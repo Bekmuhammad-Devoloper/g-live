@@ -1,0 +1,892 @@
+// Germaniya Live — O'quv markazini boshqarish tizimi
+// Ma'lumotlar modeli (TZ 5-bo'lim asosida)
+//
+// Eslatma: MVP uchun SQLite ishlatilgan (o'rnatishsiz darhol ishlaydi).
+// Production (PostgreSQL)'ga o'tish uchun: provider = "postgresql" qiling.
+// Shuning uchun bu yerda enum ISHLATILMAGAN (statuslar String + lib/constants.ts da).
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlite"
+  url      = env("DATABASE_URL")
+}
+
+// ─────────────────────────────────────────────────────────────
+// FOYDALANUVCHILAR VA TASHKILIY TUZILMA
+// ─────────────────────────────────────────────────────────────
+
+model Branch {
+  id        String   @id @default(cuid())
+  name      String
+  address   String?
+  phone     String?
+  lat       Float? // manzil kenglik
+  lng       Float? // manzil uzunlik
+  radius    Int      @default(100) // geo-radius (metr) — davomat uchun
+  imageUrl  String? // filial rasmi (data URL — galereyadan yuklangan)
+  isActive  Boolean  @default(true)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  users    User[]
+  leads    Lead[]
+  students Student[]
+  groups   Group[]
+}
+
+// Xodim rollari (boshqaruv)
+model StaffRole {
+  id          String   @id @default(cuid())
+  name        String
+  description String?
+  department  String? // bo'lim (Boshqaruv, Sotuv bo'limi, Moliya bo'limi, ...)
+  bossOnly    Boolean  @default(false) // faqat boss ko'ra oladi
+  permissions String? // vergul bilan ajratilgan ruxsat kalitlari
+  isActive    Boolean  @default(true)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+}
+
+// Teglar / yorliqlar (Nomi, Kodi, Holati)
+model Tag {
+  id        String   @id @default(cuid())
+  name      String
+  code      String?
+  isActive  Boolean  @default(true)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+model User {
+  id           String    @id @default(cuid())
+  fullName     String
+  email        String    @unique
+  phone        String?
+  passwordHash String
+  plainPassword String? // parolni rahbariyat ko'rishi uchun ochiq nusxa (ichki admin funksiyasi)
+  role         String // ROLES: STUDENT | PARENT | TEACHER | MANAGER | DEPUTY_DIRECTOR | DIRECTOR | ADMIN
+  isActive     Boolean   @default(true)
+  locale       String    @default("uz") // uz | ru
+  gender       String? // MALE | FEMALE
+  birthDate    DateTime? // tug'ilgan sana
+  imageUrl     String? // profil rasmi (data URL — galereyadan yuklangan)
+  fiksa        Int       @default(0) // o'qituvchi uchun belgilangan (fixed) oylik maosh (so'm)
+  kpiBonus     Int       @default(200000) // operator KPI: har bir muvaffaqiyatli lid uchun bonus (so'm)
+  position     String? // lavozim (erkin matn) — Sozlamalar/Xodimlar bo'limi
+  sipExtension String?  @unique // telefoniya: operatorning SIP extension'i (masalan "operator3")
+  archivedAt    DateTime? // arxivlangan (deaktivatsiya) sanasi
+  archiveReason String? // arxivlash/o'chirish sababi
+  archiveNote   String? // arxiv izohi
+  lastLoginAt  DateTime?
+  createdAt    DateTime  @default(now())
+  updatedAt    DateTime  @updatedAt
+
+  branchId String?
+  branch   Branch? @relation(fields: [branchId], references: [id])
+
+  // Rolga bog'liq profillar
+  studentProfile Student?
+  parentProfile  Parent?
+  teacherGroups  Group[]  @relation("TeacherGroups")
+
+  // CRM
+  managedLeads  Lead[]         @relation("LeadManager")
+  leadActivities LeadActivity[]
+
+  // Audit / to'lov / bildirishnoma
+  auditLogs     AuditLog[]
+  createdPayments Payment[]    @relation("PaymentAuthor")
+  notifications Notification[]
+
+  // Topshiriq / eslatma
+  assignedTasks Task[] @relation("TaskAssignee")
+  authoredTasks Task[] @relation("TaskAuthor")
+
+  // Oylik maosh yozuvlari (o'qituvchi)
+  salaries TeacherSalary[]
+
+  // Qo'ng'iroqlar markazi — operator sifatida
+  calls Call[] @relation("CallOperator")
+
+  // Moliya — kiritilgan xarajatlar
+  expenses Expense[] @relation("ExpenseAuthor")
+}
+
+// O'qituvchi oylik maoshi — har oy alohida yozuv (yil+oy bo'yicha).
+// Yangi oy = yangi yozuv (0'dan boshlanadi); eski oylar tarix sifatida saqlanadi.
+model TeacherSalary {
+  id        String   @id @default(cuid())
+  teacherId String
+  teacher   User     @relation(fields: [teacherId], references: [id], onDelete: Cascade)
+  year      Int
+  month     Int // 1-12
+  fiksa     Int      @default(0) // shu oydagi belgilangan maosh
+  bonus     Int      @default(0)
+  penalty   Int      @default(0) // ushlanma
+  kpi       Int      @default(0) // KPI bonus summasi (so'm), jamiga qo'shiladi
+  lessons   Int      @default(0) // shu oyda o'tilgan darslar
+  students  Int      @default(0) // faol o'quvchilar
+  closed    Boolean  @default(false) // oy yopilgan (tarix) bo'lsa true
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@unique([teacherId, year, month])
+  @@index([teacherId])
+}
+
+// ─────────────────────────────────────────────────────────────
+// CRM — LID VA SAVDO VORONKASI
+// ─────────────────────────────────────────────────────────────
+
+model Lead {
+  id        String   @id @default(cuid())
+  fullName  String
+  phone     String
+  email     String?
+  telegram  String?
+
+  source    String? // sayt | ilova | telegram | telefon | reklama | tashrif ...
+  utmSource   String?
+  utmCampaign String?
+  utmMedium   String?
+  vacancyLinkId String? // qaysi maxsus havoladan (Havolalar moduli) kelgan
+
+  stage     String  @default("NEW") // LEAD_STAGES (lib/constants.ts)
+  interestCourse String?
+  budget    Int? // taxminiy byudjet (so'm)
+  preferredTime  String?
+  note      String?
+  lossReason String? // yo'qotilgan bo'lsa sabab
+
+  branchId  String?
+  branch    Branch? @relation(fields: [branchId], references: [id])
+
+  managerId String?
+  manager   User?   @relation("LeadManager", fields: [managerId], references: [id])
+
+  // Konvertatsiyadan keyin bog'lanadigan o'quvchi
+  studentId String?  @unique
+  student   Student? @relation(fields: [studentId], references: [id])
+
+  activities LeadActivity[]
+  calls      Call[]
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([stage])
+  @@index([managerId])
+}
+
+model LeadActivity {
+  id        String   @id @default(cuid())
+  leadId    String
+  lead      Lead     @relation(fields: [leadId], references: [id], onDelete: Cascade)
+  authorId  String?
+  author    User?    @relation(fields: [authorId], references: [id])
+  type      String // call | message | meeting | note | stage_change | test
+  result    String?
+  nextStep  String?
+  nextStepAt DateTime?
+  createdAt DateTime @default(now())
+
+  @@index([leadId])
+}
+
+// ─────────────────────────────────────────────────────────────
+// O'QUVCHI / OTA-ONA
+// ─────────────────────────────────────────────────────────────
+
+model Student {
+  id           String   @id @default(cuid())
+  userId       String?  @unique
+  user         User?    @relation(fields: [userId], references: [id])
+  fullName     String
+  phone        String?
+  imageUrl     String? // o'quvchi profil rasmi (data URL)
+  birthDate    DateTime?
+  currentLevel String? // masalan A1.2
+  eduStatus    String   @default("WAITING") // EDU_STATUSES (lib/constants.ts)
+
+  branchId String?
+  branch   Branch? @relation(fields: [branchId], references: [id])
+
+  lead        Lead?
+  parents     StudentParent[]
+  enrollments GroupStudent[]
+  payments    Payment[]
+  submissions Submission[]
+  attendances Attendance[]
+  examResults ExamResult[]
+  certificates Certificate[]
+  tasks       Task[]
+  seasonalResults SeasonalResult[]
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+model Parent {
+  id       String  @id @default(cuid())
+  userId   String? @unique
+  user     User?   @relation(fields: [userId], references: [id])
+  fullName String
+  phone    String?
+
+  children StudentParent[]
+
+  createdAt DateTime @default(now())
+}
+
+// O'quvchi ↔ ota-ona bog'lanishi (ko'p-ko'pga)
+model StudentParent {
+  id        String  @id @default(cuid())
+  studentId String
+  student   Student @relation(fields: [studentId], references: [id], onDelete: Cascade)
+  parentId  String
+  parent    Parent  @relation(fields: [parentId], references: [id], onDelete: Cascade)
+  relation  String? // ota | ona | vasiy ...
+
+  @@unique([studentId, parentId])
+}
+
+// ─────────────────────────────────────────────────────────────
+// O'QUV DASTURI, GURUH, DARS
+// ─────────────────────────────────────────────────────────────
+
+model Program {
+  id          String  @id @default(cuid())
+  name        String // masalan "Nemis tili A1-B2"
+  description String?
+  banners     String? // JSON massiv — kurs bannerlari (data URL)
+  gradingType String  @default("PERCENT") // PERCENT | POINTS | FIVE | PASS_FAIL
+  isActive    Boolean @default(true)
+
+  levels    Level[]
+  groups    Group[]
+  materials CourseMaterial[]
+  courseLessons CourseLesson[]
+
+  createdAt DateTime @default(now())
+}
+
+// Kurs (dastur) materiallari — havola, fayl, video, hujjat
+model CourseMaterial {
+  id        String   @id @default(cuid())
+  programId String
+  program   Program  @relation(fields: [programId], references: [id], onDelete: Cascade)
+  levelCode String? // ixtiyoriy — qaysi darajaga (denormalizatsiya)
+  title     String
+  kind      String   @default("LINK") // LINK | VIDEO | FILE | DOC
+  url       String? // havola yoki fayl (data URL)
+  note      String?
+  createdAt DateTime @default(now())
+
+  @@index([programId])
+}
+
+// Kurs dars rejasi (syllabus) — ketma-ket darslar: mavzu, video, topshiriq, uy vazifasi
+model CourseLesson {
+  id         String   @id @default(cuid())
+  programId  String
+  program    Program  @relation(fields: [programId], references: [id], onDelete: Cascade)
+  order      Int      @default(0) // ketma-ketlik
+  title      String // dars nomi
+  topic      String? // mavzu tafsiloti
+  videoUrl   String? // yuklangan video yo'li (/uploads/...)
+  materialUrl String? // qo'shimcha material/fayl yo'li
+  assignment String? // dars topshirig'i (matn)
+  assignmentFileUrl String? // topshiriq uchun yuklangan fayl
+  homework   String? // uy vazifasi (matn)
+  homeworkFileUrl String? // uy vazifasi uchun yuklangan fayl
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
+
+  progress   GroupLessonProgress[]
+
+  @@index([programId])
+}
+
+// Har guruh qaysi darsni o'tganini belgilaydi (kurs shabloniga nisbatan)
+model GroupLessonProgress {
+  id             String       @id @default(cuid())
+  groupId        String
+  group          Group        @relation(fields: [groupId], references: [id], onDelete: Cascade)
+  courseLessonId String
+  courseLesson   CourseLesson @relation(fields: [courseLessonId], references: [id], onDelete: Cascade)
+  taught         Boolean      @default(false)
+  taughtAt       DateTime?
+  updatedAt      DateTime     @updatedAt
+
+  @@unique([groupId, courseLessonId])
+  @@index([groupId])
+}
+
+model Level {
+  id        String  @id @default(cuid())
+  programId String
+  program   Program @relation(fields: [programId], references: [id], onDelete: Cascade)
+  code      String // A1.1, A1.2 ...
+  name      String
+  order     Int     @default(0)
+  weeks     Int? // davomiylik (hafta) — sozlanadi
+  academicHours Int? // akademik soat
+  passScore Int? // o'tish balli (foiz)
+
+  createdAt DateTime @default(now())
+
+  @@unique([programId, code])
+}
+
+model Group {
+  id        String   @id @default(cuid())
+  name      String
+  programId String
+  program   Program  @relation(fields: [programId], references: [id])
+  teacherId String?
+  teacher   User?    @relation("TeacherGroups", fields: [teacherId], references: [id])
+  branchId  String?
+  branch    Branch?  @relation(fields: [branchId], references: [id])
+  levelCode String? // joriy daraja
+  color     String? // guruh rangi (hex, masalan #3b82f6)
+  format    String   @default("OFFLINE") // ONLINE | OFFLINE | HYBRID (o'quv shakli)
+  room      String?
+  onlineLink String?
+  status    String   @default("PLANNED") // PLANNED | ACTIVE | FINISHED | CANCELLED
+  capacity  Int      @default(12)
+  startDate DateTime?
+  endDate   DateTime? // guruh tugash sanasi
+  weekdays  String? // dars kunlari: vergul bilan 1..7 (Du=1 ... Ya=7), masalan "1,3,5"
+  startTime String? // dars boshlanish vaqti "HH:mm"
+  endTime   String? // dars tugash vaqti "HH:mm"
+
+  students    GroupStudent[]
+  lessons     Lesson[]
+  assignments Assignment[]
+  tasks       Task[]
+  seasonalAssessments SeasonalAssessment[]
+  lessonProgress GroupLessonProgress[]
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+model GroupStudent {
+  id        String   @id @default(cuid())
+  groupId   String
+  group     Group    @relation(fields: [groupId], references: [id], onDelete: Cascade)
+  studentId String
+  student   Student  @relation(fields: [studentId], references: [id], onDelete: Cascade)
+  joinedAt  DateTime @default(now())
+  isActive  Boolean  @default(true)
+
+  @@unique([groupId, studentId])
+}
+
+model Lesson {
+  id        String   @id @default(cuid())
+  groupId   String
+  group     Group    @relation(fields: [groupId], references: [id], onDelete: Cascade)
+  topic     String?
+  startsAt  DateTime
+  endsAt    DateTime?
+  // QR-davomat uchun: har dars uchun dinamik token va amal muddati
+  qrToken   String?
+  qrExpiresAt DateTime?
+
+  attendances Attendance[]
+
+  createdAt DateTime @default(now())
+
+  @@index([groupId])
+}
+
+model Attendance {
+  id        String   @id @default(cuid())
+  lessonId  String
+  lesson    Lesson   @relation(fields: [lessonId], references: [id], onDelete: Cascade)
+  studentId String
+  student   Student  @relation(fields: [studentId], references: [id], onDelete: Cascade)
+  status    String   @default("PRESENT") // PRESENT | LATE | ABSENT | EXCUSED | ONLINE | MAKEUP
+  method    String   @default("QR") // QR | MANUAL
+  confirmed Boolean  @default(false) // o'qituvchi yakuniy ro'yxatni tasdiqlaydi
+  anomaly   Boolean  @default(false) // boshqa qurilma/joydan skanerlash
+  markedAt  DateTime @default(now())
+
+  @@unique([lessonId, studentId])
+}
+
+// O'qituvchi ish jadvali (ustozlar ish jadvali)
+model TeacherSchedule {
+  id            String    @id @default(cuid())
+  teacherId     String    @unique
+  weekdays      String? // "1,2,3,4,5" (Du=1 ... Ya=7)
+  startTime     String? // "HH:mm"
+  endTime       String? // "HH:mm"
+  monthlySalary Int       @default(0)
+  startedAt     DateTime? // ish faoliyatining boshlanishi
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
+}
+
+// O'qituvchi kunlik davomati
+model TeacherAttendance {
+  id        String   @id @default(cuid())
+  teacherId String
+  date      DateTime // kun (00:00)
+  present   Boolean  @default(true)
+  createdAt DateTime @default(now())
+
+  @@unique([teacherId, date])
+  @@index([teacherId])
+}
+
+// ─────────────────────────────────────────────────────────────
+// UY VAZIFA / BAHOLASH
+// ─────────────────────────────────────────────────────────────
+
+model Assignment {
+  id        String   @id @default(cuid())
+  groupId   String
+  group     Group    @relation(fields: [groupId], references: [id], onDelete: Cascade)
+  title     String
+  type      String   @default("TASK") // TASK | EXAM | HOMEWORK | TEST
+  skill     String? // SPEAKING | WRITING | READING | LISTENING | GRAMMAR
+  maxScore  Int      @default(100)
+  dueAt     DateTime?
+  note      String? // izoh
+
+  submissions Submission[]
+
+  createdAt DateTime @default(now())
+}
+
+model Room {
+  id        String   @id @default(cuid())
+  name      String
+  capacity  Int      @default(0)
+  note      String?
+  branchId  String?
+  isActive  Boolean  @default(true)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+model Submission {
+  id           String   @id @default(cuid())
+  assignmentId String
+  assignment   Assignment @relation(fields: [assignmentId], references: [id], onDelete: Cascade)
+  studentId    String
+  student      Student  @relation(fields: [studentId], references: [id], onDelete: Cascade)
+  content      String?
+  attempt      Int      @default(1)
+  score        Int?
+  teacherNote  String? // past baho uchun majburiy izoh
+  status       String   @default("SUBMITTED") // SUBMITTED | GRADED | RETURNED
+  gradedAt     DateTime?
+  createdAt    DateTime @default(now())
+
+  @@unique([assignmentId, studentId, attempt])
+}
+
+// ─────────────────────────────────────────────────────────────
+// TO'LOV VA MOLIYA
+// ─────────────────────────────────────────────────────────────
+
+model Payment {
+  id          String   @id @default(cuid())
+  studentId   String
+  student     Student  @relation(fields: [studentId], references: [id])
+  amount      Int // so'm (butun)
+  method      String // CLICK | PAYME | UZUM | CASH | CARD | TRANSFER ...
+  purpose     String? // kurs to'lovi | qarz | ...
+  status      String   @default("PENDING") // PENDING | PAID | REFUNDED | CANCELLED
+  isManual    Boolean  @default(false) // qo'lda kiritilgan
+  transactionId String? @unique // provayder tranzaksiya ID (dublikat oldini olish)
+  docNumber   String? // chek/hujjat raqami
+  receiptUrl  String?
+  note        String?
+
+  authorId    String? // qo'lda kiritgan xodim
+  author      User?    @relation("PaymentAuthor", fields: [authorId], references: [id])
+
+  cancelledAt DateTime?
+  cancelReason String?
+
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  @@index([studentId])
+  @@index([status])
+}
+
+// ─────────────────────────────────────────────────────────────
+// IMTIHON VA SERTIFIKAT
+// ─────────────────────────────────────────────────────────────
+
+model Exam {
+  id        String   @id @default(cuid())
+  title     String
+  format    String   @default("INTERNAL") // INTERNAL | GOETHE | TELC | TESTDAF ...
+  passScore Int      @default(60)
+  createdAt DateTime @default(now())
+
+  results ExamResult[]
+}
+
+model ExamResult {
+  id        String   @id @default(cuid())
+  examId    String
+  exam      Exam     @relation(fields: [examId], references: [id], onDelete: Cascade)
+  studentId String
+  student   Student  @relation(fields: [studentId], references: [id], onDelete: Cascade)
+  score     Int?
+  status    String   @default("PENDING") // PENDING | PASSED | FAILED
+  attempt   Int      @default(1)
+  details   String? // JSON (bo'limlar bo'yicha ballar)
+  reviewer  String?
+  note      String?
+  takenAt   DateTime @default(now())
+}
+
+// Blok test — imtihon hodisasi (kirish/blok/yakuniy)
+model BlockTest {
+  id            String    @id @default(cuid())
+  title         String
+  type          String    @default("BLOCK") // KIRISH | BLOCK | YAKUNIY
+  status        String    @default("PLANNED") // PLANNED | ACTIVE | FINISHED
+  date          DateTime?
+  startTime     String? // "HH:mm"
+  durationMin   Int       @default(60)
+  responsibleId String? // mas'ul xodim (User id)
+  groupIds      String? // vergul bilan Group id lar
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
+}
+
+// Test turi (shablon)
+model TestType {
+  id          String   @id @default(cuid())
+  name        String
+  code        String?
+  durationMin Int      @default(0)
+  courseIds   String? // vergul bilan Program id lar
+  isActive    Boolean  @default(true)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+}
+
+model Certificate {
+  id         String   @id @default(cuid())
+  studentId  String
+  student    Student  @relation(fields: [studentId], references: [id], onDelete: Cascade)
+  number     String   @unique // noyob raqam
+  programName String
+  levelCode  String?
+  result     String?
+  qrCode     String   @unique // tekshiruv uchun (URL/token)
+  status     String   @default("ISSUED") // ISSUED | REPLACED | REVOKED
+  issuedAt   DateTime @default(now())
+  issuedBy   String?
+}
+
+// ─────────────────────────────────────────────────────────────
+// BILDIRISHNOMA VA AUDIT
+// ─────────────────────────────────────────────────────────────
+
+model Notification {
+  id        String   @id @default(cuid())
+  userId    String
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  title     String
+  body      String?
+  channel   String   @default("APP") // APP | PUSH | TELEGRAM | EMAIL | SMS
+  event     String? // hodisa turi
+  isRead    Boolean  @default(false)
+  createdAt DateTime @default(now())
+
+  @@index([userId, isRead])
+}
+
+// Topshiriq va eslatma (bitta model, kind bilan ajratiladi)
+model Task {
+  id         String    @id @default(cuid())
+  kind       String    @default("TASK") // TASK | REMINDER
+  title      String
+  note       String?
+  tag        String? // teg (masalan "to'lov", "qo'ng'iroq")
+  status     String    @default("OPEN") // OPEN | DONE
+  priority   String    @default("NORMAL") // LOW | NORMAL | HIGH
+  dueAt      DateTime?
+  doneAt     DateTime?
+
+  assigneeId String?
+  assignee   User?   @relation("TaskAssignee", fields: [assigneeId], references: [id])
+  authorId   String?
+  author     User?   @relation("TaskAuthor", fields: [authorId], references: [id])
+
+  studentId  String?
+  student    Student? @relation(fields: [studentId], references: [id])
+  groupId    String?
+  group      Group?   @relation(fields: [groupId], references: [id])
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([kind, status])
+  @@index([assigneeId])
+}
+
+// ─────────────────────────────────────────────────────────────
+// O'QUV BO'LIMI — MAVSUMIY BAHOLASH VA SHARTNOMA
+// ─────────────────────────────────────────────────────────────
+
+// Mavsumiy baholash — fasl/chorak bo'yicha davriy baholash sessiyasi.
+// (Har mavsumda guruh/daraja kesimida o'quvchilar baholanadi.)
+model SeasonalAssessment {
+  id        String   @id @default(cuid())
+  title     String
+  season    String // WINTER | SPRING | SUMMER | AUTUMN
+  year      Int
+  groupId   String?
+  group     Group?   @relation(fields: [groupId], references: [id])
+  levelCode String?
+  skill     String? // SPEAKING | WRITING | READING | LISTENING | GRAMMAR | GENERAL
+  maxScore  Int      @default(100)
+  passScore Int      @default(60)
+  date      DateTime?
+  status    String   @default("PLANNED") // PLANNED | ONGOING | COMPLETED
+  note      String?
+
+  results   SeasonalResult[]
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([season, year])
+  @@index([groupId])
+}
+
+model SeasonalResult {
+  id           String   @id @default(cuid())
+  assessmentId String
+  assessment   SeasonalAssessment @relation(fields: [assessmentId], references: [id], onDelete: Cascade)
+  studentId    String
+  student      Student  @relation(fields: [studentId], references: [id], onDelete: Cascade)
+  score        Int?
+  grade        String? // A|B|C|D|F yoki daraja belgisi
+  passed       Boolean?
+  note         String?
+  createdAt    DateTime @default(now())
+
+  @@unique([assessmentId, studentId])
+}
+
+// Shartnoma shabloni — o'quv markazining shartnoma hujjatlari ro'yxati.
+model ContractTemplate {
+  id        String   @id @default(cuid())
+  title     String // sarlavha
+  type      String   @default("STANDARD") // STANDARD | ONLINE | OFFLINE | OFFER | INDIVIDUAL
+  content   String? // shartnoma matni (shablon)
+  note      String?
+  isActive  Boolean  @default(true)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([type])
+}
+
+// Audit jurnali — o'chirib/tahrirlab bo'lmaydi (interfeys darajasida)
+model AuditLog {
+  id         String   @id @default(cuid())
+  actorId    String?
+  actor      User?    @relation(fields: [actorId], references: [id])
+  action     String // CREATE | UPDATE | DELETE | CANCEL | LOGIN | ...
+  entityType String // "Payment", "Lead", "Attendance", ...
+  entityId   String?
+  oldValue   String? // JSON
+  newValue   String? // JSON
+  reason     String? // qo'lda tuzatish sababi
+  ip         String?
+  createdAt  DateTime @default(now())
+
+  @@index([entityType, entityId])
+  @@index([actorId])
+}
+
+// ─────────────────────────────────────────────────────────────
+// QO'NG'IROQLAR MARKAZI (Call Center)
+// Telefoniya integratsiyasi (Asterisk/SIP) keyingi bosqichda ulanadi;
+// hozircha yozuvlar bazada saqlanadi va hisobotda ko'rsatiladi.
+// ─────────────────────────────────────────────────────────────
+model Call {
+  id           String    @id @default(cuid())
+  // Asterisk Linkedid/Uniqueid — CDR sinxronizatsiyasi bir xil qo'ng'iroqni
+  // ikki marta yozmasligi uchun. Qo'lda yaratilgan yozuvlarda null.
+  externalId   String?   @unique
+  direction    String // INCOMING | OUTGOING
+  status       String    @default("ANSWERED") // ANSWERED | MISSED | BUSY | NO_ANSWER | FAILED | CANCELLED
+
+  // Operator (xodim) — snapshot nom bilan (xodim o'chirilsa ham qoladi)
+  operatorId   String?
+  operator     User?     @relation("CallOperator", fields: [operatorId], references: [id])
+  operatorName String?
+
+  // Abonent (lid yoki noma'lum raqam)
+  leadId       String?
+  lead         Lead?     @relation(fields: [leadId], references: [id])
+  contactName  String? // abonent ismi (ma'lum bo'lsa)
+  phone        String // abonent raqami
+
+  duration     Int       @default(0) // sekund
+  recordingUrl String? // audio yozuv manzili (bo'lmasa null)
+  comment      String?
+
+  callbackStatus String  @default("NONE") // NONE | PENDING | CALLED_BACK | NOT_NEEDED
+  callbackAt     DateTime?
+
+  startedAt    DateTime  @default(now())
+  answeredAt   DateTime?
+  endedAt      DateTime?
+  createdAt    DateTime  @default(now())
+
+  @@index([startedAt])
+  @@index([status])
+  @@index([direction])
+  @@index([operatorId])
+  @@index([callbackStatus])
+}
+
+// Xodim (o'qituvchi) reytingi — o'quvchi bahosi va izohi
+model Feedback {
+  id         String    @id @default(cuid())
+  teacherId  String
+  studentId  String?
+  groupId    String?
+  lessonDate DateTime?
+  comment    String?
+  rating     Int       @default(5) // 1..5
+  createdAt  DateTime  @default(now())
+
+  @@index([teacherId])
+}
+
+// ─────────────────────────────────────────────────────────────
+// HAVOLALAR (Maxsus linklar) — vakansiya + platforma bo'yicha kuzatuv-havola
+// Har havola /apply/<code> ga olib boradi; ko'rishlar va arizalar hisoblanadi.
+// ─────────────────────────────────────────────────────────────
+model Vacancy {
+  id          String        @id @default(cuid())
+  title       String // "qassobchilik", "Qurilish sohasi"
+  company     String? // "GL", "BG GLOBAL", "MNG"
+  country     String? // "Germaniya", "Bolgariya", "Mongoliya"
+  countryCode String? // bayroq uchun: de | bg | mn ...
+  jobTitle    String?
+  salary      String?
+  description String?
+  // Ariza formasidagi qo'shimcha savollar — JSON massiv:
+  // [{ q, type: "text"|"choice", options?: string[], required?: boolean }]
+  questions   String?
+  isActive    Boolean       @default(true)
+  branchId    String?
+  createdById String?
+  createdByName String?
+  links       VacancyLink[]
+  createdAt   DateTime      @default(now())
+  updatedAt   DateTime      @updatedAt
+
+  @@index([country])
+}
+
+model VacancyLink {
+  id               String    @id @default(cuid())
+  code             String    @unique // /apply/<code>
+  name             String?
+  platform         String    @default("other") // telegram|instagram|facebook|whatsapp|tiktok|youtube|linkedin|bio-link|other
+  vacancyId        String
+  vacancy          Vacancy   @relation(fields: [vacancyId], references: [id], onDelete: Cascade)
+  views            Int       @default(0)
+  submissions      Int       @default(0)
+  isActive         Boolean   @default(true)
+  expiresAt        DateTime?
+  maxSubmissions   Int?
+  utmSource        String?
+  utmMedium        String?
+  utmCampaign      String?
+  lastViewedAt     DateTime?
+  lastSubmissionAt DateTime?
+  createdById      String?
+  createdByName    String?
+  createdAt        DateTime  @default(now())
+  updatedAt        DateTime  @updatedAt
+
+  @@index([vacancyId])
+  @@index([platform])
+  @@index([isActive])
+}
+
+// Umumiy tizim sozlamalari (key-value) — telefoniya, biznes qoidalari va h.k.
+model Setting {
+  key       String   @id
+  value     String
+  updatedAt DateTime @updatedAt
+}
+
+// ─────────────────────────────────────────────────────────────
+// MOLIYA — XARAJATLAR (EXPENSES)
+// ─────────────────────────────────────────────────────────────
+
+// Xarajat turkumi (kategoriya) — "Kategoriya qo'shing" bilan yaratiladi
+model ExpenseCategory {
+  id        String    @id @default(cuid())
+  name      String    @unique
+  createdAt DateTime  @default(now())
+
+  expenses  Expense[]
+}
+
+// Xarajat yozuvi — talabaga bog'liq emas (Payment'dan farqli)
+model Expense {
+  id         String   @id @default(cuid())
+  name       String // Nomi
+  date       DateTime // Xarajat sanasi
+  amount     Int // so'm (butun)
+  method     String   @default("CASH") // CASH | PAYME | CARD | UZUM | CLICK | HUMO | BANK
+  recipient  String? // Oluvchi
+  note       String?
+
+  categoryId String?
+  category   ExpenseCategory? @relation(fields: [categoryId], references: [id], onDelete: SetNull)
+
+  authorId   String? // kiritgan xodim
+  author     User?    @relation("ExpenseAuthor", fields: [authorId], references: [id])
+
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
+
+  @@index([date])
+  @@index([categoryId])
+}
+
+// ─────────────────────────────────────────────────────────────
+// ISH HAQI — MAOSH KALKULYATORI QOIDALARI
+// ─────────────────────────────────────────────────────────────
+
+// Maosh hisoblash qoidasi (standart yoki individual).
+// Nishon (o'qituvchi/kurs/guruh/talaba) denormalizatsiya bilan saqlanadi.
+model SalaryRule {
+  id         String   @id @default(cuid())
+  scope      String   @default("ALL") // ALL | TEACHER | COURSE | GROUP | STUDENT
+  amountType String   @default("FIXED") // FIXED (O'zgarmas) | PERCENT (Foiz)
+  amount     Int // Miqdori (so'm yoki %)
+  isDefault  Boolean  @default(false) // 1-bosqich: barcha o'qituvchilar uchun standart
+  targetId   String? // nishon id (teacher/program/group/student)
+  targetName String? // ko'rsatish uchun nom
+  createdAt  DateTime @default(now())
+
+  @@index([scope])
+}

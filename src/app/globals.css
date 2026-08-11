@@ -1,0 +1,211 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+  color-scheme: light;
+  --font-sans: "Segoe UI", -apple-system, BlinkMacSystemFont, Roboto, "Helvetica Neue", Arial, sans-serif;
+}
+
+html {
+  font-family: var(--font-sans);
+}
+
+body {
+  @apply bg-slate-100 text-slate-900 antialiased dark:bg-slate-950 dark:text-slate-100;
+  -webkit-font-smoothing: antialiased;
+  text-rendering: optimizeLegibility;
+}
+
+.dark {
+  color-scheme: dark;
+}
+
+/* O'ngdan ochiluvchi panel (drawer) animatsiyasi */
+@keyframes slideInRight {
+  from {
+    transform: translateX(100%);
+  }
+  to {
+    transform: translateX(0);
+  }
+}
+.animate-slide-in-right {
+  animation: slideInRight 0.22s ease-out;
+}
+
+/* Qo'ng'iroq oynasi — pastdan yumshoq ko'tarilish */
+@keyframes slideUp {
+  from {
+    transform: translateY(24px);
+    opacity: 0;
+  }
+  to {
+    transform: translateY(0);
+    opacity: 1;
+  }
+}
+.animate-slide-up {
+  animation: slideUp 0.24s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+/* Nozik scrollbar */
+* {
+  scrollbar-width: thin;
+  scrollbar-color: #cbd5e1 transparent;
+}
+*::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+*::-webkit-scrollbar-thumb {
+  background-color: #cbd5e1;
+  border-radius: 9999px;
+}
+*::-webkit-scrollbar-thumb:hover {
+  background-color: #94a3b8;
+}
+
+::selection {
+  background: #c7d7ff;
+}
+
+/* Qayta ishlatiladigan tugma uslublari */
+@layer components {
+  .btn-primary {
+    @apply inline-flex items-center justify-center gap-1.5 rounded-lg bg-brand-600 px-4 py-2 text-sm font-semibold text-white shadow-sm transition hover:bg-brand-700 active:scale-[.98] disabled:opacity-60;
+  }
+  .btn-ghost {
+    @apply inline-flex items-center justify-center gap-1.5 rounded-lg border border-slate-200 bg-white px-4 py-2 text-sm font-medium text-slate-600 transition hover:bg-slate-50 disabled:opacity-60 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-300 dark:hover:bg-slate-700;
+  }
+  .card {
+    @apply rounded-2xl border border-slate-200/70 bg-white shadow-sm dark:border-slate-800 dark:bg-slate-900;
+  }
+  .input {
+    @apply w-full rounded-lg border border-slate-300 px-3 py-2 text-sm outline-none transition focus:border-brand-500 focus:ring-2 focus:ring-brand-100 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-100 dark:placeholder:text-slate-500 dark:focus:ring-brand-900;
+  }
+  /* Qo'lda yozilgan shrift (sidebar yozuvlari) — OS handwriting shriftidan,
+     tashqi yuklamasiz. Windows: "Segoe Script", macOS: "Bradley Hand". */
+  .font-hand {
+    font-family: "Segoe Script", "Bradley Hand", "Comic Sans MS", cursive;
+  }
+}
+
+/* ─── Dark rejim: sahifalar bo'ylab umumiy FALLBACK moslashuv ───
+   :where() bilan spetsifikatsiya 0 ga tushiriladi — shuning uchun komponentdagi
+   aniq `dark:bg-*` / `dark:text-*` variantlari HAR DOIM ustun bo'ladi, faqat
+   variantsiz (un-themed) och elementlargina bu fallbackka tushadi. */
+.dark :where(.bg-white) {
+  background-color: #0f172a;
+}
+.dark :where(.bg-white\/95, .bg-white\/90, .bg-white\/80, .bg-white\/75, .bg-white\/70, .bg-white\/60, .bg-white\/50) {
+  background-color: rgb(15 23 42 / 0.85);
+}
+.dark :where(.bg-slate-50, .bg-slate-100) {
+  background-color: #1e293b;
+}
+.dark :where(.bg-slate-50\/80, .bg-slate-50\/70, .bg-slate-50\/60) {
+  background-color: rgb(30 41 59 / 0.6);
+}
+.dark :where(.bg-slate-50\/40, .bg-slate-50\/30) {
+  background-color: rgb(30 41 59 / 0.4);
+}
+.dark :where(.hover\:bg-slate-50):hover {
+  background-color: rgb(30 41 59 / 0.55);
+}
+.dark :where(.hover\:bg-slate-100):hover {
+  background-color: rgb(30 41 59 / 0.8);
+}
+.dark :where(.text-slate-900) {
+  color: #f1f5f9;
+}
+.dark :where(.text-slate-800) {
+  color: #e2e8f0;
+}
+.dark :where(.text-slate-700) {
+  color: #cbd5e1;
+}
+.dark :where(.text-slate-600, .text-slate-500) {
+  color: #94a3b8;
+}
+
+/* ─── Dark rejim: RANGLI to'q matnlar va ular ostidagi och yorliq fonlari ───
+   `text-emerald-700` kabi to'q ranglar qorong'i fonda yo'qolib ketardi (kontrast ~2).
+   Fon (bg-*-50) va matn JUFT ravishda almashtiriladi: to'q tusli fon + yorqin matn.
+   :where() = 0 spetsifikatsiya, shuning uchun komponentdagi aniq `dark:` variantlari ustun. */
+.dark :where(.bg-emerald-50, .bg-green-50) { background-color: rgb(6 78 59 / 0.4); }
+.dark :where(.bg-red-50, .bg-rose-50) { background-color: rgb(127 29 29 / 0.35); }
+.dark :where(.bg-amber-50, .bg-yellow-50) { background-color: rgb(120 53 15 / 0.35); }
+.dark :where(.bg-blue-50, .bg-sky-50) { background-color: rgb(30 58 138 / 0.35); }
+.dark :where(.bg-violet-50, .bg-purple-50, .bg-indigo-50) { background-color: rgb(76 29 149 / 0.35); }
+.dark :where(.bg-brand-50) { background-color: rgb(26 27 82 / 0.55); }
+.dark :where(.bg-cyan-50, .bg-teal-50) { background-color: rgb(22 78 99 / 0.35); }
+.dark :where(.bg-orange-50) { background-color: rgb(124 45 18 / 0.35); }
+.dark :where(.bg-pink-50) { background-color: rgb(131 24 67 / 0.35); }
+
+.dark :where(.text-emerald-700, .text-emerald-800, .text-green-700) { color: #6ee7b7; }
+.dark :where(.text-red-700, .text-red-800, .text-rose-700, .text-rose-800) { color: #fca5a5; }
+.dark :where(.text-amber-700, .text-amber-800, .text-yellow-700) { color: #fcd34d; }
+.dark :where(.text-blue-700, .text-blue-800, .text-sky-700) { color: #93c5fd; }
+.dark :where(.text-violet-700, .text-purple-700, .text-indigo-700) { color: #c4b5fd; }
+.dark :where(.text-brand-700, .text-brand-800) { color: #a4bcff; }
+.dark :where(.text-cyan-700, .text-teal-700) { color: #67e8f9; }
+.dark :where(.text-orange-700, .text-orange-800) { color: #fdba74; }
+.dark :where(.text-pink-700) { color: #f9a8d4; }
+
+/* Tungi rejim — scrollbar va matn belgilash */
+.dark * {
+  scrollbar-color: #475569 transparent;
+}
+.dark *::-webkit-scrollbar-thumb {
+  background-color: #475569;
+}
+.dark *::-webkit-scrollbar-thumb:hover {
+  background-color: #64748b;
+}
+.dark ::selection {
+  background: #1d4ed8;
+  color: #e0e7ff;
+}
+/* ─── Chegara chiziqlarini aniq ko'rsatish (butun platforma bo'ylab) ───
+   Juda och (slate-100 / slate-200/70) chegaralar ko'rinmay qolgani uchun
+   ularni ko'rinadigan tonga to'qlashtiramiz — bir joydan. */
+
+/* Och rejim */
+.border-slate-100 {
+  border-color: #e2e8f0; /* slate-200 — ko'rinadigan ajratuvchi */
+}
+.border-slate-200,
+.border-slate-200\/70,
+.border-slate-200\/60,
+.border-slate-200\/50 {
+  border-color: #cbd5e1; /* slate-300 — aniq karta cheti */
+}
+.divide-slate-100 > :not([hidden]) ~ :not([hidden]) {
+  border-color: #e2e8f0;
+}
+.divide-slate-200 > :not([hidden]) ~ :not([hidden]) {
+  border-color: #cbd5e1;
+}
+
+/* Tungi rejim — chegaralarni ko'rinadigan och tonga suramiz */
+.dark .border-slate-100 {
+  border-color: rgb(51 65 85 / 0.7);
+}
+.dark .border-slate-200,
+.dark .border-slate-300,
+.dark .border-slate-200\/70,
+.dark .border-slate-200\/60 {
+  border-color: #334155; /* slate-700 */
+}
+.dark [class~="dark:border-slate-800"],
+.dark [class~="dark:border-slate-800/70"] {
+  border-color: #334155;
+}
+.dark .divide-slate-100 > :not([hidden]) ~ :not([hidden]) {
+  border-color: rgb(51 65 85 / 0.6);
+}
+.dark .divide-slate-200 > :not([hidden]) ~ :not([hidden]),
+.dark [class~="dark:divide-slate-800"] > :not([hidden]) ~ :not([hidden]) {
+  border-color: #334155;
+}

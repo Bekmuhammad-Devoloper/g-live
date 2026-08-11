@@ -1,0 +1,67 @@
+import { notFound } from "next/navigation";
+import { requireSession } from "@/lib/auth";
+import { prisma } from "@/lib/db";
+import { getT } from "@/lib/i18n";
+import { canRead, canWrite, MODULES } from "@/lib/rbac";
+import { ROLES } from "@/lib/constants";
+import { Forbidden } from "../../_components/ui";
+import LeadDetail, { type DLead, type DActivity } from "./LeadDetail";
+
+export default async function LeadDetailPage({ params }: { params: Promise<{ id: string }> }) {
+  const { id } = await params;
+  const s = await requireSession();
+  const t = getT(s.locale);
+  if (!canRead(s.role, MODULES.CRM)) {
+    return <Forbidden title={t("err.forbidden")} body={t("err.forbiddenBody")} />;
+  }
+
+  const [lead, managers, ids] = await Promise.all([
+    prisma.lead.findUnique({
+      where: { id },
+      include: { manager: true, student: true, activities: { include: { author: true }, orderBy: { createdAt: "desc" } } },
+    }),
+    prisma.user.findMany({ where: { role: ROLES.OPERATOR, isActive: true }, select: { id: true, fullName: true }, orderBy: { fullName: "asc" } }),
+    prisma.lead.findMany({ orderBy: { createdAt: "desc" }, select: { id: true } }),
+  ]);
+  if (!lead) notFound();
+
+  const idx = ids.findIndex((x) => x.id === id);
+  const prevId = idx > 0 ? ids[idx - 1].id : null;
+  const nextId = idx >= 0 && idx < ids.length - 1 ? ids[idx + 1].id : null;
+
+  const dlead: DLead = {
+    id: lead.id,
+    fullName: lead.fullName,
+    phone: lead.phone,
+    email: lead.email,
+    source: lead.source,
+    stage: lead.stage,
+    interestCourse: lead.interestCourse,
+    budget: lead.budget,
+    note: lead.note,
+    managerId: lead.managerId,
+    managerName: lead.manager?.fullName ?? null,
+    studentId: lead.studentId,
+    createdAt: lead.createdAt.toISOString(),
+  };
+  const activities: DActivity[] = lead.activities.map((a) => ({
+    id: a.id,
+    type: a.type,
+    result: a.result,
+    nextStepAt: a.nextStepAt ? a.nextStepAt.toISOString() : null,
+    authorName: a.author?.fullName ?? null,
+    createdAt: a.createdAt.toISOString(),
+  }));
+
+  return (
+    <LeadDetail
+      lead={dlead}
+      activities={activities}
+      managers={managers.map((m) => ({ id: m.id, name: m.fullName }))}
+      prevId={prevId}
+      nextId={nextId}
+      canWrite={canWrite(s.role, MODULES.CRM)}
+      locale={s.locale}
+    />
+  );
+}
