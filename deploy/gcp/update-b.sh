@@ -39,13 +39,40 @@ npx prisma generate 2>&1 | grep -E "Generated" || true
 npx prisma db push --skip-generate 2>&1 | tail -1
 
 echo "══ 4/5 Build ══"
-npx next build 2>&1 | tail -3
+# Ishlab turgan .next ga TEGMAYMIZ: avval yangisini yon papkaga yig'amiz.
+# Build yiqilsa — sayt eski, ishlaydigan nusxada qolaveradi.
+rm -rf .next-build
+if ! NEXT_DIST_DIR=.next-build npx next build 2>&1 | tail -20; then
+  echo "❌ Build yiqildi — sayt eski nusxada ishlashda davom etmoqda"
+  rm -rf .next-build
+  exit 1
+fi
+# Muvaffaqiyatli build → tez almashtirish (bir necha millisekund)
+rm -rf .next-old
+[ -d .next ] && mv .next .next-old
+mv .next-build .next
 
 echo "══ 5/5 Servislarni qayta ishga tushirish ══"
 sudo systemctl restart gl-edu gl-ami
-sleep 3
+sleep 4
+
+# Sog'liq tekshiruvi — ko'tarilmasa AVVALGI nusxaga qaytamiz
+CODE=$(curl -s -o /dev/null -w "%{http_code}" --max-time 20 http://127.0.0.1:3000/login || echo 000)
+if [ "$CODE" != "200" ]; then
+  echo "⚠️  Yangi nusxa javob bermadi (HTTP $CODE) — ORQAGA QAYTARILMOQDA"
+  if [ -d .next-old ]; then
+    rm -rf .next && mv .next-old .next
+    git reset --hard "$OLD"
+    sudo systemctl restart gl-edu gl-ami
+    sleep 4
+    echo "Qaytarildi: $(curl -s -o /dev/null -w 'HTTP %{http_code}' http://127.0.0.1:3000/login)"
+  fi
+  exit 1
+fi
+
+rm -rf .next-old
 systemctl is-active gl-edu gl-ami gl-tunnel
-curl -s -o /dev/null -w "Sayt: HTTP %{http_code}\n" http://127.0.0.1:3000/login
+echo "Sayt: HTTP $CODE"
 
 echo ""
 echo "✅ Yangilash tugadi: $(git log --oneline -1)"

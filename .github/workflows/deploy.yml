@@ -31,7 +31,13 @@ jobs:
           cache: npm
       - run: npm ci --no-audit --no-fund
       - run: npx prisma generate
-      - run: npx tsc --noEmit
+      - name: Typecheck
+        run: npx tsc --noEmit
+      # Build'ni ham CI'da sinaymiz — serverга yiqiladigan kod bormasin
+      - name: Build sinovi
+        run: npx next build
+        env:
+          DATABASE_URL: "file:./ci.db"
 
   deploy:
     name: B serverga deploy
@@ -49,3 +55,13 @@ jobs:
         run: |
           ssh -i ~/.ssh/deploy_key -o BatchMode=yes uzbekmen94@34.179.202.164 \
             "bash /opt/gl-edu/deploy/gcp/update-b.sh"
+
+      - name: Sayt tirikligini tekshirish
+        run: |
+          CODE=$(curl -s -o /dev/null -w "%{http_code}" --max-time 30 http://34.179.202.164/login)
+          echo "Sayt javobi: HTTP $CODE"
+          [ "$CODE" = "200" ] || exit 1
+
+      - name: Kalitni o'chirish
+        if: always()
+        run: rm -f ~/.ssh/deploy_key
