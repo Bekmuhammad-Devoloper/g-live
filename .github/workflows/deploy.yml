@@ -1,0 +1,51 @@
+# ════════════════════════════════════════════════════════════════════
+# CI/CD — main'ga push bo'lishi bilan B server (GCP) avtomatik yangilanadi.
+#
+# Ishlashi uchun GitHub'da BITTA sir (secret) kerak:
+#   Repo → Settings → Secrets and variables → Actions → New repository secret
+#   Nomi:    B_SSH_KEY
+#   Qiymati: ~/.ssh/gl-ci faylining TO'LIQ matni (private key)
+#
+# Oqim: push → typecheck → SSH orqali B'da update-b.sh (pull+build+restart)
+# ════════════════════════════════════════════════════════════════════
+name: Deploy to GCP
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch: {}   # qo'lda ham ishga tushirsa bo'ladi (Actions → Run workflow)
+
+concurrency:
+  group: deploy-b          # bir vaqtda faqat bitta deploy
+  cancel-in-progress: false
+
+jobs:
+  check:
+    name: Tekshiruv (typecheck)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+      - run: npm ci --no-audit --no-fund
+      - run: npx prisma generate
+      - run: npx tsc --noEmit
+
+  deploy:
+    name: B serverga deploy
+    needs: check             # typecheck yiqilsa deploy bo'lmaydi
+    runs-on: ubuntu-latest
+    steps:
+      - name: SSH kalitni tayyorlash
+        run: |
+          mkdir -p ~/.ssh
+          echo "${{ secrets.B_SSH_KEY }}" > ~/.ssh/deploy_key
+          chmod 600 ~/.ssh/deploy_key
+          ssh-keyscan -H 34.179.202.164 >> ~/.ssh/known_hosts 2>/dev/null
+
+      - name: B'da yangilash skriptini ishga tushirish
+        run: |
+          ssh -i ~/.ssh/deploy_key -o BatchMode=yes uzbekmen94@34.179.202.164 \
+            "bash /opt/gl-edu/deploy/gcp/update-b.sh"
