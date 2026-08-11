@@ -292,6 +292,13 @@ export default function Softphone({ locale, canConfigure = false }: { locale: Lo
     });
   }, [cleanup, startTimer, locale]);
 
+  // WSS manzili o'zgarganda (masalan IP → domen) ochiq turgan eski sahifa
+  // abadiy eski manzilni urmasligi uchun: har uzilishda serverdan konfigni
+  // qayta so'raymiz — manzil o'zgargan bo'lsa UA yangi manzil bilan qayta quriladi.
+  const [uaEpoch, setUaEpoch] = useState(0);
+  const wsUrlRef = useRef<string | null>(null);
+  const refetchingRef = useRef(false);
+
   // ─── JsSIP UA init ───
   useEffect(() => {
     let cancelled = false;
@@ -303,6 +310,7 @@ export default function Softphone({ locale, canConfigure = false }: { locale: Lo
         setExt(cfg.extension || "");
         const wsUrl = location.protocol === "https:" ? cfg.wssUrl : (cfg.wsUrl || cfg.wssUrl);
         if (!wsUrl || !cfg.domain) { setStatus("disabled"); return; }
+        wsUrlRef.current = wsUrl;
         const ice: any[] = [];
         if (cfg.stunServer) ice.push(cfg.stunServer);
         if (cfg.turnServer) { ice.push(cfg.turnServer); ice.push({ ...cfg.turnServer, urls: cfg.turnServer.urls + "?transport=tcp" }); }
@@ -326,7 +334,24 @@ export default function Softphone({ locale, canConfigure = false }: { locale: Lo
         ua.on("registered", () => { setStatus("registered"); primeMic(); });
         ua.on("unregistered", () => setStatus("connecting"));
         ua.on("registrationFailed", () => setStatus("failed"));
-        ua.on("disconnected", () => setStatus("failed"));
+        ua.on("disconnected", () => {
+          setStatus("failed");
+          // Manzil serverda o'zgargan bo'lishi mumkin — tekshirib ko'ramiz.
+          // O'zgargan bo'lsa UA yangi manzil bilan qaytadan quriladi.
+          if (refetchingRef.current) return;
+          refetchingRef.current = true;
+          setTimeout(async () => {
+            try {
+              const r = await fetch("/api/telephony/webrtc-config", { cache: "no-store" });
+              if (r.ok) {
+                const c = await r.json();
+                const fresh = location.protocol === "https:" ? c.wssUrl : (c.wsUrl || c.wssUrl);
+                if (fresh && fresh !== wsUrlRef.current) setUaEpoch((n) => n + 1);
+              }
+            } catch { /* tarmoq yo'q — keyingi uzilishda yana uriniladi */ }
+            finally { refetchingRef.current = false; }
+          }, 4000);
+        });
         ua.on("newRTCSession", (e: any) => {
           if (e.originator !== "remote") return;
           const session = e.session;
@@ -385,7 +410,8 @@ export default function Softphone({ locale, canConfigure = false }: { locale: Lo
       if (kaRef.current) clearInterval(kaRef.current);
       try { uaRef.current?.stop(); } catch {}
     };
-  }, [wire]);
+    // uaEpoch — WSS manzili o'zgarganda UA'ni qayta qurish uchun
+  }, [wire, uaEpoch]);
 
   // ─── Click-to-call (window event: glive:call {number, leadId, contactName}) ───
   const startCall = useCallback(async (number?: string, leadId?: string, contactName?: string) => {
@@ -495,7 +521,7 @@ export default function Softphone({ locale, canConfigure = false }: { locale: Lo
         <div
           ref={panelRef}
           style={pos ? { left: pos.x, top: pos.y, right: "auto", bottom: "auto" } : undefined}
-          className="fixed bottom-24 right-6 z-[70] w-[336px] overflow-hidden rounded-2xl border border-slate-800 bg-[#0f1b2e] shadow-pop"
+          className="fixed bottom-24 right-6 z-[70] w-[336px] max-w-[calc(100vw-2rem)] overflow-hidden rounded-2xl border border-slate-800 bg-[#0f1b2e] shadow-pop"
         >
           {/* Header — teal gradient, sudrab ko'chirish uchun ushlab ko'chirish joyi */}
           <div className="flex items-center justify-between bg-gradient-to-r from-emerald-600 to-teal-500 px-4 py-3.5">
