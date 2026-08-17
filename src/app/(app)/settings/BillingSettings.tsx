@@ -120,7 +120,8 @@ export default function BillingSettings({ locale }: { locale: Locale }) {
       <div>
         <h3 className="mb-3 text-xl font-bold text-slate-800 dark:text-slate-100">{tr(locale, { uz: "To'lov tarixi", ru: "История платежей", en: "Payment history" })}</h3>
         <div className="overflow-hidden rounded-2xl border border-slate-300 bg-white shadow-card dark:border-slate-600 dark:bg-slate-900">
-          <table className="w-full text-left text-sm">
+          <div className="overflow-x-auto">
+          <table className="w-full min-w-[560px] text-left text-sm">
             <thead className="border-b border-slate-300 text-[13px] font-semibold text-slate-600 dark:border-slate-600 dark:text-slate-300">
               <tr>
                 <th className="px-5 py-3.5">{tr(locale, { uz: "Jami", ru: "Итого", en: "Total" })}</th>
@@ -142,6 +143,7 @@ export default function BillingSettings({ locale }: { locale: Locale }) {
               )}
             </tbody>
           </table>
+          </div>
         </div>
       </div>
     </div>

@@ -138,7 +138,8 @@ export default async function AttendanceReportPage({ searchParams }: { searchPar
         {/* Chap: jamlanma jadval (batafsil) */}
         <div className="flex-1">
           <div className="overflow-hidden rounded-2xl border border-slate-200/70 bg-white shadow-card dark:border-slate-800 dark:bg-slate-900">
-            <table className="w-full text-left text-sm">
+            <div className="overflow-x-auto">
+            <table className="w-full min-w-[420px] text-left text-sm">
               <tbody className="divide-y divide-slate-100 dark:divide-slate-800">
                 {rows.map((r) => (
                   <tr key={r.label} className={r.total ? "bg-brand-50/60 dark:bg-brand-500/10" : ""}>
@@ -148,6 +149,7 @@ export default async function AttendanceReportPage({ searchParams }: { searchPar
                 ))}
               </tbody>
             </table>
+            </div>
           </div>
         </div>
 

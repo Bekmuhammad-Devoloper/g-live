@@ -102,7 +102,8 @@ export default async function LeaveReasonsPage({ searchParams }: { searchParams:
             <LeaveExport rows={rows} filename={`ketganlar-${tab}`} locale={s.locale} />
           </div>
           <div className="overflow-hidden rounded-2xl border border-slate-200/70 bg-white shadow-card dark:border-slate-800 dark:bg-slate-900">
-            <table className="w-full text-left text-sm">
+            <div className="overflow-x-auto">
+            <table className="w-full min-w-[640px] text-left text-sm">
               <thead className="border-b border-slate-200/70 text-[11px] font-semibold uppercase tracking-wider text-slate-500 dark:border-slate-800">
                 <tr>
                   <th className="w-16 px-5 py-3">№</th>
@@ -122,6 +123,7 @@ export default async function LeaveReasonsPage({ searchParams }: { searchParams:
                 ))}
               </tbody>
             </table>
+            </div>
           </div>
         </div>
       </div>

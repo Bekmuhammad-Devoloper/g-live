@@ -16,12 +16,14 @@ export default async function UsersPage() {
     return <Forbidden title={t("err.forbidden")} body={t("err.forbiddenBody")} />;
   }
 
+  // XAVFSIZLIK: `select` — passwordHash/plainPassword hech qachon xotiraga ham yuklanmaydi
   const users = await prisma.user.findMany({
     where: { role: { in: STAFF_ROLES } },
     orderBy: { createdAt: "asc" },
-    include: {
+    select: {
+      id: true, fullName: true, gender: true, role: true, position: true, phone: true, isActive: true,
       branch: { select: { name: true } },
-      teacherGroups: { include: { program: { select: { name: true } }, _count: { select: { students: true } } } },
+      teacherGroups: { select: { id: true, name: true, program: { select: { name: true } }, _count: { select: { students: true } } } },
     },
   });
 
