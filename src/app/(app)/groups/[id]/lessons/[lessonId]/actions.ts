@@ -7,6 +7,7 @@ import { requireSession, type SessionUser } from "@/lib/auth";
 import { getPermission, MODULES } from "@/lib/rbac";
 import { writeAudit } from "@/lib/audit";
 import { ATTENDANCE_STATUSES } from "@/lib/constants";
+import { canBypassAttendanceLock, lessonLockState } from "@/lib/attendanceWindow";
 
 async function canManageLesson(s: SessionUser, lessonId: string): Promise<{ ok: boolean; groupId?: string }> {
   const lesson = await prisma.lesson.findUnique({
@@ -25,6 +26,13 @@ export async function generateQr(lessonId: string, minutes = 15): Promise<void> 
   const { ok, groupId } = await canManageLesson(s, lessonId);
   if (!ok) return;
 
+  // Yopilgan (dars + 3 soat o'tgan) darsga yangi QR berilmaydi — avto-"yo'q"ni
+  // QR orqali o'chirish yo'lini yopadi. Ruxsat (unlock) berilgan bo'lsa mumkin.
+  if (!canBypassAttendanceLock(s.role)) {
+    const lock = await lessonLockState(lessonId);
+    if (lock && lock.closed && !lock.unlocked) return;
+  }
+
   const token = randomUUID();
   const expires = new Date(Date.now() + minutes * 60 * 1000);
   await prisma.lesson.update({ where: { id: lessonId }, data: { qrToken: token, qrExpiresAt: expires } });
@@ -38,6 +46,12 @@ export async function markAttendance(lessonId: string, studentId: string, status
   const { ok, groupId } = await canManageLesson(s, lessonId);
   if (!ok) return;
   if (!ATTENDANCE_STATUSES.includes(status as (typeof ATTENDANCE_STATUSES)[number])) return;
+
+  // Davomat oynasi yopilgan bo'lsa (dars + 3 soat) — faqat rahbariyat yoki unlock bilan
+  if (!canBypassAttendanceLock(s.role)) {
+    const lock = await lessonLockState(lessonId);
+    if (lock && lock.closed && !lock.unlocked) return;
+  }
 
   await prisma.attendance.upsert({
     where: { lessonId_studentId: { lessonId, studentId } },

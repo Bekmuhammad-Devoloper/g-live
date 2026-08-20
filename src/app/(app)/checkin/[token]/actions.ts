@@ -2,6 +2,7 @@
 
 import { prisma } from "@/lib/db";
 import { requireSession } from "@/lib/auth";
+import { lessonLockState } from "@/lib/attendanceWindow";
 
 export type CheckInResult = "ok" | "expired" | "invalid" | "anomaly" | "already" | "notstudent";
 
@@ -17,6 +18,10 @@ export async function checkIn(token: string): Promise<CheckInResult> {
 
   // TZ FR-HW-06 — amal muddati tugagan QR qabul qilinmaydi
   if (!lesson.qrExpiresAt || lesson.qrExpiresAt.getTime() < Date.now()) return "expired";
+
+  // Davomat oynasi yopilgan dars (dars + 3 soat o'tgan) — eski QR bilan ham kirib bo'lmaydi
+  const lock = await lessonLockState(lesson.id);
+  if (lock && lock.closed && !lock.unlocked) return "expired";
 
   // Allaqachon belgilanganmi?
   const existing = await prisma.attendance.findUnique({

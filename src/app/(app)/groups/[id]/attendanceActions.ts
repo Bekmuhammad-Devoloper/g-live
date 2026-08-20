@@ -122,15 +122,16 @@ export async function getGroupAttendance(
 ): Promise<{ ok: boolean; map?: Record<string, string>; window?: AttendanceWindowInfo }> {
   const s = await canMark(groupId);
   if (!s) return { ok: false };
-  if (!/^\d{4}-\d{2}-\d{2}$/.test(dateISO)) return { ok: false };
+  if (!isValidDateISO(dateISO)) return { ok: false };
 
   const group = await prisma.group.findUnique({ where: { id: groupId }, select: { startTime: true, endTime: true } });
   const win = computeAttendanceWindow(dateISO, group?.startTime, group?.endTime);
+  const future = dateISO > todayISOLocal(); // ISO format leksikografik solishtirishga mos
   const unlockUntil = win.closed ? await activeUnlockUntil(groupId, dateISO) : null;
 
   // Oyna yopilgan va ruxsat ham yo'q — belgilanmaganlar avtomatik "yo'q" bo'ladi
   if (win.closed && !unlockUntil) {
-    try { await materializeAutoAbsent(groupId, dateISO); } catch { /* materializatsiya yiqilsa ko'rsatishga xalal bermasin */ }
+    try { await materializeAutoAbsent(groupId, dateISO, win.closesAt); } catch { /* materializatsiya yiqilsa ko'rsatishga xalal bermasin */ }
   }
 
   const { start, end } = dayRange(dateISO);
@@ -138,12 +139,14 @@ export async function getGroupAttendance(
   const map: Record<string, string> = {};
   if (lesson) for (const a of lesson.attendances) map[a.studentId] = a.status;
 
-  const editable = !win.closed || !!unlockUntil || canBypassAttendanceLock(s.role);
+  const bypass = canBypassAttendanceLock(s.role);
+  const editable = future ? bypass : (!win.closed || !!unlockUntil || bypass);
   return {
     ok: true,
     map,
     window: {
       closed: win.closed,
+      future,
       editable,
       closesAtLabel: dmOf(win.closesAt),
       unlockedUntilLabel: unlockUntil ? dmOf(unlockUntil) : null,
@@ -152,9 +155,15 @@ export async function getGroupAttendance(
   };
 }
 
-/** Yopiq oynada tahrirlashga urinishni tekshiradi: null = mumkin, aks holda sabab. */
-async function lockCheck(s: SessionUser, groupId: string, dateISO: string): Promise<{ closed: true; closesAtLabel: string } | null> {
+/** Yopiq oyna / kelajak sana tekshiruvi: null = tahrirlash mumkin, aks holda sabab. */
+async function lockCheck(
+  s: SessionUser,
+  groupId: string,
+  dateISO: string,
+): Promise<{ closed?: true; future?: true; closesAtLabel?: string } | null> {
   if (canBypassAttendanceLock(s.role)) return null;
+  // Kelajak sanaga davomat oldindan belgilanmaydi (soxtalashtirish oldini olish)
+  if (dateISO > todayISOLocal()) return { future: true };
   const group = await prisma.group.findUnique({ where: { id: groupId }, select: { startTime: true, endTime: true } });
   const win = computeAttendanceWindow(dateISO, group?.startTime, group?.endTime);
   if (!win.closed) return null;
@@ -173,11 +182,11 @@ export async function markStudentAttendance(
   dateISO: string,
   studentId: string,
   status: string,
-): Promise<{ ok: boolean; cleared?: boolean; blocked?: boolean; lessonsThisMonth?: number; closed?: boolean; closesAtLabel?: string }> {
+): Promise<{ ok: boolean; cleared?: boolean; blocked?: boolean; lessonsThisMonth?: number; closed?: boolean; future?: boolean; closesAtLabel?: string }> {
   const s = await canMark(groupId);
   if (!s) return { ok: false };
   if (!ALLOWED.includes(status)) return { ok: false };
-  if (!/^\d{4}-\d{2}-\d{2}$/.test(dateISO)) return { ok: false };
+  if (!isValidDateISO(dateISO)) return { ok: false };
 
   // Yopiq oyna tekshiruvi — belgilash HAM, o'chirish HAM taqiqlanadi (avto-"yo'q"ni o'chirib bo'lmasin)
   const lock = await lockCheck(s, groupId, dateISO);
@@ -214,10 +223,10 @@ export async function markStudentAttendance(
 export async function markAllPresent(
   groupId: string,
   dateISO: string,
-): Promise<{ ok: boolean; added?: number; skippedBlocked?: number; closed?: boolean; closesAtLabel?: string }> {
+): Promise<{ ok: boolean; added?: number; skippedBlocked?: number; closed?: boolean; future?: boolean; closesAtLabel?: string }> {
   const s = await canMark(groupId);
   if (!s) return { ok: false };
-  if (!/^\d{4}-\d{2}-\d{2}$/.test(dateISO)) return { ok: false };
+  if (!isValidDateISO(dateISO)) return { ok: false };
 
   const lock = await lockCheck(s, groupId, dateISO);
   if (lock) return { ok: false, ...lock };
@@ -250,7 +259,7 @@ export async function unlockAttendance(
 ): Promise<{ ok: boolean; untilLabel?: string; error?: string }> {
   const s = await requireSession();
   if (!canGrantAttendanceUnlock(s.role)) return { ok: false, error: "forbidden" };
-  if (!/^\d{4}-\d{2}-\d{2}$/.test(dateISO)) return { ok: false, error: "invalid" };
+  if (!isValidDateISO(dateISO)) return { ok: false, error: "invalid" };
   const g = await prisma.group.findUnique({ where: { id: groupId }, select: { id: true, name: true } });
   if (!g) return { ok: false, error: "notfound" };
 

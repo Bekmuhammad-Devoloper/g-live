@@ -83,6 +83,8 @@ ExecStart=/usr/bin/npx next start -p 3000
 Restart=always
 RestartSec=5
 Environment=NODE_ENV=production
+# Davomat oynasi va sana chegaralari O'zbekiston vaqtida hisoblanadi (attendanceWindow.ts)
+Environment=TZ=Asia/Tashkent
 
 [Install]
 WantedBy=multi-user.target

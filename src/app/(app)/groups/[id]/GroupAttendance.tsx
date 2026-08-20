@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState, useTransition } from "react";
+import { useEffect, useRef, useState, useTransition } from "react";
 import { Icon } from "../../_components/Icon";
 import { cn } from "@/lib/cn";
 import { tr } from "@/lib/tr";
@@ -20,54 +20,63 @@ export function GroupAttendance({ groupId, students, locale }: { groupId: string
   const [blockedNotice, setBlockedNotice] = useState<{ name: string; lessons: number } | null>(null);
   const [skippedCount, setSkippedCount] = useState(0);
   const [closedNotice, setClosedNotice] = useState(false);
+  const [futureNotice, setFutureNotice] = useState(false);
+  // Poyga himoyasi: faqat ENG SO'NGGI so'rov natijasi qo'llanadi
+  const reqRef = useRef(0);
 
-  const reload = () => startLoad(async () => {
-    const r = await getGroupAttendance(groupId, date);
-    if (r.ok) { setMap(r.map ?? {}); setWin(r.window ?? null); }
-  });
+  const reload = (forDate: string) => {
+    const req = ++reqRef.current;
+    startLoad(async () => {
+      const r = await getGroupAttendance(groupId, forDate);
+      if (req !== reqRef.current) return; // eskirgan javob — tashlab yuboramiz
+      if (r.ok) { setMap(r.map ?? {}); setWin(r.window ?? null); }
+    });
+  };
 
   useEffect(() => {
-    let alive = true;
-    startLoad(async () => {
-      const r = await getGroupAttendance(groupId, date);
-      if (alive && r.ok) { setMap(r.map ?? {}); setWin(r.window ?? null); setClosedNotice(false); }
-    });
-    return () => { alive = false; };
+    // Sana almashdi — eski oyna/xarita bilan noto'g'ri banner ko'rinmasin
+    setWin(null); setMap({}); setClosedNotice(false); setFutureNotice(false); setSkippedCount(0);
+    reload(date);
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [groupId, date]);
 
-  const editable = win?.editable ?? true;
+  // win===null → hali yuklanmoqda: belgilash vaqtincha yopiq (server baribir himoyalangan)
+  const editable = win ? win.editable : false;
+
+  const notifyDenied = (r: { closed?: boolean; future?: boolean }) => {
+    if (r.future) setFutureNotice(true);
+    else setClosedNotice(true);
+  };
 
   const mark = (id: string, status: string) => {
-    if (!editable) { setClosedNotice(true); return; }
+    if (!editable) { if (win) notifyDenied({ closed: win.closed, future: win.future }); return; }
     const willClear = map[id] === status;
     const prev = map[id];
     setMap((m) => { const n = { ...m }; if (willClear) delete n[id]; else n[id] = status; return n; }); // optimistik
     startSave(async () => {
       const r = await markStudentAttendance(groupId, date, id, status);
-      if (r.blocked || r.closed) {
-        // Server rad etdi — optimistik o'zgarishni bekor qilamiz
+      if (!r.ok) {
+        // Server rad etdi (yopiq/kelajak/to'lov/ruxsat) — optimistik o'zgarishni bekor qilamiz
         setMap((m) => { const n = { ...m }; if (prev === undefined) delete n[id]; else n[id] = prev; return n; });
         if (r.blocked) {
           const st = students.find((x) => x.id === id);
           setBlockedNotice({ name: st?.name ?? "", lessons: r.lessonsThisMonth ?? 0 });
-        }
-        if (r.closed) setClosedNotice(true);
+        } else notifyDenied(r);
       }
     });
   };
   const allPresent = () => {
-    if (!editable) { setClosedNotice(true); return; }
+    if (!editable) { if (win) notifyDenied({ closed: win.closed, future: win.future }); return; }
     setMap((m) => { const n = { ...m }; for (const s of students) if (!n[s.id] && !s.blocked) n[s.id] = "PRESENT"; return n; });
     startSave(async () => {
       const r = await markAllPresent(groupId, date);
-      if (r.closed) { setClosedNotice(true); reload(); return; }
+      if (!r.ok) { notifyDenied(r); reload(date); return; } // optimistik belgilarni serverdagi holatga qaytaramiz
       setSkippedCount(r.skippedBlocked ?? 0);
     });
   };
   const doUnlock = () => startUnlock(async () => {
     const r = await unlockAttendance(groupId, date);
-    if (r.ok) { setClosedNotice(false); reload(); }
+    if (r.ok) { setClosedNotice(false); reload(date); }
   });
 
   const present = students.filter((s) => map[s.id] === "PRESENT" || map[s.id] === "LATE").length;
@@ -130,6 +139,21 @@ export function GroupAttendance({ groupId, students, locale }: { groupId: string
             })}
           </span>
           <button onClick={() => setClosedNotice(false)} className="shrink-0 text-rose-400 hover:text-rose-600">✕</button>
+        </div>
+      )}
+
+      {/* Kelajak sana — oldindan belgilash taqiqlangan */}
+      {(futureNotice || (win?.future && !editable)) && (
+        <div className="mb-3 flex items-center justify-between gap-2 rounded-lg border border-amber-200 bg-amber-50 px-3 py-2 text-sm text-amber-700 dark:border-amber-900/40 dark:bg-amber-950/20 dark:text-amber-400">
+          <span className="flex items-center gap-2">
+            <Icon name="clock" className="h-4 w-4 shrink-0" />
+            {tr(locale, {
+              uz: "Kelajak sanaga davomat oldindan belgilanmaydi — dars kuni belgilanadi.",
+              ru: "Посещаемость на будущую дату заранее не отмечается — только в день урока.",
+              en: "Attendance cannot be pre-marked for a future date — mark it on the lesson day.",
+            })}
+          </span>
+          {futureNotice && <button onClick={() => setFutureNotice(false)} className="shrink-0 text-amber-400 hover:text-amber-600">✕</button>}
         </div>
       )}
 
