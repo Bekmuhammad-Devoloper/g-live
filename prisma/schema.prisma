@@ -171,6 +171,13 @@ model Lead {
   studentId String?  @unique
   student   Student? @relation(fields: [studentId], references: [id])
 
+  // "Qabul qilindi" (WON) uchun MAJBURIY guruh biriktiruvi.
+  // Guruh kursga (Program) tegishli — shuning uchun kurs alohida saqlanmaydi.
+  groupId   String?
+  group     Group?   @relation(fields: [groupId], references: [id])
+  // Guruhni keyin FAQAT BIR MARTA o'zgartirish mumkin (0 = hali o'zgartirilmagan)
+  enrollEditCount Int @default(0)
+
   activities LeadActivity[]
   calls      Call[]
 
@@ -364,6 +371,7 @@ model Group {
   endTime   String? // dars tugash vaqti "HH:mm"
 
   students    GroupStudent[]
+  leads       Lead[] // shu guruhga yo'naltirilgan lidlar
   lessons     Lesson[]
   assignments Assignment[]
   tasks       Task[]
@@ -417,6 +425,20 @@ model Attendance {
   markedAt  DateTime @default(now())
 
   @@unique([lessonId, studentId])
+}
+
+// Yopilgan (dars + 3 soat o'tgan) davomatni vaqtincha ochish ruxsati.
+// Menejer / Direktor / o'rinbosari / ROP beradi; muddati tugagach yana yopiladi.
+model AttendanceUnlock {
+  id            String   @id @default(cuid())
+  groupId       String
+  date          String // "YYYY-MM-DD" — qaysi kun davomati ochilgan
+  expiresAt     DateTime // shu vaqtgacha tahrirlash mumkin
+  grantedById   String?
+  grantedByName String?
+  createdAt     DateTime @default(now())
+
+  @@index([groupId, date])
 }
 
 // O'qituvchi ish jadvali (ustozlar ish jadvali)

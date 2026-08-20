@@ -120,6 +120,12 @@ const uz: Dict = {
   "top.upcoming": "Yaqin darslar",
   "top.videoSoon": "Video qo'llanmalar tez orada qo'shiladi.",
 
+  "rates.title": "Valyuta kursi",
+  "rates.source": "Manba: MB (cbu.uz)",
+  "rates.sum": "so'm",
+  "rates.refresh": "Yangilash",
+  "rates.stale": "Oxirgi ma'lum kurs — cbu.uz javob bermadi.",
+
   "footer.support": "Texnik yordam",
   "footer.video": "Video darsliklar",
   "footer.payMode": "To'lov rejimi",
@@ -242,6 +248,12 @@ const ru: Dict = {
   "top.upcoming": "Ближайшие уроки",
   "top.videoSoon": "Видеоинструкции скоро будут добавлены.",
 
+  "rates.title": "Курс валют",
+  "rates.source": "Источник: ЦБ РУз (cbu.uz)",
+  "rates.sum": "сум",
+  "rates.refresh": "Обновить",
+  "rates.stale": "Показан последний известный курс — cbu.uz не отвечает.",
+
   "footer.support": "Техподдержка",
   "footer.video": "Видеоуроки",
   "footer.payMode": "Режим оплаты",
@@ -363,6 +375,12 @@ const en: Dict = {
   "top.noResults": "Nothing found",
   "top.upcoming": "Upcoming lessons",
   "top.videoSoon": "Video guides will be added soon.",
+
+  "rates.title": "Exchange rates",
+  "rates.source": "Source: CBU (cbu.uz)",
+  "rates.sum": "UZS",
+  "rates.refresh": "Refresh",
+  "rates.stale": "Showing the last known rate — cbu.uz is unavailable.",
 
   "footer.support": "Tech support",
   "footer.video": "Video tutorials",

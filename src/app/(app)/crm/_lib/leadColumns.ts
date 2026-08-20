@@ -14,6 +14,11 @@ export interface VLead {
   managerId: string | null;
   managerName: string | null;
   studentId: string | null;
+  /** Yo'naltirilgan guruh (WON uchun majburiy) */
+  groupId: string | null;
+  groupName: string | null;
+  /** Guruh necha marta o'zgartirilgan (1 dan keyin bloklanadi) */
+  enrollEditCount: number;
   activityCount: number;
   lastActivity: string | null;
   createdAt: string; // ISO

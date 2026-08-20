@@ -18,7 +18,12 @@ export default async function LeadDetailPage({ params }: { params: Promise<{ id:
   const [lead, managers, ids] = await Promise.all([
     prisma.lead.findUnique({
       where: { id },
-      include: { manager: true, student: true, activities: { include: { author: true }, orderBy: { createdAt: "desc" } } },
+      include: {
+        manager: true,
+        student: true,
+        group: { select: { name: true, program: { select: { name: true } } } },
+        activities: { include: { author: true }, orderBy: { createdAt: "desc" } },
+      },
     }),
     prisma.user.findMany({ where: { role: ROLES.OPERATOR, isActive: true }, select: { id: true, fullName: true }, orderBy: { fullName: "asc" } }),
     prisma.lead.findMany({ orderBy: { createdAt: "desc" }, select: { id: true } }),
@@ -42,6 +47,10 @@ export default async function LeadDetailPage({ params }: { params: Promise<{ id:
     managerId: lead.managerId,
     managerName: lead.manager?.fullName ?? null,
     studentId: lead.studentId,
+    groupId: lead.groupId,
+    groupName: lead.group?.name ?? null,
+    courseName: lead.group?.program?.name ?? null,
+    enrollEditCount: lead.enrollEditCount,
     createdAt: lead.createdAt.toISOString(),
   };
   const activities: DActivity[] = lead.activities.map((a) => ({

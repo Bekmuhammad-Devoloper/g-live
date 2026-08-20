@@ -9,11 +9,13 @@ import { tr } from "@/lib/tr";
 import { Icon } from "../../_components/Icon";
 import { COLUMNS, colorOfStage, initials } from "../_lib/leadColumns";
 import { updateLeadField, setLeadManager, moveLeadStage, convertLead, addLeadActivity } from "../actions";
+import EnrollDrawer from "../_components/EnrollDrawer";
 
 export interface DLead {
   id: string; fullName: string; phone: string; email: string | null; source: string | null;
   stage: string; interestCourse: string | null; budget: number | null; note: string | null;
   managerId: string | null; managerName: string | null; studentId: string | null; createdAt: string;
+  groupId: string | null; groupName: string | null; courseName: string | null; enrollEditCount: number;
 }
 export interface DActivity {
   id: string; type: string; result: string | null; nextStepAt: string | null; authorName: string | null; createdAt: string;
@@ -32,6 +34,9 @@ export default function LeadDetail({ lead, activities, managers, prevId, nextId,
   const [tab, setTab] = useState<"info" | "activity">("info");
   const [note, setNote] = useState("");
   const [pending, start] = useTransition();
+  // Guruhga yo'naltirish paneli — "Qabul qilindi" uchun majburiy
+  const [enrollOpen, setEnrollOpen] = useState(false);
+  const [flash, setFlash] = useState<string | null>(null);
   const color = colorOfStage(lead.stage);
   const run = (fn: () => Promise<unknown>) => start(async () => { await fn(); router.refresh(); });
 
@@ -148,11 +153,55 @@ export default function LeadDetail({ lead, activities, managers, prevId, nextId,
                   </div>
                   <div>
                     <label className="mb-1 block text-xs font-medium text-slate-500">{tr(locale, { uz: "Bosqich", ru: "Этап", en: "Stage" })}</label>
-                    <select value={lead.stage} disabled={pending} onChange={(e) => run(() => moveLeadStage(lead.id, e.target.value))} className="input">
+                    <select
+                      value={lead.stage}
+                      disabled={pending}
+                      onChange={(e) => {
+                        const next = e.target.value;
+                        // "Qabul qilindi" — avval guruh tanlanadi (server ham talab qiladi)
+                        if ((next === "WON" || next === "PAID") && !lead.groupId) { setEnrollOpen(true); return; }
+                        run(() => moveLeadStage(lead.id, next));
+                      }}
+                      className="input"
+                    >
                       {COLUMNS.map((c) => <option key={c.key} value={c.defaultStage}>{label(LEAD_STAGE_LABELS, c.defaultStage, locale)}</option>)}
                     </select>
                   </div>
-                  {!lead.studentId && (
+                  {/* Guruh biriktiruvi — WON uchun majburiy, keyin 1 marta o'zgartirish */}
+                  <div className="rounded-xl border border-slate-200 p-3 dark:border-slate-700">
+                    <div className="mb-1 flex items-center gap-1.5 text-[11px] font-semibold text-slate-500 dark:text-slate-400">
+                      <Icon name="layers" className="h-3.5 w-3.5" />
+                      {tr(locale, { uz: "Guruh", ru: "Группа", en: "Group" })}
+                    </div>
+                    {lead.groupId ? (
+                      <>
+                        <div className="text-sm font-semibold text-slate-800 dark:text-slate-100">{lead.groupName}</div>
+                        {lead.courseName && <div className="text-[11px] text-slate-500 dark:text-slate-400">{lead.courseName}</div>}
+                        {lead.enrollEditCount >= 1 ? (
+                          <p className="mt-2 text-[11px] text-slate-400">
+                            {tr(locale, { uz: "O'zgartirish imkoni ishlatilgan", ru: "Возможность смены использована", en: "Change already used" })}
+                          </p>
+                        ) : (
+                          <button onClick={() => setEnrollOpen(true)} disabled={pending} className="btn-ghost mt-2 w-full justify-start !py-1.5 text-xs">
+                            <Icon name="refresh" className="h-3.5 w-3.5" />
+                            {tr(locale, { uz: "Guruhni o'zgartirish (1 marta)", ru: "Сменить группу (1 раз)", en: "Change group (once)" })}
+                          </button>
+                        )}
+                      </>
+                    ) : (
+                      <>
+                        <p className="text-[11px] leading-relaxed text-amber-600 dark:text-amber-400">
+                          {tr(locale, { uz: "Qabul qilish uchun guruh tanlash majburiy", ru: "Для приёма обязателен выбор группы", en: "A group is required to enroll" })}
+                        </p>
+                        <button onClick={() => setEnrollOpen(true)} disabled={pending} className="btn-ghost mt-2 w-full justify-start !py-1.5 text-xs">
+                          <Icon name="graduation" className="h-3.5 w-3.5" />
+                          {tr(locale, { uz: "Guruhga yo'naltirish", ru: "Зачислить в группу", en: "Enroll in a group" })}
+                        </button>
+                      </>
+                    )}
+                  </div>
+
+                  {!lead.studentId && !lead.groupId && (
                     <button onClick={() => run(() => convertLead(lead.id))} disabled={pending} className="btn-ghost w-full justify-start">
                       <Icon name="graduation" className="h-4 w-4" /> {tr(locale, { uz: "O'quvchiga aylantirish", ru: "Преобразовать в ученика", en: "Convert to student" })}
                     </button>
@@ -190,6 +239,25 @@ export default function LeadDetail({ lead, activities, managers, prevId, nextId,
           </div>
         </div>
       </div>
+
+      {enrollOpen && (
+        <EnrollDrawer
+          locale={locale}
+          open
+          leadId={lead.id}
+          leadName={lead.fullName}
+          currentGroupId={lead.groupId}
+          editCount={lead.enrollEditCount}
+          onClose={() => setEnrollOpen(false)}
+          onDone={(msg) => { setEnrollOpen(false); setFlash(msg); router.refresh(); setTimeout(() => setFlash(null), 4000); }}
+        />
+      )}
+
+      {flash && (
+        <div className="fixed bottom-5 left-1/2 z-[90] -translate-x-1/2 rounded-xl bg-emerald-600 px-4 py-2.5 text-sm font-medium text-white shadow-lg">
+          {flash}
+        </div>
+      )}
     </div>
   );
 }

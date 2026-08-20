@@ -37,7 +37,15 @@ export default function CommandPalette({
   const matchedLeads = useMemo(() => {
     const s = q.trim().toLowerCase();
     if (!s) return [];
-    return leads.filter((l) => `${l.fullName} ${l.phone}`.toLowerCase().includes(s)).slice(0, 8);
+    // Raqam kiritilsa — telefonni faqat raqamga tozalab solishtiramiz
+    // (raqamning oxiridan/o'rtasidan qidirsa ham topiladi).
+    const d = s.replace(/\D/g, "");
+    return leads
+      .filter((l) =>
+        `${l.fullName} ${l.phone}`.toLowerCase().includes(s) ||
+        (d.length > 0 && (l.phone ?? "").replace(/\D/g, "").includes(d))
+      )
+      .slice(0, 8);
   }, [q, leads]);
   const matchedActions = useMemo(() => {
     const s = q.trim().toLowerCase();

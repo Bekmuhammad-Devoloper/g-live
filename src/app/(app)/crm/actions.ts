@@ -102,14 +102,25 @@ export async function convertLead(leadId: string): Promise<void> {
   revalidatePath("/groups");
 }
 
+// "Qabul qilindi" hisoblanadigan bosqichlar — bularga o'tish uchun guruh SHART
+const ENROLL_REQUIRED_STAGES = ["WON", "PAID"];
+
 // Voronka bosqichini o'zgartirish (LOST uchun sabab qo'shiladi)
-export async function moveLeadStage(leadId: string, stage: string, reason?: string): Promise<void> {
+export type StageResult = { ok?: boolean; error?: string; needGroup?: boolean };
+
+export async function moveLeadStage(leadId: string, stage: string, reason?: string): Promise<StageResult> {
   const s = await requireSession();
-  if (!canWrite(s.role, MODULES.CRM)) return;
-  if (!LEAD_STAGES.includes(stage as (typeof LEAD_STAGES)[number])) return;
+  if (!canWrite(s.role, MODULES.CRM)) return { error: "forbidden" };
+  if (!LEAD_STAGES.includes(stage as (typeof LEAD_STAGES)[number])) return { error: "invalid" };
 
   const before = await prisma.lead.findUnique({ where: { id: leadId } });
-  if (!before) return;
+  if (!before) return { error: "not_found" };
+
+  // MAJBURIY QOIDA: guruhga yo'naltirilmagan lid "Qabul qilindi" bo'la olmaydi.
+  // Interfeys buni drawer bilan hal qiladi; bu — serverdagi ishonchli to'siq.
+  if (ENROLL_REQUIRED_STAGES.includes(stage) && !before.groupId) {
+    return { error: "group_required", needGroup: true };
+  }
 
   const data: Record<string, unknown> = { stage };
   if (stage === "LOST" && reason) data.lossReason = reason;
@@ -128,6 +139,170 @@ export async function moveLeadStage(leadId: string, stage: string, reason?: stri
     reason: "Voronka bosqichi o'zgartirildi",
   });
   revalidatePath("/crm");
+  return { ok: true };
+}
+
+// ─── Guruhga yo'naltirish (WON uchun majburiy qadam) ───
+
+export interface EnrollGroupOpt {
+  id: string;
+  name: string;
+  courseId: string;
+  courseName: string;
+  teacher: string | null;
+  room: string | null;
+  schedule: string | null;   // "Du, Chor, Ju · 18:00–20:00"
+  capacity: number;
+  taken: number;             // faol o'quvchilar soni
+  status: string;
+}
+export interface EnrollOptions {
+  courses: { id: string; name: string }[];
+  groups: EnrollGroupOpt[];
+}
+
+const WEEKDAY_SHORT = ["", "Du", "Se", "Chor", "Pa", "Ju", "Sha", "Yak"];
+
+/** Drawer ochilganda kurs va guruhlar ro'yxatini beradi. */
+export async function enrollOptions(): Promise<EnrollOptions> {
+  const s = await requireSession();
+  if (!canWrite(s.role, MODULES.CRM)) return { courses: [], groups: [] };
+
+  const groups = await prisma.group.findMany({
+    where: {
+      status: { in: ["PLANNED", "ACTIVE"] },       // tugagan/bekor qilinganlar taklif qilinmaydi
+      ...(s.branchId ? { branchId: s.branchId } : {}),
+      program: { isActive: true },
+    },
+    select: {
+      id: true, name: true, room: true, capacity: true, status: true,
+      weekdays: true, startTime: true, endTime: true,
+      program: { select: { id: true, name: true } },
+      teacher: { select: { fullName: true } },
+      _count: { select: { students: { where: { isActive: true } } } },
+    },
+    orderBy: [{ status: "asc" }, { name: "asc" }],
+  });
+
+  const courseMap = new Map<string, string>();
+  const list: EnrollGroupOpt[] = groups.map((g) => {
+    courseMap.set(g.program.id, g.program.name);
+    const days = (g.weekdays ?? "")
+      .split(",").map((d) => WEEKDAY_SHORT[Number(d.trim())] ?? "").filter(Boolean).join(", ");
+    const time = g.startTime && g.endTime ? `${g.startTime}–${g.endTime}` : g.startTime ?? "";
+    const schedule = [days, time].filter(Boolean).join(" · ") || null;
+    return {
+      id: g.id, name: g.name,
+      courseId: g.program.id, courseName: g.program.name,
+      teacher: g.teacher?.fullName ?? null,
+      room: g.room, schedule,
+      capacity: g.capacity, taken: g._count.students, status: g.status,
+    };
+  });
+
+  return {
+    courses: [...courseMap].map(([id, name]) => ({ id, name })).sort((a, b) => a.name.localeCompare(b.name)),
+    groups: list,
+  };
+}
+
+export type EnrollResult = { ok?: boolean; error?: string; groupName?: string; editsLeft?: number };
+
+/**
+ * Lidni guruhga yo'naltiradi va "Qabul qilindi" (WON) bosqichiga o'tkazadi.
+ *
+ * Qoidalar:
+ *  • Birinchi biriktirish — cheklovsiz (WON bo'lish uchun shart).
+ *  • Keyin guruhni FAQAT BIR MARTA o'zgartirish mumkin (enrollEditCount < 1).
+ *  • O'quvchi yo'q bo'lsa avtomatik yaratiladi (konvertatsiya).
+ */
+export async function enrollLeadToGroup(leadId: string, groupId: string): Promise<EnrollResult> {
+  const s = await requireSession();
+  if (!canWrite(s.role, MODULES.CRM)) return { error: "forbidden" };
+
+  const lead = await prisma.lead.findUnique({
+    where: { id: leadId },
+    select: { id: true, fullName: true, phone: true, branchId: true, studentId: true, groupId: true, enrollEditCount: true, stage: true },
+  });
+  if (!lead) return { error: "not_found" };
+
+  const group = await prisma.group.findUnique({
+    where: { id: groupId },
+    select: { id: true, name: true, capacity: true, program: { select: { name: true } }, _count: { select: { students: { where: { isActive: true } } } } },
+  });
+  if (!group) return { error: "group_not_found" };
+
+  const isChange = Boolean(lead.groupId) && lead.groupId !== groupId;
+  if (isChange && lead.enrollEditCount >= 1) {
+    return { error: "edit_limit" };   // bir martalik o'zgartirish allaqachon ishlatilgan
+  }
+  if (lead.groupId === groupId && lead.stage === "WON") {
+    return { ok: true, groupName: group.name, editsLeft: Math.max(0, 1 - lead.enrollEditCount) };
+  }
+  if (group._count.students >= group.capacity) return { error: "group_full" };
+
+  // 1) O'quvchi (yo'q bo'lsa — yaratamiz)
+  let studentId = lead.studentId;
+  if (!studentId) {
+    const student = await prisma.student.create({
+      data: { fullName: lead.fullName, phone: lead.phone, branchId: lead.branchId, eduStatus: "ACTIVE" },
+    });
+    studentId = student.id;
+  } else {
+    await prisma.student.update({ where: { id: studentId }, data: { eduStatus: "ACTIVE" } }).catch(() => {});
+  }
+
+  // 2) Eski guruhdan chiqaramiz (o'zgartirish holatida)
+  if (isChange && lead.groupId) {
+    await prisma.groupStudent.updateMany({
+      where: { groupId: lead.groupId, studentId },
+      data: { isActive: false },
+    }).catch(() => {});
+  }
+
+  // 3) Yangi guruhga yozamiz (takror bo'lsa qayta faollashtiramiz)
+  await prisma.groupStudent.upsert({
+    where: { groupId_studentId: { groupId, studentId } },
+    update: { isActive: true },
+    create: { groupId, studentId, isActive: true },
+  });
+
+  // 4) Lidni yangilaymiz
+  const updated = await prisma.lead.update({
+    where: { id: leadId },
+    data: {
+      groupId,
+      studentId,
+      stage: "WON",
+      enrollEditCount: isChange ? { increment: 1 } : undefined,
+    },
+    select: { enrollEditCount: true },
+  });
+
+  await prisma.leadActivity.create({
+    data: {
+      leadId, authorId: s.userId, type: "stage_change",
+      result: isChange
+        ? `Guruh o'zgartirildi: ${group.program.name} — ${group.name}`
+        : `Qabul qilindi va guruhga yo'naltirildi: ${group.program.name} — ${group.name}`,
+    },
+  }).catch(() => {});
+
+  await writeAudit({
+    actorId: s.userId,
+    action: "UPDATE",
+    entityType: "Lead",
+    entityId: leadId,
+    oldValue: { stage: lead.stage, groupId: lead.groupId },
+    newValue: { stage: "WON", groupId, studentId },
+    reason: isChange ? "Lid guruhi o'zgartirildi (bir martalik)" : "Lid guruhga yo'naltirildi",
+  });
+
+  revalidatePath("/crm");
+  revalidatePath(`/crm/${leadId}`);
+  revalidatePath("/groups");
+  revalidatePath("/students");
+  return { ok: true, groupName: group.name, editsLeft: Math.max(0, 1 - updated.enrollEditCount) };
 }
 
 // ─── Bulk amallar (bir nechta lid ustida) ───
@@ -149,10 +324,16 @@ export async function bulkLeadAction(
       if (!payload?.managerId) return { ok: false, error: "invalid" };
       await prisma.lead.updateMany({ where: { id: { in: leadIds } }, data: { managerId: payload.managerId } });
       break;
-    case "set_stage":
+    case "set_stage": {
       if (!payload?.stage || !stages.includes(payload.stage)) return { ok: false, error: "invalid" };
+      // "Qabul qilindi" har bir lid uchun guruh tanlashni talab qiladi —
+      // ommaviy amalda buni so'rab bo'lmaydi, shuning uchun taqiqlanadi.
+      if (ENROLL_REQUIRED_STAGES.includes(payload.stage)) {
+        return { ok: false, error: "group_required" };
+      }
       await prisma.lead.updateMany({ where: { id: { in: leadIds } }, data: { stage: payload.stage } });
       break;
+    }
     case "add_note":
       if (!payload?.note) return { ok: false, error: "invalid" };
       await prisma.leadActivity.createMany({ data: leadIds.map((id) => ({ leadId: id, authorId: s.userId, type: "note", result: payload!.note! })) });

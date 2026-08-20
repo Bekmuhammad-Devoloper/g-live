@@ -18,7 +18,7 @@ export default async function CrmPage() {
   const [leads, managers] = await Promise.all([
     prisma.lead.findMany({
       orderBy: { createdAt: "desc" },
-      include: { manager: true, _count: { select: { activities: true } } },
+      include: { manager: true, group: { select: { name: true } }, _count: { select: { activities: true } } },
       take: 2000,
     }),
     prisma.user.findMany({ where: { role: ROLES.OPERATOR, isActive: true }, select: { id: true, fullName: true }, orderBy: { fullName: "asc" } }),
@@ -37,6 +37,9 @@ export default async function CrmPage() {
     managerId: l.managerId,
     managerName: l.manager?.fullName ?? null,
     studentId: l.studentId,
+    groupId: l.groupId,
+    groupName: l.group?.name ?? null,
+    enrollEditCount: l.enrollEditCount,
     activityCount: l._count.activities,
     lastActivity: null,
     createdAt: l.createdAt.toISOString(),

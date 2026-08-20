@@ -11,6 +11,7 @@ import { createManualPayment, type PayState } from "../payments/actions";
 import { Icon } from "./Icon";
 import UserAvatar from "./UserAvatar";
 import ThemeToggle from "./ThemeToggle";
+import CurrencyRates from "./CurrencyRates";
 
 export interface TopbarProps {
   locale: Locale;
@@ -179,7 +180,10 @@ export default function Topbar(p: TopbarProps) {
 
         <div className="flex-1" />
 
-        {/* 5) Til */}
+        {/* 5) Valyuta kursi — MB (cbu.uz), avtomatik yangilanadi */}
+        <CurrencyRates locale={p.locale} />
+
+        {/* 6) Til */}
         <div className="hidden rounded-lg border border-slate-200 p-0.5 dark:border-slate-700 sm:flex">
           {LOCALES.map((l) => (
             <button
@@ -200,12 +204,12 @@ export default function Topbar(p: TopbarProps) {
         {/* Light / Dark rejim */}
         <ThemeToggle />
 
-        {/* 6) Butun ekran */}
+        {/* 7) Butun ekran */}
         <button onClick={toggleFs} className={cn(iconBtn, "hidden sm:flex")} title={t("top.fullscreen")}>
           <Icon name="expand" className="h-5 w-5" />
         </button>
 
-        {/* 7) Kalendar */}
+        {/* 8) Kalendar */}
         <div className="relative hidden sm:block">
           <button onClick={() => toggle("calendar")} className={iconBtn} title={t("top.calendar")}>
             <Icon name="calendar" className="h-5 w-5" />
@@ -240,7 +244,7 @@ export default function Topbar(p: TopbarProps) {
           )}
         </div>
 
-        {/* 8) Video qo'llanmalar — Telegram kanal (@GermaniyaLiveEdu) */}
+        {/* 9) Video qo'llanmalar — Telegram kanal (@GermaniyaLiveEdu) */}
         <div className="hidden sm:block">
           <a
             href="https://t.me/GermaniyaLiveEdu"
@@ -253,7 +257,7 @@ export default function Topbar(p: TopbarProps) {
           </a>
         </div>
 
-        {/* 9) Bildirishnoma */}
+        {/* 10) Bildirishnoma */}
         <Link href="/notifications" className={iconBtn} title={t("nav.notifications")}>
           <Icon name="bell" className="h-5 w-5" />
           {p.unreadCount > 0 && (
@@ -263,7 +267,7 @@ export default function Topbar(p: TopbarProps) {
           )}
         </Link>
 
-        {/* 10) Avatar */}
+        {/* 11) Avatar */}
         <div className="relative">
           <button onClick={() => toggle("user")} className="flex items-center gap-2 rounded-lg py-1 pl-1 pr-2 transition hover:bg-slate-100 dark:hover:bg-slate-800">
             <UserAvatar name={p.user.fullName} imageUrl={p.user.imageUrl} role={p.user.role} size="sm" className="!h-8 !w-8 !rounded-full" />
@@ -282,6 +286,10 @@ export default function Topbar(p: TopbarProps) {
                 <Icon name="user" className="h-4 w-4 text-slate-400" />
                 {p.locale === "ru" ? "Мой профиль" : p.locale === "en" ? "My profile" : "Mening profilim"}
               </Link>
+              {/* Kichik ekranda valyuta kursi navbarga sig'maydi — menyuda ko'rsatamiz */}
+              <div className="lg:hidden">
+                <CurrencyRates locale={p.locale} variant="menu" />
+              </div>
               {/* Mobil uchun til */}
               <div className="flex gap-1 border-b border-slate-100 px-3 py-2 sm:hidden">
                 {LOCALES.map((l) => (

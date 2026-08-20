@@ -5,7 +5,7 @@ import { Icon } from "../../_components/Icon";
 import { cn } from "@/lib/cn";
 import { tr } from "@/lib/tr";
 import type { Locale } from "@/lib/constants";
-import { getGroupAttendance, markStudentAttendance, markAllPresent } from "./attendanceActions";
+import { getGroupAttendance, markStudentAttendance, markAllPresent, unlockAttendance, type AttendanceWindowInfo } from "./attendanceActions";
 
 const p2 = (n: number) => String(n).padStart(2, "0");
 const todayISO = () => { const d = new Date(); return `${d.getFullYear()}-${p2(d.getMonth() + 1)}-${p2(d.getDate())}`; };
@@ -13,41 +13,62 @@ const todayISO = () => { const d = new Date(); return `${d.getFullYear()}-${p2(d
 export function GroupAttendance({ groupId, students, locale }: { groupId: string; students: { id: string; name: string; blocked?: boolean; lessonsThisMonth?: number }[]; locale: Locale }) {
   const [date, setDate] = useState(todayISO());
   const [map, setMap] = useState<Record<string, string>>({});
+  const [win, setWin] = useState<AttendanceWindowInfo | null>(null);
   const [loading, startLoad] = useTransition();
   const [, startSave] = useTransition();
+  const [unlocking, startUnlock] = useTransition();
   const [blockedNotice, setBlockedNotice] = useState<{ name: string; lessons: number } | null>(null);
   const [skippedCount, setSkippedCount] = useState(0);
+  const [closedNotice, setClosedNotice] = useState(false);
+
+  const reload = () => startLoad(async () => {
+    const r = await getGroupAttendance(groupId, date);
+    if (r.ok) { setMap(r.map ?? {}); setWin(r.window ?? null); }
+  });
 
   useEffect(() => {
     let alive = true;
     startLoad(async () => {
       const r = await getGroupAttendance(groupId, date);
-      if (alive && r.ok) setMap(r.map ?? {});
+      if (alive && r.ok) { setMap(r.map ?? {}); setWin(r.window ?? null); setClosedNotice(false); }
     });
     return () => { alive = false; };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [groupId, date]);
 
+  const editable = win?.editable ?? true;
+
   const mark = (id: string, status: string) => {
+    if (!editable) { setClosedNotice(true); return; }
     const willClear = map[id] === status;
     const prev = map[id];
     setMap((m) => { const n = { ...m }; if (willClear) delete n[id]; else n[id] = status; return n; }); // optimistik
     startSave(async () => {
       const r = await markStudentAttendance(groupId, date, id, status);
-      if (r.blocked) {
-        // Server bloklаdi — optimistik o'zgarishni bekor qilamiz va sababini ko'rsatamiz
+      if (r.blocked || r.closed) {
+        // Server rad etdi — optimistik o'zgarishni bekor qilamiz
         setMap((m) => { const n = { ...m }; if (prev === undefined) delete n[id]; else n[id] = prev; return n; });
-        const st = students.find((x) => x.id === id);
-        setBlockedNotice({ name: st?.name ?? "", lessons: r.lessonsThisMonth ?? 0 });
+        if (r.blocked) {
+          const st = students.find((x) => x.id === id);
+          setBlockedNotice({ name: st?.name ?? "", lessons: r.lessonsThisMonth ?? 0 });
+        }
+        if (r.closed) setClosedNotice(true);
       }
     });
   };
   const allPresent = () => {
+    if (!editable) { setClosedNotice(true); return; }
     setMap((m) => { const n = { ...m }; for (const s of students) if (!n[s.id] && !s.blocked) n[s.id] = "PRESENT"; return n; });
     startSave(async () => {
       const r = await markAllPresent(groupId, date);
+      if (r.closed) { setClosedNotice(true); reload(); return; }
       setSkippedCount(r.skippedBlocked ?? 0);
     });
   };
+  const doUnlock = () => startUnlock(async () => {
+    const r = await unlockAttendance(groupId, date);
+    if (r.ok) { setClosedNotice(false); reload(); }
+  });
 
   const present = students.filter((s) => map[s.id] === "PRESENT" || map[s.id] === "LATE").length;
   const absent = students.filter((s) => map[s.id] === "ABSENT").length;
@@ -57,6 +78,61 @@ export function GroupAttendance({ groupId, students, locale }: { groupId: string
 
   return (
     <div>
+      {/* Yopiq oyna banneri — dars + 3 soat o'tgan */}
+      {win && win.closed && !win.unlockedUntilLabel && !editable && (
+        <div className="mb-3 flex flex-wrap items-center justify-between gap-2 rounded-lg border border-slate-300 bg-slate-100 px-3 py-2 text-sm text-slate-600 dark:border-slate-700 dark:bg-slate-800/60 dark:text-slate-300">
+          <span className="flex items-center gap-2">
+            <Icon name="alert" className="h-4 w-4 shrink-0 text-slate-400" />
+            {tr(locale, {
+              uz: `Davomat yopilgan (${win.closesAtLabel} da muddat tugagan). Belgilanmaganlar avtomatik "yo'q" qilindi. O'zgartirish uchun menejer yoki direktordan ruxsat kerak.`,
+              ru: `Посещаемость закрыта (срок истёк ${win.closesAtLabel}). Неотмеченные автоматически «нет». Для изменения нужно разрешение менеджера или директора.`,
+              en: `Attendance is closed (window ended ${win.closesAtLabel}). Unmarked were auto-set to absent. Ask a manager or director to unlock.`,
+            })}
+          </span>
+        </div>
+      )}
+
+      {/* Rahbariyat uchun ochish tugmasi (yopiq bo'lsa) */}
+      {win && win.closed && win.canUnlock && !win.unlockedUntilLabel && (
+        <div className="mb-3">
+          <button
+            onClick={doUnlock}
+            disabled={unlocking}
+            className="flex items-center gap-1.5 rounded-lg bg-brand-600 px-3 py-1.5 text-xs font-semibold text-white transition hover:bg-brand-700 disabled:opacity-60"
+          >
+            {unlocking ? <Icon name="refresh" className="h-3.5 w-3.5 animate-spin" /> : <Icon name="check" className="h-3.5 w-3.5" />}
+            {tr(locale, { uz: "Davomatni ochish (24 soat)", ru: "Открыть посещаемость (24 ч)", en: "Unlock attendance (24 h)" })}
+          </button>
+        </div>
+      )}
+
+      {/* Ruxsat bilan ochilgan holat */}
+      {win && win.closed && win.unlockedUntilLabel && (
+        <div className="mb-3 flex items-center gap-2 rounded-lg border border-amber-200 bg-amber-50 px-3 py-2 text-sm text-amber-700 dark:border-amber-900/40 dark:bg-amber-950/20 dark:text-amber-400">
+          <Icon name="clock" className="h-4 w-4 shrink-0" />
+          {tr(locale, {
+            uz: `Ruxsat bilan ochilgan — ${win.unlockedUntilLabel} gacha tahrirlash mumkin.`,
+            ru: `Открыто по разрешению — редактирование до ${win.unlockedUntilLabel}.`,
+            en: `Unlocked by permission — editable until ${win.unlockedUntilLabel}.`,
+          })}
+        </div>
+      )}
+
+      {/* Yopiq oynada belgilashga urinish xabari */}
+      {closedNotice && (
+        <div className="mb-3 flex items-center justify-between gap-2 rounded-lg border border-rose-200 bg-rose-50 px-3 py-2 text-sm text-rose-700 dark:border-rose-900/40 dark:bg-rose-950/20 dark:text-rose-400">
+          <span className="flex items-center gap-2">
+            <Icon name="alert" className="h-4 w-4 shrink-0" />
+            {tr(locale, {
+              uz: "Bu kun davomati yopilgan — menejer yoki direktor ruxsat berishi kerak.",
+              ru: "Посещаемость этого дня закрыта — нужно разрешение менеджера или директора.",
+              en: "This day's attendance is closed — a manager or director must unlock it.",
+            })}
+          </span>
+          <button onClick={() => setClosedNotice(false)} className="shrink-0 text-rose-400 hover:text-rose-600">✕</button>
+        </div>
+      )}
+
       {/* Bloklangan urinish haqida ogohlantirish */}
       {blockedNotice && (
         <div className="mb-3 flex items-center justify-between gap-2 rounded-lg border border-rose-200 bg-rose-50 px-3 py-2 text-sm text-rose-700 dark:border-rose-900/40 dark:bg-rose-950/20 dark:text-rose-400">
@@ -93,7 +169,22 @@ export function GroupAttendance({ groupId, students, locale }: { groupId: string
           <input type="date" value={date} onChange={(e) => setDate(e.target.value)} className="h-9 rounded-lg border border-slate-200 bg-white pl-8 pr-2 text-sm text-slate-700 outline-none focus:border-brand-400 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-100" />
         </div>
         {isToday && <span className="rounded-full bg-brand-500/10 px-2 py-0.5 text-[11px] font-semibold text-brand-600 dark:text-brand-300">{tr(locale, { uz: "Bugun", ru: "Сегодня", en: "Today" })}</span>}
-        <button onClick={allPresent} className="rounded-lg border border-emerald-300 bg-emerald-50 px-2.5 py-1.5 text-xs font-semibold text-emerald-700 transition hover:bg-emerald-100 dark:border-emerald-800 dark:bg-emerald-500/10 dark:text-emerald-400">
+        {/* Ochiq oynada yopilish vaqti eslatmasi */}
+        {win && !win.closed && isToday && (
+          <span className="rounded-full bg-slate-100 px-2 py-0.5 text-[11px] font-medium text-slate-500 dark:bg-slate-800 dark:text-slate-400" title={tr(locale, { uz: "Dars tugagach 3 soat ichida saqlash mumkin", ru: "Можно сохранить в течение 3 часов после урока", en: "Can be saved within 3 hours after the lesson" })}>
+            {tr(locale, { uz: "Yopiladi", ru: "Закроется", en: "Closes" })}: {win.closesAtLabel}
+          </span>
+        )}
+        <button
+          onClick={allPresent}
+          disabled={!editable}
+          className={cn(
+            "rounded-lg border px-2.5 py-1.5 text-xs font-semibold transition",
+            editable
+              ? "border-emerald-300 bg-emerald-50 text-emerald-700 hover:bg-emerald-100 dark:border-emerald-800 dark:bg-emerald-500/10 dark:text-emerald-400"
+              : "cursor-not-allowed border-slate-200 bg-slate-50 text-slate-400 dark:border-slate-700 dark:bg-slate-800/40",
+          )}
+        >
           ✓ {tr(locale, { uz: "Hammasi bor", ru: "Все присутствуют", en: "All present" })}
         </button>
         <div className={cn("ml-auto flex items-center gap-2.5 text-xs", loading && "opacity-50")}>
@@ -125,15 +216,20 @@ export function GroupAttendance({ groupId, students, locale }: { groupId: string
                 <div className="flex shrink-0 gap-1.5">
                   <button
                     onClick={() => mark(s.id, "PRESENT")}
+                    disabled={!editable}
                     className={cn("flex h-8 w-8 items-center justify-center rounded-lg border text-sm font-bold transition",
-                      st === "PRESENT" ? "border-emerald-500 bg-emerald-500 text-white" : isBlocked ? "border-rose-200 text-rose-300 hover:border-rose-400 hover:text-rose-500 dark:border-rose-900/40" : "border-slate-200 text-slate-400 hover:border-emerald-400 hover:text-emerald-500 dark:border-slate-700")}
-                    title={isBlocked ? tr(locale, { uz: "To'lov majburiy — avval to'lovni qabul qiling", ru: "Оплата обязательна — сначала примите оплату", en: "Payment required first" }) : tr(locale, { uz: "Bor (keldi)", ru: "Присутствует", en: "Present" })}
+                      !editable && st !== "PRESENT" ? "cursor-not-allowed border-slate-200 text-slate-300 dark:border-slate-700" :
+                      st === "PRESENT" ? "border-emerald-500 bg-emerald-500 text-white" : isBlocked ? "border-rose-200 text-rose-300 hover:border-rose-400 hover:text-rose-500 dark:border-rose-900/40" : "border-slate-200 text-slate-400 hover:border-emerald-400 hover:text-emerald-500 dark:border-slate-700",
+                      !editable && "cursor-not-allowed")}
+                    title={!editable ? tr(locale, { uz: "Davomat yopilgan", ru: "Посещаемость закрыта", en: "Attendance closed" }) : isBlocked ? tr(locale, { uz: "To'lov majburiy — avval to'lovni qabul qiling", ru: "Оплата обязательна — сначала примите оплату", en: "Payment required first" }) : tr(locale, { uz: "Bor (keldi)", ru: "Присутствует", en: "Present" })}
                   >✓</button>
                   <button
                     onClick={() => mark(s.id, "ABSENT")}
+                    disabled={!editable}
                     className={cn("flex h-8 w-8 items-center justify-center rounded-lg border text-sm font-bold transition",
-                      st === "ABSENT" ? "border-rose-500 bg-rose-500 text-white" : "border-slate-200 text-slate-400 hover:border-rose-400 hover:text-rose-500 dark:border-slate-700")}
-                    title={tr(locale, { uz: "Yo'q (kelmadi)", ru: "Отсутствует", en: "Absent" })}
+                      st === "ABSENT" ? "border-rose-500 bg-rose-500 text-white" : "border-slate-200 text-slate-400 hover:border-rose-400 hover:text-rose-500 dark:border-slate-700",
+                      !editable && "cursor-not-allowed opacity-70")}
+                    title={!editable ? tr(locale, { uz: "Davomat yopilgan", ru: "Посещаемость закрыта", en: "Attendance closed" }) : tr(locale, { uz: "Yo'q (kelmadi)", ru: "Отсутствует", en: "Absent" })}
                   >✕</button>
                 </div>
               </li>

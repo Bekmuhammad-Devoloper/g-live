@@ -17,6 +17,7 @@ import NewLeadForm from "../NewLeadForm";
 import CommandPalette, { type PaletteAction } from "./CommandPalette";
 import KeyboardHelpOverlay from "./KeyboardHelpOverlay";
 import RejectReasonModal from "./modals/RejectReasonModal";
+import EnrollDrawer from "./EnrollDrawer";
 
 interface Opt { id: string; name: string }
 
@@ -46,6 +47,9 @@ export default function LeadsWorkspace({ locale, initialLeads, managers, sources
   const [showPalette, setShowPalette] = useState(false);
   const [showHelp, setShowHelp] = useState(false);
   const [reject, setReject] = useState<{ id: string; name: string } | null>(null);
+  // Guruhga yo'naltirish paneli — "Qabul qilindi" uchun majburiy qadam
+  const [enroll, setEnroll] = useState<{ id: string; name: string; groupId: string | null; editCount: number } | null>(null);
+  const [flash, setFlash] = useState<string | null>(null);
   const [refreshing, startRefresh] = useTransition();
 
   // Server yangilanganda (router.refresh) mahalliy holatni sinxronlash
@@ -69,8 +73,16 @@ export default function LeadsWorkspace({ locale, initialLeads, managers, sources
   // Filtrlash
   const baseFiltered = useMemo(() => {
     const q = search.trim().toLowerCase();
+    // Raqamli qidiruv: telefon formatidagi bo'shliq/qavs/chiziqchalar solishtirishga xalaqit
+    // bermasin — ikkala tomonni ham faqat raqamga tozalaymiz. Shunda raqamning
+    // OXIRIDAN (masalan "0019") yoki o'rtasidan qidirsa ham topiladi.
+    const qDigits = q.replace(/\D/g, "");
     return leads.filter((l) => {
-      if (q && !(`${l.fullName} ${l.phone}`.toLowerCase().includes(q))) return false;
+      if (q) {
+        const byText = `${l.fullName} ${l.phone}`.toLowerCase().includes(q);
+        const byPhone = qDigits.length > 0 && (l.phone ?? "").replace(/\D/g, "").includes(qDigits);
+        if (!byText && !byPhone) return false;
+      }
       if (source && l.source !== source) return false;
       if (manager && l.managerId !== manager) return false;
       return true;
@@ -130,6 +142,12 @@ export default function LeadsWorkspace({ locale, initialLeads, managers, sources
     if (colKey === "lost") {
       const lead = leads.find((l) => l.id === leadId);
       setReject({ id: leadId, name: lead?.fullName ?? "" });
+      return;
+    }
+    // "Qabul qilindi" — guruh tanlanmaguncha bosqich o'zgarmaydi
+    if (colKey === "won") {
+      const lead = leads.find((l) => l.id === leadId);
+      setEnroll({ id: leadId, name: lead?.fullName ?? "", groupId: lead?.groupId ?? null, editCount: lead?.enrollEditCount ?? 0 });
       return;
     }
     const target = columnDef(colKey).defaultStage;
@@ -252,6 +270,25 @@ export default function LeadsWorkspace({ locale, initialLeads, managers, sources
       <CommandPalette locale={locale} open={showPalette} onClose={() => setShowPalette(false)} leads={leads} actions={paletteActions} onOpenLead={(id) => router.push(`/crm/${id}`)} />
       <KeyboardHelpOverlay locale={locale} open={showHelp} onClose={() => setShowHelp(false)} />
       <RejectReasonModal locale={locale} open={!!reject} leadName={reject?.name ?? ""} onClose={() => setReject(null)} onConfirm={confirmReject} pending={refreshing} />
+
+      {enroll && (
+        <EnrollDrawer
+          locale={locale}
+          open
+          leadId={enroll.id}
+          leadName={enroll.name}
+          currentGroupId={enroll.groupId}
+          editCount={enroll.editCount}
+          onClose={() => setEnroll(null)}
+          onDone={(msg) => { setEnroll(null); setFlash(msg); router.refresh(); setTimeout(() => setFlash(null), 4000); }}
+        />
+      )}
+
+      {flash && (
+        <div className="fixed bottom-5 left-1/2 z-[90] -translate-x-1/2 rounded-xl bg-emerald-600 px-4 py-2.5 text-sm font-medium text-white shadow-lg">
+          {flash}
+        </div>
+      )}
     </div>
   );
 }

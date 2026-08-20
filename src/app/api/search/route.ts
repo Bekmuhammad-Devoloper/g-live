@@ -20,6 +20,14 @@ export async function GET(req: Request) {
   const q = (new URL(req.url).searchParams.get("q") ?? "").trim();
   if (q.length < 2) return NextResponse.json({ hits: [] });
 
+  // Telefon bazada formatli saqlanadi ("+998 91 100 00 05"), shuning uchun
+  // raqamli qidiruvda ikkala tomonni faqat raqamga tozalab solishtiramiz —
+  // raqamning OXIRIDAN yoki o'rtasidan qidirsa ham topiladi.
+  const qDigits = q.replace(/\D/g, "");
+  const byDigits = qDigits.length >= 3;
+  const digitsOf = (s: string | null | undefined) => (s ?? "").replace(/\D/g, "");
+  const phoneMatch = (phone: string | null | undefined) => byDigits && digitsOf(phone).includes(qDigits);
+
   const staff = [ROLES.DIRECTOR, ROLES.DEPUTY_DIRECTOR, ROLES.OPERATOR, ROLES.ROP, ROLES.MANAGER, ROLES.ADMIN];
   const isStaff = staff.includes(session.role as never);
   const isTeacher = session.role === ROLES.TEACHER;
@@ -27,14 +35,22 @@ export async function GET(req: Request) {
 
   // O'quvchilar (xodimlar va o'qituvchi ko'radi)
   if (isStaff || isTeacher) {
-    const students = await prisma.student.findMany({
-      where: {
-        OR: [{ fullName: { contains: q } }, { phone: { contains: q } }],
-        ...(isTeacher ? { enrollments: { some: { group: { teacherId: session.userId } } } } : {}),
-      },
+    const scope = isTeacher ? { enrollments: { some: { group: { teacherId: session.userId } } } } : {};
+    const foundS = await prisma.student.findMany({
+      where: { OR: [{ fullName: { contains: q } }, { phone: { contains: q } }], ...scope },
       take: 5,
       select: { id: true, fullName: true, phone: true, currentLevel: true },
     });
+    const extraS = byDigits
+      ? (await prisma.student.findMany({
+          where: scope,
+          orderBy: { createdAt: "desc" },
+          take: 500,
+          select: { id: true, fullName: true, phone: true, currentLevel: true },
+        })).filter((x) => phoneMatch(x.phone))
+      : [];
+    const seenS = new Set<string>();
+    const students = [...foundS, ...extraS].filter((x) => !seenS.has(x.id) && seenS.add(x.id)).slice(0, 5);
     for (const s of students) {
       hits.push({
         type: "student",
@@ -48,13 +64,26 @@ export async function GET(req: Request) {
 
   // Lidlar (CRM huquqi bo'lsa)
   if (canRead(session.role, MODULES.CRM)) {
-    const leads = await prisma.lead.findMany({
+    const found = await prisma.lead.findMany({
       where: { OR: [{ fullName: { contains: q } }, { phone: { contains: q } }] },
       take: 5,
       select: { id: true, fullName: true, phone: true, stage: true },
     });
-    for (const l of leads) {
-      hits.push({ type: "lead", id: l.id, title: l.fullName, subtitle: `${l.stage} · ${l.phone}`, href: "/crm" });
+    // Raqam bo'yicha qidiruv — formatli telefonlarni JSda tozalab solishtiramiz
+    const extra = byDigits
+      ? (await prisma.lead.findMany({
+          orderBy: { createdAt: "desc" },
+          take: 500,
+          select: { id: true, fullName: true, phone: true, stage: true },
+        })).filter((l) => phoneMatch(l.phone))
+      : [];
+    const seen = new Set<string>();
+    for (const l of [...found, ...extra]) {
+      if (seen.has(l.id)) continue;
+      seen.add(l.id);
+      if (seen.size > 5) break;
+      // Lidni bosganda uning o'z sahifasi ochilsin (barcha ma'lumot bilan)
+      hits.push({ type: "lead", id: l.id, title: l.fullName, subtitle: `${l.stage} · ${l.phone}`, href: `/crm/${l.id}` });
     }
   }
 
@@ -81,11 +110,20 @@ export async function GET(req: Request) {
 
   // O'qituvchilar (faqat xodimlar)
   if (isStaff) {
-    const teachers = await prisma.user.findMany({
+    const foundT = await prisma.user.findMany({
       where: { role: ROLES.TEACHER, OR: [{ fullName: { contains: q } }, { phone: { contains: q } }] },
       take: 5,
       select: { id: true, fullName: true, phone: true },
     });
+    const extraT = byDigits
+      ? (await prisma.user.findMany({
+          where: { role: ROLES.TEACHER },
+          take: 500,
+          select: { id: true, fullName: true, phone: true },
+        })).filter((x) => phoneMatch(x.phone))
+      : [];
+    const seenT = new Set<string>();
+    const teachers = [...foundT, ...extraT].filter((x) => !seenT.has(x.id) && seenT.add(x.id)).slice(0, 5);
     for (const t of teachers) {
       hits.push({ type: "teacher", id: t.id, title: t.fullName, subtitle: t.phone, href: "/teachers" });
     }
