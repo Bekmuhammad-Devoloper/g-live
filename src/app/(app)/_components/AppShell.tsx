@@ -218,6 +218,21 @@ const CONTROL_ROUTES = new Set<string>([
   "/reports/branches-status",
 ]);
 
+// Sotuv / Marketing menyusidagi bandlar. Ular /reports/... yo'lida bo'lsa ham
+// sidebar'da HISOBOTLAR emas, SOTUV / MARKETING yonishi kerak.
+// Bu ro'yxatga o'z sidebar bandi bo'lganlar KIRMAYDI (masalan /crm = "Lidlar"),
+// shuningdek boshqa bo'limga tegishli havolalar (/settings/sms, /reports/sms).
+const MARKETING_ROUTES = new Set<string>([
+  "/rop",
+  "/operator",
+  "/vacancies",
+  "/links",
+  "/reports/funnel",
+  "/reports/sales-team",
+  "/reports/operators",
+  "/reports/kpi",
+]);
+
 // Moliyaviy hisobotlar — faqat direktor, o'rinbosari va menejerga ko'rinadi.
 // (Hisobchida Hisobotlar menyusi yo'q — u /finance bo'limidan foydalanadi.)
 const FINANCE_REPORTS = new Set<string>([
@@ -306,10 +321,17 @@ export default function AppShell({ navItems, role, portal, user, locale, labels,
   // Nazorat menyusi bor rollarda (rahbariyat) nazorat yo'llari Nazoratni yoqadi.
   // O'qituvchida Nazorat yo'q — unda bu sahifalar odatdagidek Hisobotlarni yoqadi.
   const hasControl = navItems.some((it) => it.href === "/control");
+  const hasMarketing = navItems.some((it) => it.href === "/marketing");
   const isActive = (href: string) => {
     const inControl = hasControl && CONTROL_ROUTES.has(pathname);
+    // Sotuv bo'limi sahifalari (/operator, /rop, KPI...) Sotuv / Marketing'ni yoqadi
+    const inMarketing =
+      hasMarketing && [...MARKETING_ROUTES].some((r) => pathname === r || pathname.startsWith(r + "/"));
+
     if (href === "/control") return inControl || pathname === href || pathname.startsWith(href + "/");
-    if (href === "/reports" && inControl) return false;
+    if (href === "/marketing") return inMarketing || pathname === href || pathname.startsWith(href + "/");
+    // Bir vaqtda ikkita bo'lim yonib qolmasin
+    if (href === "/reports" && (inControl || inMarketing)) return false;
     return pathname === href || pathname.startsWith(href + "/");
   };
 
