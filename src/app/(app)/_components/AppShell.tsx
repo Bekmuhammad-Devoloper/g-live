@@ -211,6 +211,16 @@ interface Props {
   children: React.ReactNode;
 }
 
+// Nazorat menyusidagi bandlar. Ular /reports/... yo'lida tursa ham sidebar'da
+// HISOBOTLAR emas, NAZORAT yonishi kerak (foydalanuvchi qaysi bo'limdan kirgani muhim).
+const CONTROL_ROUTES = new Set<string>([
+  "/attendance",
+  "/reports/attendance",
+  "/reports/staff-rating",
+  "/reports/no-attendance",
+  "/reports/branches-status",
+]);
+
 // O'qituvchi rolida hisobotlar menyusida ko'rinadigan (o'qituvchiga mos) hisobotlar
 const TEACHER_REPORTS = new Set<string>([
   "/reports/attendance",
@@ -282,7 +292,15 @@ export default function AppShell({ navItems, role, portal, user, locale, labels,
     return next;
   });
 
-  const isActive = (href: string) => pathname === href || pathname.startsWith(href + "/");
+  // Nazorat menyusi bor rollarda (rahbariyat) nazorat yo'llari Nazoratni yoqadi.
+  // O'qituvchida Nazorat yo'q — unda bu sahifalar odatdagidek Hisobotlarni yoqadi.
+  const hasControl = navItems.some((it) => it.href === "/control");
+  const isActive = (href: string) => {
+    const inControl = hasControl && CONTROL_ROUTES.has(pathname);
+    if (href === "/control") return inControl || pathname === href || pathname.startsWith(href + "/");
+    if (href === "/reports" && inControl) return false;
+    return pathname === href || pathname.startsWith(href + "/");
+  };
 
   function openFly(href: string, el: HTMLElement) {
     if (closeTimer.current) clearTimeout(closeTimer.current);
