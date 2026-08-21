@@ -64,13 +64,13 @@ const SUBMENUS: Record<string, { title: Record<Locale, string>; groups: SubGroup
         { href: "/reports/conversion", icon: "chart", label: L("Konversiya hisobotlari") },
         { href: "/reports/attendance", icon: "check", label: L("Davomat hisobotlari") },
         { href: "/reports/leads", icon: "download", label: L("Lidlar hisobotlari") },
-        { href: "/reports/left-students", icon: "personMinus", label: L("Guruhni tark etgan o'quvchilar") },
+        { href: "/reports/left-students", icon: "personMinus", label: L("Guruhni tark etganlar") },
       ] },
       { label: L("Jurnallar", "Журналы", "Logs"), items: [
         { href: "/reports/sms", icon: "mail", label: L("Yuborilgan SMS jurnali") },
         { href: "/reports/calls", icon: "phone", label: L("Qo'ng'iroqlar jurnali") },
         { href: "/audit", icon: "listView", label: L("Audit jurnali") },
-        { href: "/teacher-attendance", icon: "clock", label: L("Workly (ish vaqti) hisoboti") },
+        { href: "/teacher-attendance", icon: "clock", label: L("Workly hisoboti") },
       ] },
       { label: L("Sotuv va marketing", "Продажи и маркетинг", "Sales & marketing"), items: [
         { href: "/reports/funnel", icon: "megaphone", label: L("Sotuv voronkasi") },
@@ -83,11 +83,11 @@ const SUBMENUS: Record<string, { title: Record<Locale, string>; groups: SubGroup
       ] },
       { label: L("O'quv", "Учебное", "Education"), items: [
         { href: "/reports/teacher-performance", icon: "teacher", label: L("O'qituvchilar samaradorligi") },
-        { href: "/reports/admin-performance", icon: "users", label: L("Administratorlar samaradorligi") },
+        { href: "/reports/admin-performance", icon: "users", label: L("Adminlar samaradorligi") },
         { href: "/reports/leave-reasons", icon: "info", label: L("Ketish sabablari") },
         { href: "/reports/rooms-analytics", icon: "building", label: L("Xonalar analitikasi") },
-        { href: "/reports/worked-hours", icon: "clock", label: L("O'quv markazga ishlab berilgan soatlar") },
-        { href: "/reports/cancelled-attendance", icon: "fileX", label: L("Davomati bekor qilinganlar analitikasi") },
+        { href: "/reports/worked-hours", icon: "clock", label: L("Ishlab berilgan soatlar") },
+        { href: "/reports/cancelled-attendance", icon: "fileX", label: L("Bekor qilingan davomatlar") },
       ] },
     ],
   },
@@ -102,11 +102,11 @@ const SUBMENUS: Record<string, { title: Record<Locale, string>; groups: SubGroup
       ] },
       { label: L("Hisobotlar", "Отчёты", "Reports"), items: [
         { href: "/reports/staff-rating", icon: "trophy", label: L("Xodimlar reytingi") },
-        { href: "/reports/no-attendance", icon: "layers", label: L("Davomat qilinmagan guruhlar") },
+        { href: "/reports/no-attendance", icon: "layers", label: L("Davomatsiz guruhlar") },
         { href: "/reports/branches-status", icon: "building", label: L("Filiallar holati") },
         { href: "/control/turnstile", icon: "shieldCheck", label: L("Turniket analitikasi") },
-        { href: "/control/turnstile-log", icon: "shieldCheck", label: L("Turniket kirish-chiqish analitikasi") },
-        { href: "/control/support", icon: "eye", label: L("Qo'llab-quvvatlash analitikasi") },
+        { href: "/control/turnstile-log", icon: "shieldCheck", label: L("Turniket kirish-chiqish") },
+        { href: "/control/support", icon: "eye", label: L("Qo'llab-quvvatlash") },
       ] },
     ],
   },
@@ -426,7 +426,7 @@ export default function AppShell({ navItems, role, portal, user, locale, labels,
       {/* Yonboshdan ochiluvchi submenu (flyout) */}
       {fly && SUBMENUS[fly.href] && (
         <div
-          className="fixed bottom-0 left-[120px] top-16 z-40 hidden w-[220px] md:block"
+          className="fixed bottom-0 left-[120px] top-16 z-40 hidden w-[272px] md:block"
           onMouseEnter={cancelClose}
           onMouseLeave={scheduleClose}
         >
@@ -457,14 +457,14 @@ export default function AppShell({ navItems, role, portal, user, locale, labels,
                         href={s.href}
                         onClick={() => { setFly(null); setOpen(false); }}
                         className={cn(
-                          "mx-2 flex items-center gap-2.5 rounded-lg px-3 py-2 text-[13px] transition",
+                          "mx-2 flex items-center gap-2.5 rounded-lg px-3 py-2 text-[12px] leading-tight whitespace-nowrap transition",
                           sactive
                             ? "bg-brand-600 font-semibold text-white"
                             : "text-slate-600 hover:bg-slate-50 hover:text-brand-700 dark:text-slate-300 dark:hover:bg-white/5 dark:hover:text-white"
                         )}
                       >
                         <Icon name={s.icon} className="h-4 w-4 shrink-0 opacity-90" />
-                        {s.label[locale] ?? s.label.uz}
+                        <span className="truncate" title={s.label[locale] ?? s.label.uz}>{s.label[locale] ?? s.label.uz}</span>
                       </Link>
                     );
                   })}
@@ -528,12 +528,12 @@ export default function AppShell({ navItems, role, portal, user, locale, labels,
                                       href={s.href}
                                       onClick={() => setOpen(false)}
                                       className={cn(
-                                        "flex items-center gap-2.5 rounded-lg px-3 py-2 text-[13px] transition",
+                                        "flex items-center gap-2.5 rounded-lg px-3 py-2 text-[13px] leading-tight whitespace-nowrap transition",
                                         sactive ? "bg-brand-600 font-semibold text-white" : "text-slate-600 hover:bg-slate-100 hover:text-brand-700 dark:text-slate-300 dark:hover:bg-white/5 dark:hover:text-white"
                                       )}
                                     >
                                       <Icon name={s.icon} className="h-4 w-4 shrink-0 opacity-90" />
-                                      {s.label[locale] ?? s.label.uz}
+                                      <span className="truncate">{s.label[locale] ?? s.label.uz}</span>
                                     </Link>
                                   );
                                 })}
