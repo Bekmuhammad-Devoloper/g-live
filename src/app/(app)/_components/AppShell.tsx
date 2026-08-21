@@ -98,15 +98,15 @@ const SUBMENUS: Record<string, { title: Record<Locale, string>; groups: SubGroup
       { label: L("Amallar", "Действия", "Actions"), items: [
         { href: "/attendance", icon: "check", label: L("Davomat") },
         { href: "/reports/attendance", icon: "chart", label: L("Davomat analitikasi") },
-        { href: "/control", icon: "info", label: L("Fikr-mulohaza") },
+        { href: "/control/feedback", icon: "info", label: L("Fikr-mulohaza") },
       ] },
       { label: L("Hisobotlar", "Отчёты", "Reports"), items: [
         { href: "/reports/staff-rating", icon: "trophy", label: L("Xodimlar reytingi") },
         { href: "/reports/no-attendance", icon: "layers", label: L("Davomat qilinmagan guruhlar") },
         { href: "/reports/branches-status", icon: "building", label: L("Filiallar holati") },
-        { href: "/control", icon: "shieldCheck", label: L("Turniket analitikasi") },
-        { href: "/control", icon: "shieldCheck", label: L("Turniket kirish-chiqish analitikasi") },
-        { href: "/control", icon: "eye", label: L("Qo'llab-quvvatlash analitikasi") },
+        { href: "/control/turnstile", icon: "shieldCheck", label: L("Turniket analitikasi") },
+        { href: "/control/turnstile-log", icon: "shieldCheck", label: L("Turniket kirish-chiqish analitikasi") },
+        { href: "/control/support", icon: "eye", label: L("Qo'llab-quvvatlash analitikasi") },
       ] },
     ],
   },
@@ -251,6 +251,13 @@ export default function AppShell({ navItems, role, portal, user, locale, labels,
     if (href === "/reports" && role === "TEACHER") {
       return groups
         .map((g) => ({ ...g, items: g.items.filter((it) => TEACHER_REPORTS.has(it.href)) }))
+        .filter((g) => g.items.length > 0);
+    }
+    // Davomat analitikasi NAZORAT bo'limida turadi — Hisobotlarda takrorlanmasin.
+    // O'qituvchida Nazorat menyusi yo'q, shuning uchun unga qoldiriladi (yuqoridagi shart).
+    if (href === "/reports") {
+      return groups
+        .map((g) => ({ ...g, items: g.items.filter((it) => it.href !== "/reports/attendance") }))
         .filter((g) => g.items.length > 0);
     }
     // Administrator faqat o'z filialiga tayinlangan — Filiallar bo'limini boshqara olmaydi
