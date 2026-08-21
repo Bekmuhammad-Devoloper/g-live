@@ -74,7 +74,6 @@ const SUBMENUS: Record<string, { title: Record<Locale, string>; groups: SubGroup
       ] },
       { label: L("Sotuv va marketing", "Продажи и маркетинг", "Sales & marketing"), items: [
         { href: "/reports/funnel", icon: "megaphone", label: L("Sotuv voronkasi") },
-        { href: "/reports/leads", icon: "download", label: L("Lidlar oqimi") },
       ] },
       { label: L("Moliya", "Финансы", "Finance"), items: [
         { href: "/reports/balance", icon: "wallet", label: L("Balans") },
@@ -127,8 +126,6 @@ const SUBMENUS: Record<string, { title: Record<Locale, string>; groups: SubGroup
     groups: [
       { label: L("Marketing"), items: [
         { href: "/marketing", icon: "megaphone", label: L("Marketing") },
-        { href: "/marketing", icon: "bell", label: L("Yangiliklar") },
-        { href: "/marketing", icon: "book", label: L("Hikoya") },
         { href: "/settings/sms", icon: "mail", label: L("SMS shablonlari") },
         { href: "/reports/sms", icon: "listView", label: L("Xabarlar ro'yhati") },
       ] },
