@@ -6,7 +6,7 @@ import { Forbidden } from "../../_components/ui";
 import LicenseBanner from "../../_components/LicenseBanner";
 import CancelledView, { type VCancel } from "./CancelledView";
 
-const ALLOWED = [ROLES.DIRECTOR, ROLES.DEPUTY_DIRECTOR, ROLES.MANAGER, ROLES.ADMIN];
+const ALLOWED = [ROLES.DIRECTOR, ROLES.DEPUTY_DIRECTOR, ROLES.MANAGER];
 
 // Bekor qilingan to'lovlar — status = CANCELLED bo'lgan to'lovlar ro'yxati.
 export default async function CancelledPage() {

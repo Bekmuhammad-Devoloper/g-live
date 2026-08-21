@@ -218,6 +218,14 @@ const CONTROL_ROUTES = new Set<string>([
   "/reports/branches-status",
 ]);
 
+// Moliyaviy hisobotlar — faqat direktor, o'rinbosari va menejerga ko'rinadi.
+// (Hisobchida Hisobotlar menyusi yo'q — u /finance bo'limidan foydalanadi.)
+const FINANCE_REPORTS = new Set<string>([
+  "/reports/balance",
+  "/reports/payments",
+  "/reports/cancelled",
+]);
+
 // O'qituvchi rolida hisobotlar menyusida ko'rinadigan (o'qituvchiga mos) hisobotlar
 const TEACHER_REPORTS = new Set<string>([
   "/reports/attendance",
@@ -263,8 +271,14 @@ export default function AppShell({ navItems, role, portal, user, locale, labels,
     // Davomat analitikasi NAZORAT bo'limida turadi — Hisobotlarda takrorlanmasin.
     // O'qituvchida Nazorat menyusi yo'q, shuning uchun unga qoldiriladi (yuqoridagi shart).
     if (href === "/reports") {
+      const canFinance = role === "DIRECTOR" || role === "DEPUTY_DIRECTOR" || role === "MANAGER";
       return groups
-        .map((g) => ({ ...g, items: g.items.filter((it) => it.href !== "/reports/attendance") }))
+        .map((g) => ({
+          ...g,
+          items: g.items.filter(
+            (it) => it.href !== "/reports/attendance" && (canFinance || !FINANCE_REPORTS.has(it.href))
+          ),
+        }))
         .filter((g) => g.items.length > 0);
     }
     // Administrator faqat o'z filialiga tayinlangan — Filiallar bo'limini boshqara olmaydi

@@ -24,6 +24,8 @@ export default async function ReportsPage() {
     prisma.lead.groupBy({ by: ["stage"], _count: true }),
   ]);
 
+  // Moliyaviy hisobot — faqat direktor, o'rinbosari va menejer
+  const canFinance = [ROLES.DIRECTOR, ROLES.DEPUTY_DIRECTOR, ROLES.MANAGER].includes(s.role as never);
   const conversion = leads > 0 ? Math.round((wonLeads / leads) * 100) : 0;
   const stageCount = (st: string) => byStage.find((b) => b.stage === st)?._count ?? 0;
   const maxStage = Math.max(1, ...byStage.map((b) => b._count));
@@ -41,7 +43,7 @@ export default async function ReportsPage() {
 
       <div className="mb-6 grid gap-3 md:grid-cols-2 xl:grid-cols-3">
         <HubCard href="/reports/leads" icon="download" title={tr(s.locale, { uz: "Lidlar hisoboti", ru: "Отчёт по лидам", en: "Leads report" })} desc={tr(s.locale, { uz: "Sana oralig'i bo'yicha lidlar soni va grafik", ru: "Количество лидов и график по диапазону дат", en: "Lead count and chart by date range" })} />
-        <HubCard href="/reports/payments" icon="wallet" title={tr(s.locale, { uz: "To'lovlar hisoboti", ru: "Отчёт по платежам", en: "Payments report" })} desc={tr(s.locale, { uz: "Tushum (kirim) sana oralig'i bo'yicha", ru: "Поступления (доход) по диапазону дат", en: "Revenue (income) by date range" })} />
+        {canFinance && <HubCard href="/reports/payments" icon="wallet" title={tr(s.locale, { uz: "To'lovlar hisoboti", ru: "Отчёт по платежам", en: "Payments report" })} desc={tr(s.locale, { uz: "Tushum (kirim) sana oralig'i bo'yicha", ru: "Поступления (доход) по диапазону дат", en: "Revenue (income) by date range" })} />}
         <HubCard href="/reports/conversion" icon="chart" title={tr(s.locale, { uz: "Konversiya hisoboti", ru: "Отчёт по конверсии", en: "Conversion report" })} desc={tr(s.locale, { uz: "Savdo voronkasi va konversiya ko'rsatkichlari", ru: "Воронка продаж и показатели конверсии", en: "Sales funnel and conversion metrics" })} />
         {/* Davomat analitikasi NAZORAT bo'limida turadi — bu yerda takrorlanmaydi.
             O'qituvchida Nazorat menyusi yo'q, shuning uchun unga ko'rsatiladi. */}

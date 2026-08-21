@@ -6,7 +6,7 @@ import { Forbidden } from "../../_components/ui";
 import LicenseBanner from "../../_components/LicenseBanner";
 import RevenueView, { type RPayment } from "./RevenueView";
 
-const ALLOWED = [ROLES.DIRECTOR, ROLES.DEPUTY_DIRECTOR, ROLES.MANAGER, ROLES.ADMIN];
+const ALLOWED = [ROLES.DIRECTOR, ROLES.DEPUTY_DIRECTOR, ROLES.MANAGER];
 
 const p2 = (n: number) => String(n).padStart(2, "0");
 const isoDay = (d: Date) => `${d.getFullYear()}-${p2(d.getMonth() + 1)}-${p2(d.getDate())}`;
