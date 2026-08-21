@@ -23,7 +23,6 @@ interface Payload {
 
 const LS_KEY = "gl-rates";
 const REFRESH_MS = 30 * 60_000;
-const SYMBOL: Record<string, string> = { USD: "$", EUR: "€" };
 
 // ─── Umumiy do'kon: komponent bir necha joyda tursa ham fetch bitta bo'ladi ───
 let store: Payload | null = null;
@@ -110,16 +109,72 @@ function useRates() {
 
 // ─── Formatlash (Intl ishlatilmaydi — server/client farqi hydration xatosi berardi) ───
 const group = (s: string) => s.replace(/\B(?=(\d{3})+(?!\d))/g, " ");
-const fmtInt = (n: number) => group(String(Math.round(n)));
-const fmtExact = (n: number) => {
-  const whole = Math.trunc(n);
-  const cents = Math.round((n - whole) * 100);
-  return `${group(String(whole))},${String(cents).padStart(2, "0")}`;
-};
-const fmtDiff = (n: number) => `${n > 0 ? "+" : n < 0 ? "−" : ""}${fmtExact(Math.abs(n))}`;
+
+/** 11847.16 → { som: "11 847", tiyin: "16" } — butun qismi yirik, tiyini mayda yoziladi */
+function split(n: number) {
+  const total = Math.round(Math.abs(n) * 100);
+  return {
+    som: `${n < 0 ? "−" : ""}${group(String(Math.trunc(total / 100)))}`,
+    tiyin: String(total % 100).padStart(2, "0"),
+  };
+}
 
 const diffClass = (d: number) =>
   d > 0 ? "text-emerald-600 dark:text-emerald-400" : d < 0 ? "text-red-500 dark:text-red-400" : "text-slate-400";
+
+// Har bir valyutaning o'z belgisi va rangi
+const META: Record<string, { icon: string; badge: string; name: Record<Locale, string> }> = {
+  USD: {
+    icon: "dollar",
+    badge: "bg-emerald-50 text-emerald-600 dark:bg-emerald-500/15 dark:text-emerald-400",
+    name: { uz: "AQSH dollari", ru: "Доллар США", en: "US Dollar" },
+  },
+  EUR: {
+    icon: "euro",
+    badge: "bg-indigo-50 text-indigo-600 dark:bg-indigo-500/15 dark:text-indigo-400",
+    name: { uz: "Yevro", ru: "Евро", en: "Euro" },
+  },
+};
+const FALLBACK = {
+  icon: "coins",
+  badge: "bg-slate-100 text-slate-500 dark:bg-slate-700 dark:text-slate-300",
+  name: { uz: "Valyuta", ru: "Валюта", en: "Currency" },
+};
+
+function Badge({ ccy, big = false }: { ccy: string; big?: boolean }) {
+  const m = META[ccy] ?? FALLBACK;
+  return (
+    <span className={cn("flex shrink-0 items-center justify-center rounded-md", m.badge, big ? "h-7 w-7" : "h-5 w-5")}>
+      <Icon name={m.icon} className={big ? "h-4 w-4" : "h-3 w-3"} strokeWidth={2.2} />
+    </span>
+  );
+}
+
+/** Kurs qiymati: "11 847" yirik + ",16" mayda */
+function Value({ n, big = false }: { n: number; big?: boolean }) {
+  const { som, tiyin } = split(n);
+  return (
+    <span className={cn("font-semibold tabular-nums", big ? "text-[13px]" : "text-[12px]")}>
+      {som}
+      <span className={cn("font-medium text-slate-400", big ? "text-[11px]" : "text-[10px]")}>,{tiyin}</span>
+    </span>
+  );
+}
+
+function Trend({ diff, withValue = false }: { diff: number; withValue?: boolean }) {
+  if (!diff) return <span className="text-[10px] font-medium text-slate-300 dark:text-slate-600">—</span>;
+  const { som, tiyin } = split(diff);
+  return (
+    <span className={cn("flex items-center gap-0.5 text-[10px] font-semibold tabular-nums", diffClass(diff))}>
+      <Icon name={diff > 0 ? "trendUp" : "trendDown"} className="h-2.5 w-2.5" />
+      {withValue && (
+        <span>
+          {som.replace("−", "")},{tiyin}
+        </span>
+      )}
+    </span>
+  );
+}
 
 export default function CurrencyRates({ locale, variant = "bar" }: { locale: Locale; variant?: "bar" | "menu" }) {
   const t = getT(locale);
@@ -148,17 +203,21 @@ export default function CurrencyRates({ locale, variant = "bar" }: { locale: Loc
 
   const rows = rates.map((r) => (
     <div key={r.ccy} className="flex items-center justify-between gap-3 px-3 py-2">
-      <span className="flex items-center gap-2 text-sm font-medium text-slate-700 dark:text-slate-200">
-        <span className="flex h-6 w-6 items-center justify-center rounded-md bg-slate-100 text-[13px] font-bold text-slate-600 dark:bg-slate-700 dark:text-slate-200">
-          {SYMBOL[r.ccy] ?? r.ccy}
+      <span className="flex items-center gap-2.5">
+        <Badge ccy={r.ccy} big />
+        <span className="leading-tight">
+          <span className="block text-[13px] font-semibold text-slate-700 dark:text-slate-100">1 {r.ccy}</span>
+          <span className="block text-[10px] text-slate-400">{(META[r.ccy] ?? FALLBACK).name[locale]}</span>
         </span>
-        1 {r.ccy}
       </span>
-      <span className="text-right">
-        <span className="block text-sm font-semibold tabular-nums text-slate-900 dark:text-slate-100">
-          {fmtExact(r.rate)} <span className="text-[11px] font-normal text-slate-400">{t("rates.sum")}</span>
+      <span className="text-right leading-tight text-slate-900 dark:text-slate-50">
+        <span className="block">
+          <Value n={r.rate} big />
+          <span className="ml-1 text-[10px] font-normal text-slate-400">{t("rates.sum")}</span>
         </span>
-        <span className={cn("block text-[11px] font-medium tabular-nums", diffClass(r.diff))}>{fmtDiff(r.diff)}</span>
+        <span className="flex justify-end">
+          <Trend diff={r.diff} withValue />
+        </span>
       </span>
     </div>
   ));
@@ -177,29 +236,30 @@ export default function CurrencyRates({ locale, variant = "bar" }: { locale: Loc
   }
 
   return (
-    <div ref={boxRef} className="relative hidden lg:block">
+    <div ref={boxRef} className="relative hidden xl:block">
       <button
         onClick={() => setOpen((v) => !v)}
         title={`${t("rates.title")} · ${t("rates.source")}${date ? ` · ${date}` : ""}`}
         className={cn(
-          "flex h-9 items-center gap-2 rounded-lg border px-2.5 text-[11px] font-semibold tabular-nums transition",
+          "flex h-9 items-center gap-2 rounded-xl border px-2 transition",
           open
             ? "border-brand-300 bg-brand-50 dark:border-brand-700 dark:bg-brand-500/10"
-            : "border-slate-200 hover:bg-slate-50 dark:border-slate-700 dark:hover:bg-slate-800",
-          data?.stale ? "text-slate-400" : "text-slate-600 dark:text-slate-300",
+            : "border-slate-200 hover:border-slate-300 hover:bg-slate-50 dark:border-slate-700 dark:hover:border-slate-600 dark:hover:bg-slate-800",
+          data?.stale ? "text-slate-400" : "text-slate-700 dark:text-slate-200",
         )}
       >
-        {rates.map((r) => (
-          <span key={r.ccy} className="flex items-center gap-1">
-            <span className="text-slate-400">{SYMBOL[r.ccy] ?? r.ccy}</span>
-            <span>{fmtInt(r.rate)}</span>
-            <span className={cn("text-[10px]", diffClass(r.diff))}>{r.diff > 0 ? "▲" : r.diff < 0 ? "▼" : "•"}</span>
+        {rates.map((r, i) => (
+          <span key={r.ccy} className="flex items-center gap-1.5">
+            {i > 0 && <span className="mr-0.5 h-4 w-px bg-slate-200 dark:bg-slate-700" />}
+            <Badge ccy={r.ccy} />
+            <Value n={r.rate} />
+            <Trend diff={r.diff} />
           </span>
         ))}
       </button>
 
       {open && (
-        <div className="absolute right-0 top-full z-40 mt-1.5 w-64 overflow-hidden rounded-xl border border-slate-200 bg-white py-1 shadow-pop dark:border-slate-700 dark:bg-slate-800">
+        <div className="absolute right-0 top-full z-40 mt-1.5 w-[17rem] overflow-hidden rounded-xl border border-slate-200 bg-white py-1 shadow-pop dark:border-slate-700 dark:bg-slate-800">
           <div className="flex items-center justify-between px-3 py-1.5">
             <span className="text-[10px] font-semibold uppercase tracking-wider text-slate-400">{t("rates.title")}</span>
             <button onClick={reload} className="text-slate-400 transition hover:text-brand-600" title={t("rates.refresh")}>

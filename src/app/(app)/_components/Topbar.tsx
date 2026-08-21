@@ -287,7 +287,7 @@ export default function Topbar(p: TopbarProps) {
                 {p.locale === "ru" ? "Мой профиль" : p.locale === "en" ? "My profile" : "Mening profilim"}
               </Link>
               {/* Kichik ekranda valyuta kursi navbarga sig'maydi — menyuda ko'rsatamiz */}
-              <div className="lg:hidden">
+              <div className="xl:hidden">
                 <CurrencyRates locale={p.locale} variant="menu" />
               </div>
               {/* Mobil uchun til */}

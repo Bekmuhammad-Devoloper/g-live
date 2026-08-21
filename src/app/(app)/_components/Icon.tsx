@@ -243,6 +243,13 @@ const P: Record<string, JSX.Element> = {
   trash: <><path d="M4 7h16" /><path d="M10 11v6" /><path d="M14 11v6" /><path d="M6 7l1 13a1 1 0 0 0 1 1h8a1 1 0 0 0 1-1l1-13" /><path d="M9 7V4a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v3" /></>,
   coins: <><ellipse cx="12" cy="6" rx="7" ry="2.8" /><path d="M5 6v5c0 1.55 3.13 2.8 7 2.8s7-1.25 7-2.8V6" /><path d="M5 11v5c0 1.55 3.13 2.8 7 2.8s7-1.25 7-2.8v-5" /></>,
 
+  // ── Valyuta (navbardagi kurs) ──
+  dollar: <><path d="M12 2.8v18.4" /><path d="M16.6 6.6H10a3.4 3.4 0 0 0 0 6.8h4a3.4 3.4 0 0 1 0 6.8H6.8" /></>,
+  euro: <><path d="M19.6 6.1a7.3 7.3 0 0 0-5-2C10.4 4.1 7 7.6 7 12s3.4 7.9 7.6 7.9a7.3 7.3 0 0 0 5-2" /><path d="M4 10.2h9.4" /><path d="M4 14h7.4" /></>,
+  // O'sish / pasayish uchun to'ldirilgan uchburchak
+  trendUp: <path d="M12 7.4 18.4 16H5.6L12 7.4Z" fill="currentColor" stroke="none" />,
+  trendDown: <path d="M12 16.6 5.6 8h12.8L12 16.6Z" fill="currentColor" stroke="none" />,
+
   // ── Qo'ng'iroqlar markazi ──
   headphones: <><path d="M3 14a9 9 0 0 1 18 0" /><rect x="3" y="13.5" width="4.5" height="7.5" rx="1.6" /><rect x="16.5" y="13.5" width="4.5" height="7.5" rx="1.6" /></>,
   phoneCall: <><path d="M14.5 3a5.5 5.5 0 0 1 5.5 5.5" /><path d="M14.5 6.5a2 2 0 0 1 2 2" /><path d="M6.6 3.5 4 4c-.7.2-1.1.9-1 1.6C4 12 12 20 18.4 21c.7.1 1.4-.3 1.6-1l.5-2.6a1 1 0 0 0-.6-1.1l-3-1.2a1 1 0 0 0-1.1.3l-1 1.2a13 13 0 0 1-5.4-5.4l1.2-1a1 1 0 0 0 .3-1.1l-1.2-3a1 1 0 0 0-1.1-.6Z" /></>,
