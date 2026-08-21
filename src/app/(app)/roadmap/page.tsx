@@ -5,7 +5,7 @@ import { Forbidden } from "../_components/ui";
 import { getSetting } from "@/lib/settings";
 import RoadmapView from "./RoadmapView";
 
-const ALLOWED = [ROLES.DIRECTOR, ROLES.ADMIN, ROLES.DEPUTY_DIRECTOR];
+const ALLOWED = [ROLES.DIRECTOR, ROLES.DEPUTY_DIRECTOR];
 
 export default async function RoadmapPage() {
   const s = await requireSession();

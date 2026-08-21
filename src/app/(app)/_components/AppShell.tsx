@@ -4,7 +4,7 @@ import { useRef, useState } from "react";
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import { cn } from "@/lib/cn";
-import type { Locale } from "@/lib/constants";
+import { ROLES, type Locale } from "@/lib/constants";
 import { getT } from "@/lib/i18n";
 import { Icon } from "./Icon";
 import Topbar, { type TopbarProps } from "./Topbar";
@@ -20,10 +20,14 @@ interface SubItem {
   href: string;
   icon: string;
   label: Record<Locale, string>;
+  /** Shu bandni ko'ra oladigan rollar. Berilmasa — hamma (sahifa o'zi tekshiradi). */
+  roles?: string[];
 }
 interface SubGroup {
   label?: Record<Locale, string>; // bo'lim sarlavhasi (ixtiyoriy)
   items: SubItem[];
+  /** Butun guruhni ko'ra oladigan rollar */
+  roles?: string[];
 }
 // qisqa yozuv uchun: L("uz") yoki L("uz","ru","en")
 const L = (uz: string, ru = uz, en = uz): Record<Locale, string> => ({ uz, ru, en });
@@ -141,13 +145,16 @@ const SUBMENUS: Record<string, { title: Record<Locale, string>; groups: SubGroup
   "/settings": {
     title: { uz: "Sozlamalar", ru: "Настройки", en: "Settings" },
     groups: [
+      // MUHIM: har bandning `roles` ro'yxati sahifasidagi ALLOWED bilan bir xil
+      // bo'lishi kerak — aks holda foydalanuvchi ocholmaydigan tugma ko'radi.
       { items: [
-        { href: "/settings/sms", icon: "mail", label: { uz: "SMS sozlamalari", ru: "Настройки SMS", en: "SMS settings" } },
-        { href: "/settings/telephony", icon: "phone", label: { uz: "Onlain telefoniya", ru: "Онлайн телефония", en: "Online telephony" } },
-        { href: "/settings/grading", icon: "award", label: { uz: "Baholash", ru: "Оценивание", en: "Grading" } },
+        { href: "/settings/sms", icon: "mail", label: { uz: "SMS sozlamalari", ru: "Настройки SMS", en: "SMS settings" }, roles: [ROLES.DIRECTOR, ROLES.DEPUTY_DIRECTOR, ROLES.ADMIN] },
+        { href: "/settings/telephony", icon: "phone", label: { uz: "Onlain telefoniya", ru: "Онлайн телефония", en: "Online telephony" }, roles: [ROLES.DIRECTOR, ROLES.ADMIN] },
+        { href: "/settings/grading", icon: "award", label: { uz: "Baholash", ru: "Оценивание", en: "Grading" }, roles: [ROLES.DIRECTOR, ROLES.ADMIN] },
         { href: "/settings/operator", icon: "headphones", label: { uz: "Operator sozlamalari", ru: "Настройки оператора", en: "Operator settings" } },
       ] },
-      { label: { uz: "CEO", ru: "CEO", en: "CEO" }, items: [
+      // Faqat rahbariyat: direktor va o'rinbosari (administrator KIRMAYDI)
+      { label: { uz: "Rahbariyat", ru: "Руководство", en: "Management" }, roles: [ROLES.DIRECTOR, ROLES.DEPUTY_DIRECTOR], items: [
         { href: "/settings", icon: "settings", label: { uz: "Umumiy sozlamalar", ru: "Общие настройки", en: "General settings" } },
         { href: "/settings/staff", icon: "users", label: { uz: "Xodimlar", ru: "Сотрудники", en: "Staff" } },
         { href: "/settings/billing", icon: "card", label: { uz: "Billing", ru: "Биллинг", en: "Billing" } },
@@ -156,7 +163,7 @@ const SUBMENUS: Record<string, { title: Record<Locale, string>; groups: SubGroup
       { label: { uz: "Ofis", ru: "Офис", en: "Office" }, items: [
         { href: "/courses", icon: "book", label: { uz: "Kurslar", ru: "Курсы", en: "Courses" } },
         { href: "/rooms", icon: "building", label: { uz: "Xonalar", ru: "Кабинеты", en: "Rooms" } },
-        { href: "/settings/holidays", icon: "calendar", label: { uz: "Dam olish kunlari", ru: "Выходные дни", en: "Holidays" } },
+        { href: "/settings/holidays", icon: "calendar", label: { uz: "Dam olish kunlari", ru: "Выходные дни", en: "Holidays" }, roles: [ROLES.DIRECTOR, ROLES.ADMIN] },
         { href: "/archive", icon: "history", label: { uz: "Arxiv", ru: "Архив", en: "Archive" } },
       ] },
     ],
@@ -273,7 +280,15 @@ export default function AppShell({ navItems, role, portal, user, locale, labels,
 
   // Submenu guruhlari — o'qituvchi rolida /reports faqat mos hisobotlarga cheklanadi
   const submenuGroups = (href: string): SubGroup[] => {
-    const groups = SUBMENUS[href].groups;
+    // Rol filtri — foydalanuvchi ocholmaydigan bandlar ko'rsatilmaydi.
+    // (Sahifalar baribir o'zini tekshiradi; bu — o'lik tugmani yashirish.)
+    const byRole = (gs: SubGroup[]): SubGroup[] =>
+      gs
+        .filter((g) => !g.roles || g.roles.includes(role))
+        .map((g) => ({ ...g, items: g.items.filter((it) => !it.roles || it.roles.includes(role)) }))
+        .filter((g) => g.items.length > 0);
+
+    const groups = byRole(SUBMENUS[href].groups);
     if (href === "/reports" && role === "TEACHER") {
       return groups
         .map((g) => ({ ...g, items: g.items.filter((it) => TEACHER_REPORTS.has(it.href)) }))

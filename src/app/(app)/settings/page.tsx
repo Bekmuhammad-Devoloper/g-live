@@ -6,7 +6,7 @@ import { Forbidden } from "../_components/ui";
 import LicenseBanner from "../_components/LicenseBanner";
 import GeneralSettings from "./GeneralSettings";
 
-const ALLOWED = [ROLES.DIRECTOR, ROLES.ADMIN];
+const ALLOWED = [ROLES.DIRECTOR, ROLES.DEPUTY_DIRECTOR];
 
 // Umumiy sozlamalar — markaz nomi/telefoni, ish vaqti, logotip, asosiy rang va h.k.
 // ?tab=... orqali kerakli bo'lim ochiladi (masalan /settings?tab=billing).

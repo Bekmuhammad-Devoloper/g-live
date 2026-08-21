@@ -4,7 +4,7 @@ import { Forbidden } from "../../_components/ui";
 import LicenseBanner from "../../_components/LicenseBanner";
 import BillingSettings from "../BillingSettings";
 
-const ALLOWED = [ROLES.DIRECTOR, ROLES.ADMIN];
+const ALLOWED = [ROLES.DIRECTOR, ROLES.DEPUTY_DIRECTOR];
 
 // Billing — platforma uchun to'lov (tarif rejalari + to'lov tarixi). Mustaqil sahifa.
 export default async function BillingPage() {

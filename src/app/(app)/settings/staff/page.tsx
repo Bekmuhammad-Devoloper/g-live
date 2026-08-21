@@ -5,7 +5,7 @@ import { tr } from "@/lib/tr";
 import { Forbidden } from "../../_components/ui";
 import StaffView, { type VStaff } from "./StaffView";
 
-const ALLOWED = [ROLES.DIRECTOR, ROLES.ADMIN, ROLES.DEPUTY_DIRECTOR];
+const ALLOWED = [ROLES.DIRECTOR, ROLES.DEPUTY_DIRECTOR];
 // Ro'yxatda ko'rinadigan rollar (eski MANAGER yozuvlari ham ko'rinsin)
 const STAFF_ROLES = [ROLES.OPERATOR, ROLES.ROP, ROLES.MANAGER, ROLES.DEPUTY_DIRECTOR, ROLES.DIRECTOR, ROLES.ADMIN, ROLES.TEACHER];
 // Yangi xodimga tanlash mumkin bo'lgan rollar — eski MANAGER berilmaydi

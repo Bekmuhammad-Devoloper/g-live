@@ -31,9 +31,13 @@ const ALL: NavItem[] = [
   { href: "/management", icon: "layout", i18nKey: "nav.management", roles: TOP },
   { href: "/reports", icon: "chart", i18nKey: "nav.reports", module: MODULES.REPORTS },
   { href: "/marketing", icon: "megaphone", i18nKey: "nav.marketing", roles: STAFF },
-  { href: "/settings", icon: "settings", i18nKey: "nav.settings", roles: TOP },
-  // Operator/ROP uchun shaxsiy sozlamalar — /settings (CEO) ularga ochiq emas
-  { href: "/settings/operator", icon: "headphones", i18nKey: "nav.mySettings", roles: [ROLES.OPERATOR, ROLES.ROP, ROLES.MANAGER, ROLES.DEPUTY_DIRECTOR] },
+  // Direktor o'rinbosari ham Sozlamalarni ko'radi — "Rahbariyat" guruhi unga tegishli.
+  // Menyu ichidagi bandlar rol bo'yicha filtrlanadi (AppShell), shuning uchun
+  // u faqat o'zi ocha oladigan bo'limlarni ko'radi.
+  { href: "/settings", icon: "settings", i18nKey: "nav.settings", roles: [...TOP, ROLES.DEPUTY_DIRECTOR] },
+  // Operator/ROP uchun shaxsiy sozlamalar — ularda umumiy Sozlamalar menyusi yo'q.
+  // O'rinbosar bu bandni alohida ko'rmaydi: u Sozlamalar ichida turibdi (takror bo'lmasin).
+  { href: "/settings/operator", icon: "headphones", i18nKey: "nav.mySettings", roles: [ROLES.OPERATOR, ROLES.ROP, ROLES.MANAGER] },
 ];
 
 export function navFor(role: string): NavItem[] {
