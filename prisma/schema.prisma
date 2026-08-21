@@ -216,6 +216,8 @@ model Student {
   imageUrl     String? // o'quvchi profil rasmi (data URL)
   birthDate    DateTime?
   currentLevel String? // masalan A1.2
+  age          Int? // yoshi (ixtiyoriy)
+  phone2       String? // qo'shimcha telefon (ixtiyoriy)
   eduStatus    String   @default("WAITING") // EDU_STATUSES (lib/constants.ts)
 
   branchId String?

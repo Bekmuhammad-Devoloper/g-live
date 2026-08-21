@@ -42,7 +42,7 @@ export default async function AppLayout({ children }: { children: React.ReactNod
   const now = new Date();
   const weekAhead = new Date(now.getTime() + 7 * 86400000);
 
-  const [branch, unreadCount, branches, students, lessons] = await Promise.all([
+  const [branch, unreadCount, branches, students, lessons, groups] = await Promise.all([
     session.branchId ? prisma.branch.findUnique({ where: { id: session.branchId } }) : Promise.resolve(null),
     prisma.notification.count({ where: { userId: session.userId, isRead: false } }),
     prisma.branch.findMany({ where: { isActive: true }, select: { id: true, name: true }, orderBy: { name: "asc" } }),
@@ -58,6 +58,15 @@ export default async function AppLayout({ children }: { children: React.ReactNod
       take: 8,
       include: { group: { select: { id: true, name: true } } },
     }),
+    // Yangi talabani darhol guruhga biriktirish uchun (navbar formasi)
+    canCreateStudent
+      ? prisma.group.findMany({
+          where: { status: { in: ["ACTIVE", "PLANNED"] } },
+          select: { id: true, name: true },
+          orderBy: { name: "asc" },
+          take: 300,
+        })
+      : Promise.resolve([]),
   ]);
 
   const navItems = navFor(session.role).map((it) => ({
@@ -92,6 +101,7 @@ export default async function AppLayout({ children }: { children: React.ReactNod
         canCreateStudent,
         canCreatePayment,
         students,
+        groups,
         upcoming: lessons.map((l) => ({
           id: l.id,
           groupId: l.group.id,

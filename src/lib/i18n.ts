@@ -121,6 +121,7 @@ const uz: Dict = {
   "top.videoSoon": "Video qo'llanmalar tez orada qo'shiladi.",
 
   "rates.title": "Valyuta kursi",
+  "rates.bank": "O'zbekiston Markaziy banki",
   "rates.source": "Manba: MB (cbu.uz)",
   "rates.sum": "so'm",
   "rates.refresh": "Yangilash",
@@ -249,6 +250,7 @@ const ru: Dict = {
   "top.videoSoon": "Видеоинструкции скоро будут добавлены.",
 
   "rates.title": "Курс валют",
+  "rates.bank": "Центральный банк Узбекистана",
   "rates.source": "Источник: ЦБ РУз (cbu.uz)",
   "rates.sum": "сум",
   "rates.refresh": "Обновить",
@@ -377,6 +379,7 @@ const en: Dict = {
   "top.videoSoon": "Video guides will be added soon.",
 
   "rates.title": "Exchange rates",
+  "rates.bank": "Central Bank of Uzbekistan",
   "rates.source": "Source: CBU (cbu.uz)",
   "rates.sum": "UZS",
   "rates.refresh": "Refresh",

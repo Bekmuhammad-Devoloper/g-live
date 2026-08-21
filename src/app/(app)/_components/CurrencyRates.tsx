@@ -119,19 +119,28 @@ function split(n: number) {
   };
 }
 
-const diffClass = (d: number) =>
-  d > 0 ? "text-emerald-600 dark:text-emerald-400" : d < 0 ? "text-red-500 dark:text-red-400" : "text-slate-400";
+/** Kechagi kursga nisbatan foiz: diff — bugungi o'zgarish, rate — bugungi kurs */
+function percent(rate: number, diff: number): number | null {
+  const yesterday = rate - diff;
+  if (!yesterday) return null;
+  return (diff / yesterday) * 100;
+}
+
+const abs = (n: number) => {
+  const { som, tiyin } = split(Math.abs(n));
+  return `${som},${tiyin}`;
+};
 
 // Har bir valyutaning o'z belgisi va rangi
 const META: Record<string, { icon: string; badge: string; name: Record<Locale, string> }> = {
   USD: {
     icon: "dollar",
-    badge: "bg-emerald-50 text-emerald-600 dark:bg-emerald-500/15 dark:text-emerald-400",
+    badge: "bg-emerald-100 text-emerald-700 dark:bg-emerald-500/20 dark:text-emerald-300",
     name: { uz: "AQSH dollari", ru: "Доллар США", en: "US Dollar" },
   },
   EUR: {
     icon: "euro",
-    badge: "bg-indigo-50 text-indigo-600 dark:bg-indigo-500/15 dark:text-indigo-400",
+    badge: "bg-indigo-100 text-indigo-700 dark:bg-indigo-500/20 dark:text-indigo-300",
     name: { uz: "Yevro", ru: "Евро", en: "Euro" },
   },
 };
@@ -144,8 +153,14 @@ const FALLBACK = {
 function Badge({ ccy, big = false }: { ccy: string; big?: boolean }) {
   const m = META[ccy] ?? FALLBACK;
   return (
-    <span className={cn("flex shrink-0 items-center justify-center rounded-md", m.badge, big ? "h-7 w-7" : "h-5 w-5")}>
-      <Icon name={m.icon} className={big ? "h-4 w-4" : "h-3 w-3"} strokeWidth={2.2} />
+    <span
+      className={cn(
+        "flex shrink-0 items-center justify-center",
+        m.badge,
+        big ? "h-8 w-8 rounded-xl" : "h-[22px] w-[22px] rounded-lg",
+      )}
+    >
+      <Icon name={m.icon} className={big ? "h-4 w-4" : "h-3 w-3"} strokeWidth={2.4} />
     </span>
   );
 }
@@ -154,24 +169,43 @@ function Badge({ ccy, big = false }: { ccy: string; big?: boolean }) {
 function Value({ n, big = false }: { n: number; big?: boolean }) {
   const { som, tiyin } = split(n);
   return (
-    <span className={cn("font-semibold tabular-nums", big ? "text-[13px]" : "text-[12px]")}>
+    <span className={cn("font-bold tabular-nums tracking-tight", big ? "text-[15px]" : "text-[12.5px]")}>
       {som}
-      <span className={cn("font-medium text-slate-400", big ? "text-[11px]" : "text-[10px]")}>,{tiyin}</span>
+      <span className={cn("font-semibold opacity-50", big ? "text-[11px]" : "text-[10px]")}>,{tiyin}</span>
     </span>
   );
 }
 
-function Trend({ diff, withValue = false }: { diff: number; withValue?: boolean }) {
-  if (!diff) return <span className="text-[10px] font-medium text-slate-300 dark:text-slate-600">—</span>;
-  const { som, tiyin } = split(diff);
+/** O'sish/pasayish — rangli yumaloq yorliq (panel uchun) yoki yolg'iz strelka (navbar uchun) */
+function Trend({ diff, rate, pill = false }: { diff: number; rate?: number; pill?: boolean }) {
+  const up = diff > 0;
+  const tone = !diff
+    ? "text-slate-400 bg-slate-100 dark:bg-slate-700/60 dark:text-slate-400"
+    : up
+      ? "text-emerald-600 bg-emerald-50 dark:text-emerald-400 dark:bg-emerald-500/10"
+      : "text-red-500 bg-red-50 dark:text-red-400 dark:bg-red-500/10";
+
+  if (!pill) {
+    if (!diff) return <span className="text-[11px] font-bold text-slate-300 dark:text-slate-600">—</span>;
+    return (
+      <Icon
+        name={up ? "trendUp" : "trendDown"}
+        className={cn("h-3 w-3", up ? "text-emerald-500 dark:text-emerald-400" : "text-red-500 dark:text-red-400")}
+      />
+    );
+  }
+
+  const p = rate != null ? percent(rate, diff) : null;
   return (
-    <span className={cn("flex items-center gap-0.5 text-[10px] font-semibold tabular-nums", diffClass(diff))}>
-      <Icon name={diff > 0 ? "trendUp" : "trendDown"} className="h-2.5 w-2.5" />
-      {withValue && (
-        <span>
-          {som.replace("−", "")},{tiyin}
-        </span>
+    <span
+      className={cn(
+        "inline-flex items-center gap-1 rounded-full px-1.5 py-[3px] text-[10px] font-bold tabular-nums leading-none",
+        tone,
       )}
+    >
+      {!!diff && <Icon name={up ? "trendUp" : "trendDown"} className="h-2.5 w-2.5" />}
+      {abs(diff)}
+      {p != null && !!diff && <span className="opacity-70">({abs(p)}%)</span>}
     </span>
   );
 }
@@ -180,10 +214,12 @@ export default function CurrencyRates({ locale, variant = "bar" }: { locale: Loc
   const t = getT(locale);
   const data = useRates();
   const [open, setOpen] = useState(false);
+  const [spin, setSpin] = useState(false);
   const boxRef = useRef<HTMLDivElement>(null);
 
   const reload = useCallback(() => {
-    void refresh(true);
+    setSpin(true);
+    void refresh(true).finally(() => setSpin(false));
   }, []);
 
   useEffect(() => {
@@ -191,8 +227,13 @@ export default function CurrencyRates({ locale, variant = "bar" }: { locale: Loc
     const h = (e: MouseEvent) => {
       if (boxRef.current && !boxRef.current.contains(e.target as Node)) setOpen(false);
     };
+    const esc = (e: KeyboardEvent) => e.key === "Escape" && setOpen(false);
     document.addEventListener("mousedown", h);
-    return () => document.removeEventListener("mousedown", h);
+    document.addEventListener("keydown", esc);
+    return () => {
+      document.removeEventListener("mousedown", h);
+      document.removeEventListener("keydown", esc);
+    };
   }, [open]);
 
   const rates = data?.rates ?? [];
@@ -201,33 +242,53 @@ export default function CurrencyRates({ locale, variant = "bar" }: { locale: Loc
   // Kurs hali kelmagan bo'lsa navbarda joy egallamaydi
   if (rates.length === 0) return null;
 
-  const rows = rates.map((r) => (
-    <div key={r.ccy} className="flex items-center justify-between gap-3 px-3 py-2">
-      <span className="flex items-center gap-2.5">
-        <Badge ccy={r.ccy} big />
-        <span className="leading-tight">
-          <span className="block text-[13px] font-semibold text-slate-700 dark:text-slate-100">1 {r.ccy}</span>
-          <span className="block text-[10px] text-slate-400">{(META[r.ccy] ?? FALLBACK).name[locale]}</span>
-        </span>
-      </span>
-      <span className="text-right leading-tight text-slate-900 dark:text-slate-50">
-        <span className="block">
-          <Value n={r.rate} big />
-          <span className="ml-1 text-[10px] font-normal text-slate-400">{t("rates.sum")}</span>
-        </span>
-        <span className="flex justify-end">
-          <Trend diff={r.diff} withValue />
-        </span>
+  const rows = (
+    <div className="divide-y divide-slate-100 dark:divide-slate-700/60">
+      {rates.map((r) => (
+        <div key={r.ccy} className="flex items-center justify-between gap-3 px-3.5 py-2.5">
+          <span className="flex items-center gap-2.5">
+            <Badge ccy={r.ccy} big />
+            <span className="leading-tight">
+              <span className="block text-[13px] font-bold text-slate-800 dark:text-slate-100">1 {r.ccy}</span>
+              <span className="block text-[10.5px] text-slate-400">{(META[r.ccy] ?? FALLBACK).name[locale]}</span>
+            </span>
+          </span>
+          <span className="flex flex-col items-end gap-1 leading-tight">
+            <span className="text-slate-900 dark:text-slate-50">
+              <Value n={r.rate} big />
+              <span className="ml-1 text-[10px] font-medium text-slate-400">{t("rates.sum")}</span>
+            </span>
+            <Trend diff={r.diff} rate={r.rate} pill />
+          </span>
+        </div>
+      ))}
+    </div>
+  );
+
+  const footer = (
+    <div className="flex items-center justify-between gap-2 border-t border-slate-100 bg-slate-50/70 px-3.5 py-2 dark:border-slate-700/60 dark:bg-slate-900/40">
+      <a
+        href="https://cbu.uz"
+        target="_blank"
+        rel="noopener noreferrer"
+        className="flex items-center gap-1.5 text-[10.5px] font-medium text-slate-400 transition hover:text-brand-600 dark:hover:text-brand-400"
+      >
+        <Icon name="globe" className="h-3 w-3" />
+        cbu.uz
+      </a>
+      <span className="flex items-center gap-1.5 text-[10.5px] font-medium text-slate-400">
+        <Icon name="calendar" className="h-3 w-3" />
+        {date}
       </span>
     </div>
-  ));
+  );
 
   // Mobil ko'rinish — avatar menyusi ichida
   if (variant === "menu") {
     return (
-      <div className="border-b border-slate-100 py-1 dark:border-slate-800">
-        <div className="flex items-center justify-between px-3 py-1">
-          <span className="text-[10px] font-semibold uppercase tracking-wider text-slate-400">{t("rates.title")}</span>
+      <div className="border-b border-slate-100 dark:border-slate-800">
+        <div className="flex items-center justify-between px-3.5 pb-1 pt-2">
+          <span className="text-[10px] font-bold uppercase tracking-wider text-slate-400">{t("rates.title")}</span>
           <span className="text-[10px] text-slate-400">{date}</span>
         </div>
         {rows}
@@ -241,44 +302,49 @@ export default function CurrencyRates({ locale, variant = "bar" }: { locale: Loc
         onClick={() => setOpen((v) => !v)}
         title={`${t("rates.title")} · ${t("rates.source")}${date ? ` · ${date}` : ""}`}
         className={cn(
-          "flex h-9 items-center gap-2 rounded-xl border px-2 transition",
+          "flex h-9 items-center gap-2 rounded-xl border pl-2 pr-1.5 transition",
           open
-            ? "border-brand-300 bg-brand-50 dark:border-brand-700 dark:bg-brand-500/10"
-            : "border-slate-200 hover:border-slate-300 hover:bg-slate-50 dark:border-slate-700 dark:hover:border-slate-600 dark:hover:bg-slate-800",
-          data?.stale ? "text-slate-400" : "text-slate-700 dark:text-slate-200",
+            ? "border-brand-300 bg-brand-50 dark:border-brand-600 dark:bg-brand-500/10"
+            : "border-slate-200/80 bg-slate-50 hover:border-slate-300 hover:bg-white dark:border-slate-700 dark:bg-slate-800/60 dark:hover:border-slate-600 dark:hover:bg-slate-800",
+          data?.stale ? "text-slate-400" : "text-slate-700 dark:text-slate-100",
         )}
       >
         {rates.map((r, i) => (
           <span key={r.ccy} className="flex items-center gap-1.5">
-            {i > 0 && <span className="mr-0.5 h-4 w-px bg-slate-200 dark:bg-slate-700" />}
+            {i > 0 && <span className="mr-0.5 h-5 w-px bg-slate-200 dark:bg-slate-700" />}
             <Badge ccy={r.ccy} />
             <Value n={r.rate} />
             <Trend diff={r.diff} />
           </span>
         ))}
+        <Icon
+          name="chevronDown"
+          className={cn("h-3.5 w-3.5 text-slate-400 transition-transform", open && "rotate-180")}
+        />
       </button>
 
       {open && (
-        <div className="absolute right-0 top-full z-40 mt-1.5 w-[17rem] overflow-hidden rounded-xl border border-slate-200 bg-white py-1 shadow-pop dark:border-slate-700 dark:bg-slate-800">
-          <div className="flex items-center justify-between px-3 py-1.5">
-            <span className="text-[10px] font-semibold uppercase tracking-wider text-slate-400">{t("rates.title")}</span>
-            <button onClick={reload} className="text-slate-400 transition hover:text-brand-600" title={t("rates.refresh")}>
-              <Icon name="refresh" className="h-3.5 w-3.5" />
+        <div className="absolute right-0 top-full z-40 mt-2 w-[19rem] overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-pop dark:border-slate-700 dark:bg-slate-800">
+          <div className="flex items-center justify-between gap-2 px-3.5 pb-2 pt-3">
+            <span className="leading-tight">
+              <span className="block text-[13px] font-bold text-slate-800 dark:text-slate-100">{t("rates.title")}</span>
+              <span className="block text-[10.5px] text-slate-400">{t("rates.bank")}</span>
+            </span>
+            <button
+              onClick={reload}
+              className="flex h-7 w-7 items-center justify-center rounded-lg text-slate-400 transition hover:bg-slate-100 hover:text-brand-600 dark:hover:bg-slate-700 dark:hover:text-brand-400"
+              title={t("rates.refresh")}
+            >
+              <Icon name="refresh" className={cn("h-3.5 w-3.5", spin && "animate-spin")} />
             </button>
           </div>
           {rows}
-          <div className="mt-1 border-t border-slate-100 px-3 py-2 dark:border-slate-800">
-            <a
-              href="https://cbu.uz"
-              target="_blank"
-              rel="noopener noreferrer"
-              className="flex items-center justify-between text-[11px] text-slate-400 transition hover:text-brand-600"
-            >
-              <span>{t("rates.source")}</span>
-              <span>{date}</span>
-            </a>
-            {data?.stale && <p className="mt-1 text-[10px] text-amber-600 dark:text-amber-400">{t("rates.stale")}</p>}
-          </div>
+          {data?.stale && (
+            <p className="border-t border-amber-100 bg-amber-50 px-3.5 py-2 text-[10.5px] font-medium text-amber-700 dark:border-amber-900/60 dark:bg-amber-950/40 dark:text-amber-400">
+              {t("rates.stale")}
+            </p>
+          )}
+          {footer}
         </div>
       )}
     </div>

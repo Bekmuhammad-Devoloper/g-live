@@ -23,6 +23,7 @@ export interface TopbarProps {
   canCreateStudent: boolean;
   canCreatePayment: boolean;
   students: { id: string; fullName: string }[];
+  groups: { id: string; name: string }[];
   upcoming: { id: string; groupId: string; groupName: string; topic: string | null; startsAt: string }[];
   subscriptionUntil: string | null;
   onMenu: () => void;
@@ -317,7 +318,7 @@ export default function Topbar(p: TopbarProps) {
       </header>
 
       {/* Modallar */}
-      {modal === "student" && <QuickStudentModal locale={p.locale} onClose={() => setModal(null)} />}
+      {modal === "student" && <QuickStudentModal locale={p.locale} groups={p.groups} onClose={() => setModal(null)} />}
       {modal === "payment" && (
         <QuickPaymentModal locale={p.locale} students={p.students} onClose={() => setModal(null)} />
       )}
@@ -430,31 +431,62 @@ function ModalShell({ title, onClose, children }: { title: string; onClose: () =
   );
 }
 
-function QuickStudentModal({ locale, onClose }: { locale: Locale; onClose: () => void }) {
+function QuickStudentModal({ locale, groups, onClose }: { locale: Locale; groups: { id: string; name: string }[]; onClose: () => void }) {
   const t = getT(locale);
   const router = useRouter();
   const [state, action, pending] = useActionState<QuickState, FormData>(quickCreateStudent, {});
   useEffect(() => { if (state.ok) { onClose(); router.refresh(); } }, [state.ok, onClose, router]);
 
+  const lbl = "mb-1 block text-xs font-semibold text-slate-600 dark:text-slate-300";
+
   return (
     <ModalShell title={t("top.newStudent")} onClose={onClose}>
       <form action={action} className="space-y-3">
-        <div>
-          <label className="mb-1 block text-xs font-semibold text-slate-600">F.I.Sh. <span className="text-red-500">*</span></label>
-          <input name="fullName" required className="input" placeholder="Ism Familiya" />
-        </div>
         <div className="grid grid-cols-2 gap-3">
           <div>
-            <label className="mb-1 block text-xs font-semibold text-slate-600">{t("common.phone")}</label>
+            <label className={lbl}>Ism <span className="text-red-500">*</span></label>
+            <input name="firstName" required className="input" placeholder="Ism" />
+          </div>
+          <div>
+            <label className={lbl}>Familiya</label>
+            <input name="lastName" className="input" placeholder="Familiya" />
+          </div>
+        </div>
+
+        <div className="grid grid-cols-2 gap-3">
+          <div>
+            <label className={lbl}>{t("common.phone")}</label>
             <input name="phone" className="input" placeholder="+998..." />
           </div>
           <div>
-            <label className="mb-1 block text-xs font-semibold text-slate-600">Daraja</label>
+            <label className={lbl}>Qo&apos;shimcha raqam</label>
+            <input name="phone2" className="input" placeholder="+998... (ixtiyoriy)" />
+          </div>
+        </div>
+
+        <div className="grid grid-cols-2 gap-3">
+          <div>
+            <label className={lbl}>Yosh</label>
+            <input name="age" type="number" min="3" max="100" className="input" placeholder="18" />
+          </div>
+          <div>
+            <label className={lbl}>Daraja</label>
             <input name="currentLevel" className="input" placeholder="A1.1" />
           </div>
         </div>
+
+        {/* Guruhga yo'naltirish — tanlansa talaba darhol guruhga biriktiriladi */}
+        <div>
+          <label className={lbl}>Guruhga yo&apos;naltirish</label>
+          <select name="groupId" className="input" defaultValue="">
+            <option value="">Guruhsiz (keyinroq biriktiriladi)</option>
+            {groups.map((g) => <option key={g.id} value={g.id}>{g.name}</option>)}
+          </select>
+          <p className="mt-1 text-[11px] text-slate-400">Guruh tanlansa — talaba faol holatga o&apos;tadi.</p>
+        </div>
+
         {state.error && (
-          <p className="rounded-lg bg-red-50 px-3 py-2 text-sm text-red-700">
+          <p className="rounded-lg bg-red-50 px-3 py-2 text-sm text-red-700 dark:bg-red-950/40 dark:text-red-400">
             {state.error === "forbidden" ? t("err.forbiddenBody") : "Ma'lumot to'liq emas."}
           </p>
         )}
