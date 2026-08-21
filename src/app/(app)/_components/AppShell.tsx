@@ -72,9 +72,6 @@ const SUBMENUS: Record<string, { title: Record<Locale, string>; groups: SubGroup
         { href: "/audit", icon: "listView", label: L("Audit jurnali") },
         { href: "/teacher-attendance", icon: "clock", label: L("Workly hisoboti") },
       ] },
-      { label: L("Sotuv va marketing", "Продажи и маркетинг", "Sales & marketing"), items: [
-        { href: "/reports/funnel", icon: "megaphone", label: L("Sotuv voronkasi") },
-      ] },
       { label: L("Moliya", "Финансы", "Finance"), items: [
         { href: "/reports/balance", icon: "wallet", label: L("Balans") },
         { href: "/reports/payments", icon: "refresh", label: L("Kirim chiqim (tushum)") },
@@ -132,7 +129,6 @@ const SUBMENUS: Record<string, { title: Record<Locale, string>; groups: SubGroup
       { label: L("Sotuv bo'limi", "Отдел продаж", "Sales dept."), items: [
         { href: "/rop", icon: "chart", label: L("ROP Dashboard") },
         { href: "/operator", icon: "headphones", label: L("Operator konsoli") },
-        { href: "/crm", icon: "download", label: L("Lidlar (buyurtmalar)") },
         { href: "/vacancies", icon: "building", label: L("Vakansiyalar", "Вакансии", "Vacancies") },
         { href: "/links", icon: "link", label: L("Maxsus linklar", "Спец. ссылки", "Special links") },
         { href: "/reports/funnel", icon: "megaphone", label: L("Sotuv voronkasi") },
