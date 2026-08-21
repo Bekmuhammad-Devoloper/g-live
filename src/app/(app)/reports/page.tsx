@@ -2,7 +2,7 @@ import { requireSession } from "@/lib/auth";
 import { prisma } from "@/lib/db";
 import { getT } from "@/lib/i18n";
 import { canRead, MODULES } from "@/lib/rbac";
-import { LEAD_STAGES, LEAD_STAGE_LABELS, label, formatMoney } from "@/lib/constants";
+import { LEAD_STAGES, LEAD_STAGE_LABELS, label, formatMoney, ROLES } from "@/lib/constants";
 import { tr } from "@/lib/tr";
 import { PageHeader, StatCard, Card, HubCard, Forbidden } from "../_components/ui";
 
@@ -43,7 +43,11 @@ export default async function ReportsPage() {
         <HubCard href="/reports/leads" icon="download" title={tr(s.locale, { uz: "Lidlar hisoboti", ru: "Отчёт по лидам", en: "Leads report" })} desc={tr(s.locale, { uz: "Sana oralig'i bo'yicha lidlar soni va grafik", ru: "Количество лидов и график по диапазону дат", en: "Lead count and chart by date range" })} />
         <HubCard href="/reports/payments" icon="wallet" title={tr(s.locale, { uz: "To'lovlar hisoboti", ru: "Отчёт по платежам", en: "Payments report" })} desc={tr(s.locale, { uz: "Tushum (kirim) sana oralig'i bo'yicha", ru: "Поступления (доход) по диапазону дат", en: "Revenue (income) by date range" })} />
         <HubCard href="/reports/conversion" icon="chart" title={tr(s.locale, { uz: "Konversiya hisoboti", ru: "Отчёт по конверсии", en: "Conversion report" })} desc={tr(s.locale, { uz: "Savdo voronkasi va konversiya ko'rsatkichlari", ru: "Воронка продаж и показатели конверсии", en: "Sales funnel and conversion metrics" })} />
-        <HubCard href="/reports/attendance" icon="check" title={tr(s.locale, { uz: "Davomat hisoboti", ru: "Отчёт по посещаемости", en: "Attendance report" })} desc={tr(s.locale, { uz: "Guruhlar bo'yicha davomat tahlili", ru: "Анализ посещаемости по группам", en: "Attendance analysis by group" })} />
+        {/* Davomat analitikasi NAZORAT bo'limida turadi — bu yerda takrorlanmaydi.
+            O'qituvchida Nazorat menyusi yo'q, shuning uchun unga ko'rsatiladi. */}
+        {s.role === ROLES.TEACHER && (
+          <HubCard href="/reports/attendance" icon="check" title={tr(s.locale, { uz: "Davomat hisoboti", ru: "Отчёт по посещаемости", en: "Attendance report" })} desc={tr(s.locale, { uz: "Guruhlar bo'yicha davomat tahlili", ru: "Анализ посещаемости по группам", en: "Attendance analysis by group" })} />
+        )}
         <HubCard href="/reports/sms" icon="mail" title={tr(s.locale, { uz: "Xabarlar jurnali", ru: "Журнал сообщений", en: "Messages log" })} desc={tr(s.locale, { uz: "Yuborilgan SMS/Telegram/Push xabarlar", ru: "Отправленные SMS/Telegram/Push сообщения", en: "Sent SMS/Telegram/Push messages" })} />
         <HubCard href="/reports/calls" icon="phone" title={tr(s.locale, { uz: "Qo'ng'iroqlar jurnali", ru: "Журнал звонков", en: "Calls log" })} desc={tr(s.locale, { uz: "Lidlar bilan telefon aloqalari", ru: "Телефонные контакты с лидами", en: "Phone contacts with leads" })} />
       </div>
