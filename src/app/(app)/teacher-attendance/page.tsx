@@ -5,8 +5,12 @@ import { tr } from "@/lib/tr";
 import { Forbidden } from "../_components/ui";
 import TeacherAttendanceWorkspace, { type VTeacher, type VAtt } from "./TeacherAttendanceWorkspace";
 
-const ALLOWED = [ROLES.DIRECTOR, ROLES.DEPUTY_DIRECTOR, ROLES.ADMIN, ROLES.TEACHER];
+const ALLOWED = [ROLES.DIRECTOR, ROLES.DEPUTY_DIRECTOR, ROLES.MANAGER, ROLES.ADMIN, ROLES.TEACHER];
+// Ish jadvali/maosh sozlash huquqi
 const HEAD = [ROLES.DIRECTOR, ROLES.DEPUTY_DIRECTOR, ROLES.ADMIN];
+// Davomat katakchalarini o'zgartirish huquqi — faqat menejer/direktor/o'rinbosar;
+// admin va ustoz faqat ko'radi (✓ ustozga o'zi davomat o'tkazganda avtomatik tushadi)
+const CAN_MARK = [ROLES.DIRECTOR, ROLES.DEPUTY_DIRECTOR, ROLES.MANAGER];
 const p2 = (n: number) => String(n).padStart(2, "0");
 const fmtDate = (d: Date | null) => (d ? `${p2(d.getDate())}.${p2(d.getMonth() + 1)}.${d.getFullYear()}` : "");
 const isoDate = (d: Date) => `${d.getFullYear()}-${p2(d.getMonth() + 1)}-${p2(d.getDate())}`;
@@ -66,7 +70,8 @@ export default async function TeacherAttendancePage() {
 
   const now = new Date();
   const defaultMonth = `${now.getFullYear()}-${p2(now.getMonth() + 1)}`;
-  const canManage = HEAD.includes(s.role as never); // o'qituvchi — faqat ko'radi
+  const canManage = HEAD.includes(s.role as never); // jadval/maosh sozlash
+  const canMark = CAN_MARK.includes(s.role as never); // davomat katakchalari
 
-  return <TeacherAttendanceWorkspace teachers={vteachers} attendance={vatt} defaultMonth={defaultMonth} canManage={canManage} locale={s.locale} />;
+  return <TeacherAttendanceWorkspace teachers={vteachers} attendance={vatt} defaultMonth={defaultMonth} canManage={canManage} canMark={canMark} locale={s.locale} />;
 }

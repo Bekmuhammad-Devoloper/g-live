@@ -8,6 +8,7 @@ import { getPermission, MODULES } from "@/lib/rbac";
 import { writeAudit } from "@/lib/audit";
 import { ATTENDANCE_STATUSES } from "@/lib/constants";
 import { canBypassAttendanceLock, lessonLockState } from "@/lib/attendanceWindow";
+import { autoMarkTeacherPresentForLesson } from "@/lib/teacherAutoAttendance";
 
 async function canManageLesson(s: SessionUser, lessonId: string): Promise<{ ok: boolean; groupId?: string }> {
   const lesson = await prisma.lesson.findUnique({
@@ -37,6 +38,7 @@ export async function generateQr(lessonId: string, minutes = 15): Promise<void> 
   const expires = new Date(Date.now() + minutes * 60 * 1000);
   await prisma.lesson.update({ where: { id: lessonId }, data: { qrToken: token, qrExpiresAt: expires } });
   await writeAudit({ actorId: s.userId, action: "UPDATE", entityType: "Lesson", entityId: lessonId, reason: "QR yaratildi" });
+  await autoMarkTeacherPresentForLesson(s, lessonId); // QR bilan dars o'tkazish ham davomat hisoblanadi
   revalidatePath(`/groups/${groupId}/lessons/${lessonId}`);
 }
 
@@ -58,6 +60,7 @@ export async function markAttendance(lessonId: string, studentId: string, status
     create: { lessonId, studentId, status, method: "MANUAL", confirmed: false },
     update: { status, method: "MANUAL" },
   });
+  await autoMarkTeacherPresentForLesson(s, lessonId); // ustozlar davomatiga avtomatik ✓
   revalidatePath(`/groups/${groupId}/lessons/${lessonId}`);
 }
 
@@ -69,5 +72,6 @@ export async function confirmAttendance(lessonId: string): Promise<void> {
 
   await prisma.attendance.updateMany({ where: { lessonId }, data: { confirmed: true } });
   await writeAudit({ actorId: s.userId, action: "UPDATE", entityType: "Lesson", entityId: lessonId, reason: "Davomat tasdiqlandi" });
+  await autoMarkTeacherPresentForLesson(s, lessonId); // ustozlar davomatiga avtomatik ✓
   revalidatePath(`/groups/${groupId}/lessons/${lessonId}`);
 }

@@ -7,6 +7,7 @@ import { getPermission, MODULES } from "@/lib/rbac";
 import { ROLES } from "@/lib/constants";
 import { writeAudit } from "@/lib/audit";
 import { isPaymentMandatory, isPaymentMandatoryBulk } from "@/lib/paymentPolicy";
+import { autoMarkTeacherPresent } from "@/lib/teacherAutoAttendance";
 import {
   activeUnlockUntil,
   canBypassAttendanceLock,
@@ -198,6 +199,7 @@ export async function markStudentAttendance(
   // Xuddi shu holat qayta bosilsa — belgini olib tashlaymiz (uchinchi holat: belgisiz)
   if (existing && existing.status === status) {
     await prisma.attendance.delete({ where: { id: existing.id } });
+    await autoMarkTeacherPresent(s, groupId, dateISO);
     revalidatePath(`/groups/${groupId}`);
     return { ok: true, cleared: true };
   }
@@ -215,6 +217,7 @@ export async function markStudentAttendance(
     update: { status, method: "MANUAL", confirmed: true, markedAt: new Date() },
   });
   await writeAudit({ actorId: s.userId, action: "UPDATE", entityType: "Attendance", entityId: lesson.id, newValue: { studentId, status, date: dateISO } });
+  await autoMarkTeacherPresent(s, groupId, dateISO); // ustozlar davomatiga avtomatik ✓
   revalidatePath(`/groups/${groupId}`);
   return { ok: true };
 }
@@ -245,6 +248,7 @@ export async function markAllPresent(
     await prisma.attendance.create({ data: { lessonId: lesson.id, studentId: gs.studentId, status: "PRESENT", method: "MANUAL", confirmed: true } });
     added++;
   }
+  await autoMarkTeacherPresent(s, groupId, dateISO); // ustozlar davomatiga avtomatik ✓
   revalidatePath(`/groups/${groupId}`);
   return { ok: true, added, skippedBlocked };
 }

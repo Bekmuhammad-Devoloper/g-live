@@ -9,8 +9,14 @@ import { writeAudit } from "@/lib/audit";
 
 export type FormState = { ok?: boolean; error?: string };
 
+// Ish jadvali va maosh sozlamalari
 const CAN = [ROLES.DIRECTOR, ROLES.DEPUTY_DIRECTOR, ROLES.ADMIN];
 const canManage = (role: string) => CAN.includes(role as never);
+// Davomat katakchalari (2026-08-21 talab): faqat menejer/direktor/o'rinbosar
+// o'zgartiradi; qolganlar (admin, ustoz) faqat ko'radi. Ustozga ✓ o'zi
+// guruhida davomat o'tkazganda avtomatik tushadi (teacherAutoAttendance).
+const CAN_ATT = [ROLES.DIRECTOR, ROLES.DEPUTY_DIRECTOR, ROLES.MANAGER];
+const canMarkAtt = (role: string) => CAN_ATT.includes(role as never);
 const timeRe = /^([01]\d|2[0-3]):[0-5]\d$/;
 
 function normalizeWeekdays(raw?: string): string | null {
@@ -69,7 +75,7 @@ export async function deleteTeacherSchedule(teacherId: string): Promise<void> {
 // ─── Kunlik davomat (uch holatli aylanma: yo'q → keldi → kelmadi → yo'q) ───
 export async function cycleTeacherAttendance(teacherId: string, dateISO: string): Promise<void> {
   const s = await requireSession();
-  if (!canManage(s.role)) return;
+  if (!canMarkAtt(s.role)) return;
   const date = new Date(dateISO + "T00:00:00");
   const existing = await prisma.teacherAttendance.findUnique({ where: { teacherId_date: { teacherId, date } } });
   if (!existing) {

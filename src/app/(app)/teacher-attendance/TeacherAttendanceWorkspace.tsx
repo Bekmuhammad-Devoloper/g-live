@@ -30,8 +30,8 @@ const MONTHS: Record<Locale, string[]> = {
 const p2 = (n: number) => String(n).padStart(2, "0");
 const wdName = (arr: number[], locale: Locale) => (arr.length ? arr.map((d) => WD[locale][d]).join(", ") : "—");
 
-export default function TeacherAttendanceWorkspace({ teachers, attendance, defaultMonth, canManage, locale }: {
-  teachers: VTeacher[]; attendance: VAtt[]; defaultMonth: string; canManage: boolean; locale: Locale;
+export default function TeacherAttendanceWorkspace({ teachers, attendance, defaultMonth, canManage, canMark, locale }: {
+  teachers: VTeacher[]; attendance: VAtt[]; defaultMonth: string; canManage: boolean; canMark: boolean; locale: Locale;
 }) {
   const [tab, setTab] = useState<"davomat" | "jadval" | "maosh">("davomat");
   const [month, setMonth] = useState(defaultMonth); // YYYY-MM
@@ -91,7 +91,7 @@ export default function TeacherAttendanceWorkspace({ teachers, attendance, defau
           </div>
         )}
 
-        {tab === "davomat" && <DavomatGrid teachers={teachers} days={days} attMap={attMap} calc={calc} canManage={canManage} monthName={MONTHS[locale][mon]} locale={locale} />}
+        {tab === "davomat" && <DavomatGrid teachers={teachers} days={days} attMap={attMap} calc={calc} canMark={canMark} monthName={MONTHS[locale][mon]} locale={locale} />}
         {tab === "jadval" && <JadvalTab teachers={teachers} canManage={canManage} locale={locale} onAdd={() => openForm(null)} onEdit={openForm} />}
         {tab === "maosh" && <MaoshTab teachers={teachers} calc={calc} locale={locale} />}
       </div>
@@ -104,14 +104,16 @@ export default function TeacherAttendanceWorkspace({ teachers, attendance, defau
 }
 
 /* ───────── 1) Davomat grid ───────── */
-function DavomatGrid({ teachers, days, attMap, calc, canManage, monthName, locale }: {
+// canMark — faqat menejer/direktor/o'rinbosar; qolganlar (admin, ustoz) faqat ko'radi.
+// Ustozga ✓ o'zi guruhida davomat o'tkazganda avtomatik tushadi.
+function DavomatGrid({ teachers, days, attMap, calc, canMark, monthName, locale }: {
   teachers: VTeacher[]; days: { d: number; wd: number; key: string }[]; attMap: Map<string, boolean>;
-  calc: (t: VTeacher) => { workDays: number; keldi: number; extra: number }; canManage: boolean; monthName: string; locale: Locale;
+  calc: (t: VTeacher) => { workDays: number; keldi: number; extra: number }; canMark: boolean; monthName: string; locale: Locale;
 }) {
   const router = useRouter();
   const [pending, start] = useTransition();
   const cellClick = (teacherId: string, key: string, working: boolean) => {
-    if (!canManage || !working) return;
+    if (!canMark || !working) return;
     start(async () => { await cycleTeacherAttendance(teacherId, key); router.refresh(); });
   };
   if (teachers.length === 0) return <Empty locale={locale} />;
@@ -147,7 +149,7 @@ function DavomatGrid({ teachers, days, attMap, calc, canManage, monthName, local
                     <td key={d.d} className="px-1 py-1.5 text-center">
                       <button
                         onClick={() => cellClick(t.id, d.key, working)}
-                        disabled={!canManage || !working}
+                        disabled={!canMark || !working}
                         className={cn("mx-auto grid h-7 w-7 place-items-center rounded-md text-xs font-bold transition",
                           !working ? "cursor-default bg-slate-50 text-slate-200 dark:bg-slate-800/40 dark:text-slate-700"
                             : v === true ? "bg-emerald-500 text-white"

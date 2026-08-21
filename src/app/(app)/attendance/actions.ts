@@ -7,6 +7,7 @@ import { canWrite, MODULES } from "@/lib/rbac";
 import { ROLES, ATTENDANCE_STATUSES } from "@/lib/constants";
 import { writeAudit } from "@/lib/audit";
 import { canBypassAttendanceLock, lessonLockState } from "@/lib/attendanceWindow";
+import { autoMarkTeacherPresentForLesson } from "@/lib/teacherAutoAttendance";
 
 // Faqat o'z guruhi (o'qituvchi) yoki to'liq ruxsatga ega rahbariyat davomat belgilaydi.
 // Menejer/Direktor/Admin — faqat ko'rish (READ), talaba/ota-ona — belgilay olmaydi.
@@ -54,6 +55,7 @@ export async function markAttendance(lessonId: string, studentId: string, status
     newValue: { status, method: "MANUAL" },
   });
 
+  await autoMarkTeacherPresentForLesson(g.s, lessonId); // ustozlar davomatiga avtomatik ✓
   revalidatePath("/attendance");
   return { ok: true };
 }
