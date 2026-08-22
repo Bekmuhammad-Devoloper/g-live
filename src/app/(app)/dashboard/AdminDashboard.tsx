@@ -1,7 +1,8 @@
 import { prisma } from "@/lib/db";
-import { ROLE_LABELS, label, intlLocale, type Locale } from "@/lib/constants";
-import { tr } from "@/lib/tr";
-import { Card, StatCard, HubCard, Table, EmptyRow, Badge } from "../_components/ui";
+import LessonCalendar, { type CalLesson } from "./LessonCalendar";
+import { groupColor } from "../groups/groupColor";
+import { type Locale } from "@/lib/constants";
+import { StatCard, HubCard } from "../_components/ui";
 
 const T: Record<Locale, Record<string, string>> = {
   uz: {
@@ -33,25 +34,47 @@ const T: Record<Locale, Record<string, string>> = {
   },
 };
 
-const actionTone: Record<string, "green" | "red" | "amber" | "blue" | "slate"> = {
-  CREATE: "green", UPDATE: "amber", CANCEL: "red", DELETE: "red", LOGIN: "blue",
-};
-
 export default async function AdminDashboard({ locale }: { locale: Locale }) {
   const t = T[locale] ?? T.uz;
 
-  const [users, activeUsers, branches, auditCount, recentAudit] = await Promise.all([
+  // Joriy hafta (Yakshanbadan boshlab) — dars jadvali uchun
+  const now = new Date();
+  const weekStart = new Date(now.getFullYear(), now.getMonth(), now.getDate() - now.getDay(), 0, 0, 0);
+  const weekEnd = new Date(weekStart.getTime() + 7 * 86400000);
+
+  const [users, activeUsers, branches, auditCount, weekLessons, teacherRows, groupRows, programRows] = await Promise.all([
     prisma.user.findMany({ select: { role: true } }),
     prisma.user.count({ where: { isActive: true } }),
     prisma.branch.count(),
     prisma.auditLog.count(),
-    prisma.auditLog.findMany({ orderBy: { createdAt: "desc" }, take: 8, include: { actor: true } }),
+    prisma.lesson.findMany({
+      where: { startsAt: { gte: weekStart, lt: weekEnd } },
+      include: { group: { include: { teacher: true, program: true } } },
+    }),
+    prisma.user.findMany({ where: { role: "TEACHER" }, select: { fullName: true }, orderBy: { fullName: "asc" } }),
+    prisma.group.findMany({ select: { name: true, room: true }, orderBy: { name: "asc" } }),
+    prisma.program.findMany({ select: { name: true }, orderBy: { name: "asc" } }),
   ]);
 
-  const byRole = users.reduce<Record<string, number>>((acc, u) => {
-    acc[u.role] = (acc[u.role] ?? 0) + 1;
-    return acc;
-  }, {});
+  const calLessons: CalLesson[] = weekLessons.map((l) => {
+    const st = l.startsAt;
+    const en = l.endsAt ?? new Date(st.getTime() + 90 * 60000);
+    return {
+      id: l.id,
+      groupId: l.groupId,
+      day: st.getDay(),
+      startMin: st.getHours() * 60 + st.getMinutes(),
+      endMin: en.getHours() * 60 + en.getMinutes(),
+      group: l.group.name,
+      teacher: l.group.teacher?.fullName ?? null,
+      room: l.group.room ?? null,
+      course: l.group.program.name,
+      color: groupColor(l.group.id, l.group.color),
+      isPast: en.getTime() < now.getTime(),
+    };
+  });
+
+  const rooms = [...new Set(groupRows.map((g) => g.room).filter((x): x is string => !!x))];
 
   return (
     <div className="space-y-6">
@@ -74,54 +97,19 @@ export default async function AdminDashboard({ locale }: { locale: Locale }) {
         </div>
       </div>
 
-      <div className="grid gap-6 lg:grid-cols-5">
-        {/* Rollar taqsimoti */}
-        <Card className="lg:col-span-2">
-          <h3 className="mb-3 text-sm font-semibold text-slate-700">{t.byRole}</h3>
-          <div className="space-y-2">
-            {Object.entries(byRole)
-              .sort((a, b) => b[1] - a[1])
-              .map(([role, n]) => (
-                <div key={role} className="flex items-center justify-between rounded-lg bg-slate-50 px-3 py-2">
-                  <span className="text-sm text-slate-700">{label(ROLE_LABELS, role, locale)}</span>
-                  <Badge tone="brand">{n}</Badge>
-                </div>
-              ))}
-          </div>
-        </Card>
+      {/* Dars jadvali — qatorlar GURUHLAR bo'yicha (xona/o'qituvchiga ham almashtirsa bo'ladi) */}
+      <LessonCalendar
+        locale={locale}
+        lessons={calLessons}
+        teachers={teacherRows.map((x) => x.fullName)}
+        groups={groupRows.map((x) => x.name)}
+        rooms={rooms}
+        courses={programRows.map((x) => x.name)}
+        todayIndex={now.getDay()}
+        defaultView="list"
+        defaultGroupMode="group"
+      />
 
-        {/* Oxirgi audit */}
-        <Card className="lg:col-span-3" padded={false}>
-          <div className="border-b border-slate-100 px-5 py-4">
-            <h3 className="text-sm font-semibold text-slate-700">{t.recent}</h3>
-          </div>
-          <Table
-            head={
-              <tr>
-                <th className="px-4 py-3">{t.author}</th>
-                <th className="px-4 py-3">{t.action}</th>
-                <th className="px-4 py-3">{t.object}</th>
-                <th className="px-4 py-3">{tr(locale, { uz: "Sana", ru: "Дата", en: "Date" })}</th>
-              </tr>
-            }
-          >
-            {recentAudit.length === 0 ? (
-              <EmptyRow colSpan={4} text={t.noData} />
-            ) : (
-              recentAudit.map((l) => (
-                <tr key={l.id} className="hover:bg-slate-50">
-                  <td className="px-4 py-3 text-slate-700">{l.actor?.fullName ?? "—"}</td>
-                  <td className="px-4 py-3"><Badge tone={actionTone[l.action] ?? "slate"}>{l.action}</Badge></td>
-                  <td className="px-4 py-3 text-slate-600">{l.entityType}</td>
-                  <td className="px-4 py-3 text-slate-500">
-                    {new Intl.DateTimeFormat(intlLocale(locale), { dateStyle: "short", timeStyle: "short" }).format(l.createdAt)}
-                  </td>
-                </tr>
-              ))
-            )}
-          </Table>
-        </Card>
-      </div>
     </div>
   );
 }

@@ -131,22 +131,22 @@ const abs = (n: number) => {
   return `${som},${tiyin}`;
 };
 
-// Har bir valyutaning o'z belgisi va rangi
+// Har bir valyutaning o'z belgisi va rangi (belgi — oq, foni gradientli)
 const META: Record<string, { icon: string; badge: string; name: Record<Locale, string> }> = {
   USD: {
     icon: "dollar",
-    badge: "bg-emerald-100 text-emerald-700 dark:bg-emerald-500/20 dark:text-emerald-300",
+    badge: "bg-gradient-to-br from-emerald-400 to-emerald-600 shadow-emerald-500/25",
     name: { uz: "AQSH dollari", ru: "Доллар США", en: "US Dollar" },
   },
   EUR: {
     icon: "euro",
-    badge: "bg-indigo-100 text-indigo-700 dark:bg-indigo-500/20 dark:text-indigo-300",
+    badge: "bg-gradient-to-br from-indigo-400 to-indigo-600 shadow-indigo-500/25",
     name: { uz: "Yevro", ru: "Евро", en: "Euro" },
   },
 };
 const FALLBACK = {
   icon: "coins",
-  badge: "bg-slate-100 text-slate-500 dark:bg-slate-700 dark:text-slate-300",
+  badge: "bg-gradient-to-br from-slate-400 to-slate-600 shadow-slate-500/25",
   name: { uz: "Valyuta", ru: "Валюта", en: "Currency" },
 };
 
@@ -155,12 +155,12 @@ function Badge({ ccy, big = false }: { ccy: string; big?: boolean }) {
   return (
     <span
       className={cn(
-        "flex shrink-0 items-center justify-center",
+        "flex shrink-0 items-center justify-center text-white shadow-sm",
         m.badge,
-        big ? "h-8 w-8 rounded-xl" : "h-[22px] w-[22px] rounded-lg",
+        big ? "h-9 w-9 rounded-xl" : "h-[22px] w-[22px] rounded-[7px]",
       )}
     >
-      <Icon name={m.icon} className={big ? "h-4 w-4" : "h-3 w-3"} strokeWidth={2.4} />
+      <Icon name={m.icon} className={big ? "h-[18px] w-[18px]" : "h-3 w-3"} strokeWidth={2.4} />
     </span>
   );
 }
@@ -180,10 +180,10 @@ function Value({ n, big = false }: { n: number; big?: boolean }) {
 function Trend({ diff, rate, pill = false }: { diff: number; rate?: number; pill?: boolean }) {
   const up = diff > 0;
   const tone = !diff
-    ? "text-slate-400 bg-slate-100 dark:bg-slate-700/60 dark:text-slate-400"
+    ? "bg-slate-100 text-slate-400 ring-slate-200/70 dark:bg-slate-700/60 dark:text-slate-400 dark:ring-slate-600/50"
     : up
-      ? "text-emerald-600 bg-emerald-50 dark:text-emerald-400 dark:bg-emerald-500/10"
-      : "text-red-500 bg-red-50 dark:text-red-400 dark:bg-red-500/10";
+      ? "bg-emerald-50 text-emerald-700 ring-emerald-200/70 dark:bg-emerald-500/10 dark:text-emerald-400 dark:ring-emerald-500/25"
+      : "bg-red-50 text-red-600 ring-red-200/70 dark:bg-red-500/10 dark:text-red-400 dark:ring-red-500/25";
 
   if (!pill) {
     if (!diff) return <span className="text-[11px] font-bold text-slate-300 dark:text-slate-600">—</span>;
@@ -199,7 +199,7 @@ function Trend({ diff, rate, pill = false }: { diff: number; rate?: number; pill
   return (
     <span
       className={cn(
-        "inline-flex items-center gap-1 rounded-full px-1.5 py-[3px] text-[10px] font-bold tabular-nums leading-none",
+        "inline-flex items-center gap-1 rounded-full px-2 py-1 text-[10px] font-bold tabular-nums leading-none ring-1",
         tone,
       )}
     >
@@ -242,18 +242,24 @@ export default function CurrencyRates({ locale, variant = "bar" }: { locale: Loc
   // Kurs hali kelmagan bo'lsa navbarda joy egallamaydi
   if (rates.length === 0) return null;
 
+  // Har bir valyuta — alohida oq karta (yumshoq kulrang fon ustida)
   const rows = (
-    <div className="divide-y divide-slate-100 dark:divide-slate-700/60">
+    <div className="space-y-2 bg-slate-50/70 p-2 dark:bg-slate-900/40">
       {rates.map((r) => (
-        <div key={r.ccy} className="flex items-center justify-between gap-3 px-3.5 py-2.5">
+        <div
+          key={r.ccy}
+          className="flex items-center justify-between gap-3 rounded-xl bg-white px-3 py-2.5 shadow-card ring-1 ring-slate-100 transition hover:ring-slate-200 dark:bg-slate-800 dark:ring-slate-700/70 dark:hover:ring-slate-600"
+        >
           <span className="flex items-center gap-2.5">
             <Badge ccy={r.ccy} big />
             <span className="leading-tight">
-              <span className="block text-[13px] font-bold text-slate-800 dark:text-slate-100">1 {r.ccy}</span>
+              <span className="block text-[13px] font-bold tracking-tight text-slate-800 dark:text-slate-100">
+                1 {r.ccy}
+              </span>
               <span className="block text-[10.5px] text-slate-400">{(META[r.ccy] ?? FALLBACK).name[locale]}</span>
             </span>
           </span>
-          <span className="flex flex-col items-end gap-1 leading-tight">
+          <span className="flex flex-col items-end gap-1.5 leading-tight">
             <span className="text-slate-900 dark:text-slate-50">
               <Value n={r.rate} big />
               <span className="ml-1 text-[10px] font-medium text-slate-400">{t("rates.sum")}</span>
@@ -266,7 +272,7 @@ export default function CurrencyRates({ locale, variant = "bar" }: { locale: Loc
   );
 
   const footer = (
-    <div className="flex items-center justify-between gap-2 border-t border-slate-100 bg-slate-50/70 px-3.5 py-2 dark:border-slate-700/60 dark:bg-slate-900/40">
+    <div className="flex items-center justify-between gap-2 border-t border-slate-100 px-3.5 py-2.5 dark:border-slate-700/60">
       <a
         href="https://cbu.uz"
         target="_blank"
@@ -302,10 +308,10 @@ export default function CurrencyRates({ locale, variant = "bar" }: { locale: Loc
         onClick={() => setOpen((v) => !v)}
         title={`${t("rates.title")} · ${t("rates.source")}${date ? ` · ${date}` : ""}`}
         className={cn(
-          "flex h-9 items-center gap-2 rounded-xl border pl-2 pr-1.5 transition",
+          "flex h-9 items-center gap-2 rounded-xl border pl-2 pr-1.5 transition active:scale-[0.98]",
           open
-            ? "border-brand-300 bg-brand-50 dark:border-brand-600 dark:bg-brand-500/10"
-            : "border-slate-200/80 bg-slate-50 hover:border-slate-300 hover:bg-white dark:border-slate-700 dark:bg-slate-800/60 dark:hover:border-slate-600 dark:hover:bg-slate-800",
+            ? "border-brand-300 bg-brand-50 shadow-card dark:border-brand-600 dark:bg-brand-500/10"
+            : "border-slate-200/80 bg-white shadow-card hover:border-slate-300 hover:shadow-soft dark:border-slate-700 dark:bg-slate-800/60 dark:hover:border-slate-600 dark:hover:bg-slate-800",
           data?.stale ? "text-slate-400" : "text-slate-700 dark:text-slate-100",
         )}
       >
@@ -324,18 +330,20 @@ export default function CurrencyRates({ locale, variant = "bar" }: { locale: Loc
       </button>
 
       {open && (
-        <div className="absolute right-0 top-full z-40 mt-2 w-[19rem] overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-pop dark:border-slate-700 dark:bg-slate-800">
-          <div className="flex items-center justify-between gap-2 px-3.5 pb-2 pt-3">
+        <div className="animate-pop-in absolute right-0 top-full z-40 mt-2 w-[19.5rem] origin-top-right overflow-hidden rounded-2xl border border-slate-200/80 bg-white shadow-pop dark:border-slate-700 dark:bg-slate-800">
+          <div className="flex items-center justify-between gap-2 px-3.5 pb-2.5 pt-3">
             <span className="leading-tight">
-              <span className="block text-[13px] font-bold text-slate-800 dark:text-slate-100">{t("rates.title")}</span>
+              <span className="block text-[13.5px] font-bold tracking-tight text-slate-800 dark:text-slate-100">
+                {t("rates.title")}
+              </span>
               <span className="block text-[10.5px] text-slate-400">{t("rates.bank")}</span>
             </span>
             <button
               onClick={reload}
-              className="flex h-7 w-7 items-center justify-center rounded-lg text-slate-400 transition hover:bg-slate-100 hover:text-brand-600 dark:hover:bg-slate-700 dark:hover:text-brand-400"
+              className="flex h-8 w-8 items-center justify-center rounded-xl text-slate-400 transition hover:bg-slate-100 hover:text-brand-600 active:scale-95 dark:hover:bg-slate-700 dark:hover:text-brand-400"
               title={t("rates.refresh")}
             >
-              <Icon name="refresh" className={cn("h-3.5 w-3.5", spin && "animate-spin")} />
+              <Icon name="refresh" className={cn("h-4 w-4", spin && "animate-spin")} />
             </button>
           </div>
           {rows}

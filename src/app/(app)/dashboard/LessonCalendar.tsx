@@ -35,7 +35,9 @@ interface Props {
   todayIndex: number;
   todayISO?: string; // server bugungi sana "yyyy-mm-dd" (hafta navigatsiyasi uchun)
   weekNav?: boolean; // hafta bo'ylab o'tish (oldingi/keyingi hafta) yoqilsinmi
-  defaultView?: "grid" | "list"; // "list" = xona×vaqt gorizontal matritsa (Dars jadvali sahifasi shundan boshlanadi)
+  defaultView?: "grid" | "list";
+  /** Ro'yxat ko'rinishida qatorlar nima bo'yicha: xona (asosiy) / o'qituvchi / guruh */
+  defaultGroupMode?: "room" | "teacher" | "group"; // "list" = xona×vaqt gorizontal matritsa (Dars jadvali sahifasi shundan boshlanadi)
 }
 
 const DAY_LABELS: Record<Locale, string[]> = {
@@ -48,7 +50,7 @@ const T: Record<Locale, Record<string, string>> = {
   uz: {
     title: "Dars jadvali", teacher: "O'qituvchi", group: "Guruh", room: "Xona", course: "Kurs", status: "Holati",
     all: "Barchasi", filter: "Filtr", export: "Eksport", upcoming: "Kelgusi", past: "O'tgan", empty: "Bu kunda dars yo'q",
-    byRoom: "Xona bo'yicha", byTeacher: "O'qituvchi bo'yicha", gridV: "Panjara", listV: "Ro'yxat", settings: "Sozlamalar",
+    byRoom: "Xona bo'yicha", byTeacher: "O'qituvchi bo'yicha", byGroup: "Guruh bo'yicha", gridV: "Panjara", listV: "Ro'yxat", settings: "Sozlamalar",
     timeRange: "Vaqt oralig'i", fs: "Butun ekran", cfgTitle: "Jadval ko'rinishi sozlamalari",
     cfgSub: "Har bir qator uchun maydon tanlang", save: "Saqlash",
     s1: "1-sarlavha", s2: "2-sarlavha", s3: "3-sarlavha", s4: "1-qator", s5: "2-qator", s6: "3-qator", s7: "Pastki qator",
@@ -57,7 +59,7 @@ const T: Record<Locale, Record<string, string>> = {
   ru: {
     title: "Расписание", teacher: "Преподаватель", group: "Группа", room: "Кабинет", course: "Курс", status: "Статус",
     all: "Все", filter: "Фильтр", export: "Экспорт", upcoming: "Предстоящие", past: "Прошедшие", empty: "Нет уроков в этот день",
-    byRoom: "По кабинетам", byTeacher: "По преподавателям", gridV: "Сетка", listV: "Список", settings: "Настройки",
+    byRoom: "По кабинетам", byTeacher: "По преподавателям", byGroup: "По группам", gridV: "Сетка", listV: "Список", settings: "Настройки",
     timeRange: "Диапазон времени", fs: "Полный экран", cfgTitle: "Настройки вида расписания",
     cfgSub: "Выберите поле для каждой строки", save: "Сохранить",
     s1: "1-й заголовок", s2: "2-й заголовок", s3: "3-й заголовок", s4: "1-я строка", s5: "2-я строка", s6: "3-я строка", s7: "Нижняя строка",
@@ -66,7 +68,7 @@ const T: Record<Locale, Record<string, string>> = {
   en: {
     title: "Schedule", teacher: "Teacher", group: "Group", room: "Room", course: "Course", status: "Status",
     all: "All", filter: "Filter", export: "Export", upcoming: "Upcoming", past: "Past", empty: "No lessons this day",
-    byRoom: "By room", byTeacher: "By teacher", gridV: "Grid", listV: "List", settings: "Settings",
+    byRoom: "By room", byTeacher: "By teacher", byGroup: "By group", gridV: "Grid", listV: "List", settings: "Settings",
     timeRange: "Time range", fs: "Fullscreen", cfgTitle: "Schedule view settings",
     cfgSub: "Choose a field for each row", save: "Save",
     s1: "Title 1", s2: "Title 2", s3: "Title 3", s4: "Row 1", s5: "Row 2", s6: "Row 3", s7: "Bottom row",
@@ -174,7 +176,10 @@ export default function LessonCalendar(p: Props) {
   const [fCourse, setFCourse] = useState("");
   const [fStatus, setFStatus] = useState("");
 
-  const [groupMode, setGroupMode] = useState<"room" | "teacher">("room");
+  // Qatorlar nima bo'yicha guruhlanadi: xona / o'qituvchi / guruh
+  const [groupMode, setGroupMode] = useState<"room" | "teacher" | "group">(p.defaultGroupMode ?? "room");
+  // Dars qaysi qatorga tushishi (tanlangan rejimga qarab)
+  const rowKeyOf = (l: CalLesson) => (groupMode === "room" ? l.room : groupMode === "teacher" ? l.teacher : l.group);
   const [viewType, setViewType] = useState<"grid" | "list">(p.defaultView ?? "grid");
   const [rangeIdx, setRangeIdx] = useState(0);
   const [showSettings, setShowSettings] = useState(false);
@@ -266,12 +271,13 @@ export default function LessonCalendar(p: Props) {
 
   // Ro'yxat (matritsa) ko'rinishi uchun qatorlar: xona yoki o'qituvchi
   const rowNames = useMemo(() => {
-    const set = new Set<string>((groupMode === "room" ? p.rooms : p.teachers).filter(Boolean));
-    dayLessons.forEach((l) => set.add((groupMode === "room" ? l.room : l.teacher) || "—"));
+    const base = groupMode === "room" ? p.rooms : groupMode === "teacher" ? p.teachers : p.groups;
+    const set = new Set<string>(base.filter(Boolean));
+    dayLessons.forEach((l) => set.add(rowKeyOf(l) || "—"));
     return [...set];
-  }, [groupMode, dayLessons, p.rooms, p.teachers]);
+  }, [groupMode, dayLessons, p.rooms, p.teachers, p.groups]);
   const lessonsForRow = (name: string) =>
-    dayLessons.filter((l) => ((groupMode === "room" ? l.room : l.teacher) || "—") === name);
+    dayLessons.filter((l) => (rowKeyOf(l) || "—") === name);
 
   function exportCsv() {
     const rows = [[
@@ -350,6 +356,7 @@ export default function LessonCalendar(p: Props) {
           <div className="flex gap-0.5 rounded-lg border border-slate-200 p-0.5 dark:border-slate-700">
             <TBtn label={t.byRoom} active={groupMode === "room"} onClick={() => setGroupMode("room")}><Icon name="building" className="h-4 w-4" /></TBtn>
             <TBtn label={t.byTeacher} active={groupMode === "teacher"} onClick={() => setGroupMode("teacher")}><Icon name="user" className="h-4 w-4" /></TBtn>
+            <TBtn label={t.byGroup} active={groupMode === "group"} onClick={() => setGroupMode("group")}><Icon name="layers" className="h-4 w-4" /></TBtn>
           </div>
           <div className="flex gap-0.5 rounded-lg border border-slate-200 p-0.5 dark:border-slate-700">
             <TBtn label={t.gridV} active={viewType === "grid"} onClick={() => setViewType("grid")}><Icon name="grid" className="h-4 w-4" /></TBtn>
@@ -395,7 +402,7 @@ export default function LessonCalendar(p: Props) {
               {/* Sarlavha: vaqt ustunlari (gorizontal) */}
               <div className="sticky top-0 z-20 flex bg-slate-50/95 backdrop-blur dark:bg-slate-800/90">
                 <div className="sticky left-0 z-30 flex w-[150px] shrink-0 items-center border-b border-r border-slate-200 bg-slate-50/95 px-3 py-2.5 text-[11px] font-semibold uppercase tracking-wider text-slate-400 dark:border-slate-700 dark:bg-slate-800/90">
-                  {groupMode === "room" ? t.room : t.teacher}
+                  {groupMode === "room" ? t.room : groupMode === "teacher" ? t.teacher : t.group}
                 </div>
                 {slots.map((s) => (
                   <div key={s.min} className="flex w-[128px] shrink-0 items-center justify-center border-b border-r border-slate-100 px-1 py-2.5 text-[11px] text-slate-500 dark:border-slate-700/60">{s.label}</div>
