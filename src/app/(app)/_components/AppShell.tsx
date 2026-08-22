@@ -65,7 +65,7 @@ const SUBMENUS: Record<string, { title: Record<Locale, string>; groups: SubGroup
     title: L("Hisobotlar", "Отчёты", "Reports"),
     groups: [
       { items: [
-        { href: "/reports/conversion", icon: "chart", label: L("Konversiya hisobotlari") },
+        { href: "/reports/conversion", icon: "chart", label: L("Konversiya hisobotlari"), roles: [ROLES.DIRECTOR, ROLES.DEPUTY_DIRECTOR, ROLES.ROP, ROLES.MANAGER] },
         { href: "/reports/attendance", icon: "check", label: L("Davomat hisobotlari") },
         { href: "/reports/leads", icon: "download", label: L("Lidlar hisobotlari") },
         { href: "/reports/left-students", icon: "personMinus", label: L("Guruhni tark etganlar") },
@@ -126,7 +126,7 @@ const SUBMENUS: Record<string, { title: Record<Locale, string>; groups: SubGroup
     title: L("Sotuv / Marketing", "Продажи / Маркетинг", "Sales / Marketing"),
     groups: [
       { label: L("Marketing"), items: [
-        { href: "/marketing", icon: "megaphone", label: L("Marketing") },
+        { href: "/marketing", icon: "megaphone", label: L("Marketing"), roles: [ROLES.DIRECTOR, ROLES.DEPUTY_DIRECTOR, ROLES.ROP, ROLES.MANAGER] },
         { href: "/settings/sms", icon: "mail", label: L("SMS shablonlari") },
         { href: "/reports/sms", icon: "listView", label: L("Xabarlar ro'yhati") },
       ] },

@@ -8,7 +8,8 @@ import type { Prisma } from "@prisma/client";
 // UI (/reports/conversion) sana / manba / xodim filtrlarini shu yerga yuboradi,
 // natijada voronka sanog'i + tanlangan bosqich lidlari qaytadi.
 
-const ALLOWED = [ROLES.DIRECTOR, ROLES.DEPUTY_DIRECTOR, ROLES.ROP, ROLES.MANAGER, ROLES.ADMIN];
+// Sahifadagi ALLOWED bilan bir xil — administrator kiritilmagan
+const ALLOWED = [ROLES.DIRECTOR, ROLES.DEPUTY_DIRECTOR, ROLES.ROP, ROLES.MANAGER];
 
 // Bizning LEAD_STAGES → 5 ta Modme voronka bosqichiga moslashtirilgan
 const BUCKETS: { key: string; stages: string[] }[] = [

@@ -4,7 +4,8 @@ import { tr } from "@/lib/tr";
 import { Forbidden } from "../../_components/ui";
 import ConversionReport from "./ConversionReport";
 
-const ALLOWED = [ROLES.DIRECTOR, ROLES.DEPUTY_DIRECTOR, ROLES.ROP, ROLES.MANAGER, ROLES.ADMIN];
+// Administrator konversiya hisobotini ko'rmaydi (texnik rol, sotuv ko'rsatkichlari kerak emas)
+const ALLOWED = [ROLES.DIRECTOR, ROLES.DEPUTY_DIRECTOR, ROLES.ROP, ROLES.MANAGER];
 
 const p2 = (n: number) => String(n).padStart(2, "0");
 const isoDay = (d: Date) => `${d.getFullYear()}-${p2(d.getMonth() + 1)}-${p2(d.getDate())}`;
