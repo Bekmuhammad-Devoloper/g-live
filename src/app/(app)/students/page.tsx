@@ -4,6 +4,8 @@ import { prisma } from "@/lib/db";
 import { ROLES, type Locale } from "@/lib/constants";
 import { canWrite, MODULES } from "@/lib/rbac";
 import { branchWhere } from "@/lib/branchScope";
+import { getSetting } from "@/lib/settings";
+import { RECEIPT_MODE_KEY, parseReceiptMode } from "@/lib/receiptMode";
 import { tr } from "@/lib/tr";
 import { Forbidden } from "../_components/ui";
 import { Icon } from "../_components/Icon";
@@ -32,6 +34,9 @@ export default async function StudentsPage() {
   }
   // Faol filial o'quvchilarigina (filialsiz eski yozuvlar ham ko'rinadi)
   where = { AND: [where, branchWhere(s)] };
+
+  // Chek majburiyligi — CEO sozlamasi (Sozlamalar > Chek)
+  const receiptMode = parseReceiptMode(await getSetting(RECEIPT_MODE_KEY));
 
   const students = await prisma.student.findMany({
     where,
@@ -99,6 +104,7 @@ export default async function StudentsPage() {
         canCreate={CAN_CREATE.includes(s.role as never)}
         canPay={canWrite(s.role, MODULES.PAYMENTS)}
         currentUserName={s.fullName}
+      receiptMode={receiptMode}
       />
     </div>
   );

@@ -3,7 +3,7 @@
 import { useEffect, useRef, useState } from "react";
 import { useActionState } from "react";
 import { createManualPayment, type PayState } from "./actions";
-import { PAYMENT_METHODS, type Locale } from "@/lib/constants";
+import { PAYMENT_METHODS, PAYMENT_METHOD_LABELS, label, type Locale } from "@/lib/constants";
 import { getT } from "@/lib/i18n";
 import { tr } from "@/lib/tr";
 
@@ -58,7 +58,7 @@ export default function NewPaymentForm({
               <div>
                 <label className="mb-1 block text-xs font-medium text-slate-600">{t("pay.method")} <span className="text-red-500">*</span></label>
                 <select name="method" required className={input} defaultValue="CASH">
-                  {PAYMENT_METHODS.map((m) => <option key={m} value={m}>{m}</option>)}
+                  {PAYMENT_METHODS.map((m) => <option key={m} value={m}>{label(PAYMENT_METHOD_LABELS, m, locale)}</option>)}
                 </select>
               </div>
             </div>

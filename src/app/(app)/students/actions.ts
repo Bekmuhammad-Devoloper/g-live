@@ -10,6 +10,8 @@ import { getSettings } from "@/lib/settings";
 import { writeAudit } from "@/lib/audit";
 import { notify } from "@/lib/notify";
 import { lessonsAttendedThisMonth, MANDATORY_LESSON_THRESHOLD } from "@/lib/paymentPolicy";
+import { getSetting } from "@/lib/settings";
+import { RECEIPT_MODE_KEY, parseReceiptMode, isReceiptRequired } from "@/lib/receiptMode";
 
 export type EditState = { ok?: boolean; error?: string };
 export type BulkState = { ok?: boolean; error?: string; count?: number };
@@ -124,9 +126,13 @@ export async function acceptPayment(
   if (!PAYMENT_METHODS.includes(input.method as never)) return { ok: false, error: "method" };
   const purpose = String(input.purpose || "").trim();
   if (purpose.length < 2) return { ok: false, error: "purpose" };
-  // Karta to'lovida chek fayli majburiy
+  // Chek majburiyligi — CEO sozlamasidan (ixtiyoriy / naqd pulsizda / har doim).
+  // Interfeys ham tekshiradi, bu — chetlab o'tib bo'lmaydigan server to'sig'i.
   const receiptUrl = String(input.receiptUrl || "").trim() || null;
-  if (input.method === "CARD" && !receiptUrl) return { ok: false, error: "receipt_required" };
+  const receiptMode = parseReceiptMode(await getSetting(RECEIPT_MODE_KEY));
+  if (isReceiptRequired(receiptMode, input.method) && !receiptUrl) {
+    return { ok: false, error: "receipt_required" };
+  }
 
   // To'lov vaqti (bo'sh yoki noto'g'ri bo'lsa — hozir)
   let paidAt = new Date();

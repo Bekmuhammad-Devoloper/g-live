@@ -1,9 +1,14 @@
 "use client";
 
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useRef, useState, useTransition } from "react";
 import { cn } from "@/lib/cn";
 import { tr } from "@/lib/tr";
 import type { Locale } from "@/lib/constants";
+import {
+  RECEIPT_MODES, RECEIPT_MODE_LABELS, RECEIPT_MODE_HINTS, type ReceiptMode,
+} from "@/lib/receiptMode";
+import { saveReceiptMode } from "./actions";
+import { Icon } from "../_components/Icon";
 
 const STORAGE_KEY = "gl-chek-settings";
 
@@ -38,7 +43,22 @@ const LABELS: Record<string, L> = {
   ...Object.fromEntries(FOOTER.map((f) => [f.key, f.label])),
 };
 
-export default function ChekSettings({ locale, centerName }: { locale: Locale; centerName: string }) {
+export default function ChekSettings({ locale, centerName, receiptMode }: { locale: Locale; centerName: string; receiptMode: ReceiptMode }) {
+  // Chek yuklash majburiyligi — BAZAGA yoziladi (qolgan sozlamalar localStorage'da)
+  const [mode, setMode] = useState<ReceiptMode>(receiptMode);
+  const [modeSaved, setModeSaved] = useState(false);
+  const [modeErr, setModeErr] = useState<string | null>(null);
+  const [savingMode, startSaveMode] = useTransition();
+
+  const pickMode = (m: ReceiptMode) => {
+    setMode(m); setModeErr(null);
+    startSaveMode(async () => {
+      const r = await saveReceiptMode(m);
+      if (r.ok) { setModeSaved(true); setTimeout(() => setModeSaved(false), 2200); }
+      else { setMode(receiptMode); setModeErr(tr(locale, { uz: "Saqlanmadi — ruxsat yo'q", ru: "Не сохранено — нет доступа", en: "Not saved — no permission" })); }
+    });
+  };
+
   const [hide, setHide] = useState<Record<string, boolean>>({});
   const [image, setImage] = useState<string | null>(null);
   const [saved, setSaved] = useState(false);
@@ -70,6 +90,50 @@ export default function ChekSettings({ locale, centerName }: { locale: Locale; c
   return (
     <div>
       <h2 className="mb-6 text-2xl font-bold text-slate-800 dark:text-slate-100">{tr(locale, { uz: "Chek", ru: "Чек", en: "Receipt" })}</h2>
+
+      {/* ── Chek yuklash majburiyligi (bazaga saqlanadi) ── */}
+      <div className="mb-8 rounded-2xl border border-slate-200 bg-white p-5 dark:border-slate-700 dark:bg-slate-900">
+        <div className="mb-1 flex items-center gap-2">
+          <Icon name="shieldCheck" className="h-5 w-5 text-brand-500" />
+          <h3 className="text-base font-bold text-slate-800 dark:text-slate-100">
+            {tr(locale, { uz: "To'lovda chek yuklash", ru: "Загрузка чека при оплате", en: "Receipt upload on payment" })}
+          </h3>
+          {savingMode && <span className="text-xs text-slate-400">{tr(locale, { uz: "saqlanmoqda…", ru: "сохранение…", en: "saving…" })}</span>}
+          {modeSaved && <span className="text-xs font-semibold text-emerald-600">{tr(locale, { uz: "saqlandi ✓", ru: "сохранено ✓", en: "saved ✓" })}</span>}
+        </div>
+        <p className="mb-3 text-xs text-slate-500 dark:text-slate-400">
+          {tr(locale, {
+            uz: "Kassir to'lov qabul qilganda chek (kvitansiya) yuklashi shartmi — shu yerdan boshqariladi.",
+            ru: "Обязан ли кассир загружать чек при приёме оплаты — управляется здесь.",
+            en: "Controls whether the cashier must attach a receipt when accepting a payment.",
+          })}
+        </p>
+        <div className="grid gap-2 sm:grid-cols-3">
+          {RECEIPT_MODES.map((m) => (
+            <button
+              key={m}
+              type="button"
+              onClick={() => pickMode(m)}
+              disabled={savingMode}
+              className={cn(
+                "rounded-xl border p-3 text-left transition disabled:opacity-60",
+                mode === m
+                  ? "border-brand-500 bg-brand-50 ring-2 ring-brand-500/20 dark:border-brand-500/50 dark:bg-brand-950/30"
+                  : "border-slate-200 hover:border-brand-300 hover:bg-slate-50 dark:border-slate-700 dark:hover:bg-slate-800/60",
+              )}
+            >
+              <div className="flex items-center gap-1.5">
+                <span className={cn("grid h-4 w-4 shrink-0 place-items-center rounded-full border-2", mode === m ? "border-brand-600" : "border-slate-300 dark:border-slate-600")}>
+                  {mode === m && <span className="h-2 w-2 rounded-full bg-brand-600" />}
+                </span>
+                <span className="text-sm font-semibold text-slate-800 dark:text-slate-100">{tr(locale, RECEIPT_MODE_LABELS[m])}</span>
+              </div>
+              <p className="mt-1.5 text-[11px] leading-relaxed text-slate-500 dark:text-slate-400">{tr(locale, RECEIPT_MODE_HINTS[m])}</p>
+            </button>
+          ))}
+        </div>
+        {modeErr && <p className="mt-2 text-xs font-medium text-rose-600">{modeErr}</p>}
+      </div>
 
       <div className="grid gap-8 lg:grid-cols-2">
         {/* Chap: yashirish belgilashlari */}

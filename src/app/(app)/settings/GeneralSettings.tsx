@@ -13,6 +13,7 @@ import IntegrationsSettings from "./IntegrationsSettings";
 import BillingSettings from "./BillingSettings";
 import ExamsSettings from "./ExamsSettings";
 import ChekSettings from "./ChekSettings";
+import type { ReceiptMode } from "@/lib/receiptMode";
 import AccountSettings from "./AccountSettings";
 import LandingSettings from "./LandingSettings";
 
@@ -38,7 +39,7 @@ interface Form {
   logo: string | null; color: string; offerName: string;
 }
 
-export default function GeneralSettings({ locale, defaultName, defaultPhone, branches = [], initialSection }: { locale: Locale; defaultName: string; defaultPhone: string; branches?: string[]; initialSection?: string }) {
+export default function GeneralSettings({ locale, defaultName, defaultPhone, branches = [], initialSection, receiptMode }: { locale: Locale; defaultName: string; defaultPhone: string; branches?: string[]; initialSection?: string; receiptMode: ReceiptMode }) {
   const [section, setSection] = useState(initialSection ?? "general");
   const [f, setF] = useState<Form>({
     name: defaultName, phone: defaultPhone, workStart: "09:00", workEnd: "20:00",
@@ -119,7 +120,7 @@ export default function GeneralSettings({ locale, defaultName, defaultPhone, bra
           ) : section === "exams" ? (
             <ExamsSettings locale={locale} />
           ) : section === "receipt" ? (
-            <ChekSettings locale={locale} centerName={f.name} />
+            <ChekSettings locale={locale} centerName={f.name} receiptMode={receiptMode} />
           ) : section === "landing" ? (
             <LandingSettings locale={locale} branches={branches} />
           ) : section !== "general" ? (

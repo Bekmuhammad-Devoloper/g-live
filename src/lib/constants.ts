@@ -93,7 +93,20 @@ export const EDU_STATUS_LABELS: Record<string, Record<Locale, string>> = {
 };
 
 // ─── To'lov ───
-export const PAYMENT_METHODS = ["CASH", "CARD", "CLICK", "PAYME", "UZUM", "TRANSFER"] as const;
+// "BANK" — bank hisobiga o'tkazma (xarajatlar ro'yxatida allaqachon bor edi,
+// endi kirim to'lovlarida ham tanlanadi).
+export const PAYMENT_METHODS = ["CASH", "CARD", "BANK", "CLICK", "PAYME", "UZUM", "TRANSFER"] as const;
+
+export const PAYMENT_METHOD_LABELS: Record<string, Record<Locale, string>> = {
+  CASH: { uz: "Naqd", ru: "Наличные", en: "Cash" },
+  CARD: { uz: "Karta", ru: "Карта", en: "Card" },
+  BANK: { uz: "Bank hisobi", ru: "Банковский счёт", en: "Bank account" },
+  CLICK: { uz: "Click", ru: "Click", en: "Click" },
+  PAYME: { uz: "Payme", ru: "Payme", en: "Payme" },
+  UZUM: { uz: "Uzum", ru: "Uzum", en: "Uzum" },
+  TRANSFER: { uz: "O'tkazma", ru: "Перевод", en: "Transfer" },
+  HUMO: { uz: "Humo", ru: "Humo", en: "Humo" },
+};
 export const PAYMENT_STATUSES = ["PENDING", "PAID", "REFUNDED", "CANCELLED"] as const;
 
 export const PAYMENT_STATUS_LABELS: Record<string, Record<Locale, string>> = {

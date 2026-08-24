@@ -7,6 +7,7 @@ import { useRouter } from "next/navigation";
 import { cn } from "@/lib/cn";
 import { EDU_STATUS_LABELS, EDU_STATUSES, PAYMENT_STATUS_LABELS, label, formatMoney, type Locale } from "@/lib/constants";
 import { tr } from "@/lib/tr";
+import { isReceiptRequired, type ReceiptMode } from "@/lib/receiptMode";
 import { quickCreateStudent, type QuickState } from "../actions";
 import { updateStudent, bulkArchiveStudents, bulkAssignGroup, bulkNotifyStudents, setStudentImage, getStudentPayments, acceptPayment, type StudentPayments, type MonthPay, type ReceiptData } from "./actions";
 import { Icon } from "../_components/Icon";
@@ -37,6 +38,8 @@ interface Props {
   canCreate: boolean;
   canPay: boolean;
   currentUserName: string;
+  /** CEO sozlamasi: chek yuklash majburiymi (server'dan keladi) */
+  receiptMode: ReceiptMode;
 }
 
 const PAGE_SIZE = 15;
@@ -129,7 +132,7 @@ function StudentAvatar({ id, name, imageUrl, canManage, locale }: { id: string; 
   );
 }
 
-export default function StudentsView({ students, courses, locale, canCreate, canPay, currentUserName }: Props) {
+export default function StudentsView({ students, courses, locale, canCreate, canPay, currentUserName, receiptMode }: Props) {
   const router = useRouter();
 
   // ── Filtrlar ──
@@ -586,6 +589,7 @@ export default function StudentsView({ students, courses, locale, canCreate, can
           canManage={canCreate}
           canPay={canPay}
           cashierName={currentUserName}
+          receiptMode={receiptMode}
           onClose={() => setDetail(null)}
           onEdit={() => { setDetail(null); setEditing(detail); }}
         />
@@ -597,13 +601,14 @@ export default function StudentsView({ students, courses, locale, canCreate, can
 // ───────────── O'quvchi ma'lumotlari (bosilганда ochiladi) ─────────────
 
 function StudentDetailModal({
-  student: st, locale, canManage, canPay, cashierName, onClose, onEdit,
+  student: st, locale, canManage, canPay, cashierName, receiptMode, onClose, onEdit,
 }: {
   student: VStudent;
   locale: Locale;
   canManage: boolean;
   canPay: boolean;
   cashierName: string;
+  receiptMode: ReceiptMode;
   onClose: () => void;
   onEdit: () => void;
 }) {
@@ -702,6 +707,7 @@ function StudentDetailModal({
                   studentId={st.id}
                   defaultPurpose={st.courses[0] ? `${st.courses[0]} ${tr(locale, { uz: "kurs to'lovi", ru: "оплата курса", en: "course fee" })}` : tr(locale, { uz: "Kurs to'lovi", ru: "Оплата курса", en: "Course fee" })}
                   cashierName={cashierName}
+                  receiptMode={receiptMode}
                   locale={locale}
                   onCancel={() => setPayForm(false)}
                   onDone={(r) => { setPayForm(false); setReceipt(r); reloadPay(); }}
@@ -849,12 +855,14 @@ function StudentDetailModal({
     </div>, document.body);
 }
 
-// To'lov qabul qilish formasi (drawer ichida ochiladi) — Naqd/Karta, karta bo'lsa chek yuklanadi
-function PayAcceptForm({ studentId, defaultPurpose, cashierName, locale, onCancel, onDone }: {
+// To'lov qabul qilish formasi (drawer ichida ochiladi) — Naqd / Karta / Bank hisobi.
+// Chek majburiymi — CEO sozlamasidan keladi (receiptMode), qattiq yozilmagan.
+function PayAcceptForm({ studentId, defaultPurpose, cashierName, locale, receiptMode, onCancel, onDone }: {
   studentId: string;
   defaultPurpose: string;
   cashierName: string;
   locale: Locale;
+  receiptMode: ReceiptMode;
   onCancel: () => void;
   onDone: (r: ReceiptData) => void;
 }) {
@@ -863,7 +871,7 @@ function PayAcceptForm({ studentId, defaultPurpose, cashierName, locale, onCance
     return `${d.getFullYear()}-${p(d.getMonth() + 1)}-${p(d.getDate())}T${p(d.getHours())}:${p(d.getMinutes())}`;
   };
   const [amountStr, setAmountStr] = useState("");
-  const [method, setMethod] = useState<"CASH" | "CARD">("CASH");
+  const [method, setMethod] = useState<"CASH" | "CARD" | "BANK">("CASH");
   const [paidAt, setPaidAt] = useState(nowLocal());
   const [receiptUrl, setReceiptUrl] = useState("");
   const [uploading, setUploading] = useState(false);
@@ -895,7 +903,10 @@ function PayAcceptForm({ studentId, defaultPurpose, cashierName, locale, onCance
     setErr(null);
     const amount = Number(amountStr.replace(/\s/g, ""));
     if (!amount || amount <= 0) { setErr(tr(locale, { uz: "Summani kiriting", ru: "Введите сумму", en: "Enter amount" })); return; }
-    if (method === "CARD" && !receiptUrl) { setErr(tr(locale, { uz: "Karta to'lovi uchun chek yuklang", ru: "Загрузите чек для оплаты картой", en: "Upload receipt for card payment" })); return; }
+    if (isReceiptRequired(receiptMode, method) && !receiptUrl) {
+      setErr(tr(locale, { uz: "Bu to'lov uchun chek yuklash majburiy", ru: "Для этой оплаты чек обязателен", en: "A receipt is required for this payment" }));
+      return;
+    }
     startBusy(async () => {
       const r = await acceptPayment(studentId, { amount, method, purpose: defaultPurpose, receiptUrl: receiptUrl || null, paidAt: new Date(paidAt).toISOString() });
       if (r.ok && r.receipt) onDone(r.receipt);
@@ -915,6 +926,7 @@ function PayAcceptForm({ studentId, defaultPurpose, cashierName, locale, onCance
         <div className="flex gap-2">
           <button type="button" onClick={() => setMethod("CASH")} className={tab(method === "CASH")}><Icon name="wallet" className="h-4 w-4" /> {tr(locale, { uz: "Naqd", ru: "Наличные", en: "Cash" })}</button>
           <button type="button" onClick={() => setMethod("CARD")} className={tab(method === "CARD")}><Icon name="card" className="h-4 w-4" /> {tr(locale, { uz: "Karta", ru: "Карта", en: "Card" })}</button>
+          <button type="button" onClick={() => setMethod("BANK")} className={tab(method === "BANK")}><Icon name="building" className="h-4 w-4" /> {tr(locale, { uz: "Bank hisobi", ru: "Банк. счёт", en: "Bank" })}</button>
         </div>
       </div>
 
@@ -936,10 +948,21 @@ function PayAcceptForm({ studentId, defaultPurpose, cashierName, locale, onCance
         <span className="font-semibold text-slate-600 dark:text-slate-200">{cashierName}</span>
       </div>
 
-      {/* Karta bo'lsa — chek yuklash */}
-      {method === "CARD" && (
+      {/* Chek yuklash — sozlamaga qarab (ixtiyoriy bo'lsa ham yuklash mumkin) */}
+      {(
         <div>
-          <label className="mb-1 block text-[11px] font-semibold text-slate-500">{tr(locale, { uz: "Chek (rasm yoki PDF)", ru: "Чек (фото или PDF)", en: "Receipt (image or PDF)" })}</label>
+          <label className="mb-1 flex items-center gap-1.5 text-[11px] font-semibold text-slate-500">
+            {tr(locale, { uz: "Chek (rasm yoki PDF)", ru: "Чек (фото или PDF)", en: "Receipt (image or PDF)" })}
+            {isReceiptRequired(receiptMode, method) ? (
+              <span className="rounded bg-rose-500/15 px-1.5 py-0.5 text-[10px] font-bold text-rose-600 dark:text-rose-400">
+                {tr(locale, { uz: "majburiy", ru: "обязательно", en: "required" })}
+              </span>
+            ) : (
+              <span className="rounded bg-slate-500/10 px-1.5 py-0.5 text-[10px] font-medium text-slate-500">
+                {tr(locale, { uz: "ixtiyoriy", ru: "необязательно", en: "optional" })}
+              </span>
+            )}
+          </label>
           {receiptUrl ? (
             <div className="flex items-center gap-2 rounded-lg border border-emerald-200 bg-emerald-50 px-3 py-2 text-xs dark:border-emerald-900/40 dark:bg-emerald-950/20">
               <Icon name="check" className="h-4 w-4 shrink-0 text-emerald-500" />

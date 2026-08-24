@@ -5,7 +5,7 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { cn } from "@/lib/cn";
 import { getT } from "@/lib/i18n";
-import { LOCALES, intlLocale, type Locale } from "@/lib/constants";
+import { LOCALES, intlLocale, PAYMENT_METHODS, PAYMENT_METHOD_LABELS, label, type Locale } from "@/lib/constants";
 import { logout, setLocale, setBranch, quickCreateStudent, type QuickState } from "../actions";
 import { createManualPayment, type PayState } from "../payments/actions";
 import { Icon } from "./Icon";
@@ -33,7 +33,7 @@ export interface TopbarProps {
 type Menu = "new" | "branch" | "calendar" | "video" | "user" | null;
 type Modal = "student" | "payment" | null;
 
-const PAYMENT_METHODS = ["CASH", "CARD", "CLICK", "PAYME", "UZUM", "TRANSFER"];
+// Ro'yxat umumiy manbadan (constants.ts) — bu yerda dublikat saqlanmaydi
 
 export default function Topbar(p: TopbarProps) {
   const t = getT(p.locale);
@@ -525,7 +525,7 @@ function QuickPaymentModal({
           <div>
             <label className="mb-1 block text-xs font-semibold text-slate-600">{t("pay.method")} <span className="text-red-500">*</span></label>
             <select name="method" required className="input" defaultValue="CASH">
-              {PAYMENT_METHODS.map((m) => <option key={m} value={m}>{m}</option>)}
+              {PAYMENT_METHODS.map((m) => <option key={m} value={m}>{label(PAYMENT_METHOD_LABELS, m, locale)}</option>)}
             </select>
           </div>
         </div>

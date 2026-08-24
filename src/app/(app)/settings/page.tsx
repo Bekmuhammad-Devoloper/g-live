@@ -5,6 +5,8 @@ import { tr } from "@/lib/tr";
 import { Forbidden } from "../_components/ui";
 import LicenseBanner from "../_components/LicenseBanner";
 import GeneralSettings from "./GeneralSettings";
+import { getSetting } from "@/lib/settings";
+import { RECEIPT_MODE_KEY, parseReceiptMode } from "@/lib/receiptMode";
 
 const ALLOWED = [ROLES.DIRECTOR, ROLES.DEPUTY_DIRECTOR];
 
@@ -17,6 +19,7 @@ export default async function SettingsPage({ searchParams }: { searchParams: Pro
   }
 
   const sp = await searchParams;
+  const receiptMode = parseReceiptMode(await getSetting(RECEIPT_MODE_KEY));
   const [branch, allBranches] = await Promise.all([
     s.branchId
       ? prisma.branch.findUnique({ where: { id: s.branchId }, select: { name: true, phone: true } })
@@ -33,6 +36,7 @@ export default async function SettingsPage({ searchParams }: { searchParams: Pro
         defaultPhone={branch?.phone ?? ""}
         branches={allBranches.map((b) => b.name)}
         initialSection={sp.tab ?? "general"}
+        receiptMode={receiptMode}
       />
     </div>
   );
