@@ -849,20 +849,10 @@ function StudentDetailModal({
           )}
         </div>
 
-        {/* Footer amallari */}
+        {/* Footer amallari — hammasi bitta qatorda */}
         {canManage && (
           <div className="shrink-0 border-t border-slate-100 bg-white px-5 py-3 dark:border-white/10 dark:bg-[#15243d]">
-            <div className="flex gap-2">
-              <button onClick={onEdit} className="flex flex-1 items-center justify-center gap-2 rounded-xl bg-brand-600 py-2.5 text-sm font-semibold text-white shadow-sm transition hover:bg-brand-700 active:scale-[.99]">
-                <Icon name="pencil" className="h-4 w-4" /> {tr(locale, { uz: "Tahrirlash", ru: "Редактировать", en: "Edit" })}
-              </button>
-              {st.phone && (
-                <a href={`tel:${st.phone}`} className="flex items-center justify-center gap-2 rounded-xl border border-slate-200 px-4 py-2.5 text-sm font-semibold text-slate-600 transition hover:bg-slate-100 dark:border-slate-700 dark:text-slate-300 dark:hover:bg-white/10">
-                  <Icon name="phone" className="h-4 w-4" />
-                </a>
-              )}
-            </div>
-            <StudentDangerZone student={st} locale={locale} onDone={onClose} />
+            <StudentActionsBar student={st} locale={locale} onEdit={onEdit} onDone={onClose} />
           </div>
         )}
       </div>
@@ -873,7 +863,7 @@ function StudentDetailModal({
 // O'chirish amallari: arxivlash (qaytariladi) va mutloq o'chirish (qaytarilmaydi).
 // Mutloq o'chirishda to'lov tarixi ham yo'qoladi — shu sabab ism yozib tasdiqlanadi
 // va server tomonda faqat direktor/o'rinbosariga ruxsat beriladi.
-function StudentDangerZone({ student: st, locale, onDone }: { student: VStudent; locale: Locale; onDone: () => void }) {
+function StudentActionsBar({ student: st, locale, onEdit, onDone }: { student: VStudent; locale: Locale; onEdit: () => void; onDone: () => void }) {
   const router = useRouter();
   const [pending, start] = useTransition();
   const [mode, setMode] = useState<"none" | "purge">("none");
@@ -898,26 +888,51 @@ function StudentDangerZone({ student: st, locale, onDone }: { student: VStudent;
   });
 
   return (
-    <div className="mt-2 border-t border-slate-100 pt-2 dark:border-white/10">
-      {mode === "none" ? (
-        <div className="flex gap-2">
-          <button
-            onClick={runArchive}
-            disabled={pending}
-            className="flex-1 rounded-xl border border-slate-200 py-2 text-xs font-semibold text-slate-500 transition hover:bg-slate-50 disabled:opacity-60 dark:border-white/10 dark:text-slate-400 dark:hover:bg-white/5"
+    <div>
+      {/* Barcha amallar bitta qatorda: tahrirlash · qo'ng'iroq · arxiv · o'chirish */}
+      <div className="flex items-stretch gap-2">
+        <button
+          onClick={onEdit}
+          title={L("Tahrirlash", "Редактировать", "Edit")}
+          className="flex min-w-0 flex-1 items-center justify-center gap-1.5 rounded-xl bg-brand-600 px-3 py-2.5 text-sm font-semibold text-white shadow-sm transition hover:bg-brand-700 active:scale-[.99]"
+        >
+          <Icon name="pencil" className="h-4 w-4 shrink-0" />
+          <span className="truncate">{L("Tahrirlash", "Редактировать", "Edit")}</span>
+        </button>
+
+        {st.phone && (
+          <a
+            href={`tel:${st.phone}`}
+            title={st.phone}
+            className="flex shrink-0 items-center justify-center rounded-xl border border-slate-200 px-3 text-slate-600 transition hover:bg-slate-100 dark:border-slate-700 dark:text-slate-300 dark:hover:bg-white/10"
           >
-            {archived ? L("Arxivdan qaytarish", "Вернуть из архива", "Restore") : L("Arxivlash", "В архив", "Archive")}
-          </button>
-          <button
-            onClick={() => { setMode("purge"); setTyped(""); setErr(null); }}
-            disabled={pending}
-            className="flex-1 rounded-xl border border-rose-200 py-2 text-xs font-semibold text-rose-600 transition hover:bg-rose-50 disabled:opacity-60 dark:border-rose-500/30 dark:text-rose-400 dark:hover:bg-rose-500/10"
-          >
-            {L("Butunlay o'chirish", "Удалить навсегда", "Delete permanently")}
-          </button>
-        </div>
-      ) : (
-        <div className="rounded-xl border border-rose-200 bg-rose-50 p-3 dark:border-rose-500/30 dark:bg-rose-500/10">
+            <Icon name="phone" className="h-4 w-4" />
+          </a>
+        )}
+
+        <button
+          onClick={runArchive}
+          disabled={pending}
+          title={archived ? L("Arxivdan qaytarish", "Вернуть из архива", "Restore") : L("Arxivlash", "В архив", "Archive")}
+          className="flex shrink-0 items-center justify-center gap-1.5 rounded-xl border border-slate-200 px-3 text-xs font-semibold text-slate-500 transition hover:bg-slate-50 disabled:opacity-60 dark:border-white/10 dark:text-slate-400 dark:hover:bg-white/5"
+        >
+          <Icon name={archived ? "refresh" : "personOff"} className="h-4 w-4 shrink-0" />
+          <span className="hidden sm:inline">{archived ? L("Qaytarish", "Вернуть", "Restore") : L("Arxiv", "Архив", "Archive")}</span>
+        </button>
+
+        <button
+          onClick={() => { setMode(mode === "purge" ? "none" : "purge"); setTyped(""); setErr(null); }}
+          disabled={pending}
+          title={L("Butunlay o'chirish", "Удалить навсегда", "Delete permanently")}
+          className="flex shrink-0 items-center justify-center gap-1.5 rounded-xl border border-rose-200 px-3 text-xs font-semibold text-rose-600 transition hover:bg-rose-50 disabled:opacity-60 dark:border-rose-500/30 dark:text-rose-400 dark:hover:bg-rose-500/10"
+        >
+          <Icon name="trash" className="h-4 w-4 shrink-0" />
+          <span className="hidden sm:inline">{L("O'chirish", "Удалить", "Delete")}</span>
+        </button>
+      </div>
+
+      {mode === "purge" && (
+        <div className="mt-2 rounded-xl border border-rose-200 bg-rose-50 p-3 dark:border-rose-500/30 dark:bg-rose-500/10">
           <p className="text-[11px] leading-relaxed text-rose-700 dark:text-rose-300">
             {L(
               "Diqqat: o'quvchi bilan birga davomat, to'lov tarixi va sertifikatlari ham butunlay o'chadi. Qaytarib bo'lmaydi.",
