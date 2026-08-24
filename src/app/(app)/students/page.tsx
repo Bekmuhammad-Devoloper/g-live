@@ -3,6 +3,7 @@ import { requireSession } from "@/lib/auth";
 import { prisma } from "@/lib/db";
 import { ROLES, type Locale } from "@/lib/constants";
 import { canWrite, MODULES } from "@/lib/rbac";
+import { branchWhere } from "@/lib/branchScope";
 import { tr } from "@/lib/tr";
 import { Forbidden } from "../_components/ui";
 import { Icon } from "../_components/Icon";
@@ -29,6 +30,8 @@ export default async function StudentsPage() {
   if (s.role === ROLES.TEACHER) {
     where = { enrollments: { some: { group: { teacherId: s.userId } } } };
   }
+  // Faol filial o'quvchilarigina (filialsiz eski yozuvlar ham ko'rinadi)
+  where = { AND: [where, branchWhere(s)] };
 
   const students = await prisma.student.findMany({
     where,

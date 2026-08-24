@@ -2,6 +2,7 @@ import { requireSession } from "@/lib/auth";
 import { prisma } from "@/lib/db";
 import { canRead, MODULES } from "@/lib/rbac";
 import { ROLES } from "@/lib/constants";
+import { branchWhere } from "@/lib/branchScope";
 import { tr } from "@/lib/tr";
 import { Forbidden } from "../_components/ui";
 import RoomsView, { type VRoom, type RoomStatus } from "./RoomsView";
@@ -15,9 +16,9 @@ export default async function RoomsPage() {
   }
 
   const [rooms, groups] = await Promise.all([
-    prisma.room.findMany({ where: { isActive: true }, orderBy: { name: "asc" } }),
+    prisma.room.findMany({ where: { AND: [{ isActive: true }, branchWhere(s)] }, orderBy: { name: "asc" } }),
     prisma.group.findMany({
-      where: { room: { not: null }, status: { in: ["ACTIVE", "PLANNED"] } },
+      where: { AND: [{ room: { not: null }, status: { in: ["ACTIVE", "PLANNED"] } }, branchWhere(s)] },
       select: { room: true, name: true, weekdays: true, startTime: true, endTime: true, program: { select: { name: true } } },
     }),
   ]);

@@ -3,6 +3,7 @@ import { prisma } from "@/lib/db";
 import { getT } from "@/lib/i18n";
 import { canRead, canWrite, MODULES } from "@/lib/rbac";
 import { ROLES } from "@/lib/constants";
+import { branchWhere } from "@/lib/branchScope";
 import { Forbidden } from "../_components/ui";
 import LeadsWorkspace from "./_components/LeadsWorkspace";
 import { columnOf, type VLead } from "./_lib/leadColumns";
@@ -17,6 +18,7 @@ export default async function CrmPage() {
 
   const [leads, managers] = await Promise.all([
     prisma.lead.findMany({
+      where: branchWhere(s), // faol filial lidlarigina (filialsiz eski yozuvlar ham)
       orderBy: { createdAt: "desc" },
       include: { manager: true, group: { select: { name: true } }, _count: { select: { activities: true } } },
       take: 2000,

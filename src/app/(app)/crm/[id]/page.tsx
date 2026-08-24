@@ -4,6 +4,7 @@ import { prisma } from "@/lib/db";
 import { getT } from "@/lib/i18n";
 import { canRead, canWrite, MODULES } from "@/lib/rbac";
 import { ROLES } from "@/lib/constants";
+import { branchWhere } from "@/lib/branchScope";
 import { Forbidden } from "../../_components/ui";
 import LeadDetail, { type DLead, type DActivity } from "./LeadDetail";
 
@@ -26,7 +27,7 @@ export default async function LeadDetailPage({ params }: { params: Promise<{ id:
       },
     }),
     prisma.user.findMany({ where: { role: ROLES.OPERATOR, isActive: true }, select: { id: true, fullName: true }, orderBy: { fullName: "asc" } }),
-    prisma.lead.findMany({ orderBy: { createdAt: "desc" }, select: { id: true } }),
+    prisma.lead.findMany({ where: branchWhere(s), orderBy: { createdAt: "desc" }, select: { id: true } }), // oldingi/keyingi — faol filial doirasida
   ]);
   if (!lead) notFound();
 

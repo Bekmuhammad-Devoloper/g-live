@@ -3,6 +3,7 @@ import { prisma } from "@/lib/db";
 import { getT } from "@/lib/i18n";
 import { canRead, getPermission, MODULES } from "@/lib/rbac";
 import { ROLES } from "@/lib/constants";
+import { branchWhere } from "@/lib/branchScope";
 import { Forbidden } from "../_components/ui";
 import GroupsView, { type VGroup } from "./GroupsView";
 import type { Prisma } from "@prisma/client";
@@ -29,6 +30,10 @@ export default async function GroupsPage() {
     const parent = await prisma.parent.findUnique({ where: { userId: s.userId }, include: { children: true } });
     const ids = parent?.children.map((c) => c.studentId) ?? [];
     where = { students: { some: { studentId: { in: ids.length ? ids : ["__none__"] } } } };
+  }
+  // Xodimlar faol filial guruhlarinigina ko'radi (o'quvchi/ota-ona o'z guruhini har doim ko'radi)
+  if (![ROLES.STUDENT, ROLES.PARENT].includes(s.role as never)) {
+    where = { AND: [where, branchWhere(s)] };
   }
 
   const [groups, totalStudents, frozenStudents] = await Promise.all([
