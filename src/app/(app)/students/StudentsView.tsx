@@ -865,10 +865,17 @@ function StudentDetailModal({
           )}
         </div>
 
-        {/* Footer amallari — hammasi bitta qatorda */}
+        {/* Footer amallari. Arxiv va o'chirish tahrirlash oynasi ichida. */}
         {canManage && (
-          <div className="shrink-0 border-t border-slate-100 bg-white px-5 py-3 dark:border-white/10 dark:bg-[#15243d]">
-            <StudentActionsBar student={st} locale={locale} onEdit={onEdit} onDone={onClose} />
+          <div className="flex shrink-0 gap-2 border-t border-slate-100 bg-white px-5 py-3 dark:border-white/10 dark:bg-[#15243d]">
+            <button onClick={onEdit} className="flex flex-1 items-center justify-center gap-2 rounded-xl bg-brand-600 py-2.5 text-sm font-semibold text-white shadow-sm transition hover:bg-brand-700 active:scale-[.99]">
+              <Icon name="pencil" className="h-4 w-4" /> {tr(locale, { uz: "Tahrirlash", ru: "Редактировать", en: "Edit" })}
+            </button>
+            {st.phone && (
+              <a href={`tel:${st.phone}`} title={st.phone} className="flex shrink-0 items-center justify-center rounded-xl border border-slate-200 px-4 py-2.5 text-slate-600 transition hover:bg-slate-100 dark:border-slate-700 dark:text-slate-300 dark:hover:bg-white/10">
+                <Icon name="phone" className="h-4 w-4" />
+              </a>
+            )}
           </div>
         )}
       </div>
@@ -879,7 +886,7 @@ function StudentDetailModal({
 // O'chirish amallari: arxivlash (qaytariladi) va mutloq o'chirish (qaytarilmaydi).
 // Mutloq o'chirishda to'lov tarixi ham yo'qoladi — shu sabab ism yozib tasdiqlanadi
 // va server tomonda faqat direktor/o'rinbosariga ruxsat beriladi.
-function StudentActionsBar({ student: st, locale, onEdit, onDone }: { student: VStudent; locale: Locale; onEdit: () => void; onDone: () => void }) {
+function StudentDangerActions({ student: st, locale, onDone }: { student: VStudent; locale: Locale; onDone: () => void }) {
   const router = useRouter();
   const [pending, start] = useTransition();
   const [mode, setMode] = useState<"none" | "purge">("none");
@@ -905,45 +912,26 @@ function StudentActionsBar({ student: st, locale, onEdit, onDone }: { student: V
 
   return (
     <div>
-      {/* Barcha amallar bitta qatorda: tahrirlash · qo'ng'iroq · arxiv · o'chirish */}
+      {/* Arxivlash va butunlay o'chirish */}
       <div className="flex items-stretch gap-2">
         <button
-          onClick={onEdit}
-          title={L("Tahrirlash", "Редактировать", "Edit")}
-          className="flex min-w-0 flex-1 items-center justify-center gap-1.5 rounded-xl bg-brand-600 px-3 py-2.5 text-sm font-semibold text-white shadow-sm transition hover:bg-brand-700 active:scale-[.99]"
-        >
-          <Icon name="pencil" className="h-4 w-4 shrink-0" />
-          <span className="truncate">{L("Tahrirlash", "Редактировать", "Edit")}</span>
-        </button>
-
-        {st.phone && (
-          <a
-            href={`tel:${st.phone}`}
-            title={st.phone}
-            className="flex shrink-0 items-center justify-center rounded-xl border border-slate-200 px-3 text-slate-600 transition hover:bg-slate-100 dark:border-slate-700 dark:text-slate-300 dark:hover:bg-white/10"
-          >
-            <Icon name="phone" className="h-4 w-4" />
-          </a>
-        )}
-
-        <button
+          type="button"
           onClick={runArchive}
           disabled={pending}
-          title={archived ? L("Arxivdan qaytarish", "Вернуть из архива", "Restore") : L("Arxivlash", "В архив", "Archive")}
-          className="flex shrink-0 items-center justify-center gap-1.5 rounded-xl border border-slate-200 px-3 text-xs font-semibold text-slate-500 transition hover:bg-slate-50 disabled:opacity-60 dark:border-white/10 dark:text-slate-400 dark:hover:bg-white/5"
+          className="flex flex-1 items-center justify-center gap-1.5 rounded-xl border border-slate-200 py-2 text-xs font-semibold text-slate-500 transition hover:bg-slate-50 disabled:opacity-60 dark:border-white/10 dark:text-slate-400 dark:hover:bg-white/5"
         >
           <Icon name={archived ? "refresh" : "personOff"} className="h-4 w-4 shrink-0" />
-          <span className="hidden sm:inline">{archived ? L("Qaytarish", "Вернуть", "Restore") : L("Arxiv", "Архив", "Archive")}</span>
+          {archived ? L("Arxivdan qaytarish", "Вернуть из архива", "Restore") : L("Arxivlash", "В архив", "Archive")}
         </button>
 
         <button
+          type="button"
           onClick={() => { setMode(mode === "purge" ? "none" : "purge"); setTyped(""); setErr(null); }}
           disabled={pending}
-          title={L("Butunlay o'chirish", "Удалить навсегда", "Delete permanently")}
-          className="flex shrink-0 items-center justify-center gap-1.5 rounded-xl border border-rose-200 px-3 text-xs font-semibold text-rose-600 transition hover:bg-rose-50 disabled:opacity-60 dark:border-rose-500/30 dark:text-rose-400 dark:hover:bg-rose-500/10"
+          className="flex flex-1 items-center justify-center gap-1.5 rounded-xl border border-rose-200 py-2 text-xs font-semibold text-rose-600 transition hover:bg-rose-50 disabled:opacity-60 dark:border-rose-500/30 dark:text-rose-400 dark:hover:bg-rose-500/10"
         >
           <Icon name="trash" className="h-4 w-4 shrink-0" />
-          <span className="hidden sm:inline">{L("O'chirish", "Удалить", "Delete")}</span>
+          {L("Butunlay o'chirish", "Удалить навсегда", "Delete permanently")}
         </button>
       </div>
 
@@ -963,11 +951,15 @@ function StudentActionsBar({ student: st, locale, onEdit, onDone }: { student: V
           <input
             value={typed}
             onChange={(e) => setTyped(e.target.value)}
+            // Enter tahrirlash formasini yubormasin
+            onKeyDown={(e) => { if (e.key === "Enter") e.preventDefault(); }}
             className="mt-1.5 h-9 w-full rounded-lg border border-rose-200 bg-white px-2.5 text-sm outline-none focus:border-rose-400 dark:border-rose-500/30 dark:bg-slate-900 dark:text-slate-100"
           />
           {err && <p className="mt-1.5 text-[11px] font-medium text-rose-700 dark:text-rose-300">{err}</p>}
+          {/* type="button" SHART — bu blok tahrirlash formasi ichida turadi */}
           <div className="mt-2 flex gap-2">
             <button
+              type="button"
               onClick={() => { setMode("none"); setErr(null); }}
               disabled={pending}
               className="flex-1 rounded-lg border border-slate-200 bg-white py-2 text-xs font-semibold text-slate-600 transition hover:bg-slate-50 disabled:opacity-60 dark:border-white/10 dark:bg-slate-900 dark:text-slate-300"
@@ -975,6 +967,7 @@ function StudentActionsBar({ student: st, locale, onEdit, onDone }: { student: V
               {L("Bekor qilish", "Отмена", "Cancel")}
             </button>
             <button
+              type="button"
               onClick={runPurge}
               disabled={pending || typed.trim() !== st.fullName.trim()}
               className="flex-[1.4] rounded-lg bg-rose-600 py-2 text-xs font-semibold text-white transition hover:bg-rose-700 disabled:opacity-40"
@@ -1590,6 +1583,12 @@ function EditModal({ student, locale, onClose, onDone }: { student: VStudent; lo
           {error && (
             <p className="rounded-lg bg-rose-50 px-3 py-2 text-sm text-rose-700 dark:bg-rose-500/10 dark:text-rose-400">{error}</p>
           )}
+
+          {/* Arxivlash va butunlay o'chirish — tahrirlash oynasi ichida */}
+          <div className="mt-2 border-t border-slate-100 pt-3.5 dark:border-white/10">
+            <p className={labelCls}>{tr(locale, { uz: "Talabani o'chirish", ru: "Удаление ученика", en: "Remove student" })}</p>
+            <StudentDangerActions student={student} locale={locale} onDone={onClose} />
+          </div>
         </div>
 
         <div className="flex shrink-0 gap-2 border-t border-slate-100 px-5 py-4 dark:border-white/10">
