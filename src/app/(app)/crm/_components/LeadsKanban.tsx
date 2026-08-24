@@ -14,11 +14,13 @@ interface Props {
   locale: Locale;
   selected: Set<string>;
   onOpen: (id: string, e: React.MouseEvent) => void;
+  /** Ikki marta bosilganda — lidning to'liq sahifasi */
+  onOpenFull: (id: string) => void;
   onDropToColumn: (columnKey: string, leadId: string) => void;
   onAdd: (defaultStage: string) => void;
 }
 
-export default function LeadsKanban({ leads, totals, locale, selected, onOpen, onDropToColumn, onAdd }: Props) {
+export default function LeadsKanban({ leads, totals, locale, selected, onOpen, onOpenFull, onDropToColumn, onAdd }: Props) {
   const [dragId, setDragId] = useState<string | null>(null);
   const [overCol, setOverCol] = useState<string | null>(null);
 
@@ -83,6 +85,7 @@ export default function LeadsKanban({ leads, totals, locale, selected, onOpen, o
                     locale={locale}
                     selected={selected.has(lead.id)}
                     onOpen={onOpen}
+                    onOpenFull={onOpenFull}
                     onDragStart={(id, e) => { e.dataTransfer.setData("text/plain", id); e.dataTransfer.effectAllowed = "move"; setDragId(id); }}
                     onDragEnd={() => { setDragId(null); setOverCol(null); }}
                   />

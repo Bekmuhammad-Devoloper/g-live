@@ -18,6 +18,8 @@ import CommandPalette, { type PaletteAction } from "./CommandPalette";
 import KeyboardHelpOverlay from "./KeyboardHelpOverlay";
 import RejectReasonModal from "./modals/RejectReasonModal";
 import EnrollDrawer from "./EnrollDrawer";
+import LeadQuickView from "./LeadQuickView";
+import { useDoubleClickOpen } from "../../_components/useDoubleClickOpen";
 
 interface Opt { id: string; name: string }
 
@@ -49,6 +51,9 @@ export default function LeadsWorkspace({ locale, initialLeads, managers, sources
   const [reject, setReject] = useState<{ id: string; name: string } | null>(null);
   // Guruhga yo'naltirish paneli — "Qabul qilindi" uchun majburiy qadam
   const [enroll, setEnroll] = useState<{ id: string; name: string; groupId: string | null; editCount: number } | null>(null);
+  // Yonboshdan ochiladigan tezkor ko'rish oynasi (1 marta bosilganda)
+  const [quickId, setQuickId] = useState<string | null>(null);
+  const { single, double, cancel: cancelOpen } = useDoubleClickOpen();
   const [flash, setFlash] = useState<string | null>(null);
   const [refreshing, startRefresh] = useTransition();
 
@@ -119,14 +124,25 @@ export default function LeadsWorkspace({ locale, initialLeads, managers, sources
     return arr;
   }, [shown, sort]);
 
+  // Tezkor oyna uchun lid — ro'yxat yangilansa avtomatik yopiladi
+  const quickLead = useMemo(() => (quickId ? leads.find((l) => l.id === quickId) ?? null : null), [quickId, leads]);
+
   // Amallar
+  // 1 marta bosish -> yonbosh tezkor ko'rish oynasi
+  // 2 marta bosish -> lidning to'liq sahifasi (/crm/[id])
+  // Ctrl/Cmd + bosish -> avvalgidek belgilash (kechiktirmasdan)
   const openLead = useCallback((id: string, e: React.MouseEvent) => {
     if (e.ctrlKey || e.metaKey) {
+      cancelOpen();
       setSelection((prev) => { const n = new Set(prev); n.has(id) ? n.delete(id) : n.add(id); return n; });
       return;
     }
-    router.push(`/crm/${id}`);
-  }, [router]);
+    single(() => setQuickId(id));
+  }, [single, cancelOpen]);
+
+  const openLeadFull = useCallback((id: string) => {
+    double(() => router.push(`/crm/${id}`));
+  }, [double, router]);
 
   const toggleSelect = useCallback((id: string) => {
     setSelection((prev) => { const n = new Set(prev); n.has(id) ? n.delete(id) : n.add(id); return n; });
@@ -259,9 +275,9 @@ export default function LeadsWorkspace({ locale, initialLeads, managers, sources
       </div>
 
       {view === "kanban" ? (
-        <LeadsKanban leads={sortedShown} totals={shownTotals} locale={locale} selected={selection} onOpen={openLead} onDropToColumn={onDropToColumn} onAdd={(stage) => setCreate({ open: true, stage })} />
+        <LeadsKanban leads={sortedShown} totals={shownTotals} locale={locale} selected={selection} onOpen={openLead} onOpenFull={openLeadFull} onDropToColumn={onDropToColumn} onAdd={(stage) => setCreate({ open: true, stage })} />
       ) : (
-        <LeadsTable leads={sortedShown} locale={locale} selected={selection} onToggle={(id) => toggleSelect(id)} onOpen={openLead} allSelected={selection.size === shown.length && shown.length > 0} onToggleAll={toggleAll} />
+        <LeadsTable leads={sortedShown} locale={locale} selected={selection} onToggle={(id) => toggleSelect(id)} onOpen={openLead} onOpenFull={openLeadFull} allSelected={selection.size === shown.length && shown.length > 0} onToggleAll={toggleAll} />
       )}
 
       {canWrite && <SelectionActionBar ids={[...selection]} managers={managers} locale={locale} onDone={() => setSelection(new Set())} />}
@@ -270,6 +286,19 @@ export default function LeadsWorkspace({ locale, initialLeads, managers, sources
       <CommandPalette locale={locale} open={showPalette} onClose={() => setShowPalette(false)} leads={leads} actions={paletteActions} onOpenLead={(id) => router.push(`/crm/${id}`)} />
       <KeyboardHelpOverlay locale={locale} open={showHelp} onClose={() => setShowHelp(false)} />
       <RejectReasonModal locale={locale} open={!!reject} leadName={reject?.name ?? ""} onClose={() => setReject(null)} onConfirm={confirmReject} pending={refreshing} />
+
+      {quickLead && (
+        <LeadQuickView
+          lead={quickLead}
+          locale={locale}
+          canWrite={canWrite}
+          onClose={() => setQuickId(null)}
+          onEnroll={() => {
+            setQuickId(null);
+            setEnroll({ id: quickLead.id, name: quickLead.fullName, groupId: quickLead.groupId, editCount: quickLead.enrollEditCount });
+          }}
+        />
+      )}
 
       {enroll && (
         <EnrollDrawer

@@ -20,11 +20,13 @@ interface Props {
   locale: Locale;
   selected: boolean;
   onOpen: (id: string, e: React.MouseEvent) => void;
+  /** Ikki marta bosilganda — lidning to'liq sahifasi */
+  onOpenFull: (id: string) => void;
   onDragStart: (id: string, e: React.DragEvent) => void;
   onDragEnd: () => void;
 }
 
-export default function LeadCard({ lead, locale, selected, onOpen, onDragStart, onDragEnd }: Props) {
+export default function LeadCard({ lead, locale, selected, onOpen, onOpenFull, onDragStart, onDragEnd }: Props) {
   const col = columnDef(columnOf(lead.stage));
   const color = col.color;
   const days = daysSince(lead.createdAt);
@@ -39,7 +41,9 @@ export default function LeadCard({ lead, locale, selected, onOpen, onDragStart, 
       draggable
       onDragStart={(e) => onDragStart(lead.id, e)}
       onDragEnd={onDragEnd}
+      // 1 marta -> yonbosh tezkor oyna, 2 marta -> to'liq sahifa
       onClick={(e) => onOpen(lead.id, e)}
+      onDoubleClick={() => onOpenFull(lead.id)}
       className={cn(
         "group cursor-pointer select-none rounded-xl border bg-[#ffffff] p-3.5 transition hover:-translate-y-0.5 hover:shadow-lg dark:bg-[#15243d]",
         selected ? "border-brand-500 ring-2 ring-brand-500/40" : "border-slate-200 dark:border-white/[0.07]"
@@ -73,6 +77,7 @@ export default function LeadCard({ lead, locale, selected, onOpen, onDragStart, 
       <div className="mt-2.5 space-y-1.5">
         <button
           onClick={(e) => { e.preventDefault(); e.stopPropagation(); window.dispatchEvent(new CustomEvent("glive:call", { detail: { number: lead.phone, leadId: lead.id, contactName: lead.fullName } })); }}
+          onDoubleClick={(e) => e.stopPropagation()}
           title={tr(locale, { uz: "Qo'ng'iroq qilish", ru: "Позвонить", en: "Call" })}
           className="flex items-center gap-2 text-sm transition hover:opacity-70"
         >

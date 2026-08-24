@@ -17,11 +17,13 @@ interface Props {
   selected: Set<string>;
   onToggle: (id: string, e: React.MouseEvent) => void;
   onOpen: (id: string, e: React.MouseEvent) => void;
+  /** Ikki marta bosilganda — lidning to'liq sahifasi */
+  onOpenFull: (id: string) => void;
   allSelected: boolean;
   onToggleAll: () => void;
 }
 
-export default function LeadsTable({ leads, locale, selected, onToggle, onOpen, allSelected, onToggleAll }: Props) {
+export default function LeadsTable({ leads, locale, selected, onToggle, onOpen, onOpenFull, allSelected, onToggleAll }: Props) {
   return (
     <div className="overflow-hidden rounded-2xl border border-slate-200/70 bg-white shadow-card dark:border-slate-800 dark:bg-slate-900">
       <div className="overflow-x-auto">
@@ -47,8 +49,14 @@ export default function LeadsTable({ leads, locale, selected, onToggle, onOpen, 
                 const col = columnDef(columnOf(l.stage));
                 const sel = selected.has(l.id);
                 return (
-                  <tr key={l.id} className={cn("cursor-pointer transition hover:bg-slate-50 dark:hover:bg-slate-800/50", sel && "bg-brand-50/60 dark:bg-brand-950/30")} onClick={(e) => onOpen(l.id, e)}>
-                    <td className="px-3 py-2.5" onClick={(e) => { e.stopPropagation(); onToggle(l.id, e); }}>
+                  <tr
+                    key={l.id}
+                    // 1 marta -> yonbosh tezkor oyna, 2 marta -> to'liq sahifa
+                    className={cn("cursor-pointer select-none transition hover:bg-slate-50 dark:hover:bg-slate-800/50", sel && "bg-brand-50/60 dark:bg-brand-950/30")}
+                    onClick={(e) => onOpen(l.id, e)}
+                    onDoubleClick={() => onOpenFull(l.id)}
+                  >
+                    <td className="px-3 py-2.5" onClick={(e) => { e.stopPropagation(); onToggle(l.id, e); }} onDoubleClick={(e) => e.stopPropagation()}>
                       <input type="checkbox" checked={sel} readOnly className="h-4 w-4 rounded border-slate-300 accent-brand-600" />
                     </td>
                     <td className="px-4 py-2.5">
@@ -60,6 +68,7 @@ export default function LeadsTable({ leads, locale, selected, onToggle, onOpen, 
                           <div className="truncate font-medium text-slate-800 dark:text-slate-100">{l.fullName}</div>
                           <button
                             onClick={(e) => { e.preventDefault(); e.stopPropagation(); window.dispatchEvent(new CustomEvent("glive:call", { detail: { number: l.phone, leadId: l.id, contactName: l.fullName } })); }}
+                            onDoubleClick={(e) => e.stopPropagation()}
                             title={tr(locale, { uz: "Qo'ng'iroq qilish", ru: "Позвонить", en: "Call" })}
                             className="truncate text-xs text-slate-400 transition hover:text-emerald-600 dark:hover:text-emerald-400"
                           >

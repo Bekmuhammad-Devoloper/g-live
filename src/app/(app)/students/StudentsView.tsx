@@ -4,6 +4,7 @@ import { useActionState, useEffect, useMemo, useRef, useState, useTransition } f
 import { createPortal } from "react-dom";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
+import { useDoubleClickOpen } from "../_components/useDoubleClickOpen";
 import { cn } from "@/lib/cn";
 import { EDU_STATUS_LABELS, EDU_STATUSES, PAYMENT_STATUS_LABELS, label, formatMoney, type Locale } from "@/lib/constants";
 import { tr } from "@/lib/tr";
@@ -156,6 +157,8 @@ export default function StudentsView({ students, courses, locale, canCreate, can
   const [showCreate, setShowCreate] = useState(false);
   const [editing, setEditing] = useState<VStudent | null>(null);
   const [detail, setDetail] = useState<VStudent | null>(null);
+  // 1 marta bosish -> tezkor oyna, 2 marta -> to'liq profil
+  const { single, double } = useDoubleClickOpen();
 
   // ── Ommaviy amallar ──
   const [bulkModal, setBulkModal] = useState<null | "assign" | "message">(null);
@@ -419,27 +422,21 @@ export default function StudentsView({ students, courses, locale, canCreate, can
                   return (
                     <tr
                       key={st.id}
-                      // Qatorni bosish — yonboshdan tezkor ko'rish oynasi ochiladi
-                      // (to'lov qabul qilish o'sha yerda). To'liq profil sahifasiga esa
-                      // ism ustidan yoki AMALLAR'dagi "To'liq profil" tugmasidan o'tiladi.
+                      // 1 marta bosish -> yonboshdan tezkor ko'rish oynasi (to'lov shu yerda)
+                      // 2 marta bosish -> o'quvchining to'liq profil sahifasi
                       // Katakdagi tugmalar e.stopPropagation() bilan himoyalangan.
-                      onClick={() => setDetail(st)}
-                      className={cn("cursor-pointer transition hover:bg-slate-50 dark:hover:bg-slate-800/50", sel && "bg-brand-50/60 dark:bg-brand-950/30")}
+                      onClick={() => single(() => setDetail(st))}
+                      onDoubleClick={() => double(() => router.push(`/students/${st.id}`))}
+                      className={cn("cursor-pointer select-none transition hover:bg-slate-50 dark:hover:bg-slate-800/50", sel && "bg-brand-50/60 dark:bg-brand-950/30")}
                     >
-                      <td className="px-3 py-2" onClick={(e) => e.stopPropagation()}>
+                      <td className="px-3 py-2" onClick={(e) => e.stopPropagation()} onDoubleClick={(e) => e.stopPropagation()}>
                         <input type="checkbox" checked={sel} onChange={() => toggleOne(st.id)} className="h-4 w-4 rounded border-slate-300 accent-brand-600" />
                       </td>
-                      <td className="px-3 py-2" onClick={(e) => e.stopPropagation()}>
+                      <td className="px-3 py-2" onClick={(e) => e.stopPropagation()} onDoubleClick={(e) => e.stopPropagation()}>
                         <StudentAvatar id={st.id} name={st.fullName} imageUrl={st.imageUrl} canManage={canCreate} locale={locale} />
                       </td>
                       <td className="px-4 py-2">
-                        <Link
-                          href={`/students/${st.id}`}
-                          onClick={(e) => e.stopPropagation()}
-                          className="block truncate font-medium text-slate-800 underline-offset-2 transition hover:text-brand-600 hover:underline dark:text-slate-100 dark:hover:text-brand-400"
-                        >
-                          {st.fullName}
-                        </Link>
+                        <div className="truncate font-medium text-slate-800 dark:text-slate-100">{st.fullName}</div>
                         <div className="mt-0.5 flex items-center gap-1.5">
                           <span
                             className="inline-flex items-center rounded-full px-2 py-0.5 text-[11px] font-semibold"
@@ -454,7 +451,7 @@ export default function StudentsView({ students, courses, locale, canCreate, can
                         <td className="whitespace-nowrap px-4 py-2 tabular-nums text-slate-700 dark:text-slate-200">{st.phone ?? "—"}</td>
                       )}
                       {isVisible("guruhlar") && (
-                        <td className="px-4 py-2" onClick={(e) => e.stopPropagation()}>
+                        <td className="px-4 py-2" onClick={(e) => e.stopPropagation()} onDoubleClick={(e) => e.stopPropagation()}>
                           {st.groups.length === 0 ? (
                             <span className="text-xs text-slate-400">—</span>
                           ) : (
@@ -498,7 +495,7 @@ export default function StudentsView({ students, courses, locale, canCreate, can
                       {isVisible("izoh") && (
                         <td className="px-4 py-2 text-slate-600 dark:text-slate-300">{st.note ?? "—"}</td>
                       )}
-                      <td className="px-4 py-2" onClick={(e) => e.stopPropagation()}>
+                      <td className="px-4 py-2" onClick={(e) => e.stopPropagation()} onDoubleClick={(e) => e.stopPropagation()}>
                         <div className="flex items-center justify-end gap-1">
                           {/* To'liq profil sahifasi. Tezkor ko'rish uchun qatorning o'zi bosiladi. */}
                           <Link
