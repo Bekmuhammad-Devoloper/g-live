@@ -85,6 +85,21 @@ body {
   background: #c7d7ff;
 }
 
+/* Uzun matn maydondan chiqib ketmasin: 3 soniya turadi, keyin sekin surilib
+   oxirigacha ko'rsatadi, yana qaytadi. Faqat matn sig'magan holatda ishlaydi
+   (MarqueeText komponenti --mq-shift ni o'lchab beradi). */
+@keyframes mqScroll {
+  0%, 25% { transform: translateX(0); }
+  45%, 70% { transform: translateX(var(--mq-shift, 0)); }
+  90%, 100% { transform: translateX(0); }
+}
+.mq-run {
+  animation: mqScroll var(--mq-dur, 12s) ease-in-out infinite;
+}
+@media (prefers-reduced-motion: reduce) {
+  .mq-run { animation: none; }
+}
+
 /* Select strelkasi — brauzerniki chetga yopishib turadi, o'rniga ichkariroqda
    o'zimizniki chiziladi. `.appearance-none` bilan o'z ikonkasini qo'ygan
    selectlarga tegilmaydi (ular allaqachon chevron Icon bilan yuradi). */

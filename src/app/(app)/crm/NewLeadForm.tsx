@@ -9,6 +9,7 @@ import { LEAD_STAGES, LEAD_STAGE_LABELS, label, type Locale } from "@/lib/consta
 import { tr } from "@/lib/tr";
 import { getT } from "@/lib/i18n";
 import { Icon } from "../_components/Icon";
+import MarqueeText from "../_components/MarqueeText";
 
 const SOURCES = ["sayt", "ilova", "telegram", "telefon", "reklama", "tashrif"];
 
@@ -122,16 +123,7 @@ export default function NewLeadForm({
                   ({tr(locale, { uz: "ixtiyoriy", ru: "необязательно", en: "optional" })})
                 </span>
               </label>
-              <select name="groupId" className={input} defaultValue="">
-                <option value="">{tr(locale, { uz: "— yo'naltirilmagan —", ru: "— не назначена —", en: "— not assigned —" })}</option>
-                {groups.map((g) => (
-                  <option key={g.id} value={g.id} disabled={g.taken >= g.capacity}>
-                    {g.courseName} — {g.name} ({g.taken}/{g.capacity})
-                    {g.schedule ? ` · ${g.schedule}` : ""}
-                    {g.taken >= g.capacity ? ` · ${tr(locale, { uz: "to'lgan", ru: "заполнена", en: "full" })}` : ""}
-                  </option>
-                ))}
-              </select>
+              <GroupPicker locale={locale} groups={groups} inputClass={input} />
             </div>
             <div className="col-span-2">
               <label className="mb-1 block text-xs font-medium text-slate-600 dark:text-slate-400">{t("common.note")}</label>
@@ -164,5 +156,78 @@ export default function NewLeadForm({
       </form>
     </div>,
     document.body,
+  );
+}
+
+// Guruh tanlash — brauzerning o'z ro'yxati o'rniga (u maydondan chiqib ketardi).
+// Ro'yxat maydon kengligida qoladi, uzun yozuv esa 3 soniyadan keyin aylanadi.
+function GroupPicker({ locale, groups, inputClass }: { locale: Locale; groups: EnrollGroupOpt[]; inputClass: string }) {
+  const [open, setOpen] = useState(false);
+  const [picked, setPicked] = useState("");
+  const boxRef = useRef<HTMLDivElement>(null);
+
+  const none = tr(locale, { uz: "— yo'naltirilmagan —", ru: "— не назначена —", en: "— not assigned —" });
+  const fullTxt = tr(locale, { uz: "to'lgan", ru: "заполнена", en: "full" });
+  const optLabel = (g: EnrollGroupOpt) =>
+    `${g.courseName} — ${g.name} (${g.taken}/${g.capacity})` +
+    (g.schedule ? ` · ${g.schedule}` : "") +
+    (g.taken >= g.capacity ? ` · ${fullTxt}` : "");
+
+  const current = groups.find((g) => g.id === picked);
+
+  // Tashqariga bosilsa yopiladi
+  useEffect(() => {
+    if (!open) return;
+    const onDown = (e: MouseEvent) => {
+      if (boxRef.current && !boxRef.current.contains(e.target as Node)) setOpen(false);
+    };
+    document.addEventListener("mousedown", onDown);
+    return () => document.removeEventListener("mousedown", onDown);
+  }, [open]);
+
+  return (
+    <div ref={boxRef} className="relative">
+      <input type="hidden" name="groupId" value={picked} />
+      <button
+        type="button"
+        onClick={() => setOpen((o) => !o)}
+        className={`${inputClass} flex items-center gap-2 text-left`}
+      >
+        <MarqueeText text={current ? optLabel(current) : none} className={current ? "flex-1" : "flex-1 text-slate-400"} />
+        <Icon name="chevronDown" className={`h-4 w-4 shrink-0 text-slate-400 transition ${open ? "rotate-180" : ""}`} />
+      </button>
+
+      {open && (
+        <div className="absolute left-0 right-0 z-20 mt-1 max-h-56 overflow-y-auto rounded-lg border border-slate-200 bg-white py-1 shadow-pop dark:border-slate-700 dark:bg-slate-800">
+          <button
+            type="button"
+            onClick={() => { setPicked(""); setOpen(false); }}
+            className="block w-full px-3 py-2 text-left text-sm text-slate-500 hover:bg-slate-50 dark:text-slate-400 dark:hover:bg-white/5"
+          >
+            {none}
+          </button>
+          {groups.map((g) => {
+            const full = g.taken >= g.capacity;
+            return (
+              <button
+                key={g.id}
+                type="button"
+                disabled={full}
+                onClick={() => { setPicked(g.id); setOpen(false); }}
+                className={`block w-full px-3 py-2 text-left text-sm ${
+                  full
+                    ? "cursor-not-allowed text-slate-300 dark:text-slate-600"
+                    : picked === g.id
+                      ? "bg-brand-50 font-medium text-brand-700 dark:bg-brand-500/10 dark:text-brand-300"
+                      : "text-slate-700 hover:bg-slate-50 dark:text-slate-200 dark:hover:bg-white/5"
+                }`}
+              >
+                <MarqueeText text={optLabel(g)} />
+              </button>
+            );
+          })}
+        </div>
+      )}
+    </div>
   );
 }
