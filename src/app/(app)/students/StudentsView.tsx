@@ -419,11 +419,11 @@ export default function StudentsView({ students, courses, locale, canCreate, can
                   return (
                     <tr
                       key={st.id}
-                      // Qatorni bosish — o'quvchining O'Z PROFILIGA o'tadi (/students/[id]).
-                      // <tr> ni <Link> ichiga solib bo'lmaydi (noto'g'ri HTML + ichma-ich <a>),
-                      // shuning uchun router.push ishlatiladi. Katakdagi tugmalar
-                      // e.stopPropagation() bilan himoyalangan.
-                      onClick={() => router.push(`/students/${st.id}`)}
+                      // Qatorni bosish — yonboshdan tezkor ko'rish oynasi ochiladi
+                      // (to'lov qabul qilish o'sha yerda). To'liq profil sahifasiga esa
+                      // ism ustidan yoki AMALLAR'dagi "To'liq profil" tugmasidan o'tiladi.
+                      // Katakdagi tugmalar e.stopPropagation() bilan himoyalangan.
+                      onClick={() => setDetail(st)}
                       className={cn("cursor-pointer transition hover:bg-slate-50 dark:hover:bg-slate-800/50", sel && "bg-brand-50/60 dark:bg-brand-950/30")}
                     >
                       <td className="px-3 py-2" onClick={(e) => e.stopPropagation()}>
@@ -433,7 +433,13 @@ export default function StudentsView({ students, courses, locale, canCreate, can
                         <StudentAvatar id={st.id} name={st.fullName} imageUrl={st.imageUrl} canManage={canCreate} locale={locale} />
                       </td>
                       <td className="px-4 py-2">
-                        <div className="font-medium text-slate-800 dark:text-slate-100">{st.fullName}</div>
+                        <Link
+                          href={`/students/${st.id}`}
+                          onClick={(e) => e.stopPropagation()}
+                          className="block truncate font-medium text-slate-800 underline-offset-2 transition hover:text-brand-600 hover:underline dark:text-slate-100 dark:hover:text-brand-400"
+                        >
+                          {st.fullName}
+                        </Link>
                         <div className="mt-0.5 flex items-center gap-1.5">
                           <span
                             className="inline-flex items-center rounded-full px-2 py-0.5 text-[11px] font-semibold"
@@ -494,15 +500,15 @@ export default function StudentsView({ students, courses, locale, canCreate, can
                       )}
                       <td className="px-4 py-2" onClick={(e) => e.stopPropagation()}>
                         <div className="flex items-center justify-end gap-1">
-                          {/* Tezkor ko'rish — sahifadan chiqmasdan (to'lov qabul qilish shu yerda).
-                              Qatorning o'zi bosilsa to'liq profil sahifasi ochiladi. */}
-                          <button
-                            onClick={() => setDetail(st)}
+                          {/* To'liq profil sahifasi. Tezkor ko'rish uchun qatorning o'zi bosiladi. */}
+                          <Link
+                            href={`/students/${st.id}`}
+                            onClick={(e) => e.stopPropagation()}
                             className="flex h-8 w-8 items-center justify-center rounded-lg text-slate-400 transition hover:bg-slate-100 hover:text-brand-600 dark:hover:bg-slate-800"
-                            title={tr(locale, { uz: "Tezkor ko'rish", ru: "Быстрый просмотр", en: "Quick view" })}
+                            title={tr(locale, { uz: "To'liq profil", ru: "Полный профиль", en: "Full profile" })}
                           >
-                            <Icon name="eye" className="h-4 w-4" />
-                          </button>
+                            <Icon name="expand" className="h-4 w-4" />
+                          </Link>
                           {canCreate && (
                             <button
                               onClick={() => setEditing(st)}
@@ -662,7 +668,16 @@ function StudentDetailModal({
                 </div>
               </div>
             </div>
-            <button onClick={onClose} className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full text-lg text-slate-400 transition hover:bg-slate-100 hover:text-slate-600 dark:hover:bg-white/10">✕</button>
+            <div className="flex shrink-0 items-center gap-1">
+              {/* Tezkor oynadan to'liq profil sahifasiga o'tish */}
+              <Link
+                href={`/students/${st.id}`}
+                className="flex items-center gap-1.5 rounded-lg border border-slate-200 px-2.5 py-1.5 text-[11px] font-semibold text-slate-600 transition hover:border-brand-300 hover:text-brand-600 dark:border-white/10 dark:text-slate-300 dark:hover:bg-white/10"
+              >
+                <Icon name="expand" className="h-3.5 w-3.5" /> {tr(locale, { uz: "To'liq profil", ru: "Полный профиль", en: "Full profile" })}
+              </Link>
+              <button onClick={onClose} className="flex h-8 w-8 items-center justify-center rounded-full text-lg text-slate-400 transition hover:bg-slate-100 hover:text-slate-600 dark:hover:bg-white/10">✕</button>
+            </div>
           </div>
         </div>
 
