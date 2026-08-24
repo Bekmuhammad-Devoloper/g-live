@@ -85,8 +85,10 @@ export function webrtcConfigFor(ext: string): WebrtcConfig | null {
 // UZ raqam: 998XXXXXXXXX ko'rinishiga keltiradi
 export function normalizeUzPhone(raw: string): string {
   const d = raw.replace(/\D/g, "");
-  if (d.startsWith("998")) return d.slice(0, 12);
+  // MUHIM: 9 xonali mahalliy raqam AVVAL tekshiriladi — "99 888 99 99" ning
+  // o'zi 998 bilan boshlanadi va aks holda mamlakat kodi deb qabul qilinardi.
   if (d.length === 9) return "998" + d;
+  if (d.startsWith("998")) return d.slice(0, 12);
   if (d.length === 10 && (d.startsWith("0") || d.startsWith("8"))) return "998" + d.slice(1);
   return d;
 }

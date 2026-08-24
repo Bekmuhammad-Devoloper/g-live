@@ -6,6 +6,7 @@ import { useRouter } from "next/navigation";
 import { Icon } from "../_components/Icon";
 import { type Locale } from "@/lib/constants";
 import { tr } from "@/lib/tr";
+import { fmtUzPhoneInput } from "@/lib/phone";
 import { createTeacher } from "./teacherActions";
 
 export interface BranchOption { id: string; name: string }
@@ -27,8 +28,8 @@ export default function NewTeacherForm({ branches, locale, onClose }: { branches
 
   const groupDigits = (d: string) => d.replace(/\B(?=(\d{3})+(?!\d))/g, " ");
   const fmtMoney = (v: string) => { const d = v.replace(/\D/g, "").slice(0, 12); return d ? groupDigits(d) : ""; };
-  // +998 doimiy prefiks; foydalanuvchi faqat qolgan 9 raqamni kiritadi (XX XXX XX XX)
-  const fmtPhone = (raw: string) => { let d = raw.replace(/\D/g, ""); if (d.startsWith("998")) d = d.slice(3); d = d.slice(0, 9); return [d.slice(0, 2), d.slice(2, 5), d.slice(5, 7), d.slice(7, 9)].filter(Boolean).join(" "); };
+  // +998 doimiy prefiks; foydalanuvchi faqat qolgan 9 raqamni kiritadi (src/lib/phone.ts)
+  const fmtPhone = fmtUzPhoneInput;
   function onFiksaChange(v: string) { setFiksaStr(fmtMoney(v)); }
   function onKpiChange(v: string) { setKpiStr(fmtMoney(v)); }
   function onPhoneChange(v: string) { setPhone(fmtPhone(v)); }

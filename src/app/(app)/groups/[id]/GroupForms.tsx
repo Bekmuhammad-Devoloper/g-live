@@ -8,6 +8,7 @@ import { updateGroup } from "./actions";
 import { GROUP_FORMATS, GROUP_FORMAT_LABELS } from "@/lib/constants";
 import type { Locale } from "@/lib/constants";
 import { tr } from "@/lib/tr";
+import { fmtUzPhoneInput } from "@/lib/phone";
 import { Icon } from "../../_components/Icon";
 import { GROUP_COLORS } from "../NewGroupForm";
 
@@ -54,8 +55,8 @@ export function CreateStudentForm({ groupId, locale }: { groupId: string; locale
   const [state, action, pending] = useActionState<FormState, FormData>(createStudentInGroup, {});
   const ref = useRef<HTMLFormElement>(null);
   const [phone, setPhone] = useState("");
-  // +998 doimiy prefiks; foydalanuvchi faqat qolgan 9 raqamni kiritadi
-  const fmtPhone = (raw: string) => { let d = raw.replace(/\D/g, ""); if (d.startsWith("998")) d = d.slice(3); d = d.slice(0, 9); return [d.slice(0, 2), d.slice(2, 5), d.slice(5, 7), d.slice(7, 9)].filter(Boolean).join(" "); };
+  // +998 doimiy prefiks; foydalanuvchi faqat qolgan 9 raqamni kiritadi (src/lib/phone.ts)
+  const fmtPhone = fmtUzPhoneInput;
   // Har muvaffaqiyatli qo'shishda tozalanadi (state — har safar yangi obyekt, shu sabab ketma-ket qo'shishda ham ishlaydi)
   useEffect(() => { if (state.ok) { ref.current?.reset(); setPhone(""); } }, [state]);
 

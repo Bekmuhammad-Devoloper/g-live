@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 import { cn } from "@/lib/cn";
 import { tr } from "@/lib/tr";
 import type { Locale } from "@/lib/constants";
+import { fmtUzPhoneInput } from "@/lib/phone";
 import { Icon } from "../_components/Icon";
 import UserAvatar from "../_components/UserAvatar";
 import { updateProfile, changePassword } from "./actions";
@@ -16,13 +17,8 @@ export interface Me {
   position: string | null; sipExtension: string | null; joined: string; lastLogin: string | null;
 }
 
-// +998 doimiy prefiks — foydalanuvchi faqat 9 raqam kiritadi
-const fmtPhone = (raw: string) => {
-  let d = raw.replace(/\D/g, "");
-  if (d.startsWith("998")) d = d.slice(3);
-  d = d.slice(0, 9);
-  return [d.slice(0, 2), d.slice(2, 5), d.slice(5, 7), d.slice(7, 9)].filter(Boolean).join(" ");
-};
+// +998 doimiy prefiks — foydalanuvchi faqat 9 raqam kiritadi (src/lib/phone.ts)
+const fmtPhone = fmtUzPhoneInput;
 
 export default function ProfileView({ locale, me, stats }: {
   locale: Locale; me: Me; stats: { leads: number; tasksOpen: number; calls: number };
