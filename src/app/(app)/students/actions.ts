@@ -341,3 +341,102 @@ export async function bulkNotifyStudents(ids: string[], message: string): Promis
   revalidatePath("/students");
   return { ok: true, count };
 }
+
+// ─── O'quvchini o'chirish (ikki bosqich) ───
+// 1) Arxivlash — yumshoq o'chirish: o'quvchi ro'yxatdan chiqadi, lekin barcha
+//    ma'lumoti (to'lov tarixi, davomat) saqlanadi va qaytarib bo'ladi.
+// 2) Mutloq o'chirish — o'quvchi va unga bog'liq HAMMA yozuv butunlay yo'qoladi.
+
+/** Yumshoq o'chirish: eduStatus = ARCHIVED. Qaytarib bo'ladi. */
+export async function archiveStudent(id: string): Promise<EditState> {
+  const s = await requireSession();
+  if (!ALLOWED.includes(s.role as never)) return { error: "forbidden" };
+
+  const st = await prisma.student.findUnique({ where: { id }, select: { fullName: true, eduStatus: true } });
+  if (!st) return { error: "notfound" };
+
+  await prisma.student.update({ where: { id }, data: { eduStatus: "ARCHIVED" } });
+  await writeAudit({
+    actorId: s.userId,
+    action: "UPDATE",
+    entityType: "Student",
+    entityId: id,
+    oldValue: { eduStatus: st.eduStatus },
+    newValue: { eduStatus: "ARCHIVED" },
+    reason: `O'quvchi arxivlandi: ${st.fullName}`,
+  });
+
+  revalidatePath("/students");
+  return { ok: true };
+}
+
+/** Arxivdan qaytarish. */
+export async function restoreStudent(id: string): Promise<EditState> {
+  const s = await requireSession();
+  if (!ALLOWED.includes(s.role as never)) return { error: "forbidden" };
+
+  const st = await prisma.student.findUnique({
+    where: { id },
+    select: { fullName: true, enrollments: { where: { isActive: true }, select: { id: true }, take: 1 } },
+  });
+  if (!st) return { error: "notfound" };
+
+  // Guruhi bo'lsa — faol, bo'lmasa kutish holatiga qaytadi
+  const next = st.enrollments.length ? "ACTIVE" : "WAITING";
+  await prisma.student.update({ where: { id }, data: { eduStatus: next } });
+  await writeAudit({
+    actorId: s.userId,
+    action: "UPDATE",
+    entityType: "Student",
+    entityId: id,
+    newValue: { eduStatus: next },
+    reason: `O'quvchi arxivdan qaytarildi: ${st.fullName}`,
+  });
+
+  revalidatePath("/students");
+  return { ok: true };
+}
+
+/**
+ * MUTLOQ o'chirish — orqaga qaytarib bo'lmaydi.
+ * O'quvchi bilan birga davomat, topshiriq javoblari, sertifikat, imtihon
+ * natijalari va TO'LOV TARIXI ham o'chadi (Payment.studentId majburiy bo'lgani
+ * uchun to'lovlarni saqlab qolib bo'lmaydi). Shu sabab faqat direktor va
+ * o'rinbosariga ruxsat; audit jurnalida qancha yozuv o'chgani qoladi.
+ */
+export async function deleteStudentPermanently(id: string): Promise<EditState> {
+  const s = await requireSession();
+  const CAN_PURGE = [ROLES.DIRECTOR, ROLES.DEPUTY_DIRECTOR];
+  if (!CAN_PURGE.includes(s.role as never)) return { error: "forbidden" };
+
+  const st = await prisma.student.findUnique({
+    where: { id },
+    select: { fullName: true, phone: true, userId: true, _count: { select: { payments: true, attendances: true, enrollments: true } } },
+  });
+  if (!st) return { error: "notfound" };
+
+  await prisma.$transaction(async (tx) => {
+    // Bog'lanishlarni uzamiz (bular kaskad bilan o'chmaydi)
+    await tx.lead.updateMany({ where: { studentId: id }, data: { studentId: null } });
+    await tx.task.updateMany({ where: { studentId: id }, data: { studentId: null } });
+    // To'lovlar — studentId majburiy, shuning uchun o'chiriladi
+    await tx.payment.deleteMany({ where: { studentId: id } });
+    // Qolgani (davomat, javoblar, sertifikat, guruh a'zoligi...) kaskad bilan ketadi
+    await tx.student.delete({ where: { id } });
+    // O'quvchining tizimga kirish hisobi bo'lsa — u ham o'chiriladi
+    if (st.userId) await tx.user.delete({ where: { id: st.userId } }).catch(() => {});
+  });
+
+  await writeAudit({
+    actorId: s.userId,
+    action: "DELETE",
+    entityType: "Student",
+    entityId: id,
+    oldValue: { fullName: st.fullName, phone: st.phone, ...st._count },
+    reason: `O'quvchi MUTLOQ o'chirildi: ${st.fullName}`,
+  });
+
+  revalidatePath("/students");
+  revalidatePath("/finance");
+  return { ok: true };
+}

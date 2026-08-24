@@ -10,7 +10,7 @@ import { EDU_STATUS_LABELS, EDU_STATUSES, PAYMENT_STATUS_LABELS, label, formatMo
 import { tr } from "@/lib/tr";
 import { isReceiptRequired, type ReceiptMode } from "@/lib/receiptMode";
 import { quickCreateStudent, type QuickState } from "../actions";
-import { updateStudent, bulkArchiveStudents, bulkAssignGroup, bulkNotifyStudents, setStudentImage, getStudentPayments, acceptPayment, type StudentPayments, type MonthPay, type ReceiptData } from "./actions";
+import { updateStudent, bulkArchiveStudents, bulkAssignGroup, bulkNotifyStudents, setStudentImage, getStudentPayments, acceptPayment, archiveStudent, restoreStudent, deleteStudentPermanently, type StudentPayments, type MonthPay, type ReceiptData } from "./actions";
 import { Icon } from "../_components/Icon";
 
 // Sahifaga serverdan keladigan bitta o'quvchi qatori
@@ -851,20 +851,111 @@ function StudentDetailModal({
 
         {/* Footer amallari */}
         {canManage && (
-          <div className="flex shrink-0 gap-2 border-t border-slate-100 bg-white px-5 py-3 dark:border-white/10 dark:bg-[#15243d]">
-            <button onClick={onEdit} className="flex flex-1 items-center justify-center gap-2 rounded-xl bg-brand-600 py-2.5 text-sm font-semibold text-white shadow-sm transition hover:bg-brand-700 active:scale-[.99]">
-              <Icon name="pencil" className="h-4 w-4" /> {tr(locale, { uz: "Tahrirlash", ru: "Редактировать", en: "Edit" })}
-            </button>
-            {st.phone && (
-              <a href={`tel:${st.phone}`} className="flex items-center justify-center gap-2 rounded-xl border border-slate-200 px-4 py-2.5 text-sm font-semibold text-slate-600 transition hover:bg-slate-100 dark:border-slate-700 dark:text-slate-300 dark:hover:bg-white/10">
-                <Icon name="phone" className="h-4 w-4" />
-              </a>
-            )}
+          <div className="shrink-0 border-t border-slate-100 bg-white px-5 py-3 dark:border-white/10 dark:bg-[#15243d]">
+            <div className="flex gap-2">
+              <button onClick={onEdit} className="flex flex-1 items-center justify-center gap-2 rounded-xl bg-brand-600 py-2.5 text-sm font-semibold text-white shadow-sm transition hover:bg-brand-700 active:scale-[.99]">
+                <Icon name="pencil" className="h-4 w-4" /> {tr(locale, { uz: "Tahrirlash", ru: "Редактировать", en: "Edit" })}
+              </button>
+              {st.phone && (
+                <a href={`tel:${st.phone}`} className="flex items-center justify-center gap-2 rounded-xl border border-slate-200 px-4 py-2.5 text-sm font-semibold text-slate-600 transition hover:bg-slate-100 dark:border-slate-700 dark:text-slate-300 dark:hover:bg-white/10">
+                  <Icon name="phone" className="h-4 w-4" />
+                </a>
+              )}
+            </div>
+            <StudentDangerZone student={st} locale={locale} onDone={onClose} />
           </div>
         )}
       </div>
       {receipt && <ReceiptModal receipt={receipt} locale={locale} onClose={() => setReceipt(null)} />}
     </div>, document.body);
+}
+
+// O'chirish amallari: arxivlash (qaytariladi) va mutloq o'chirish (qaytarilmaydi).
+// Mutloq o'chirishda to'lov tarixi ham yo'qoladi — shu sabab ism yozib tasdiqlanadi
+// va server tomonda faqat direktor/o'rinbosariga ruxsat beriladi.
+function StudentDangerZone({ student: st, locale, onDone }: { student: VStudent; locale: Locale; onDone: () => void }) {
+  const router = useRouter();
+  const [pending, start] = useTransition();
+  const [mode, setMode] = useState<"none" | "purge">("none");
+  const [typed, setTyped] = useState("");
+  const [err, setErr] = useState<string | null>(null);
+  const L = (uz: string, ru: string, en: string) => tr(locale, { uz, ru, en });
+
+  const archived = st.eduStatus === "ARCHIVED";
+  const errText = (code?: string) =>
+    code === "forbidden"
+      ? L("Bu amal faqat direktor va o'rinbosariga ruxsat etilgan.", "Действие доступно только директору и заместителю.", "Only the director and deputy may do this.")
+      : L("Amal bajarilmadi.", "Не удалось выполнить.", "Action failed.");
+
+  const runArchive = () => start(async () => {
+    const r = archived ? await restoreStudent(st.id) : await archiveStudent(st.id);
+    if (r.ok) { router.refresh(); onDone(); } else setErr(errText(r.error));
+  });
+
+  const runPurge = () => start(async () => {
+    const r = await deleteStudentPermanently(st.id);
+    if (r.ok) { router.refresh(); onDone(); } else setErr(errText(r.error));
+  });
+
+  return (
+    <div className="mt-2 border-t border-slate-100 pt-2 dark:border-white/10">
+      {mode === "none" ? (
+        <div className="flex gap-2">
+          <button
+            onClick={runArchive}
+            disabled={pending}
+            className="flex-1 rounded-xl border border-slate-200 py-2 text-xs font-semibold text-slate-500 transition hover:bg-slate-50 disabled:opacity-60 dark:border-white/10 dark:text-slate-400 dark:hover:bg-white/5"
+          >
+            {archived ? L("Arxivdan qaytarish", "Вернуть из архива", "Restore") : L("Arxivlash", "В архив", "Archive")}
+          </button>
+          <button
+            onClick={() => { setMode("purge"); setTyped(""); setErr(null); }}
+            disabled={pending}
+            className="flex-1 rounded-xl border border-rose-200 py-2 text-xs font-semibold text-rose-600 transition hover:bg-rose-50 disabled:opacity-60 dark:border-rose-500/30 dark:text-rose-400 dark:hover:bg-rose-500/10"
+          >
+            {L("Butunlay o'chirish", "Удалить навсегда", "Delete permanently")}
+          </button>
+        </div>
+      ) : (
+        <div className="rounded-xl border border-rose-200 bg-rose-50 p-3 dark:border-rose-500/30 dark:bg-rose-500/10">
+          <p className="text-[11px] leading-relaxed text-rose-700 dark:text-rose-300">
+            {L(
+              "Diqqat: o'quvchi bilan birga davomat, to'lov tarixi va sertifikatlari ham butunlay o'chadi. Qaytarib bo'lmaydi.",
+              "Внимание: вместе с учеником безвозвратно удалятся посещаемость, история платежей и сертификаты.",
+              "Warning: attendance, payment history and certificates are deleted with the student. This cannot be undone.",
+            )}
+          </p>
+          <p className="mt-2 text-[11px] font-medium text-rose-700 dark:text-rose-300">
+            {L("Tasdiqlash uchun ismini yozing:", "Для подтверждения введите имя:", "Type the name to confirm:")}{" "}
+            <span className="font-bold">{st.fullName}</span>
+          </p>
+          <input
+            value={typed}
+            onChange={(e) => setTyped(e.target.value)}
+            className="mt-1.5 h-9 w-full rounded-lg border border-rose-200 bg-white px-2.5 text-sm outline-none focus:border-rose-400 dark:border-rose-500/30 dark:bg-slate-900 dark:text-slate-100"
+          />
+          {err && <p className="mt-1.5 text-[11px] font-medium text-rose-700 dark:text-rose-300">{err}</p>}
+          <div className="mt-2 flex gap-2">
+            <button
+              onClick={() => { setMode("none"); setErr(null); }}
+              disabled={pending}
+              className="flex-1 rounded-lg border border-slate-200 bg-white py-2 text-xs font-semibold text-slate-600 transition hover:bg-slate-50 disabled:opacity-60 dark:border-white/10 dark:bg-slate-900 dark:text-slate-300"
+            >
+              {L("Bekor qilish", "Отмена", "Cancel")}
+            </button>
+            <button
+              onClick={runPurge}
+              disabled={pending || typed.trim() !== st.fullName.trim()}
+              className="flex-[1.4] rounded-lg bg-rose-600 py-2 text-xs font-semibold text-white transition hover:bg-rose-700 disabled:opacity-40"
+            >
+              {pending ? L("O'chirilmoqda...", "Удаление...", "Deleting...") : L("Ha, butunlay o'chirilsin", "Да, удалить навсегда", "Yes, delete permanently")}
+            </button>
+          </div>
+        </div>
+      )}
+      {mode === "none" && err && <p className="mt-1.5 text-[11px] font-medium text-rose-600 dark:text-rose-400">{err}</p>}
+    </div>
+  );
 }
 
 // To'lov qabul qilish formasi (drawer ichida ochiladi) — Naqd / Karta / Bank hisobi.
@@ -1368,6 +1459,21 @@ function CreateModal({ locale, onClose, onDone }: { locale: Locale; onClose: () 
               <label className={labelCls}>{tr(locale, { uz: "Daraja", ru: "Уровень", en: "Level" })}</label>
               <input name="currentLevel" className={inputCls} placeholder="A1.1" />
             </div>
+          </div>
+          {/* Qarzdor qilib qo'shish — kiritilsa qarz yozuvi ochiladi (Qarzdorlar ro'yxatiga tushadi) */}
+          <div>
+            <label className={labelCls}>
+              {tr(locale, { uz: "Qarz (so'm)", ru: "Долг (сум)", en: "Debt (UZS)" })}
+              <span className="ml-1 font-normal text-slate-400">({tr(locale, { uz: "ixtiyoriy", ru: "необязательно", en: "optional" })})</span>
+            </label>
+            <input name="debt" type="number" min="0" step="10000" className={inputCls} placeholder="0" />
+            <p className="mt-1 text-[11px] text-slate-400">
+              {tr(locale, {
+                uz: "Kiritilsa talaba qarzdor sifatida qo'shiladi va Qarzdorlar ro'yxatida ko'rinadi.",
+                ru: "Если указать, ученик будет добавлен как должник и попадёт в список должников.",
+                en: "If set, the student is added as a debtor and appears in the debtors list.",
+              })}
+            </p>
           </div>
           {state.error && (
             <p className="rounded-lg bg-rose-50 px-3 py-2 text-sm text-rose-700 dark:bg-rose-500/10 dark:text-rose-400">

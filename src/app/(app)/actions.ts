@@ -55,6 +55,8 @@ const studentSchema = z.object({
   age: z.coerce.number().int().min(3).max(100).optional(),
   currentLevel: z.string().optional(),
   groupId: z.string().optional(),
+  // Boshlang'ich qarz (so'm) — kiritilsa PENDING to'lov yozuvi yaratiladi
+  debt: z.coerce.number().int().min(0).max(1_000_000_000).optional(),
 });
 
 export type QuickState = { ok?: boolean; error?: string; studentId?: string };
@@ -64,14 +66,19 @@ export async function quickCreateStudent(_prev: QuickState, formData: FormData):
   const allowed = [ROLES.DIRECTOR, ROLES.DEPUTY_DIRECTOR, ROLES.MANAGER, ROLES.ADMIN];
   if (!allowed.includes(s.role as never)) return { error: "forbidden" };
 
+  // Forma ikki xil bo'lishi mumkin: ism/familiya alohida yoki bitta "fullName"
+  const rawFull = String(formData.get("fullName") ?? "").trim();
+  const [fullFirst, ...fullRest] = rawFull.split(/\s+/);
+
   const parsed = studentSchema.safeParse({
-    firstName: formData.get("firstName"),
-    lastName: formData.get("lastName") || undefined,
+    firstName: formData.get("firstName") || fullFirst || undefined,
+    lastName: formData.get("lastName") || (fullRest.length ? fullRest.join(" ") : undefined),
     phone: formData.get("phone") || undefined,
     phone2: formData.get("phone2") || undefined,
     age: formData.get("age") || undefined,
     currentLevel: formData.get("currentLevel") || undefined,
     groupId: formData.get("groupId") || undefined,
+    debt: formData.get("debt") || undefined,
   });
   if (!parsed.success) return { error: "invalid" };
   const d = parsed.data;
@@ -101,16 +108,32 @@ export async function quickCreateStudent(_prev: QuickState, formData: FormData):
     await prisma.groupStudent.create({ data: { groupId: group.id, studentId: student.id } });
   }
 
+  // Qarzdor qilib qo'shish: PENDING to'lov = qarz (/finance/debtors bilan bir xil mantiq)
+  if (d.debt && d.debt > 0) {
+    await prisma.payment.create({
+      data: {
+        studentId: student.id,
+        amount: d.debt,
+        method: "CASH",
+        status: "PENDING",
+        isManual: true,
+        purpose: "Boshlang'ich qarz",
+        authorId: s.userId,
+      },
+    });
+  }
+
   await writeAudit({
     actorId: s.userId,
     action: "CREATE",
     entityType: "Student",
     entityId: student.id,
-    newValue: { fullName: student.fullName, groupId: group?.id ?? null },
+    newValue: { fullName: student.fullName, groupId: group?.id ?? null, debt: d.debt ?? 0 },
     reason: "Navbar orqali tez qo'shildi",
   });
 
   revalidatePath("/students");
+  if (d.debt && d.debt > 0) revalidatePath("/finance/debtors");
   if (group) revalidatePath(`/groups/${group.id}`);
   return { ok: true, studentId: student.id };
 }
