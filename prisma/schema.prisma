@@ -371,6 +371,7 @@ model Group {
   weekdays  String? // dars kunlari: vergul bilan 1..7 (Du=1 ... Ya=7), masalan "1,3,5"
   startTime String? // dars boshlanish vaqti "HH:mm"
   endTime   String? // dars tugash vaqti "HH:mm"
+  note      String? // guruh haqida izoh/kament — guruh ma'lumoti ko'rinadigan hamma joyda chiqadi
 
   students    GroupStudent[]
   leads       Lead[] // shu guruhga yo'naltirilgan lidlar

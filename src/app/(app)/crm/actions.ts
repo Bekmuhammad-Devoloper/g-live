@@ -232,6 +232,7 @@ export interface EnrollGroupOpt {
   capacity: number;
   taken: number;             // faol o'quvchilar soni
   status: string;
+  note: string | null;       // guruh izohi (kament)
 }
 export interface EnrollOptions {
   courses: { id: string; name: string }[];
@@ -252,7 +253,7 @@ export async function enrollOptions(): Promise<EnrollOptions> {
       program: { isActive: true },
     },
     select: {
-      id: true, name: true, room: true, capacity: true, status: true,
+      id: true, name: true, room: true, capacity: true, status: true, note: true,
       weekdays: true, startTime: true, endTime: true,
       program: { select: { id: true, name: true } },
       teacher: { select: { fullName: true } },
@@ -274,6 +275,7 @@ export async function enrollOptions(): Promise<EnrollOptions> {
       teacher: g.teacher?.fullName ?? null,
       room: g.room, schedule,
       capacity: g.capacity, taken: g._count.students, status: g.status,
+      note: g.note,
     };
   });
 

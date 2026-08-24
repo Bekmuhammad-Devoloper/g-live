@@ -171,7 +171,8 @@ function GroupPicker({ locale, groups, inputClass }: { locale: Locale; groups: E
   const optLabel = (g: EnrollGroupOpt) =>
     `${g.courseName} — ${g.name} (${g.taken}/${g.capacity})` +
     (g.schedule ? ` · ${g.schedule}` : "") +
-    (g.taken >= g.capacity ? ` · ${fullTxt}` : "");
+    (g.taken >= g.capacity ? ` · ${fullTxt}` : "") +
+    (g.note ? ` · ${g.note}` : ""); // guruh izohi (kament)
 
   const current = groups.find((g) => g.id === picked);
 

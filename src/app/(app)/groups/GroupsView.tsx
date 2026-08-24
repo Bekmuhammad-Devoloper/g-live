@@ -35,6 +35,7 @@ export interface VGroup {
   onlineLink: string | null;
   startDate: string | null; // "yyyy-mm-dd"
   endDate: string | null; // "yyyy-mm-dd"
+  note: string | null; // izoh/kament
 }
 
 const wdLabel = (locale: Locale, d: number) =>
@@ -231,6 +232,13 @@ export default function GroupsView({
                         <Link href={`/groups/${g.id}`} className="font-semibold text-brand-700 hover:underline dark:text-brand-300">{g.name}</Link>
                         <span className={cn("rounded px-1.5 py-0.5 text-[10px] font-semibold", statusTone[g.status] ?? statusTone.PLANNED)}>{statusLabel(g.status, locale)}</span>
                       </div>
+                      {/* Izoh (kament) — guruh nomi ostida */}
+                      {g.note && (
+                        <div className="mt-1 flex max-w-[280px] items-start gap-1 text-[11px] leading-snug text-amber-600 dark:text-amber-400" title={g.note}>
+                          <Icon name="info" className="mt-px h-3 w-3 shrink-0" />
+                          <span className="line-clamp-2">{g.note}</span>
+                        </div>
+                      )}
                     </td>
                     <td className="px-4 py-3 text-slate-600 dark:text-slate-300">{g.program}</td>
                     <td className="px-4 py-3 text-slate-500">{g.level ?? "—"}</td>
@@ -346,7 +354,7 @@ function editDataOf(g: VGroup): EditGroupData {
     levelCode: g.level, color: g.color, format: g.format, onlineLink: g.onlineLink, room: g.room,
     status: g.status, capacity: g.capacity, startDate: g.startDate, endDate: g.endDate,
     weekdays: g.weekdays.length ? g.weekdays.join(",") : null,
-    startTime: g.startTime, endTime: g.endTime,
+    startTime: g.startTime, endTime: g.endTime, note: g.note,
   };
 }
 

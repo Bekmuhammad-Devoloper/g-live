@@ -39,6 +39,7 @@ const groupSchema = z.object({
   weekdays: z.string().optional(), // "1,3,5"
   startTime: z.string().optional(), // "HH:mm"
   endTime: z.string().optional(),
+  note: z.string().max(1000).optional(), // izoh/kament
 });
 
 // "1,3,5" ni tozalab 1..7 oralig'idagi noyob kunlarni tartiblab qaytaradi
@@ -112,6 +113,7 @@ export async function createGroup(_prev: FormState, formData: FormData): Promise
     weekdays: formData.get("weekdays") || undefined,
     startTime: formData.get("startTime") || undefined,
     endTime: formData.get("endTime") || undefined,
+    note: formData.get("note") || undefined,
   });
   if (!parsed.success) return { error: "invalid" };
 
@@ -148,6 +150,7 @@ export async function createGroup(_prev: FormState, formData: FormData): Promise
       weekdays,
       startTime,
       endTime,
+      note: parsed.data.note?.trim() || null,
       branchId: s.branchId,
       status: "ACTIVE",
     },

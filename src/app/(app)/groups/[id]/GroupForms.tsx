@@ -49,6 +49,7 @@ export type EditGroupData = {
   weekdays: string | null;
   startTime: string | null;
   endTime: string | null;
+  note: string | null; // izoh/kament
 };
 
 export function CreateStudentForm({ groupId, locale }: { groupId: string; locale: Locale }) {
@@ -455,6 +456,23 @@ function EditGroupForm({
               <label className={fLabel}>{tr(locale, { uz: "Tugash sanasi", ru: "Дата окончания", en: "End date" })}</label>
               <input name="endDate" type="date" defaultValue={group.endDate ?? ""} className={input} />
             </div>
+          </div>
+
+          {/* Izoh — guruh ma'lumoti ko'rinadigan hamma joyda chiqadi */}
+          <div>
+            <label className={fLabel}>{tr(locale, { uz: "Izoh", ru: "Комментарий", en: "Comment" })}</label>
+            <textarea
+              name="note"
+              rows={3}
+              maxLength={1000}
+              defaultValue={group.note ?? ""}
+              placeholder={tr(locale, {
+                uz: "Guruh haqida qo'shimcha ma'lumot",
+                ru: "Дополнительная информация о группе",
+                en: "Additional info about the group",
+              })}
+              className={`${input} h-auto resize-y py-2 leading-relaxed`}
+            />
           </div>
 
           {state.error && (

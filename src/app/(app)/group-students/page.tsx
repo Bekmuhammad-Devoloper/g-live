@@ -43,7 +43,7 @@ export default async function GroupStudentsPage() {
       fullName: st.fullName,
       phone: st.phone,
       eduStatus: st.eduStatus,
-      groups: st.enrollments.map((e) => ({ id: e.groupId, name: e.group.name, status: e.group.status })),
+      groups: st.enrollments.map((e) => ({ id: e.groupId, name: e.group.name, status: e.group.status, note: e.group.note })),
       teachers,
       joinedAt: joinDates.length ? isoDay(joinDates[0]) : "",
     };

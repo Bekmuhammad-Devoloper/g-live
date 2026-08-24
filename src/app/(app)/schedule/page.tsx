@@ -67,6 +67,7 @@ export default async function SchedulePage() {
         endISO: isoLocal(g.endDate),
         students: g._count.students,
         capacity: g.capacity,
+        note: g.note, // guruh izohi — blok ustiga kelganda ko'rinadi
         isPast: day < todayCal || (day === todayCal && endMin < nowMin),
       });
     }

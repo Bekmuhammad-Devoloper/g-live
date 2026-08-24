@@ -15,7 +15,7 @@ export interface DLead {
   id: string; fullName: string; phone: string; email: string | null; source: string | null;
   stage: string; interestCourse: string | null; budget: number | null; note: string | null;
   managerId: string | null; managerName: string | null; studentId: string | null; createdAt: string;
-  groupId: string | null; groupName: string | null; courseName: string | null; enrollEditCount: number;
+  groupId: string | null; groupName: string | null; groupNote: string | null; courseName: string | null; enrollEditCount: number;
 }
 export interface DActivity {
   id: string; type: string; result: string | null; nextStepAt: string | null; authorName: string | null; createdAt: string;
@@ -177,6 +177,13 @@ export default function LeadDetail({ lead, activities, managers, prevId, nextId,
                       <>
                         <div className="text-sm font-semibold text-slate-800 dark:text-slate-100">{lead.groupName}</div>
                         {lead.courseName && <div className="text-[11px] text-slate-500 dark:text-slate-400">{lead.courseName}</div>}
+                        {/* Guruh izohi (kament) */}
+                        {lead.groupNote && (
+                          <div className="mt-1.5 flex items-start gap-1 text-[11px] leading-snug text-amber-600 dark:text-amber-400">
+                            <Icon name="info" className="mt-px h-3 w-3 shrink-0" />
+                            <span className="whitespace-pre-wrap">{lead.groupNote}</span>
+                          </div>
+                        )}
                         {lead.enrollEditCount >= 1 ? (
                           <p className="mt-2 text-[11px] text-slate-400">
                             {tr(locale, { uz: "O'zgartirish imkoni ishlatilgan", ru: "Возможность смены использована", en: "Change already used" })}

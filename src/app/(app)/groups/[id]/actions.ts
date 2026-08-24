@@ -61,6 +61,7 @@ export async function updateGroup(_prev: FormState, formData: FormData): Promise
   const room = String(formData.get("room") ?? "").trim() || null;
   const onlineLink = String(formData.get("onlineLink") ?? "").trim() || null;
   const weekdays = normalizeWeekdays(String(formData.get("weekdays") ?? ""));
+  const note = String(formData.get("note") ?? "").trim().slice(0, 1000) || null;
 
   // Xona bandligi: shu xonada vaqti kesishadigan boshqa guruh bo'lsa — taqiqlanadi
   const conflict = await findRoomConflict({ room, weekdays, startTime, endTime, branchId: existing.branchId, excludeId: id });
@@ -82,6 +83,7 @@ export async function updateGroup(_prev: FormState, formData: FormData): Promise
     weekdays,
     startTime,
     endTime,
+    note,
   };
 
   await prisma.group.update({ where: { id }, data });

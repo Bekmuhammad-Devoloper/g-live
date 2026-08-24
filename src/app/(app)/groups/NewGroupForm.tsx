@@ -227,6 +227,22 @@ export default function NewGroupForm({
             </div>
           </div>
 
+          {/* Izoh — guruh ma'lumoti ko'rinadigan hamma joyda chiqadi */}
+          <div>
+            <label className={label}>{tr(locale, { uz: "Izoh", ru: "Комментарий", en: "Comment" })}</label>
+            <textarea
+              name="note"
+              rows={3}
+              maxLength={1000}
+              placeholder={tr(locale, {
+                uz: "Guruh haqida qo'shimcha ma'lumot (masalan: kuchli guruh, imtihonga tayyorlanmoqda)",
+                ru: "Дополнительная информация о группе (например: сильная группа, готовится к экзамену)",
+                en: "Additional info about the group (e.g. strong group, preparing for the exam)",
+              })}
+              className={`${input} h-auto resize-y py-2 leading-relaxed`}
+            />
+          </div>
+
           {state.error && !hideErr && (
             <p className="rounded-lg bg-rose-50 px-3 py-2 text-sm text-rose-700 dark:bg-rose-500/10 dark:text-rose-400">
               {errMsg(state)}

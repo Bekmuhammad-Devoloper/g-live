@@ -223,6 +223,13 @@ export default function EnrollDrawer({
                           {g.schedule && <span className="flex items-center gap-1"><Icon name="clock" className="h-3 w-3" />{g.schedule}</span>}
                           {g.room && <span className="flex items-center gap-1"><Icon name="building" className="h-3 w-3" />{g.room}</span>}
                         </div>
+                        {/* Guruh izohi (kament) */}
+                        {g.note && (
+                          <div className="mt-1.5 flex items-start gap-1 text-[11px] leading-snug text-amber-600 dark:text-amber-400">
+                            <Icon name="info" className="mt-px h-3 w-3 shrink-0" />
+                            <span className="line-clamp-2">{g.note}</span>
+                          </div>
+                        )}
                       </button>
                     );
                   })}

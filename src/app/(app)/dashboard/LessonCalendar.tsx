@@ -22,6 +22,7 @@ export interface CalLesson {
   endISO?: string | null; // guruh tugash sanasi "yyyy-mm-dd"
   students?: number; // guruhdagi o'quvchilar soni
   capacity?: number; // guruh sig'imi
+  note?: string | null; // guruh izohi (kament)
   isPast: boolean;
 }
 
@@ -428,7 +429,7 @@ export default function LessonCalendar(p: Props) {
                         <Link
                           key={l.id}
                           href={`/groups/${l.groupId}`}
-                          title={`${l.group} · ${hhmm(l.startMin)}–${hhmm(l.endMin)} · ${l.course}`}
+                          title={`${l.group} · ${hhmm(l.startMin)}–${hhmm(l.endMin)} · ${l.course}${l.note ? `\n\n${l.note}` : ""}`}
                           className="absolute bottom-1.5 top-1.5 flex flex-col overflow-hidden rounded-lg px-2 py-1.5 text-xs transition hover:z-10 hover:brightness-105 hover:shadow-lg"
                           style={{ left: left + 2, width, ...cst }}
                         >

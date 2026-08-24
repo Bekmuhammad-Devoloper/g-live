@@ -13,7 +13,7 @@ export interface VGroupStudent {
   fullName: string;
   phone: string | null;
   eduStatus: string;
-  groups: { id: string; name: string; status: string }[];
+  groups: { id: string; name: string; status: string; note?: string | null }[];
   teachers: string[];
   joinedAt: string; // YYYY-MM-DD yoki ""
 }
@@ -137,7 +137,8 @@ export default function GroupStudentsView({ locale, students, teacherNames }: { 
                     <td className="px-4 py-3">
                       <div className="flex flex-wrap gap-1">
                         {st.groups.length === 0 ? <span className="text-xs text-slate-400">—</span> : st.groups.map((g) => (
-                          <Link key={g.id} href={`/groups/${g.id}`} className="rounded-md bg-slate-100 px-2 py-0.5 text-xs text-slate-600 hover:bg-brand-50 hover:text-brand-700 dark:bg-slate-700/50 dark:text-slate-300">{g.name}</Link>
+                          // title — guruh izohi (kament) sichqoncha olib borilganda ko'rinadi
+                          <Link key={g.id} href={`/groups/${g.id}`} title={g.note || undefined} className="rounded-md bg-slate-100 px-2 py-0.5 text-xs text-slate-600 hover:bg-brand-50 hover:text-brand-700 dark:bg-slate-700/50 dark:text-slate-300">{g.name}</Link>
                         ))}
                       </div>
                     </td>

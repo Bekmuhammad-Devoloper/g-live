@@ -22,7 +22,7 @@ export default async function LeadDetailPage({ params }: { params: Promise<{ id:
       include: {
         manager: true,
         student: true,
-        group: { select: { name: true, program: { select: { name: true } } } },
+        group: { select: { name: true, note: true, program: { select: { name: true } } } },
         activities: { include: { author: true }, orderBy: { createdAt: "desc" } },
       },
     }),
@@ -50,6 +50,7 @@ export default async function LeadDetailPage({ params }: { params: Promise<{ id:
     studentId: lead.studentId,
     groupId: lead.groupId,
     groupName: lead.group?.name ?? null,
+    groupNote: lead.group?.note ?? null,
     courseName: lead.group?.program?.name ?? null,
     enrollEditCount: lead.enrollEditCount,
     createdAt: lead.createdAt.toISOString(),
