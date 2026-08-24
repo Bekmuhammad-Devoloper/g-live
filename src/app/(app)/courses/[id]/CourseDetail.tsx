@@ -17,6 +17,7 @@ export interface CourseData {
   name: string;
   description: string | null;
   banners: string[];
+  monthlyFee: number | null; // oylik narx (bazadan) — qarz hisobida ishlatiladi
   studentsTotal: number;
   levels: { id: string; code: string; name: string; weeks: number | null; academicHours: number | null; passScore: number | null }[];
   groups: { id: string; name: string; teacher: string | null; students: number; status: string }[];
@@ -205,7 +206,8 @@ export default function CourseDetail({ course }: { course: CourseData }) {
 
       <CourseFormDrawer
         mode="edit"
-        initial={{ id: course.id, name: course.name, description: course.description, meta, banners: course.banners }}
+        // Narx bazadan keladi, qolgan meta (kod, davomiylik) hozircha brauzerda
+        initial={{ id: course.id, name: course.name, description: course.description, meta: { ...meta, price: course.monthlyFee ?? undefined }, banners: course.banners }}
         open={editOpen}
         onClose={() => setEditOpen(false)}
         onSaved={(id, m) => setMeta(saveMetaFor(id, m)[id] ?? m)}

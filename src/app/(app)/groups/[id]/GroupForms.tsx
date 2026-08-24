@@ -50,6 +50,7 @@ export type EditGroupData = {
   startTime: string | null;
   endTime: string | null;
   note: string | null; // izoh/kament
+  monthlyFee: number | null; // guruh oylik to'lovi (bo'sh — kurs narxi)
 };
 
 export function CreateStudentForm({ groupId, locale }: { groupId: string; locale: Locale }) {
@@ -456,6 +457,19 @@ function EditGroupForm({
               <label className={fLabel}>{tr(locale, { uz: "Tugash sanasi", ru: "Дата окончания", en: "End date" })}</label>
               <input name="endDate" type="date" defaultValue={group.endDate ?? ""} className={input} />
             </div>
+          </div>
+
+          {/* Oylik to'lov — bo'sh qoldirilsa kurs narxi ishlatiladi */}
+          <div>
+            <label className={fLabel}>{tr(locale, { uz: "Oylik to'lov (so'm)", ru: "Ежемесячная оплата (сум)", en: "Monthly fee (UZS)" })}</label>
+            <input name="monthlyFee" type="number" min="0" step="10000" defaultValue={group.monthlyFee ?? ""} placeholder={tr(locale, { uz: "kurs narxi", ru: "цена курса", en: "course price" })} className={input} />
+            <p className="mt-1 text-[11px] text-slate-400">
+              {tr(locale, {
+                uz: "O'quvchi qo'shilgan oydan boshlab har oy qarzga hisoblanadi.",
+                ru: "Начисляется в долг каждый месяц с месяца зачисления ученика.",
+                en: "Charged monthly from the student's join month.",
+              })}
+            </p>
           </div>
 
           {/* Izoh — guruh ma'lumoti ko'rinadigan hamma joyda chiqadi */}

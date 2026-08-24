@@ -30,6 +30,7 @@ export default async function CoursesPage() {
     levels: p._count.levels,
     groups: p._count.groups,
     banner: firstBanner(p.banners),
+    monthlyFee: p.monthlyFee,
   }));
 
   return <CoursesView courses={courses} />;

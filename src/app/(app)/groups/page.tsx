@@ -73,6 +73,7 @@ export default async function GroupsPage() {
     startDate: g.startDate ? g.startDate.toISOString().slice(0, 10) : null,
     endDate: g.endDate ? g.endDate.toISOString().slice(0, 10) : null,
     note: g.note,
+    monthlyFee: g.monthlyFee,
   }));
 
   const canCreate = getPermission(s.role, MODULES.GROUPS) === "FULL";

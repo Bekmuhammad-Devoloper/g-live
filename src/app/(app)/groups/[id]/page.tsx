@@ -102,6 +102,7 @@ export default async function GroupDetailPage({ params }: { params: Promise<{ id
     startTime: group.startTime,
     endTime: group.endTime,
     note: group.note,
+    monthlyFee: group.monthlyFee,
   };
 
   const fmt = (d: Date) =>

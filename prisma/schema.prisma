@@ -273,6 +273,9 @@ model Program {
   banners     String? // JSON massiv — kurs bannerlari (data URL)
   gradingType String  @default("PERCENT") // PERCENT | POINTS | FIVE | PASS_FAIL
   isActive    Boolean @default(true)
+  // Kurs oylik to'lovi (so'm). Guruhda o'z narxi bo'lmasa shu ishlatiladi.
+  // O'quvchi guruhga qo'shilgan oydan boshlab har oy shu summa hisoblanadi.
+  monthlyFee  Int?
 
   levels    Level[]
   groups    Group[]
@@ -372,6 +375,7 @@ model Group {
   startTime String? // dars boshlanish vaqti "HH:mm"
   endTime   String? // dars tugash vaqti "HH:mm"
   note      String? // guruh haqida izoh/kament — guruh ma'lumoti ko'rinadigan hamma joyda chiqadi
+  monthlyFee Int? // guruhning oylik to'lovi (so'm); bo'lmasa kurs narxi olinadi
 
   students    GroupStudent[]
   leads       Lead[] // shu guruhga yo'naltirilgan lidlar
@@ -393,6 +397,7 @@ model GroupStudent {
   student   Student  @relation(fields: [studentId], references: [id], onDelete: Cascade)
   joinedAt  DateTime @default(now())
   isActive  Boolean  @default(true)
+  leftAt    DateTime? // guruhdan chiqarilgan sana — to'lov hisobi shu oygacha yuritiladi
 
   @@unique([groupId, studentId])
 }

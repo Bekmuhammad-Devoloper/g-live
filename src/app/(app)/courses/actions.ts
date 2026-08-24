@@ -14,6 +14,9 @@ export type CourseState = { ok?: boolean; error?: string; id?: string };
 const schema = z.object({
   name: z.string().min(2),
   description: z.string().optional(),
+  // Kurs oylik to'lovi (so'm) — o'quvchi guruhga qo'shilgan oydan boshlab
+  // shu summa har oy qarzga hisoblanadi (src/lib/debt.ts)
+  monthlyFee: z.coerce.number().int().min(0).max(1_000_000_000).optional(),
 });
 
 // Bannerlarni JSON'dan tozalab, faqat data:image URL'larni qaytaradi (maks 6 ta)
@@ -33,12 +36,18 @@ export async function createCourse(_prev: CourseState, formData: FormData): Prom
   const parsed = schema.safeParse({
     name: formData.get("name"),
     description: formData.get("description") || undefined,
+    monthlyFee: formData.get("monthlyFee") || undefined,
   });
   if (!parsed.success) return { error: "invalid" };
 
   const banners = parseBanners(formData.get("banners"));
   const p = await prisma.program.create({
-    data: { name: parsed.data.name, description: parsed.data.description || null, banners: banners.length ? JSON.stringify(banners) : null },
+    data: {
+      name: parsed.data.name,
+      description: parsed.data.description || null,
+      banners: banners.length ? JSON.stringify(banners) : null,
+      monthlyFee: parsed.data.monthlyFee ?? null,
+    },
   });
   await writeAudit({ actorId: s.userId, action: "CREATE", entityType: "Program", entityId: p.id, newValue: { name: p.name, banners: banners.length } });
   revalidatePath("/courses");
@@ -53,6 +62,7 @@ export async function updateCourse(id: string, _prev: CourseState, formData: For
   const parsed = schema.safeParse({
     name: formData.get("name"),
     description: formData.get("description") || undefined,
+    monthlyFee: formData.get("monthlyFee") || undefined,
   });
   if (!parsed.success) return { error: "invalid" };
 
@@ -62,7 +72,12 @@ export async function updateCourse(id: string, _prev: CourseState, formData: For
   const banners = parseBanners(formData.get("banners"));
   await prisma.program.update({
     where: { id },
-    data: { name: parsed.data.name, description: parsed.data.description || null, banners: banners.length ? JSON.stringify(banners) : null },
+    data: {
+      name: parsed.data.name,
+      description: parsed.data.description || null,
+      banners: banners.length ? JSON.stringify(banners) : null,
+      monthlyFee: parsed.data.monthlyFee ?? null,
+    },
   });
   await writeAudit({ actorId: s.userId, action: "UPDATE", entityType: "Program", entityId: id, newValue: { name: parsed.data.name, banners: banners.length } });
   revalidatePath("/courses");

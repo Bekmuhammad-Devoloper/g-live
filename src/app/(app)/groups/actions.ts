@@ -40,6 +40,7 @@ const groupSchema = z.object({
   startTime: z.string().optional(), // "HH:mm"
   endTime: z.string().optional(),
   note: z.string().max(1000).optional(), // izoh/kament
+  monthlyFee: z.coerce.number().int().min(0).max(1_000_000_000).optional(), // guruh oylik to'lovi
 });
 
 // "1,3,5" ni tozalab 1..7 oralig'idagi noyob kunlarni tartiblab qaytaradi
@@ -114,6 +115,7 @@ export async function createGroup(_prev: FormState, formData: FormData): Promise
     startTime: formData.get("startTime") || undefined,
     endTime: formData.get("endTime") || undefined,
     note: formData.get("note") || undefined,
+    monthlyFee: formData.get("monthlyFee") || undefined,
   });
   if (!parsed.success) return { error: "invalid" };
 
@@ -151,6 +153,7 @@ export async function createGroup(_prev: FormState, formData: FormData): Promise
       startTime,
       endTime,
       note: parsed.data.note?.trim() || null,
+      monthlyFee: parsed.data.monthlyFee ?? null,
       branchId: s.branchId,
       status: "ACTIVE",
     },
@@ -256,6 +259,7 @@ export async function enrollStudent(groupId: string, studentId: string): Promise
 export async function removeStudent(groupId: string, studentId: string): Promise<void> {
   const s = await requireSession();
   if (!hasFullGroups(s.role)) return;
+  // Yozuv o'chiriladi — to'lov hisobi ham shu bilan to'xtaydi (leftAt keraksiz)
   const res = await prisma.groupStudent.deleteMany({ where: { groupId, studentId } });
   if (res.count > 0) {
     await writeAudit({ actorId: s.userId, action: "DELETE", entityType: "GroupStudent", oldValue: { groupId, studentId } });

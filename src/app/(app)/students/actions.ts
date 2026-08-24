@@ -10,6 +10,7 @@ import { getSettings } from "@/lib/settings";
 import { writeAudit } from "@/lib/audit";
 import { notify } from "@/lib/notify";
 import { lessonsAttendedThisMonth, MANDATORY_LESSON_THRESHOLD } from "@/lib/paymentPolicy";
+import { computeDebt } from "@/lib/debt";
 import { getSetting } from "@/lib/settings";
 import { RECEIPT_MODE_KEY, parseReceiptMode, isReceiptRequired } from "@/lib/receiptMode";
 
@@ -26,7 +27,7 @@ export interface StudentPayments {
   lastMonth: MonthPay;
   totalPaid: number;
   lastPaidDate: string | null;
-  debt: number; // jami qarzdorlik — PENDING to'lovlar yig'indisi
+  debt: number; // jami qarzdorlik — qo'shilgan oydan hisoblangan + qo'lda kiritilgan
   lessonsThisMonth: number; // shu oy o'tilgan darslar soni (davomat bo'yicha)
   mandatoryThreshold: number; // shundan keyin to'lov majburiy bo'ladi
   paymentMandatory: boolean; // shu oy chegaradan ko'p dars o'tilgan, lekin to'lov qilinmagan
@@ -82,7 +83,8 @@ export async function getStudentPayments(studentId: string): Promise<{ ok: boole
       lastMonth: monthSummary(lastY, lastM),
       totalPaid: paid.reduce((n, p) => n + p.amount, 0),
       lastPaidDate: paid.length ? paid[0].createdAt.toISOString() : null,
-      debt: pending.reduce((n, p) => n + p.amount, 0),
+      // Qarz — guruhga qo'shilgan oydan hisoblangan to'lov + qo'lda kiritilgani
+      debt: (await computeDebt(studentId, now)).debt,
       lessonsThisMonth,
       mandatoryThreshold: MANDATORY_LESSON_THRESHOLD,
       paymentMandatory,

@@ -4,6 +4,7 @@ import { prisma } from "@/lib/db";
 import { ROLES, type Locale } from "@/lib/constants";
 import { canWrite, MODULES } from "@/lib/rbac";
 import { branchWhere } from "@/lib/branchScope";
+import { computeDebts } from "@/lib/debt";
 import { getSetting } from "@/lib/settings";
 import { RECEIPT_MODE_KEY, parseReceiptMode } from "@/lib/receiptMode";
 import { tr } from "@/lib/tr";
@@ -57,6 +58,9 @@ export default async function StudentsPage() {
     },
   });
 
+  // Qarz — o'quvchi guruhga qo'shilgan oydan boshlab hisoblanadi (src/lib/debt.ts)
+  const debts = await computeDebts(students.map((st) => st.id));
+
   const uniq = (arr: (string | null | undefined)[]) =>
     Array.from(new Set(arr.filter((x): x is string => !!x)));
 
@@ -79,8 +83,8 @@ export default async function StudentsPage() {
         .map((e) => e.group.startDate?.toISOString())
         .filter((x): x is string => !!x),
       balance: paid.reduce((n, p) => n + p.amount, 0),
-      // Qarz = PENDING to'lovlar yig'indisi (/finance/debtors bilan bir xil mantiq)
-      debt: st.payments.filter((p) => p.status === "PENDING").reduce((n, p) => n + p.amount, 0),
+      // Qarz = qo'shilgan oydan hisoblangan to'lov − to'langani + qo'lda kiritilgan qarz
+      debt: debts.get(st.id)?.debt ?? 0,
       // Shu oy kamida bitta PAID to'lov bo'lganmi (davomat/to'lov holati bo'limi bilan bir xil mantiq)
       paidThisMonth: paid.some((p) => p.createdAt.getFullYear() === curY && p.createdAt.getMonth() === curM),
       note: null,

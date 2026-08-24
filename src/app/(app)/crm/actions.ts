@@ -157,7 +157,7 @@ async function applyEnrollment(
   if (lead.groupId && lead.groupId !== groupId) {
     await prisma.groupStudent.updateMany({
       where: { groupId: lead.groupId, studentId },
-      data: { isActive: false },
+      data: { isActive: false, leftAt: new Date() }, // to'lov hisobi shu oyda to'xtaydi
     }).catch(() => {});
   }
 

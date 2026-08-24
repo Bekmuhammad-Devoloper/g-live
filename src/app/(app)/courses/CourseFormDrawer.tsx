@@ -134,7 +134,7 @@ export default function CourseFormDrawer({
             <input value={months} onChange={(e) => setMonths(e.target.value)} type="number" min="0" className={input} />
           </div>
           <div>
-            <label className={label}>Narx</label>
+            <label className={label}>Oylik narx</label>
             <div className="relative">
               <input
                 value={price ? fmtDigits(price) : ""}
@@ -146,6 +146,12 @@ export default function CourseFormDrawer({
               />
               <span className="pointer-events-none absolute right-3.5 top-1/2 -translate-y-1/2 text-xs font-medium text-slate-400">so&apos;m</span>
             </div>
+            {/* Bazaga yoziladi: qarz shu summadan hisoblanadi */}
+            <input type="hidden" name="monthlyFee" value={price} />
+            <p className="mt-1 text-xs text-slate-400">
+              O&apos;quvchi guruhga qo&apos;shilgan oydan boshlab har oy shu summa qarzga hisoblanadi.
+              Guruhda o&apos;z narxi ko&apos;rsatilsa — o&apos;shanisi ustun.
+            </p>
           </div>
           <div>
             <label className={label}>Izoh</label>

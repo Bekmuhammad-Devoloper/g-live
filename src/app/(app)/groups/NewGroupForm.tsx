@@ -227,6 +227,19 @@ export default function NewGroupForm({
             </div>
           </div>
 
+          {/* Oylik to'lov — bo'sh qoldirilsa kurs narxi ishlatiladi */}
+          <div>
+            <label className={label}>{tr(locale, { uz: "Oylik to'lov (so'm)", ru: "Ежемесячная оплата (сум)", en: "Monthly fee (UZS)" })}</label>
+            <input name="monthlyFee" type="number" min="0" step="10000" placeholder={tr(locale, { uz: "kurs narxi", ru: "цена курса", en: "course price" })} className={input} />
+            <p className="mt-1 text-[11px] text-slate-400">
+              {tr(locale, {
+                uz: "O'quvchi qo'shilgan oydan boshlab har oy shu summa qarzga hisoblanadi. Bo'sh qoldirilsa kurs narxi olinadi.",
+                ru: "С месяца зачисления ученика эта сумма ежемесячно начисляется в долг. Если пусто — берётся цена курса.",
+                en: "Charged monthly from the student's join month. Left empty — the course price is used.",
+              })}
+            </p>
+          </div>
+
           {/* Izoh — guruh ma'lumoti ko'rinadigan hamma joyda chiqadi */}
           <div>
             <label className={label}>{tr(locale, { uz: "Izoh", ru: "Комментарий", en: "Comment" })}</label>

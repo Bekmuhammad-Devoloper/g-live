@@ -36,6 +36,7 @@ export interface VGroup {
   startDate: string | null; // "yyyy-mm-dd"
   endDate: string | null; // "yyyy-mm-dd"
   note: string | null; // izoh/kament
+  monthlyFee: number | null; // guruh oylik to'lovi
 }
 
 const wdLabel = (locale: Locale, d: number) =>
@@ -354,7 +355,7 @@ function editDataOf(g: VGroup): EditGroupData {
     levelCode: g.level, color: g.color, format: g.format, onlineLink: g.onlineLink, room: g.room,
     status: g.status, capacity: g.capacity, startDate: g.startDate, endDate: g.endDate,
     weekdays: g.weekdays.length ? g.weekdays.join(",") : null,
-    startTime: g.startTime, endTime: g.endTime, note: g.note,
+    startTime: g.startTime, endTime: g.endTime, note: g.note, monthlyFee: g.monthlyFee,
   };
 }
 

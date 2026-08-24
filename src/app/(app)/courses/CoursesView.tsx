@@ -13,12 +13,14 @@ export interface VCourse {
   levels: number;
   groups: number;
   banner: string | null; // birinchi banner (muqova)
+  monthlyFee: number | null; // oylik narx — BAZADAN keladi (qarz hisobida ishlatiladi)
 }
 
 export default function CoursesView({ courses }: { courses: VCourse[] }) {
   const [meta, setMeta] = useState<Record<string, CourseMeta>>({});
   const [addOpen, setAddOpen] = useState(false);
 
+  // Kurs kodi va davomiyligi hali brauzer xotirasida; narx esa bazadan keladi
   useEffect(() => { setMeta(loadMeta()); }, []);
 
   return (
@@ -74,7 +76,7 @@ function CourseCard({ course, meta }: { course: VCourse; meta?: CourseMeta }) {
           {meta?.code && <span className="shrink-0 rounded bg-slate-100 px-1.5 py-0.5 text-[10px] font-semibold text-slate-500 dark:bg-slate-800 dark:text-slate-300">{meta.code}</span>}
         </div>
         <div className="mt-2 text-sm text-slate-400">
-          {meta?.price != null ? formatMoney(meta.price) : "Narx belgilanmagan"}
+          {course.monthlyFee != null ? `${formatMoney(course.monthlyFee)} / oy` : "Narx belgilanmagan"}
         </div>
         <div className="mt-1 text-xs text-slate-400">{sub}</div>
       </div>
