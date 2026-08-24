@@ -105,11 +105,11 @@ function StudentAvatar({ id, name, imageUrl, canManage, locale }: { id: string; 
   };
 
   return (
-    <div className="group/av relative h-9 w-9">
+    <div className="group/av relative h-8 w-8">
       {imageUrl ? (
-        <span className="block h-9 w-9 rounded-full bg-cover bg-center ring-1 ring-black/5 dark:ring-white/10" style={{ backgroundImage: `url(${imageUrl})` }} />
+        <span className="block h-8 w-8 rounded-full bg-cover bg-center ring-1 ring-black/5 dark:ring-white/10" style={{ backgroundImage: `url(${imageUrl})` }} />
       ) : (
-        <span className="flex h-9 w-9 items-center justify-center rounded-full" style={{ color: `hsl(${h} 55% 42%)`, background: `hsl(${h} 70% 92%)` }}><Icon name="user" className="h-5 w-5" /></span>
+        <span className="flex h-8 w-8 items-center justify-center rounded-full" style={{ color: `hsl(${h} 55% 42%)`, background: `hsl(${h} 70% 92%)` }}><Icon name="user" className="h-4 w-4" /></span>
       )}
       {canManage && (
         <>
@@ -374,22 +374,22 @@ export default function StudentsView({ students, courses, locale, canCreate, can
           <table className="w-full text-left text-sm">
             <thead className="border-b border-slate-200/70 bg-slate-50/80 text-[11px] font-semibold uppercase tracking-wider text-slate-500 dark:border-slate-800 dark:bg-slate-800/50">
               <tr>
-                <th className="w-10 px-3 py-3">
+                <th className="w-10 px-3 py-2.5">
                   <input type="checkbox" checked={allOnPageSelected} onChange={toggleAll} className="h-4 w-4 rounded border-slate-300 accent-brand-600" />
                 </th>
-                <th className="px-3 py-3">{tr(locale, { uz: "Foto", ru: "Фото", en: "Photo" })}</th>
-                <th className="px-4 py-3">
+                <th className="px-3 py-2.5">{tr(locale, { uz: "Foto", ru: "Фото", en: "Photo" })}</th>
+                <th className="px-4 py-2.5">
                   <button onClick={() => setSortDir((d) => (d === "asc" ? "desc" : "asc"))} className="inline-flex items-center gap-1 transition hover:text-slate-700 dark:hover:text-slate-200">
                     {tr(locale, { uz: "Ism", ru: "Имя", en: "Name" })} <span className="text-brand-500">{sortDir === "asc" ? "↑" : "↓"}</span>
                   </button>
                 </th>
-                {isVisible("telefon") && <th className="px-4 py-3">{tr(locale, { uz: "Telefon", ru: "Телефон", en: "Phone" })}</th>}
-                {isVisible("guruhlar") && <th className="px-4 py-3">{tr(locale, { uz: "Guruhlar", ru: "Группы", en: "Groups" })}</th>}
-                {isVisible("oqituvchilar") && <th className="px-4 py-3">{tr(locale, { uz: "O'qituvchilar", ru: "Преподаватели", en: "Teachers" })}</th>}
-                {isVisible("sanalar") && <th className="px-4 py-3">{tr(locale, { uz: "Mashg'ulotlar sanalari", ru: "Даты занятий", en: "Lesson dates" })}</th>}
-                {isVisible("balans") && <th className="px-4 py-3">{tr(locale, { uz: "Balans", ru: "Баланс", en: "Balance" })}</th>}
-                {isVisible("izoh") && <th className="px-4 py-3">{tr(locale, { uz: "Izoh", ru: "Примечание", en: "Note" })}</th>}
-                <th className="px-4 py-3 text-right">
+                {isVisible("telefon") && <th className="px-4 py-2.5">{tr(locale, { uz: "Telefon", ru: "Телефон", en: "Phone" })}</th>}
+                {isVisible("guruhlar") && <th className="px-4 py-2.5">{tr(locale, { uz: "Guruhlar", ru: "Группы", en: "Groups" })}</th>}
+                {isVisible("oqituvchilar") && <th className="px-4 py-2.5">{tr(locale, { uz: "O'qituvchilar", ru: "Преподаватели", en: "Teachers" })}</th>}
+                {isVisible("sanalar") && <th className="px-4 py-2.5">{tr(locale, { uz: "Mashg'ulotlar sanalari", ru: "Даты занятий", en: "Lesson dates" })}</th>}
+                {isVisible("balans") && <th className="px-4 py-2.5">{tr(locale, { uz: "Balans", ru: "Баланс", en: "Balance" })}</th>}
+                {isVisible("izoh") && <th className="px-4 py-2.5">{tr(locale, { uz: "Izoh", ru: "Примечание", en: "Note" })}</th>}
+                <th className="px-4 py-2.5 text-right">
                   {selected.size > 0 ? (
                     <div className="flex items-center justify-end gap-1">
                       <HeadAction icon="layers" title={tr(locale, { uz: "Guruhga biriktirish", ru: "Привязать к группе", en: "Assign to group" })} active onClick={() => setBulkModal("assign")} />
@@ -414,30 +414,38 @@ export default function StudentsView({ students, courses, locale, canCreate, can
                 pageRows.map((st) => {
                   const sel = selected.has(st.id);
                   return (
-                    <tr key={st.id} onClick={() => setDetail(st)} className={cn("cursor-pointer transition hover:bg-slate-50 dark:hover:bg-slate-800/50", sel && "bg-brand-50/60 dark:bg-brand-950/30")}>
-                      <td className="px-3 py-2.5" onClick={(e) => e.stopPropagation()}>
+                    <tr
+                      key={st.id}
+                      // Qatorni bosish — o'quvchining O'Z PROFILIGA o'tadi (/students/[id]).
+                      // <tr> ni <Link> ichiga solib bo'lmaydi (noto'g'ri HTML + ichma-ich <a>),
+                      // shuning uchun router.push ishlatiladi. Katakdagi tugmalar
+                      // e.stopPropagation() bilan himoyalangan.
+                      onClick={() => router.push(`/students/${st.id}`)}
+                      className={cn("cursor-pointer transition hover:bg-slate-50 dark:hover:bg-slate-800/50", sel && "bg-brand-50/60 dark:bg-brand-950/30")}
+                    >
+                      <td className="px-3 py-2" onClick={(e) => e.stopPropagation()}>
                         <input type="checkbox" checked={sel} onChange={() => toggleOne(st.id)} className="h-4 w-4 rounded border-slate-300 accent-brand-600" />
                       </td>
-                      <td className="px-3 py-2.5" onClick={(e) => e.stopPropagation()}>
+                      <td className="px-3 py-2" onClick={(e) => e.stopPropagation()}>
                         <StudentAvatar id={st.id} name={st.fullName} imageUrl={st.imageUrl} canManage={canCreate} locale={locale} />
                       </td>
-                      <td className="px-4 py-2.5">
+                      <td className="px-4 py-2">
                         <div className="font-medium text-slate-800 dark:text-slate-100">{st.fullName}</div>
                         <div className="mt-0.5 flex items-center gap-1.5">
                           <span
-                            className="inline-flex items-center rounded-full px-2 py-0.5 text-[10px] font-semibold"
+                            className="inline-flex items-center rounded-full px-2 py-0.5 text-[11px] font-semibold"
                             style={{ color: statusTone[st.eduStatus] ?? "#64748b", background: `${statusTone[st.eduStatus] ?? "#64748b"}1a` }}
                           >
                             {label(EDU_STATUS_LABELS, st.eduStatus, locale)}
                           </span>
-                          {st.currentLevel && <span className="text-[10px] text-slate-400">{st.currentLevel}</span>}
+                          {st.currentLevel && <span className="text-[11px] font-medium text-slate-500 dark:text-slate-400">{st.currentLevel}</span>}
                         </div>
                       </td>
                       {isVisible("telefon") && (
-                        <td className="whitespace-nowrap px-4 py-2.5 text-slate-600 dark:text-slate-300">{st.phone ?? "—"}</td>
+                        <td className="whitespace-nowrap px-4 py-2 tabular-nums text-slate-700 dark:text-slate-200">{st.phone ?? "—"}</td>
                       )}
                       {isVisible("guruhlar") && (
-                        <td className="px-4 py-2.5" onClick={(e) => e.stopPropagation()}>
+                        <td className="px-4 py-2" onClick={(e) => e.stopPropagation()}>
                           {st.groups.length === 0 ? (
                             <span className="text-xs text-slate-400">—</span>
                           ) : (
@@ -452,16 +460,16 @@ export default function StudentsView({ students, courses, locale, canCreate, can
                         </td>
                       )}
                       {isVisible("oqituvchilar") && (
-                        <td className="px-4 py-2.5 text-slate-600 dark:text-slate-300">
+                        <td className="px-4 py-2 text-slate-700 dark:text-slate-200">
                           {st.teachers.length ? st.teachers.join(", ") : <span className="text-slate-400">—</span>}
                         </td>
                       )}
                       {isVisible("sanalar") && (
-                        <td className="px-4 py-2.5 text-slate-500">
+                        <td className="px-4 py-2 text-slate-600 dark:text-slate-300">
                           {st.scheduleDates.length ? (
                             <div className="flex flex-wrap gap-1">
                               {st.scheduleDates.map((d, i) => (
-                                <span key={i} className="rounded bg-slate-100 px-1.5 py-0.5 text-[11px] text-slate-500 dark:bg-slate-800 dark:text-slate-400">
+                                <span key={i} className="rounded bg-slate-100 px-1.5 py-0.5 text-[11px] tabular-nums text-slate-600 dark:bg-slate-800 dark:text-slate-300">
                                   {fmtDate(d)}
                                 </span>
                               ))}
@@ -472,17 +480,26 @@ export default function StudentsView({ students, courses, locale, canCreate, can
                         </td>
                       )}
                       {isVisible("balans") && (
-                        <td className="px-4 py-2.5">
+                        <td className="px-4 py-2">
                           <span className={cn("font-semibold", st.balance > 0 ? "text-emerald-600" : "text-slate-400")}>
                             {formatMoney(st.balance, locale)}
                           </span>
                         </td>
                       )}
                       {isVisible("izoh") && (
-                        <td className="px-4 py-2.5 text-slate-400">{st.note ?? "—"}</td>
+                        <td className="px-4 py-2 text-slate-600 dark:text-slate-300">{st.note ?? "—"}</td>
                       )}
-                      <td className="px-4 py-2.5" onClick={(e) => e.stopPropagation()}>
+                      <td className="px-4 py-2" onClick={(e) => e.stopPropagation()}>
                         <div className="flex items-center justify-end gap-1">
+                          {/* Tezkor ko'rish — sahifadan chiqmasdan (to'lov qabul qilish shu yerda).
+                              Qatorning o'zi bosilsa to'liq profil sahifasi ochiladi. */}
+                          <button
+                            onClick={() => setDetail(st)}
+                            className="flex h-8 w-8 items-center justify-center rounded-lg text-slate-400 transition hover:bg-slate-100 hover:text-brand-600 dark:hover:bg-slate-800"
+                            title={tr(locale, { uz: "Tezkor ko'rish", ru: "Быстрый просмотр", en: "Quick view" })}
+                          >
+                            <Icon name="eye" className="h-4 w-4" />
+                          </button>
                           {canCreate && (
                             <button
                               onClick={() => setEditing(st)}
@@ -492,7 +509,7 @@ export default function StudentsView({ students, courses, locale, canCreate, can
                               <Icon name="pencil" className="h-4 w-4" />
                             </button>
                           )}
-                          <Link href="/groups" className="flex h-8 w-8 items-center justify-center rounded-lg text-slate-400 transition hover:bg-slate-100 hover:text-brand-600 dark:hover:bg-slate-800" title={tr(locale, { uz: "Guruhlar", ru: "Группы", en: "Groups" })}>
+                          <Link href={st.groups[0] ? `/groups/${st.groups[0].id}` : "/groups"} className="flex h-8 w-8 items-center justify-center rounded-lg text-slate-400 transition hover:bg-slate-100 hover:text-brand-600 dark:hover:bg-slate-800" title={tr(locale, { uz: "Guruhlar", ru: "Группы", en: "Groups" })}>
                             <Icon name="layers" className="h-4 w-4" />
                           </Link>
                           {st.phone && (
