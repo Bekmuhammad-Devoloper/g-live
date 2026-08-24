@@ -160,6 +160,16 @@ export default function StudentsView({ students, courses, locale, canCreate, can
   // 1 marta bosish -> tezkor oyna, 2 marta -> to'liq profil
   const { single, double } = useDoubleClickOpen();
 
+  // Global qidiruvdan kelinganda (/students?student=<id>) o'sha talaba kartasi
+  // darhol ochiladi, so'ng manzildan parametr olib tashlanadi.
+  useEffect(() => {
+    const id = new URLSearchParams(window.location.search).get("student");
+    if (!id) return;
+    const found = students.find((x) => x.id === id);
+    if (found) setDetail(found);
+    window.history.replaceState(null, "", window.location.pathname);
+  }, [students]);
+
   // ── Ommaviy amallar ──
   const [bulkModal, setBulkModal] = useState<null | "assign" | "message">(null);
   const [bulkBusy, startBulk] = useTransition();

@@ -59,7 +59,7 @@ export async function GET(req: Request) {
         id: s.id,
         title: s.fullName,
         subtitle: [s.currentLevel, s.phone].filter(Boolean).join(" · ") || null,
-        href: "/students",
+        href: `/students?student=${s.id}`, // ro'yxat ochilib, o'sha talaba kartasi chiqadi
       });
     }
   }
@@ -130,7 +130,7 @@ export async function GET(req: Request) {
     const seenT = new Set<string>();
     const teachers = [...foundT, ...extraT].filter((x) => !seenT.has(x.id) && seenT.add(x.id)).slice(0, 5);
     for (const t of teachers) {
-      hits.push({ type: "teacher", id: t.id, title: t.fullName, subtitle: t.phone, href: "/teachers" });
+      hits.push({ type: "teacher", id: t.id, title: t.fullName, subtitle: t.phone, href: `/teachers?teacher=${t.id}` });
     }
   }
 
