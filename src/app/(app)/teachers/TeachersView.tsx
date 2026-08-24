@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useMemo, useState } from "react";
+import { useSearchParams } from "next/navigation";
 import Link from "next/link";
 import { cn } from "@/lib/cn";
 import { Icon } from "../_components/Icon";
@@ -37,19 +38,20 @@ export interface VTeacher {
 
 
 export default function TeachersView({ teachers, canManage, locale, branches }: { teachers: VTeacher[]; canManage: boolean; locale: Locale; branches: BranchOption[] }) {
+  const searchParams = useSearchParams();
   const [search, setSearch] = useState("");
   const [view, setView] = useState<"grid" | "table">("grid");
   const [addOpen, setAddOpen] = useState(false);
 
   // Global qidiruvdan kelinganda (/teachers?teacher=<id>) o'sha o'qituvchi
-  // qidiruvga qo'yiladi — kartasi darhol ko'rinadi.
+  // qidiruvga qo'yiladi — kartasi darhol ko'rinadi. useSearchParams sahifa
+  // qayta yuklanmasa ham (yumshoq o'tish) manzil o'zgarishini eshitadi.
+  const openTeacherId = searchParams.get("teacher");
   useEffect(() => {
-    const id = new URLSearchParams(window.location.search).get("teacher");
-    if (!id) return;
-    const found = teachers.find((t) => t.id === id);
+    if (!openTeacherId) return;
+    const found = teachers.find((t) => t.id === openTeacherId);
     if (found) setSearch(found.fullName);
-    window.history.replaceState(null, "", window.location.pathname);
-  }, [teachers]);
+  }, [openTeacherId, teachers]);
 
   const totals = useMemo(() => ({
     teachers: teachers.length,

@@ -3,7 +3,7 @@
 import { useActionState, useEffect, useMemo, useRef, useState, useTransition } from "react";
 import { createPortal } from "react-dom";
 import Link from "next/link";
-import { useRouter } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 import { useDoubleClickOpen } from "../_components/useDoubleClickOpen";
 import { cn } from "@/lib/cn";
 import { EDU_STATUS_LABELS, EDU_STATUSES, PAYMENT_STATUS_LABELS, label, formatMoney, type Locale } from "@/lib/constants";
@@ -135,6 +135,7 @@ function StudentAvatar({ id, name, imageUrl, canManage, locale }: { id: string; 
 
 export default function StudentsView({ students, courses, locale, canCreate, canPay, currentUserName, receiptMode }: Props) {
   const router = useRouter();
+  const searchParams = useSearchParams();
 
   // ── Filtrlar ──
   const [q, setQ] = useState("");
@@ -161,14 +162,19 @@ export default function StudentsView({ students, courses, locale, canCreate, can
   const { single, double } = useDoubleClickOpen();
 
   // Global qidiruvdan kelinganda (/students?student=<id>) o'sha talaba kartasi
-  // darhol ochiladi, so'ng manzildan parametr olib tashlanadi.
+  // darhol ochiladi. useSearchParams — sahifa qayta yuklanmasa ham (yumshoq
+  // o'tish) manzil o'zgarishini eshitadi; parametr karta yopilganda tozalanadi.
+  const openId = searchParams.get("student");
   useEffect(() => {
-    const id = new URLSearchParams(window.location.search).get("student");
-    if (!id) return;
-    const found = students.find((x) => x.id === id);
+    if (!openId) return;
+    const found = students.find((x) => x.id === openId);
     if (found) setDetail(found);
-    window.history.replaceState(null, "", window.location.pathname);
-  }, [students]);
+  }, [openId, students]);
+
+  const closeDetail = () => {
+    setDetail(null);
+    if (openId) router.replace("/students");
+  };
 
   // ── Ommaviy amallar ──
   const [bulkModal, setBulkModal] = useState<null | "assign" | "message">(null);
@@ -603,7 +609,7 @@ export default function StudentsView({ students, courses, locale, canCreate, can
           canPay={canPay}
           cashierName={currentUserName}
           receiptMode={receiptMode}
-          onClose={() => setDetail(null)}
+          onClose={closeDetail}
           onEdit={() => { setDetail(null); setEditing(detail); }}
         />
       )}
