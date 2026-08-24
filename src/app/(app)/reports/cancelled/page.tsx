@@ -2,6 +2,7 @@ import { requireSession } from "@/lib/auth";
 import { prisma } from "@/lib/db";
 import { ROLES } from "@/lib/constants";
 import { tr } from "@/lib/tr";
+import { branchViaStudent } from "@/lib/branchScope";
 import { Forbidden } from "../../_components/ui";
 import LicenseBanner from "../../_components/LicenseBanner";
 import CancelledView, { type VCancel } from "./CancelledView";
@@ -16,7 +17,7 @@ export default async function CancelledPage() {
   }
 
   const pays = await prisma.payment.findMany({
-    where: { status: "CANCELLED" },
+    where: { AND: [{ status: "CANCELLED" }, branchViaStudent(s)] }, // faol filial doirasida
     orderBy: { cancelledAt: "desc" },
     select: {
       id: true,

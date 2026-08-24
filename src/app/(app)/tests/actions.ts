@@ -51,6 +51,7 @@ export async function createBlockTest(_prev: FormState, formData: FormData): Pro
       durationMin: parsed.data.durationMin,
       responsibleId: parsed.data.responsibleId || null,
       groupIds: cleanIds(parsed.data.groupIds),
+      branchId: s.branchId, // faol filialga biriktiriladi
     },
   });
   await writeAudit({ actorId: s.userId, action: "CREATE", entityType: "BlockTest", entityId: bt.id, newValue: { title: bt.title } });

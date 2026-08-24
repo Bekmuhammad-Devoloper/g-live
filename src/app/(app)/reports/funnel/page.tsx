@@ -2,6 +2,7 @@ import { requireSession } from "@/lib/auth";
 import { prisma } from "@/lib/db";
 import { ROLES } from "@/lib/constants";
 import { tr } from "@/lib/tr";
+import { branchWhere } from "@/lib/branchScope";
 import { Forbidden } from "../../_components/ui";
 import LicenseBanner from "../../_components/LicenseBanner";
 import FunnelDashboard, { type FLead } from "./FunnelDashboard";
@@ -19,6 +20,7 @@ export default async function FunnelPage() {
   }
 
   const leads = await prisma.lead.findMany({
+    where: branchWhere(s), // faol filial doirasida
     orderBy: { createdAt: "desc" },
     select: {
       id: true, stage: true, source: true, interestCourse: true, createdAt: true,

@@ -2,6 +2,7 @@ import { requireSession } from "@/lib/auth";
 import { prisma } from "@/lib/db";
 import { canRead, canWrite, MODULES } from "@/lib/rbac";
 import { type Locale } from "@/lib/constants";
+import { branchWhere } from "@/lib/branchScope";
 import { tr } from "@/lib/tr";
 import { Forbidden } from "../_components/ui";
 import LinksView from "./LinksView";
@@ -33,13 +34,14 @@ export default async function LinksPage({ searchParams }: { searchParams: Promis
 
   const [vacancies, leadCounts] = await Promise.all([
     prisma.vacancy.findMany({
+      where: branchWhere(s), // faol filial doirasida
       orderBy: { createdAt: "desc" },
       include: { links: { orderBy: { createdAt: "asc" } } },
     }),
     // "Arizalar" — Lead.vacancyLinkId orqali bog'langan lidlar soni (haqiqiy manba).
     prisma.lead.groupBy({
       by: ["vacancyLinkId"],
-      where: { vacancyLinkId: { not: null } },
+      where: { AND: [{ vacancyLinkId: { not: null } }, branchWhere(s)] }, // faol filial doirasida
       _count: { _all: true },
     }),
   ]);

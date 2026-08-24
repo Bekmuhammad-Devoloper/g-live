@@ -4,6 +4,7 @@ import { getT } from "@/lib/i18n";
 import { canRead, canWrite, MODULES } from "@/lib/rbac";
 import { PAYMENT_STATUS_LABELS, label, formatMoney } from "@/lib/constants";
 import { tr } from "@/lib/tr";
+import { branchWhere, branchViaStudent } from "@/lib/branchScope";
 import { PageHeader, Table, EmptyRow, Badge, Forbidden, StatCard } from "../_components/ui";
 import NewPaymentForm from "./NewPaymentForm";
 import OnlinePaymentForm from "./OnlinePaymentForm";
@@ -27,11 +28,12 @@ export default async function PaymentsPage() {
 
   const [payments, students, paidAgg] = await Promise.all([
     prisma.payment.findMany({
+      where: branchViaStudent(s), // faol filial doirasida (to'lov o'quvchi orqali bog'lanadi)
       orderBy: { createdAt: "desc" },
       include: { student: true, author: true },
     }),
-    prisma.student.findMany({ orderBy: { fullName: "asc" }, select: { id: true, fullName: true } }),
-    prisma.payment.aggregate({ _sum: { amount: true }, where: { status: "PAID" } }),
+    prisma.student.findMany({ where: branchWhere(s), orderBy: { fullName: "asc" }, select: { id: true, fullName: true } }), // faol filial doirasida
+    prisma.payment.aggregate({ _sum: { amount: true }, where: { AND: [{ status: "PAID" }, branchViaStudent(s)] } }), // faol filial doirasida
   ]);
 
   const writable = canWrite(s.role, MODULES.PAYMENTS);

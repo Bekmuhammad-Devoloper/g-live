@@ -45,6 +45,7 @@ export async function createExpense(_prev: ExState, formData: FormData): Promise
       recipient: parsed.data.recipient,
       note: parsed.data.note,
       authorId: s.userId,
+      branchId: s.branchId, // xarajat qaysi filialda kiritilgan bo'lsa — o'shanga biriktiriladi
     },
   });
 

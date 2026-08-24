@@ -1,6 +1,7 @@
 import { requireSession } from "@/lib/auth";
 import { prisma } from "@/lib/db";
 import { ROLES } from "@/lib/constants";
+import { branchWhere } from "@/lib/branchScope";
 import { Forbidden } from "../_components/ui";
 import CoursesView, { type VCourse } from "./CoursesView";
 
@@ -12,9 +13,10 @@ export default async function CoursesPage() {
     return <Forbidden title="Kirish taqiqlangan" body="Bu bo'lim rahbariyat uchun." />;
   }
 
+  // Kurs katalogi hamma filialda umumiy, lekin guruhlar soni faol filial bo'yicha
   const programs = await prisma.program.findMany({
     orderBy: { createdAt: "desc" },
-    include: { _count: { select: { levels: true, groups: true } } },
+    include: { _count: { select: { levels: true, groups: { where: branchWhere(s) } } } },
   });
 
   const firstBanner = (raw: string | null): string | null => {

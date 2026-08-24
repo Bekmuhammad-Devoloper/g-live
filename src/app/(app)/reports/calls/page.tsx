@@ -3,6 +3,7 @@ import { prisma } from "@/lib/db";
 import type { Prisma } from "@prisma/client";
 import { ROLES, type Locale } from "@/lib/constants";
 import { canWrite, isScopedToOwn, MODULES } from "@/lib/rbac";
+import { branchWhere } from "@/lib/branchScope";
 import { tr } from "@/lib/tr";
 import { Forbidden } from "../../_components/ui";
 import CallsView from "./CallsView";
@@ -91,7 +92,14 @@ export default async function CallsPage({ searchParams }: { searchParams?: Promi
   // Operator faqat O'Z qo'ng'iroqlarini ko'radi (REPORTS = "OWN").
   // ROP va rahbariyat butun jamoanikini ko'radi.
   const own = isScopedToOwn(s.role, MODULES.REPORTS);
-  const scope: Prisma.CallWhereInput = own ? { operatorId: s.userId } : {};
+  // Call'da branchId yo'q — qo'ng'iroqni qabul qilgan operator filiali bo'yicha
+  // cheklaymiz (operatorsiz yozuvlar hamma filialda ko'rinadi)
+  const branchScope: Prisma.CallWhereInput = s.branchId
+    ? { OR: [{ operator: branchWhere(s) }, { operatorId: null }] }
+    : {};
+  const scope: Prisma.CallWhereInput = own
+    ? { AND: [{ operatorId: s.userId }, branchScope] }
+    : branchScope;
 
   const [calls, totalCount, byStatus, byDirection, answeredAgg, missedPending, operatorUsers] = await Promise.all([
     prisma.call.findMany({

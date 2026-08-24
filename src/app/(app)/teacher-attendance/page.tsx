@@ -1,6 +1,7 @@
 import { requireSession } from "@/lib/auth";
 import { prisma } from "@/lib/db";
 import { ROLES } from "@/lib/constants";
+import { branchWhere } from "@/lib/branchScope";
 import { tr } from "@/lib/tr";
 import { Forbidden } from "../_components/ui";
 import TeacherAttendanceWorkspace, { type VTeacher, type VAtt } from "./TeacherAttendanceWorkspace";
@@ -28,11 +29,20 @@ export default async function TeacherAttendancePage() {
 
   // O'qituvchi bo'lsa — faqat o'z ma'lumoti (o'zini ko'radi, tahrir qila olmaydi)
   const isTeacher = s.role === ROLES.TEACHER;
-  const [teachers, schedules, attendance, groups] = await Promise.all([
-    prisma.user.findMany({ where: isTeacher ? { role: ROLES.TEACHER, id: s.userId } : { role: ROLES.TEACHER }, orderBy: { fullName: "asc" }, select: { id: true, fullName: true, fiksa: true } }),
-    prisma.teacherSchedule.findMany({ where: isTeacher ? { teacherId: s.userId } : {} }),
-    prisma.teacherAttendance.findMany({ where: isTeacher ? { teacherId: s.userId } : {} }),
-    prisma.group.findMany({ where: { teacherId: isTeacher ? s.userId : { not: null }, status: { not: "CANCELLED" } }, select: { teacherId: true, weekdays: true } }),
+  // faol filial doirasida
+  const teachers = await prisma.user.findMany({
+    where: { AND: [isTeacher ? { role: ROLES.TEACHER, id: s.userId } : { role: ROLES.TEACHER }, branchWhere(s)] },
+    orderBy: { fullName: "asc" },
+    select: { id: true, fullName: true, fiksa: true },
+  });
+  // TeacherSchedule/TeacherAttendance'da branchId yo'q — filial o'qituvchilari id'si orqali chegaralaymiz
+  const teacherIds = teachers.map((t) => t.id);
+
+  const [schedules, attendance, groups] = await Promise.all([
+    prisma.teacherSchedule.findMany({ where: isTeacher ? { teacherId: s.userId } : { teacherId: { in: teacherIds } } }),
+    prisma.teacherAttendance.findMany({ where: isTeacher ? { teacherId: s.userId } : { teacherId: { in: teacherIds } } }),
+    // faol filial doirasida
+    prisma.group.findMany({ where: { AND: [{ teacherId: isTeacher ? s.userId : { not: null }, status: { not: "CANCELLED" } }, branchWhere(s)] }, select: { teacherId: true, weekdays: true } }),
   ]);
 
   const schedMap = new Map(schedules.map((x) => [x.teacherId, x]));

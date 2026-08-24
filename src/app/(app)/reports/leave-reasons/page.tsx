@@ -4,6 +4,7 @@ import { prisma } from "@/lib/db";
 import { canRead, MODULES } from "@/lib/rbac";
 import { cn } from "@/lib/cn";
 import { tr } from "@/lib/tr";
+import { branchWhere } from "@/lib/branchScope";
 import { Forbidden } from "../../_components/ui";
 import LeaveFilters from "./LeaveFilters";
 import LeaveExport from "./LeaveExport";
@@ -37,7 +38,7 @@ export default async function LeaveReasonsPage({ searchParams }: { searchParams:
 
   // Sababi ro'yxati — yo'qotilgan lidlarning sabablari
   const distinctReasons = await prisma.lead.findMany({
-    where: { stage: "LOST", lossReason: { not: null } },
+    where: { AND: [{ stage: "LOST", lossReason: { not: null } }, branchWhere(s)] }, // faol filial doirasida
     select: { lossReason: true }, distinct: ["lossReason"],
   });
   const reasons = distinctReasons.map((x) => x.lossReason!).filter(Boolean);
@@ -48,7 +49,8 @@ export default async function LeaveReasonsPage({ searchParams }: { searchParams:
   if (tab === "buyurtma") {
     // Buyurtmadan ketganlar = yo'qotilgan lidlar (lossReason bo'yicha)
     const leads = await prisma.lead.findMany({
-      where: { stage: "LOST", updatedAt: { gte: from, lte: to }, ...(reason ? { lossReason: reason } : {}) },
+      // faol filial doirasida
+      where: { AND: [{ stage: "LOST", updatedAt: { gte: from, lte: to }, ...(reason ? { lossReason: reason } : {}) }, branchWhere(s)] },
       select: { lossReason: true },
     });
     count = leads.length;
@@ -59,7 +61,7 @@ export default async function LeaveReasonsPage({ searchParams }: { searchParams:
     const where: Prisma.StudentWhereInput = { eduStatus: { in: LEFT_STATUS }, updatedAt: { gte: from, lte: to } };
     if (tab === "tolov_yoq") where.payments = { none: { status: "PAID" } };
     if (tab === "tolov_bor") where.payments = { some: { status: "PAID" } };
-    count = await prisma.student.count({ where });
+    count = await prisma.student.count({ where: { AND: [where, branchWhere(s)] } }); // faol filial doirasida
     rows = count > 0 ? [{ name: tr(s.locale, { uz: "Belgilanmagan", ru: "Не указано", en: "Unspecified" }), count }] : [];
   }
 

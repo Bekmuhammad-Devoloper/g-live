@@ -1,5 +1,7 @@
 import Link from "next/link";
 import { prisma } from "@/lib/db";
+import { requireSession } from "@/lib/auth";
+import { branchWhere, branchViaStudent, branchViaGroup } from "@/lib/branchScope";
 import { formatMoney, type Locale } from "@/lib/constants";
 import { getT } from "@/lib/i18n";
 import { Card, StatCard } from "../_components/ui";
@@ -10,6 +12,7 @@ import { groupColor } from "../groups/groupColor";
 // CEO paneli — 12 status kartasi + qisqa jamlanma + haftalik dars jadvali.
 export default async function CeoDashboard({ locale }: { locale: Locale }) {
   const t = getT(locale);
+  const s = await requireSession(); // faol filial — barcha ko'rsatkichlar shu doirada
 
   // Joriy hafta (Yakshanbadan boshlab)
   const now = new Date();
@@ -17,15 +20,15 @@ export default async function CeoDashboard({ locale }: { locale: Locale }) {
   const weekEnd = new Date(weekStart.getTime() + 7 * 86400000);
 
   const [counts, paidAgg, leads, weekLessons, teacherRows, groupRows, programRows] = await Promise.all([
-    computeStatusCounts(),
-    prisma.payment.aggregate({ _sum: { amount: true }, where: { status: "PAID" } }),
-    prisma.lead.count(),
+    computeStatusCounts(s),
+    prisma.payment.aggregate({ _sum: { amount: true }, where: { AND: [{ status: "PAID" }, branchViaStudent(s)] } }),
+    prisma.lead.count({ where: branchWhere(s) }),
     prisma.lesson.findMany({
-      where: { startsAt: { gte: weekStart, lt: weekEnd } },
+      where: { AND: [{ startsAt: { gte: weekStart, lt: weekEnd } }, branchViaGroup(s)] },
       include: { group: { include: { teacher: true, program: true } } },
     }),
-    prisma.user.findMany({ where: { role: "TEACHER" }, select: { fullName: true }, orderBy: { fullName: "asc" } }),
-    prisma.group.findMany({ select: { name: true, room: true }, orderBy: { name: "asc" } }),
+    prisma.user.findMany({ where: { AND: [{ role: "TEACHER" }, branchWhere(s)] }, select: { fullName: true }, orderBy: { fullName: "asc" } }),
+    prisma.group.findMany({ where: branchWhere(s), select: { name: true, room: true }, orderBy: { name: "asc" } }),
     prisma.program.findMany({ select: { name: true }, orderBy: { name: "asc" } }),
   ]);
 

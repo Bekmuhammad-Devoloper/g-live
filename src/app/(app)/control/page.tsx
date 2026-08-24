@@ -1,6 +1,7 @@
 import { requireSession } from "@/lib/auth";
 import { prisma } from "@/lib/db";
 import { ROLES } from "@/lib/constants";
+import { branchViaLesson, branchViaStudent } from "@/lib/branchScope";
 import { tr } from "@/lib/tr";
 import { PageHeader, Card, HubCard, StatCard, Table, EmptyRow, Badge, Forbidden } from "../_components/ui";
 
@@ -12,16 +13,17 @@ export default async function ControlPage() {
     return <Forbidden title={tr(s.locale, { uz: "Kirish taqiqlangan", ru: "Доступ запрещён", en: "Access denied" })} body={tr(s.locale, { uz: "Bu bo'lim rahbariyat uchun.", ru: "Этот раздел для руководства.", en: "This section is for management." })} />;
   }
 
+  // Barcha ko'rsatkichlar faol filial doirasida
   const [anomalies, unconfirmed, manualPayments, lowScores, recentAudit] = await Promise.all([
     prisma.attendance.findMany({
-      where: { anomaly: true },
+      where: { AND: [{ anomaly: true }, branchViaLesson(s)] },
       include: { student: true, lesson: { include: { group: true } } },
       take: 20,
       orderBy: { markedAt: "desc" },
     }),
-    prisma.attendance.count({ where: { confirmed: false } }),
-    prisma.payment.count({ where: { isManual: true } }),
-    prisma.submission.count({ where: { score: { lt: 60 }, status: "GRADED" } }),
+    prisma.attendance.count({ where: { AND: [{ confirmed: false }, branchViaLesson(s)] } }),
+    prisma.payment.count({ where: { AND: [{ isManual: true }, branchViaStudent(s)] } }),
+    prisma.submission.count({ where: { AND: [{ score: { lt: 60 }, status: "GRADED" }, branchViaStudent(s)] } }),
     prisma.auditLog.findMany({ orderBy: { createdAt: "desc" }, take: 8, include: { actor: true } }),
   ]);
 

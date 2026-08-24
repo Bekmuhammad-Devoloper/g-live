@@ -3,6 +3,7 @@ import { requireSession } from "@/lib/auth";
 import { prisma } from "@/lib/db";
 import { canRead, MODULES } from "@/lib/rbac";
 import { ROLES, LEAD_STAGE_LABELS, label, type Locale } from "@/lib/constants";
+import { branchWhere } from "@/lib/branchScope";
 import { Forbidden } from "../_components/ui";
 import { Icon } from "../_components/Icon";
 
@@ -42,9 +43,11 @@ export default async function OperatorConsolePage({ searchParams }: { searchPara
     : todayStart;
 
   const [op, calls, leads, reminders] = await Promise.all([
-    prisma.user.findUnique({ where: { id: opId }, select: { fullName: true } }),
+    // begona operator konsoli faqat faol filial doirasida ochilsin (o'z konsoli doim ochiq)
+    prisma.user.findFirst({ where: opId === s.userId ? { id: opId } : { AND: [{ id: opId }, branchWhere(s)] }, select: { fullName: true } }),
     prisma.call.findMany({ where: { operatorId: opId }, select: { direction: true, status: true, duration: true, startedAt: true } }),
-    prisma.lead.findMany({ where: { managerId: opId }, orderBy: { createdAt: "desc" }, select: { id: true, stage: true, fullName: true, phone: true, source: true, createdAt: true } }),
+    // faol filial doirasida
+    prisma.lead.findMany({ where: { AND: [{ managerId: opId }, branchWhere(s)] }, orderBy: { createdAt: "desc" }, select: { id: true, stage: true, fullName: true, phone: true, source: true, createdAt: true } }),
     prisma.task.findMany({ where: { kind: "REMINDER", assigneeId: opId, status: "OPEN" }, orderBy: { dueAt: "asc" }, take: 6, select: { id: true, title: true, dueAt: true } }),
   ]);
 

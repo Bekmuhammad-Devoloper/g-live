@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/db";
 import { getSession } from "@/lib/auth";
+import { branchWhere } from "@/lib/branchScope";
 import { ROLES } from "@/lib/constants";
 import type { Prisma } from "@prisma/client";
 
@@ -37,14 +38,21 @@ export async function GET(req: Request) {
   if (from) createdAt.gte = new Date(`${from}T00:00:00`);
   if (to) createdAt.lte = new Date(`${to}T23:59:59`);
 
+  // Barcha so'rovlar faol filial doirasida (filialsiz eski lidlar ham)
+  const branch = branchWhere(session);
   const where: Prisma.LeadWhereInput = {
-    ...(from || to ? { createdAt } : {}),
-    ...(source ? { source } : {}),
-    ...(manager ? { managerId: manager } : {}),
+    AND: [
+      {
+        ...(from || to ? { createdAt } : {}),
+        ...(source ? { source } : {}),
+        ...(manager ? { managerId: manager } : {}),
+      },
+      branch,
+    ],
   };
 
-  // Filtrsiz — dropdown variantlari va xodim nomlari uchun
-  const allLeads = await prisma.lead.findMany({ select: { source: true, managerId: true } });
+  // Sana/manba filtrisiz — dropdown variantlari va xodim nomlari uchun
+  const allLeads = await prisma.lead.findMany({ where: branch, select: { source: true, managerId: true } });
   const allManagerIds = Array.from(new Set(allLeads.map((l) => l.managerId).filter((x): x is string => !!x)));
   const users = allManagerIds.length
     ? await prisma.user.findMany({ where: { id: { in: allManagerIds } }, select: { id: true, fullName: true } })

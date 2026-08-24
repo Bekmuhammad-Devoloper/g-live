@@ -587,6 +587,8 @@ model BlockTest {
   durationMin   Int       @default(60)
   responsibleId String? // mas'ul xodim (User id)
   groupIds      String? // vergul bilan Group id lar
+  // Qaysi filial testi (filial izolyatsiyasi uchun; eski yozuvlarda null)
+  branchId      String?
   createdAt     DateTime  @default(now())
   updatedAt     DateTime  @updatedAt
 }
@@ -656,6 +658,9 @@ model Task {
   student    Student? @relation(fields: [studentId], references: [id])
   groupId    String?
   group      Group?   @relation(fields: [groupId], references: [id])
+
+  // Qaysi filial topshirig'i/eslatmasi (filial izolyatsiyasi; eski yozuvlarda null)
+  branchId   String?
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
@@ -885,6 +890,9 @@ model Expense {
 
   categoryId String?
   category   ExpenseCategory? @relation(fields: [categoryId], references: [id], onDelete: SetNull)
+
+  // Qaysi filial xarajati (filial izolyatsiyasi uchun; eski yozuvlarda null)
+  branchId   String?
 
   authorId   String? // kiritgan xodim
   author     User?    @relation("ExpenseAuthor", fields: [authorId], references: [id])

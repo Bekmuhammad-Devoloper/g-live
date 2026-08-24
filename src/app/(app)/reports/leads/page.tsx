@@ -5,6 +5,7 @@ import { getT } from "@/lib/i18n";
 import { canRead, MODULES } from "@/lib/rbac";
 import type { Locale } from "@/lib/constants";
 import { tr } from "@/lib/tr";
+import { branchWhere } from "@/lib/branchScope";
 import { PageHeader, Forbidden } from "../../_components/ui";
 import { Icon } from "../../_components/Icon";
 import BarChart, { type BarPoint } from "../_components/BarChart";
@@ -49,7 +50,7 @@ export default async function LeadsReportPage({
   const toEnd = new Date(toDate.getFullYear(), toDate.getMonth(), toDate.getDate(), 23, 59, 59, 999);
 
   const leads = await prisma.lead.findMany({
-    where: { createdAt: { gte: fromDate, lte: toEnd } },
+    where: { AND: [{ createdAt: { gte: fromDate, lte: toEnd } }, branchWhere(s)] }, // faol filial doirasida
     select: { createdAt: true },
   });
   const total = leads.length;

@@ -2,6 +2,7 @@ import { requireSession } from "@/lib/auth";
 import { prisma } from "@/lib/db";
 import { canRead, canWrite, MODULES } from "@/lib/rbac";
 import { tr } from "@/lib/tr";
+import { branchWhere, branchViaStudent } from "@/lib/branchScope";
 import { Forbidden } from "../../_components/ui";
 import LicenseBanner from "../../_components/LicenseBanner";
 import WithdrawalsView, { type VWithdrawal } from "./WithdrawalsView";
@@ -18,7 +19,7 @@ export default async function WithdrawalsPage() {
 
   const [rows, students] = await Promise.all([
     prisma.payment.findMany({
-      where: { status: "REFUNDED" },
+      where: { AND: [{ status: "REFUNDED" }, branchViaStudent(s)] }, // faol filial doirasida
       orderBy: { createdAt: "desc" },
       include: {
         author: { select: { fullName: true } },
@@ -35,7 +36,8 @@ export default async function WithdrawalsPage() {
         },
       },
     }),
-    prisma.student.findMany({ orderBy: { fullName: "asc" }, select: { id: true, fullName: true } }),
+    // Forma uchun o'quvchilar ro'yxati — faol filial doirasida
+    prisma.student.findMany({ where: branchWhere(s), orderBy: { fullName: "asc" }, select: { id: true, fullName: true } }),
   ]);
 
   const withdrawals: VWithdrawal[] = rows.map((p) => ({

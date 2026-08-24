@@ -55,6 +55,7 @@ export async function createTask(_prev: TaskState, formData: FormData): Promise<
       groupId: parsed.data.groupId || null,
       authorId: s.userId,
       dueAt: parsed.data.dueAt ? new Date(parsed.data.dueAt) : null,
+      branchId: s.branchId, // faol filialga biriktiriladi
     },
   });
 

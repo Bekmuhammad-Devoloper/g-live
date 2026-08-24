@@ -4,6 +4,7 @@ import { prisma } from "@/lib/db";
 import { canRead, MODULES } from "@/lib/rbac";
 import type { Locale } from "@/lib/constants";
 import { tr } from "@/lib/tr";
+import { branchWhere, branchViaGroup } from "@/lib/branchScope";
 import { Forbidden } from "../../_components/ui";
 import { Icon } from "../../_components/Icon";
 import LeftExport from "./LeftExport";
@@ -42,15 +43,21 @@ export default async function LeftStudentsPage({ searchParams }: { searchParams:
 
   const [programs, teachers] = await Promise.all([
     prisma.program.findMany({ where: { isActive: true }, select: { id: true, name: true }, orderBy: { name: "asc" } }),
-    prisma.user.findMany({ where: { role: "TEACHER" }, select: { id: true, fullName: true }, orderBy: { fullName: "asc" } }),
+    // faol filial doirasida
+    prisma.user.findMany({ where: { AND: [{ role: "TEACHER" }, branchWhere(s)] }, select: { id: true, fullName: true }, orderBy: { fullName: "asc" } }),
   ]);
 
   // Guruhni tark etgan = GroupStudent isActive=false
   const where: Prisma.GroupStudentWhereInput = {
-    isActive: false,
-    joinedAt: { gte: from, lte: to },
-    ...(courseId || teacherId ? { group: { ...(courseId ? { programId: courseId } : {}), ...(teacherId ? { teacherId } : {}) } } : {}),
-    ...(status ? { student: { eduStatus: status } } : {}),
+    AND: [
+      {
+        isActive: false,
+        joinedAt: { gte: from, lte: to },
+        ...(courseId || teacherId ? { group: { ...(courseId ? { programId: courseId } : {}), ...(teacherId ? { teacherId } : {}) } } : {}),
+        ...(status ? { student: { eduStatus: status } } : {}),
+      },
+      branchViaGroup(s), // faol filial doirasida
+    ],
   };
   const left = await prisma.groupStudent.findMany({
     where,

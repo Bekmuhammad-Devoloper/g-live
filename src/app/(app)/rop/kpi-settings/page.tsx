@@ -2,6 +2,7 @@ import { requireSession } from "@/lib/auth";
 import { prisma } from "@/lib/db";
 import { canRead, MODULES } from "@/lib/rbac";
 import { ROLES, type Locale } from "@/lib/constants";
+import { branchWhere } from "@/lib/branchScope";
 import { getSetting } from "@/lib/settings";
 import { Forbidden } from "../../_components/ui";
 import KpiSettingsView, { type VRatingRow } from "./KpiSettingsView";
@@ -18,8 +19,10 @@ export default async function RopKpiSettingsPage() {
 
   const [raw, operators, leads] = await Promise.all([
     getSetting("rop.kpi"),
-    prisma.user.findMany({ where: { role: ROLES.OPERATOR, isActive: true }, select: { id: true, fullName: true, kpiBonus: true }, orderBy: { fullName: "asc" } }),
-    prisma.lead.findMany({ where: { managerId: { not: null } }, select: { managerId: true, stage: true } }),
+    // faol filial doirasida
+    prisma.user.findMany({ where: { AND: [{ role: ROLES.OPERATOR, isActive: true }, branchWhere(s)] }, select: { id: true, fullName: true, kpiBonus: true }, orderBy: { fullName: "asc" } }),
+    // faol filial doirasida
+    prisma.lead.findMany({ where: { AND: [{ managerId: { not: null } }, branchWhere(s)] }, select: { managerId: true, stage: true } }),
   ]);
 
   let settings: RopKpiSettings = DEFAULT_KPI;

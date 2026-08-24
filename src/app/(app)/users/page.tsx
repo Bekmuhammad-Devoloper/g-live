@@ -3,6 +3,7 @@ import { prisma } from "@/lib/db";
 import { getT } from "@/lib/i18n";
 import { canRead, MODULES } from "@/lib/rbac";
 import { ROLES, ROLE_LABELS, label } from "@/lib/constants";
+import { branchWhere } from "@/lib/branchScope";
 import { Forbidden } from "../_components/ui";
 import UsersView, { type VStaff } from "./UsersView";
 
@@ -18,12 +19,15 @@ export default async function UsersPage() {
 
   // XAVFSIZLIK: `select` — passwordHash/plainPassword hech qachon xotiraga ham yuklanmaydi
   const users = await prisma.user.findMany({
-    where: { role: { in: STAFF_ROLES } },
+    where: { AND: [{ role: { in: STAFF_ROLES } }, branchWhere(s)] }, // faol filial doirasida
     orderBy: { createdAt: "asc" },
     select: {
       id: true, fullName: true, gender: true, role: true, position: true, phone: true, isActive: true,
       branch: { select: { name: true } },
-      teacherGroups: { select: { id: true, name: true, program: { select: { name: true } }, _count: { select: { students: true } } } },
+      teacherGroups: {
+        where: branchWhere(s), // faol filial doirasida
+        select: { id: true, name: true, program: { select: { name: true } }, _count: { select: { students: true } } },
+      },
     },
   });
 

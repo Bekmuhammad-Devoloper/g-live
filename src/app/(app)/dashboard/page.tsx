@@ -4,6 +4,7 @@ import { requireSession } from "@/lib/auth";
 import { prisma } from "@/lib/db";
 import { getT } from "@/lib/i18n";
 import { ROLES, ROLE_LABELS, EDU_STATUS_LABELS, label, formatMoney, isRopPosition, type Locale } from "@/lib/constants";
+import { branchViaStudent } from "@/lib/branchScope";
 import { tr } from "@/lib/tr";
 import { PageHeader, StatCard, Card, Badge } from "../_components/ui";
 import CeoDashboard from "./CeoDashboard";
@@ -33,7 +34,7 @@ export default async function DashboardPage() {
         title={`${t("dash.welcome")}, ${s.fullName}!`}
         subtitle={`${t("dash.role")}: ${label(ROLE_LABELS, s.role, s.locale)}`}
       />
-      {await roleContent({ role: s.role, userId: s.userId, locale: s.locale, t })}
+      {await roleContent({ role: s.role, userId: s.userId, branchId: s.branchId, locale: s.locale, t })}
     </>
   );
 }
@@ -41,11 +42,13 @@ export default async function DashboardPage() {
 async function roleContent({
   role,
   userId,
+  branchId,
   locale,
   t,
 }: {
   role: string;
   userId: string;
+  branchId: string | null;
   locale: Locale;
   t: (k: string) => string;
 }) {
@@ -64,11 +67,12 @@ async function roleContent({
     const now = new Date();
     const monthStart = new Date(now.getFullYear(), now.getMonth(), 1);
     const dayStart = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+    const b = branchViaStudent({ branchId }); // faol filial o'quvchilarining to'lovlari
     const [monthAgg, todayAgg, debtAgg, recent] = await Promise.all([
-      prisma.payment.aggregate({ _sum: { amount: true }, where: { status: "PAID", createdAt: { gte: monthStart } } }),
-      prisma.payment.aggregate({ _sum: { amount: true }, _count: true, where: { status: "PAID", createdAt: { gte: dayStart } } }),
-      prisma.payment.aggregate({ _sum: { amount: true }, where: { status: "PENDING" } }),
-      prisma.payment.findMany({ orderBy: { createdAt: "desc" }, take: 6, include: { student: { select: { fullName: true } } } }),
+      prisma.payment.aggregate({ _sum: { amount: true }, where: { AND: [{ status: "PAID", createdAt: { gte: monthStart } }, b] } }),
+      prisma.payment.aggregate({ _sum: { amount: true }, _count: true, where: { AND: [{ status: "PAID", createdAt: { gte: dayStart } }, b] } }),
+      prisma.payment.aggregate({ _sum: { amount: true }, where: { AND: [{ status: "PENDING" }, b] } }),
+      prisma.payment.findMany({ where: b, orderBy: { createdAt: "desc" }, take: 6, include: { student: { select: { fullName: true } } } }),
     ]);
     return (
       <>

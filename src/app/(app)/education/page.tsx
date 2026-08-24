@@ -1,6 +1,7 @@
 import { requireSession } from "@/lib/auth";
 import { prisma } from "@/lib/db";
 import { ROLES } from "@/lib/constants";
+import { branchWhere, branchViaGroup } from "@/lib/branchScope";
 import { tr } from "@/lib/tr";
 import { Card, HubCard, Badge, StatCard, Forbidden } from "../_components/ui";
 
@@ -13,11 +14,14 @@ export default async function EducationPage() {
   }
 
   const [programs, groupsCount, onlineCount, contractsCount, assessmentsCount] = await Promise.all([
-    prisma.program.findMany({ include: { levels: { orderBy: { order: "asc" } }, _count: { select: { groups: true } } } }),
-    prisma.group.count({ where: { status: "ACTIVE" } }),
-    prisma.group.count({ where: { status: "ACTIVE", format: "ONLINE" } }),
+    // Dasturlar umumiy ma'lumotnoma, lekin guruh soni faol filial doirasida sanaladi
+    prisma.program.findMany({ include: { levels: { orderBy: { order: "asc" } }, _count: { select: { groups: { where: branchWhere(s) } } } } }),
+    // faol filial doirasida
+    prisma.group.count({ where: { AND: [{ status: "ACTIVE" }, branchWhere(s)] } }),
+    prisma.group.count({ where: { AND: [{ status: "ACTIVE", format: "ONLINE" }, branchWhere(s)] } }),
     prisma.contractTemplate.count(),
-    prisma.seasonalAssessment.count(),
+    // guruhsiz (umumiy) baholashlar hamma filialda ko'rinadi — faol filial doirasida
+    prisma.seasonalAssessment.count({ where: s.branchId ? { OR: [branchViaGroup(s), { groupId: null }] } : {} }),
   ]);
 
   return (

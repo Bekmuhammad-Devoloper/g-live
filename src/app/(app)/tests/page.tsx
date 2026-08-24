@@ -1,6 +1,7 @@
 import { requireSession } from "@/lib/auth";
 import { prisma } from "@/lib/db";
 import { ROLES } from "@/lib/constants";
+import { branchWhere } from "@/lib/branchScope";
 import { tr } from "@/lib/tr";
 import { Forbidden } from "../_components/ui";
 import TestsWorkspace, { type VBlockTest, type VTestType } from "./TestsWorkspace";
@@ -20,10 +21,11 @@ export default async function TestsPage() {
   }
 
   const [blockTests, testTypes, staff, groups, programs] = await Promise.all([
-    prisma.blockTest.findMany({ orderBy: { createdAt: "desc" } }),
+    prisma.blockTest.findMany({ where: branchWhere(s), orderBy: { createdAt: "desc" } }), // faol filial testlari
     prisma.testType.findMany({ orderBy: { createdAt: "desc" } }),
-    prisma.user.findMany({ where: { role: { notIn: [ROLES.STUDENT, ROLES.PARENT] }, isActive: true }, select: { id: true, fullName: true }, orderBy: { fullName: "asc" } }),
-    prisma.group.findMany({ select: { id: true, name: true }, orderBy: { name: "asc" } }),
+    // xodimlar va guruhlar — faol filial doirasida
+    prisma.user.findMany({ where: { AND: [{ role: { notIn: [ROLES.STUDENT, ROLES.PARENT] }, isActive: true }, branchWhere(s)] }, select: { id: true, fullName: true }, orderBy: { fullName: "asc" } }),
+    prisma.group.findMany({ where: branchWhere(s), select: { id: true, name: true }, orderBy: { name: "asc" } }),
     prisma.program.findMany({ where: { isActive: true }, select: { id: true, name: true }, orderBy: { name: "asc" } }),
   ]);
 

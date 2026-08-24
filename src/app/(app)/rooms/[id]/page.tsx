@@ -3,6 +3,7 @@ import { notFound } from "next/navigation";
 import { requireSession } from "@/lib/auth";
 import { prisma } from "@/lib/db";
 import { canRead, MODULES } from "@/lib/rbac";
+import { branchWhere } from "@/lib/branchScope";
 import { tr } from "@/lib/tr";
 import { Forbidden } from "../../_components/ui";
 import { Icon } from "../../_components/Icon";
@@ -29,7 +30,7 @@ export default async function RoomDetailPage({ params }: { params: Promise<{ id:
 
   const [groups, branch] = await Promise.all([
     prisma.group.findMany({
-      where: { room: room.name },
+      where: { AND: [{ room: room.name }, branchWhere(s)] }, // faol filial doirasida
       orderBy: { name: "asc" },
       include: {
         teacher: { select: { fullName: true } },

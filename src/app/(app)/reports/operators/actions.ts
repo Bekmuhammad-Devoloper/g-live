@@ -171,6 +171,7 @@ export async function assignOperatorTask(fd: FormData): Promise<OpResult> {
       dueAt: /^\d{4}-\d{2}-\d{2}$/.test(due) ? new Date(`${due}T00:00:00`) : null,
       assigneeId: id,
       authorId: s.userId,
+      branchId: s.branchId, // faol filialga biriktiriladi
     },
     select: { id: true },
   });

@@ -4,6 +4,7 @@ import { getT } from "@/lib/i18n";
 import { canRead, MODULES } from "@/lib/rbac";
 import { formatMoney, PAYMENT_STATUS_LABELS, label } from "@/lib/constants";
 import { tr } from "@/lib/tr";
+import { branchViaStudent } from "@/lib/branchScope";
 import { PageHeader, Card, HubCard, StatCard, Table, EmptyRow, Badge, Forbidden } from "../_components/ui";
 import ExportButton from "../payments/ExportButton";
 
@@ -17,12 +18,13 @@ export default async function FinancePage() {
   const now = new Date();
   const monthStart = new Date(now.getFullYear(), now.getMonth(), 1);
 
+  // To'lovlar Student orqali filialga bog'lanadi — faol filial doirasida
   const [paidAgg, monthAgg, cancelled, recent, manualCount] = await Promise.all([
-    prisma.payment.aggregate({ _sum: { amount: true }, where: { status: "PAID" } }),
-    prisma.payment.aggregate({ _sum: { amount: true }, where: { status: "PAID", createdAt: { gte: monthStart } } }),
-    prisma.payment.count({ where: { status: "CANCELLED" } }),
-    prisma.payment.findMany({ orderBy: { createdAt: "desc" }, take: 8, include: { student: true } }),
-    prisma.payment.count({ where: { isManual: true } }),
+    prisma.payment.aggregate({ _sum: { amount: true }, where: { AND: [{ status: "PAID" }, branchViaStudent(s)] } }),
+    prisma.payment.aggregate({ _sum: { amount: true }, where: { AND: [{ status: "PAID", createdAt: { gte: monthStart } }, branchViaStudent(s)] } }),
+    prisma.payment.count({ where: { AND: [{ status: "CANCELLED" }, branchViaStudent(s)] } }),
+    prisma.payment.findMany({ where: branchViaStudent(s), orderBy: { createdAt: "desc" }, take: 8, include: { student: true } }),
+    prisma.payment.count({ where: { AND: [{ isManual: true }, branchViaStudent(s)] } }),
   ]);
 
   const df = new Intl.DateTimeFormat(s.locale === "ru" ? "ru-RU" : "uz-UZ");

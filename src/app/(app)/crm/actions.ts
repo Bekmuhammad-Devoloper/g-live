@@ -16,6 +16,8 @@ const schema = z.object({
   budget: z.coerce.number().int().nonnegative().optional(),
   stage: z.enum(LEAD_STAGES),
   note: z.string().optional(),
+  // Ixtiyoriy: lid yaratilayotganda darhol mavjud guruhga yo'naltirish
+  groupId: z.string().min(1).optional(),
 });
 
 export type LeadState = { ok?: boolean; error?: string };
@@ -36,8 +38,27 @@ export async function createLead(_prev: LeadState, formData: FormData): Promise<
     budget: formData.get("budget") || undefined,
     stage: formData.get("stage"),
     note: formData.get("note") || undefined,
+    groupId: formData.get("groupId") || undefined,
   });
   if (!parsed.success) return { error: "invalid" };
+
+  const { groupId, ...leadData } = parsed.data;
+
+  // Majburiylik qoidasi yaratishda ham amal qiladi: guruhsiz "Qabul qilindi"
+  // bo'lmaydi (aks holda forma orqali qoidani chetlab o'tish mumkin bo'lardi).
+  if (ENROLL_REQUIRED_STAGES.includes(leadData.stage) && !groupId) {
+    return { error: "group_required" };
+  }
+
+  // Guruh tanlangan bo'lsa — mavjudligini va joy borligini tekshiramiz
+  if (groupId) {
+    const g = await prisma.group.findUnique({
+      where: { id: groupId },
+      select: { capacity: true, _count: { select: { students: { where: { isActive: true } } } } },
+    });
+    if (!g) return { error: "group_not_found" };
+    if (g._count.students >= g.capacity) return { error: "group_full" };
+  }
 
   // Dublikat telefon tekshiruvi (TZ FR-CRM-03 — ogohlantirish)
   const dup = await prisma.lead.findFirst({ where: { phone: parsed.data.phone } });
@@ -45,12 +66,13 @@ export async function createLead(_prev: LeadState, formData: FormData): Promise<
 
   const lead = await prisma.lead.create({
     data: {
-      ...parsed.data,
-      utmSource: parsed.data.source,
+      ...leadData,
+      groupId: groupId ?? null,
+      utmSource: leadData.source,
       branchId: s.branchId,
       managerId: isSalesRole(s.role) ? s.userId : null,
       activities: {
-        create: { authorId: s.userId, type: "note", result: "Lid yaratildi" },
+        create: { authorId: s.userId, type: "note", result: groupId ? "Lid yaratildi va guruhga yo'naltirildi" : "Lid yaratildi" },
       },
     },
   });
@@ -60,8 +82,15 @@ export async function createLead(_prev: LeadState, formData: FormData): Promise<
     action: "CREATE",
     entityType: "Lead",
     entityId: lead.id,
-    newValue: { fullName: lead.fullName, phone: lead.phone, stage: lead.stage },
+    newValue: { fullName: lead.fullName, phone: lead.phone, stage: lead.stage, groupId: lead.groupId },
   });
+
+  // "Qabul qilindi" bosqichida yaratilsa — o'quvchini darhol guruhga yozamiz
+  if (groupId && ENROLL_REQUIRED_STAGES.includes(lead.stage)) {
+    const studentId = await applyEnrollment(lead, groupId);
+    await prisma.lead.update({ where: { id: lead.id }, data: { studentId } });
+    revalidatePath("/groups");
+  }
 
   revalidatePath("/crm");
   return { ok: true };
@@ -102,6 +131,45 @@ export async function convertLead(leadId: string): Promise<void> {
   revalidatePath("/groups");
 }
 
+/**
+ * Lidni guruhga HAQIQATAN biriktiradi: o'quvchi yaratadi (yo'q bo'lsa),
+ * eski guruhdan chiqaradi va yangisiga yozadi.
+ *
+ * `enrollLeadToGroup` ham, `moveLeadStage` ham shuni chaqiradi — shuning uchun
+ * guruh qayerda tanlanishidan qat'i nazar (drawer, yoki lid yaratishda)
+ * o'quvchi guruhda albatta paydo bo'ladi. Takror chaqirilsa zarar qilmaydi.
+ */
+async function applyEnrollment(
+  lead: { id: string; fullName: string; phone: string; branchId: string | null; studentId: string | null; groupId: string | null },
+  groupId: string,
+): Promise<string> {
+  let studentId = lead.studentId;
+  if (!studentId) {
+    const student = await prisma.student.create({
+      data: { fullName: lead.fullName, phone: lead.phone, branchId: lead.branchId, eduStatus: "ACTIVE" },
+    });
+    studentId = student.id;
+  } else {
+    await prisma.student.update({ where: { id: studentId }, data: { eduStatus: "ACTIVE" } }).catch(() => {});
+  }
+
+  // Guruh almashsa — eskisidan chiqaramiz
+  if (lead.groupId && lead.groupId !== groupId) {
+    await prisma.groupStudent.updateMany({
+      where: { groupId: lead.groupId, studentId },
+      data: { isActive: false },
+    }).catch(() => {});
+  }
+
+  await prisma.groupStudent.upsert({
+    where: { groupId_studentId: { groupId, studentId } },
+    update: { isActive: true },
+    create: { groupId, studentId, isActive: true },
+  });
+
+  return studentId;
+}
+
 // "Qabul qilindi" hisoblanadigan bosqichlar — bularga o'tish uchun guruh SHART
 const ENROLL_REQUIRED_STAGES = ["WON", "PAID"];
 
@@ -124,6 +192,15 @@ export async function moveLeadStage(leadId: string, stage: string, reason?: stri
 
   const data: Record<string, unknown> = { stage };
   if (stage === "LOST" && reason) data.lossReason = reason;
+
+  // Guruh lid YARATILISHIDA tanlangan bo'lishi mumkin — u holda o'quvchi hali
+  // guruhga yozilmagan. "Qabul qilindi" ga o'tishda buni kafolatlaymiz,
+  // aks holda lidda guruh ko'rinadi-yu, o'quvchi guruhda bo'lmaydi.
+  if (ENROLL_REQUIRED_STAGES.includes(stage) && before.groupId) {
+    const studentId = await applyEnrollment(before, before.groupId);
+    data.studentId = studentId;
+  }
+
   await prisma.lead.update({ where: { id: leadId }, data });
   // Bosqich o'zgarishini faoliyat sifatida yozish
   await prisma.leadActivity.create({
@@ -241,31 +318,7 @@ export async function enrollLeadToGroup(leadId: string, groupId: string): Promis
   }
   if (group._count.students >= group.capacity) return { error: "group_full" };
 
-  // 1) O'quvchi (yo'q bo'lsa — yaratamiz)
-  let studentId = lead.studentId;
-  if (!studentId) {
-    const student = await prisma.student.create({
-      data: { fullName: lead.fullName, phone: lead.phone, branchId: lead.branchId, eduStatus: "ACTIVE" },
-    });
-    studentId = student.id;
-  } else {
-    await prisma.student.update({ where: { id: studentId }, data: { eduStatus: "ACTIVE" } }).catch(() => {});
-  }
-
-  // 2) Eski guruhdan chiqaramiz (o'zgartirish holatida)
-  if (isChange && lead.groupId) {
-    await prisma.groupStudent.updateMany({
-      where: { groupId: lead.groupId, studentId },
-      data: { isActive: false },
-    }).catch(() => {});
-  }
-
-  // 3) Yangi guruhga yozamiz (takror bo'lsa qayta faollashtiramiz)
-  await prisma.groupStudent.upsert({
-    where: { groupId_studentId: { groupId, studentId } },
-    update: { isActive: true },
-    create: { groupId, studentId, isActive: true },
-  });
+  const studentId = await applyEnrollment(lead, groupId);
 
   // 4) Lidni yangilaymiz
   const updated = await prisma.lead.update({

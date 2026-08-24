@@ -1,6 +1,7 @@
 import { requireSession } from "@/lib/auth";
 import { prisma } from "@/lib/db";
 import { ROLES } from "@/lib/constants";
+import { branchViaLesson } from "@/lib/branchScope";
 import { tr } from "@/lib/tr";
 import { PageHeader, Card, Table, EmptyRow, Badge, Forbidden } from "../../_components/ui";
 
@@ -15,7 +16,7 @@ export default async function TurnstileLogPage() {
   const T = (uz: string, ru: string, en: string) => tr(s.locale, { uz, ru, en });
 
   const rows = await prisma.attendance.findMany({
-    where: { method: "QR" },
+    where: { AND: [{ method: "QR" }, branchViaLesson(s)] }, // faol filial doirasida
     orderBy: { markedAt: "desc" },
     take: 100,
     select: {

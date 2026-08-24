@@ -2,6 +2,7 @@ import { requireSession } from "@/lib/auth";
 import { prisma } from "@/lib/db";
 import { canRead, MODULES } from "@/lib/rbac";
 import { tr } from "@/lib/tr";
+import { branchWhere, branchViaStudent } from "@/lib/branchScope";
 import { Forbidden } from "../../_components/ui";
 import LicenseBanner from "../../_components/LicenseBanner";
 import DebtorsView, { type VDebtor } from "./DebtorsView";
@@ -16,7 +17,7 @@ export default async function DebtorsPage() {
   // Qarz = talabaning PENDING to'lovlari yig'indisi
   const grouped = await prisma.payment.groupBy({
     by: ["studentId"],
-    where: { status: "PENDING" },
+    where: { AND: [{ status: "PENDING" }, branchViaStudent(s)] }, // faol filial doirasida
     _sum: { amount: true },
     _min: { createdAt: true },
   });
@@ -27,7 +28,7 @@ export default async function DebtorsPage() {
   if (ids.length) {
     const [students, openTasks] = await Promise.all([
       prisma.student.findMany({
-        where: { id: { in: ids } },
+        where: { AND: [{ id: { in: ids } }, branchWhere(s)] }, // faol filial doirasida
         select: {
           id: true, fullName: true, phone: true, eduStatus: true,
           enrollments: {

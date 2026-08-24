@@ -2,6 +2,7 @@ import { requireSession } from "@/lib/auth";
 import { prisma } from "@/lib/db";
 import { getT } from "@/lib/i18n";
 import { canRead, MODULES } from "@/lib/rbac";
+import { branchViaGroup } from "@/lib/branchScope";
 import { ROLES, ATTENDANCE_STATUS_LABELS, label } from "@/lib/constants";
 import { tr } from "@/lib/tr";
 import { PageHeader, Forbidden } from "../_components/ui";
@@ -28,6 +29,9 @@ export default async function AttendancePage() {
     const st = await prisma.student.findUnique({ where: { userId: s.userId } });
     where = { group: { students: { some: { studentId: st?.id ?? "__none__" } } } };
   }
+  // O'quvchi/ota-ona o'z darslarini filialdan qat'i nazar ko'radi, xodimlar — faol filial doirasida
+  const selfScoped = s.role === ROLES.STUDENT || s.role === ROLES.PARENT;
+  if (!selfScoped) where = { AND: [where, branchViaGroup(s)] };
 
   const lessons = await prisma.lesson.findMany({
     where,

@@ -2,6 +2,7 @@ import type { Prisma } from "@prisma/client";
 import { requireSession } from "@/lib/auth";
 import { prisma } from "@/lib/db";
 import { ROLES, SEASON_LABELS, ASSESSMENT_STATUS_LABELS, label } from "@/lib/constants";
+import { branchWhere, branchViaGroup, branchViaStudent } from "@/lib/branchScope";
 import { tr } from "@/lib/tr";
 import { Card, StatCard, Table, EmptyRow, Badge, Forbidden } from "../../_components/ui";
 import AssessmentControls from "./AssessmentControls";
@@ -22,9 +23,14 @@ export default async function AssessmentPage() {
   const isTeacher = s.role === ROLES.TEACHER;
 
   // O'qituvchi faqat o'z guruhi va umumiy baholashlarni ko'radi
-  const where: Prisma.SeasonalAssessmentWhereInput = isTeacher
+  const roleWhere: Prisma.SeasonalAssessmentWhereInput = isTeacher
     ? { OR: [{ group: { teacherId: s.userId } }, { groupId: null }] }
     : {};
+  // faol filial doirasida (guruhsiz — umumiy — baholashlar hamma filialda ko'rinadi)
+  const branchCond: Prisma.SeasonalAssessmentWhereInput = s.branchId
+    ? { OR: [branchViaGroup(s), { groupId: null }] }
+    : {};
+  const where: Prisma.SeasonalAssessmentWhereInput = { AND: [roleWhere, branchCond] };
 
   const [assessments, completed, resultsAgg, recentResults, groups] = await Promise.all([
     prisma.seasonalAssessment.findMany({
@@ -33,15 +39,18 @@ export default async function AssessmentPage() {
       include: { group: { select: { name: true } }, _count: { select: { results: true } } },
     }),
     prisma.seasonalAssessment.count({ where: { ...where, status: "COMPLETED" } }),
-    prisma.seasonalResult.aggregate({ _avg: { score: true }, _count: true }),
+    // natijalar o'quvchi orqali faol filial doirasida
+    prisma.seasonalResult.aggregate({ where: branchViaStudent(s), _avg: { score: true }, _count: true }),
     prisma.seasonalResult.findMany({
+      where: branchViaStudent(s), // faol filial doirasida
       orderBy: { createdAt: "desc" },
       take: 8,
       include: { student: { select: { fullName: true } }, assessment: { select: { title: true, passScore: true } } },
     }),
+    // faol filial doirasida
     isTeacher
-      ? prisma.group.findMany({ where: { teacherId: s.userId }, select: { id: true, name: true }, orderBy: { name: "asc" } })
-      : prisma.group.findMany({ select: { id: true, name: true }, orderBy: { name: "asc" } }),
+      ? prisma.group.findMany({ where: { AND: [{ teacherId: s.userId }, branchWhere(s)] }, select: { id: true, name: true }, orderBy: { name: "asc" } })
+      : prisma.group.findMany({ where: branchWhere(s), select: { id: true, name: true }, orderBy: { name: "asc" } }),
   ]);
 
   const avg = resultsAgg._avg.score != null ? Math.round(resultsAgg._avg.score) : 0;

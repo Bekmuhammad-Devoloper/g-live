@@ -2,6 +2,7 @@ import { requireSession } from "@/lib/auth";
 import { prisma } from "@/lib/db";
 import { canRead, canSeeTeamReports, getPermission, MODULES } from "@/lib/rbac";
 import { ROLES, type Locale } from "@/lib/constants";
+import { branchWhere } from "@/lib/branchScope";
 import { tr } from "@/lib/tr";
 import { Forbidden } from "../../_components/ui";
 import KpiView from "./KpiView";
@@ -41,7 +42,7 @@ export default async function KpiPage() {
   const roles = [ROLES.MANAGER, ROLES.DEPUTY_DIRECTOR, ROLES.DIRECTOR, ROLES.ADMIN];
   const [users, leads] = await Promise.all([
     prisma.user.findMany({
-      where: { role: { in: roles }, isActive: true },
+      where: { AND: [{ role: { in: roles }, isActive: true }, branchWhere(s)] }, // faol filial doirasida
       orderBy: { fullName: "asc" },
       select: {
         id: true,
@@ -56,7 +57,7 @@ export default async function KpiPage() {
       },
     }),
     prisma.lead.findMany({
-      where: { managerId: { not: null } },
+      where: { AND: [{ managerId: { not: null } }, branchWhere(s)] }, // faol filial doirasida
       select: { managerId: true, stage: true, createdAt: true },
     }),
   ]);

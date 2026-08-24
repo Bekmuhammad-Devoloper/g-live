@@ -1,6 +1,7 @@
 import { requireSession } from "@/lib/auth";
 import { prisma } from "@/lib/db";
 import { ROLES } from "@/lib/constants";
+import { branchWhere } from "@/lib/branchScope";
 import { tr } from "@/lib/tr";
 import { Forbidden } from "../_components/ui";
 import TasksView, { type VTask } from "./TasksView";
@@ -13,14 +14,15 @@ export default async function TasksPage() {
 
   const [tasks, staff, students, groups] = await Promise.all([
     prisma.task.findMany({
-      where: { kind: "TASK" },
+      where: { AND: [{ kind: "TASK" }, branchWhere(s)] }, // faol filial topshiriqlari
       orderBy: [{ status: "asc" }, { dueAt: "asc" }],
       include: { assignee: true, student: true, group: true, author: true },
       take: 300,
     }),
-    prisma.user.findMany({ where: { role: { notIn: [ROLES.STUDENT, ROLES.PARENT] }, isActive: true }, select: { id: true, fullName: true }, orderBy: { fullName: "asc" } }),
-    prisma.student.findMany({ select: { id: true, fullName: true }, orderBy: { fullName: "asc" }, take: 500 }),
-    prisma.group.findMany({ select: { id: true, name: true }, orderBy: { name: "asc" } }),
+    // faol filial doirasida
+    prisma.user.findMany({ where: { AND: [{ role: { notIn: [ROLES.STUDENT, ROLES.PARENT] }, isActive: true }, branchWhere(s)] }, select: { id: true, fullName: true }, orderBy: { fullName: "asc" } }),
+    prisma.student.findMany({ where: branchWhere(s), select: { id: true, fullName: true }, orderBy: { fullName: "asc" }, take: 500 }), // faol filial doirasida
+    prisma.group.findMany({ where: branchWhere(s), select: { id: true, name: true }, orderBy: { name: "asc" } }), // faol filial doirasida
   ]);
 
   const vtasks: VTask[] = tasks.map((t) => ({

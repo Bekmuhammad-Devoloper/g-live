@@ -1,6 +1,7 @@
 import { requireSession } from "@/lib/auth";
 import { prisma } from "@/lib/db";
 import { ROLES } from "@/lib/constants";
+import { branchViaLesson } from "@/lib/branchScope";
 import { tr } from "@/lib/tr";
 import { PageHeader, Card, StatCard, Table, EmptyRow, Forbidden } from "../../_components/ui";
 
@@ -24,7 +25,7 @@ export default async function TurnstilePage() {
   since.setDate(since.getDate() - (DAYS - 1));
 
   const entries = await prisma.attendance.findMany({
-    where: { method: "QR", markedAt: { gte: since } },
+    where: { AND: [{ method: "QR", markedAt: { gte: since } }, branchViaLesson(s)] }, // faol filial doirasida
     select: { markedAt: true, anomaly: true, studentId: true, lesson: { select: { group: { select: { name: true } } } } },
   });
 

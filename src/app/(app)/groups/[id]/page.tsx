@@ -4,6 +4,7 @@ import { requireSession } from "@/lib/auth";
 import { prisma } from "@/lib/db";
 import { getPermission, MODULES } from "@/lib/rbac";
 import { ROLES } from "@/lib/constants";
+import { branchWhere } from "@/lib/branchScope";
 import { tr } from "@/lib/tr";
 import { PageHeader, Card, Table, EmptyRow, Badge, Forbidden } from "../../_components/ui";
 import { CreateStudentForm, EnrollExisting, BulkImportStudents, NewLessonForm, RemoveStudentButton, EditGroupButton } from "./GroupForms";
@@ -65,7 +66,8 @@ export default async function GroupDetailPage({ params }: { params: Promise<{ id
   // Biriktirish uchun nomzodlar (bu guruhda bo'lmagan o'quvchilar)
   const candidates = full
     ? await prisma.student.findMany({
-        where: { id: { notIn: enrolledIds.length ? enrolledIds : ["__none__"] } },
+        // faol filial o'quvchilarigina biriktirish uchun taklif qilinadi
+        where: { AND: [{ id: { notIn: enrolledIds.length ? enrolledIds : ["__none__"] } }, branchWhere(s)] },
         select: { id: true, fullName: true },
         orderBy: { fullName: "asc" },
         take: 100,
@@ -76,7 +78,8 @@ export default async function GroupDetailPage({ params }: { params: Promise<{ id
   const [programs, teachers] = full
     ? await Promise.all([
         prisma.program.findMany({ where: { isActive: true }, select: { id: true, name: true }, orderBy: { name: "asc" } }),
-        prisma.user.findMany({ where: { role: ROLES.TEACHER }, select: { id: true, fullName: true }, orderBy: { fullName: "asc" } }),
+        // faol filial o'qituvchilari
+        prisma.user.findMany({ where: { AND: [{ role: ROLES.TEACHER }, branchWhere(s)] }, select: { id: true, fullName: true }, orderBy: { fullName: "asc" } }),
       ])
     : [[], []];
 

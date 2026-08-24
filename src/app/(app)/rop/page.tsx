@@ -3,6 +3,7 @@ import { requireSession } from "@/lib/auth";
 import { prisma } from "@/lib/db";
 import { canRead, canSeeTeamReports, MODULES } from "@/lib/rbac";
 import { ROLES, LEAD_STAGE_LABELS, label, type Locale } from "@/lib/constants";
+import { branchWhere } from "@/lib/branchScope";
 import { tr } from "@/lib/tr";
 import { Forbidden, HubCard } from "../_components/ui";
 import { Icon } from "../_components/Icon";
@@ -58,12 +59,15 @@ export default async function RopDashboardPage({ searchParams }: { searchParams:
     : todayStart;
 
   const [operators, leads, todayCalls] = await Promise.all([
-    prisma.user.findMany({ where: { role: ROLES.OPERATOR, isActive: true }, select: { id: true, fullName: true } }),
+    // faol filial doirasida
+    prisma.user.findMany({ where: { AND: [{ role: ROLES.OPERATOR, isActive: true }, branchWhere(s)] }, select: { id: true, fullName: true } }),
     prisma.lead.findMany({
+      where: branchWhere(s), // faol filial doirasida
       orderBy: { createdAt: "desc" },
       select: { id: true, managerId: true, stage: true, createdAt: true, fullName: true, phone: true, source: true },
     }),
-    prisma.call.count({ where: { startedAt: { gte: todayStart } } }),
+    // Call'da branchId yo'q — operator filiali bo'yicha (operatorsizlar hamma joyda)
+    prisma.call.count({ where: { AND: [{ startedAt: { gte: todayStart } }, { OR: [{ operator: branchWhere(s) }, { operatorId: null }] }] } }),
   ]);
 
   // ── Pipeline (joriy holat) ──

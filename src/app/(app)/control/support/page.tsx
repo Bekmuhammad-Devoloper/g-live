@@ -1,6 +1,7 @@
 import { requireSession } from "@/lib/auth";
 import { prisma } from "@/lib/db";
 import { ROLES } from "@/lib/constants";
+import { branchWhere } from "@/lib/branchScope";
 import { tr } from "@/lib/tr";
 import { PageHeader, Card, StatCard, Table, EmptyRow, Badge, Forbidden } from "../../_components/ui";
 
@@ -17,11 +18,20 @@ export default async function SupportAnalyticsPage() {
   const T = (uz: string, ru: string, en: string) => tr(s.locale, { uz, ru, en });
 
   const since = new Date(Date.now() - DAYS * 86_400_000);
+
+  // AuditLog'da branchId yo'q — faol filial xodimlari (muallif) orqali cheklaymiz
+  const branchStaff = s.branchId
+    ? await prisma.user.findMany({ where: branchWhere(s), select: { id: true } })
+    : null;
+  const scope = branchStaff
+    ? { createdAt: { gte: since }, actorId: { in: branchStaff.map((x) => x.id) } }
+    : { createdAt: { gte: since } };
+
   const [total, cancels, byEntity, byActor] = await Promise.all([
-    prisma.auditLog.count({ where: { createdAt: { gte: since } } }),
-    prisma.auditLog.count({ where: { createdAt: { gte: since }, action: "CANCEL" } }),
-    prisma.auditLog.groupBy({ by: ["entityType"], where: { createdAt: { gte: since } }, _count: { _all: true } }),
-    prisma.auditLog.groupBy({ by: ["actorId"], where: { createdAt: { gte: since } }, _count: { _all: true } }),
+    prisma.auditLog.count({ where: scope }),
+    prisma.auditLog.count({ where: { ...scope, action: "CANCEL" } }),
+    prisma.auditLog.groupBy({ by: ["entityType"], where: scope, _count: { _all: true } }),
+    prisma.auditLog.groupBy({ by: ["actorId"], where: scope, _count: { _all: true } }),
   ]);
 
   const actorIds = byActor.map((a) => a.actorId).filter(Boolean) as string[];

@@ -1,6 +1,7 @@
 import { requireSession } from "@/lib/auth";
 import { prisma } from "@/lib/db";
 import { canRead, getPermission, MODULES } from "@/lib/rbac";
+import { branchWhere, branchViaGroup } from "@/lib/branchScope";
 import { ROLES } from "@/lib/constants";
 import { tr } from "@/lib/tr";
 import { Forbidden } from "../_components/ui";
@@ -21,6 +22,9 @@ export default async function AssignmentsPage() {
   // Ko'lam: o'qituvchi faqat o'z guruhlari vazifalarini ko'radi
   let where: Prisma.AssignmentWhereInput = {};
   if (s.role === ROLES.TEACHER) where = { group: { teacherId: s.userId } };
+  // O'quvchi/ota-ona o'z vazifalarini filialdan qat'i nazar ko'radi, xodimlar — faol filial doirasida
+  const selfScoped = s.role === ROLES.STUDENT || s.role === ROLES.PARENT;
+  if (!selfScoped) where = { AND: [where, branchViaGroup(s)] };
 
   const assignments = await prisma.assignment.findMany({
     where,
@@ -48,7 +52,8 @@ export default async function AssignmentsPage() {
   const canCreate = getPermission(s.role, MODULES.GROUPS) === "FULL" || s.role === ROLES.TEACHER;
   const groups = canCreate
     ? await prisma.group.findMany({
-        where: s.role === ROLES.TEACHER ? { teacherId: s.userId } : {},
+        // faol filial doirasida
+        where: { AND: [s.role === ROLES.TEACHER ? { teacherId: s.userId } : {}, branchWhere(s)] },
         select: { id: true, name: true },
         orderBy: { name: "asc" },
       })

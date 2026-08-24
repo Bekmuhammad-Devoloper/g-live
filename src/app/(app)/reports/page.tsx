@@ -4,6 +4,7 @@ import { getT } from "@/lib/i18n";
 import { canRead, MODULES } from "@/lib/rbac";
 import { LEAD_STAGES, LEAD_STAGE_LABELS, label, formatMoney, ROLES } from "@/lib/constants";
 import { tr } from "@/lib/tr";
+import { branchWhere, branchViaStudent } from "@/lib/branchScope";
 import { PageHeader, StatCard, Card, HubCard, Forbidden } from "../_components/ui";
 
 export default async function ReportsPage() {
@@ -15,13 +16,13 @@ export default async function ReportsPage() {
   }
 
   const [activeStudents, totalStudents, leads, wonLeads, groups, paidAgg, byStage] = await Promise.all([
-    prisma.student.count({ where: { eduStatus: "ACTIVE" } }),
-    prisma.student.count(),
-    prisma.lead.count(),
-    prisma.lead.count({ where: { stage: "WON" } }),
-    prisma.group.count({ where: { status: "ACTIVE" } }),
-    prisma.payment.aggregate({ _sum: { amount: true }, where: { status: "PAID" } }),
-    prisma.lead.groupBy({ by: ["stage"], _count: true }),
+    prisma.student.count({ where: { AND: [{ eduStatus: "ACTIVE" }, branchWhere(s)] } }), // faol filial doirasida
+    prisma.student.count({ where: branchWhere(s) }), // faol filial doirasida
+    prisma.lead.count({ where: branchWhere(s) }), // faol filial doirasida
+    prisma.lead.count({ where: { AND: [{ stage: "WON" }, branchWhere(s)] } }), // faol filial doirasida
+    prisma.group.count({ where: { AND: [{ status: "ACTIVE" }, branchWhere(s)] } }), // faol filial doirasida
+    prisma.payment.aggregate({ _sum: { amount: true }, where: { AND: [{ status: "PAID" }, branchViaStudent(s)] } }), // faol filial doirasida
+    prisma.lead.groupBy({ by: ["stage"], _count: true, where: branchWhere(s) }), // faol filial doirasida
   ]);
 
   // Moliyaviy hisobot — faqat direktor, o'rinbosari va menejer

@@ -4,7 +4,7 @@ import { useEffect, useRef, useState } from "react";
 import { useActionState } from "react";
 import { createPortal } from "react-dom";
 import { useRouter } from "next/navigation";
-import { createLead, type LeadState } from "./actions";
+import { createLead, enrollOptions, type LeadState, type EnrollGroupOpt } from "./actions";
 import { LEAD_STAGES, LEAD_STAGE_LABELS, label, type Locale } from "@/lib/constants";
 import { tr } from "@/lib/tr";
 import { getT } from "@/lib/i18n";
@@ -30,8 +30,20 @@ export default function NewLeadForm({
   const [state, action, pending] = useActionState<LeadState, FormData>(createLead, {});
   const formRef = useRef<HTMLFormElement>(null);
   const [mounted, setMounted] = useState(false);
+  // Ixtiyoriy guruh biriktiruvi. Ro'yxat HAR ochilishda qayta yuklanadi —
+  // shu orada yaratilgan guruh ham ko'rinsin (bir martalik kesh eskirib qoladi).
+  const [groups, setGroups] = useState<EnrollGroupOpt[]>([]);
 
   useEffect(() => setMounted(true), []);
+
+  useEffect(() => {
+    if (!open) return;
+    let alive = true;
+    enrollOptions()
+      .then((o) => { if (alive) setGroups(o.groups); })
+      .catch(() => { if (alive) setGroups([]); });
+    return () => { alive = false; };
+  }, [open]);
 
   useEffect(() => {
     if (state.ok) {
@@ -104,6 +116,24 @@ export default function NewLeadForm({
               </select>
             </div>
             <div className="col-span-2">
+              <label className="mb-1 block text-xs font-medium text-slate-600 dark:text-slate-400">
+                {tr(locale, { uz: "Guruh", ru: "Группа", en: "Group" })}
+                <span className="ml-1 font-normal text-slate-400">
+                  ({tr(locale, { uz: "ixtiyoriy", ru: "необязательно", en: "optional" })})
+                </span>
+              </label>
+              <select name="groupId" className={input} defaultValue="">
+                <option value="">{tr(locale, { uz: "— yo'naltirilmagan —", ru: "— не назначена —", en: "— not assigned —" })}</option>
+                {groups.map((g) => (
+                  <option key={g.id} value={g.id} disabled={g.taken >= g.capacity}>
+                    {g.courseName} — {g.name} ({g.taken}/{g.capacity})
+                    {g.schedule ? ` · ${g.schedule}` : ""}
+                    {g.taken >= g.capacity ? ` · ${tr(locale, { uz: "to'lgan", ru: "заполнена", en: "full" })}` : ""}
+                  </option>
+                ))}
+              </select>
+            </div>
+            <div className="col-span-2">
               <label className="mb-1 block text-xs font-medium text-slate-600 dark:text-slate-400">{t("common.note")}</label>
               <textarea name="note" rows={3} className={input} />
             </div>
@@ -111,7 +141,17 @@ export default function NewLeadForm({
 
           {state.error && (
             <p className="mt-3 rounded-lg bg-red-50 px-3 py-2 text-sm text-red-700 dark:bg-red-500/10 dark:text-red-300">
-              {state.error === "duplicate" ? tr(locale, { uz: "Bu telefon raqami bilan lid allaqachon mavjud (dublikat).", ru: "Лид с этим номером телефона уже существует (дубликат).", en: "A lead with this phone number already exists (duplicate)." }) : state.error === "forbidden" ? t("pay.noPermission") : tr(locale, { uz: "Ma'lumotlar to'liq emas.", ru: "Данные заполнены не полностью.", en: "The data is incomplete." })}
+              {state.error === "duplicate"
+                ? tr(locale, { uz: "Bu telefon raqami bilan lid allaqachon mavjud (dublikat).", ru: "Лид с этим номером телефона уже существует (дубликат).", en: "A lead with this phone number already exists (duplicate)." })
+                : state.error === "forbidden"
+                  ? t("pay.noPermission")
+                  : state.error === "group_required"
+                    ? tr(locale, { uz: "\"Qabul qilindi\" bosqichi uchun guruh tanlash majburiy.", ru: "Для этапа «Принят» выбор группы обязателен.", en: "A group is required for the Won stage." })
+                    : state.error === "group_full"
+                      ? tr(locale, { uz: "Tanlangan guruh to'lgan — boshqasini tanlang.", ru: "Выбранная группа заполнена — выберите другую.", en: "The selected group is full — pick another." })
+                      : state.error === "group_not_found"
+                        ? tr(locale, { uz: "Guruh topilmadi.", ru: "Группа не найдена.", en: "Group not found." })
+                        : tr(locale, { uz: "Ma'lumotlar to'liq emas.", ru: "Данные заполнены не полностью.", en: "The data is incomplete." })}
             </p>
           )}
         </div>

@@ -2,6 +2,7 @@ import { requireSession } from "@/lib/auth";
 import { prisma } from "@/lib/db";
 import { canRead, canWrite, MODULES } from "@/lib/rbac";
 import { ROLES, type Locale } from "@/lib/constants";
+import { branchWhere } from "@/lib/branchScope";
 import { tr } from "@/lib/tr";
 import { Forbidden } from "../../_components/ui";
 import OperatorsMonitor, { type VOperator } from "./OperatorsMonitor";
@@ -18,12 +19,14 @@ export default async function RopOperatorsPage() {
 
   const [operators, leads, calls] = await Promise.all([
     prisma.user.findMany({
-      where: { role: ROLES.OPERATOR, isActive: true },
+      where: { AND: [{ role: ROLES.OPERATOR, isActive: true }, branchWhere(s)] }, // faol filial doirasida
       select: { id: true, fullName: true, phone: true, imageUrl: true, lastLoginAt: true, createdAt: true },
       orderBy: { fullName: "asc" },
     }),
-    prisma.lead.findMany({ where: { managerId: { not: null } }, orderBy: { createdAt: "desc" }, select: { managerId: true, stage: true, fullName: true } }),
-    prisma.call.findMany({ where: { operatorId: { not: null } }, select: { operatorId: true, duration: true, startedAt: true } }),
+    // faol filial doirasida
+    prisma.lead.findMany({ where: { AND: [{ managerId: { not: null } }, branchWhere(s)] }, orderBy: { createdAt: "desc" }, select: { managerId: true, stage: true, fullName: true } }),
+    // faol filial operatorlarining qo'ng'iroqlari
+    prisma.call.findMany({ where: { AND: [{ operatorId: { not: null } }, { operator: branchWhere(s) }] }, select: { operatorId: true, duration: true, startedAt: true } }),
   ]);
 
   const ONLINE_MS = 15 * 60 * 1000;

@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { prisma } from "@/lib/db";
 import { getSession } from "@/lib/auth";
 import { canRead, MODULES } from "@/lib/rbac";
+import { branchWhere } from "@/lib/branchScope";
 import { ROLES } from "@/lib/constants";
 
 export interface SearchHit {
@@ -32,18 +33,19 @@ export async function GET(req: Request) {
   const isStaff = staff.includes(session.role as never);
   const isTeacher = session.role === ROLES.TEACHER;
   const hits: SearchHit[] = [];
+  const branch = branchWhere(session); // qidiruv ham faol filial doirasida
 
   // O'quvchilar (xodimlar va o'qituvchi ko'radi)
   if (isStaff || isTeacher) {
     const scope = isTeacher ? { enrollments: { some: { group: { teacherId: session.userId } } } } : {};
     const foundS = await prisma.student.findMany({
-      where: { OR: [{ fullName: { contains: q } }, { phone: { contains: q } }], ...scope },
+      where: { AND: [{ OR: [{ fullName: { contains: q } }, { phone: { contains: q } }], ...scope }, branch] },
       take: 5,
       select: { id: true, fullName: true, phone: true, currentLevel: true },
     });
     const extraS = byDigits
       ? (await prisma.student.findMany({
-          where: scope,
+          where: { AND: [scope, branch] },
           orderBy: { createdAt: "desc" },
           take: 500,
           select: { id: true, fullName: true, phone: true, currentLevel: true },
@@ -65,13 +67,14 @@ export async function GET(req: Request) {
   // Lidlar (CRM huquqi bo'lsa)
   if (canRead(session.role, MODULES.CRM)) {
     const found = await prisma.lead.findMany({
-      where: { OR: [{ fullName: { contains: q } }, { phone: { contains: q } }] },
+      where: { AND: [{ OR: [{ fullName: { contains: q } }, { phone: { contains: q } }] }, branch] },
       take: 5,
       select: { id: true, fullName: true, phone: true, stage: true },
     });
     // Raqam bo'yicha qidiruv — formatli telefonlarni JSda tozalab solishtiramiz
     const extra = byDigits
       ? (await prisma.lead.findMany({
+          where: branch,
           orderBy: { createdAt: "desc" },
           take: 500,
           select: { id: true, fullName: true, phone: true, stage: true },
@@ -91,8 +94,10 @@ export async function GET(req: Request) {
   if (canRead(session.role, MODULES.GROUPS)) {
     const groups = await prisma.group.findMany({
       where: {
-        name: { contains: q },
-        ...(isTeacher ? { teacherId: session.userId } : {}),
+        AND: [
+          { name: { contains: q }, ...(isTeacher ? { teacherId: session.userId } : {}) },
+          branch,
+        ],
       },
       take: 5,
       select: { id: true, name: true, levelCode: true, room: true },
@@ -111,13 +116,13 @@ export async function GET(req: Request) {
   // O'qituvchilar (faqat xodimlar)
   if (isStaff) {
     const foundT = await prisma.user.findMany({
-      where: { role: ROLES.TEACHER, OR: [{ fullName: { contains: q } }, { phone: { contains: q } }] },
+      where: { AND: [{ role: ROLES.TEACHER, OR: [{ fullName: { contains: q } }, { phone: { contains: q } }] }, branch] },
       take: 5,
       select: { id: true, fullName: true, phone: true },
     });
     const extraT = byDigits
       ? (await prisma.user.findMany({
-          where: { role: ROLES.TEACHER },
+          where: { AND: [{ role: ROLES.TEACHER }, branch] },
           take: 500,
           select: { id: true, fullName: true, phone: true },
         })).filter((x) => phoneMatch(x.phone))

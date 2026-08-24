@@ -2,6 +2,7 @@ import { requireSession } from "@/lib/auth";
 import { prisma } from "@/lib/db";
 import { canRead, MODULES } from "@/lib/rbac";
 import { ROLES, formatMoney, type Locale } from "@/lib/constants";
+import { branchWhere } from "@/lib/branchScope";
 import { tr } from "@/lib/tr";
 import { Forbidden, StatCard } from "../../_components/ui";
 import DateNav from "./DateNav";
@@ -27,11 +28,14 @@ export default async function SalesTeamPage({ searchParams }: { searchParams: Pr
   const to = new Date(toStr + "T23:59:59");
   const loc = s.locale as Locale;
 
-  const rangeLead: Prisma.LeadWhereInput = { managerId: { not: null }, createdAt: { gte: from, lte: to } };
-  const rangeCall: Prisma.CallWhereInput = { operatorId: { not: null }, startedAt: { gte: from, lte: to } };
+  // faol filial doirasida
+  const rangeLead: Prisma.LeadWhereInput = { AND: [{ managerId: { not: null }, createdAt: { gte: from, lte: to } }, branchWhere(s)] };
+  // faol filial operatorlarining qo'ng'iroqlari
+  const rangeCall: Prisma.CallWhereInput = { AND: [{ operatorId: { not: null }, startedAt: { gte: from, lte: to } }, { operator: branchWhere(s) }] };
 
   const [ops, leads, calls] = await Promise.all([
-    prisma.user.findMany({ where: { role: ROLES.OPERATOR, isActive: true }, orderBy: { fullName: "asc" }, select: { id: true, fullName: true, fiksa: true, position: true } }),
+    // faol filial doirasida
+    prisma.user.findMany({ where: { AND: [{ role: ROLES.OPERATOR, isActive: true }, branchWhere(s)] }, orderBy: { fullName: "asc" }, select: { id: true, fullName: true, fiksa: true, position: true } }),
     prisma.lead.findMany({ where: rangeLead, select: { managerId: true, stage: true } }),
     prisma.call.findMany({ where: rangeCall, select: { operatorId: true, duration: true, startedAt: true, leadId: true } }),
   ]);

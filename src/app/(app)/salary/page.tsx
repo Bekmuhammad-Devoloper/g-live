@@ -4,6 +4,7 @@ import { getT } from "@/lib/i18n";
 import { tr } from "@/lib/tr";
 import { canRead, getPermission, MODULES } from "@/lib/rbac";
 import { ROLES } from "@/lib/constants";
+import { branchWhere, branchViaGroup } from "@/lib/branchScope";
 import { PageHeader, Card, StatCard, Forbidden } from "../_components/ui";
 import SalaryWorkspace, { type SalaryRow } from "./SalaryWorkspace";
 
@@ -18,7 +19,7 @@ export default async function SalaryPage({ searchParams }: { searchParams: Promi
   // O'qituvchi — o'z yuklamasi bo'yicha dastlabki ma'lumot
   if (s.role === ROLES.TEACHER) {
     const groups = await prisma.group.findMany({
-      where: { teacherId: s.userId },
+      where: { AND: [{ teacherId: s.userId }, branchWhere(s)] }, // faol filial doirasida
       include: { _count: { select: { students: true, lessons: true } } },
     });
     const lessons = groups.reduce((n, g) => n + g._count.lessons, 0);
@@ -55,14 +56,14 @@ export default async function SalaryPage({ searchParams }: { searchParams: Promi
   const monthEnd = new Date(year, month, 1);
 
   const teachers = await prisma.user.findMany({
-    where: { role: ROLES.TEACHER, isActive: true },
+    where: { AND: [{ role: ROLES.TEACHER, isActive: true }, branchWhere(s)] }, // faol filial doirasida
     select: { id: true, fullName: true, fiksa: true, kpiBonus: true },
     orderBy: { fullName: "asc" },
   });
   const teacherIds = teachers.map((tc) => tc.id);
 
   const groups = await prisma.group.findMany({
-    where: { teacherId: { in: teacherIds } },
+    where: { AND: [{ teacherId: { in: teacherIds } }, branchWhere(s)] }, // faol filial doirasida
     select: { id: true, teacherId: true },
   });
   const groupToTeacher = new Map(groups.map((g) => [g.id, g.teacherId!]));
@@ -70,10 +71,12 @@ export default async function SalaryPage({ searchParams }: { searchParams: Promi
 
   const [lessonRows, studentRows, salaries] = await Promise.all([
     groupIds.length
-      ? prisma.lesson.groupBy({ by: ["groupId"], where: { groupId: { in: groupIds }, startsAt: { gte: monthStart, lt: monthEnd } }, _count: { _all: true } })
+      // faol filial doirasida
+      ? prisma.lesson.groupBy({ by: ["groupId"], where: { AND: [{ groupId: { in: groupIds }, startsAt: { gte: monthStart, lt: monthEnd } }, branchViaGroup(s)] }, _count: { _all: true } })
       : Promise.resolve([] as { groupId: string; _count: { _all: number } }[]),
     groupIds.length
-      ? prisma.groupStudent.groupBy({ by: ["groupId"], where: { groupId: { in: groupIds }, isActive: true }, _count: { _all: true } })
+      // faol filial doirasida
+      ? prisma.groupStudent.groupBy({ by: ["groupId"], where: { AND: [{ groupId: { in: groupIds }, isActive: true }, branchViaGroup(s)] }, _count: { _all: true } })
       : Promise.resolve([] as { groupId: string; _count: { _all: number } }[]),
     prisma.teacherSalary.findMany({ where: { teacherId: { in: teacherIds }, year, month } }),
   ]);

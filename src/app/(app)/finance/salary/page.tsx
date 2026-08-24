@@ -3,6 +3,7 @@ import { prisma } from "@/lib/db";
 import { canRead, getPermission, MODULES } from "@/lib/rbac";
 import { ROLES } from "@/lib/constants";
 import { tr } from "@/lib/tr";
+import { branchWhere } from "@/lib/branchScope";
 import { Forbidden } from "../../_components/ui";
 import LicenseBanner from "../../_components/LicenseBanner";
 import SalaryCalculatorView, { type VRule } from "./SalaryCalculatorView";
@@ -17,11 +18,12 @@ export default async function SalaryCalculatorPage() {
   }
 
   const [rules, teachers, programs, groups, students] = await Promise.all([
+    // SalaryRule va Program — umumiy ma'lumotnoma (filialga bog'liq emas)
     prisma.salaryRule.findMany({ orderBy: [{ isDefault: "desc" }, { createdAt: "desc" }] }),
-    prisma.user.findMany({ where: { role: ROLES.TEACHER, isActive: true }, select: { id: true, fullName: true }, orderBy: { fullName: "asc" } }),
+    prisma.user.findMany({ where: { AND: [{ role: ROLES.TEACHER, isActive: true }, branchWhere(s)] }, select: { id: true, fullName: true }, orderBy: { fullName: "asc" } }), // faol filial doirasida
     prisma.program.findMany({ where: { isActive: true }, select: { id: true, name: true }, orderBy: { name: "asc" } }),
-    prisma.group.findMany({ select: { id: true, name: true }, orderBy: { name: "asc" } }),
-    prisma.student.findMany({ select: { id: true, fullName: true }, orderBy: { fullName: "asc" } }),
+    prisma.group.findMany({ where: branchWhere(s), select: { id: true, name: true }, orderBy: { name: "asc" } }), // faol filial doirasida
+    prisma.student.findMany({ where: branchWhere(s), select: { id: true, fullName: true }, orderBy: { fullName: "asc" } }), // faol filial doirasida
   ]);
 
   const vrules: VRule[] = rules.map((r) => ({

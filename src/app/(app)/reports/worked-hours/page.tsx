@@ -2,6 +2,7 @@ import { requireSession } from "@/lib/auth";
 import { prisma } from "@/lib/db";
 import { ROLES } from "@/lib/constants";
 import { tr } from "@/lib/tr";
+import { branchViaGroup } from "@/lib/branchScope";
 import { Forbidden } from "../../_components/ui";
 import LicenseBanner from "../../_components/LicenseBanner";
 import WorkedHoursView, { type WLesson } from "./WorkedHoursView";
@@ -22,7 +23,7 @@ export default async function WorkedHoursPage() {
   // O'qituvchi bo'lsa — faqat o'z darslari (o'ziga mos ma'lumot)
   const isTeacher = s.role === ROLES.TEACHER;
   const lessons = await prisma.lesson.findMany({
-    where: isTeacher ? { group: { teacherId: s.userId } } : {},
+    where: { AND: [isTeacher ? { group: { teacherId: s.userId } } : {}, branchViaGroup(s)] }, // faol filial doirasida
     select: {
       startsAt: true,
       endsAt: true,

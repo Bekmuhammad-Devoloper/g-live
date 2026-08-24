@@ -1,6 +1,7 @@
 import { requireSession } from "@/lib/auth";
 import { prisma } from "@/lib/db";
 import { ROLES, type Locale } from "@/lib/constants";
+import { branchWhere } from "@/lib/branchScope";
 import { tr } from "@/lib/tr";
 import { Forbidden } from "../_components/ui";
 import VacanciesView, { type VVacancy } from "./VacanciesView";
@@ -23,6 +24,7 @@ export default async function VacanciesPage({ searchParams }: { searchParams: Pr
   const sp = await searchParams;
 
   const vacancies = await prisma.vacancy.findMany({
+    where: branchWhere(s), // faol filial doirasida
     orderBy: { createdAt: "desc" },
     select: {
       id: true, title: true, company: true, country: true, countryCode: true,
@@ -35,7 +37,7 @@ export default async function VacanciesPage({ searchParams }: { searchParams: Pr
   // Arizalar — lidlarning vacancyLinkId si bo'yicha (haqiqiy hisob)
   const grouped = await prisma.lead.groupBy({
     by: ["vacancyLinkId"],
-    where: { vacancyLinkId: { not: null } },
+    where: { AND: [{ vacancyLinkId: { not: null } }, branchWhere(s)] }, // faol filial doirasida
     _count: { _all: true },
   });
   const appsByLink = new Map(grouped.map((g) => [g.vacancyLinkId as string, g._count._all]));

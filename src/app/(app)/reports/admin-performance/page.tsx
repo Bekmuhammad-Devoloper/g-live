@@ -2,6 +2,7 @@ import { requireSession } from "@/lib/auth";
 import { prisma } from "@/lib/db";
 import { ROLES } from "@/lib/constants";
 import { tr } from "@/lib/tr";
+import { branchWhere } from "@/lib/branchScope";
 import { Forbidden } from "../../_components/ui";
 import LicenseBanner from "../../_components/LicenseBanner";
 import AdminPerfView, { type AdminStudent } from "./AdminPerfView";
@@ -20,6 +21,7 @@ export default async function AdminPerformancePage() {
   }
 
   const students = await prisma.student.findMany({
+    where: branchWhere(s), // faol filial doirasida
     select: {
       eduStatus: true,
       createdAt: true,

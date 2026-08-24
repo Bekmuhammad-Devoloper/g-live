@@ -2,6 +2,7 @@ import { requireSession } from "@/lib/auth";
 import { prisma } from "@/lib/db";
 import { canRead, MODULES } from "@/lib/rbac";
 import { tr } from "@/lib/tr";
+import { branchViaLesson } from "@/lib/branchScope";
 import { Forbidden } from "../../_components/ui";
 import CancelledView, { type VCancelled } from "./CancelledView";
 
@@ -17,7 +18,7 @@ export default async function CancelledAttendancePage() {
 
   // Bekor qilingan / sababli davomat = status EXCUSED
   const recs = await prisma.attendance.findMany({
-    where: { status: "EXCUSED" },
+    where: { AND: [{ status: "EXCUSED" }, branchViaLesson(s)] }, // faol filial doirasida
     orderBy: { markedAt: "desc" },
     take: 1000,
     select: {

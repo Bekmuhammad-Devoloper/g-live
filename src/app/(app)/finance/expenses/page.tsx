@@ -2,6 +2,7 @@ import { requireSession } from "@/lib/auth";
 import { prisma } from "@/lib/db";
 import { canRead, canWrite, MODULES } from "@/lib/rbac";
 import { tr } from "@/lib/tr";
+import { branchWhere } from "@/lib/branchScope";
 import { Forbidden } from "../../_components/ui";
 import LicenseBanner from "../../_components/LicenseBanner";
 import ExpensesView, { type VExpense } from "./ExpensesView";
@@ -18,6 +19,7 @@ export default async function ExpensesPage() {
 
   const [rows, categories] = await Promise.all([
     prisma.expense.findMany({
+      where: branchWhere(s), // faol filial doirasida
       orderBy: { date: "desc" },
       include: {
         category: { select: { name: true } },

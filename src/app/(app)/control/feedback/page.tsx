@@ -1,6 +1,7 @@
 import { requireSession } from "@/lib/auth";
 import { prisma } from "@/lib/db";
 import { ROLES } from "@/lib/constants";
+import { branchWhere } from "@/lib/branchScope";
 import { tr } from "@/lib/tr";
 import { PageHeader, Card, StatCard, Table, EmptyRow, Forbidden } from "../../_components/ui";
 
@@ -14,9 +15,15 @@ export default async function FeedbackPage() {
   }
   const T = (uz: string, ru: string, en: string) => tr(s.locale, { uz, ru, en });
 
+  // Feedback'da branchId yo'q — faol filial o'qituvchilari orqali cheklaymiz
+  const branchTeachers = s.branchId
+    ? await prisma.user.findMany({ where: { AND: [{ role: ROLES.TEACHER }, branchWhere(s)] }, select: { id: true } })
+    : null;
+  const scope = branchTeachers ? { teacherId: { in: branchTeachers.map((x) => x.id) } } : {};
+
   const [items, perTeacher] = await Promise.all([
-    prisma.feedback.findMany({ orderBy: { createdAt: "desc" }, take: 100 }),
-    prisma.feedback.groupBy({ by: ["teacherId"], _avg: { rating: true }, _count: { _all: true } }),
+    prisma.feedback.findMany({ where: scope, orderBy: { createdAt: "desc" }, take: 100 }),
+    prisma.feedback.groupBy({ by: ["teacherId"], where: scope, _avg: { rating: true }, _count: { _all: true } }),
   ]);
 
   const teacherIds = Array.from(new Set([...items.map((f) => f.teacherId), ...perTeacher.map((p) => p.teacherId)]));

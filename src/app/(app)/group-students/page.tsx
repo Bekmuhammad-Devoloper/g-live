@@ -1,6 +1,7 @@
 import { requireSession } from "@/lib/auth";
 import { prisma } from "@/lib/db";
 import { ROLES } from "@/lib/constants";
+import { branchWhere } from "@/lib/branchScope";
 import { tr } from "@/lib/tr";
 import { Forbidden } from "../_components/ui";
 import GroupStudentsView, { type VGroupStudent } from "./GroupStudentsView";
@@ -22,6 +23,8 @@ export default async function GroupStudentsPage() {
   if (s.role === ROLES.TEACHER) {
     where = { enrollments: { some: { group: { teacherId: s.userId } } } };
   }
+  // faol filial doirasida
+  where = { AND: [where, branchWhere(s)] };
 
   const students = await prisma.student.findMany({
     where,

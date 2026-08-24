@@ -2,6 +2,7 @@ import Link from "next/link";
 import { requireSession } from "@/lib/auth";
 import { prisma } from "@/lib/db";
 import { ROLES, type Locale } from "@/lib/constants";
+import { branchWhere } from "@/lib/branchScope";
 import { tr } from "@/lib/tr";
 import { Forbidden } from "../_components/ui";
 import { Icon } from "../_components/Icon";
@@ -86,7 +87,11 @@ export default async function AuditPage({ searchParams }: { searchParams: Promis
       }
     : {};
 
-  const where: Prisma.AuditLogWhereInput = { AND: [typeWhere, dateWhere, searchWhere] };
+  // AuditLog'da branchId yo'q — faol filial xodimlari (muallif) orqali cheklaymiz
+  const branchStaff = s.branchId ? await prisma.user.findMany({ where: branchWhere(s), select: { id: true } }) : null;
+  const branchScope: Prisma.AuditLogWhereInput = branchStaff ? { actorId: { in: branchStaff.map((x) => x.id) } } : {};
+
+  const where: Prisma.AuditLogWhereInput = { AND: [typeWhere, dateWhere, searchWhere, branchScope] };
 
   const [logs, total] = await Promise.all([
     prisma.auditLog.findMany({ where, orderBy: { createdAt: "desc" }, take: limit, include: { actor: { select: { fullName: true, phone: true } } } }),

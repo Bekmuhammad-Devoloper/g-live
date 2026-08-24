@@ -1,4 +1,6 @@
 import { prisma } from "@/lib/db";
+import { requireSession } from "@/lib/auth";
+import { branchWhere, branchViaGroup } from "@/lib/branchScope";
 import LessonCalendar, { type CalLesson } from "./LessonCalendar";
 import { groupColor } from "../groups/groupColor";
 import { type Locale } from "@/lib/constants";
@@ -36,6 +38,7 @@ const T: Record<Locale, Record<string, string>> = {
 
 export default async function AdminDashboard({ locale }: { locale: Locale }) {
   const t = T[locale] ?? T.uz;
+  const s = await requireSession(); // faol filial doirasi
 
   // Joriy hafta (Yakshanbadan boshlab) — dars jadvali uchun
   const now = new Date();
@@ -43,16 +46,16 @@ export default async function AdminDashboard({ locale }: { locale: Locale }) {
   const weekEnd = new Date(weekStart.getTime() + 7 * 86400000);
 
   const [users, activeUsers, branches, auditCount, weekLessons, teacherRows, groupRows, programRows] = await Promise.all([
-    prisma.user.findMany({ select: { role: true } }),
-    prisma.user.count({ where: { isActive: true } }),
+    prisma.user.findMany({ where: branchWhere(s), select: { role: true } }),
+    prisma.user.count({ where: { AND: [{ isActive: true }, branchWhere(s)] } }),
     prisma.branch.count(),
     prisma.auditLog.count(),
     prisma.lesson.findMany({
-      where: { startsAt: { gte: weekStart, lt: weekEnd } },
+      where: { AND: [{ startsAt: { gte: weekStart, lt: weekEnd } }, branchViaGroup(s)] },
       include: { group: { include: { teacher: true, program: true } } },
     }),
-    prisma.user.findMany({ where: { role: "TEACHER" }, select: { fullName: true }, orderBy: { fullName: "asc" } }),
-    prisma.group.findMany({ select: { name: true, room: true }, orderBy: { name: "asc" } }),
+    prisma.user.findMany({ where: { AND: [{ role: "TEACHER" }, branchWhere(s)] }, select: { fullName: true }, orderBy: { fullName: "asc" } }),
+    prisma.group.findMany({ where: branchWhere(s), select: { name: true, room: true }, orderBy: { name: "asc" } }),
     prisma.program.findMany({ select: { name: true }, orderBy: { name: "asc" } }),
   ]);
 

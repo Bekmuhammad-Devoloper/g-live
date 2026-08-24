@@ -2,6 +2,7 @@ import { requireSession } from "@/lib/auth";
 import { prisma } from "@/lib/db";
 import { canRead, MODULES } from "@/lib/rbac";
 import { tr } from "@/lib/tr";
+import { branchViaGroup } from "@/lib/branchScope";
 import { Forbidden } from "../../_components/ui";
 import Controls from "./Controls";
 import { SortHeader, ExportButton } from "./TableTools";
@@ -25,7 +26,7 @@ export default async function RoomsAnalyticsPage({ searchParams }: { searchParam
 
   // Darslardan xonalar bandligini yig'ish
   const lessons = await prisma.lesson.findMany({
-    where: { startsAt: { gte: from, lte: to } },
+    where: { AND: [{ startsAt: { gte: from, lte: to } }, branchViaGroup(s)] }, // faol filial doirasida
     select: { startsAt: true, endsAt: true, group: { select: { name: true, room: true } } },
   });
 

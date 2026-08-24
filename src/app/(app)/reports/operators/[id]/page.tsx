@@ -3,6 +3,7 @@ import { requireSession } from "@/lib/auth";
 import { prisma } from "@/lib/db";
 import { canRead, canWrite, MODULES } from "@/lib/rbac";
 import { ROLES, type Locale } from "@/lib/constants";
+import { branchWhere } from "@/lib/branchScope";
 import { tr } from "@/lib/tr";
 import { Forbidden } from "../../../_components/ui";
 import OperatorDetail, { type DCall, type DLead, type DMonth, type DOperator } from "./OperatorDetail";
@@ -64,8 +65,9 @@ export default async function OperatorDetailPage({
   const range = from && to ? { gte: from, lt: to } : undefined;
 
   const [op, leads, calls, wonAll] = await Promise.all([
-    prisma.user.findUnique({
-      where: { id },
+    // faol filial doirasida (boshqa filial operatori ochilmasin) — shu sabab findFirst
+    prisma.user.findFirst({
+      where: { AND: [{ id }, branchWhere(s)] },
       // XAVFSIZLIK: faqat kerakli maydonlar
       select: {
         id: true, fullName: true, email: true, phone: true, role: true, isActive: true, imageUrl: true,
@@ -74,7 +76,8 @@ export default async function OperatorDetailPage({
       },
     }),
     prisma.lead.findMany({
-      where: { managerId: id, ...(range ? { createdAt: range } : {}) },
+      // faol filial doirasida
+      where: { AND: [{ managerId: id, ...(range ? { createdAt: range } : {}) }, branchWhere(s)] },
       orderBy: { updatedAt: "desc" },
       take: 300,
       select: {
@@ -96,7 +99,8 @@ export default async function OperatorDetailPage({
         duration: true, recordingUrl: true, comment: true, startedAt: true,
       },
     }),
-    prisma.lead.findMany({ where: { managerId: id, stage: "WON" }, select: { createdAt: true } }),
+    // faol filial doirasida
+    prisma.lead.findMany({ where: { AND: [{ managerId: id, stage: "WON" }, branchWhere(s)] }, select: { createdAt: true } }),
   ]);
 
   if (!op || op.role !== ROLES.OPERATOR) notFound();

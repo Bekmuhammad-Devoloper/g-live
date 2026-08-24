@@ -2,6 +2,7 @@ import { requireSession } from "@/lib/auth";
 import { prisma } from "@/lib/db";
 import { canRead, MODULES } from "@/lib/rbac";
 import { tr } from "@/lib/tr";
+import { branchViaStudent } from "@/lib/branchScope";
 import { Forbidden } from "../../_components/ui";
 import LicenseBanner from "../../_components/LicenseBanner";
 import AllPaymentsView, { type VPayment } from "./AllPaymentsView";
@@ -17,6 +18,7 @@ export default async function AllPaymentsPage() {
   }
 
   const rows = await prisma.payment.findMany({
+    where: branchViaStudent(s), // faol filial doirasida (to'lov o'quvchi orqali bog'lanadi)
     orderBy: { createdAt: "desc" },
     include: {
       author: { select: { fullName: true } },

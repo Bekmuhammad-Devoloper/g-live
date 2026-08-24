@@ -4,6 +4,7 @@ import { prisma } from "@/lib/db";
 import { getT } from "@/lib/i18n";
 import { tr } from "@/lib/tr";
 import { canRead, MODULES } from "@/lib/rbac";
+import { branchWhere, branchViaGroup } from "@/lib/branchScope";
 import { ROLES } from "@/lib/constants";
 import { PageHeader, Table, EmptyRow, Badge, Forbidden } from "../_components/ui";
 import NewAssignmentForm from "./NewAssignmentForm";
@@ -24,6 +25,9 @@ export default async function HomeworkPage() {
     const st = await prisma.student.findUnique({ where: { userId: s.userId } });
     where = { group: { students: { some: { studentId: st?.id ?? "__none__" } } } };
   }
+  // O'quvchi/ota-ona o'z vazifalarini filialdan qat'i nazar ko'radi, xodimlar — faol filial doirasida
+  const selfScoped = s.role === ROLES.STUDENT || s.role === ROLES.PARENT;
+  if (!selfScoped) where = { AND: [where, branchViaGroup(s)] };
 
   const assignments = await prisma.assignment.findMany({
     where,
@@ -33,7 +37,8 @@ export default async function HomeworkPage() {
 
   const isTeacher = s.role === ROLES.TEACHER;
   const ownGroups = isTeacher
-    ? await prisma.group.findMany({ where: { teacherId: s.userId }, select: { id: true, name: true } })
+    // faol filial doirasida
+    ? await prisma.group.findMany({ where: { AND: [{ teacherId: s.userId }, branchWhere(s)] }, select: { id: true, name: true } })
     : [];
 
   return (

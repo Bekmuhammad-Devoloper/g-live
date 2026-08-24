@@ -4,6 +4,7 @@ import { prisma } from "@/lib/db";
 import { canRead, MODULES } from "@/lib/rbac";
 import { ROLES } from "@/lib/constants";
 import { tr } from "@/lib/tr";
+import { branchWhere, branchViaLesson } from "@/lib/branchScope";
 import { Forbidden } from "../../_components/ui";
 import { Icon } from "../../_components/Icon";
 import AttendanceExport from "./AttendanceExport";
@@ -43,17 +44,28 @@ export default async function AttendanceReportPage({ searchParams }: { searchPar
 
   const [branches, groups] = await Promise.all([
     prisma.branch.findMany({ where: { isActive: true }, select: { id: true, name: true }, orderBy: { name: "asc" } }),
-    prisma.group.findMany({ select: { id: true, name: true }, orderBy: { name: "asc" }, ...(branchId ? { where: { branchId } } : {}) }),
+    // faol filial doirasida (sahifadagi filial tanlovi bilan birga)
+    prisma.group.findMany({ where: { AND: [branchId ? { branchId } : {}, branchWhere(s)] }, select: { id: true, name: true }, orderBy: { name: "asc" } }),
   ]);
 
   const attWhere: Prisma.AttendanceWhereInput = {
-    markedAt: { gte: from, lte: to },
-    ...(groupId ? { lesson: { groupId } } : {}),
-    ...(branchId ? { student: { branchId } } : {}),
+    AND: [
+      {
+        markedAt: { gte: from, lte: to },
+        ...(groupId ? { lesson: { groupId } } : {}),
+        ...(branchId ? { student: { branchId } } : {}),
+      },
+      branchViaLesson(s), // faol filial doirasida
+    ],
   };
   const studentWhere: Prisma.StudentWhereInput = {
-    ...(branchId ? { branchId } : {}),
-    ...(groupId ? { enrollments: { some: { groupId } } } : {}),
+    AND: [
+      {
+        ...(branchId ? { branchId } : {}),
+        ...(groupId ? { enrollments: { some: { groupId } } } : {}),
+      },
+      branchWhere(s), // faol filial doirasida
+    ],
   };
 
   const [recs, total] = await Promise.all([

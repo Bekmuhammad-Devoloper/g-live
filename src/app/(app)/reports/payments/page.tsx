@@ -2,6 +2,7 @@ import { requireSession } from "@/lib/auth";
 import { prisma } from "@/lib/db";
 import { ROLES } from "@/lib/constants";
 import { tr } from "@/lib/tr";
+import { branchWhere, branchViaStudent } from "@/lib/branchScope";
 import { Forbidden } from "../../_components/ui";
 import LicenseBanner from "../../_components/LicenseBanner";
 import RevenueView, { type RPayment } from "./RevenueView";
@@ -19,8 +20,9 @@ export default async function RevenuePage() {
   }
 
   const [payments, students] = await Promise.all([
-    prisma.payment.findMany({ where: { status: "PAID" }, select: { amount: true, studentId: true, createdAt: true } }),
-    prisma.student.findMany({ select: { id: true, eduStatus: true } }),
+    // faol filial doirasida (to'lov o'quvchi orqali bog'lanadi)
+    prisma.payment.findMany({ where: { AND: [{ status: "PAID" }, branchViaStudent(s)] }, select: { amount: true, studentId: true, createdAt: true } }),
+    prisma.student.findMany({ where: branchWhere(s), select: { id: true, eduStatus: true } }), // faol filial doirasida
   ]);
 
   const rpayments: RPayment[] = payments.map((p) => ({

@@ -3,6 +3,7 @@ import { prisma } from "@/lib/db";
 import { canRead, canSeeTeamReports, MODULES } from "@/lib/rbac";
 import { canManageOperators } from "@/lib/operatorAccess";
 import { ROLES, type Locale } from "@/lib/constants";
+import { branchWhere } from "@/lib/branchScope";
 import { tr } from "@/lib/tr";
 import { Forbidden } from "../../_components/ui";
 import OperatorsBoard, { type VOperator } from "./OperatorsBoard";
@@ -51,7 +52,7 @@ export default async function OperatorsPage({ searchParams }: { searchParams: Pr
 
   const [ops, leads, dayCalls, recentCalls] = await Promise.all([
     prisma.user.findMany({
-      where: { role: ROLES.OPERATOR, isActive: true },
+      where: { AND: [{ role: ROLES.OPERATOR, isActive: true }, branchWhere(s)] }, // faol filial doirasida
       orderBy: { fullName: "asc" },
       // XAVFSIZLIK: select bilan faqat kerakli maydonlar (passwordHash hech qachon yuklanmaydi)
       select: {
@@ -60,16 +61,17 @@ export default async function OperatorsPage({ searchParams }: { searchParams: Pr
       },
     }),
     prisma.lead.findMany({
-      where: { managerId: { not: null } },
+      where: { AND: [{ managerId: { not: null } }, branchWhere(s)] }, // faol filial doirasida
       orderBy: { createdAt: "desc" },
       select: { managerId: true, stage: true, fullName: true, phone: true },
     }),
     prisma.call.findMany({
-      where: { operatorId: { not: null }, startedAt: { gte: dayStart, lt: dayEnd } },
+      // faol filial operatorlarining qo'ng'iroqlari
+      where: { AND: [{ operatorId: { not: null }, startedAt: { gte: dayStart, lt: dayEnd } }, { operator: branchWhere(s) }] },
       select: { operatorId: true, duration: true },
     }),
     prisma.call.findMany({
-      where: { operatorId: { not: null } },
+      where: { AND: [{ operatorId: { not: null } }, { operator: branchWhere(s) }] }, // faol filial doirasida
       orderBy: { startedAt: "desc" },
       take: 400,
       select: { operatorId: true, contactName: true, phone: true, startedAt: true, endedAt: true },

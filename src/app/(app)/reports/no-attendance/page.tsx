@@ -3,6 +3,7 @@ import { prisma } from "@/lib/db";
 import { canRead, canWrite, MODULES } from "@/lib/rbac";
 import { ROLES } from "@/lib/constants";
 import { tr } from "@/lib/tr";
+import { branchViaGroup } from "@/lib/branchScope";
 import { Forbidden } from "../../_components/ui";
 import NoAttendanceView, { type VNoAtt } from "./NoAttendanceView";
 import type { Prisma } from "@prisma/client";
@@ -20,6 +21,7 @@ export default async function NoAttendancePage() {
   // O'tgan, lekin davomati belgilanmagan darslar
   let where: Prisma.LessonWhereInput = { startsAt: { lte: new Date() }, attendances: { none: {} } };
   if (s.role === ROLES.TEACHER) where = { ...where, group: { teacherId: s.userId } };
+  where = { AND: [where, branchViaGroup(s)] }; // faol filial doirasida
 
   const lessons = await prisma.lesson.findMany({
     where,

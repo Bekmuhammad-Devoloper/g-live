@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { Icon } from "../_components/Icon";
 import { prisma } from "@/lib/db";
+import { branchWhere } from "@/lib/branchScope";
 import type { Locale } from "@/lib/constants";
 
 export interface StatusCounts {
@@ -54,24 +55,26 @@ const META: { icon: string; color: string; num: string; key: keyof StatusCounts;
 ];
 
 // Modme uslubidagi 12 status kartasi uchun sonlar (haqiqiy bazadan)
-export async function computeStatusCounts(): Promise<StatusCounts> {
+// Faol filial doirasida hisoblanadi (filialsiz eski yozuvlar ham qo'shiladi)
+export async function computeStatusCounts(s: { branchId: string | null }): Promise<StatusCounts> {
+  const b = branchWhere(s);
   const [
     orders, firstLesson, newStudents, activeStudents,
     leftOrders, leftNew, leftActive, debtors,
     groups, firstPayment, frozen, archived,
   ] = await Promise.all([
-    prisma.lead.count({ where: { stage: { in: ["NEW", "IN_PROGRESS", "CONTACTED"] } } }),
-    prisma.lead.count({ where: { stage: { in: ["TEST", "OFFER", "AWAITING_PAYMENT"] } } }),
-    prisma.student.count({ where: { eduStatus: "WAITING" } }),
-    prisma.student.count({ where: { eduStatus: "ACTIVE" } }),
-    prisma.lead.count({ where: { stage: "LOST" } }),
-    prisma.student.count({ where: { eduStatus: "EXPELLED", payments: { none: { status: "PAID" } } } }),
-    prisma.student.count({ where: { eduStatus: "EXPELLED", payments: { some: { status: "PAID" } } } }),
-    prisma.student.count({ where: { eduStatus: "ACTIVE", payments: { none: { status: "PAID" } } } }),
-    prisma.group.count({ where: { status: "ACTIVE" } }),
-    prisma.student.count({ where: { payments: { some: { status: "PAID" } } } }),
-    prisma.student.count({ where: { eduStatus: "FROZEN" } }),
-    prisma.student.count({ where: { eduStatus: { in: ["PROGRAM_DONE", "CERTIFIED"] } } }),
+    prisma.lead.count({ where: { AND: [{ stage: { in: ["NEW", "IN_PROGRESS", "CONTACTED"] } }, b] } }),
+    prisma.lead.count({ where: { AND: [{ stage: { in: ["TEST", "OFFER", "AWAITING_PAYMENT"] } }, b] } }),
+    prisma.student.count({ where: { AND: [{ eduStatus: "WAITING" }, b] } }),
+    prisma.student.count({ where: { AND: [{ eduStatus: "ACTIVE" }, b] } }),
+    prisma.lead.count({ where: { AND: [{ stage: "LOST" }, b] } }),
+    prisma.student.count({ where: { AND: [{ eduStatus: "EXPELLED", payments: { none: { status: "PAID" } } }, b] } }),
+    prisma.student.count({ where: { AND: [{ eduStatus: "EXPELLED", payments: { some: { status: "PAID" } } }, b] } }),
+    prisma.student.count({ where: { AND: [{ eduStatus: "ACTIVE", payments: { none: { status: "PAID" } } }, b] } }),
+    prisma.group.count({ where: { AND: [{ status: "ACTIVE" }, b] } }),
+    prisma.student.count({ where: { AND: [{ payments: { some: { status: "PAID" } } }, b] } }),
+    prisma.student.count({ where: { AND: [{ eduStatus: "FROZEN" }, b] } }),
+    prisma.student.count({ where: { AND: [{ eduStatus: { in: ["PROGRAM_DONE", "CERTIFIED"] } }, b] } }),
   ]);
   return {
     orders, firstLesson, newStudents, activeStudents,

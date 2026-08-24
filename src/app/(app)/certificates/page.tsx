@@ -4,6 +4,7 @@ import { prisma } from "@/lib/db";
 import { getT } from "@/lib/i18n";
 import { tr } from "@/lib/tr";
 import { canRead, canWrite, MODULES } from "@/lib/rbac";
+import { branchWhere, branchViaStudent } from "@/lib/branchScope";
 import { ROLES } from "@/lib/constants";
 import { PageHeader, Table, EmptyRow, Badge, Card, Forbidden } from "../_components/ui";
 import { IssueForm, RevokeButton, ExportCertsButton, type CertExportRow } from "./CertControls";
@@ -28,11 +29,15 @@ export default async function CertificatesPage() {
     const st = await prisma.student.findUnique({ where: { userId: s.userId } });
     where = { studentId: st?.id ?? "__none__" };
   }
+  // O'quvchi/ota-ona o'z sertifikatini filialdan qat'i nazar ko'radi, xodimlar — faol filial doirasida
+  const selfScoped = s.role === ROLES.STUDENT || s.role === ROLES.PARENT;
+  if (!selfScoped) where = { AND: [where, branchViaStudent(s)] };
 
   const writable = canWrite(s.role, MODULES.CERTIFICATES);
   const [certs, students] = await Promise.all([
     prisma.certificate.findMany({ where, orderBy: { issuedAt: "desc" }, include: { student: true } }),
-    writable ? prisma.student.findMany({ orderBy: { fullName: "asc" }, select: { id: true, fullName: true } }) : Promise.resolve([]),
+    // faol filial doirasida
+    writable ? prisma.student.findMany({ where: branchWhere(s), orderBy: { fullName: "asc" }, select: { id: true, fullName: true } }) : Promise.resolve([]),
   ]);
 
   const exportRowsData: CertExportRow[] = certs.map((c) => ({
