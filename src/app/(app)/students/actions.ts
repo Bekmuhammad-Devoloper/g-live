@@ -504,3 +504,129 @@ export async function moveStudentToBranch(
   revalidatePath("/groups");
   return { ok: true, branchName: branch.name, removedGroups: stale.length };
 }
+
+// ─── Qarz qo'shish va to'lovni tahrirlash (2026-08-27 talab) ───
+// "Qarzdor holatga tushurish" — qo'lda qarz yozuvi (PENDING to'lov) ochiladi.
+// To'lovni tahrirlash/o'chirish — noto'g'ri kiritilgan yozuvni tuzatish uchun.
+
+const CAN_EDIT_PAY = [ROLES.DIRECTOR, ROLES.DEPUTY_DIRECTOR, ROLES.MANAGER, ROLES.ADMIN, ROLES.ACCOUNTANT];
+
+/** O'quvchini qarzdor qilish — ko'rsatilgan summada qarz yozuvi ochadi. */
+export async function addStudentDebt(
+  studentId: string,
+  input: { amount: number; purpose?: string; dateIso?: string | null },
+): Promise<{ ok?: boolean; error?: string }> {
+  const s = await requireSession();
+  if (!canWrite(s.role, MODULES.PAYMENTS) && !ALLOWED.includes(s.role as never)) return { error: "forbidden" };
+
+  const amount = Math.trunc(Number(input.amount));
+  if (!Number.isFinite(amount) || amount <= 0) return { error: "amount" };
+
+  const st = await prisma.student.findUnique({ where: { id: studentId }, select: { id: true, fullName: true } });
+  if (!st) return { error: "notfound" };
+
+  let createdAt = new Date();
+  if (input.dateIso) { const d = new Date(input.dateIso); if (!isNaN(d.getTime())) createdAt = d; }
+
+  const pay = await prisma.payment.create({
+    data: {
+      studentId,
+      amount,
+      method: "CASH",
+      status: "PENDING", // PENDING = qarz
+      isManual: true,
+      purpose: String(input.purpose || "").trim() || "Qarz",
+      authorId: s.userId,
+      createdAt,
+    },
+  });
+
+  await writeAudit({
+    actorId: s.userId,
+    action: "CREATE",
+    entityType: "Payment",
+    entityId: pay.id,
+    newValue: { studentId, amount, status: "PENDING" },
+    reason: `Qarz qo'shildi: ${st.fullName}`,
+  });
+
+  revalidatePath("/students");
+  revalidatePath("/finance/debtors");
+  return { ok: true };
+}
+
+/** To'lov yozuvini tahrirlash (summa, usul, maqsad, holat, sana). */
+export async function updatePaymentRecord(
+  paymentId: string,
+  input: { amount?: number; method?: string; purpose?: string; status?: string; dateIso?: string | null },
+): Promise<{ ok?: boolean; error?: string }> {
+  const s = await requireSession();
+  if (!CAN_EDIT_PAY.includes(s.role as never)) return { error: "forbidden" };
+
+  const existing = await prisma.payment.findUnique({
+    where: { id: paymentId },
+    select: { id: true, studentId: true, amount: true, method: true, purpose: true, status: true, createdAt: true },
+  });
+  if (!existing) return { error: "notfound" };
+
+  const data: Record<string, unknown> = {};
+  if (input.amount !== undefined) {
+    const a = Math.trunc(Number(input.amount));
+    if (!Number.isFinite(a) || a <= 0) return { error: "amount" };
+    data.amount = a;
+  }
+  if (input.method !== undefined) {
+    if (!PAYMENT_METHODS.includes(input.method as never)) return { error: "method" };
+    data.method = input.method;
+  }
+  if (input.purpose !== undefined) data.purpose = String(input.purpose).trim().slice(0, 200) || null;
+  if (input.status !== undefined) {
+    if (!["PAID", "PENDING", "REFUNDED", "CANCELLED"].includes(input.status)) return { error: "status" };
+    data.status = input.status;
+  }
+  if (input.dateIso) { const d = new Date(input.dateIso); if (!isNaN(d.getTime())) data.createdAt = d; }
+  if (Object.keys(data).length === 0) return { ok: true };
+
+  await prisma.payment.update({ where: { id: paymentId }, data });
+  await writeAudit({
+    actorId: s.userId,
+    action: "UPDATE",
+    entityType: "Payment",
+    entityId: paymentId,
+    oldValue: { amount: existing.amount, method: existing.method, purpose: existing.purpose, status: existing.status, createdAt: existing.createdAt.toISOString() },
+    newValue: data,
+    reason: "To'lov yozuvi tahrirlandi",
+  });
+
+  revalidatePath("/students");
+  revalidatePath("/finance");
+  revalidatePath("/finance/debtors");
+  return { ok: true };
+}
+
+/** To'lov yozuvini o'chirish (xato kiritilgan bo'lsa). */
+export async function deletePaymentRecord(paymentId: string): Promise<{ ok?: boolean; error?: string }> {
+  const s = await requireSession();
+  if (!CAN_EDIT_PAY.includes(s.role as never)) return { error: "forbidden" };
+
+  const existing = await prisma.payment.findUnique({
+    where: { id: paymentId },
+    select: { id: true, studentId: true, amount: true, method: true, status: true, purpose: true },
+  });
+  if (!existing) return { error: "notfound" };
+
+  await prisma.payment.delete({ where: { id: paymentId } });
+  await writeAudit({
+    actorId: s.userId,
+    action: "DELETE",
+    entityType: "Payment",
+    entityId: paymentId,
+    oldValue: { ...existing },
+    reason: "To'lov yozuvi o'chirildi",
+  });
+
+  revalidatePath("/students");
+  revalidatePath("/finance");
+  revalidatePath("/finance/debtors");
+  return { ok: true };
+}

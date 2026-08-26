@@ -14,6 +14,7 @@ import BillingSettings from "./BillingSettings";
 import ExamsSettings from "./ExamsSettings";
 import ChekSettings from "./ChekSettings";
 import type { ReceiptMode } from "@/lib/receiptMode";
+import DebtSettings from "./DebtSettings";
 import AccountSettings from "./AccountSettings";
 import LandingSettings from "./LandingSettings";
 
@@ -26,6 +27,7 @@ const SECTIONS: { key: string; label: { uz: string; ru: string; en: string } }[]
   { key: "integrations", label: { uz: "Integratsiyalar", ru: "Интеграции", en: "Integrations" } },
   { key: "exams", label: { uz: "Imtihonlar", ru: "Экзамены", en: "Exams" } },
   { key: "receipt", label: { uz: "Chek", ru: "Чек", en: "Receipt" } },
+  { key: "debt", label: { uz: "Qarzdorlik", ru: "Задолженность", en: "Debt" } },
   { key: "account", label: { uz: "Hisob va to'lovlar", ru: "Счёт и платежи", en: "Account and payments" } },
   { key: "landing", label: { uz: "Landing page", ru: "Лендинг", en: "Landing page" } },
 ];
@@ -39,7 +41,7 @@ interface Form {
   logo: string | null; color: string; offerName: string;
 }
 
-export default function GeneralSettings({ locale, defaultName, defaultPhone, branches = [], initialSection, receiptMode }: { locale: Locale; defaultName: string; defaultPhone: string; branches?: string[]; initialSection?: string; receiptMode: ReceiptMode }) {
+export default function GeneralSettings({ locale, defaultName, defaultPhone, branches = [], initialSection, receiptMode, defaultFee }: { locale: Locale; defaultName: string; defaultPhone: string; branches?: string[]; initialSection?: string; receiptMode: ReceiptMode; defaultFee: number }) {
   const [section, setSection] = useState(initialSection ?? "general");
   const [f, setF] = useState<Form>({
     name: defaultName, phone: defaultPhone, workStart: "09:00", workEnd: "20:00",
@@ -121,6 +123,8 @@ export default function GeneralSettings({ locale, defaultName, defaultPhone, bra
             <ExamsSettings locale={locale} />
           ) : section === "receipt" ? (
             <ChekSettings locale={locale} centerName={f.name} receiptMode={receiptMode} />
+          ) : section === "debt" ? (
+            <DebtSettings locale={locale} defaultFee={defaultFee} />
           ) : section === "landing" ? (
             <LandingSettings locale={locale} branches={branches} />
           ) : section !== "general" ? (

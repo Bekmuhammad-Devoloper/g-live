@@ -1,7 +1,9 @@
 import Link from "next/link";
 import { Icon } from "../_components/Icon";
+import { formatMoney } from "@/lib/constants";
 import { prisma } from "@/lib/db";
 import { branchWhere } from "@/lib/branchScope";
+import { totalDebt } from "@/lib/debt";
 import type { Locale } from "@/lib/constants";
 
 export interface StatusCounts {
@@ -13,6 +15,7 @@ export interface StatusCounts {
   leftNew: number;
   leftActive: number;
   debtors: number;
+  debtTotal: number; // umumiy qarzdorlik summasi (so'm)
   groups: number;
   firstPayment: number;
   frozen: number;
@@ -60,7 +63,7 @@ export async function computeStatusCounts(s: { branchId: string | null }): Promi
   const b = branchWhere(s);
   const [
     orders, firstLesson, newStudents, activeStudents,
-    leftOrders, leftNew, leftActive, debtors,
+    leftOrders, leftNew, leftActive, debtInfo,
     groups, firstPayment, frozen, archived,
   ] = await Promise.all([
     prisma.lead.count({ where: { AND: [{ stage: { in: ["NEW", "IN_PROGRESS", "CONTACTED"] } }, b] } }),
@@ -70,7 +73,7 @@ export async function computeStatusCounts(s: { branchId: string | null }): Promi
     prisma.lead.count({ where: { AND: [{ stage: "LOST" }, b] } }),
     prisma.student.count({ where: { AND: [{ eduStatus: "EXPELLED", payments: { none: { status: "PAID" } } }, b] } }),
     prisma.student.count({ where: { AND: [{ eduStatus: "EXPELLED", payments: { some: { status: "PAID" } } }, b] } }),
-    prisma.student.count({ where: { AND: [{ eduStatus: "ACTIVE", payments: { none: { status: "PAID" } } }, b] } }),
+    totalDebt({ AND: [{ eduStatus: { not: "ARCHIVED" } }, b] }), // haqiqiy qarz bo'yicha
     prisma.group.count({ where: { AND: [{ status: "ACTIVE" }, b] } }),
     prisma.student.count({ where: { AND: [{ payments: { some: { status: "PAID" } } }, b] } }),
     prisma.student.count({ where: { AND: [{ eduStatus: "FROZEN" }, b] } }),
@@ -78,7 +81,9 @@ export async function computeStatusCounts(s: { branchId: string | null }): Promi
   ]);
   return {
     orders, firstLesson, newStudents, activeStudents,
-    leftOrders, leftNew, leftActive, debtors,
+    leftOrders, leftNew, leftActive,
+    debtors: debtInfo.debtors,
+    debtTotal: debtInfo.total,
     groups, firstPayment, frozen, archived,
   };
 }
@@ -102,8 +107,14 @@ export function StatusGrid({ counts, locale }: { counts: StatusCounts; locale: L
             <div className="min-w-0 flex-1 text-[11.5px] font-medium leading-[1.2] text-slate-500">
               {labels[i]}
             </div>
-            <div className={`shrink-0 text-2xl font-bold tabular-nums ${m.num}`}>{counts[m.key]}</div>
+            <div className={`shrink-0 text-2xl font-bold tabular-nums ${m.num}`}>{counts[m.key as keyof StatusCounts]}</div>
           </div>
+          {/* Qarzdorlar kartasida umumiy summa ham ko'rinadi (platforma bo'yicha) */}
+          {m.key === "debtors" && counts.debtTotal > 0 && (
+            <div className="mt-1.5 border-t border-slate-100 pt-1.5 text-right text-[11px] font-semibold tabular-nums text-rose-600 dark:border-white/5 dark:text-rose-400">
+              {formatMoney(counts.debtTotal, locale)}
+            </div>
+          )}
         </Link>
       ))}
     </div>

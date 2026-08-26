@@ -6,11 +6,11 @@ import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
 import { useDoubleClickOpen } from "../_components/useDoubleClickOpen";
 import { cn } from "@/lib/cn";
-import { EDU_STATUS_LABELS, EDU_STATUSES, PAYMENT_STATUS_LABELS, label, formatMoney, type Locale } from "@/lib/constants";
+import { EDU_STATUS_LABELS, EDU_STATUSES, PAYMENT_STATUS_LABELS, PAYMENT_METHODS, PAYMENT_METHOD_LABELS, label, formatMoney, type Locale } from "@/lib/constants";
 import { tr } from "@/lib/tr";
 import { isReceiptRequired, type ReceiptMode } from "@/lib/receiptMode";
 import { quickCreateStudent, type QuickState } from "../actions";
-import { updateStudent, bulkArchiveStudents, bulkAssignGroup, bulkNotifyStudents, setStudentImage, getStudentPayments, acceptPayment, archiveStudent, restoreStudent, deleteStudentPermanently, studentBranchOptions, moveStudentToBranch, type StudentPayments, type MonthPay, type ReceiptData } from "./actions";
+import { updateStudent, bulkArchiveStudents, bulkAssignGroup, bulkNotifyStudents, setStudentImage, getStudentPayments, acceptPayment, archiveStudent, restoreStudent, deleteStudentPermanently, studentBranchOptions, moveStudentToBranch, addStudentDebt, updatePaymentRecord, deletePaymentRecord, type StudentPayments, type MonthPay, type PayRow, type ReceiptData } from "./actions";
 import { Icon } from "../_components/Icon";
 import BranchMover from "../_components/BranchMover";
 
@@ -636,6 +636,7 @@ function StudentDetailModal({
   const [pay, setPay] = useState<StudentPayments | null>(null);
   const [, startPay] = useTransition();
   const [payForm, setPayForm] = useState(false);
+  const [debtForm, setDebtForm] = useState(false); // qarzdor holatga tushurish formasi
   const [receipt, setReceipt] = useState<ReceiptData | null>(null);
   const h = hue(st.fullName);
   const tone = statusTone[st.eduStatus] ?? "#64748b";
@@ -703,10 +704,16 @@ function StudentDetailModal({
                 <div className="flex items-center gap-2 text-xs font-semibold uppercase tracking-wide text-slate-400">
                   <Icon name="wallet" className="h-3.5 w-3.5" /> {tr(locale, { uz: "To'lov holati", ru: "Статус оплаты", en: "Payment status" })}
                 </div>
-                {canPay && !payForm && (
-                  <button onClick={() => setPayForm(true)} className="flex items-center gap-1 rounded-lg bg-brand-600 px-2.5 py-1 text-[11px] font-semibold text-white transition hover:bg-brand-700">
-                    <Icon name="plus" className="h-3.5 w-3.5" /> {tr(locale, { uz: "To'lov qabul qilish", ru: "Принять оплату", en: "Accept payment" })}
-                  </button>
+                {canPay && !payForm && !debtForm && (
+                  <div className="flex gap-1.5">
+                    {/* Qarzdor holatga tushurish — qo'lda qarz yozuvi */}
+                    <button onClick={() => setDebtForm(true)} className="flex items-center gap-1 rounded-lg border border-amber-300 px-2.5 py-1 text-[11px] font-semibold text-amber-700 transition hover:bg-amber-50 dark:border-amber-500/40 dark:text-amber-400 dark:hover:bg-amber-500/10">
+                      <Icon name="alert" className="h-3.5 w-3.5" /> {tr(locale, { uz: "Qarz qo'shish", ru: "Добавить долг", en: "Add debt" })}
+                    </button>
+                    <button onClick={() => setPayForm(true)} className="flex items-center gap-1 rounded-lg bg-brand-600 px-2.5 py-1 text-[11px] font-semibold text-white transition hover:bg-brand-700">
+                      <Icon name="plus" className="h-3.5 w-3.5" /> {tr(locale, { uz: "To'lov qabul qilish", ru: "Принять оплату", en: "Accept payment" })}
+                    </button>
+                  </div>
                 )}
               </div>
 
@@ -729,6 +736,15 @@ function StudentDetailModal({
                     </div>
                   </div>
                 </div>
+              )}
+
+              {debtForm && (
+                <AddDebtForm
+                  studentId={st.id}
+                  locale={locale}
+                  onCancel={() => setDebtForm(false)}
+                  onDone={() => { setDebtForm(false); reloadPay(); }}
+                />
               )}
 
               {payForm && (
@@ -779,18 +795,15 @@ function StudentDetailModal({
                       <span>{tr(locale, { uz: "So'nggi to'lovlar", ru: "Последние платежи", en: "Recent payments" })}</span>
                       <span className="tabular-nums">{tr(locale, { uz: "Jami", ru: "Итого", en: "Total" })}: {formatMoney(pay.totalPaid, locale)}</span>
                     </div>
-                    {pay.recent.map((p) => {
-                      const ps = payStatusStyle(p.status);
-                      return (
-                        <div key={p.id} className="flex items-center justify-between gap-2 rounded-lg border border-slate-100 px-3 py-1.5 dark:border-white/5">
-                          <div className="min-w-0">
-                            <div className="text-xs font-semibold tabular-nums text-slate-700 dark:text-slate-200">{formatMoney(p.amount, locale)}</div>
-                            <div className="truncate text-[11px] text-slate-400">{fmtDate(p.date)} · {p.method}{p.purpose ? ` · ${p.purpose}` : ""}</div>
-                          </div>
-                          <span className="shrink-0 rounded-full px-2 py-0.5 text-[10px] font-semibold" style={{ color: ps.fg, background: ps.bg }}>{label(PAYMENT_STATUS_LABELS, p.status, locale)}</span>
-                        </div>
-                      );
-                    })}
+                    {pay.recent.map((p) => (
+                      <PaymentRow
+                        key={p.id}
+                        p={p}
+                        locale={locale}
+                        canEdit={canPay || canManage}
+                        onChanged={() => { setPayForm(false); reloadPay(); }}
+                      />
+                    ))}
                   </div>
                 ) : (
                   <p className="mt-2 rounded-lg bg-slate-50 px-3 py-2 text-sm text-slate-400 dark:bg-white/[0.03]">{tr(locale, { uz: "Hali to'lov qilinmagan.", ru: "Оплат ещё не было.", en: "No payments yet." })}</p>
@@ -882,6 +895,146 @@ function StudentDetailModal({
       </div>
       {receipt && <ReceiptModal receipt={receipt} locale={locale} onClose={() => setReceipt(null)} />}
     </div>, document.body);
+}
+
+// Qarzdor holatga tushurish — qo'lda qarz yozuvi (PENDING to'lov) ochadi.
+function AddDebtForm({ studentId, locale, onCancel, onDone }: {
+  studentId: string; locale: Locale; onCancel: () => void; onDone: () => void;
+}) {
+  const [amount, setAmount] = useState("");
+  const [purpose, setPurpose] = useState("");
+  const [err, setErr] = useState<string | null>(null);
+  const [pending, start] = useTransition();
+  const L = (uz: string, ru: string, en: string) => tr(locale, { uz, ru, en });
+  const inp = "h-9 w-full rounded-lg border border-slate-200 bg-white px-2.5 text-sm text-slate-800 outline-none focus:border-amber-400 dark:border-slate-700 dark:bg-slate-800/60 dark:text-slate-100";
+
+  const submit = () => start(async () => {
+    const r = await addStudentDebt(studentId, { amount: Number(amount), purpose });
+    if (r.ok) onDone();
+    else setErr(r.error === "amount" ? L("Summani to'g'ri kiriting.", "Введите корректную сумму.", "Enter a valid amount.")
+      : r.error === "forbidden" ? L("Ruxsat yo'q.", "Нет доступа.", "No permission.")
+      : L("Saqlanmadi.", "Не сохранено.", "Not saved."));
+  });
+
+  return (
+    <div className="mb-3 rounded-xl border border-amber-300 bg-amber-50 p-3 dark:border-amber-500/40 dark:bg-amber-500/10">
+      <div className="mb-2 text-xs font-semibold text-amber-800 dark:text-amber-300">
+        {L("Qarzdor holatga tushurish", "Перевести в должники", "Mark as debtor")}
+      </div>
+      <div className="grid grid-cols-2 gap-2">
+        <div>
+          <label className="mb-0.5 block text-[10px] font-semibold text-slate-500">{L("Summa (so'm)", "Сумма (сум)", "Amount (UZS)")} *</label>
+          <input value={amount} onChange={(e) => setAmount(e.target.value.replace(/[^0-9]/g, ""))} inputMode="numeric" placeholder="0" className={inp} />
+        </div>
+        <div>
+          <label className="mb-0.5 block text-[10px] font-semibold text-slate-500">{L("Izoh", "Комментарий", "Note")}</label>
+          <input value={purpose} onChange={(e) => setPurpose(e.target.value)} placeholder={L("Kurs to'lovi qarzi", "Долг за курс", "Course fee debt")} className={inp} />
+        </div>
+      </div>
+      {err && <p className="mt-1.5 text-[11px] font-medium text-rose-600 dark:text-rose-400">{err}</p>}
+      <div className="mt-2 flex gap-2">
+        <button type="button" onClick={onCancel} disabled={pending} className="flex-1 rounded-lg border border-slate-200 bg-white py-1.5 text-xs font-semibold text-slate-600 transition hover:bg-slate-50 disabled:opacity-60 dark:border-white/10 dark:bg-slate-900 dark:text-slate-300">
+          {L("Bekor qilish", "Отмена", "Cancel")}
+        </button>
+        <button type="button" onClick={submit} disabled={pending || !amount} className="flex-[1.4] rounded-lg bg-amber-600 py-1.5 text-xs font-semibold text-white transition hover:bg-amber-700 disabled:opacity-40">
+          {pending ? "..." : L("Qarz qo'shish", "Добавить долг", "Add debt")}
+        </button>
+      </div>
+    </div>
+  );
+}
+
+// Bitta to'lov qatori — tahrirlash va o'chirish bilan (2026-08-27 talab).
+// Noto'g'ri kiritilgan summa/usul/holat shu yerdan tuzatiladi.
+function PaymentRow({ p, locale, canEdit, onChanged }: {
+  p: PayRow; locale: Locale; canEdit: boolean; onChanged: () => void;
+}) {
+  const [edit, setEdit] = useState(false);
+  const [amount, setAmount] = useState(String(p.amount));
+  const [method, setMethod] = useState(p.method);
+  const [status, setStatus] = useState(p.status);
+  const [purpose, setPurpose] = useState(p.purpose ?? "");
+  const [err, setErr] = useState<string | null>(null);
+  const [pending, start] = useTransition();
+  const L = (uz: string, ru: string, en: string) => tr(locale, { uz, ru, en });
+  const ps = payStatusStyle(p.status);
+
+  const save = () => start(async () => {
+    const r = await updatePaymentRecord(p.id, { amount: Number(amount), method, status, purpose });
+    if (r.ok) { setEdit(false); onChanged(); }
+    else setErr(r.error === "forbidden" ? L("Ruxsat yo'q.", "Нет доступа.", "No permission.") : L("Saqlanmadi.", "Не сохранено.", "Not saved."));
+  });
+
+  const remove = () => start(async () => {
+    const r = await deletePaymentRecord(p.id);
+    if (r.ok) onChanged();
+    else setErr(L("O'chirilmadi.", "Не удалено.", "Not deleted."));
+  });
+
+  const inp = "h-8 w-full rounded-md border border-slate-200 bg-white px-2 text-xs text-slate-800 outline-none focus:border-brand-400 dark:border-slate-700 dark:bg-slate-800/60 dark:text-slate-100";
+
+  if (!edit) {
+    return (
+      <div className="flex items-center justify-between gap-2 rounded-lg border border-slate-100 px-3 py-1.5 dark:border-white/5">
+        <div className="min-w-0">
+          <div className="text-xs font-semibold tabular-nums text-slate-700 dark:text-slate-200">{formatMoney(p.amount, locale)}</div>
+          <div className="truncate text-[11px] text-slate-400">{fmtDate(p.date)} · {p.method}{p.purpose ? ` · ${p.purpose}` : ""}</div>
+        </div>
+        <div className="flex shrink-0 items-center gap-1.5">
+          <span className="rounded-full px-2 py-0.5 text-[10px] font-semibold" style={{ color: ps.fg, background: ps.bg }}>{label(PAYMENT_STATUS_LABELS, p.status, locale)}</span>
+          {canEdit && (
+            <button
+              type="button"
+              onClick={() => { setEdit(true); setErr(null); }}
+              title={L("Tahrirlash", "Изменить", "Edit")}
+              className="grid h-6 w-6 place-items-center rounded-md text-slate-400 transition hover:bg-slate-100 hover:text-slate-600 dark:hover:bg-white/10"
+            >
+              <Icon name="pencil" className="h-3.5 w-3.5" />
+            </button>
+          )}
+        </div>
+      </div>
+    );
+  }
+
+  return (
+    <div className="rounded-lg border border-brand-200 bg-brand-50/50 p-2.5 dark:border-brand-500/30 dark:bg-brand-500/10">
+      <div className="grid grid-cols-2 gap-2">
+        <div>
+          <label className="mb-0.5 block text-[10px] font-semibold text-slate-500">{L("Summa", "Сумма", "Amount")}</label>
+          <input value={amount} onChange={(e) => setAmount(e.target.value.replace(/\D/g, ""))} inputMode="numeric" className={inp} />
+        </div>
+        <div>
+          <label className="mb-0.5 block text-[10px] font-semibold text-slate-500">{L("Usul", "Способ", "Method")}</label>
+          <select value={method} onChange={(e) => setMethod(e.target.value)} className={inp}>
+            {PAYMENT_METHODS.map((m) => <option key={m} value={m}>{label(PAYMENT_METHOD_LABELS, m, locale)}</option>)}
+          </select>
+        </div>
+        <div>
+          <label className="mb-0.5 block text-[10px] font-semibold text-slate-500">{L("Holat", "Статус", "Status")}</label>
+          <select value={status} onChange={(e) => setStatus(e.target.value)} className={inp}>
+            {["PAID", "PENDING", "REFUNDED", "CANCELLED"].map((x) => <option key={x} value={x}>{label(PAYMENT_STATUS_LABELS, x, locale)}</option>)}
+          </select>
+        </div>
+        <div>
+          <label className="mb-0.5 block text-[10px] font-semibold text-slate-500">{L("Maqsad", "Назначение", "Purpose")}</label>
+          <input value={purpose} onChange={(e) => setPurpose(e.target.value)} className={inp} />
+        </div>
+      </div>
+      {err && <p className="mt-1.5 text-[11px] font-medium text-rose-600 dark:text-rose-400">{err}</p>}
+      <div className="mt-2 flex gap-1.5">
+        <button type="button" onClick={() => setEdit(false)} disabled={pending} className="flex-1 rounded-md border border-slate-200 bg-white py-1.5 text-[11px] font-semibold text-slate-600 transition hover:bg-slate-50 disabled:opacity-60 dark:border-white/10 dark:bg-slate-900 dark:text-slate-300">
+          {L("Bekor", "Отмена", "Cancel")}
+        </button>
+        <button type="button" onClick={remove} disabled={pending} className="rounded-md border border-rose-200 px-2.5 py-1.5 text-[11px] font-semibold text-rose-600 transition hover:bg-rose-50 disabled:opacity-60 dark:border-rose-500/30 dark:text-rose-400">
+          {L("O'chirish", "Удалить", "Delete")}
+        </button>
+        <button type="button" onClick={save} disabled={pending || !amount} className="flex-1 rounded-md bg-brand-600 py-1.5 text-[11px] font-semibold text-white transition hover:bg-brand-700 disabled:opacity-40">
+          {pending ? "..." : L("Saqlash", "Сохранить", "Save")}
+        </button>
+      </div>
+    </div>
+  );
 }
 
 // O'chirish amallari: arxivlash (qaytariladi) va mutloq o'chirish (qaytarilmaydi).
