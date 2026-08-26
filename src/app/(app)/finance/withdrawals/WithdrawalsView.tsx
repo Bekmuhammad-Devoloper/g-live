@@ -233,8 +233,10 @@ function NewWithdrawal({ students, locale }: { students: { id: string; fullName:
       </button>
 
       {open && (
-        <div className="fixed inset-0 z-50 flex items-start justify-center overflow-y-auto bg-black/40 p-4 pt-16">
-          <form ref={formRef} action={action} className="w-full max-w-md space-y-3 rounded-2xl bg-white p-6 shadow-xl dark:bg-slate-900">
+        <div className="fixed inset-0 z-[80]">
+          {/* Yonboshdan ochiladigan panel (ilovadagi boshqa formalar kabi) */}
+          <div className="absolute inset-0 bg-slate-900/50 backdrop-blur-sm" />
+          <form ref={formRef} action={action} className="animate-slide-in-right absolute right-0 top-0 flex h-full w-[440px] max-w-[92%] flex-col space-y-3 overflow-y-auto border-l border-slate-200 bg-white p-5 shadow-pop dark:border-white/10 dark:bg-[#15243d]">
             <div className="flex items-center justify-between">
               <h3 className="text-lg font-bold text-slate-900 dark:text-slate-100">{tr(locale, { uz: "Yangi yechib olish", ru: "Новый вывод средств", en: "New withdrawal" })}</h3>
               <button type="button" onClick={() => setOpen(false)} className="text-slate-400 hover:text-slate-600"><Icon name="close" className="h-5 w-5" /></button>
