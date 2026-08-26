@@ -8,7 +8,7 @@ import { formatMoney, LEAD_STAGE_LABELS, label, type Locale } from "@/lib/consta
 import { tr } from "@/lib/tr";
 import { Icon } from "../../_components/Icon";
 import { COLUMNS, colorOfStage, initials } from "../_lib/leadColumns";
-import { updateLeadField, setLeadManager, moveLeadStage, convertLead, addLeadActivity, branchOptions, moveLeadToBranch } from "../actions";
+import { updateLeadField, setLeadManager, moveLeadStage, convertLead, addLeadActivity, branchOptions, moveLeadToBranch, deleteLeadPermanently } from "../actions";
 import BranchMover from "../../_components/BranchMover";
 import EnrollDrawer from "../_components/EnrollDrawer";
 
@@ -29,8 +29,8 @@ function fmt(iso: string) {
   return `${p(d.getDate())}.${p(d.getMonth() + 1)}.${d.getFullYear()} ${p(d.getHours())}:${p(d.getMinutes())}`;
 }
 
-export default function LeadDetail({ lead, activities, managers, prevId, nextId, canWrite, locale }: {
-  lead: DLead; activities: DActivity[]; managers: Opt[]; prevId: string | null; nextId: string | null; canWrite: boolean; locale: Locale;
+export default function LeadDetail({ lead, activities, managers, prevId, nextId, canWrite, canDelete, locale }: {
+  lead: DLead; activities: DActivity[]; managers: Opt[]; prevId: string | null; nextId: string | null; canWrite: boolean; canDelete: boolean; locale: Locale;
 }) {
   const router = useRouter();
   const [tab, setTab] = useState<"info" | "activity">("info");
@@ -39,6 +39,10 @@ export default function LeadDetail({ lead, activities, managers, prevId, nextId,
   // Guruhga yo'naltirish paneli — "Qabul qilindi" uchun majburiy
   const [enrollOpen, setEnrollOpen] = useState(false);
   const [flash, setFlash] = useState<string | null>(null);
+  // Lidni butunlay o'chirish — tasdiqlash uchun ism yoziladi
+  const [purge, setPurge] = useState(false);
+  const [typed, setTyped] = useState("");
+  const [purgeErr, setPurgeErr] = useState<string | null>(null);
   const color = colorOfStage(lead.stage);
   const run = (fn: () => Promise<unknown>) => start(async () => { await fn(); router.refresh(); });
 
@@ -229,6 +233,58 @@ export default function LeadDetail({ lead, activities, managers, prevId, nextId,
                   <button onClick={() => navigator.clipboard?.writeText(lead.phone)} className="btn-ghost w-full justify-start">
                     <Icon name="copy" className="h-4 w-4" /> {tr(locale, { uz: "Telefonni nusxalash", ru: "Копировать телефон", en: "Copy phone" })}
                   </button>
+
+                  {/* Lidni butunlay o'chirish — direktor, o'rinbosari va administrator */}
+                  {canDelete && (!purge ? (
+                    <button
+                      onClick={() => { setPurge(true); setTyped(""); setPurgeErr(null); }}
+                      className="flex w-full items-center justify-start gap-2 rounded-xl border border-rose-200 px-3 py-2 text-sm font-semibold text-rose-600 transition hover:bg-rose-50 dark:border-rose-500/30 dark:text-rose-400 dark:hover:bg-rose-500/10"
+                    >
+                      <Icon name="trash" className="h-4 w-4" /> {tr(locale, { uz: "Lidni butunlay o'chirish", ru: "Удалить лида навсегда", en: "Delete lead permanently" })}
+                    </button>
+                  ) : (
+                    <div className="rounded-xl border border-rose-200 bg-rose-50 p-3 dark:border-rose-500/30 dark:bg-rose-500/10">
+                      <p className="text-[11px] leading-relaxed text-rose-700 dark:text-rose-300">
+                        {tr(locale, {
+                          uz: "Diqqat: lid va uning faoliyat tarixi butunlay o'chadi. Qo'ng'iroqlar tarixi saqlanadi. Qaytarib bo'lmaydi.",
+                          ru: "Внимание: лид и история его активности будут удалены безвозвратно. История звонков сохранится.",
+                          en: "Warning: the lead and its activity history are deleted permanently. Call history is kept.",
+                        })}
+                      </p>
+                      <p className="mt-2 text-[11px] font-medium text-rose-700 dark:text-rose-300">
+                        {tr(locale, { uz: "Tasdiqlash uchun ismini yozing:", ru: "Для подтверждения введите имя:", en: "Type the name to confirm:" })}{" "}
+                        <span className="font-bold">{lead.fullName}</span>
+                      </p>
+                      <input
+                        value={typed}
+                        onChange={(e) => setTyped(e.target.value)}
+                        className="mt-1.5 h-9 w-full rounded-lg border border-rose-200 bg-white px-2.5 text-sm outline-none focus:border-rose-400 dark:border-rose-500/30 dark:bg-slate-900 dark:text-slate-100"
+                      />
+                      {purgeErr && <p className="mt-1.5 text-[11px] font-medium text-rose-700 dark:text-rose-300">{purgeErr}</p>}
+                      <div className="mt-2 flex gap-2">
+                        <button
+                          onClick={() => { setPurge(false); setPurgeErr(null); }}
+                          disabled={pending}
+                          className="flex-1 rounded-lg border border-slate-200 bg-white py-2 text-xs font-semibold text-slate-600 transition hover:bg-slate-50 disabled:opacity-60 dark:border-white/10 dark:bg-slate-900 dark:text-slate-300"
+                        >
+                          {tr(locale, { uz: "Bekor qilish", ru: "Отмена", en: "Cancel" })}
+                        </button>
+                        <button
+                          onClick={() => start(async () => {
+                            const r = await deleteLeadPermanently(lead.id);
+                            if (r.ok) router.push("/crm");
+                            else setPurgeErr(r.error === "forbidden"
+                              ? tr(locale, { uz: "Sizda bu amal uchun ruxsat yo'q.", ru: "У вас нет прав на это действие.", en: "You do not have permission." })
+                              : tr(locale, { uz: "O'chirib bo'lmadi.", ru: "Не удалось удалить.", en: "Could not delete." }));
+                          })}
+                          disabled={pending || typed.trim() !== lead.fullName.trim()}
+                          className="flex-[1.4] rounded-lg bg-rose-600 py-2 text-xs font-semibold text-white transition hover:bg-rose-700 disabled:opacity-40"
+                        >
+                          {pending ? tr(locale, { uz: "O'chirilmoqda...", ru: "Удаление...", en: "Deleting..." }) : tr(locale, { uz: "Ha, o'chirilsin", ru: "Да, удалить", en: "Yes, delete" })}
+                        </button>
+                      </div>
+                    </div>
+                  ))}
                 </div>
               ) : (
                 <p className="text-xs text-slate-400">{tr(locale, { uz: "Sizda tahrirlash huquqi yo'q.", ru: "У вас нет прав на редактирование.", en: "You do not have edit permission." })}</p>

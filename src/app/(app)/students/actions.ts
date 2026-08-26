@@ -409,7 +409,8 @@ export async function restoreStudent(id: string): Promise<EditState> {
  */
 export async function deleteStudentPermanently(id: string): Promise<EditState> {
   const s = await requireSession();
-  const CAN_PURGE = [ROLES.DIRECTOR, ROLES.DEPUTY_DIRECTOR];
+  // Administrator ham o'chira oladi (2026-08-26 talab)
+  const CAN_PURGE = [ROLES.DIRECTOR, ROLES.DEPUTY_DIRECTOR, ROLES.ADMIN];
   if (!CAN_PURGE.includes(s.role as never)) return { error: "forbidden" };
 
   const st = await prisma.student.findUnique({

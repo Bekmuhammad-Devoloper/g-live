@@ -483,3 +483,40 @@ export async function moveLeadToBranch(leadId: string, branchId: string): Promis
   revalidatePath(`/crm/${leadId}`);
   return { ok: true, branchName: branch.name };
 }
+
+// ─── Lidni butunlay o'chirish (2026-08-26 talab) ───
+// Direktor, o'rinbosari va ADMINISTRATOR o'chira oladi.
+// Lid bilan birga faoliyat tarixi (LeadActivity) ham ketadi (kaskad).
+// Qo'ng'iroqlar (Call) o'chmaydi — faqat lid bilan aloqasi uziladi, chunki
+// qo'ng'iroq tarixi moliyaviy/nazorat hujjati sifatida saqlanishi kerak.
+// O'quvchiga aylantirilgan bo'lsa — o'quvchi ham o'chmaydi (aloqa uziladi).
+const CAN_DELETE_LEAD = [ROLES.DIRECTOR, ROLES.DEPUTY_DIRECTOR, ROLES.ADMIN];
+
+export async function deleteLeadPermanently(leadId: string): Promise<{ ok?: boolean; error?: string }> {
+  const s = await requireSession();
+  if (!CAN_DELETE_LEAD.includes(s.role as never)) return { error: "forbidden" };
+
+  const lead = await prisma.lead.findUnique({
+    where: { id: leadId },
+    select: { id: true, fullName: true, phone: true, stage: true, studentId: true, _count: { select: { activities: true, calls: true } } },
+  });
+  if (!lead) return { error: "not_found" };
+
+  await prisma.$transaction(async (tx) => {
+    // Qo'ng'iroqlar saqlanadi — faqat bog'lanish uziladi
+    await tx.call.updateMany({ where: { leadId }, data: { leadId: null } });
+    await tx.lead.delete({ where: { id: leadId } });
+  });
+
+  await writeAudit({
+    actorId: s.userId,
+    action: "DELETE",
+    entityType: "Lead",
+    entityId: leadId,
+    oldValue: { fullName: lead.fullName, phone: lead.phone, stage: lead.stage, ...lead._count },
+    reason: `Lid butunlay o'chirildi: ${lead.fullName}`,
+  });
+
+  revalidatePath("/crm");
+  return { ok: true };
+}

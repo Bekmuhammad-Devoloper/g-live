@@ -74,6 +74,8 @@ export default async function LeadDetailPage({ params }: { params: Promise<{ id:
       prevId={prevId}
       nextId={nextId}
       canWrite={canWrite(s.role, MODULES.CRM)}
+      // Lidni butunlay o'chirish — direktor, o'rinbosari va administrator
+      canDelete={[ROLES.DIRECTOR, ROLES.DEPUTY_DIRECTOR, ROLES.ADMIN].includes(s.role as never)}
       locale={s.locale}
     />
   );
