@@ -19,7 +19,7 @@ export interface SGroup {
 export interface SProfile {
   id: string; fullName: string; phone: string | null; imageUrl: string | null;
   birthDate: string | null; currentLevel: string | null; eduStatus: string;
-  branchName: string | null; joined: string;
+  branchName: string | null; joined: string; note: string | null;
   paid: number; debt: number; attendancePct: number | null; lessonsCounted: number;
   groups: SGroup[];
   payments: { id: string; amount: number; method: string; status: string; purpose: string | null; createdAt: string }[];
@@ -115,6 +115,19 @@ export default function StudentProfile({ profile: st, locale }: { profile: SProf
           hint={st.lessonsCounted ? `${st.lessonsCounted} ${L("dars", "занятий", "lessons")}` : undefined}
         />
       </div>
+
+      {/* ── Izoh ── */}
+      {st.note && (
+        <div className="flex gap-2.5 rounded-2xl border border-amber-200/70 bg-amber-50 px-4 py-3 dark:border-amber-500/25 dark:bg-amber-500/10">
+          <Icon name="info" className="mt-0.5 h-4 w-4 shrink-0 text-amber-500" />
+          <div className="min-w-0">
+            <div className="text-[11px] font-semibold uppercase tracking-wide text-amber-600 dark:text-amber-400">
+              {L("Izoh", "Примечание", "Note")}
+            </div>
+            <p className="mt-0.5 whitespace-pre-wrap text-sm leading-relaxed text-slate-700 dark:text-slate-200">{st.note}</p>
+          </div>
+        </div>
+      )}
 
       {/* ── Ota-onalar ── */}
       {st.parents.length > 0 && (

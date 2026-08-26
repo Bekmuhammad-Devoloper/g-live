@@ -227,6 +227,7 @@ export async function updateStudent(fd: FormData): Promise<EditState> {
 
   const phone = String(fd.get("phone") || "").trim() || null;
   const currentLevel = String(fd.get("currentLevel") || "").trim() || null;
+  const note = String(fd.get("note") || "").trim().slice(0, 2000) || null;
   const eduRaw = String(fd.get("eduStatus") || "").trim();
   const eduStatus = EDU_STATUSES.includes(eduRaw as never) ? eduRaw : undefined;
 
@@ -235,7 +236,7 @@ export async function updateStudent(fd: FormData): Promise<EditState> {
 
   const updated = await prisma.student.update({
     where: { id },
-    data: { fullName, phone, currentLevel, ...(eduStatus ? { eduStatus } : {}) },
+    data: { fullName, phone, currentLevel, note, ...(eduStatus ? { eduStatus } : {}) },
   });
 
   await writeAudit({
@@ -243,8 +244,8 @@ export async function updateStudent(fd: FormData): Promise<EditState> {
     action: "UPDATE",
     entityType: "Student",
     entityId: id,
-    oldValue: { fullName: existing.fullName, phone: existing.phone, currentLevel: existing.currentLevel, eduStatus: existing.eduStatus },
-    newValue: { fullName: updated.fullName, phone: updated.phone, currentLevel: updated.currentLevel, eduStatus: updated.eduStatus },
+    oldValue: { fullName: existing.fullName, phone: existing.phone, currentLevel: existing.currentLevel, eduStatus: existing.eduStatus, note: existing.note },
+    newValue: { fullName: updated.fullName, phone: updated.phone, currentLevel: updated.currentLevel, eduStatus: updated.eduStatus, note: updated.note },
   });
 
   revalidatePath("/students");

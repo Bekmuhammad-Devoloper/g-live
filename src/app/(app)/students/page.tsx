@@ -87,7 +87,7 @@ export default async function StudentsPage() {
       debt: debts.get(st.id)?.debt ?? 0,
       // Shu oy kamida bitta PAID to'lov bo'lganmi (davomat/to'lov holati bo'limi bilan bir xil mantiq)
       paidThisMonth: paid.some((p) => p.createdAt.getFullYear() === curY && p.createdAt.getMonth() === curM),
-      note: null,
+      note: st.note,
       branchName: st.branch?.name ?? null,
     };
   });

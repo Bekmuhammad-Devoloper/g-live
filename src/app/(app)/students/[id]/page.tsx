@@ -80,6 +80,7 @@ export default async function StudentProfilePage({ params }: { params: Promise<{
     currentLevel: student.currentLevel,
     eduStatus: student.eduStatus,
     branchName: student.branch?.name ?? null,
+    note: student.note,
     joined: iso(student.createdAt)!,
     paid,
     debt,

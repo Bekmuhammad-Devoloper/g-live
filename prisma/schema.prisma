@@ -219,6 +219,7 @@ model Student {
   age          Int? // yoshi (ixtiyoriy)
   phone2       String? // qo'shimcha telefon (ixtiyoriy)
   eduStatus    String   @default("WAITING") // EDU_STATUSES (lib/constants.ts)
+  note         String? // o'quvchi haqida izoh — profil, ro'yxat va kartochkada ko'rinadi
 
   branchId String?
   branch   Branch? @relation(fields: [branchId], references: [id])

@@ -1573,6 +1573,22 @@ function EditModal({ student, locale, onClose, onDone }: { student: VStudent; lo
               <input name="currentLevel" defaultValue={student.currentLevel ?? ""} className={inputCls} placeholder="A1.1" />
             </div>
           </div>
+          {/* Izoh — talaba profili, ro'yxat va kartochkada ko'rinadi */}
+          <div>
+            <label className={labelCls}>{tr(locale, { uz: "Izoh", ru: "Примечание", en: "Note" })}</label>
+            <textarea
+              name="note"
+              rows={3}
+              maxLength={2000}
+              defaultValue={student.note ?? ""}
+              placeholder={tr(locale, {
+                uz: "Talaba haqida qo'shimcha ma'lumot (masalan: dars kunlari cheklovi, ota-ona iltimosi)",
+                ru: "Дополнительная информация об ученике (например: ограничения по дням, просьба родителей)",
+                en: "Additional info about the student (e.g. day restrictions, parent request)",
+              })}
+              className={`${inputCls} h-auto resize-y py-2 leading-relaxed`}
+            />
+          </div>
           <div>
             <label className={labelCls}>{tr(locale, { uz: "O'quv holati", ru: "Учебный статус", en: "Education status" })}</label>
             <select name="eduStatus" defaultValue={student.eduStatus} className={inputCls}>
