@@ -10,8 +10,9 @@ import { EDU_STATUS_LABELS, EDU_STATUSES, PAYMENT_STATUS_LABELS, label, formatMo
 import { tr } from "@/lib/tr";
 import { isReceiptRequired, type ReceiptMode } from "@/lib/receiptMode";
 import { quickCreateStudent, type QuickState } from "../actions";
-import { updateStudent, bulkArchiveStudents, bulkAssignGroup, bulkNotifyStudents, setStudentImage, getStudentPayments, acceptPayment, archiveStudent, restoreStudent, deleteStudentPermanently, type StudentPayments, type MonthPay, type ReceiptData } from "./actions";
+import { updateStudent, bulkArchiveStudents, bulkAssignGroup, bulkNotifyStudents, setStudentImage, getStudentPayments, acceptPayment, archiveStudent, restoreStudent, deleteStudentPermanently, studentBranchOptions, moveStudentToBranch, type StudentPayments, type MonthPay, type ReceiptData } from "./actions";
 import { Icon } from "../_components/Icon";
+import BranchMover from "../_components/BranchMover";
 
 // Sahifaga serverdan keladigan bitta o'quvchi qatori
 export interface VStudent {
@@ -1583,6 +1584,21 @@ function EditModal({ student, locale, onClose, onDone }: { student: VStudent; lo
           {error && (
             <p className="rounded-lg bg-rose-50 px-3 py-2 text-sm text-rose-700 dark:bg-rose-500/10 dark:text-rose-400">{error}</p>
           )}
+
+          {/* Boshqa filialga ko'chirish */}
+          <div className="mt-2 border-t border-slate-100 pt-3.5 dark:border-white/10">
+            <BranchMover
+              locale={locale}
+              currentBranchName={student.branchName}
+              warning={tr(locale, {
+                uz: "Diqqat: o'quvchi eski filialdagi guruhlardan chiqariladi (to'lov hisobi ham shu oyda to'xtaydi).",
+                ru: "Внимание: ученик будет выведен из групп прежнего филиала (начисление оплаты также прекратится).",
+                en: "Note: the student is removed from the previous branch's groups (fee accrual stops this month).",
+              })}
+              loadBranches={studentBranchOptions}
+              onMove={(branchId) => moveStudentToBranch(student.id, branchId)}
+            />
+          </div>
 
           {/* Arxivlash va butunlay o'chirish — tahrirlash oynasi ichida */}
           <div className="mt-2 border-t border-slate-100 pt-3.5 dark:border-white/10">

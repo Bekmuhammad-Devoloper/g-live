@@ -4,7 +4,7 @@ import { revalidatePath } from "next/cache";
 import { z } from "zod";
 import { prisma } from "@/lib/db";
 import { requireSession } from "@/lib/auth";
-import { canWrite, MODULES } from "@/lib/rbac";
+import { canRead, canWrite, MODULES } from "@/lib/rbac";
 import { writeAudit } from "@/lib/audit";
 import { ROLES, LEAD_STAGES, isSalesRole } from "@/lib/constants";
 
@@ -441,4 +441,45 @@ export async function updateLeadField(leadId: string, field: string, value: stri
   await writeAudit({ actorId: s.userId, action: "UPDATE", entityType: "Lead", entityId: leadId, newValue: { [field]: value }, reason: "Maydon tahrirlandi" });
   revalidatePath(`/crm/${leadId}`);
   revalidatePath("/crm");
+}
+
+// ─── Lidni boshqa filialga ko'chirish (2026-08-25 talab) ───
+// Filial izolyatsiyasi joriy qilingach kerak bo'ldi: noto'g'ri filialga tushgan
+// yoki boshqa filialga o'tkazilishi kerak bo'lgan lid ko'chiriladi.
+
+export interface BranchOpt { id: string; name: string }
+
+/** Ko'chirish uchun faol filiallar ro'yxati. */
+export async function branchOptions(): Promise<BranchOpt[]> {
+  const s = await requireSession();
+  if (!canRead(s.role, MODULES.CRM)) return [];
+  return prisma.branch.findMany({ where: { isActive: true }, orderBy: { name: "asc" }, select: { id: true, name: true } });
+}
+
+export async function moveLeadToBranch(leadId: string, branchId: string): Promise<{ ok?: boolean; error?: string; branchName?: string }> {
+  const s = await requireSession();
+  if (!canWrite(s.role, MODULES.CRM)) return { error: "forbidden" };
+
+  const [lead, branch] = await Promise.all([
+    prisma.lead.findUnique({ where: { id: leadId }, select: { id: true, fullName: true, branchId: true } }),
+    prisma.branch.findUnique({ where: { id: branchId }, select: { id: true, name: true, isActive: true } }),
+  ]);
+  if (!lead) return { error: "not_found" };
+  if (!branch || !branch.isActive) return { error: "invalid" };
+  if (lead.branchId === branchId) return { ok: true, branchName: branch.name };
+
+  await prisma.lead.update({ where: { id: leadId }, data: { branchId } });
+  await writeAudit({
+    actorId: s.userId,
+    action: "UPDATE",
+    entityType: "Lead",
+    entityId: leadId,
+    oldValue: { branchId: lead.branchId },
+    newValue: { branchId },
+    reason: `Lid boshqa filialga ko'chirildi: ${lead.fullName} → ${branch.name}`,
+  });
+
+  revalidatePath("/crm");
+  revalidatePath(`/crm/${leadId}`);
+  return { ok: true, branchName: branch.name };
 }

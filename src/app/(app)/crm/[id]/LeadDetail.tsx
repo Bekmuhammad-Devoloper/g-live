@@ -8,7 +8,8 @@ import { formatMoney, LEAD_STAGE_LABELS, label, type Locale } from "@/lib/consta
 import { tr } from "@/lib/tr";
 import { Icon } from "../../_components/Icon";
 import { COLUMNS, colorOfStage, initials } from "../_lib/leadColumns";
-import { updateLeadField, setLeadManager, moveLeadStage, convertLead, addLeadActivity } from "../actions";
+import { updateLeadField, setLeadManager, moveLeadStage, convertLead, addLeadActivity, branchOptions, moveLeadToBranch } from "../actions";
+import BranchMover from "../../_components/BranchMover";
 import EnrollDrawer from "../_components/EnrollDrawer";
 
 export interface DLead {
@@ -16,6 +17,7 @@ export interface DLead {
   stage: string; interestCourse: string | null; budget: number | null; note: string | null;
   managerId: string | null; managerName: string | null; studentId: string | null; createdAt: string;
   groupId: string | null; groupName: string | null; groupNote: string | null; courseName: string | null; enrollEditCount: number;
+  branchName: string | null; // filial nomi — boshqa filialga ko'chirish uchun
 }
 export interface DActivity {
   id: string; type: string; result: string | null; nextStepAt: string | null; authorName: string | null; createdAt: string;
@@ -207,6 +209,14 @@ export default function LeadDetail({ lead, activities, managers, prevId, nextId,
                       </>
                     )}
                   </div>
+
+                  {/* Filial — boshqa filialga ko'chirish */}
+                  <BranchMover
+                    locale={locale}
+                    currentBranchName={lead.branchName}
+                    loadBranches={branchOptions}
+                    onMove={(branchId) => moveLeadToBranch(lead.id, branchId)}
+                  />
 
                   {!lead.studentId && !lead.groupId && (
                     <button onClick={() => run(() => convertLead(lead.id))} disabled={pending} className="btn-ghost w-full justify-start">

@@ -442,3 +442,63 @@ export async function deleteStudentPermanently(id: string): Promise<EditState> {
   revalidatePath("/finance");
   return { ok: true };
 }
+
+// ─── O'quvchini boshqa filialga ko'chirish (2026-08-25 talab) ───
+// Guruhlar filialga tegishli bo'lgani uchun, ko'chirilganda o'quvchi eski
+// filialdagi guruhlardan chiqariladi (leftAt yoziladi) — aks holda u ko'rinmaydigan
+// guruhda "osilib" qolardi va to'lov hisobi ham davom etaverardi.
+
+export interface BranchOpt { id: string; name: string }
+
+/** Ko'chirish uchun faol filiallar ro'yxati. */
+export async function studentBranchOptions(): Promise<BranchOpt[]> {
+  const s = await requireSession();
+  if (!ALLOWED.includes(s.role as never)) return [];
+  return prisma.branch.findMany({ where: { isActive: true }, orderBy: { name: "asc" }, select: { id: true, name: true } });
+}
+
+export async function moveStudentToBranch(
+  studentId: string,
+  branchId: string,
+): Promise<{ ok?: boolean; error?: string; branchName?: string; removedGroups?: number }> {
+  const s = await requireSession();
+  if (!ALLOWED.includes(s.role as never)) return { error: "forbidden" };
+
+  const [student, branch] = await Promise.all([
+    prisma.student.findUnique({ where: { id: studentId }, select: { id: true, fullName: true, branchId: true } }),
+    prisma.branch.findUnique({ where: { id: branchId }, select: { id: true, name: true, isActive: true } }),
+  ]);
+  if (!student) return { error: "notfound" };
+  if (!branch || !branch.isActive) return { error: "invalid" };
+  if (student.branchId === branchId) return { ok: true, branchName: branch.name, removedGroups: 0 };
+
+  // Yangi filialga tegishli BO'LMAGAN guruhlardagi faol a'zoliklar tugatiladi
+  const stale = await prisma.groupStudent.findMany({
+    where: { studentId, isActive: true, group: { branchId: { not: branchId } } },
+    select: { id: true },
+  });
+
+  await prisma.$transaction(async (tx) => {
+    if (stale.length) {
+      await tx.groupStudent.updateMany({
+        where: { id: { in: stale.map((x) => x.id) } },
+        data: { isActive: false, leftAt: new Date() },
+      });
+    }
+    await tx.student.update({ where: { id: studentId }, data: { branchId } });
+  });
+
+  await writeAudit({
+    actorId: s.userId,
+    action: "UPDATE",
+    entityType: "Student",
+    entityId: studentId,
+    oldValue: { branchId: student.branchId },
+    newValue: { branchId, closedEnrollments: stale.length },
+    reason: `O'quvchi boshqa filialga ko'chirildi: ${student.fullName} → ${branch.name}`,
+  });
+
+  revalidatePath("/students");
+  revalidatePath("/groups");
+  return { ok: true, branchName: branch.name, removedGroups: stale.length };
+}
