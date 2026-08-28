@@ -4,40 +4,46 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 
 const TEAL = "#0e7490";
+const GRAY = "#94a3b8";
 
-// Maketdagi pastki yorliqlar: Start (uy) · Kurse (kitob) · Üben (nishon) · Profil (odam)
+// Pastki yorliqlar: Start (uy) · Kurse (kitob) · Üben (nishon+o'q) · Profil (odam).
+// Hammasi bir xil o'lchamda (26px), bir xil chiziq qalinligida (2) va bir xil
+// optik og'irlikda chizilgan; faol yorliq to'ldirilgan va rangli, ostida chiziqcha.
 function Ico({ name, active }: { name: string; active: boolean }) {
-  const c = active ? TEAL : "#94a3b8";
-  const common = { width: 26, height: 26, viewBox: "0 0 24 24", strokeWidth: 2, strokeLinecap: "round" as const, strokeLinejoin: "round" as const };
+  const c = active ? TEAL : GRAY;
+  const p = { width: 26, height: 26, viewBox: "0 0 24 24", fill: "none", stroke: c, strokeWidth: 2, strokeLinecap: "round" as const, strokeLinejoin: "round" as const };
+
   if (name === "home") {
-    return active ? (
-      <svg {...common} fill={c} stroke={c}><path d="M4 10.5 12 4l8 6.5V20a1 1 0 0 1-1 1h-4.5v-6h-5v6H5a1 1 0 0 1-1-1v-9.5Z" /></svg>
-    ) : (
-      <svg {...common} fill="none" stroke={c}><path d="M4 10.5 12 4l8 6.5V20a1 1 0 0 1-1 1h-4.5v-6h-5v6H5a1 1 0 0 1-1-1v-9.5Z" /></svg>
+    return (
+      <svg {...p} fill={active ? c : "none"}>
+        <path d="M4 10.7 12 4.2l8 6.5V19a1.2 1.2 0 0 1-1.2 1.2h-3.9v-5.6h-5.8v5.6H5.2A1.2 1.2 0 0 1 4 19v-8.3Z" />
+      </svg>
     );
   }
   if (name === "book") {
     return (
-      <svg {...common} fill="none" stroke={c}>
-        <path d="M12 6c-1.5-1.6-3.6-2.2-6-2.2-1 0-2 .15-3 .45V19c1-.3 2-.45 3-.45 2.4 0 4.5.6 6 2.2 1.5-1.6 3.6-2.2 6-2.2 1 0 2 .15 3 .45V4.25c-1-.3-2-.45-3-.45-2.4 0-4.5.6-6 2.2Z" />
-        <path d="M12 6v14.75" />
+      <svg {...p}>
+        <path d="M12 6.4c-1.4-1.5-3.4-2.1-5.7-2.1-.95 0-1.9.14-2.85.43V18.6c.95-.29 1.9-.43 2.85-.43 2.3 0 4.3.6 5.7 2.1 1.4-1.5 3.4-2.1 5.7-2.1.95 0 1.9.14 2.85.43V4.73c-.95-.29-1.9-.43-2.85-.43-2.3 0-4.3.6-5.7 2.1Z" />
+        <path d="M12 6.4v13.87" />
       </svg>
     );
   }
   if (name === "target") {
     return (
-      <svg {...common} fill="none" stroke={c}>
-        <circle cx="12" cy="12" r="9" />
-        <circle cx="12" cy="12" r="5" />
-        <circle cx="12" cy="12" r="1.6" fill={c} stroke="none" />
+      <svg {...p}>
+        <circle cx="11.4" cy="12.6" r="8" />
+        <circle cx="11.4" cy="12.6" r="4.3" />
+        <circle cx="11.4" cy="12.6" r="1.3" fill={c} stroke="none" />
+        <path d="m11.4 12.6 8.2-8.2" />
+        <path d="M16.9 4.4h2.9v2.9" />
       </svg>
     );
   }
-  // profil
+  // Profil
   return (
-    <svg {...common} fill="none" stroke={c}>
-      <circle cx="12" cy="8" r="3.5" />
-      <path d="M4.5 20c.9-3.6 3.9-5.5 7.5-5.5s6.6 1.9 7.5 5.5" />
+    <svg {...p}>
+      <circle cx="12" cy="8.2" r="3.7" />
+      <path d="M4.8 20c.9-3.7 3.9-5.7 7.2-5.7s6.3 2 7.2 5.7" />
     </svg>
   );
 }
@@ -51,18 +57,24 @@ export default function BottomNav({ kurseHref }: { kurseHref: string }) {
     { href: "/profile", icon: "profil", label: "Profil" },
   ];
   return (
-    <nav className="fixed inset-x-0 bottom-0 z-40 mx-auto max-w-md rounded-t-[22px] bg-white px-4 pb-5 pt-2.5 shadow-[0_-10px_30px_rgba(19,78,94,0.14)]">
-      <div className="flex items-center justify-around">
+    <nav className="fixed inset-x-0 bottom-0 z-40 mx-auto max-w-md rounded-t-[26px] bg-white px-3 pb-2 pt-2.5 shadow-[0_-10px_30px_rgba(19,78,94,0.14)]">
+      <div className="flex items-stretch justify-around">
         {items.map((it) => {
           const active = it.exact ? pathname === it.href : pathname.startsWith(it.href);
           return (
-            <Link key={it.label} href={it.href} className="flex flex-col items-center gap-1 px-4 py-1">
+            <Link key={it.label} href={it.href} className="flex flex-1 flex-col items-center gap-1 px-1 py-1">
               <Ico name={it.icon} active={active} />
-              <span className="text-[12px] font-semibold" style={{ color: active ? TEAL : "#94a3b8" }}>{it.label}</span>
+              <span className="text-[12.5px] font-semibold leading-none" style={{ color: active ? TEAL : GRAY }}>
+                {it.label}
+              </span>
+              {/* faol yorliq ostidagi chiziqcha (maketdagidek) */}
+              <span className="h-[3px] w-6 rounded-full" style={{ background: active ? TEAL : "transparent" }} />
             </Link>
           );
         })}
       </div>
+      {/* telefon "home indicator" chizig'i */}
+      <div className="mx-auto mt-1 h-[5px] w-[134px] rounded-full bg-slate-900/85" />
     </nav>
   );
 }
