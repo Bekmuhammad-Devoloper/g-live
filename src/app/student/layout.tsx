@@ -19,7 +19,7 @@ export default async function StudentLayout({ children }: { children: React.Reac
   const kurseHref = student?.enrollments[0] ? `/groups/${student.enrollments[0].groupId}` : "/student";
 
   return (
-    <div className="min-h-screen bg-[#e8f0f6]">
+    <div className="min-h-screen bg-[#e4edf3]">
       <div className="mx-auto min-h-screen max-w-md px-4 pb-28 pt-5">{children}</div>
       <BottomNav kurseHref={kurseHref} />
     </div>
