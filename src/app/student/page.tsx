@@ -122,19 +122,41 @@ function IcoFlame({ s = 30 }: { s?: number }) {
   );
 }
 
-// ── Germaniya bayrog'i (SVG — emoji o'rniga, hamma qurilmada bir xil) ──
-function GermanFlag({ w = 76 }: { w?: number }) {
-  const h = Math.round(w * 0.62);
+// ── Germaniya bayrog'i (silliq to'lqin, rasmiy ranglar) ──
+// Uch rangni alohida to'lqinlantirish o'rniga butun bayroq shakli clipPath
+// qilinadi va ichiga tekis chiziqlar chiziladi — chetlari toza chiqadi.
+function GermanFlag({ w = 88 }: { w?: number }) {
+  const h = Math.round(w * 0.6);
+  const amp = h * 0.13; // to'lqin balandligi
+  const wave = `M0 ${amp}
+    C ${w * 0.3} ${-amp * 0.6}, ${w * 0.62} ${amp * 1.7}, ${w} ${amp * 0.2}
+    L ${w} ${h + amp * 0.2}
+    C ${w * 0.62} ${h + amp * 1.7}, ${w * 0.3} ${h - amp * 0.6}, 0 ${h + amp}
+    Z`;
   return (
-    <svg width={w + 8} height={h + 26} viewBox={`0 0 ${w + 8} ${h + 26}`}>
-      {/* bayroq tayog'i */}
-      <rect x="2" y="0" width="3.5" height={h + 26} rx="1.5" fill="#8fb3c4" />
-      <circle cx="3.7" cy="2.6" r="2.6" fill="#8fb3c4" />
-      {/* hilpiragan bayroq */}
-      <g transform={`translate(6,3)`}>
-        <path d={`M0 0 Q ${w * 0.55} -6 ${w} 2 L ${w} ${h * 0.33 + 2} Q ${w * 0.55} ${h * 0.33 - 6} 0 ${h * 0.33} Z`} fill="#1f2937" />
-        <path d={`M0 ${h * 0.33} Q ${w * 0.55} ${h * 0.33 - 6} ${w} ${h * 0.33 + 2} L ${w} ${h * 0.66 + 2} Q ${w * 0.55} ${h * 0.66 - 6} 0 ${h * 0.66} Z`} fill="#dd2c2c" />
-        <path d={`M0 ${h * 0.66} Q ${w * 0.55} ${h * 0.66 - 6} ${w} ${h * 0.66 + 2} L ${w} ${h + 2} Q ${w * 0.55} ${h - 6} 0 ${h} Z`} fill="#f7c948" />
+    <svg width={w + 8} height={h + amp * 2 + 20} viewBox={`0 0 ${w + 8} ${h + amp * 2 + 20}`}>
+      <defs>
+        <clipPath id="glFlagClip">
+          <path d={wave} />
+        </clipPath>
+        <linearGradient id="glFlagShade" x1="0" y1="0" x2="1" y2="0">
+          <stop offset="0%" stopColor="#000" stopOpacity="0.22" />
+          <stop offset="30%" stopColor="#000" stopOpacity="0" />
+          <stop offset="72%" stopColor="#000" stopOpacity="0" />
+          <stop offset="100%" stopColor="#000" stopOpacity="0.14" />
+        </linearGradient>
+      </defs>
+
+      {/* tayoq */}
+      <rect x="0.5" y="0" width="3" height={h + amp * 2 + 20} rx="1.5" fill="#dceef5" />
+      <circle cx="2" cy="2.4" r="2.4" fill="#dceef5" />
+
+      {/* bayroq: uch tekis chiziq, to'lqin shakli bo'yicha kesilgan */}
+      <g transform="translate(4.5,3)" clipPath="url(#glFlagClip)">
+        <rect x="0" y={-amp * 2} width={w} height={h / 3 + amp * 2} fill="#111111" />
+        <rect x="0" y={h / 3} width={w} height={h / 3} fill="#DD0000" />
+        <rect x="0" y={(h * 2) / 3} width={w} height={h / 3 + amp * 2} fill="#FFCE00" />
+        <rect x="0" y={-amp * 2} width={w} height={h + amp * 4} fill="url(#glFlagShade)" />
       </g>
     </svg>
   );
@@ -377,7 +399,7 @@ export default async function StudentStartPage() {
 
       {/* ── Reklama banneri ── */}
       <div
-        className="relative overflow-hidden rounded-[26px] p-6 text-white shadow-[0_16px_32px_rgba(14,116,144,0.3)]"
+        className="relative min-h-[178px] overflow-hidden rounded-[26px] p-6 pb-10 text-white shadow-[0_16px_32px_rgba(14,116,144,0.3)]"
         style={{ background: "linear-gradient(105deg, #0c6a86 0%, #1590b3 45%, #7fd0e6 100%)" }}
       >
         <div className="relative z-10 max-w-[58%]">
@@ -387,15 +409,15 @@ export default async function StudentStartPage() {
             Jetzt entdecken
           </Link>
         </div>
-        {/* o'ng tomondagi illyustratsiya: bayroq + darvoza + planshet */}
-        <div className="pointer-events-none absolute right-3 top-3 z-0">
-          <GermanFlag w={72} />
+        {/* o'ng tomondagi illyustratsiya: darvoza (orqada) + bayroq + planshet */}
+        <div className="pointer-events-none absolute bottom-6 right-6 z-0 opacity-70">
+          <Gate w={62} />
         </div>
-        <div className="pointer-events-none absolute bottom-8 right-24 z-0 opacity-90">
-          <Gate w={52} />
+        <div className="pointer-events-none absolute right-4 top-4 z-[1] drop-shadow-[0_6px_10px_rgba(0,0,0,0.22)]">
+          <GermanFlag w={78} />
         </div>
-        <div className="pointer-events-none absolute -bottom-1 right-2 z-0 rotate-[-8deg]">
-          <Tablet w={58} tone="#0b5d76" />
+        <div className="pointer-events-none absolute bottom-4 right-3 z-[2] rotate-[-8deg] drop-shadow-[0_6px_10px_rgba(0,0,0,0.25)]">
+          <Tablet w={54} tone="#0b5d76" />
         </div>
         {/* karusel nuqtalari */}
         <div className="absolute bottom-2.5 left-1/2 z-10 flex -translate-x-1/2 items-center gap-1.5 rounded-full bg-white/25 px-2.5 py-1.5 backdrop-blur-sm">
