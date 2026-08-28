@@ -285,12 +285,6 @@ export default async function StudentStartPage() {
           <h1 className="truncate text-[22px] font-extrabold leading-tight tracking-tight text-slate-900 sm:text-[26px]">Hallo, {firstName}!</h1>
           <p className="truncate text-[13px] text-slate-500">Bereit, Deutsch zu lernen?</p>
         </div>
-        {/* Ikonkalar pastki tab-bar ikonkalari o'lchamida (26px) */}
-        <Link href="/notifications" className="relative grid h-11 w-11 shrink-0 place-items-center rounded-full bg-white shadow-[0_6px_16px_rgba(19,78,94,0.12)]">
-          <IcoBell s={26} />
-          {/* bildirishnoma nuqtasi */}
-          <span className="absolute right-[9px] top-[8px] h-2 w-2 rounded-full" style={{ background: "#2ea8c9" }} />
-        </Link>
         {/* Streak (ketma-ket qatnashuv) kartochkasi — olovcha + kunlar soni */}
         <div className="flex h-11 shrink-0 items-center gap-1 rounded-2xl bg-white px-2.5 shadow-[0_6px_16px_rgba(19,78,94,0.12)]">
           <IcoFlame s={26} />
@@ -299,6 +293,12 @@ export default async function StudentStartPage() {
             <div className="mt-0.5 text-[10px] font-semibold text-slate-500">kun</div>
           </div>
         </div>
+        {/* Ikonkalar pastki tab-bar ikonkalari o'lchamida (26px) */}
+        <Link href="/notifications" className="relative grid h-11 w-11 shrink-0 place-items-center rounded-full bg-white shadow-[0_6px_16px_rgba(19,78,94,0.12)]">
+          <IcoBell s={26} />
+          {/* bildirishnoma nuqtasi */}
+          <span className="absolute right-[9px] top-[8px] h-2 w-2 rounded-full" style={{ background: "#2ea8c9" }} />
+        </Link>
       </div>
 
       {/* ── 4 ko'nikma kartasi ── */}
