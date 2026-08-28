@@ -104,6 +104,24 @@ function IcoBell({ s = 22 }: { s?: number }) {
     </svg>
   );
 }
+function IcoFlame({ s = 30 }: { s?: number }) {
+  return (
+    <svg width={s} height={s} viewBox="0 0 24 24">
+      {/* tashqi olov */}
+      <path
+        d="M12 2.5c.5 3-1 4.6-2.6 6.2C7.7 10.4 6 12.2 6 15a6 6 0 0 0 12 0c0-2.2-1-4-2.2-5.6C14.4 7.5 13 5.5 12 2.5Z"
+        fill="#f4511e"
+      />
+      <path
+        d="M12 2.5c.5 3-1 4.6-2.6 6.2C7.7 10.4 6 12.2 6 15a6 6 0 0 0 12 0c0-2.2-1-4-2.2-5.6C14.4 7.5 13 5.5 12 2.5Z"
+        fill="#ff7a2f" opacity="0.55"
+      />
+      {/* ichki olov */}
+      <path d="M12 10.5c.3 1.6-.6 2.5-1.4 3.4-.7.8-1.4 1.6-1.4 2.8a2.9 2.9 0 0 0 5.8 0c0-1.1-.5-1.9-1.1-2.8-.7-1-1.5-2-1.9-3.4Z" fill="#ffc93c" />
+    </svg>
+  );
+}
+
 function IcoPerson({ s = 30 }: { s?: number }) {
   return (
     <svg width={s} height={s} viewBox="0 0 24 24" fill="white">
@@ -272,6 +290,14 @@ export default async function StudentStartPage() {
           {/* bildirishnoma nuqtasi */}
           <span className="absolute right-[15px] top-[14px] h-2.5 w-2.5 rounded-full" style={{ background: "#2ea8c9" }} />
         </Link>
+        {/* Streak (ketma-ket qatnashuv) kartochkasi — olovcha + kunlar soni */}
+        <div className="flex h-[64px] shrink-0 items-center gap-1.5 rounded-[20px] bg-white px-3 shadow-[0_6px_16px_rgba(19,78,94,0.12)]">
+          <IcoFlame s={32} />
+          <div className="leading-none">
+            <div className="text-[19px] font-extrabold text-slate-900">{streak}</div>
+            <div className="mt-0.5 text-[11px] font-semibold text-slate-500">kun</div>
+          </div>
+        </div>
       </div>
 
       {/* ── 4 ko'nikma kartasi ── */}
