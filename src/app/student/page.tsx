@@ -122,15 +122,6 @@ function IcoFlame({ s = 30 }: { s?: number }) {
   );
 }
 
-function IcoPerson({ s = 30 }: { s?: number }) {
-  return (
-    <svg width={s} height={s} viewBox="0 0 24 24" fill="white">
-      <circle cx="12" cy="8.2" r="3.6" />
-      <path d="M4.5 20c.9-3.8 4-5.8 7.5-5.8s6.6 2 7.5 5.8H4.5Z" />
-    </svg>
-  );
-}
-
 // ── Germaniya bayrog'i (SVG — emoji o'rniga, hamma qurilmada bir xil) ──
 function GermanFlag({ w = 76 }: { w?: number }) {
   const h = Math.round(w * 0.62);
@@ -198,6 +189,8 @@ export default async function StudentStartPage() {
       id: true,
       fullName: true,
       currentLevel: true,
+      imageUrl: true,
+      user: { select: { imageUrl: true } },
       enrollments: {
         where: { isActive: true },
         orderBy: { joinedAt: "desc" },
@@ -262,6 +255,8 @@ export default async function StudentStartPage() {
 
   const kurseHref = group ? `/groups/${group.id}` : "/student";
   const firstName = student.fullName.split(/\s+/)[0];
+  // Profil rasmi: avval o'quvchi rasmi, keyin foydalanuvchi rasmi; ikkalasi ham yo'q bo'lsa — logotip
+  const avatarUrl = student.imageUrl || student.user?.imageUrl || null;
 
   const skills = [
     { key: "w", label: "Wörter", pct: woerter, icon: <span style={{ color: TEAL }} className="text-[34px] font-extrabold leading-none">W</span> },
@@ -277,10 +272,27 @@ export default async function StudentStartPage() {
     <div className="space-y-[18px]">
       {/* ── Salomlashish ── */}
       <div className="flex items-center gap-2.5 pt-1">
-        {/* Avatar ham tab-bar ikonkalari o'lchamida */}
-        <div className="grid h-11 w-11 shrink-0 place-items-center rounded-full shadow-[0_8px_16px_rgba(14,116,144,0.3)]" style={{ background: `linear-gradient(135deg, #17a2bf, ${TEAL})` }}>
-          <IcoPerson s={26} />
-        </div>
+        {/* Avatar: rasm qo'yilgan bo'lsa — o'sha; bo'lmasa Germaniya Live logotipi.
+            Logotip keng (1979×757), shuning uchun faqat belgisi (chapdagi burgutli "G")
+            kesib ko'rsatiladi — background-size/position bilan aniq joylashtirilgan. */}
+        {avatarUrl ? (
+          <img
+            src={avatarUrl}
+            alt={student.fullName}
+            className="h-11 w-11 shrink-0 rounded-full object-cover shadow-[0_8px_16px_rgba(14,116,144,0.3)]"
+          />
+        ) : (
+          <div
+            className="h-11 w-11 shrink-0 rounded-full bg-white shadow-[0_8px_16px_rgba(19,78,94,0.18)]"
+            style={{
+              backgroundImage: "url(/logo.png)",
+              backgroundSize: "345% auto",
+              backgroundPosition: "4% center",
+              backgroundRepeat: "no-repeat",
+            }}
+            aria-label="Germaniya Live"
+          />
+        )}
         <div className="min-w-0 flex-1">
           <h1 className="truncate text-[22px] font-extrabold leading-tight tracking-tight text-slate-900 sm:text-[26px]">Hallo, {firstName}!</h1>
           <p className="truncate text-[13px] text-slate-500">Bereit, Deutsch zu lernen?</p>
