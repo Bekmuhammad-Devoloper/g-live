@@ -122,6 +122,24 @@ function IcoFlame({ s = 30 }: { s?: number }) {
   );
 }
 
+// ── Doira shaklidagi Germaniya bayrog'i (rasm qo'yilmagan avatar uchun) ──
+function FlagAvatar({ s = 44 }: { s?: number }) {
+  return (
+    <svg width={s} height={s} viewBox="0 0 44 44" className="shrink-0">
+      <defs>
+        <clipPath id="glAvatarClip"><circle cx="22" cy="22" r="22" /></clipPath>
+      </defs>
+      <g clipPath="url(#glAvatarClip)">
+        <rect x="0" y="0" width="44" height="14.67" fill="#111111" />
+        <rect x="0" y="14.67" width="44" height="14.67" fill="#DD0000" />
+        <rect x="0" y="29.34" width="44" height="14.66" fill="#FFCE00" />
+      </g>
+      {/* yengil ichki halqa — chetini yumshatadi */}
+      <circle cx="22" cy="22" r="21.25" fill="none" stroke="rgba(255,255,255,0.55)" strokeWidth="1.5" />
+    </svg>
+  );
+}
+
 // ── Germaniya bayrog'i (silliq to'lqin, rasmiy ranglar) ──
 // Uch rangni alohida to'lqinlantirish o'rniga butun bayroq shakli clipPath
 // qilinadi va ichiga tekis chiziqlar chiziladi — chetlari toza chiqadi.
@@ -294,9 +312,8 @@ export default async function StudentStartPage() {
     <div className="space-y-[18px]">
       {/* ── Salomlashish ── */}
       <div className="flex items-center gap-2.5 pt-1">
-        {/* Avatar: rasm qo'yilgan bo'lsa — o'sha; bo'lmasa Germaniya Live logotipi.
-            Logotip keng (1979×757), shuning uchun faqat belgisi (chapdagi burgutli "G")
-            kesib ko'rsatiladi — background-size/position bilan aniq joylashtirilgan. */}
+        {/* Avatar: rasm qo'yilgan bo'lsa — o'sha, bo'lmasa Germaniya bayrog'i (doira).
+            Logotip keng bo'lgani uchun doiraga kesib solinganda chiroyli chiqmasdi. */}
         {avatarUrl ? (
           <img
             src={avatarUrl}
@@ -304,16 +321,9 @@ export default async function StudentStartPage() {
             className="h-11 w-11 shrink-0 rounded-full object-cover shadow-[0_8px_16px_rgba(14,116,144,0.3)]"
           />
         ) : (
-          <div
-            className="h-11 w-11 shrink-0 rounded-full bg-white shadow-[0_8px_16px_rgba(19,78,94,0.18)]"
-            style={{
-              backgroundImage: "url(/logo.png)",
-              backgroundSize: "345% auto",
-              backgroundPosition: "4% center",
-              backgroundRepeat: "no-repeat",
-            }}
-            aria-label="Germaniya Live"
-          />
+          <span className="shrink-0 rounded-full shadow-[0_8px_16px_rgba(19,78,94,0.22)]" aria-label="Deutsch">
+            <FlagAvatar s={44} />
+          </span>
         )}
         <div className="min-w-0 flex-1">
           <h1 className="truncate text-[22px] font-extrabold leading-tight tracking-tight text-slate-900 sm:text-[26px]">Hallo, {firstName}!</h1>
