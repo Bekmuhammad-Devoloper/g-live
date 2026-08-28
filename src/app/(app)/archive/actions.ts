@@ -9,6 +9,9 @@ import { writeAudit } from "@/lib/audit";
 
 const ALLOWED = [ROLES.DIRECTOR, ROLES.ADMIN, ROLES.DEPUTY_DIRECTOR];
 const can = (r: string) => ALLOWED.includes(r as never);
+// Butunlay o'chirish — faqat direktor va o'rinbosari (administrator emas)
+const CAN_PURGE = [ROLES.DIRECTOR, ROLES.DEPUTY_DIRECTOR];
+const canPurge = (r: string) => CAN_PURGE.includes(r as never);
 
 export type Res = { ok?: boolean; error?: string; count?: number; failed?: number };
 
@@ -27,7 +30,7 @@ export async function restoreUsers(ids: string[]): Promise<Res> {
 // Butunlay o'chirish — bog'liq ma'lumotlari borlarni o'chirib bo'lmaydi (FK), ular failed ga tushadi
 export async function deleteUsersPermanent(ids: string[]): Promise<Res> {
   const s = await requireSession();
-  if (!can(s.role)) return { error: "Ruxsat yo'q" };
+  if (!canPurge(s.role)) return { error: "Ruxsat yo'q" };
   if (ids.length === 0) return { error: "Hech kim tanlanmagan" };
   let count = 0, failed = 0;
   for (const id of ids) {

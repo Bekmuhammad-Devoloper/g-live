@@ -8,6 +8,10 @@ import { writeAudit } from "@/lib/audit";
 
 const CAN = [ROLES.DIRECTOR, ROLES.ADMIN, ROLES.DEPUTY_DIRECTOR];
 const can = (r: string) => CAN.includes(r as never);
+// Xodimni ro'yxatdan olib tashlash — FAQAT direktor va o'rinbosari
+// (2026-08-28 talab: administrator boshqa xodimlarni o'chira olmasin)
+const CAN_DELETE_STAFF = [ROLES.DIRECTOR, ROLES.DEPUTY_DIRECTOR];
+const canDelete = (r: string) => CAN_DELETE_STAFF.includes(r as never);
 const STAFF_ROLES = [ROLES.OPERATOR, ROLES.ROP, ROLES.MANAGER, ROLES.DEPUTY_DIRECTOR, ROLES.DIRECTOR, ROLES.ADMIN, ROLES.TEACHER];
 const emailOk = (e: string) => /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(e);
 
@@ -62,7 +66,7 @@ export async function updateStaff(fd: FormData): Promise<State> {
 
 export async function deleteStaff(id: string, reason?: string): Promise<void> {
   const s = await requireSession();
-  if (!can(s.role)) return;
+  if (!canDelete(s.role)) return;
   if (id === s.userId) return; // o'zini o'chira olmaydi
   await prisma.user.update({ where: { id }, data: { isActive: false, archivedAt: new Date(), archiveReason: reason?.trim() || null } }).catch(() => {});
   await writeAudit({ actorId: s.userId, action: "UPDATE", entityType: "User", entityId: id, newValue: { archived: true } });

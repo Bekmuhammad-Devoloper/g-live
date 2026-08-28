@@ -12,7 +12,7 @@ import { createStaff, updateStaff, deleteStaff, inviteStaff, importStaff } from 
 export interface VStaff { id: string; shortId: string; fullName: string; role: string; roleLabel: string; position: string | null; phone: string | null }
 export interface RoleOption { value: string; label: string }
 
-export default function StaffView({ locale, rows, roleOptions, currentUserId }: { locale: Locale; rows: VStaff[]; roleOptions: RoleOption[]; currentUserId: string }) {
+export default function StaffView({ locale, rows, roleOptions, currentUserId, canDelete }: { locale: Locale; rows: VStaff[]; roleOptions: RoleOption[]; currentUserId: string; canDelete: boolean }) {
   const router = useRouter();
   const [, start] = useTransition();
   const [search, setSearch] = useState("");
@@ -81,7 +81,8 @@ export default function StaffView({ locale, rows, roleOptions, currentUserId }: 
                     <div className="flex items-center justify-end gap-2">
                       <button onClick={() => onInvite(r.id)} title={tr(locale, { uz: "Taklif / xabar yuborish", ru: "Отправить приглашение / сообщение", en: "Send invite / message" })} className="grid h-8 w-8 place-items-center rounded-lg text-amber-500 transition hover:bg-amber-50 dark:hover:bg-amber-500/10"><Icon name="mail" className="h-5 w-5" /></button>
                       <button onClick={() => setDrawer({ edit: r })} title={tr(locale, { uz: "Tahrirlash", ru: "Редактировать", en: "Edit" })} className="grid h-8 w-8 place-items-center rounded-lg text-slate-400 opacity-0 transition hover:bg-slate-100 hover:text-brand-600 group-hover:opacity-100 dark:hover:bg-slate-800"><Icon name="pencil" className="h-4 w-4" /></button>
-                      <button onClick={() => onDelete(r)} title={tr(locale, { uz: "Olib tashlash", ru: "Удалить", en: "Remove" })} className="grid h-8 w-8 place-items-center rounded-lg text-slate-400 opacity-0 transition hover:bg-rose-50 hover:text-rose-600 group-hover:opacity-100 dark:hover:bg-rose-500/10"><Icon name="trash" className="h-4 w-4" /></button>
+                      {/* O'chirish — faqat direktor va o'rinbosarida */}
+                      {canDelete && <button onClick={() => onDelete(r)} title={tr(locale, { uz: "Olib tashlash", ru: "Удалить", en: "Remove" })} className="grid h-8 w-8 place-items-center rounded-lg text-slate-400 opacity-0 transition hover:bg-rose-50 hover:text-rose-600 group-hover:opacity-100 dark:hover:bg-rose-500/10"><Icon name="trash" className="h-4 w-4" /></button>}
                     </div>
                   </td>
                 </tr>

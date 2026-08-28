@@ -35,7 +35,9 @@ export default async function StaffSettingsPage() {
 
   const roleOptions = ASSIGNABLE_ROLES.map((r) => ({ value: r, label: label(ROLE_LABELS, r, s.locale as Locale) }));
 
-  return <StaffView locale={s.locale} rows={rows} roleOptions={roleOptions} currentUserId={s.userId} />;
+  // Xodimni o'chirish — faqat direktor va o'rinbosarida (administratorda emas)
+  const canDelete = [ROLES.DIRECTOR, ROLES.DEPUTY_DIRECTOR].includes(s.role as never);
+  return <StaffView locale={s.locale} rows={rows} roleOptions={roleOptions} currentUserId={s.userId} canDelete={canDelete} />;
 }
 
 export const dynamic = "force-dynamic";

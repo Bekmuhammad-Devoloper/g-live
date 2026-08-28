@@ -53,7 +53,9 @@ export default async function ArchivePage() {
 
   const roleOptions = STAFF_ROLES.map((r) => ({ value: r, label: label(ROLE_LABELS, r, s.locale as Locale) }));
 
-  return <ArchiveView locale={s.locale} rows={rows} reasons={reasons} roleOptions={roleOptions} />;
+  // Butunlay o'chirish — faqat direktor va o'rinbosarida (administratorda emas)
+  const canPurge = [ROLES.DIRECTOR, ROLES.DEPUTY_DIRECTOR].includes(s.role as never);
+  return <ArchiveView locale={s.locale} rows={rows} reasons={reasons} roleOptions={roleOptions} canPurge={canPurge} />;
 }
 
 export const dynamic = "force-dynamic";

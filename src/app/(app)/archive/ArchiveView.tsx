@@ -16,7 +16,7 @@ export interface VArchived {
 }
 export interface RoleOpt { value: string; label: string }
 
-export default function ArchiveView({ locale, rows, reasons, roleOptions }: { locale: Locale; rows: VArchived[]; reasons: string[]; roleOptions: RoleOpt[] }) {
+export default function ArchiveView({ locale, rows, reasons, roleOptions, canPurge }: { locale: Locale; rows: VArchived[]; reasons: string[]; roleOptions: RoleOpt[]; canPurge: boolean }) {
   const router = useRouter();
   const [, start] = useTransition();
   const [search, setSearch] = useState("");
@@ -92,7 +92,8 @@ export default function ArchiveView({ locale, rows, reasons, roleOptions }: { lo
         </select>
         <input type="date" value={from} onChange={(e) => setFrom(e.target.value)} className={cn(fInp, "w-[160px]")} title="Boshlanish sanasi" />
         <input type="date" value={to} onChange={(e) => setTo(e.target.value)} className={cn(fInp, "w-[160px]")} title="Tugash sanasi" />
-        <button onClick={() => need() && onDelete(selIds())} className="flex h-10 items-center gap-1.5 rounded-lg border border-rose-200 bg-white px-4 text-sm font-semibold text-rose-600 transition hover:bg-rose-50 dark:border-rose-500/30 dark:bg-slate-900 dark:hover:bg-rose-500/10"><Icon name="trash" className="h-4 w-4" /> O&apos;chirish</button>
+        {/* Butunlay o'chirish — faqat direktor va o'rinbosarida */}
+        {canPurge && <button onClick={() => need() && onDelete(selIds())} className="flex h-10 items-center gap-1.5 rounded-lg border border-rose-200 bg-white px-4 text-sm font-semibold text-rose-600 transition hover:bg-rose-50 dark:border-rose-500/30 dark:bg-slate-900 dark:hover:bg-rose-500/10"><Icon name="trash" className="h-4 w-4" /> O&apos;chirish</button>}
         <button onClick={() => need() && onRestore(selIds())} className="flex h-10 items-center gap-1.5 rounded-lg border border-emerald-200 bg-white px-4 text-sm font-semibold text-emerald-600 transition hover:bg-emerald-50 dark:border-emerald-500/30 dark:bg-slate-900 dark:hover:bg-emerald-500/10"><Icon name="refresh" className="h-4 w-4" /> Qayta tiklash</button>
         <button onClick={onMessage} title="Belgilanganlarga xabar" className="grid h-10 w-11 place-items-center rounded-lg border border-slate-200 bg-white text-amber-500 transition hover:bg-slate-50 dark:border-slate-700 dark:bg-slate-900 dark:hover:bg-slate-800"><Icon name="mail" className="h-5 w-5" /></button>
       </div>
@@ -128,7 +129,7 @@ export default function ArchiveView({ locale, rows, reasons, roleOptions }: { lo
                   <td className="px-4 py-3">
                     <div className="flex items-center justify-end gap-2">
                       <button onClick={() => onRestore([r.id])} title="Qayta tiklash" className="grid h-8 w-8 place-items-center rounded-lg text-emerald-500 transition hover:bg-emerald-50 dark:hover:bg-emerald-500/10"><Icon name="refresh" className="h-4 w-4" /></button>
-                      <button onClick={() => onDelete([r.id])} title="Butunlay o'chirish" className="grid h-8 w-8 place-items-center rounded-lg text-rose-500 transition hover:bg-rose-50 dark:hover:bg-rose-500/10"><Icon name="trash" className="h-4 w-4" /></button>
+                      {canPurge && <button onClick={() => onDelete([r.id])} title="Butunlay o'chirish" className="grid h-8 w-8 place-items-center rounded-lg text-rose-500 transition hover:bg-rose-50 dark:hover:bg-rose-500/10"><Icon name="trash" className="h-4 w-4" /></button>}
                     </div>
                   </td>
                 </tr>
