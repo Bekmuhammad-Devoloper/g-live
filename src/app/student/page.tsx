@@ -284,18 +284,18 @@ export default async function StudentStartPage() {
           <h1 className="truncate text-[30px] font-extrabold leading-tight tracking-tight text-slate-900">Hallo, {firstName}!</h1>
           <p className="text-[15px] text-slate-500">Bereit, Deutsch zu lernen?</p>
         </div>
-        {/* Avatar bilan bir xil o'lcham (64px) */}
-        <Link href="/notifications" className="relative grid h-[64px] w-[64px] shrink-0 place-items-center rounded-full bg-white shadow-[0_6px_16px_rgba(19,78,94,0.12)]">
-          <IcoBell s={28} />
+        {/* Ikonkalar pastki tab-bar ikonkalari o'lchamida (26px) */}
+        <Link href="/notifications" className="relative grid h-11 w-11 shrink-0 place-items-center rounded-full bg-white shadow-[0_6px_16px_rgba(19,78,94,0.12)]">
+          <IcoBell s={26} />
           {/* bildirishnoma nuqtasi */}
-          <span className="absolute right-[15px] top-[14px] h-2.5 w-2.5 rounded-full" style={{ background: "#2ea8c9" }} />
+          <span className="absolute right-[9px] top-[8px] h-2 w-2 rounded-full" style={{ background: "#2ea8c9" }} />
         </Link>
         {/* Streak (ketma-ket qatnashuv) kartochkasi — olovcha + kunlar soni */}
-        <div className="flex h-[64px] shrink-0 items-center gap-1.5 rounded-[20px] bg-white px-3 shadow-[0_6px_16px_rgba(19,78,94,0.12)]">
-          <IcoFlame s={32} />
+        <div className="flex h-11 shrink-0 items-center gap-1 rounded-2xl bg-white px-2.5 shadow-[0_6px_16px_rgba(19,78,94,0.12)]">
+          <IcoFlame s={26} />
           <div className="leading-none">
-            <div className="text-[19px] font-extrabold text-slate-900">{streak}</div>
-            <div className="mt-0.5 text-[11px] font-semibold text-slate-500">kun</div>
+            <div className="text-[15px] font-extrabold text-slate-900">{streak}</div>
+            <div className="mt-0.5 text-[10px] font-semibold text-slate-500">kun</div>
           </div>
         </div>
       </div>
