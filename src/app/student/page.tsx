@@ -276,13 +276,14 @@ export default async function StudentStartPage() {
   return (
     <div className="space-y-[18px]">
       {/* ── Salomlashish ── */}
-      <div className="flex items-center gap-4 pt-1">
-        <div className="grid h-[64px] w-[64px] shrink-0 place-items-center rounded-full shadow-[0_10px_20px_rgba(14,116,144,0.35)]" style={{ background: `linear-gradient(135deg, #17a2bf, ${TEAL})` }}>
-          <IcoPerson s={34} />
+      <div className="flex items-center gap-2.5 pt-1">
+        {/* Avatar ham tab-bar ikonkalari o'lchamida */}
+        <div className="grid h-11 w-11 shrink-0 place-items-center rounded-full shadow-[0_8px_16px_rgba(14,116,144,0.3)]" style={{ background: `linear-gradient(135deg, #17a2bf, ${TEAL})` }}>
+          <IcoPerson s={26} />
         </div>
         <div className="min-w-0 flex-1">
-          <h1 className="truncate text-[30px] font-extrabold leading-tight tracking-tight text-slate-900">Hallo, {firstName}!</h1>
-          <p className="text-[15px] text-slate-500">Bereit, Deutsch zu lernen?</p>
+          <h1 className="truncate text-[22px] font-extrabold leading-tight tracking-tight text-slate-900 sm:text-[26px]">Hallo, {firstName}!</h1>
+          <p className="truncate text-[13px] text-slate-500">Bereit, Deutsch zu lernen?</p>
         </div>
         {/* Ikonkalar pastki tab-bar ikonkalari o'lchamida (26px) */}
         <Link href="/notifications" className="relative grid h-11 w-11 shrink-0 place-items-center rounded-full bg-white shadow-[0_6px_16px_rgba(19,78,94,0.12)]">
@@ -323,7 +324,7 @@ export default async function StudentStartPage() {
         <div className="flex items-center justify-between gap-4">
           <div className="min-w-0">
             <div className="text-[12px] font-bold uppercase tracking-[0.22em]" style={{ color: TEAL }}>Dein Fortschritt</div>
-            <div className="mt-1.5 truncate text-[34px] font-extrabold leading-tight tracking-tight text-slate-900">
+            <div className="mt-1.5 text-[26px] font-extrabold leading-tight tracking-tight text-slate-900 sm:text-[32px]">
               {level} · Kapitel {chapter}
             </div>
             <div className="mt-1 truncate text-[15px] text-slate-600">
