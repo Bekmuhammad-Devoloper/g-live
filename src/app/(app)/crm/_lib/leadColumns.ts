@@ -9,6 +9,8 @@ export interface VLead {
   source: string | null;
   stage: string;
   interestCourse: string | null;
+  age: number | null;
+  level: string | null;
   budget: number | null;
   note: string | null;
   managerId: string | null;

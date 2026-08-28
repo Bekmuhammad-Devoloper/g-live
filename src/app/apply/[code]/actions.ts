@@ -9,7 +9,13 @@ export type ApplyState = { ok?: boolean; error?: string };
 
 // Ochiq (login talab qilmaydigan) ariza yuborish — CRM ga real Lead yaratadi.
 // `answers` — havolaga biriktirilgan qo'shimcha savollarga javoblar (tartibi savollar bilan bir xil).
-export async function submitApplication(code: string, fullName: string, phone: string, answers: string[] = []): Promise<ApplyState> {
+export async function submitApplication(
+  code: string,
+  fullName: string,
+  phone: string,
+  answers: string[] = [],
+  extra: { age?: string; level?: string } = {},
+): Promise<ApplyState> {
   const link = await prisma.vacancyLink.findUnique({ where: { code }, include: { vacancy: true } });
   if (!link) return { error: "Havola topilmadi" };
   if (!link.isActive) return { error: "Havola faol emas" };
@@ -23,6 +29,13 @@ export async function submitApplication(code: string, fullName: string, phone: s
   // qabul qilinardi (masalan +99850551899825644545).
   const tel = parseUzPhone(phone);
   if (!tel) return { error: "Telefon raqamini to'g'ri kiriting: +998 XX XXX XX XX" };
+
+  // Yosh — mantiqiy oraliqda bo'lsagina saqlanadi
+  const ageRaw = parseInt(String(extra.age ?? ""), 10);
+  const ageNum = Number.isFinite(ageRaw) && ageRaw >= 3 && ageRaw <= 99 ? ageRaw : null;
+  // Daraja — faqat ro'yxatdagi qiymat
+  const LEVELS = ["A1", "A2", "B1", "B2", "C1", "C2"];
+  const levelStr = LEVELS.includes(String(extra.level ?? "")) ? String(extra.level) : null;
 
   // Qo'shimcha savollar — majburiylari serverda ham tekshiriladi (mijozga ishonmaymiz)
   const questions = parseQuestions(link.vacancy.questions);
@@ -42,6 +55,9 @@ export async function submitApplication(code: string, fullName: string, phone: s
     data: {
       fullName: name,
       phone: tel,
+      // Yosh va daraja — ariza formasida so'raladi (ixtiyoriy)
+      age: ageNum,
+      level: levelStr,
       source: link.platform,
       utmSource: link.utmSource,
       utmMedium: link.utmMedium,

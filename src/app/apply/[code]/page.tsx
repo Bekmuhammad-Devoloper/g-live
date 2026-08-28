@@ -27,12 +27,10 @@ export default async function ApplyPage({ params, searchParams }: {
   return (
     <div className="flex min-h-screen items-center justify-center bg-slate-100 p-4">
       <div className="w-full max-w-md overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm">
-        <div className="flex items-center gap-2.5 border-b border-slate-200 bg-brand-600 px-5 py-4 text-white">
-          <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-white/20 text-sm font-bold">GL</div>
-          <div>
-            <div className="text-sm font-bold">Germaniya Live</div>
-            <div className="text-[11px] text-white/70">Vakansiyaga ariza topshirish</div>
-          </div>
+        <div className="border-b border-slate-200 bg-brand-600 px-5 py-4 text-white">
+          {/* To'q fon uchun mo'ljallangan logotip (oq yozuvli) */}
+          <img src="/logo-dark.png" alt="Germaniya Live" className="h-8 w-auto object-contain" />
+          <div className="mt-1.5 text-[11px] text-white/70">Vakansiyaga ariza topshirish</div>
         </div>
 
         <div className="p-6">

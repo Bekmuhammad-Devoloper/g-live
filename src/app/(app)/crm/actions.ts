@@ -442,10 +442,13 @@ export async function setLeadManager(leadId: string, managerId: string | null): 
 export async function updateLeadField(leadId: string, field: string, value: string): Promise<void> {
   const s = await requireSession();
   if (!canWrite(s.role, MODULES.CRM)) return;
-  const allowed = ["fullName", "phone", "email", "interestCourse", "note", "source", "budget"];
+  const allowed = ["fullName", "phone", "email", "interestCourse", "note", "source", "budget", "age", "level"];
   if (!allowed.includes(field)) return;
   if (field === "fullName" && (!value || value.trim().length < 2)) return;
-  const data: Record<string, unknown> = field === "budget" ? { budget: value ? Number(value) : null } : { [field]: value || null };
+  const data: Record<string, unknown> =
+    field === "budget" ? { budget: value ? Number(value) : null }
+    : field === "age" ? { age: value ? Math.max(3, Math.min(99, Number(value) || 0)) || null : null }
+    : { [field]: value || null };
   await prisma.lead.update({ where: { id: leadId }, data });
   await writeAudit({ actorId: s.userId, action: "UPDATE", entityType: "Lead", entityId: leadId, newValue: { [field]: value }, reason: "Maydon tahrirlandi" });
   revalidatePath(`/crm/${leadId}`);

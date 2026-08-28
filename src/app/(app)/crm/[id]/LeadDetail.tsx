@@ -15,6 +15,7 @@ import EnrollDrawer from "../_components/EnrollDrawer";
 export interface DLead {
   id: string; fullName: string; phone: string; email: string | null; source: string | null;
   stage: string; interestCourse: string | null; budget: number | null; note: string | null;
+  age: number | null; level: string | null; // ariza formasidan keladi
   managerId: string | null; managerName: string | null; studentId: string | null; createdAt: string;
   groupId: string | null; groupName: string | null; groupNote: string | null; courseName: string | null; enrollEditCount: number;
   branchName: string | null; // filial nomi — boshqa filialga ko'chirish uchun
@@ -113,6 +114,8 @@ export default function LeadDetail({ lead, activities, managers, prevId, nextId,
                 <Field label={tr(locale, { uz: "E-mail", ru: "E-mail", en: "E-mail" })} value={lead.email ?? ""} onSave={(v) => save("email", v)} readonly={!canWrite} />
                 <Field label={tr(locale, { uz: "Manba", ru: "Источник", en: "Source" })} value={lead.source ?? ""} onSave={(v) => save("source", v)} readonly={!canWrite} />
                 <Field label={tr(locale, { uz: "Kurs", ru: "Курс", en: "Course" })} value={lead.interestCourse ?? ""} onSave={(v) => save("interestCourse", v)} readonly={!canWrite} />
+                <Field label={tr(locale, { uz: "Yosh", ru: "Возраст", en: "Age" })} value={lead.age?.toString() ?? ""} onSave={(v) => save("age", v)} readonly={!canWrite} />
+                <Field label={tr(locale, { uz: "Daraja", ru: "Уровень", en: "Level" })} value={lead.level ?? ""} onSave={(v) => save("level", v)} readonly={!canWrite} />
                 <Field label={tr(locale, { uz: "Byudjet (so'm)", ru: "Бюджет (сум)", en: "Budget (UZS)" })} value={lead.budget?.toString() ?? ""} onSave={(v) => save("budget", v)} readonly={!canWrite} />
                 <div className="sm:col-span-2">
                   <Field label={tr(locale, { uz: "Izoh", ru: "Комментарий", en: "Note" })} value={lead.note ?? ""} onSave={(v) => save("note", v)} readonly={!canWrite} textarea />

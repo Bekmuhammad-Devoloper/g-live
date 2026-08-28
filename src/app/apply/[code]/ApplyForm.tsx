@@ -5,6 +5,9 @@ import { submitApplication } from "./actions";
 import type { ApplyQuestion } from "../../(app)/links/questions";
 import { fmtUzPhoneInput } from "@/lib/phone";
 
+// Ariza formasida taklif etiladigan darajalar
+const LEVELS = ["A1", "A2", "B1", "B2", "C1", "C2"];
+
 export default function ApplyForm({ code, preview, questions = [] }: {
   code: string;
   preview: boolean;
@@ -16,6 +19,8 @@ export default function ApplyForm({ code, preview, questions = [] }: {
   const [done, setDone] = useState(false);
   const [fullName, setName] = useState("");
   const [phone, setPhone] = useState("");
+  const [age, setAge] = useState("");
+  const [level, setLevel] = useState("");
   const [answers, setAnswers] = useState<string[]>(() => questions.map(() => ""));
 
   const setAnswer = (i: number, v: string) => setAnswers((a) => a.map((x, k) => (k === i ? v : x)));
@@ -39,7 +44,7 @@ export default function ApplyForm({ code, preview, questions = [] }: {
     }
 
     start(async () => {
-      const r = await submitApplication(code, fullName, `+998 ${phone}`, answers);
+      const r = await submitApplication(code, fullName, `+998 ${phone}`, answers, { age, level });
       if (r.ok) setDone(true);
       else setError(r.error ?? "Xatolik");
     });
@@ -79,6 +84,27 @@ export default function ApplyForm({ code, preview, questions = [] }: {
           />
         </div>
       </label>
+
+      {/* Yosh va daraja — ixtiyoriy, lekin operatorga juda foydali */}
+      <div className="grid grid-cols-2 gap-3">
+        <label className="block">
+          <span className="mb-1 block text-xs font-semibold text-slate-500">Yosh</span>
+          <input
+            value={age}
+            onChange={(e) => setAge(e.target.value.replace(/\D/g, "").slice(0, 2))}
+            inputMode="numeric"
+            placeholder="18"
+            className={inp}
+          />
+        </label>
+        <label className="block">
+          <span className="mb-1 block text-xs font-semibold text-slate-500">Daraja</span>
+          <select value={level} onChange={(e) => setLevel(e.target.value)} className={inp}>
+            <option value="">Bilmayman</option>
+            {LEVELS.map((l) => <option key={l} value={l}>{l}</option>)}
+          </select>
+        </label>
+      </div>
 
       {/* Qo'shimcha savollar — yoziladigan yoki variantli */}
       {questions.map((q, i) => (

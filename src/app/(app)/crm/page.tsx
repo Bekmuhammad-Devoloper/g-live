@@ -34,6 +34,8 @@ export default async function CrmPage() {
     source: l.source,
     stage: l.stage,
     interestCourse: l.interestCourse,
+    age: l.age,
+    level: l.level,
     budget: l.budget,
     note: l.note,
     managerId: l.managerId,
