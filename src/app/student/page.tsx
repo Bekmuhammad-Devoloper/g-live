@@ -73,29 +73,50 @@ function IcoTarget({ c = "white", s = 34 }: { c?: string; s?: number }) {
     </svg>
   );
 }
-function IcoBadgeStar({ s = 22 }: { s?: number }) {
+// Münzen — tanga (ikkita ustma-ust tanga, ustidagisida yulduzcha)
+function IcoCoin({ s = 26 }: { s?: number }) {
   return (
-    <svg width={s} height={s} viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth={sw} strokeLinecap="round" strokeLinejoin="round">
-      <circle cx="12" cy="12" r="8.5" />
-      <path d="m12 8 1.2 2.4 2.6.4-1.9 1.9.4 2.6-2.3-1.2-2.3 1.2.4-2.6-1.9-1.9 2.6-.4L12 8Z" fill="white" stroke="none" />
+    <svg width={s} height={s} viewBox="0 0 24 24" fill="none">
+      {/* pastdagi tanga */}
+      <ellipse cx="12" cy="16.4" rx="7.6" ry="3.1" fill="white" opacity="0.45" />
+      {/* ustidagi tanga */}
+      <circle cx="12" cy="10.6" r="7.1" fill="white" />
+      <circle cx="12" cy="10.6" r="5.2" fill="none" stroke="#0e7490" strokeWidth="1.1" opacity="0.55" />
+      <path d="m12 7.6 1 2.1 2.3.33-1.65 1.6.4 2.28L12 12.83l-2.05 1.08.4-2.28-1.65-1.6L11 9.7 12 7.6Z" fill="#0e7490" />
     </svg>
   );
 }
-function IcoStar({ s = 22 }: { s?: number }) {
+
+// Streak — olov (ketma-ket kunlar), oq siluet
+function IcoFlameWhite({ s = 26 }: { s?: number }) {
   return (
-    <svg width={s} height={s} viewBox="0 0 24 24" fill="white" stroke="white" strokeWidth={1} strokeLinejoin="round">
-      <path d="M12 2.8 14.9 8.6l6.4 .9-4.6 4.5 1.1 6.3L12 17.4 6.2 20.3l1.1-6.3L2.7 9.5l6.4-.9L12 2.8Z" />
+    <svg width={s} height={s} viewBox="0 0 24 24">
+      <path
+        d="M12 2.4c.6 3.2-1.1 4.8-2.7 6.5C7.6 10.7 5.8 12.6 5.8 15.3a6.2 6.2 0 0 0 12.4 0c0-2.3-1.1-4.2-2.4-5.8-1.5-1.9-3.1-4-3.8-7.1Z"
+        fill="white"
+      />
+      <path
+        d="M12 10.8c.35 1.7-.65 2.6-1.5 3.6-.75.85-1.45 1.7-1.45 2.95a3.05 3.05 0 0 0 6.1 0c0-1.15-.55-2-1.2-2.95-.75-1.05-1.6-2.1-1.95-3.6Z"
+        fill="#0e7490" opacity="0.35"
+      />
     </svg>
   );
 }
-function IcoTrend({ s = 22 }: { s?: number }) {
+
+// Rang — o'sish (ustunlar + yuqoriga strelka)
+function IcoGrowth({ s = 26 }: { s?: number }) {
   return (
-    <svg width={s} height={s} viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth={2.4} strokeLinecap="round" strokeLinejoin="round">
-      <path d="m3 17 6-6 4 4 8-8" />
-      <path d="M15 7h6v6" />
+    <svg width={s} height={s} viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
+      <path d="M4 19.5h16" />
+      <rect x="5" y="13" width="3.4" height="5" rx="1.2" fill="white" stroke="none" opacity="0.75" />
+      <rect x="10.3" y="10" width="3.4" height="8" rx="1.2" fill="white" stroke="none" opacity="0.85" />
+      <rect x="15.6" y="6" width="3.4" height="12" rx="1.2" fill="white" stroke="none" />
+      <path d="m5.5 9.5 4-3.5 3 2.2 5-4.2" strokeWidth="2" opacity="0.9" />
+      <path d="M14.6 3.4h3.2v3.1" strokeWidth="2" opacity="0.9" />
     </svg>
   );
 }
+
 function IcoBell({ s = 22 }: { s?: number }) {
   return (
     <svg width={s} height={s} viewBox="0 0 24 24" fill="none" stroke={TEAL} strokeWidth={sw} strokeLinecap="round" strokeLinejoin="round">
@@ -393,16 +414,16 @@ export default async function StudentStartPage() {
       {/* ── Münzen · Streak · Rang ── */}
       <div className="grid grid-cols-3 gap-3">
         {[
-          { icon: <IcoBadgeStar />, label: "Münzen", value: String(coins) },
-          { icon: <IcoStar />, label: "Streak", value: `${streak} Tage` },
-          { icon: <IcoTrend />, label: "Rang", value: `Top ${rangTop}%` },
+          { icon: <IcoCoin />, label: "Münzen", value: String(coins) },
+          { icon: <IcoFlameWhite />, label: "Streak", value: `${streak} Tage` },
+          { icon: <IcoGrowth />, label: "Rang", value: `Top ${rangTop}%` },
         ].map((t) => (
-          <div key={t.label} className={`${card} flex flex-col items-center gap-2 px-2 pb-5 pt-5`}>
-            <span className="grid h-[52px] w-[52px] place-items-center rounded-full shadow-[0_8px_16px_rgba(14,116,144,0.3)]" style={{ background: `linear-gradient(135deg, #17a2bf, ${TEAL})` }}>
+          <div key={t.label} className={`${card} flex flex-col items-center gap-2.5 px-1.5 pb-4 pt-4`}>
+            <span className="grid h-[50px] w-[50px] place-items-center rounded-full shadow-[0_8px_16px_rgba(14,116,144,0.3)]" style={{ background: `linear-gradient(135deg, #17a2bf, ${TEAL})` }}>
               {t.icon}
             </span>
-            <span className="text-[14px] font-medium text-slate-600">{t.label}</span>
-            <span className="text-[22px] font-extrabold leading-none text-slate-900">{t.value}</span>
+            <span className="text-[13px] font-medium leading-none text-slate-500">{t.label}</span>
+            <span className="whitespace-nowrap text-[19px] font-extrabold leading-none text-slate-900">{t.value}</span>
           </div>
         ))}
       </div>
