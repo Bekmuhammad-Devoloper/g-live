@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useRef, useState, useTransition } from "react";
+import Link from "next/link";
 import { Icon } from "../../_components/Icon";
 import { cn } from "@/lib/cn";
 import { tr } from "@/lib/tr";
@@ -230,7 +231,13 @@ export function GroupAttendance({ groupId, students, locale }: { groupId: string
             return (
               <li key={s.id} className="flex items-center justify-between gap-3 py-2">
                 <div className="flex min-w-0 items-center gap-2">
-                  <span className="min-w-0 truncate text-sm text-slate-700 dark:text-slate-200">{s.name}</span>
+                  <Link
+                    href={`/students/${s.id}`}
+                    title={tr(locale, { uz: "O'quvchi ma'lumotlari", ru: "Данные ученика", en: "Student details" })}
+                    className="min-w-0 truncate text-sm text-slate-700 transition hover:text-brand-600 hover:underline dark:text-slate-200 dark:hover:text-brand-300"
+                  >
+                    {s.name}
+                  </Link>
                   {isBlocked && (
                     <span className="inline-flex shrink-0 items-center gap-1 rounded-full bg-rose-500/10 px-2 py-0.5 text-[10px] font-semibold text-rose-600 dark:text-rose-400" title={tr(locale, { uz: `Shu oy ${s.lessonsThisMonth} dars o'tildi — to'lov majburiy`, ru: `В этом месяце ${s.lessonsThisMonth} уроков — оплата обязательна`, en: `${s.lessonsThisMonth} lessons this month — payment required` })}>
                       <Icon name="alert" className="h-3 w-3" /> {tr(locale, { uz: "To'lov kerak", ru: "Нужна оплата", en: "Payment needed" })}

@@ -172,7 +172,12 @@ export default async function GroupDetailPage({ params }: { params: Promise<{ id
             <ul className="divide-y divide-slate-100">
               {group.students.map((gs) => (
                 <li key={gs.id} className="flex items-center justify-between py-2 text-sm">
-                  <span className="text-slate-700">{gs.student.fullName}</span>
+                  <Link
+                    href={`/students/${gs.studentId}`}
+                    className="truncate text-slate-700 transition hover:text-brand-600 hover:underline dark:hover:text-brand-300"
+                  >
+                    {gs.student.fullName}
+                  </Link>
                   <div className="flex items-center gap-2">
                     <Badge tone="slate">{gs.student.currentLevel ?? "—"}</Badge>
                     {full && <RemoveStudentButton groupId={group.id} studentId={gs.studentId} locale={s.locale} />}
