@@ -266,10 +266,11 @@ export default async function StudentStartPage() {
           <h1 className="truncate text-[30px] font-extrabold leading-tight tracking-tight text-slate-900">Hallo, {firstName}!</h1>
           <p className="text-[15px] text-slate-500">Bereit, Deutsch zu lernen?</p>
         </div>
-        <Link href="/notifications" className="relative grid h-12 w-12 shrink-0 place-items-center rounded-full bg-white shadow-[0_6px_16px_rgba(19,78,94,0.12)]">
-          <IcoBell />
+        {/* Avatar bilan bir xil o'lcham (64px) */}
+        <Link href="/notifications" className="relative grid h-[64px] w-[64px] shrink-0 place-items-center rounded-full bg-white shadow-[0_6px_16px_rgba(19,78,94,0.12)]">
+          <IcoBell s={28} />
           {/* bildirishnoma nuqtasi */}
-          <span className="absolute right-2.5 top-2.5 h-2 w-2 rounded-full" style={{ background: "#2ea8c9" }} />
+          <span className="absolute right-[15px] top-[14px] h-2.5 w-2.5 rounded-full" style={{ background: "#2ea8c9" }} />
         </Link>
       </div>
 
