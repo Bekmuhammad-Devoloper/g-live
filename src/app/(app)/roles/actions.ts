@@ -7,7 +7,8 @@ import { ROLES } from "@/lib/constants";
 import { tr } from "@/lib/tr";
 import { writeAudit } from "@/lib/audit";
 
-const CAN = [ROLES.DIRECTOR, ROLES.DEPUTY_DIRECTOR, ROLES.ADMIN];
+// Rollarni boshqarish — faqat direktor va o'rinbosari (administrator emas)
+const CAN = [ROLES.DIRECTOR, ROLES.DEPUTY_DIRECTOR];
 const can = (r: string) => CAN.includes(r as never);
 
 export async function saveRole(fd: FormData): Promise<{ ok?: boolean; error?: string }> {
