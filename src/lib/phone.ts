@@ -22,3 +22,19 @@ export function fmtUzPhoneInput(raw: string): string {
   d = d.slice(0, UZ_LOCAL_LEN);
   return [d.slice(0, 2), d.slice(2, 5), d.slice(5, 7), d.slice(7, 9)].filter(Boolean).join(" ");
 }
+
+/**
+ * Raqamni tekshiradi va "+998 XX XXX XX XX" ko'rinishiga keltiradi.
+ * Noto'g'ri bo'lsa null qaytaradi — ochiq (public) formalarda ishlatiladi,
+ * u yerda foydalanuvchi xohlagancha raqam yozib yuborishi mumkin.
+ */
+export function parseUzPhone(raw: string): string | null {
+  let d = String(raw ?? "").replace(/\D/g, "");
+  // Mamlakat kodi bilan yozilgan bo'lsa olib tashlaymiz (faqat to'liq uzunlikda)
+  if (d.length === UZ_FULL_LEN && d.startsWith("998")) d = d.slice(3);
+  // Ichki formatdagi "0"/"8" prefiksi
+  if (d.length === UZ_LOCAL_LEN + 1 && (d.startsWith("0") || d.startsWith("8"))) d = d.slice(1);
+  if (d.length !== UZ_LOCAL_LEN) return null; // aynan 9 xona bo'lishi shart
+  if (!/^[2-9]/.test(d)) return null; // operator kodi 2..9 dan boshlanadi
+  return `+998 ${d.slice(0, 2)} ${d.slice(2, 5)} ${d.slice(5, 7)} ${d.slice(7, 9)}`;
+}

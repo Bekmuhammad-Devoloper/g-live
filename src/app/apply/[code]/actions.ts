@@ -3,6 +3,7 @@
 import { revalidatePath } from "next/cache";
 import { prisma } from "@/lib/db";
 import { parseQuestions } from "../../(app)/links/questions";
+import { parseUzPhone } from "@/lib/phone";
 
 export type ApplyState = { ok?: boolean; error?: string };
 
@@ -15,10 +16,13 @@ export async function submitApplication(code: string, fullName: string, phone: s
   if (link.expiresAt && link.expiresAt.getTime() < Date.now()) return { error: "Havolaning muddati o'tgan" };
   if (link.maxSubmissions != null && link.submissions >= link.maxSubmissions) return { error: "Ariza chegarasi to'ldi" };
 
-  const name = fullName.trim();
-  const tel = phone.trim();
+  const name = fullName.trim().slice(0, 120);
   if (name.length < 2) return { error: "Ismingizni kiriting" };
-  if (tel.replace(/\D/g, "").length < 7) return { error: "Telefon raqamini to'g'ri kiriting" };
+  // Raqam AYNAN 9 xonali O'zbekiston raqami bo'lishi shart. Ilgari faqat
+  // "kamida 7 raqam" tekshirilardi — shu sabab uzun, soxta raqamlar ham
+  // qabul qilinardi (masalan +99850551899825644545).
+  const tel = parseUzPhone(phone);
+  if (!tel) return { error: "Telefon raqamini to'g'ri kiriting: +998 XX XXX XX XX" };
 
   // Qo'shimcha savollar — majburiylari serverda ham tekshiriladi (mijozga ishonmaymiz)
   const questions = parseQuestions(link.vacancy.questions);

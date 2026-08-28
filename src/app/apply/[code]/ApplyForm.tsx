@@ -3,6 +3,7 @@
 import { useState, useTransition } from "react";
 import { submitApplication } from "./actions";
 import type { ApplyQuestion } from "../../(app)/links/questions";
+import { fmtUzPhoneInput } from "@/lib/phone";
 
 export default function ApplyForm({ code, preview, questions = [] }: {
   code: string;
@@ -24,6 +25,12 @@ export default function ApplyForm({ code, preview, questions = [] }: {
     if (preview) return;
     setError(null);
 
+    // Telefon — aynan 9 xona bo'lishi shart (serverda ham qayta tekshiriladi)
+    if (phone.replace(/\D/g, "").length !== 9) {
+      setError("Telefon raqamini to'liq kiriting: +998 XX XXX XX XX");
+      return;
+    }
+
     // Majburiy savollar tekshiruvi (serverda ham qayta tekshiriladi)
     const missing = questions.findIndex((q, i) => q.required && !answers[i]?.trim());
     if (missing >= 0) {
@@ -32,7 +39,7 @@ export default function ApplyForm({ code, preview, questions = [] }: {
     }
 
     start(async () => {
-      const r = await submitApplication(code, fullName, phone, answers);
+      const r = await submitApplication(code, fullName, `+998 ${phone}`, answers);
       if (r.ok) setDone(true);
       else setError(r.error ?? "Xatolik");
     });
@@ -58,7 +65,19 @@ export default function ApplyForm({ code, preview, questions = [] }: {
       </label>
       <label className="block">
         <span className="mb-1 block text-xs font-semibold text-slate-500">Telefon raqami</span>
-        <input value={phone} onChange={(e) => setPhone(e.target.value)} required placeholder="+998 90 123 45 67" inputMode="tel" className={inp} />
+        {/* +998 doimiy prefiks, maska 9 xonadan ortiq yozishga yo'l qo'ymaydi */}
+        <div className="flex items-center rounded-lg border border-slate-300 px-3 py-2.5 text-sm focus-within:border-brand-500 focus-within:ring-2 focus-within:ring-brand-100">
+          <span className="select-none font-medium text-slate-500">+998</span>
+          <input
+            value={phone}
+            onChange={(e) => setPhone(fmtUzPhoneInput(e.target.value))}
+            required
+            placeholder="90 123 45 67"
+            inputMode="numeric"
+            autoComplete="tel-national"
+            className="ml-2 w-full flex-1 bg-transparent outline-none"
+          />
+        </div>
       </label>
 
       {/* Qo'shimcha savollar — yoziladigan yoki variantli */}

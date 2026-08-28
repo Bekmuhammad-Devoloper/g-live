@@ -7,6 +7,7 @@ import { requireSession } from "@/lib/auth";
 import { canRead, canWrite, MODULES } from "@/lib/rbac";
 import { writeAudit } from "@/lib/audit";
 import { ROLES, LEAD_STAGES, isSalesRole } from "@/lib/constants";
+import { parseUzPhone } from "@/lib/phone";
 
 const schema = z.object({
   fullName: z.string().min(2),
@@ -44,6 +45,14 @@ export async function createLead(_prev: LeadState, formData: FormData): Promise<
 
   const { groupId, ...leadData } = parsed.data;
 
+  // Raqamni tartibga solamiz. O'zbekiston raqami bo'lsa "+998 XX XXX XX XX"
+  // ko'rinishiga keltiriladi; xorijiy raqam ham bo'lishi mumkin, shuning uchun
+  // faqat mantiqiy uzunlik chegarasi qo'yiladi (soxta, uzun raqamlar kirmasin).
+  const normalized = parseUzPhone(leadData.phone);
+  leadData.phone = normalized ?? leadData.phone.trim();
+  const digits = leadData.phone.replace(/\D/g, "");
+  if (digits.length < 7 || digits.length > 15) return { error: "invalid_phone" };
+
   // Majburiylik qoidasi yaratishda ham amal qiladi: guruhsiz "Qabul qilindi"
   // bo'lmaydi (aks holda forma orqali qoidani chetlab o'tish mumkin bo'lardi).
   if (ENROLL_REQUIRED_STAGES.includes(leadData.stage) && !groupId) {
@@ -61,7 +70,7 @@ export async function createLead(_prev: LeadState, formData: FormData): Promise<
   }
 
   // Dublikat telefon tekshiruvi (TZ FR-CRM-03 — ogohlantirish)
-  const dup = await prisma.lead.findFirst({ where: { phone: parsed.data.phone } });
+  const dup = await prisma.lead.findFirst({ where: { phone: leadData.phone } }); // tartibga solingan raqam bo'yicha
   if (dup) return { error: "duplicate" };
 
   const lead = await prisma.lead.create({

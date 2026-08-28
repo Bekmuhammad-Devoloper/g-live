@@ -10,6 +10,7 @@ import { tr } from "@/lib/tr";
 import { getT } from "@/lib/i18n";
 import { Icon } from "../_components/Icon";
 import MarqueeText from "../_components/MarqueeText";
+import { fmtUzPhoneInput } from "@/lib/phone";
 
 const SOURCES = ["sayt", "ilova", "telegram", "telefon", "reklama", "tashrif"];
 
@@ -94,7 +95,7 @@ export default function NewLeadForm({
             </div>
             <div>
               <label className="mb-1 block text-xs font-medium text-slate-600 dark:text-slate-400">{t("common.phone")} <span className="text-red-500">*</span></label>
-              <input name="phone" required placeholder="+998 __ ___ __ __" className={input} />
+              <PhoneField input={input} />
             </div>
             <div>
               <label className="mb-1 block text-xs font-medium text-slate-600 dark:text-slate-400">{t("crm.source")}</label>
@@ -135,7 +136,9 @@ export default function NewLeadForm({
             <p className="mt-3 rounded-lg bg-red-50 px-3 py-2 text-sm text-red-700 dark:bg-red-500/10 dark:text-red-300">
               {state.error === "duplicate"
                 ? tr(locale, { uz: "Bu telefon raqami bilan lid allaqachon mavjud (dublikat).", ru: "Лид с этим номером телефона уже существует (дубликат).", en: "A lead with this phone number already exists (duplicate)." })
-                : state.error === "forbidden"
+                : state.error === "invalid_phone"
+                  ? tr(locale, { uz: "Telefon raqami noto'g'ri — masalan: +998 90 123 45 67", ru: "Неверный номер телефона — например: +998 90 123 45 67", en: "Invalid phone number — e.g. +998 90 123 45 67" })
+                  : state.error === "forbidden"
                   ? t("pay.noPermission")
                   : state.error === "group_required"
                     ? tr(locale, { uz: "\"Qabul qilindi\" bosqichi uchun guruh tanlash majburiy.", ru: "Для этапа «Принят» выбор группы обязателен.", en: "A group is required for the Won stage." })
@@ -156,6 +159,28 @@ export default function NewLeadForm({
       </form>
     </div>,
     document.body,
+  );
+}
+
+// Telefon maydoni: +998 doimiy prefiks, maska 9 xonadan ortiq yozdirmaydi.
+// Ilgari oddiy input edi — juda uzun, soxta raqamlar ham kiritilardi.
+function PhoneField({ input }: { input: string }) {
+  const [phone, setPhone] = useState("");
+  return (
+    <>
+      <div className={`${input} flex items-center !py-0`}>
+        <span className="select-none py-2 text-sm font-medium text-slate-500">+998</span>
+        <input
+          value={phone}
+          onChange={(e) => setPhone(fmtUzPhoneInput(e.target.value))}
+          required
+          inputMode="numeric"
+          placeholder="90 123 45 67"
+          className="ml-2 w-full flex-1 bg-transparent py-2 outline-none"
+        />
+      </div>
+      <input type="hidden" name="phone" value={phone ? `+998 ${phone}` : ""} />
+    </>
   );
 }
 
