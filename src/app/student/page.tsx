@@ -14,7 +14,7 @@ import MissingStudent from "./MissingStudent";
 //   Sprechen — guruh kursining o'tilgan darslari foizi
 //   Münzen   — keldi×5 + baholangan vazifa×10
 //   Streak   — so'nggi ketma-ket qatnashgan darslar
-//   Rang     — guruhdoshlar orasida davomat bo'yicha o'rin (Top X%)
+//   Rang     — guruhdoshlar orasida davomat bo'yicha O'RIN (1 = birinchi)
 
 const clamp = (n: number) => Math.max(0, Math.min(100, Math.round(n)));
 
@@ -315,8 +315,8 @@ export default async function StudentStartPage() {
     else break;
   }
 
-  // ── Reyting (guruhdoshlar orasida davomat bo'yicha) ──
-  let rangTop = 100;
+  // ── Reyting: guruhdoshlar orasidagi O'RIN (raqam) ──
+  let rangPos = 1;
   if (mates.length > 1) {
     const counts = await prisma.attendance.groupBy({
       by: ["studentId"],
@@ -325,7 +325,7 @@ export default async function StudentStartPage() {
     });
     const mine = counts.find((c) => c.studentId === student.id)?._count._all ?? 0;
     const better = counts.filter((c) => c._count._all > mine).length;
-    rangTop = clamp(((better + 1) / mates.length) * 100) || 1;
+    rangPos = better + 1; // 1 = birinchi o'rin
   }
 
   const kurseHref = "/student/kurse"; // kurs sahifasi endi portal ichida
@@ -429,15 +429,15 @@ export default async function StudentStartPage() {
       <div className="grid grid-cols-3 gap-3">
         {[
           { icon: <IcoCoin />, label: "Münzen", value: String(coins) },
-          { icon: <IcoFlameWhite />, label: "Streak", value: `${streak} Tage` },
-          { icon: <IcoGrowth />, label: "Rang", value: `Top ${rangTop}%` },
+          { icon: <IcoFlameWhite />, label: "Streak", value: String(streak) },
+          { icon: <IcoGrowth />, label: "Rang", value: String(rangPos) },
         ].map((t) => (
           <div key={t.label} className={`${card} flex flex-col items-center gap-2.5 px-1.5 pb-4 pt-4`}>
             <span className="grid h-[50px] w-[50px] place-items-center rounded-full shadow-[0_8px_16px_rgba(14,116,144,0.3)]" style={{ background: `linear-gradient(135deg, #17a2bf, ${TEAL})` }}>
               {t.icon}
             </span>
             <span className="text-[13px] font-medium leading-none text-slate-500">{t.label}</span>
-            <span className="whitespace-nowrap text-[19px] font-extrabold leading-none text-slate-900">{t.value}</span>
+            <span className="whitespace-nowrap text-[24px] font-extrabold leading-none text-slate-900">{t.value}</span>
           </div>
         ))}
       </div>
