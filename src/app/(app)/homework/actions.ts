@@ -71,6 +71,21 @@ export async function submitAssignment(assignmentId: string, content: string): P
   const student = await prisma.student.findUnique({ where: { userId: s.userId } });
   if (!student) return { error: "forbidden" };
   if (!content || content.trim().length < 1) return { error: "invalid" };
+  if (content.length > 20_000) return { error: "invalid" }; // cheksiz matn bazaga yozilmasin
+
+  // Topshiriq mavjudligini VA o'quvchi o'sha guruhning faol a'zosi ekanini tekshirish.
+  // Aks holda istalgan o'quvchi begona guruh topshirig'iga javob yoza olardi
+  // (action to'g'ridan-to'g'ri POST qilinishi mumkin — UI filtriga ishonib bo'lmaydi).
+  const assignment = await prisma.assignment.findUnique({
+    where: { id: assignmentId },
+    select: { groupId: true },
+  });
+  if (!assignment) return { error: "not_found" };
+  const member = await prisma.groupStudent.findFirst({
+    where: { groupId: assignment.groupId, studentId: student.id, isActive: true },
+    select: { id: true },
+  });
+  if (!member) return { error: "forbidden" };
 
   // Oldingi urinishlar soni
   const prev = await prisma.submission.count({ where: { assignmentId, studentId: student.id } });

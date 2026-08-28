@@ -2,6 +2,8 @@ import Link from "next/link";
 import { redirect } from "next/navigation";
 import { getSession } from "@/lib/auth";
 import { prisma } from "@/lib/db";
+import { isAttended } from "./_ui";
+import MissingStudent from "./MissingStudent";
 
 // O'quvchi "Start" ekrani — berilgan maket bilan birma-bir.
 // Barcha ikonka va illyustratsiyalar SVG (emoji EMAS — bayroq emojisi
@@ -259,37 +261,49 @@ export default async function StudentStartPage() {
       },
     },
   });
-  if (!student) redirect("/dashboard");
+  // Student yozuvi yo'q — /dashboard ga redirect AYLANISH hosil qiladi
+  // (dashboard STUDENT ni yana shu yerga qaytaradi). Xabar ko'rsatamiz.
+  if (!student) return <MissingStudent />;
 
   const group = student.enrollments[0]?.group ?? null;
 
-  const [attendance, submissions, exams, progress, courseLessons, mates] = await Promise.all([
+  const [attendance, submissions, exams, progress, courseLessons, mates, unread] = await Promise.all([
     prisma.attendance.findMany({
       where: { studentId: student.id },
       orderBy: { markedAt: "desc" },
       select: { status: true },
       take: 200,
     }),
-    prisma.submission.findMany({ where: { studentId: student.id, status: "GRADED" }, select: { score: true } }),
+    prisma.submission.findMany({ where: { studentId: student.id, status: "GRADED" }, select: { score: true, assignment: { select: { maxScore: true } } } }),
     prisma.examResult.findMany({ where: { studentId: student.id }, select: { score: true } }),
     group ? prisma.groupLessonProgress.findMany({ where: { groupId: group.id, taught: true }, orderBy: { taughtAt: "desc" }, select: { courseLessonId: true } }) : Promise.resolve([]),
     group ? prisma.courseLesson.findMany({ where: { programId: group.programId }, orderBy: { order: "asc" }, select: { id: true, title: true, topic: true } }) : Promise.resolve([]),
     group
       ? prisma.groupStudent.findMany({ where: { groupId: group.id, isActive: true }, select: { studentId: true } })
       : Promise.resolve([]),
+    prisma.notification.count({ where: { userId: session.userId, isRead: false } }),
   ]);
 
   // ── Ko'nikmalar ──
-  const present = attendance.filter((a) => a.status === "PRESENT" || a.status === "LATE");
+  // Kanonik davomat formulasi (Profil va admin hisobotlari bilan bir xil)
+  const present = attendance.filter((a) => isAttended(a.status));
   const hoeren = attendance.length ? clamp((present.length / attendance.length) * 100) : 0;
-  const lesen = submissions.length ? clamp(submissions.reduce((n, x) => n + (x.score ?? 0), 0) / submissions.length) : 0;
+  // Ball maxScore ga normalizatsiya qilinadi — 10 ballik vazifada 9 ball 90% bo'lsin
+  const lesen = submissions.length
+    ? clamp(submissions.reduce((n, x) => n + ((x.score ?? 0) / (x.assignment.maxScore || 100)) * 100, 0) / submissions.length)
+    : 0;
   const woerter = exams.length ? clamp(exams.reduce((n, x) => n + (x.score ?? 0), 0) / exams.length) : 0;
-  const sprechen = courseLessons.length ? clamp((progress.length / courseLessons.length) * 100) : 0;
+  // (sprechen quyida, doneInProgram aniqlangach hisoblanadi)
 
   // ── Kurs jarayoni ──
   const level = group?.levelCode ?? student.currentLevel ?? "A1";
-  const chapter = Math.max(1, progress.length);
   const taughtIds = new Set(progress.map((p) => p.courseLessonId));
+  // Faqat JORIY kurs dasturidagi o'tilgan darslar sanaladi (guruh dasturi
+  // almashtirilgan bo'lsa eski progress yozuvlari Kapitel raqamini oshirmasin
+  // — Kurse sahifasi bilan bir xil hisob)
+  const doneInProgram = courseLessons.filter((cl) => taughtIds.has(cl.id)).length;
+  const chapter = Math.max(1, doneInProgram);
+  const sprechen = courseLessons.length ? clamp((doneInProgram / courseLessons.length) * 100) : 0;
   const currentLesson = courseLessons.find((cl) => !taughtIds.has(cl.id)) ?? courseLessons[courseLessons.length - 1] ?? null;
   const kursPct = sprechen;
 
@@ -297,7 +311,7 @@ export default async function StudentStartPage() {
   const coins = present.length * 5 + submissions.length * 10;
   let streak = 0;
   for (const a of attendance) {
-    if (a.status === "PRESENT" || a.status === "LATE") streak++;
+    if (isAttended(a.status)) streak++;
     else break;
   }
 
@@ -306,7 +320,7 @@ export default async function StudentStartPage() {
   if (mates.length > 1) {
     const counts = await prisma.attendance.groupBy({
       by: ["studentId"],
-      where: { studentId: { in: mates.map((m) => m.studentId) }, status: { in: ["PRESENT", "LATE"] } },
+      where: { studentId: { in: mates.map((m) => m.studentId) }, status: { in: ["PRESENT", "LATE", "ONLINE", "MAKEUP"] } },
       _count: { _all: true },
     });
     const mine = counts.find((c) => c.studentId === student.id)?._count._all ?? 0;
@@ -314,7 +328,7 @@ export default async function StudentStartPage() {
     rangTop = clamp(((better + 1) / mates.length) * 100) || 1;
   }
 
-  const kurseHref = group ? `/groups/${group.id}` : "/student";
+  const kurseHref = "/student/kurse"; // kurs sahifasi endi portal ichida
   const firstName = student.fullName.split(/\s+/)[0];
   // Profil rasmi: avval o'quvchi rasmi, keyin foydalanuvchi rasmi; ikkalasi ham yo'q bo'lsa — logotip
   const avatarUrl = student.imageUrl || student.user?.imageUrl || null;
@@ -359,10 +373,10 @@ export default async function StudentStartPage() {
           </div>
         </div>
         {/* Ikonkalar pastki tab-bar ikonkalari o'lchamida (26px) */}
-        <Link href="/notifications" className="relative grid h-11 w-11 shrink-0 place-items-center rounded-full bg-white shadow-[0_6px_16px_rgba(19,78,94,0.12)]">
+        <Link href="/student/mitteilungen" className="relative grid h-11 w-11 shrink-0 place-items-center rounded-full bg-white shadow-[0_6px_16px_rgba(19,78,94,0.12)]">
           <IcoBell s={26} />
-          {/* bildirishnoma nuqtasi */}
-          <span className="absolute right-[9px] top-[8px] h-2 w-2 rounded-full" style={{ background: "#2ea8c9" }} />
+          {/* bildirishnoma nuqtasi — faqat o'qilmagan xabar bo'lsa */}
+          {unread > 0 && <span className="absolute right-[9px] top-[8px] h-2 w-2 rounded-full" style={{ background: "#2ea8c9" }} />}
         </Link>
       </div>
 

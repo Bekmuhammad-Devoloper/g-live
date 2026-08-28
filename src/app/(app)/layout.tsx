@@ -11,6 +11,9 @@ import Softphone from "./_components/Softphone";
 export default async function AppLayout({ children }: { children: React.ReactNode }) {
   const session = await getSession();
   if (!session) redirect("/login");
+  // Diqqat: STUDENT bu yerdan redirect QILINMAYDI — /checkin/[token] (QR-davomat)
+  // shu layout ichida va uni o'quvchining o'zi ochadi. Qolgan sahifalar har biri
+  // o'z RBAC tekshiruvi bilan himoyalangan (canRead bo'lmasa Forbidden).
 
   const t = getT(session.locale);
   const isTeacher = session.role === ROLES.TEACHER;
