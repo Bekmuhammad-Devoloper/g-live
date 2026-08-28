@@ -38,5 +38,6 @@ export async function login(_prev: LoginState, formData: FormData): Promise<Logi
     branchId: user.branchId,
   });
 
-  redirect("/dashboard");
+  // O'quvchi — mobil ilova ko'rinishidagi portalga
+  redirect(user.role === "STUDENT" ? "/student" : "/dashboard");
 }

@@ -111,39 +111,9 @@ async function roleContent({
     return <TeacherDashboard userId={userId} locale={locale} />;
   }
 
-  // ── O'quvchi ──
+  // ── O'quvchi — mobil ilova ko'rinishidagi portalga (2026-08-28) ──
   if (role === ROLES.STUDENT) {
-    const student = await prisma.student.findUnique({
-      where: { userId },
-      include: {
-        enrollments: { include: { group: true } },
-        payments: { orderBy: { createdAt: "desc" }, take: 5 },
-      },
-    });
-    if (!student) return <Card>{tr(locale, { uz: "Profil topilmadi.", ru: "Профиль не найден.", en: "Profile not found." })}</Card>;
-    const paid = student.payments.filter((p) => p.status === "PAID").reduce((n, p) => n + p.amount, 0);
-    return (
-      <>
-        <div className="mb-4 grid grid-cols-2 gap-4 lg:grid-cols-4">
-          <StatCard label={tr(locale, { uz: "Joriy daraja", ru: "Текущий уровень", en: "Current level" })} value={student.currentLevel ?? "—"} tone="brand" icon="award" />
-          <StatCard label={tr(locale, { uz: "Status", ru: "Статус", en: "Status" })} value={label(EDU_STATUS_LABELS, student.eduStatus, locale)} icon="check" />
-          <StatCard label={tr(locale, { uz: "Guruhlar", ru: "Группы", en: "Groups" })} value={student.enrollments.length} icon="book" />
-          <StatCard label={tr(locale, { uz: "To'langan", ru: "Оплачено", en: "Paid" })} value={formatMoney(paid, locale)} tone="green" icon="wallet" />
-        </div>
-        <Card>
-          <h3 className="mb-2 text-sm font-semibold text-slate-700">{tr(locale, { uz: "Guruhlarim", ru: "Мои группы", en: "My groups" })}</h3>
-          {student.enrollments.length === 0 ? (
-            <p className="text-sm text-slate-400">{t("common.noData")}</p>
-          ) : (
-            <ul className="space-y-1 text-sm text-slate-600">
-              {student.enrollments.map((e) => (
-                <li key={e.id}>📚 {e.group.name} — {e.group.room}</li>
-              ))}
-            </ul>
-          )}
-        </Card>
-      </>
-    );
+    redirect("/student");
   }
 
   // ── Ota-ona ──
