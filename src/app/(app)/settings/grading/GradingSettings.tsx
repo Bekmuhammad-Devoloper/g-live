@@ -61,16 +61,16 @@ export default function GradingSettings({ locale }: { locale: Locale }) {
           <Icon name="check" className="h-4 w-4" strokeWidth={2.5} />
         </div>
         <div className="text-sm leading-relaxed text-emerald-700 dark:text-emerald-300">
-          <div className="font-bold">{tr(locale, { uz: "Diqqat!", ru: "Внимание!", en: "Attention!" })}</div>
+          <div className="font-bold">{tr(locale, { uz: "Diqqat!", ru: "Внимание!", en: "Attention!", de: "Achtung!" })}</div>
           <p className="mt-0.5">
-            {tr(locale, { uz: "Baholash tizimi joriy qilingandan so'ng maksimum baho o'zgartirilsa, eski baholarning barchasi o'chiriladi.", ru: "После внедрения системы оценивания при изменении максимальной оценки все прежние оценки будут удалены.", en: "Once the grading system is in use, changing the maximum grade will delete all previous grades." })}
+            {tr(locale, { uz: "Baholash tizimi joriy qilingandan so'ng maksimum baho o'zgartirilsa, eski baholarning barchasi o'chiriladi.", ru: "После внедрения системы оценивания при изменении максимальной оценки все прежние оценки будут удалены.", en: "Once the grading system is in use, changing the maximum grade will delete all previous grades.", de: "Sobald das Bewertungssystem im Einsatz ist, werden beim Ändern der maximalen Note alle bisherigen Noten gelöscht." })}
           </p>
         </div>
       </div>
 
       {/* Maksimum baho */}
       <div className="mb-7">
-        <div className="mb-2 text-sm font-medium text-slate-700 dark:text-slate-200">{tr(locale, { uz: "Maksimum baho", ru: "Максимальная оценка", en: "Maximum grade" })}</div>
+        <div className="mb-2 text-sm font-medium text-slate-700 dark:text-slate-200">{tr(locale, { uz: "Maksimum baho", ru: "Максимальная оценка", en: "Maximum grade", de: "Maximale Note" })}</div>
         <div className="flex flex-wrap items-center gap-3">
           {/* Preset segmenti 5 / 10 */}
           <div className="inline-flex overflow-hidden rounded-lg border border-slate-200 dark:border-slate-700">
@@ -97,7 +97,7 @@ export default function GradingSettings({ locale }: { locale: Locale }) {
               type="button"
               onClick={() => setMax(prefs.maxGrade - 1)}
               className="flex h-11 w-11 items-center justify-center text-xl text-slate-500 transition hover:bg-slate-100 dark:hover:bg-slate-700"
-              aria-label={tr(locale, { uz: "Kamaytirish", ru: "Уменьшить", en: "Decrease" })}
+              aria-label={tr(locale, { uz: "Kamaytirish", ru: "Уменьшить", en: "Decrease", de: "Verringern" })}
             >
               −
             </button>
@@ -108,7 +108,7 @@ export default function GradingSettings({ locale }: { locale: Locale }) {
               type="button"
               onClick={() => setMax(prefs.maxGrade + 1)}
               className="flex h-11 w-11 items-center justify-center text-xl text-slate-500 transition hover:bg-slate-100 dark:hover:bg-slate-700"
-              aria-label={tr(locale, { uz: "Oshirish", ru: "Увеличить", en: "Increase" })}
+              aria-label={tr(locale, { uz: "Oshirish", ru: "Увеличить", en: "Increase", de: "Erhöhen" })}
             >
               +
             </button>
@@ -118,10 +118,10 @@ export default function GradingSettings({ locale }: { locale: Locale }) {
 
       {/* Toggle sozlamalari */}
       <div className="space-y-6">
-        <ToggleRow label={tr(locale, { uz: "O'tgan sanalar uchun bahoni tahrirlash", ru: "Редактировать оценки за прошедшие даты", en: "Edit grades for past dates" })} on={prefs.editPastGrades} onChange={(v) => set("editPastGrades", v)} />
-        <ToggleRow label={tr(locale, { uz: "Ustozlardan tashqari, hodimlar ham baholashga ruxsat berish", ru: "Разрешить оценивать не только преподавателям, но и сотрудникам", en: "Allow staff, not only teachers, to grade" })} on={prefs.staffCanGrade} onChange={(v) => set("staffCanGrade", v)} />
-        <ToggleRow label={tr(locale, { uz: "Talaba profilida markaz kesimida reytingni ko'rsatish", ru: "Показывать рейтинг по центру в профиле ученика", en: "Show center-wide rating on the student profile" })} on={prefs.showCenterRating} onChange={(v) => set("showCenterRating", v)} />
-        <ToggleRow label={tr(locale, { uz: "Talaba profilida filial kesimida reytingni ko'rsatish", ru: "Показывать рейтинг по филиалу в профиле ученика", en: "Show branch-wide rating on the student profile" })} on={prefs.showBranchRating} onChange={(v) => set("showBranchRating", v)} />
+        <ToggleRow label={tr(locale, { uz: "O'tgan sanalar uchun bahoni tahrirlash", ru: "Редактировать оценки за прошедшие даты", en: "Edit grades for past dates", de: "Noten für vergangene Termine bearbeiten" })} on={prefs.editPastGrades} onChange={(v) => set("editPastGrades", v)} />
+        <ToggleRow label={tr(locale, { uz: "Ustozlardan tashqari, hodimlar ham baholashga ruxsat berish", ru: "Разрешить оценивать не только преподавателям, но и сотрудникам", en: "Allow staff, not only teachers, to grade", de: "Auch Mitarbeitern, nicht nur Lehrern, das Benoten erlauben" })} on={prefs.staffCanGrade} onChange={(v) => set("staffCanGrade", v)} />
+        <ToggleRow label={tr(locale, { uz: "Talaba profilida markaz kesimida reytingni ko'rsatish", ru: "Показывать рейтинг по центру в профиле ученика", en: "Show center-wide rating on the student profile", de: "Zentrumsweite Bewertung im Schülerprofil anzeigen" })} on={prefs.showCenterRating} onChange={(v) => set("showCenterRating", v)} />
+        <ToggleRow label={tr(locale, { uz: "Talaba profilida filial kesimida reytingni ko'rsatish", ru: "Показывать рейтинг по филиалу в профиле ученика", en: "Show branch-wide rating on the student profile", de: "Filialweite Bewertung im Schülerprofil anzeigen" })} on={prefs.showBranchRating} onChange={(v) => set("showBranchRating", v)} />
       </div>
 
       {/* Saqlash */}
@@ -131,11 +131,11 @@ export default function GradingSettings({ locale }: { locale: Locale }) {
           onClick={save}
           className="rounded-lg bg-blue-500 px-10 py-2.5 text-sm font-semibold text-white shadow-sm transition hover:bg-blue-600"
         >
-          {tr(locale, { uz: "Saqlash", ru: "Сохранить", en: "Save" })}
+          {tr(locale, { uz: "Saqlash", ru: "Сохранить", en: "Save", de: "Speichern" })}
         </button>
         {saved && (
           <span className="flex items-center gap-1 text-sm font-medium text-emerald-600 dark:text-emerald-400">
-            <Icon name="check" className="h-4 w-4" /> {tr(locale, { uz: "Saqlandi", ru: "Сохранено", en: "Saved" })}
+            <Icon name="check" className="h-4 w-4" /> {tr(locale, { uz: "Saqlandi", ru: "Сохранено", en: "Saved", de: "Gespeichert" })}
           </span>
         )}
       </div>

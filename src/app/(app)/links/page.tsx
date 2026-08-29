@@ -22,8 +22,8 @@ export default async function LinksPage({ searchParams }: { searchParams: Promis
   if (!canRead(s.role, MODULES.CRM)) {
     return (
       <Forbidden
-        title={tr(loc, { uz: "Kirish taqiqlangan", ru: "Доступ запрещён", en: "Access denied" })}
-        body={tr(loc, { uz: "Bu bo'lim sotuv bo'limi uchun.", ru: "Этот раздел для отдела продаж.", en: "This section is for the sales department." })}
+        title={tr(loc, { uz: "Kirish taqiqlangan", ru: "Доступ запрещён", en: "Access denied", de: "Zugriff verweigert" })}
+        body={tr(loc, { uz: "Bu bo'lim sotuv bo'limi uchun.", ru: "Этот раздел для отдела продаж.", en: "This section is for the sales department.", de: "Dieser Bereich ist für die Vertriebsabteilung." })}
       />
     );
   }

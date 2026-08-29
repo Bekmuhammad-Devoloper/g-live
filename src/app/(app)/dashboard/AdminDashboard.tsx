@@ -33,6 +33,14 @@ const T: Record<Locale, Record<string, string>> = {
     auditLog: "Audit log", auditLogD: "Immutable action history",
     control: "Control", controlD: "Anomalies and unconfirmed records",
     noData: "No records", author: "Author", action: "Action", object: "Object",
+  }, de: {
+    users: "Benutzer", active: "Aktiv", branches: "Filialen", audit: "Audit-Einträge",
+    byRole: "Nach Rolle", quick: "Technische Bereiche", recent: "Letzte Aktionen (Audit)",
+    manageUsers: "Benutzer", manageUsersD: "Mitarbeiter, Rollen und Zugriffsrechte",
+    settings: "Einstellungen", settingsD: "Systemparameter und RBAC-Matrix",
+    auditLog: "Audit-Protokoll", auditLogD: "Unveränderliche Aktionshistorie",
+    control: "Kontrolle", controlD: "Anomalien und unbestätigte Einträge",
+    noData: "Keine Einträge", author: "Autor", action: "Aktion", object: "Objekt",
   },
 };
 

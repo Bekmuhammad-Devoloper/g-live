@@ -53,11 +53,11 @@ export default function RatingView({ students, defaultFrom, defaultTo, locale }:
     exportRows(
       `reyting_${from}_${to}`,
       [
-        { key: "rank", label: tr(locale, { uz: "O'rin", ru: "Место", en: "Rank" }) },
-        { key: "name", label: tr(locale, { uz: "Ism", ru: "Имя", en: "Name" }) },
-        { key: "group", label: tr(locale, { uz: "Guruh", ru: "Группа", en: "Group" }) },
-        { key: "baho", label: tr(locale, { uz: "Baho", ru: "Оценка", en: "Score" }) },
-        { key: "count", label: tr(locale, { uz: "Baholar soni", ru: "Количество оценок", en: "Number of scores" }) },
+        { key: "rank", label: tr(locale, { uz: "O'rin", ru: "Место", en: "Rank", de: "Platz" }) },
+        { key: "name", label: tr(locale, { uz: "Ism", ru: "Имя", en: "Name", de: "Name" }) },
+        { key: "group", label: tr(locale, { uz: "Guruh", ru: "Группа", en: "Group", de: "Gruppe" }) },
+        { key: "baho", label: tr(locale, { uz: "Baho", ru: "Оценка", en: "Score", de: "Bewertung" }) },
+        { key: "count", label: tr(locale, { uz: "Baholar soni", ru: "Количество оценок", en: "Number of scores", de: "Anzahl der Bewertungen" }) },
       ],
       rows.map((r, i) => ({ rank: i + 1, name: r.name, group: r.group ?? "", baho: r.baho, count: r.count }))
     );
@@ -66,7 +66,7 @@ export default function RatingView({ students, defaultFrom, defaultTo, locale }:
 
   return (
     <div className="space-y-4">
-      <h1 className="text-[24px] font-bold tracking-tight text-slate-900 dark:text-slate-100">{tr(locale, { uz: "Reyting", ru: "Рейтинг", en: "Rating" })}</h1>
+      <h1 className="text-[24px] font-bold tracking-tight text-slate-900 dark:text-slate-100">{tr(locale, { uz: "Reyting", ru: "Рейтинг", en: "Rating", de: "Rangliste" })}</h1>
 
       {/* Sana oralig'i */}
       <div className="grid gap-3 sm:grid-cols-2">
@@ -82,15 +82,15 @@ export default function RatingView({ students, defaultFrom, defaultTo, locale }:
 
       {/* Tablar */}
       <div className="flex items-center gap-5 border-b border-slate-200 dark:border-slate-800">
-        <TabBtn active={tab === "chart"} onClick={() => setTab("chart")}>{tr(locale, { uz: "Grafik", ru: "График", en: "Chart" })}</TabBtn>
-        <TabBtn active={tab === "table"} onClick={() => setTab("table")}>{tr(locale, { uz: "Jadval", ru: "Таблица", en: "Table" })}</TabBtn>
+        <TabBtn active={tab === "chart"} onClick={() => setTab("chart")}>{tr(locale, { uz: "Grafik", ru: "График", en: "Chart", de: "Diagramm" })}</TabBtn>
+        <TabBtn active={tab === "table"} onClick={() => setTab("table")}>{tr(locale, { uz: "Jadval", ru: "Таблица", en: "Table", de: "Tabelle" })}</TabBtn>
         <button
           onClick={exportCsv}
           disabled={rows.length === 0}
-          title={tr(locale, { uz: "CSV yuklab olish", ru: "Скачать CSV", en: "Download CSV" })}
+          title={tr(locale, { uz: "CSV yuklab olish", ru: "Скачать CSV", en: "Download CSV", de: "CSV herunterladen" })}
           className="mb-2 ml-auto inline-flex items-center gap-1.5 rounded-lg border border-emerald-300 px-3 py-1.5 text-xs font-semibold text-emerald-600 transition hover:bg-emerald-50 disabled:opacity-40 dark:border-emerald-800 dark:hover:bg-emerald-950/40"
         >
-          <Icon name="download" className="h-4 w-4" /> {tr(locale, { uz: "Eksport", ru: "Экспорт", en: "Export" })}
+          <Icon name="download" className="h-4 w-4" /> {tr(locale, { uz: "Eksport", ru: "Экспорт", en: "Export", de: "Export" })}
         </button>
       </div>
 
@@ -101,14 +101,14 @@ export default function RatingView({ students, defaultFrom, defaultTo, locale }:
               <thead className="border-b border-slate-200/70 text-[13px] font-semibold text-slate-500 dark:border-slate-800">
                 <tr>
                   <th className="w-16 px-4 py-4 text-center">№</th>
-                  <SortableTh label={tr(locale, { uz: "Ism", ru: "Имя", en: "Name" })} active={sort.key === "name"} dir={sort.dir} onClick={() => toggleSort("name")} />
-                  <SortableTh label={tr(locale, { uz: "Guruh", ru: "Группа", en: "Group" })} active={sort.key === "group"} dir={sort.dir} onClick={() => toggleSort("group")} />
-                  <SortableTh label={tr(locale, { uz: "Baho", ru: "Оценка", en: "Score" })} align="right" active={sort.key === "baho"} dir={sort.dir} onClick={() => toggleSort("baho")} />
+                  <SortableTh label={tr(locale, { uz: "Ism", ru: "Имя", en: "Name", de: "Name" })} active={sort.key === "name"} dir={sort.dir} onClick={() => toggleSort("name")} />
+                  <SortableTh label={tr(locale, { uz: "Guruh", ru: "Группа", en: "Group", de: "Gruppe" })} active={sort.key === "group"} dir={sort.dir} onClick={() => toggleSort("group")} />
+                  <SortableTh label={tr(locale, { uz: "Baho", ru: "Оценка", en: "Score", de: "Bewertung" })} align="right" active={sort.key === "baho"} dir={sort.dir} onClick={() => toggleSort("baho")} />
                 </tr>
               </thead>
               <tbody className="divide-y divide-slate-100 dark:divide-slate-800">
                 {shown.length === 0 ? (
-                  <tr><td colSpan={4} className="px-4 py-12 text-center text-slate-400">{tr(locale, { uz: "Bo'sh", ru: "Пусто", en: "Empty" })}</td></tr>
+                  <tr><td colSpan={4} className="px-4 py-12 text-center text-slate-400">{tr(locale, { uz: "Bo'sh", ru: "Пусто", en: "Empty", de: "Leer" })}</td></tr>
                 ) : shown.map((r, i) => {
                   const rank = (cur - 1) * pageSize + i + 1;
                   return (
@@ -133,14 +133,14 @@ export default function RatingView({ students, defaultFrom, defaultTo, locale }:
           {/* Sahifalash */}
           <div className="flex items-center gap-2 border-t border-slate-100 px-4 py-3 dark:border-slate-800">
             <select value={pageSize} onChange={(e) => { setPageSize(Number(e.target.value)); setPage(1); }} className="rounded-lg border border-slate-200 bg-white px-2 py-1.5 text-xs outline-none dark:border-slate-700 dark:bg-slate-800 dark:text-slate-200">
-              {[20, 50, 100].map((n) => <option key={n} value={n}>{n}/{tr(locale, { uz: "sahifa", ru: "страница", en: "page" })}</option>)}
+              {[20, 50, 100].map((n) => <option key={n} value={n}>{n}/{tr(locale, { uz: "sahifa", ru: "страница", en: "page", de: "Seite" })}</option>)}
             </select>
             <div className="flex items-center gap-1.5">
               <PageBtn disabled={cur <= 1} onClick={() => setPage(cur - 1)}>‹</PageBtn>
               <span className="grid h-8 min-w-8 place-items-center rounded-lg bg-brand-600 px-2 text-sm font-semibold text-white">{cur}</span>
               <PageBtn disabled={cur >= totalPages} onClick={() => setPage(cur + 1)}>›</PageBtn>
             </div>
-            <span className="ml-auto text-xs text-slate-400">{tr(locale, { uz: "Jami", ru: "Всего", en: "Total" })}: {rows.length}</span>
+            <span className="ml-auto text-xs text-slate-400">{tr(locale, { uz: "Jami", ru: "Всего", en: "Total", de: "Gesamt" })}: {rows.length}</span>
           </div>
         </div>
       ) : (
@@ -153,7 +153,7 @@ export default function RatingView({ students, defaultFrom, defaultTo, locale }:
 function RatingChart({ rows, locale }: { rows: { id: string; name: string; baho: number }[]; locale: Locale }) {
   const top = rows.slice(0, 20);
   if (top.length === 0) {
-    return <div className="rounded-2xl border border-dashed border-slate-300 py-16 text-center text-slate-400 dark:border-slate-700">{tr(locale, { uz: "Bo'sh", ru: "Пусто", en: "Empty" })}</div>;
+    return <div className="rounded-2xl border border-dashed border-slate-300 py-16 text-center text-slate-400 dark:border-slate-700">{tr(locale, { uz: "Bo'sh", ru: "Пусто", en: "Empty", de: "Leer" })}</div>;
   }
   return (
     <div className="rounded-2xl border border-slate-200/70 bg-white p-5 shadow-card dark:border-slate-800 dark:bg-slate-900">

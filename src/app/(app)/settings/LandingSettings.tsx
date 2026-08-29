@@ -6,18 +6,18 @@ import type { Locale } from "@/lib/constants";
 import { Icon } from "../_components/Icon";
 
 const STORAGE_KEY = "gl-landing-pages";
-const SECTIONS: { value: string; label: { uz: string; ru: string; en: string } }[] = [
-  { value: "Asosiy sahifa", label: { uz: "Asosiy sahifa", ru: "Главная страница", en: "Home page" } },
-  { value: "Kurslar", label: { uz: "Kurslar", ru: "Курсы", en: "Courses" } },
-  { value: "Aloqa", label: { uz: "Aloqa", ru: "Связь", en: "Contact" } },
-  { value: "Biz haqimizda", label: { uz: "Biz haqimizda", ru: "О нас", en: "About us" } },
+const SECTIONS: { value: string; label: { uz: string; ru: string; en: string; de: string } }[] = [
+  { value: "Asosiy sahifa", label: { uz: "Asosiy sahifa", ru: "Главная страница", en: "Home page", de: "Startseite" } },
+  { value: "Kurslar", label: { uz: "Kurslar", ru: "Курсы", en: "Courses", de: "Kurse" } },
+  { value: "Aloqa", label: { uz: "Aloqa", ru: "Связь", en: "Contact", de: "Kontakt" } },
+  { value: "Biz haqimizda", label: { uz: "Biz haqimizda", ru: "О нас", en: "About us", de: "Über uns" } },
 ];
-const SOURCES: { value: string; label: { uz: string; ru: string; en: string } }[] = [
-  { value: "telegram", label: { uz: "telegram", ru: "телеграм", en: "telegram" } },
-  { value: "instagram", label: { uz: "instagram", ru: "инстаграм", en: "instagram" } },
-  { value: "sayt", label: { uz: "sayt", ru: "сайт", en: "website" } },
-  { value: "reklama", label: { uz: "reklama", ru: "реклама", en: "advertising" } },
-  { value: "tashrif", label: { uz: "tashrif", ru: "визит", en: "visit" } },
+const SOURCES: { value: string; label: { uz: string; ru: string; en: string; de: string } }[] = [
+  { value: "telegram", label: { uz: "telegram", ru: "телеграм", en: "telegram", de: "telegram" } },
+  { value: "instagram", label: { uz: "instagram", ru: "инстаграм", en: "instagram", de: "instagram" } },
+  { value: "sayt", label: { uz: "sayt", ru: "сайт", en: "website", de: "Webseite" } },
+  { value: "reklama", label: { uz: "reklama", ru: "реклама", en: "advertising", de: "Werbung" } },
+  { value: "tashrif", label: { uz: "tashrif", ru: "визит", en: "visit", de: "Besuch" } },
 ];
 
 interface Page { id: string; name: string; slug: string; branch: string; section: string; source: string }
@@ -46,9 +46,9 @@ export default function LandingSettings({ locale, branches }: { locale: Locale; 
 
   const create = () => {
     setError("");
-    if (form.name.trim().length < 2) return setError(tr(locale, { uz: "Nomi kamida 2 ta belgi bo'lsin", ru: "Название должно содержать не менее 2 символов", en: "Name must be at least 2 characters" }));
-    if (!form.slug.trim()) return setError(tr(locale, { uz: "Slug majburiy", ru: "Slug обязателен", en: "Slug is required" }));
-    if (list.some((p) => p.slug === form.slug.trim())) return setError(tr(locale, { uz: "Bu slug allaqachon mavjud", ru: "Такой slug уже существует", en: "This slug already exists" }));
+    if (form.name.trim().length < 2) return setError(tr(locale, { uz: "Nomi kamida 2 ta belgi bo'lsin", ru: "Название должно содержать не менее 2 символов", en: "Name must be at least 2 characters", de: "Der Name muss mindestens 2 Zeichen lang sein" }));
+    if (!form.slug.trim()) return setError(tr(locale, { uz: "Slug majburiy", ru: "Slug обязателен", en: "Slug is required", de: "Slug ist erforderlich" }));
+    if (list.some((p) => p.slug === form.slug.trim())) return setError(tr(locale, { uz: "Bu slug allaqachon mavjud", ru: "Такой slug уже существует", en: "This slug already exists", de: "Dieser Slug existiert bereits" }));
     const id = `lp-${Date.now().toString(36)}-${seed}`;
     setSeed((s) => s + 1);
     persist([{ id, name: form.name.trim(), slug: form.slug.trim(), branch: form.branch, section: form.section, source: form.source }, ...list]);
@@ -59,32 +59,32 @@ export default function LandingSettings({ locale, branches }: { locale: Locale; 
 
   return (
     <div>
-      <h2 className="mb-6 text-2xl font-bold text-slate-800 dark:text-slate-100">{tr(locale, { uz: "Landing page", ru: "Лендинг", en: "Landing page" })}</h2>
+      <h2 className="mb-6 text-2xl font-bold text-slate-800 dark:text-slate-100">{tr(locale, { uz: "Landing page", ru: "Лендинг", en: "Landing page", de: "Landingpage" })}</h2>
 
       {/* Yaratish formasi */}
       <fieldset className="relative max-w-2xl rounded-xl border border-slate-300 p-6 pt-7 dark:border-slate-600">
-        <legend className="ml-2 px-1.5 text-sm font-semibold text-slate-700 dark:text-slate-200">{tr(locale, { uz: "Landing page yaratish", ru: "Создать лендинг", en: "Create landing page" })}</legend>
+        <legend className="ml-2 px-1.5 text-sm font-semibold text-slate-700 dark:text-slate-200">{tr(locale, { uz: "Landing page yaratish", ru: "Создать лендинг", en: "Create landing page", de: "Landingpage erstellen" })}</legend>
         <div className="space-y-4">
-          <Field label={tr(locale, { uz: "Nomi", ru: "Название", en: "Name" })} required>
-            <input value={form.name} onChange={(e) => onName(e.target.value)} className={inp} placeholder={tr(locale, { uz: "Landing sahifa nomi", ru: "Название лендинга", en: "Landing page name" })} />
+          <Field label={tr(locale, { uz: "Nomi", ru: "Название", en: "Name", de: "Name" })} required>
+            <input value={form.name} onChange={(e) => onName(e.target.value)} className={inp} placeholder={tr(locale, { uz: "Landing sahifa nomi", ru: "Название лендинга", en: "Landing page name", de: "Name der Landingpage" })} />
           </Field>
-          <Field label={tr(locale, { uz: "Slug", ru: "Slug", en: "Slug" })} required>
+          <Field label={tr(locale, { uz: "Slug", ru: "Slug", en: "Slug", de: "Slug" })} required>
             <input value={form.slug} onChange={(e) => setForm((f) => ({ ...f, slug: e.target.value, slugTouched: true }))} className={inp} placeholder="landing-sahifa" />
           </Field>
-          <Field label={tr(locale, { uz: "Filial", ru: "Филиал", en: "Branch" })}>
-            <Select value={form.branch} onChange={(v) => setForm((f) => ({ ...f, branch: v }))} options={branches.map((b) => ({ value: b, label: b }))} placeholder={tr(locale, { uz: "Tanlang", ru: "Выберите", en: "Select" })} />
+          <Field label={tr(locale, { uz: "Filial", ru: "Филиал", en: "Branch", de: "Filiale" })}>
+            <Select value={form.branch} onChange={(v) => setForm((f) => ({ ...f, branch: v }))} options={branches.map((b) => ({ value: b, label: b }))} placeholder={tr(locale, { uz: "Tanlang", ru: "Выберите", en: "Select", de: "Auswählen" })} />
           </Field>
-          <Field label={tr(locale, { uz: "Bo'lim", ru: "Раздел", en: "Section" })}>
-            <Select value={form.section} onChange={(v) => setForm((f) => ({ ...f, section: v }))} options={SECTIONS.map((s) => ({ value: s.value, label: tr(locale, s.label) }))} placeholder={tr(locale, { uz: "Tanlang", ru: "Выберите", en: "Select" })} muted />
+          <Field label={tr(locale, { uz: "Bo'lim", ru: "Раздел", en: "Section", de: "Bereich" })}>
+            <Select value={form.section} onChange={(v) => setForm((f) => ({ ...f, section: v }))} options={SECTIONS.map((s) => ({ value: s.value, label: tr(locale, s.label) }))} placeholder={tr(locale, { uz: "Tanlang", ru: "Выберите", en: "Select", de: "Auswählen" })} muted />
           </Field>
-          <Field label={tr(locale, { uz: "Manba", ru: "Источник", en: "Source" })}>
-            <Select value={form.source} onChange={(v) => setForm((f) => ({ ...f, source: v }))} options={SOURCES.map((s) => ({ value: s.value, label: tr(locale, s.label) }))} placeholder={tr(locale, { uz: "Tanlang", ru: "Выберите", en: "Select" })} muted />
+          <Field label={tr(locale, { uz: "Manba", ru: "Источник", en: "Source", de: "Quelle" })}>
+            <Select value={form.source} onChange={(v) => setForm((f) => ({ ...f, source: v }))} options={SOURCES.map((s) => ({ value: s.value, label: tr(locale, s.label) }))} placeholder={tr(locale, { uz: "Tanlang", ru: "Выберите", en: "Select", de: "Auswählen" })} muted />
           </Field>
 
           {error && <p className="rounded-lg bg-rose-50 px-3 py-2 text-sm text-rose-700 dark:bg-rose-500/10 dark:text-rose-400">{error}</p>}
 
           <button onClick={create} className="rounded-full bg-teal-400 px-8 py-2.5 text-sm font-semibold text-white transition hover:bg-teal-500">
-            {tr(locale, { uz: "Yaratish", ru: "Создать", en: "Create" })}
+            {tr(locale, { uz: "Yaratish", ru: "Создать", en: "Create", de: "Erstellen" })}
           </button>
         </div>
       </fieldset>
@@ -95,14 +95,14 @@ export default function LandingSettings({ locale, branches }: { locale: Locale; 
         <table className="w-full min-w-[560px] text-left text-sm">
           <thead className="border-b border-slate-300 text-[13px] font-semibold text-slate-500 dark:border-slate-600 dark:text-slate-300">
             <tr>
-              <th className="px-5 py-3.5">{tr(locale, { uz: "Nomi", ru: "Название", en: "Name" })}</th>
-              <th className="px-5 py-3.5">{tr(locale, { uz: "Slug", ru: "Slug", en: "Slug" })}</th>
-              <th className="px-5 py-3.5 text-right">{tr(locale, { uz: "Amallar", ru: "Действия", en: "Actions" })}</th>
+              <th className="px-5 py-3.5">{tr(locale, { uz: "Nomi", ru: "Название", en: "Name", de: "Name" })}</th>
+              <th className="px-5 py-3.5">{tr(locale, { uz: "Slug", ru: "Slug", en: "Slug", de: "Slug" })}</th>
+              <th className="px-5 py-3.5 text-right">{tr(locale, { uz: "Amallar", ru: "Действия", en: "Actions", de: "Aktionen" })}</th>
             </tr>
           </thead>
           <tbody className="divide-y divide-slate-100 dark:divide-slate-800">
             {list.length === 0 ? (
-              <tr><td colSpan={3} className="px-5 py-10 text-center text-slate-400">{tr(locale, { uz: "Bo'sh", ru: "Пусто", en: "Empty" })}</td></tr>
+              <tr><td colSpan={3} className="px-5 py-10 text-center text-slate-400">{tr(locale, { uz: "Bo'sh", ru: "Пусто", en: "Empty", de: "Leer" })}</td></tr>
             ) : (
               list.map((p) => (
                 <tr key={p.id} className="hover:bg-slate-50 dark:hover:bg-slate-800/40">
@@ -110,8 +110,8 @@ export default function LandingSettings({ locale, branches }: { locale: Locale; 
                   <td className="px-5 py-3 font-mono text-xs text-slate-500">/{p.slug}</td>
                   <td className="px-5 py-3">
                     <div className="flex items-center justify-end gap-2 text-slate-400">
-                      <a href={`/${p.slug}`} target="_blank" rel="noreferrer" className="transition hover:text-brand-600" title={tr(locale, { uz: "Ochish", ru: "Открыть", en: "Open" })}><Icon name="link" className="h-4 w-4" /></a>
-                      <button onClick={() => remove(p.id)} className="transition hover:text-rose-600" title={tr(locale, { uz: "O'chirish", ru: "Удалить", en: "Delete" })}><Icon name="trash" className="h-4 w-4" /></button>
+                      <a href={`/${p.slug}`} target="_blank" rel="noreferrer" className="transition hover:text-brand-600" title={tr(locale, { uz: "Ochish", ru: "Открыть", en: "Open", de: "Öffnen" })}><Icon name="link" className="h-4 w-4" /></a>
+                      <button onClick={() => remove(p.id)} className="transition hover:text-rose-600" title={tr(locale, { uz: "O'chirish", ru: "Удалить", en: "Delete", de: "Löschen" })}><Icon name="trash" className="h-4 w-4" /></button>
                     </div>
                   </td>
                 </tr>

@@ -18,10 +18,10 @@ export interface VTestType {
 }
 interface Opt { id: string; name: string }
 
-const TYPE_DICT: Record<string, { uz: string; ru: string; en: string }> = {
-  KIRISH: { uz: "Kirish", ru: "Вводный", en: "Entry" },
-  BLOCK: { uz: "Blok", ru: "Блок", en: "Block" },
-  YAKUNIY: { uz: "Yakuniy", ru: "Итоговый", en: "Final" },
+const TYPE_DICT: Record<string, { uz: string; ru: string; en: string; de: string }> = {
+  KIRISH: { uz: "Kirish", ru: "Вводный", en: "Entry", de: "Eingang" },
+  BLOCK: { uz: "Blok", ru: "Блок", en: "Block", de: "Block" },
+  YAKUNIY: { uz: "Yakuniy", ru: "Итоговый", en: "Final", de: "Abschluss" },
 };
 const typeLabel = (locale: Locale, code: string) => (TYPE_DICT[code] ? tr(locale, TYPE_DICT[code]) : code);
 const TYPE_TONE: Record<string, string> = {
@@ -29,10 +29,10 @@ const TYPE_TONE: Record<string, string> = {
   BLOCK: "bg-brand-500/15 text-brand-600 dark:text-brand-300",
   YAKUNIY: "bg-violet-500/15 text-violet-600 dark:text-violet-400",
 };
-const STATUS_DICT: Record<string, { uz: string; ru: string; en: string }> = {
-  PLANNED: { uz: "Rejalashtirilgan", ru: "Запланирован", en: "Planned" },
-  ACTIVE: { uz: "Faol", ru: "Активный", en: "Active" },
-  FINISHED: { uz: "Tugagan", ru: "Завершён", en: "Finished" },
+const STATUS_DICT: Record<string, { uz: string; ru: string; en: string; de: string }> = {
+  PLANNED: { uz: "Rejalashtirilgan", ru: "Запланирован", en: "Planned", de: "Geplant" },
+  ACTIVE: { uz: "Faol", ru: "Активный", en: "Active", de: "Aktiv" },
+  FINISHED: { uz: "Tugagan", ru: "Завершён", en: "Finished", de: "Abgeschlossen" },
 };
 const statusLabel = (locale: Locale, code: string) => (STATUS_DICT[code] ? tr(locale, STATUS_DICT[code]) : code);
 const STATUS_TONE: Record<string, string> = {
@@ -51,20 +51,20 @@ export default function TestsWorkspace({ exams, types, canCreate, staff, groups,
   return (
     <div className="space-y-4">
       <div className="flex items-center gap-3">
-        <h1 className="text-[22px] font-bold tracking-tight text-slate-900 dark:text-slate-100">{tr(locale, { uz: "Blok test", ru: "Блочный тест", en: "Block test" })}</h1>
-        <span className="text-sm text-slate-400">{tr(locale, { uz: "Kirish, blok va yakuniy imtihonlar", ru: "Вводные, блочные и итоговые экзамены", en: "Entry, block and final exams" })}</span>
+        <h1 className="text-[22px] font-bold tracking-tight text-slate-900 dark:text-slate-100">{tr(locale, { uz: "Blok test", ru: "Блочный тест", en: "Block test", de: "Blocktest" })}</h1>
+        <span className="text-sm text-slate-400">{tr(locale, { uz: "Kirish, blok va yakuniy imtihonlar", ru: "Вводные, блочные и итоговые экзамены", en: "Entry, block and final exams", de: "Eingangs-, Block- und Abschlussprüfungen" })}</span>
       </div>
 
       {/* Tablar + qo'shish tugmasi (yonma-yon) */}
       <div className="flex flex-wrap items-center gap-1.5">
-        <TabBtn active={tab === "exams"} onClick={() => setTab("exams")}>{tr(locale, { uz: "Imtihonlar", ru: "Экзамены", en: "Exams" })} <Count n={exams.length} /></TabBtn>
-        <TabBtn active={tab === "types"} onClick={() => setTab("types")}>{tr(locale, { uz: "Test turlari", ru: "Типы тестов", en: "Test types" })} <Count n={types.length} /></TabBtn>
+        <TabBtn active={tab === "exams"} onClick={() => setTab("exams")}>{tr(locale, { uz: "Imtihonlar", ru: "Экзамены", en: "Exams", de: "Prüfungen" })} <Count n={exams.length} /></TabBtn>
+        <TabBtn active={tab === "types"} onClick={() => setTab("types")}>{tr(locale, { uz: "Test turlari", ru: "Типы тестов", en: "Test types", de: "Testarten" })} <Count n={types.length} /></TabBtn>
         {canCreate && (
           <button
             onClick={() => (tab === "exams" ? setAddExam(true) : setAddType(true))}
             className="ml-auto flex h-10 items-center gap-1.5 rounded-lg bg-brand-600 px-4 text-sm font-semibold text-white shadow-sm transition hover:bg-brand-700"
           >
-            <Icon name="plus" className="h-4 w-4" /> {tab === "exams" ? tr(locale, { uz: "Imtihon qo'shish", ru: "Добавить экзамен", en: "Add exam" }) : tr(locale, { uz: "Tur qo'shish", ru: "Добавить тип", en: "Add type" })}
+            <Icon name="plus" className="h-4 w-4" /> {tab === "exams" ? tr(locale, { uz: "Imtihon qo'shish", ru: "Добавить экзамен", en: "Add exam", de: "Prüfung hinzufügen" }) : tr(locale, { uz: "Tur qo'shish", ru: "Добавить тип", en: "Add type", de: "Typ hinzufügen" })}
           </button>
         )}
       </div>
@@ -97,9 +97,9 @@ function ExamsTable({ exams, locale }: { exams: VBlockTest[]; locale: Locale }) 
       pageSize={pageSize} setPageSize={setPageSize} page={cur} setPage={setPage} totalPages={totalPages}
       minWidth={1040}
       head={<tr>
-        <th className="w-12 px-4 py-3">№</th><th className="px-4 py-3">{tr(locale, { uz: "Nomi", ru: "Название", en: "Name" })}</th><th className="px-4 py-3">{tr(locale, { uz: "Turi", ru: "Тип", en: "Type" })}</th>
-        <th className="px-4 py-3">{tr(locale, { uz: "Holati", ru: "Статус", en: "Status" })}</th><th className="px-4 py-3">{tr(locale, { uz: "Sana", ru: "Дата", en: "Date" })}</th><th className="px-4 py-3">{tr(locale, { uz: "Boshlanish vaqti", ru: "Время начала", en: "Start time" })}</th>
-        <th className="px-4 py-3">{tr(locale, { uz: "Davomiyligi (daqiqa)", ru: "Длительность (мин)", en: "Duration (min)" })}</th><th className="px-4 py-3">{tr(locale, { uz: "Mas'ul xodim", ru: "Ответственный", en: "Responsible" })}</th><th className="px-4 py-3">{tr(locale, { uz: "Guruhlar", ru: "Группы", en: "Groups" })}</th>
+        <th className="w-12 px-4 py-3">№</th><th className="px-4 py-3">{tr(locale, { uz: "Nomi", ru: "Название", en: "Name", de: "Name" })}</th><th className="px-4 py-3">{tr(locale, { uz: "Turi", ru: "Тип", en: "Type", de: "Typ" })}</th>
+        <th className="px-4 py-3">{tr(locale, { uz: "Holati", ru: "Статус", en: "Status", de: "Status" })}</th><th className="px-4 py-3">{tr(locale, { uz: "Sana", ru: "Дата", en: "Date", de: "Datum" })}</th><th className="px-4 py-3">{tr(locale, { uz: "Boshlanish vaqti", ru: "Время начала", en: "Start time", de: "Startzeit" })}</th>
+        <th className="px-4 py-3">{tr(locale, { uz: "Davomiyligi (daqiqa)", ru: "Длительность (мин)", en: "Duration (min)", de: "Dauer (Min.)" })}</th><th className="px-4 py-3">{tr(locale, { uz: "Mas'ul xodim", ru: "Ответственный", en: "Responsible", de: "Verantwortlich" })}</th><th className="px-4 py-3">{tr(locale, { uz: "Guruhlar", ru: "Группы", en: "Groups", de: "Gruppen" })}</th>
       </tr>}
       colSpan={9} empty={shown.length === 0}
     >
@@ -146,8 +146,8 @@ function TypesTable({ types, locale }: { types: VTestType[]; locale: Locale }) {
       pageSize={pageSize} setPageSize={setPageSize} page={cur} setPage={setPage} totalPages={totalPages}
       minWidth={860}
       head={<tr>
-        <th className="w-12 px-4 py-3">№</th><th className="px-4 py-3">{tr(locale, { uz: "Nomi", ru: "Название", en: "Name" })}</th><th className="px-4 py-3">{tr(locale, { uz: "Kodi", ru: "Код", en: "Code" })}</th>
-        <th className="px-4 py-3">{tr(locale, { uz: "Davomiyligi (daqiqa)", ru: "Длительность (мин)", en: "Duration (min)" })}</th><th className="px-4 py-3">{tr(locale, { uz: "Kurslar", ru: "Курсы", en: "Courses" })}</th><th className="px-4 py-3">{tr(locale, { uz: "Holati", ru: "Статус", en: "Status" })}</th><th className="px-4 py-3">{tr(locale, { uz: "Qo'shilgan sana", ru: "Дата добавления", en: "Added date" })}</th>
+        <th className="w-12 px-4 py-3">№</th><th className="px-4 py-3">{tr(locale, { uz: "Nomi", ru: "Название", en: "Name", de: "Name" })}</th><th className="px-4 py-3">{tr(locale, { uz: "Kodi", ru: "Код", en: "Code", de: "Code" })}</th>
+        <th className="px-4 py-3">{tr(locale, { uz: "Davomiyligi (daqiqa)", ru: "Длительность (мин)", en: "Duration (min)", de: "Dauer (Min.)" })}</th><th className="px-4 py-3">{tr(locale, { uz: "Kurslar", ru: "Курсы", en: "Courses", de: "Kurse" })}</th><th className="px-4 py-3">{tr(locale, { uz: "Holati", ru: "Статус", en: "Status", de: "Status" })}</th><th className="px-4 py-3">{tr(locale, { uz: "Qo'shilgan sana", ru: "Дата добавления", en: "Added date", de: "Hinzugefügt am" })}</th>
       </tr>}
       colSpan={7} empty={shown.length === 0}
     >
@@ -164,7 +164,7 @@ function TypesTable({ types, locale }: { types: VTestType[]; locale: Locale }) {
               ))}
             </div>
           </td>
-          <td className="px-4 py-3"><span className={cn("rounded-md px-2 py-0.5 text-[11px] font-semibold", t.active ? STATUS_TONE.ACTIVE : STATUS_TONE.FINISHED)}>{t.active ? tr(locale, { uz: "Faol", ru: "Активный", en: "Active" }) : tr(locale, { uz: "Nofaol", ru: "Неактивный", en: "Inactive" })}</span></td>
+          <td className="px-4 py-3"><span className={cn("rounded-md px-2 py-0.5 text-[11px] font-semibold", t.active ? STATUS_TONE.ACTIVE : STATUS_TONE.FINISHED)}>{t.active ? tr(locale, { uz: "Faol", ru: "Активный", en: "Active", de: "Aktiv" }) : tr(locale, { uz: "Nofaol", ru: "Неактивный", en: "Inactive", de: "Inaktiv" })}</span></td>
           <td className="px-4 py-3 tabular-nums text-slate-500">{t.createdAt}</td>
         </tr>
       ))}
@@ -183,13 +183,13 @@ function TableShell({ search, setSearch, total, pageSize, setPageSize, page, set
       <div className="flex flex-wrap items-center gap-2">
         <div className="relative ml-auto">
           <Icon name="search" className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400" />
-          <input value={search} onChange={(e) => setSearch(e.target.value)} placeholder={tr(locale, { uz: "Qidirish", ru: "Поиск", en: "Search" })} className="h-10 w-60 rounded-lg border border-slate-200 bg-white pl-9 pr-3 text-sm outline-none focus:border-brand-400 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-100" />
+          <input value={search} onChange={(e) => setSearch(e.target.value)} placeholder={tr(locale, { uz: "Qidirish", ru: "Поиск", en: "Search", de: "Suchen" })} className="h-10 w-60 rounded-lg border border-slate-200 bg-white pl-9 pr-3 text-sm outline-none focus:border-brand-400 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-100" />
         </div>
       </div>
 
       <div className="overflow-hidden rounded-2xl border border-slate-200/70 bg-white shadow-card dark:border-slate-800 dark:bg-slate-900">
         <div className="flex items-center justify-end border-b border-slate-100 px-4 py-2 dark:border-slate-800">
-          <span className="rounded-lg bg-slate-100 px-2.5 py-1 text-xs font-semibold text-slate-500 dark:bg-slate-800 dark:text-slate-300">{tr(locale, { uz: "Umumiy soni", ru: "Всего", en: "Total" })}: {total}</span>
+          <span className="rounded-lg bg-slate-100 px-2.5 py-1 text-xs font-semibold text-slate-500 dark:bg-slate-800 dark:text-slate-300">{tr(locale, { uz: "Umumiy soni", ru: "Всего", en: "Total", de: "Gesamt" })}: {total}</span>
         </div>
         <div className="overflow-x-auto">
           <table className="w-full text-left text-sm" style={{ minWidth }}>
@@ -198,8 +198,8 @@ function TableShell({ search, setSearch, total, pageSize, setPageSize, page, set
               {empty ? (
                 <tr><td colSpan={colSpan} className="px-4 py-16 text-center">
                   <div className="text-3xl opacity-30">📭</div>
-                  <p className="mt-2 font-medium text-slate-500 dark:text-slate-400">{tr(locale, { uz: "Ma'lumotlar topilmadi", ru: "Данные не найдены", en: "No data found" })}</p>
-                  <p className="mt-0.5 text-xs text-slate-400">{tr(locale, { uz: "Ma'lumotlar topilmadi. Filterni o'zgartirib ko'ring.", ru: "Данные не найдены. Попробуйте изменить фильтр.", en: "No data found. Try changing the filter." })}</p>
+                  <p className="mt-2 font-medium text-slate-500 dark:text-slate-400">{tr(locale, { uz: "Ma'lumotlar topilmadi", ru: "Данные не найдены", en: "No data found", de: "Keine Daten gefunden" })}</p>
+                  <p className="mt-0.5 text-xs text-slate-400">{tr(locale, { uz: "Ma'lumotlar topilmadi. Filterni o'zgartirib ko'ring.", ru: "Данные не найдены. Попробуйте изменить фильтр.", en: "No data found. Try changing the filter.", de: "Keine Daten gefunden. Versuchen Sie, den Filter zu ändern." })}</p>
                 </td></tr>
               ) : children}
             </tbody>
@@ -209,7 +209,7 @@ function TableShell({ search, setSearch, total, pageSize, setPageSize, page, set
           <div className="flex items-center gap-2 text-xs text-slate-500 dark:text-slate-400">
             <Icon name="listView" className="h-4 w-4" />
             <select value={pageSize} onChange={(e) => { setPageSize(Number(e.target.value)); setPage(1); }} className="rounded-lg border border-slate-200 bg-white px-2 py-1 text-xs outline-none dark:border-slate-700 dark:bg-slate-800 dark:text-slate-200">
-              {[10, 20, 50, 100].map((n) => <option key={n} value={n}>{n} {tr(locale, { uz: "qator", ru: "строк", en: "rows" })}</option>)}
+              {[10, 20, 50, 100].map((n) => <option key={n} value={n}>{n} {tr(locale, { uz: "qator", ru: "строк", en: "rows", de: "Zeilen" })}</option>)}
             </select>
           </div>
           {totalPages > 1 && (
@@ -238,21 +238,21 @@ function NewBlockTestForm({ staff, groups, locale, onClose }: { staff: Opt[]; gr
   const toggleG = (id: string) => setGsel((d) => d.includes(id) ? d.filter((x) => x !== id) : [...d, id]);
 
   return createPortal(
-    <Drawer title={tr(locale, { uz: "Imtihon qo'shish", ru: "Добавить экзамен", en: "Add exam" })} locale={locale} formRef={formRef} action={action} onClose={onClose} pending={pending} error={state.error}>
-      <Field label={tr(locale, { uz: "Nomi", ru: "Название", en: "Name" })} required><input name="title" required placeholder={tr(locale, { uz: "A1 blok imtihon", ru: "A1 блочный экзамен", en: "A1 block exam" })} className={INP} /></Field>
+    <Drawer title={tr(locale, { uz: "Imtihon qo'shish", ru: "Добавить экзамен", en: "Add exam", de: "Prüfung hinzufügen" })} locale={locale} formRef={formRef} action={action} onClose={onClose} pending={pending} error={state.error}>
+      <Field label={tr(locale, { uz: "Nomi", ru: "Название", en: "Name", de: "Name" })} required><input name="title" required placeholder={tr(locale, { uz: "A1 blok imtihon", ru: "A1 блочный экзамен", en: "A1 block exam", de: "A1-Blockprüfung" })} className={INP} /></Field>
       <div className="grid grid-cols-2 gap-3">
-        <Field label={tr(locale, { uz: "Turi", ru: "Тип", en: "Type" })}><select name="type" className={INP} defaultValue="BLOCK"><option value="KIRISH">{tr(locale, { uz: "Kirish", ru: "Вводный", en: "Entry" })}</option><option value="BLOCK">{tr(locale, { uz: "Blok", ru: "Блок", en: "Block" })}</option><option value="YAKUNIY">{tr(locale, { uz: "Yakuniy", ru: "Итоговый", en: "Final" })}</option></select></Field>
-        <Field label={tr(locale, { uz: "Holati", ru: "Статус", en: "Status" })}><select name="status" className={INP} defaultValue="PLANNED"><option value="PLANNED">{tr(locale, { uz: "Rejalashtirilgan", ru: "Запланирован", en: "Planned" })}</option><option value="ACTIVE">{tr(locale, { uz: "Faol", ru: "Активный", en: "Active" })}</option><option value="FINISHED">{tr(locale, { uz: "Tugagan", ru: "Завершён", en: "Finished" })}</option></select></Field>
+        <Field label={tr(locale, { uz: "Turi", ru: "Тип", en: "Type", de: "Typ" })}><select name="type" className={INP} defaultValue="BLOCK"><option value="KIRISH">{tr(locale, { uz: "Kirish", ru: "Вводный", en: "Entry", de: "Eingang" })}</option><option value="BLOCK">{tr(locale, { uz: "Blok", ru: "Блок", en: "Block", de: "Block" })}</option><option value="YAKUNIY">{tr(locale, { uz: "Yakuniy", ru: "Итоговый", en: "Final", de: "Abschluss" })}</option></select></Field>
+        <Field label={tr(locale, { uz: "Holati", ru: "Статус", en: "Status", de: "Status" })}><select name="status" className={INP} defaultValue="PLANNED"><option value="PLANNED">{tr(locale, { uz: "Rejalashtirilgan", ru: "Запланирован", en: "Planned", de: "Geplant" })}</option><option value="ACTIVE">{tr(locale, { uz: "Faol", ru: "Активный", en: "Active", de: "Aktiv" })}</option><option value="FINISHED">{tr(locale, { uz: "Tugagan", ru: "Завершён", en: "Finished", de: "Abgeschlossen" })}</option></select></Field>
       </div>
       <div className="grid grid-cols-2 gap-3">
-        <Field label={tr(locale, { uz: "Sana", ru: "Дата", en: "Date" })}><input name="date" type="date" className={INP} /></Field>
-        <Field label={tr(locale, { uz: "Boshlanish vaqti", ru: "Время начала", en: "Start time" })}><input name="startTime" type="time" className={INP} /></Field>
+        <Field label={tr(locale, { uz: "Sana", ru: "Дата", en: "Date", de: "Datum" })}><input name="date" type="date" className={INP} /></Field>
+        <Field label={tr(locale, { uz: "Boshlanish vaqti", ru: "Время начала", en: "Start time", de: "Startzeit" })}><input name="startTime" type="time" className={INP} /></Field>
       </div>
       <div className="grid grid-cols-2 gap-3">
-        <Field label={tr(locale, { uz: "Davomiyligi (daqiqa)", ru: "Длительность (мин)", en: "Duration (min)" })}><input name="durationMin" type="number" min="0" max="1000" defaultValue={60} className={INP} /></Field>
-        <Field label={tr(locale, { uz: "Mas'ul xodim", ru: "Ответственный", en: "Responsible" })}><select name="responsibleId" className={INP} defaultValue=""><option value="">—</option>{staff.map((x) => <option key={x.id} value={x.id}>{x.name}</option>)}</select></Field>
+        <Field label={tr(locale, { uz: "Davomiyligi (daqiqa)", ru: "Длительность (мин)", en: "Duration (min)", de: "Dauer (Min.)" })}><input name="durationMin" type="number" min="0" max="1000" defaultValue={60} className={INP} /></Field>
+        <Field label={tr(locale, { uz: "Mas'ul xodim", ru: "Ответственный", en: "Responsible", de: "Verantwortlich" })}><select name="responsibleId" className={INP} defaultValue=""><option value="">—</option>{staff.map((x) => <option key={x.id} value={x.id}>{x.name}</option>)}</select></Field>
       </div>
-      <Field label={tr(locale, { uz: "Guruhlar", ru: "Группы", en: "Groups" })}>
+      <Field label={tr(locale, { uz: "Guruhlar", ru: "Группы", en: "Groups", de: "Gruppen" })}>
         <ChipSelect options={groups} selected={gsel} onToggle={toggleG} locale={locale} />
         <input type="hidden" name="groupIds" value={gsel.join(",")} />
       </Field>
@@ -272,13 +272,13 @@ function NewTestTypeForm({ programs, locale, onClose }: { programs: Opt[]; local
   const toggleC = (id: string) => setCsel((d) => d.includes(id) ? d.filter((x) => x !== id) : [...d, id]);
 
   return createPortal(
-    <Drawer title={tr(locale, { uz: "Test turi qo'shish", ru: "Добавить тип теста", en: "Add test type" })} locale={locale} formRef={formRef} action={action} onClose={onClose} pending={pending} error={state.error}>
-      <Field label={tr(locale, { uz: "Nomi", ru: "Название", en: "Name" })} required><input name="name" required placeholder={tr(locale, { uz: "Blok test A1", ru: "Блочный тест A1", en: "Block test A1" })} className={INP} /></Field>
+    <Drawer title={tr(locale, { uz: "Test turi qo'shish", ru: "Добавить тип теста", en: "Add test type", de: "Testtyp hinzufügen" })} locale={locale} formRef={formRef} action={action} onClose={onClose} pending={pending} error={state.error}>
+      <Field label={tr(locale, { uz: "Nomi", ru: "Название", en: "Name", de: "Name" })} required><input name="name" required placeholder={tr(locale, { uz: "Blok test A1", ru: "Блочный тест A1", en: "Block test A1", de: "Blocktest A1" })} className={INP} /></Field>
       <div className="grid grid-cols-2 gap-3">
-        <Field label={tr(locale, { uz: "Kodi", ru: "Код", en: "Code" })}><input name="code" placeholder="BT-A1" className={INP} /></Field>
-        <Field label={tr(locale, { uz: "Davomiyligi (daqiqa)", ru: "Длительность (мин)", en: "Duration (min)" })}><input name="durationMin" type="number" min="0" max="1000" defaultValue={60} className={INP} /></Field>
+        <Field label={tr(locale, { uz: "Kodi", ru: "Код", en: "Code", de: "Code" })}><input name="code" placeholder="BT-A1" className={INP} /></Field>
+        <Field label={tr(locale, { uz: "Davomiyligi (daqiqa)", ru: "Длительность (мин)", en: "Duration (min)", de: "Dauer (Min.)" })}><input name="durationMin" type="number" min="0" max="1000" defaultValue={60} className={INP} /></Field>
       </div>
-      <Field label={tr(locale, { uz: "Kurslar", ru: "Курсы", en: "Courses" })}>
+      <Field label={tr(locale, { uz: "Kurslar", ru: "Курсы", en: "Courses", de: "Kurse" })}>
         <ChipSelect options={programs} selected={csel} onToggle={toggleC} locale={locale} />
         <input type="hidden" name="courseIds" value={csel.join(",")} />
       </Field>
@@ -308,11 +308,11 @@ function Drawer({ title, formRef, action, onClose, pending, error, children, loc
         </div>
         <div className="flex-1 space-y-3.5 overflow-y-auto px-5 py-4">
           {children}
-          {error && <p className="rounded-lg bg-rose-50 px-3 py-2 text-sm text-rose-700 dark:bg-rose-500/10 dark:text-rose-400">{error === "forbidden" ? tr(locale, { uz: "Ruxsat yo'q.", ru: "Нет доступа.", en: "No access." }) : tr(locale, { uz: "Ma'lumotlar to'liq emas.", ru: "Данные заполнены не полностью.", en: "Data is incomplete." })}</p>}
+          {error && <p className="rounded-lg bg-rose-50 px-3 py-2 text-sm text-rose-700 dark:bg-rose-500/10 dark:text-rose-400">{error === "forbidden" ? tr(locale, { uz: "Ruxsat yo'q.", ru: "Нет доступа.", en: "No access.", de: "Kein Zugriff." }) : tr(locale, { uz: "Ma'lumotlar to'liq emas.", ru: "Данные заполнены не полностью.", en: "Data is incomplete.", de: "Die Daten sind unvollständig." })}</p>}
         </div>
         <div className="flex shrink-0 gap-2 border-t border-slate-100 px-5 py-4 dark:border-white/10">
-          <button type="button" onClick={onClose} className="flex-1 rounded-xl border border-slate-200 py-2.5 text-sm font-semibold text-slate-600 transition hover:bg-slate-50 dark:border-white/10 dark:text-slate-300 dark:hover:bg-white/5">{tr(locale, { uz: "Bekor qilish", ru: "Отмена", en: "Cancel" })}</button>
-          <button type="submit" disabled={pending} className="flex-[1.4] rounded-xl bg-brand-600 py-2.5 text-sm font-semibold text-white transition hover:bg-brand-700 disabled:opacity-60">{pending ? tr(locale, { uz: "Saqlanmoqda...", ru: "Сохранение...", en: "Saving..." }) : tr(locale, { uz: "Saqlash", ru: "Сохранить", en: "Save" })}</button>
+          <button type="button" onClick={onClose} className="flex-1 rounded-xl border border-slate-200 py-2.5 text-sm font-semibold text-slate-600 transition hover:bg-slate-50 dark:border-white/10 dark:text-slate-300 dark:hover:bg-white/5">{tr(locale, { uz: "Bekor qilish", ru: "Отмена", en: "Cancel", de: "Abbrechen" })}</button>
+          <button type="submit" disabled={pending} className="flex-[1.4] rounded-xl bg-brand-600 py-2.5 text-sm font-semibold text-white transition hover:bg-brand-700 disabled:opacity-60">{pending ? tr(locale, { uz: "Saqlanmoqda...", ru: "Сохранение...", en: "Saving...", de: "Wird gespeichert..." }) : tr(locale, { uz: "Saqlash", ru: "Сохранить", en: "Save", de: "Speichern" })}</button>
         </div>
       </form>
     </div>
@@ -329,7 +329,7 @@ function Field({ label, required, children }: { label: string; required?: boolea
 }
 
 function ChipSelect({ options, selected, onToggle, locale }: { options: Opt[]; selected: string[]; onToggle: (id: string) => void; locale: Locale }) {
-  if (options.length === 0) return <p className="text-xs text-slate-400">{tr(locale, { uz: "Variant yo'q", ru: "Нет вариантов", en: "No options" })}</p>;
+  if (options.length === 0) return <p className="text-xs text-slate-400">{tr(locale, { uz: "Variant yo'q", ru: "Нет вариантов", en: "No options", de: "Keine Optionen" })}</p>;
   return (
     <div className="flex max-h-32 flex-wrap gap-1.5 overflow-y-auto">
       {options.map((o) => {

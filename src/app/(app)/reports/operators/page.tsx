@@ -16,14 +16,14 @@ const fmtDate = (d: Date) => `${p2(d.getDate())}.${p2(d.getMonth() + 1)}.${d.get
 const fmtTime = (d: Date) => `${p2(d.getHours())}:${p2(d.getMinutes())}`;
 
 function ago(d: Date | null, locale: Locale): string {
-  if (!d) return tr(locale, { uz: "hech qachon", ru: "никогда", en: "never" });
+  if (!d) return tr(locale, { uz: "hech qachon", ru: "никогда", en: "never", de: "nie" });
   const min = Math.floor((Date.now() - d.getTime()) / 60000);
-  if (min < 1) return tr(locale, { uz: "hozir", ru: "сейчас", en: "now" });
-  if (min < 60) return tr(locale, { uz: `${min} daq oldin`, ru: `${min} мин назад`, en: `${min} min ago` });
+  if (min < 1) return tr(locale, { uz: "hozir", ru: "сейчас", en: "now", de: "gerade eben" });
+  if (min < 60) return tr(locale, { uz: `${min} daq oldin`, ru: `${min} мин назад`, en: `${min} min ago`, de: `vor ${min} Min.` });
   const h = Math.floor(min / 60);
-  if (h < 24) return tr(locale, { uz: `${h} soat oldin`, ru: `${h} ч назад`, en: `${h} h ago` });
+  if (h < 24) return tr(locale, { uz: `${h} soat oldin`, ru: `${h} ч назад`, en: `${h} h ago`, de: `vor ${h} Std.` });
   const days = Math.floor(h / 24);
-  return tr(locale, { uz: `${days} kun oldin`, ru: `${days} дн назад`, en: `${days} days ago` });
+  return tr(locale, { uz: `${days} kun oldin`, ru: `${days} дн назад`, en: `${days} days ago`, de: `vor ${days} Tagen` });
 }
 
 const ONLINE_MS = 15 * 60 * 1000; // oxirgi 15 daqiqada kirgan bo'lsa — online
@@ -37,8 +37,8 @@ export default async function OperatorsPage({ searchParams }: { searchParams: Pr
   if (!canSeeTeamReports(s.role)) {
     return (
       <Forbidden
-        title={tr(loc, { uz: "Kirish taqiqlangan", ru: "Доступ запрещён", en: "Access denied" })}
-        body={tr(loc, { uz: "Bu bo'lim savdo bo'limi uchun.", ru: "Этот раздел для отдела продаж.", en: "This section is for the sales department." })}
+        title={tr(loc, { uz: "Kirish taqiqlangan", ru: "Доступ запрещён", en: "Access denied", de: "Zugriff verweigert" })}
+        body={tr(loc, { uz: "Bu bo'lim savdo bo'limi uchun.", ru: "Этот раздел для отдела продаж.", en: "This section is for the sales department.", de: "Dieser Bereich ist für die Vertriebsabteilung." })}
       />
     );
   }

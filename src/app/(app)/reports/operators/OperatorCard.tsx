@@ -40,7 +40,7 @@ export default function OperatorCard({ locale, op, canManage, onTask, onNotify, 
   };
 
   const statusText = op.onCall
-    ? tr(locale, { uz: "Qo'ng'iroqda", ru: "На звонке", en: "On call" })
+    ? tr(locale, { uz: "Qo'ng'iroqda", ru: "На звонке", en: "On call", de: "Im Gespräch" })
     : op.online
       ? "Online"
       : "Offline";
@@ -67,10 +67,10 @@ export default function OperatorCard({ locale, op, canManage, onTask, onNotify, 
           </div>
           {canManage && (
             <div className="flex shrink-0 items-center gap-0.5">
-              <IconBtn title={tr(locale, { uz: "Topshiriq berish", ru: "Дать задачу", en: "Assign task" })} icon="clipboard" hover="hover:text-brand-500 hover:bg-brand-500/10" onClick={onTask} />
-              <IconBtn title={tr(locale, { uz: "Xabar yuborish", ru: "Отправить сообщение", en: "Send message" })} icon="bell" hover="hover:text-amber-500 hover:bg-amber-500/10" onClick={onNotify} />
-              <IconBtn title={tr(locale, { uz: "Tahrirlash", ru: "Редактировать", en: "Edit" })} icon="edit" hover="hover:text-blue-500 hover:bg-blue-500/10" onClick={onEdit} />
-              <IconBtn title={tr(locale, { uz: "O'chirish", ru: "Удалить", en: "Remove" })} icon="trash" hover="hover:text-red-500 hover:bg-red-500/10" onClick={onArchive} />
+              <IconBtn title={tr(locale, { uz: "Topshiriq berish", ru: "Дать задачу", en: "Assign task", de: "Aufgabe zuweisen" })} icon="clipboard" hover="hover:text-brand-500 hover:bg-brand-500/10" onClick={onTask} />
+              <IconBtn title={tr(locale, { uz: "Xabar yuborish", ru: "Отправить сообщение", en: "Send message", de: "Nachricht senden" })} icon="bell" hover="hover:text-amber-500 hover:bg-amber-500/10" onClick={onNotify} />
+              <IconBtn title={tr(locale, { uz: "Tahrirlash", ru: "Редактировать", en: "Edit", de: "Bearbeiten" })} icon="edit" hover="hover:text-blue-500 hover:bg-blue-500/10" onClick={onEdit} />
+              <IconBtn title={tr(locale, { uz: "O'chirish", ru: "Удалить", en: "Remove", de: "Entfernen" })} icon="trash" hover="hover:text-red-500 hover:bg-red-500/10" onClick={onArchive} />
             </div>
           )}
         </div>
@@ -83,8 +83,8 @@ export default function OperatorCard({ locale, op, canManage, onTask, onNotify, 
 
         {/* Kunlik ko'rsatkichlar */}
         <div className="mb-3 grid grid-cols-2 gap-2">
-          <MiniStat icon="phoneCall" tone="text-cyan-500" value={String(op.dayCalls)} label={tr(locale, { uz: "Kunlik qo'ng'iroq", ru: "Звонков за день", en: "Calls that day" })} />
-          <MiniStat icon="clock" tone="text-amber-500" value={fmtTalk(op.dayTalkSec)} label={tr(locale, { uz: "Gaplashgan", ru: "Наговорено", en: "Talk time" })} />
+          <MiniStat icon="phoneCall" tone="text-cyan-500" value={String(op.dayCalls)} label={tr(locale, { uz: "Kunlik qo'ng'iroq", ru: "Звонков за день", en: "Calls that day", de: "Anrufe an diesem Tag" })} />
+          <MiniStat icon="clock" tone="text-amber-500" value={fmtTalk(op.dayTalkSec)} label={tr(locale, { uz: "Gaplashgan", ru: "Наговорено", en: "Talk time", de: "Gesprächszeit" })} />
         </div>
 
         <div className="h-px w-full bg-slate-100 dark:bg-slate-800" />
@@ -93,7 +93,7 @@ export default function OperatorCard({ locale, op, canManage, onTask, onNotify, 
         <div className="py-3">
           <div className="mb-1.5 flex items-center justify-between">
             <span className="flex items-center gap-1.5 text-[11px] font-medium text-slate-400">
-              <Icon name="chart" className="h-3.5 w-3.5" /> {tr(locale, { uz: "Konversiya", ru: "Конверсия", en: "Conversion" })}
+              <Icon name="chart" className="h-3.5 w-3.5" /> {tr(locale, { uz: "Konversiya", ru: "Конверсия", en: "Conversion", de: "Konversion" })}
             </span>
             <span className="text-sm font-bold" style={{ color: kpiColor(op.conv) }}>{op.conv}%</span>
           </div>
@@ -101,8 +101,8 @@ export default function OperatorCard({ locale, op, canManage, onTask, onNotify, 
             <div className="h-full rounded-full transition-all" style={{ width: `${Math.min(100, op.conv)}%`, background: kpiColor(op.conv) }} />
           </div>
           <div className="mt-1.5 flex justify-between text-[10px] text-slate-400">
-            <span>{tr(locale, { uz: "Muvaffaqiyatli", ru: "Успешные", en: "Successful" })}: <b className="text-emerald-600 dark:text-emerald-400">{op.won}</b></span>
-            <span>{tr(locale, { uz: "Jami", ru: "Всего", en: "Total" })}: <b className="text-slate-600 dark:text-slate-300">{op.total}</b></span>
+            <span>{tr(locale, { uz: "Muvaffaqiyatli", ru: "Успешные", en: "Successful", de: "Erfolgreich" })}: <b className="text-emerald-600 dark:text-emerald-400">{op.won}</b></span>
+            <span>{tr(locale, { uz: "Jami", ru: "Всего", en: "Total", de: "Gesamt" })}: <b className="text-slate-600 dark:text-slate-300">{op.total}</b></span>
           </div>
         </div>
 
@@ -111,15 +111,15 @@ export default function OperatorCard({ locale, op, canManage, onTask, onNotify, 
         {/* Oxirgi faollik */}
         <div className="space-y-2 py-3 text-[10px] text-slate-400">
           <div className="flex items-center justify-between">
-            <span className="flex items-center gap-1.5"><Icon name="clock" className="h-3 w-3" /> {tr(locale, { uz: "Oxirgi online", ru: "Последний онлайн", en: "Last online" })}:</span>
+            <span className="flex items-center gap-1.5"><Icon name="clock" className="h-3 w-3" /> {tr(locale, { uz: "Oxirgi online", ru: "Последний онлайн", en: "Last online", de: "Zuletzt online" })}:</span>
             <span className="font-medium text-slate-600 dark:text-slate-300">{op.lastOnline}</span>
           </div>
           <div className="flex items-center justify-between">
-            <span className="flex items-center gap-1.5"><Icon name="user" className="h-3 w-3" /> {tr(locale, { uz: "Oxirgi lid", ru: "Последний лид", en: "Last lead" })}:</span>
+            <span className="flex items-center gap-1.5"><Icon name="user" className="h-3 w-3" /> {tr(locale, { uz: "Oxirgi lid", ru: "Последний лид", en: "Last lead", de: "Letzter Lead" })}:</span>
             <span className="max-w-[150px] truncate font-medium text-slate-600 dark:text-slate-300">{op.lastLead ?? "—"}</span>
           </div>
           <div className="flex items-center justify-between">
-            <span className="flex items-center gap-1.5"><Icon name="phoneCall" className="h-3 w-3" /> {tr(locale, { uz: "Oxirgi qo'ng'iroq", ru: "Последний звонок", en: "Last call" })}:</span>
+            <span className="flex items-center gap-1.5"><Icon name="phoneCall" className="h-3 w-3" /> {tr(locale, { uz: "Oxirgi qo'ng'iroq", ru: "Последний звонок", en: "Last call", de: "Letzter Anruf" })}:</span>
             <span className="max-w-[150px] truncate font-medium text-slate-600 dark:text-slate-300">{op.lastCall ?? "—"}</span>
           </div>
         </div>
@@ -134,7 +134,7 @@ export default function OperatorCard({ locale, op, canManage, onTask, onNotify, 
                 className="flex w-full items-center gap-2 text-[11px] font-medium text-slate-400 transition hover:text-slate-600 dark:hover:text-slate-200"
               >
                 <Icon name="shield" className="h-3.5 w-3.5" />
-                <span>{tr(locale, { uz: "Kirish ma'lumotlari", ru: "Данные входа", en: "Login details" })}</span>
+                <span>{tr(locale, { uz: "Kirish ma'lumotlari", ru: "Данные входа", en: "Login details", de: "Anmeldedaten" })}</span>
                 <Icon name="chevronDown" className={cn("ml-auto h-3 w-3 transition-transform", showLogin && "rotate-180")} />
               </button>
               {showLogin && (
@@ -146,7 +146,7 @@ export default function OperatorCard({ locale, op, canManage, onTask, onNotify, 
                     onCopy={() => copy(op.email, "login")}
                   />
                   <CredRow
-                    label={tr(locale, { uz: "Parol", ru: "Пароль", en: "Password" })}
+                    label={tr(locale, { uz: "Parol", ru: "Пароль", en: "Password", de: "Passwort" })}
                     value={op.password ?? "••••••••"}
                     copied={copied === "pass"}
                     onCopy={op.password ? () => copy(op.password as string, "pass") : undefined}
@@ -160,9 +160,9 @@ export default function OperatorCard({ locale, op, canManage, onTask, onNotify, 
 
       {/* Pastki qator */}
       <div className="flex items-center justify-between bg-slate-50 px-4 py-2.5 text-[10px] text-slate-400 dark:bg-white/[0.03]">
-        <span>{tr(locale, { uz: "Yaratilgan", ru: "Создан", en: "Created" })}: {op.createdAt}</span>
+        <span>{tr(locale, { uz: "Yaratilgan", ru: "Создан", en: "Created", de: "Erstellt" })}: {op.createdAt}</span>
         <Link href={`/reports/operators/${op.id}`} className="flex items-center gap-1 font-semibold text-brand-600 transition hover:underline dark:text-brand-300">
-          <Icon name="eye" className="h-3 w-3" /> {tr(locale, { uz: "Batafsil", ru: "Подробнее", en: "Details" })}
+          <Icon name="eye" className="h-3 w-3" /> {tr(locale, { uz: "Batafsil", ru: "Подробнее", en: "Details", de: "Details" })}
         </Link>
       </div>
     </div>

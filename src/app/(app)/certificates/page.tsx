@@ -52,7 +52,7 @@ export default async function CertificatesPage() {
     <>
       <PageHeader
         title={t("nav.certificates")}
-        subtitle={tr(s.locale, { uz: "Sertifikatlar va QR-tekshiruv (TZ 4.5)", ru: "Сертификаты и QR-проверка (ТЗ 4.5)", en: "Certificates and QR verification (TZ 4.5)" })}
+        subtitle={tr(s.locale, { uz: "Sertifikatlar va QR-tekshiruv (TZ 4.5)", ru: "Сертификаты и QR-проверка (ТЗ 4.5)", en: "Certificates and QR verification (TZ 4.5)", de: "Zertifikate und QR-Überprüfung (TZ 4.5)" })}
         action={
           <div className="flex items-center gap-2">
             <ExportCertsButton rows={exportRowsData} locale={s.locale} />
@@ -68,6 +68,7 @@ export default async function CertificatesPage() {
               uz: "Hozircha sertifikat berilmagan. Imtihon shartlari bajarilganda sertifikat noyob raqam va tekshiruv QR-kodi bilan beriladi.",
               ru: "Пока сертификаты не выданы. При выполнении условий экзамена сертификат выдаётся с уникальным номером и QR-кодом для проверки.",
               en: "No certificates issued yet. Once the exam requirements are met, a certificate is issued with a unique number and a verification QR code.",
+              de: "Es wurden noch keine Zertifikate ausgestellt. Sobald die Prüfungsanforderungen erfüllt sind, wird ein Zertifikat mit einer eindeutigen Nummer und einem QR-Code zur Überprüfung ausgestellt.",
             })}
           </p>
         </Card>
@@ -75,12 +76,12 @@ export default async function CertificatesPage() {
         <Table
           head={
             <tr>
-              <th className="px-4 py-3">{tr(s.locale, { uz: "Raqam", ru: "Номер", en: "Number" })}</th>
-              <th className="px-4 py-3">{tr(s.locale, { uz: "O'quvchi", ru: "Ученик", en: "Student" })}</th>
-              <th className="px-4 py-3">{tr(s.locale, { uz: "Dastur / daraja", ru: "Программа / уровень", en: "Program / level" })}</th>
-              <th className="px-4 py-3">{tr(s.locale, { uz: "Natija", ru: "Результат", en: "Result" })}</th>
+              <th className="px-4 py-3">{tr(s.locale, { uz: "Raqam", ru: "Номер", en: "Number", de: "Nummer" })}</th>
+              <th className="px-4 py-3">{tr(s.locale, { uz: "O'quvchi", ru: "Ученик", en: "Student", de: "Schüler" })}</th>
+              <th className="px-4 py-3">{tr(s.locale, { uz: "Dastur / daraja", ru: "Программа / уровень", en: "Program / level", de: "Programm / Niveau" })}</th>
+              <th className="px-4 py-3">{tr(s.locale, { uz: "Natija", ru: "Результат", en: "Result", de: "Ergebnis" })}</th>
               <th className="px-4 py-3">{t("common.status")}</th>
-              <th className="px-4 py-3">{tr(s.locale, { uz: "Tekshirish", ru: "Проверка", en: "Verify" })}</th>
+              <th className="px-4 py-3">{tr(s.locale, { uz: "Tekshirish", ru: "Проверка", en: "Verify", de: "Überprüfen" })}</th>
               {writable && <th className="px-4 py-3">{t("common.actions")}</th>}
             </tr>
           }
@@ -94,7 +95,7 @@ export default async function CertificatesPage() {
               <td className="px-4 py-3"><Badge tone={statusTone[c.status] ?? "slate"}>{c.status}</Badge></td>
               <td className="px-4 py-3">
                 <Link href={`/verify/${c.qrCode}`} target="_blank" className="text-xs text-brand-600 hover:underline">
-                  🔗 {tr(s.locale, { uz: "QR sahifa", ru: "QR-страница", en: "QR page" })}
+                  🔗 {tr(s.locale, { uz: "QR sahifa", ru: "QR-страница", en: "QR page", de: "QR-Seite" })}
                 </Link>
               </td>
               {writable && (

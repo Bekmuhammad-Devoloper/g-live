@@ -67,11 +67,11 @@ export default function WithdrawalsView({ withdrawals, courses, students, writab
 
   const exportCsv = () => {
     const head = [
-      tr(locale, { uz: "Sana", ru: "Дата", en: "Date" }),
-      tr(locale, { uz: "Talaba ismi", ru: "Имя ученика", en: "Student name" }),
-      tr(locale, { uz: "Sum", ru: "Сумма", en: "Amount" }),
-      tr(locale, { uz: "Izoh", ru: "Примечание", en: "Note" }),
-      tr(locale, { uz: "Xodim", ru: "Сотрудник", en: "Staff" }),
+      tr(locale, { uz: "Sana", ru: "Дата", en: "Date", de: "Datum" }),
+      tr(locale, { uz: "Talaba ismi", ru: "Имя ученика", en: "Student name", de: "Name des Schülers" }),
+      tr(locale, { uz: "Sum", ru: "Сумма", en: "Amount", de: "Betrag" }),
+      tr(locale, { uz: "Izoh", ru: "Примечание", en: "Note", de: "Notiz" }),
+      tr(locale, { uz: "Xodim", ru: "Сотрудник", en: "Staff", de: "Mitarbeiter" }),
     ];
     const lines = filtered.map((w) => [fmtDate(w.date), w.student, String(w.amount), w.note ?? "", w.author ?? ""]);
     const csv = [head, ...lines].map((r) => r.map((c) => `"${String(c).replace(/"/g, '""')}"`).join(",")).join("\n");
@@ -84,7 +84,7 @@ export default function WithdrawalsView({ withdrawals, courses, students, writab
   return (
     <div className="space-y-5">
       <div className="flex flex-wrap items-center justify-between gap-3">
-        <h1 className="text-[24px] font-bold tracking-tight text-slate-900 dark:text-slate-100">{tr(locale, { uz: "Yechib olish", ru: "Вывод средств", en: "Withdrawals" })}</h1>
+        <h1 className="text-[24px] font-bold tracking-tight text-slate-900 dark:text-slate-100">{tr(locale, { uz: "Yechib olish", ru: "Вывод средств", en: "Withdrawals", de: "Auszahlungen" })}</h1>
         {writable && <NewWithdrawal students={students} locale={locale} />}
       </div>
 
@@ -93,7 +93,7 @@ export default function WithdrawalsView({ withdrawals, courses, students, writab
         <div className="rounded-2xl border border-l-4 border-slate-300 border-l-brand-600 bg-white p-5 shadow-card dark:border-slate-600 dark:border-l-brand-500 dark:bg-slate-900">
           <div className="flex items-start justify-between gap-3">
             <div className="text-lg text-slate-700 dark:text-slate-200">
-              {tr(locale, { uz: "Jami yechib olishlar", ru: "Всего выводов", en: "Total withdrawals" })}: <span className="font-bold text-slate-900 dark:text-slate-100">{formatMoney(total, locale)}</span>
+              {tr(locale, { uz: "Jami yechib olishlar", ru: "Всего выводов", en: "Total withdrawals", de: "Auszahlungen insgesamt" })}: <span className="font-bold text-slate-900 dark:text-slate-100">{formatMoney(total, locale)}</span>
               <div className="mt-1 text-sm text-slate-400">({fmtDate(from)} — {fmtDate(to)})</div>
             </div>
             <Icon name="coins" className="h-7 w-7 shrink-0 text-brand-400" />
@@ -101,10 +101,10 @@ export default function WithdrawalsView({ withdrawals, courses, students, writab
         </div>
         <div className="rounded-2xl border border-slate-300 bg-white p-5 shadow-card dark:border-slate-600 dark:bg-slate-900">
           {byCourse.length === 0 ? (
-            <div className="flex h-32 items-center justify-center text-sm text-slate-400">{tr(locale, { uz: "Ko'rsatiladigan ma'lumotlar yo'q", ru: "Нет данных для отображения", en: "No data to display" })}</div>
+            <div className="flex h-32 items-center justify-center text-sm text-slate-400">{tr(locale, { uz: "Ko'rsatiladigan ma'lumotlar yo'q", ru: "Нет данных для отображения", en: "No data to display", de: "Keine Daten zum Anzeigen" })}</div>
           ) : (
             <div className="space-y-2.5">
-              <h3 className="mb-3 text-sm font-semibold text-slate-600 dark:text-slate-300">{tr(locale, { uz: "Kurs bo'yicha", ru: "По курсу", en: "By course" })}</h3>
+              <h3 className="mb-3 text-sm font-semibold text-slate-600 dark:text-slate-300">{tr(locale, { uz: "Kurs bo'yicha", ru: "По курсу", en: "By course", de: "Nach Kurs" })}</h3>
               {byCourse.map(([c, v]) => (
                 <div key={c}>
                   <div className="mb-1 flex justify-between text-xs">
@@ -123,15 +123,15 @@ export default function WithdrawalsView({ withdrawals, courses, students, writab
 
       {/* Filtrlar */}
       <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-6">
-        <FField label={tr(locale, { uz: "Sanadan boshlab", ru: "С даты", en: "From date" })}><input type="date" value={from} onChange={(e) => setFrom(e.target.value)} className={inp} /></FField>
-        <FField label={tr(locale, { uz: "Sana bo'yicha", ru: "По дату", en: "To date" })}><input type="date" value={to} onChange={(e) => setTo(e.target.value)} className={inp} /></FField>
-        <FField label={tr(locale, { uz: "Ism yoki Telefon", ru: "Имя или телефон", en: "Name or phone" })}><input value={q} onChange={(e) => setQ(e.target.value)} placeholder={tr(locale, { uz: "Qidiruv", ru: "Поиск", en: "Search" })} className={inp} /></FField>
-        <FField label={tr(locale, { uz: "Sum", ru: "Сумма", en: "Amount" })}><input value={sum} onChange={(e) => setSum(e.target.value)} placeholder={tr(locale, { uz: "min summa", ru: "мин. сумма", en: "min amount" })} className={inp} /></FField>
-        <FField label={tr(locale, { uz: "Kurs", ru: "Курс", en: "Course" })}>
+        <FField label={tr(locale, { uz: "Sanadan boshlab", ru: "С даты", en: "From date", de: "Von Datum" })}><input type="date" value={from} onChange={(e) => setFrom(e.target.value)} className={inp} /></FField>
+        <FField label={tr(locale, { uz: "Sana bo'yicha", ru: "По дату", en: "To date", de: "Bis Datum" })}><input type="date" value={to} onChange={(e) => setTo(e.target.value)} className={inp} /></FField>
+        <FField label={tr(locale, { uz: "Ism yoki Telefon", ru: "Имя или телефон", en: "Name or phone", de: "Name oder Telefon" })}><input value={q} onChange={(e) => setQ(e.target.value)} placeholder={tr(locale, { uz: "Qidiruv", ru: "Поиск", en: "Search", de: "Suchen" })} className={inp} /></FField>
+        <FField label={tr(locale, { uz: "Sum", ru: "Сумма", en: "Amount", de: "Betrag" })}><input value={sum} onChange={(e) => setSum(e.target.value)} placeholder={tr(locale, { uz: "min summa", ru: "мин. сумма", en: "min amount", de: "Min. Betrag" })} className={inp} /></FField>
+        <FField label={tr(locale, { uz: "Kurs", ru: "Курс", en: "Course", de: "Kurs" })}>
           <div className="relative">
             <select value={course} onChange={(e) => setCourse(e.target.value)}
               className={cn("h-11 w-full appearance-none rounded-lg border bg-white pl-3 pr-9 text-sm outline-none focus:border-brand-400 dark:bg-slate-800/60", course ? "border-brand-300 text-slate-700 dark:text-slate-100" : "border-slate-300 text-slate-400 dark:border-slate-600")}>
-              <option value="">{tr(locale, { uz: "Tanlang", ru: "Выберите", en: "Select" })}</option>
+              <option value="">{tr(locale, { uz: "Tanlang", ru: "Выберите", en: "Select", de: "Auswählen" })}</option>
               {courses.map((c) => <option key={c} value={c}>{c}</option>)}
             </select>
             <Icon name="chevronDown" className="pointer-events-none absolute right-2.5 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400" />
@@ -139,30 +139,30 @@ export default function WithdrawalsView({ withdrawals, courses, students, writab
         </FField>
         <div className="flex items-end">
           <button onClick={() => { setFrom(defaultFrom); setTo(defaultTo); setQ(""); setSum(""); setCourse(""); }}
-            className="h-11 rounded-full bg-brand-800 px-8 text-sm font-semibold text-white transition hover:bg-brand-900">{tr(locale, { uz: "Tozalash", ru: "Очистить", en: "Clear" })}</button>
+            className="h-11 rounded-full bg-brand-800 px-8 text-sm font-semibold text-white transition hover:bg-brand-900">{tr(locale, { uz: "Tozalash", ru: "Очистить", en: "Clear", de: "Zurücksetzen" })}</button>
         </div>
       </div>
 
       {/* Jadval */}
       <div className="relative overflow-hidden rounded-2xl border border-slate-300 bg-white shadow-card dark:border-slate-600 dark:bg-slate-900">
         <div className="flex items-center justify-between border-b border-slate-200/70 px-5 py-3 dark:border-slate-800">
-          <span className="text-sm text-slate-500">{tr(locale, { uz: "Jami", ru: "Всего", en: "Total" })}: <b className="text-slate-800 dark:text-slate-100">{filtered.length}</b> {tr(locale, { uz: "ta", ru: "шт", en: "items" })}</span>
+          <span className="text-sm text-slate-500">{tr(locale, { uz: "Jami", ru: "Всего", en: "Total", de: "Gesamt" })}: <b className="text-slate-800 dark:text-slate-100">{filtered.length}</b> {tr(locale, { uz: "ta", ru: "шт", en: "items", de: "Stk." })}</span>
         </div>
         <div className="overflow-x-auto">
           <table className="w-full min-w-[820px] text-left text-sm">
             <thead className="border-b border-slate-200/70 bg-slate-50/60 text-[12px] font-semibold text-slate-600 dark:border-slate-800 dark:bg-slate-800/40 dark:text-slate-300">
               <tr>
-                <th className="px-4 py-3.5">{tr(locale, { uz: "Sana", ru: "Дата", en: "Date" })}</th>
-                <th className="px-4 py-3.5">{tr(locale, { uz: "Talaba ismi", ru: "Имя ученика", en: "Student name" })}</th>
-                <th className="px-4 py-3.5">{tr(locale, { uz: "Sum", ru: "Сумма", en: "Amount" })}</th>
-                <th className="px-4 py-3.5">{tr(locale, { uz: "Izoh", ru: "Примечание", en: "Note" })}</th>
-                <th className="px-4 py-3.5">{tr(locale, { uz: "Xodim", ru: "Сотрудник", en: "Staff" })}</th>
-                <th className="px-4 py-3.5 text-right">{tr(locale, { uz: "Harakatlar", ru: "Действия", en: "Actions" })}</th>
+                <th className="px-4 py-3.5">{tr(locale, { uz: "Sana", ru: "Дата", en: "Date", de: "Datum" })}</th>
+                <th className="px-4 py-3.5">{tr(locale, { uz: "Talaba ismi", ru: "Имя ученика", en: "Student name", de: "Name des Schülers" })}</th>
+                <th className="px-4 py-3.5">{tr(locale, { uz: "Sum", ru: "Сумма", en: "Amount", de: "Betrag" })}</th>
+                <th className="px-4 py-3.5">{tr(locale, { uz: "Izoh", ru: "Примечание", en: "Note", de: "Notiz" })}</th>
+                <th className="px-4 py-3.5">{tr(locale, { uz: "Xodim", ru: "Сотрудник", en: "Staff", de: "Mitarbeiter" })}</th>
+                <th className="px-4 py-3.5 text-right">{tr(locale, { uz: "Harakatlar", ru: "Действия", en: "Actions", de: "Aktionen" })}</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-slate-100 dark:divide-slate-800">
               {filtered.length === 0 ? (
-                <tr><td colSpan={6} className="px-4 py-16 text-center text-slate-400">{tr(locale, { uz: "Ko'rsatiladigan ma'lumotlar yo'q", ru: "Нет данных для отображения", en: "No data to display" })}</td></tr>
+                <tr><td colSpan={6} className="px-4 py-16 text-center text-slate-400">{tr(locale, { uz: "Ko'rsatiladigan ma'lumotlar yo'q", ru: "Нет данных для отображения", en: "No data to display", de: "Keine Daten zum Anzeigen" })}</td></tr>
               ) : (
                 filtered.map((w) => (
                   <tr key={w.id} className="transition hover:bg-slate-50 dark:hover:bg-slate-800/40">
@@ -180,7 +180,7 @@ export default function WithdrawalsView({ withdrawals, courses, students, writab
         </div>
 
         {/* Export FAB */}
-        <button onClick={exportCsv} title={tr(locale, { uz: "CSV yuklab olish", ru: "Скачать CSV", en: "Download CSV" })}
+        <button onClick={exportCsv} title={tr(locale, { uz: "CSV yuklab olish", ru: "Скачать CSV", en: "Download CSV", de: "CSV herunterladen" })}
           className="absolute bottom-4 right-4 grid h-12 w-12 place-items-center rounded-full border-2 border-emerald-500 bg-white text-emerald-600 shadow-card transition hover:bg-emerald-50 dark:bg-slate-900 dark:hover:bg-emerald-950/30">
           <Icon name="download" className="h-5 w-5" />
         </button>
@@ -203,14 +203,14 @@ function FField({ label, children }: { label: string; children: React.ReactNode 
 function CancelBtn({ id, locale }: { id: string; locale: Locale }) {
   const [pending, start] = useTransition();
   const onClick = () => {
-    const reason = window.prompt(tr(locale, { uz: "Bekor qilish sababi (kamida 3 belgi):", ru: "Причина отмены (минимум 3 символа):", en: "Cancellation reason (at least 3 characters):" }));
+    const reason = window.prompt(tr(locale, { uz: "Bekor qilish sababi (kamida 3 belgi):", ru: "Причина отмены (минимум 3 символа):", en: "Cancellation reason (at least 3 characters):", de: "Stornierungsgrund (mind. 3 Zeichen):" }));
     if (!reason || reason.trim().length < 3) return;
     start(() => cancelWithdrawal(id, reason.trim()));
   };
   return (
     <button onClick={onClick} disabled={pending}
       className="inline-flex items-center gap-1.5 rounded-lg border border-rose-200 px-3 py-1.5 text-xs font-medium text-rose-600 transition hover:bg-rose-50 disabled:opacity-50 dark:border-rose-900/50 dark:text-rose-400 dark:hover:bg-rose-950/30">
-      <Icon name="close" className="h-3.5 w-3.5" /> {pending ? "..." : tr(locale, { uz: "Bekor qilish", ru: "Отмена", en: "Cancel" })}
+      <Icon name="close" className="h-3.5 w-3.5" /> {pending ? "..." : tr(locale, { uz: "Bekor qilish", ru: "Отмена", en: "Cancel", de: "Abbrechen" })}
     </button>
   );
 }
@@ -229,7 +229,7 @@ function NewWithdrawal({ students, locale }: { students: { id: string; fullName:
   return (
     <>
       <button onClick={() => setOpen(true)} className="inline-flex items-center gap-1.5 rounded-full bg-brand-600 px-5 py-2.5 text-sm font-semibold text-white transition hover:bg-brand-700">
-        <Icon name="plus" className="h-4 w-4" /> {tr(locale, { uz: "Yechib olish", ru: "Вывод средств", en: "Withdraw" })}
+        <Icon name="plus" className="h-4 w-4" /> {tr(locale, { uz: "Yechib olish", ru: "Вывод средств", en: "Withdraw", de: "Auszahlen" })}
       </button>
 
       {open && (
@@ -238,35 +238,35 @@ function NewWithdrawal({ students, locale }: { students: { id: string; fullName:
           <div className="absolute inset-0 bg-slate-900/50 backdrop-blur-sm" />
           <form ref={formRef} action={action} className="animate-slide-in-right absolute right-0 top-0 flex h-full w-[440px] max-w-[92%] flex-col space-y-3 overflow-y-auto border-l border-slate-200 bg-white p-5 shadow-pop dark:border-white/10 dark:bg-[#15243d]">
             <div className="flex items-center justify-between">
-              <h3 className="text-lg font-bold text-slate-900 dark:text-slate-100">{tr(locale, { uz: "Yangi yechib olish", ru: "Новый вывод средств", en: "New withdrawal" })}</h3>
+              <h3 className="text-lg font-bold text-slate-900 dark:text-slate-100">{tr(locale, { uz: "Yangi yechib olish", ru: "Новый вывод средств", en: "New withdrawal", de: "Neue Auszahlung" })}</h3>
               <button type="button" onClick={() => setOpen(false)} className="text-slate-400 hover:text-slate-600"><Icon name="close" className="h-5 w-5" /></button>
             </div>
 
             <div>
-              <label className="mb-1 block text-xs font-medium text-slate-600 dark:text-slate-300">{tr(locale, { uz: "Talaba", ru: "Ученик", en: "Student" })} <span className="text-rose-500">*</span></label>
+              <label className="mb-1 block text-xs font-medium text-slate-600 dark:text-slate-300">{tr(locale, { uz: "Talaba", ru: "Ученик", en: "Student", de: "Schüler" })} <span className="text-rose-500">*</span></label>
               <select name="studentId" required className={fld} defaultValue="">
                 <option value="" disabled>—</option>
                 {students.map((st) => <option key={st.id} value={st.id}>{st.fullName}</option>)}
               </select>
             </div>
             <div>
-              <label className="mb-1 block text-xs font-medium text-slate-600 dark:text-slate-300">{tr(locale, { uz: "Summa (so'm)", ru: "Сумма (сум)", en: "Amount (soʻm)" })} <span className="text-rose-500">*</span></label>
+              <label className="mb-1 block text-xs font-medium text-slate-600 dark:text-slate-300">{tr(locale, { uz: "Summa (so'm)", ru: "Сумма (сум)", en: "Amount (soʻm)", de: "Betrag (UZS)" })} <span className="text-rose-500">*</span></label>
               <input name="amount" type="number" min="1" step="10000" required className={fld} />
             </div>
             <div>
-              <label className="mb-1 block text-xs font-medium text-slate-600 dark:text-slate-300">{tr(locale, { uz: "Izoh", ru: "Примечание", en: "Note" })}</label>
-              <textarea name="note" rows={2} placeholder={tr(locale, { uz: "Sababi...", ru: "Причина...", en: "Reason..." })} className={fld} />
+              <label className="mb-1 block text-xs font-medium text-slate-600 dark:text-slate-300">{tr(locale, { uz: "Izoh", ru: "Примечание", en: "Note", de: "Notiz" })}</label>
+              <textarea name="note" rows={2} placeholder={tr(locale, { uz: "Sababi...", ru: "Причина...", en: "Reason...", de: "Grund..." })} className={fld} />
             </div>
 
             {state.error && (
               <p className="rounded-lg bg-rose-50 px-3 py-2 text-sm text-rose-700 dark:bg-rose-950/30 dark:text-rose-300">
-                {state.error === "forbidden" ? tr(locale, { uz: "Ruxsat yo'q.", ru: "Нет доступа.", en: "No permission." }) : tr(locale, { uz: "Barcha majburiy maydonlarni to'ldiring.", ru: "Заполните все обязательные поля.", en: "Fill in all required fields." })}
+                {state.error === "forbidden" ? tr(locale, { uz: "Ruxsat yo'q.", ru: "Нет доступа.", en: "No permission.", de: "Kein Zugriff." }) : tr(locale, { uz: "Barcha majburiy maydonlarni to'ldiring.", ru: "Заполните все обязательные поля.", en: "Fill in all required fields.", de: "Füllen Sie alle Pflichtfelder aus." })}
               </p>
             )}
 
             <div className="flex justify-end gap-2 pt-1">
-              <button type="button" onClick={() => setOpen(false)} className="rounded-lg border border-slate-300 px-4 py-2 text-sm font-medium text-slate-600 hover:bg-slate-50 dark:border-slate-600 dark:text-slate-300 dark:hover:bg-slate-800">{tr(locale, { uz: "Bekor", ru: "Отмена", en: "Cancel" })}</button>
-              <button type="submit" disabled={pending} className="rounded-lg bg-brand-600 px-4 py-2 text-sm font-semibold text-white hover:bg-brand-700 disabled:opacity-60">{pending ? "..." : tr(locale, { uz: "Saqlash", ru: "Сохранить", en: "Save" })}</button>
+              <button type="button" onClick={() => setOpen(false)} className="rounded-lg border border-slate-300 px-4 py-2 text-sm font-medium text-slate-600 hover:bg-slate-50 dark:border-slate-600 dark:text-slate-300 dark:hover:bg-slate-800">{tr(locale, { uz: "Bekor", ru: "Отмена", en: "Cancel", de: "Abbrechen" })}</button>
+              <button type="submit" disabled={pending} className="rounded-lg bg-brand-600 px-4 py-2 text-sm font-semibold text-white hover:bg-brand-700 disabled:opacity-60">{pending ? "..." : tr(locale, { uz: "Saqlash", ru: "Сохранить", en: "Save", de: "Speichern" })}</button>
             </div>
           </form>
         </div>

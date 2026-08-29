@@ -54,7 +54,7 @@ export default function NewPaymentForm({
 
             <div className="grid grid-cols-2 gap-3">
               <div>
-                <label className="mb-1 block text-xs font-medium text-slate-600">{t("common.amount")} ({tr(locale, { uz: "so'm", ru: "сум", en: "soʻm" })}) <span className="text-red-500">*</span></label>
+                <label className="mb-1 block text-xs font-medium text-slate-600">{t("common.amount")} ({tr(locale, { uz: "so'm", ru: "сум", en: "soʻm", de: "UZS" })}) <span className="text-red-500">*</span></label>
                 <input name="amount" type="number" min="1" step="10000" required className={input} />
               </div>
               <div>
@@ -67,7 +67,7 @@ export default function NewPaymentForm({
 
             <div>
               <label className="mb-1 block text-xs font-medium text-slate-600">{t("pay.purpose")} <span className="text-red-500">*</span></label>
-              <input name="purpose" required placeholder={tr(locale, { uz: "A1.2 kurs to'lovi", ru: "Оплата курса A1.2", en: "A1.2 course payment" })} className={input} />
+              <input name="purpose" required placeholder={tr(locale, { uz: "A1.2 kurs to'lovi", ru: "Оплата курса A1.2", en: "A1.2 course payment", de: "A1.2-Kurszahlung" })} className={input} />
             </div>
             <div>
               <label className="mb-1 block text-xs font-medium text-slate-600">{t("pay.docNumber")} <span className="text-red-500">*</span></label>
@@ -80,7 +80,7 @@ export default function NewPaymentForm({
 
             {state.error && (
               <p className="rounded-lg bg-red-50 px-3 py-2 text-sm text-red-700">
-                {state.error === "forbidden" ? t("pay.noPermission") : tr(locale, { uz: "Barcha majburiy maydonlarni to'ldiring.", ru: "Заполните все обязательные поля.", en: "Fill in all required fields." })}
+                {state.error === "forbidden" ? t("pay.noPermission") : tr(locale, { uz: "Barcha majburiy maydonlarni to'ldiring.", ru: "Заполните все обязательные поля.", en: "Fill in all required fields.", de: "Füllen Sie alle Pflichtfelder aus." })}
               </p>
             )}
 

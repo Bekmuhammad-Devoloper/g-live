@@ -42,13 +42,13 @@ export interface VGroup {
 const wdLabel = (locale: Locale, d: number) =>
   [
     "",
-    tr(locale, { uz: "Du", ru: "Пн", en: "Mon" }),
-    tr(locale, { uz: "Se", ru: "Вт", en: "Tue" }),
-    tr(locale, { uz: "Ch", ru: "Ср", en: "Wed" }),
-    tr(locale, { uz: "Pa", ru: "Чт", en: "Thu" }),
-    tr(locale, { uz: "Ju", ru: "Пт", en: "Fri" }),
-    tr(locale, { uz: "Sh", ru: "Сб", en: "Sat" }),
-    tr(locale, { uz: "Ya", ru: "Вс", en: "Sun" }),
+    tr(locale, { uz: "Du", ru: "Пн", en: "Mon", de: "Mo" }),
+    tr(locale, { uz: "Se", ru: "Вт", en: "Tue", de: "Di" }),
+    tr(locale, { uz: "Ch", ru: "Ср", en: "Wed", de: "Mi" }),
+    tr(locale, { uz: "Pa", ru: "Чт", en: "Thu", de: "Do" }),
+    tr(locale, { uz: "Ju", ru: "Пт", en: "Fri", de: "Fr" }),
+    tr(locale, { uz: "Sh", ru: "Сб", en: "Sat", de: "Sa" }),
+    tr(locale, { uz: "Ya", ru: "Вс", en: "Sun", de: "So" }),
   ][d] ?? "";
 const ODD = [1, 3, 5];
 const EVEN = [2, 4, 6];
@@ -59,13 +59,13 @@ const statusTone: Record<string, string> = {
   FINISHED: "bg-slate-400/20 text-slate-500",
   CANCELLED: "bg-rose-500/15 text-rose-600 dark:text-rose-400",
 };
-const STATUS_LABEL: Record<string, { uz: string; ru: string; en: string }> = {
-  ACTIVE: { uz: "Faol", ru: "Активна", en: "Active" },
-  PLANNED: { uz: "Nofaol", ru: "Неактивна", en: "Inactive" },
-  FINISHED: { uz: "Yakunlangan", ru: "Завершена", en: "Finished" },
-  CANCELLED: { uz: "Bekor qilingan", ru: "Отменена", en: "Cancelled" },
+const STATUS_LABEL: Record<string, { uz: string; ru: string; en: string; de: string }> = {
+  ACTIVE: { uz: "Faol", ru: "Активна", en: "Active", de: "Aktiv" },
+  PLANNED: { uz: "Nofaol", ru: "Неактивна", en: "Inactive", de: "Inaktiv" },
+  FINISHED: { uz: "Yakunlangan", ru: "Завершена", en: "Finished", de: "Abgeschlossen" },
+  CANCELLED: { uz: "Bekor qilingan", ru: "Отменена", en: "Cancelled", de: "Storniert" },
 };
-const statusLabel = (st: string, locale: Locale) => tr(locale, STATUS_LABEL[st] ?? { uz: st, ru: st, en: st });
+const statusLabel = (st: string, locale: Locale) => tr(locale, STATUS_LABEL[st] ?? { uz: st, ru: st, en: st, de: st });
 
 type SortKey = "name" | "students" | "teacher";
 
@@ -152,22 +152,22 @@ export default function GroupsView({
       <div className="flex flex-wrap items-center gap-2">
         {canCreate && (
           <button onClick={() => setAddOpen(true)} className="flex h-10 items-center gap-1.5 rounded-lg bg-brand-600 px-4 text-sm font-semibold text-white shadow-sm transition hover:bg-brand-700">
-            <Icon name="plus" className="h-4 w-4" /> {tr(locale, { uz: "Qo'shish", ru: "Добавить", en: "Add" })}
+            <Icon name="plus" className="h-4 w-4" /> {tr(locale, { uz: "Qo'shish", ru: "Добавить", en: "Add", de: "Hinzufügen" })}
           </button>
         )}
 
-        <FilterSelect value={teacher} onChange={setTeacher} placeholder={tr(locale, { uz: "O'qituvchi", ru: "Преподаватель", en: "Teacher" })} options={teacherNames.map((n) => ({ v: n, label: n }))} />
+        <FilterSelect value={teacher} onChange={setTeacher} placeholder={tr(locale, { uz: "O'qituvchi", ru: "Преподаватель", en: "Teacher", de: "Lehrer" })} options={teacherNames.map((n) => ({ v: n, label: n }))} />
 
-        <TimeFilter label={tr(locale, { uz: "Boshlanish vaqti", ru: "Время начала", en: "Start time" })} value={startTime} onChange={setStartTime} />
-        <TimeFilter label={tr(locale, { uz: "Tugash vaqti", ru: "Время окончания", en: "End time" })} value={endTime} onChange={setEndTime} />
+        <TimeFilter label={tr(locale, { uz: "Boshlanish vaqti", ru: "Время начала", en: "Start time", de: "Startzeit" })} value={startTime} onChange={setStartTime} />
+        <TimeFilter label={tr(locale, { uz: "Tugash vaqti", ru: "Время окончания", en: "End time", de: "Endzeit" })} value={endTime} onChange={setEndTime} />
 
-        <FilterSelect value={day} onChange={setDay} placeholder={tr(locale, { uz: "Kun", ru: "День", en: "Day" })} options={[1, 2, 3, 4, 5, 6, 7].map((i) => ({ v: String(i), label: wdLabel(locale, i) }))} />
-        <FilterSelect value={program} onChange={setProgram} placeholder={tr(locale, { uz: "Kurs", ru: "Курс", en: "Course" })} options={programNames.map((n) => ({ v: n, label: n }))} />
-        <FilterSelect value={room} onChange={setRoom} placeholder={tr(locale, { uz: "Xona", ru: "Кабинет", en: "Room" })} options={rooms.map((n) => ({ v: n, label: n }))} />
+        <FilterSelect value={day} onChange={setDay} placeholder={tr(locale, { uz: "Kun", ru: "День", en: "Day", de: "Tag" })} options={[1, 2, 3, 4, 5, 6, 7].map((i) => ({ v: String(i), label: wdLabel(locale, i) }))} />
+        <FilterSelect value={program} onChange={setProgram} placeholder={tr(locale, { uz: "Kurs", ru: "Курс", en: "Course", de: "Kurs" })} options={programNames.map((n) => ({ v: n, label: n }))} />
+        <FilterSelect value={room} onChange={setRoom} placeholder={tr(locale, { uz: "Xona", ru: "Кабинет", en: "Room", de: "Raum" })} options={rooms.map((n) => ({ v: n, label: n }))} />
 
         <button
           onClick={resetFilters}
-          title={tr(locale, { uz: "Filtrlarni tozalash", ru: "Очистить фильтры", en: "Clear filters" })}
+          title={tr(locale, { uz: "Filtrlarni tozalash", ru: "Очистить фильтры", en: "Clear filters", de: "Filter zurücksetzen" })}
           className={cn("flex h-10 w-10 items-center justify-center rounded-lg border transition", hasFilters ? "border-brand-300 text-brand-600 hover:bg-brand-50 dark:border-brand-500/40 dark:text-brand-300" : "border-slate-200 text-slate-400 dark:border-slate-700")}
         >
           <Icon name="filter" className="h-4 w-4" />
@@ -176,42 +176,42 @@ export default function GroupsView({
 
       {/* Toolbar 2-qator (o'ngga) */}
       <div className="flex flex-wrap items-center justify-end gap-2">
-        <FilterSelect value={statusF} onChange={setStatusF} placeholder={tr(locale, { uz: "Holat", ru: "Статус", en: "Status" })} allowEmpty={false}
-          options={[{ v: "ACTIVE", label: tr(locale, { uz: "Aktiv guruh", ru: "Активная группа", en: "Active group" }) }, { v: "ALL", label: tr(locale, { uz: "Barcha guruhlar", ru: "Все группы", en: "All groups" }) }, { v: "PLANNED", label: tr(locale, { uz: "Rejalashtirilgan", ru: "Запланировано", en: "Planned" }) }, { v: "FINISHED", label: tr(locale, { uz: "Tugagan", ru: "Завершено", en: "Finished" }) }]} />
+        <FilterSelect value={statusF} onChange={setStatusF} placeholder={tr(locale, { uz: "Holat", ru: "Статус", en: "Status", de: "Status" })} allowEmpty={false}
+          options={[{ v: "ACTIVE", label: tr(locale, { uz: "Aktiv guruh", ru: "Активная группа", en: "Active group", de: "Aktive Gruppe" }) }, { v: "ALL", label: tr(locale, { uz: "Barcha guruhlar", ru: "Все группы", en: "All groups", de: "Alle Gruppen" }) }, { v: "PLANNED", label: tr(locale, { uz: "Rejalashtirilgan", ru: "Запланировано", en: "Planned", de: "Geplant" }) }, { v: "FINISHED", label: tr(locale, { uz: "Tugagan", ru: "Завершено", en: "Finished", de: "Abgeschlossen" }) }]} />
         <div className="relative">
           <Icon name="search" className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400" />
-          <input value={search} onChange={(e) => setSearch(e.target.value)} placeholder={tr(locale, { uz: "Qidirish", ru: "Поиск", en: "Search" })} className="h-10 w-56 rounded-lg border border-slate-200 bg-white pl-9 pr-3 text-sm outline-none focus:border-brand-400 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-100" />
+          <input value={search} onChange={(e) => setSearch(e.target.value)} placeholder={tr(locale, { uz: "Qidirish", ru: "Поиск", en: "Search", de: "Suchen" })} className="h-10 w-56 rounded-lg border border-slate-200 bg-white pl-9 pr-3 text-sm outline-none focus:border-brand-400 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-100" />
         </div>
-        <FilterSelect value={oddEven} onChange={setOddEven} placeholder={tr(locale, { uz: "Toq/Juft kunlar", ru: "Нечётные/чётные дни", en: "Odd/even days" })}
-          options={[{ v: "odd", label: tr(locale, { uz: "Toq kunlar (Du-Ch-Ju)", ru: "Нечётные дни (Пн-Ср-Пт)", en: "Odd days (Mon-Wed-Fri)" }) }, { v: "even", label: tr(locale, { uz: "Juft kunlar (Se-Pa-Sh)", ru: "Чётные дни (Вт-Чт-Сб)", en: "Even days (Tue-Thu-Sat)" }) }]} />
+        <FilterSelect value={oddEven} onChange={setOddEven} placeholder={tr(locale, { uz: "Toq/Juft kunlar", ru: "Нечётные/чётные дни", en: "Odd/even days", de: "Ungerade/gerade Tage" })}
+          options={[{ v: "odd", label: tr(locale, { uz: "Toq kunlar (Du-Ch-Ju)", ru: "Нечётные дни (Пн-Ср-Пт)", en: "Odd days (Mon-Wed-Fri)", de: "Ungerade Tage (Mo-Mi-Fr)" }) }, { v: "even", label: tr(locale, { uz: "Juft kunlar (Se-Pa-Sh)", ru: "Чётные дни (Вт-Чт-Сб)", en: "Even days (Tue-Thu-Sat)", de: "Gerade Tage (Di-Do-Sa)" }) }]} />
       </div>
 
       {/* Statistika qatori */}
       <div className="flex flex-wrap items-center gap-x-5 gap-y-1 text-sm text-slate-500 dark:text-slate-400">
-        <span>{tr(locale, { uz: "Jami o'quvchilar soni:", ru: "Всего учеников:", en: "Total students:" })} <b className="text-slate-800 dark:text-slate-200">{totalStudents}</b></span>
-        <span>{tr(locale, { uz: "Muzlatilgan o'quvchilar soni:", ru: "Замороженных учеников:", en: "Frozen students:" })} <b className="text-slate-800 dark:text-slate-200">{frozenStudents}</b></span>
+        <span>{tr(locale, { uz: "Jami o'quvchilar soni:", ru: "Всего учеников:", en: "Total students:", de: "Schüler insgesamt:" })} <b className="text-slate-800 dark:text-slate-200">{totalStudents}</b></span>
+        <span>{tr(locale, { uz: "Muzlatilgan o'quvchilar soni:", ru: "Замороженных учеников:", en: "Frozen students:", de: "Eingefrorene Schüler:" })} <b className="text-slate-800 dark:text-slate-200">{frozenStudents}</b></span>
       </div>
 
       {/* Jadval */}
       <div className="overflow-hidden rounded-2xl border border-slate-200/70 bg-white shadow-card dark:border-slate-800 dark:bg-slate-900">
         <div className="flex items-center justify-end border-b border-slate-100 px-4 py-2 dark:border-slate-800">
-          <span className="rounded-lg bg-slate-100 px-2.5 py-1 text-xs font-semibold text-slate-500 dark:bg-slate-800 dark:text-slate-300">{tr(locale, { uz: "Umumiy soni:", ru: "Всего:", en: "Total:" })} {filtered.length}</span>
+          <span className="rounded-lg bg-slate-100 px-2.5 py-1 text-xs font-semibold text-slate-500 dark:bg-slate-800 dark:text-slate-300">{tr(locale, { uz: "Umumiy soni:", ru: "Всего:", en: "Total:", de: "Gesamt:" })} {filtered.length}</span>
         </div>
         <div className="overflow-x-auto">
           <table className="w-full min-w-[900px] text-left text-sm">
             <thead className="border-b border-slate-200/70 bg-slate-50/80 text-[11px] font-semibold uppercase tracking-wider text-slate-500 dark:border-slate-800 dark:bg-slate-800/50">
               <tr>
                 <th className="px-4 py-3 w-12">№</th>
-                <SortableTh label={tr(locale, { uz: "Guruh nomi", ru: "Название группы", en: "Group name" })} active={sort.key === "name"} dir={sort.dir} onClick={() => toggleSort("name")} />
-                <th className="px-4 py-3">{tr(locale, { uz: "Kurs", ru: "Курс", en: "Course" })}</th>
-                <th className="px-4 py-3">{tr(locale, { uz: "Darajasi", ru: "Уровень", en: "Level" })}</th>
-                <th className="px-4 py-3">{tr(locale, { uz: "Kun", ru: "День", en: "Day" })}</th>
-                <th className="px-4 py-3">{tr(locale, { uz: "Dars vaqti", ru: "Время урока", en: "Lesson time" })}</th>
-                <th className="px-4 py-3">{tr(locale, { uz: "Boshlanish sanasi", ru: "Дата начала", en: "Start date" })}</th>
-                <th className="px-4 py-3">{tr(locale, { uz: "Tugash sanasi", ru: "Дата окончания", en: "End date" })}</th>
-                <SortableTh label={tr(locale, { uz: "O'quvchilar", ru: "Ученики", en: "Students" })} active={sort.key === "students"} dir={sort.dir} onClick={() => toggleSort("students")} />
-                <SortableTh label={tr(locale, { uz: "O'qituvchi", ru: "Преподаватель", en: "Teacher" })} active={sort.key === "teacher"} dir={sort.dir} onClick={() => toggleSort("teacher")} />
-                <th className="px-4 py-3 text-right">{tr(locale, { uz: "Amallar", ru: "Действия", en: "Actions" })}</th>
+                <SortableTh label={tr(locale, { uz: "Guruh nomi", ru: "Название группы", en: "Group name", de: "Gruppenname" })} active={sort.key === "name"} dir={sort.dir} onClick={() => toggleSort("name")} />
+                <th className="px-4 py-3">{tr(locale, { uz: "Kurs", ru: "Курс", en: "Course", de: "Kurs" })}</th>
+                <th className="px-4 py-3">{tr(locale, { uz: "Darajasi", ru: "Уровень", en: "Level", de: "Niveau" })}</th>
+                <th className="px-4 py-3">{tr(locale, { uz: "Kun", ru: "День", en: "Day", de: "Tag" })}</th>
+                <th className="px-4 py-3">{tr(locale, { uz: "Dars vaqti", ru: "Время урока", en: "Lesson time", de: "Unterrichtszeit" })}</th>
+                <th className="px-4 py-3">{tr(locale, { uz: "Boshlanish sanasi", ru: "Дата начала", en: "Start date", de: "Startdatum" })}</th>
+                <th className="px-4 py-3">{tr(locale, { uz: "Tugash sanasi", ru: "Дата окончания", en: "End date", de: "Enddatum" })}</th>
+                <SortableTh label={tr(locale, { uz: "O'quvchilar", ru: "Ученики", en: "Students", de: "Schüler" })} active={sort.key === "students"} dir={sort.dir} onClick={() => toggleSort("students")} />
+                <SortableTh label={tr(locale, { uz: "O'qituvchi", ru: "Преподаватель", en: "Teacher", de: "Lehrer" })} active={sort.key === "teacher"} dir={sort.dir} onClick={() => toggleSort("teacher")} />
+                <th className="px-4 py-3 text-right">{tr(locale, { uz: "Amallar", ru: "Действия", en: "Actions", de: "Aktionen" })}</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-slate-100 dark:divide-slate-800">
@@ -219,8 +219,8 @@ export default function GroupsView({
                 <tr>
                   <td colSpan={10} className="px-4 py-16 text-center">
                     <div className="text-3xl opacity-30">📭</div>
-                    <p className="mt-2 font-medium text-slate-500 dark:text-slate-400">{tr(locale, { uz: "Ma'lumotlar topilmadi", ru: "Данные не найдены", en: "No data found" })}</p>
-                    <p className="mt-0.5 text-xs text-slate-400">{tr(locale, { uz: "Ma'lumotlar topilmadi. Filterni o'zgartirib ko'ring.", ru: "Данные не найдены. Попробуйте изменить фильтр.", en: "No data found. Try changing the filter." })}</p>
+                    <p className="mt-2 font-medium text-slate-500 dark:text-slate-400">{tr(locale, { uz: "Ma'lumotlar topilmadi", ru: "Данные не найдены", en: "No data found", de: "Keine Daten gefunden" })}</p>
+                    <p className="mt-0.5 text-xs text-slate-400">{tr(locale, { uz: "Ma'lumotlar topilmadi. Filterni o'zgartirib ko'ring.", ru: "Данные не найдены. Попробуйте изменить фильтр.", en: "No data found. Try changing the filter.", de: "Keine Daten gefunden. Versuchen Sie, den Filter zu ändern." })}</p>
                   </td>
                 </tr>
               ) : (
@@ -254,7 +254,7 @@ export default function GroupsView({
                     <td className="px-4 py-3">
                       <div className="flex items-center justify-end gap-1">
                         {canCreate && <GroupActiveToggle id={g.id} active={g.status === "ACTIVE"} locale={locale} />}
-                        <Link href={`/groups/${g.id}`} title={tr(locale, { uz: "Batafsil", ru: "Подробнее", en: "Details" })} className="grid h-8 w-8 place-items-center rounded-lg text-slate-400 transition hover:bg-slate-100 hover:text-brand-600 dark:hover:bg-slate-800"><Icon name="eye" className="h-4 w-4" /></Link>
+                        <Link href={`/groups/${g.id}`} title={tr(locale, { uz: "Batafsil", ru: "Подробнее", en: "Details", de: "Details" })} className="grid h-8 w-8 place-items-center rounded-lg text-slate-400 transition hover:bg-slate-100 hover:text-brand-600 dark:hover:bg-slate-800"><Icon name="eye" className="h-4 w-4" /></Link>
                         {canCreate && (
                           <>
                             <EditGroupButton compact group={editDataOf(g)} programs={programs} teachers={teachers} locale={locale} />
@@ -275,7 +275,7 @@ export default function GroupsView({
           <div className="flex items-center gap-2 text-xs text-slate-500 dark:text-slate-400">
             <Icon name="listView" className="h-4 w-4" />
             <select value={pageSize} onChange={(e) => { setPageSize(Number(e.target.value)); setPage(1); }} className="rounded-lg border border-slate-200 bg-white px-2 py-1 text-xs outline-none dark:border-slate-700 dark:bg-slate-800 dark:text-slate-200">
-              {[10, 20, 50, 100].map((n) => <option key={n} value={n}>{n} {tr(locale, { uz: "qatorda", ru: "строк", en: "rows" })}</option>)}
+              {[10, 20, 50, 100].map((n) => <option key={n} value={n}>{n} {tr(locale, { uz: "qatorda", ru: "строк", en: "rows", de: "Zeilen" })}</option>)}
             </select>
           </div>
           {totalPages > 1 && (
@@ -290,7 +290,7 @@ export default function GroupsView({
 
       {/* FAB */}
       {canCreate && (
-        <button onClick={() => setAddOpen(true)} title={tr(locale, { uz: "Yangi guruh", ru: "Новая группа", en: "New group" })} className="fixed bottom-6 right-6 z-30 flex h-12 w-12 items-center justify-center rounded-full bg-brand-600 text-white shadow-pop transition hover:scale-105 hover:bg-brand-700">
+        <button onClick={() => setAddOpen(true)} title={tr(locale, { uz: "Yangi guruh", ru: "Новая группа", en: "New group", de: "Neue Gruppe" })} className="fixed bottom-6 right-6 z-30 flex h-12 w-12 items-center justify-center rounded-full bg-brand-600 text-white shadow-pop transition hover:scale-105 hover:bg-brand-700">
           <Icon name="plus" className="h-5 w-5" />
         </button>
       )}
@@ -383,7 +383,7 @@ function GroupActiveToggle({ id, active, locale }: { id: string; active: boolean
       aria-checked={on}
       onClick={toggle}
       disabled={pending}
-      title={on ? tr(locale, { uz: "Faol", ru: "Активна", en: "Active" }) : tr(locale, { uz: "Nofaol", ru: "Неактивна", en: "Inactive" })}
+      title={on ? tr(locale, { uz: "Faol", ru: "Активна", en: "Active", de: "Aktiv" }) : tr(locale, { uz: "Nofaol", ru: "Неактивна", en: "Inactive", de: "Inaktiv" })}
       className={cn(
         "relative h-6 w-11 shrink-0 rounded-full transition-colors disabled:opacity-60",
         on ? "bg-emerald-500" : "bg-slate-300 dark:bg-slate-600"
@@ -401,7 +401,7 @@ function DeleteGroupBtn({ id, name, locale }: { id: string; name: string; locale
     if (!window.confirm(tr(locale, {
       uz: `"${name}" guruhini o'chirasizmi? O'quvchilar biriktiruvi va darslar ham o'chadi.`,
       ru: `Удалить группу "${name}"? Записи учеников и уроки тоже будут удалены.`,
-      en: `Delete group "${name}"? Student enrollments and lessons will also be deleted.`,
+      en: `Delete group "${name}"? Student enrollments and lessons will also be deleted.`, de: `Gruppe "${name}" löschen? Schüleranmeldungen und Unterrichte werden ebenfalls gelöscht.`,
     }))) return;
     start(async () => {
       const r = await deleteGroup(id);
@@ -409,7 +409,7 @@ function DeleteGroupBtn({ id, name, locale }: { id: string; name: string; locale
     });
   };
   return (
-    <button onClick={onDelete} disabled={pending} title={tr(locale, { uz: "O'chirish", ru: "Удалить", en: "Delete" })}
+    <button onClick={onDelete} disabled={pending} title={tr(locale, { uz: "O'chirish", ru: "Удалить", en: "Delete", de: "Löschen" })}
       className="grid h-8 w-8 place-items-center rounded-lg text-rose-500 transition hover:bg-rose-50 disabled:opacity-50 dark:hover:bg-rose-500/10">
       <Icon name="trash" className="h-4 w-4" />
     </button>

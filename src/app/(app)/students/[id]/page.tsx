@@ -21,8 +21,8 @@ export default async function StudentProfilePage({ params }: { params: Promise<{
   if (!ALLOWED.includes(s.role as never)) {
     return (
       <Forbidden
-        title={tr(s.locale, { uz: "Kirish taqiqlangan", ru: "Доступ запрещён", en: "Access denied" })}
-        body={tr(s.locale, { uz: "Bu bo'lim xodimlar uchun.", ru: "Этот раздел для сотрудников.", en: "This section is for staff." })}
+        title={tr(s.locale, { uz: "Kirish taqiqlangan", ru: "Доступ запрещён", en: "Access denied", de: "Zugriff verweigert" })}
+        body={tr(s.locale, { uz: "Bu bo'lim xodimlar uchun.", ru: "Этот раздел для сотрудников.", en: "This section is for staff.", de: "Dieser Bereich ist für Mitarbeiter." })}
       />
     );
   }

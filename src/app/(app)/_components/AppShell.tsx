@@ -30,7 +30,7 @@ interface SubGroup {
   roles?: string[];
 }
 // qisqa yozuv uchun: L("uz") yoki L("uz","ru","en")
-const L = (uz: string, ru = uz, en = uz): Record<Locale, string> => ({ uz, ru, en });
+const L = (uz: string, ru = uz, en = uz, de = en): Record<Locale, string> => ({ uz, ru, en, de });
 
 // Footer havolalari — texnik yordam (Telegram lichka) va video darsliklar kanali
 const SUPPORT_TELEGRAM = "https://t.me/yuksalish_development";
@@ -39,132 +39,132 @@ const VIDEO_CHANNEL = "https://t.me/yuksalish_development";
 // Sidebar bo'limlari uchun yonboshdan ochiluvchi submenu (Radian/Modme uslubida)
 const SUBMENUS: Record<string, { title: Record<Locale, string>; groups: SubGroup[] }> = {
   "/groups": {
-    title: { uz: "Guruhlar", ru: "Группы", en: "Groups" },
+    title: { uz: "Guruhlar", ru: "Группы", en: "Groups", de: "Gruppen" },
     groups: [
       { items: [
-        { href: "/groups", icon: "layers", label: { uz: "Guruh", ru: "Группа", en: "Group" } },
-        { href: "/assignments", icon: "clipboard", label: { uz: "Barcha vazifalar", ru: "Все задачи", en: "All tasks" } },
-        { href: "/schedule", icon: "calendar", label: { uz: "Dars jadvali", ru: "Расписание", en: "Schedule" } },
-        { href: "/rooms", icon: "building", label: { uz: "Xonalar", ru: "Кабинеты", en: "Rooms" } },
-        { href: "/group-students", icon: "graduation", label: { uz: "Guruh o'quvchilari", ru: "Ученики группы", en: "Group students" } },
+        { href: "/groups", icon: "layers", label: { uz: "Guruh", ru: "Группа", en: "Group", de: "Gruppe" } },
+        { href: "/assignments", icon: "clipboard", label: { uz: "Barcha vazifalar", ru: "Все задачи", en: "All tasks", de: "Alle Aufgaben" } },
+        { href: "/schedule", icon: "calendar", label: { uz: "Dars jadvali", ru: "Расписание", en: "Schedule", de: "Stundenplan" } },
+        { href: "/rooms", icon: "building", label: { uz: "Xonalar", ru: "Кабинеты", en: "Rooms", de: "Räume" } },
+        { href: "/group-students", icon: "graduation", label: { uz: "Guruh o'quvchilari", ru: "Ученики группы", en: "Group students", de: "Schüler der Gruppe" } },
       ] },
     ],
   },
   "/management": {
-    title: { uz: "Boshqaruv", ru: "Управление", en: "Management" },
+    title: { uz: "Boshqaruv", ru: "Управление", en: "Management", de: "Verwaltung" },
     groups: [
       { items: [
-        { href: "/users", icon: "users", label: { uz: "Xodimlar", ru: "Сотрудники", en: "Staff" } },
-        { href: "/roles", icon: "shield", label: { uz: "Rollar", ru: "Роли", en: "Roles" } },
-        { href: "/branches", icon: "building", label: { uz: "Filiallar", ru: "Филиалы", en: "Branches" } },
-        { href: "/tags", icon: "layers", label: { uz: "Teglar", ru: "Теги", en: "Tags" } },
+        { href: "/users", icon: "users", label: { uz: "Xodimlar", ru: "Сотрудники", en: "Staff", de: "Mitarbeiter" } },
+        { href: "/roles", icon: "shield", label: { uz: "Rollar", ru: "Роли", en: "Roles", de: "Rollen" } },
+        { href: "/branches", icon: "building", label: { uz: "Filiallar", ru: "Филиалы", en: "Branches", de: "Filialen" } },
+        { href: "/tags", icon: "layers", label: { uz: "Teglar", ru: "Теги", en: "Tags", de: "Tags" } },
       ] },
     ],
   },
   "/reports": {
-    title: L("Hisobotlar", "Отчёты", "Reports"),
+    title: L("Hisobotlar", "Отчёты", "Reports", "Berichte"),
     groups: [
       { items: [
-        { href: "/reports/conversion", icon: "chart", label: L("Konversiya hisobotlari"), roles: [ROLES.DIRECTOR, ROLES.DEPUTY_DIRECTOR, ROLES.ROP, ROLES.MANAGER] },
-        { href: "/reports/attendance", icon: "check", label: L("Davomat hisobotlari") },
-        { href: "/reports/leads", icon: "download", label: L("Lidlar hisobotlari") },
-        { href: "/reports/left-students", icon: "personMinus", label: L("Guruhni tark etganlar") },
+        { href: "/reports/conversion", icon: "chart", label: L("Konversiya hisobotlari", "Konversiya hisobotlari", "Konversiya hisobotlari", "Konversionsberichte"), roles: [ROLES.DIRECTOR, ROLES.DEPUTY_DIRECTOR, ROLES.ROP, ROLES.MANAGER] },
+        { href: "/reports/attendance", icon: "check", label: L("Davomat hisobotlari", "Davomat hisobotlari", "Davomat hisobotlari", "Anwesenheitsberichte") },
+        { href: "/reports/leads", icon: "download", label: L("Lidlar hisobotlari", "Lidlar hisobotlari", "Lidlar hisobotlari", "Lead-Berichte") },
+        { href: "/reports/left-students", icon: "personMinus", label: L("Guruhni tark etganlar", "Guruhni tark etganlar", "Guruhni tark etganlar", "Ausgetretene Schüler") },
       ] },
-      { label: L("Jurnallar", "Журналы", "Logs"), items: [
-        { href: "/reports/sms", icon: "mail", label: L("Yuborilgan SMS jurnali") },
-        { href: "/reports/calls", icon: "phone", label: L("Qo'ng'iroqlar jurnali") },
-        { href: "/audit", icon: "listView", label: L("Audit jurnali") },
-        { href: "/teacher-attendance", icon: "clock", label: L("Workly hisoboti") },
+      { label: L("Jurnallar", "Журналы", "Logs", "Protokolle"), items: [
+        { href: "/reports/sms", icon: "mail", label: L("Yuborilgan SMS jurnali", "Yuborilgan SMS jurnali", "Yuborilgan SMS jurnali", "SMS-Versandprotokoll") },
+        { href: "/reports/calls", icon: "phone", label: L("Qo'ng'iroqlar jurnali", "Qo'ng'iroqlar jurnali", "Qo'ng'iroqlar jurnali", "Anrufprotokoll") },
+        { href: "/audit", icon: "listView", label: L("Audit jurnali", "Audit jurnali", "Audit jurnali", "Audit-Protokoll") },
+        { href: "/teacher-attendance", icon: "clock", label: L("Workly hisoboti", "Workly hisoboti", "Workly hisoboti", "Workly-Bericht") },
       ] },
-      { label: L("Moliya", "Финансы", "Finance"), items: [
-        { href: "/reports/balance", icon: "wallet", label: L("Balans") },
-        { href: "/reports/payments", icon: "refresh", label: L("Kirim chiqim (tushum)") },
-        { href: "/reports/cancelled", icon: "fileX", label: L("Bekor qilingan to'lovlar") },
+      { label: L("Moliya", "Финансы", "Finance", "Finanzen"), items: [
+        { href: "/reports/balance", icon: "wallet", label: L("Balans", "Balans", "Balans", "Bilanz") },
+        { href: "/reports/payments", icon: "refresh", label: L("Kirim chiqim (tushum)", "Kirim chiqim (tushum)", "Kirim chiqim (tushum)", "Einnahmen/Ausgaben (Umsatz)") },
+        { href: "/reports/cancelled", icon: "fileX", label: L("Bekor qilingan to'lovlar", "Bekor qilingan to'lovlar", "Bekor qilingan to'lovlar", "Stornierte Zahlungen") },
       ] },
-      { label: L("O'quv", "Учебное", "Education"), items: [
-        { href: "/reports/teacher-performance", icon: "teacher", label: L("O'qituvchilar samaradorligi") },
-        { href: "/reports/admin-performance", icon: "users", label: L("Adminlar samaradorligi") },
-        { href: "/reports/leave-reasons", icon: "info", label: L("Ketish sabablari") },
-        { href: "/reports/rooms-analytics", icon: "building", label: L("Xonalar analitikasi") },
-        { href: "/reports/worked-hours", icon: "clock", label: L("Ishlab berilgan soatlar") },
-        { href: "/reports/cancelled-attendance", icon: "fileX", label: L("Bekor qilingan davomatlar") },
+      { label: L("O'quv", "Учебное", "Education", "Bildung"), items: [
+        { href: "/reports/teacher-performance", icon: "teacher", label: L("O'qituvchilar samaradorligi", "O'qituvchilar samaradorligi", "O'qituvchilar samaradorligi", "Lehrerleistung") },
+        { href: "/reports/admin-performance", icon: "users", label: L("Adminlar samaradorligi", "Adminlar samaradorligi", "Adminlar samaradorligi", "Admin-Leistung") },
+        { href: "/reports/leave-reasons", icon: "info", label: L("Ketish sabablari", "Ketish sabablari", "Ketish sabablari", "Kündigungsgründe") },
+        { href: "/reports/rooms-analytics", icon: "building", label: L("Xonalar analitikasi", "Xonalar analitikasi", "Xonalar analitikasi", "Raumanalyse") },
+        { href: "/reports/worked-hours", icon: "clock", label: L("Ishlab berilgan soatlar", "Ishlab berilgan soatlar", "Ishlab berilgan soatlar", "Geleistete Stunden") },
+        { href: "/reports/cancelled-attendance", icon: "fileX", label: L("Bekor qilingan davomatlar", "Bekor qilingan davomatlar", "Bekor qilingan davomatlar", "Stornierte Anwesenheiten") },
       ] },
     ],
   },
   // Nazorat submenu — hisobot elementlari /reports dan ko'chirildi (takrorlanmasin)
   "/control": {
-    title: L("Nazorat", "Контроль", "Control"),
+    title: L("Nazorat", "Контроль", "Control", "Kontrolle"),
     groups: [
-      { label: L("Amallar", "Действия", "Actions"), items: [
-        { href: "/attendance", icon: "check", label: L("Davomat") },
-        { href: "/reports/attendance", icon: "chart", label: L("Davomat analitikasi") },
-        { href: "/control/feedback", icon: "info", label: L("Fikr-mulohaza") },
+      { label: L("Amallar", "Действия", "Actions", "Aktionen"), items: [
+        { href: "/attendance", icon: "check", label: L("Davomat", "Davomat", "Davomat", "Anwesenheit") },
+        { href: "/reports/attendance", icon: "chart", label: L("Davomat analitikasi", "Davomat analitikasi", "Davomat analitikasi", "Anwesenheitsanalyse") },
+        { href: "/control/feedback", icon: "info", label: L("Fikr-mulohaza", "Fikr-mulohaza", "Fikr-mulohaza", "Rückmeldung") },
       ] },
-      { label: L("Hisobotlar", "Отчёты", "Reports"), items: [
-        { href: "/reports/staff-rating", icon: "trophy", label: L("Xodimlar reytingi") },
-        { href: "/reports/no-attendance", icon: "layers", label: L("Davomatsiz guruhlar") },
-        { href: "/reports/branches-status", icon: "building", label: L("Filiallar holati") },
-        { href: "/control/turnstile", icon: "shieldCheck", label: L("Turniket analitikasi") },
-        { href: "/control/turnstile-log", icon: "shieldCheck", label: L("Turniket kirish-chiqish") },
-        { href: "/control/support", icon: "eye", label: L("Qo'llab-quvvatlash") },
+      { label: L("Hisobotlar", "Отчёты", "Reports", "Berichte"), items: [
+        { href: "/reports/staff-rating", icon: "trophy", label: L("Xodimlar reytingi", "Xodimlar reytingi", "Xodimlar reytingi", "Mitarbeiterbewertung") },
+        { href: "/reports/no-attendance", icon: "layers", label: L("Davomatsiz guruhlar", "Davomatsiz guruhlar", "Davomatsiz guruhlar", "Gruppen ohne Anwesenheit") },
+        { href: "/reports/branches-status", icon: "building", label: L("Filiallar holati", "Filiallar holati", "Filiallar holati", "Filialstatus") },
+        { href: "/control/turnstile", icon: "shieldCheck", label: L("Turniket analitikasi", "Turniket analitikasi", "Turniket analitikasi", "Drehkreuz-Analyse") },
+        { href: "/control/turnstile-log", icon: "shieldCheck", label: L("Turniket kirish-chiqish", "Turniket kirish-chiqish", "Turniket kirish-chiqish", "Drehkreuz Ein-/Ausgang") },
+        { href: "/control/support", icon: "eye", label: L("Qo'llab-quvvatlash", "Qo'llab-quvvatlash", "Qo'llab-quvvatlash", "Support") },
       ] },
     ],
   },
   "/finance": {
-    title: L("Moliya", "Финансы", "Finance"),
+    title: L("Moliya", "Финансы", "Finance", "Finanzen"),
     groups: [
       { items: [
-        { href: "/finance/payments", icon: "coins", label: L("Barcha to'lovlar") },
-        { href: "/finance/withdrawals", icon: "coins", label: L("Yechib olish") },
-        { href: "/finance/expenses", icon: "wallet", label: L("Xarajatlar") },
-        { href: "/finance/salary", icon: "clipboard", label: L("Ish haqi new") },
-        { href: "/finance/debtors", icon: "alert", label: L("Qarzdorlar") },
+        { href: "/finance/payments", icon: "coins", label: L("Barcha to'lovlar", "Barcha to'lovlar", "Barcha to'lovlar", "Alle Zahlungen") },
+        { href: "/finance/withdrawals", icon: "coins", label: L("Yechib olish", "Yechib olish", "Yechib olish", "Auszahlung") },
+        { href: "/finance/expenses", icon: "wallet", label: L("Xarajatlar", "Xarajatlar", "Xarajatlar", "Ausgaben") },
+        { href: "/finance/salary", icon: "clipboard", label: L("Ish haqi new", "Ish haqi new", "Ish haqi new", "Gehalt") },
+        { href: "/finance/debtors", icon: "alert", label: L("Qarzdorlar", "Qarzdorlar", "Qarzdorlar", "Schuldner") },
       ] },
     ],
   },
   "/marketing": {
-    title: L("Sotuv / Marketing", "Продажи / Маркетинг", "Sales / Marketing"),
+    title: L("Sotuv / Marketing", "Продажи / Маркетинг", "Sales / Marketing", "Vertrieb / Marketing"),
     groups: [
       { label: L("Marketing"), items: [
         { href: "/marketing", icon: "megaphone", label: L("Marketing"), roles: [ROLES.DIRECTOR, ROLES.DEPUTY_DIRECTOR, ROLES.ROP, ROLES.MANAGER] },
-        { href: "/settings/sms", icon: "mail", label: L("SMS shablonlari") },
-        { href: "/reports/sms", icon: "listView", label: L("Xabarlar ro'yhati") },
+        { href: "/settings/sms", icon: "mail", label: L("SMS shablonlari", "SMS shablonlari", "SMS shablonlari", "SMS-Vorlagen") },
+        { href: "/reports/sms", icon: "listView", label: L("Xabarlar ro'yhati", "Xabarlar ro'yhati", "Xabarlar ro'yhati", "Nachrichtenliste") },
       ] },
-      { label: L("Sotuv bo'limi", "Отдел продаж", "Sales dept."), items: [
+      { label: L("Sotuv bo'limi", "Отдел продаж", "Sales dept.", "Vertriebsabteilung"), items: [
         { href: "/rop", icon: "chart", label: L("ROP Dashboard") },
-        { href: "/operator", icon: "headphones", label: L("Operator konsoli") },
-        { href: "/vacancies", icon: "building", label: L("Vakansiyalar", "Вакансии", "Vacancies") },
-        { href: "/links", icon: "link", label: L("Maxsus linklar", "Спец. ссылки", "Special links") },
-        { href: "/reports/funnel", icon: "megaphone", label: L("Sotuv voronkasi") },
-        { href: "/reports/sales-team", icon: "chart", label: L("Savdo bo'limi") },
-        { href: "/reports/operators", icon: "user", label: L("Operatorlar") },
+        { href: "/operator", icon: "headphones", label: L("Operator konsoli", "Operator konsoli", "Operator konsoli", "Operator-Konsole") },
+        { href: "/vacancies", icon: "building", label: L("Vakansiyalar", "Вакансии", "Vacancies", "Stellenangebote") },
+        { href: "/links", icon: "link", label: L("Maxsus linklar", "Спец. ссылки", "Special links", "Spezielle Links") },
+        { href: "/reports/funnel", icon: "megaphone", label: L("Sotuv voronkasi", "Sotuv voronkasi", "Sotuv voronkasi", "Verkaufstrichter") },
+        { href: "/reports/sales-team", icon: "chart", label: L("Savdo bo'limi", "Savdo bo'limi", "Savdo bo'limi", "Vertriebsabteilung") },
+        { href: "/reports/operators", icon: "user", label: L("Operatorlar", "Operatorlar", "Operatorlar", "Operatoren") },
         { href: "/reports/kpi", icon: "trophy", label: L("KPI") },
       ] },
     ],
   },
   "/settings": {
-    title: { uz: "Sozlamalar", ru: "Настройки", en: "Settings" },
+    title: { uz: "Sozlamalar", ru: "Настройки", en: "Settings", de: "Einstellungen" },
     groups: [
       // MUHIM: har bandning `roles` ro'yxati sahifasidagi ALLOWED bilan bir xil
       // bo'lishi kerak — aks holda foydalanuvchi ocholmaydigan tugma ko'radi.
       { items: [
-        { href: "/settings/sms", icon: "mail", label: { uz: "SMS sozlamalari", ru: "Настройки SMS", en: "SMS settings" }, roles: [ROLES.DIRECTOR, ROLES.DEPUTY_DIRECTOR, ROLES.ADMIN] },
-        { href: "/settings/telephony", icon: "phone", label: { uz: "Onlain telefoniya", ru: "Онлайн телефония", en: "Online telephony" }, roles: [ROLES.DIRECTOR, ROLES.ADMIN] },
-        { href: "/settings/grading", icon: "award", label: { uz: "Baholash", ru: "Оценивание", en: "Grading" }, roles: [ROLES.DIRECTOR, ROLES.ADMIN] },
-        { href: "/settings/operator", icon: "headphones", label: { uz: "Operator sozlamalari", ru: "Настройки оператора", en: "Operator settings" } },
+        { href: "/settings/sms", icon: "mail", label: { uz: "SMS sozlamalari", ru: "Настройки SMS", en: "SMS settings", de: "SMS-Einstellungen" }, roles: [ROLES.DIRECTOR, ROLES.DEPUTY_DIRECTOR, ROLES.ADMIN] },
+        { href: "/settings/telephony", icon: "phone", label: { uz: "Onlain telefoniya", ru: "Онлайн телефония", en: "Online telephony", de: "Online-Telefonie" }, roles: [ROLES.DIRECTOR, ROLES.ADMIN] },
+        { href: "/settings/grading", icon: "award", label: { uz: "Baholash", ru: "Оценивание", en: "Grading", de: "Bewertung" }, roles: [ROLES.DIRECTOR, ROLES.ADMIN] },
+        { href: "/settings/operator", icon: "headphones", label: { uz: "Operator sozlamalari", ru: "Настройки оператора", en: "Operator settings", de: "Operator-Einstellungen" } },
       ] },
       // Faqat rahbariyat: direktor va o'rinbosari (administrator KIRMAYDI)
-      { label: { uz: "Rahbariyat", ru: "Руководство", en: "Management" }, roles: [ROLES.DIRECTOR, ROLES.DEPUTY_DIRECTOR], items: [
-        { href: "/settings", icon: "settings", label: { uz: "Umumiy sozlamalar", ru: "Общие настройки", en: "General settings" } },
-        { href: "/settings/staff", icon: "users", label: { uz: "Xodimlar", ru: "Сотрудники", en: "Staff" } },
-        { href: "/settings/billing", icon: "card", label: { uz: "Billing", ru: "Биллинг", en: "Billing" } },
-        { href: "/roadmap", icon: "chart", label: { uz: "Roadmap", ru: "Roadmap", en: "Roadmap" } },
+      { label: { uz: "Rahbariyat", ru: "Руководство", en: "Management", de: "Geschäftsleitung" }, roles: [ROLES.DIRECTOR, ROLES.DEPUTY_DIRECTOR], items: [
+        { href: "/settings", icon: "settings", label: { uz: "Umumiy sozlamalar", ru: "Общие настройки", en: "General settings", de: "Allgemeine Einstellungen" } },
+        { href: "/settings/staff", icon: "users", label: { uz: "Xodimlar", ru: "Сотрудники", en: "Staff", de: "Mitarbeiter" } },
+        { href: "/settings/billing", icon: "card", label: { uz: "Billing", ru: "Биллинг", en: "Billing", de: "Abrechnung" } },
+        { href: "/roadmap", icon: "chart", label: { uz: "Roadmap", ru: "Roadmap", en: "Roadmap", de: "Roadmap" } },
       ] },
-      { label: { uz: "Ofis", ru: "Офис", en: "Office" }, items: [
-        { href: "/courses", icon: "book", label: { uz: "Kurslar", ru: "Курсы", en: "Courses" } },
-        { href: "/rooms", icon: "building", label: { uz: "Xonalar", ru: "Кабинеты", en: "Rooms" } },
-        { href: "/settings/holidays", icon: "calendar", label: { uz: "Dam olish kunlari", ru: "Выходные дни", en: "Holidays" }, roles: [ROLES.DIRECTOR, ROLES.ADMIN] },
-        { href: "/archive", icon: "history", label: { uz: "Arxiv", ru: "Архив", en: "Archive" } },
+      { label: { uz: "Ofis", ru: "Офис", en: "Office", de: "Büro" }, items: [
+        { href: "/courses", icon: "book", label: { uz: "Kurslar", ru: "Курсы", en: "Courses", de: "Kurse" } },
+        { href: "/rooms", icon: "building", label: { uz: "Xonalar", ru: "Кабинеты", en: "Rooms", de: "Räume" } },
+        { href: "/settings/holidays", icon: "calendar", label: { uz: "Dam olish kunlari", ru: "Выходные дни", en: "Holidays", de: "Feiertage" }, roles: [ROLES.DIRECTOR, ROLES.ADMIN] },
+        { href: "/archive", icon: "history", label: { uz: "Arxiv", ru: "Архив", en: "Archive", de: "Archiv" } },
       ] },
     ],
   },
@@ -172,17 +172,17 @@ const SUBMENUS: Record<string, { title: Record<Locale, string>; groups: SubGroup
 
 // ROP (sotuv bo'limi boshlig'i) uchun alohida sidebar bandlari
 const ROP_NAV: { href: string; icon: string; label: Record<Locale, string>; exact?: boolean }[] = [
-  { href: "/rop", icon: "grid", label: L("Bosh sahifa", "Главная", "Home"), exact: true },
-  { href: "/crm", icon: "download", label: L("Lidlar", "Лиды", "Leads") },
-  { href: "/reports/operators", icon: "headphones", label: L("Operatorlar", "Операторы", "Operators") },
+  { href: "/rop", icon: "grid", label: L("Bosh sahifa", "Главная", "Home", "Startseite"), exact: true },
+  { href: "/crm", icon: "download", label: L("Lidlar", "Лиды", "Leads", "Leads") },
+  { href: "/reports/operators", icon: "headphones", label: L("Operatorlar", "Операторы", "Operators", "Operatoren") },
   { href: "/reports/kpi", icon: "chart", label: L("KPI") },
-  { href: "/rop/kpi-settings", icon: "settings", label: L("KPI sozlamalari", "Настройки KPI", "KPI settings") },
-  { href: "/reports/calls", icon: "phone", label: L("Qo'ng'iroq", "Звонки", "Calls") },
-  { href: "/vacancies", icon: "building", label: L("Vakansiyalar", "Вакансии", "Vacancies") },
-  { href: "/links", icon: "link", label: L("Havolalar", "Ссылки", "Links") },
-  { href: "/tasks", icon: "clipboard", label: L("Vazifalar", "Задачи", "Tasks") },
-  { href: "/marketing", icon: "bell", label: L("Xabarlar", "Сообщения", "Messages") },
-  { href: "/settings/operator", icon: "settings", label: L("Sozlamalar", "Настройки", "Settings") },
+  { href: "/rop/kpi-settings", icon: "settings", label: L("KPI sozlamalari", "Настройки KPI", "KPI settings", "KPI-Einstellungen") },
+  { href: "/reports/calls", icon: "phone", label: L("Qo'ng'iroq", "Звонки", "Calls", "Anrufe") },
+  { href: "/vacancies", icon: "building", label: L("Vakansiyalar", "Вакансии", "Vacancies", "Stellenangebote") },
+  { href: "/links", icon: "link", label: L("Havolalar", "Ссылки", "Links", "Links") },
+  { href: "/tasks", icon: "clipboard", label: L("Vazifalar", "Задачи", "Tasks", "Aufgaben") },
+  { href: "/marketing", icon: "bell", label: L("Xabarlar", "Сообщения", "Messages", "Nachrichten") },
+  { href: "/settings/operator", icon: "settings", label: L("Sozlamalar", "Настройки", "Settings", "Einstellungen") },
 ];
 
 // Operator (sotuv menejeri) portali — eski loyihadagi `operator` sidebar bilan
@@ -191,12 +191,12 @@ const ROP_NAV: { href: string; icon: string; label: Record<Locale, string>; exac
 //   → /operator/notifications → /operator/settings
 // Bu loyihadagi mavjud sahifalarga moslashtirilgan.
 const OPERATOR_NAV: { href: string; icon: string; label: Record<Locale, string>; exact?: boolean }[] = [
-  { href: "/operator", icon: "grid", label: L("Bosh sahifa", "Главная", "Dashboard"), exact: true },
-  { href: "/crm", icon: "download", label: L("Lidlar", "Лиды", "Leads") },
-  { href: "/reports/calls", icon: "phone", label: L("Qo'ng'iroqlar", "Звонки", "Calls") },
-  { href: "/reminders", icon: "clock", label: L("Eslatmalar", "Напоминания", "Reminders") },
-  { href: "/notifications", icon: "bell", label: L("Bildirishnomalar", "Уведомления", "Notifications") },
-  { href: "/settings/operator", icon: "settings", label: L("Sozlamalar", "Настройки", "Settings") },
+  { href: "/operator", icon: "grid", label: L("Bosh sahifa", "Главная", "Dashboard", "Startseite"), exact: true },
+  { href: "/crm", icon: "download", label: L("Lidlar", "Лиды", "Leads", "Leads") },
+  { href: "/reports/calls", icon: "phone", label: L("Qo'ng'iroqlar", "Звонки", "Calls", "Anrufe") },
+  { href: "/reminders", icon: "clock", label: L("Eslatmalar", "Напоминания", "Reminders", "Erinnerungen") },
+  { href: "/notifications", icon: "bell", label: L("Bildirishnomalar", "Уведомления", "Notifications", "Benachrichtigungen") },
+  { href: "/settings/operator", icon: "settings", label: L("Sozlamalar", "Настройки", "Settings", "Einstellungen") },
 ];
 
 interface Props {

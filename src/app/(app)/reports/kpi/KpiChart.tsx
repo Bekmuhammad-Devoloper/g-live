@@ -18,8 +18,8 @@ function bar(x: number, y: number, w: number, h: number, r = 4): string {
 export default function KpiChart({ rows, locale }: { rows: VKpiRow[]; locale: Locale }) {
   const t = {
     kpi: "KPI %",
-    conv: `${tr(locale, { uz: "Konversiya", ru: "Конверсия", en: "Conversion" })} %`,
-    empty: tr(locale, { uz: "Ma'lumot yo'q", ru: "Нет данных", en: "No data" }),
+    conv: `${tr(locale, { uz: "Konversiya", ru: "Конверсия", en: "Conversion", de: "Konversion" })} %`,
+    empty: tr(locale, { uz: "Ma'lumot yo'q", ru: "Нет данных", en: "No data", de: "Keine Daten" }),
   };
 
   if (rows.length === 0) {

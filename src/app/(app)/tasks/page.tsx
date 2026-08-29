@@ -9,7 +9,7 @@ import TasksView, { type VTask } from "./TasksView";
 export default async function TasksPage() {
   const s = await requireSession();
   if (s.role === ROLES.STUDENT || s.role === ROLES.PARENT) {
-    return <Forbidden title={tr(s.locale, { uz: "Kirish taqiqlangan", ru: "Доступ запрещён", en: "Access denied" })} body={tr(s.locale, { uz: "Bu bo'lim xodimlar uchun.", ru: "Этот раздел для сотрудников.", en: "This section is for staff." })} />;
+    return <Forbidden title={tr(s.locale, { uz: "Kirish taqiqlangan", ru: "Доступ запрещён", en: "Access denied", de: "Zugriff verweigert" })} body={tr(s.locale, { uz: "Bu bo'lim xodimlar uchun.", ru: "Этот раздел для сотрудников.", en: "This section is for staff.", de: "Dieser Bereich ist für Mitarbeiter." })} />;
   }
 
   const [tasks, staff, students, groups] = await Promise.all([
@@ -35,7 +35,7 @@ export default async function TasksPage() {
   return (
     <TasksView
       kind="TASK"
-      title={tr(s.locale, { uz: "Topshiriqlar", ru: "Задачи", en: "Tasks" })}
+      title={tr(s.locale, { uz: "Topshiriqlar", ru: "Задачи", en: "Tasks", de: "Aufgaben" })}
       locale={s.locale}
       tasks={vtasks}
       staff={staff.map((x) => ({ id: x.id, name: x.fullName }))}

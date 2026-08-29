@@ -27,12 +27,12 @@ interface Props {
   onSort: (v: string) => void;
 }
 
-export const SORT_OPTIONS: { key: string; label: { uz: string; ru: string; en: string } }[] = [
-  { key: "newest", label: { uz: "Eng yangi", ru: "Сначала новые", en: "Newest" } },
-  { key: "oldest", label: { uz: "Eng eski", ru: "Сначала старые", en: "Oldest" } },
-  { key: "budget", label: { uz: "Byudjet (katta)", ru: "Бюджет (больше)", en: "Budget (high)" } },
-  { key: "name", label: { uz: "Ism (A-Z)", ru: "Имя (А-Я)", en: "Name (A-Z)" } },
-  { key: "activity", label: { uz: "Faoliyat (ko'p)", ru: "Активность (больше)", en: "Activity (most)" } },
+export const SORT_OPTIONS: { key: string; label: { uz: string; ru: string; en: string; de?: string } }[] = [
+  { key: "newest", label: { uz: "Eng yangi", ru: "Сначала новые", en: "Newest", de: "Neueste" } },
+  { key: "oldest", label: { uz: "Eng eski", ru: "Сначала старые", en: "Oldest", de: "Älteste" } },
+  { key: "budget", label: { uz: "Byudjet (katta)", ru: "Бюджет (больше)", en: "Budget (high)", de: "Budget (hoch)" } },
+  { key: "name", label: { uz: "Ism (A-Z)", ru: "Имя (А-Я)", en: "Name (A-Z)", de: "Name (A-Z)" } },
+  { key: "activity", label: { uz: "Faoliyat (ko'p)", ru: "Активность (больше)", en: "Activity (most)", de: "Aktivität (meist)" } },
 ];
 
 export default function FilterBar(p: Props) {
@@ -46,24 +46,24 @@ export default function FilterBar(p: Props) {
           <input
             value={p.search}
             onChange={(e) => p.onSearch(e.target.value)}
-            placeholder={tr(locale, { uz: "Ism, telefon bo'yicha qidirish...", ru: "Поиск по имени, телефону...", en: "Search by name, phone..." })}
+            placeholder={tr(locale, { uz: "Ism, telefon bo'yicha qidirish...", ru: "Поиск по имени, телефону...", en: "Search by name, phone...", de: "Suche nach Name, Telefon..." })}
             className="h-10 w-full rounded-lg border border-slate-200 bg-white pl-9 pr-3 text-sm outline-none focus:border-brand-400 focus:ring-2 focus:ring-brand-100 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-100 dark:placeholder:text-slate-500"
           />
         </div>
         <select value={p.source} onChange={(e) => p.onSource(e.target.value)} className={sel}>
-          <option value="">{tr(locale, { uz: "Manba: Barchasi", ru: "Источник: Все", en: "Source: All" })}</option>
+          <option value="">{tr(locale, { uz: "Manba: Barchasi", ru: "Источник: Все", en: "Source: All", de: "Quelle: Alle" })}</option>
           {p.sources.map((x) => <option key={x} value={x}>{x}</option>)}
         </select>
         <select value={p.manager} onChange={(e) => p.onManager(e.target.value)} className={sel}>
-          <option value="">{tr(locale, { uz: "Menejer: Barchasi", ru: "Менеджер: Все", en: "Manager: All" })}</option>
+          <option value="">{tr(locale, { uz: "Menejer: Barchasi", ru: "Менеджер: Все", en: "Manager: All", de: "Manager: Alle" })}</option>
           {p.managers.map((m) => <option key={m.id} value={m.id}>{m.name}</option>)}
         </select>
         <select value={p.sort} onChange={(e) => p.onSort(e.target.value)} className={sel}>
-          {SORT_OPTIONS.map((o) => <option key={o.key} value={o.key}>{tr(locale, { uz: "Saralash", ru: "Сортировка", en: "Sort" })}: {tr(locale, o.label)}</option>)}
+          {SORT_OPTIONS.map((o) => <option key={o.key} value={o.key}>{tr(locale, { uz: "Saralash", ru: "Сортировка", en: "Sort", de: "Sortieren" })}: {tr(locale, o.label)}</option>)}
         </select>
         {p.hasFilters && (
           <button onClick={p.onClear} className="flex items-center gap-1.5 rounded-lg px-3 py-2 text-sm font-medium text-slate-400 hover:text-slate-600">
-            <Icon name="personX" className="h-4 w-4" /> {tr(locale, { uz: "Tozalash", ru: "Очистить", en: "Clear" })}
+            <Icon name="personX" className="h-4 w-4" /> {tr(locale, { uz: "Tozalash", ru: "Очистить", en: "Clear", de: "Zurücksetzen" })}
           </button>
         )}
       </div>

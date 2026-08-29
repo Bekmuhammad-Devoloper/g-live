@@ -17,17 +17,18 @@ const MONTHS_BY_LOCALE: Record<Locale, string[]> = {
   uz: ["Yan", "Fev", "Mar", "Apr", "May", "Iyun", "Iyul", "Avg", "Sen", "Okt", "Noy", "Dek"],
   ru: ["Янв", "Фев", "Мар", "Апр", "Май", "Июн", "Июл", "Авг", "Сен", "Окт", "Ноя", "Дек"],
   en: ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"],
+  de: ["Jan", "Feb", "Mär", "Apr", "Mai", "Jun", "Jul", "Aug", "Sep", "Okt", "Nov", "Dez"],
 };
-const STATUS_OPTS: { v: string; label: { uz: string; ru: string; en: string } }[] = [
-  { v: "WAITING", label: { uz: "Sinov darsida", ru: "На пробном уроке", en: "In trial lesson" } },
-  { v: "ACTIVE", label: { uz: "Faol", ru: "Активный", en: "Active" } },
-  { v: "FROZEN", label: { uz: "Muzlatilgan", ru: "Заморожен", en: "Frozen" } },
+const STATUS_OPTS: { v: string; label: { uz: string; ru: string; en: string; de: string } }[] = [
+  { v: "WAITING", label: { uz: "Sinov darsida", ru: "На пробном уроке", en: "In trial lesson", de: "In der Probestunde" } },
+  { v: "ACTIVE", label: { uz: "Faol", ru: "Активный", en: "Active", de: "Aktiv" } },
+  { v: "FROZEN", label: { uz: "Muzlatilgan", ru: "Заморожен", en: "Frozen", de: "Pausiert" } },
 ];
 
 export default async function LeftStudentsPage({ searchParams }: { searchParams: Promise<Record<string, string | undefined>> }) {
   const s = await requireSession();
   if (!canRead(s.role, MODULES.REPORTS)) {
-    return <Forbidden title={tr(s.locale, { uz: "Kirish taqiqlangan", ru: "Доступ запрещён", en: "Access denied" })} body={tr(s.locale, { uz: "Bu bo'lim uchun ruxsat yo'q.", ru: "Нет доступа к этому разделу.", en: "You don't have access to this section." })} />;
+    return <Forbidden title={tr(s.locale, { uz: "Kirish taqiqlangan", ru: "Доступ запрещён", en: "Access denied", de: "Zugriff verweigert" })} body={tr(s.locale, { uz: "Bu bo'lim uchun ruxsat yo'q.", ru: "Нет доступа к этому разделу.", en: "You don't have access to this section.", de: "Sie haben keinen Zugriff auf diesen Bereich." })} />;
   }
   const sp = await searchParams;
   const MONTHS = MONTHS_BY_LOCALE[s.locale];
@@ -93,8 +94,8 @@ export default async function LeftStudentsPage({ searchParams }: { searchParams:
   return (
     <div className="space-y-5">
       <div className="flex items-center gap-3">
-        <h1 className="text-[24px] font-bold tracking-tight text-slate-900 dark:text-slate-100">{tr(s.locale, { uz: "Guruhni tark etgan o'quvchilar", ru: "Ученики, покинувшие группу", en: "Students who left the group" })}</h1>
-        <span className="text-sm text-slate-400">{tr(s.locale, { uz: "Miqdor", ru: "Количество", en: "Count" })} — {left.length}</span>
+        <h1 className="text-[24px] font-bold tracking-tight text-slate-900 dark:text-slate-100">{tr(s.locale, { uz: "Guruhni tark etgan o'quvchilar", ru: "Ученики, покинувшие группу", en: "Students who left the group", de: "Schüler, die die Gruppe verlassen haben" })}</h1>
+        <span className="text-sm text-slate-400">{tr(s.locale, { uz: "Miqdor", ru: "Количество", en: "Count", de: "Anzahl" })} — {left.length}</span>
         <div className="ml-auto"><LeftExport rows={exportRowsData} locale={s.locale} /></div>
       </div>
 
@@ -109,23 +110,23 @@ export default async function LeftStudentsPage({ searchParams }: { searchParams:
             <Icon name="calendar" className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400" />
             <input type="date" name="to" defaultValue={toStr} className={dateInp} />
           </div>
-          <Select name="courseId" value={courseId} placeholder={tr(s.locale, { uz: "Kurs", ru: "Курс", en: "Course" })} options={programs.map((p) => ({ v: p.id, label: p.name }))} cls={sel} />
-          <Select name="teacherId" value={teacherId} placeholder={tr(s.locale, { uz: "O'qituvchi", ru: "Преподаватель", en: "Teacher" })} options={teachers.map((tt) => ({ v: tt.id, label: tt.fullName }))} cls={sel} />
-          <Select name="reason" value={sp.reason || ""} placeholder={tr(s.locale, { uz: "Arxivlash sabablari", ru: "Причины архивации", en: "Archiving reasons" })} options={[]} cls={sel} />
-          <Select name="status" value={status} placeholder={tr(s.locale, { uz: "Holati", ru: "Статус", en: "Status" })} options={STATUS_OPTS.map((o) => ({ v: o.v, label: tr(s.locale, o.label) }))} cls={sel} />
+          <Select name="courseId" value={courseId} placeholder={tr(s.locale, { uz: "Kurs", ru: "Курс", en: "Course", de: "Kurs" })} options={programs.map((p) => ({ v: p.id, label: p.name }))} cls={sel} />
+          <Select name="teacherId" value={teacherId} placeholder={tr(s.locale, { uz: "O'qituvchi", ru: "Преподаватель", en: "Teacher", de: "Lehrer" })} options={teachers.map((tt) => ({ v: tt.id, label: tt.fullName }))} cls={sel} />
+          <Select name="reason" value={sp.reason || ""} placeholder={tr(s.locale, { uz: "Arxivlash sabablari", ru: "Причины архивации", en: "Archiving reasons", de: "Archivierungsgründe" })} options={[]} cls={sel} />
+          <Select name="status" value={status} placeholder={tr(s.locale, { uz: "Holati", ru: "Статус", en: "Status", de: "Status" })} options={STATUS_OPTS.map((o) => ({ v: o.v, label: tr(s.locale, o.label) }))} cls={sel} />
         </div>
         <div className="mt-3 flex items-center gap-2">
-          <button type="submit" className="rounded-lg bg-brand-600 px-6 py-2 text-sm font-semibold text-white transition hover:bg-brand-700">{tr(s.locale, { uz: "Filtr", ru: "Фильтр", en: "Filter" })}</button>
-          <Link href="/reports/left-students" className="flex h-9 w-10 items-center justify-center rounded-lg border border-slate-200 text-slate-500 transition hover:bg-slate-50 dark:border-slate-700" title={tr(s.locale, { uz: "Tozalash", ru: "Очистить", en: "Clear" })}><Icon name="refresh" className="h-4 w-4" /></Link>
+          <button type="submit" className="rounded-lg bg-brand-600 px-6 py-2 text-sm font-semibold text-white transition hover:bg-brand-700">{tr(s.locale, { uz: "Filtr", ru: "Фильтр", en: "Filter", de: "Filter" })}</button>
+          <Link href="/reports/left-students" className="flex h-9 w-10 items-center justify-center rounded-lg border border-slate-200 text-slate-500 transition hover:bg-slate-50 dark:border-slate-700" title={tr(s.locale, { uz: "Tozalash", ru: "Очистить", en: "Clear", de: "Zurücksetzen" })}><Icon name="refresh" className="h-4 w-4" /></Link>
         </div>
       </form>
 
       {/* Diagrammalar */}
       <div className="grid gap-5 lg:grid-cols-2">
-        <Chart title={tr(s.locale, { uz: "Ustoz kesimida", ru: "По преподавателям", en: "By teacher" })} data={byTeacher} />
-        <Chart title={tr(s.locale, { uz: "Kurs kesimida", ru: "По курсам", en: "By course" })} data={byCourse} />
-        <Chart title={tr(s.locale, { uz: "Oylik kesimida", ru: "По месяцам", en: "By month" })} data={byMonth} />
-        <Chart title={tr(s.locale, { uz: "Sabab kesimida", ru: "По причинам", en: "By reason" })} data={byReason} />
+        <Chart title={tr(s.locale, { uz: "Ustoz kesimida", ru: "По преподавателям", en: "By teacher", de: "Nach Lehrer" })} data={byTeacher} />
+        <Chart title={tr(s.locale, { uz: "Kurs kesimida", ru: "По курсам", en: "By course", de: "Nach Kurs" })} data={byCourse} />
+        <Chart title={tr(s.locale, { uz: "Oylik kesimida", ru: "По месяцам", en: "By month", de: "Nach Monat" })} data={byMonth} />
+        <Chart title={tr(s.locale, { uz: "Sabab kesimida", ru: "По причинам", en: "By reason", de: "Nach Grund" })} data={byReason} />
       </div>
     </div>
   );

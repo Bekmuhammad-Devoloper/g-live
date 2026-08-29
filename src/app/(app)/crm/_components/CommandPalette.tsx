@@ -87,17 +87,17 @@ export default function CommandPalette({
       >
         <div className="flex items-center gap-2 border-b border-slate-100 px-4 py-3 dark:border-white/10">
           <Icon name="search" className="h-4 w-4 text-slate-400" />
-          <input ref={inputRef} value={q} onChange={(e) => setQ(e.target.value)} placeholder={tr(locale, { uz: "Buyruq yoki lid qidiring...", ru: "Найти команду или лид...", en: "Search command or lead..." })} className="flex-1 bg-transparent text-sm outline-none dark:text-slate-100" />
+          <input ref={inputRef} value={q} onChange={(e) => setQ(e.target.value)} placeholder={tr(locale, { uz: "Buyruq yoki lid qidiring...", ru: "Найти команду или лид...", en: "Search command or lead...", de: "Befehl oder Lead suchen..." })} className="flex-1 bg-transparent text-sm outline-none dark:text-slate-100" />
           <kbd className="rounded bg-slate-100 px-1.5 py-0.5 text-[10px] text-slate-400 dark:bg-slate-800">ESC</kbd>
         </div>
         <div className="max-h-[50vh] overflow-y-auto py-1">
-          {matchedActions.length > 0 && <Section label={tr(locale, { uz: "Amallar", ru: "Действия", en: "Actions" })} />}
+          {matchedActions.length > 0 && <Section label={tr(locale, { uz: "Amallar", ru: "Действия", en: "Actions", de: "Aktionen" })} />}
           {matchedActions.map((a, i) => (
             <Row key={a.id} active={active === i} onHover={() => setActive(i)} onClick={() => exec(i)}>
               <Icon name={a.icon} className="h-4 w-4 text-slate-400" /> {a.label}
             </Row>
           ))}
-          {matchedLeads.length > 0 && <Section label={tr(locale, { uz: "Lidlar", ru: "Лиды", en: "Leads" })} />}
+          {matchedLeads.length > 0 && <Section label={tr(locale, { uz: "Lidlar", ru: "Лиды", en: "Leads", de: "Leads" })} />}
           {matchedLeads.map((l, i) => {
             const idx = matchedActions.length + i;
             return (
@@ -108,7 +108,7 @@ export default function CommandPalette({
               </Row>
             );
           })}
-          {flat.length === 0 && <p className="px-4 py-6 text-center text-sm text-slate-400">{tr(locale, { uz: "Hech narsa topilmadi", ru: "Ничего не найдено", en: "Nothing found" })}</p>}
+          {flat.length === 0 && <p className="px-4 py-6 text-center text-sm text-slate-400">{tr(locale, { uz: "Hech narsa topilmadi", ru: "Ничего не найдено", en: "Nothing found", de: "Nichts gefunden" })}</p>}
         </div>
       </div>
     </div>

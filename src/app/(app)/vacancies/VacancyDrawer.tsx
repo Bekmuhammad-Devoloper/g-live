@@ -20,7 +20,7 @@ export default function VacancyDrawer({ locale, edit, onClose, onSaved }: {
   const [err, setErr] = useState<string | null>(null);
   const [countryCode, setCountryCode] = useState(edit?.countryCode ?? "");
   const formRef = useRef<HTMLFormElement>(null);
-  const L = (uz: string, ru: string, en: string) => tr(locale, { uz, ru, en });
+  const L = (uz: string, ru: string, en: string, de?: string) => tr(locale, { uz, ru, en, de });
 
   useEffect(() => {
     setMounted(true);
@@ -41,8 +41,8 @@ export default function VacancyDrawer({ locale, edit, onClose, onSaved }: {
     fd.set("country", c?.name ?? "");
     start(async () => {
       const r = await saveVacancy(fd);
-      if (r.ok) onSaved(edit ? L("Saqlandi", "Сохранено", "Saved") : L("Vakansiya yaratildi", "Вакансия создана", "Vacancy created"));
-      else setErr(r.error ?? L("Xatolik", "Ошибка", "Error"));
+      if (r.ok) onSaved(edit ? L("Saqlandi", "Сохранено", "Saved", "Gespeichert") : L("Vakansiya yaratildi", "Вакансия создана", "Vacancy created", "Stelle erstellt"));
+      else setErr(r.error ?? L("Xatolik", "Ошибка", "Error", "Fehler"));
     });
   };
 
@@ -56,7 +56,7 @@ export default function VacancyDrawer({ locale, edit, onClose, onSaved }: {
         <div className="flex shrink-0 items-center justify-between border-b border-slate-100 px-5 py-4 dark:border-white/10">
           <div className="flex items-center gap-2 text-base font-bold text-slate-800 dark:text-slate-100">
             <Icon name="building" className="h-5 w-5 text-brand-500" />
-            {edit ? L("Vakansiyani tahrirlash", "Редактировать вакансию", "Edit vacancy") : L("Yangi vakansiya", "Новая вакансия", "New vacancy")}
+            {edit ? L("Vakansiyani tahrirlash", "Редактировать вакансию", "Edit vacancy", "Stelle bearbeiten") : L("Yangi vakansiya", "Новая вакансия", "New vacancy", "Neue Stelle")}
           </div>
           <button type="button" onClick={onClose} className="grid h-8 w-8 place-items-center rounded-lg text-slate-400 transition hover:bg-slate-100 dark:hover:bg-white/10">
             <Icon name="close" className="h-5 w-5" />
@@ -64,36 +64,36 @@ export default function VacancyDrawer({ locale, edit, onClose, onSaved }: {
         </div>
 
         <div className="flex-1 space-y-3.5 overflow-y-auto px-5 py-4">
-          <Field label={L("Vakansiya nomi", "Название вакансии", "Vacancy title")} required>
+          <Field label={L("Vakansiya nomi", "Название вакансии", "Vacancy title", "Stellenbezeichnung")} required>
             <input name="title" required defaultValue={edit?.title ?? ""} autoFocus
-              placeholder={L("Masalan: Qassobchilik", "Например: Мясник", "e.g. Butcher")} className={inp} />
+              placeholder={L("Masalan: Qassobchilik", "Например: Мясник", "e.g. Butcher", "z. B. Metzger")} className={inp} />
           </Field>
 
           <div className="grid grid-cols-2 gap-3">
-            <Field label={L("Kompaniya", "Компания", "Company")}>
+            <Field label={L("Kompaniya", "Компания", "Company", "Unternehmen")}>
               <input name="company" defaultValue={edit?.company ?? ""} placeholder="GL" className={inp} />
             </Field>
-            <Field label={L("Davlat", "Страна", "Country")}>
+            <Field label={L("Davlat", "Страна", "Country", "Land")}>
               <select value={countryCode} onChange={(e) => setCountryCode(e.target.value)} className={inp}>
-                <option value="">{L("— tanlanmagan —", "— не выбрано —", "— not selected —")}</option>
+                <option value="">{L("— tanlanmagan —", "— не выбрано —", "— not selected —", "— nicht ausgewählt —")}</option>
                 {COUNTRIES.map((c) => <option key={c.code} value={c.code}>{c.flag} {c.name}</option>)}
               </select>
             </Field>
           </div>
 
           <div className="grid grid-cols-2 gap-3">
-            <Field label={L("Ish turi", "Тип работы", "Job type")}>
+            <Field label={L("Ish turi", "Тип работы", "Job type", "Tätigkeit")}>
               <input name="jobTitle" defaultValue={edit?.jobTitle ?? ""}
-                placeholder={L("Masalan: Ishlab chiqarish", "Например: Производство", "e.g. Production")} className={inp} />
+                placeholder={L("Masalan: Ishlab chiqarish", "Например: Производство", "e.g. Production", "z. B. Produktion")} className={inp} />
             </Field>
-            <Field label={L("Oylik", "Зарплата", "Salary")}>
+            <Field label={L("Oylik", "Зарплата", "Salary", "Gehalt")}>
               <input name="salary" defaultValue={edit?.salary ?? ""} placeholder="2000-2500 €" className={inp} />
             </Field>
           </div>
 
-          <Field label={L("Tavsif / talablar", "Описание / требования", "Description / requirements")}>
+          <Field label={L("Tavsif / talablar", "Описание / требования", "Description / requirements", "Beschreibung / Anforderungen")}>
             <textarea name="description" defaultValue={edit?.description ?? ""} rows={5}
-              placeholder={L("Ish sharoitlari, talablar, qo'shimcha ma'lumot...", "Условия работы, требования, доп. информация...", "Working conditions, requirements, extra info...")}
+              placeholder={L("Ish sharoitlari, talablar, qo'shimcha ma'lumot...", "Условия работы, требования, доп. информация...", "Working conditions, requirements, extra info...", "Arbeitsbedingungen, Anforderungen, weitere Informationen...")}
               className="w-full rounded-xl border border-slate-200 bg-white px-3.5 py-2.5 text-sm text-slate-800 outline-none focus:border-brand-400 dark:border-slate-700 dark:bg-slate-800/60 dark:text-slate-100" />
           </Field>
 
@@ -101,7 +101,7 @@ export default function VacancyDrawer({ locale, edit, onClose, onSaved }: {
             <input type="checkbox" name="isActive" value="true" defaultChecked={edit ? edit.isActive : true}
               className="h-4 w-4 rounded accent-brand-600" />
             <span className="text-sm text-slate-600 dark:text-slate-300">
-              {L("Faol (arizalar qabul qilinadi)", "Активна (заявки принимаются)", "Active (accepting applications)")}
+              {L("Faol (arizalar qabul qilinadi)", "Активна (заявки принимаются)", "Active (accepting applications)", "Aktiv (Bewerbungen werden angenommen)")}
             </span>
           </label>
           {/* checkbox belgilanmasa "false" yuborilishi uchun */}
@@ -109,7 +109,7 @@ export default function VacancyDrawer({ locale, edit, onClose, onSaved }: {
 
           {edit && edit.linkCount > 0 && (
             <p className="rounded-xl bg-blue-500/10 px-3.5 py-2.5 text-xs text-blue-700 dark:text-blue-300">
-              {L(`Bu vakansiyada ${edit.linkCount} ta havola bor.`, `У этой вакансии ${edit.linkCount} ссылок.`, `This vacancy has ${edit.linkCount} link(s).`)}
+              {L(`Bu vakansiyada ${edit.linkCount} ta havola bor.`, `У этой вакансии ${edit.linkCount} ссылок.`, `This vacancy has ${edit.linkCount} link(s).`, `Diese Stelle hat ${edit.linkCount} Link(s).`)}
             </p>
           )}
 
@@ -119,11 +119,11 @@ export default function VacancyDrawer({ locale, edit, onClose, onSaved }: {
         <div className="flex shrink-0 gap-2 border-t border-slate-100 px-5 py-4 dark:border-white/10">
           <button type="button" onClick={onClose}
             className="flex-1 rounded-xl border border-slate-200 py-2.5 text-sm font-semibold text-slate-600 transition hover:bg-slate-50 dark:border-white/10 dark:text-slate-300 dark:hover:bg-white/5">
-            {L("Bekor qilish", "Отмена", "Cancel")}
+            {L("Bekor qilish", "Отмена", "Cancel", "Abbrechen")}
           </button>
           <button type="submit" disabled={pending}
             className="flex-[1.4] rounded-xl bg-brand-600 py-2.5 text-sm font-semibold text-white transition hover:bg-brand-700 disabled:opacity-60">
-            {pending ? L("Saqlanmoqda...", "Сохранение...", "Saving...") : L("Saqlash", "Сохранить", "Save")}
+            {pending ? L("Saqlanmoqda...", "Сохранение...", "Saving...", "Wird gespeichert...") : L("Saqlash", "Сохранить", "Save", "Speichern")}
           </button>
         </div>
       </form>

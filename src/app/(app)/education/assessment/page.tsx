@@ -18,7 +18,7 @@ const statusTone: Record<string, "green" | "amber" | "slate"> = {
 export default async function AssessmentPage() {
   const s = await requireSession();
   if (!ALLOWED.includes(s.role as never)) {
-    return <Forbidden title={tr(s.locale, { uz: "Kirish taqiqlangan", ru: "Доступ запрещён", en: "Access denied" })} body={tr(s.locale, { uz: "Bu bo'lim o'quv bo'limi uchun.", ru: "Этот раздел для учебного отдела.", en: "This section is for the education department." })} />;
+    return <Forbidden title={tr(s.locale, { uz: "Kirish taqiqlangan", ru: "Доступ запрещён", en: "Access denied", de: "Zugriff verweigert" })} body={tr(s.locale, { uz: "Bu bo'lim o'quv bo'limi uchun.", ru: "Этот раздел для учебного отдела.", en: "This section is for the education department.", de: "Dieser Bereich ist für die Bildungsabteilung." })} />;
   }
   const isTeacher = s.role === ROLES.TEACHER;
 
@@ -60,14 +60,14 @@ export default async function AssessmentPage() {
   return (
     <>
       <div className="mb-6 grid grid-cols-2 gap-4 lg:grid-cols-4">
-        <StatCard label={tr(s.locale, { uz: "Baholashlar", ru: "Оценивания", en: "Assessments" })} value={assessments.length} tone="brand" icon="filecheck" />
-        <StatCard label={tr(s.locale, { uz: "Yakunlangan", ru: "Завершено", en: "Completed" })} value={completed} tone="green" icon="check" />
-        <StatCard label={tr(s.locale, { uz: "Natijalar", ru: "Результаты", en: "Results" })} value={resultsAgg._count} icon="chart" />
-        <StatCard label={tr(s.locale, { uz: "O'rtacha ball", ru: "Средний балл", en: "Average score" })} value={avg} icon="trophy" />
+        <StatCard label={tr(s.locale, { uz: "Baholashlar", ru: "Оценивания", en: "Assessments", de: "Bewertungen" })} value={assessments.length} tone="brand" icon="filecheck" />
+        <StatCard label={tr(s.locale, { uz: "Yakunlangan", ru: "Завершено", en: "Completed", de: "Abgeschlossen" })} value={completed} tone="green" icon="check" />
+        <StatCard label={tr(s.locale, { uz: "Natijalar", ru: "Результаты", en: "Results", de: "Ergebnisse" })} value={resultsAgg._count} icon="chart" />
+        <StatCard label={tr(s.locale, { uz: "O'rtacha ball", ru: "Средний балл", en: "Average score", de: "Durchschnittliche Punktzahl" })} value={avg} icon="trophy" />
       </div>
 
       <div className="mb-3 flex items-center justify-between">
-        <h3 className="text-sm font-semibold text-slate-700">{tr(s.locale, { uz: "Mavsumiy baholashlar", ru: "Сезонные оценивания", en: "Seasonal assessments" })}</h3>
+        <h3 className="text-sm font-semibold text-slate-700">{tr(s.locale, { uz: "Mavsumiy baholashlar", ru: "Сезонные оценивания", en: "Seasonal assessments", de: "Saisonale Bewertungen" })}</h3>
         <AssessmentControls groups={groups} locale={s.locale} />
       </div>
 
@@ -76,18 +76,18 @@ export default async function AssessmentPage() {
           head={
             <tr>
               <th className="px-4 py-3 w-12">№</th>
-              <th className="px-4 py-3">{tr(s.locale, { uz: "Nomi", ru: "Название", en: "Name" })}</th>
-              <th className="px-4 py-3">{tr(s.locale, { uz: "Mavsum", ru: "Сезон", en: "Season" })}</th>
-              <th className="px-4 py-3">{tr(s.locale, { uz: "Guruh", ru: "Группа", en: "Group" })}</th>
-              <th className="px-4 py-3">{tr(s.locale, { uz: "Daraja", ru: "Уровень", en: "Level" })}</th>
-              <th className="px-4 py-3">{tr(s.locale, { uz: "Sana", ru: "Дата", en: "Date" })}</th>
-              <th className="px-4 py-3">{tr(s.locale, { uz: "Natijalar", ru: "Результаты", en: "Results" })}</th>
-              <th className="px-4 py-3">{tr(s.locale, { uz: "Holat", ru: "Статус", en: "Status" })}</th>
+              <th className="px-4 py-3">{tr(s.locale, { uz: "Nomi", ru: "Название", en: "Name", de: "Name" })}</th>
+              <th className="px-4 py-3">{tr(s.locale, { uz: "Mavsum", ru: "Сезон", en: "Season", de: "Saison" })}</th>
+              <th className="px-4 py-3">{tr(s.locale, { uz: "Guruh", ru: "Группа", en: "Group", de: "Gruppe" })}</th>
+              <th className="px-4 py-3">{tr(s.locale, { uz: "Daraja", ru: "Уровень", en: "Level", de: "Niveau" })}</th>
+              <th className="px-4 py-3">{tr(s.locale, { uz: "Sana", ru: "Дата", en: "Date", de: "Datum" })}</th>
+              <th className="px-4 py-3">{tr(s.locale, { uz: "Natijalar", ru: "Результаты", en: "Results", de: "Ergebnisse" })}</th>
+              <th className="px-4 py-3">{tr(s.locale, { uz: "Holat", ru: "Статус", en: "Status", de: "Status" })}</th>
             </tr>
           }
         >
           {assessments.length === 0 ? (
-            <EmptyRow colSpan={8} text={tr(s.locale, { uz: "Baholash qo'shilmagan", ru: "Оценивания не добавлены", en: "No assessments added" })} />
+            <EmptyRow colSpan={8} text={tr(s.locale, { uz: "Baholash qo'shilmagan", ru: "Оценивания не добавлены", en: "No assessments added", de: "Keine Bewertungen hinzugefügt" })} />
           ) : (
             assessments.map((a, i) => (
               <tr key={a.id} className="hover:bg-slate-50 dark:hover:bg-slate-800/50">
@@ -99,7 +99,7 @@ export default async function AssessmentPage() {
                 <td className="px-4 py-3">
                   <Badge tone="blue">{label(SEASON_LABELS, a.season, s.locale)} {a.year}</Badge>
                 </td>
-                <td className="px-4 py-3 text-slate-600 dark:text-slate-300">{a.group?.name ?? tr(s.locale, { uz: "Umumiy", ru: "Общее", en: "General" })}</td>
+                <td className="px-4 py-3 text-slate-600 dark:text-slate-300">{a.group?.name ?? tr(s.locale, { uz: "Umumiy", ru: "Общее", en: "General", de: "Allgemein" })}</td>
                 <td className="px-4 py-3 text-slate-500">{a.levelCode ?? "—"}</td>
                 <td className="px-4 py-3 text-slate-500">{fmtDate(a.date)}</td>
                 <td className="px-4 py-3">
@@ -117,15 +117,15 @@ export default async function AssessmentPage() {
       {recentResults.length > 0 && (
         <Card padded={false} className="mt-5">
           <div className="border-b border-slate-100 px-5 py-4 dark:border-slate-800">
-            <h3 className="text-sm font-semibold text-slate-700">{tr(s.locale, { uz: "Oxirgi natijalar", ru: "Последние результаты", en: "Latest results" })}</h3>
+            <h3 className="text-sm font-semibold text-slate-700">{tr(s.locale, { uz: "Oxirgi natijalar", ru: "Последние результаты", en: "Latest results", de: "Neueste Ergebnisse" })}</h3>
           </div>
           <Table
             head={
               <tr>
-                <th className="px-4 py-3">{tr(s.locale, { uz: "O'quvchi", ru: "Ученик", en: "Student" })}</th>
-                <th className="px-4 py-3">{tr(s.locale, { uz: "Baholash", ru: "Оценивание", en: "Assessment" })}</th>
-                <th className="px-4 py-3">{tr(s.locale, { uz: "Ball", ru: "Балл", en: "Score" })}</th>
-                <th className="px-4 py-3">{tr(s.locale, { uz: "Natija", ru: "Результат", en: "Result" })}</th>
+                <th className="px-4 py-3">{tr(s.locale, { uz: "O'quvchi", ru: "Ученик", en: "Student", de: "Schüler" })}</th>
+                <th className="px-4 py-3">{tr(s.locale, { uz: "Baholash", ru: "Оценивание", en: "Assessment", de: "Bewertung" })}</th>
+                <th className="px-4 py-3">{tr(s.locale, { uz: "Ball", ru: "Балл", en: "Score", de: "Punktzahl" })}</th>
+                <th className="px-4 py-3">{tr(s.locale, { uz: "Natija", ru: "Результат", en: "Result", de: "Ergebnis" })}</th>
               </tr>
             }
           >
@@ -137,7 +137,7 @@ export default async function AssessmentPage() {
                   <td className="px-4 py-3 text-slate-600 dark:text-slate-300">{r.assessment.title}</td>
                   <td className="px-4 py-3 text-slate-700 dark:text-slate-200">{r.score ?? "—"}{r.grade ? ` (${r.grade})` : ""}</td>
                   <td className="px-4 py-3">
-                    {passed === null ? <Badge tone="slate">—</Badge> : passed ? <Badge tone="green">{tr(s.locale, { uz: "O'tdi", ru: "Сдал", en: "Passed" })}</Badge> : <Badge tone="red">{tr(s.locale, { uz: "O'tmadi", ru: "Не сдал", en: "Failed" })}</Badge>}
+                    {passed === null ? <Badge tone="slate">—</Badge> : passed ? <Badge tone="green">{tr(s.locale, { uz: "O'tdi", ru: "Сдал", en: "Passed", de: "Bestanden" })}</Badge> : <Badge tone="red">{tr(s.locale, { uz: "O'tmadi", ru: "Не сдал", en: "Failed", de: "Nicht bestanden" })}</Badge>}
                   </td>
                 </tr>
               );

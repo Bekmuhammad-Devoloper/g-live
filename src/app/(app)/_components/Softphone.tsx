@@ -19,23 +19,23 @@ const NORMAL_CAUSES = new Set([
 const isRealError = (c: string) => !NORMAL_CAUSES.has(c);
 
 function causeText(c: string, locale: Locale): string {
-  const M: Record<string, { uz: string; ru: string; en: string }> = {
-    Canceled: { uz: "Chaqiruvchi qo'ng'iroqni uzdi", ru: "Звонящий положил трубку", en: "Caller hung up" },
-    Terminated: { uz: "Qo'ng'iroq tugadi", ru: "Звонок завершён", en: "Call ended" },
-    BYE: { uz: "Qo'ng'iroq tugadi", ru: "Звонок завершён", en: "Call ended" },
-    Busy: { uz: "Abonent band", ru: "Абонент занят", en: "Line busy" },
-    Rejected: { uz: "Qo'ng'iroq rad etildi", ru: "Звонок отклонён", en: "Call rejected" },
-    Unavailable: { uz: "Abonent mavjud emas", ru: "Абонент недоступен", en: "Unavailable" },
-    "No Answer": { uz: "Javob berilmadi", ru: "Нет ответа", en: "No answer" },
-    "Request Timeout": { uz: "Vaqt tugadi — javob kelmadi", ru: "Тайм-аут запроса", en: "Request timed out" },
-    "Connection Error": { uz: "Aloqa uzildi", ru: "Ошибка соединения", en: "Connection error" },
-    "Internal Error": { uz: "Ichki xatolik", ru: "Внутренняя ошибка", en: "Internal error" },
-    "User Denied Media Access": { uz: "Mikrofonga ruxsat berilmadi", ru: "Нет доступа к микрофону", en: "Microphone access denied" },
-    "Incompatible SDP": { uz: "Media sozlamalari mos kelmadi", ru: "Несовместимые медиа-настройки", en: "Incompatible media settings" },
+  const M: Record<string, { uz: string; ru: string; en: string; de: string }> = {
+    Canceled: { uz: "Chaqiruvchi qo'ng'iroqni uzdi", ru: "Звонящий положил трубку", en: "Caller hung up", de: "Anrufer hat aufgelegt" },
+    Terminated: { uz: "Qo'ng'iroq tugadi", ru: "Звонок завершён", en: "Call ended", de: "Anruf beendet" },
+    BYE: { uz: "Qo'ng'iroq tugadi", ru: "Звонок завершён", en: "Call ended", de: "Anruf beendet" },
+    Busy: { uz: "Abonent band", ru: "Абонент занят", en: "Line busy", de: "Besetzt" },
+    Rejected: { uz: "Qo'ng'iroq rad etildi", ru: "Звонок отклонён", en: "Call rejected", de: "Anruf abgelehnt" },
+    Unavailable: { uz: "Abonent mavjud emas", ru: "Абонент недоступен", en: "Unavailable", de: "Nicht erreichbar" },
+    "No Answer": { uz: "Javob berilmadi", ru: "Нет ответа", en: "No answer", de: "Keine Antwort" },
+    "Request Timeout": { uz: "Vaqt tugadi — javob kelmadi", ru: "Тайм-аут запроса", en: "Request timed out", de: "Zeitüberschreitung der Anfrage" },
+    "Connection Error": { uz: "Aloqa uzildi", ru: "Ошибка соединения", en: "Connection error", de: "Verbindungsfehler" },
+    "Internal Error": { uz: "Ichki xatolik", ru: "Внутренняя ошибка", en: "Internal error", de: "Interner Fehler" },
+    "User Denied Media Access": { uz: "Mikrofonga ruxsat berilmadi", ru: "Нет доступа к микрофону", en: "Microphone access denied", de: "Mikrofonzugriff verweigert" },
+    "Incompatible SDP": { uz: "Media sozlamalari mos kelmadi", ru: "Несовместимые медиа-настройки", en: "Incompatible media settings", de: "Inkompatible Medieneinstellungen" },
   };
   const t = M[c];
   if (t) return tr(locale, t);
-  return c ? tr(locale, { uz: "Qo'ng'iroq uzildi: ", ru: "Звонок прерван: ", en: "Call ended: " }) + c : "";
+  return c ? tr(locale, { uz: "Qo'ng'iroq uzildi: ", ru: "Звонок прерван: ", en: "Call ended: ", de: "Anruf beendet: " }) + c : "";
 }
 type CallState = "none" | "incoming" | "outgoing" | "active";
 type Tab = "dial" | "history";
@@ -176,6 +176,7 @@ export default function Softphone({ locale, canConfigure = false }: { locale: Lo
         uz: "Mikrofon ochilmadi — ovozsiz rejimda ulandi",
         ru: "Микрофон недоступен — подключено без звука",
         en: "Microphone unavailable — connected muted",
+        de: "Mikrofon nicht verfügbar — stumm verbunden",
       }));
       return silent();
     }
@@ -376,14 +377,14 @@ export default function Softphone({ locale, canConfigure = false }: { locale: Lo
                   session.answer(answerOptions(stream));
                 } catch (e: unknown) {
                   const m = e instanceof Error ? e.message : String(e);
-                  setErr(tr(locale, { uz: "Javob berish xatosi: ", ru: "Ошибка ответа: ", en: "Answer error: " }) + m);
+                  setErr(tr(locale, { uz: "Javob berish xatosi: ", ru: "Ошибка ответа: ", en: "Answer error: ", de: "Antwortfehler: " }) + m);
                   try { session.terminate(); } catch {}
                   cleanup();
                 }
               })
               .catch((e: unknown) => {
                 const m = e instanceof Error ? e.message : String(e);
-                setErr(tr(locale, { uz: "Mikrofon xatosi: ", ru: "Ошибка микрофона: ", en: "Microphone error: " }) + m);
+                setErr(tr(locale, { uz: "Mikrofon xatosi: ", ru: "Ошибка микрофона: ", en: "Microphone error: ", de: "Mikrofonfehler: " }) + m);
                 try { session.terminate(); } catch {}
                 cleanup();
               });
@@ -429,7 +430,7 @@ export default function Softphone({ locale, canConfigure = false }: { locale: Lo
     if (res.ok) {
       callIdRef.current = j.callId ?? null;
     } else {
-      setErr(j.message || tr(locale, { uz: "Qo'ng'iroq amalga oshmadi", ru: "Звонок не удался", en: "Call failed" }));
+      setErr(j.message || tr(locale, { uz: "Qo'ng'iroq amalga oshmadi", ru: "Звонок не удался", en: "Call failed", de: "Anruf fehlgeschlagen" }));
       pendingOutRef.current = false; amiOutRef.current = false; setCallState("none");
     }
   }, [dial, locale]);
@@ -465,7 +466,7 @@ export default function Softphone({ locale, canConfigure = false }: { locale: Lo
     try { s.answer(answerOptions(stream)); setCallState("active"); startTimer(); }
     catch (e: unknown) {
       const m = e instanceof Error ? e.message : String(e);
-      setErr(tr(locale, { uz: "Javob berish xatosi: ", ru: "Ошибка ответа: ", en: "Answer error: " }) + m);
+      setErr(tr(locale, { uz: "Javob berish xatosi: ", ru: "Ошибка ответа: ", en: "Answer error: ", de: "Antwortfehler: " }) + m);
       try { s.terminate(); } catch {} cleanup();
     }
   };
@@ -498,6 +499,7 @@ export default function Softphone({ locale, canConfigure = false }: { locale: Lo
     uz: status === "registered" ? "Ulangan" : status === "failed" ? "Ulanmadi" : status === "disabled" ? "Sozlanmagan" : "Ulanmoqda...",
     ru: status === "registered" ? "Подключено" : status === "failed" ? "Ошибка" : status === "disabled" ? "Не настроено" : "Подключение...",
     en: status === "registered" ? "Connected" : status === "failed" ? "Failed" : status === "disabled" ? "Not configured" : "Connecting...",
+    de: status === "registered" ? "Verbunden" : status === "failed" ? "Fehlgeschlagen" : status === "disabled" ? "Nicht konfiguriert" : "Verbinden...",
   });
   const inCall = callState === "active" || callState === "outgoing" || callState === "incoming";
   const footerCaption = [ext || "—", "WebRTC", statusText].join(" • ");
@@ -527,11 +529,11 @@ export default function Softphone({ locale, canConfigure = false }: { locale: Lo
           <div className="flex items-center justify-between bg-gradient-to-r from-emerald-600 to-teal-500 px-4 py-3.5">
             <div onMouseDown={beginDrag("panel")} className="flex flex-1 cursor-move items-center gap-2 select-none">
               <Icon name="phone" className="h-4 w-4 text-white" />
-              <span className="text-sm font-bold text-white">{tr(locale, { uz: "Telefon", ru: "Телефон", en: "Phone" })}</span>
+              <span className="text-sm font-bold text-white">{tr(locale, { uz: "Telefon", ru: "Телефон", en: "Phone", de: "Telefon" })}</span>
               <span className={cn("h-2 w-2 rounded-full bg-white/90", inCall && "animate-pulse")} />
             </div>
             <div className="flex items-center gap-1">
-              <button onClick={() => setOpen(false)} className="grid h-6 w-6 place-items-center rounded-md text-white/80 transition hover:bg-white/15 hover:text-white" title={tr(locale, { uz: "Kichraytirish", ru: "Свернуть", en: "Minimize" })}>
+              <button onClick={() => setOpen(false)} className="grid h-6 w-6 place-items-center rounded-md text-white/80 transition hover:bg-white/15 hover:text-white" title={tr(locale, { uz: "Kichraytirish", ru: "Свернуть", en: "Minimize", de: "Minimieren" })}>
                 <Icon name="minimize" className="h-3.5 w-3.5" />
               </button>
               <button onClick={() => setOpen(false)} className="grid h-6 w-6 place-items-center rounded-md text-white/80 transition hover:bg-white/15 hover:text-white">
@@ -545,11 +547,11 @@ export default function Softphone({ locale, canConfigure = false }: { locale: Lo
             <div className="flex border-b border-white/10 px-1">
               <TabBtn active={tab === "dial"} onClick={() => setTab("dial")}>
                 <span className="w-3.5 text-center text-[13px] font-bold leading-none">#</span>
-                {tr(locale, { uz: "Raqam terish", ru: "Набор номера", en: "Dial number" })}
+                {tr(locale, { uz: "Raqam terish", ru: "Набор номера", en: "Dial number", de: "Nummer wählen" })}
               </TabBtn>
               <TabBtn active={tab === "history"} onClick={() => setTab("history")}>
                 <Icon name="history" className="h-3.5 w-3.5" />
-                {tr(locale, { uz: "Tarix", ru: "История", en: "History" })}
+                {tr(locale, { uz: "Tarix", ru: "История", en: "History", de: "Verlauf" })}
               </TabBtn>
             </div>
           )}
@@ -559,19 +561,20 @@ export default function Softphone({ locale, canConfigure = false }: { locale: Lo
               /* Telefoniya sozlanmagan holati */
               <div className="py-4 text-center">
                 <div className="mx-auto mb-3 grid h-12 w-12 place-items-center rounded-full bg-white/5 text-slate-400"><Icon name="phoneOff" className="h-6 w-6" /></div>
-                <p className="text-sm font-medium text-slate-200">{tr(locale, { uz: "Telefoniya hali sozlanmagan", ru: "Телефония ещё не настроена", en: "Telephony not configured yet" })}</p>
+                <p className="text-sm font-medium text-slate-200">{tr(locale, { uz: "Telefoniya hali sozlanmagan", ru: "Телефония ещё не настроена", en: "Telephony not configured yet", de: "Telefonie noch nicht eingerichtet" })}</p>
                 {/* Sozlash huquqi yo'q foydalanuvchini kira olmaydigan sahifaga
                     yuborish o'rniga — kimga murojaat qilishni aytamiz */}
                 {canConfigure ? (
                   <>
-                    <p className="mt-1 text-xs leading-relaxed text-slate-500">{tr(locale, { uz: "Qo'ng'iroqlar uchun Asterisk/WebRTC serverini Sozlamalardan ulang.", ru: "Для звонков подключите Asterisk/WebRTC в настройках.", en: "Connect Asterisk/WebRTC in settings to make calls." })}</p>
-                    <a href="/settings/telephony" className="mt-3 inline-block rounded-lg bg-gradient-to-br from-emerald-500 to-teal-600 px-4 py-2 text-xs font-semibold text-white transition hover:opacity-90">{tr(locale, { uz: "Telefoniya sozlamalari", ru: "Настройки телефонии", en: "Telephony settings" })}</a>
+                    <p className="mt-1 text-xs leading-relaxed text-slate-500">{tr(locale, { uz: "Qo'ng'iroqlar uchun Asterisk/WebRTC serverini Sozlamalardan ulang.", ru: "Для звонков подключите Asterisk/WebRTC в настройках.", en: "Connect Asterisk/WebRTC in settings to make calls.", de: "Verbinden Sie Asterisk/WebRTC in den Einstellungen, um Anrufe zu tätigen." })}</p>
+                    <a href="/settings/telephony" className="mt-3 inline-block rounded-lg bg-gradient-to-br from-emerald-500 to-teal-600 px-4 py-2 text-xs font-semibold text-white transition hover:opacity-90">{tr(locale, { uz: "Telefoniya sozlamalari", ru: "Настройки телефонии", en: "Telephony settings", de: "Telefonie-Einstellungen" })}</a>
                   </>
                 ) : (
                   <p className="mt-1 text-xs leading-relaxed text-slate-500">{tr(locale, {
                     uz: "Sizga SIP raqami biriktirilmagan. Administrator yoki ROP'ga murojaat qiling.",
                     ru: "Вам не назначен SIP-номер. Обратитесь к администратору или РОПу.",
                     en: "No SIP extension assigned to you. Contact your administrator or ROP.",
+                    de: "Ihnen ist keine SIP-Nebenstelle zugewiesen. Wenden Sie sich an Ihren Administrator oder ROP.",
                   })}</p>
                 )}
               </div>
@@ -583,16 +586,16 @@ export default function Softphone({ locale, canConfigure = false }: { locale: Lo
                   <input
                     value={histQ}
                     onChange={(e) => setHistQ(e.target.value)}
-                    placeholder={tr(locale, { uz: "Qidirish...", ru: "Поиск...", en: "Search..." })}
+                    placeholder={tr(locale, { uz: "Qidirish...", ru: "Поиск...", en: "Search...", de: "Suchen..." })}
                     className="h-9 w-full rounded-xl border border-white/10 bg-white/5 pl-9 pr-3 text-sm text-slate-100 placeholder:text-slate-500 outline-none focus:border-emerald-500/50"
                   />
                 </div>
                 {histLoading ? (
-                  <div className="py-10 text-center text-xs text-slate-500">{tr(locale, { uz: "Yuklanmoqda...", ru: "Загрузка...", en: "Loading..." })}</div>
+                  <div className="py-10 text-center text-xs text-slate-500">{tr(locale, { uz: "Yuklanmoqda...", ru: "Загрузка...", en: "Loading...", de: "Wird geladen..." })}</div>
                 ) : !calls || calls.length === 0 ? (
                   <div className="py-10 text-center">
                     <Icon name="history" className="mx-auto mb-2 h-8 w-8 text-slate-600" />
-                    <p className="text-sm text-slate-500">{tr(locale, { uz: "Tarix bo'sh", ru: "История пуста", en: "History is empty" })}</p>
+                    <p className="text-sm text-slate-500">{tr(locale, { uz: "Tarix bo'sh", ru: "История пуста", en: "History is empty", de: "Verlauf ist leer" })}</p>
                   </div>
                 ) : (
                   <ul className="-mx-1 max-h-72 space-y-0.5 overflow-y-auto">
@@ -607,7 +610,7 @@ export default function Softphone({ locale, canConfigure = false }: { locale: Lo
                             <span className="block truncate text-sm font-medium text-slate-100">{c.contactName || c.phone}</span>
                             <span className="block text-[11px] text-slate-500">{fmtWhen(c.startedAt)}{ok && c.duration ? ` · ${fmtDur(c.duration)}` : ""}</span>
                           </span>
-                          <button onClick={() => startCall(c.phone, undefined, c.contactName || undefined)} className="grid h-8 w-8 shrink-0 place-items-center rounded-full text-slate-500 transition hover:bg-emerald-500/15 hover:text-emerald-400" title={tr(locale, { uz: "Qayta qo'ng'iroq", ru: "Перезвонить", en: "Call again" })}>
+                          <button onClick={() => startCall(c.phone, undefined, c.contactName || undefined)} className="grid h-8 w-8 shrink-0 place-items-center rounded-full text-slate-500 transition hover:bg-emerald-500/15 hover:text-emerald-400" title={tr(locale, { uz: "Qayta qo'ng'iroq", ru: "Перезвонить", en: "Call again", de: "Erneut anrufen" })}>
                             <Icon name="phone" className="h-3.5 w-3.5" />
                           </button>
                         </li>
@@ -625,7 +628,7 @@ export default function Softphone({ locale, canConfigure = false }: { locale: Lo
                   value={dial}
                   onChange={(e) => setDial(e.target.value.replace(/[^\d+]/g, ""))}
                   onKeyDown={(e) => { if (e.key === "Enter") { e.preventDefault(); startCall(); } }}
-                  placeholder={tr(locale, { uz: "Raqam kiriting", ru: "Введите номер", en: "Enter number" })}
+                  placeholder={tr(locale, { uz: "Raqam kiriting", ru: "Введите номер", en: "Enter number", de: "Nummer eingeben" })}
                   className="mb-3 h-11 w-full border-b border-white/10 bg-transparent text-center text-xl font-semibold tracking-wide text-white outline-none placeholder:text-base placeholder:font-medium placeholder:text-slate-600"
                 />
                 <div className="grid grid-cols-3 gap-2">
@@ -638,7 +641,7 @@ export default function Softphone({ locale, canConfigure = false }: { locale: Lo
                     <Icon name="backspace" className="h-4 w-4" />
                   </button>
                   <button onClick={() => startCall()} disabled={!dial} className="flex h-11 flex-1 items-center justify-center gap-2 rounded-full bg-emerald-500 text-sm font-semibold text-white transition hover:bg-emerald-600 disabled:opacity-40">
-                    <Icon name="phoneCall" className="h-4 w-4" /> {tr(locale, { uz: "Qo'ng'iroq", ru: "Позвонить", en: "Call" })}
+                    <Icon name="phoneCall" className="h-4 w-4" /> {tr(locale, { uz: "Qo'ng'iroq", ru: "Позвонить", en: "Call", de: "Anrufen" })}
                   </button>
                   <span className="grid h-11 w-11 shrink-0 place-items-center rounded-full bg-white/[0.04] text-slate-700">
                     <Icon name="phoneOff" className="h-4 w-4" />
@@ -698,32 +701,32 @@ export default function Softphone({ locale, canConfigure = false }: { locale: Lo
             {/* Holat */}
             <div className="mt-2.5 text-[11px] uppercase tracking-[0.18em] text-slate-400">
               {callState === "incoming"
-                ? tr(locale, { uz: "Kiruvchi qo'ng'iroq", ru: "Входящий звонок", en: "Incoming call" })
+                ? tr(locale, { uz: "Kiruvchi qo'ng'iroq", ru: "Входящий звонок", en: "Incoming call", de: "Eingehender Anruf" })
                 : callState === "outgoing"
-                  ? tr(locale, { uz: "Chaqirilmoqda...", ru: "Вызов...", en: "Ringing..." })
+                  ? tr(locale, { uz: "Chaqirilmoqda...", ru: "Вызов...", en: "Ringing...", de: "Klingelt..." })
                   : held
-                    ? tr(locale, { uz: "Kutishda", ru: "На удержании", en: "On hold" })
-                    : tr(locale, { uz: "Suhbat", ru: "Разговор", en: "In call" })}
+                    ? tr(locale, { uz: "Kutishda", ru: "На удержании", en: "On hold", de: "In der Warteschleife" })
+                    : tr(locale, { uz: "Suhbat", ru: "Разговор", en: "In call", de: "Im Gespräch" })}
             </div>
 
             {/* Boshqaruv tugmalari */}
             <div className="mt-6 flex items-center justify-center gap-4">
               {callState === "incoming" ? (
                 <>
-                  <button onClick={hangup} title={tr(locale, { uz: "Rad etish", ru: "Отклонить", en: "Decline" })} className="grid h-16 w-16 place-items-center rounded-full bg-rose-500 text-white transition hover:bg-rose-600 active:scale-95">
+                  <button onClick={hangup} title={tr(locale, { uz: "Rad etish", ru: "Отклонить", en: "Decline", de: "Ablehnen" })} className="grid h-16 w-16 place-items-center rounded-full bg-rose-500 text-white transition hover:bg-rose-600 active:scale-95">
                     <Icon name="phoneOff" className="h-7 w-7" />
                   </button>
-                  <button onClick={answer} title={tr(locale, { uz: "Javob berish", ru: "Ответить", en: "Answer" })} className="grid h-16 w-16 place-items-center rounded-full bg-emerald-500 text-white transition hover:bg-emerald-600 active:scale-95">
+                  <button onClick={answer} title={tr(locale, { uz: "Javob berish", ru: "Ответить", en: "Answer", de: "Annehmen" })} className="grid h-16 w-16 place-items-center rounded-full bg-emerald-500 text-white transition hover:bg-emerald-600 active:scale-95">
                     <Icon name="phoneCall" className="h-7 w-7" />
                   </button>
                 </>
               ) : (
                 <>
-                  <RoundBtn active={muted} disabled={callState !== "active"} onClick={toggleMute} icon={muted ? "micOff" : "mic"} label={tr(locale, { uz: "Ovozsiz", ru: "Микрофон", en: "Mute" })} />
-                  <button onClick={hangup} title={tr(locale, { uz: "Tugatish", ru: "Завершить", en: "Hang up" })} className="grid h-16 w-16 place-items-center rounded-full bg-rose-500 text-white transition hover:bg-rose-600 active:scale-95">
+                  <RoundBtn active={muted} disabled={callState !== "active"} onClick={toggleMute} icon={muted ? "micOff" : "mic"} label={tr(locale, { uz: "Ovozsiz", ru: "Микрофон", en: "Mute", de: "Stumm" })} />
+                  <button onClick={hangup} title={tr(locale, { uz: "Tugatish", ru: "Завершить", en: "Hang up", de: "Auflegen" })} className="grid h-16 w-16 place-items-center rounded-full bg-rose-500 text-white transition hover:bg-rose-600 active:scale-95">
                     <Icon name="phoneOff" className="h-7 w-7" />
                   </button>
-                  <RoundBtn active={held} disabled={callState !== "active"} onClick={toggleHold} icon="pause" label={tr(locale, { uz: "Kutish", ru: "Удержание", en: "Hold" })} />
+                  <RoundBtn active={held} disabled={callState !== "active"} onClick={toggleHold} icon="pause" label={tr(locale, { uz: "Kutish", ru: "Удержание", en: "Hold", de: "Halten" })} />
                 </>
               )}
             </div>

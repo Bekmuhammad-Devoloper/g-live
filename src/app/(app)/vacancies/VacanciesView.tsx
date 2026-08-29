@@ -36,7 +36,7 @@ export default function VacanciesView({ locale, rows, stats, openNew }: {
   const [del, setDel] = useState<VVacancy | null>(null);
   const [toast, setToast] = useState<string | null>(null);
   const flash = (m: string) => { setToast(m); setTimeout(() => setToast(null), 2200); };
-  const L = (uz: string, ru: string, en: string) => tr(locale, { uz, ru, en });
+  const L = (uz: string, ru: string, en: string, de: string = en) => tr(locale, { uz, ru, en, de });
 
   const shown = useMemo(() => {
     const n = q.trim().toLowerCase();
@@ -56,7 +56,7 @@ export default function VacanciesView({ locale, rows, stats, openNew }: {
 
   const onToggle = (r: VVacancy) => start(async () => {
     await toggleVacancy(r.id); router.refresh();
-    flash(r.isActive ? L("Nofaol qilindi", "Деактивировано", "Deactivated") : L("Faollashtirildi", "Активировано", "Activated"));
+    flash(r.isActive ? L("Nofaol qilindi", "Деактивировано", "Deactivated", "Deaktiviert") : L("Faollashtirildi", "Активировано", "Activated", "Aktiviert"));
   });
 
   const onDelete = () => {
@@ -65,28 +65,28 @@ export default function VacanciesView({ locale, rows, stats, openNew }: {
     start(async () => {
       const res = await removeVacancy(v.id);
       router.refresh();
-      flash(res.ok ? L("O'chirildi", "Удалено", "Deleted") : res.error ?? L("Xatolik", "Ошибка", "Error"));
+      flash(res.ok ? L("O'chirildi", "Удалено", "Deleted", "Gelöscht") : res.error ?? L("Xatolik", "Ошибка", "Error", "Fehler"));
     });
   };
 
   const csv = () => exportRows(
     "vakansiyalar",
     [
-      { key: "title", label: L("Vakansiya", "Вакансия", "Vacancy") },
-      { key: "company", label: L("Kompaniya", "Компания", "Company") },
-      { key: "country", label: L("Davlat", "Страна", "Country") },
-      { key: "jobTitle", label: L("Ish turi", "Тип работы", "Job type") },
-      { key: "salary", label: L("Oylik", "Зарплата", "Salary") },
-      { key: "linkCount", label: L("Linklar", "Ссылки", "Links") },
-      { key: "views", label: L("Ko'rishlar", "Просмотры", "Views") },
-      { key: "applications", label: L("Arizalar", "Заявки", "Applications") },
-      { key: "st", label: L("Holat", "Статус", "Status") },
-      { key: "createdAt", label: L("Sana", "Дата", "Date") },
+      { key: "title", label: L("Vakansiya", "Вакансия", "Vacancy", "Stelle") },
+      { key: "company", label: L("Kompaniya", "Компания", "Company", "Unternehmen") },
+      { key: "country", label: L("Davlat", "Страна", "Country", "Land") },
+      { key: "jobTitle", label: L("Ish turi", "Тип работы", "Job type", "Beschäftigungsart") },
+      { key: "salary", label: L("Oylik", "Зарплата", "Salary", "Gehalt") },
+      { key: "linkCount", label: L("Linklar", "Ссылки", "Links", "Links") },
+      { key: "views", label: L("Ko'rishlar", "Просмотры", "Views", "Aufrufe") },
+      { key: "applications", label: L("Arizalar", "Заявки", "Applications", "Bewerbungen") },
+      { key: "st", label: L("Holat", "Статус", "Status", "Status") },
+      { key: "createdAt", label: L("Sana", "Дата", "Date", "Datum") },
     ],
     shown.map((r) => ({
       title: r.title, company: r.company ?? "", country: r.country ?? "", jobTitle: r.jobTitle ?? "",
       salary: r.salary ?? "", linkCount: r.linkCount, views: r.views, applications: r.applications,
-      st: r.isActive ? L("Faol", "Активна", "Active") : L("Nofaol", "Неактивна", "Inactive"),
+      st: r.isActive ? L("Faol", "Активна", "Active", "Aktiv") : L("Nofaol", "Неактивна", "Inactive", "Inaktiv"),
       createdAt: r.createdAt,
     })),
   );
@@ -97,31 +97,31 @@ export default function VacanciesView({ locale, rows, stats, openNew }: {
       <div className="flex flex-wrap items-start justify-between gap-3">
         <div>
           <h1 className="text-[26px] font-bold tracking-tight text-slate-900 dark:text-slate-100">
-            {L("Vakansiyalar", "Вакансии", "Vacancies")}
+            {L("Vakansiyalar", "Вакансии", "Vacancies", "Stellenangebote")}
           </h1>
           <p className="mt-0.5 text-sm text-slate-500 dark:text-slate-400">
-            {L("Ish o'rinlarini yaratish va boshqarish", "Создание и управление вакансиями", "Create and manage job openings")}
+            {L("Ish o'rinlarini yaratish va boshqarish", "Создание и управление вакансиями", "Create and manage job openings", "Stellenangebote erstellen und verwalten")}
           </p>
         </div>
         <div className="flex flex-wrap items-center gap-2">
           <button onClick={csv} className="flex h-10 items-center gap-2 rounded-xl border border-slate-200 bg-white px-4 text-sm font-medium text-slate-600 transition hover:bg-slate-50 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-300 dark:hover:bg-slate-800">
-            <Icon name="download" className="h-4 w-4" /> {L("Eksport", "Экспорт", "Export")}
+            <Icon name="download" className="h-4 w-4" /> {L("Eksport", "Экспорт", "Export", "Export")}
           </button>
           <Link href="/links" className="flex h-10 items-center gap-2 rounded-xl border border-slate-200 bg-white px-4 text-sm font-medium text-slate-600 transition hover:bg-slate-50 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-300 dark:hover:bg-slate-800">
-            <Icon name="link" className="h-4 w-4" /> {L("Havolalar", "Ссылки", "Links")}
+            <Icon name="link" className="h-4 w-4" /> {L("Havolalar", "Ссылки", "Links", "Links")}
           </Link>
           <button onClick={() => setDrawer(null)} className="flex h-10 items-center gap-2 rounded-xl bg-brand-600 px-4 text-sm font-semibold text-white shadow-sm transition hover:bg-brand-700">
-            <Icon name="plus" className="h-4 w-4" /> {L("Yangi vakansiya", "Новая вакансия", "New vacancy")}
+            <Icon name="plus" className="h-4 w-4" /> {L("Yangi vakansiya", "Новая вакансия", "New vacancy", "Neue Stelle")}
           </button>
         </div>
       </div>
 
       {/* Ko'rsatkichlar */}
       <div className="grid grid-cols-2 gap-4 lg:grid-cols-4">
-        <Tile label={L("Jami vakansiya", "Всего вакансий", "Total vacancies")} value={stats.total} icon="building" tone="#3b82f6" />
-        <Tile label={L("Faol", "Активные", "Active")} value={stats.active} icon="check" tone="#10b981" />
-        <Tile label={L("Ko'rishlar", "Просмотры", "Views")} value={nf(stats.views)} icon="eye" tone="#a855f7" />
-        <Tile label={L("Arizalar", "Заявки", "Applications")} value={stats.applications} icon="users" tone="#f59e0b" />
+        <Tile label={L("Jami vakansiya", "Всего вакансий", "Total vacancies", "Stellen insgesamt")} value={stats.total} icon="building" tone="#3b82f6" />
+        <Tile label={L("Faol", "Активные", "Active", "Aktiv")} value={stats.active} icon="check" tone="#10b981" />
+        <Tile label={L("Ko'rishlar", "Просмотры", "Views", "Aufrufe")} value={nf(stats.views)} icon="eye" tone="#a855f7" />
+        <Tile label={L("Arizalar", "Заявки", "Applications", "Bewerbungen")} value={stats.applications} icon="users" tone="#f59e0b" />
       </div>
 
       {/* Filtrlar */}
@@ -129,12 +129,12 @@ export default function VacanciesView({ locale, rows, stats, openNew }: {
         <div className="relative min-w-[240px] flex-1">
           <Icon name="search" className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400" />
           <input value={q} onChange={(e) => setQ(e.target.value)}
-            placeholder={L("Vakansiya, kompaniya yoki davlat qidiring...", "Поиск вакансии, компании или страны...", "Search vacancy, company or country...")}
+            placeholder={L("Vakansiya, kompaniya yoki davlat qidiring...", "Поиск вакансии, компании или страны...", "Search vacancy, company or country...", "Stelle, Unternehmen oder Land suchen...")}
             className="h-11 w-full rounded-xl border border-slate-200 bg-white pl-10 pr-3 text-sm outline-none focus:border-brand-400 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-100" />
         </div>
         <select value={country} onChange={(e) => setCountry(e.target.value)}
           className="h-11 rounded-xl border border-slate-200 bg-white px-3 text-sm text-slate-600 outline-none dark:border-slate-700 dark:bg-slate-900 dark:text-slate-300">
-          <option value="">{L("Barcha davlatlar", "Все страны", "All countries")}</option>
+          <option value="">{L("Barcha davlatlar", "Все страны", "All countries", "Alle Länder")}</option>
           {countries.map((c) => {
             const def = COUNTRIES.find((x) => x.code === c || x.name === c);
             return <option key={c} value={c}>{flagOf(c, c)} {def?.name ?? c}</option>;
@@ -142,11 +142,11 @@ export default function VacanciesView({ locale, rows, stats, openNew }: {
         </select>
         <select value={status} onChange={(e) => setStatus(e.target.value as typeof status)}
           className="h-11 rounded-xl border border-slate-200 bg-white px-3 text-sm text-slate-600 outline-none dark:border-slate-700 dark:bg-slate-900 dark:text-slate-300">
-          <option value="">{L("Barcha holatlar", "Все статусы", "All statuses")}</option>
-          <option value="active">{L("Faol", "Активные", "Active")}</option>
-          <option value="inactive">{L("Nofaol", "Неактивные", "Inactive")}</option>
+          <option value="">{L("Barcha holatlar", "Все статусы", "All statuses", "Alle Status")}</option>
+          <option value="active">{L("Faol", "Активные", "Active", "Aktiv")}</option>
+          <option value="inactive">{L("Nofaol", "Неактивные", "Inactive", "Inaktiv")}</option>
         </select>
-        <button onClick={() => router.refresh()} title={L("Yangilash", "Обновить", "Refresh")}
+        <button onClick={() => router.refresh()} title={L("Yangilash", "Обновить", "Refresh", "Aktualisieren")}
           className="grid h-11 w-11 place-items-center rounded-xl border border-slate-200 bg-white text-slate-500 transition hover:bg-slate-50 dark:border-slate-700 dark:bg-slate-900 dark:hover:bg-slate-800">
           <Icon name="refresh" className="h-4 w-4" />
         </button>
@@ -159,14 +159,14 @@ export default function VacanciesView({ locale, rows, stats, openNew }: {
             <thead className="border-b border-slate-200/70 bg-slate-50/60 text-[11px] font-semibold uppercase tracking-wider text-slate-500 dark:border-slate-800 dark:bg-white/[0.02]">
               <tr>
                 <th className="w-12 px-4 py-3.5">#</th>
-                <th className="px-4 py-3.5">{L("Vakansiya", "Вакансия", "Vacancy")}</th>
-                <th className="px-4 py-3.5">{L("Davlat", "Страна", "Country")}</th>
-                <th className="px-4 py-3.5 text-center">{L("Linklar", "Ссылки", "Links")}</th>
-                <th className="px-4 py-3.5 text-center">{L("Ko'rishlar", "Просмотры", "Views")}</th>
-                <th className="px-4 py-3.5 text-center">{L("Arizalar", "Заявки", "Applications")}</th>
-                <th className="px-4 py-3.5 text-center">{L("Holat", "Статус", "Status")}</th>
-                <th className="px-4 py-3.5">{L("Sana", "Дата", "Date")}</th>
-                <th className="px-4 py-3.5 text-right">{L("Amallar", "Действия", "Actions")}</th>
+                <th className="px-4 py-3.5">{L("Vakansiya", "Вакансия", "Vacancy", "Stelle")}</th>
+                <th className="px-4 py-3.5">{L("Davlat", "Страна", "Country", "Land")}</th>
+                <th className="px-4 py-3.5 text-center">{L("Linklar", "Ссылки", "Links", "Links")}</th>
+                <th className="px-4 py-3.5 text-center">{L("Ko'rishlar", "Просмотры", "Views", "Aufrufe")}</th>
+                <th className="px-4 py-3.5 text-center">{L("Arizalar", "Заявки", "Applications", "Bewerbungen")}</th>
+                <th className="px-4 py-3.5 text-center">{L("Holat", "Статус", "Status", "Status")}</th>
+                <th className="px-4 py-3.5">{L("Sana", "Дата", "Date", "Datum")}</th>
+                <th className="px-4 py-3.5 text-right">{L("Amallar", "Действия", "Actions", "Aktionen")}</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-slate-100 dark:divide-slate-800">
@@ -176,8 +176,8 @@ export default function VacanciesView({ locale, rows, stats, openNew }: {
                     <div className="mx-auto grid h-14 w-14 place-items-center rounded-2xl bg-slate-100 text-slate-400 dark:bg-slate-800">
                       <Icon name="building" className="h-7 w-7" />
                     </div>
-                    <p className="mt-3 font-medium text-slate-600 dark:text-slate-300">{L("Vakansiya topilmadi", "Вакансии не найдены", "No vacancies found")}</p>
-                    <p className="mt-1 text-xs text-slate-400">{L("Yangi vakansiya yarating yoki filtrni o'zgartiring", "Создайте вакансию или измените фильтр", "Create a vacancy or change the filter")}</p>
+                    <p className="mt-3 font-medium text-slate-600 dark:text-slate-300">{L("Vakansiya topilmadi", "Вакансии не найдены", "No vacancies found", "Keine Stellen gefunden")}</p>
+                    <p className="mt-1 text-xs text-slate-400">{L("Yangi vakansiya yarating yoki filtrni o'zgartiring", "Создайте вакансию или измените фильтр", "Create a vacancy or change the filter", "Erstellen Sie eine Stelle oder ändern Sie den Filter")}</p>
                   </td>
                 </tr>
               ) : shown.map((r, i) => (
@@ -219,7 +219,7 @@ export default function VacanciesView({ locale, rows, stats, openNew }: {
                       </Link>
                     ) : (
                       <Link href={`/links?vacancyId=${r.id}`} className="text-xs font-medium text-brand-600 hover:underline dark:text-brand-400">
-                        + {L("Link", "Ссылка", "Link")}
+                        + {L("Link", "Ссылка", "Link", "Link")}
                       </Link>
                     )}
                   </td>
@@ -233,14 +233,14 @@ export default function VacanciesView({ locale, rows, stats, openNew }: {
                         r.isActive ? "bg-emerald-500/12 text-emerald-600 hover:bg-emerald-500/20 dark:text-emerald-400"
                                    : "bg-slate-200/70 text-slate-500 hover:bg-slate-300/70 dark:bg-slate-700 dark:text-slate-400")}>
                       <span className={cn("h-1.5 w-1.5 rounded-full", r.isActive ? "bg-emerald-500" : "bg-slate-400")} />
-                      {r.isActive ? L("Faol", "Активна", "Active") : L("Nofaol", "Неактивна", "Inactive")}
+                      {r.isActive ? L("Faol", "Активна", "Active", "Aktiv") : L("Nofaol", "Неактивна", "Inactive", "Inaktiv")}
                     </button>
                   </td>
                   <td className="px-4 py-3.5 whitespace-nowrap text-xs text-slate-500">{r.createdAt}</td>
                   <td className="px-4 py-3.5">
                     <div className="flex items-center justify-end gap-1">
-                      <IconBtn title={L("Tahrirlash", "Редактировать", "Edit")} icon="pencil" onClick={() => setDrawer(r)} />
-                      <IconBtn title={L("O'chirish", "Удалить", "Delete")} icon="trash" danger onClick={() => setDel(r)} />
+                      <IconBtn title={L("Tahrirlash", "Редактировать", "Edit", "Bearbeiten")} icon="pencil" onClick={() => setDrawer(r)} />
+                      <IconBtn title={L("O'chirish", "Удалить", "Delete", "Löschen")} icon="trash" danger onClick={() => setDel(r)} />
                     </div>
                   </td>
                 </tr>
@@ -250,7 +250,7 @@ export default function VacanciesView({ locale, rows, stats, openNew }: {
         </div>
         {shown.length > 0 && (
           <div className="border-t border-slate-100 px-4 py-2.5 text-xs text-slate-400 dark:border-slate-800">
-            {shown.length} / {rows.length} {L("ta vakansiya", "вакансий", "vacancies")}
+            {shown.length} / {rows.length} {L("ta vakansiya", "вакансий", "vacancies", "Stellen")}
           </div>
         )}
       </div>
@@ -266,17 +266,17 @@ export default function VacanciesView({ locale, rows, stats, openNew }: {
             <div className="mx-auto grid h-12 w-12 place-items-center rounded-2xl bg-rose-100 text-rose-600 dark:bg-rose-500/15">
               <Icon name="alert" className="h-6 w-6" />
             </div>
-            <h3 className="mt-3 text-base font-bold text-slate-800 dark:text-slate-100">{L("Diqqat!", "Внимание!", "Warning!")}</h3>
+            <h3 className="mt-3 text-base font-bold text-slate-800 dark:text-slate-100">{L("Diqqat!", "Внимание!", "Warning!", "Achtung!")}</h3>
             <p className="mt-1.5 text-sm text-slate-500 dark:text-slate-400">
-              <b>{del.title}</b> {L("o'chiriladi.", "будет удалена.", "will be deleted.")}
-              {del.linkCount > 0 && " " + L(`Unga tegishli ${del.linkCount} ta havola ham o'chadi.`, `Также будут удалены ${del.linkCount} ссылок.`, `Its ${del.linkCount} link(s) will also be deleted.`)}
+              <b>{del.title}</b> {L("o'chiriladi.", "будет удалена.", "will be deleted.", "wird gelöscht.")}
+              {del.linkCount > 0 && " " + L(`Unga tegishli ${del.linkCount} ta havola ham o'chadi.`, `Также будут удалены ${del.linkCount} ссылок.`, `Its ${del.linkCount} link(s) will also be deleted.`, `Die zugehörigen ${del.linkCount} Link(s) werden ebenfalls gelöscht.`)}
             </p>
             <div className="mt-5 flex gap-2">
               <button onClick={() => setDel(null)} className="flex-1 rounded-xl border border-slate-200 py-2.5 text-sm font-semibold text-slate-600 hover:bg-slate-50 dark:border-slate-700 dark:text-slate-300 dark:hover:bg-slate-800">
-                {L("Bekor", "Отмена", "Cancel")}
+                {L("Bekor", "Отмена", "Cancel", "Abbrechen")}
               </button>
               <button onClick={onDelete} className="flex-1 rounded-xl bg-rose-600 py-2.5 text-sm font-semibold text-white hover:bg-rose-700">
-                {L("O'chirish", "Удалить", "Delete")}
+                {L("O'chirish", "Удалить", "Delete", "Löschen")}
               </button>
             </div>
           </div>

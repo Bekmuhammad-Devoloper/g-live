@@ -18,20 +18,20 @@ export default function KpiTable({ rows, tab, locale, canEdit = false }: { rows:
   const [editing, setEditing] = useState<VKpiRow | null>(null);
 
   const t = {
-    employee: tr(locale, { uz: "Xodim", ru: "Сотрудник", en: "Employee" }),
-    total: tr(locale, { uz: "Jami lidlar", ru: "Всего лидов", en: "Total leads" }),
-    success: tr(locale, { uz: "Muvaffaqiyat", ru: "Успех", en: "Success" }),
-    blocked: tr(locale, { uz: "Bloklangan", ru: "Заблокировано", en: "Blocked" }),
-    operators: tr(locale, { uz: "Operatorlar", ru: "Операторы", en: "Operators" }),
-    conv: tr(locale, { uz: "Konversiya", ru: "Конверсия", en: "Conversion" }),
-    salary: tr(locale, { uz: "Oylik to'lov", ru: "Оклад", en: "Monthly pay" }),
-    earned: tr(locale, { uz: "Yig'gan (oy)", ru: "Заработано (мес.)", en: "Earned (month)" }),
-    workDays: tr(locale, { uz: "Ish kunlari", ru: "Рабочие дни", en: "Work days" }),
-    lead: tr(locale, { uz: "lid", ru: "лид", en: "leads" }),
-    days: tr(locale, { uz: "kun", ru: "дн.", en: "days" }),
-    empty: tr(locale, { uz: "Ma'lumot topilmadi", ru: "Данные не найдены", en: "No data found" }),
-    actions: tr(locale, { uz: "Amallar", ru: "Действия", en: "Actions" }),
-    edit: tr(locale, { uz: "Oylik va bonusni tahrirlash", ru: "Изменить оклад и бонус", en: "Edit pay and bonus" }),
+    employee: tr(locale, { uz: "Xodim", ru: "Сотрудник", en: "Employee", de: "Mitarbeiter" }),
+    total: tr(locale, { uz: "Jami lidlar", ru: "Всего лидов", en: "Total leads", de: "Leads gesamt" }),
+    success: tr(locale, { uz: "Muvaffaqiyat", ru: "Успех", en: "Success", de: "Erfolg" }),
+    blocked: tr(locale, { uz: "Bloklangan", ru: "Заблокировано", en: "Blocked", de: "Blockiert" }),
+    operators: tr(locale, { uz: "Operatorlar", ru: "Операторы", en: "Operators", de: "Operatoren" }),
+    conv: tr(locale, { uz: "Konversiya", ru: "Конверсия", en: "Conversion", de: "Konversion" }),
+    salary: tr(locale, { uz: "Oylik to'lov", ru: "Оклад", en: "Monthly pay", de: "Monatliches Gehalt" }),
+    earned: tr(locale, { uz: "Yig'gan (oy)", ru: "Заработано (мес.)", en: "Earned (month)", de: "Verdient (Monat)" }),
+    workDays: tr(locale, { uz: "Ish kunlari", ru: "Рабочие дни", en: "Work days", de: "Arbeitstage" }),
+    lead: tr(locale, { uz: "lid", ru: "лид", en: "leads", de: "Leads" }),
+    days: tr(locale, { uz: "kun", ru: "дн.", en: "days", de: "Tage" }),
+    empty: tr(locale, { uz: "Ma'lumot topilmadi", ru: "Данные не найдены", en: "No data found", de: "Keine Daten gefunden" }),
+    actions: tr(locale, { uz: "Amallar", ru: "Действия", en: "Actions", de: "Aktionen" }),
+    edit: tr(locale, { uz: "Oylik va bonusni tahrirlash", ru: "Изменить оклад и бонус", en: "Edit pay and bonus", de: "Gehalt und Bonus bearbeiten" }),
   };
 
   const th = "px-4 py-3.5 text-[11px] font-semibold uppercase tracking-wider text-slate-500";
@@ -197,8 +197,8 @@ function EditPayModal({ row, locale, onClose }: { row: VKpiRow; locale: Locale; 
       const r = await saveKpiPay(row.id, num(fiksa), num(bonus));
       if (r.ok) { onClose(); router.refresh(); }
       else setErr(r.error === "forbidden"
-        ? tr(locale, { uz: "Sizda ish haqini tahrirlash huquqi yo'q", ru: "Нет прав на изменение зарплаты", en: "No permission to edit pay" })
-        : tr(locale, { uz: "Saqlab bo'lmadi", ru: "Не удалось сохранить", en: "Could not save" }));
+        ? tr(locale, { uz: "Sizda ish haqini tahrirlash huquqi yo'q", ru: "Нет прав на изменение зарплаты", en: "No permission to edit pay", de: "Sie haben keine Berechtigung, das Gehalt zu bearbeiten" })
+        : tr(locale, { uz: "Saqlab bo'lmadi", ru: "Не удалось сохранить", en: "Could not save", de: "Konnte nicht gespeichert werden" }));
     });
   };
 
@@ -230,22 +230,22 @@ function EditPayModal({ row, locale, onClose }: { row: VKpiRow; locale: Locale; 
 
         <div className="space-y-3.5 px-5 py-4">
           <div>
-            <label className={lbl}>{tr(locale, { uz: "Oylik to'lov (fiksa, so'm)", ru: "Оклад (фикс, сум)", en: "Monthly pay (fixed, UZS)" })}</label>
+            <label className={lbl}>{tr(locale, { uz: "Oylik to'lov (fiksa, so'm)", ru: "Оклад (фикс, сум)", en: "Monthly pay (fixed, UZS)", de: "Monatliches Gehalt (fest, UZS)" })}</label>
             <input inputMode="numeric" value={fiksa} onChange={(e) => setFiksa(money(e.target.value))} placeholder="5 000 000" className={inp} autoFocus />
           </div>
           <div>
-            <label className={lbl}>{tr(locale, { uz: "Har bir muvaffaqiyatli lid uchun bonus (so'm)", ru: "Бонус за успешный лид (сум)", en: "Bonus per won lead (UZS)" })}</label>
+            <label className={lbl}>{tr(locale, { uz: "Har bir muvaffaqiyatli lid uchun bonus (so'm)", ru: "Бонус за успешный лид (сум)", en: "Bonus per won lead (UZS)", de: "Bonus pro gewonnenem Lead (UZS)" })}</label>
             <input inputMode="numeric" value={bonus} onChange={(e) => setBonus(money(e.target.value))} placeholder="200 000" className={inp} />
           </div>
 
           {/* Taxminiy hisob */}
           <div className="rounded-xl bg-slate-50 px-3.5 py-3 text-xs dark:bg-white/[0.03]">
             <div className="flex items-center justify-between text-slate-500">
-              <span>{tr(locale, { uz: "Shu oyda yopilgan lidlar", ru: "Закрыто лидов в этом месяце", en: "Leads won this month" })}</span>
+              <span>{tr(locale, { uz: "Shu oyda yopilgan lidlar", ru: "Закрыто лидов в этом месяце", en: "Leads won this month", de: "Diesen Monat gewonnene Leads" })}</span>
               <span className="font-semibold text-slate-700 dark:text-slate-200">{row.wonMonth}</span>
             </div>
             <div className="mt-1.5 flex items-center justify-between border-t border-slate-200/70 pt-1.5 dark:border-slate-700">
-              <span className="font-medium text-slate-600 dark:text-slate-300">{tr(locale, { uz: "Taxminiy oylik jami", ru: "Примерно за месяц", en: "Estimated month total" })}</span>
+              <span className="font-medium text-slate-600 dark:text-slate-300">{tr(locale, { uz: "Taxminiy oylik jami", ru: "Примерно за месяц", en: "Estimated month total", de: "Geschätzte Monatssumme" })}</span>
               <span className="font-bold tabular-nums text-emerald-600 dark:text-emerald-400">{formatMoney(preview, locale)}</span>
             </div>
           </div>
@@ -255,10 +255,10 @@ function EditPayModal({ row, locale, onClose }: { row: VKpiRow; locale: Locale; 
 
         <div className="flex gap-2 border-t border-slate-100 px-5 py-4 dark:border-slate-800">
           <button onClick={onClose} disabled={busy} className="flex-1 rounded-xl border border-slate-200 py-2.5 text-sm font-semibold text-slate-600 transition hover:bg-slate-50 dark:border-slate-700 dark:text-slate-300 dark:hover:bg-slate-800">
-            {tr(locale, { uz: "Bekor", ru: "Отмена", en: "Cancel" })}
+            {tr(locale, { uz: "Bekor", ru: "Отмена", en: "Cancel", de: "Abbrechen" })}
           </button>
           <button onClick={submit} disabled={busy} className={cn("flex-[1.4] rounded-xl bg-brand-600 py-2.5 text-sm font-semibold text-white transition hover:bg-brand-700", busy && "opacity-60")}>
-            {busy ? tr(locale, { uz: "Saqlanmoqda...", ru: "Сохранение...", en: "Saving..." }) : tr(locale, { uz: "Saqlash", ru: "Сохранить", en: "Save" })}
+            {busy ? tr(locale, { uz: "Saqlanmoqda...", ru: "Сохранение...", en: "Saving...", de: "Wird gespeichert..." }) : tr(locale, { uz: "Saqlash", ru: "Сохранить", en: "Save", de: "Speichern" })}
           </button>
         </div>
       </div>

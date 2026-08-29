@@ -12,7 +12,7 @@ import DebtorsView, { type VDebtor } from "./DebtorsView";
 export default async function DebtorsPage() {
   const s = await requireSession();
   if (!canRead(s.role, MODULES.PAYMENTS)) {
-    return <Forbidden title={tr(s.locale, { uz: "Kirish taqiqlangan", ru: "Доступ запрещён", en: "Access denied" })} body={tr(s.locale, { uz: "Bu bo'lim uchun ruxsatingiz yo'q.", ru: "У вас нет доступа к этому разделу.", en: "You do not have permission for this section." })} />;
+    return <Forbidden title={tr(s.locale, { uz: "Kirish taqiqlangan", ru: "Доступ запрещён", en: "Access denied", de: "Zugriff verweigert" })} body={tr(s.locale, { uz: "Bu bo'lim uchun ruxsatingiz yo'q.", ru: "У вас нет доступа к этому разделу.", en: "You do not have permission for this section.", de: "Sie haben keine Berechtigung für diesen Bereich." })} />;
   }
 
   // Qarz — o'quvchi guruhga qo'shilgan oydan boshlab hisoblanadi, ustiga qo'lda

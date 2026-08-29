@@ -83,25 +83,25 @@ export default function OperatorsBoard({ locale, operators, avgKpi, totalLeads, 
     exportRows(
       `operatorlar-${selectedDate ?? "bugun"}`,
       [
-        { key: "name", label: tr(locale, { uz: "Operator", ru: "Оператор", en: "Operator" }) },
+        { key: "name", label: tr(locale, { uz: "Operator", ru: "Оператор", en: "Operator", de: "Operator" }) },
         { key: "email", label: "Login" },
-        { key: "phone", label: tr(locale, { uz: "Telefon", ru: "Телефон", en: "Phone" }) },
+        { key: "phone", label: tr(locale, { uz: "Telefon", ru: "Телефон", en: "Phone", de: "Telefon" }) },
         { key: "sip", label: "SIP" },
-        { key: "status", label: tr(locale, { uz: "Holat", ru: "Статус", en: "Status" }) },
-        { key: "dayCalls", label: tr(locale, { uz: "Qo'ng'iroqlar", ru: "Звонки", en: "Calls" }) },
-        { key: "talk", label: tr(locale, { uz: "Gaplashgan", ru: "Наговорено", en: "Talk time" }) },
-        { key: "total", label: tr(locale, { uz: "Lidlar", ru: "Лиды", en: "Leads" }) },
-        { key: "won", label: tr(locale, { uz: "Muvaffaqiyatli", ru: "Успешные", en: "Successful" }) },
-        { key: "lost", label: tr(locale, { uz: "Yo'qotilgan", ru: "Потерянные", en: "Lost" }) },
-        { key: "conv", label: tr(locale, { uz: "Konversiya %", ru: "Конверсия %", en: "Conversion %" }) },
-        { key: "lastOnline", label: tr(locale, { uz: "Oxirgi online", ru: "Последний онлайн", en: "Last online" }) },
+        { key: "status", label: tr(locale, { uz: "Holat", ru: "Статус", en: "Status", de: "Status" }) },
+        { key: "dayCalls", label: tr(locale, { uz: "Qo'ng'iroqlar", ru: "Звонки", en: "Calls", de: "Anrufe" }) },
+        { key: "talk", label: tr(locale, { uz: "Gaplashgan", ru: "Наговорено", en: "Talk time", de: "Sprechzeit" }) },
+        { key: "total", label: tr(locale, { uz: "Lidlar", ru: "Лиды", en: "Leads", de: "Leads" }) },
+        { key: "won", label: tr(locale, { uz: "Muvaffaqiyatli", ru: "Успешные", en: "Successful", de: "Erfolgreich" }) },
+        { key: "lost", label: tr(locale, { uz: "Yo'qotilgan", ru: "Потерянные", en: "Lost", de: "Verloren" }) },
+        { key: "conv", label: tr(locale, { uz: "Konversiya %", ru: "Конверсия %", en: "Conversion %", de: "Konversion %" }) },
+        { key: "lastOnline", label: tr(locale, { uz: "Oxirgi online", ru: "Последний онлайн", en: "Last online", de: "Zuletzt online" }) },
       ],
       shown.map((o) => ({
         name: o.name,
         email: o.email,
         phone: o.phone ?? "",
         sip: o.sip ?? "",
-        status: o.onCall ? tr(locale, { uz: "Qo'ng'iroqda", ru: "На звонке", en: "On call" }) : o.online ? "Online" : "Offline",
+        status: o.onCall ? tr(locale, { uz: "Qo'ng'iroqda", ru: "На звонке", en: "On call", de: "Im Gespräch" }) : o.online ? "Online" : "Offline",
         dayCalls: o.dayCalls,
         talk: fmtTalk(o.dayTalkSec),
         total: o.total,
@@ -123,10 +123,10 @@ export default function OperatorsBoard({ locale, operators, avgKpi, totalLeads, 
           </span>
           <div>
             <h1 className="text-[22px] font-bold tracking-tight text-slate-900 dark:text-slate-100">
-              {tr(locale, { uz: "Operatorlar", ru: "Операторы", en: "Operators" })}
+              {tr(locale, { uz: "Operatorlar", ru: "Операторы", en: "Operators", de: "Operatoren" })}
             </h1>
             <p className="text-sm text-slate-400">
-              {tr(locale, { uz: "Operatorlarni boshqarish va monitoring", ru: "Управление и мониторинг операторов", en: "Operator management and monitoring" })}
+              {tr(locale, { uz: "Operatorlarni boshqarish va monitoring", ru: "Управление и мониторинг операторов", en: "Operator management and monitoring", de: "Verwaltung und Überwachung der Operatoren" })}
             </p>
           </div>
         </div>
@@ -138,7 +138,7 @@ export default function OperatorsBoard({ locale, operators, avgKpi, totalLeads, 
             onClick={() => router.refresh()}
             className="flex h-10 items-center gap-2 rounded-lg border border-slate-200 bg-white px-3.5 text-sm font-medium text-slate-600 transition hover:bg-slate-50 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-300 dark:hover:bg-slate-800"
           >
-            <Icon name="refresh" className="h-4 w-4" /> {tr(locale, { uz: "Yangilash", ru: "Обновить", en: "Refresh" })}
+            <Icon name="refresh" className="h-4 w-4" /> {tr(locale, { uz: "Yangilash", ru: "Обновить", en: "Refresh", de: "Aktualisieren" })}
           </button>
           <button
             type="button"
@@ -153,7 +153,7 @@ export default function OperatorsBoard({ locale, operators, avgKpi, totalLeads, 
               onClick={() => setDrawer(null)}
               className="flex h-10 items-center gap-1.5 rounded-lg bg-brand-600 px-4 text-sm font-semibold text-white shadow-sm transition hover:bg-brand-700"
             >
-              <Icon name="plus" className="h-4 w-4" /> {tr(locale, { uz: "Yangi operator", ru: "Новый оператор", en: "New operator" })}
+              <Icon name="plus" className="h-4 w-4" /> {tr(locale, { uz: "Yangi operator", ru: "Новый оператор", en: "New operator", de: "Neuer Operator" })}
             </button>
           )}
         </div>
@@ -161,15 +161,15 @@ export default function OperatorsBoard({ locale, operators, avgKpi, totalLeads, 
 
       {/* Ko'rsatkichlar */}
       <div className="grid grid-cols-2 gap-2.5 lg:grid-cols-5">
-        <Tile icon="users" label={tr(locale, { uz: "Jami", ru: "Всего", en: "Total" })} value={operators.length} tone="#3b82f6" />
+        <Tile icon="users" label={tr(locale, { uz: "Jami", ru: "Всего", en: "Total", de: "Gesamt" })} value={operators.length} tone="#3b82f6" />
         <Tile icon="globe" label="Online" value={onlineCount} tone="#10b981" />
-        <Tile icon="chart" label={tr(locale, { uz: "O'rtacha KPI", ru: "Средний KPI", en: "Average KPI" })} value={`${avgKpi}%`} tone={kpiColor(avgKpi)} />
-        <Tile icon="trophy" label={tr(locale, { uz: "Jami lidlar", ru: "Всего лидов", en: "Total leads" })} value={totalLeads} tone="#8b5cf6" />
+        <Tile icon="chart" label={tr(locale, { uz: "O'rtacha KPI", ru: "Средний KPI", en: "Average KPI", de: "Durchschnittlicher KPI" })} value={`${avgKpi}%`} tone={kpiColor(avgKpi)} />
+        <Tile icon="trophy" label={tr(locale, { uz: "Jami lidlar", ru: "Всего лидов", en: "Total leads", de: "Leads gesamt" })} value={totalLeads} tone="#8b5cf6" />
         <Tile
           icon="phoneCall"
           label={selectedDate
-            ? tr(locale, { uz: "Qo'ng'iroqlar", ru: "Звонки", en: "Calls" })
-            : tr(locale, { uz: "Bugungi qo'ng'iroqlar", ru: "Звонки сегодня", en: "Calls today" })}
+            ? tr(locale, { uz: "Qo'ng'iroqlar", ru: "Звонки", en: "Calls", de: "Anrufe" })
+            : tr(locale, { uz: "Bugungi qo'ng'iroqlar", ru: "Звонки сегодня", en: "Calls today", de: "Anrufe heute" })}
           value={dayCallsTotal}
           tone="#06b6d4"
         />
@@ -182,7 +182,7 @@ export default function OperatorsBoard({ locale, operators, avgKpi, totalLeads, 
           <input
             value={search}
             onChange={(e) => setSearch(e.target.value)}
-            placeholder={tr(locale, { uz: "Operator qidirish...", ru: "Поиск оператора...", en: "Search operator..." })}
+            placeholder={tr(locale, { uz: "Operator qidirish...", ru: "Поиск оператора...", en: "Search operator...", de: "Operator suchen..." })}
             className="h-10 w-full rounded-lg border border-slate-200 bg-white pl-9 pr-3 text-sm outline-none focus:border-brand-400 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-100"
           />
         </div>
@@ -197,7 +197,7 @@ export default function OperatorsBoard({ locale, operators, avgKpi, totalLeads, 
                 tab === t ? "bg-brand-600 text-white" : "text-slate-500 hover:bg-slate-100 dark:text-slate-400 dark:hover:bg-slate-800"
               )}
             >
-              {t === "all" ? tr(locale, { uz: "Barchasi", ru: "Все", en: "All" }) : t === "online" ? "Online" : "Offline"}
+              {t === "all" ? tr(locale, { uz: "Barchasi", ru: "Все", en: "All", de: "Alle" }) : t === "online" ? "Online" : "Offline"}
             </button>
           ))}
         </div>
@@ -207,7 +207,7 @@ export default function OperatorsBoard({ locale, operators, avgKpi, totalLeads, 
       {shown.length === 0 ? (
         <div className="rounded-2xl border border-dashed border-slate-300 py-16 text-center dark:border-slate-700">
           <Icon name="headphones" className="mx-auto h-10 w-10 text-slate-300 dark:text-slate-600" />
-          <p className="mt-2 text-sm text-slate-400">{tr(locale, { uz: "Operator topilmadi", ru: "Оператор не найден", en: "No operator found" })}</p>
+          <p className="mt-2 text-sm text-slate-400">{tr(locale, { uz: "Operator topilmadi", ru: "Оператор не найден", en: "No operator found", de: "Kein Operator gefunden" })}</p>
         </div>
       ) : (
         <div className="grid gap-3 md:grid-cols-2 xl:grid-cols-3">

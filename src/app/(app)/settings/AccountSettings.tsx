@@ -7,21 +7,21 @@ import type { Locale } from "@/lib/constants";
 
 const STORAGE_KEY = "gl-account-settings";
 
-const MODES: { value: string; label: { uz: string; ru: string; en: string } }[] = [
-  { value: "Oylik (kalendar oyiga)", label: { uz: "Oylik (kalendar oyiga)", ru: "Помесячно (по календарному месяцу)", en: "Monthly (by calendar month)" } },
-  { value: "Oylik (30 kunlik)", label: { uz: "Oylik (30 kunlik)", ru: "Помесячно (30 дней)", en: "Monthly (30 days)" } },
-  { value: "Kunlik", label: { uz: "Kunlik", ru: "Ежедневно", en: "Daily" } },
-  { value: "Kurs bo'yicha", label: { uz: "Kurs bo'yicha", ru: "По курсу", en: "By course" } },
-  { value: "Modul bo'yicha", label: { uz: "Modul bo'yicha", ru: "По модулю", en: "By module" } },
-  { value: "Individual", label: { uz: "Individual", ru: "Индивидуально", en: "Individual" } },
+const MODES: { value: string; label: { uz: string; ru: string; en: string; de: string } }[] = [
+  { value: "Oylik (kalendar oyiga)", label: { uz: "Oylik (kalendar oyiga)", ru: "Помесячно (по календарному месяцу)", en: "Monthly (by calendar month)", de: "Monatlich (Kalendermonat)" } },
+  { value: "Oylik (30 kunlik)", label: { uz: "Oylik (30 kunlik)", ru: "Помесячно (30 дней)", en: "Monthly (30 days)", de: "Monatlich (30 Tage)" } },
+  { value: "Kunlik", label: { uz: "Kunlik", ru: "Ежедневно", en: "Daily", de: "Täglich" } },
+  { value: "Kurs bo'yicha", label: { uz: "Kurs bo'yicha", ru: "По курсу", en: "By course", de: "Nach Kurs" } },
+  { value: "Modul bo'yicha", label: { uz: "Modul bo'yicha", ru: "По модулю", en: "By module", de: "Nach Modul" } },
+  { value: "Individual", label: { uz: "Individual", ru: "Индивидуально", en: "Individual", de: "Individuell" } },
 ];
 
-const OPTS: { key: string; label: { uz: string; ru: string; en: string } }[] = [
-  { key: "teacherSms", label: { uz: "O'qituvchilarga: talabalarga SMS yuborishga ruxsat bering", ru: "Преподавателям: разрешить отправку SMS ученикам", en: "Teachers: allow sending SMS to students" } },
-  { key: "hideStudentInfo", label: { uz: "O'qituvchilarga: talabalar ma'lumotlarini yashirish", ru: "Преподавателям: скрывать данные учеников", en: "Teachers: hide student information" } },
-  { key: "attendanceDuringLesson", label: { uz: "O'qituvchilar: davomatni faqat dars davomida belgilash", ru: "Преподаватели: отмечать посещаемость только во время урока", en: "Teachers: mark attendance only during the lesson" } },
-  { key: "allowOverlap", label: { uz: "Jadval: guruhlarni bitta kabinet / o'qituvchi bilan kesib o'tishga ruxsat bering", ru: "Расписание: разрешить пересечение групп по одному кабинету / преподавателю", en: "Schedule: allow groups to overlap in one room / teacher" } },
-  { key: "showGroupBalance", label: { uz: "Guruh balansini ko'rsatish", ru: "Показывать баланс группы", en: "Show group balance" } },
+const OPTS: { key: string; label: { uz: string; ru: string; en: string; de: string } }[] = [
+  { key: "teacherSms", label: { uz: "O'qituvchilarga: talabalarga SMS yuborishga ruxsat bering", ru: "Преподавателям: разрешить отправку SMS ученикам", en: "Teachers: allow sending SMS to students", de: "Lehrer: SMS-Versand an Schüler erlauben" } },
+  { key: "hideStudentInfo", label: { uz: "O'qituvchilarga: talabalar ma'lumotlarini yashirish", ru: "Преподавателям: скрывать данные учеников", en: "Teachers: hide student information", de: "Lehrer: Schülerdaten verbergen" } },
+  { key: "attendanceDuringLesson", label: { uz: "O'qituvchilar: davomatni faqat dars davomida belgilash", ru: "Преподаватели: отмечать посещаемость только во время урока", en: "Teachers: mark attendance only during the lesson", de: "Lehrer: Anwesenheit nur während des Unterrichts markieren" } },
+  { key: "allowOverlap", label: { uz: "Jadval: guruhlarni bitta kabinet / o'qituvchi bilan kesib o'tishga ruxsat bering", ru: "Расписание: разрешить пересечение групп по одному кабинету / преподавателю", en: "Schedule: allow groups to overlap in one room / teacher", de: "Stundenplan: Überschneidung von Gruppen in einem Raum / bei einem Lehrer erlauben" } },
+  { key: "showGroupBalance", label: { uz: "Guruh balansini ko'rsatish", ru: "Показывать баланс группы", en: "Show group balance", de: "Gruppensaldo anzeigen" } },
 ];
 
 interface Form { mode: string; opts: Record<string, boolean> }
@@ -45,13 +45,13 @@ export default function AccountSettings({ locale }: { locale: Locale }) {
 
   return (
     <div>
-      <h2 className="mb-6 text-2xl font-bold text-slate-800 dark:text-slate-100">{tr(locale, { uz: "Hisob va to'lovlar", ru: "Счёт и платежи", en: "Account and payments" })}</h2>
+      <h2 className="mb-6 text-2xl font-bold text-slate-800 dark:text-slate-100">{tr(locale, { uz: "Hisob va to'lovlar", ru: "Счёт и платежи", en: "Account and payments", de: "Konto und Zahlungen" })}</h2>
 
       <div className="max-w-3xl space-y-6">
         {/* To'lov rejimi */}
         <div>
           <label className="mb-1.5 block text-sm font-medium text-slate-600 dark:text-slate-300">
-            {tr(locale, { uz: "Talabalar uchun to'lov rejimi", ru: "Режим оплаты для учеников", en: "Payment mode for students" })} <span className="text-rose-500">*</span>
+            {tr(locale, { uz: "Talabalar uchun to'lov rejimi", ru: "Режим оплаты для учеников", en: "Payment mode for students", de: "Zahlungsmodus für Schüler" })} <span className="text-rose-500">*</span>
           </label>
           <div className="relative">
             <select value={f.mode} onChange={(e) => setF((s) => ({ ...s, mode: e.target.value }))}
@@ -64,7 +64,7 @@ export default function AccountSettings({ locale }: { locale: Locale }) {
 
         {/* Others — ruxsatlar */}
         <fieldset className="relative rounded-xl border border-slate-300 p-5 pt-6 dark:border-slate-600">
-          <legend className="ml-2 px-1.5 text-sm font-semibold text-slate-700 dark:text-slate-200">{tr(locale, { uz: "Boshqalar", ru: "Другое", en: "Others" })}</legend>
+          <legend className="ml-2 px-1.5 text-sm font-semibold text-slate-700 dark:text-slate-200">{tr(locale, { uz: "Boshqalar", ru: "Другое", en: "Others", de: "Sonstiges" })}</legend>
           <div className="space-y-4">
             {OPTS.map((o) => (
               <label key={o.key} className="flex cursor-pointer items-start gap-3">
@@ -84,7 +84,7 @@ export default function AccountSettings({ locale }: { locale: Locale }) {
         </fieldset>
 
         <button onClick={save} className="rounded-full bg-brand-800 px-8 py-2.5 text-sm font-semibold text-white transition hover:bg-brand-900">
-          {saved ? tr(locale, { uz: "Saqlandi ✓", ru: "Сохранено ✓", en: "Saved ✓" }) : tr(locale, { uz: "Saqlash", ru: "Сохранить", en: "Save" })}
+          {saved ? tr(locale, { uz: "Saqlandi ✓", ru: "Сохранено ✓", en: "Saved ✓", de: "Gespeichert ✓" }) : tr(locale, { uz: "Saqlash", ru: "Сохранить", en: "Save", de: "Speichern" })}
         </button>
       </div>
     </div>

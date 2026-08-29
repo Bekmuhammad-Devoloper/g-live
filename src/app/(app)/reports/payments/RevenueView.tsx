@@ -50,10 +50,10 @@ export default function RevenueView({ payments, students, locale, defaultDate }:
 
     return [
       { label: fmtDate(date), count: eligible.length, amount: 0 },
-      { label: tr(locale, { uz: "Eski oydan qarzdor bo'lib o'tgan o'quvchilar summasi", ru: "Сумма долга учеников, перешедшего с прошлого месяца", en: "Amount of student debt carried over from last month" }), count: 0, amount: 0 },
-      { label: tr(locale, { uz: "Eski oydan o'quvchilar to'lab o'tgan summa", ru: "Сумма, оплаченная учениками с прошлого месяца", en: "Amount paid by students from last month" }), count: uniq(lastM), amount: sum(lastM) },
-      { label: tr(locale, { uz: "Shu oyda to'lagan summa", ru: "Сумма, оплаченная в этом месяце", en: "Amount paid this month" }), count: uniq(thisM), amount: sum(thisM) },
-      { label: tr(locale, { uz: "Qolgan kutilayotgan tushum", ru: "Оставшийся ожидаемый доход", en: "Remaining expected revenue" }), count: null as number | null, amount: 0 },
+      { label: tr(locale, { uz: "Eski oydan qarzdor bo'lib o'tgan o'quvchilar summasi", ru: "Сумма долга учеников, перешедшего с прошлого месяца", en: "Amount of student debt carried over from last month", de: "Schuldenbetrag der Schüler aus dem Vormonat" }), count: 0, amount: 0 },
+      { label: tr(locale, { uz: "Eski oydan o'quvchilar to'lab o'tgan summa", ru: "Сумма, оплаченная учениками с прошлого месяца", en: "Amount paid by students from last month", de: "Von Schülern aus dem Vormonat gezahlter Betrag" }), count: uniq(lastM), amount: sum(lastM) },
+      { label: tr(locale, { uz: "Shu oyda to'lagan summa", ru: "Сумма, оплаченная в этом месяце", en: "Amount paid this month", de: "In diesem Monat gezahlter Betrag" }), count: uniq(thisM), amount: sum(thisM) },
+      { label: tr(locale, { uz: "Qolgan kutilayotgan tushum", ru: "Оставшийся ожидаемый доход", en: "Remaining expected revenue", de: "Verbleibender erwarteter Umsatz" }), count: null as number | null, amount: 0 },
     ];
   }, [payments, students, date, status, locale]);
 
@@ -61,9 +61,9 @@ export default function RevenueView({ payments, students, locale, defaultDate }:
     exportRows(
       `tushum_${date}`,
       [
-        { key: "label", label: tr(locale, { uz: "Tushum rejasi", ru: "План поступлений", en: "Revenue plan" }) },
-        { key: "count", label: tr(locale, { uz: "O'quvchi soni", ru: "Число учеников", en: "Student count" }) },
-        { key: "amount", label: tr(locale, { uz: "Umumiy kutilayotgan summa", ru: "Общая ожидаемая сумма", en: "Total expected amount" }) },
+        { key: "label", label: tr(locale, { uz: "Tushum rejasi", ru: "План поступлений", en: "Revenue plan", de: "Umsatzplan" }) },
+        { key: "count", label: tr(locale, { uz: "O'quvchi soni", ru: "Число учеников", en: "Student count", de: "Anzahl der Schüler" }) },
+        { key: "amount", label: tr(locale, { uz: "Umumiy kutilayotgan summa", ru: "Общая ожидаемая сумма", en: "Total expected amount", de: "Gesamter erwarteter Betrag" }) },
       ],
       rows.map((r) => ({ label: r.label, count: r.count === null ? "" : r.count, amount: r.amount })),
     );
@@ -87,7 +87,7 @@ export default function RevenueView({ payments, students, locale, defaultDate }:
               status ? "border-brand-300 text-brand-700 dark:border-brand-500/40 dark:text-brand-300" : "border-slate-200 text-slate-500 dark:border-slate-700"
             )}
           >
-            <option value="">{tr(locale, { uz: "Barcha holatlar", ru: "Все статусы", en: "All statuses" })}</option>
+            <option value="">{tr(locale, { uz: "Barcha holatlar", ru: "Все статусы", en: "All statuses", de: "Alle Status" })}</option>
             {EDU_STATUSES.map((st) => (
               <option key={st} value={st}>{label(EDU_STATUS_LABELS, st, locale)}</option>
             ))}
@@ -96,7 +96,7 @@ export default function RevenueView({ payments, students, locale, defaultDate }:
             <button
               onClick={() => setStatus("")}
               className="absolute right-8 top-1/2 -translate-y-1/2 text-brand-500 hover:text-brand-700"
-              title={tr(locale, { uz: "Tozalash", ru: "Очистить", en: "Clear" })}
+              title={tr(locale, { uz: "Tozalash", ru: "Очистить", en: "Clear", de: "Löschen" })}
             >
               ✕
             </button>
@@ -106,7 +106,7 @@ export default function RevenueView({ payments, students, locale, defaultDate }:
 
         <button onClick={doExport} className="ml-auto flex h-10 items-center gap-2 rounded-lg border border-slate-200 bg-white px-4 text-sm font-medium text-slate-700 transition hover:bg-slate-50 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-100 dark:hover:bg-slate-800">
           <Icon name="download" className="h-4 w-4" />
-          {tr(locale, { uz: "Eksport", ru: "Экспорт", en: "Export" })}
+          {tr(locale, { uz: "Eksport", ru: "Экспорт", en: "Export", de: "Export" })}
         </button>
       </div>
 
@@ -116,9 +116,9 @@ export default function RevenueView({ payments, students, locale, defaultDate }:
           <table className="w-full text-left text-sm">
             <thead className="border-b border-slate-200/70 text-[12px] font-semibold uppercase tracking-wider text-slate-500 dark:border-slate-800 dark:text-slate-400">
               <tr>
-                <th className="px-5 py-4">{tr(locale, { uz: "Tushum rejasi", ru: "План поступлений", en: "Revenue plan" })}</th>
-                <th className="px-5 py-4">{tr(locale, { uz: "O'quvchi soni", ru: "Число учеников", en: "Student count" })}</th>
-                <th className="px-5 py-4">{tr(locale, { uz: "Umumiy kutilayotgan summa", ru: "Общая ожидаемая сумма", en: "Total expected amount" })}</th>
+                <th className="px-5 py-4">{tr(locale, { uz: "Tushum rejasi", ru: "План поступлений", en: "Revenue plan", de: "Umsatzplan" })}</th>
+                <th className="px-5 py-4">{tr(locale, { uz: "O'quvchi soni", ru: "Число учеников", en: "Student count", de: "Anzahl der Schüler" })}</th>
+                <th className="px-5 py-4">{tr(locale, { uz: "Umumiy kutilayotgan summa", ru: "Общая ожидаемая сумма", en: "Total expected amount", de: "Gesamter erwarteter Betrag" })}</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-slate-100 dark:divide-slate-800">

@@ -32,34 +32,34 @@ export default function AttendanceCharts(p: Props) {
     <div className="space-y-5">
       {/* KPI kartalar */}
       <div className="grid grid-cols-2 gap-4 lg:grid-cols-4">
-        <Kpi label={tr(p.locale, { uz: "Jami o'quvchilar", ru: "Всего учеников", en: "Total students" })} value={nf(p.total)} icon="graduation" tone="brand" />
-        <Kpi label={tr(p.locale, { uz: "Davomat foizi", ru: "Посещаемость", en: "Attendance rate" })} value={`${p.rate}%`} icon="chart" tone="green" hint={`${nf(p.totalPresent)} / ${nf(p.totalPresent + p.totalAbsent)}`} />
-        <Kpi label={tr(p.locale, { uz: "Kelganlar (belgi)", ru: "Присутствия", en: "Present marks" })} value={nf(p.totalPresent)} icon="check" tone="green" />
-        <Kpi label={tr(p.locale, { uz: "Kelmaganlar (belgi)", ru: "Отсутствия", en: "Absent marks" })} value={nf(p.totalAbsent)} icon="fileX" tone="rose" />
+        <Kpi label={tr(p.locale, { uz: "Jami o'quvchilar", ru: "Всего учеников", en: "Total students", de: "Schüler gesamt" })} value={nf(p.total)} icon="graduation" tone="brand" />
+        <Kpi label={tr(p.locale, { uz: "Davomat foizi", ru: "Посещаемость", en: "Attendance rate", de: "Anwesenheitsquote" })} value={`${p.rate}%`} icon="chart" tone="green" hint={`${nf(p.totalPresent)} / ${nf(p.totalPresent + p.totalAbsent)}`} />
+        <Kpi label={tr(p.locale, { uz: "Kelganlar (belgi)", ru: "Присутствия", en: "Present marks", de: "Anwesend (Markierungen)" })} value={nf(p.totalPresent)} icon="check" tone="green" />
+        <Kpi label={tr(p.locale, { uz: "Kelmaganlar (belgi)", ru: "Отсутствия", en: "Absent marks", de: "Abwesend (Markierungen)" })} value={nf(p.totalAbsent)} icon="fileX" tone="rose" />
       </div>
 
       <div className="grid gap-5 lg:grid-cols-2">
         {/* Donut: o'quvchilar taqsimoti */}
-        <ChartCard title={tr(p.locale, { uz: "O'quvchilar taqsimoti", ru: "Распределение учеников", en: "Student distribution" })}>
+        <ChartCard title={tr(p.locale, { uz: "O'quvchilar taqsimoti", ru: "Распределение учеников", en: "Student distribution", de: "Schülerverteilung" })}>
           <Donut
             locale={p.locale}
             total={p.total}
             slices={[
-              { key: "att", label: tr(p.locale, { uz: "Kelgan", ru: "Присутствовали", en: "Attended" }), count: p.attended, color: C.green },
-              { key: "abs", label: tr(p.locale, { uz: "Faqat kelmagan", ru: "Только отсутствия", en: "Absent only" }), count: p.absentOnly, color: C.rose },
-              { key: "empty", label: tr(p.locale, { uz: "Davomat bo'sh", ru: "Нет посещаемости", en: "No attendance" }), count: p.bosh, color: C.slate },
+              { key: "att", label: tr(p.locale, { uz: "Kelgan", ru: "Присутствовали", en: "Attended", de: "Anwesend" }), count: p.attended, color: C.green },
+              { key: "abs", label: tr(p.locale, { uz: "Faqat kelmagan", ru: "Только отсутствия", en: "Absent only", de: "Nur abwesend" }), count: p.absentOnly, color: C.rose },
+              { key: "empty", label: tr(p.locale, { uz: "Davomat bo'sh", ru: "Нет посещаемости", en: "No attendance", de: "Keine Anwesenheit" }), count: p.bosh, color: C.slate },
             ]}
           />
         </ChartCard>
 
         {/* Status taqsimoti (gorizontal bar) */}
-        <ChartCard title={tr(p.locale, { uz: "Davomat holatlari bo'yicha", ru: "По статусам посещаемости", en: "By attendance status" })}>
+        <ChartCard title={tr(p.locale, { uz: "Davomat holatlari bo'yicha", ru: "По статусам посещаемости", en: "By attendance status", de: "Nach Anwesenheitsstatus" })}>
           <StatusBars locale={p.locale} statuses={p.statuses} />
         </ChartCard>
       </div>
 
       {/* Kunlik davomat (stacked bar) */}
-      <ChartCard title={tr(p.locale, { uz: "Kunlik davomat", ru: "Посещаемость по дням", en: "Daily attendance" })}>
+      <ChartCard title={tr(p.locale, { uz: "Kunlik davomat", ru: "Посещаемость по дням", en: "Daily attendance", de: "Tägliche Anwesenheit" })}>
         <DailyBars locale={p.locale} daily={p.daily} />
       </ChartCard>
     </div>
@@ -117,7 +117,7 @@ function Donut({ locale, total, slices }: { locale: Locale; total: number; slice
         </svg>
         <div className="absolute inset-0 flex flex-col items-center justify-center">
           <div className="text-2xl font-extrabold text-slate-800 dark:text-slate-100">{nf(total)}</div>
-          <div className="text-[11px] text-slate-400">{tr(locale, { uz: "o'quvchi", ru: "учеников", en: "students" })}</div>
+          <div className="text-[11px] text-slate-400">{tr(locale, { uz: "o'quvchi", ru: "учеников", en: "students", de: "Schüler" })}</div>
         </div>
       </div>
       <ul className="w-full space-y-2">
@@ -167,8 +167,8 @@ function DailyBars({ locale, daily }: { locale: Locale; daily: DayPoint[] }) {
   return (
     <div>
       <div className="mb-3 flex items-center gap-4 text-xs">
-        <span className="flex items-center gap-1.5 text-slate-500 dark:text-slate-400"><span className="h-2.5 w-2.5 rounded-sm" style={{ background: C.green }} /> {tr(locale, { uz: "Kelgan", ru: "Присутствия", en: "Present" })}</span>
-        <span className="flex items-center gap-1.5 text-slate-500 dark:text-slate-400"><span className="h-2.5 w-2.5 rounded-sm" style={{ background: C.rose }} /> {tr(locale, { uz: "Kelmagan", ru: "Отсутствия", en: "Absent" })}</span>
+        <span className="flex items-center gap-1.5 text-slate-500 dark:text-slate-400"><span className="h-2.5 w-2.5 rounded-sm" style={{ background: C.green }} /> {tr(locale, { uz: "Kelgan", ru: "Присутствия", en: "Present", de: "Anwesend" })}</span>
+        <span className="flex items-center gap-1.5 text-slate-500 dark:text-slate-400"><span className="h-2.5 w-2.5 rounded-sm" style={{ background: C.rose }} /> {tr(locale, { uz: "Kelmagan", ru: "Отсутствия", en: "Absent", de: "Abwesend" })}</span>
       </div>
       <div className="overflow-x-auto">
         <div className="relative flex items-end gap-1.5" style={{ height: H, minWidth: Math.max(0, data.length * 18) }}>
@@ -182,8 +182,8 @@ function DailyBars({ locale, daily }: { locale: Locale; daily: DayPoint[] }) {
                 {hover === i && (
                   <div className="pointer-events-none absolute bottom-full z-10 mb-1 whitespace-nowrap rounded-lg bg-slate-800 px-2 py-1 text-[11px] font-medium text-white shadow-lg dark:bg-slate-700">
                     <div className="text-slate-300">{dm(d.date)}</div>
-                    <div style={{ color: C.green }}>● {tr(locale, { uz: "Kelgan", ru: "Присут.", en: "Present" })}: {d.present}</div>
-                    <div style={{ color: "#fca5a5" }}>● {tr(locale, { uz: "Kelmagan", ru: "Отсут.", en: "Absent" })}: {d.absent}</div>
+                    <div style={{ color: C.green }}>● {tr(locale, { uz: "Kelgan", ru: "Присут.", en: "Present", de: "Anwesend" })}: {d.present}</div>
+                    <div style={{ color: "#fca5a5" }}>● {tr(locale, { uz: "Kelmagan", ru: "Отсут.", en: "Absent", de: "Abwesend" })}: {d.absent}</div>
                   </div>
                 )}
                 <div className="flex w-full max-w-[26px] flex-col justify-end overflow-hidden rounded-md transition group-hover:opacity-80" style={{ height: Math.max(2, pH + aH) }}>
@@ -202,5 +202,5 @@ function DailyBars({ locale, daily }: { locale: Locale; daily: DayPoint[] }) {
 }
 
 function Empty({ locale }: { locale: Locale }) {
-  return <div className="py-10 text-center text-sm text-slate-400">{tr(locale, { uz: "Bu davr uchun davomat ma'lumoti yo'q", ru: "Нет данных за период", en: "No attendance data for this period" })}</div>;
+  return <div className="py-10 text-center text-sm text-slate-400">{tr(locale, { uz: "Bu davr uchun davomat ma'lumoti yo'q", ru: "Нет данных за период", en: "No attendance data for this period", de: "Keine Anwesenheitsdaten für diesen Zeitraum" })}</div>;
 }

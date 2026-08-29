@@ -71,10 +71,10 @@ async function createLinks(vacancyId: string, platforms: string[], fd: FormData,
 // Yangi vakansiya + havola(lar)
 export async function createVacancyLink(fd: FormData): Promise<FormState> {
   const s = await requireSession();
-  if (!can(s.role)) return { error: tr(s.locale, { uz: "Ruxsat yo'q", ru: "Нет доступа", en: "No permission" }) };
+  if (!can(s.role)) return { error: tr(s.locale, { uz: "Ruxsat yo'q", ru: "Нет доступа", en: "No permission", de: "Keine Berechtigung" }) };
 
   const title = String(fd.get("title") || "").trim();
-  if (title.length < 2) return { error: tr(s.locale, { uz: "Vakansiya nomi kamida 2 ta belgi bo'lsin", ru: "Название вакансии — минимум 2 символа", en: "Vacancy title must be at least 2 characters" }) };
+  if (title.length < 2) return { error: tr(s.locale, { uz: "Vakansiya nomi kamida 2 ta belgi bo'lsin", ru: "Название вакансии — минимум 2 символа", en: "Vacancy title must be at least 2 characters", de: "Der Titel der Stelle muss mindestens 2 Zeichen haben" }) };
   const platforms = parsePlatforms(fd);
 
   const vacancy = await prisma.vacancy.create({
@@ -102,10 +102,10 @@ export async function createVacancyLink(fd: FormData): Promise<FormState> {
 // Mavjud vakansiyaga havola(lar) qo'shish
 export async function addLinkToVacancy(fd: FormData): Promise<FormState> {
   const s = await requireSession();
-  if (!can(s.role)) return { error: tr(s.locale, { uz: "Ruxsat yo'q", ru: "Нет доступа", en: "No permission" }) };
+  if (!can(s.role)) return { error: tr(s.locale, { uz: "Ruxsat yo'q", ru: "Нет доступа", en: "No permission", de: "Keine Berechtigung" }) };
   const vacancyId = String(fd.get("vacancyId") || "");
   const v = await prisma.vacancy.findUnique({ where: { id: vacancyId }, select: { id: true } });
-  if (!v) return { error: tr(s.locale, { uz: "Vakansiya topilmadi", ru: "Вакансия не найдена", en: "Vacancy not found" }) };
+  if (!v) return { error: tr(s.locale, { uz: "Vakansiya topilmadi", ru: "Вакансия не найдена", en: "Vacancy not found", de: "Stelle nicht gefunden" }) };
   const platforms = parsePlatforms(fd);
   const links = await createLinks(vacancyId, platforms, fd, s.fullName ?? "", s.userId);
   await writeAudit({ actorId: s.userId, action: "CREATE", entityType: "VacancyLink", entityId: vacancyId, newValue: { links: links.length } });
@@ -133,7 +133,7 @@ export async function regenerateCode(id: string): Promise<void> {
 
 export async function updateLink(fd: FormData): Promise<FormState> {
   const s = await requireSession();
-  if (!can(s.role)) return { error: tr(s.locale, { uz: "Ruxsat yo'q", ru: "Нет доступа", en: "No permission" }) };
+  if (!can(s.role)) return { error: tr(s.locale, { uz: "Ruxsat yo'q", ru: "Нет доступа", en: "No permission", de: "Keine Berechtigung" }) };
   const id = String(fd.get("id") || "");
   await prisma.vacancyLink.update({
     where: { id },
@@ -183,6 +183,6 @@ export async function linkQrDataUrl(code: string): Promise<{ url: string; qr: st
     const qr = await QRCode.toDataURL(url, { width: 512, margin: 1 });
     return { url, qr };
   } catch {
-    return { error: tr(s.locale, { uz: "QR yaratib bo'lmadi", ru: "Не удалось создать QR", en: "Failed to generate QR" }) };
+    return { error: tr(s.locale, { uz: "QR yaratib bo'lmadi", ru: "Не удалось создать QR", en: "Failed to generate QR", de: "QR-Code konnte nicht erstellt werden" }) };
   }
 }

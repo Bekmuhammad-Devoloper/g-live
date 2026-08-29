@@ -136,18 +136,18 @@ const META: Record<string, { icon: string; badge: string; name: Record<Locale, s
   USD: {
     icon: "dollar",
     badge: "bg-gradient-to-br from-emerald-400 to-emerald-600 shadow-emerald-500/25",
-    name: { uz: "AQSH dollari", ru: "Доллар США", en: "US Dollar" },
+    name: { uz: "AQSH dollari", ru: "Доллар США", en: "US Dollar", de: "US-Dollar" },
   },
   EUR: {
     icon: "euro",
     badge: "bg-gradient-to-br from-indigo-400 to-indigo-600 shadow-indigo-500/25",
-    name: { uz: "Yevro", ru: "Евро", en: "Euro" },
+    name: { uz: "Yevro", ru: "Евро", en: "Euro", de: "Euro" },
   },
 };
 const FALLBACK = {
   icon: "coins",
   badge: "bg-gradient-to-br from-slate-400 to-slate-600 shadow-slate-500/25",
-  name: { uz: "Valyuta", ru: "Валюта", en: "Currency" },
+  name: { uz: "Valyuta", ru: "Валюта", en: "Currency", de: "Währung" },
 };
 
 function Badge({ ccy, big = false }: { ccy: string; big?: boolean }) {

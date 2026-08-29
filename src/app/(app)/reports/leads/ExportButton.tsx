@@ -16,8 +16,8 @@ export default function ExportButton({ filename, rows, locale }: { filename: str
     exportRows(
       filename,
       [
-        { key: "label", label: tr(locale, { uz: "Oy", ru: "Месяц", en: "Month" }) },
-        { key: "value", label: tr(locale, { uz: "Lidlar soni", ru: "Количество лидов", en: "Number of leads" }) },
+        { key: "label", label: tr(locale, { uz: "Oy", ru: "Месяц", en: "Month", de: "Monat" }) },
+        { key: "value", label: tr(locale, { uz: "Lidlar soni", ru: "Количество лидов", en: "Number of leads", de: "Anzahl der Leads" }) },
       ],
       rows
     );
@@ -29,7 +29,7 @@ export default function ExportButton({ filename, rows, locale }: { filename: str
       onClick={handleExport}
       className="flex h-10 items-center gap-2 rounded-full border border-brand-200 px-5 text-sm font-semibold text-brand-600 transition hover:bg-brand-50 dark:border-brand-500/40 dark:text-brand-300 dark:hover:bg-brand-950/40"
     >
-      <Icon name="download" className="h-4 w-4" /> {tr(locale, { uz: "Eksport", ru: "Экспорт", en: "Export" })}
+      <Icon name="download" className="h-4 w-4" /> {tr(locale, { uz: "Eksport", ru: "Экспорт", en: "Export", de: "Export" })}
     </button>
   );
 }

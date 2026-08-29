@@ -41,7 +41,7 @@ export default function EnrollDrawer({
   const [pending, start] = useTransition();
   const loadedRef = useRef(false);
 
-  const L = (uz: string, ru: string, en: string) => tr(locale, { uz, ru, en });
+  const L = (uz: string, ru: string, en: string, de: string) => tr(locale, { uz, ru, en, de });
   const isChange = Boolean(currentGroupId);
   const editsLeft = Math.max(0, 1 - editCount);
 
@@ -54,7 +54,7 @@ export default function EnrollDrawer({
     setLoading(true);
     enrollOptions()
       .then((o) => { setCourses(o.courses); setGroups(o.groups); })
-      .catch(() => setErr(L("Ro'yxatni yuklab bo'lmadi", "Не удалось загрузить список", "Could not load the list")))
+      .catch(() => setErr(L("Ro'yxatni yuklab bo'lmadi", "Не удалось загрузить список", "Could not load the list", "Die Liste konnte nicht geladen werden")))
       .finally(() => setLoading(false));
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [open]);
@@ -87,18 +87,18 @@ export default function EnrollDrawer({
       if (r.ok) {
         onDone(
           isChange
-            ? L(`Guruh o'zgartirildi: ${r.groupName}`, `Группа изменена: ${r.groupName}`, `Group changed: ${r.groupName}`)
-            : L(`${leadName} — ${r.groupName} guruhiga qabul qilindi`, `${leadName} принят(а) в группу ${r.groupName}`, `${leadName} enrolled in ${r.groupName}`)
+            ? L(`Guruh o'zgartirildi: ${r.groupName}`, `Группа изменена: ${r.groupName}`, `Group changed: ${r.groupName}`, `Gruppe geändert: ${r.groupName}`)
+            : L(`${leadName} — ${r.groupName} guruhiga qabul qilindi`, `${leadName} принят(а) в группу ${r.groupName}`, `${leadName} enrolled in ${r.groupName}`, `${leadName} wurde in die Gruppe ${r.groupName} aufgenommen`)
         );
         return;
       }
       const M: Record<string, string> = {
-        edit_limit: L("Guruhni o'zgartirish imkoni allaqachon ishlatilgan (faqat 1 marta)", "Возможность смены группы уже использована (только 1 раз)", "The one-time group change has already been used"),
-        group_full: L("Bu guruh to'lgan — boshqasini tanlang", "Группа заполнена — выберите другую", "This group is full — pick another"),
-        group_not_found: L("Guruh topilmadi", "Группа не найдена", "Group not found"),
-        forbidden: L("Sizda ruxsat yo'q", "Нет доступа", "No permission"),
+        edit_limit: L("Guruhni o'zgartirish imkoni allaqachon ishlatilgan (faqat 1 marta)", "Возможность смены группы уже использована (только 1 раз)", "The one-time group change has already been used", "Die einmalige Gruppenänderung wurde bereits verwendet"),
+        group_full: L("Bu guruh to'lgan — boshqasini tanlang", "Группа заполнена — выберите другую", "This group is full — pick another", "Diese Gruppe ist voll — wählen Sie eine andere"),
+        group_not_found: L("Guruh topilmadi", "Группа не найдена", "Group not found", "Gruppe nicht gefunden"),
+        forbidden: L("Sizda ruxsat yo'q", "Нет доступа", "No permission", "Keine Berechtigung"),
       };
-      setErr(M[r.error ?? ""] ?? L("Amal bajarilmadi", "Не удалось выполнить", "Action failed"));
+      setErr(M[r.error ?? ""] ?? L("Amal bajarilmadi", "Не удалось выполнить", "Action failed", "Aktion fehlgeschlagen"));
       setConfirming(false);
     });
   }, [picked, leadId, leadName, isChange, onDone, locale]);
@@ -120,7 +120,7 @@ export default function EnrollDrawer({
           <div className="min-w-0">
             <div className="flex items-center gap-2 text-base font-bold text-slate-800 dark:text-slate-100">
               <Icon name="graduation" className="h-5 w-5 shrink-0 text-emerald-500" />
-              {isChange ? L("Guruhni o'zgartirish", "Смена группы", "Change group") : L("Guruhga yo'naltirish", "Зачисление в группу", "Enroll in a group")}
+              {isChange ? L("Guruhni o'zgartirish", "Смена группы", "Change group", "Gruppe wechseln") : L("Guruhga yo'naltirish", "Зачисление в группу", "Enroll in a group", "In eine Gruppe aufnehmen")}
             </div>
             <p className="mt-0.5 truncate text-xs text-slate-500 dark:text-slate-400">{leadName}</p>
           </div>
@@ -137,14 +137,17 @@ export default function EnrollDrawer({
           {blocked
             ? L("Bu lid guruhi allaqachon bir marta o'zgartirilgan. Boshqa o'zgartirib bo'lmaydi.",
                 "Группа этого лида уже менялась один раз. Больше изменить нельзя.",
-                "This lead's group has already been changed once. No further changes are allowed.")
+                "This lead's group has already been changed once. No further changes are allowed.",
+                "Die Gruppe dieses Leads wurde bereits einmal geändert. Weitere Änderungen sind nicht möglich.")
             : isChange
               ? L("Diqqat: guruhni faqat BIR MARTA o'zgartirish mumkin. Shundan keyin o'zgartirib bo'lmaydi.",
                   "Внимание: группу можно сменить только ОДИН РАЗ. После этого изменить нельзя.",
-                  "Note: the group can be changed only ONCE. After that it is locked.")
+                  "Note: the group can be changed only ONCE. After that it is locked.",
+                  "Achtung: Die Gruppe kann nur EINMAL geändert werden. Danach ist sie gesperrt.")
               : L("Lidni \"Qabul qilindi\" qilish uchun guruh tanlash majburiy. Keyin faqat bir marta o'zgartira olasiz.",
                   "Для перевода лида в «Принят» выбор группы обязателен. Затем сменить можно только один раз.",
-                  "Choosing a group is required to mark the lead as Won. Afterwards you may change it only once.")}
+                  "Choosing a group is required to mark the lead as Won. Afterwards you may change it only once.",
+                  "Für die Kennzeichnung des Leads als „Gewonnen\" ist die Wahl einer Gruppe erforderlich. Danach können Sie sie nur einmal ändern.")}
         </div>
 
         {/* Tanlov */}
@@ -155,20 +158,20 @@ export default function EnrollDrawer({
             </div>
           ) : blocked ? (
             <div className="rounded-xl border border-dashed border-rose-300 px-4 py-10 text-center text-sm text-rose-500 dark:border-rose-500/30">
-              {L("O'zgartirish imkoni tugagan", "Возможность смены исчерпана", "No changes left")}
+              {L("O'zgartirish imkoni tugagan", "Возможность смены исчерпана", "No changes left", "Keine Änderungen mehr möglich")}
             </div>
           ) : (
             <>
               <label className="mb-3 block">
                 <span className="mb-1 block text-[11px] font-semibold text-slate-500 dark:text-slate-400">
-                  {L("Kurs", "Курс", "Course")}
+                  {L("Kurs", "Курс", "Course", "Kurs")}
                 </span>
                 <select
                   value={course}
                   onChange={(e) => { setCourse(e.target.value); setPicked(null); }}
                   className="h-11 w-full rounded-xl border border-slate-200 bg-white px-3.5 text-sm text-slate-800 outline-none transition focus:border-brand-400 dark:border-slate-700 dark:bg-slate-800/60 dark:text-slate-100"
                 >
-                  <option value="">{L("Barcha kurslar", "Все курсы", "All courses")}</option>
+                  <option value="">{L("Barcha kurslar", "Все курсы", "All courses", "Alle Kurse")}</option>
                   {courses.map((c) => <option key={c.id} value={c.id}>{c.name}</option>)}
                 </select>
               </label>
@@ -178,14 +181,14 @@ export default function EnrollDrawer({
                 <input
                   value={q}
                   onChange={(e) => setQ(e.target.value)}
-                  placeholder={L("Guruh, o'qituvchi, xona…", "Группа, преподаватель, кабинет…", "Group, teacher, room…")}
+                  placeholder={L("Guruh, o'qituvchi, xona…", "Группа, преподаватель, кабинет…", "Group, teacher, room…", "Gruppe, Lehrer, Raum…")}
                   className="h-11 w-full rounded-xl border border-slate-200 bg-white pl-9 pr-3 text-sm text-slate-800 outline-none transition focus:border-brand-400 dark:border-slate-700 dark:bg-slate-800/60 dark:text-slate-100"
                 />
               </div>
 
               {shown.length === 0 ? (
                 <div className="rounded-xl border border-dashed border-slate-300 px-4 py-10 text-center text-sm text-slate-400 dark:border-slate-700">
-                  {L("Mos guruh topilmadi", "Подходящих групп нет", "No matching groups")}
+                  {L("Mos guruh topilmadi", "Подходящих групп нет", "No matching groups", "Keine passende Gruppe gefunden")}
                 </div>
               ) : (
                 <div className="space-y-2">
@@ -248,17 +251,17 @@ export default function EnrollDrawer({
               <p className="mb-2.5 text-xs leading-relaxed text-slate-600 dark:text-slate-300">
                 <b>{pickedGroup.name}</b> ({pickedGroup.courseName}) —{" "}
                 {isChange
-                  ? L("guruhni o'zgartirasizmi? Bu oxirgi imkoniyat.", "сменить группу? Это последняя возможность.", "change the group? This is the last chance.")
-                  : L("lidni shu guruhga qabul qilasizmi?", "принять лида в эту группу?", "enroll the lead in this group?")}
+                  ? L("guruhni o'zgartirasizmi? Bu oxirgi imkoniyat.", "сменить группу? Это последняя возможность.", "change the group? This is the last chance.", "die Gruppe ändern? Dies ist die letzte Möglichkeit.")
+                  : L("lidni shu guruhga qabul qilasizmi?", "принять лида в эту группу?", "enroll the lead in this group?", "den Lead dieser Gruppe zuweisen?")}
               </p>
               <div className="flex gap-2">
                 <button type="button" onClick={() => setConfirming(false)} disabled={pending}
                   className="flex-1 rounded-xl border border-slate-200 py-2.5 text-sm font-semibold text-slate-600 transition hover:bg-slate-50 disabled:opacity-60 dark:border-white/10 dark:text-slate-300 dark:hover:bg-white/5">
-                  {L("Orqaga", "Назад", "Back")}
+                  {L("Orqaga", "Назад", "Back", "Zurück")}
                 </button>
                 <button type="button" onClick={submit} disabled={pending}
                   className="flex-[1.4] rounded-xl bg-emerald-600 py-2.5 text-sm font-semibold text-white transition hover:bg-emerald-700 disabled:opacity-60">
-                  {pending ? L("Saqlanmoqda…", "Сохранение…", "Saving…") : L("Ha, tasdiqlayman", "Да, подтверждаю", "Yes, confirm")}
+                  {pending ? L("Saqlanmoqda…", "Сохранение…", "Saving…", "Wird gespeichert…") : L("Ha, tasdiqlayman", "Да, подтверждаю", "Yes, confirm", "Ja, bestätigen")}
                 </button>
               </div>
             </>
@@ -266,7 +269,7 @@ export default function EnrollDrawer({
             <div className="flex gap-2">
               <button type="button" onClick={onClose}
                 className="flex-1 rounded-xl border border-slate-200 py-2.5 text-sm font-semibold text-slate-600 transition hover:bg-slate-50 dark:border-white/10 dark:text-slate-300 dark:hover:bg-white/5">
-                {L("Bekor qilish", "Отмена", "Cancel")}
+                {L("Bekor qilish", "Отмена", "Cancel", "Abbrechen")}
               </button>
               <button
                 type="button"
@@ -274,7 +277,7 @@ export default function EnrollDrawer({
                 onClick={() => setConfirming(true)}
                 className="flex-[1.4] rounded-xl bg-emerald-600 py-2.5 text-sm font-semibold text-white transition hover:bg-emerald-700 disabled:opacity-40"
               >
-                {isChange ? L("O'zgartirish", "Сменить", "Change") : L("Qabul qilish", "Принять", "Enroll")}
+                {isChange ? L("O'zgartirish", "Сменить", "Change", "Ändern") : L("Qabul qilish", "Принять", "Enroll", "Aufnehmen")}
               </button>
             </div>
           )}

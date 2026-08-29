@@ -24,19 +24,19 @@ interface Props {
 
 type Dim = "teacher" | "room" | "course";
 type Period = "day" | "week" | "month" | "quarter" | "year";
-type Tr = { uz: string; ru: string; en: string };
+type Tr = { uz: string; ru: string; en: string; de: string };
 
 const DIMS: { key: Dim; label: Tr }[] = [
-  { key: "teacher", label: { uz: "O'qituvchi", ru: "Преподаватель", en: "Teacher" } },
-  { key: "room", label: { uz: "Xona", ru: "Кабинет", en: "Room" } },
-  { key: "course", label: { uz: "Kurs", ru: "Курс", en: "Course" } },
+  { key: "teacher", label: { uz: "O'qituvchi", ru: "Преподаватель", en: "Teacher", de: "Lehrer" } },
+  { key: "room", label: { uz: "Xona", ru: "Кабинет", en: "Room", de: "Raum" } },
+  { key: "course", label: { uz: "Kurs", ru: "Курс", en: "Course", de: "Kurs" } },
 ];
 const PERIODS: { key: Period; label: Tr }[] = [
-  { key: "day", label: { uz: "Kun", ru: "День", en: "Day" } },
-  { key: "week", label: { uz: "Hafta", ru: "Неделя", en: "Week" } },
-  { key: "month", label: { uz: "Oy", ru: "Месяц", en: "Month" } },
-  { key: "quarter", label: { uz: "Chorak yil", ru: "Квартал", en: "Quarter" } },
-  { key: "year", label: { uz: "Yil", ru: "Год", en: "Year" } },
+  { key: "day", label: { uz: "Kun", ru: "День", en: "Day", de: "Tag" } },
+  { key: "week", label: { uz: "Hafta", ru: "Неделя", en: "Week", de: "Woche" } },
+  { key: "month", label: { uz: "Oy", ru: "Месяц", en: "Month", de: "Monat" } },
+  { key: "quarter", label: { uz: "Chorak yil", ru: "Квартал", en: "Quarter", de: "Quartal" } },
+  { key: "year", label: { uz: "Yil", ru: "Год", en: "Year", de: "Jahr" } },
 ];
 
 const p2 = (n: number) => String(n).padStart(2, "0");
@@ -72,7 +72,7 @@ function buildBuckets(from: string, to: string, period: Period, locale: Locale) 
       e = new Date(cur.getFullYear(), q * 3 + 3, 1);
       key = `${cur.getFullYear()}-q${q}`;
       const yy = String(cur.getFullYear()).slice(2);
-      label = tr(locale, { uz: `${q + 1}-chorak '${yy}`, ru: `${q + 1} кв. '${yy}`, en: `Q${q + 1} '${yy}` });
+      label = tr(locale, { uz: `${q + 1}-chorak '${yy}`, ru: `${q + 1} кв. '${yy}`, en: `Q${q + 1} '${yy}`, de: `Q${q + 1} '${yy}` });
       cur.setMonth(q * 3 + 3, 1);
     } else {
       e = new Date(cur.getFullYear() + 1, 0, 1);
@@ -132,7 +132,7 @@ export default function WorkedHoursView({ lessons, defaultFrom, defaultTo, local
     const columns = [
       { key: "name", label: dimLabel },
       ...buckets.map((b) => ({ key: b.key, label: b.label })),
-      { key: "__total", label: tr(locale, { uz: "Jami", ru: "Итого", en: "Total" }) },
+      { key: "__total", label: tr(locale, { uz: "Jami", ru: "Итого", en: "Total", de: "Gesamt" }) },
     ];
     const data = rows.map((r) => {
       const rec: Record<string, string | number> = { name: r.name, __total: r.total };
@@ -147,16 +147,16 @@ export default function WorkedHoursView({ lessons, defaultFrom, defaultTo, local
       {/* Header */}
       <div className="flex flex-wrap items-start justify-between gap-3">
         <div>
-          <h1 className="text-[24px] font-bold tracking-tight text-slate-900 dark:text-slate-100">{tr(locale, { uz: "O'quv markazga ishlab berilgan soatlar", ru: "Часы, отработанные для учебного центра", en: "Hours worked for the learning center" })}</h1>
-          {isEmpty && <p className="mt-1 text-sm text-amber-600 dark:text-amber-400">{tr(locale, { uz: "Ma'lumotlar topilmadi", ru: "Данные не найдены", en: "No data found" })}</p>}
-          {!isEmpty && <p className="mt-1 text-sm text-slate-500 dark:text-slate-400">{tr(locale, { uz: "Jami", ru: "Итого", en: "Total" })}: <span className="font-semibold text-slate-700 dark:text-slate-200">{fmtHours(grand)} {tr(locale, { uz: "soat", ru: "ч", en: "h" })}</span></p>}
+          <h1 className="text-[24px] font-bold tracking-tight text-slate-900 dark:text-slate-100">{tr(locale, { uz: "O'quv markazga ishlab berilgan soatlar", ru: "Часы, отработанные для учебного центра", en: "Hours worked for the learning center", de: "Für das Lernzentrum geleistete Stunden" })}</h1>
+          {isEmpty && <p className="mt-1 text-sm text-amber-600 dark:text-amber-400">{tr(locale, { uz: "Ma'lumotlar topilmadi", ru: "Данные не найдены", en: "No data found", de: "Keine Daten gefunden" })}</p>}
+          {!isEmpty && <p className="mt-1 text-sm text-slate-500 dark:text-slate-400">{tr(locale, { uz: "Jami", ru: "Итого", en: "Total", de: "Gesamt" })}: <span className="font-semibold text-slate-700 dark:text-slate-200">{fmtHours(grand)} {tr(locale, { uz: "soat", ru: "ч", en: "h", de: "Std." })}</span></p>}
         </div>
 
         <div className="flex flex-wrap items-center gap-2.5">
           <button
             onClick={() => setListView((v) => !v)}
             className={cn("flex h-10 w-10 items-center justify-center rounded-lg border transition", listView ? "border-brand-300 bg-brand-50 text-brand-600 dark:border-brand-500/40 dark:bg-brand-950/40" : "border-slate-200 text-slate-500 hover:bg-slate-50 dark:border-slate-700 dark:hover:bg-slate-800")}
-            title={listView ? tr(locale, { uz: "Jadval ko'rinishi", ru: "Табличный вид", en: "Table view" }) : tr(locale, { uz: "Ro'yxat ko'rinishi", ru: "Список", en: "List view" })}
+            title={listView ? tr(locale, { uz: "Jadval ko'rinishi", ru: "Табличный вид", en: "Table view", de: "Tabellenansicht" }) : tr(locale, { uz: "Ro'yxat ko'rinishi", ru: "Список", en: "List view", de: "Listenansicht" })}
           >
             <Icon name="listView" className="h-5 w-5" />
           </button>
@@ -175,17 +175,17 @@ export default function WorkedHoursView({ lessons, defaultFrom, defaultTo, local
           <button
             onClick={doExport}
             disabled={isEmpty}
-            title={tr(locale, { uz: "CSV yuklab olish", ru: "Скачать CSV", en: "Download CSV" })}
+            title={tr(locale, { uz: "CSV yuklab olish", ru: "Скачать CSV", en: "Download CSV", de: "CSV herunterladen" })}
             className="flex h-10 items-center gap-1.5 rounded-lg border border-emerald-300 px-3 text-sm font-medium text-emerald-600 transition hover:bg-emerald-50 disabled:opacity-40 dark:border-emerald-800 dark:hover:bg-emerald-950/40"
           >
             <Icon name="download" className="h-4 w-4" /> CSV
           </button>
           <button
             onClick={() => printPage()}
-            title={tr(locale, { uz: "Chop etish", ru: "Печать", en: "Print" })}
+            title={tr(locale, { uz: "Chop etish", ru: "Печать", en: "Print", de: "Drucken" })}
             className="flex h-10 items-center gap-1.5 rounded-lg border border-slate-200 px-3 text-sm font-medium text-slate-600 transition hover:bg-slate-50 dark:border-slate-700 dark:text-slate-300 dark:hover:bg-slate-800"
           >
-            <Icon name="copy" className="h-4 w-4" /> {tr(locale, { uz: "Chop etish", ru: "Печать", en: "Print" })}
+            <Icon name="copy" className="h-4 w-4" /> {tr(locale, { uz: "Chop etish", ru: "Печать", en: "Print", de: "Drucken" })}
           </button>
         </div>
       </div>
@@ -194,7 +194,7 @@ export default function WorkedHoursView({ lessons, defaultFrom, defaultTo, local
       {isEmpty ? (
         <div className="flex h-64 flex-col items-center justify-center rounded-2xl border border-dashed border-slate-200 text-slate-400 dark:border-slate-700">
           <Icon name="clock" className="h-9 w-9 opacity-40" />
-          <p className="mt-3 text-sm">{tr(locale, { uz: "Tanlangan oraliqda o'tilgan dars yo'q", ru: "За выбранный период проведённых уроков нет", en: "No lessons held in the selected range" })}</p>
+          <p className="mt-3 text-sm">{tr(locale, { uz: "Tanlangan oraliqda o'tilgan dars yo'q", ru: "За выбранный период проведённых уроков нет", en: "No lessons held in the selected range", de: "Im ausgewählten Zeitraum wurden keine Unterrichtsstunden abgehalten" })}</p>
         </div>
       ) : listView ? (
         // Ro'yxat ko'rinishi — o'lcham bo'yicha jami soatlar
@@ -206,7 +206,7 @@ export default function WorkedHoursView({ lessons, defaultFrom, defaultTo, local
               <div className="h-2 w-40 overflow-hidden rounded-full bg-slate-100 dark:bg-slate-800">
                 <div className="h-full rounded-full bg-brand-500" style={{ width: `${grand ? (r.total / rows[0].total) * 100 : 0}%` }} />
               </div>
-              <span className="w-20 text-right font-semibold text-slate-800 dark:text-slate-100">{fmtHours(r.total)} {tr(locale, { uz: "soat", ru: "ч", en: "h" })}</span>
+              <span className="w-20 text-right font-semibold text-slate-800 dark:text-slate-100">{fmtHours(r.total)} {tr(locale, { uz: "soat", ru: "ч", en: "h", de: "Std." })}</span>
             </div>
           ))}
         </div>
@@ -219,7 +219,7 @@ export default function WorkedHoursView({ lessons, defaultFrom, defaultTo, local
                 <tr>
                   <th className="sticky left-0 z-10 bg-slate-50/60 px-4 py-3 dark:bg-slate-800/40">{dimLabel}</th>
                   {buckets.map((b) => <th key={b.key} className="px-4 py-3 text-center whitespace-nowrap">{b.label}</th>)}
-                  <th className="px-4 py-3 text-center">{tr(locale, { uz: "Jami", ru: "Итого", en: "Total" })}</th>
+                  <th className="px-4 py-3 text-center">{tr(locale, { uz: "Jami", ru: "Итого", en: "Total", de: "Gesamt" })}</th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-slate-100 dark:divide-slate-800">
@@ -237,7 +237,7 @@ export default function WorkedHoursView({ lessons, defaultFrom, defaultTo, local
               </tbody>
               <tfoot>
                 <tr className="border-t-2 border-slate-200 bg-slate-50/60 font-bold dark:border-slate-700 dark:bg-slate-800/40">
-                  <td className="sticky left-0 z-10 bg-slate-50/60 px-4 py-3 text-slate-700 dark:bg-slate-800/40 dark:text-slate-200">{tr(locale, { uz: "Jami", ru: "Итого", en: "Total" })}</td>
+                  <td className="sticky left-0 z-10 bg-slate-50/60 px-4 py-3 text-slate-700 dark:bg-slate-800/40 dark:text-slate-200">{tr(locale, { uz: "Jami", ru: "Итого", en: "Total", de: "Gesamt" })}</td>
                   {buckets.map((b) => <td key={b.key} className="px-4 py-3 text-center text-slate-800 dark:text-slate-100">{fmtHours(colTotals[b.key] ?? 0)}</td>)}
                   <td className="px-4 py-3 text-center text-brand-600 dark:text-brand-300">{fmtHours(grand)}</td>
                 </tr>

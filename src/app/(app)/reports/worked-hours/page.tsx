@@ -17,7 +17,7 @@ const isoDay = (d: Date) => `${d.getFullYear()}-${p2(d.getMonth() + 1)}-${p2(d.g
 export default async function WorkedHoursPage() {
   const s = await requireSession();
   if (!ALLOWED.includes(s.role as never)) {
-    return <Forbidden title={tr(s.locale, { uz: "Kirish taqiqlangan", ru: "Доступ запрещён", en: "Access denied" })} body={tr(s.locale, { uz: "Bu hisobot rahbariyat uchun.", ru: "Этот отчёт для руководства.", en: "This report is for management." })} />;
+    return <Forbidden title={tr(s.locale, { uz: "Kirish taqiqlangan", ru: "Доступ запрещён", en: "Access denied", de: "Zugriff verweigert" })} body={tr(s.locale, { uz: "Bu hisobot rahbariyat uchun.", ru: "Этот отчёт для руководства.", en: "This report is for management.", de: "Dieser Bericht ist für die Geschäftsleitung." })} />;
   }
 
   // O'qituvchi bo'lsa — faqat o'z darslari (o'ziga mos ma'lumot)
@@ -32,8 +32,8 @@ export default async function WorkedHoursPage() {
   });
 
   const wlessons: WLesson[] = lessons.map((l) => ({
-    teacher: l.group.teacher?.fullName ?? tr(s.locale, { uz: "Belgilanmagan", ru: "Не указано", en: "Unassigned" }),
-    room: l.group.room ?? tr(s.locale, { uz: "Belgilanmagan", ru: "Не указано", en: "Unassigned" }),
+    teacher: l.group.teacher?.fullName ?? tr(s.locale, { uz: "Belgilanmagan", ru: "Не указано", en: "Unassigned", de: "Nicht zugewiesen" }),
+    room: l.group.room ?? tr(s.locale, { uz: "Belgilanmagan", ru: "Не указано", en: "Unassigned", de: "Nicht zugewiesen" }),
     course: l.group.program.name,
     startsAt: l.startsAt.toISOString(),
     hours: l.endsAt ? Math.round(((l.endsAt.getTime() - l.startsAt.getTime()) / 3600000) * 10) / 10 : 1.5,

@@ -48,15 +48,15 @@ export default function CreateLinkModal({ locale, mode, vacancies, courses, pres
     e.preventDefault();
     setError(null);
     const fd = new FormData(e.currentTarget);
-    if (picked.length === 0) { setError(tr(locale, { uz: "Kamida bitta platforma tanlang", ru: "Выберите хотя бы одну платформу", en: "Select at least one platform" })); return; }
+    if (picked.length === 0) { setError(tr(locale, { uz: "Kamida bitta platforma tanlang", ru: "Выберите хотя бы одну платформу", en: "Select at least one platform", de: "Wählen Sie mindestens eine Plattform" })); return; }
     for (const p of picked) fd.append("platforms", p);
     // Savollar JSON matn sifatida yuboriladi (bo'sh savollar serverda tashlanadi)
     fd.set("questions", JSON.stringify(questions.filter((x) => x.q.trim())));
-    if (mode === "existing" && !fd.get("vacancyId")) { setError(tr(locale, { uz: "Kursni tanlang", ru: "Выберите курс", en: "Select a course" })); return; }
+    if (mode === "existing" && !fd.get("vacancyId")) { setError(tr(locale, { uz: "Kursni tanlang", ru: "Выберите курс", en: "Select a course", de: "Wählen Sie einen Kurs" })); return; }
     start(async () => {
       const r = mode === "new" ? await createVacancyLink(fd) : await addLinkToVacancy(fd);
       if (r.ok) onDone(r.links ?? []);
-      else setError(r.error ?? tr(locale, { uz: "Xatolik", ru: "Ошибка", en: "Error" }));
+      else setError(r.error ?? tr(locale, { uz: "Xatolik", ru: "Ошибка", en: "Error", de: "Fehler" }));
     });
   };
 
@@ -70,8 +70,8 @@ export default function CreateLinkModal({ locale, mode, vacancies, courses, pres
             <span className="grid h-9 w-9 place-items-center rounded-xl bg-brand-100 text-brand-600 dark:bg-brand-500/15 dark:text-brand-300"><Icon name="link" className="h-5 w-5" /></span>
             <h3 className="text-base font-bold text-slate-800 dark:text-slate-100">
               {mode === "new"
-                ? tr(locale, { uz: "Yangi kurs + Link", ru: "Новый курс + Ссылка", en: "New course + Link" })
-                : tr(locale, { uz: "Mavjud kursga link", ru: "Ссылка к существующему курсу", en: "Link to existing course" })}
+                ? tr(locale, { uz: "Yangi kurs + Link", ru: "Новый курс + Ссылка", en: "New course + Link", de: "Neuer Kurs + Link" })
+                : tr(locale, { uz: "Mavjud kursga link", ru: "Ссылка к существующему курсу", en: "Link to existing course", de: "Link zu bestehendem Kurs" })}
             </h3>
           </div>
           <button type="button" onClick={onClose} className="text-slate-400 transition hover:text-slate-600 dark:hover:text-slate-200"><Icon name="close" className="h-5 w-5" /></button>
@@ -80,22 +80,22 @@ export default function CreateLinkModal({ locale, mode, vacancies, courses, pres
         <div className="max-h-[68vh] space-y-4 overflow-y-auto px-5 py-4">
           {mode === "existing" ? (
             <>
-              <Field label={tr(locale, { uz: "Kurs", ru: "Курс", en: "Course" })} req>
+              <Field label={tr(locale, { uz: "Kurs", ru: "Курс", en: "Course", de: "Kurs" })} req>
                 <select name="vacancyId" value={vacancyId} onChange={(e) => setVacancyId(e.target.value)} className={inp}>
-                  <option value="">{tr(locale, { uz: "— tanlang —", ru: "— выберите —", en: "— select —" })}</option>
+                  <option value="">{tr(locale, { uz: "— tanlang —", ru: "— выберите —", en: "— select —", de: "— auswählen —" })}</option>
                   {vacancies.map((v) => (
-                    <option key={v.id} value={v.id}>{v.title} — {v.country ?? tr(locale, { uz: "Noma'lum", ru: "Неизвестно", en: "Unknown" })}</option>
+                    <option key={v.id} value={v.id}>{v.title} — {v.country ?? tr(locale, { uz: "Noma'lum", ru: "Неизвестно", en: "Unknown", de: "Unbekannt" })}</option>
                   ))}
                 </select>
               </Field>
               {vacancies.length === 0 && (
                 <p className="flex items-center gap-1 text-xs text-amber-600 dark:text-amber-400">
-                  <Icon name="alert" className="h-3 w-3" /> {tr(locale, { uz: "Avval kurs havolasini yarating", ru: "Сначала создайте курс", en: "Create a course first" })}
+                  <Icon name="alert" className="h-3 w-3" /> {tr(locale, { uz: "Avval kurs havolasini yarating", ru: "Сначала создайте курс", en: "Create a course first", de: "Erstellen Sie zuerst einen Kurs" })}
                 </p>
               )}
               {selectedVacancy && (
                 <div className="rounded-xl border border-slate-200/70 bg-slate-50 p-3 dark:border-slate-800 dark:bg-slate-800/50">
-                  <p className="mb-1 text-xs text-slate-400">{tr(locale, { uz: "Tanlangan kurs", ru: "Выбранный курс", en: "Selected course" })}</p>
+                  <p className="mb-1 text-xs text-slate-400">{tr(locale, { uz: "Tanlangan kurs", ru: "Выбранный курс", en: "Selected course", de: "Ausgewählter Kurs" })}</p>
                   <div className="flex items-center gap-2">
                     <span>{flagOf(selectedVacancy.countryCode, selectedVacancy.country)}</span>
                     <span className="text-sm font-medium text-slate-800 dark:text-slate-100">{selectedVacancy.title}</span>
@@ -109,14 +109,14 @@ export default function CreateLinkModal({ locale, mode, vacancies, courses, pres
               <input type="hidden" name="country" value="O'zbekiston" />
               <input type="hidden" name="countryCode" value="uz" />
 
-              <Field label={tr(locale, { uz: "Kurs", ru: "Курс", en: "Course" })} req>
+              <Field label={tr(locale, { uz: "Kurs", ru: "Курс", en: "Course", de: "Kurs" })} req>
                 {courses.length > 0 && (
                   <select
                     value={pickedCourse}
                     onChange={(e) => { setPickedCourse(e.target.value); setTitle(e.target.value); }}
                     className={cn(inp, "mb-2")}
                   >
-                    <option value="">{tr(locale, { uz: "— ro'yxatdan tanlang —", ru: "— выберите из списка —", en: "— select from list —" })}</option>
+                    <option value="">{tr(locale, { uz: "— ro'yxatdan tanlang —", ru: "— выберите из списка —", en: "— select from list —", de: "— aus der Liste wählen —" })}</option>
                     {courses.map((c) => <option key={c} value={c}>{c}</option>)}
                   </select>
                 )}
@@ -125,28 +125,28 @@ export default function CreateLinkModal({ locale, mode, vacancies, courses, pres
                   required
                   value={title}
                   onChange={(e) => { setTitle(e.target.value); setPickedCourse(""); }}
-                  placeholder={tr(locale, { uz: "masalan: Nemis tili A1–B2", ru: "например: Немецкий язык A1–B2", en: "e.g. German A1–B2" })}
+                  placeholder={tr(locale, { uz: "masalan: Nemis tili A1–B2", ru: "например: Немецкий язык A1–B2", en: "e.g. German A1–B2", de: "z. B. Deutsch A1–B2" })}
                   className={inp}
                   autoFocus
                 />
                 {courses.length > 0 && (
                   <p className="mt-1 text-[11px] text-slate-400">
-                    {tr(locale, { uz: "Ro'yxatda yo'q kursni qo'lda yozishingiz mumkin", ru: "Курс, которого нет в списке, можно вписать вручную", en: "You can type a course that is not in the list" })}
+                    {tr(locale, { uz: "Ro'yxatda yo'q kursni qo'lda yozishingiz mumkin", ru: "Курс, которого нет в списке, можно вписать вручную", en: "You can type a course that is not in the list", de: "Sie können einen nicht gelisteten Kurs manuell eingeben" })}
                   </p>
                 )}
               </Field>
 
               <div className="grid grid-cols-2 gap-3">
-                <Field label={tr(locale, { uz: "Daraja / yo'nalish", ru: "Уровень / направление", en: "Level / track" })}>
-                  <input name="jobTitle" placeholder={tr(locale, { uz: "A1 / B2 / IELTS ...", ru: "A1 / B2 / IELTS ...", en: "A1 / B2 / IELTS ..." })} className={inp} />
+                <Field label={tr(locale, { uz: "Daraja / yo'nalish", ru: "Уровень / направление", en: "Level / track", de: "Niveau / Richtung" })}>
+                  <input name="jobTitle" placeholder={tr(locale, { uz: "A1 / B2 / IELTS ...", ru: "A1 / B2 / IELTS ...", en: "A1 / B2 / IELTS ...", de: "A1 / B2 / IELTS ..." })} className={inp} />
                 </Field>
-                <Field label={tr(locale, { uz: "Narxi (ixtiyoriy)", ru: "Цена (необяз.)", en: "Price (optional)" })}>
-                  <input name="salary" placeholder={tr(locale, { uz: "masalan: 500 000 so'm/oy", ru: "например: 500 000 сум/мес", en: "e.g. 500 000 UZS/mo" })} className={inp} />
+                <Field label={tr(locale, { uz: "Narxi (ixtiyoriy)", ru: "Цена (необяз.)", en: "Price (optional)", de: "Preis (optional)" })}>
+                  <input name="salary" placeholder={tr(locale, { uz: "masalan: 500 000 so'm/oy", ru: "например: 500 000 сум/мес", en: "e.g. 500 000 UZS/mo", de: "z. B. 500 000 UZS/Monat" })} className={inp} />
                 </Field>
               </div>
 
-              <Field label={tr(locale, { uz: "Tavsif (ixtiyoriy)", ru: "Описание (необяз.)", en: "Description (optional)" })}>
-                <textarea name="description" rows={3} placeholder={tr(locale, { uz: "Dars jadvali, o'qituvchi, kurs davomiyligi...", ru: "Расписание, преподаватель, длительность курса...", en: "Schedule, teacher, course duration..." })} className={cn(inp, "resize-none")} />
+              <Field label={tr(locale, { uz: "Tavsif (ixtiyoriy)", ru: "Описание (необяз.)", en: "Description (optional)", de: "Beschreibung (optional)" })}>
+                <textarea name="description" rows={3} placeholder={tr(locale, { uz: "Dars jadvali, o'qituvchi, kurs davomiyligi...", ru: "Расписание, преподаватель, длительность курса...", en: "Schedule, teacher, course duration...", de: "Stundenplan, Lehrer, Kursdauer..." })} className={cn(inp, "resize-none")} />
               </Field>
 
               {/* Ariza formasidagi qo'shimcha savollar */}
@@ -154,7 +154,7 @@ export default function CreateLinkModal({ locale, mode, vacancies, courses, pres
 
               {title.trim() && (
                 <div className="rounded-xl border border-slate-200/70 bg-slate-50 p-3 dark:border-slate-800 dark:bg-slate-800/50">
-                  <p className="mb-1.5 text-xs text-slate-400">{tr(locale, { uz: "Yaratiladi:", ru: "Будет создано:", en: "Will be created:" })}</p>
+                  <p className="mb-1.5 text-xs text-slate-400">{tr(locale, { uz: "Yaratiladi:", ru: "Будет создано:", en: "Will be created:", de: "Wird erstellt:" })}</p>
                   <div className="flex items-center gap-2">
                     <Icon name="book" className="h-4 w-4 text-brand-500" />
                     <span className="text-sm font-medium text-slate-800 dark:text-slate-100">{title}</span>
@@ -166,18 +166,18 @@ export default function CreateLinkModal({ locale, mode, vacancies, courses, pres
 
           <div className="border-t border-slate-100 pt-3 dark:border-slate-800">
             <p className="mb-3 flex items-center gap-1.5 text-xs font-medium text-slate-500 dark:text-slate-400">
-              <Icon name="link" className="h-3.5 w-3.5" /> {tr(locale, { uz: "Link sozlamalari", ru: "Настройки ссылки", en: "Link settings" })}
+              <Icon name="link" className="h-3.5 w-3.5" /> {tr(locale, { uz: "Link sozlamalari", ru: "Настройки ссылки", en: "Link settings", de: "Linkeinstellungen" })}
             </p>
-            <Field label={tr(locale, { uz: "Link nomi (ixtiyoriy)", ru: "Название ссылки (необяз.)", en: "Link name (optional)" })}>
-              <input name="name" placeholder={tr(locale, { uz: "masalan: Telegram reklama", ru: "например: Реклама в Telegram", en: "e.g. Telegram ad" })} className={inp} />
+            <Field label={tr(locale, { uz: "Link nomi (ixtiyoriy)", ru: "Название ссылки (необяз.)", en: "Link name (optional)", de: "Linkname (optional)" })}>
+              <input name="name" placeholder={tr(locale, { uz: "masalan: Telegram reklama", ru: "например: Реклама в Telegram", en: "e.g. Telegram ad", de: "z. B. Telegram-Anzeige" })} className={inp} />
             </Field>
           </div>
 
           <div>
             <span className="mb-1.5 block text-xs font-semibold text-slate-500 dark:text-slate-400">
-              {tr(locale, { uz: "Platformalar", ru: "Платформы", en: "Platforms" })} <span className="text-rose-500">*</span>
+              {tr(locale, { uz: "Platformalar", ru: "Платформы", en: "Platforms", de: "Plattformen" })} <span className="text-rose-500">*</span>
             </span>
-            <p className="mb-2 text-xs text-slate-400">{tr(locale, { uz: "Har bir platforma uchun alohida kod yaratiladi — qaysi kanal ko'proq ariza berayotganini ko'rasiz.", ru: "Для каждой платформы создаётся отдельный код — вы увидите, какой канал даёт больше заявок.", en: "A separate code is generated per platform — you will see which channel brings more applications." })}</p>
+            <p className="mb-2 text-xs text-slate-400">{tr(locale, { uz: "Har bir platforma uchun alohida kod yaratiladi — qaysi kanal ko'proq ariza berayotganini ko'rasiz.", ru: "Для каждой платформы создаётся отдельный код — вы увидите, какой канал даёт больше заявок.", en: "A separate code is generated per platform — you will see which channel brings more applications.", de: "Für jede Plattform wird ein eigener Code erstellt — so sehen Sie, welcher Kanal mehr Bewerbungen bringt." })}</p>
             <div className="flex flex-wrap gap-2">
               {PLATFORMS.map((p) => {
                 const sel = picked.includes(p.key);
@@ -198,7 +198,7 @@ export default function CreateLinkModal({ locale, mode, vacancies, courses, pres
           </div>
 
           <details className="rounded-xl border border-slate-200 dark:border-slate-700">
-            <summary className="cursor-pointer px-3 py-2 text-xs font-semibold text-slate-500 dark:text-slate-400">{tr(locale, { uz: "Qo'shimcha (UTM, muddat)", ru: "Дополнительно (UTM, срок)", en: "Additional (UTM, expiry)" })}</summary>
+            <summary className="cursor-pointer px-3 py-2 text-xs font-semibold text-slate-500 dark:text-slate-400">{tr(locale, { uz: "Qo'shimcha (UTM, muddat)", ru: "Дополнительно (UTM, срок)", en: "Additional (UTM, expiry)", de: "Zusätzlich (UTM, Ablauf)" })}</summary>
             <div className="space-y-3 border-t border-slate-100 px-3 py-3 dark:border-slate-800">
               <div className="grid grid-cols-3 gap-2">
                 <Field label="UTM source"><input name="utmSource" placeholder="telegram" className={inp} /></Field>
@@ -206,8 +206,8 @@ export default function CreateLinkModal({ locale, mode, vacancies, courses, pres
                 <Field label="UTM campaign"><input name="utmCampaign" placeholder="q3-2026" className={inp} /></Field>
               </div>
               <div className="grid grid-cols-2 gap-2">
-                <Field label={tr(locale, { uz: "Amal muddati", ru: "Срок действия", en: "Expiry date" })}><input name="expiresAt" type="date" className={inp} /></Field>
-                <Field label={tr(locale, { uz: "Ariza chegarasi", ru: "Лимит заявок", en: "Application limit" })}><input name="maxSubmissions" type="number" min={0} placeholder={tr(locale, { uz: "cheksiz", ru: "без лимита", en: "unlimited" })} className={inp} /></Field>
+                <Field label={tr(locale, { uz: "Amal muddati", ru: "Срок действия", en: "Expiry date", de: "Ablaufdatum" })}><input name="expiresAt" type="date" className={inp} /></Field>
+                <Field label={tr(locale, { uz: "Ariza chegarasi", ru: "Лимит заявок", en: "Application limit", de: "Bewerbungslimit" })}><input name="maxSubmissions" type="number" min={0} placeholder={tr(locale, { uz: "cheksiz", ru: "без лимита", en: "unlimited", de: "unbegrenzt" })} className={inp} /></Field>
               </div>
             </div>
           </details>
@@ -217,11 +217,11 @@ export default function CreateLinkModal({ locale, mode, vacancies, courses, pres
 
         <div className="flex justify-end gap-3 border-t border-slate-100 px-5 py-4 dark:border-slate-800">
           <button type="button" onClick={onClose} className="rounded-xl border border-slate-200 px-4 py-2.5 text-sm font-semibold text-slate-600 transition hover:bg-slate-50 dark:border-slate-700 dark:text-slate-300 dark:hover:bg-slate-800">
-            {tr(locale, { uz: "Bekor qilish", ru: "Отмена", en: "Cancel" })}
+            {tr(locale, { uz: "Bekor qilish", ru: "Отмена", en: "Cancel", de: "Abbrechen" })}
           </button>
           <button type="submit" disabled={pending} className="flex items-center gap-2 rounded-xl bg-brand-600 px-5 py-2.5 text-sm font-semibold text-white transition hover:bg-brand-700 disabled:opacity-60">
             <Icon name={pending ? "refresh" : "plus"} className={cn("h-4 w-4", pending && "animate-spin")} />
-            {pending ? tr(locale, { uz: "Yaratilmoqda...", ru: "Создание...", en: "Creating..." }) : tr(locale, { uz: "Yaratish", ru: "Создать", en: "Create" })}
+            {pending ? tr(locale, { uz: "Yaratilmoqda...", ru: "Создание...", en: "Creating...", de: "Wird erstellt..." }) : tr(locale, { uz: "Yaratish", ru: "Создать", en: "Create", de: "Erstellen" })}
           </button>
         </div>
       </form>
@@ -258,11 +258,11 @@ function QuestionsBuilder({ locale, questions, onChange }: {
       <div className="mb-2 flex items-center justify-between gap-2">
         <p className="flex items-center gap-1.5 text-xs font-medium text-slate-500 dark:text-slate-400">
           <Icon name="clipboard" className="h-3.5 w-3.5" />
-          {tr(locale, { uz: "Ariza savollari (ixtiyoriy)", ru: "Вопросы в заявке (необяз.)", en: "Application questions (optional)" })}
+          {tr(locale, { uz: "Ariza savollari (ixtiyoriy)", ru: "Вопросы в заявке (необяз.)", en: "Application questions (optional)", de: "Bewerbungsfragen (optional)" })}
         </p>
         {questions.length < MAX_QUESTIONS && (
           <button type="button" onClick={add} className="flex items-center gap-1 rounded-lg bg-brand-50 px-2.5 py-1 text-[11px] font-semibold text-brand-600 transition hover:bg-brand-100 dark:bg-brand-500/15 dark:text-brand-300">
-            <Icon name="plus" className="h-3.5 w-3.5" /> {tr(locale, { uz: "Savol qo'shish", ru: "Добавить вопрос", en: "Add question" })}
+            <Icon name="plus" className="h-3.5 w-3.5" /> {tr(locale, { uz: "Savol qo'shish", ru: "Добавить вопрос", en: "Add question", de: "Frage hinzufügen" })}
           </button>
         )}
       </div>
@@ -273,6 +273,7 @@ function QuestionsBuilder({ locale, questions, onChange }: {
             uz: "Ism va telefondan tashqari savol so'ramoqchi bo'lsangiz qo'shing (masalan: \"Qaysi vaqt qulay?\").",
             ru: "Добавьте вопросы помимо имени и телефона (например: «Какое время удобно?»).",
             en: "Add questions beyond name and phone (e.g. \"Which time suits you?\").",
+            de: "Fügen Sie Fragen über Name und Telefon hinaus hinzu (z. B. „Welche Zeit passt Ihnen?\").",
           })}
         </p>
       ) : (
@@ -283,10 +284,10 @@ function QuestionsBuilder({ locale, questions, onChange }: {
                 <input
                   value={q.q}
                   onChange={(e) => patch(i, { q: e.target.value })}
-                  placeholder={tr(locale, { uz: `${i + 1}-savol`, ru: `Вопрос ${i + 1}`, en: `Question ${i + 1}` })}
+                  placeholder={tr(locale, { uz: `${i + 1}-savol`, ru: `Вопрос ${i + 1}`, en: `Question ${i + 1}`, de: `Frage ${i + 1}` })}
                   className={small}
                 />
-                <button type="button" onClick={() => remove(i)} title={tr(locale, { uz: "O'chirish", ru: "Удалить", en: "Remove" })} className="mt-0.5 shrink-0 text-slate-400 transition hover:text-rose-500">
+                <button type="button" onClick={() => remove(i)} title={tr(locale, { uz: "O'chirish", ru: "Удалить", en: "Remove", de: "Entfernen" })} className="mt-0.5 shrink-0 text-slate-400 transition hover:text-rose-500">
                   <Icon name="trash" className="h-4 w-4" />
                 </button>
               </div>
@@ -305,14 +306,14 @@ function QuestionsBuilder({ locale, questions, onChange }: {
                       )}
                     >
                       {tp === "text"
-                        ? tr(locale, { uz: "Yoziladi", ru: "Ввод текста", en: "Free text" })
-                        : tr(locale, { uz: "Variantli", ru: "Варианты", en: "Choices" })}
+                        ? tr(locale, { uz: "Yoziladi", ru: "Ввод текста", en: "Free text", de: "Freitext" })
+                        : tr(locale, { uz: "Variantli", ru: "Варианты", en: "Choices", de: "Auswahl" })}
                     </button>
                   ))}
                 </div>
                 <label className="flex cursor-pointer items-center gap-1.5 text-[11px] text-slate-500 dark:text-slate-400">
                   <input type="checkbox" checked={!!q.required} onChange={(e) => patch(i, { required: e.target.checked })} className="h-3.5 w-3.5 rounded border-slate-300 accent-brand-600" />
-                  {tr(locale, { uz: "Majburiy", ru: "Обязательный", en: "Required" })}
+                  {tr(locale, { uz: "Majburiy", ru: "Обязательный", en: "Required", de: "Erforderlich" })}
                 </label>
               </div>
 
@@ -325,7 +326,7 @@ function QuestionsBuilder({ locale, questions, onChange }: {
                       <input
                         value={opt}
                         onChange={(e) => patch(i, { options: (q.options ?? []).map((o, k) => (k === oi ? e.target.value : o)) })}
-                        placeholder={tr(locale, { uz: `${oi + 1}-variant`, ru: `Вариант ${oi + 1}`, en: `Option ${oi + 1}` })}
+                        placeholder={tr(locale, { uz: `${oi + 1}-variant`, ru: `Вариант ${oi + 1}`, en: `Option ${oi + 1}`, de: `Option ${oi + 1}` })}
                         className={small}
                       />
                       <button
@@ -343,7 +344,7 @@ function QuestionsBuilder({ locale, questions, onChange }: {
                       onClick={() => patch(i, { options: [...(q.options ?? []), ""] })}
                       className="ml-4.5 flex items-center gap-1 text-[11px] font-medium text-brand-600 transition hover:underline dark:text-brand-400"
                     >
-                      <Icon name="plus" className="h-3 w-3" /> {tr(locale, { uz: "Variant qo'shish", ru: "Добавить вариант", en: "Add option" })}
+                      <Icon name="plus" className="h-3 w-3" /> {tr(locale, { uz: "Variant qo'shish", ru: "Добавить вариант", en: "Add option", de: "Option hinzufügen" })}
                     </button>
                   )}
                 </div>

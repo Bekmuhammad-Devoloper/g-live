@@ -45,7 +45,7 @@ export default function PaymentSettings({ locale, centerName }: { locale: Locale
 
   return (
     <div>
-      <h2 className="mb-6 text-2xl font-bold text-slate-800 dark:text-slate-100">{tr(locale, { uz: "To'lov usullari", ru: "Способы оплаты", en: "Payment methods" })}</h2>
+      <h2 className="mb-6 text-2xl font-bold text-slate-800 dark:text-slate-100">{tr(locale, { uz: "To'lov usullari", ru: "Способы оплаты", en: "Payment methods", de: "Zahlungsmethoden" })}</h2>
 
       <div className="grid gap-5 lg:grid-cols-3">
         {/* Yuqori qator — 3 ta ID kartochkasi */}
@@ -66,19 +66,19 @@ export default function PaymentSettings({ locale, centerName }: { locale: Locale
         <Fieldset title="Payme" className="lg:col-span-2">
           <div className="space-y-4">
             <div>
-              <Label>{tr(locale, { uz: "Kompaniya havolasi", ru: "Ссылка компании", en: "Company link" })}</Label>
+              <Label>{tr(locale, { uz: "Kompaniya havolasi", ru: "Ссылка компании", en: "Company link", de: "Unternehmenslink" })}</Label>
               <Input value={f.companyLink} onChange={(v) => set("companyLink", v)} disabled />
             </div>
             <div>
-              <Label>{tr(locale, { uz: "Paycom sotuvchi identifikatori", ru: "Идентификатор продавца Paycom", en: "Paycom merchant ID" })}</Label>
+              <Label>{tr(locale, { uz: "Paycom sotuvchi identifikatori", ru: "Идентификатор продавца Paycom", en: "Paycom merchant ID", de: "Paycom-Händler-ID" })}</Label>
               <Input value={f.paycomMerchantId} onChange={(v) => set("paycomMerchantId", v)} />
             </div>
             <div>
-              <Label>{tr(locale, { uz: "Paycom foydalanuvchi nomi", ru: "Имя пользователя Paycom", en: "Paycom username" })}</Label>
+              <Label>{tr(locale, { uz: "Paycom foydalanuvchi nomi", ru: "Имя пользователя Paycom", en: "Paycom username", de: "Paycom-Benutzername" })}</Label>
               <Input value={f.paycomUsername} onChange={(v) => set("paycomUsername", v)} highlight />
             </div>
             <div>
-              <Label>{tr(locale, { uz: "Paycom paroli", ru: "Пароль Paycom", en: "Paycom password" })}</Label>
+              <Label>{tr(locale, { uz: "Paycom paroli", ru: "Пароль Paycom", en: "Paycom password", de: "Paycom-Passwort" })}</Label>
               <div className="relative">
                 <Input value={f.paycomPassword} onChange={(v) => set("paycomPassword", v)} type={showPass ? "text" : "password"} highlight className="pr-10" />
                 <button type="button" onClick={() => setShowPass((v) => !v)} className="absolute right-2 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600">
@@ -105,7 +105,7 @@ export default function PaymentSettings({ locale, centerName }: { locale: Locale
       </div>
 
       <button onClick={save} className="mt-7 rounded-lg bg-sky-500 px-8 py-2.5 text-sm font-semibold text-white transition hover:bg-sky-600">
-        {saved ? tr(locale, { uz: "Saqlandi ✓", ru: "Сохранено ✓", en: "Saved ✓" }) : tr(locale, { uz: "Saqlash", ru: "Сохранить", en: "Save" })}
+        {saved ? tr(locale, { uz: "Saqlandi ✓", ru: "Сохранено ✓", en: "Saved ✓", de: "Gespeichert ✓" }) : tr(locale, { uz: "Saqlash", ru: "Сохранить", en: "Save", de: "Speichern" })}
       </button>
     </div>
   );

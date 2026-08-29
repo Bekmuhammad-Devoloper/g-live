@@ -16,16 +16,16 @@ export interface AdminStudent {
 type Tr = { uz: string; ru: string; en: string };
 
 const BUCKETS = [
-  { key: "aktiv", label: { uz: "Aktiv", ru: "Активные", en: "Active" } as Tr, statuses: ["ACTIVE", "WAITING", "LEVEL_DONE"], color: "text-emerald-600 dark:text-emerald-400" },
-  { key: "ketgan", label: { uz: "Ketganlar", ru: "Ушедшие", en: "Left" } as Tr, statuses: ["EXPELLED", "TRANSFERRED"], color: "text-red-600 dark:text-red-400" },
-  { key: "bitirgan", label: { uz: "Bitirganlar", ru: "Выпускники", en: "Graduated" } as Tr, statuses: ["PROGRAM_DONE", "CERTIFIED"], color: "text-brand-600 dark:text-brand-300" },
-  { key: "muzlatilgan", label: { uz: "Muzlatilgan", ru: "Замороженные", en: "Frozen" } as Tr, statuses: ["FROZEN"], color: "text-slate-500 dark:text-slate-400" },
+  { key: "aktiv", label: { uz: "Aktiv", ru: "Активные", en: "Active", de: "Aktiv" } as Tr, statuses: ["ACTIVE", "WAITING", "LEVEL_DONE"], color: "text-emerald-600 dark:text-emerald-400" },
+  { key: "ketgan", label: { uz: "Ketganlar", ru: "Ушедшие", en: "Left", de: "Ausgetreten" } as Tr, statuses: ["EXPELLED", "TRANSFERRED"], color: "text-red-600 dark:text-red-400" },
+  { key: "bitirgan", label: { uz: "Bitirganlar", ru: "Выпускники", en: "Graduated", de: "Absolventen" } as Tr, statuses: ["PROGRAM_DONE", "CERTIFIED"], color: "text-brand-600 dark:text-brand-300" },
+  { key: "muzlatilgan", label: { uz: "Muzlatilgan", ru: "Замороженные", en: "Frozen", de: "Eingefroren" } as Tr, statuses: ["FROZEN"], color: "text-slate-500 dark:text-slate-400" },
 ] as const;
 
 const GROUPS = [
-  { key: "start", label: { uz: "Davr boshidagi holati", ru: "Состояние на начало периода", en: "Status at start of period" } as Tr },
-  { key: "change", label: { uz: "O'zgarishlar", ru: "Изменения", en: "Changes" } as Tr },
-  { key: "end", label: { uz: "Davr oxiridagi holati", ru: "Состояние на конец периода", en: "Status at end of period" } as Tr },
+  { key: "start", label: { uz: "Davr boshidagi holati", ru: "Состояние на начало периода", en: "Status at start of period", de: "Status zu Periodenbeginn" } as Tr },
+  { key: "change", label: { uz: "O'zgarishlar", ru: "Изменения", en: "Changes", de: "Änderungen" } as Tr },
+  { key: "end", label: { uz: "Davr oxiridagi holati", ru: "Состояние на конец периода", en: "Status at end of period", de: "Status am Periodenende" } as Tr },
 ] as const;
 
 const bucketOf = (status: string) => BUCKETS.find((b) => b.statuses.includes(status as never))?.key ?? "aktiv";
@@ -94,7 +94,7 @@ export default function AdminPerfView({ rows, defaultFrom, defaultTo, locale }: 
 
   const onExport = () => {
     const cols = [
-      { key: "name", label: tr(locale, { uz: "Ism", ru: "Имя", en: "Name" }) },
+      { key: "name", label: tr(locale, { uz: "Ism", ru: "Имя", en: "Name", de: "Name" }) },
       ...GROUPS.flatMap((g) => BUCKETS.map((b) => ({ key: `${g.key}_${b.key}`, label: `${tr(locale, g.label)}: ${tr(locale, b.label)}` }))),
     ];
     const data = admins.map((a) => {
@@ -106,7 +106,7 @@ export default function AdminPerfView({ rows, defaultFrom, defaultTo, locale }: 
   };
 
   const SortTh = ({ col, label, className }: { col: string; label: string; className?: string }) => (
-    <button type="button" onClick={() => toggleSort(col)} className={cn("inline-flex items-center gap-1 hover:text-brand-600 dark:hover:text-brand-300", className)} title={tr(locale, { uz: "Saralash", ru: "Сортировка", en: "Sort" })}>
+    <button type="button" onClick={() => toggleSort(col)} className={cn("inline-flex items-center gap-1 hover:text-brand-600 dark:hover:text-brand-300", className)} title={tr(locale, { uz: "Saralash", ru: "Сортировка", en: "Sort", de: "Sortieren" })}>
       <span>{label}</span>
       <Icon name="arrow" className={cn("h-3 w-3", sortCol === col ? "text-brand-500" : "text-slate-300 dark:text-slate-600", sortCol === col && sortDir === "asc" && "rotate-180")} />
     </button>
@@ -135,7 +135,7 @@ export default function AdminPerfView({ rows, defaultFrom, defaultTo, locale }: 
             <thead className="text-slate-500 dark:text-slate-400">
               <tr className="border-b border-slate-200/70 text-[12px] font-bold uppercase tracking-wider dark:border-slate-800">
                 <th rowSpan={2} className="px-4 py-3">№</th>
-                <th rowSpan={2} className="px-4 py-3"><SortTh col="name" label={tr(locale, { uz: "Ism", ru: "Имя", en: "Name" })} /></th>
+                <th rowSpan={2} className="px-4 py-3"><SortTh col="name" label={tr(locale, { uz: "Ism", ru: "Имя", en: "Name", de: "Name" })} /></th>
                 {GROUPS.map((g) => (
                   <th key={g.key} colSpan={4} className={cn("px-4 py-3 text-center", groupBorder)}>{tr(locale, g.label)}</th>
                 ))}
@@ -155,7 +155,7 @@ export default function AdminPerfView({ rows, defaultFrom, defaultTo, locale }: 
                 <tr>
                   <td colSpan={14} className="py-16 text-center">
                     <Icon name="user" className="mx-auto h-8 w-8 text-slate-300 dark:text-slate-600" />
-                    <div className="mt-2 text-sm text-slate-400">{tr(locale, { uz: "Ma'lumotlar topilmadi", ru: "Данные не найдены", en: "No data found" })}</div>
+                    <div className="mt-2 text-sm text-slate-400">{tr(locale, { uz: "Ma'lumotlar topilmadi", ru: "Данные не найдены", en: "No data found", de: "Keine Daten gefunden" })}</div>
                   </td>
                 </tr>
               ) : (
@@ -178,7 +178,7 @@ export default function AdminPerfView({ rows, defaultFrom, defaultTo, locale }: 
               <tfoot>
                 <tr className="border-t-2 border-slate-200 bg-slate-50/60 text-sm font-bold dark:border-slate-700 dark:bg-slate-800/40">
                   <td className="px-4 py-3" />
-                  <td className="px-4 py-3 text-slate-700 dark:text-slate-200">{tr(locale, { uz: "Jami", ru: "Итого", en: "Total" })}</td>
+                  <td className="px-4 py-3 text-slate-700 dark:text-slate-200">{tr(locale, { uz: "Jami", ru: "Итого", en: "Total", de: "Gesamt" })}</td>
                   {GROUPS.map((g) =>
                     BUCKETS.map((b, bi) => (
                       <td key={g.key + b.key} className={cn("px-4 py-3 text-center text-slate-800 dark:text-slate-100", bi === 0 && groupBorder)}>

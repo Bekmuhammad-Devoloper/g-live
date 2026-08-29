@@ -18,18 +18,18 @@ import DebtSettings from "./DebtSettings";
 import AccountSettings from "./AccountSettings";
 import LandingSettings from "./LandingSettings";
 
-const SECTIONS: { key: string; label: { uz: string; ru: string; en: string } }[] = [
-  { key: "general", label: { uz: "Umumiy sozlamalari", ru: "Общие настройки", en: "General settings" } },
-  { key: "login", label: { uz: "Sistemaga kirish", ru: "Вход в систему", en: "System login" } },
-  { key: "leadform", label: { uz: "Lid forma", ru: "Форма лида", en: "Lead form" } },
-  { key: "payment", label: { uz: "To'lov usullari", ru: "Способы оплаты", en: "Payment methods" } },
-  { key: "contact", label: { uz: "Aloqa", ru: "Связь", en: "Contact" } },
-  { key: "integrations", label: { uz: "Integratsiyalar", ru: "Интеграции", en: "Integrations" } },
-  { key: "exams", label: { uz: "Imtihonlar", ru: "Экзамены", en: "Exams" } },
-  { key: "receipt", label: { uz: "Chek", ru: "Чек", en: "Receipt" } },
-  { key: "debt", label: { uz: "Qarzdorlik", ru: "Задолженность", en: "Debt" } },
-  { key: "account", label: { uz: "Hisob va to'lovlar", ru: "Счёт и платежи", en: "Account and payments" } },
-  { key: "landing", label: { uz: "Landing page", ru: "Лендинг", en: "Landing page" } },
+const SECTIONS: { key: string; label: { uz: string; ru: string; en: string; de: string } }[] = [
+  { key: "general", label: { uz: "Umumiy sozlamalari", ru: "Общие настройки", en: "General settings", de: "Allgemeine Einstellungen" } },
+  { key: "login", label: { uz: "Sistemaga kirish", ru: "Вход в систему", en: "System login", de: "Systemanmeldung" } },
+  { key: "leadform", label: { uz: "Lid forma", ru: "Форма лида", en: "Lead form", de: "Lead-Formular" } },
+  { key: "payment", label: { uz: "To'lov usullari", ru: "Способы оплаты", en: "Payment methods", de: "Zahlungsmethoden" } },
+  { key: "contact", label: { uz: "Aloqa", ru: "Связь", en: "Contact", de: "Kontakt" } },
+  { key: "integrations", label: { uz: "Integratsiyalar", ru: "Интеграции", en: "Integrations", de: "Integrationen" } },
+  { key: "exams", label: { uz: "Imtihonlar", ru: "Экзамены", en: "Exams", de: "Prüfungen" } },
+  { key: "receipt", label: { uz: "Chek", ru: "Чек", en: "Receipt", de: "Beleg" } },
+  { key: "debt", label: { uz: "Qarzdorlik", ru: "Задолженность", en: "Debt", de: "Schulden" } },
+  { key: "account", label: { uz: "Hisob va to'lovlar", ru: "Счёт и платежи", en: "Account and payments", de: "Konto und Zahlungen" } },
+  { key: "landing", label: { uz: "Landing page", ru: "Лендинг", en: "Landing page", de: "Landingpage" } },
 ];
 
 const COLORS = ["#a21caf", "#4148ef", "#4d7c0f", "#ea580c", "#b91c1c"];
@@ -130,35 +130,35 @@ export default function GeneralSettings({ locale, defaultName, defaultPhone, bra
           ) : section !== "general" ? (
             <div className="flex h-72 flex-col items-center justify-center text-slate-400">
               <Icon name="settings" className="h-9 w-9 opacity-40" />
-              <p className="mt-3 text-sm">{tr(locale, { uz: "Bu bo'lim tayyorlanmoqda", ru: "Этот раздел в разработке", en: "This section is being prepared" })}</p>
+              <p className="mt-3 text-sm">{tr(locale, { uz: "Bu bo'lim tayyorlanmoqda", ru: "Этот раздел в разработке", en: "This section is being prepared", de: "Dieser Bereich wird vorbereitet" })}</p>
             </div>
           ) : (
             <>
-              <h2 className="mb-6 text-2xl font-bold text-slate-800 dark:text-slate-100">{tr(locale, { uz: "Umumiy sozlamalari", ru: "Общие настройки", en: "General settings" })}</h2>
+              <h2 className="mb-6 text-2xl font-bold text-slate-800 dark:text-slate-100">{tr(locale, { uz: "Umumiy sozlamalari", ru: "Общие настройки", en: "General settings", de: "Allgemeine Einstellungen" })}</h2>
 
               <div className="grid gap-x-8 gap-y-5 md:grid-cols-2">
-                <Field label={tr(locale, { uz: "O'quv markazining nomi", ru: "Название учебного центра", en: "Name of the learning center" })} required>
+                <Field label={tr(locale, { uz: "O'quv markazining nomi", ru: "Название учебного центра", en: "Name of the learning center", de: "Name des Lernzentrums" })} required>
                   <input value={f.name} onChange={(e) => set("name", e.target.value)} className={inp} />
                 </Field>
-                <Field label={tr(locale, { uz: "O'quv markazining telefon raqami", ru: "Телефон учебного центра", en: "Learning center phone number" })} required>
+                <Field label={tr(locale, { uz: "O'quv markazining telefon raqami", ru: "Телефон учебного центра", en: "Learning center phone number", de: "Telefonnummer des Lernzentrums" })} required>
                   <input value={f.phone} onChange={(e) => set("phone", e.target.value)} className={inp} />
                 </Field>
 
-                <Field label={tr(locale, { uz: "Ish boshlanish vaqti", ru: "Время начала работы", en: "Work start time" })} required>
+                <Field label={tr(locale, { uz: "Ish boshlanish vaqti", ru: "Время начала работы", en: "Work start time", de: "Arbeitsbeginn" })} required>
                   <TimeInput value={f.workStart} onChange={(v) => set("workStart", v)} />
                 </Field>
-                <Field label={tr(locale, { uz: "ish tugash vaqti", ru: "Время окончания работы", en: "Work end time" })} required>
+                <Field label={tr(locale, { uz: "ish tugash vaqti", ru: "Время окончания работы", en: "Work end time", de: "Arbeitsende" })} required>
                   <TimeInput value={f.workEnd} onChange={(v) => set("workEnd", v)} />
                 </Field>
 
-                <Toggle label={tr(locale, { uz: "Dars boshlanish vaqti: (qadam 5 daqiqa)", ru: "Время начала урока: (шаг 5 минут)", en: "Lesson start time: (step 5 minutes)" })} on={f.step5} onClick={() => set("step5", !f.step5)} />
-                <Toggle label={tr(locale, { uz: "Barcha xodimlar coin bera oladi", ru: "Все сотрудники могут начислять коины", en: "All staff can give coins" })} on={f.coin} onClick={() => set("coin", !f.coin)} />
+                <Toggle label={tr(locale, { uz: "Dars boshlanish vaqti: (qadam 5 daqiqa)", ru: "Время начала урока: (шаг 5 минут)", en: "Lesson start time: (step 5 minutes)", de: "Unterrichtsbeginn: (Schritt 5 Minuten)" })} on={f.step5} onClick={() => set("step5", !f.step5)} />
+                <Toggle label={tr(locale, { uz: "Barcha xodimlar coin bera oladi", ru: "Все сотрудники могут начислять коины", en: "All staff can give coins", de: "Alle Mitarbeiter können Coins vergeben" })} on={f.coin} onClick={() => set("coin", !f.coin)} />
 
-                <Toggle label={tr(locale, { uz: "OnlinePBX filial rejimida", ru: "OnlinePBX в режиме филиала", en: "OnlinePBX in branch mode" })} on={f.onlinePbx} onClick={() => set("onlinePbx", !f.onlinePbx)} />
-                <Toggle label={tr(locale, { uz: "Animatsiya", ru: "Анимация", en: "Animation" })} on={f.animation} onClick={() => set("animation", !f.animation)} />
+                <Toggle label={tr(locale, { uz: "OnlinePBX filial rejimida", ru: "OnlinePBX в режиме филиала", en: "OnlinePBX in branch mode", de: "OnlinePBX im Filialmodus" })} on={f.onlinePbx} onClick={() => set("onlinePbx", !f.onlinePbx)} />
+                <Toggle label={tr(locale, { uz: "Animatsiya", ru: "Анимация", en: "Animation", de: "Animation" })} on={f.animation} onClick={() => set("animation", !f.animation)} />
 
                 {/* Logotip */}
-                <Field label={tr(locale, { uz: "Logotip", ru: "Логотип", en: "Logo" })}>
+                <Field label={tr(locale, { uz: "Logotip", ru: "Логотип", en: "Logo", de: "Logo" })}>
                   <button type="button" onClick={() => logoRef.current?.click()}
                     className="grid h-44 w-44 place-items-center overflow-hidden rounded-xl border border-dashed border-slate-300 bg-white transition hover:border-brand-400 dark:border-slate-700 dark:bg-slate-800/40">
                     {f.logo ? (
@@ -166,7 +166,7 @@ export default function GeneralSettings({ locale, defaultName, defaultPhone, bra
                     ) : (
                       <span className="flex flex-col items-center gap-1.5 text-slate-400">
                         <Icon name="camera" className="h-7 w-7" />
-                        <span className="text-xs">{tr(locale, { uz: "Logotip yuklash", ru: "Загрузить логотип", en: "Upload logo" })}</span>
+                        <span className="text-xs">{tr(locale, { uz: "Logotip yuklash", ru: "Загрузить логотип", en: "Upload logo", de: "Logo hochladen" })}</span>
                       </span>
                     )}
                   </button>
@@ -175,7 +175,7 @@ export default function GeneralSettings({ locale, defaultName, defaultPhone, bra
 
                 {/* Asosiy rang + oferta */}
                 <div className="space-y-5">
-                  <Field label={tr(locale, { uz: "Asosiy rangni ko'rsating", ru: "Укажите основной цвет", en: "Choose the primary color" })}>
+                  <Field label={tr(locale, { uz: "Asosiy rangni ko'rsating", ru: "Укажите основной цвет", en: "Choose the primary color", de: "Wählen Sie die Hauptfarbe" })}>
                     <div className="flex items-center gap-4">
                       {COLORS.map((c) => (
                         <button key={c} type="button" onClick={() => set("color", c)}
@@ -189,11 +189,11 @@ export default function GeneralSettings({ locale, defaultName, defaultPhone, bra
                     </div>
                   </Field>
 
-                  <Field label={tr(locale, { uz: "Kompaniya Ofertasi", ru: "Оферта компании", en: "Company offer" })}>
+                  <Field label={tr(locale, { uz: "Kompaniya Ofertasi", ru: "Оферта компании", en: "Company offer", de: "Angebot des Unternehmens" })}>
                     <div className="flex items-center gap-3">
                       <button type="button" onClick={() => offerRef.current?.click()}
                         className="rounded-lg bg-sky-500 px-5 py-2 text-sm font-medium text-white transition hover:bg-sky-600">
-                        {tr(locale, { uz: "Faylni tanlang", ru: "Выберите файл", en: "Choose file" })}
+                        {tr(locale, { uz: "Faylni tanlang", ru: "Выберите файл", en: "Choose file", de: "Datei auswählen" })}
                       </button>
                       {f.offerName && <span className="truncate text-sm text-slate-500">{f.offerName}</span>}
                       <input ref={offerRef} type="file" className="hidden" onChange={(e) => set("offerName", e.target.files?.[0]?.name ?? "")} />
@@ -203,7 +203,7 @@ export default function GeneralSettings({ locale, defaultName, defaultPhone, bra
               </div>
 
               <button onClick={save} className="mt-8 rounded-lg bg-amber-500 px-8 py-2.5 text-sm font-semibold text-white transition hover:bg-amber-600">
-                {saved ? tr(locale, { uz: "Saqlandi ✓", ru: "Сохранено ✓", en: "Saved ✓" }) : tr(locale, { uz: "Saqlash", ru: "Сохранить", en: "Save" })}
+                {saved ? tr(locale, { uz: "Saqlandi ✓", ru: "Сохранено ✓", en: "Saved ✓", de: "Gespeichert ✓" }) : tr(locale, { uz: "Saqlash", ru: "Сохранить", en: "Save", de: "Speichern" })}
               </button>
             </>
           )}

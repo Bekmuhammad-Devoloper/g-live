@@ -16,7 +16,7 @@ const isoDay = (d: Date) => `${d.getFullYear()}-${p2(d.getMonth() + 1)}-${p2(d.g
 export default async function FunnelPage() {
   const s = await requireSession();
   if (!ALLOWED.includes(s.role as never)) {
-    return <Forbidden title={tr(s.locale, { uz: "Kirish taqiqlangan", ru: "Доступ запрещён", en: "Access denied" })} body={tr(s.locale, { uz: "Bu bo'lim sotuv bo'limi uchun.", ru: "Этот раздел для отдела продаж.", en: "This section is for the sales department." })} />;
+    return <Forbidden title={tr(s.locale, { uz: "Kirish taqiqlangan", ru: "Доступ запрещён", en: "Access denied", de: "Zugriff verweigert" })} body={tr(s.locale, { uz: "Bu bo'lim sotuv bo'limi uchun.", ru: "Этот раздел для отдела продаж.", en: "This section is for the sales department.", de: "Dieser Bereich ist für die Vertriebsabteilung." })} />;
   }
 
   const leads = await prisma.lead.findMany({

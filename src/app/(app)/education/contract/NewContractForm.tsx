@@ -46,47 +46,47 @@ export default function NewContractForm({ open, onClose, locale }: { open: boole
         className="animate-slide-in-right absolute right-0 top-0 flex h-full w-[460px] max-w-[92%] flex-col border-l border-slate-200 bg-white shadow-pop dark:border-white/10 dark:bg-[#15243d]"
       >
         <div className="flex shrink-0 items-center justify-between border-b border-slate-100 px-5 py-4 dark:border-white/10">
-          <h3 className="text-base font-bold text-slate-800 dark:text-slate-100">{tr(locale, { uz: "Yangi shartnoma", ru: "Новый договор", en: "New contract" })}</h3>
+          <h3 className="text-base font-bold text-slate-800 dark:text-slate-100">{tr(locale, { uz: "Yangi shartnoma", ru: "Новый договор", en: "New contract", de: "Neuer Vertrag" })}</h3>
           <button type="button" onClick={onClose} className="flex h-8 w-8 items-center justify-center rounded-lg text-lg text-slate-400 transition hover:bg-slate-100 hover:text-slate-600 dark:hover:bg-white/10">✕</button>
         </div>
 
         <div className="flex-1 space-y-3.5 overflow-y-auto px-5 py-4">
           <div>
-            <label className={label}>{tr(locale, { uz: "Sarlavha", ru: "Заголовок", en: "Title" })} <span className="text-rose-500">*</span></label>
-            <input name="title" required placeholder={tr(locale, { uz: "O'quv shartnomasi 2026", ru: "Учебный договор 2026", en: "Education contract 2026" })} className={input} />
+            <label className={label}>{tr(locale, { uz: "Sarlavha", ru: "Заголовок", en: "Title", de: "Titel" })} <span className="text-rose-500">*</span></label>
+            <input name="title" required placeholder={tr(locale, { uz: "O'quv shartnomasi 2026", ru: "Учебный договор 2026", en: "Education contract 2026", de: "Bildungsvertrag 2026" })} className={input} />
           </div>
           <div>
-            <label className={label}>{tr(locale, { uz: "Shartnoma turi", ru: "Тип договора", en: "Contract type" })} <span className="text-rose-500">*</span></label>
+            <label className={label}>{tr(locale, { uz: "Shartnoma turi", ru: "Тип договора", en: "Contract type", de: "Vertragstyp" })} <span className="text-rose-500">*</span></label>
             <select name="type" required className={input} defaultValue="STANDARD">
               {CONTRACT_TEMPLATE_TYPES.map((v) => <option key={v} value={v}>{CONTRACT_TEMPLATE_TYPE_LABELS[v][locale]}</option>)}
             </select>
           </div>
           <div>
-            <label className={label}>{tr(locale, { uz: "Shartnoma matni", ru: "Текст договора", en: "Contract text" })}</label>
-            <textarea name="content" rows={8} placeholder={tr(locale, { uz: "Shartnoma shabloni matnini kiriting...", ru: "Введите текст шаблона договора...", en: "Enter the contract template text..." })} className="w-full rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm text-slate-800 outline-none transition focus:border-brand-400 dark:border-slate-700 dark:bg-slate-800/60 dark:text-slate-100" />
+            <label className={label}>{tr(locale, { uz: "Shartnoma matni", ru: "Текст договора", en: "Contract text", de: "Vertragstext" })}</label>
+            <textarea name="content" rows={8} placeholder={tr(locale, { uz: "Shartnoma shabloni matnini kiriting...", ru: "Введите текст шаблона договора...", en: "Enter the contract template text...", de: "Geben Sie den Vertragsvorlagentext ein..." })} className="w-full rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm text-slate-800 outline-none transition focus:border-brand-400 dark:border-slate-700 dark:bg-slate-800/60 dark:text-slate-100" />
           </div>
           <div>
-            <label className={label}>{tr(locale, { uz: "Izoh", ru: "Комментарий", en: "Note" })}</label>
-            <input name="note" placeholder={tr(locale, { uz: "Ichki izoh (ixtiyoriy)", ru: "Внутренний комментарий (необязательно)", en: "Internal note (optional)" })} className={input} />
+            <label className={label}>{tr(locale, { uz: "Izoh", ru: "Комментарий", en: "Note", de: "Notiz" })}</label>
+            <input name="note" placeholder={tr(locale, { uz: "Ichki izoh (ixtiyoriy)", ru: "Внутренний комментарий (необязательно)", en: "Internal note (optional)", de: "Interne Notiz (optional)" })} className={input} />
           </div>
           <label className="flex items-center gap-2 text-sm text-slate-600 dark:text-slate-300">
             <input type="checkbox" name="isActive" defaultChecked className="h-4 w-4 rounded border-slate-300 text-brand-600 focus:ring-brand-500" />
-            {tr(locale, { uz: "Faol (foydalanishga tayyor)", ru: "Активен (готов к использованию)", en: "Active (ready to use)" })}
+            {tr(locale, { uz: "Faol (foydalanishga tayyor)", ru: "Активен (готов к использованию)", en: "Active (ready to use)", de: "Aktiv (einsatzbereit)" })}
           </label>
 
           {state.error && (
             <p className="rounded-lg bg-rose-50 px-3 py-2 text-sm text-rose-700 dark:bg-rose-500/10 dark:text-rose-400">
-              {state.error === "forbidden" ? tr(locale, { uz: "Ruxsat yo'q.", ru: "Нет доступа.", en: "No permission." }) : tr(locale, { uz: "Ma'lumotlar to'liq emas.", ru: "Данные неполные.", en: "The data is incomplete." })}
+              {state.error === "forbidden" ? tr(locale, { uz: "Ruxsat yo'q.", ru: "Нет доступа.", en: "No permission.", de: "Keine Berechtigung." }) : tr(locale, { uz: "Ma'lumotlar to'liq emas.", ru: "Данные неполные.", en: "The data is incomplete.", de: "Die Daten sind unvollständig." })}
             </p>
           )}
         </div>
 
         <div className="flex shrink-0 gap-2 border-t border-slate-100 px-5 py-4 dark:border-white/10">
           <button type="button" onClick={onClose} className="flex-1 rounded-xl border border-slate-200 py-2.5 text-sm font-semibold text-slate-600 transition hover:bg-slate-50 dark:border-white/10 dark:text-slate-300 dark:hover:bg-white/5">
-            {tr(locale, { uz: "Bekor qilish", ru: "Отмена", en: "Cancel" })}
+            {tr(locale, { uz: "Bekor qilish", ru: "Отмена", en: "Cancel", de: "Abbrechen" })}
           </button>
           <button type="submit" disabled={pending} className="flex-[1.4] rounded-xl bg-brand-600 py-2.5 text-sm font-semibold text-white transition hover:bg-brand-700 disabled:opacity-60">
-            {pending ? tr(locale, { uz: "Saqlanmoqda...", ru: "Сохранение...", en: "Saving..." }) : tr(locale, { uz: "Saqlash", ru: "Сохранить", en: "Save" })}
+            {pending ? tr(locale, { uz: "Saqlanmoqda...", ru: "Сохранение...", en: "Saving...", de: "Wird gespeichert..." }) : tr(locale, { uz: "Saqlash", ru: "Сохранить", en: "Save", de: "Speichern" })}
           </button>
         </div>
       </form>

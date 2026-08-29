@@ -55,7 +55,7 @@ type Tab = "groups" | "payments" | "attendance" | "exams";
 
 export default function StudentProfile({ profile: st, locale }: { profile: SProfile; locale: Locale }) {
   const [tab, setTab] = useState<Tab>("groups");
-  const L = (uz: string, ru: string, en: string) => tr(locale, { uz, ru, en });
+  const L = (uz: string, ru: string, en: string, de: string) => tr(locale, { uz, ru, en, de });
   const tone = STATUS_TONE[st.eduStatus] ?? "#64748b";
 
   return (
@@ -91,11 +91,11 @@ export default function StudentProfile({ profile: st, locale }: { profile: SProf
           </div>
           <div className="flex shrink-0 gap-2">
             <Link href="/students" className="flex items-center gap-1.5 rounded-lg border border-slate-200 px-3 py-2 text-sm font-medium text-slate-600 transition hover:bg-slate-50 dark:border-slate-700 dark:text-slate-300 dark:hover:bg-slate-800">
-              <Icon name="arrow" className="h-4 w-4 rotate-180" /> {L("Ro'yxatga", "К списку", "Back to list")}
+              <Icon name="arrow" className="h-4 w-4 rotate-180" /> {L("Ro'yxatga", "К списку", "Back to list", "Zur Liste")}
             </Link>
             {st.lead && (
               <Link href={`/crm/${st.lead.id}`} className="flex items-center gap-1.5 rounded-lg border border-slate-200 px-3 py-2 text-sm font-medium text-slate-600 transition hover:bg-slate-50 dark:border-slate-700 dark:text-slate-300 dark:hover:bg-slate-800">
-                <Icon name="download" className="h-4 w-4" /> {L("Lid kartasi", "Карточка лида", "Lead card")}
+                <Icon name="download" className="h-4 w-4" /> {L("Lid kartasi", "Карточка лида", "Lead card", "Lead-Karte")}
               </Link>
             )}
           </div>
@@ -104,15 +104,15 @@ export default function StudentProfile({ profile: st, locale }: { profile: SProf
 
       {/* ── Ko'rsatkichlar ── */}
       <div className="grid grid-cols-2 gap-4 lg:grid-cols-4">
-        <Tile icon="layers" tone="#6366f1" label={L("Guruhlar", "Группы", "Groups")} value={String(st.groups.filter((g) => g.isActive).length)} />
-        <Tile icon="wallet" tone="#10b981" label={L("To'langan", "Оплачено", "Paid")} value={formatMoney(st.paid, locale)} small />
-        <Tile icon="alert" tone={st.debt > 0 ? "#ef4444" : "#94a3b8"} label={L("Qarzdorlik", "Задолженность", "Debt")} value={formatMoney(st.debt, locale)} small />
+        <Tile icon="layers" tone="#6366f1" label={L("Guruhlar", "Группы", "Groups", "Gruppen")} value={String(st.groups.filter((g) => g.isActive).length)} />
+        <Tile icon="wallet" tone="#10b981" label={L("To'langan", "Оплачено", "Paid", "Bezahlt")} value={formatMoney(st.paid, locale)} small />
+        <Tile icon="alert" tone={st.debt > 0 ? "#ef4444" : "#94a3b8"} label={L("Qarzdorlik", "Задолженность", "Debt", "Schulden")} value={formatMoney(st.debt, locale)} small />
         <Tile
           icon="check"
           tone="#0ea5e9"
-          label={L("Davomat", "Посещаемость", "Attendance")}
+          label={L("Davomat", "Посещаемость", "Attendance", "Anwesenheit")}
           value={st.attendancePct === null ? "—" : `${st.attendancePct}%`}
-          hint={st.lessonsCounted ? `${st.lessonsCounted} ${L("dars", "занятий", "lessons")}` : undefined}
+          hint={st.lessonsCounted ? `${st.lessonsCounted} ${L("dars", "занятий", "lessons", "Stunden")}` : undefined}
         />
       </div>
 
@@ -122,7 +122,7 @@ export default function StudentProfile({ profile: st, locale }: { profile: SProf
           <Icon name="info" className="mt-0.5 h-4 w-4 shrink-0 text-amber-500" />
           <div className="min-w-0">
             <div className="text-[11px] font-semibold uppercase tracking-wide text-amber-600 dark:text-amber-400">
-              {L("Izoh", "Примечание", "Note")}
+              {L("Izoh", "Примечание", "Note", "Notiz")}
             </div>
             <p className="mt-0.5 whitespace-pre-wrap text-sm leading-relaxed text-slate-700 dark:text-slate-200">{st.note}</p>
           </div>
@@ -133,7 +133,7 @@ export default function StudentProfile({ profile: st, locale }: { profile: SProf
       {st.parents.length > 0 && (
         <div className="rounded-2xl border border-slate-200/70 bg-white p-4 shadow-card dark:border-slate-800 dark:bg-slate-900">
           <h3 className="mb-2.5 flex items-center gap-2 text-sm font-semibold text-slate-700 dark:text-slate-200">
-            <Icon name="users" className="h-4 w-4 text-slate-400" /> {L("Ota-onalar", "Родители", "Parents")}
+            <Icon name="users" className="h-4 w-4 text-slate-400" /> {L("Ota-onalar", "Родители", "Parents", "Eltern")}
           </h3>
           <div className="flex flex-wrap gap-2">
             {st.parents.map((p, i) => (
@@ -149,15 +149,15 @@ export default function StudentProfile({ profile: st, locale }: { profile: SProf
 
       {/* ── Tablar ── */}
       <div className="flex flex-wrap gap-2">
-        <TabBtn active={tab === "groups"} onClick={() => setTab("groups")} icon="layers" n={st.groups.length}>{L("Guruhlar", "Группы", "Groups")}</TabBtn>
-        <TabBtn active={tab === "payments"} onClick={() => setTab("payments")} icon="wallet" n={st.payments.length}>{L("To'lovlar", "Платежи", "Payments")}</TabBtn>
-        <TabBtn active={tab === "attendance"} onClick={() => setTab("attendance")} icon="check" n={st.attendance.length}>{L("Davomat", "Посещаемость", "Attendance")}</TabBtn>
-        <TabBtn active={tab === "exams"} onClick={() => setTab("exams")} icon="award" n={st.exams.length}>{L("Imtihonlar", "Экзамены", "Exams")}</TabBtn>
+        <TabBtn active={tab === "groups"} onClick={() => setTab("groups")} icon="layers" n={st.groups.length}>{L("Guruhlar", "Группы", "Groups", "Gruppen")}</TabBtn>
+        <TabBtn active={tab === "payments"} onClick={() => setTab("payments")} icon="wallet" n={st.payments.length}>{L("To'lovlar", "Платежи", "Payments", "Zahlungen")}</TabBtn>
+        <TabBtn active={tab === "attendance"} onClick={() => setTab("attendance")} icon="check" n={st.attendance.length}>{L("Davomat", "Посещаемость", "Attendance", "Anwesenheit")}</TabBtn>
+        <TabBtn active={tab === "exams"} onClick={() => setTab("exams")} icon="award" n={st.exams.length}>{L("Imtihonlar", "Экзамены", "Exams", "Prüfungen")}</TabBtn>
       </div>
 
       <div className="overflow-hidden rounded-2xl border border-slate-200/70 bg-white shadow-card dark:border-slate-800 dark:bg-slate-900">
         {tab === "groups" && (
-          st.groups.length === 0 ? <Empty text={L("Guruhga biriktirilmagan", "Не привязан к группе", "Not assigned to a group")} /> : (
+          st.groups.length === 0 ? <Empty text={L("Guruhga biriktirilmagan", "Не привязан к группе", "Not assigned to a group", "Keiner Gruppe zugewiesen")} /> : (
             <div className="divide-y divide-slate-100 dark:divide-slate-800">
               {st.groups.map((g) => (
                 <Link key={g.id} href={`/groups/${g.id}`} className="flex items-center justify-between gap-3 px-4 py-3 transition hover:bg-slate-50 dark:hover:bg-slate-800/50">
@@ -166,7 +166,7 @@ export default function StudentProfile({ profile: st, locale }: { profile: SProf
                       <span className="truncate text-sm font-semibold text-slate-800 dark:text-slate-100">{g.name}</span>
                       {!g.isActive && (
                         <span className="rounded bg-slate-100 px-1.5 py-0.5 text-[10px] font-semibold text-slate-500 dark:bg-slate-800">
-                          {L("chiqarilgan", "исключён", "removed")}
+                          {L("chiqarilgan", "исключён", "removed", "entfernt")}
                         </span>
                       )}
                     </div>
@@ -185,7 +185,7 @@ export default function StudentProfile({ profile: st, locale }: { profile: SProf
         )}
 
         {tab === "payments" && (
-          st.payments.length === 0 ? <Empty text={L("To'lov yo'q", "Платежей нет", "No payments")} /> : (
+          st.payments.length === 0 ? <Empty text={L("To'lov yo'q", "Платежей нет", "No payments", "Keine Zahlungen")} /> : (
             <Rows>
               {st.payments.map((p) => (
                 <Row
@@ -201,7 +201,7 @@ export default function StudentProfile({ profile: st, locale }: { profile: SProf
         )}
 
         {tab === "attendance" && (
-          st.attendance.length === 0 ? <Empty text={L("Davomat yozuvi yo'q", "Нет записей посещаемости", "No attendance records")} /> : (
+          st.attendance.length === 0 ? <Empty text={L("Davomat yozuvi yo'q", "Нет записей посещаемости", "No attendance records", "Keine Anwesenheitseinträge")} /> : (
             <Rows>
               {st.attendance.map((a) => (
                 <Row
@@ -216,7 +216,7 @@ export default function StudentProfile({ profile: st, locale }: { profile: SProf
         )}
 
         {tab === "exams" && (
-          st.exams.length === 0 ? <Empty text={L("Imtihon natijasi yo'q", "Нет результатов экзаменов", "No exam results")} /> : (
+          st.exams.length === 0 ? <Empty text={L("Imtihon natijasi yo'q", "Нет результатов экзаменов", "No exam results", "Keine Prüfungsergebnisse")} /> : (
             <Rows>
               {st.exams.map((e) => (
                 <Row

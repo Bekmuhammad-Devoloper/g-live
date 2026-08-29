@@ -40,17 +40,17 @@ export default function AttendanceView({ lessons, canMark, locale }: { lessons: 
           <thead className="border-b border-slate-200/70 bg-slate-50/80 text-[11px] font-semibold uppercase tracking-wider text-slate-500 dark:border-slate-800 dark:bg-slate-800/50">
             <tr>
               <th className="w-8 px-3 py-3" />
-              <th className="px-4 py-3">{tr(locale, { uz: "Sana", ru: "Дата", en: "Date" })}</th>
-              <th className="px-4 py-3">{tr(locale, { uz: "Guruh", ru: "Группа", en: "Group" })}</th>
-              <th className="px-4 py-3">{tr(locale, { uz: "Mavzu", ru: "Тема", en: "Topic" })}</th>
-              <th className="px-4 py-3">{tr(locale, { uz: "Qatnashdi", ru: "Присутствовал", en: "Attended" })}</th>
-              <th className="px-4 py-3">{tr(locale, { uz: "Tasdiqlangan", ru: "Подтверждено", en: "Confirmed" })}</th>
+              <th className="px-4 py-3">{tr(locale, { uz: "Sana", ru: "Дата", en: "Date", de: "Datum" })}</th>
+              <th className="px-4 py-3">{tr(locale, { uz: "Guruh", ru: "Группа", en: "Group", de: "Gruppe" })}</th>
+              <th className="px-4 py-3">{tr(locale, { uz: "Mavzu", ru: "Тема", en: "Topic", de: "Thema" })}</th>
+              <th className="px-4 py-3">{tr(locale, { uz: "Qatnashdi", ru: "Присутствовал", en: "Attended", de: "Anwesend" })}</th>
+              <th className="px-4 py-3">{tr(locale, { uz: "Tasdiqlangan", ru: "Подтверждено", en: "Confirmed", de: "Bestätigt" })}</th>
             </tr>
           </thead>
           <tbody className="divide-y divide-slate-100 dark:divide-slate-800">
             {lessons.length === 0 ? (
               <tr>
-                <td colSpan={6} className="px-4 py-12 text-center text-slate-400">{tr(locale, { uz: "Ma'lumot yo'q", ru: "Нет данных", en: "No data" })}</td>
+                <td colSpan={6} className="px-4 py-12 text-center text-slate-400">{tr(locale, { uz: "Ma'lumot yo'q", ru: "Нет данных", en: "No data", de: "Keine Daten" })}</td>
               </tr>
             ) : (
               lessons.map((l) => {
@@ -96,13 +96,13 @@ function LessonRows({ lesson: l, isOpen, onToggle, canMark, locale }: {
         <td className="px-4 py-3 font-medium text-slate-800 dark:text-slate-100">{l.groupName}</td>
         <td className="px-4 py-3 text-slate-600 dark:text-slate-300">{l.topic ?? "—"}</td>
         <td className="px-4 py-3"><Badge tone="green">{l.present} / {l.total}</Badge></td>
-        <td className="px-4 py-3">{l.confirmed ? <Badge tone="green">{tr(locale, { uz: "Ha", ru: "Да", en: "Yes" })}</Badge> : <Badge tone="amber">{tr(locale, { uz: "Kutilmoqda", ru: "Ожидается", en: "Pending" })}</Badge>}</td>
+        <td className="px-4 py-3">{l.confirmed ? <Badge tone="green">{tr(locale, { uz: "Ha", ru: "Да", en: "Yes", de: "Ja" })}</Badge> : <Badge tone="amber">{tr(locale, { uz: "Kutilmoqda", ru: "Ожидается", en: "Pending", de: "Ausstehend" })}</Badge>}</td>
       </tr>
       {isOpen && (
         <tr className="bg-slate-50/40 dark:bg-slate-800/20">
           <td colSpan={6} className="px-4 py-4">
             {l.students.length === 0 ? (
-              <p className="py-4 text-center text-sm text-slate-400">{tr(locale, { uz: "Guruhda o'quvchi yo'q", ru: "В группе нет учеников", en: "No students in the group" })}</p>
+              <p className="py-4 text-center text-sm text-slate-400">{tr(locale, { uz: "Guruhda o'quvchi yo'q", ru: "В группе нет учеников", en: "No students in the group", de: "Keine Schüler in der Gruppe" })}</p>
             ) : (
               <div className={cn("space-y-1.5", pending && "opacity-60")}>
                 {l.students.map((st) => (
@@ -118,7 +118,7 @@ function LessonRows({ lesson: l, isOpen, onToggle, canMark, locale }: {
                         onChange={(e) => setStatus(st.id, e.target.value)}
                         className="h-9 rounded-lg border border-slate-200 bg-white px-2.5 text-sm text-slate-700 outline-none transition focus:border-brand-400 disabled:opacity-60 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-100"
                       >
-                        <option value="" disabled>{tr(locale, { uz: "Belgilanmagan", ru: "Не отмечено", en: "Not marked" })}</option>
+                        <option value="" disabled>{tr(locale, { uz: "Belgilanmagan", ru: "Не отмечено", en: "Not marked", de: "Nicht markiert" })}</option>
                         {ATTENDANCE_STATUSES.map((s) => (
                           <option key={s} value={s}>{label(ATTENDANCE_STATUS_LABELS, s, locale)}</option>
                         ))}
@@ -137,7 +137,7 @@ function LessonRows({ lesson: l, isOpen, onToggle, canMark, locale }: {
                       disabled={pending || l.confirmed}
                       className="inline-flex items-center gap-1.5 rounded-lg bg-brand-600 px-4 py-2 text-sm font-semibold text-white transition hover:bg-brand-700 disabled:opacity-50"
                     >
-                      <Icon name="filecheck" className="h-4 w-4" /> {l.confirmed ? tr(locale, { uz: "Tasdiqlangan", ru: "Подтверждено", en: "Confirmed" }) : tr(locale, { uz: "Ro'yxatni tasdiqlash", ru: "Подтвердить список", en: "Confirm list" })}
+                      <Icon name="filecheck" className="h-4 w-4" /> {l.confirmed ? tr(locale, { uz: "Tasdiqlangan", ru: "Подтверждено", en: "Confirmed", de: "Bestätigt" }) : tr(locale, { uz: "Ro'yxatni tasdiqlash", ru: "Подтвердить список", en: "Confirm list", de: "Liste bestätigen" })}
                     </button>
                   </div>
                 )}

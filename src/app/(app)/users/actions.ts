@@ -42,7 +42,7 @@ function roleForPosition(position: string): string {
 
 export async function createStaff(fd: FormData): Promise<{ ok?: boolean; error?: string }> {
   const s = await requireSession();
-  if (!can(s.role)) return { error: tr(s.locale, { uz: "Ruxsat yo'q", ru: "Нет доступа", en: "No access" }) };
+  if (!can(s.role)) return { error: tr(s.locale, { uz: "Ruxsat yo'q", ru: "Нет доступа", en: "No access", de: "Kein Zugriff" }) };
 
   const ism = String(fd.get("ism") || "").trim();
   const familiya = String(fd.get("familiya") || "").trim();
@@ -57,14 +57,14 @@ export async function createStaff(fd: FormData): Promise<{ ok?: boolean; error?:
   const birthDate = birthRaw ? new Date(birthRaw) : null;
   const fiksa = Math.max(0, Math.round(Number(fd.get("fiksa")) || 0));
 
-  if (ism.length < 2) return { error: tr(s.locale, { uz: "Ism kamida 2 ta harf bo'lsin", ru: "Имя должно содержать не менее 2 букв", en: "First name must be at least 2 letters" }) };
-  if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) return { error: tr(s.locale, { uz: "Email noto'g'ri", ru: "Неверный email", en: "Invalid email" }) };
-  if (password.length < 4) return { error: tr(s.locale, { uz: "Parol kamida 4 ta belgi bo'lsin", ru: "Пароль должен содержать не менее 4 символов", en: "Password must be at least 4 characters" }) };
-  if (!position) return { error: tr(s.locale, { uz: "Vazifa tanlanmadi", ru: "Должность не выбрана", en: "Position not selected" }) };
+  if (ism.length < 2) return { error: tr(s.locale, { uz: "Ism kamida 2 ta harf bo'lsin", ru: "Имя должно содержать не менее 2 букв", en: "First name must be at least 2 letters", de: "Der Vorname muss mindestens 2 Buchstaben enthalten" }) };
+  if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) return { error: tr(s.locale, { uz: "Email noto'g'ri", ru: "Неверный email", en: "Invalid email", de: "Ungültige E-Mail" }) };
+  if (password.length < 4) return { error: tr(s.locale, { uz: "Parol kamida 4 ta belgi bo'lsin", ru: "Пароль должен содержать не менее 4 символов", en: "Password must be at least 4 characters", de: "Das Passwort muss mindestens 4 Zeichen enthalten" }) };
+  if (!position) return { error: tr(s.locale, { uz: "Vazifa tanlanmadi", ru: "Должность не выбрана", en: "Position not selected", de: "Position nicht ausgewählt" }) };
   const role = roleForPosition(position);
 
   const exists = await prisma.user.findUnique({ where: { email } });
-  if (exists) return { error: tr(s.locale, { uz: "Bu email allaqachon mavjud", ru: "Этот email уже существует", en: "This email already exists" }) };
+  if (exists) return { error: tr(s.locale, { uz: "Bu email allaqachon mavjud", ru: "Этот email уже существует", en: "This email already exists", de: "Diese E-Mail existiert bereits" }) };
 
   const u = await prisma.user.create({
     data: { fullName, email, phone, passwordHash: await hashPassword(password), plainPassword: password, role, position, branchId, gender, birthDate, fiksa, isActive: true },

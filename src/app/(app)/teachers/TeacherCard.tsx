@@ -68,7 +68,7 @@ export default function TeacherCard({ teacher: t, maxStudents, canManage, locale
                 type="button"
                 onClick={() => fileRef.current?.click()}
                 disabled={uploading}
-                title={t.imageUrl ? tr(locale, { uz: "Rasmni almashtirish", ru: "Заменить фото", en: "Change photo" }) : tr(locale, { uz: "Rasm yuklash", ru: "Загрузить фото", en: "Upload photo" })}
+                title={t.imageUrl ? tr(locale, { uz: "Rasmni almashtirish", ru: "Заменить фото", en: "Change photo", de: "Foto ändern" }) : tr(locale, { uz: "Rasm yuklash", ru: "Загрузить фото", en: "Upload photo", de: "Foto hochladen" })}
                 className="absolute inset-0 flex items-center justify-center rounded-full bg-black/45 text-white opacity-0 transition group-hover/av:opacity-100 disabled:opacity-100"
               >
                 {uploading ? <Icon name="refresh" className="h-5 w-5 animate-spin" /> : <Icon name="camera" className="h-5 w-5" />}
@@ -83,16 +83,16 @@ export default function TeacherCard({ teacher: t, maxStudents, canManage, locale
             {t.gender && (
               <span
                 className="flex h-4 w-4 shrink-0 items-center justify-center rounded-full text-[11px] font-bold leading-none"
-                title={t.gender === "MALE" ? tr(locale, { uz: "Erkak", ru: "Мужчина", en: "Male" }) : tr(locale, { uz: "Ayol", ru: "Женщина", en: "Female" })}
+                title={t.gender === "MALE" ? tr(locale, { uz: "Erkak", ru: "Мужчина", en: "Male", de: "Männlich" }) : tr(locale, { uz: "Ayol", ru: "Женщина", en: "Female", de: "Weiblich" })}
                 style={t.gender === "MALE" ? { color: "#3b82f6", background: "#3b82f61a" } : { color: "#ec4899", background: "#ec48991a" }}
               >
                 {t.gender === "MALE" ? "♂" : "♀"}
               </span>
             )}
             {t.active ? (
-              <span className="h-2 w-2 shrink-0 rounded-full bg-emerald-500" title={tr(locale, { uz: "Faol", ru: "Активен", en: "Active" })} />
+              <span className="h-2 w-2 shrink-0 rounded-full bg-emerald-500" title={tr(locale, { uz: "Faol", ru: "Активен", en: "Active", de: "Aktiv" })} />
             ) : (
-              <span className="h-2 w-2 shrink-0 rounded-full bg-slate-400" title={tr(locale, { uz: "Nofaol", ru: "Неактивен", en: "Inactive" })} />
+              <span className="h-2 w-2 shrink-0 rounded-full bg-slate-400" title={tr(locale, { uz: "Nofaol", ru: "Неактивен", en: "Inactive", de: "Inaktiv" })} />
             )}
           </div>
           {t.phone && (
@@ -110,9 +110,9 @@ export default function TeacherCard({ teacher: t, maxStudents, canManage, locale
 
       {/* Statistika */}
       <div className="mt-3 grid grid-cols-3 gap-2 rounded-xl bg-slate-50 p-2.5 dark:bg-white/[0.03]">
-        <Stat icon="layers" value={t.groups.length} label={tr(locale, { uz: "Guruh", ru: "Группы", en: "Groups" })} color="#3b82f6" />
-        <Stat icon="graduation" value={t.totalStudents} label={tr(locale, { uz: "O'quvchi", ru: "Ученики", en: "Students" })} color="#10b981" />
-        <Stat icon="check" value={t.totalLessons} label={tr(locale, { uz: "Dars", ru: "Занятия", en: "Lessons" })} color="#8b5cf6" />
+        <Stat icon="layers" value={t.groups.length} label={tr(locale, { uz: "Guruh", ru: "Группы", en: "Groups", de: "Gruppen" })} color="#3b82f6" />
+        <Stat icon="graduation" value={t.totalStudents} label={tr(locale, { uz: "O'quvchi", ru: "Ученики", en: "Students", de: "Schüler" })} color="#10b981" />
+        <Stat icon="check" value={t.totalLessons} label={tr(locale, { uz: "Dars", ru: "Занятия", en: "Lessons", de: "Unterricht" })} color="#8b5cf6" />
       </div>
 
       {/* Guruh chiplari */}
@@ -130,7 +130,7 @@ export default function TeacherCard({ teacher: t, maxStudents, canManage, locale
       {/* Yuklama */}
       <div className="mt-3">
         <div className="mb-1 flex items-center justify-between text-[11px] text-slate-400">
-          <span>{tr(locale, { uz: "Yuklama", ru: "Нагрузка", en: "Workload" })}</span>
+          <span>{tr(locale, { uz: "Yuklama", ru: "Нагрузка", en: "Workload", de: "Arbeitslast" })}</span>
           <span className="font-semibold" style={{ color }}>{load}%</span>
         </div>
         <div className="h-1.5 overflow-hidden rounded-full bg-slate-100 dark:bg-white/[0.06]">
@@ -142,7 +142,7 @@ export default function TeacherCard({ teacher: t, maxStudents, canManage, locale
       <div className="mt-3 rounded-xl border border-slate-100 bg-slate-50/60 p-3 dark:border-white/5 dark:bg-white/[0.03]">
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-1.5 text-[11px] font-medium text-slate-400">
-            <Icon name="wallet" className="h-3.5 w-3.5 text-amber-500" /> {tr(locale, { uz: "Bu oy", ru: "Этот месяц", en: "This month" })}
+            <Icon name="wallet" className="h-3.5 w-3.5 text-amber-500" /> {tr(locale, { uz: "Bu oy", ru: "Этот месяц", en: "This month", de: "Diesen Monat" })}
           </div>
           <div className="flex items-center gap-1.5">
             {t.kpi > 0 && (
@@ -156,12 +156,12 @@ export default function TeacherCard({ teacher: t, maxStudents, canManage, locale
             onClick={() => setSalaryOpen(true)}
             className="flex items-center gap-1 rounded-lg border border-slate-200 bg-white px-2.5 py-1 text-[11px] font-semibold text-slate-600 transition hover:border-brand-300 hover:text-brand-600 dark:border-white/10 dark:bg-white/5 dark:text-slate-300 dark:hover:text-brand-300"
           >
-            <Icon name="history" className="h-3 w-3" /> {canManage ? tr(locale, { uz: "Boshqarish", ru: "Управление", en: "Manage" }) : tr(locale, { uz: "Tarix", ru: "История", en: "History" })}
+            <Icon name="history" className="h-3 w-3" /> {canManage ? tr(locale, { uz: "Boshqarish", ru: "Управление", en: "Manage", de: "Verwalten" }) : tr(locale, { uz: "Tarix", ru: "История", en: "History", de: "Verlauf" })}
           </button>
         </div>
         {(t.bonus > 0 || t.penalty > 0 || t.kpi > 0) && (
           <div className="mt-1.5 flex flex-wrap gap-x-2 gap-y-0.5 text-[10px]">
-            <span className="text-slate-400">{tr(locale, { uz: "Fiksa", ru: "Фикса", en: "Base" })} {formatMoney(t.fiksa, locale)}</span>
+            <span className="text-slate-400">{tr(locale, { uz: "Fiksa", ru: "Фикса", en: "Base", de: "Fixgehalt" })} {formatMoney(t.fiksa, locale)}</span>
             {t.bonus > 0 && <span className="text-emerald-600 dark:text-emerald-400">+{formatMoney(t.bonus, locale)}</span>}
             {t.kpi > 0 && <span className="text-violet-600 dark:text-violet-400">KPI +{formatMoney(t.kpi, locale)}</span>}
             {t.penalty > 0 && <span className="text-rose-500">−{formatMoney(t.penalty, locale)}</span>}

@@ -39,7 +39,7 @@ export default function ContactSettings({ locale }: { locale: Locale }) {
 
   return (
     <div>
-      <h2 className="mb-6 text-2xl font-bold text-slate-800 dark:text-slate-100">{tr(locale, { uz: "Aloqa", ru: "Связь", en: "Contact" })}</h2>
+      <h2 className="mb-6 text-2xl font-bold text-slate-800 dark:text-slate-100">{tr(locale, { uz: "Aloqa", ru: "Связь", en: "Contact", de: "Kontakt" })}</h2>
 
       <div className="grid gap-6 lg:grid-cols-2">
         {/* PlayMobile SMS */}
@@ -80,7 +80,7 @@ export default function ContactSettings({ locale }: { locale: Locale }) {
       </div>
 
       <button onClick={save} className="mt-7 rounded-full bg-brand-800 px-8 py-2.5 text-sm font-semibold text-white transition hover:bg-brand-900">
-        {saved ? tr(locale, { uz: "Saqlandi ✓", ru: "Сохранено ✓", en: "Saved ✓" }) : tr(locale, { uz: "Saqlash", ru: "Сохранить", en: "Save" })}
+        {saved ? tr(locale, { uz: "Saqlandi ✓", ru: "Сохранено ✓", en: "Saved ✓", de: "Gespeichert ✓" }) : tr(locale, { uz: "Saqlash", ru: "Сохранить", en: "Save", de: "Speichern" })}
       </button>
     </div>
   );
@@ -113,7 +113,7 @@ function Password({ value, onChange, show, onToggle, locale }: { value: string; 
   return (
     <div className="relative">
       <input type={show ? "text" : "password"} value={value} onChange={(e) => onChange(e.target.value)} className={inpCls(false, "pr-10")} />
-      <button type="button" onClick={onToggle} className="absolute right-2.5 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600" title={show ? tr(locale, { uz: "Yashirish", ru: "Скрыть", en: "Hide" }) : tr(locale, { uz: "Ko'rsatish", ru: "Показать", en: "Show" })}>
+      <button type="button" onClick={onToggle} className="absolute right-2.5 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600" title={show ? tr(locale, { uz: "Yashirish", ru: "Скрыть", en: "Hide", de: "Ausblenden" }) : tr(locale, { uz: "Ko'rsatish", ru: "Показать", en: "Show", de: "Anzeigen" })}>
         <Icon name="eye" className="h-4 w-4" />
       </button>
     </div>

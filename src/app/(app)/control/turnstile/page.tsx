@@ -15,9 +15,9 @@ const isoOf = (d: Date) => `${d.getFullYear()}-${p2(d.getMonth() + 1)}-${p2(d.ge
 export default async function TurnstilePage() {
   const s = await requireSession();
   if (!ALLOWED.includes(s.role as never)) {
-    return <Forbidden title={tr(s.locale, { uz: "Kirish taqiqlangan", ru: "Доступ запрещён", en: "Access denied" })} body={tr(s.locale, { uz: "Bu bo'lim rahbariyat uchun.", ru: "Этот раздел для руководства.", en: "This section is for management." })} />;
+    return <Forbidden title={tr(s.locale, { uz: "Kirish taqiqlangan", ru: "Доступ запрещён", en: "Access denied", de: "Zugriff verweigert" })} body={tr(s.locale, { uz: "Bu bo'lim rahbariyat uchun.", ru: "Этот раздел для руководства.", en: "This section is for management.", de: "Dieser Bereich ist für die Geschäftsleitung." })} />;
   }
-  const T = (uz: string, ru: string, en: string) => tr(s.locale, { uz, ru, en });
+  const T = (uz: string, ru: string, en: string, de: string = en) => tr(s.locale, { uz, ru, en, de });
 
   const now = new Date();
   const todayStart = new Date(now.getFullYear(), now.getMonth(), now.getDate());
@@ -54,18 +54,18 @@ export default async function TurnstilePage() {
 
   return (
     <>
-      <PageHeader title={T("Turniket analitikasi", "Аналитика турникета", "Turnstile analytics")} subtitle={T("QR orqali belgilangan kirishlar statistikasi", "Статистика входов, отмеченных по QR", "Statistics of QR check-ins")} />
+      <PageHeader title={T("Turniket analitikasi", "Аналитика турникета", "Turnstile analytics", "Drehkreuz-Analytik")} subtitle={T("QR orqali belgilangan kirishlar statistikasi", "Статистика входов, отмеченных по QR", "Statistics of QR check-ins", "Statistik der QR-Check-ins")} />
 
       <div className="mb-6 grid grid-cols-2 gap-4 lg:grid-cols-4">
-        <StatCard label={T("Bugun kirishlar", "Входов сегодня", "Entries today")} value={today} icon="shieldCheck" />
-        <StatCard label={T("Bugun o'quvchilar", "Учеников сегодня", "Students today")} value={todayStudents.size} icon="user" />
+        <StatCard label={T("Bugun kirishlar", "Входов сегодня", "Entries today", "Eintritte heute")} value={today} icon="shieldCheck" />
+        <StatCard label={T("Bugun o'quvchilar", "Учеников сегодня", "Students today", "Schüler heute")} value={todayStudents.size} icon="user" />
         <StatCard label={T(`${DAYS} kunda kirishlar`, `Входов за ${DAYS} дн.`, `Entries in ${DAYS}d`)} value={entries.length} icon="chart" />
-        <StatCard label={T("Anomaliyalar", "Аномалии", "Anomalies")} value={anomalies} tone={anomalies ? "red" : "green"} icon="eye" />
+        <StatCard label={T("Anomaliyalar", "Аномалии", "Anomalies", "Anomalien")} value={anomalies} tone={anomalies ? "red" : "green"} icon="eye" />
       </div>
 
       <div className="grid gap-5 lg:grid-cols-2">
         <Card>
-          <h3 className="mb-4 text-sm font-semibold text-slate-700">{T("Kunlik kirishlar (oxirgi 14 kun)", "Входы по дням (последние 14 дней)", "Daily entries (last 14 days)")}</h3>
+          <h3 className="mb-4 text-sm font-semibold text-slate-700">{T("Kunlik kirishlar (oxirgi 14 kun)", "Входы по дням (последние 14 дней)", "Daily entries (last 14 days)", "Tägliche Eintritte (letzte 14 Tage)")}</h3>
           <div className="space-y-2">
             {dayRows.map(([iso, n]) => (
               <div key={iso} className="flex items-center gap-3 text-xs">
@@ -80,13 +80,13 @@ export default async function TurnstilePage() {
         </Card>
 
         <Card padded={false}>
-          <div className="border-b border-slate-100 px-5 py-4"><h3 className="text-sm font-semibold text-slate-700">{T("Guruhlar bo'yicha (14 kun)", "По группам (14 дней)", "By group (14 days)")}</h3></div>
+          <div className="border-b border-slate-100 px-5 py-4"><h3 className="text-sm font-semibold text-slate-700">{T("Guruhlar bo'yicha (14 kun)", "По группам (14 дней)", "By group (14 days)", "Nach Gruppe (14 Tage)")}</h3></div>
           <Table head={<tr>
-            <th className="px-4 py-3">{T("Guruh", "Группа", "Group")}</th>
-            <th className="px-4 py-3 w-1/2">{T("Kirishlar", "Входы", "Entries")}</th>
+            <th className="px-4 py-3">{T("Guruh", "Группа", "Group", "Gruppe")}</th>
+            <th className="px-4 py-3 w-1/2">{T("Kirishlar", "Входы", "Entries", "Eintritte")}</th>
           </tr>}>
             {topGroups.length === 0 ? (
-              <EmptyRow colSpan={2} text={T("Bu davrda QR-kirishlar yo'q", "За этот период входов по QR нет", "No QR entries in this period")} />
+              <EmptyRow colSpan={2} text={T("Bu davrda QR-kirishlar yo'q", "За этот период входов по QR нет", "No QR entries in this period", "Keine QR-Eintritte in diesem Zeitraum")} />
             ) : topGroups.map(([name, n]) => (
               <tr key={name} className="hover:bg-slate-50">
                 <td className="px-4 py-3 font-medium text-slate-800">{name}</td>

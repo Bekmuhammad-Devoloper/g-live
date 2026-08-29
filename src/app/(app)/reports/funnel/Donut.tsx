@@ -13,7 +13,7 @@ export default function Donut({ items, locale }: { items: { label: string; value
   if (total === 0) {
     return (
       <div className="flex h-[220px] items-center justify-center rounded-xl border border-dashed border-slate-200 text-sm text-slate-400 dark:border-slate-700">
-        {tr(locale, { uz: "Ma'lumot mavjud emas", ru: "Данные отсутствуют", en: "No data available" })}
+        {tr(locale, { uz: "Ma'lumot mavjud emas", ru: "Данные отсутствуют", en: "No data available", de: "Keine Daten verfügbar" })}
       </div>
     );
   }
@@ -49,7 +49,7 @@ export default function Donut({ items, locale }: { items: { label: string; value
           return el;
         })}
         <text x={cx} y={cy - 2} textAnchor="middle" className="fill-slate-800 text-[20px] font-bold dark:fill-slate-100">{total}</text>
-        <text x={cx} y={cy + 14} textAnchor="middle" className="fill-slate-400 text-[9px]">{tr(locale, { uz: "jami", ru: "всего", en: "total" })}</text>
+        <text x={cx} y={cy + 14} textAnchor="middle" className="fill-slate-400 text-[9px]">{tr(locale, { uz: "jami", ru: "всего", en: "total", de: "gesamt" })}</text>
       </svg>
 
       <div className="min-w-0 flex-1 space-y-1.5">

@@ -32,15 +32,15 @@ export function useCdrSync(locale: Locale) {
           if (!silent || changed) {
             setNote({
               text: changed
-                ? tr(locale, { uz: `${n} ta yangi qo'ng'iroq qo'shildi`, ru: `Добавлено ${n} новых звонков`, en: `${n} new call(s) added` })
-                : tr(locale, { uz: "Yangi qo'ng'iroq yo'q", ru: "Новых звонков нет", en: "No new calls" }),
+                ? tr(locale, { uz: `${n} ta yangi qo'ng'iroq qo'shildi`, ru: `Добавлено ${n} новых звонков`, en: `${n} new call(s) added`, de: `${n} neue(r) Anruf(e) hinzugefügt` })
+                : tr(locale, { uz: "Yangi qo'ng'iroq yo'q", ru: "Новых звонков нет", en: "No new calls", de: "Keine neuen Anrufe" }),
             });
           }
         } else if (!silent) {
-          setNote({ text: data?.error ?? tr(locale, { uz: "Sinxronizatsiya amalga oshmadi", ru: "Синхронизация не удалась", en: "Sync failed" }), error: true });
+          setNote({ text: data?.error ?? tr(locale, { uz: "Sinxronizatsiya amalga oshmadi", ru: "Синхронизация не удалась", en: "Sync failed", de: "Synchronisierung fehlgeschlagen" }), error: true });
         }
       } catch {
-        if (!silent) setNote({ text: tr(locale, { uz: "Serverga ulanib bo'lmadi", ru: "Не удалось подключиться к серверу", en: "Could not reach the server" }), error: true });
+        if (!silent) setNote({ text: tr(locale, { uz: "Serverga ulanib bo'lmadi", ru: "Не удалось подключиться к серверу", en: "Could not reach the server", de: "Server konnte nicht erreicht werden" }), error: true });
       } finally {
         setSyncing(false);
         // Jim rejimda faqat yangilik bo'lsa qayta yuklaymiz

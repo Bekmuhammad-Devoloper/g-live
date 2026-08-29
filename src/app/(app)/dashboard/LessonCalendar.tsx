@@ -45,6 +45,7 @@ const DAY_LABELS: Record<Locale, string[]> = {
   uz: ["Yak", "Du", "Se", "Chor", "Pa", "Ju", "Sha"],
   ru: ["Вс", "Пн", "Вт", "Ср", "Чт", "Пт", "Сб"],
   en: ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"],
+  de: ["So", "Mo", "Di", "Mi", "Do", "Fr", "Sa"],
 };
 
 const T: Record<Locale, Record<string, string>> = {
@@ -75,6 +76,15 @@ const T: Record<Locale, Record<string, string>> = {
     s1: "Title 1", s2: "Title 2", s3: "Title 3", s4: "Row 1", s5: "Row 2", s6: "Row 3", s7: "Bottom row",
     fNone: "—", fTime: "Lesson time", fCourse: "Course name", fTeacher: "Teacher", fRoom: "Room", fGroup: "Group name", fDay: "Day",
   },
+  de: {
+    title: "Stundenplan", teacher: "Lehrer", group: "Gruppe", room: "Raum", course: "Kurs", status: "Status",
+    all: "Alle", filter: "Filter", export: "Export", upcoming: "Bevorstehend", past: "Vergangen", empty: "Kein Unterricht an diesem Tag",
+    byRoom: "Nach Raum", byTeacher: "Nach Lehrer", byGroup: "Nach Gruppe", gridV: "Raster", listV: "Liste", settings: "Einstellungen",
+    timeRange: "Zeitspanne", fs: "Vollbild", cfgTitle: "Einstellungen der Stundenplanansicht",
+    cfgSub: "Wählen Sie ein Feld für jede Zeile", save: "Speichern",
+    s1: "Titel 1", s2: "Titel 2", s3: "Titel 3", s4: "Zeile 1", s5: "Zeile 2", s6: "Zeile 3", s7: "Untere Zeile",
+    fNone: "—", fTime: "Unterrichtszeit", fCourse: "Kursname", fTeacher: "Lehrer", fRoom: "Raum", fGroup: "Gruppenname", fDay: "Tag",
+  },
 };
 
 const ROW = 40;
@@ -103,6 +113,7 @@ const MONTHS_SHORT: Record<Locale, string[]> = {
   uz: ["yan", "fev", "mar", "apr", "may", "iyun", "iyul", "avg", "sen", "okt", "noy", "dek"],
   ru: ["янв", "фев", "мар", "апр", "май", "июн", "июл", "авг", "сен", "окт", "ноя", "дек"],
   en: ["jan", "feb", "mar", "apr", "may", "jun", "jul", "aug", "sep", "oct", "nov", "dec"],
+  de: ["Jan", "Feb", "Mär", "Apr", "Mai", "Jun", "Jul", "Aug", "Sep", "Okt", "Nov", "Dez"],
 };
 function shortDate(iso: string | null | undefined, locale: Locale): string {
   if (!iso) return "";
@@ -282,12 +293,12 @@ export default function LessonCalendar(p: Props) {
 
   function exportCsv() {
     const rows = [[
-      tr(p.locale, { uz: "Kun", ru: "День", en: "Day" }),
-      tr(p.locale, { uz: "Vaqt", ru: "Время", en: "Time" }),
-      tr(p.locale, { uz: "Guruh", ru: "Группа", en: "Group" }),
-      tr(p.locale, { uz: "O'qituvchi", ru: "Преподаватель", en: "Teacher" }),
-      tr(p.locale, { uz: "Xona", ru: "Кабинет", en: "Room" }),
-      tr(p.locale, { uz: "Kurs", ru: "Курс", en: "Course" }),
+      tr(p.locale, { uz: "Kun", ru: "День", en: "Day", de: "Tag" }),
+      tr(p.locale, { uz: "Vaqt", ru: "Время", en: "Time", de: "Zeit" }),
+      tr(p.locale, { uz: "Guruh", ru: "Группа", en: "Group", de: "Gruppe" }),
+      tr(p.locale, { uz: "O'qituvchi", ru: "Преподаватель", en: "Teacher", de: "Lehrer" }),
+      tr(p.locale, { uz: "Xona", ru: "Кабинет", en: "Room", de: "Raum" }),
+      tr(p.locale, { uz: "Kurs", ru: "Курс", en: "Course", de: "Kurs" }),
     ]];
     dayLessons.forEach((l) => rows.push([days[l.day], `${hhmm(l.startMin)}-${hhmm(l.endMin)}`, l.group, l.teacher ?? "", l.room ?? "", l.course]));
     const csv = rows.map((r) => r.map((c) => `"${c}"`).join(",")).join("\n");
@@ -330,11 +341,11 @@ export default function LessonCalendar(p: Props) {
       {/* Hafta navigatori (yoqilgan bo'lsa) — oldingi/keyingi hafta */}
       {p.weekNav && (
         <div className="flex flex-wrap items-center gap-2 border-b border-slate-100 px-5 pt-3 pb-1 dark:border-slate-800">
-          <button onClick={() => setWeekOffset((o) => o - 1)} className="flex h-8 w-8 items-center justify-center rounded-lg border border-slate-200 text-lg text-slate-500 transition hover:bg-slate-50 dark:border-slate-700 dark:text-slate-300" aria-label={tr(p.locale, { uz: "Oldingi hafta", ru: "Прошлая неделя", en: "Previous week" })}>‹</button>
+          <button onClick={() => setWeekOffset((o) => o - 1)} className="flex h-8 w-8 items-center justify-center rounded-lg border border-slate-200 text-lg text-slate-500 transition hover:bg-slate-50 dark:border-slate-700 dark:text-slate-300" aria-label={tr(p.locale, { uz: "Oldingi hafta", ru: "Прошлая неделя", en: "Previous week", de: "Vorherige Woche" })}>‹</button>
           <span className="min-w-[150px] text-center text-sm font-semibold text-slate-700 dark:text-slate-200">{dm(weekDates[0])} – {dm(weekDates[6])}.{weekDates[6].getFullYear()}</span>
-          <button onClick={() => setWeekOffset((o) => o + 1)} className="flex h-8 w-8 items-center justify-center rounded-lg border border-slate-200 text-lg text-slate-500 transition hover:bg-slate-50 dark:border-slate-700 dark:text-slate-300" aria-label={tr(p.locale, { uz: "Keyingi hafta", ru: "Следующая неделя", en: "Next week" })}>›</button>
+          <button onClick={() => setWeekOffset((o) => o + 1)} className="flex h-8 w-8 items-center justify-center rounded-lg border border-slate-200 text-lg text-slate-500 transition hover:bg-slate-50 dark:border-slate-700 dark:text-slate-300" aria-label={tr(p.locale, { uz: "Keyingi hafta", ru: "Следующая неделя", en: "Next week", de: "Nächste Woche" })}>›</button>
           {weekOffset !== 0 && (
-            <button onClick={() => { setWeekOffset(0); setDay(p.todayIndex); }} className="rounded-lg border border-brand-200 bg-brand-50 px-2.5 py-1 text-xs font-semibold text-brand-600 transition hover:bg-brand-100 dark:border-brand-500/30 dark:bg-brand-500/10 dark:text-brand-300">{tr(p.locale, { uz: "Bugun", ru: "Сегодня", en: "Today" })}</button>
+            <button onClick={() => { setWeekOffset(0); setDay(p.todayIndex); }} className="rounded-lg border border-brand-200 bg-brand-50 px-2.5 py-1 text-xs font-semibold text-brand-600 transition hover:bg-brand-100 dark:border-brand-500/30 dark:bg-brand-500/10 dark:text-brand-300">{tr(p.locale, { uz: "Bugun", ru: "Сегодня", en: "Today", de: "Heute" })}</button>
           )}
         </div>
       )}

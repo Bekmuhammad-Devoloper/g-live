@@ -15,7 +15,7 @@ const fmt = (d: Date) => `${p2(d.getDate())}.${p2(d.getMonth() + 1)}.${d.getFull
 export default async function NoAttendancePage() {
   const s = await requireSession();
   if (!canRead(s.role, MODULES.REPORTS)) {
-    return <Forbidden title={tr(s.locale, { uz: "Kirish taqiqlangan", ru: "Доступ запрещён", en: "Access denied" })} body={tr(s.locale, { uz: "Bu bo'lim uchun ruxsat yo'q.", ru: "Нет доступа к этому разделу.", en: "You don't have access to this section." })} />;
+    return <Forbidden title={tr(s.locale, { uz: "Kirish taqiqlangan", ru: "Доступ запрещён", en: "Access denied", de: "Zugriff verweigert" })} body={tr(s.locale, { uz: "Bu bo'lim uchun ruxsat yo'q.", ru: "Нет доступа к этому разделу.", en: "You don't have access to this section.", de: "Sie haben keinen Zugriff auf diesen Bereich." })} />;
   }
 
   // O'tgan, lekin davomati belgilanmagan darslar
@@ -47,7 +47,7 @@ export default async function NoAttendancePage() {
 
   return (
     <div className="space-y-4">
-      <h1 className="text-[22px] font-bold tracking-tight text-slate-900 dark:text-slate-100">{tr(s.locale, { uz: "Davomat qilinmagan guruhlar", ru: "Группы без отмеченной посещаемости", en: "Groups without marked attendance" })}</h1>
+      <h1 className="text-[22px] font-bold tracking-tight text-slate-900 dark:text-slate-100">{tr(s.locale, { uz: "Davomat qilinmagan guruhlar", ru: "Группы без отмеченной посещаемости", en: "Groups without marked attendance", de: "Gruppen ohne erfasste Anwesenheit" })}</h1>
       <NoAttendanceView rows={rows} defaultFrom={from} defaultTo={to} canMark={canMark} locale={s.locale} />
     </div>
   );

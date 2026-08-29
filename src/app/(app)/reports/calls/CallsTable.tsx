@@ -24,14 +24,14 @@ interface Props {
 
 export default function CallsTable({ rows, locale, total, start, pageSize, page, pageCount, onPage, loadedNote }: Props) {
   const head = [
-    tr(locale, { uz: "Vaqt", ru: "Время", en: "Time" }),
-    tr(locale, { uz: "Tur", ru: "Тип", en: "Type" }),
-    tr(locale, { uz: "Holat", ru: "Статус", en: "Status" }),
-    tr(locale, { uz: "Operator", ru: "Оператор", en: "Operator" }),
-    tr(locale, { uz: "Abonent", ru: "Абонент", en: "Contact" }),
-    tr(locale, { uz: "Davomiylik", ru: "Длительность", en: "Duration" }),
-    tr(locale, { uz: "Audio yozuv", ru: "Аудиозапись", en: "Recording" }),
-    tr(locale, { uz: "Izoh", ru: "Комментарий", en: "Comment" }),
+    tr(locale, { uz: "Vaqt", ru: "Время", en: "Time", de: "Zeit" }),
+    tr(locale, { uz: "Tur", ru: "Тип", en: "Type", de: "Typ" }),
+    tr(locale, { uz: "Holat", ru: "Статус", en: "Status", de: "Status" }),
+    tr(locale, { uz: "Operator", ru: "Оператор", en: "Operator", de: "Operator" }),
+    tr(locale, { uz: "Abonent", ru: "Абонент", en: "Contact", de: "Kontakt" }),
+    tr(locale, { uz: "Davomiylik", ru: "Длительность", en: "Duration", de: "Dauer" }),
+    tr(locale, { uz: "Audio yozuv", ru: "Аудиозапись", en: "Recording", de: "Aufnahme" }),
+    tr(locale, { uz: "Izoh", ru: "Комментарий", en: "Comment", de: "Kommentar" }),
   ];
 
   if (rows.length === 0) {
@@ -41,10 +41,10 @@ export default function CallsTable({ rows, locale, total, start, pageSize, page,
           <Icon name="phone" className="h-7 w-7 text-slate-300 dark:text-slate-600" />
         </div>
         <p className="font-medium text-slate-500 dark:text-slate-400">
-          {tr(locale, { uz: "Qo'ng'iroq topilmadi", ru: "Звонки не найдены", en: "No calls found" })}
+          {tr(locale, { uz: "Qo'ng'iroq topilmadi", ru: "Звонки не найдены", en: "No calls found", de: "Keine Anrufe gefunden" })}
         </p>
         <p className="text-xs text-slate-400 dark:text-slate-500">
-          {tr(locale, { uz: "Filtrlarni o'zgartirib ko'ring", ru: "Попробуйте изменить фильтры", en: "Try changing the filters" })}
+          {tr(locale, { uz: "Filtrlarni o'zgartirib ko'ring", ru: "Попробуйте изменить фильтры", en: "Try changing the filters", de: "Versuchen Sie, die Filter zu ändern" })}
         </p>
       </div>
     );
@@ -90,7 +90,7 @@ export default function CallsTable({ rows, locale, total, start, pageSize, page,
                         </div>
                       ) : (
                         <span className="text-xs italic text-slate-400">
-                          {tr(locale, { uz: "Belgilanmagan", ru: "Не указан", en: "Unassigned" })}
+                          {tr(locale, { uz: "Belgilanmagan", ru: "Не указан", en: "Unassigned", de: "Nicht zugewiesen" })}
                         </span>
                       )}
                     </td>
@@ -140,17 +140,17 @@ export default function CallsTable({ rows, locale, total, start, pageSize, page,
           <span className="font-semibold text-slate-700 dark:text-slate-300">
             {start + 1}–{Math.min(start + pageSize, total)}
           </span>{" "}
-          / {total} {tr(locale, { uz: "ta qo'ng'iroq", ru: "звонков", en: "calls" })}
+          / {total} {tr(locale, { uz: "ta qo'ng'iroq", ru: "звонков", en: "calls", de: "Anrufe" })}
           {loadedNote && <span className="ml-2 text-xs text-slate-400">({loadedNote})</span>}
         </p>
         <div className="flex items-center gap-1.5">
-          <PgBtn disabled={page <= 1} onClick={() => onPage(page - 1)} label={tr(locale, { uz: "Oldingi", ru: "Назад", en: "Previous" })}>
+          <PgBtn disabled={page <= 1} onClick={() => onPage(page - 1)} label={tr(locale, { uz: "Oldingi", ru: "Назад", en: "Previous", de: "Zurück" })}>
             <Icon name="chevronDown" className="h-4 w-4 rotate-90" />
           </PgBtn>
           <span className="min-w-[70px] rounded-xl border border-slate-200 bg-slate-50 px-4 py-2 text-center text-sm font-semibold text-slate-700 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-300">
             {page} / {pageCount}
           </span>
-          <PgBtn disabled={page >= pageCount} onClick={() => onPage(page + 1)} label={tr(locale, { uz: "Keyingi", ru: "Вперёд", en: "Next" })}>
+          <PgBtn disabled={page >= pageCount} onClick={() => onPage(page + 1)} label={tr(locale, { uz: "Keyingi", ru: "Вперёд", en: "Next", de: "Weiter" })}>
             <Icon name="chevronDown" className="h-4 w-4 -rotate-90" />
           </PgBtn>
         </div>

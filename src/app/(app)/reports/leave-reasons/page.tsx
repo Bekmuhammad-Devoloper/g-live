@@ -14,18 +14,18 @@ const p2 = (n: number) => String(n).padStart(2, "0");
 const iso = (d: Date) => `${d.getFullYear()}-${p2(d.getMonth() + 1)}-${p2(d.getDate())}`;
 const LEFT_STATUS = ["EXPELLED", "TRANSFERRED"];
 
-type Tr = { uz: string; ru: string; en: string };
+type Tr = { uz: string; ru: string; en: string; de?: string };
 const TABS: { key: string; tab: Tr; title: Tr }[] = [
-  { key: "umumiy", tab: { uz: "Umumiy ketganlar", ru: "Всего ушедшие", en: "All leavers" }, title: { uz: "Umumiy ketgan o'quvchilar", ru: "Все ушедшие ученики", en: "All students who left" } },
-  { key: "buyurtma", tab: { uz: "Buyurtmadan ketganlar", ru: "Ушедшие из заявки", en: "Left from lead" }, title: { uz: "Buyurtmadan ketgan o'quvchilar", ru: "Ученики, ушедшие из заявки", en: "Students who left from lead" } },
-  { key: "tolov_yoq", tab: { uz: "To'lov qilmasdan ketganlar", ru: "Ушли без оплаты", en: "Left without payment" }, title: { uz: "To'lov qilmasdan ketgan o'quvchilar", ru: "Ученики, ушедшие без оплаты", en: "Students who left without payment" } },
-  { key: "tolov_bor", tab: { uz: "To'lov qilib ketganlar", ru: "Ушли после оплаты", en: "Left after payment" }, title: { uz: "To'lov qilib ketgan o'quvchilar", ru: "Ученики, ушедшие после оплаты", en: "Students who left after payment" } },
+  { key: "umumiy", tab: { uz: "Umumiy ketganlar", ru: "Всего ушедшие", en: "All leavers", de: "Alle Abgänger" }, title: { uz: "Umumiy ketgan o'quvchilar", ru: "Все ушедшие ученики", en: "All students who left", de: "Alle Schüler, die gegangen sind" } },
+  { key: "buyurtma", tab: { uz: "Buyurtmadan ketganlar", ru: "Ушедшие из заявки", en: "Left from lead", de: "Aus Lead abgesprungen" }, title: { uz: "Buyurtmadan ketgan o'quvchilar", ru: "Ученики, ушедшие из заявки", en: "Students who left from lead", de: "Schüler, die aus dem Lead abgesprungen sind" } },
+  { key: "tolov_yoq", tab: { uz: "To'lov qilmasdan ketganlar", ru: "Ушли без оплаты", en: "Left without payment", de: "Ohne Zahlung gegangen" }, title: { uz: "To'lov qilmasdan ketgan o'quvchilar", ru: "Ученики, ушедшие без оплаты", en: "Students who left without payment", de: "Schüler, die ohne Zahlung gegangen sind" } },
+  { key: "tolov_bor", tab: { uz: "To'lov qilib ketganlar", ru: "Ушли после оплаты", en: "Left after payment", de: "Nach Zahlung gegangen" }, title: { uz: "To'lov qilib ketgan o'quvchilar", ru: "Ученики, ушедшие после оплаты", en: "Students who left after payment", de: "Schüler, die nach Zahlung gegangen sind" } },
 ];
 
 export default async function LeaveReasonsPage({ searchParams }: { searchParams: Promise<Record<string, string | undefined>> }) {
   const s = await requireSession();
   if (!canRead(s.role, MODULES.REPORTS)) {
-    return <Forbidden title={tr(s.locale, { uz: "Kirish taqiqlangan", ru: "Доступ запрещён", en: "Access denied" })} body={tr(s.locale, { uz: "Bu bo'lim uchun ruxsat yo'q.", ru: "Нет доступа к этому разделу.", en: "You don't have access to this section." })} />;
+    return <Forbidden title={tr(s.locale, { uz: "Kirish taqiqlangan", ru: "Доступ запрещён", en: "Access denied", de: "Zugriff verweigert" })} body={tr(s.locale, { uz: "Bu bo'lim uchun ruxsat yo'q.", ru: "Нет доступа к этому разделу.", en: "You don't have access to this section.", de: "Sie haben keinen Zugriff auf diesen Bereich." })} />;
   }
   const sp = await searchParams;
   const tab = TABS.find((x) => x.key === sp.tab)?.key ?? "umumiy";
@@ -55,14 +55,14 @@ export default async function LeaveReasonsPage({ searchParams }: { searchParams:
     });
     count = leads.length;
     const m = new Map<string, number>();
-    for (const l of leads) { const k = l.lossReason || tr(s.locale, { uz: "Belgilanmagan", ru: "Не указано", en: "Unspecified" }); m.set(k, (m.get(k) ?? 0) + 1); }
+    for (const l of leads) { const k = l.lossReason || tr(s.locale, { uz: "Belgilanmagan", ru: "Не указано", en: "Unspecified", de: "Nicht angegeben" }); m.set(k, (m.get(k) ?? 0) + 1); }
     rows = [...m.entries()].map(([name, c]) => ({ name, count: c })).sort((a, b) => b.count - a.count);
   } else {
     const where: Prisma.StudentWhereInput = { eduStatus: { in: LEFT_STATUS }, updatedAt: { gte: from, lte: to } };
     if (tab === "tolov_yoq") where.payments = { none: { status: "PAID" } };
     if (tab === "tolov_bor") where.payments = { some: { status: "PAID" } };
     count = await prisma.student.count({ where: { AND: [where, branchWhere(s)] } }); // faol filial doirasida
-    rows = count > 0 ? [{ name: tr(s.locale, { uz: "Belgilanmagan", ru: "Не указано", en: "Unspecified" }), count }] : [];
+    rows = count > 0 ? [{ name: tr(s.locale, { uz: "Belgilanmagan", ru: "Не указано", en: "Unspecified", de: "Nicht angegeben" }), count }] : [];
   }
 
   const active = TABS.find((x) => x.key === tab)!;
@@ -109,13 +109,13 @@ export default async function LeaveReasonsPage({ searchParams }: { searchParams:
               <thead className="border-b border-slate-200/70 text-[11px] font-semibold uppercase tracking-wider text-slate-500 dark:border-slate-800">
                 <tr>
                   <th className="w-16 px-5 py-3">№</th>
-                  <th className="px-5 py-3">{tr(s.locale, { uz: "Sabab nomi", ru: "Причина", en: "Reason" })}</th>
-                  <th className="px-5 py-3 text-right">{tr(s.locale, { uz: "Ketgan o'quvchi soni", ru: "Число ушедших учеников", en: "Number of students who left" })}</th>
+                  <th className="px-5 py-3">{tr(s.locale, { uz: "Sabab nomi", ru: "Причина", en: "Reason", de: "Grund" })}</th>
+                  <th className="px-5 py-3 text-right">{tr(s.locale, { uz: "Ketgan o'quvchi soni", ru: "Число ушедших учеников", en: "Number of students who left", de: "Anzahl der ausgeschiedenen Schüler" })}</th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-slate-100 dark:divide-slate-800">
                 {rows.length === 0 ? (
-                  <tr><td colSpan={3} className="py-14 text-center text-slate-400">{tr(s.locale, { uz: "Ma'lumotlar topilmadi", ru: "Данные не найдены", en: "No data found" })}</td></tr>
+                  <tr><td colSpan={3} className="py-14 text-center text-slate-400">{tr(s.locale, { uz: "Ma'lumotlar topilmadi", ru: "Данные не найдены", en: "No data found", de: "Keine Daten gefunden" })}</td></tr>
                 ) : rows.map((r, i) => (
                   <tr key={r.name} className="hover:bg-slate-50 dark:hover:bg-slate-800/50">
                     <td className="px-5 py-3 text-slate-400">{i + 1}</td>

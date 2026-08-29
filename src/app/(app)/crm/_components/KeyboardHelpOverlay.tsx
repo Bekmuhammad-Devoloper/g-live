@@ -3,19 +3,19 @@
 import { tr } from "@/lib/tr";
 import type { Locale } from "@/lib/constants";
 
-const SHORTCUTS: [string, { uz: string; ru: string; en: string }][] = [
-  ["/", { uz: "Qidiruvga o'tish", ru: "Перейти к поиску", en: "Focus search" }],
-  ["v", { uz: "Kanban ↔ Jadval", ru: "Канбан ↔ Таблица", en: "Kanban ↔ Table" }],
-  ["⌘K / Ctrl+K", { uz: "Buyruqlar paneli", ru: "Панель команд", en: "Command palette" }],
-  ["g → y", { uz: "Filter: Yangi", ru: "Фильтр: Новые", en: "Filter: New" }],
-  ["g → i", { uz: "Filter: Ishda", ru: "Фильтр: В работе", en: "Filter: In progress" }],
-  ["g → t", { uz: "Filter: Test / Taklif", ru: "Фильтр: Тест / Предложение", en: "Filter: Test / Offer" }],
-  ["g → q", { uz: "Filter: Qabul qilindi", ru: "Фильтр: Принят", en: "Filter: Won" }],
-  ["g → r", { uz: "Filter: Yo'qotilgan", ru: "Фильтр: Потерян", en: "Filter: Lost" }],
-  ["r", { uz: "Filtrlarni tozalash", ru: "Очистить фильтры", en: "Clear filters" }],
-  ["n", { uz: "Yangi lid", ru: "Новый лид", en: "New lead" }],
-  ["Esc", { uz: "Tanlov/oyna yopish", ru: "Закрыть выбор/окно", en: "Close selection/window" }],
-  ["?", { uz: "Ushbu yordam", ru: "Эта справка", en: "This help" }],
+const SHORTCUTS: [string, { uz: string; ru: string; en: string; de?: string }][] = [
+  ["/", { uz: "Qidiruvga o'tish", ru: "Перейти к поиску", en: "Focus search", de: "Suche fokussieren" }],
+  ["v", { uz: "Kanban ↔ Jadval", ru: "Канбан ↔ Таблица", en: "Kanban ↔ Table", de: "Kanban ↔ Tabelle" }],
+  ["⌘K / Ctrl+K", { uz: "Buyruqlar paneli", ru: "Панель команд", en: "Command palette", de: "Befehlspalette" }],
+  ["g → y", { uz: "Filter: Yangi", ru: "Фильтр: Новые", en: "Filter: New", de: "Filter: Neu" }],
+  ["g → i", { uz: "Filter: Ishda", ru: "Фильтр: В работе", en: "Filter: In progress", de: "Filter: In Bearbeitung" }],
+  ["g → t", { uz: "Filter: Test / Taklif", ru: "Фильтр: Тест / Предложение", en: "Filter: Test / Offer", de: "Filter: Test / Angebot" }],
+  ["g → q", { uz: "Filter: Qabul qilindi", ru: "Фильтр: Принят", en: "Filter: Won", de: "Filter: Gewonnen" }],
+  ["g → r", { uz: "Filter: Yo'qotilgan", ru: "Фильтр: Потерян", en: "Filter: Lost", de: "Filter: Verloren" }],
+  ["r", { uz: "Filtrlarni tozalash", ru: "Очистить фильтры", en: "Clear filters", de: "Filter zurücksetzen" }],
+  ["n", { uz: "Yangi lid", ru: "Новый лид", en: "New lead", de: "Neuer Lead" }],
+  ["Esc", { uz: "Tanlov/oyna yopish", ru: "Закрыть выбор/окно", en: "Close selection/window", de: "Auswahl/Fenster schließen" }],
+  ["?", { uz: "Ushbu yordam", ru: "Эта справка", en: "This help", de: "Diese Hilfe" }],
 ];
 
 export default function KeyboardHelpOverlay({ locale, open, onClose }: { locale: Locale; open: boolean; onClose: () => void }) {
@@ -24,7 +24,7 @@ export default function KeyboardHelpOverlay({ locale, open, onClose }: { locale:
     <div className="fixed inset-0 z-[70] flex items-center justify-center bg-slate-900/50 p-4 backdrop-blur-sm" onClick={onClose}>
       <div className="w-full max-w-md rounded-2xl border border-slate-200 bg-white p-6 shadow-pop dark:border-white/10 dark:bg-slate-900" onClick={(e) => e.stopPropagation()}>
         <div className="mb-4 flex items-center justify-between">
-          <h3 className="text-lg font-bold text-slate-900 dark:text-slate-100">{tr(locale, { uz: "Klaviatura yorliqlari", ru: "Горячие клавиши", en: "Keyboard shortcuts" })}</h3>
+          <h3 className="text-lg font-bold text-slate-900 dark:text-slate-100">{tr(locale, { uz: "Klaviatura yorliqlari", ru: "Горячие клавиши", en: "Keyboard shortcuts", de: "Tastenkürzel" })}</h3>
           <button onClick={onClose} className="text-slate-400 hover:text-slate-600">✕</button>
         </div>
         <div className="space-y-1.5">

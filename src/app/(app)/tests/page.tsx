@@ -17,7 +17,7 @@ const idsToNames = (raw: string | null, map: Map<string, string>) =>
 export default async function TestsPage() {
   const s = await requireSession();
   if (!ALLOWED.includes(s.role as never)) {
-    return <Forbidden title={tr(s.locale, { uz: "Kirish taqiqlangan", ru: "Доступ запрещён", en: "Access denied" })} body={tr(s.locale, { uz: "Bu bo'lim o'quv bo'limi uchun.", ru: "Этот раздел предназначен для учебного отдела.", en: "This section is for the education department." })} />;
+    return <Forbidden title={tr(s.locale, { uz: "Kirish taqiqlangan", ru: "Доступ запрещён", en: "Access denied", de: "Zugriff verweigert" })} body={tr(s.locale, { uz: "Bu bo'lim o'quv bo'limi uchun.", ru: "Этот раздел предназначен для учебного отдела.", en: "This section is for the education department.", de: "Dieser Bereich ist für die Bildungsabteilung." })} />;
   }
 
   const [blockTests, testTypes, staff, groups, programs] = await Promise.all([

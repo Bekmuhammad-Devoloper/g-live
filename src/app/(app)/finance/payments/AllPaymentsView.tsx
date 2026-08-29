@@ -100,18 +100,18 @@ export default function AllPaymentsView({ payments, options, locale, defaultFrom
 
   return (
     <div className="space-y-5">
-      <h1 className="text-[24px] font-bold tracking-tight text-slate-900 dark:text-slate-100">{tr(locale, { uz: "Barcha to'lovlar", ru: "Все платежи", en: "All payments" })}</h1>
+      <h1 className="text-[24px] font-bold tracking-tight text-slate-900 dark:text-slate-100">{tr(locale, { uz: "Barcha to'lovlar", ru: "Все платежи", en: "All payments", de: "Alle Zahlungen" })}</h1>
 
       {/* Statistika + breakdown */}
       <div className="grid gap-4 lg:grid-cols-[minmax(0,380px)_1fr]">
         <div className="space-y-4">
-          <StatCard title={tr(locale, { uz: "To'lovlar miqdori", ru: "Сумма платежей", en: "Payments amount" })} value={formatMoney(total, locale)} range={`${fmtDate(from)} — ${fmtDate(to)}`} />
-          <StatCard title={tr(locale, { uz: "Sof foyda miqdori", ru: "Чистая прибыль", en: "Net profit amount" })} value={formatMoney(total, locale)} range={`${fmtDate(from)} — ${fmtDate(to)}`} details locale={locale} />
+          <StatCard title={tr(locale, { uz: "To'lovlar miqdori", ru: "Сумма платежей", en: "Payments amount", de: "Zahlungsbetrag" })} value={formatMoney(total, locale)} range={`${fmtDate(from)} — ${fmtDate(to)}`} />
+          <StatCard title={tr(locale, { uz: "Sof foyda miqdori", ru: "Чистая прибыль", en: "Net profit amount", de: "Nettogewinn" })} value={formatMoney(total, locale)} range={`${fmtDate(from)} — ${fmtDate(to)}`} details locale={locale} />
         </div>
         <div className="rounded-2xl border border-slate-300 bg-white p-5 shadow-card dark:border-slate-600 dark:bg-slate-900">
-          <h3 className="mb-4 text-sm font-semibold text-slate-600 dark:text-slate-300">{tr(locale, { uz: "To'lov turlari bo'yicha", ru: "По типам платежей", en: "By payment type" })}</h3>
+          <h3 className="mb-4 text-sm font-semibold text-slate-600 dark:text-slate-300">{tr(locale, { uz: "To'lov turlari bo'yicha", ru: "По типам платежей", en: "By payment type", de: "Nach Zahlungsart" })}</h3>
           {byMethod.length === 0 ? (
-            <div className="flex h-32 items-center justify-center text-sm text-slate-400">{tr(locale, { uz: "Ko'rsatiladigan ma'lumotlar yo'q", ru: "Нет данных для отображения", en: "No data to display" })}</div>
+            <div className="flex h-32 items-center justify-center text-sm text-slate-400">{tr(locale, { uz: "Ko'rsatiladigan ma'lumotlar yo'q", ru: "Нет данных для отображения", en: "No data to display", de: "Keine Daten zum Anzeigen" })}</div>
           ) : (
             <div className="space-y-2.5">
               {byMethod.map(([m, v]) => (
@@ -132,31 +132,31 @@ export default function AllPaymentsView({ payments, options, locale, defaultFrom
 
       {/* Filtrlar */}
       <div className="grid gap-3 sm:grid-cols-3 lg:grid-cols-5">
-        <FField label={tr(locale, { uz: "Sanadan boshlab", ru: "С даты", en: "From date" })}><input type="date" value={from} onChange={(e) => setFrom(e.target.value)} className={inp} /></FField>
-        <FField label={tr(locale, { uz: "Sana bo'yicha", ru: "По дату", en: "To date" })}><input type="date" value={to} onChange={(e) => setTo(e.target.value)} className={inp} /></FField>
-        <FField label={tr(locale, { uz: "Ism yoki Telefon", ru: "Имя или телефон", en: "Name or phone" })}><input value={q} onChange={(e) => setQ(e.target.value)} placeholder={tr(locale, { uz: "Qidiruv", ru: "Поиск", en: "Search" })} className={inp} /></FField>
-        <FField label={tr(locale, { uz: "Guruhni tanlash", ru: "Выбор группы", en: "Select group" })}><Sel value={group} onChange={setGroup} options={options.groups} locale={locale} /></FField>
-        <FField label={tr(locale, { uz: "Kurs", ru: "Курс", en: "Course" })}><Sel value={course} onChange={setCourse} options={options.courses} locale={locale} /></FField>
-        <FField label={tr(locale, { uz: "O'qituvchi", ru: "Преподаватель", en: "Teacher" })}><Sel value={teacher} onChange={setTeacher} options={options.teachers} locale={locale} /></FField>
-        <FField label={tr(locale, { uz: "To'lov turi", ru: "Тип платежа", en: "Payment type" })}><Sel value={method} onChange={setMethod} options={options.methods} locale={locale} /></FField>
-        <FField label={tr(locale, { uz: "Sum", ru: "Сумма", en: "Amount" })}><input value={sum} onChange={(e) => setSum(e.target.value)} placeholder={tr(locale, { uz: "min summa", ru: "мин. сумма", en: "min amount" })} className={inp} /></FField>
-        <FField label={tr(locale, { uz: "Xodimni ismi", ru: "Имя сотрудника", en: "Staff name" })}><Sel value={staff} onChange={setStaff} options={options.staff} locale={locale} /></FField>
+        <FField label={tr(locale, { uz: "Sanadan boshlab", ru: "С даты", en: "From date", de: "Ab Datum" })}><input type="date" value={from} onChange={(e) => setFrom(e.target.value)} className={inp} /></FField>
+        <FField label={tr(locale, { uz: "Sana bo'yicha", ru: "По дату", en: "To date", de: "Bis Datum" })}><input type="date" value={to} onChange={(e) => setTo(e.target.value)} className={inp} /></FField>
+        <FField label={tr(locale, { uz: "Ism yoki Telefon", ru: "Имя или телефон", en: "Name or phone", de: "Name oder Telefon" })}><input value={q} onChange={(e) => setQ(e.target.value)} placeholder={tr(locale, { uz: "Qidiruv", ru: "Поиск", en: "Search", de: "Suche" })} className={inp} /></FField>
+        <FField label={tr(locale, { uz: "Guruhni tanlash", ru: "Выбор группы", en: "Select group", de: "Gruppe auswählen" })}><Sel value={group} onChange={setGroup} options={options.groups} locale={locale} /></FField>
+        <FField label={tr(locale, { uz: "Kurs", ru: "Курс", en: "Course", de: "Kurs" })}><Sel value={course} onChange={setCourse} options={options.courses} locale={locale} /></FField>
+        <FField label={tr(locale, { uz: "O'qituvchi", ru: "Преподаватель", en: "Teacher", de: "Lehrer" })}><Sel value={teacher} onChange={setTeacher} options={options.teachers} locale={locale} /></FField>
+        <FField label={tr(locale, { uz: "To'lov turi", ru: "Тип платежа", en: "Payment type", de: "Zahlungsart" })}><Sel value={method} onChange={setMethod} options={options.methods} locale={locale} /></FField>
+        <FField label={tr(locale, { uz: "Sum", ru: "Сумма", en: "Amount", de: "Betrag" })}><input value={sum} onChange={(e) => setSum(e.target.value)} placeholder={tr(locale, { uz: "min summa", ru: "мин. сумма", en: "min amount", de: "Mindestbetrag" })} className={inp} /></FField>
+        <FField label={tr(locale, { uz: "Xodimni ismi", ru: "Имя сотрудника", en: "Staff name", de: "Name des Mitarbeiters" })}><Sel value={staff} onChange={setStaff} options={options.staff} locale={locale} /></FField>
         <div className="flex items-end">
           <button onClick={() => { setFrom(defaultFrom); setTo(defaultTo); setQ(""); setGroup(""); setCourse(""); setTeacher(""); setMethod(""); setSum(""); setStaff(""); }}
-            className="h-11 rounded-full bg-brand-800 px-8 text-sm font-semibold text-white transition hover:bg-brand-900">{tr(locale, { uz: "Tozalash", ru: "Очистить", en: "Clear" })}</button>
+            className="h-11 rounded-full bg-brand-800 px-8 text-sm font-semibold text-white transition hover:bg-brand-900">{tr(locale, { uz: "Tozalash", ru: "Очистить", en: "Clear", de: "Zurücksetzen" })}</button>
         </div>
       </div>
 
       {/* Jadval */}
       <div className="overflow-hidden rounded-2xl border border-slate-300 bg-white shadow-card dark:border-slate-600 dark:bg-slate-900">
         <div className="flex items-center justify-between border-b border-slate-200/70 px-5 py-3 dark:border-slate-800">
-          <span className="text-sm text-slate-500">{tr(locale, { uz: "Jami", ru: "Всего", en: "Total" })}: <b className="text-slate-800 dark:text-slate-100">{filtered.length}</b> {tr(locale, { uz: "ta", ru: "шт", en: "items" })}</span>
+          <span className="text-sm text-slate-500">{tr(locale, { uz: "Jami", ru: "Всего", en: "Total", de: "Gesamt" })}: <b className="text-slate-800 dark:text-slate-100">{filtered.length}</b> {tr(locale, { uz: "ta", ru: "шт", en: "items", de: "St." })}</span>
         </div>
         <div className="overflow-x-auto">
           <table className="w-full min-w-[900px] text-left text-sm">
             <thead className="border-b border-slate-200/70 bg-slate-50/60 text-[12px] font-semibold text-slate-600 dark:border-slate-800 dark:bg-slate-800/40 dark:text-slate-300">
               <tr>
-                {([["date",tr(locale,{uz:"Sana",ru:"Дата",en:"Date"})],["student",tr(locale,{uz:"Talaba ismi",ru:"Имя ученика",en:"Student name"})],["amount",tr(locale,{uz:"Sum",ru:"Сумма",en:"Amount"})],["method",tr(locale,{uz:"To'lov turi",ru:"Тип платежа",en:"Payment type"})],["teacher",tr(locale,{uz:"O'qituvchi",ru:"Преподаватель",en:"Teacher"})],["note",tr(locale,{uz:"Izoh",ru:"Примечание",en:"Note"})],["author",tr(locale,{uz:"Xodim",ru:"Сотрудник",en:"Staff"})]] as [SortKey,string][]).map(([k, lb]) => (
+                {([["date",tr(locale,{uz:"Sana",ru:"Дата",en:"Date",de:"Datum"})],["student",tr(locale,{uz:"Talaba ismi",ru:"Имя ученика",en:"Student name",de:"Name des Schülers"})],["amount",tr(locale,{uz:"Sum",ru:"Сумма",en:"Amount",de:"Betrag"})],["method",tr(locale,{uz:"To'lov turi",ru:"Тип платежа",en:"Payment type",de:"Zahlungsart"})],["teacher",tr(locale,{uz:"O'qituvchi",ru:"Преподаватель",en:"Teacher",de:"Lehrer"})],["note",tr(locale,{uz:"Izoh",ru:"Примечание",en:"Note",de:"Notiz"})],["author",tr(locale,{uz:"Xodim",ru:"Сотрудник",en:"Staff",de:"Mitarbeiter"})]] as [SortKey,string][]).map(([k, lb]) => (
                   <th key={k} className="cursor-pointer select-none px-4 py-3.5" onClick={() => toggleSort(k)}>
                     <span className="inline-flex items-center gap-1">{lb}<span className="text-brand-500">{sortKey === k ? (sortDir === "asc" ? "↑" : "↓") : "⇅"}</span></span>
                   </th>
@@ -165,7 +165,7 @@ export default function AllPaymentsView({ payments, options, locale, defaultFrom
             </thead>
             <tbody className="divide-y divide-slate-100 dark:divide-slate-800">
               {filtered.length === 0 ? (
-                <tr><td colSpan={7} className="px-4 py-16 text-center text-slate-400">{tr(locale, { uz: "Ko'rsatiladigan ma'lumotlar yo'q", ru: "Нет данных для отображения", en: "No data to display" })}</td></tr>
+                <tr><td colSpan={7} className="px-4 py-16 text-center text-slate-400">{tr(locale, { uz: "Ko'rsatiladigan ma'lumotlar yo'q", ru: "Нет данных для отображения", en: "No data to display", de: "Keine Daten zum Anzeigen" })}</td></tr>
               ) : (
                 filtered.map((p) => (
                   <tr key={p.id} className={cn("transition hover:bg-slate-50 dark:hover:bg-slate-800/40", p.status === "CANCELLED" && "opacity-50")}>
@@ -199,7 +199,7 @@ function StatCard({ title, value, range, details, locale }: { title: string; val
         </div>
         <Icon name="coins" className="h-7 w-7 shrink-0 text-brand-400" />
       </div>
-      {details && <div className="mt-3 flex items-center gap-1.5 border-t border-slate-100 pt-2.5 text-xs text-slate-400 dark:border-slate-800"><Icon name="info" className="h-3.5 w-3.5" /> {tr(locale ?? "uz", { uz: "Tafsilotlar", ru: "Подробности", en: "Details" })}</div>}
+      {details && <div className="mt-3 flex items-center gap-1.5 border-t border-slate-100 pt-2.5 text-xs text-slate-400 dark:border-slate-800"><Icon name="info" className="h-3.5 w-3.5" /> {tr(locale ?? "uz", { uz: "Tafsilotlar", ru: "Подробности", en: "Details", de: "Details" })}</div>}
     </div>
   );
 }
@@ -218,7 +218,7 @@ function Sel({ value, onChange, options, locale }: { value: string; onChange: (v
     <div className="relative">
       <select value={value} onChange={(e) => onChange(e.target.value)}
         className={cn("h-11 w-full appearance-none rounded-lg border bg-white pl-3 pr-9 text-sm outline-none transition focus:border-brand-400 dark:bg-slate-800/60", value ? "border-brand-300 text-slate-700 dark:border-brand-500/40 dark:text-slate-100" : "border-slate-300 text-slate-400 dark:border-slate-600")}>
-        <option value="">{tr(locale, { uz: "Tanlang", ru: "Выберите", en: "Select" })}</option>
+        <option value="">{tr(locale, { uz: "Tanlang", ru: "Выберите", en: "Select", de: "Auswählen" })}</option>
         {options.map((o) => <option key={o} value={o}>{o}</option>)}
       </select>
       <Icon name="chevronDown" className="pointer-events-none absolute right-2.5 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400" />

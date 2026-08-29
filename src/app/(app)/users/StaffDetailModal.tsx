@@ -10,7 +10,7 @@ import { getStaffDetail, setUserPassword, type StaffDetail } from "./actions";
 const WD: Record<Locale, string[]> = {
   uz: ["", "Du", "Se", "Ch", "Pa", "Ju", "Sh", "Ya"],
   ru: ["", "Пн", "Вт", "Ср", "Чт", "Пт", "Сб", "Вс"],
-  en: ["", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"],
+  en: ["", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"], de: ["", "Mo", "Di", "Mi", "Do", "Fr", "Sa", "So"],
 };
 
 export default function StaffDetailModal({ userId, locale, onClose }: { userId: string; locale: Locale; onClose: () => void }) {
@@ -34,10 +34,10 @@ export default function StaffDetailModal({ userId, locale, onClose }: { userId: 
 
   const savePw = () => startSave(async () => {
     const r = await setUserPassword(userId, newPw);
-    if (r.ok) { setD((x) => (x ? { ...x, password: newPw } : x)); setShowPw(true); setNewPw(""); setMsg(tr(locale, { uz: "Parol yangilandi", ru: "Пароль обновлён", en: "Password updated" })); }
-    else setMsg(r.error === "short" ? tr(locale, { uz: "Parol kamida 4 ta belgi", ru: "Пароль минимум 4 символа", en: "Password min 4 chars" }) : tr(locale, { uz: "Xatolik", ru: "Ошибка", en: "Error" }));
+    if (r.ok) { setD((x) => (x ? { ...x, password: newPw } : x)); setShowPw(true); setNewPw(""); setMsg(tr(locale, { uz: "Parol yangilandi", ru: "Пароль обновлён", en: "Password updated", de: "Passwort aktualisiert" })); }
+    else setMsg(r.error === "short" ? tr(locale, { uz: "Parol kamida 4 ta belgi", ru: "Пароль минимум 4 символа", en: "Password min 4 chars", de: "Passwort mind. 4 Zeichen" }) : tr(locale, { uz: "Xatolik", ru: "Ошибка", en: "Error", de: "Fehler" }));
   });
-  const copy = (v: string) => { navigator.clipboard?.writeText(v).then(() => setMsg(tr(locale, { uz: "Nusxalandi", ru: "Скопировано", en: "Copied" }))).catch(() => {}); };
+  const copy = (v: string) => { navigator.clipboard?.writeText(v).then(() => setMsg(tr(locale, { uz: "Nusxalandi", ru: "Скопировано", en: "Copied", de: "Kopiert" }))).catch(() => {}); };
 
   if (!mounted) return null;
 
@@ -66,41 +66,41 @@ export default function StaffDetailModal({ userId, locale, onClose }: { userId: 
           ) : (
             <>
               {/* Kirish ma'lumotlari */}
-              <Section title={tr(locale, { uz: "Kirish ma'lumotlari", ru: "Данные для входа", en: "Login credentials" })} icon="key">
+              <Section title={tr(locale, { uz: "Kirish ma'lumotlari", ru: "Данные для входа", en: "Login credentials", de: "Anmeldedaten" })} icon="key">
                 <div className="space-y-2">
                   <div className="flex items-center gap-2">
                     <span className="w-14 shrink-0 text-xs text-slate-400">Login</span>
                     <div className={box + " truncate"}>{d.email}</div>
-                    <button onClick={() => copy(d.email)} className={ico} title={tr(locale, { uz: "Nusxalash", ru: "Копировать", en: "Copy" })}><Icon name="copy" className="h-4 w-4" /></button>
+                    <button onClick={() => copy(d.email)} className={ico} title={tr(locale, { uz: "Nusxalash", ru: "Копировать", en: "Copy", de: "Kopieren" })}><Icon name="copy" className="h-4 w-4" /></button>
                   </div>
                   <div className="flex items-center gap-2">
-                    <span className="w-14 shrink-0 text-xs text-slate-400">{tr(locale, { uz: "Parol", ru: "Пароль", en: "Password" })}</span>
-                    <div className={box + " font-mono"}>{d.password ? (showPw ? d.password : "••••••••") : tr(locale, { uz: "— (yangi parol qo'ying)", ru: "— (задайте пароль)", en: "— (set a password)" })}</div>
-                    {d.password && <button onClick={() => setShowPw((v) => !v)} className={ico} title={tr(locale, { uz: "Ko'rsatish/yashirish", ru: "Показать/скрыть", en: "Show/hide" })}><Icon name="eye" className="h-4 w-4" /></button>}
-                    {d.password && showPw && <button onClick={() => copy(d.password!)} className={ico} title={tr(locale, { uz: "Nusxalash", ru: "Копировать", en: "Copy" })}><Icon name="copy" className="h-4 w-4" /></button>}
+                    <span className="w-14 shrink-0 text-xs text-slate-400">{tr(locale, { uz: "Parol", ru: "Пароль", en: "Password", de: "Passwort" })}</span>
+                    <div className={box + " font-mono"}>{d.password ? (showPw ? d.password : "••••••••") : tr(locale, { uz: "— (yangi parol qo'ying)", ru: "— (задайте пароль)", en: "— (set a password)", de: "— (Passwort festlegen)" })}</div>
+                    {d.password && <button onClick={() => setShowPw((v) => !v)} className={ico} title={tr(locale, { uz: "Ko'rsatish/yashirish", ru: "Показать/скрыть", en: "Show/hide", de: "Anzeigen/Verbergen" })}><Icon name="eye" className="h-4 w-4" /></button>}
+                    {d.password && showPw && <button onClick={() => copy(d.password!)} className={ico} title={tr(locale, { uz: "Nusxalash", ru: "Копировать", en: "Copy", de: "Kopieren" })}><Icon name="copy" className="h-4 w-4" /></button>}
                   </div>
                   <div className="flex items-center gap-2 pt-1">
-                    <input value={newPw} onChange={(e) => setNewPw(e.target.value)} placeholder={tr(locale, { uz: "Yangi parol o'rnatish", ru: "Задать новый пароль", en: "Set new password" })} className="h-9 flex-1 rounded-lg border border-slate-200 bg-white px-3 text-sm text-slate-800 outline-none focus:border-brand-400 dark:border-slate-700 dark:bg-slate-800/60 dark:text-slate-100" />
-                    <button onClick={savePw} disabled={saving || newPw.trim().length < 4} className="h-9 shrink-0 rounded-lg bg-brand-600 px-3 text-xs font-semibold text-white transition hover:bg-brand-700 disabled:opacity-60">{saving ? "…" : tr(locale, { uz: "O'rnatish", ru: "Задать", en: "Set" })}</button>
+                    <input value={newPw} onChange={(e) => setNewPw(e.target.value)} placeholder={tr(locale, { uz: "Yangi parol o'rnatish", ru: "Задать новый пароль", en: "Set new password", de: "Neues Passwort festlegen" })} className="h-9 flex-1 rounded-lg border border-slate-200 bg-white px-3 text-sm text-slate-800 outline-none focus:border-brand-400 dark:border-slate-700 dark:bg-slate-800/60 dark:text-slate-100" />
+                    <button onClick={savePw} disabled={saving || newPw.trim().length < 4} className="h-9 shrink-0 rounded-lg bg-brand-600 px-3 text-xs font-semibold text-white transition hover:bg-brand-700 disabled:opacity-60">{saving ? "…" : tr(locale, { uz: "O'rnatish", ru: "Задать", en: "Set", de: "Festlegen" })}</button>
                   </div>
                   {msg && <p className="text-xs text-emerald-600 dark:text-emerald-400">{msg}</p>}
                 </div>
               </Section>
 
               {/* Ish ma'lumotlari */}
-              <Section title={tr(locale, { uz: "Ish ma'lumotlari", ru: "Рабочие данные", en: "Work info" })} icon="wallet">
+              <Section title={tr(locale, { uz: "Ish ma'lumotlari", ru: "Рабочие данные", en: "Work info", de: "Arbeitsinformationen" })} icon="wallet">
                 <div className="grid grid-cols-2 gap-3">
-                  <Stat label={tr(locale, { uz: "Belgilangan oylik", ru: "Установленная зарплата", en: "Base salary" })} value={formatMoney(d.fiksa, locale)} />
-                  <Stat label={tr(locale, { uz: "KPI bonus", ru: "KPI бонус", en: "KPI bonus" })} value={formatMoney(d.kpiBonus, locale)} />
-                  <Stat label={tr(locale, { uz: "Bu oy jami", ru: "Итого за месяц", en: "This month total" })} value={formatMoney(d.monthTotal, locale)} accent />
-                  <Stat label={tr(locale, { uz: "Ish kunlari", ru: "Рабочие дни", en: "Work days" })} value={d.workdays.length ? d.workdays.map((n) => WD[locale][n]).join(", ") : "—"} />
-                  {(d.startTime || d.endTime) && <Stat label={tr(locale, { uz: "Ish vaqti", ru: "Время работы", en: "Work time" })} value={`${d.startTime ?? "—"} – ${d.endTime ?? "—"}`} />}
+                  <Stat label={tr(locale, { uz: "Belgilangan oylik", ru: "Установленная зарплата", en: "Base salary", de: "Grundgehalt" })} value={formatMoney(d.fiksa, locale)} />
+                  <Stat label={tr(locale, { uz: "KPI bonus", ru: "KPI бонус", en: "KPI bonus", de: "KPI-Bonus" })} value={formatMoney(d.kpiBonus, locale)} />
+                  <Stat label={tr(locale, { uz: "Bu oy jami", ru: "Итого за месяц", en: "This month total", de: "Gesamt diesen Monat" })} value={formatMoney(d.monthTotal, locale)} accent />
+                  <Stat label={tr(locale, { uz: "Ish kunlari", ru: "Рабочие дни", en: "Work days", de: "Arbeitstage" })} value={d.workdays.length ? d.workdays.map((n) => WD[locale][n]).join(", ") : "—"} />
+                  {(d.startTime || d.endTime) && <Stat label={tr(locale, { uz: "Ish vaqti", ru: "Время работы", en: "Work time", de: "Arbeitszeit" })} value={`${d.startTime ?? "—"} – ${d.endTime ?? "—"}`} />}
                 </div>
               </Section>
 
               {/* Guruhlar (o'qituvchi bo'lsa) */}
               {d.groups.length > 0 && (
-                <Section title={tr(locale, { uz: "Guruhlar", ru: "Группы", en: "Groups" })} icon="layers">
+                <Section title={tr(locale, { uz: "Guruhlar", ru: "Группы", en: "Groups", de: "Gruppen" })} icon="layers">
                   <div className="flex flex-wrap gap-1.5">
                     {d.groups.map((g) => <span key={g} className="rounded-md bg-slate-100 px-2 py-0.5 text-xs text-slate-600 dark:bg-slate-800 dark:text-slate-300">{g}</span>)}
                   </div>
@@ -108,13 +108,13 @@ export default function StaffDetailModal({ userId, locale, onClose }: { userId: 
               )}
 
               {/* Kontakt */}
-              <Section title={tr(locale, { uz: "Kontakt", ru: "Контакт", en: "Contact" })} icon="phone">
+              <Section title={tr(locale, { uz: "Kontakt", ru: "Контакт", en: "Contact", de: "Kontakt" })} icon="phone">
                 <div className="space-y-1.5 text-sm">
-                  <Row label={tr(locale, { uz: "Telefon", ru: "Телефон", en: "Phone" })} value={d.phone ?? "—"} />
-                  <Row label={tr(locale, { uz: "Filial", ru: "Филиал", en: "Branch" })} value={d.branch ?? "—"} />
-                  <Row label={tr(locale, { uz: "Jinsi", ru: "Пол", en: "Gender" })} value={d.gender === "MALE" ? tr(locale, { uz: "Erkak", ru: "Мужской", en: "Male" }) : d.gender === "FEMALE" ? tr(locale, { uz: "Ayol", ru: "Женский", en: "Female" }) : "—"} />
-                  <Row label={tr(locale, { uz: "Tug'ilgan sana", ru: "Дата рождения", en: "Birth date" })} value={d.birthDate ?? "—"} />
-                  <Row label={tr(locale, { uz: "Holati", ru: "Статус", en: "Status" })} value={d.isActive ? tr(locale, { uz: "Faol", ru: "Активен", en: "Active" }) : tr(locale, { uz: "Nofaol", ru: "Неактивен", en: "Inactive" })} />
+                  <Row label={tr(locale, { uz: "Telefon", ru: "Телефон", en: "Phone", de: "Telefon" })} value={d.phone ?? "—"} />
+                  <Row label={tr(locale, { uz: "Filial", ru: "Филиал", en: "Branch", de: "Filiale" })} value={d.branch ?? "—"} />
+                  <Row label={tr(locale, { uz: "Jinsi", ru: "Пол", en: "Gender", de: "Geschlecht" })} value={d.gender === "MALE" ? tr(locale, { uz: "Erkak", ru: "Мужской", en: "Male", de: "Männlich" }) : d.gender === "FEMALE" ? tr(locale, { uz: "Ayol", ru: "Женский", en: "Female", de: "Weiblich" }) : "—"} />
+                  <Row label={tr(locale, { uz: "Tug'ilgan sana", ru: "Дата рождения", en: "Birth date", de: "Geburtsdatum" })} value={d.birthDate ?? "—"} />
+                  <Row label={tr(locale, { uz: "Holati", ru: "Статус", en: "Status", de: "Status" })} value={d.isActive ? tr(locale, { uz: "Faol", ru: "Активен", en: "Active", de: "Aktiv" }) : tr(locale, { uz: "Nofaol", ru: "Неактивен", en: "Inactive", de: "Inaktiv" })} />
                 </div>
               </Section>
             </>

@@ -62,7 +62,7 @@ export default function LeadCard({ lead, locale, selected, onOpen, onOpenFull, o
             <div className="min-w-0">
               <div className="flex items-center gap-1.5">
                 <span className="truncate text-[15px] font-semibold text-slate-800 dark:text-slate-100">{first}</span>
-                {stuck && <span className="shrink-0 text-xs font-bold text-red-500">{days} {tr(locale, { uz: "kun", ru: "дн.", en: "days" })}</span>}
+                {stuck && <span className="shrink-0 text-xs font-bold text-red-500">{days} {tr(locale, { uz: "kun", ru: "дн.", en: "days", de: "Tage" })}</span>}
               </div>
               {rest && <div className="truncate text-xs text-slate-400">{rest}</div>}
             </div>
@@ -78,7 +78,7 @@ export default function LeadCard({ lead, locale, selected, onOpen, onOpenFull, o
         <button
           onClick={(e) => { e.preventDefault(); e.stopPropagation(); window.dispatchEvent(new CustomEvent("glive:call", { detail: { number: lead.phone, leadId: lead.id, contactName: lead.fullName } })); }}
           onDoubleClick={(e) => e.stopPropagation()}
-          title={tr(locale, { uz: "Qo'ng'iroq qilish", ru: "Позвонить", en: "Call" })}
+          title={tr(locale, { uz: "Qo'ng'iroq qilish", ru: "Позвонить", en: "Call", de: "Anrufen" })}
           className="flex items-center gap-2 text-sm transition hover:opacity-70"
         >
           <Icon name="phone" className="h-3.5 w-3.5" style={{ color: "#10b981" }} />
@@ -97,7 +97,7 @@ export default function LeadCard({ lead, locale, selected, onOpen, onOpenFull, o
         {/* Yosh va daraja — ariza formasidan keladi */}
         {(lead.age || lead.level) && (
           <div className="flex flex-wrap items-center gap-1.5 text-[11px]">
-            {lead.age ? <span className="rounded bg-slate-100 px-1.5 py-0.5 font-medium text-slate-500 dark:bg-slate-800 dark:text-slate-300">{lead.age} {tr(locale, { uz: "yosh", ru: "лет", en: "y.o." })}</span> : null}
+            {lead.age ? <span className="rounded bg-slate-100 px-1.5 py-0.5 font-medium text-slate-500 dark:bg-slate-800 dark:text-slate-300">{lead.age} {tr(locale, { uz: "yosh", ru: "лет", en: "y.o.", de: "J." })}</span> : null}
             {lead.level ? <span className="rounded bg-brand-50 px-1.5 py-0.5 font-semibold text-brand-600 dark:bg-brand-500/10 dark:text-brand-300">{lead.level}</span> : null}
           </div>
         )}

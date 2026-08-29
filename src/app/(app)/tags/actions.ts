@@ -12,11 +12,11 @@ const can = (r: string) => CAN.includes(r as never);
 
 export async function saveTag(fd: FormData): Promise<{ ok?: boolean; error?: string }> {
   const s = await requireSession();
-  if (!can(s.role)) return { error: tr(s.locale, { uz: "Ruxsat yo'q", ru: "Нет доступа", en: "No permission" }) };
+  if (!can(s.role)) return { error: tr(s.locale, { uz: "Ruxsat yo'q", ru: "Нет доступа", en: "No permission", de: "Keine Berechtigung" }) };
   const id = String(fd.get("id") || "");
   const name = String(fd.get("name") || "").trim();
   const code = String(fd.get("code") || "").trim() || null;
-  if (name.length < 2) return { error: tr(s.locale, { uz: "Nomi kamida 2 ta belgi bo'lsin", ru: "Название должно быть не менее 2 символов", en: "Name must be at least 2 characters" }) };
+  if (name.length < 2) return { error: tr(s.locale, { uz: "Nomi kamida 2 ta belgi bo'lsin", ru: "Название должно быть не менее 2 символов", en: "Name must be at least 2 characters", de: "Der Name muss mindestens 2 Zeichen lang sein" }) };
   if (id) await prisma.tag.update({ where: { id }, data: { name, code } });
   else await prisma.tag.create({ data: { name, code } });
   await writeAudit({ actorId: s.userId, action: id ? "UPDATE" : "CREATE", entityType: "Tag", entityId: id || undefined, newValue: { name } });

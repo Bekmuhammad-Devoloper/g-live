@@ -128,8 +128,8 @@ export function SaveBtn({ locale, pending, onClick }: { locale: Locale; pending:
         className="h-11 rounded-xl bg-brand-700 px-8 text-sm font-bold text-white transition hover:bg-brand-800 disabled:opacity-60"
       >
         {pending
-          ? tr(locale, { uz: "Saqlanmoqda...", ru: "Сохранение...", en: "Saving..." })
-          : tr(locale, { uz: "Saqlash", ru: "Сохранить", en: "Save" })}
+          ? tr(locale, { uz: "Saqlanmoqda...", ru: "Сохранение...", en: "Saving...", de: "Wird gespeichert..." })
+          : tr(locale, { uz: "Saqlash", ru: "Сохранить", en: "Save", de: "Speichern" })}
       </button>
     </div>
   );

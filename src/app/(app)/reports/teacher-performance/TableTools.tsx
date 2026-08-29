@@ -39,7 +39,7 @@ export function SortHeader({
       type="button"
       onClick={go}
       className={`inline-flex items-center gap-1 hover:text-brand-600 dark:hover:text-brand-300 ${className ?? ""}`}
-      title={tr(locale, { uz: "Saralash", ru: "Сортировка", en: "Sort" })}
+      title={tr(locale, { uz: "Saralash", ru: "Сортировка", en: "Sort", de: "Sortieren" })}
     >
       <span>{label}</span>
       <Icon
@@ -60,17 +60,17 @@ export interface TeacherRow {
 /** Ko'rinib turgan qatorlardan CSV yuklab beradi. */
 export function ExportButton({ rows, locale }: { rows: TeacherRow[]; locale: Locale }) {
   const onClick = () => {
-    const boshi = tr(locale, { uz: "Boshi", ru: "Начало", en: "Start" });
-    const ozgarish = tr(locale, { uz: "O'zgarish", ru: "Изменение", en: "Change" });
-    const oxiri = tr(locale, { uz: "Oxiri", ru: "Конец", en: "End" });
-    const aktiv = tr(locale, { uz: "Aktiv", ru: "Активные", en: "Active" });
-    const ketganlar = tr(locale, { uz: "Ketganlar", ru: "Ушедшие", en: "Left" });
-    const bitirganlar = tr(locale, { uz: "Bitirganlar", ru: "Выпускники", en: "Graduated" });
-    const muzlatilgan = tr(locale, { uz: "Muzlatilgan", ru: "Замороженные", en: "Frozen" });
+    const boshi = tr(locale, { uz: "Boshi", ru: "Начало", en: "Start", de: "Anfang" });
+    const ozgarish = tr(locale, { uz: "O'zgarish", ru: "Изменение", en: "Change", de: "Änderung" });
+    const oxiri = tr(locale, { uz: "Oxiri", ru: "Конец", en: "End", de: "Ende" });
+    const aktiv = tr(locale, { uz: "Aktiv", ru: "Активные", en: "Active", de: "Aktiv" });
+    const ketganlar = tr(locale, { uz: "Ketganlar", ru: "Ушедшие", en: "Left", de: "Ausgetreten" });
+    const bitirganlar = tr(locale, { uz: "Bitirganlar", ru: "Выпускники", en: "Graduated", de: "Absolventen" });
+    const muzlatilgan = tr(locale, { uz: "Muzlatilgan", ru: "Замороженные", en: "Frozen", de: "Eingefroren" });
     exportRows(
       "oqituvchilar-samaradorligi",
       [
-        { key: "name", label: tr(locale, { uz: "O'qituvchi", ru: "Преподаватель", en: "Teacher" }) },
+        { key: "name", label: tr(locale, { uz: "O'qituvchi", ru: "Преподаватель", en: "Teacher", de: "Lehrer" }) },
         { key: "s_active", label: `${boshi}: ${aktiv}` },
         { key: "s_left", label: `${boshi}: ${ketganlar}` },
         { key: "s_grad", label: `${boshi}: ${bitirganlar}` },

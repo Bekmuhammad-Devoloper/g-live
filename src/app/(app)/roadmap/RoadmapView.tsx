@@ -8,10 +8,10 @@ import { Icon } from "../_components/Icon";
 import { ROADMAP, ALL_QUESTIONS, TARGET_MAX } from "./roadmap-data";
 import { saveRoadmap } from "./actions";
 
-const OPTS: { v: number; label: { uz: string; ru: string; en: string }; c: string }[] = [
-  { v: 10, label: { uz: "Ha", ru: "Да", en: "Yes" }, c: "#10b981" },
-  { v: 5, label: { uz: "Yarim", ru: "Частично", en: "Partly" }, c: "#f59e0b" },
-  { v: 0, label: { uz: "Yo'q", ru: "Нет", en: "No" }, c: "#94a3b8" },
+const OPTS: { v: number; label: { uz: string; ru: string; en: string; de: string }; c: string }[] = [
+  { v: 10, label: { uz: "Ha", ru: "Да", en: "Yes", de: "Ja" }, c: "#10b981" },
+  { v: 5, label: { uz: "Yarim", ru: "Частично", en: "Partly", de: "Teilweise" }, c: "#f59e0b" },
+  { v: 0, label: { uz: "Yo'q", ru: "Нет", en: "No", de: "Nein" }, c: "#94a3b8" },
 ];
 
 export default function RoadmapView({ locale, initialScores }: { locale: Locale; initialScores: Record<string, number> }) {
@@ -41,28 +41,28 @@ export default function RoadmapView({ locale, initialScores }: { locale: Locale;
       <div className="flex flex-wrap items-center justify-between gap-3">
         <div>
           <h1 className="text-[22px] font-bold tracking-tight text-slate-900 dark:text-slate-100">Roadmap</h1>
-          <p className="text-sm text-slate-400">{tr(locale, { uz: `Biznes yetukligini o'zini-o'zi baholash — ${answered}/${ALL_QUESTIONS.length} savol belgilangan`, ru: `Самооценка зрелости бизнеса — отмечено ${answered}/${ALL_QUESTIONS.length} вопросов`, en: `Business maturity self-assessment — ${answered}/${ALL_QUESTIONS.length} questions marked` })}</p>
+          <p className="text-sm text-slate-400">{tr(locale, { uz: `Biznes yetukligini o'zini-o'zi baholash — ${answered}/${ALL_QUESTIONS.length} savol belgilangan`, ru: `Самооценка зрелости бизнеса — отмечено ${answered}/${ALL_QUESTIONS.length} вопросов`, en: `Business maturity self-assessment — ${answered}/${ALL_QUESTIONS.length} questions marked`, de: `Selbsteinschätzung der Geschäftsreife — ${answered}/${ALL_QUESTIONS.length} Fragen markiert` })}</p>
         </div>
         <button onClick={save} disabled={pending || !dirty} className="flex h-10 items-center gap-1.5 rounded-lg bg-brand-700 px-6 text-sm font-semibold text-white shadow-sm transition hover:bg-brand-800 disabled:opacity-50">
-          <Icon name="check" className="h-4 w-4" /> {pending ? tr(locale, { uz: "Saqlanmoqda...", ru: "Сохранение...", en: "Saving..." }) : saved ? tr(locale, { uz: "Saqlandi ✓", ru: "Сохранено ✓", en: "Saved ✓" }) : tr(locale, { uz: "Saqlash", ru: "Сохранить", en: "Save" })}
+          <Icon name="check" className="h-4 w-4" /> {pending ? tr(locale, { uz: "Saqlanmoqda...", ru: "Сохранение...", en: "Saving...", de: "Wird gespeichert..." }) : saved ? tr(locale, { uz: "Saqlandi ✓", ru: "Сохранено ✓", en: "Saved ✓", de: "Gespeichert ✓" }) : tr(locale, { uz: "Saqlash", ru: "Сохранить", en: "Save", de: "Speichern" })}
         </button>
       </div>
 
       {/* Umumiy ball */}
       <div className="overflow-hidden rounded-2xl border border-blue-200 bg-blue-50/70 shadow-card dark:border-blue-500/30 dark:bg-blue-500/10">
         <div className="flex flex-wrap items-center justify-between gap-4 p-5">
-          <div className="text-lg font-bold text-slate-800 dark:text-slate-100">{tr(locale, { uz: "Umumiy ball", ru: "Общий балл", en: "Total score" })}</div>
+          <div className="text-lg font-bold text-slate-800 dark:text-slate-100">{tr(locale, { uz: "Umumiy ball", ru: "Общий балл", en: "Total score", de: "Gesamtpunktzahl" })}</div>
           <div className="flex items-center gap-8">
             <div>
-              <div className="text-xs font-medium text-slate-500 dark:text-slate-400">{tr(locale, { uz: "Maximal ball", ru: "Максимальный балл", en: "Maximum score" })}</div>
+              <div className="text-xs font-medium text-slate-500 dark:text-slate-400">{tr(locale, { uz: "Maximal ball", ru: "Максимальный балл", en: "Maximum score", de: "Höchstpunktzahl" })}</div>
               <div className="text-2xl font-bold text-slate-700 dark:text-slate-200">{TARGET_MAX}</div>
             </div>
             <div>
-              <div className="text-xs font-medium text-slate-500 dark:text-slate-400">{tr(locale, { uz: "Sizning ballingiz", ru: "Ваш балл", en: "Your score" })}</div>
+              <div className="text-xs font-medium text-slate-500 dark:text-slate-400">{tr(locale, { uz: "Sizning ballingiz", ru: "Ваш балл", en: "Your score", de: "Ihre Punktzahl" })}</div>
               <div className="rounded-lg bg-amber-200/80 px-4 py-1 text-2xl font-extrabold text-amber-800 dark:bg-amber-500/20 dark:text-amber-300">{your.toFixed(1)}</div>
             </div>
             <div className="w-40">
-              <div className="mb-1 flex justify-between text-xs text-slate-500 dark:text-slate-400"><span>{tr(locale, { uz: "Yetuklik", ru: "Зрелость", en: "Maturity" })}</span><span className="font-semibold">{pct}%</span></div>
+              <div className="mb-1 flex justify-between text-xs text-slate-500 dark:text-slate-400"><span>{tr(locale, { uz: "Yetuklik", ru: "Зрелость", en: "Maturity", de: "Reife" })}</span><span className="font-semibold">{pct}%</span></div>
               <div className="h-2 overflow-hidden rounded-full bg-white/70 dark:bg-slate-800"><div className="h-full rounded-full bg-blue-500 transition-all" style={{ width: `${pct}%` }} /></div>
             </div>
           </div>
@@ -84,11 +84,11 @@ export default function RoadmapView({ locale, initialScores }: { locale: Locale;
           <table className="w-full min-w-[860px] text-left text-sm">
             <thead className="border-b border-slate-200/70 bg-slate-50/80 text-[11px] font-semibold uppercase tracking-wider text-slate-500 dark:border-slate-800 dark:bg-white/[0.02]">
               <tr>
-                <th className="w-10 px-2 py-3 text-center">{tr(locale, { uz: "Bo'lim", ru: "Раздел", en: "Section" })}</th>
-                <th className="px-4 py-3">{tr(locale, { uz: "Savol", ru: "Вопрос", en: "Question" })}</th>
-                <th className="w-[220px] px-4 py-3 text-center">{tr(locale, { uz: "Ball (maksimal 10)", ru: "Балл (максимум 10)", en: "Score (max 10)" })}</th>
-                <th className="w-[160px] px-4 py-3">{tr(locale, { uz: "Natija", ru: "Результат", en: "Result" })}</th>
-                <th className="px-4 py-3">{tr(locale, { uz: "Yo'riqnoma", ru: "Инструкция", en: "Guidance" })}</th>
+                <th className="w-10 px-2 py-3 text-center">{tr(locale, { uz: "Bo'lim", ru: "Раздел", en: "Section", de: "Abschnitt" })}</th>
+                <th className="px-4 py-3">{tr(locale, { uz: "Savol", ru: "Вопрос", en: "Question", de: "Frage" })}</th>
+                <th className="w-[220px] px-4 py-3 text-center">{tr(locale, { uz: "Ball (maksimal 10)", ru: "Балл (максимум 10)", en: "Score (max 10)", de: "Punktzahl (max. 10)" })}</th>
+                <th className="w-[160px] px-4 py-3">{tr(locale, { uz: "Natija", ru: "Результат", en: "Result", de: "Ergebnis" })}</th>
+                <th className="px-4 py-3">{tr(locale, { uz: "Yo'riqnoma", ru: "Инструкция", en: "Guidance", de: "Anleitung" })}</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-slate-100 dark:divide-slate-800">
@@ -128,7 +128,7 @@ export default function RoadmapView({ locale, initialScores }: { locale: Locale;
         </div>
       </div>
 
-      <p className="text-xs text-slate-400">{tr(locale, { uz: `Har bir savol 0–10 ball. Umumiy ball ${TARGET_MAX} ballik shkalaga keltiriladi. O'zgartirishlardan so'ng`, ru: `Каждый вопрос — 0–10 баллов. Общий балл приводится к шкале из ${TARGET_MAX} баллов. После изменений нажмите`, en: `Each question is 0–10 points. The total is normalized to a ${TARGET_MAX}-point scale. After changes, click` })} <b>{tr(locale, { uz: "Saqlash", ru: "Сохранить", en: "Save" })}</b>{tr(locale, { uz: "ni bosing.", ru: ".", en: "." })}</p>
+      <p className="text-xs text-slate-400">{tr(locale, { uz: `Har bir savol 0–10 ball. Umumiy ball ${TARGET_MAX} ballik shkalaga keltiriladi. O'zgartirishlardan so'ng`, ru: `Каждый вопрос — 0–10 баллов. Общий балл приводится к шкале из ${TARGET_MAX} баллов. После изменений нажмите`, en: `Each question is 0–10 points. The total is normalized to a ${TARGET_MAX}-point scale. After changes, click`, de: `Jede Frage ist 0–10 Punkte wert. Die Summe wird auf eine Skala von ${TARGET_MAX} Punkten normiert. Klicken Sie nach Änderungen auf` })} <b>{tr(locale, { uz: "Saqlash", ru: "Сохранить", en: "Save", de: "Speichern" })}</b>{tr(locale, { uz: "ni bosing.", ru: ".", en: ".", de: "." })}</p>
     </div>
   );
 }

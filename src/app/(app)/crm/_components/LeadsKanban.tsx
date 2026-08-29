@@ -69,7 +69,7 @@ export default function LeadsKanban({ leads, totals, locale, selected, onOpen, o
               </div>
               <div className="flex items-center gap-1">
                 <span className="text-sm font-bold" style={{ color: col.color }}>{totals[col.key] ?? items.length}</span>
-                <button onClick={() => onAdd(col.defaultStage)} title={tr(locale, { uz: "Qo'shish", ru: "Добавить", en: "Add" })} className="flex h-6 w-6 items-center justify-center rounded-md text-slate-400 transition hover:bg-slate-200/60 hover:text-slate-600 dark:hover:bg-white/[0.06]">
+                <button onClick={() => onAdd(col.defaultStage)} title={tr(locale, { uz: "Qo'shish", ru: "Добавить", en: "Add", de: "Hinzufügen" })} className="flex h-6 w-6 items-center justify-center rounded-md text-slate-400 transition hover:bg-slate-200/60 hover:text-slate-600 dark:hover:bg-white/[0.06]">
                   <Icon name="plus" className="h-4 w-4" />
                 </button>
               </div>
@@ -97,7 +97,7 @@ export default function LeadsKanban({ leads, totals, locale, selected, onOpen, o
               ) : items.length === 0 ? (
                 <div className="rounded-xl border border-dashed border-slate-200 py-8 text-center dark:border-white/[0.08]">
                   <div className="text-2xl opacity-30">📭</div>
-                  <p className="mt-1 text-xs text-slate-400">{tr(locale, { uz: "Lid yo'q", ru: "Нет лидов", en: "No leads" })}</p>
+                  <p className="mt-1 text-xs text-slate-400">{tr(locale, { uz: "Lid yo'q", ru: "Нет лидов", en: "No leads", de: "Keine Leads" })}</p>
                 </div>
               ) : (
                 items.map((lead) => (
@@ -160,7 +160,7 @@ function WonColumn({
     return (
       <div className="rounded-xl border border-dashed border-slate-200 py-8 text-center dark:border-white/[0.08]">
         <div className="text-2xl opacity-30">📭</div>
-        <p className="mt-1 text-xs text-slate-400">{tr(locale, { uz: "Lid yo'q", ru: "Нет лидов", en: "No leads" })}</p>
+        <p className="mt-1 text-xs text-slate-400">{tr(locale, { uz: "Lid yo'q", ru: "Нет лидов", en: "No leads", de: "Keine Leads" })}</p>
       </div>
     );
   }
@@ -173,7 +173,7 @@ function WonColumn({
           <SectionLabel
             icon="alert"
             color="#f59e0b"
-            text={tr(locale, { uz: "Guruh kutmoqda", ru: "Ожидают группу", en: "Awaiting group" })}
+            text={tr(locale, { uz: "Guruh kutmoqda", ru: "Ожидают группу", en: "Awaiting group", de: "Gruppe wird erwartet" })}
             count={waiting.length}
           />
           {waiting.map((lead) => (
@@ -197,7 +197,7 @@ function WonColumn({
           <SectionLabel
             icon="layers"
             color={color}
-            text={tr(locale, { uz: "Guruhlar", ru: "Группы", en: "Groups" })}
+            text={tr(locale, { uz: "Guruhlar", ru: "Группы", en: "Groups", de: "Gruppen" })}
             count={buckets.reduce((n, b) => n + b.count, 0)}
           />
           {buckets.map((b) => (
@@ -232,6 +232,7 @@ function GroupBucketCard({ bucket, locale, color }: { bucket: Bucket; locale: Lo
             uz: `${bucket.count} ta qabul qilingan lid`,
             ru: `${bucket.count} принятых лидов`,
             en: `${bucket.count} accepted leads`,
+            de: `${bucket.count} akzeptierte Leads`,
           })}
         </div>
       </div>

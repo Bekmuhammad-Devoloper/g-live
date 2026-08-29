@@ -16,7 +16,7 @@ async function guard() {
   const s = await requireSession();
   const error = CAN.includes(s.role as never)
     ? null
-    : tr(s.locale, { uz: "Ruxsat yo'q", ru: "Нет доступа", en: "No permission" });
+    : tr(s.locale, { uz: "Ruxsat yo'q", ru: "Нет доступа", en: "No permission", de: "Keine Berechtigung" });
   return { s, error };
 }
 
@@ -33,7 +33,7 @@ export async function saveVacancy(fd: FormData): Promise<VacState> {
   const id = txt(fd, "id");
   const title = txt(fd, "title");
   if (title.length < 2) {
-    return { error: tr(s.locale, { uz: "Vakansiya nomi kamida 2 ta belgi bo'lsin", ru: "Название вакансии — минимум 2 символа", en: "Vacancy title must be at least 2 characters" }) };
+    return { error: tr(s.locale, { uz: "Vakansiya nomi kamida 2 ta belgi bo'lsin", ru: "Название вакансии — минимум 2 символа", en: "Vacancy title must be at least 2 characters", de: "Der Titel der Stelle muss mindestens 2 Zeichen haben" }) };
   }
 
   const data = {
@@ -49,7 +49,7 @@ export async function saveVacancy(fd: FormData): Promise<VacState> {
 
   if (id) {
     const cur = await prisma.vacancy.findUnique({ where: { id }, select: { id: true } });
-    if (!cur) return { error: tr(s.locale, { uz: "Vakansiya topilmadi", ru: "Вакансия не найдена", en: "Vacancy not found" }) };
+    if (!cur) return { error: tr(s.locale, { uz: "Vakansiya topilmadi", ru: "Вакансия не найдена", en: "Vacancy not found", de: "Stelle nicht gefunden" }) };
     await prisma.vacancy.update({ where: { id }, data });
     await writeAudit({ actorId: s.userId, action: "UPDATE", entityType: "Vacancy", entityId: id, newValue: { title } });
     refresh();
@@ -80,7 +80,7 @@ export async function removeVacancy(id: string): Promise<VacState> {
   const { s, error } = await guard();
   if (error) return { error };
   const v = await prisma.vacancy.findUnique({ where: { id }, select: { title: true } });
-  if (!v) return { error: tr(s.locale, { uz: "Vakansiya topilmadi", ru: "Вакансия не найдена", en: "Vacancy not found" }) };
+  if (!v) return { error: tr(s.locale, { uz: "Vakansiya topilmadi", ru: "Вакансия не найдена", en: "Vacancy not found", de: "Stelle nicht gefunden" }) };
   await prisma.vacancy.delete({ where: { id } });
   await writeAudit({ actorId: s.userId, action: "DELETE", entityType: "Vacancy", entityId: id, oldValue: { title: v.title } });
   refresh();

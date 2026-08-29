@@ -29,15 +29,15 @@ export interface VOperator {
 const p2 = (n: number) => String(n).padStart(2, "0");
 const fmtDate = (iso: string) => { const d = new Date(iso); return `${p2(d.getDate())}.${p2(d.getMonth() + 1)}.${d.getFullYear()}`; };
 function ago(iso: string | null, locale: Locale): string {
-  if (!iso) return tr(locale, { uz: "hech qachon", ru: "никогда", en: "never" });
+  if (!iso) return tr(locale, { uz: "hech qachon", ru: "никогда", en: "never", de: "nie" });
   const diff = Date.now() - new Date(iso).getTime();
   const m = Math.floor(diff / 60000);
-  if (m < 1) return tr(locale, { uz: "hozir", ru: "сейчас", en: "now" });
-  if (m < 60) return tr(locale, { uz: `${m} daqiqa oldin`, ru: `${m} мин назад`, en: `${m} min ago` });
+  if (m < 1) return tr(locale, { uz: "hozir", ru: "сейчас", en: "now", de: "jetzt" });
+  if (m < 60) return tr(locale, { uz: `${m} daqiqa oldin`, ru: `${m} мин назад`, en: `${m} min ago`, de: `vor ${m} Min.` });
   const h = Math.floor(m / 60);
-  if (h < 24) return tr(locale, { uz: `${h} soat oldin`, ru: `${h} ч назад`, en: `${h} h ago` });
+  if (h < 24) return tr(locale, { uz: `${h} soat oldin`, ru: `${h} ч назад`, en: `${h} h ago`, de: `vor ${h} Std.` });
   const days = Math.floor(h / 24);
-  return tr(locale, { uz: `${days} kun oldin`, ru: `${days} дн назад`, en: `${days} days ago` });
+  return tr(locale, { uz: `${days} kun oldin`, ru: `${days} дн назад`, en: `${days} days ago`, de: `vor ${days} Tg.` });
 }
 function fmtTalk(min: number): string {
   if (min < 60) return `${min}m`;
@@ -69,17 +69,17 @@ export default function OperatorsMonitor({ operators, totalLeads, todayCalls, wr
         <div className="flex items-center gap-3.5">
           <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-brand-500 text-white"><Icon name="headphones" className="h-6 w-6" /></div>
           <div>
-            <h1 className="text-[22px] font-bold tracking-tight text-slate-900 dark:text-slate-100">{tr(locale, { uz: "Operatorlar", ru: "Операторы", en: "Operators" })}</h1>
-            <p className="text-sm text-slate-500 dark:text-slate-400">{tr(locale, { uz: "Sotuv menejerlarini boshqarish va monitoring", ru: "Управление и мониторинг менеджеров по продажам", en: "Sales manager management and monitoring" })}</p>
+            <h1 className="text-[22px] font-bold tracking-tight text-slate-900 dark:text-slate-100">{tr(locale, { uz: "Operatorlar", ru: "Операторы", en: "Operators", de: "Operatoren" })}</h1>
+            <p className="text-sm text-slate-500 dark:text-slate-400">{tr(locale, { uz: "Sotuv menejerlarini boshqarish va monitoring", ru: "Управление и мониторинг менеджеров по продажам", en: "Sales manager management and monitoring", de: "Verwaltung und Überwachung der Vertriebsmitarbeiter" })}</p>
           </div>
         </div>
         <div className="flex items-center gap-2">
           <button onClick={() => router.refresh()} className="inline-flex h-10 items-center gap-1.5 rounded-lg border border-slate-200 bg-white px-4 text-sm font-medium text-slate-600 transition hover:bg-slate-50 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-300 dark:hover:bg-slate-800">
-            <Icon name="refresh" className="h-4 w-4" /> {tr(locale, { uz: "Yangilash", ru: "Обновить", en: "Refresh" })}
+            <Icon name="refresh" className="h-4 w-4" /> {tr(locale, { uz: "Yangilash", ru: "Обновить", en: "Refresh", de: "Aktualisieren" })}
           </button>
           {writable && (
             <Link href="/reports/operators" className="inline-flex h-10 items-center gap-1.5 rounded-lg bg-brand-600 px-4 text-sm font-semibold text-white transition hover:bg-brand-700">
-              <Icon name="plus" className="h-4 w-4" /> {tr(locale, { uz: "Yangi operator", ru: "Новый оператор", en: "New operator" })}
+              <Icon name="plus" className="h-4 w-4" /> {tr(locale, { uz: "Yangi operator", ru: "Новый оператор", en: "New operator", de: "Neuer Operator" })}
             </Link>
           )}
         </div>
@@ -241,8 +241,8 @@ function OperatorAvatar({ op, writable, locale }: { op: VOperator; writable: boo
             onClick={() => fileRef.current?.click()}
             disabled={busy}
             title={op.imageUrl
-              ? tr(locale, { uz: "Rasmni almashtirish", ru: "Заменить фото", en: "Change photo" })
-              : tr(locale, { uz: "Rasm yuklash", ru: "Загрузить фото", en: "Upload photo" })}
+              ? tr(locale, { uz: "Rasmni almashtirish", ru: "Заменить фото", en: "Change photo", de: "Foto ändern" })
+              : tr(locale, { uz: "Rasm yuklash", ru: "Загрузить фото", en: "Upload photo", de: "Foto hochladen" })}
             className="absolute inset-0 grid place-items-center rounded-full bg-black/45 text-white opacity-0 transition group-hover/av:opacity-100 disabled:opacity-100"
           >
             {busy ? <Icon name="refresh" className="h-4 w-4 animate-spin" /> : <Icon name="camera" className="h-4 w-4" />}

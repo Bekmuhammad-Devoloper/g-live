@@ -28,7 +28,7 @@ const statusTone: Record<string, "green" | "amber" | "slate" | "red"> = {
 export default async function CoursesSection({ mode }: { mode: "ONLINE" | "OFFLINE" }) {
   const s = await requireSession();
   if (!ALLOWED.includes(s.role as never)) {
-    return <Forbidden title={tr(s.locale, { uz: "Kirish taqiqlangan", ru: "Доступ запрещён", en: "Access denied" })} body={tr(s.locale, { uz: "Bu bo'lim o'quv bo'limi uchun.", ru: "Этот раздел для учебного отдела.", en: "This section is for the education department." })} />;
+    return <Forbidden title={tr(s.locale, { uz: "Kirish taqiqlangan", ru: "Доступ запрещён", en: "Access denied", de: "Zugriff verweigert" })} body={tr(s.locale, { uz: "Bu bo'lim o'quv bo'limi uchun.", ru: "Этот раздел для учебного отдела.", en: "This section is for the education department.", de: "Dieser Bereich ist für die Bildungsabteilung." })} />;
   }
 
   const formats = mode === "ONLINE" ? ["ONLINE", "HYBRID"] : ["OFFLINE", "HYBRID"];
@@ -74,30 +74,30 @@ export default async function CoursesSection({ mode }: { mode: "ONLINE" | "OFFLI
         <div className="flex items-center gap-3">
           <span className="grid h-11 w-11 shrink-0 place-items-center rounded-xl bg-brand-50 text-brand-600 dark:bg-brand-500/15 dark:text-brand-300"><Icon name="layers" className="h-5 w-5" /></span>
           <div>
-            <h2 className="text-base font-bold text-slate-800 dark:text-slate-100">{tr(s.locale, { uz: "Kurslar (dasturlar)", ru: "Курсы (программы)", en: "Courses (programs)" })}</h2>
-            <p className="text-xs text-slate-400">{tr(s.locale, { uz: "Yangi kurs qo'shing yoki barcha kurslarni boshqaring", ru: "Добавьте новый курс или управляйте всеми курсами", en: "Add a new course or manage all courses" })}</p>
+            <h2 className="text-base font-bold text-slate-800 dark:text-slate-100">{tr(s.locale, { uz: "Kurslar (dasturlar)", ru: "Курсы (программы)", en: "Courses (programs)", de: "Kurse (Programme)" })}</h2>
+            <p className="text-xs text-slate-400">{tr(s.locale, { uz: "Yangi kurs qo'shing yoki barcha kurslarni boshqaring", ru: "Добавьте новый курс или управляйте всеми курсами", en: "Add a new course or manage all courses", de: "Neuen Kurs hinzufügen oder alle Kurse verwalten" })}</p>
           </div>
         </div>
         <div className="flex items-center gap-2">
           <Link href="/courses" className="inline-flex h-10 items-center gap-1.5 rounded-lg border border-slate-200 bg-white px-4 text-sm font-medium text-slate-600 transition hover:bg-slate-50 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-300 dark:hover:bg-slate-800">
-            <Icon name="listView" className="h-4 w-4" /> {tr(s.locale, { uz: "Barcha kurslar", ru: "Все курсы", en: "All courses" })}
+            <Icon name="listView" className="h-4 w-4" /> {tr(s.locale, { uz: "Barcha kurslar", ru: "Все курсы", en: "All courses", de: "Alle Kurse" })}
           </Link>
           {canAddCourse && <AddCourseButton locale={s.locale} />}
         </div>
       </div>
 
       <div className="mb-6 grid grid-cols-2 gap-4 lg:grid-cols-4">
-        <StatCard label={isOnline ? tr(s.locale, { uz: "Onlayn kurslar", ru: "Онлайн-курсы", en: "Online courses" }) : tr(s.locale, { uz: "Offline kurslar", ru: "Офлайн-курсы", en: "Offline courses" })} value={groups.length} tone="brand" icon={isOnline ? "video" : "building"} />
-        <StatCard label={tr(s.locale, { uz: "Faol", ru: "Активные", en: "Active" })} value={activeCount} tone="green" icon="check" />
-        <StatCard label={tr(s.locale, { uz: "O'quvchilar", ru: "Ученики", en: "Students" })} value={studentsTotal} icon="graduation" />
-        <StatCard label={tr(s.locale, { uz: "O'quv shakli", ru: "Форма обучения", en: "Study format" })} value={isOnline ? tr(s.locale, { uz: "Masofaviy", ru: "Дистанционно", en: "Remote" }) : tr(s.locale, { uz: "Auditoriya", ru: "Аудитория", en: "Classroom" })} icon="layers" />
+        <StatCard label={isOnline ? tr(s.locale, { uz: "Onlayn kurslar", ru: "Онлайн-курсы", en: "Online courses", de: "Online-Kurse" }) : tr(s.locale, { uz: "Offline kurslar", ru: "Офлайн-курсы", en: "Offline courses", de: "Offline-Kurse" })} value={groups.length} tone="brand" icon={isOnline ? "video" : "building"} />
+        <StatCard label={tr(s.locale, { uz: "Faol", ru: "Активные", en: "Active", de: "Aktiv" })} value={activeCount} tone="green" icon="check" />
+        <StatCard label={tr(s.locale, { uz: "O'quvchilar", ru: "Ученики", en: "Students", de: "Schüler" })} value={studentsTotal} icon="graduation" />
+        <StatCard label={tr(s.locale, { uz: "O'quv shakli", ru: "Форма обучения", en: "Study format", de: "Unterrichtsform" })} value={isOnline ? tr(s.locale, { uz: "Masofaviy", ru: "Дистанционно", en: "Remote", de: "Fernunterricht" }) : tr(s.locale, { uz: "Auditoriya", ru: "Аудитория", en: "Classroom", de: "Präsenz" })} icon="layers" />
       </div>
 
       <CoursesTable rows={rows} isOnline={isOnline} locale={s.locale} />
 
       <p className="mt-4 text-xs text-slate-400">
-        ℹ️ {tr(s.locale, { uz: "O'quv shakli (onlayn/offline/aralash) guruh yaratishda belgilanadi.", ru: "Форма обучения (онлайн/офлайн/смешанная) задаётся при создании группы.", en: "The study format (online/offline/hybrid) is set when creating a group." })}{" "}
-        <span className="text-slate-500">{tr(s.locale, { uz: "Holat bo'yicha:", ru: "По статусу:", en: "By status:" })} <Badge tone={statusTone.ACTIVE}>{tr(s.locale, { uz: "Faol", ru: "Активные", en: "Active" })}</Badge> — {activeCount} {tr(s.locale, { uz: "ta, jami —", ru: "шт., всего —", en: ", total —" })} {groups.length} {tr(s.locale, { uz: "ta.", ru: "шт.", en: "." })}</span>
+        ℹ️ {tr(s.locale, { uz: "O'quv shakli (onlayn/offline/aralash) guruh yaratishda belgilanadi.", ru: "Форма обучения (онлайн/офлайн/смешанная) задаётся при создании группы.", en: "The study format (online/offline/hybrid) is set when creating a group.", de: "Die Unterrichtsform (online/offline/gemischt) wird bei der Gruppenerstellung festgelegt." })}{" "}
+        <span className="text-slate-500">{tr(s.locale, { uz: "Holat bo'yicha:", ru: "По статусу:", en: "By status:", de: "Nach Status:" })} <Badge tone={statusTone.ACTIVE}>{tr(s.locale, { uz: "Faol", ru: "Активные", en: "Active", de: "Aktiv" })}</Badge> — {activeCount} {tr(s.locale, { uz: "ta, jami —", ru: "шт., всего —", en: ", total —", de: ", insgesamt —" })} {groups.length} {tr(s.locale, { uz: "ta.", ru: "шт.", en: ".", de: "." })}</span>
       </p>
     </>
   );

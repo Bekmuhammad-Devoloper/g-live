@@ -8,12 +8,12 @@ import { tr } from "@/lib/tr";
 import { PageHeader, StatCard, Forbidden } from "../../_components/ui";
 import SmsLog, { type SmsRow } from "./SmsLog";
 
-const CHANNEL_LABEL: Record<string, { uz: string; ru: string; en: string }> = {
-  APP: { uz: "Ilova", ru: "Приложение", en: "App" },
-  SMS: { uz: "SMS", ru: "SMS", en: "SMS" },
-  PUSH: { uz: "Push", ru: "Push", en: "Push" },
-  TELEGRAM: { uz: "Telegram", ru: "Telegram", en: "Telegram" },
-  EMAIL: { uz: "E-mail", ru: "E-mail", en: "E-mail" },
+const CHANNEL_LABEL: Record<string, { uz: string; ru: string; en: string; de?: string }> = {
+  APP: { uz: "Ilova", ru: "Приложение", en: "App", de: "App" },
+  SMS: { uz: "SMS", ru: "SMS", en: "SMS", de: "SMS" },
+  PUSH: { uz: "Push", ru: "Push", en: "Push", de: "Push" },
+  TELEGRAM: { uz: "Telegram", ru: "Telegram", en: "Telegram", de: "Telegram" },
+  EMAIL: { uz: "E-mail", ru: "E-mail", en: "E-mail", de: "E-Mail" },
 };
 
 export default async function SmsLogPage() {
@@ -51,15 +51,15 @@ export default async function SmsLogPage() {
   return (
     <>
       <div className="mb-4">
-        <Link href="/reports" className="text-sm text-brand-600 hover:underline">← {tr(s.locale, { uz: "Hisobotlar", ru: "Отчёты", en: "Reports" })}</Link>
+        <Link href="/reports" className="text-sm text-brand-600 hover:underline">← {tr(s.locale, { uz: "Hisobotlar", ru: "Отчёты", en: "Reports", de: "Berichte" })}</Link>
       </div>
-      <PageHeader title={tr(s.locale, { uz: "Yuborilgan xabarlar jurnali", ru: "Журнал отправленных сообщений", en: "Sent messages log" })} subtitle={tr(s.locale, { uz: "SMS, Telegram, Push va boshqa bildirishnomalar", ru: "SMS, Telegram, Push и другие уведомления", en: "SMS, Telegram, Push and other notifications" })} />
+      <PageHeader title={tr(s.locale, { uz: "Yuborilgan xabarlar jurnali", ru: "Журнал отправленных сообщений", en: "Sent messages log", de: "Protokoll gesendeter Nachrichten" })} subtitle={tr(s.locale, { uz: "SMS, Telegram, Push va boshqa bildirishnomalar", ru: "SMS, Telegram, Push и другие уведомления", en: "SMS, Telegram, Push and other notifications", de: "SMS, Telegram, Push und andere Benachrichtigungen" })} />
 
       <div className="mb-6 grid grid-cols-2 gap-4 lg:grid-cols-4">
-        <StatCard label={tr(s.locale, { uz: "Jami xabarlar", ru: "Всего сообщений", en: "Total messages" })} value={total} tone="brand" icon="mail" />
-        <StatCard label={tr(s.locale, { uz: "SMS", ru: "SMS", en: "SMS" })} value={cCount("SMS")} tone="green" icon="mail" />
-        <StatCard label={tr(s.locale, { uz: "Telegram", ru: "Telegram", en: "Telegram" })} value={cCount("TELEGRAM")} icon="mail" />
-        <StatCard label={tr(s.locale, { uz: "Push", ru: "Push", en: "Push" })} value={cCount("PUSH")} tone="amber" icon="bell" />
+        <StatCard label={tr(s.locale, { uz: "Jami xabarlar", ru: "Всего сообщений", en: "Total messages", de: "Nachrichten insgesamt" })} value={total} tone="brand" icon="mail" />
+        <StatCard label={tr(s.locale, { uz: "SMS", ru: "SMS", en: "SMS", de: "SMS" })} value={cCount("SMS")} tone="green" icon="mail" />
+        <StatCard label={tr(s.locale, { uz: "Telegram", ru: "Telegram", en: "Telegram", de: "Telegram" })} value={cCount("TELEGRAM")} icon="mail" />
+        <StatCard label={tr(s.locale, { uz: "Push", ru: "Push", en: "Push", de: "Push" })} value={cCount("PUSH")} tone="amber" icon="bell" />
       </div>
 
       <SmsLog rows={rows} locale={s.locale} />

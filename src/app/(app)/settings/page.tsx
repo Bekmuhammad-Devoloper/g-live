@@ -16,7 +16,7 @@ const ALLOWED = [ROLES.DIRECTOR, ROLES.DEPUTY_DIRECTOR];
 export default async function SettingsPage({ searchParams }: { searchParams: Promise<{ tab?: string }> }) {
   const s = await requireSession();
   if (!ALLOWED.includes(s.role as never)) {
-    return <Forbidden title={tr(s.locale, { uz: "Kirish taqiqlangan", ru: "Доступ запрещён", en: "Access denied" })} body={tr(s.locale, { uz: "Sozlamalar faqat direktor va administrator uchun.", ru: "Настройки доступны только директору и администратору.", en: "Settings are available only to the director and administrator." })} />;
+    return <Forbidden title={tr(s.locale, { uz: "Kirish taqiqlangan", ru: "Доступ запрещён", en: "Access denied", de: "Zugriff verweigert" })} body={tr(s.locale, { uz: "Sozlamalar faqat direktor va administrator uchun.", ru: "Настройки доступны только директору и администратору.", en: "Settings are available only to the director and administrator.", de: "Einstellungen stehen nur dem Direktor und dem Administrator zur Verfügung." })} />;
   }
 
   const sp = await searchParams;

@@ -25,7 +25,7 @@ async function guard() {
   // Direktor/Administrator (USERS moduli) yoki ROP — operatorlar uning jamoasi
   const error = (await canManageOperators(s.role, s.userId))
     ? null
-    : tr(s.locale, { uz: "Ruxsat yo'q", ru: "Нет доступа", en: "No permission" });
+    : tr(s.locale, { uz: "Ruxsat yo'q", ru: "Нет доступа", en: "No permission", de: "Keine Berechtigung" });
   return { s, error };
 }
 
@@ -49,16 +49,16 @@ export async function createOperator(fd: FormData): Promise<OpResult> {
   const fiksa = numOf(fd.get("fiksa"));
   const kpiBonus = numOf(fd.get("kpiBonus"));
 
-  if (fullName.length < 3) return { error: tr(s.locale, { uz: "F.I.Sh. kamida 3 ta harf bo'lsin", ru: "Ф.И.О. — минимум 3 буквы", en: "Full name must be at least 3 letters" }) };
-  if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) return { error: tr(s.locale, { uz: "Email noto'g'ri", ru: "Неверный email", en: "Invalid email" }) };
-  if (password.length < 4) return { error: tr(s.locale, { uz: "Parol kamida 4 ta belgi bo'lsin", ru: "Пароль — минимум 4 символа", en: "Password must be at least 4 characters" }) };
+  if (fullName.length < 3) return { error: tr(s.locale, { uz: "F.I.Sh. kamida 3 ta harf bo'lsin", ru: "Ф.И.О. — минимум 3 буквы", en: "Full name must be at least 3 letters", de: "Der vollständige Name muss mindestens 3 Buchstaben haben" }) };
+  if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) return { error: tr(s.locale, { uz: "Email noto'g'ri", ru: "Неверный email", en: "Invalid email", de: "Ungültige E-Mail" }) };
+  if (password.length < 4) return { error: tr(s.locale, { uz: "Parol kamida 4 ta belgi bo'lsin", ru: "Пароль — минимум 4 символа", en: "Password must be at least 4 characters", de: "Das Passwort muss mindestens 4 Zeichen haben" }) };
 
   const exists = await prisma.user.findUnique({ where: { email }, select: { id: true } });
-  if (exists) return { error: tr(s.locale, { uz: "Bu email allaqachon mavjud", ru: "Этот email уже существует", en: "This email already exists" }) };
+  if (exists) return { error: tr(s.locale, { uz: "Bu email allaqachon mavjud", ru: "Этот email уже существует", en: "This email already exists", de: "Diese E-Mail existiert bereits" }) };
 
   if (sipExtension) {
     const busy = await prisma.user.findUnique({ where: { sipExtension }, select: { id: true } });
-    if (busy) return { error: tr(s.locale, { uz: "Bu SIP raqam band", ru: "Этот SIP номер занят", en: "This SIP extension is taken" }) };
+    if (busy) return { error: tr(s.locale, { uz: "Bu SIP raqam band", ru: "Этот SIP номер занят", en: "This SIP extension is taken", de: "Diese SIP-Nummer ist bereits vergeben" }) };
   }
 
   const u = await prisma.user.create({
@@ -97,16 +97,16 @@ export async function updateOperator(fd: FormData): Promise<OpResult> {
   const fiksa = numOf(fd.get("fiksa"));
   const kpiBonus = numOf(fd.get("kpiBonus"));
 
-  if (!id) return { error: tr(s.locale, { uz: "Operator topilmadi", ru: "Оператор не найден", en: "Operator not found" }) };
-  if (fullName.length < 3) return { error: tr(s.locale, { uz: "F.I.Sh. kamida 3 ta harf bo'lsin", ru: "Ф.И.О. — минимум 3 буквы", en: "Full name must be at least 3 letters" }) };
-  if (password && password.length < 4) return { error: tr(s.locale, { uz: "Parol kamida 4 ta belgi bo'lsin", ru: "Пароль — минимум 4 символа", en: "Password must be at least 4 characters" }) };
+  if (!id) return { error: tr(s.locale, { uz: "Operator topilmadi", ru: "Оператор не найден", en: "Operator not found", de: "Operator nicht gefunden" }) };
+  if (fullName.length < 3) return { error: tr(s.locale, { uz: "F.I.Sh. kamida 3 ta harf bo'lsin", ru: "Ф.И.О. — минимум 3 буквы", en: "Full name must be at least 3 letters", de: "Der vollständige Name muss mindestens 3 Buchstaben haben" }) };
+  if (password && password.length < 4) return { error: tr(s.locale, { uz: "Parol kamida 4 ta belgi bo'lsin", ru: "Пароль — минимум 4 символа", en: "Password must be at least 4 characters", de: "Das Passwort muss mindestens 4 Zeichen haben" }) };
 
   const cur = await prisma.user.findUnique({ where: { id }, select: { id: true, role: true, sipExtension: true } });
-  if (!cur || cur.role !== ROLES.OPERATOR) return { error: tr(s.locale, { uz: "Operator topilmadi", ru: "Оператор не найден", en: "Operator not found" }) };
+  if (!cur || cur.role !== ROLES.OPERATOR) return { error: tr(s.locale, { uz: "Operator topilmadi", ru: "Оператор не найден", en: "Operator not found", de: "Operator nicht gefunden" }) };
 
   if (sipExtension && sipExtension !== cur.sipExtension) {
     const busy = await prisma.user.findUnique({ where: { sipExtension }, select: { id: true } });
-    if (busy) return { error: tr(s.locale, { uz: "Bu SIP raqam band", ru: "Этот SIP номер занят", en: "This SIP extension is taken" }) };
+    if (busy) return { error: tr(s.locale, { uz: "Bu SIP raqam band", ru: "Этот SIP номер занят", en: "This SIP extension is taken", de: "Diese SIP-Nummer ist bereits vergeben" }) };
   }
 
   await prisma.user.update({
@@ -137,8 +137,8 @@ export async function archiveOperator(fd: FormData): Promise<OpResult> {
   const id = txt(fd, "id");
   const reason = txt(fd, "reason") || null;
   const cur = await prisma.user.findUnique({ where: { id }, select: { id: true, role: true, fullName: true } });
-  if (!cur || cur.role !== ROLES.OPERATOR) return { error: tr(s.locale, { uz: "Operator topilmadi", ru: "Оператор не найден", en: "Operator not found" }) };
-  if (id === s.userId) return { error: tr(s.locale, { uz: "O'zingizni o'chira olmaysiz", ru: "Нельзя удалить себя", en: "You cannot remove yourself" }) };
+  if (!cur || cur.role !== ROLES.OPERATOR) return { error: tr(s.locale, { uz: "Operator topilmadi", ru: "Оператор не найден", en: "Operator not found", de: "Operator nicht gefunden" }) };
+  if (id === s.userId) return { error: tr(s.locale, { uz: "O'zingizni o'chira olmaysiz", ru: "Нельзя удалить себя", en: "You cannot remove yourself", de: "Sie können sich nicht selbst entfernen" }) };
 
   await prisma.user.update({ where: { id }, data: { isActive: false, archivedAt: new Date(), archiveReason: reason } });
   await writeAudit({ actorId: s.userId, action: "DELETE", entityType: "User", entityId: id, oldValue: { fullName: cur.fullName } });
@@ -159,8 +159,8 @@ export async function assignOperatorTask(fd: FormData): Promise<OpResult> {
   const priority = ["LOW", "NORMAL", "HIGH"].includes(txt(fd, "priority")) ? txt(fd, "priority") : "NORMAL";
   const due = txt(fd, "dueAt");
 
-  if (!id) return { error: tr(s.locale, { uz: "Operator topilmadi", ru: "Оператор не найден", en: "Operator not found" }) };
-  if (title.length < 3) return { error: tr(s.locale, { uz: "Sarlavha kamida 3 ta harf bo'lsin", ru: "Заголовок — минимум 3 буквы", en: "Title must be at least 3 letters" }) };
+  if (!id) return { error: tr(s.locale, { uz: "Operator topilmadi", ru: "Оператор не найден", en: "Operator not found", de: "Operator nicht gefunden" }) };
+  if (title.length < 3) return { error: tr(s.locale, { uz: "Sarlavha kamida 3 ta harf bo'lsin", ru: "Заголовок — минимум 3 буквы", en: "Title must be at least 3 letters", de: "Der Titel muss mindestens 3 Buchstaben haben" }) };
 
   const t = await prisma.task.create({
     data: {
@@ -193,8 +193,8 @@ export async function sendOperatorNotification(fd: FormData): Promise<OpResult> 
   const body = txt(fd, "body") || undefined;
   const event = txt(fd, "event") || "message";
 
-  if (!id) return { error: tr(s.locale, { uz: "Operator topilmadi", ru: "Оператор не найден", en: "Operator not found" }) };
-  if (title.length < 3) return { error: tr(s.locale, { uz: "Sarlavha kamida 3 ta harf bo'lsin", ru: "Заголовок — минимум 3 буквы", en: "Title must be at least 3 letters" }) };
+  if (!id) return { error: tr(s.locale, { uz: "Operator topilmadi", ru: "Оператор не найден", en: "Operator not found", de: "Operator nicht gefunden" }) };
+  if (title.length < 3) return { error: tr(s.locale, { uz: "Sarlavha kamida 3 ta harf bo'lsin", ru: "Заголовок — минимум 3 буквы", en: "Title must be at least 3 letters", de: "Der Titel muss mindestens 3 Buchstaben haben" }) };
 
   await notify({ userId: id, title, body, event });
   refresh();

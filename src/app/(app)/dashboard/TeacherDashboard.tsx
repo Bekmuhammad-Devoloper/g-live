@@ -10,6 +10,7 @@ const WD: Record<Locale, string[]> = {
   uz: ["", "Du", "Se", "Ch", "Pa", "Ju", "Sh", "Ya"],
   ru: ["", "Пн", "Вт", "Ср", "Чт", "Пт", "Сб", "Вс"],
   en: ["", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"],
+  de: ["", "Mo", "Di", "Mi", "Do", "Fr", "Sa", "So"],
 };
 const toMin = (t: string | null) => { if (!t) return null; const [h, m] = t.split(":").map(Number); return h * 60 + (m || 0); };
 const daysLabel = (wd: string | null, locale: Locale) => (wd ?? "").split(",").filter(Boolean).map((d) => WD[locale][+d]).join(", ");
@@ -46,11 +47,11 @@ export default async function TeacherDashboard({ userId, locale }: { userId: str
     <div className="space-y-5">
       {/* KPI kartalar */}
       <div className="grid grid-cols-2 gap-4 lg:grid-cols-5">
-        <StatCard label={tr(locale, { uz: "Mening guruhlarim", ru: "Мои группы", en: "My groups" })} value={groups.length} tone="brand" icon="layers" />
-        <StatCard label={tr(locale, { uz: "Jami o'quvchilar", ru: "Всего учеников", en: "Total students" })} value={totalStudents} tone="green" icon="graduation" />
-        <StatCard label={tr(locale, { uz: "Bugungi darslar", ru: "Занятия сегодня", en: "Today's lessons" })} value={todayGroups.length} icon="calendar" />
-        <StatCard label={tr(locale, { uz: "Haftalik darslar", ru: "Занятий в неделю", en: "Weekly lessons" })} value={weekLessons} tone="amber" icon="clock" />
-        <StatCard label={tr(locale, { uz: "Oylik maosh", ru: "Месячная зарплата", en: "Monthly salary" })} value={formatMoney(salary, locale)} tone="brand" icon="wallet" />
+        <StatCard label={tr(locale, { uz: "Mening guruhlarim", ru: "Мои группы", en: "My groups", de: "Meine Gruppen" })} value={groups.length} tone="brand" icon="layers" />
+        <StatCard label={tr(locale, { uz: "Jami o'quvchilar", ru: "Всего учеников", en: "Total students", de: "Schüler insgesamt" })} value={totalStudents} tone="green" icon="graduation" />
+        <StatCard label={tr(locale, { uz: "Bugungi darslar", ru: "Занятия сегодня", en: "Today's lessons", de: "Heutiger Unterricht" })} value={todayGroups.length} icon="calendar" />
+        <StatCard label={tr(locale, { uz: "Haftalik darslar", ru: "Занятий в неделю", en: "Weekly lessons", de: "Wöchentlicher Unterricht" })} value={weekLessons} tone="amber" icon="clock" />
+        <StatCard label={tr(locale, { uz: "Oylik maosh", ru: "Месячная зарплата", en: "Monthly salary", de: "Monatsgehalt" })} value={formatMoney(salary, locale)} tone="brand" icon="wallet" />
       </div>
 
       <div className="grid gap-5 lg:grid-cols-3 lg:items-start">
@@ -59,14 +60,14 @@ export default async function TeacherDashboard({ userId, locale }: { userId: str
           <div className="rounded-2xl border border-slate-200/70 bg-white p-5 shadow-card dark:border-slate-800 dark:bg-slate-900">
             <div className="mb-3 flex items-center justify-between">
               <h3 className="flex items-center gap-2 text-sm font-semibold text-slate-700 dark:text-slate-200">
-                <Icon name="calendar" className="h-4 w-4 text-brand-500" /> {tr(locale, { uz: "Bugungi darslar", ru: "Занятия сегодня", en: "Today's lessons" })}
+                <Icon name="calendar" className="h-4 w-4 text-brand-500" /> {tr(locale, { uz: "Bugungi darslar", ru: "Занятия сегодня", en: "Today's lessons", de: "Heutiger Unterricht" })}
               </h3>
-              <Link href="/schedule" className="text-xs font-semibold text-brand-600 hover:underline dark:text-brand-300">{tr(locale, { uz: "To'liq jadval", ru: "Всё расписание", en: "Full schedule" })} →</Link>
+              <Link href="/schedule" className="text-xs font-semibold text-brand-600 hover:underline dark:text-brand-300">{tr(locale, { uz: "To'liq jadval", ru: "Всё расписание", en: "Full schedule", de: "Vollständiger Stundenplan" })} →</Link>
             </div>
             {todayGroups.length === 0 ? (
               <div className="flex min-h-[200px] flex-col items-center justify-center text-center">
                 <div className="text-4xl opacity-30">🎉</div>
-                <p className="mt-2 text-sm text-slate-400">{tr(locale, { uz: "Bugun darsingiz yo'q", ru: "Сегодня занятий нет", en: "No lessons today" })}</p>
+                <p className="mt-2 text-sm text-slate-400">{tr(locale, { uz: "Bugun darsingiz yo'q", ru: "Сегодня занятий нет", en: "No lessons today", de: "Heute kein Unterricht" })}</p>
               </div>
             ) : (
               <ul className="space-y-2">
@@ -86,11 +87,11 @@ export default async function TeacherDashboard({ userId, locale }: { userId: str
                         <div className="min-w-0 flex-1">
                           <div className="flex items-center gap-2">
                             <span className="truncate font-semibold text-slate-800 dark:text-slate-100">{g.name}</span>
-                            {live && <span className="shrink-0 rounded-full bg-emerald-500/15 px-2 py-0.5 text-[10px] font-bold text-emerald-600 dark:text-emerald-400">{tr(locale, { uz: "hozir", ru: "сейчас", en: "now" })}</span>}
+                            {live && <span className="shrink-0 rounded-full bg-emerald-500/15 px-2 py-0.5 text-[10px] font-bold text-emerald-600 dark:text-emerald-400">{tr(locale, { uz: "hozir", ru: "сейчас", en: "now", de: "jetzt" })}</span>}
                           </div>
                           <div className="mt-0.5 truncate text-xs text-slate-400">{[g.program.name, g.levelCode, g.room].filter(Boolean).join(" · ")}</div>
                         </div>
-                        <span className="shrink-0 rounded-full bg-slate-100 px-2.5 py-1 text-xs font-semibold text-slate-500 dark:bg-slate-800 dark:text-slate-300">{g._count.students} {tr(locale, { uz: "o'quvchi", ru: "уч.", en: "st." })}</span>
+                        <span className="shrink-0 rounded-full bg-slate-100 px-2.5 py-1 text-xs font-semibold text-slate-500 dark:bg-slate-800 dark:text-slate-300">{g._count.students} {tr(locale, { uz: "o'quvchi", ru: "уч.", en: "st.", de: "Sch." })}</span>
                       </Link>
                     </li>
                   );
@@ -101,11 +102,11 @@ export default async function TeacherDashboard({ userId, locale }: { userId: str
 
           {/* Mening guruhlarim — Bugungi darslar tagida, bir xil kenglikda */}
           <div>
-            <h3 className="mb-3 text-sm font-semibold text-slate-700 dark:text-slate-200">{tr(locale, { uz: "Mening guruhlarim", ru: "Мои группы", en: "My groups" })}</h3>
+            <h3 className="mb-3 text-sm font-semibold text-slate-700 dark:text-slate-200">{tr(locale, { uz: "Mening guruhlarim", ru: "Мои группы", en: "My groups", de: "Meine Gruppen" })}</h3>
             {groups.length === 0 ? (
               <div className="rounded-2xl border border-dashed border-slate-300 py-10 text-center dark:border-slate-700">
                 <div className="text-3xl opacity-30">📚</div>
-                <p className="mt-2 text-sm text-slate-400">{tr(locale, { uz: "Sizga guruh biriktirilmagan", ru: "Вам не назначены группы", en: "No groups assigned to you" })}</p>
+                <p className="mt-2 text-sm text-slate-400">{tr(locale, { uz: "Sizga guruh biriktirilmagan", ru: "Вам не назначены группы", en: "No groups assigned to you", de: "Ihnen sind keine Gruppen zugewiesen" })}</p>
               </div>
             ) : (
               <div className="grid gap-4 sm:grid-cols-2">
@@ -135,14 +136,14 @@ export default async function TeacherDashboard({ userId, locale }: { userId: str
 
         {/* Tezkor havolalar */}
         <div className="rounded-2xl border border-slate-200/70 bg-white p-5 shadow-card dark:border-slate-800 dark:bg-slate-900">
-          <h3 className="mb-3 text-sm font-semibold text-slate-700 dark:text-slate-200">{tr(locale, { uz: "Tezkor havolalar", ru: "Быстрые ссылки", en: "Quick links" })}</h3>
+          <h3 className="mb-3 text-sm font-semibold text-slate-700 dark:text-slate-200">{tr(locale, { uz: "Tezkor havolalar", ru: "Быстрые ссылки", en: "Quick links", de: "Schnellzugriff" })}</h3>
           <div className="grid grid-cols-2 gap-2.5">
-            <QuickLink href="/schedule" icon="calendar" label={tr(locale, { uz: "Dars jadvali", ru: "Расписание", en: "Schedule" })} />
-            <QuickLink href="/students" icon="graduation" label={tr(locale, { uz: "O'quvchilar", ru: "Ученики", en: "Students" })} />
-            <QuickLink href="/education" icon="book" label={tr(locale, { uz: "O'quv bo'limi", ru: "Учебное", en: "Education" })} />
-            <QuickLink href="/tests" icon="filecheck" label={tr(locale, { uz: "Blok test", ru: "Блок-тест", en: "Block test" })} />
-            <QuickLink href="/tasks" icon="clipboard" label={tr(locale, { uz: "Topshiriqlar", ru: "Задачи", en: "Tasks" })} />
-            <QuickLink href="/reminders" icon="clock" label={tr(locale, { uz: "Eslatma", ru: "Напоминания", en: "Reminders" })} />
+            <QuickLink href="/schedule" icon="calendar" label={tr(locale, { uz: "Dars jadvali", ru: "Расписание", en: "Schedule", de: "Stundenplan" })} />
+            <QuickLink href="/students" icon="graduation" label={tr(locale, { uz: "O'quvchilar", ru: "Ученики", en: "Students", de: "Schüler" })} />
+            <QuickLink href="/education" icon="book" label={tr(locale, { uz: "O'quv bo'limi", ru: "Учебное", en: "Education", de: "Unterricht" })} />
+            <QuickLink href="/tests" icon="filecheck" label={tr(locale, { uz: "Blok test", ru: "Блок-тест", en: "Block test", de: "Blocktest" })} />
+            <QuickLink href="/tasks" icon="clipboard" label={tr(locale, { uz: "Topshiriqlar", ru: "Задачи", en: "Tasks", de: "Aufgaben" })} />
+            <QuickLink href="/reminders" icon="clock" label={tr(locale, { uz: "Eslatma", ru: "Напоминания", en: "Reminders", de: "Erinnerungen" })} />
           </div>
         </div>
       </div>

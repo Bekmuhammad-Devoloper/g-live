@@ -33,33 +33,33 @@ export default async function ReportsPage() {
 
   return (
     <>
-      <PageHeader title={t("reports.title")} subtitle={tr(s.locale, { uz: "Real vaqt operatsion va moliyaviy ko'rsatkichlar", ru: "Операционные и финансовые показатели в реальном времени", en: "Real-time operational and financial metrics" })} />
+      <PageHeader title={t("reports.title")} subtitle={tr(s.locale, { uz: "Real vaqt operatsion va moliyaviy ko'rsatkichlar", ru: "Операционные и финансовые показатели в реальном времени", en: "Real-time operational and financial metrics", de: "Betriebs- und Finanzkennzahlen in Echtzeit" })} />
 
       <div className="mb-6 grid grid-cols-2 gap-4 lg:grid-cols-4">
-        <StatCard label={t("reports.activeStudents")} value={activeStudents} hint={`${tr(s.locale, { uz: "Jami", ru: "Всего", en: "Total" })}: ${totalStudents}`} tone="brand" icon="users" />
-        <StatCard label={t("reports.leads")} value={leads} hint={`${tr(s.locale, { uz: "Konversiya", ru: "Конверсия", en: "Conversion" })}: ${conversion}%`} icon="chart" />
+        <StatCard label={t("reports.activeStudents")} value={activeStudents} hint={`${tr(s.locale, { uz: "Jami", ru: "Всего", en: "Total", de: "Gesamt" })}: ${totalStudents}`} tone="brand" icon="users" />
+        <StatCard label={t("reports.leads")} value={leads} hint={`${tr(s.locale, { uz: "Konversiya", ru: "Конверсия", en: "Conversion", de: "Konversion" })}: ${conversion}%`} icon="chart" />
         <StatCard label={t("reports.groups")} value={groups} icon="book" />
         <StatCard label={t("reports.revenue")} value={formatMoney(paidAgg._sum.amount ?? 0, s.locale)} tone="green" icon="wallet" />
       </div>
 
       <div className="mb-6 grid gap-3 md:grid-cols-2 xl:grid-cols-3">
-        <HubCard href="/reports/leads" icon="download" title={tr(s.locale, { uz: "Lidlar hisoboti", ru: "Отчёт по лидам", en: "Leads report" })} desc={tr(s.locale, { uz: "Sana oralig'i bo'yicha lidlar soni va grafik", ru: "Количество лидов и график по диапазону дат", en: "Lead count and chart by date range" })} />
-        {canFinance && <HubCard href="/reports/payments" icon="wallet" title={tr(s.locale, { uz: "To'lovlar hisoboti", ru: "Отчёт по платежам", en: "Payments report" })} desc={tr(s.locale, { uz: "Tushum (kirim) sana oralig'i bo'yicha", ru: "Поступления (доход) по диапазону дат", en: "Revenue (income) by date range" })} />}
+        <HubCard href="/reports/leads" icon="download" title={tr(s.locale, { uz: "Lidlar hisoboti", ru: "Отчёт по лидам", en: "Leads report", de: "Lead-Bericht" })} desc={tr(s.locale, { uz: "Sana oralig'i bo'yicha lidlar soni va grafik", ru: "Количество лидов и график по диапазону дат", en: "Lead count and chart by date range", de: "Anzahl der Leads und Diagramm nach Datumsbereich" })} />
+        {canFinance && <HubCard href="/reports/payments" icon="wallet" title={tr(s.locale, { uz: "To'lovlar hisoboti", ru: "Отчёт по платежам", en: "Payments report", de: "Zahlungsbericht" })} desc={tr(s.locale, { uz: "Tushum (kirim) sana oralig'i bo'yicha", ru: "Поступления (доход) по диапазону дат", en: "Revenue (income) by date range", de: "Einnahmen (Umsatz) nach Datumsbereich" })} />}
         {/* Administrator konversiya hisobotini ko'rmaydi (sahifa ham uni to'sadi) */}
         {s.role !== ROLES.ADMIN && (
-          <HubCard href="/reports/conversion" icon="chart" title={tr(s.locale, { uz: "Konversiya hisoboti", ru: "Отчёт по конверсии", en: "Conversion report" })} desc={tr(s.locale, { uz: "Savdo voronkasi va konversiya ko'rsatkichlari", ru: "Воронка продаж и показатели конверсии", en: "Sales funnel and conversion metrics" })} />
+          <HubCard href="/reports/conversion" icon="chart" title={tr(s.locale, { uz: "Konversiya hisoboti", ru: "Отчёт по конверсии", en: "Conversion report", de: "Konversionsbericht" })} desc={tr(s.locale, { uz: "Savdo voronkasi va konversiya ko'rsatkichlari", ru: "Воронка продаж и показатели конверсии", en: "Sales funnel and conversion metrics", de: "Verkaufstrichter und Konversionskennzahlen" })} />
         )}
         {/* Davomat analitikasi NAZORAT bo'limida turadi — bu yerda takrorlanmaydi.
             O'qituvchida Nazorat menyusi yo'q, shuning uchun unga ko'rsatiladi. */}
         {s.role === ROLES.TEACHER && (
-          <HubCard href="/reports/attendance" icon="check" title={tr(s.locale, { uz: "Davomat hisoboti", ru: "Отчёт по посещаемости", en: "Attendance report" })} desc={tr(s.locale, { uz: "Guruhlar bo'yicha davomat tahlili", ru: "Анализ посещаемости по группам", en: "Attendance analysis by group" })} />
+          <HubCard href="/reports/attendance" icon="check" title={tr(s.locale, { uz: "Davomat hisoboti", ru: "Отчёт по посещаемости", en: "Attendance report", de: "Anwesenheitsbericht" })} desc={tr(s.locale, { uz: "Guruhlar bo'yicha davomat tahlili", ru: "Анализ посещаемости по группам", en: "Attendance analysis by group", de: "Anwesenheitsanalyse nach Gruppe" })} />
         )}
-        <HubCard href="/reports/sms" icon="mail" title={tr(s.locale, { uz: "Xabarlar jurnali", ru: "Журнал сообщений", en: "Messages log" })} desc={tr(s.locale, { uz: "Yuborilgan SMS/Telegram/Push xabarlar", ru: "Отправленные SMS/Telegram/Push сообщения", en: "Sent SMS/Telegram/Push messages" })} />
-        <HubCard href="/reports/calls" icon="phone" title={tr(s.locale, { uz: "Qo'ng'iroqlar jurnali", ru: "Журнал звонков", en: "Calls log" })} desc={tr(s.locale, { uz: "Lidlar bilan telefon aloqalari", ru: "Телефонные контакты с лидами", en: "Phone contacts with leads" })} />
+        <HubCard href="/reports/sms" icon="mail" title={tr(s.locale, { uz: "Xabarlar jurnali", ru: "Журнал сообщений", en: "Messages log", de: "Nachrichtenprotokoll" })} desc={tr(s.locale, { uz: "Yuborilgan SMS/Telegram/Push xabarlar", ru: "Отправленные SMS/Telegram/Push сообщения", en: "Sent SMS/Telegram/Push messages", de: "Gesendete SMS/Telegram/Push-Nachrichten" })} />
+        <HubCard href="/reports/calls" icon="phone" title={tr(s.locale, { uz: "Qo'ng'iroqlar jurnali", ru: "Журнал звонков", en: "Calls log", de: "Anrufprotokoll" })} desc={tr(s.locale, { uz: "Lidlar bilan telefon aloqalari", ru: "Телефонные контакты с лидами", en: "Phone contacts with leads", de: "Telefonkontakte mit Leads" })} />
       </div>
 
       <Card>
-        <h3 className="mb-4 text-sm font-semibold text-slate-700">{tr(s.locale, { uz: "Savdo voronkasi", ru: "Воронка продаж", en: "Sales funnel" })}</h3>
+        <h3 className="mb-4 text-sm font-semibold text-slate-700">{tr(s.locale, { uz: "Savdo voronkasi", ru: "Воронка продаж", en: "Sales funnel", de: "Verkaufstrichter" })}</h3>
         <div className="space-y-2.5">
           {LEAD_STAGES.map((st) => {
             const c = stageCount(st);

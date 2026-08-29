@@ -11,13 +11,13 @@ import { Icon } from "../_components/Icon";
 // ─── Sotuv bo'limi boshlig'i (ROP) command-center dashboard ───
 // Imkon CRM ROP dashboardidan moslashtirilgan — GL EDU lead/operator/call ma'lumotidan.
 
-type TL = { uz: string; ru: string; en: string };
+type TL = { uz: string; ru: string; en: string; de: string };
 type Period = "today" | "week" | "month" | "year";
 const PERIODS: { key: Period; label: TL; short: TL }[] = [
-  { key: "today", label: { uz: "Bugun", ru: "Сегодня", en: "Today" }, short: { uz: "bugun", ru: "сегодня", en: "today" } },
-  { key: "week", label: { uz: "Hafta", ru: "Неделя", en: "Week" }, short: { uz: "hafta", ru: "неделя", en: "week" } },
-  { key: "month", label: { uz: "Oy", ru: "Месяц", en: "Month" }, short: { uz: "oy", ru: "месяц", en: "month" } },
-  { key: "year", label: { uz: "Yil", ru: "Год", en: "Year" }, short: { uz: "yil", ru: "год", en: "year" } },
+  { key: "today", label: { uz: "Bugun", ru: "Сегодня", en: "Today", de: "Heute" }, short: { uz: "bugun", ru: "сегодня", en: "today", de: "heute" } },
+  { key: "week", label: { uz: "Hafta", ru: "Неделя", en: "Week", de: "Woche" }, short: { uz: "hafta", ru: "неделя", en: "week", de: "Woche" } },
+  { key: "month", label: { uz: "Oy", ru: "Месяц", en: "Month", de: "Monat" }, short: { uz: "oy", ru: "месяц", en: "month", de: "Monat" } },
+  { key: "year", label: { uz: "Yil", ru: "Год", en: "Year", de: "Jahr" }, short: { uz: "yil", ru: "год", en: "year", de: "Jahr" } },
 ];
 
 const NEW_STAGES = ["NEW"];
@@ -44,7 +44,7 @@ export default async function RopDashboardPage({ searchParams }: { searchParams:
   const s = await requireSession();
   const locale = s.locale as Locale;
   if (!canSeeTeamReports(s.role)) {
-    return <Forbidden title={tr(locale, { uz: "Kirish taqiqlangan", ru: "Доступ запрещён", en: "Access denied" })} body={tr(locale, { uz: "Bu bo'lim savdo bo'limi uchun.", ru: "Этот раздел для отдела продаж.", en: "This section is for the sales department." })} />;
+    return <Forbidden title={tr(locale, { uz: "Kirish taqiqlangan", ru: "Доступ запрещён", en: "Access denied", de: "Zugriff verweigert" })} body={tr(locale, { uz: "Bu bo'lim savdo bo'limi uchun.", ru: "Этот раздел для отдела продаж.", en: "This section is for the sales department.", de: "Dieser Bereich ist für die Vertriebsabteilung." })} />;
   }
   const sp = await searchParams;
   const period = (PERIODS.find((p) => p.key === sp.period)?.key ?? "today") as Period;
@@ -93,13 +93,13 @@ export default async function RopDashboardPage({ searchParams }: { searchParams:
   const recentLeads = leads.slice(0, 7);
 
   const QUICK = [
-    { href: "/crm", icon: "download", title: tr(locale, { uz: "Lidlar", ru: "Лиды", en: "Leads" }), desc: tr(locale, { uz: "Buyurtmalar bazasi", ru: "База заявок", en: "Orders database" }) },
-    { href: "/rop/operators", icon: "headphones", title: tr(locale, { uz: "Operatorlar", ru: "Операторы", en: "Operators" }), desc: tr(locale, { uz: "Jamoa nazorati", ru: "Контроль команды", en: "Team monitoring" }) },
-    { href: "/rop/kpi-settings", icon: "trophy", title: "KPI", desc: tr(locale, { uz: "Sozlamalar & reyting", ru: "Настройки и рейтинг", en: "Settings & rating" }) },
-    { href: "/reports/calls", icon: "phone", title: tr(locale, { uz: "Qo'ng'iroqlar", ru: "Звонки", en: "Calls" }), desc: tr(locale, { uz: "Qo'ng'iroqlar markazi", ru: "Центр звонков", en: "Call center" }) },
-    { href: "/links", icon: "link", title: tr(locale, { uz: "Havolalar", ru: "Ссылки", en: "Links" }), desc: tr(locale, { uz: "Maxsus linklar", ru: "Специальные ссылки", en: "Special links" }) },
-    { href: "/reports/funnel", icon: "megaphone", title: tr(locale, { uz: "Voronka", ru: "Воронка", en: "Funnel" }), desc: tr(locale, { uz: "Sotuv voronkasi", ru: "Воронка продаж", en: "Sales funnel" }) },
-    { href: "/marketing", icon: "bell", title: tr(locale, { uz: "Xabarlar", ru: "Сообщения", en: "Messages" }), desc: "Marketing" },
+    { href: "/crm", icon: "download", title: tr(locale, { uz: "Lidlar", ru: "Лиды", en: "Leads", de: "Leads" }), desc: tr(locale, { uz: "Buyurtmalar bazasi", ru: "База заявок", en: "Orders database", de: "Bestellungsdatenbank" }) },
+    { href: "/rop/operators", icon: "headphones", title: tr(locale, { uz: "Operatorlar", ru: "Операторы", en: "Operators", de: "Operatoren" }), desc: tr(locale, { uz: "Jamoa nazorati", ru: "Контроль команды", en: "Team monitoring", de: "Teamüberwachung" }) },
+    { href: "/rop/kpi-settings", icon: "trophy", title: "KPI", desc: tr(locale, { uz: "Sozlamalar & reyting", ru: "Настройки и рейтинг", en: "Settings & rating", de: "Einstellungen & Rangliste" }) },
+    { href: "/reports/calls", icon: "phone", title: tr(locale, { uz: "Qo'ng'iroqlar", ru: "Звонки", en: "Calls", de: "Anrufe" }), desc: tr(locale, { uz: "Qo'ng'iroqlar markazi", ru: "Центр звонков", en: "Call center", de: "Anrufzentrale" }) },
+    { href: "/links", icon: "link", title: tr(locale, { uz: "Havolalar", ru: "Ссылки", en: "Links", de: "Links" }), desc: tr(locale, { uz: "Maxsus linklar", ru: "Специальные ссылки", en: "Special links", de: "Spezielle Links" }) },
+    { href: "/reports/funnel", icon: "megaphone", title: tr(locale, { uz: "Voronka", ru: "Воронка", en: "Funnel", de: "Trichter" }), desc: tr(locale, { uz: "Sotuv voronkasi", ru: "Воронка продаж", en: "Sales funnel", de: "Verkaufstrichter" }) },
+    { href: "/marketing", icon: "bell", title: tr(locale, { uz: "Xabarlar", ru: "Сообщения", en: "Messages", de: "Nachrichten" }), desc: "Marketing" },
   ];
 
   return (
@@ -111,8 +111,8 @@ export default async function RopDashboardPage({ searchParams }: { searchParams:
             <Icon name="chart" className="h-6 w-6" />
           </div>
           <div>
-            <h1 className="text-[22px] font-bold tracking-tight text-slate-900 dark:text-slate-100">{tr(locale, { uz: "ROP Dashboard", ru: "Панель РОП", en: "ROP Dashboard" })}</h1>
-            <p className="text-sm text-slate-500 dark:text-slate-400">{tr(locale, { uz: "Operatorlar nazorati va lidlar boshqaruvi", ru: "Контроль операторов и управление лидами", en: "Operator monitoring and lead management" })}</p>
+            <h1 className="text-[22px] font-bold tracking-tight text-slate-900 dark:text-slate-100">{tr(locale, { uz: "ROP Dashboard", ru: "Панель РОП", en: "ROP Dashboard", de: "ROP-Dashboard" })}</h1>
+            <p className="text-sm text-slate-500 dark:text-slate-400">{tr(locale, { uz: "Operatorlar nazorati va lidlar boshqaruvi", ru: "Контроль операторов и управление лидами", en: "Operator monitoring and lead management", de: "Operatorenüberwachung und Lead-Verwaltung" })}</p>
           </div>
         </div>
         <div className="flex items-center gap-1.5 rounded-xl border border-slate-200 bg-slate-50/60 p-1 dark:border-slate-700 dark:bg-slate-800/40">
@@ -122,7 +122,7 @@ export default async function RopDashboardPage({ searchParams }: { searchParams:
               {tr(locale, p.label)}
             </Link>
           ))}
-          <Link href={`/rop?period=${period}`} title={tr(locale, { uz: "Yangilash", ru: "Обновить", en: "Refresh" })} className="ml-1 flex h-8 w-8 items-center justify-center rounded-lg text-slate-400 transition hover:bg-slate-100 hover:text-slate-600 dark:hover:bg-slate-700">
+          <Link href={`/rop?period=${period}`} title={tr(locale, { uz: "Yangilash", ru: "Обновить", en: "Refresh", de: "Aktualisieren" })} className="ml-1 flex h-8 w-8 items-center justify-center rounded-lg text-slate-400 transition hover:bg-slate-100 hover:text-slate-600 dark:hover:bg-slate-700">
             <Icon name="refresh" className="h-4 w-4" />
           </Link>
         </div>
@@ -130,10 +130,10 @@ export default async function RopDashboardPage({ searchParams }: { searchParams:
 
       {/* KPI tiles */}
       <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-4">
-        <RopTile icon="download" tone="brand" value={newLeads} label={tr(locale, { uz: "Yangi lidlar", ru: "Новые лиды", en: "New leads" })} delta={`+${createdInPeriod} ${periodShort}`} deltaTone="brand" />
-        <RopTile icon="headphones" tone="amber" value={operators.length} label={tr(locale, { uz: "Faol operatorlar", ru: "Активные операторы", en: "Active operators" })} delta={tr(locale, { uz: `${assigned} biriktirilgan`, ru: `${assigned} назначено`, en: `${assigned} assigned` })} deltaTone="slate" />
-        <RopTile icon="check" tone="green" value={won} label={tr(locale, { uz: "Muvaffaqiyatli", ru: "Успешные", en: "Successful" })} delta={tr(locale, { uz: `${conv}% konversiya`, ru: `${conv}% конверсия`, en: `${conv}% conversion` })} deltaTone={conv >= 30 ? "green" : "red"} />
-        <RopTile icon="arrowUpRight" tone="violet" value={adminSent} label={tr(locale, { uz: "To'lovga yuborilgan", ru: "Отправлено на оплату", en: "Sent for payment" })} delta={tr(locale, { uz: `${reprocess} qayta ishlash`, ru: `${reprocess} в доработке`, en: `${reprocess} reprocessing` })} deltaTone="slate" />
+        <RopTile icon="download" tone="brand" value={newLeads} label={tr(locale, { uz: "Yangi lidlar", ru: "Новые лиды", en: "New leads", de: "Neue Leads" })} delta={`+${createdInPeriod} ${periodShort}`} deltaTone="brand" />
+        <RopTile icon="headphones" tone="amber" value={operators.length} label={tr(locale, { uz: "Faol operatorlar", ru: "Активные операторы", en: "Active operators", de: "Aktive Operatoren" })} delta={tr(locale, { uz: `${assigned} biriktirilgan`, ru: `${assigned} назначено`, en: `${assigned} assigned`, de: `${assigned} zugewiesen` })} deltaTone="slate" />
+        <RopTile icon="check" tone="green" value={won} label={tr(locale, { uz: "Muvaffaqiyatli", ru: "Успешные", en: "Successful", de: "Erfolgreich" })} delta={tr(locale, { uz: `${conv}% konversiya`, ru: `${conv}% конверсия`, en: `${conv}% conversion`, de: `${conv}% Konversion` })} deltaTone={conv >= 30 ? "green" : "red"} />
+        <RopTile icon="arrowUpRight" tone="violet" value={adminSent} label={tr(locale, { uz: "To'lovga yuborilgan", ru: "Отправлено на оплату", en: "Sent for payment", de: "Zur Zahlung gesendet" })} delta={tr(locale, { uz: `${reprocess} qayta ishlash`, ru: `${reprocess} в доработке`, en: `${reprocess} reprocessing`, de: `${reprocess} in Bearbeitung` })} deltaTone="slate" />
       </div>
 
       {/* Top operatorlar + So'nggi lidlar */}
@@ -141,19 +141,19 @@ export default async function RopDashboardPage({ searchParams }: { searchParams:
         {/* Top operatorlar */}
         <div className="overflow-hidden rounded-2xl border border-slate-200/70 bg-white shadow-card dark:border-slate-800 dark:bg-slate-900">
           <div className="flex items-center justify-between border-b border-slate-200/70 px-5 py-4 dark:border-slate-800">
-            <h2 className="flex items-center gap-2 text-base font-semibold text-slate-700 dark:text-slate-200"><Icon name="trophy" className="h-5 w-5 text-amber-500" /> {tr(locale, { uz: "Top Operatorlar", ru: "Топ операторы", en: "Top Operators" })}</h2>
-            <Link href="/rop/operators" className="text-sm font-medium text-brand-600 hover:underline dark:text-brand-300">{tr(locale, { uz: "Barchasi", ru: "Все", en: "All" })}</Link>
+            <h2 className="flex items-center gap-2 text-base font-semibold text-slate-700 dark:text-slate-200"><Icon name="trophy" className="h-5 w-5 text-amber-500" /> {tr(locale, { uz: "Top Operatorlar", ru: "Топ операторы", en: "Top Operators", de: "Top-Operatoren" })}</h2>
+            <Link href="/rop/operators" className="text-sm font-medium text-brand-600 hover:underline dark:text-brand-300">{tr(locale, { uz: "Barchasi", ru: "Все", en: "All", de: "Alle" })}</Link>
           </div>
           <div className="divide-y divide-slate-100 dark:divide-slate-800">
             {topOperators.length === 0 ? (
-              <div className="px-5 py-10 text-center text-sm text-slate-400">{tr(locale, { uz: "Operatorlar yo'q", ru: "Операторов нет", en: "No operators" })}</div>
+              <div className="px-5 py-10 text-center text-sm text-slate-400">{tr(locale, { uz: "Operatorlar yo'q", ru: "Операторов нет", en: "No operators", de: "Keine Operatoren" })}</div>
             ) : (
               topOperators.map((op, i) => (
                 <div key={op.id} className="flex items-center gap-3 px-5 py-3.5 transition hover:bg-slate-50 dark:hover:bg-slate-800/40">
                   <span className={`flex h-7 w-7 shrink-0 items-center justify-center rounded-full text-xs font-bold ${i === 0 ? "bg-amber-100 text-amber-700 dark:bg-amber-500/20 dark:text-amber-300" : "bg-slate-100 text-slate-500 dark:bg-slate-800 dark:text-slate-400"}`}>{i + 1}</span>
                   <div className="min-w-0 flex-1">
                     <div className="truncate font-medium text-slate-800 dark:text-slate-100">{op.name}</div>
-                    <div className="text-xs text-slate-400">{op.won}/{op.total} {tr(locale, { uz: "lid", ru: "лид", en: "leads" })}</div>
+                    <div className="text-xs text-slate-400">{op.won}/{op.total} {tr(locale, { uz: "lid", ru: "лид", en: "leads", de: "Leads" })}</div>
                   </div>
                   <span className={`text-sm font-bold ${op.conv >= 30 ? "text-emerald-600 dark:text-emerald-400" : op.conv > 0 ? "text-amber-600 dark:text-amber-400" : "text-slate-400"}`}>{op.conv}%</span>
                 </div>
@@ -165,12 +165,12 @@ export default async function RopDashboardPage({ searchParams }: { searchParams:
         {/* So'nggi lidlar */}
         <div className="overflow-hidden rounded-2xl border border-slate-200/70 bg-white shadow-card dark:border-slate-800 dark:bg-slate-900">
           <div className="flex items-center justify-between border-b border-slate-200/70 px-5 py-4 dark:border-slate-800">
-            <h2 className="flex items-center gap-2 text-base font-semibold text-slate-700 dark:text-slate-200"><Icon name="users" className="h-5 w-5 text-brand-500" /> {tr(locale, { uz: "So'nggi lidlar", ru: "Последние лиды", en: "Recent leads" })}</h2>
-            <Link href="/crm" className="text-sm font-medium text-brand-600 hover:underline dark:text-brand-300">{tr(locale, { uz: "Barchasi", ru: "Все", en: "All" })}</Link>
+            <h2 className="flex items-center gap-2 text-base font-semibold text-slate-700 dark:text-slate-200"><Icon name="users" className="h-5 w-5 text-brand-500" /> {tr(locale, { uz: "So'nggi lidlar", ru: "Последние лиды", en: "Recent leads", de: "Neueste Leads" })}</h2>
+            <Link href="/crm" className="text-sm font-medium text-brand-600 hover:underline dark:text-brand-300">{tr(locale, { uz: "Barchasi", ru: "Все", en: "All", de: "Alle" })}</Link>
           </div>
           <div className="divide-y divide-slate-100 dark:divide-slate-800">
             {recentLeads.length === 0 ? (
-              <div className="px-5 py-10 text-center text-sm text-slate-400">{tr(locale, { uz: "Lidlar yo'q", ru: "Лидов нет", en: "No leads" })}</div>
+              <div className="px-5 py-10 text-center text-sm text-slate-400">{tr(locale, { uz: "Lidlar yo'q", ru: "Лидов нет", en: "No leads", de: "Keine Leads" })}</div>
             ) : (
               recentLeads.map((l) => (
                 <Link key={l.id} href={`/crm/${l.id}`} className="flex items-center gap-3 px-5 py-3 transition hover:bg-slate-50 dark:hover:bg-slate-800/40">
@@ -192,7 +192,7 @@ export default async function RopDashboardPage({ searchParams }: { searchParams:
 
       {/* Tezkor havolalar */}
       <div>
-        <h2 className="mb-3 text-base font-semibold text-slate-700 dark:text-slate-200">{tr(locale, { uz: "Tezkor havolalar", ru: "Быстрые ссылки", en: "Quick links" })}</h2>
+        <h2 className="mb-3 text-base font-semibold text-slate-700 dark:text-slate-200">{tr(locale, { uz: "Tezkor havolalar", ru: "Быстрые ссылки", en: "Quick links", de: "Schnellzugriffe" })}</h2>
         <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-7">
           {QUICK.map((q) => (
             <HubCard key={q.title} href={q.href} icon={q.icon} title={q.title} desc={q.desc} />
@@ -201,7 +201,7 @@ export default async function RopDashboardPage({ searchParams }: { searchParams:
       </div>
 
       <p className="text-xs text-slate-400">
-        ℹ️ {tr(locale, { uz: "Bugungi qo'ng'iroqlar", ru: "Звонки сегодня", en: "Calls today" })}: <b className="text-slate-600 dark:text-slate-300">{todayCalls}</b> · {tr(locale, { uz: "Davr", ru: "Период", en: "Period" })}: {tr(locale, PERIODS.find((p) => p.key === period)!.label)} · {tr(locale, { uz: "Muvaffaqiyatli", ru: "Успешные", en: "Successful" })} ({periodShort}): {wonInPeriod}
+        ℹ️ {tr(locale, { uz: "Bugungi qo'ng'iroqlar", ru: "Звонки сегодня", en: "Calls today", de: "Anrufe heute" })}: <b className="text-slate-600 dark:text-slate-300">{todayCalls}</b> · {tr(locale, { uz: "Davr", ru: "Период", en: "Period", de: "Zeitraum" })}: {tr(locale, PERIODS.find((p) => p.key === period)!.label)} · {tr(locale, { uz: "Muvaffaqiyatli", ru: "Успешные", en: "Successful", de: "Erfolgreich" })} ({periodShort}): {wonInPeriod}
       </p>
     </div>
   );

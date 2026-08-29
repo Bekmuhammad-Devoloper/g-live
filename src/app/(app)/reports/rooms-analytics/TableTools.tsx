@@ -38,7 +38,7 @@ export function SortHeader({
       type="button"
       onClick={go}
       className={`inline-flex items-center gap-1 hover:text-brand-600 dark:hover:text-brand-300 ${className ?? ""}`}
-      title={tr(locale, { uz: "Saralash", ru: "Сортировка", en: "Sort" })}
+      title={tr(locale, { uz: "Saralash", ru: "Сортировка", en: "Sort", de: "Sortieren" })}
     >
       <span>{label}</span>
       <Icon
@@ -62,11 +62,11 @@ export function ExportButton({ rows, locale }: { rows: RoomRow[]; locale: Locale
     exportRows(
       "xonalar-analitikasi",
       [
-        { key: "room", label: tr(locale, { uz: "Xona", ru: "Кабинет", en: "Room" }) },
-        { key: "sessions", label: tr(locale, { uz: "Seanslar", ru: "Сеансы", en: "Sessions" }) },
-        { key: "hours", label: tr(locale, { uz: "Soatlar", ru: "Часы", en: "Hours" }) },
-        { key: "days", label: tr(locale, { uz: "Band kunlar", ru: "Занятых дней", en: "Busy days" }) },
-        { key: "groups", label: tr(locale, { uz: "Guruhlar", ru: "Группы", en: "Groups" }) },
+        { key: "room", label: tr(locale, { uz: "Xona", ru: "Кабинет", en: "Room", de: "Raum" }) },
+        { key: "sessions", label: tr(locale, { uz: "Seanslar", ru: "Сеансы", en: "Sessions", de: "Sitzungen" }) },
+        { key: "hours", label: tr(locale, { uz: "Soatlar", ru: "Часы", en: "Hours", de: "Stunden" }) },
+        { key: "days", label: tr(locale, { uz: "Band kunlar", ru: "Занятых дней", en: "Busy days", de: "Belegte Tage" }) },
+        { key: "groups", label: tr(locale, { uz: "Guruhlar", ru: "Группы", en: "Groups", de: "Gruppen" }) },
       ],
       rows.map((r) => ({ room: r.room, sessions: r.sessions, hours: r.hours, days: r.days, groups: r.groups.join("; ") })),
     );

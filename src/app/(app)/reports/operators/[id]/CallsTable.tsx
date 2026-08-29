@@ -19,18 +19,18 @@ const fmtDur = (sec: number) => {
   return h > 0 ? `${h}:${p2(m)}:${p2(sec % 60)}` : `${m}:${p2(sec % 60)}`;
 };
 
-const STATUS: Record<string, { label: { uz: string; ru: string; en: string }; icon: string; cls: string }> = {
-  ANSWERED: { label: { uz: "Javob berildi", ru: "Отвечен", en: "Answered" }, icon: "phoneCall", cls: "bg-emerald-500/15 text-emerald-600 dark:text-emerald-400" },
-  MISSED: { label: { uz: "O'tkazib yuborildi", ru: "Пропущен", en: "Missed" }, icon: "phoneMissed", cls: "bg-red-500/15 text-red-600 dark:text-red-400" },
-  NO_ANSWER: { label: { uz: "Javob bermadi", ru: "Не ответил", en: "No answer" }, icon: "phoneOff", cls: "bg-red-500/15 text-red-600 dark:text-red-400" },
-  BUSY: { label: { uz: "Band", ru: "Занято", en: "Busy" }, icon: "phoneOff", cls: "bg-amber-500/15 text-amber-600 dark:text-amber-400" },
-  FAILED: { label: { uz: "Xatolik", ru: "Ошибка", en: "Failed" }, icon: "alert", cls: "bg-red-500/15 text-red-600 dark:text-red-400" },
-  CANCELLED: { label: { uz: "Bekor qilindi", ru: "Отменён", en: "Cancelled" }, icon: "close", cls: "bg-slate-500/15 text-slate-500 dark:text-slate-400" },
+const STATUS: Record<string, { label: { uz: string; ru: string; en: string; de: string }; icon: string; cls: string }> = {
+  ANSWERED: { label: { uz: "Javob berildi", ru: "Отвечен", en: "Answered", de: "Angenommen" }, icon: "phoneCall", cls: "bg-emerald-500/15 text-emerald-600 dark:text-emerald-400" },
+  MISSED: { label: { uz: "O'tkazib yuborildi", ru: "Пропущен", en: "Missed", de: "Verpasst" }, icon: "phoneMissed", cls: "bg-red-500/15 text-red-600 dark:text-red-400" },
+  NO_ANSWER: { label: { uz: "Javob bermadi", ru: "Не ответил", en: "No answer", de: "Keine Antwort" }, icon: "phoneOff", cls: "bg-red-500/15 text-red-600 dark:text-red-400" },
+  BUSY: { label: { uz: "Band", ru: "Занято", en: "Busy", de: "Besetzt" }, icon: "phoneOff", cls: "bg-amber-500/15 text-amber-600 dark:text-amber-400" },
+  FAILED: { label: { uz: "Xatolik", ru: "Ошибка", en: "Failed", de: "Fehler" }, icon: "alert", cls: "bg-red-500/15 text-red-600 dark:text-red-400" },
+  CANCELLED: { label: { uz: "Bekor qilindi", ru: "Отменён", en: "Cancelled", de: "Abgebrochen" }, icon: "close", cls: "bg-slate-500/15 text-slate-500 dark:text-slate-400" },
 };
 
-const DIR: Record<string, { label: { uz: string; ru: string; en: string }; icon: string; cls: string }> = {
-  INCOMING: { label: { uz: "Kiruvchi", ru: "Входящий", en: "Incoming" }, icon: "arrowDownLeft", cls: "text-indigo-600 dark:text-indigo-400" },
-  OUTGOING: { label: { uz: "Chiquvchi", ru: "Исходящий", en: "Outgoing" }, icon: "arrowUpRight", cls: "text-emerald-600 dark:text-emerald-400" },
+const DIR: Record<string, { label: { uz: string; ru: string; en: string; de: string }; icon: string; cls: string }> = {
+  INCOMING: { label: { uz: "Kiruvchi", ru: "Входящий", en: "Incoming", de: "Eingehend" }, icon: "arrowDownLeft", cls: "text-indigo-600 dark:text-indigo-400" },
+  OUTGOING: { label: { uz: "Chiquvchi", ru: "Исходящий", en: "Outgoing", de: "Ausgehend" }, icon: "arrowUpRight", cls: "text-emerald-600 dark:text-emerald-400" },
 };
 
 export default function CallsTable({ locale, calls }: { locale: Locale; calls: DCall[] }) {
@@ -51,13 +51,13 @@ export default function CallsTable({ locale, calls }: { locale: Locale; calls: D
     exportRows(
       "operator-qongiroqlar",
       [
-        { key: "when", label: tr(locale, { uz: "Vaqt", ru: "Время", en: "Time" }) },
-        { key: "dir", label: tr(locale, { uz: "Tur", ru: "Тип", en: "Type" }) },
-        { key: "status", label: tr(locale, { uz: "Holat", ru: "Статус", en: "Status" }) },
-        { key: "phone", label: tr(locale, { uz: "Telefon", ru: "Телефон", en: "Phone" }) },
-        { key: "contact", label: tr(locale, { uz: "Abonent", ru: "Абонент", en: "Contact" }) },
-        { key: "duration", label: tr(locale, { uz: "Davomiylik", ru: "Длительность", en: "Duration" }) },
-        { key: "comment", label: tr(locale, { uz: "Izoh", ru: "Комментарий", en: "Comment" }) },
+        { key: "when", label: tr(locale, { uz: "Vaqt", ru: "Время", en: "Time", de: "Zeit" }) },
+        { key: "dir", label: tr(locale, { uz: "Tur", ru: "Тип", en: "Type", de: "Typ" }) },
+        { key: "status", label: tr(locale, { uz: "Holat", ru: "Статус", en: "Status", de: "Status" }) },
+        { key: "phone", label: tr(locale, { uz: "Telefon", ru: "Телефон", en: "Phone", de: "Telefon" }) },
+        { key: "contact", label: tr(locale, { uz: "Abonent", ru: "Абонент", en: "Contact", de: "Kontakt" }) },
+        { key: "duration", label: tr(locale, { uz: "Davomiylik", ru: "Длительность", en: "Duration", de: "Dauer" }) },
+        { key: "comment", label: tr(locale, { uz: "Izoh", ru: "Комментарий", en: "Comment", de: "Kommentar" }) },
       ],
       filtered.map((c) => ({
         when: `${c.date} ${c.time}`,
@@ -79,7 +79,7 @@ export default function CallsTable({ locale, calls }: { locale: Locale; calls: D
           <input
             value={q}
             onChange={(e) => { setQ(e.target.value); setPage(1); }}
-            placeholder={tr(locale, { uz: "Ism, telefon...", ru: "Имя, телефон...", en: "Name, phone..." })}
+            placeholder={tr(locale, { uz: "Ism, telefon...", ru: "Имя, телефон...", en: "Name, phone...", de: "Name, Telefon..." })}
             className="h-10 w-full rounded-lg border border-slate-200 bg-white pl-9 pr-3 text-sm outline-none focus:border-brand-400 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-100"
           />
         </div>
@@ -95,19 +95,19 @@ export default function CallsTable({ locale, calls }: { locale: Locale; calls: D
       {rows.length === 0 ? (
         <div className="py-14 text-center">
           <Icon name="phone" className="mx-auto h-10 w-10 text-slate-300 dark:text-slate-600" />
-          <p className="mt-2 text-sm text-slate-400">{tr(locale, { uz: "Qo'ng'iroq topilmadi", ru: "Звонки не найдены", en: "No calls found" })}</p>
+          <p className="mt-2 text-sm text-slate-400">{tr(locale, { uz: "Qo'ng'iroq topilmadi", ru: "Звонки не найдены", en: "No calls found", de: "Keine Anrufe gefunden" })}</p>
         </div>
       ) : (
         <div className="overflow-x-auto rounded-xl border border-slate-200/70 dark:border-slate-800">
           <table className="w-full text-left text-sm">
             <thead className="border-b border-slate-200/70 bg-slate-50/80 text-[11px] font-semibold uppercase tracking-wider text-slate-500 dark:border-slate-800 dark:bg-slate-800/40 dark:text-slate-300">
               <tr>
-                <th className="px-4 py-3">{tr(locale, { uz: "Vaqt", ru: "Время", en: "Time" })}</th>
-                <th className="px-4 py-3">{tr(locale, { uz: "Tur", ru: "Тип", en: "Type" })}</th>
-                <th className="px-4 py-3">{tr(locale, { uz: "Holat", ru: "Статус", en: "Status" })}</th>
-                <th className="px-4 py-3">{tr(locale, { uz: "Telefon / Lid", ru: "Телефон / Лид", en: "Phone / Lead" })}</th>
-                <th className="px-4 py-3">{tr(locale, { uz: "Davomiylik", ru: "Длительность", en: "Duration" })}</th>
-                <th className="px-4 py-3">{tr(locale, { uz: "Yozuv", ru: "Запись", en: "Recording" })}</th>
+                <th className="px-4 py-3">{tr(locale, { uz: "Vaqt", ru: "Время", en: "Time", de: "Zeit" })}</th>
+                <th className="px-4 py-3">{tr(locale, { uz: "Tur", ru: "Тип", en: "Type", de: "Typ" })}</th>
+                <th className="px-4 py-3">{tr(locale, { uz: "Holat", ru: "Статус", en: "Status", de: "Status" })}</th>
+                <th className="px-4 py-3">{tr(locale, { uz: "Telefon / Lid", ru: "Телефон / Лид", en: "Phone / Lead", de: "Telefon / Lead" })}</th>
+                <th className="px-4 py-3">{tr(locale, { uz: "Davomiylik", ru: "Длительность", en: "Duration", de: "Dauer" })}</th>
+                <th className="px-4 py-3">{tr(locale, { uz: "Yozuv", ru: "Запись", en: "Recording", de: "Aufnahme" })}</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-slate-100 dark:divide-slate-800">
@@ -159,7 +159,7 @@ export default function CallsTable({ locale, calls }: { locale: Locale; calls: D
       {filtered.length > PAGE_SIZE && (
         <div className="flex items-center justify-between">
           <span className="text-sm text-slate-400">
-            {filtered.length} {tr(locale, { uz: "ta qo'ng'iroq", ru: "звонков", en: "calls" })}
+            {filtered.length} {tr(locale, { uz: "ta qo'ng'iroq", ru: "звонков", en: "calls", de: "Anrufe" })}
           </span>
           <div className="flex items-center gap-2">
             <button

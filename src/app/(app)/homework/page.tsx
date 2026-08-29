@@ -45,18 +45,18 @@ export default async function HomeworkPage() {
     <>
       <PageHeader
         title={t("nav.homework")}
-        subtitle={tr(s.locale, { uz: "Vazifalar va baholash (TZ 4.4)", ru: "Задания и оценивание (ТЗ 4.4)", en: "Assignments and grading (TZ 4.4)" })}
+        subtitle={tr(s.locale, { uz: "Vazifalar va baholash (TZ 4.4)", ru: "Задания и оценивание (ТЗ 4.4)", en: "Assignments and grading (TZ 4.4)", de: "Aufgaben und Bewertung (TZ 4.4)" })}
         action={isTeacher ? <NewAssignmentForm groups={ownGroups} locale={s.locale} /> : undefined}
       />
       <Table
         head={
           <tr>
-            <th className="px-4 py-3">{tr(s.locale, { uz: "Vazifa", ru: "Задание", en: "Assignment" })}</th>
-            <th className="px-4 py-3">{tr(s.locale, { uz: "Guruh", ru: "Группа", en: "Group" })}</th>
-            <th className="px-4 py-3">{tr(s.locale, { uz: "Turi", ru: "Тип", en: "Type" })}</th>
-            <th className="px-4 py-3">{tr(s.locale, { uz: "Ko'nikma", ru: "Навык", en: "Skill" })}</th>
-            <th className="px-4 py-3">{tr(s.locale, { uz: "Topshirganlar", ru: "Сдавшие", en: "Submitted" })}</th>
-            <th className="px-4 py-3">{tr(s.locale, { uz: "Muddat", ru: "Срок", en: "Due date" })}</th>
+            <th className="px-4 py-3">{tr(s.locale, { uz: "Vazifa", ru: "Задание", en: "Assignment", de: "Aufgabe" })}</th>
+            <th className="px-4 py-3">{tr(s.locale, { uz: "Guruh", ru: "Группа", en: "Group", de: "Gruppe" })}</th>
+            <th className="px-4 py-3">{tr(s.locale, { uz: "Turi", ru: "Тип", en: "Type", de: "Typ" })}</th>
+            <th className="px-4 py-3">{tr(s.locale, { uz: "Ko'nikma", ru: "Навык", en: "Skill", de: "Fertigkeit" })}</th>
+            <th className="px-4 py-3">{tr(s.locale, { uz: "Topshirganlar", ru: "Сдавшие", en: "Submitted", de: "Abgegeben" })}</th>
+            <th className="px-4 py-3">{tr(s.locale, { uz: "Muddat", ru: "Срок", en: "Due date", de: "Fälligkeitsdatum" })}</th>
           </tr>
         }
       >
@@ -80,7 +80,7 @@ export default async function HomeworkPage() {
         )}
       </Table>
       <p className="mt-3 text-xs text-slate-400">
-        ℹ️ {tr(s.locale, { uz: "Topshirish/tekshirish interfeysi va ko'nikma bo'yicha rivojlanish grafiklari keyingi iteratsiyada.", ru: "Интерфейс сдачи/проверки и графики развития по навыкам — в следующей итерации.", en: "Submission/review interface and skill progress charts are coming in the next iteration." })}
+        ℹ️ {tr(s.locale, { uz: "Topshirish/tekshirish interfeysi va ko'nikma bo'yicha rivojlanish grafiklari keyingi iteratsiyada.", ru: "Интерфейс сдачи/проверки и графики развития по навыкам — в следующей итерации.", en: "Submission/review interface and skill progress charts are coming in the next iteration.", de: "Die Oberfläche zur Abgabe/Überprüfung und die Fortschrittsdiagramme nach Fertigkeiten folgen in der nächsten Iteration." })}
       </p>
     </>
   );

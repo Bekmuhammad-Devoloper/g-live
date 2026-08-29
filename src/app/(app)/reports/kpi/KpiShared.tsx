@@ -3,7 +3,7 @@
 import { cn } from "@/lib/cn";
 import { Icon } from "../../_components/Icon";
 
-export type TL = { uz: string; ru: string; en: string };
+export type TL = { uz: string; ru: string; en: string; de?: string };
 
 /** Xodim toifasi — eski loyihadagi operator / rop / admin ko'rinishlari. */
 export type Cat = "operator" | "rop" | "admin";
@@ -42,15 +42,15 @@ export interface VKpiRow {
 }
 
 export const CAT_LABEL: Record<Cat, TL> = {
-  operator: { uz: "Operator", ru: "Оператор", en: "Operator" },
-  rop: { uz: "ROP", ru: "РОП", en: "ROP" },
-  admin: { uz: "Admin", ru: "Админ", en: "Admin" },
+  operator: { uz: "Operator", ru: "Оператор", en: "Operator", de: "Operator" },
+  rop: { uz: "ROP", ru: "РОП", en: "ROP", de: "ROP" },
+  admin: { uz: "Admin", ru: "Админ", en: "Admin", de: "Admin" },
 };
 
 export const TABS: { key: Cat; label: TL; icon: string }[] = [
-  { key: "operator", label: { uz: "Operatorlar", ru: "Операторы", en: "Operators" }, icon: "users" },
-  { key: "rop", label: { uz: "ROPlar", ru: "РОПы", en: "ROPs" }, icon: "chart" },
-  { key: "admin", label: { uz: "Adminlar", ru: "Админы", en: "Admins" }, icon: "shieldCheck" },
+  { key: "operator", label: { uz: "Operatorlar", ru: "Операторы", en: "Operators", de: "Operatoren" }, icon: "users" },
+  { key: "rop", label: { uz: "ROPlar", ru: "РОПы", en: "ROPs", de: "ROPs" }, icon: "chart" },
+  { key: "admin", label: { uz: "Adminlar", ru: "Админы", en: "Admins", de: "Admins" }, icon: "shieldCheck" },
 ];
 
 /** Toifa ranglari — eski loyihadagidek: operator ko'k, ROP binafsha, admin to'q sariq. */

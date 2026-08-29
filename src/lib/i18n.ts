@@ -392,9 +392,140 @@ const en: Dict = {
   "footer.tagline": "learning platform",
 };
 
-const DICTS: Record<Locale, Dict> = { uz, ru, en };
+// Nemischa lug'at — to'liq (fallback baribir en -> uz zanjiri orqali ishlaydi)
+const de: Dict = {
+  "app.name": "Germaniya Live",
+  "app.tagline": "Verwaltungssystem des Lernzentrums",
+
+  "common.save": "Speichern",
+  "common.cancel": "Abbrechen",
+  "common.create": "Erstellen",
+  "common.edit": "Bearbeiten",
+  "common.delete": "Löschen",
+  "common.search": "Suchen",
+  "common.actions": "Aktionen",
+  "common.status": "Status",
+  "common.date": "Datum",
+  "common.name": "Name",
+  "common.phone": "Telefon",
+  "common.email": "E-Mail",
+  "common.amount": "Betrag",
+  "common.note": "Notiz",
+  "common.all": "Alle",
+  "common.none": "—",
+  "common.loading": "Wird geladen...",
+  "common.back": "Zurück",
+  "common.logout": "Abmelden",
+  "common.required": "erforderlich",
+  "common.noData": "Keine Daten",
+
+  "login.title": "Anmeldung",
+  "login.email": "E-Mail",
+  "login.password": "Passwort",
+  "login.submit": "Anmelden",
+  "login.error": "E-Mail oder Passwort ist falsch",
+  "login.demoHint": "Demo-Konten (Passwort: 12345678):",
+
+  "nav.dashboard": "Startseite",
+  "nav.crm": "CRM / Leads",
+  "nav.groups": "Gruppen / Stundenplan",
+  "nav.attendance": "Anwesenheit",
+  "nav.homework": "Aufgaben / Noten",
+  "nav.payments": "Zahlungen",
+  "nav.certificates": "Zertifikate",
+  "nav.salary": "Gehalt",
+  "nav.reports": "Berichte",
+  "nav.users": "Benutzer",
+  "nav.notifications": "Mitteilungen",
+  "nav.audit": "Audit-Protokoll",
+
+  "nav.tasks": "Aufgaben",
+  "nav.leads": "Leads",
+  "nav.teachers": "Lehrer",
+  "nav.students": "Schüler",
+  "nav.education": "Lernabteilung",
+  "nav.reminders": "Erinnerungen",
+  "nav.blocktest": "Blocktest",
+  "nav.finance": "Finanzen",
+  "nav.rating": "Rangliste",
+  "nav.control": "Kontrolle",
+  "nav.teacherAttendance": "Lehrer-Anwesenheit",
+  "nav.management": "Verwaltung",
+  "nav.marketing": "Vertrieb / Marketing",
+  "nav.settings": "Einstellungen",
+  "nav.mySettings": "Meine Einstellungen",
+
+  "notif.title": "Mitteilungen",
+  "notif.markAllRead": "Alle als gelesen markieren",
+  "notif.empty": "Keine Mitteilungen",
+
+  "crm.title": "CRM — Verkaufstrichter",
+  "crm.newLead": "Neuer Lead",
+  "crm.stage": "Phase",
+  "crm.source": "Quelle",
+  "crm.manager": "Manager",
+  "crm.budget": "Budget",
+  "crm.total": "Leads gesamt",
+  "crm.created": "Lead erstellt",
+
+  "pay.title": "Zahlungen",
+  "pay.new": "Zahlung manuell erfassen",
+  "pay.method": "Methode",
+  "pay.purpose": "Zweck",
+  "pay.docNumber": "Beleg-/Quittungsnummer",
+  "pay.student": "Schüler",
+  "pay.manual": "Manuell erfasst",
+  "pay.author": "Erfasst von",
+  "pay.created": "Zahlung erfasst (mit Audit)",
+  "pay.noPermission": "Sie dürfen keine manuellen Zahlungen erfassen",
+
+  "dash.welcome": "Willkommen",
+  "dash.role": "Rolle",
+  "dash.branch": "Filiale",
+  "reports.title": "Gesamtübersicht",
+  "reports.activeStudents": "Aktive Schüler",
+  "reports.leads": "Leads",
+  "reports.revenue": "Einnahmen (bezahlt)",
+  "reports.debt": "Außenstände",
+  "reports.groups": "Gruppen",
+
+  "err.forbidden": "Zugriff verweigert",
+  "err.forbiddenBody": "Sie haben keine Berechtigung für diesen Bereich.",
+
+  // Navbar
+  "top.new": "Erstellen",
+  "top.newStudent": "Neuer Schüler",
+  "top.newPayment": "Neue Zahlung",
+  "top.branches": "Filialen",
+  "top.addBranch": "Filiale hinzufügen",
+  "top.searchPlaceholder": "Schüler, Lead oder Gruppe suchen...",
+  "top.subscription": "Abo",
+  "top.daysLeft": "Tage übrig",
+  "top.fullscreen": "Vollbild",
+  "top.calendar": "Stundenplan",
+  "top.video": "Video-Anleitungen",
+  "top.noResults": "Nichts gefunden",
+  "top.upcoming": "Nächste Stunden",
+  "top.videoSoon": "Video-Anleitungen folgen in Kürze.",
+
+  "rates.title": "Wechselkurse",
+  "rates.bank": "Zentralbank Usbekistans",
+  "rates.source": "Quelle: CBU (cbu.uz)",
+  "rates.sum": "UZS",
+  "rates.refresh": "Aktualisieren",
+  "rates.stale": "Letzter bekannter Kurs — cbu.uz ist nicht erreichbar.",
+
+  "footer.support": "Technischer Support",
+  "footer.video": "Video-Tutorials",
+  "footer.payMode": "Zahlungsmodus",
+  "footer.payModeValue": "Monatlich (pro Kalendermonat)",
+  "footer.tagline": "learning platform",
+};
+
+const DICTS: Record<Locale, Dict> = { uz, ru, en, de };
 
 export function getT(locale: Locale) {
   const d = DICTS[locale] ?? uz;
-  return (key: string): string => d[key] ?? uz[key] ?? key;
+  // Tanlangan tilda yo'q kalit: avval inglizcha, keyin o'zbekcha
+  return (key: string): string => d[key] ?? en[key] ?? uz[key] ?? key;
 }

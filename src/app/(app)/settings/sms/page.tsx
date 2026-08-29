@@ -12,7 +12,7 @@ const ALLOWED = [ROLES.DIRECTOR, ROLES.DEPUTY_DIRECTOR, ROLES.ADMIN];
 export default async function SmsSettingsPage() {
   const s = await requireSession();
   if (!ALLOWED.includes(s.role as never)) {
-    return <Forbidden title={tr(s.locale, { uz: "Kirish taqiqlangan", ru: "Доступ запрещён", en: "Access denied" })} body={tr(s.locale, { uz: "Sozlamalar rahbariyat uchun.", ru: "Настройки доступны руководству.", en: "Settings are available to management." })} />;
+    return <Forbidden title={tr(s.locale, { uz: "Kirish taqiqlangan", ru: "Доступ запрещён", en: "Access denied", de: "Zugriff verweigert" })} body={tr(s.locale, { uz: "Sozlamalar rahbariyat uchun.", ru: "Настройки доступны руководству.", en: "Settings are available to management.", de: "Die Einstellungen stehen nur der Leitung zur Verfügung." })} />;
   }
 
   // (LC) o'zgaruvchisi uchun markaz nomi — foydalanuvchi filiali yoki ilova nomi

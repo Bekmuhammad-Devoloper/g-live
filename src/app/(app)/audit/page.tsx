@@ -13,28 +13,28 @@ import type { Prisma } from "@prisma/client";
 
 const CAN = [ROLES.DIRECTOR, ROLES.DEPUTY_DIRECTOR, ROLES.ADMIN];
 
-type Tr = { uz: string; ru: string; en: string };
+type Tr = { uz: string; ru: string; en: string; de?: string };
 
 // Holat filtri chiplari → entityType(lar)
 const FILTERS: { key: string; label: Tr; entity: string[] | "other" }[] = [
-  { key: "user", label: { uz: "User", ru: "Ученик", en: "User" }, entity: ["Student"] },
-  { key: "kurs", label: { uz: "Kurs", ru: "Курс", en: "Course" }, entity: ["Program"] },
-  { key: "guruh", label: { uz: "Guruh", ru: "Группа", en: "Group" }, entity: ["Group"] },
-  { key: "xona", label: { uz: "Xona", ru: "Кабинет", en: "Room" }, entity: ["Room"] },
-  { key: "tolov", label: { uz: "To'lov", ru: "Платёж", en: "Payment" }, entity: ["Payment"] },
-  { key: "xodim", label: { uz: "Xodim", ru: "Сотрудник", en: "Staff" }, entity: ["User"] },
-  { key: "boshqa", label: { uz: "Boshqa", ru: "Другое", en: "Other" }, entity: "other" },
+  { key: "user", label: { uz: "User", ru: "Ученик", en: "User", de: "Benutzer" }, entity: ["Student"] },
+  { key: "kurs", label: { uz: "Kurs", ru: "Курс", en: "Course", de: "Kurs" }, entity: ["Program"] },
+  { key: "guruh", label: { uz: "Guruh", ru: "Группа", en: "Group", de: "Gruppe" }, entity: ["Group"] },
+  { key: "xona", label: { uz: "Xona", ru: "Кабинет", en: "Room", de: "Raum" }, entity: ["Room"] },
+  { key: "tolov", label: { uz: "To'lov", ru: "Платёж", en: "Payment", de: "Zahlung" }, entity: ["Payment"] },
+  { key: "xodim", label: { uz: "Xodim", ru: "Сотрудник", en: "Staff", de: "Mitarbeiter" }, entity: ["User"] },
+  { key: "boshqa", label: { uz: "Boshqa", ru: "Другое", en: "Other", de: "Sonstiges" }, entity: "other" },
 ];
 const KNOWN = ["Student", "Program", "Group", "Room", "Payment", "User"];
 
 const ENTITY_LABEL: Record<string, Tr> = {
-  Payment: { uz: "To'lov", ru: "Платёж", en: "Payment" }, Lead: { uz: "Lid", ru: "Лид", en: "Lead" }, Group: { uz: "Guruh", ru: "Группа", en: "Group" }, Student: { uz: "O'quvchi", ru: "Ученик", en: "Student" }, User: { uz: "Xodim", ru: "Сотрудник", en: "Staff" }, Room: { uz: "Xona", ru: "Кабинет", en: "Room" },
-  Branch: { uz: "Filial", ru: "Филиал", en: "Branch" }, StaffRole: { uz: "Rol", ru: "Роль", en: "Role" }, Tag: { uz: "Teg", ru: "Тег", en: "Tag" }, Assignment: { uz: "Vazifa", ru: "Задача", en: "Task" }, BlockTest: { uz: "Blok test", ru: "Блок-тест", en: "Block test" },
-  TestType: { uz: "Test turi", ru: "Тип теста", en: "Test type" }, TeacherSalary: { uz: "Maosh", ru: "Зарплата", en: "Salary" }, TeacherSchedule: { uz: "Ish jadvali", ru: "Расписание", en: "Schedule" }, Program: { uz: "Kurs", ru: "Курс", en: "Course" }, Lesson: { uz: "Dars", ru: "Урок", en: "Lesson" },
-  Attendance: { uz: "Davomat", ru: "Посещаемость", en: "Attendance" }, Certificate: { uz: "Sertifikat", ru: "Сертификат", en: "Certificate" }, Call: { uz: "Qo'ng'iroq", ru: "Звонок", en: "Call" }, Notification: { uz: "Bildirishnoma", ru: "Уведомление", en: "Notification" },
+  Payment: { uz: "To'lov", ru: "Платёж", en: "Payment", de: "Zahlung" }, Lead: { uz: "Lid", ru: "Лид", en: "Lead", de: "Lead" }, Group: { uz: "Guruh", ru: "Группа", en: "Group", de: "Gruppe" }, Student: { uz: "O'quvchi", ru: "Ученик", en: "Student", de: "Schüler" }, User: { uz: "Xodim", ru: "Сотрудник", en: "Staff", de: "Mitarbeiter" }, Room: { uz: "Xona", ru: "Кабинет", en: "Room", de: "Raum" },
+  Branch: { uz: "Filial", ru: "Филиал", en: "Branch", de: "Filiale" }, StaffRole: { uz: "Rol", ru: "Роль", en: "Role", de: "Rolle" }, Tag: { uz: "Teg", ru: "Тег", en: "Tag", de: "Tag" }, Assignment: { uz: "Vazifa", ru: "Задача", en: "Task", de: "Aufgabe" }, BlockTest: { uz: "Blok test", ru: "Блок-тест", en: "Block test", de: "Blocktest" },
+  TestType: { uz: "Test turi", ru: "Тип теста", en: "Test type", de: "Testart" }, TeacherSalary: { uz: "Maosh", ru: "Зарплата", en: "Salary", de: "Gehalt" }, TeacherSchedule: { uz: "Ish jadvali", ru: "Расписание", en: "Schedule", de: "Stundenplan" }, Program: { uz: "Kurs", ru: "Курс", en: "Course", de: "Kurs" }, Lesson: { uz: "Dars", ru: "Урок", en: "Lesson", de: "Unterricht" },
+  Attendance: { uz: "Davomat", ru: "Посещаемость", en: "Attendance", de: "Anwesenheit" }, Certificate: { uz: "Sertifikat", ru: "Сертификат", en: "Certificate", de: "Zertifikat" }, Call: { uz: "Qo'ng'iroq", ru: "Звонок", en: "Call", de: "Anruf" }, Notification: { uz: "Bildirishnoma", ru: "Уведомление", en: "Notification", de: "Benachrichtigung" },
 };
 const ACTION_LABEL: Record<string, Tr> = {
-  CREATE: { uz: "Yaratildi", ru: "Создано", en: "Created" }, UPDATE: { uz: "O'zgartirildi", ru: "Изменено", en: "Updated" }, DELETE: { uz: "O'chirildi", ru: "Удалено", en: "Deleted" }, CANCEL: { uz: "Bekor qilindi", ru: "Отменено", en: "Cancelled" }, LOGIN: { uz: "Tizimga kirdi", ru: "Вход в систему", en: "Logged in" },
+  CREATE: { uz: "Yaratildi", ru: "Создано", en: "Created", de: "Erstellt" }, UPDATE: { uz: "O'zgartirildi", ru: "Изменено", en: "Updated", de: "Aktualisiert" }, DELETE: { uz: "O'chirildi", ru: "Удалено", en: "Deleted", de: "Gelöscht" }, CANCEL: { uz: "Bekor qilindi", ru: "Отменено", en: "Cancelled", de: "Storniert" }, LOGIN: { uz: "Tizimga kirdi", ru: "Вход в систему", en: "Logged in", de: "Angemeldet" },
 };
 const entityLabel = (locale: Locale, t: string) => (ENTITY_LABEL[t] ? tr(locale, ENTITY_LABEL[t]) : t);
 const actionLabel = (locale: Locale, a: string) => (ACTION_LABEL[a] ? tr(locale, ACTION_LABEL[a]) : a);
@@ -52,7 +52,7 @@ const fmt = (d: Date) => `${p2(d.getDate())}.${p2(d.getMonth() + 1)}.${d.getFull
 export default async function AuditPage({ searchParams }: { searchParams: Promise<Record<string, string | undefined>> }) {
   const s = await requireSession();
   if (!CAN.includes(s.role as never)) {
-    return <Forbidden title={tr(s.locale, { uz: "Kirish taqiqlangan", ru: "Доступ запрещён", en: "Access denied" })} body={tr(s.locale, { uz: "Audit jurnali faqat rahbariyat uchun.", ru: "Журнал аудита только для руководства.", en: "The audit log is for management only." })} />;
+    return <Forbidden title={tr(s.locale, { uz: "Kirish taqiqlangan", ru: "Доступ запрещён", en: "Access denied", de: "Zugriff verweigert" })} body={tr(s.locale, { uz: "Audit jurnali faqat rahbariyat uchun.", ru: "Журнал аудита только для руководства.", en: "The audit log is for management only.", de: "Das Audit-Protokoll ist nur für die Geschäftsleitung." })} />;
   }
   const sp = await searchParams;
   const type = sp.type || "";
@@ -102,7 +102,7 @@ export default async function AuditPage({ searchParams }: { searchParams: Promis
     date: fmt(l.createdAt),
     entity: entityLabel(s.locale, l.entityType),
     action: actionLabel(s.locale, l.action),
-    actor: l.actor?.fullName ?? tr(s.locale, { uz: "Tizim", ru: "Система", en: "System" }),
+    actor: l.actor?.fullName ?? tr(s.locale, { uz: "Tizim", ru: "Система", en: "System", de: "System" }),
     phone: l.actor?.phone ?? "",
     reason: l.reason ?? "",
   }));
@@ -136,8 +136,8 @@ export default async function AuditPage({ searchParams }: { searchParams: Promis
       <div className="flex-1 overflow-hidden rounded-2xl border border-slate-200/70 bg-white shadow-card dark:border-slate-800 dark:bg-slate-900">
         <div className="flex items-center justify-between border-b border-slate-100 px-5 py-4 dark:border-slate-800">
           <div className="flex items-baseline gap-2.5">
-            <h1 className="text-xl font-bold text-slate-900 dark:text-slate-100">{tr(s.locale, { uz: "Jurnallar", ru: "Журналы", en: "Logs" })}</h1>
-            <span className="text-xs font-medium text-slate-400">{total} {tr(s.locale, { uz: "ta yozuv", ru: "записей", en: "records" })}</span>
+            <h1 className="text-xl font-bold text-slate-900 dark:text-slate-100">{tr(s.locale, { uz: "Jurnallar", ru: "Журналы", en: "Logs", de: "Protokolle" })}</h1>
+            <span className="text-xs font-medium text-slate-400">{total} {tr(s.locale, { uz: "ta yozuv", ru: "записей", en: "records", de: "Einträge" })}</span>
           </div>
           <div className="flex items-center gap-3">
             <AuditExport rows={exportData} locale={s.locale} />
@@ -150,7 +150,7 @@ export default async function AuditPage({ searchParams }: { searchParams: Promis
           {type && <input type="hidden" name="type" value={type} />}
           <div className="relative flex-1 min-w-[180px]">
             <Icon name="search" className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400" />
-            <input name="q" defaultValue={q} placeholder={tr(s.locale, { uz: "Qidiruv (xodim, izoh, obyekt)", ru: "Поиск (сотрудник, комментарий, объект)", en: "Search (staff, comment, object)" })} className="h-10 w-full rounded-lg border border-slate-200 bg-white pl-9 pr-3 text-sm text-slate-700 outline-none focus:border-brand-400 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-100" />
+            <input name="q" defaultValue={q} placeholder={tr(s.locale, { uz: "Qidiruv (xodim, izoh, obyekt)", ru: "Поиск (сотрудник, комментарий, объект)", en: "Search (staff, comment, object)", de: "Suche (Mitarbeiter, Kommentar, Objekt)" })} className="h-10 w-full rounded-lg border border-slate-200 bg-white pl-9 pr-3 text-sm text-slate-700 outline-none focus:border-brand-400 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-100" />
           </div>
           <div className="relative">
             <Icon name="calendar" className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400" />
@@ -161,13 +161,13 @@ export default async function AuditPage({ searchParams }: { searchParams: Promis
             <Icon name="calendar" className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400" />
             <input type="date" name="to" defaultValue={toStr} className="h-10 rounded-lg border border-slate-200 bg-white pl-9 pr-2 text-sm text-slate-700 outline-none focus:border-brand-400 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-100" />
           </div>
-          <button type="submit" className="h-10 rounded-lg bg-brand-600 px-5 text-sm font-semibold text-white transition hover:bg-brand-700">{tr(s.locale, { uz: "Filtr", ru: "Фильтр", en: "Filter" })}</button>
-          {hasFilter && <Link href="/audit" className="flex h-10 w-10 items-center justify-center rounded-lg border border-slate-200 text-slate-500 transition hover:bg-slate-50 dark:border-slate-700" title={tr(s.locale, { uz: "Tozalash", ru: "Очистить", en: "Clear" })}><Icon name="refresh" className="h-4 w-4" /></Link>}
+          <button type="submit" className="h-10 rounded-lg bg-brand-600 px-5 text-sm font-semibold text-white transition hover:bg-brand-700">{tr(s.locale, { uz: "Filtr", ru: "Фильтр", en: "Filter", de: "Filter" })}</button>
+          {hasFilter && <Link href="/audit" className="flex h-10 w-10 items-center justify-center rounded-lg border border-slate-200 text-slate-500 transition hover:bg-slate-50 dark:border-slate-700" title={tr(s.locale, { uz: "Tozalash", ru: "Очистить", en: "Clear", de: "Löschen" })}><Icon name="refresh" className="h-4 w-4" /></Link>}
         </form>
 
         <div className="divide-y divide-slate-100 dark:divide-slate-800">
           {logs.length === 0 ? (
-            <div className="py-16 text-center text-slate-400">{tr(s.locale, { uz: "Jurnal bo'sh", ru: "Журнал пуст", en: "Log is empty" })}</div>
+            <div className="py-16 text-center text-slate-400">{tr(s.locale, { uz: "Jurnal bo'sh", ru: "Журнал пуст", en: "Log is empty", de: "Protokoll ist leer" })}</div>
           ) : logs.map((l) => (
             <div key={l.id} className="flex items-center gap-3 px-5 py-3 hover:bg-slate-50 dark:hover:bg-slate-800/40">
               <span className="h-4 w-4 shrink-0 rounded-full border-2 border-slate-300 dark:border-slate-600" />
@@ -179,7 +179,7 @@ export default async function AuditPage({ searchParams }: { searchParams: Promis
               </div>
               <div className="hidden min-w-0 items-center gap-1.5 text-sm text-slate-500 md:flex">
                 <Icon name="user" className="h-4 w-4 shrink-0 text-slate-400" />
-                <span className="truncate">{l.actor?.fullName ?? tr(s.locale, { uz: "Tizim", ru: "Система", en: "System" })}</span>
+                <span className="truncate">{l.actor?.fullName ?? tr(s.locale, { uz: "Tizim", ru: "Система", en: "System", de: "System" })}</span>
                 {l.actor?.phone && <span className="text-slate-400">· {l.actor.phone}</span>}
               </div>
               <div className="shrink-0 whitespace-nowrap text-sm tabular-nums text-slate-400">{fmt(l.createdAt)}</div>
@@ -189,7 +189,7 @@ export default async function AuditPage({ searchParams }: { searchParams: Promis
 
         {logs.length < total && (
           <div className="flex justify-center border-t border-slate-100 py-4 dark:border-slate-800">
-            <Link href={moreHref()} className="rounded-full bg-brand-600 px-7 py-2.5 text-sm font-semibold text-white transition hover:bg-brand-700">{tr(s.locale, { uz: "Ko'proq ...", ru: "Ещё ...", en: "More ..." })}</Link>
+            <Link href={moreHref()} className="rounded-full bg-brand-600 px-7 py-2.5 text-sm font-semibold text-white transition hover:bg-brand-700">{tr(s.locale, { uz: "Ko'proq ...", ru: "Ещё ...", en: "More ...", de: "Mehr ..." })}</Link>
           </div>
         )}
       </div>
@@ -197,7 +197,7 @@ export default async function AuditPage({ searchParams }: { searchParams: Promis
       {/* O'ng: Holat filtri */}
       <div className="w-full shrink-0 lg:w-72">
         <div className="rounded-2xl border border-slate-200/70 bg-white p-5 shadow-card dark:border-slate-800 dark:bg-slate-900">
-          <h3 className="mb-3 text-base font-semibold text-slate-700 dark:text-slate-200">{tr(s.locale, { uz: "Holat filtri", ru: "Фильтр по статусу", en: "Status filter" })}</h3>
+          <h3 className="mb-3 text-base font-semibold text-slate-700 dark:text-slate-200">{tr(s.locale, { uz: "Holat filtri", ru: "Фильтр по статусу", en: "Status filter", de: "Statusfilter" })}</h3>
           <div className="flex flex-wrap gap-2">
             {FILTERS.map((c) => {
               const active = type === c.key;
@@ -211,7 +211,7 @@ export default async function AuditPage({ searchParams }: { searchParams: Promis
               );
             })}
           </div>
-          {type && <Link href="/audit" className="mt-3 inline-block text-xs text-slate-400 hover:text-slate-600">✕ {tr(s.locale, { uz: "Filtrni tozalash", ru: "Очистить фильтр", en: "Clear filter" })}</Link>}
+          {type && <Link href="/audit" className="mt-3 inline-block text-xs text-slate-400 hover:text-slate-600">✕ {tr(s.locale, { uz: "Filtrni tozalash", ru: "Очистить фильтр", en: "Clear filter", de: "Filter löschen" })}</Link>}
         </div>
       </div>
       </div>

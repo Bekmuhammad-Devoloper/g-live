@@ -26,14 +26,14 @@ const GROUP_COLOR: Record<string, string> = {
   done: "#94a3b8",
 };
 
-const GROUP_LABEL: Record<string, { uz: string; ru: string; en: string }> = {
-  student: { uz: "O'quvchi", ru: "Ученик", en: "Student" },
-  group: { uz: "Guruh", ru: "Группа", en: "Group" },
-  staff: { uz: "Mas'ul shaxs", ru: "Ответственный", en: "Assignee" },
-  overdue: { uz: "O'tib ketgan", ru: "Просрочено", en: "Overdue" },
-  today: { uz: "Bugun", ru: "Сегодня", en: "Today" },
-  future: { uz: "Kelajak", ru: "Будущее", en: "Future" },
-  done: { uz: "Bajarilgan", ru: "Выполнено", en: "Done" },
+const GROUP_LABEL: Record<string, { uz: string; ru: string; en: string; de?: string }> = {
+  student: { uz: "O'quvchi", ru: "Ученик", en: "Student", de: "Schüler" },
+  group: { uz: "Guruh", ru: "Группа", en: "Group", de: "Gruppe" },
+  staff: { uz: "Mas'ul shaxs", ru: "Ответственный", en: "Assignee", de: "Verantwortlicher" },
+  overdue: { uz: "O'tib ketgan", ru: "Просрочено", en: "Overdue", de: "Überfällig" },
+  today: { uz: "Bugun", ru: "Сегодня", en: "Today", de: "Heute" },
+  future: { uz: "Kelajak", ru: "Будущее", en: "Future", de: "Zukunft" },
+  done: { uz: "Bajarilgan", ru: "Выполнено", en: "Done", de: "Erledigt" },
 };
 
 function urgencyOf(t: VTask): Urg {
@@ -376,13 +376,14 @@ export default function GraphView({ tasks, onSelect, lens = "all", locale }: Pro
           <Icon name="layers" className="h-7 w-7" />
         </div>
         <h3 className="mt-3 text-lg font-bold text-slate-700 dark:text-slate-200">
-          {tr(locale, { uz: "Bog'lanishlar xaritasi bo'sh", ru: "Граф связей пуст", en: "The graph is empty" })}
+          {tr(locale, { uz: "Bog'lanishlar xaritasi bo'sh", ru: "Граф связей пуст", en: "The graph is empty", de: "Der Graph ist leer" })}
         </h3>
         <p className="mx-auto mt-1.5 max-w-md text-sm text-slate-500 dark:text-slate-400">
           {tr(locale, {
             uz: "Eslatma qo'shsangiz — u o'quvchi, guruh va mas'ul shaxs bilan bog'lanib xaritada paydo bo'ladi.",
             ru: "Добавьте напоминание — оно появится на графе, связанное с учеником, группой и ответственным.",
             en: "Add a reminder — it appears on the graph, linked to its student, group and assignee.",
+            de: "Fügen Sie eine Erinnerung hinzu — sie erscheint im Graphen, verknüpft mit Schüler, Gruppe und Verantwortlichem.",
           })}
         </p>
       </div>
@@ -413,7 +414,7 @@ export default function GraphView({ tasks, onSelect, lens = "all", locale }: Pro
             <input
               value={q}
               onChange={(e) => setQ(e.target.value)}
-              placeholder={tr(locale, { uz: "Xaritadan qidirish…", ru: "Поиск по графу…", en: "Search graph…" })}
+              placeholder={tr(locale, { uz: "Xaritadan qidirish…", ru: "Поиск по графу…", en: "Search graph…", de: "Graph durchsuchen…" })}
               className="w-44 bg-transparent text-xs text-slate-700 outline-none placeholder:text-slate-400 dark:text-slate-200"
             />
             {q && <button onClick={() => setQ("")} className="text-slate-400 hover:text-slate-600"><Icon name="close" className="h-3.5 w-3.5" /></button>}
@@ -427,25 +428,25 @@ export default function GraphView({ tasks, onSelect, lens = "all", locale }: Pro
 
         {/* Yuqori o'ng: boshqaruv tugmalari */}
         <div className="absolute right-3 top-3 flex items-center gap-1.5">
-          <Ctrl title={tr(locale, { uz: "Kattalashtirish", ru: "Приблизить", en: "Zoom in" })} icon="plus" onClick={() => zoomBy(1.25)} />
-          <Ctrl title={tr(locale, { uz: "Kichraytirish", ru: "Отдалить", en: "Zoom out" })} icon="minimize" onClick={() => zoomBy(0.8)} />
-          <Ctrl title={tr(locale, { uz: "Ekranga moslash", ru: "Вписать", en: "Fit to screen" })} icon="expand" onClick={fit} />
-          <Ctrl title={tr(locale, { uz: "To'liq ekran", ru: "На весь экран", en: "Fullscreen" })} icon={fullscreen ? "minimize" : "expand"} onClick={() => { setFullscreen((v) => !v); setTimeout(fit, 60); }} />
-          <Ctrl title={tr(locale, { uz: "Sozlamalar", ru: "Настройки", en: "Settings" })} icon="settings" active={panel} onClick={() => setPanel((v) => !v)} />
+          <Ctrl title={tr(locale, { uz: "Kattalashtirish", ru: "Приблизить", en: "Zoom in", de: "Vergrößern" })} icon="plus" onClick={() => zoomBy(1.25)} />
+          <Ctrl title={tr(locale, { uz: "Kichraytirish", ru: "Отдалить", en: "Zoom out", de: "Verkleinern" })} icon="minimize" onClick={() => zoomBy(0.8)} />
+          <Ctrl title={tr(locale, { uz: "Ekranga moslash", ru: "Вписать", en: "Fit to screen", de: "An Bildschirm anpassen" })} icon="expand" onClick={fit} />
+          <Ctrl title={tr(locale, { uz: "To'liq ekran", ru: "На весь экран", en: "Fullscreen", de: "Vollbild" })} icon={fullscreen ? "minimize" : "expand"} onClick={() => { setFullscreen((v) => !v); setTimeout(fit, 60); }} />
+          <Ctrl title={tr(locale, { uz: "Sozlamalar", ru: "Настройки", en: "Settings", de: "Einstellungen" })} icon="settings" active={panel} onClick={() => setPanel((v) => !v)} />
         </div>
 
         {/* O'ng panel — Obsidian uslubidagi bo'limlar */}
         {panel && (
           <div className="absolute right-3 top-14 max-h-[calc(100%-72px)] w-[248px] overflow-y-auto rounded-xl border border-slate-200 bg-white/95 p-1 shadow-lg backdrop-blur dark:border-slate-700 dark:bg-slate-900/95">
-            <Section title={tr(locale, { uz: "Filtrlar", ru: "Фильтры", en: "Filters" })} open={open.filter} onToggle={() => setOpen((o) => ({ ...o, filter: !o.filter }))}>
-              <Toggle label={tr(locale, { uz: "Bog'lanmaganlarni ko'rsatish", ru: "Показывать одиночные", en: "Show orphans" })}
+            <Section title={tr(locale, { uz: "Filtrlar", ru: "Фильтры", en: "Filters", de: "Filter" })} open={open.filter} onToggle={() => setOpen((o) => ({ ...o, filter: !o.filter }))}>
+              <Toggle label={tr(locale, { uz: "Bog'lanmaganlarni ko'rsatish", ru: "Показывать одиночные", en: "Show orphans", de: "Verwaiste anzeigen" })}
                 checked={display.showOrphans} onChange={(v) => setDisplay((d) => ({ ...d, showOrphans: v }))} />
               <p className="px-1 pt-1 text-[10px] leading-relaxed text-slate-400">
-                {tr(locale, { uz: "Hech kimga biriktirilmagan eslatmalar.", ru: "Напоминания без связей.", en: "Reminders with no links." })}
+                {tr(locale, { uz: "Hech kimga biriktirilmagan eslatmalar.", ru: "Напоминания без связей.", en: "Reminders with no links.", de: "Erinnerungen ohne Verknüpfungen." })}
               </p>
             </Section>
 
-            <Section title={tr(locale, { uz: "Guruhlar", ru: "Группы", en: "Groups" })} open={open.groups} onToggle={() => setOpen((o) => ({ ...o, groups: !o.groups }))}>
+            <Section title={tr(locale, { uz: "Guruhlar", ru: "Группы", en: "Groups", de: "Gruppen" })} open={open.groups} onToggle={() => setOpen((o) => ({ ...o, groups: !o.groups }))}>
               <div className="space-y-1">
                 {groupsUsed.map((g) => (
                   <div key={g} className="flex items-center gap-2 px-1 py-0.5 text-[11px] text-slate-600 dark:text-slate-300">
@@ -457,31 +458,31 @@ export default function GraphView({ tasks, onSelect, lens = "all", locale }: Pro
               </div>
             </Section>
 
-            <Section title={tr(locale, { uz: "Ko'rinish", ru: "Отображение", en: "Display" })} open={open.display} onToggle={() => setOpen((o) => ({ ...o, display: !o.display }))}>
-              <Slider label={tr(locale, { uz: "Tugun o'lchami", ru: "Размер узла", en: "Node size" })} min={0.4} max={2} step={0.05}
+            <Section title={tr(locale, { uz: "Ko'rinish", ru: "Отображение", en: "Display", de: "Anzeige" })} open={open.display} onToggle={() => setOpen((o) => ({ ...o, display: !o.display }))}>
+              <Slider label={tr(locale, { uz: "Tugun o'lchami", ru: "Размер узла", en: "Node size", de: "Knotengröße" })} min={0.4} max={2} step={0.05}
                 value={display.nodeSize} onChange={(v) => setDisplay((d) => ({ ...d, nodeSize: v }))} />
-              <Slider label={tr(locale, { uz: "Chiziq qalinligi", ru: "Толщина связей", en: "Link thickness" })} min={0.4} max={3} step={0.1}
+              <Slider label={tr(locale, { uz: "Chiziq qalinligi", ru: "Толщина связей", en: "Link thickness", de: "Verbindungsdicke" })} min={0.4} max={3} step={0.1}
                 value={display.linkThickness} onChange={(v) => setDisplay((d) => ({ ...d, linkThickness: v }))} />
-              <Slider label={tr(locale, { uz: "Yozuv chegarasi", ru: "Порог текста", en: "Text fade threshold" })} min={0} max={2} step={0.05}
+              <Slider label={tr(locale, { uz: "Yozuv chegarasi", ru: "Порог текста", en: "Text fade threshold", de: "Textausblend-Schwelle" })} min={0} max={2} step={0.05}
                 value={display.textFade} onChange={(v) => setDisplay((d) => ({ ...d, textFade: v }))} />
-              <Toggle label={tr(locale, { uz: "Yo'nalish strelkalari", ru: "Стрелки", en: "Arrows" })}
+              <Toggle label={tr(locale, { uz: "Yo'nalish strelkalari", ru: "Стрелки", en: "Arrows", de: "Pfeile" })}
                 checked={display.showArrows} onChange={(v) => setDisplay((d) => ({ ...d, showArrows: v }))} />
             </Section>
 
-            <Section title={tr(locale, { uz: "Kuchlar", ru: "Силы", en: "Forces" })} open={open.forces} onToggle={() => setOpen((o) => ({ ...o, forces: !o.forces }))}>
-              <Slider label={tr(locale, { uz: "Markazga tortish", ru: "Центр", en: "Center force" })} min={0} max={1} step={0.02}
+            <Section title={tr(locale, { uz: "Kuchlar", ru: "Силы", en: "Forces", de: "Kräfte" })} open={open.forces} onToggle={() => setOpen((o) => ({ ...o, forces: !o.forces }))}>
+              <Slider label={tr(locale, { uz: "Markazga tortish", ru: "Центр", en: "Center force", de: "Zentralkraft" })} min={0} max={1} step={0.02}
                 value={forces.center} onChange={(v) => setForces((f) => ({ ...f, center: v }))} />
-              <Slider label={tr(locale, { uz: "Itarish kuchi", ru: "Отталкивание", en: "Repel force" })} min={0} max={30} step={0.5}
+              <Slider label={tr(locale, { uz: "Itarish kuchi", ru: "Отталкивание", en: "Repel force", de: "Abstoßungskraft" })} min={0} max={30} step={0.5}
                 value={forces.repel} onChange={(v) => setForces((f) => ({ ...f, repel: v }))} />
-              <Slider label={tr(locale, { uz: "Bog'lanish kuchi", ru: "Сила связей", en: "Link force" })} min={0} max={2} step={0.05}
+              <Slider label={tr(locale, { uz: "Bog'lanish kuchi", ru: "Сила связей", en: "Link force", de: "Verbindungskraft" })} min={0} max={2} step={0.05}
                 value={forces.link} onChange={(v) => setForces((f) => ({ ...f, link: v }))} />
-              <Slider label={tr(locale, { uz: "Bog'lanish uzunligi", ru: "Длина связей", en: "Link distance" })} min={30} max={300} step={5}
+              <Slider label={tr(locale, { uz: "Bog'lanish uzunligi", ru: "Длина связей", en: "Link distance", de: "Verbindungslänge" })} min={30} max={300} step={5}
                 value={forces.distance} onChange={(v) => setForces((f) => ({ ...f, distance: v }))} />
               <button
                 onClick={() => { setForces({ ...DEFAULT_FORCES }); setDisplay({ ...DEFAULT_DISPLAY }); }}
                 className="mt-1.5 w-full rounded-lg border border-slate-200 py-1.5 text-[11px] font-medium text-slate-500 transition hover:bg-slate-50 dark:border-slate-700 dark:text-slate-400 dark:hover:bg-slate-800"
               >
-                {tr(locale, { uz: "Standart holatga qaytarish", ru: "Сбросить настройки", en: "Restore defaults" })}
+                {tr(locale, { uz: "Standart holatga qaytarish", ru: "Сбросить настройки", en: "Restore defaults", de: "Standard wiederherstellen" })}
               </button>
             </Section>
           </div>
@@ -489,7 +490,7 @@ export default function GraphView({ tasks, onSelect, lens = "all", locale }: Pro
 
         {/* Pastki chap: hisob */}
         <div className="pointer-events-none absolute bottom-3 left-3 rounded-lg bg-white/85 px-2.5 py-1 text-[11px] text-slate-500 shadow-sm backdrop-blur dark:bg-slate-900/85 dark:text-slate-400">
-          {nodes.length} {tr(locale, { uz: "tugun", ru: "узлов", en: "nodes" })} · {links.length} {tr(locale, { uz: "bog'lanish", ru: "связей", en: "links" })}
+          {nodes.length} {tr(locale, { uz: "tugun", ru: "узлов", en: "nodes", de: "Knoten" })} · {links.length} {tr(locale, { uz: "bog'lanish", ru: "связей", en: "links", de: "Verbindungen" })}
         </div>
       </div>
 
@@ -498,6 +499,7 @@ export default function GraphView({ tasks, onSelect, lens = "all", locale }: Pro
           uz: "Sudrab suring · g'ildirak bilan kattalashtiring · tugunni sudrang · ustiga borsangiz qo'shnilari yoritiladi · bosing — batafsil",
           ru: "Тяните для перемещения · колесо — масштаб · тяните узел · наведите — подсветятся соседи · клик — подробнее",
           en: "Drag to pan · wheel to zoom · drag a node · hover to highlight neighbours · click for details",
+          de: "Ziehen zum Verschieben · Mausrad zum Zoomen · Knoten ziehen · Hover hebt Nachbarn hervor · Klick für Details",
         })}
       </p>
     </div>

@@ -12,33 +12,33 @@ import { Icon } from "../_components/Icon";
 
 const STORAGE_KEY = "gl-chek-settings";
 
-type L = { uz: string; ru: string; en: string };
+type L = { uz: string; ru: string; en: string; de: string };
 
 // Chek qatorlari (tartib skrinshotdagidek). value — namunaviy ko'rinish uchun.
 const ROWS: { key: string; label: L; value: (c: string) => string }[] = [
-  { key: "checkNumber", label: { uz: "Tekshirish raqami", ru: "Номер чека", en: "Check number" }, value: () => "№12345" },
-  { key: "company", label: { uz: "Kompaniya", ru: "Компания", en: "Company" }, value: (c) => c },
-  { key: "branch", label: { uz: "Filial", ru: "Филиал", en: "Branch" }, value: (c) => c },
-  { key: "student", label: { uz: "Talaba", ru: "Ученик", en: "Student" }, value: () => "Aziz Karimov" },
-  { key: "phone", label: { uz: "Telefon", ru: "Телефон", en: "Phone" }, value: () => "+998 90 123 45 67" },
-  { key: "balance", label: { uz: "Balans", ru: "Баланс", en: "Balance" }, value: () => "1 000 UZS" },
-  { key: "group", label: { uz: "Guruh", ru: "Группа", en: "Group" }, value: () => "A1 ertalabki" },
-  { key: "coursePrice", label: { uz: "Kurs narxi", ru: "Стоимость курса", en: "Course price" }, value: () => "200 000 UZS" },
-  { key: "teacher", label: { uz: "O'qituvchi", ru: "Преподаватель", en: "Teacher" }, value: () => "Nigora Rashidova" },
-  { key: "type", label: { uz: "Turi", ru: "Тип", en: "Type" }, value: () => "Naqd pul" },
-  { key: "amount", label: { uz: "To'lov miqdori", ru: "Сумма платежа", en: "Payment amount" }, value: () => "200 000 UZS" },
-  { key: "date", label: { uz: "Sana", ru: "Дата", en: "Date" }, value: () => "01.01.2025" },
+  { key: "checkNumber", label: { uz: "Tekshirish raqami", ru: "Номер чека", en: "Check number", de: "Belegnummer" }, value: () => "№12345" },
+  { key: "company", label: { uz: "Kompaniya", ru: "Компания", en: "Company", de: "Unternehmen" }, value: (c) => c },
+  { key: "branch", label: { uz: "Filial", ru: "Филиал", en: "Branch", de: "Filiale" }, value: (c) => c },
+  { key: "student", label: { uz: "Talaba", ru: "Ученик", en: "Student", de: "Schüler" }, value: () => "Aziz Karimov" },
+  { key: "phone", label: { uz: "Telefon", ru: "Телефон", en: "Phone", de: "Telefon" }, value: () => "+998 90 123 45 67" },
+  { key: "balance", label: { uz: "Balans", ru: "Баланс", en: "Balance", de: "Saldo" }, value: () => "1 000 UZS" },
+  { key: "group", label: { uz: "Guruh", ru: "Группа", en: "Group", de: "Gruppe" }, value: () => "A1 ertalabki" },
+  { key: "coursePrice", label: { uz: "Kurs narxi", ru: "Стоимость курса", en: "Course price", de: "Kurspreis" }, value: () => "200 000 UZS" },
+  { key: "teacher", label: { uz: "O'qituvchi", ru: "Преподаватель", en: "Teacher", de: "Lehrer" }, value: () => "Nigora Rashidova" },
+  { key: "type", label: { uz: "Turi", ru: "Тип", en: "Type", de: "Typ" }, value: () => "Naqd pul" },
+  { key: "amount", label: { uz: "To'lov miqdori", ru: "Сумма платежа", en: "Payment amount", de: "Zahlungsbetrag" }, value: () => "200 000 UZS" },
+  { key: "date", label: { uz: "Sana", ru: "Дата", en: "Date", de: "Datum" }, value: () => "01.01.2025" },
 ];
 const FOOTER: { key: string; label: L; value: string }[] = [
-  { key: "staff", label: { uz: "Xodim", ru: "Сотрудник", en: "Staff" }, value: "Admin" },
-  { key: "time", label: { uz: "Vaqt", ru: "Время", en: "Time" }, value: "01.01.2025 10:00" },
+  { key: "staff", label: { uz: "Xodim", ru: "Сотрудник", en: "Staff", de: "Mitarbeiter" }, value: "Admin" },
+  { key: "time", label: { uz: "Vaqt", ru: "Время", en: "Time", de: "Uhrzeit" }, value: "01.01.2025 10:00" },
 ];
 // Chap ustundagi barcha "Yashirish:" tartibi
 const TOGGLES = ["logo", "image", "text", ...ROWS.map((r) => r.key), ...FOOTER.map((f) => f.key)];
 const LABELS: Record<string, L> = {
-  logo: { uz: "Logotip", ru: "Логотип", en: "Logo" },
-  image: { uz: "Image fild", ru: "Поле изображения", en: "Image field" },
-  text: { uz: "Text fild", ru: "Текстовое поле", en: "Text field" },
+  logo: { uz: "Logotip", ru: "Логотип", en: "Logo", de: "Logo" },
+  image: { uz: "Image fild", ru: "Поле изображения", en: "Image field", de: "Bildfeld" },
+  text: { uz: "Text fild", ru: "Текстовое поле", en: "Text field", de: "Textfeld" },
   ...Object.fromEntries(ROWS.map((r) => [r.key, r.label])),
   ...Object.fromEntries(FOOTER.map((f) => [f.key, f.label])),
 };
@@ -55,7 +55,7 @@ export default function ChekSettings({ locale, centerName, receiptMode }: { loca
     startSaveMode(async () => {
       const r = await saveReceiptMode(m);
       if (r.ok) { setModeSaved(true); setTimeout(() => setModeSaved(false), 2200); }
-      else { setMode(receiptMode); setModeErr(tr(locale, { uz: "Saqlanmadi — ruxsat yo'q", ru: "Не сохранено — нет доступа", en: "Not saved — no permission" })); }
+      else { setMode(receiptMode); setModeErr(tr(locale, { uz: "Saqlanmadi — ruxsat yo'q", ru: "Не сохранено — нет доступа", en: "Not saved — no permission", de: "Nicht gespeichert — keine Berechtigung" })); }
     });
   };
 
@@ -89,23 +89,23 @@ export default function ChekSettings({ locale, centerName, receiptMode }: { loca
 
   return (
     <div>
-      <h2 className="mb-6 text-2xl font-bold text-slate-800 dark:text-slate-100">{tr(locale, { uz: "Chek", ru: "Чек", en: "Receipt" })}</h2>
+      <h2 className="mb-6 text-2xl font-bold text-slate-800 dark:text-slate-100">{tr(locale, { uz: "Chek", ru: "Чек", en: "Receipt", de: "Beleg" })}</h2>
 
       {/* ── Chek yuklash majburiyligi (bazaga saqlanadi) ── */}
       <div className="mb-8 rounded-2xl border border-slate-200 bg-white p-5 dark:border-slate-700 dark:bg-slate-900">
         <div className="mb-1 flex items-center gap-2">
           <Icon name="shieldCheck" className="h-5 w-5 text-brand-500" />
           <h3 className="text-base font-bold text-slate-800 dark:text-slate-100">
-            {tr(locale, { uz: "To'lovda chek yuklash", ru: "Загрузка чека при оплате", en: "Receipt upload on payment" })}
+            {tr(locale, { uz: "To'lovda chek yuklash", ru: "Загрузка чека при оплате", en: "Receipt upload on payment", de: "Belegupload bei Zahlung" })}
           </h3>
-          {savingMode && <span className="text-xs text-slate-400">{tr(locale, { uz: "saqlanmoqda…", ru: "сохранение…", en: "saving…" })}</span>}
-          {modeSaved && <span className="text-xs font-semibold text-emerald-600">{tr(locale, { uz: "saqlandi ✓", ru: "сохранено ✓", en: "saved ✓" })}</span>}
+          {savingMode && <span className="text-xs text-slate-400">{tr(locale, { uz: "saqlanmoqda…", ru: "сохранение…", en: "saving…", de: "wird gespeichert…" })}</span>}
+          {modeSaved && <span className="text-xs font-semibold text-emerald-600">{tr(locale, { uz: "saqlandi ✓", ru: "сохранено ✓", en: "saved ✓", de: "gespeichert ✓" })}</span>}
         </div>
         <p className="mb-3 text-xs text-slate-500 dark:text-slate-400">
           {tr(locale, {
             uz: "Kassir to'lov qabul qilganda chek (kvitansiya) yuklashi shartmi — shu yerdan boshqariladi.",
             ru: "Обязан ли кассир загружать чек при приёме оплаты — управляется здесь.",
-            en: "Controls whether the cashier must attach a receipt when accepting a payment.",
+            en: "Controls whether the cashier must attach a receipt when accepting a payment.", de: "Legt fest, ob der Kassierer bei Zahlungsannahme einen Beleg anhängen muss.",
           })}
         </p>
         <div className="grid gap-2 sm:grid-cols-3">
@@ -140,7 +140,7 @@ export default function ChekSettings({ locale, centerName, receiptMode }: { loca
         <div className="space-y-5">
           {TOGGLES.map((k) => (
             <div key={k}>
-              <label className="mb-2 block text-sm text-slate-700 dark:text-slate-200">{tr(locale, { uz: "Yashirish", ru: "Скрыть", en: "Hide" })}: {tr(locale, LABELS[k])}</label>
+              <label className="mb-2 block text-sm text-slate-700 dark:text-slate-200">{tr(locale, { uz: "Yashirish", ru: "Скрыть", en: "Hide", de: "Ausblenden" })}: {tr(locale, LABELS[k])}</label>
               <button type="button" onClick={() => toggle(k)} role="checkbox" aria-checked={!!hide[k]}
                 className={cn("flex h-6 w-6 items-center justify-center rounded border-2 transition",
                   hide[k] ? "border-brand-600 bg-brand-600 text-white" : "border-slate-300 bg-white hover:border-brand-400 dark:border-slate-600 dark:bg-slate-800")}>
@@ -155,10 +155,10 @@ export default function ChekSettings({ locale, centerName, receiptMode }: { loca
 
           <div className="flex gap-2 pt-2">
             <button onClick={save} className="rounded-full bg-brand-800 px-8 py-2.5 text-sm font-semibold text-white transition hover:bg-brand-900">
-              {saved ? tr(locale, { uz: "Saqlandi ✓", ru: "Сохранено ✓", en: "Saved ✓" }) : tr(locale, { uz: "Saqlash", ru: "Сохранить", en: "Save" })}
+              {saved ? tr(locale, { uz: "Saqlandi ✓", ru: "Сохранено ✓", en: "Saved ✓", de: "Gespeichert ✓" }) : tr(locale, { uz: "Saqlash", ru: "Сохранить", en: "Save", de: "Speichern" })}
             </button>
             <button onClick={reset} className="rounded-full border border-slate-300 px-6 py-2.5 text-sm font-semibold text-slate-600 transition hover:bg-slate-50 dark:border-slate-600 dark:text-slate-300 dark:hover:bg-slate-800">
-              {tr(locale, { uz: "Bekor qilish", ru: "Отмена", en: "Cancel" })}
+              {tr(locale, { uz: "Bekor qilish", ru: "Отмена", en: "Cancel", de: "Abbrechen" })}
             </button>
           </div>
         </div>
@@ -176,7 +176,7 @@ export default function ChekSettings({ locale, centerName, receiptMode }: { loca
             )}
             {shown("image") && (
               <div className="mb-3 flex justify-center">
-                {image ? <span className="h-20 w-full rounded bg-contain bg-center bg-no-repeat" style={{ backgroundImage: `url(${image})` }} /> : <div className="grid h-16 w-full place-items-center rounded border border-dashed border-slate-300 text-xs text-slate-400">{tr(locale, { uz: "Rasm", ru: "Изображение", en: "Image" })}</div>}
+                {image ? <span className="h-20 w-full rounded bg-contain bg-center bg-no-repeat" style={{ backgroundImage: `url(${image})` }} /> : <div className="grid h-16 w-full place-items-center rounded border border-dashed border-slate-300 text-xs text-slate-400">{tr(locale, { uz: "Rasm", ru: "Изображение", en: "Image", de: "Bild" })}</div>}
               </div>
             )}
             {shown("text") && (

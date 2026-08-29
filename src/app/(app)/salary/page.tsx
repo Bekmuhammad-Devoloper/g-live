@@ -26,11 +26,11 @@ export default async function SalaryPage({ searchParams }: { searchParams: Promi
     const students = groups.reduce((n, g) => n + g._count.students, 0);
     return (
       <>
-        <PageHeader title={t("nav.salary")} subtitle={tr(s.locale, { uz: "Dastlabki yuklama (tasdiqlanmagan hisob)", ru: "Предварительная нагрузка (неутверждённый расчёт)", en: "Preliminary workload (unconfirmed calculation)" })} />
+        <PageHeader title={t("nav.salary")} subtitle={tr(s.locale, { uz: "Dastlabki yuklama (tasdiqlanmagan hisob)", ru: "Предварительная нагрузка (неутверждённый расчёт)", en: "Preliminary workload (unconfirmed calculation)", de: "Vorläufige Auslastung (unbestätigte Berechnung)" })} />
         <div className="mb-4 grid grid-cols-2 gap-4 lg:grid-cols-4">
-          <StatCard label={tr(s.locale, { uz: "Guruhlarim", ru: "Мои группы", en: "My groups" })} value={groups.length} tone="brand" icon="book" />
-          <StatCard label={tr(s.locale, { uz: "O'tilgan darslar", ru: "Проведённые занятия", en: "Lessons held" })} value={lessons} icon="check" />
-          <StatCard label={tr(s.locale, { uz: "O'quvchilar", ru: "Ученики", en: "Students" })} value={students} icon="users" />
+          <StatCard label={tr(s.locale, { uz: "Guruhlarim", ru: "Мои группы", en: "My groups", de: "Meine Gruppen" })} value={groups.length} tone="brand" icon="book" />
+          <StatCard label={tr(s.locale, { uz: "O'tilgan darslar", ru: "Проведённые занятия", en: "Lessons held", de: "Gehaltener Unterricht" })} value={lessons} icon="check" />
+          <StatCard label={tr(s.locale, { uz: "O'quvchilar", ru: "Ученики", en: "Students", de: "Schüler" })} value={students} icon="users" />
         </div>
         <Card>
           <p className="text-sm text-slate-500">
@@ -38,6 +38,7 @@ export default async function SalaryPage({ searchParams }: { searchParams: Promi
               uz: "Ish haqi formulalari (stavka, akademik soat, bonus/ushlanma) TZ bo'yicha 2-bosqichda sozlanadi. Bu yerda faqat dastlabki yuklama ko'rsatilgan; yakuniy hisobni buxgalter/direktor o'rinbosari tasdiqlaydi.",
               ru: "Формулы расчёта зарплаты (ставка, академический час, бонус/удержание) настраиваются на 2-м этапе по ТЗ. Здесь показана только предварительная нагрузка; итоговый расчёт утверждает бухгалтер/зам. директора.",
               en: "Salary formulas (rate, academic hour, bonus/deduction) are configured in phase 2 per the spec. Only the preliminary workload is shown here; the final calculation is confirmed by the accountant/deputy director.",
+              de: "Gehaltsformeln (Satz, akademische Stunde, Bonus/Abzug) werden in Phase 2 gemäß Spezifikation konfiguriert. Hier wird nur die vorläufige Auslastung angezeigt; die endgültige Berechnung wird vom Buchhalter/stellvertretenden Direktor bestätigt.",
             })}
           </p>
         </Card>
@@ -114,7 +115,7 @@ export default async function SalaryPage({ searchParams }: { searchParams: Promi
 
   return (
     <>
-      <PageHeader title={t("nav.salary")} subtitle={tr(s.locale, { uz: "Ish haqi hisob-kitobi (davr bo'yicha)", ru: "Расчёт зарплаты (по периоду)", en: "Salary calculation (by period)" })} />
+      <PageHeader title={t("nav.salary")} subtitle={tr(s.locale, { uz: "Ish haqi hisob-kitobi (davr bo'yicha)", ru: "Расчёт зарплаты (по периоду)", en: "Salary calculation (by period)", de: "Gehaltsberechnung (nach Zeitraum)" })} />
       <SalaryWorkspace year={year} month={month} rows={rows} canManage={canManage} locale={s.locale} />
     </>
   );

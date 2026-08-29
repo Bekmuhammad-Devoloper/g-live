@@ -9,7 +9,7 @@ import TasksView, { type VTask } from "../tasks/TasksView";
 export default async function RemindersPage() {
   const s = await requireSession();
   if (s.role === ROLES.STUDENT || s.role === ROLES.PARENT) {
-    return <Forbidden title={tr(s.locale, { uz: "Kirish taqiqlangan", ru: "Доступ запрещён", en: "Access denied" })} body={tr(s.locale, { uz: "Bu bo'lim xodimlar uchun.", ru: "Этот раздел для сотрудников.", en: "This section is for staff." })} />;
+    return <Forbidden title={tr(s.locale, { uz: "Kirish taqiqlangan", ru: "Доступ запрещён", en: "Access denied", de: "Zugriff verweigert" })} body={tr(s.locale, { uz: "Bu bo'lim xodimlar uchun.", ru: "Этот раздел для сотрудников.", en: "This section is for staff.", de: "Dieser Bereich ist für Mitarbeiter." })} />;
   }
 
   const [items, staff, students, groups] = await Promise.all([
@@ -35,7 +35,7 @@ export default async function RemindersPage() {
   return (
     <TasksView
       kind="REMINDER"
-      title={tr(s.locale, { uz: "Eslatmalar", ru: "Напоминания", en: "Reminders" })}
+      title={tr(s.locale, { uz: "Eslatmalar", ru: "Напоминания", en: "Reminders", de: "Erinnerungen" })}
       locale={s.locale}
       tasks={vtasks}
       staff={staff.map((x) => ({ id: x.id, name: x.fullName }))}

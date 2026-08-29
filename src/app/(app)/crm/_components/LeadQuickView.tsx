@@ -84,7 +84,7 @@ export default function LeadQuickView({
                 href={`/crm/${lead.id}`}
                 className="flex items-center gap-1.5 rounded-lg border border-slate-200 px-2.5 py-1.5 text-[11px] font-semibold text-slate-600 transition hover:border-brand-300 hover:text-brand-600 dark:border-white/10 dark:text-slate-300 dark:hover:bg-white/10"
               >
-                <Icon name="expand" className="h-3.5 w-3.5" /> {tr(locale, { uz: "To'liq sahifa", ru: "Полная страница", en: "Full page" })}
+                <Icon name="expand" className="h-3.5 w-3.5" /> {tr(locale, { uz: "To'liq sahifa", ru: "Полная страница", en: "Full page", de: "Vollständige Seite" })}
               </Link>
               <button onClick={onClose} className="flex h-8 w-8 items-center justify-center rounded-full text-lg text-slate-400 transition hover:bg-slate-100 hover:text-slate-600 dark:hover:bg-white/10">✕</button>
             </div>
@@ -93,7 +93,7 @@ export default function LeadQuickView({
 
         <div className="flex-1 space-y-5 overflow-y-auto px-5 py-4">
           {/* Aloqa */}
-          <Section icon="phone" title={tr(locale, { uz: "Aloqa", ru: "Контакты", en: "Contact" })}>
+          <Section icon="phone" title={tr(locale, { uz: "Aloqa", ru: "Контакты", en: "Contact", de: "Kontakt" })}>
             <button
               onClick={call}
               className="flex w-full items-center justify-between gap-2 rounded-xl border border-slate-200 px-3.5 py-2.5 text-left transition hover:border-emerald-300 hover:bg-emerald-50/60 dark:border-white/10 dark:hover:bg-emerald-950/20"
@@ -103,43 +103,43 @@ export default function LeadQuickView({
                 <Icon name="phoneCall" className="h-4 w-4" />
               </span>
             </button>
-            {lead.email && <Row label={tr(locale, { uz: "Email", ru: "Email", en: "Email" })} value={lead.email} />}
+            {lead.email && <Row label={tr(locale, { uz: "Email", ru: "Email", en: "Email", de: "E-Mail" })} value={lead.email} />}
           </Section>
 
           {/* Lid ma'lumotlari */}
-          <Section icon="info" title={tr(locale, { uz: "Ma'lumotlar", ru: "Данные", en: "Details" })}>
-            <Row label={tr(locale, { uz: "Qiziqqan kurs", ru: "Интересующий курс", en: "Course of interest" })} value={lead.interestCourse ?? "—"} />
-            <Row label={tr(locale, { uz: "Byudjet", ru: "Бюджет", en: "Budget" })} value={lead.budget ? formatMoney(lead.budget, locale) : "—"} />
-            <Row label={tr(locale, { uz: "Menejer", ru: "Менеджер", en: "Manager" })} value={lead.managerName ?? "—"} />
-            <Row label={tr(locale, { uz: "Yaratilgan", ru: "Создан", en: "Created" })} value={fmtDate(lead.createdAt)} />
-            <Row label={tr(locale, { uz: "Oxirgi harakat", ru: "Последняя активность", en: "Last activity" })} value={fmtDate(lead.lastActivity)} />
-            <Row label={tr(locale, { uz: "Harakatlar soni", ru: "Кол-во действий", en: "Activities" })} value={String(lead.activityCount)} />
+          <Section icon="info" title={tr(locale, { uz: "Ma'lumotlar", ru: "Данные", en: "Details", de: "Details" })}>
+            <Row label={tr(locale, { uz: "Qiziqqan kurs", ru: "Интересующий курс", en: "Course of interest", de: "Interessierter Kurs" })} value={lead.interestCourse ?? "—"} />
+            <Row label={tr(locale, { uz: "Byudjet", ru: "Бюджет", en: "Budget", de: "Budget" })} value={lead.budget ? formatMoney(lead.budget, locale) : "—"} />
+            <Row label={tr(locale, { uz: "Menejer", ru: "Менеджер", en: "Manager", de: "Manager" })} value={lead.managerName ?? "—"} />
+            <Row label={tr(locale, { uz: "Yaratilgan", ru: "Создан", en: "Created", de: "Erstellt" })} value={fmtDate(lead.createdAt)} />
+            <Row label={tr(locale, { uz: "Oxirgi harakat", ru: "Последняя активность", en: "Last activity", de: "Letzte Aktivität" })} value={fmtDate(lead.lastActivity)} />
+            <Row label={tr(locale, { uz: "Harakatlar soni", ru: "Кол-во действий", en: "Activities", de: "Aktivitäten" })} value={String(lead.activityCount)} />
           </Section>
 
           {/* Guruh — "Qabul qilindi" bosqichi uchun majburiy qadam */}
-          <Section icon="layers" title={tr(locale, { uz: "Guruh", ru: "Группа", en: "Group" })}>
+          <Section icon="layers" title={tr(locale, { uz: "Guruh", ru: "Группа", en: "Group", de: "Gruppe" })}>
             {lead.groupName ? (
               <div className="flex items-center justify-between gap-2 rounded-xl border border-emerald-200 bg-emerald-50/60 px-3.5 py-2.5 dark:border-emerald-900/40 dark:bg-emerald-950/20">
                 <div className="min-w-0">
                   <div className="truncate text-sm font-semibold text-emerald-700 dark:text-emerald-400">{lead.groupName}</div>
                   <div className="text-[11px] text-emerald-600/80 dark:text-emerald-400/70">
                     {lead.enrollEditCount > 0
-                      ? tr(locale, { uz: "O'zgartirish imkoni tugagan", ru: "Изменение больше недоступно", en: "No further changes allowed" })
-                      : tr(locale, { uz: "Bir marta o'zgartirish mumkin", ru: "Можно изменить один раз", en: "Can be changed once" })}
+                      ? tr(locale, { uz: "O'zgartirish imkoni tugagan", ru: "Изменение больше недоступно", en: "No further changes allowed", de: "Keine weiteren Änderungen möglich" })
+                      : tr(locale, { uz: "Bir marta o'zgartirish mumkin", ru: "Можно изменить один раз", en: "Can be changed once", de: "Kann einmal geändert werden" })}
                   </div>
                 </div>
                 {canWrite && lead.enrollEditCount === 0 && (
                   <button onClick={onEnroll} className="shrink-0 rounded-lg border border-emerald-300 px-2.5 py-1 text-[11px] font-semibold text-emerald-700 transition hover:bg-emerald-100 dark:border-emerald-800 dark:text-emerald-400 dark:hover:bg-emerald-900/30">
-                    {tr(locale, { uz: "O'zgartirish", ru: "Изменить", en: "Change" })}
+                    {tr(locale, { uz: "O'zgartirish", ru: "Изменить", en: "Change", de: "Ändern" })}
                   </button>
                 )}
               </div>
             ) : (
               <div className="flex items-center justify-between gap-2 rounded-xl border border-dashed border-slate-300 px-3.5 py-2.5 dark:border-slate-600">
-                <span className="text-sm text-slate-400">{tr(locale, { uz: "Yo'naltirilmagan", ru: "Не назначена", en: "Not assigned" })}</span>
+                <span className="text-sm text-slate-400">{tr(locale, { uz: "Yo'naltirilmagan", ru: "Не назначена", en: "Not assigned", de: "Nicht zugewiesen" })}</span>
                 {canWrite && (
                   <button onClick={onEnroll} className="shrink-0 rounded-lg bg-brand-600 px-2.5 py-1 text-[11px] font-semibold text-white transition hover:bg-brand-700">
-                    {tr(locale, { uz: "Guruhga yo'naltirish", ru: "Назначить группу", en: "Assign group" })}
+                    {tr(locale, { uz: "Guruhga yo'naltirish", ru: "Назначить группу", en: "Assign group", de: "Gruppe zuweisen" })}
                   </button>
                 )}
               </div>
@@ -147,7 +147,7 @@ export default function LeadQuickView({
           </Section>
 
           {lead.note && (
-            <Section icon="alignLeft" title={tr(locale, { uz: "Izoh", ru: "Заметка", en: "Note" })}>
+            <Section icon="alignLeft" title={tr(locale, { uz: "Izoh", ru: "Заметка", en: "Note", de: "Notiz" })}>
               <p className="whitespace-pre-wrap rounded-lg bg-slate-50 px-3 py-2 text-sm text-slate-600 dark:bg-white/[0.03] dark:text-slate-300">{lead.note}</p>
             </Section>
           )}
@@ -159,7 +159,7 @@ export default function LeadQuickView({
             href={`/crm/${lead.id}`}
             className="flex flex-1 items-center justify-center gap-2 rounded-xl bg-brand-600 py-2.5 text-sm font-semibold text-white shadow-sm transition hover:bg-brand-700 active:scale-[.99]"
           >
-            <Icon name="expand" className="h-4 w-4" /> {tr(locale, { uz: "To'liq sahifani ochish", ru: "Открыть полностью", en: "Open full page" })}
+            <Icon name="expand" className="h-4 w-4" /> {tr(locale, { uz: "To'liq sahifani ochish", ru: "Открыть полностью", en: "Open full page", de: "Vollständige Seite öffnen" })}
           </Link>
           <button onClick={call} className="flex items-center justify-center gap-2 rounded-xl border border-slate-200 px-4 py-2.5 text-sm font-semibold text-slate-600 transition hover:bg-slate-100 dark:border-slate-700 dark:text-slate-300 dark:hover:bg-white/10">
             <Icon name="phone" className="h-4 w-4" />

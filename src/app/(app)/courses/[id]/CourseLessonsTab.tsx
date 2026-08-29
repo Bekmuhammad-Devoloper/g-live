@@ -34,13 +34,13 @@ export default function CourseLessonsTab({ programId, lessons, canManage, locale
   return (
     <div>
       <div className="mb-4 flex flex-wrap items-center justify-between gap-2">
-        <p className="text-sm text-slate-500 dark:text-slate-400">{tr(locale, { uz: "Darslar ketma-ketligi — mavzu, video, topshiriq, uy vazifasi", ru: "Последовательность уроков — тема, видео, задание, домашка", en: "Lesson sequence — topic, video, assignment, homework" })}</p>
+        <p className="text-sm text-slate-500 dark:text-slate-400">{tr(locale, { uz: "Darslar ketma-ketligi — mavzu, video, topshiriq, uy vazifasi", ru: "Последовательность уроков — тема, видео, задание, домашка", en: "Lesson sequence — topic, video, assignment, homework", de: "Lektionsreihenfolge — Thema, Video, Aufgabe, Hausaufgabe" })}</p>
         {groupId && lessons.length > 0 && (
-          <span className="rounded-full bg-emerald-500/10 px-2.5 py-0.5 text-xs font-semibold text-emerald-600 dark:text-emerald-400">{tr(locale, { uz: "O'tildi", ru: "Пройдено", en: "Taught" })}: {taughtCount}/{lessons.length}</span>
+          <span className="rounded-full bg-emerald-500/10 px-2.5 py-0.5 text-xs font-semibold text-emerald-600 dark:text-emerald-400">{tr(locale, { uz: "O'tildi", ru: "Пройдено", en: "Taught", de: "Unterrichtet" })}: {taughtCount}/{lessons.length}</span>
         )}
         {canManage && (
           <button onClick={openNew} className="flex shrink-0 items-center gap-1.5 rounded-lg bg-brand-600 px-3.5 py-2 text-sm font-semibold text-white transition hover:bg-brand-700">
-            <Icon name="plus" className="h-4 w-4" /> {tr(locale, { uz: "Yangi dars", ru: "Новый урок", en: "New lesson" })}
+            <Icon name="plus" className="h-4 w-4" /> {tr(locale, { uz: "Yangi dars", ru: "Новый урок", en: "New lesson", de: "Neue Lektion" })}
           </button>
         )}
       </div>
@@ -48,7 +48,7 @@ export default function CourseLessonsTab({ programId, lessons, canManage, locale
       {lessons.length === 0 ? (
         <div className="rounded-2xl border border-dashed border-slate-300 py-14 text-center dark:border-slate-700">
           <div className="text-3xl opacity-30">🎬</div>
-          <p className="mt-2 text-sm text-slate-400">{tr(locale, { uz: "Hali dars qo'shilmagan", ru: "Уроки ещё не добавлены", en: "No lessons yet" })}</p>
+          <p className="mt-2 text-sm text-slate-400">{tr(locale, { uz: "Hali dars qo'shilmagan", ru: "Уроки ещё не добавлены", en: "No lessons yet", de: "Noch keine Lektionen hinzugefügt" })}</p>
         </div>
       ) : (
         <ol className="space-y-3">
@@ -68,7 +68,7 @@ function LessonCard({ lesson: l, index, count, canManage, locale, onEdit, groupI
   const [pending, start] = useTransition();
   const [isTaught, setIsTaught] = useState(!!taught);
   const router = useRouter();
-  const del = () => { if (confirm(tr(locale, { uz: "Bu darsni o'chirasizmi?", ru: "Удалить этот урок?", en: "Delete this lesson?" }))) start(async () => { await deleteCourseLesson(l.id); router.refresh(); }); };
+  const del = () => { if (confirm(tr(locale, { uz: "Bu darsni o'chirasizmi?", ru: "Удалить этот урок?", en: "Delete this lesson?", de: "Möchten Sie diese Lektion löschen?" }))) start(async () => { await deleteCourseLesson(l.id); router.refresh(); }); };
   const move = (dir: "up" | "down") => start(async () => { await moveCourseLesson(l.id, dir); router.refresh(); });
   const toggleTaught = () => { if (!groupId) return; const next = !isTaught; setIsTaught(next); start(async () => { await setLessonTaught(groupId, l.id, next); }); };
 
@@ -80,7 +80,7 @@ function LessonCard({ lesson: l, index, count, canManage, locale, onEdit, groupI
       <div className="flex items-center gap-3.5 p-4">
         {/* Tartib / o'tildi belgisi */}
         {groupId && canManage ? (
-          <button onClick={toggleTaught} title={tr(locale, { uz: "O'tildi deb belgilash", ru: "Отметить пройденным", en: "Mark as taught" })}
+          <button onClick={toggleTaught} title={tr(locale, { uz: "O'tildi deb belgilash", ru: "Отметить пройденным", en: "Mark as taught", de: "Als unterrichtet markieren" })}
             className={cn("grid h-11 w-11 shrink-0 place-items-center rounded-xl text-[15px] font-extrabold shadow-sm transition", done ? "bg-gradient-to-br from-emerald-500 to-emerald-600 text-white" : "bg-slate-100 text-slate-400 hover:bg-emerald-100 hover:text-emerald-600 dark:bg-slate-800 dark:hover:bg-emerald-500/20")}>
             {done ? <Icon name="check" className="h-5 w-5" /> : l.order}
           </button>
@@ -95,11 +95,11 @@ function LessonCard({ lesson: l, index, count, canManage, locale, onEdit, groupI
             {hasDetails && <Icon name="chevronDown" className={cn("h-4 w-4 shrink-0 text-slate-400 transition-transform duration-200", expanded && "rotate-180")} />}
           </div>
           <div className="mt-1.5 flex flex-wrap items-center gap-1.5">
-            {l.videoUrl && <Tag emoji="🎬" text={tr(locale, { uz: "Video", ru: "Видео", en: "Video" })} tone="rose" />}
-            {(l.assignment || l.assignmentFileUrl) && <Tag emoji="📝" text={tr(locale, { uz: "Topshiriq", ru: "Задание", en: "Assignment" })} tone="amber" />}
-            {(l.homework || l.homeworkFileUrl) && <Tag emoji="🏠" text={tr(locale, { uz: "Uy vazifa", ru: "Домашка", en: "Homework" })} tone="emerald" />}
-            {l.materialUrl && <Tag emoji="📎" text={tr(locale, { uz: "Material", ru: "Материал", en: "Material" })} tone="blue" />}
-            {!hasDetails && <span className="text-xs text-slate-400">{tr(locale, { uz: "Ma'lumot qo'shilmagan", ru: "Нет данных", en: "No details yet" })}</span>}
+            {l.videoUrl && <Tag emoji="🎬" text={tr(locale, { uz: "Video", ru: "Видео", en: "Video", de: "Video" })} tone="rose" />}
+            {(l.assignment || l.assignmentFileUrl) && <Tag emoji="📝" text={tr(locale, { uz: "Topshiriq", ru: "Задание", en: "Assignment", de: "Aufgabe" })} tone="amber" />}
+            {(l.homework || l.homeworkFileUrl) && <Tag emoji="🏠" text={tr(locale, { uz: "Uy vazifa", ru: "Домашка", en: "Homework", de: "Hausaufgabe" })} tone="emerald" />}
+            {l.materialUrl && <Tag emoji="📎" text={tr(locale, { uz: "Material", ru: "Материал", en: "Material", de: "Material" })} tone="blue" />}
+            {!hasDetails && <span className="text-xs text-slate-400">{tr(locale, { uz: "Ma'lumot qo'shilmagan", ru: "Нет данных", en: "No details yet", de: "Noch keine Angaben" })}</span>}
           </div>
         </button>
 
@@ -107,49 +107,49 @@ function LessonCard({ lesson: l, index, count, canManage, locale, onEdit, groupI
         {canManage && (
           <div className="flex shrink-0 items-center gap-1">
             <div className="mr-1 flex flex-col overflow-hidden rounded-lg border border-slate-200 dark:border-slate-700">
-              <button onClick={() => move("up")} disabled={index === 0} className="flex h-4 w-7 items-center justify-center text-[10px] text-slate-400 transition hover:bg-slate-100 hover:text-brand-500 disabled:opacity-25 dark:hover:bg-slate-800" title={tr(locale, { uz: "Yuqoriga", ru: "Вверх", en: "Up" })}>▲</button>
-              <button onClick={() => move("down")} disabled={index === count - 1} className="flex h-4 w-7 items-center justify-center border-t border-slate-200 text-[10px] text-slate-400 transition hover:bg-slate-100 hover:text-brand-500 disabled:opacity-25 dark:border-slate-700 dark:hover:bg-slate-800" title={tr(locale, { uz: "Pastga", ru: "Вниз", en: "Down" })}>▼</button>
+              <button onClick={() => move("up")} disabled={index === 0} className="flex h-4 w-7 items-center justify-center text-[10px] text-slate-400 transition hover:bg-slate-100 hover:text-brand-500 disabled:opacity-25 dark:hover:bg-slate-800" title={tr(locale, { uz: "Yuqoriga", ru: "Вверх", en: "Up", de: "Nach oben" })}>▲</button>
+              <button onClick={() => move("down")} disabled={index === count - 1} className="flex h-4 w-7 items-center justify-center border-t border-slate-200 text-[10px] text-slate-400 transition hover:bg-slate-100 hover:text-brand-500 disabled:opacity-25 dark:border-slate-700 dark:hover:bg-slate-800" title={tr(locale, { uz: "Pastga", ru: "Вниз", en: "Down", de: "Nach unten" })}>▼</button>
             </div>
             <button onClick={onEdit} className="flex h-8 items-center gap-1 rounded-lg border border-slate-200 px-2.5 text-xs font-semibold text-slate-600 transition hover:border-brand-300 hover:bg-brand-50 hover:text-brand-600 dark:border-slate-700 dark:text-slate-300 dark:hover:bg-brand-950/30">
-              <Icon name="edit" className="h-3.5 w-3.5" /> {tr(locale, { uz: "Tahrir", ru: "Изм.", en: "Edit" })}
+              <Icon name="edit" className="h-3.5 w-3.5" /> {tr(locale, { uz: "Tahrir", ru: "Изм.", en: "Edit", de: "Bearb." })}
             </button>
-            <button onClick={del} className="grid h-8 w-8 place-items-center rounded-lg text-rose-500 transition hover:bg-rose-50 dark:hover:bg-rose-500/10" title={tr(locale, { uz: "O'chirish", ru: "Удалить", en: "Delete" })}><Icon name="fileX" className="h-4 w-4" /></button>
+            <button onClick={del} className="grid h-8 w-8 place-items-center rounded-lg text-rose-500 transition hover:bg-rose-50 dark:hover:bg-rose-500/10" title={tr(locale, { uz: "O'chirish", ru: "Удалить", en: "Delete", de: "Löschen" })}><Icon name="fileX" className="h-4 w-4" /></button>
           </div>
         )}
       </div>
 
       {expanded && hasDetails && (
         <div className="space-y-3 border-t border-slate-100 bg-slate-50/50 px-4 py-4 dark:border-slate-800 dark:bg-white/[0.02]">
-          {l.topic && <Field label={tr(locale, { uz: "Mavzu", ru: "Тема", en: "Topic" })} value={l.topic} />}
+          {l.topic && <Field label={tr(locale, { uz: "Mavzu", ru: "Тема", en: "Topic", de: "Thema" })} value={l.topic} />}
           {l.videoUrl && (
             <div>
-              <div className="mb-1.5 flex items-center gap-1.5 text-xs font-semibold text-slate-500 dark:text-slate-400"><span>🎬</span> {tr(locale, { uz: "Dars videosi", ru: "Видео урока", en: "Lesson video" })}</div>
+              <div className="mb-1.5 flex items-center gap-1.5 text-xs font-semibold text-slate-500 dark:text-slate-400"><span>🎬</span> {tr(locale, { uz: "Dars videosi", ru: "Видео урока", en: "Lesson video", de: "Lektionsvideo" })}</div>
               <video controls preload="metadata" className="max-h-[360px] w-full rounded-xl bg-black shadow-sm" src={l.videoUrl} />
             </div>
           )}
           {(l.assignment || l.assignmentFileUrl) && (
             <div>
-              {l.assignment && <Field label={tr(locale, { uz: "Dars topshirig'i", ru: "Задание урока", en: "Lesson assignment" })} value={l.assignment} />}
+              {l.assignment && <Field label={tr(locale, { uz: "Dars topshirig'i", ru: "Задание урока", en: "Lesson assignment", de: "Lektionsaufgabe" })} value={l.assignment} />}
               {l.assignmentFileUrl && (
                 <a href={l.assignmentFileUrl} target="_blank" rel="noreferrer" className={`inline-flex items-center gap-1.5 rounded-lg border border-amber-200 bg-amber-50 px-3 py-1.5 text-sm font-medium text-amber-700 transition hover:bg-amber-100 dark:border-amber-800 dark:bg-amber-500/10 dark:text-amber-400 ${l.assignment ? "mt-2" : ""}`}>
-                  <Icon name="download" className="h-4 w-4" /> {tr(locale, { uz: "Topshiriq faylini ochish", ru: "Открыть файл задания", en: "Open assignment file" })}
+                  <Icon name="download" className="h-4 w-4" /> {tr(locale, { uz: "Topshiriq faylini ochish", ru: "Открыть файл задания", en: "Open assignment file", de: "Aufgabendatei öffnen" })}
                 </a>
               )}
             </div>
           )}
           {(l.homework || l.homeworkFileUrl) && (
             <div>
-              {l.homework && <Field label={tr(locale, { uz: "Uy vazifasi", ru: "Домашнее задание", en: "Homework" })} value={l.homework} />}
+              {l.homework && <Field label={tr(locale, { uz: "Uy vazifasi", ru: "Домашнее задание", en: "Homework", de: "Hausaufgabe" })} value={l.homework} />}
               {l.homeworkFileUrl && (
                 <a href={l.homeworkFileUrl} target="_blank" rel="noreferrer" className={`inline-flex items-center gap-1.5 rounded-lg border border-emerald-200 bg-emerald-50 px-3 py-1.5 text-sm font-medium text-emerald-700 transition hover:bg-emerald-100 dark:border-emerald-800 dark:bg-emerald-500/10 dark:text-emerald-400 ${l.homework ? "mt-2" : ""}`}>
-                  <Icon name="download" className="h-4 w-4" /> {tr(locale, { uz: "Uy vazifasi faylini ochish", ru: "Открыть файл домашнего задания", en: "Open homework file" })}
+                  <Icon name="download" className="h-4 w-4" /> {tr(locale, { uz: "Uy vazifasi faylini ochish", ru: "Открыть файл домашнего задания", en: "Open homework file", de: "Hausaufgabendatei öffnen" })}
                 </a>
               )}
             </div>
           )}
           {l.materialUrl && (
             <a href={l.materialUrl} target="_blank" rel="noreferrer" className="inline-flex items-center gap-1.5 rounded-lg border border-slate-200 bg-white px-3 py-1.5 text-sm font-medium text-brand-600 transition hover:bg-brand-50 dark:border-slate-700 dark:bg-slate-900 dark:hover:bg-brand-950/30">
-              <Icon name="download" className="h-4 w-4" /> {tr(locale, { uz: "Materialni ochish", ru: "Открыть материал", en: "Open material" })}
+              <Icon name="download" className="h-4 w-4" /> {tr(locale, { uz: "Materialni ochish", ru: "Открыть материал", en: "Open material", de: "Material öffnen" })}
             </a>
           )}
         </div>
@@ -197,15 +197,16 @@ function LessonDrawer({ programId, initial, locale, onClose }: { programId: stri
     if (!title.trim()) { setErr("title"); return; }
     // Bo'sh qolgan muhim maydonlar haqida eslatma (baribir saqlash mumkin)
     const missing: string[] = [];
-    if (!topic.trim()) missing.push(tr(locale, { uz: "Mavzu", ru: "Тема", en: "Topic" }));
-    if (!videoUrl) missing.push(tr(locale, { uz: "Dars videosi", ru: "Видео урока", en: "Lesson video" }));
-    if (!assignment.trim() && !assignmentFileUrl) missing.push(tr(locale, { uz: "Dars topshirig'i", ru: "Задание урока", en: "Assignment" }));
-    if (!homework.trim() && !homeworkFileUrl) missing.push(tr(locale, { uz: "Uy vazifasi", ru: "Домашнее задание", en: "Homework" }));
+    if (!topic.trim()) missing.push(tr(locale, { uz: "Mavzu", ru: "Тема", en: "Topic", de: "Thema" }));
+    if (!videoUrl) missing.push(tr(locale, { uz: "Dars videosi", ru: "Видео урока", en: "Lesson video", de: "Lektionsvideo" }));
+    if (!assignment.trim() && !assignmentFileUrl) missing.push(tr(locale, { uz: "Dars topshirig'i", ru: "Задание урока", en: "Assignment", de: "Aufgabe" }));
+    if (!homework.trim() && !homeworkFileUrl) missing.push(tr(locale, { uz: "Uy vazifasi", ru: "Домашнее задание", en: "Homework", de: "Hausaufgabe" }));
     if (missing.length > 0) {
       const msg = tr(locale, {
         uz: `Quyidagilar to'ldirilmagan:\n\n• ${missing.join("\n• ")}\n\nBaribir saqlaysizmi?`,
         ru: `Не заполнено:\n\n• ${missing.join("\n• ")}\n\nВсё равно сохранить?`,
         en: `Not filled in:\n\n• ${missing.join("\n• ")}\n\nSave anyway?`,
+        de: `Folgendes ist nicht ausgefüllt:\n\n• ${missing.join("\n• ")}\n\nTrotzdem speichern?`,
       });
       if (!confirm(msg)) return;
     }
@@ -224,67 +225,67 @@ function LessonDrawer({ programId, initial, locale, onClose }: { programId: stri
       <div className="absolute inset-0 bg-slate-900/50 backdrop-blur-sm" />
       <div onMouseDown={(e) => e.stopPropagation()} className="animate-slide-in-right absolute right-0 top-0 flex h-full w-[480px] max-w-[94%] flex-col border-l border-slate-200 bg-white shadow-pop dark:border-white/10 dark:bg-[#15243d]">
         <div className="flex shrink-0 items-center justify-between border-b border-slate-100 px-5 py-4 dark:border-white/10">
-          <h3 className="text-base font-bold text-slate-800 dark:text-slate-100">{initial ? tr(locale, { uz: "Darsni tahrirlash", ru: "Редактировать урок", en: "Edit lesson" }) : tr(locale, { uz: "Yangi dars", ru: "Новый урок", en: "New lesson" })}</h3>
+          <h3 className="text-base font-bold text-slate-800 dark:text-slate-100">{initial ? tr(locale, { uz: "Darsni tahrirlash", ru: "Редактировать урок", en: "Edit lesson", de: "Lektion bearbeiten" }) : tr(locale, { uz: "Yangi dars", ru: "Новый урок", en: "New lesson", de: "Neue Lektion" })}</h3>
           <button type="button" onClick={onClose} className="flex h-8 w-8 items-center justify-center rounded-lg text-lg text-slate-400 hover:bg-slate-100 dark:hover:bg-white/10">✕</button>
         </div>
 
         <div className="flex-1 space-y-4 overflow-y-auto px-5 py-4">
           <div>
-            <label className={lbl}>{tr(locale, { uz: "Dars nomi", ru: "Название урока", en: "Lesson title" })} <span className="text-rose-500">*</span></label>
-            <input value={title} onChange={(e) => { setTitle(e.target.value); setErr(null); }} placeholder={tr(locale, { uz: "1-dars: Kirish", ru: "Урок 1: Введение", en: "Lesson 1: Intro" })} className={cn(inp, err === "title" && "border-rose-400")} />
+            <label className={lbl}>{tr(locale, { uz: "Dars nomi", ru: "Название урока", en: "Lesson title", de: "Lektionstitel" })} <span className="text-rose-500">*</span></label>
+            <input value={title} onChange={(e) => { setTitle(e.target.value); setErr(null); }} placeholder={tr(locale, { uz: "1-dars: Kirish", ru: "Урок 1: Введение", en: "Lesson 1: Intro", de: "Lektion 1: Einführung" })} className={cn(inp, err === "title" && "border-rose-400")} />
           </div>
           <div>
-            <label className={lbl}>{tr(locale, { uz: "Mavzu (tafsilot)", ru: "Тема (описание)", en: "Topic (details)" })}</label>
+            <label className={lbl}>{tr(locale, { uz: "Mavzu (tafsilot)", ru: "Тема (описание)", en: "Topic (details)", de: "Thema (Details)" })}</label>
             <textarea value={topic} onChange={(e) => setTopic(e.target.value)} rows={2} className={inp} />
           </div>
           {/* Daraja — o'quvchi portalida darslar shu bo'yicha bo'limlarga ajraladi */}
           <div>
             <label className="mb-1 block text-xs font-medium text-slate-500 dark:text-slate-400">
-              {tr(locale, { uz: "Daraja", ru: "Уровень", en: "Level" })}
-              <span className="ml-1 font-normal text-slate-400">({tr(locale, { uz: "o'quvchi ilovasida bo'limlarga ajratish uchun", ru: "для разделов в приложении ученика", en: "groups lessons in the student app" })})</span>
+              {tr(locale, { uz: "Daraja", ru: "Уровень", en: "Level", de: "Niveau" })}
+              <span className="ml-1 font-normal text-slate-400">({tr(locale, { uz: "o'quvchi ilovasida bo'limlarga ajratish uchun", ru: "для разделов в приложении ученика", en: "groups lessons in the student app", de: "gruppiert Lektionen in der Schüler-App" })})</span>
             </label>
             <select value={levelCode} onChange={(e) => setLevelCode(e.target.value)} className={inp}>
-              <option value="">{tr(locale, { uz: "— tanlanmagan —", ru: "— не выбрано —", en: "— none —" })}</option>
+              <option value="">{tr(locale, { uz: "— tanlanmagan —", ru: "— не выбрано —", en: "— none —", de: "— nicht ausgewählt —" })}</option>
               {["A1", "A2", "B1", "B2", "C1", "C2"].map((c) => <option key={c} value={c}>{c}</option>)}
             </select>
           </div>
 
           <FileUpload
-            label={tr(locale, { uz: "Dars videosi", ru: "Видео урока", en: "Lesson video" })}
+            label={tr(locale, { uz: "Dars videosi", ru: "Видео урока", en: "Lesson video", de: "Lektionsvideo" })}
             accept="video/*" current={videoUrl} onChange={setVideoUrl} locale={locale} isVideo
           />
 
           <div>
-            <label className={lbl}>{tr(locale, { uz: "Dars topshirig'i", ru: "Задание урока", en: "Lesson assignment" })}</label>
-            <textarea value={assignment} onChange={(e) => setAssignment(e.target.value)} rows={2} placeholder={tr(locale, { uz: "Darsda bajariladigan topshiriq", ru: "Задание на уроке", en: "In-class assignment" })} className={inp} />
+            <label className={lbl}>{tr(locale, { uz: "Dars topshirig'i", ru: "Задание урока", en: "Lesson assignment", de: "Lektionsaufgabe" })}</label>
+            <textarea value={assignment} onChange={(e) => setAssignment(e.target.value)} rows={2} placeholder={tr(locale, { uz: "Darsda bajariladigan topshiriq", ru: "Задание на уроке", en: "In-class assignment", de: "Aufgabe im Unterricht" })} className={inp} />
           </div>
 
           <FileUpload
-            label={tr(locale, { uz: "Topshiriq fayli (pdf/word/txt)", ru: "Файл задания (pdf/word/txt)", en: "Assignment file (pdf/word/txt)" })}
+            label={tr(locale, { uz: "Topshiriq fayli (pdf/word/txt)", ru: "Файл задания (pdf/word/txt)", en: "Assignment file (pdf/word/txt)", de: "Aufgabendatei (pdf/word/txt)" })}
             accept="application/pdf,.doc,.docx,.txt,.rtf,image/*,.xls,.xlsx,.ppt,.pptx,.zip" current={assignmentFileUrl} onChange={setAssignmentFileUrl} locale={locale}
           />
 
           <div>
-            <label className={lbl}>{tr(locale, { uz: "Uy vazifasi", ru: "Домашнее задание", en: "Homework" })}</label>
-            <textarea value={homework} onChange={(e) => setHomework(e.target.value)} rows={2} placeholder={tr(locale, { uz: "Uyga beriladigan vazifa", ru: "Домашнее задание", en: "Homework" })} className={inp} />
+            <label className={lbl}>{tr(locale, { uz: "Uy vazifasi", ru: "Домашнее задание", en: "Homework", de: "Hausaufgabe" })}</label>
+            <textarea value={homework} onChange={(e) => setHomework(e.target.value)} rows={2} placeholder={tr(locale, { uz: "Uyga beriladigan vazifa", ru: "Домашнее задание", en: "Homework", de: "Hausaufgabe" })} className={inp} />
           </div>
 
           <FileUpload
-            label={tr(locale, { uz: "Uy vazifasi fayli (pdf/rasm/hujjat)", ru: "Файл домашнего задания (pdf/изобр./документ)", en: "Homework file (pdf/image/doc)" })}
+            label={tr(locale, { uz: "Uy vazifasi fayli (pdf/rasm/hujjat)", ru: "Файл домашнего задания (pdf/изобр./документ)", en: "Homework file (pdf/image/doc)", de: "Hausaufgabendatei (pdf/Bild/Dokument)" })}
             accept="application/pdf,image/*,video/*,.doc,.docx,.xls,.xlsx,.ppt,.pptx,.zip" current={homeworkFileUrl} onChange={setHomeworkFileUrl} locale={locale}
           />
 
           <FileUpload
-            label={tr(locale, { uz: "Qo'shimcha material (fayl/pdf)", ru: "Доп. материал (файл/pdf)", en: "Extra material (file/pdf)" })}
+            label={tr(locale, { uz: "Qo'shimcha material (fayl/pdf)", ru: "Доп. материал (файл/pdf)", en: "Extra material (file/pdf)", de: "Zusätzliches Material (Datei/pdf)" })}
             accept="application/pdf,image/*,video/*" current={materialUrl} onChange={setMaterialUrl} locale={locale}
           />
 
-          {err && err !== "title" && <p className="rounded-lg bg-rose-50 px-3 py-2 text-sm text-rose-700 dark:bg-rose-500/10 dark:text-rose-400">{err === "forbidden" ? tr(locale, { uz: "Ruxsat yo'q.", ru: "Нет доступа.", en: "No permission." }) : tr(locale, { uz: "Xatolik yuz berdi.", ru: "Произошла ошибка.", en: "An error occurred." })}</p>}
+          {err && err !== "title" && <p className="rounded-lg bg-rose-50 px-3 py-2 text-sm text-rose-700 dark:bg-rose-500/10 dark:text-rose-400">{err === "forbidden" ? tr(locale, { uz: "Ruxsat yo'q.", ru: "Нет доступа.", en: "No permission.", de: "Keine Berechtigung." }) : tr(locale, { uz: "Xatolik yuz berdi.", ru: "Произошла ошибка.", en: "An error occurred.", de: "Ein Fehler ist aufgetreten." })}</p>}
         </div>
 
         <div className="flex shrink-0 gap-2 border-t border-slate-100 px-5 py-4 dark:border-white/10">
-          <button type="button" onClick={onClose} className="flex-1 rounded-xl border border-slate-200 py-2.5 text-sm font-semibold text-slate-600 hover:bg-slate-50 dark:border-white/10 dark:text-slate-300">{tr(locale, { uz: "Bekor", ru: "Отмена", en: "Cancel" })}</button>
-          <button type="button" onClick={save} disabled={saving} className="flex-[1.4] rounded-xl bg-brand-600 py-2.5 text-sm font-semibold text-white hover:bg-brand-700 disabled:opacity-60">{saving ? tr(locale, { uz: "Saqlanmoqda...", ru: "Сохранение...", en: "Saving..." }) : tr(locale, { uz: "Saqlash", ru: "Сохранить", en: "Save" })}</button>
+          <button type="button" onClick={onClose} className="flex-1 rounded-xl border border-slate-200 py-2.5 text-sm font-semibold text-slate-600 hover:bg-slate-50 dark:border-white/10 dark:text-slate-300">{tr(locale, { uz: "Bekor", ru: "Отмена", en: "Cancel", de: "Abbrechen" })}</button>
+          <button type="button" onClick={save} disabled={saving} className="flex-[1.4] rounded-xl bg-brand-600 py-2.5 text-sm font-semibold text-white hover:bg-brand-700 disabled:opacity-60">{saving ? tr(locale, { uz: "Saqlanmoqda...", ru: "Сохранение...", en: "Saving...", de: "Wird gespeichert..." }) : tr(locale, { uz: "Saqlash", ru: "Сохранить", en: "Save", de: "Speichern" })}</button>
         </div>
       </div>
     </div>, document.body);
@@ -314,7 +315,7 @@ function FileUpload({ label, accept, current, onChange, locale, isVideo }: { lab
     });
     setUploading(false);
     if (url.url) onChange(url.url);
-    else setError(url.error === "too_large" ? tr(locale, { uz: "Fayl juda katta (maks 300 MB)", ru: "Файл слишком большой (макс 300 МБ)", en: "File too large (max 300 MB)" }) : tr(locale, { uz: "Yuklab bo'lmadi", ru: "Не удалось загрузить", en: "Upload failed" }));
+    else setError(url.error === "too_large" ? tr(locale, { uz: "Fayl juda katta (maks 300 MB)", ru: "Файл слишком большой (макс 300 МБ)", en: "File too large (max 300 MB)", de: "Datei zu groß (max. 300 MB)" }) : tr(locale, { uz: "Yuklab bo'lmadi", ru: "Не удалось загрузить", en: "Upload failed", de: "Hochladen fehlgeschlagen" }));
   };
 
   return (
@@ -328,18 +329,18 @@ function FileUpload({ label, accept, current, onChange, locale, isVideo }: { lab
             <a href={current} target="_blank" rel="noreferrer" className="block truncate text-sm text-brand-600 hover:underline">{current.split("/").pop()}</a>
           )}
           <div className="flex gap-2">
-            <button type="button" onClick={() => ref.current?.click()} className="rounded-md border border-slate-200 px-2.5 py-1 text-xs font-medium text-slate-600 hover:bg-slate-50 dark:border-slate-700 dark:text-slate-300">{tr(locale, { uz: "Almashtirish", ru: "Заменить", en: "Replace" })}</button>
-            <button type="button" onClick={() => onChange("")} className="rounded-md border border-rose-200 px-2.5 py-1 text-xs font-medium text-rose-600 hover:bg-rose-50 dark:border-rose-900">{tr(locale, { uz: "O'chirish", ru: "Удалить", en: "Remove" })}</button>
+            <button type="button" onClick={() => ref.current?.click()} className="rounded-md border border-slate-200 px-2.5 py-1 text-xs font-medium text-slate-600 hover:bg-slate-50 dark:border-slate-700 dark:text-slate-300">{tr(locale, { uz: "Almashtirish", ru: "Заменить", en: "Replace", de: "Ersetzen" })}</button>
+            <button type="button" onClick={() => onChange("")} className="rounded-md border border-rose-200 px-2.5 py-1 text-xs font-medium text-rose-600 hover:bg-rose-50 dark:border-rose-900">{tr(locale, { uz: "O'chirish", ru: "Удалить", en: "Remove", de: "Entfernen" })}</button>
           </div>
         </div>
       ) : uploading ? (
         <div className="rounded-lg border border-slate-200 p-3 dark:border-slate-700">
-          <div className="mb-1.5 flex items-center justify-between text-xs text-slate-500"><span>{tr(locale, { uz: "Yuklanmoqda...", ru: "Загрузка...", en: "Uploading..." })}</span><span className="font-semibold tabular-nums">{pct}%</span></div>
+          <div className="mb-1.5 flex items-center justify-between text-xs text-slate-500"><span>{tr(locale, { uz: "Yuklanmoqda...", ru: "Загрузка...", en: "Uploading...", de: "Wird hochgeladen..." })}</span><span className="font-semibold tabular-nums">{pct}%</span></div>
           <div className="h-2 overflow-hidden rounded-full bg-slate-100 dark:bg-slate-800"><div className="h-full rounded-full bg-brand-500 transition-all" style={{ width: `${pct}%` }} /></div>
         </div>
       ) : (
         <button type="button" onClick={() => ref.current?.click()} className="flex w-full items-center justify-center gap-2 rounded-lg border border-dashed border-slate-300 py-4 text-sm font-medium text-slate-500 transition hover:border-brand-400 hover:text-brand-600 dark:border-slate-600 dark:text-slate-400">
-          <Icon name="download" className="h-4 w-4 rotate-180" /> {tr(locale, { uz: "Fayl tanlash", ru: "Выбрать файл", en: "Choose file" })}
+          <Icon name="download" className="h-4 w-4 rotate-180" /> {tr(locale, { uz: "Fayl tanlash", ru: "Выбрать файл", en: "Choose file", de: "Datei auswählen" })}
         </button>
       )}
       {error && <p className="mt-1 text-xs text-rose-500">{error}</p>}

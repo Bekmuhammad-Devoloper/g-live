@@ -22,7 +22,7 @@ const statusTone: Record<string, string> = {
 export default async function RoomDetailPage({ params }: { params: Promise<{ id: string }> }) {
   const s = await requireSession();
   if (!canRead(s.role, MODULES.GROUPS)) {
-    return <Forbidden title={tr(s.locale, { uz: "Kirish taqiqlangan", ru: "Доступ запрещён", en: "Access denied" })} body={tr(s.locale, { uz: "Bu bo'lim uchun ruxsat yo'q.", ru: "Нет доступа к этому разделу.", en: "You do not have access to this section." })} />;
+    return <Forbidden title={tr(s.locale, { uz: "Kirish taqiqlangan", ru: "Доступ запрещён", en: "Access denied", de: "Zugriff verweigert" })} body={tr(s.locale, { uz: "Bu bo'lim uchun ruxsat yo'q.", ru: "Нет доступа к этому разделу.", en: "You do not have access to this section.", de: "Sie haben keinen Zugriff auf diesen Bereich." })} />;
   }
   const { id } = await params;
   const room = await prisma.room.findUnique({ where: { id } });
@@ -44,13 +44,13 @@ export default async function RoomDetailPage({ params }: { params: Promise<{ id:
   const totalStudents = groups.reduce((n, g) => n + g._count.students, 0);
   const activeGroups = groups.filter((g) => g.status === "ACTIVE").length;
 
-  const L = (uz: string, ru: string, en: string) => tr(s.locale, { uz, ru, en });
+  const L = (uz: string, ru: string, en: string, de: string = en) => tr(s.locale, { uz, ru, en, de });
 
   return (
     <div className="space-y-5">
       {/* Orqaga */}
       <Link href="/rooms" className="inline-flex items-center gap-1.5 text-sm font-medium text-slate-500 transition hover:text-brand-600 dark:text-slate-400 dark:hover:text-brand-300">
-        <Icon name="arrow" className="h-4 w-4 rotate-180" /> {L("Xonalar", "Кабинеты", "Rooms")}
+        <Icon name="arrow" className="h-4 w-4 rotate-180" /> {L("Xonalar", "Кабинеты", "Rooms", "Räume")}
       </Link>
 
       {/* Xona sarlavhasi */}
@@ -60,7 +60,7 @@ export default async function RoomDetailPage({ params }: { params: Promise<{ id:
           <div>
             <h1 className="text-[24px] font-bold tracking-tight text-slate-900 dark:text-slate-100">{room.name}</h1>
             <div className="mt-1 flex flex-wrap items-center gap-3 text-sm text-slate-500 dark:text-slate-400">
-              <span className="inline-flex items-center gap-1"><Icon name="users" className="h-4 w-4" /> {L("Sig'imi", "Вместимость", "Capacity")}: <b className="text-slate-700 dark:text-slate-200">{room.capacity || "—"}</b></span>
+              <span className="inline-flex items-center gap-1"><Icon name="users" className="h-4 w-4" /> {L("Sig'imi", "Вместимость", "Capacity", "Kapazität")}: <b className="text-slate-700 dark:text-slate-200">{room.capacity || "—"}</b></span>
               {branch?.name && <span className="inline-flex items-center gap-1"><Icon name="building" className="h-4 w-4" /> {branch.name}</span>}
             </div>
           </div>
@@ -69,15 +69,15 @@ export default async function RoomDetailPage({ params }: { params: Promise<{ id:
 
       {/* Ma'lumot kartalari */}
       <div className="grid gap-4 sm:grid-cols-3">
-        <InfoCard icon="layers" tone="brand" value={groups.length} label={L("Guruhlar", "Группы", "Groups")} />
-        <InfoCard icon="check" tone="green" value={activeGroups} label={L("Faol guruhlar", "Активные группы", "Active groups")} />
-        <InfoCard icon="graduation" tone="violet" value={totalStudents} label={L("O'quvchilar", "Ученики", "Students")} />
+        <InfoCard icon="layers" tone="brand" value={groups.length} label={L("Guruhlar", "Группы", "Groups", "Gruppen")} />
+        <InfoCard icon="check" tone="green" value={activeGroups} label={L("Faol guruhlar", "Активные группы", "Active groups", "Aktive Gruppen")} />
+        <InfoCard icon="graduation" tone="violet" value={totalStudents} label={L("O'quvchilar", "Ученики", "Students", "Schüler")} />
       </div>
 
       {/* Izoh */}
       {room.note && room.note.trim() && (
         <div className="rounded-2xl border border-slate-200/70 bg-white p-5 shadow-card dark:border-slate-800 dark:bg-slate-900">
-          <div className="mb-1 text-xs font-semibold uppercase tracking-wider text-slate-400">{L("Izoh", "Примечание", "Note")}</div>
+          <div className="mb-1 text-xs font-semibold uppercase tracking-wider text-slate-400">{L("Izoh", "Примечание", "Note", "Notiz")}</div>
           <p className="text-sm text-slate-700 dark:text-slate-200">{room.note}</p>
         </div>
       )}
@@ -85,25 +85,25 @@ export default async function RoomDetailPage({ params }: { params: Promise<{ id:
       {/* Undagi guruhlar / jadval */}
       <div className="overflow-hidden rounded-2xl border border-slate-200/70 bg-white shadow-card dark:border-slate-800 dark:bg-slate-900">
         <div className="border-b border-slate-200/70 px-6 py-4 dark:border-slate-800">
-          <h2 className="flex items-center gap-2 text-base font-semibold text-slate-700 dark:text-slate-200"><Icon name="calendar" className="h-5 w-5 text-brand-500" /> {L("Xonadagi guruhlar va jadval", "Группы и расписание кабинета", "Groups and schedule in this room")}</h2>
+          <h2 className="flex items-center gap-2 text-base font-semibold text-slate-700 dark:text-slate-200"><Icon name="calendar" className="h-5 w-5 text-brand-500" /> {L("Xonadagi guruhlar va jadval", "Группы и расписание кабинета", "Groups and schedule in this room", "Gruppen und Stundenplan in diesem Raum")}</h2>
         </div>
         <div className="overflow-x-auto">
           <table className="w-full min-w-[820px] text-left text-sm">
             <thead className="border-b border-slate-200/70 bg-slate-50/60 text-[11px] font-semibold uppercase tracking-wider text-slate-500 dark:border-slate-800 dark:bg-slate-800/40 dark:text-slate-400">
               <tr>
-                <th className="px-6 py-3.5">{L("Guruh", "Группа", "Group")}</th>
-                <th className="px-6 py-3.5">{L("Kurs", "Курс", "Course")}</th>
-                <th className="px-6 py-3.5">{L("Daraja", "Уровень", "Level")}</th>
-                <th className="px-6 py-3.5">{L("Kun", "Дни", "Days")}</th>
-                <th className="px-6 py-3.5">{L("Dars vaqti", "Время", "Time")}</th>
-                <th className="px-6 py-3.5">{L("O'qituvchi", "Преподаватель", "Teacher")}</th>
-                <th className="px-6 py-3.5">{L("O'quvchilar", "Ученики", "Students")}</th>
-                <th className="px-6 py-3.5">{L("Holat", "Статус", "Status")}</th>
+                <th className="px-6 py-3.5">{L("Guruh", "Группа", "Group", "Gruppe")}</th>
+                <th className="px-6 py-3.5">{L("Kurs", "Курс", "Course", "Kurs")}</th>
+                <th className="px-6 py-3.5">{L("Daraja", "Уровень", "Level", "Stufe")}</th>
+                <th className="px-6 py-3.5">{L("Kun", "Дни", "Days", "Tage")}</th>
+                <th className="px-6 py-3.5">{L("Dars vaqti", "Время", "Time", "Uhrzeit")}</th>
+                <th className="px-6 py-3.5">{L("O'qituvchi", "Преподаватель", "Teacher", "Lehrer")}</th>
+                <th className="px-6 py-3.5">{L("O'quvchilar", "Ученики", "Students", "Schüler")}</th>
+                <th className="px-6 py-3.5">{L("Holat", "Статус", "Status", "Status")}</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-slate-100 dark:divide-slate-800">
               {groups.length === 0 ? (
-                <tr><td colSpan={8} className="py-16 text-center text-slate-400">{L("Bu xonaga biriktirilgan guruhlar yo'q", "Нет групп, привязанных к этому кабинету", "No groups assigned to this room")}</td></tr>
+                <tr><td colSpan={8} className="py-16 text-center text-slate-400">{L("Bu xonaga biriktirilgan guruhlar yo'q", "Нет групп, привязанных к этому кабинету", "No groups assigned to this room", "Diesem Raum sind keine Gruppen zugeordnet")}</td></tr>
               ) : groups.map((g) => (
                 <tr key={g.id} className="transition hover:bg-slate-50 dark:hover:bg-slate-800/40">
                   <td className="px-6 py-4"><Link href={`/groups/${g.id}`} className="font-semibold text-slate-800 transition hover:text-brand-600 dark:text-slate-100 dark:hover:text-brand-300">{g.name}</Link></td>

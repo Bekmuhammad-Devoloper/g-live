@@ -38,6 +38,11 @@ const LABELS: Record<Locale, string[]> = {
     "Left from orders", "Left from new", "Left from active", "Debtors",
     "Groups", "Made first payment", "Frozen", "Archived",
   ],
+  de: [
+    "Bestellungen", "Kommen zur ersten Stunde", "Neue Schüler", "Aktive Schüler",
+    "Aus Bestellungen abgesprungen", "Aus Neuen abgesprungen", "Aus Aktiven abgesprungen", "Schuldner",
+    "Gruppen", "Erste Zahlung geleistet", "Eingefroren", "Archiviert",
+  ],
 };
 
 // Har karta: [ikonka, rang(bg), qiymat kaliti, havola]

@@ -27,21 +27,21 @@ const STATUS_CLS: Record<string, string> = {
   CERTIFIED: "bg-brand-500/15 text-brand-600 dark:text-brand-300",
 };
 const statusLabel = (locale: Locale, key: string): string | null => {
-  const m: Record<string, { uz: string; ru: string; en: string }> = {
-    ACTIVE: { uz: "Faol", ru: "Активен", en: "Active" },
-    WAITING: { uz: "Kutmoqda", ru: "Ожидает", en: "Waiting" },
-    FROZEN: { uz: "Muzlatilgan", ru: "Заморожен", en: "Frozen" },
-    TRANSFERRED: { uz: "Ko'chirilgan", ru: "Переведён", en: "Transferred" },
-    EXPELLED: { uz: "Chetlashtirilgan", ru: "Отчислен", en: "Expelled" },
-    CERTIFIED: { uz: "Bitirgan", ru: "Выпускник", en: "Graduated" },
+  const m: Record<string, { uz: string; ru: string; en: string; de: string }> = {
+    ACTIVE: { uz: "Faol", ru: "Активен", en: "Active", de: "Aktiv" },
+    WAITING: { uz: "Kutmoqda", ru: "Ожидает", en: "Waiting", de: "Wartet" },
+    FROZEN: { uz: "Muzlatilgan", ru: "Заморожен", en: "Frozen", de: "Eingefroren" },
+    TRANSFERRED: { uz: "Ko'chirilgan", ru: "Переведён", en: "Transferred", de: "Verlegt" },
+    EXPELLED: { uz: "Chetlashtirilgan", ru: "Отчислен", en: "Expelled", de: "Exmatrikuliert" },
+    CERTIFIED: { uz: "Bitirgan", ru: "Выпускник", en: "Graduated", de: "Absolvent" },
   };
   return m[key] ? tr(locale, m[key]) : null;
 };
 const groupStatusOpts = (locale: Locale) => [
-  { v: "ACTIVE", label: tr(locale, { uz: "Aktiv", ru: "Активная", en: "Active" }) },
-  { v: "PLANNED", label: tr(locale, { uz: "Rejalashtirilgan", ru: "Запланирована", en: "Planned" }) },
-  { v: "FINISHED", label: tr(locale, { uz: "Tugagan", ru: "Завершена", en: "Finished" }) },
-  { v: "CANCELLED", label: tr(locale, { uz: "Bekor qilingan", ru: "Отменена", en: "Cancelled" }) },
+  { v: "ACTIVE", label: tr(locale, { uz: "Aktiv", ru: "Активная", en: "Active", de: "Aktiv" }) },
+  { v: "PLANNED", label: tr(locale, { uz: "Rejalashtirilgan", ru: "Запланирована", en: "Planned", de: "Geplant" }) },
+  { v: "FINISHED", label: tr(locale, { uz: "Tugagan", ru: "Завершена", en: "Finished", de: "Abgeschlossen" }) },
+  { v: "CANCELLED", label: tr(locale, { uz: "Bekor qilingan", ru: "Отменена", en: "Cancelled", de: "Storniert" }) },
 ];
 
 export default function GroupStudentsView({ locale, students, teacherNames }: { locale: Locale; students: VGroupStudent[]; teacherNames: string[] }) {
@@ -82,11 +82,11 @@ export default function GroupStudentsView({ locale, students, teacherNames }: { 
           <span className={cn("relative h-5 w-9 rounded-full transition", frozen ? "bg-brand-600" : "bg-slate-300 dark:bg-slate-600")}>
             <span className={cn("absolute top-0.5 h-4 w-4 rounded-full bg-white transition-all", frozen ? "left-4" : "left-0.5")} />
           </span>
-          {tr(locale, { uz: "Muzlatilgan", ru: "Замороженные", en: "Frozen" })}
+          {tr(locale, { uz: "Muzlatilgan", ru: "Замороженные", en: "Frozen", de: "Eingefroren" })}
         </button>
 
-        <FilterSelect value={teacher} onChange={setTeacher} placeholder={tr(locale, { uz: "O'qituvchi", ru: "Преподаватель", en: "Teacher" })} options={teacherNames.map((n) => ({ v: n, label: n }))} />
-        <FilterSelect value={groupStatus} onChange={setGroupStatus} placeholder={tr(locale, { uz: "Guruh holati", ru: "Статус группы", en: "Group status" })} options={groupStatusOpts(locale)} />
+        <FilterSelect value={teacher} onChange={setTeacher} placeholder={tr(locale, { uz: "O'qituvchi", ru: "Преподаватель", en: "Teacher", de: "Lehrer" })} options={teacherNames.map((n) => ({ v: n, label: n }))} />
+        <FilterSelect value={groupStatus} onChange={setGroupStatus} placeholder={tr(locale, { uz: "Guruh holati", ru: "Статус группы", en: "Group status", de: "Gruppenstatus" })} options={groupStatusOpts(locale)} />
 
         <div className={cn("flex h-10 items-center gap-1 rounded-lg border bg-white px-2.5 dark:bg-slate-800", from || to ? "border-brand-300 dark:border-brand-500/40" : "border-slate-200 dark:border-slate-700")}>
           <Icon name="calendar" className="h-4 w-4 text-slate-400" />
@@ -98,14 +98,14 @@ export default function GroupStudentsView({ locale, students, teacherNames }: { 
 
         <div className="relative ml-auto">
           <Icon name="search" className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400" />
-          <input value={search} onChange={(e) => setSearch(e.target.value)} placeholder={tr(locale, { uz: "Qidirish", ru: "Поиск", en: "Search" })} className="h-10 w-56 rounded-lg border border-slate-200 bg-white pl-9 pr-3 text-sm outline-none focus:border-brand-400 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-100" />
+          <input value={search} onChange={(e) => setSearch(e.target.value)} placeholder={tr(locale, { uz: "Qidirish", ru: "Поиск", en: "Search", de: "Suchen" })} className="h-10 w-56 rounded-lg border border-slate-200 bg-white pl-9 pr-3 text-sm outline-none focus:border-brand-400 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-100" />
         </div>
       </div>
 
       {/* Jadval */}
       <div className="overflow-hidden rounded-2xl border border-slate-200/70 bg-white shadow-card dark:border-slate-800 dark:bg-slate-900">
         <div className="flex items-center justify-end border-b border-slate-100 px-4 py-2 dark:border-slate-800">
-          <span className="rounded-lg bg-slate-100 px-2.5 py-1 text-xs font-semibold text-slate-500 dark:bg-slate-800 dark:text-slate-300">{tr(locale, { uz: "Umumiy soni:", ru: "Всего:", en: "Total:" })} {filtered.length}</span>
+          <span className="rounded-lg bg-slate-100 px-2.5 py-1 text-xs font-semibold text-slate-500 dark:bg-slate-800 dark:text-slate-300">{tr(locale, { uz: "Umumiy soni:", ru: "Всего:", en: "Total:", de: "Gesamt:" })} {filtered.length}</span>
         </div>
         <div className="overflow-x-auto">
           <table className="w-full min-w-[820px] text-left text-sm">
@@ -113,10 +113,10 @@ export default function GroupStudentsView({ locale, students, teacherNames }: { 
               <tr>
                 <th className="w-12 px-4 py-3">№</th>
                 <th className="px-4 py-3">ID</th>
-                <th className="px-4 py-3">{tr(locale, { uz: "Ism", ru: "Имя", en: "Name" })}</th>
-                <th className="px-4 py-3">{tr(locale, { uz: "Guruhlar", ru: "Группы", en: "Groups" })}</th>
-                <th className="px-4 py-3">{tr(locale, { uz: "O'qituvchi", ru: "Преподаватель", en: "Teacher" })}</th>
-                <th className="px-4 py-3">{tr(locale, { uz: "Holati", ru: "Статус", en: "Status" })}</th>
+                <th className="px-4 py-3">{tr(locale, { uz: "Ism", ru: "Имя", en: "Name", de: "Name" })}</th>
+                <th className="px-4 py-3">{tr(locale, { uz: "Guruhlar", ru: "Группы", en: "Groups", de: "Gruppen" })}</th>
+                <th className="px-4 py-3">{tr(locale, { uz: "O'qituvchi", ru: "Преподаватель", en: "Teacher", de: "Lehrer" })}</th>
+                <th className="px-4 py-3">{tr(locale, { uz: "Holati", ru: "Статус", en: "Status", de: "Status" })}</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-slate-100 dark:divide-slate-800">
@@ -124,8 +124,8 @@ export default function GroupStudentsView({ locale, students, teacherNames }: { 
                 <tr>
                   <td colSpan={6} className="px-4 py-16 text-center">
                     <div className="text-3xl opacity-30">📭</div>
-                    <p className="mt-2 font-medium text-slate-500 dark:text-slate-400">{tr(locale, { uz: "Ma'lumotlar topilmadi", ru: "Данные не найдены", en: "No data found" })}</p>
-                    <p className="mt-0.5 text-xs text-slate-400">{tr(locale, { uz: "Ma'lumotlar topilmadi. Filterni o'zgartirib ko'ring.", ru: "Данные не найдены. Попробуйте изменить фильтр.", en: "No data found. Try changing the filter." })}</p>
+                    <p className="mt-2 font-medium text-slate-500 dark:text-slate-400">{tr(locale, { uz: "Ma'lumotlar topilmadi", ru: "Данные не найдены", en: "No data found", de: "Keine Daten gefunden" })}</p>
+                    <p className="mt-0.5 text-xs text-slate-400">{tr(locale, { uz: "Ma'lumotlar topilmadi. Filterni o'zgartirib ko'ring.", ru: "Данные не найдены. Попробуйте изменить фильтр.", en: "No data found. Try changing the filter.", de: "Keine Daten gefunden. Versuchen Sie, den Filter zu ändern." })}</p>
                   </td>
                 </tr>
               ) : (
@@ -156,7 +156,7 @@ export default function GroupStudentsView({ locale, students, teacherNames }: { 
           <div className="flex items-center gap-2 text-xs text-slate-500 dark:text-slate-400">
             <Icon name="listView" className="h-4 w-4" />
             <select value={pageSize} onChange={(e) => { setPageSize(Number(e.target.value)); setPage(1); }} className="rounded-lg border border-slate-200 bg-white px-2 py-1 text-xs outline-none dark:border-slate-700 dark:bg-slate-800 dark:text-slate-200">
-              {[10, 20, 50, 100].map((n) => <option key={n} value={n}>{n} {tr(locale, { uz: "qator", ru: "строк", en: "rows" })}</option>)}
+              {[10, 20, 50, 100].map((n) => <option key={n} value={n}>{n} {tr(locale, { uz: "qator", ru: "строк", en: "rows", de: "Zeilen" })}</option>)}
             </select>
           </div>
           {totalPages > 1 && (

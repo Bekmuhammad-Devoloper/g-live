@@ -11,9 +11,9 @@ const ALLOWED = [ROLES.DIRECTOR, ROLES.DEPUTY_DIRECTOR, ROLES.ADMIN];
 export default async function TurnstileLogPage() {
   const s = await requireSession();
   if (!ALLOWED.includes(s.role as never)) {
-    return <Forbidden title={tr(s.locale, { uz: "Kirish taqiqlangan", ru: "Доступ запрещён", en: "Access denied" })} body={tr(s.locale, { uz: "Bu bo'lim rahbariyat uchun.", ru: "Этот раздел для руководства.", en: "This section is for management." })} />;
+    return <Forbidden title={tr(s.locale, { uz: "Kirish taqiqlangan", ru: "Доступ запрещён", en: "Access denied", de: "Zugriff verweigert" })} body={tr(s.locale, { uz: "Bu bo'lim rahbariyat uchun.", ru: "Этот раздел для руководства.", en: "This section is for management.", de: "Dieser Bereich ist für die Leitung." })} />;
   }
-  const T = (uz: string, ru: string, en: string) => tr(s.locale, { uz, ru, en });
+  const T = (uz: string, ru: string, en: string, de?: string) => tr(s.locale, { uz, ru, en, de });
 
   const rows = await prisma.attendance.findMany({
     where: { AND: [{ method: "QR" }, branchViaLesson(s)] }, // faol filial doirasida
@@ -30,18 +30,18 @@ export default async function TurnstileLogPage() {
 
   return (
     <>
-      <PageHeader title={T("Turniket kirish-chiqish analitikasi", "Аналитика входов-выходов турникета", "Turnstile in/out log")} subtitle={T("QR skanerlash orqali kirishlar jurnali (oxirgi 100 ta)", "Журнал входов по сканированию QR (последние 100)", "Log of QR scan entries (latest 100)")} />
+      <PageHeader title={T("Turniket kirish-chiqish analitikasi", "Аналитика входов-выходов турникета", "Turnstile in/out log", "Drehkreuz Ein-/Ausgangsprotokoll")} subtitle={T("QR skanerlash orqali kirishlar jurnali (oxirgi 100 ta)", "Журнал входов по сканированию QR (последние 100)", "Log of QR scan entries (latest 100)", "QR-Scan-Protokoll der Eintritte (letzte 100)")} />
 
       <Card padded={false}>
         <Table head={<tr>
-          <th className="px-4 py-3">{T("Vaqt", "Время", "Time")}</th>
-          <th className="px-4 py-3">{T("O'quvchi", "Ученик", "Student")}</th>
-          <th className="px-4 py-3">{T("Guruh", "Группа", "Group")}</th>
-          <th className="px-4 py-3">{T("Holat", "Статус", "Status")}</th>
-          <th className="px-4 py-3">{T("Belgi", "Отметка", "Flag")}</th>
+          <th className="px-4 py-3">{T("Vaqt", "Время", "Time", "Uhrzeit")}</th>
+          <th className="px-4 py-3">{T("O'quvchi", "Ученик", "Student", "Schüler")}</th>
+          <th className="px-4 py-3">{T("Guruh", "Группа", "Group", "Gruppe")}</th>
+          <th className="px-4 py-3">{T("Holat", "Статус", "Status", "Status")}</th>
+          <th className="px-4 py-3">{T("Belgi", "Отметка", "Flag", "Markierung")}</th>
         </tr>}>
           {rows.length === 0 ? (
-            <EmptyRow colSpan={5} text={T("QR orqali kirishlar hali yo'q", "Входов по QR пока нет", "No QR entries yet")} />
+            <EmptyRow colSpan={5} text={T("QR orqali kirishlar hali yo'q", "Входов по QR пока нет", "No QR entries yet", "Noch keine QR-Eintritte")} />
           ) : rows.map((r) => (
             <tr key={r.id} className="hover:bg-slate-50">
               <td className="whitespace-nowrap px-4 py-3 tabular-nums text-slate-600">{fmt.format(r.markedAt)}</td>
@@ -50,8 +50,8 @@ export default async function TurnstileLogPage() {
               <td className="px-4 py-3"><Badge tone={r.status === "PRESENT" ? "green" : r.status === "LATE" ? "amber" : "red"}>{r.status}</Badge></td>
               <td className="px-4 py-3">
                 {r.anomaly
-                  ? <Badge tone="red">{T("Anomaliya", "Аномалия", "Anomaly")}</Badge>
-                  : <span className="text-xs text-slate-400">{T("Toza", "Чисто", "Clean")}</span>}
+                  ? <Badge tone="red">{T("Anomaliya", "Аномалия", "Anomaly", "Anomalie")}</Badge>
+                  : <span className="text-xs text-slate-400">{T("Toza", "Чисто", "Clean", "Sauber")}</span>}
               </td>
             </tr>
           ))}

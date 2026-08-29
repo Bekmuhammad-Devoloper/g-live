@@ -38,13 +38,13 @@ const ACT_ICON: Record<string, string> = {
   test: "filecheck",
 };
 
-const ACT_LABEL: Record<string, { uz: string; ru: string; en: string }> = {
-  call: { uz: "Qo'ng'iroq", ru: "Звонок", en: "Call" },
-  message: { uz: "Xabar", ru: "Сообщение", en: "Message" },
-  meeting: { uz: "Uchrashuv", ru: "Встреча", en: "Meeting" },
-  note: { uz: "Izoh", ru: "Заметка", en: "Note" },
-  stage_change: { uz: "Bosqich o'zgarishi", ru: "Смена этапа", en: "Stage change" },
-  test: { uz: "Test", ru: "Тест", en: "Test" },
+const ACT_LABEL: Record<string, { uz: string; ru: string; en: string; de: string }> = {
+  call: { uz: "Qo'ng'iroq", ru: "Звонок", en: "Call", de: "Anruf" },
+  message: { uz: "Xabar", ru: "Сообщение", en: "Message", de: "Nachricht" },
+  meeting: { uz: "Uchrashuv", ru: "Встреча", en: "Meeting", de: "Treffen" },
+  note: { uz: "Izoh", ru: "Заметка", en: "Note", de: "Notiz" },
+  stage_change: { uz: "Bosqich o'zgarishi", ru: "Смена этапа", en: "Stage change", de: "Phasenwechsel" },
+  test: { uz: "Test", ru: "Тест", en: "Test", de: "Test" },
 };
 
 const initials = (n: string) => n.split(" ").filter(Boolean).slice(0, 2).map((w) => w[0]).join("").toUpperCase();
@@ -56,7 +56,7 @@ export default function LeadList({ locale, leads }: { locale: Locale; leads: DLe
     return (
       <div className="py-14 text-center">
         <Icon name="phoneOff" className="mx-auto h-10 w-10 text-slate-300 dark:text-slate-600" />
-        <p className="mt-2 text-sm text-slate-400">{tr(locale, { uz: "Lid topilmadi", ru: "Лид не найден", en: "No lead found" })}</p>
+        <p className="mt-2 text-sm text-slate-400">{tr(locale, { uz: "Lid topilmadi", ru: "Лид не найден", en: "No lead found", de: "Kein Lead gefunden" })}</p>
       </div>
     );
   }
@@ -89,7 +89,7 @@ export default function LeadList({ locale, leads }: { locale: Locale; leads: DLe
               <div className="flex shrink-0 items-center gap-2">
                 {l.talked && (
                   <span className="hidden items-center gap-1 rounded-full bg-emerald-500/15 px-2 py-0.5 text-[11px] font-medium text-emerald-600 sm:inline-flex dark:text-emerald-400">
-                    <Icon name="phoneCall" className="h-3 w-3" /> {tr(locale, { uz: "Gaplashilgan", ru: "Поговорили", en: "Talked" })}
+                    <Icon name="phoneCall" className="h-3 w-3" /> {tr(locale, { uz: "Gaplashilgan", ru: "Поговорили", en: "Talked", de: "Gesprochen" })}
                   </span>
                 )}
                 {l.calls > 0 && (
@@ -106,20 +106,20 @@ export default function LeadList({ locale, leads }: { locale: Locale; leads: DLe
             {expanded && (
               <div className="space-y-4 border-t border-slate-100 bg-slate-50 p-4 dark:border-slate-800 dark:bg-white/[0.02]">
                 <div className="grid grid-cols-2 gap-3 text-sm md:grid-cols-4">
-                  <Cell label={tr(locale, { uz: "Ism", ru: "Имя", en: "Name" })} value={l.name} />
-                  <Cell label={tr(locale, { uz: "Telefon", ru: "Телефон", en: "Phone" })} value={l.phone} />
-                  <Cell label={tr(locale, { uz: "Manba", ru: "Источник", en: "Source" })} value={l.source ?? "—"} />
-                  <Cell label={tr(locale, { uz: "Kurs", ru: "Курс", en: "Course" })} value={l.course ?? "—"} />
-                  <Cell label={tr(locale, { uz: "Byudjet", ru: "Бюджет", en: "Budget" })} value={l.budget != null ? formatMoney(l.budget, locale) : "—"} />
-                  <Cell label={tr(locale, { uz: "Qo'ng'iroqlar", ru: "Звонки", en: "Calls" })} value={`${l.calls} (${tr(locale, { uz: "javob", ru: "ответ", en: "answered" })}: ${l.answered})`} />
-                  <Cell label={tr(locale, { uz: "Gaplashgan", ru: "Наговорено", en: "Talk time" })} value={fmtDur(l.talkSec)} />
-                  <Cell label={tr(locale, { uz: "Yaratilgan", ru: "Создан", en: "Created" })} value={l.createdAt} />
+                  <Cell label={tr(locale, { uz: "Ism", ru: "Имя", en: "Name", de: "Name" })} value={l.name} />
+                  <Cell label={tr(locale, { uz: "Telefon", ru: "Телефон", en: "Phone", de: "Telefon" })} value={l.phone} />
+                  <Cell label={tr(locale, { uz: "Manba", ru: "Источник", en: "Source", de: "Quelle" })} value={l.source ?? "—"} />
+                  <Cell label={tr(locale, { uz: "Kurs", ru: "Курс", en: "Course", de: "Kurs" })} value={l.course ?? "—"} />
+                  <Cell label={tr(locale, { uz: "Byudjet", ru: "Бюджет", en: "Budget", de: "Budget" })} value={l.budget != null ? formatMoney(l.budget, locale) : "—"} />
+                  <Cell label={tr(locale, { uz: "Qo'ng'iroqlar", ru: "Звонки", en: "Calls", de: "Anrufe" })} value={`${l.calls} (${tr(locale, { uz: "javob", ru: "ответ", en: "answered", de: "beantwortet" })}: ${l.answered})`} />
+                  <Cell label={tr(locale, { uz: "Gaplashgan", ru: "Наговорено", en: "Talk time", de: "Sprechzeit" })} value={fmtDur(l.talkSec)} />
+                  <Cell label={tr(locale, { uz: "Yaratilgan", ru: "Создан", en: "Created", de: "Erstellt" })} value={l.createdAt} />
                 </div>
 
                 {l.note && (
                   <div className="rounded-xl bg-white p-3.5 dark:bg-slate-900">
                     <div className="mb-1.5 flex items-center gap-2 text-sm font-medium text-slate-700 dark:text-slate-200">
-                      <Icon name="alignLeft" className="h-4 w-4 text-slate-400" /> {tr(locale, { uz: "Izoh", ru: "Комментарий", en: "Note" })}
+                      <Icon name="alignLeft" className="h-4 w-4 text-slate-400" /> {tr(locale, { uz: "Izoh", ru: "Комментарий", en: "Note", de: "Notiz" })}
                     </div>
                     <p className="text-sm text-slate-500 dark:text-slate-400">{l.note}</p>
                   </div>
@@ -129,7 +129,7 @@ export default function LeadList({ locale, leads }: { locale: Locale; leads: DLe
                   <div>
                     <h5 className="mb-2.5 flex items-center gap-2 text-sm font-medium text-slate-700 dark:text-slate-200">
                       <Icon name="history" className="h-4 w-4 text-slate-400" />
-                      {tr(locale, { uz: "Faoliyat tarixi", ru: "История активности", en: "Activity history" })} ({l.activities.length})
+                      {tr(locale, { uz: "Faoliyat tarixi", ru: "История активности", en: "Activity history", de: "Aktivitätsverlauf" })} ({l.activities.length})
                     </h5>
                     <div className="space-y-2">
                       {l.activities.map((a) => (
@@ -152,7 +152,7 @@ export default function LeadList({ locale, leads }: { locale: Locale; leads: DLe
                 )}
 
                 <Link href={`/crm/${l.id}`} className="inline-flex items-center gap-1.5 text-sm font-semibold text-brand-600 hover:underline dark:text-brand-300">
-                  <Icon name="eye" className="h-4 w-4" /> {tr(locale, { uz: "Lid kartasini ochish", ru: "Открыть карточку лида", en: "Open lead card" })}
+                  <Icon name="eye" className="h-4 w-4" /> {tr(locale, { uz: "Lid kartasini ochish", ru: "Открыть карточку лида", en: "Open lead card", de: "Lead-Karte öffnen" })}
                 </Link>
               </div>
             )}

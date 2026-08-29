@@ -67,11 +67,11 @@ export default function LeadDetail({ lead, activities, managers, prevId, nextId,
       {/* Sarlavha */}
       <div className="flex flex-wrap items-center justify-between gap-3">
         <Link href="/crm" className="flex items-center gap-1.5 text-sm text-slate-500 hover:text-slate-700 dark:text-slate-400">
-          <Icon name="arrow" className="h-4 w-4 rotate-180" /> {tr(locale, { uz: "Orqaga", ru: "Назад", en: "Back" })}
+          <Icon name="arrow" className="h-4 w-4 rotate-180" /> {tr(locale, { uz: "Orqaga", ru: "Назад", en: "Back", de: "Zurück" })}
         </Link>
         <div className="flex items-center gap-2">
-          <NavBtn href={prevId ? `/crm/${prevId}` : null} icon="arrow" flip label={tr(locale, { uz: "Oldingi", ru: "Предыдущий", en: "Previous" })} />
-          <NavBtn href={nextId ? `/crm/${nextId}` : null} icon="arrow" label={tr(locale, { uz: "Keyingi", ru: "Следующий", en: "Next" })} />
+          <NavBtn href={prevId ? `/crm/${prevId}` : null} icon="arrow" flip label={tr(locale, { uz: "Oldingi", ru: "Предыдущий", en: "Previous", de: "Vorherige" })} />
+          <NavBtn href={nextId ? `/crm/${nextId}` : null} icon="arrow" label={tr(locale, { uz: "Keyingi", ru: "Следующий", en: "Next", de: "Nächste" })} />
         </div>
       </div>
 
@@ -87,7 +87,7 @@ export default function LeadDetail({ lead, activities, managers, prevId, nextId,
                 <h1 className="truncate text-xl font-bold text-slate-900 dark:text-slate-100">{lead.fullName}</h1>
                 <button
                   onClick={() => window.dispatchEvent(new CustomEvent("glive:call", { detail: { number: lead.phone, leadId: lead.id, contactName: lead.fullName } }))}
-                  title={tr(locale, { uz: "Qo'ng'iroq qilish", ru: "Позвонить", en: "Call" })}
+                  title={tr(locale, { uz: "Qo'ng'iroq qilish", ru: "Позвонить", en: "Call", de: "Anrufen" })}
                   className="mt-0.5 flex items-center gap-1.5 text-sm text-slate-500 transition hover:text-emerald-600 dark:text-slate-300 dark:hover:text-emerald-400"
                 >
                   <Icon name="phone" className="h-3.5 w-3.5" /> {lead.phone}
@@ -96,35 +96,35 @@ export default function LeadDetail({ lead, activities, managers, prevId, nextId,
                   <span className="rounded-md px-2 py-0.5 text-xs font-semibold" style={{ color, background: `${color}1a` }}>
                     {label(LEAD_STAGE_LABELS, lead.stage, locale)}
                   </span>
-                  {lead.studentId && <span className="rounded-md bg-emerald-50 px-2 py-0.5 text-xs font-medium text-emerald-700 dark:bg-emerald-950/50 dark:text-emerald-300">✓ {tr(locale, { uz: "O'quvchi", ru: "Ученик", en: "Student" })}</span>}
+                  {lead.studentId && <span className="rounded-md bg-emerald-50 px-2 py-0.5 text-xs font-medium text-emerald-700 dark:bg-emerald-950/50 dark:text-emerald-300">✓ {tr(locale, { uz: "O'quvchi", ru: "Ученик", en: "Student", de: "Schüler" })}</span>}
                 </div>
               </div>
             </div>
 
             {/* Tablar */}
             <div className="mt-5 flex gap-1 border-b border-slate-100 dark:border-slate-800">
-              <TabBtn active={tab === "info"} onClick={() => setTab("info")}>{tr(locale, { uz: "Ma'lumot", ru: "Информация", en: "Info" })}</TabBtn>
-              <TabBtn active={tab === "activity"} onClick={() => setTab("activity")}>{tr(locale, { uz: "Faoliyat", ru: "Активность", en: "Activity" })} ({activities.length})</TabBtn>
+              <TabBtn active={tab === "info"} onClick={() => setTab("info")}>{tr(locale, { uz: "Ma'lumot", ru: "Информация", en: "Info", de: "Info" })}</TabBtn>
+              <TabBtn active={tab === "activity"} onClick={() => setTab("activity")}>{tr(locale, { uz: "Faoliyat", ru: "Активность", en: "Activity", de: "Aktivität" })} ({activities.length})</TabBtn>
             </div>
 
             {tab === "info" ? (
               <div className="mt-4 grid gap-3 sm:grid-cols-2">
-                <Field label={tr(locale, { uz: "F.I.Sh.", ru: "Ф.И.О.", en: "Full name" })} value={lead.fullName} onSave={(v) => save("fullName", v)} readonly={!canWrite} />
-                <Field label={tr(locale, { uz: "Telefon", ru: "Телефон", en: "Phone" })} value={lead.phone} onSave={(v) => save("phone", v)} readonly={!canWrite} />
-                <Field label={tr(locale, { uz: "E-mail", ru: "E-mail", en: "E-mail" })} value={lead.email ?? ""} onSave={(v) => save("email", v)} readonly={!canWrite} />
-                <Field label={tr(locale, { uz: "Manba", ru: "Источник", en: "Source" })} value={lead.source ?? ""} onSave={(v) => save("source", v)} readonly={!canWrite} />
-                <Field label={tr(locale, { uz: "Kurs", ru: "Курс", en: "Course" })} value={lead.interestCourse ?? ""} onSave={(v) => save("interestCourse", v)} readonly={!canWrite} />
-                <Field label={tr(locale, { uz: "Yosh", ru: "Возраст", en: "Age" })} value={lead.age?.toString() ?? ""} onSave={(v) => save("age", v)} readonly={!canWrite} />
-                <Field label={tr(locale, { uz: "Daraja", ru: "Уровень", en: "Level" })} value={lead.level ?? ""} onSave={(v) => save("level", v)} readonly={!canWrite} />
-                <Field label={tr(locale, { uz: "Byudjet (so'm)", ru: "Бюджет (сум)", en: "Budget (UZS)" })} value={lead.budget?.toString() ?? ""} onSave={(v) => save("budget", v)} readonly={!canWrite} />
+                <Field label={tr(locale, { uz: "F.I.Sh.", ru: "Ф.И.О.", en: "Full name", de: "Vollständiger Name" })} value={lead.fullName} onSave={(v) => save("fullName", v)} readonly={!canWrite} />
+                <Field label={tr(locale, { uz: "Telefon", ru: "Телефон", en: "Phone", de: "Telefon" })} value={lead.phone} onSave={(v) => save("phone", v)} readonly={!canWrite} />
+                <Field label={tr(locale, { uz: "E-mail", ru: "E-mail", en: "E-mail", de: "E-Mail" })} value={lead.email ?? ""} onSave={(v) => save("email", v)} readonly={!canWrite} />
+                <Field label={tr(locale, { uz: "Manba", ru: "Источник", en: "Source", de: "Quelle" })} value={lead.source ?? ""} onSave={(v) => save("source", v)} readonly={!canWrite} />
+                <Field label={tr(locale, { uz: "Kurs", ru: "Курс", en: "Course", de: "Kurs" })} value={lead.interestCourse ?? ""} onSave={(v) => save("interestCourse", v)} readonly={!canWrite} />
+                <Field label={tr(locale, { uz: "Yosh", ru: "Возраст", en: "Age", de: "Alter" })} value={lead.age?.toString() ?? ""} onSave={(v) => save("age", v)} readonly={!canWrite} />
+                <Field label={tr(locale, { uz: "Daraja", ru: "Уровень", en: "Level", de: "Niveau" })} value={lead.level ?? ""} onSave={(v) => save("level", v)} readonly={!canWrite} />
+                <Field label={tr(locale, { uz: "Byudjet (so'm)", ru: "Бюджет (сум)", en: "Budget (UZS)", de: "Budget (UZS)" })} value={lead.budget?.toString() ?? ""} onSave={(v) => save("budget", v)} readonly={!canWrite} />
                 <div className="sm:col-span-2">
-                  <Field label={tr(locale, { uz: "Izoh", ru: "Комментарий", en: "Note" })} value={lead.note ?? ""} onSave={(v) => save("note", v)} readonly={!canWrite} textarea />
+                  <Field label={tr(locale, { uz: "Izoh", ru: "Комментарий", en: "Note", de: "Notiz" })} value={lead.note ?? ""} onSave={(v) => save("note", v)} readonly={!canWrite} textarea />
                 </div>
               </div>
             ) : (
               <div className="mt-4">
                 {activities.length === 0 ? (
-                  <p className="py-8 text-center text-sm text-slate-400">{tr(locale, { uz: "Faoliyat yo'q", ru: "Нет активности", en: "No activity" })}</p>
+                  <p className="py-8 text-center text-sm text-slate-400">{tr(locale, { uz: "Faoliyat yo'q", ru: "Нет активности", en: "No activity", de: "Keine Aktivität" })}</p>
                 ) : (
                   <ul className="space-y-3">
                     {activities.map((a) => (
@@ -150,18 +150,18 @@ export default function LeadDetail({ lead, activities, managers, prevId, nextId,
         <div className="space-y-4">
           <div className="sticky top-20 space-y-4">
             <div className="rounded-2xl border border-slate-200/70 bg-white p-4 shadow-card dark:border-slate-800 dark:bg-slate-900">
-              <h3 className="mb-3 text-sm font-semibold text-slate-700 dark:text-slate-200">{tr(locale, { uz: "Tez amallar", ru: "Быстрые действия", en: "Quick actions" })}</h3>
+              <h3 className="mb-3 text-sm font-semibold text-slate-700 dark:text-slate-200">{tr(locale, { uz: "Tez amallar", ru: "Быстрые действия", en: "Quick actions", de: "Schnellaktionen" })}</h3>
               {canWrite ? (
                 <div className="space-y-3">
                   <div>
-                    <label className="mb-1 block text-xs font-medium text-slate-500">{tr(locale, { uz: "Menejer", ru: "Менеджер", en: "Manager" })}</label>
+                    <label className="mb-1 block text-xs font-medium text-slate-500">{tr(locale, { uz: "Menejer", ru: "Менеджер", en: "Manager", de: "Manager" })}</label>
                     <select value={lead.managerId ?? ""} disabled={pending} onChange={(e) => run(() => setLeadManager(lead.id, e.target.value || null))} className="input">
-                      <option value="">{tr(locale, { uz: "— tayinlanmagan", ru: "— не назначен", en: "— unassigned" })}</option>
+                      <option value="">{tr(locale, { uz: "— tayinlanmagan", ru: "— не назначен", en: "— unassigned", de: "— nicht zugewiesen" })}</option>
                       {managers.map((m) => <option key={m.id} value={m.id}>{m.name}</option>)}
                     </select>
                   </div>
                   <div>
-                    <label className="mb-1 block text-xs font-medium text-slate-500">{tr(locale, { uz: "Bosqich", ru: "Этап", en: "Stage" })}</label>
+                    <label className="mb-1 block text-xs font-medium text-slate-500">{tr(locale, { uz: "Bosqich", ru: "Этап", en: "Stage", de: "Phase" })}</label>
                     <select
                       value={lead.stage}
                       disabled={pending}
@@ -180,7 +180,7 @@ export default function LeadDetail({ lead, activities, managers, prevId, nextId,
                   <div className="rounded-xl border border-slate-200 p-3 dark:border-slate-700">
                     <div className="mb-1 flex items-center gap-1.5 text-[11px] font-semibold text-slate-500 dark:text-slate-400">
                       <Icon name="layers" className="h-3.5 w-3.5" />
-                      {tr(locale, { uz: "Guruh", ru: "Группа", en: "Group" })}
+                      {tr(locale, { uz: "Guruh", ru: "Группа", en: "Group", de: "Gruppe" })}
                     </div>
                     {lead.groupId ? (
                       <>
@@ -195,23 +195,23 @@ export default function LeadDetail({ lead, activities, managers, prevId, nextId,
                         )}
                         {lead.enrollEditCount >= 1 ? (
                           <p className="mt-2 text-[11px] text-slate-400">
-                            {tr(locale, { uz: "O'zgartirish imkoni ishlatilgan", ru: "Возможность смены использована", en: "Change already used" })}
+                            {tr(locale, { uz: "O'zgartirish imkoni ishlatilgan", ru: "Возможность смены использована", en: "Change already used", de: "Änderung bereits verwendet" })}
                           </p>
                         ) : (
                           <button onClick={() => setEnrollOpen(true)} disabled={pending} className="btn-ghost mt-2 w-full justify-start !py-1.5 text-xs">
                             <Icon name="refresh" className="h-3.5 w-3.5" />
-                            {tr(locale, { uz: "Guruhni o'zgartirish (1 marta)", ru: "Сменить группу (1 раз)", en: "Change group (once)" })}
+                            {tr(locale, { uz: "Guruhni o'zgartirish (1 marta)", ru: "Сменить группу (1 раз)", en: "Change group (once)", de: "Gruppe wechseln (einmalig)" })}
                           </button>
                         )}
                       </>
                     ) : (
                       <>
                         <p className="text-[11px] leading-relaxed text-amber-600 dark:text-amber-400">
-                          {tr(locale, { uz: "Qabul qilish uchun guruh tanlash majburiy", ru: "Для приёма обязателен выбор группы", en: "A group is required to enroll" })}
+                          {tr(locale, { uz: "Qabul qilish uchun guruh tanlash majburiy", ru: "Для приёма обязателен выбор группы", en: "A group is required to enroll", de: "Für die Aufnahme ist eine Gruppe erforderlich" })}
                         </p>
                         <button onClick={() => setEnrollOpen(true)} disabled={pending} className="btn-ghost mt-2 w-full justify-start !py-1.5 text-xs">
                           <Icon name="graduation" className="h-3.5 w-3.5" />
-                          {tr(locale, { uz: "Guruhga yo'naltirish", ru: "Зачислить в группу", en: "Enroll in a group" })}
+                          {tr(locale, { uz: "Guruhga yo'naltirish", ru: "Зачислить в группу", en: "Enroll in a group", de: "In eine Gruppe aufnehmen" })}
                         </button>
                       </>
                     )}
@@ -227,14 +227,14 @@ export default function LeadDetail({ lead, activities, managers, prevId, nextId,
 
                   {!lead.studentId && !lead.groupId && (
                     <button onClick={() => run(() => convertLead(lead.id))} disabled={pending} className="btn-ghost w-full justify-start">
-                      <Icon name="graduation" className="h-4 w-4" /> {tr(locale, { uz: "O'quvchiga aylantirish", ru: "Преобразовать в ученика", en: "Convert to student" })}
+                      <Icon name="graduation" className="h-4 w-4" /> {tr(locale, { uz: "O'quvchiga aylantirish", ru: "Преобразовать в ученика", en: "Convert to student", de: "In Schüler umwandeln" })}
                     </button>
                   )}
                   <button onClick={() => window.dispatchEvent(new CustomEvent("glive:call", { detail: { number: lead.phone, leadId: lead.id, contactName: lead.fullName } }))} className="btn-ghost w-full justify-start">
-                    <Icon name="phoneCall" className="h-4 w-4" /> {tr(locale, { uz: "Qo'ng'iroq qilish", ru: "Позвонить", en: "Call" })}
+                    <Icon name="phoneCall" className="h-4 w-4" /> {tr(locale, { uz: "Qo'ng'iroq qilish", ru: "Позвонить", en: "Call", de: "Anrufen" })}
                   </button>
                   <button onClick={() => navigator.clipboard?.writeText(lead.phone)} className="btn-ghost w-full justify-start">
-                    <Icon name="copy" className="h-4 w-4" /> {tr(locale, { uz: "Telefonni nusxalash", ru: "Копировать телефон", en: "Copy phone" })}
+                    <Icon name="copy" className="h-4 w-4" /> {tr(locale, { uz: "Telefonni nusxalash", ru: "Копировать телефон", en: "Copy phone", de: "Telefon kopieren" })}
                   </button>
 
                   {/* Lidni butunlay o'chirish — direktor, o'rinbosari va administrator */}
@@ -243,7 +243,7 @@ export default function LeadDetail({ lead, activities, managers, prevId, nextId,
                       onClick={() => { setPurge(true); setTyped(""); setPurgeErr(null); }}
                       className="flex w-full items-center justify-start gap-2 rounded-xl border border-rose-200 px-3 py-2 text-sm font-semibold text-rose-600 transition hover:bg-rose-50 dark:border-rose-500/30 dark:text-rose-400 dark:hover:bg-rose-500/10"
                     >
-                      <Icon name="trash" className="h-4 w-4" /> {tr(locale, { uz: "Lidni butunlay o'chirish", ru: "Удалить лида навсегда", en: "Delete lead permanently" })}
+                      <Icon name="trash" className="h-4 w-4" /> {tr(locale, { uz: "Lidni butunlay o'chirish", ru: "Удалить лида навсегда", en: "Delete lead permanently", de: "Lead endgültig löschen" })}
                     </button>
                   ) : (
                     <div className="rounded-xl border border-rose-200 bg-rose-50 p-3 dark:border-rose-500/30 dark:bg-rose-500/10">
@@ -252,10 +252,11 @@ export default function LeadDetail({ lead, activities, managers, prevId, nextId,
                           uz: "Diqqat: lid va uning faoliyat tarixi butunlay o'chadi. Qo'ng'iroqlar tarixi saqlanadi. Qaytarib bo'lmaydi.",
                           ru: "Внимание: лид и история его активности будут удалены безвозвратно. История звонков сохранится.",
                           en: "Warning: the lead and its activity history are deleted permanently. Call history is kept.",
+                          de: "Achtung: Der Lead und sein Aktivitätsverlauf werden endgültig gelöscht. Der Anrufverlauf bleibt erhalten.",
                         })}
                       </p>
                       <p className="mt-2 text-[11px] font-medium text-rose-700 dark:text-rose-300">
-                        {tr(locale, { uz: "Tasdiqlash uchun ismini yozing:", ru: "Для подтверждения введите имя:", en: "Type the name to confirm:" })}{" "}
+                        {tr(locale, { uz: "Tasdiqlash uchun ismini yozing:", ru: "Для подтверждения введите имя:", en: "Type the name to confirm:", de: "Geben Sie zur Bestätigung den Namen ein:" })}{" "}
                         <span className="font-bold">{lead.fullName}</span>
                       </p>
                       <input
@@ -270,47 +271,47 @@ export default function LeadDetail({ lead, activities, managers, prevId, nextId,
                           disabled={pending}
                           className="flex-1 rounded-lg border border-slate-200 bg-white py-2 text-xs font-semibold text-slate-600 transition hover:bg-slate-50 disabled:opacity-60 dark:border-white/10 dark:bg-slate-900 dark:text-slate-300"
                         >
-                          {tr(locale, { uz: "Bekor qilish", ru: "Отмена", en: "Cancel" })}
+                          {tr(locale, { uz: "Bekor qilish", ru: "Отмена", en: "Cancel", de: "Abbrechen" })}
                         </button>
                         <button
                           onClick={() => start(async () => {
                             const r = await deleteLeadPermanently(lead.id);
                             if (r.ok) router.push("/crm");
                             else setPurgeErr(r.error === "forbidden"
-                              ? tr(locale, { uz: "Sizda bu amal uchun ruxsat yo'q.", ru: "У вас нет прав на это действие.", en: "You do not have permission." })
-                              : tr(locale, { uz: "O'chirib bo'lmadi.", ru: "Не удалось удалить.", en: "Could not delete." }));
+                              ? tr(locale, { uz: "Sizda bu amal uchun ruxsat yo'q.", ru: "У вас нет прав на это действие.", en: "You do not have permission.", de: "Sie haben keine Berechtigung für diese Aktion." })
+                              : tr(locale, { uz: "O'chirib bo'lmadi.", ru: "Не удалось удалить.", en: "Could not delete.", de: "Löschen fehlgeschlagen." }));
                           })}
                           disabled={pending || typed.trim() !== lead.fullName.trim()}
                           className="flex-[1.4] rounded-lg bg-rose-600 py-2 text-xs font-semibold text-white transition hover:bg-rose-700 disabled:opacity-40"
                         >
-                          {pending ? tr(locale, { uz: "O'chirilmoqda...", ru: "Удаление...", en: "Deleting..." }) : tr(locale, { uz: "Ha, o'chirilsin", ru: "Да, удалить", en: "Yes, delete" })}
+                          {pending ? tr(locale, { uz: "O'chirilmoqda...", ru: "Удаление...", en: "Deleting...", de: "Wird gelöscht..." }) : tr(locale, { uz: "Ha, o'chirilsin", ru: "Да, удалить", en: "Yes, delete", de: "Ja, löschen" })}
                         </button>
                       </div>
                     </div>
                   ))}
                 </div>
               ) : (
-                <p className="text-xs text-slate-400">{tr(locale, { uz: "Sizda tahrirlash huquqi yo'q.", ru: "У вас нет прав на редактирование.", en: "You do not have edit permission." })}</p>
+                <p className="text-xs text-slate-400">{tr(locale, { uz: "Sizda tahrirlash huquqi yo'q.", ru: "У вас нет прав на редактирование.", en: "You do not have edit permission.", de: "Sie haben keine Bearbeitungsberechtigung." })}</p>
               )}
             </div>
 
             {/* Izoh qo'shish */}
             {canWrite && (
               <div className="rounded-2xl border border-slate-200/70 bg-white p-4 shadow-card dark:border-slate-800 dark:bg-slate-900">
-                <h3 className="mb-2 text-sm font-semibold text-slate-700 dark:text-slate-200">{tr(locale, { uz: "Izoh qo'shish", ru: "Добавить комментарий", en: "Add note" })}</h3>
-                <textarea value={note} onChange={(e) => setNote(e.target.value)} rows={3} placeholder={tr(locale, { uz: "Izoh yozing...", ru: "Напишите комментарий...", en: "Write a note..." })} className="input" />
+                <h3 className="mb-2 text-sm font-semibold text-slate-700 dark:text-slate-200">{tr(locale, { uz: "Izoh qo'shish", ru: "Добавить комментарий", en: "Add note", de: "Notiz hinzufügen" })}</h3>
+                <textarea value={note} onChange={(e) => setNote(e.target.value)} rows={3} placeholder={tr(locale, { uz: "Izoh yozing...", ru: "Напишите комментарий...", en: "Write a note...", de: "Notiz schreiben..." })} className="input" />
                 <button
                   onClick={() => { if (note.trim()) { run(() => addLeadActivity(lead.id, "note", note)); setNote(""); } }}
                   disabled={pending || !note.trim()}
                   className="btn-primary mt-2 w-full"
                 >
-                  {tr(locale, { uz: "Qo'shish", ru: "Добавить", en: "Add" })}
+                  {tr(locale, { uz: "Qo'shish", ru: "Добавить", en: "Add", de: "Hinzufügen" })}
                 </button>
               </div>
             )}
 
             <div className="rounded-2xl border border-slate-200/70 bg-white p-4 text-xs text-slate-400 shadow-card dark:border-slate-800 dark:bg-slate-900">
-              {tr(locale, { uz: "Yaratilgan", ru: "Создан", en: "Created" })}: {fmt(lead.createdAt)}
+              {tr(locale, { uz: "Yaratilgan", ru: "Создан", en: "Created", de: "Erstellt" })}: {fmt(lead.createdAt)}
             </div>
           </div>
         </div>

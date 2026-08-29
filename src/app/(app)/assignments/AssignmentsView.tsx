@@ -91,39 +91,39 @@ export default function AssignmentsView({
       <div className="flex flex-wrap items-center gap-2">
         {canCreate && (
           <button onClick={() => setAddOpen(true)} className="flex h-10 items-center gap-1.5 rounded-lg bg-brand-600 px-4 text-sm font-semibold text-white shadow-sm transition hover:bg-brand-700">
-            <Icon name="plus" className="h-4 w-4" /> {tr(locale, { uz: "Imtihon qo'shish", ru: "Добавить экзамен", en: "Add exam" })}
+            <Icon name="plus" className="h-4 w-4" /> {tr(locale, { uz: "Imtihon qo'shish", ru: "Добавить экзамен", en: "Add exam", de: "Prüfung hinzufügen" })}
           </button>
         )}
-        <FilterSelect value={type} onChange={setType} placeholder={tr(locale, { uz: "Turi", ru: "Тип", en: "Type" })} options={Object.entries(TYPE_LABELS).map(([v, l]) => ({ v, label: l }))} />
-        <FilterSelect value={group} onChange={setGroup} placeholder={tr(locale, { uz: "Guruh", ru: "Группа", en: "Group" })} options={groupNames.map((n) => ({ v: n, label: n }))} />
-        <FilterSelect value={teacher} onChange={setTeacher} placeholder={tr(locale, { uz: "O'qituvchi", ru: "Преподаватель", en: "Teacher" })} options={teacherNames.map((n) => ({ v: n, label: n }))} />
-        <button onClick={resetFilters} title={tr(locale, { uz: "Filtrlarni tozalash", ru: "Очистить фильтры", en: "Clear filters" })} className={cn("flex h-10 w-10 items-center justify-center rounded-lg border transition", hasFilters ? "border-brand-300 text-brand-600 hover:bg-brand-50 dark:border-brand-500/40 dark:text-brand-300" : "border-slate-200 text-slate-400 dark:border-slate-700")}>
+        <FilterSelect value={type} onChange={setType} placeholder={tr(locale, { uz: "Turi", ru: "Тип", en: "Type", de: "Typ" })} options={Object.entries(TYPE_LABELS).map(([v, l]) => ({ v, label: l }))} />
+        <FilterSelect value={group} onChange={setGroup} placeholder={tr(locale, { uz: "Guruh", ru: "Группа", en: "Group", de: "Gruppe" })} options={groupNames.map((n) => ({ v: n, label: n }))} />
+        <FilterSelect value={teacher} onChange={setTeacher} placeholder={tr(locale, { uz: "O'qituvchi", ru: "Преподаватель", en: "Teacher", de: "Lehrer" })} options={teacherNames.map((n) => ({ v: n, label: n }))} />
+        <button onClick={resetFilters} title={tr(locale, { uz: "Filtrlarni tozalash", ru: "Очистить фильтры", en: "Clear filters", de: "Filter zurücksetzen" })} className={cn("flex h-10 w-10 items-center justify-center rounded-lg border transition", hasFilters ? "border-brand-300 text-brand-600 hover:bg-brand-50 dark:border-brand-500/40 dark:text-brand-300" : "border-slate-200 text-slate-400 dark:border-slate-700")}>
           <Icon name="filter" className="h-4 w-4" />
         </button>
         <div className="relative ml-auto">
           <Icon name="search" className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400" />
-          <input value={search} onChange={(e) => setSearch(e.target.value)} placeholder={tr(locale, { uz: "Qidirish", ru: "Поиск", en: "Search" })} className="h-10 w-56 rounded-lg border border-slate-200 bg-white pl-9 pr-3 text-sm outline-none focus:border-brand-400 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-100" />
+          <input value={search} onChange={(e) => setSearch(e.target.value)} placeholder={tr(locale, { uz: "Qidirish", ru: "Поиск", en: "Search", de: "Suchen" })} className="h-10 w-56 rounded-lg border border-slate-200 bg-white pl-9 pr-3 text-sm outline-none focus:border-brand-400 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-100" />
         </div>
       </div>
 
       {/* Jadval */}
       <div className="overflow-hidden rounded-2xl border border-slate-200/70 bg-white shadow-card dark:border-slate-800 dark:bg-slate-900">
         <div className="flex items-center justify-end border-b border-slate-100 px-4 py-2 dark:border-slate-800">
-          <span className="rounded-lg bg-slate-100 px-2.5 py-1 text-xs font-semibold text-slate-500 dark:bg-slate-800 dark:text-slate-300">{tr(locale, { uz: "Umumiy soni:", ru: "Всего:", en: "Total:" })} {filtered.length}</span>
+          <span className="rounded-lg bg-slate-100 px-2.5 py-1 text-xs font-semibold text-slate-500 dark:bg-slate-800 dark:text-slate-300">{tr(locale, { uz: "Umumiy soni:", ru: "Всего:", en: "Total:", de: "Gesamt:" })} {filtered.length}</span>
         </div>
         <div className="overflow-x-auto">
           <table className="w-full min-w-[980px] text-left text-sm">
             <thead className="border-b border-slate-200/70 bg-slate-50/80 text-[11px] font-semibold uppercase tracking-wider text-slate-500 dark:border-slate-800 dark:bg-slate-800/50">
               <tr>
                 <th className="w-12 px-4 py-3">№</th>
-                <th className="px-4 py-3">{tr(locale, { uz: "Turi", ru: "Тип", en: "Type" })}</th>
-                <SortableTh label={tr(locale, { uz: "Nomi", ru: "Название", en: "Name" })} active={sort.key === "title"} dir={sort.dir} onClick={() => toggleSort("title")} />
-                <th className="px-4 py-3">{tr(locale, { uz: "Topshirish muddati", ru: "Срок сдачи", en: "Due date" })}</th>
-                <th className="px-4 py-3">{tr(locale, { uz: "O'qituvchi", ru: "Преподаватель", en: "Teacher" })}</th>
-                <th className="px-4 py-3">{tr(locale, { uz: "Guruh", ru: "Группа", en: "Group" })}</th>
-                <SortableTh label={tr(locale, { uz: "Maksimal ball", ru: "Максимальный балл", en: "Max score" })} active={sort.key === "maxScore"} dir={sort.dir} onClick={() => toggleSort("maxScore")} />
-                <th className="px-4 py-3">{tr(locale, { uz: "Izoh", ru: "Примечание", en: "Note" })}</th>
-                <SortableTh label={tr(locale, { uz: "Yaratilgan sanasi", ru: "Дата создания", en: "Created date" })} active={sort.key === "createdAt"} dir={sort.dir} onClick={() => toggleSort("createdAt")} />
+                <th className="px-4 py-3">{tr(locale, { uz: "Turi", ru: "Тип", en: "Type", de: "Typ" })}</th>
+                <SortableTh label={tr(locale, { uz: "Nomi", ru: "Название", en: "Name", de: "Name" })} active={sort.key === "title"} dir={sort.dir} onClick={() => toggleSort("title")} />
+                <th className="px-4 py-3">{tr(locale, { uz: "Topshirish muddati", ru: "Срок сдачи", en: "Due date", de: "Fälligkeitsdatum" })}</th>
+                <th className="px-4 py-3">{tr(locale, { uz: "O'qituvchi", ru: "Преподаватель", en: "Teacher", de: "Lehrer" })}</th>
+                <th className="px-4 py-3">{tr(locale, { uz: "Guruh", ru: "Группа", en: "Group", de: "Gruppe" })}</th>
+                <SortableTh label={tr(locale, { uz: "Maksimal ball", ru: "Максимальный балл", en: "Max score", de: "Höchstpunktzahl" })} active={sort.key === "maxScore"} dir={sort.dir} onClick={() => toggleSort("maxScore")} />
+                <th className="px-4 py-3">{tr(locale, { uz: "Izoh", ru: "Примечание", en: "Note", de: "Notiz" })}</th>
+                <SortableTh label={tr(locale, { uz: "Yaratilgan sanasi", ru: "Дата создания", en: "Created date", de: "Erstellungsdatum" })} active={sort.key === "createdAt"} dir={sort.dir} onClick={() => toggleSort("createdAt")} />
               </tr>
             </thead>
             <tbody className="divide-y divide-slate-100 dark:divide-slate-800">
@@ -131,8 +131,8 @@ export default function AssignmentsView({
                 <tr>
                   <td colSpan={9} className="px-4 py-16 text-center">
                     <div className="text-3xl opacity-30">📭</div>
-                    <p className="mt-2 font-medium text-slate-500 dark:text-slate-400">{tr(locale, { uz: "Ma'lumotlar topilmadi", ru: "Данные не найдены", en: "No data found" })}</p>
-                    <p className="mt-0.5 text-xs text-slate-400">{tr(locale, { uz: "Ma'lumotlar topilmadi. Filterni o'zgartirib ko'ring.", ru: "Данные не найдены. Попробуйте изменить фильтр.", en: "No data found. Try changing the filter." })}</p>
+                    <p className="mt-2 font-medium text-slate-500 dark:text-slate-400">{tr(locale, { uz: "Ma'lumotlar topilmadi", ru: "Данные не найдены", en: "No data found", de: "Keine Daten gefunden" })}</p>
+                    <p className="mt-0.5 text-xs text-slate-400">{tr(locale, { uz: "Ma'lumotlar topilmadi. Filterni o'zgartirib ko'ring.", ru: "Данные не найдены. Попробуйте изменить фильтр.", en: "No data found. Try changing the filter.", de: "Keine Daten gefunden. Versuchen Sie, den Filter zu ändern." })}</p>
                   </td>
                 </tr>
               ) : (
@@ -164,7 +164,7 @@ export default function AssignmentsView({
           <div className="flex items-center gap-2 text-xs text-slate-500 dark:text-slate-400">
             <Icon name="listView" className="h-4 w-4" />
             <select value={pageSize} onChange={(e) => { setPageSize(Number(e.target.value)); setPage(1); }} className="rounded-lg border border-slate-200 bg-white px-2 py-1 text-xs outline-none dark:border-slate-700 dark:bg-slate-800 dark:text-slate-200">
-              {[10, 20, 50, 100].map((n) => <option key={n} value={n}>{n} {tr(locale, { uz: "qator", ru: "строк", en: "rows" })}</option>)}
+              {[10, 20, 50, 100].map((n) => <option key={n} value={n}>{n} {tr(locale, { uz: "qator", ru: "строк", en: "rows", de: "Zeilen" })}</option>)}
             </select>
           </div>
           {totalPages > 1 && (
@@ -178,7 +178,7 @@ export default function AssignmentsView({
       </div>
 
       {canCreate && (
-        <button onClick={() => setAddOpen(true)} title={tr(locale, { uz: "Imtihon qo'shish", ru: "Добавить экзамен", en: "Add exam" })} className="fixed bottom-6 right-6 z-30 flex h-12 w-12 items-center justify-center rounded-full bg-brand-600 text-white shadow-pop transition hover:scale-105 hover:bg-brand-700">
+        <button onClick={() => setAddOpen(true)} title={tr(locale, { uz: "Imtihon qo'shish", ru: "Добавить экзамен", en: "Add exam", de: "Prüfung hinzufügen" })} className="fixed bottom-6 right-6 z-30 flex h-12 w-12 items-center justify-center rounded-full bg-brand-600 text-white shadow-pop transition hover:scale-105 hover:bg-brand-700">
           <Icon name="plus" className="h-5 w-5" />
         </button>
       )}

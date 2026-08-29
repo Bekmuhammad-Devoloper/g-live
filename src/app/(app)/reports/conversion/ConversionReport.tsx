@@ -28,12 +28,12 @@ interface Props {
 }
 
 // Voronka bosqichlari (API'dagi BUCKETS bilan bir xil kalitlar)
-const FUNNEL: { key: string; label: { uz: string; ru: string; en: string }; stages: string[] | null }[] = [
-  { key: "sorovlar", label: { uz: "So'rovlar", ru: "Заявки", en: "Requests" }, stages: null },
-  { key: "kutish", label: { uz: "Kutish", ru: "Ожидание", en: "Waiting" }, stages: ["NEW", "IN_PROGRESS"] },
-  { key: "toplam", label: { uz: "To'plam", ru: "Набор", en: "Set" }, stages: ["CONTACTED", "TEST", "OFFER"] },
-  { key: "davomat", label: { uz: "Davomat", ru: "Посещаемость", en: "Attendance" }, stages: ["AWAITING_PAYMENT"] },
-  { key: "tolangan", label: { uz: "To'langan", ru: "Оплачено", en: "Paid" }, stages: ["PAID", "WON"] },
+const FUNNEL: { key: string; label: { uz: string; ru: string; en: string; de: string }; stages: string[] | null }[] = [
+  { key: "sorovlar", label: { uz: "So'rovlar", ru: "Заявки", en: "Requests", de: "Anfragen" }, stages: null },
+  { key: "kutish", label: { uz: "Kutish", ru: "Ожидание", en: "Waiting", de: "Warten" }, stages: ["NEW", "IN_PROGRESS"] },
+  { key: "toplam", label: { uz: "To'plam", ru: "Набор", en: "Set", de: "Sammlung" }, stages: ["CONTACTED", "TEST", "OFFER"] },
+  { key: "davomat", label: { uz: "Davomat", ru: "Посещаемость", en: "Attendance", de: "Anwesenheit" }, stages: ["AWAITING_PAYMENT"] },
+  { key: "tolangan", label: { uz: "To'langan", ru: "Оплачено", en: "Paid", de: "Bezahlt" }, stages: ["PAID", "WON"] },
 ];
 
 const inBucket = (stage: string, key: string) => {
@@ -91,10 +91,10 @@ export default function ConversionReport({ defaultFrom, defaultTo, locale }: Pro
     exportRows(
       `konversiya_${from}_${to}`,
       [
-        { key: "fullName", label: tr(locale, { uz: "FIO", ru: "ФИО", en: "Full name" }) },
-        { key: "phone", label: tr(locale, { uz: "Telefon", ru: "Телефон", en: "Phone" }) },
-        { key: "stage", label: tr(locale, { uz: "Holati", ru: "Статус", en: "Status" }) },
-        { key: "managerName", label: tr(locale, { uz: "Xodimni ismi", ru: "Имя сотрудника", en: "Employee name" }) },
+        { key: "fullName", label: tr(locale, { uz: "FIO", ru: "ФИО", en: "Full name", de: "Vollständiger Name" }) },
+        { key: "phone", label: tr(locale, { uz: "Telefon", ru: "Телефон", en: "Phone", de: "Telefon" }) },
+        { key: "stage", label: tr(locale, { uz: "Holati", ru: "Статус", en: "Status", de: "Status" }) },
+        { key: "managerName", label: tr(locale, { uz: "Xodimni ismi", ru: "Имя сотрудника", en: "Employee name", de: "Name des Mitarbeiters" }) },
       ],
       rows
     );
@@ -103,7 +103,7 @@ export default function ConversionReport({ defaultFrom, defaultTo, locale }: Pro
   return (
     <div className="space-y-4">
       <div className="flex items-center gap-3">
-        <h1 className="text-[26px] font-bold tracking-tight text-slate-900 dark:text-slate-100">{tr(locale, { uz: "Konversiya hisobotlari", ru: "Отчёты по конверсии", en: "Conversion reports" })}</h1>
+        <h1 className="text-[26px] font-bold tracking-tight text-slate-900 dark:text-slate-100">{tr(locale, { uz: "Konversiya hisobotlari", ru: "Отчёты по конверсии", en: "Conversion reports", de: "Konversionsberichte" })}</h1>
         {loading && <Icon name="refresh" className="h-4 w-4 animate-spin text-slate-400" />}
       </div>
 
@@ -111,10 +111,10 @@ export default function ConversionReport({ defaultFrom, defaultTo, locale }: Pro
       <div className="flex flex-wrap items-center gap-2.5">
         <DateBox value={from} onChange={setFrom} />
         <DateBox value={to} onChange={setTo} />
-        <FilterSelect value={source} onChange={setSource} placeholder={tr(locale, { uz: "Mijoz manbalari", ru: "Источники клиентов", en: "Client sources" })}>
+        <FilterSelect value={source} onChange={setSource} placeholder={tr(locale, { uz: "Mijoz manbalari", ru: "Источники клиентов", en: "Client sources", de: "Kundenquellen" })}>
           {options.sources.map((sname) => <option key={sname} value={sname}>{sname}</option>)}
         </FilterSelect>
-        <FilterSelect value={manager} onChange={setManager} placeholder={tr(locale, { uz: "Xodimlar tomonidan", ru: "По сотрудникам", en: "By employees" })}>
+        <FilterSelect value={manager} onChange={setManager} placeholder={tr(locale, { uz: "Xodimlar tomonidan", ru: "По сотрудникам", en: "By employees", de: "Nach Mitarbeitern" })}>
           {options.managers.map((m) => <option key={m.id} value={m.id}>{m.name}</option>)}
         </FilterSelect>
         <div className="relative flex h-10 items-center rounded-lg border border-slate-200 bg-white dark:border-slate-700 dark:bg-slate-900">
@@ -123,14 +123,14 @@ export default function ConversionReport({ defaultFrom, defaultTo, locale }: Pro
             onChange={(e) => setSelected(e.target.value)}
             className="h-full appearance-none rounded-lg bg-transparent pl-3 pr-8 text-sm text-slate-600 outline-none dark:text-slate-300"
           >
-            <option value="">{tr(locale, { uz: "Umumiy", ru: "Общий", en: "General" })}</option>
+            <option value="">{tr(locale, { uz: "Umumiy", ru: "Общий", en: "General", de: "Allgemein" })}</option>
             {FUNNEL.map((b) => <option key={b.key} value={b.key}>{tr(locale, b.label)}</option>)}
           </select>
           <Icon name="chevronDown" className="pointer-events-none absolute right-2.5 h-3.5 w-3.5 text-slate-400" />
         </div>
         <button
           onClick={() => setShowPct((v) => !v)}
-          title={showPct ? tr(locale, { uz: "Foizlarni yashirish", ru: "Скрыть проценты", en: "Hide percentages" }) : tr(locale, { uz: "Foizlarni ko'rsatish", ru: "Показать проценты", en: "Show percentages" })}
+          title={showPct ? tr(locale, { uz: "Foizlarni yashirish", ru: "Скрыть проценты", en: "Hide percentages", de: "Prozente ausblenden" }) : tr(locale, { uz: "Foizlarni ko'rsatish", ru: "Показать проценты", en: "Show percentages", de: "Prozente anzeigen" })}
           className={cn(
             "flex h-10 w-10 items-center justify-center rounded-lg border transition",
             showPct
@@ -145,13 +145,13 @@ export default function ConversionReport({ defaultFrom, defaultTo, locale }: Pro
           disabled={loading || leads.length === 0}
           className="ml-auto flex h-10 items-center gap-2 rounded-lg bg-brand-600 px-4 text-sm font-semibold text-white shadow-sm transition hover:bg-brand-700 disabled:cursor-not-allowed disabled:opacity-50"
         >
-          <Icon name="download" className="h-4 w-4" /> {tr(locale, { uz: "Eksport", ru: "Экспорт", en: "Export" })}
+          <Icon name="download" className="h-4 w-4" /> {tr(locale, { uz: "Eksport", ru: "Экспорт", en: "Export", de: "Export" })}
         </button>
       </div>
 
       {error && (
         <div className="rounded-xl border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700 dark:border-red-900/50 dark:bg-red-950/30 dark:text-red-400">
-          {tr(locale, { uz: "Hisobotni yuklashda xatolik. Sahifani yangilab ko'ring.", ru: "Ошибка при загрузке отчёта. Попробуйте обновить страницу.", en: "Error loading the report. Try refreshing the page." })}
+          {tr(locale, { uz: "Hisobotni yuklashda xatolik. Sahifani yangilab ko'ring.", ru: "Ошибка при загрузке отчёта. Попробуйте обновить страницу.", en: "Error loading the report. Try refreshing the page.", de: "Fehler beim Laden des Berichts. Versuchen Sie, die Seite zu aktualisieren." })}
         </div>
       )}
 
@@ -160,7 +160,7 @@ export default function ConversionReport({ defaultFrom, defaultTo, locale }: Pro
         {/* ── Chap: Konversiya ── */}
         <div className="space-y-4">
           <div className="rounded-2xl border border-slate-200/70 bg-white p-5 shadow-card dark:border-slate-800 dark:bg-slate-900">
-            <h3 className="mb-5 text-lg font-semibold text-slate-700 dark:text-slate-200">{tr(locale, { uz: "Konversiya", ru: "Конверсия", en: "Conversion" })}</h3>
+            <h3 className="mb-5 text-lg font-semibold text-slate-700 dark:text-slate-200">{tr(locale, { uz: "Konversiya", ru: "Конверсия", en: "Conversion", de: "Konversion" })}</h3>
 
             <div className="overflow-x-auto">
               <div className="grid min-w-[520px] grid-cols-[3rem_repeat(5,minmax(4.5rem,1fr))] items-center gap-x-2 gap-y-3">
@@ -183,7 +183,7 @@ export default function ConversionReport({ defaultFrom, defaultTo, locale }: Pro
                   );
                 })}
 
-                <div className="text-sm font-medium text-slate-500 dark:text-slate-400">{tr(locale, { uz: "Jami", ru: "Всего", en: "Total" })}</div>
+                <div className="text-sm font-medium text-slate-500 dark:text-slate-400">{tr(locale, { uz: "Jami", ru: "Всего", en: "Total", de: "Gesamt" })}</div>
                 {FUNNEL.map((b) => (
                   <div key={b.key} className="text-center text-lg font-bold text-slate-800 dark:text-slate-100">
                     {counts[b.key] ?? 0}
@@ -200,10 +200,10 @@ export default function ConversionReport({ defaultFrom, defaultTo, locale }: Pro
               <table className="w-full min-w-[520px] text-left text-sm">
                 <thead className="border-b border-slate-200/70 text-[13px] font-semibold text-slate-600 dark:border-slate-800 dark:text-slate-300">
                   <tr>
-                    <th className="px-4 py-3.5">{tr(locale, { uz: "FIO", ru: "ФИО", en: "Full name" })}</th>
-                    <th className="px-4 py-3.5">{tr(locale, { uz: "Telefon", ru: "Телефон", en: "Phone" })}</th>
-                    <th className="px-4 py-3.5">{tr(locale, { uz: "Holati", ru: "Статус", en: "Status" })}</th>
-                    <th className="px-4 py-3.5">{tr(locale, { uz: "Xodimni ismi", ru: "Имя сотрудника", en: "Employee name" })}</th>
+                    <th className="px-4 py-3.5">{tr(locale, { uz: "FIO", ru: "ФИО", en: "Full name", de: "Vollständiger Name" })}</th>
+                    <th className="px-4 py-3.5">{tr(locale, { uz: "Telefon", ru: "Телефон", en: "Phone", de: "Telefon" })}</th>
+                    <th className="px-4 py-3.5">{tr(locale, { uz: "Holati", ru: "Статус", en: "Status", de: "Status" })}</th>
+                    <th className="px-4 py-3.5">{tr(locale, { uz: "Xodimni ismi", ru: "Имя сотрудника", en: "Employee name", de: "Name des Mitarbeiters" })}</th>
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-slate-100 dark:divide-slate-800">
@@ -211,8 +211,8 @@ export default function ConversionReport({ defaultFrom, defaultTo, locale }: Pro
                     <tr>
                       <td colSpan={4} className="bg-slate-50/60 px-4 py-8 text-center text-sm text-slate-500 dark:bg-slate-800/30 dark:text-slate-400">
                         {loading
-                          ? tr(locale, { uz: "Yuklanmoqda...", ru: "Загрузка...", en: "Loading..." })
-                          : tr(locale, { uz: "Hisobotni ko'rish uchun yuqoridagi voronka bosqichlaridan birini tanlang.", ru: "Чтобы посмотреть отчёт, выберите один из этапов воронки выше.", en: "To view the report, select one of the funnel stages above." })}
+                          ? tr(locale, { uz: "Yuklanmoqda...", ru: "Загрузка...", en: "Loading...", de: "Wird geladen..." })
+                          : tr(locale, { uz: "Hisobotni ko'rish uchun yuqoridagi voronka bosqichlaridan birini tanlang.", ru: "Чтобы посмотреть отчёт, выберите один из этапов воронки выше.", en: "To view the report, select one of the funnel stages above.", de: "Wählen Sie oben eine der Trichterphasen aus, um den Bericht anzuzeigen." })}
                       </td>
                     </tr>
                   ) : (
@@ -233,7 +233,7 @@ export default function ConversionReport({ defaultFrom, defaultTo, locale }: Pro
 
         {/* ── O'ng: Sotuv voronkasi ── */}
         <div className="rounded-2xl border border-slate-200/70 bg-white p-6 shadow-card dark:border-slate-800 dark:bg-slate-900">
-          <h3 className="mb-4 text-lg font-semibold text-slate-700 dark:text-slate-200">{tr(locale, { uz: "Sotuv voronkasi", ru: "Воронка продаж", en: "Sales funnel" })}</h3>
+          <h3 className="mb-4 text-lg font-semibold text-slate-700 dark:text-slate-200">{tr(locale, { uz: "Sotuv voronkasi", ru: "Воронка продаж", en: "Sales funnel", de: "Verkaufstrichter" })}</h3>
           <div>
             {FUNNEL.map((b, i) => {
               const c = counts[b.key] ?? 0;

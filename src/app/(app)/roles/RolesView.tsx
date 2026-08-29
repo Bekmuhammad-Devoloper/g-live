@@ -49,57 +49,57 @@ export default function RolesView({ roles, canManage, locale }: { roles: VRole[]
     for (const d of DEPARTMENTS) if (map.has(d)) order.push(d);
     for (const k of map.keys()) if (k !== OTHER && !order.includes(k)) order.push(k);
     if (map.has(OTHER)) order.push(OTHER);
-    return order.map((k) => ({ key: k, label: k === OTHER ? tr(locale, { uz: "Bo'limsiz", ru: "Без отдела", en: "No department" }) : k, roles: map.get(k)! }));
+    return order.map((k) => ({ key: k, label: k === OTHER ? tr(locale, { uz: "Bo'limsiz", ru: "Без отдела", en: "No department", de: "Keine Abteilung" }) : k, roles: map.get(k)! }));
   }, [filtered, locale]);
 
-  const del = (id: string) => { if (confirm(tr(locale, { uz: "Rolni o'chirasizmi?", ru: "Удалить роль?", en: "Delete this role?" }))) start(async () => { await deleteRole(id); router.refresh(); }); };
+  const del = (id: string) => { if (confirm(tr(locale, { uz: "Rolni o'chirasizmi?", ru: "Удалить роль?", en: "Delete this role?", de: "Diese Rolle löschen?" }))) start(async () => { await deleteRole(id); router.refresh(); }); };
 
   const exportCsvNow = () => exportRows(
-    tr(locale, { uz: "rollar", ru: "роли", en: "roles" }),
+    tr(locale, { uz: "rollar", ru: "роли", en: "roles", de: "rollen" }),
     [
-      { key: "name", label: tr(locale, { uz: "Nomi", ru: "Название", en: "Name" }) },
-      { key: "description", label: tr(locale, { uz: "Izoh", ru: "Описание", en: "Description" }) },
-      { key: "permissions", label: tr(locale, { uz: "Ruxsatlar soni", ru: "Кол-во разрешений", en: "Permissions count" }) },
-      { key: "bossOnly", label: tr(locale, { uz: "Faqat boss", ru: "Только босс", en: "Boss only" }) },
+      { key: "name", label: tr(locale, { uz: "Nomi", ru: "Название", en: "Name", de: "Name" }) },
+      { key: "description", label: tr(locale, { uz: "Izoh", ru: "Описание", en: "Description", de: "Beschreibung" }) },
+      { key: "permissions", label: tr(locale, { uz: "Ruxsatlar soni", ru: "Кол-во разрешений", en: "Permissions count", de: "Anzahl der Berechtigungen" }) },
+      { key: "bossOnly", label: tr(locale, { uz: "Faqat boss", ru: "Только босс", en: "Boss only", de: "Nur Chef" }) },
     ],
-    filtered.map((r) => ({ name: r.name, description: r.description, permissions: r.permissions.length, bossOnly: r.bossOnly ? tr(locale, { uz: "Ha", ru: "Да", en: "Yes" }) : tr(locale, { uz: "Yo'q", ru: "Нет", en: "No" }) })),
+    filtered.map((r) => ({ name: r.name, description: r.description, permissions: r.permissions.length, bossOnly: r.bossOnly ? tr(locale, { uz: "Ha", ru: "Да", en: "Yes", de: "Ja" }) : tr(locale, { uz: "Yo'q", ru: "Нет", en: "No", de: "Nein" }) })),
   );
 
   return (
     <div className="space-y-4">
-      <h1 className="text-[22px] font-bold tracking-tight text-slate-900 dark:text-slate-100">{tr(locale, { uz: "Rollar", ru: "Роли", en: "Roles" })}</h1>
+      <h1 className="text-[22px] font-bold tracking-tight text-slate-900 dark:text-slate-100">{tr(locale, { uz: "Rollar", ru: "Роли", en: "Roles", de: "Rollen" })}</h1>
 
       <div className="flex flex-wrap items-center gap-2">
         {canManage && (
           <button onClick={() => { setEditing(null); setOpen(true); }} className="flex h-10 items-center gap-1.5 rounded-lg bg-brand-600 px-4 text-sm font-semibold text-white shadow-sm transition hover:bg-brand-700">
-            <Icon name="plus" className="h-4 w-4" /> {tr(locale, { uz: "Rol qo'shish", ru: "Добавить роль", en: "Add role" })}
+            <Icon name="plus" className="h-4 w-4" /> {tr(locale, { uz: "Rol qo'shish", ru: "Добавить роль", en: "Add role", de: "Rolle hinzufügen" })}
           </button>
         )}
         <div className="relative ml-auto">
           <Icon name="search" className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400" />
-          <input value={search} onChange={(e) => setSearch(e.target.value)} placeholder={tr(locale, { uz: "Qidiruv", ru: "Поиск", en: "Search" })} className="h-10 w-60 rounded-lg border border-slate-200 bg-white pl-9 pr-3 text-sm outline-none focus:border-brand-400 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-100" />
+          <input value={search} onChange={(e) => setSearch(e.target.value)} placeholder={tr(locale, { uz: "Qidiruv", ru: "Поиск", en: "Search", de: "Suchen" })} className="h-10 w-60 rounded-lg border border-slate-200 bg-white pl-9 pr-3 text-sm outline-none focus:border-brand-400 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-100" />
         </div>
-        <button onClick={exportCsvNow} className="flex h-10 items-center gap-1.5 rounded-lg border border-slate-200 bg-white px-3.5 text-sm font-semibold text-slate-600 transition hover:bg-slate-50 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-300 dark:hover:bg-slate-700/60" title={tr(locale, { uz: "CSV yuklab olish", ru: "Скачать CSV", en: "Download CSV" })}>
-          <Icon name="download" className="h-4 w-4" /> {tr(locale, { uz: "Eksport", ru: "Экспорт", en: "Export" })}
+        <button onClick={exportCsvNow} className="flex h-10 items-center gap-1.5 rounded-lg border border-slate-200 bg-white px-3.5 text-sm font-semibold text-slate-600 transition hover:bg-slate-50 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-300 dark:hover:bg-slate-700/60" title={tr(locale, { uz: "CSV yuklab olish", ru: "Скачать CSV", en: "Download CSV", de: "CSV herunterladen" })}>
+          <Icon name="download" className="h-4 w-4" /> {tr(locale, { uz: "Eksport", ru: "Экспорт", en: "Export", de: "Export" })}
         </button>
       </div>
 
       <div className={cn("overflow-hidden rounded-2xl border border-slate-200/70 bg-white shadow-card dark:border-slate-800 dark:bg-slate-900", pending && "opacity-70")}>
         <div className="flex items-center justify-end border-b border-slate-100 px-4 py-2 dark:border-slate-800">
-          <span className="rounded-lg bg-slate-100 px-2.5 py-1 text-xs font-semibold text-slate-500 dark:bg-slate-800 dark:text-slate-300">{tr(locale, { uz: "Umumiy soni", ru: "Всего", en: "Total" })}: {filtered.length}</span>
+          <span className="rounded-lg bg-slate-100 px-2.5 py-1 text-xs font-semibold text-slate-500 dark:bg-slate-800 dark:text-slate-300">{tr(locale, { uz: "Umumiy soni", ru: "Всего", en: "Total", de: "Gesamt" })}: {filtered.length}</span>
         </div>
         <div className="overflow-x-auto">
           <table className="w-full min-w-[640px] text-left text-sm">
             <thead className="border-b border-slate-200/70 bg-slate-50/80 text-[11px] font-semibold uppercase tracking-wider text-slate-500 dark:border-slate-800 dark:bg-slate-800/50">
               <tr>
-                <th className="w-12 px-4 py-3">№</th><th className="px-4 py-3">{tr(locale, { uz: "Nomi", ru: "Название", en: "Name" })}</th><th className="px-4 py-3">{tr(locale, { uz: "Izoh", ru: "Описание", en: "Description" })}</th>
-                <th className="px-4 py-3 text-center">{tr(locale, { uz: "Ruxsatlar", ru: "Разрешения", en: "Permissions" })}</th><th className="px-4 py-3 text-center">{tr(locale, { uz: "Xodimlar", ru: "Сотрудники", en: "Staff" })}</th>
-                {canManage && <th className="px-4 py-3 text-right">{tr(locale, { uz: "Amallar", ru: "Действия", en: "Actions" })}</th>}
+                <th className="w-12 px-4 py-3">№</th><th className="px-4 py-3">{tr(locale, { uz: "Nomi", ru: "Название", en: "Name", de: "Name" })}</th><th className="px-4 py-3">{tr(locale, { uz: "Izoh", ru: "Описание", en: "Description", de: "Beschreibung" })}</th>
+                <th className="px-4 py-3 text-center">{tr(locale, { uz: "Ruxsatlar", ru: "Разрешения", en: "Permissions", de: "Berechtigungen" })}</th><th className="px-4 py-3 text-center">{tr(locale, { uz: "Xodimlar", ru: "Сотрудники", en: "Staff", de: "Mitarbeiter" })}</th>
+                {canManage && <th className="px-4 py-3 text-right">{tr(locale, { uz: "Amallar", ru: "Действия", en: "Actions", de: "Aktionen" })}</th>}
               </tr>
             </thead>
             <tbody className="divide-y divide-slate-100 dark:divide-slate-800">
               {filtered.length === 0 ? (
-                <tr><td colSpan={canManage ? 6 : 5} className="px-4 py-14 text-center text-slate-400">{tr(locale, { uz: "Ma'lumotlar topilmadi", ru: "Данные не найдены", en: "No data found" })}</td></tr>
+                <tr><td colSpan={canManage ? 6 : 5} className="px-4 py-14 text-center text-slate-400">{tr(locale, { uz: "Ma'lumotlar topilmadi", ru: "Данные не найдены", en: "No data found", de: "Keine Daten gefunden" })}</td></tr>
               ) : (() => {
                 let no = 0;
                 return grouped.map((g) => (
@@ -120,7 +120,7 @@ export default function RolesView({ roles, canManage, locale }: { roles: VRole[]
                           <td className="px-4 py-3 text-slate-400">{no}</td>
                           <td className="px-4 py-3">
                             <span className="font-medium text-slate-800 dark:text-slate-100">{r.name}</span>
-                            {r.bossOnly && <span className="ml-2 rounded bg-amber-100 px-1.5 py-0.5 text-[10px] font-semibold text-amber-700 dark:bg-amber-900/40 dark:text-amber-300">{tr(locale, { uz: "Faqat boss", ru: "Только босс", en: "Boss only" })}</span>}
+                            {r.bossOnly && <span className="ml-2 rounded bg-amber-100 px-1.5 py-0.5 text-[10px] font-semibold text-amber-700 dark:bg-amber-900/40 dark:text-amber-300">{tr(locale, { uz: "Faqat boss", ru: "Только босс", en: "Boss only", de: "Nur Chef" })}</span>}
                           </td>
                           <td className="px-4 py-3 text-slate-500">{r.description || "—"}</td>
                           <td className="px-4 py-3 text-center"><span className="rounded-md bg-brand-500/15 px-2 py-0.5 text-xs font-bold text-brand-600 dark:text-brand-300">{r.permissions.length}</span></td>
@@ -128,8 +128,8 @@ export default function RolesView({ roles, canManage, locale }: { roles: VRole[]
                           {canManage && (
                             <td className="px-4 py-3">
                               <div className="flex items-center justify-end gap-2 text-slate-400">
-                                <button onClick={() => { setEditing(r); setOpen(true); }} className="transition hover:text-brand-600" title={tr(locale, { uz: "Tahrirlash", ru: "Редактировать", en: "Edit" })}><Icon name="pencil" className="h-4 w-4" /></button>
-                                <button onClick={() => del(r.id)} className="transition hover:text-rose-600" title={tr(locale, { uz: "O'chirish", ru: "Удалить", en: "Delete" })}><Icon name="trash" className="h-4 w-4" /></button>
+                                <button onClick={() => { setEditing(r); setOpen(true); }} className="transition hover:text-brand-600" title={tr(locale, { uz: "Tahrirlash", ru: "Редактировать", en: "Edit", de: "Bearbeiten" })}><Icon name="pencil" className="h-4 w-4" /></button>
+                                <button onClick={() => del(r.id)} className="transition hover:text-rose-600" title={tr(locale, { uz: "O'chirish", ru: "Удалить", en: "Delete", de: "Löschen" })}><Icon name="trash" className="h-4 w-4" /></button>
                               </div>
                             </td>
                           )}
@@ -178,7 +178,7 @@ function RoleForm({ editing, onClose, onSaved, locale }: { editing: VRole | null
     const fd = new FormData(formRef.current!);
     fd.set("permissions", [...sel].join(","));
     fd.set("bossOnly", bossOnly ? "true" : "false");
-    start(async () => { const r = await saveRole(fd); if (r.ok) onSaved(); else setError(r.error ?? tr(locale, { uz: "Xatolik", ru: "Ошибка", en: "Error" })); });
+    start(async () => { const r = await saveRole(fd); if (r.ok) onSaved(); else setError(r.error ?? tr(locale, { uz: "Xatolik", ru: "Ошибка", en: "Error", de: "Fehler" })); });
   };
 
   const inp = "w-full rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm text-slate-800 outline-none focus:border-brand-400 dark:border-slate-700 dark:bg-slate-800/60 dark:text-slate-100";
@@ -190,28 +190,28 @@ function RoleForm({ editing, onClose, onSaved, locale }: { editing: VRole | null
       <form ref={formRef} onMouseDown={(e) => e.stopPropagation()} className="animate-slide-in-right absolute right-0 top-0 flex h-full w-[760px] max-w-[96%] flex-col border-l border-slate-200 bg-white shadow-pop dark:border-white/10 dark:bg-[#15243d]">
         <input type="hidden" name="id" defaultValue={editing?.id ?? ""} />
         <div className="flex shrink-0 items-center justify-between border-b border-slate-100 px-5 py-4 dark:border-white/10">
-          <h3 className="text-base font-bold text-slate-800 dark:text-slate-100">{editing ? tr(locale, { uz: "Rolni tahrirlash", ru: "Редактировать роль", en: "Edit role" }) : tr(locale, { uz: "Rol qo'shish", ru: "Добавить роль", en: "Add role" })}</h3>
+          <h3 className="text-base font-bold text-slate-800 dark:text-slate-100">{editing ? tr(locale, { uz: "Rolni tahrirlash", ru: "Редактировать роль", en: "Edit role", de: "Rolle bearbeiten" }) : tr(locale, { uz: "Rol qo'shish", ru: "Добавить роль", en: "Add role", de: "Rolle hinzufügen" })}</h3>
           <button type="button" onClick={onClose} className="flex h-8 w-8 items-center justify-center rounded-lg text-lg text-slate-400 hover:bg-slate-100 dark:hover:bg-white/10">✕</button>
         </div>
 
         <div className="flex-1 space-y-4 overflow-y-auto px-5 py-4">
           <div className="grid gap-3 sm:grid-cols-2">
-            <div><label className={lbl}>{tr(locale, { uz: "Ism", ru: "Имя", en: "Name" })} <span className="text-rose-500">*</span></label><input name="name" required defaultValue={editing?.name ?? ""} placeholder={tr(locale, { uz: "Rol nomi", ru: "Название роли", en: "Role name" })} className={inp} /></div>
+            <div><label className={lbl}>{tr(locale, { uz: "Ism", ru: "Имя", en: "Name", de: "Name" })} <span className="text-rose-500">*</span></label><input name="name" required defaultValue={editing?.name ?? ""} placeholder={tr(locale, { uz: "Rol nomi", ru: "Название роли", en: "Role name", de: "Rollenname" })} className={inp} /></div>
             <div>
-              <label className={lbl}>{tr(locale, { uz: "Bo'lim", ru: "Отдел", en: "Department" })}</label>
+              <label className={lbl}>{tr(locale, { uz: "Bo'lim", ru: "Отдел", en: "Department", de: "Abteilung" })}</label>
               <select name="department" defaultValue={editing?.department ?? ""} className={inp}>
-                <option value="">{tr(locale, { uz: "Bo'limsiz", ru: "Без отдела", en: "No department" })}</option>
+                <option value="">{tr(locale, { uz: "Bo'limsiz", ru: "Без отдела", en: "No department", de: "Keine Abteilung" })}</option>
                 {DEPARTMENTS.map((d) => <option key={d} value={d}>{d}</option>)}
                 {editing?.department && !DEPARTMENTS.includes(editing.department as never) && <option value={editing.department}>{editing.department}</option>}
               </select>
             </div>
-            <div className="sm:col-span-2"><label className={lbl}>{tr(locale, { uz: "Izoh", ru: "Описание", en: "Description" })}</label><input name="description" defaultValue={editing?.description ?? ""} placeholder={tr(locale, { uz: "Izoh", ru: "Описание", en: "Description" })} className={inp} /></div>
+            <div className="sm:col-span-2"><label className={lbl}>{tr(locale, { uz: "Izoh", ru: "Описание", en: "Description", de: "Beschreibung" })}</label><input name="description" defaultValue={editing?.description ?? ""} placeholder={tr(locale, { uz: "Izoh", ru: "Описание", en: "Description", de: "Beschreibung" })} className={inp} /></div>
           </div>
 
           <div className="flex flex-wrap items-center gap-x-6 gap-y-2 rounded-xl bg-slate-50 px-4 py-3 dark:bg-white/[0.03]">
-            <Check checked={bossOnly} onChange={() => setBossOnly((v) => !v)} label={tr(locale, { uz: "Faqat boss ko'ra oladi", ru: "Видит только босс", en: "Only boss can view" })} />
-            <Check checked={allChecked} onChange={toggleAll} label={tr(locale, { uz: "Hammasi", ru: "Все", en: "All" })} strong />
-            <span className="ml-auto text-xs text-slate-400">{sel.size} / {ALL_PERM_KEYS.length} {tr(locale, { uz: "ruxsat", ru: "разрешений", en: "permissions" })}</span>
+            <Check checked={bossOnly} onChange={() => setBossOnly((v) => !v)} label={tr(locale, { uz: "Faqat boss ko'ra oladi", ru: "Видит только босс", en: "Only boss can view", de: "Nur der Chef kann es sehen" })} />
+            <Check checked={allChecked} onChange={toggleAll} label={tr(locale, { uz: "Hammasi", ru: "Все", en: "All", de: "Alle" })} strong />
+            <span className="ml-auto text-xs text-slate-400">{sel.size} / {ALL_PERM_KEYS.length} {tr(locale, { uz: "ruxsat", ru: "разрешений", en: "permissions", de: "Berechtigungen" })}</span>
           </div>
 
           {/* Ruxsatlar matritsasi */}
@@ -242,8 +242,8 @@ function RoleForm({ editing, onClose, onSaved, locale }: { editing: VRole | null
         </div>
 
         <div className="flex shrink-0 gap-2 border-t border-slate-100 px-5 py-4 dark:border-white/10">
-          <button type="button" onClick={onClose} className="flex-1 rounded-xl border border-slate-200 py-2.5 text-sm font-semibold text-slate-600 hover:bg-slate-50 dark:border-white/10 dark:text-slate-300">{tr(locale, { uz: "Orqaga", ru: "Назад", en: "Back" })}</button>
-          <button type="button" onClick={submit} disabled={pending} className="flex-[1.4] rounded-xl bg-brand-600 py-2.5 text-sm font-semibold text-white hover:bg-brand-700 disabled:opacity-60">{pending ? tr(locale, { uz: "Saqlanmoqda...", ru: "Сохранение...", en: "Saving..." }) : tr(locale, { uz: "Saqlash", ru: "Сохранить", en: "Save" })}</button>
+          <button type="button" onClick={onClose} className="flex-1 rounded-xl border border-slate-200 py-2.5 text-sm font-semibold text-slate-600 hover:bg-slate-50 dark:border-white/10 dark:text-slate-300">{tr(locale, { uz: "Orqaga", ru: "Назад", en: "Back", de: "Zurück" })}</button>
+          <button type="button" onClick={submit} disabled={pending} className="flex-[1.4] rounded-xl bg-brand-600 py-2.5 text-sm font-semibold text-white hover:bg-brand-700 disabled:opacity-60">{pending ? tr(locale, { uz: "Saqlanmoqda...", ru: "Сохранение...", en: "Saving...", de: "Wird gespeichert..." }) : tr(locale, { uz: "Saqlash", ru: "Сохранить", en: "Save", de: "Speichern" })}</button>
         </div>
       </form>
     </div>, document.body);

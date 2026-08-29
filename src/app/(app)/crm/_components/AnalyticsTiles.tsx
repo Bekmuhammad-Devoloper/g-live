@@ -15,14 +15,14 @@ export interface Analytics {
 
 export default function AnalyticsTiles({ a, locale }: { a: Analytics; locale: Locale }) {
   const delta = a.newToday - a.newYesterday;
-  const ago = tr(locale, { uz: "kechaga", ru: "к вчера", en: "vs yesterday" });
+  const ago = tr(locale, { uz: "kechaga", ru: "к вчера", en: "vs yesterday", de: "vs. gestern" });
   return (
     <div className="flex gap-2.5 overflow-x-auto pb-1">
-      <Tile label={tr(locale, { uz: "Bugungi yangi", ru: "Новые сегодня", en: "New today" })} value={a.newToday} hint={delta >= 0 ? `+${delta} ${ago}` : `${delta} ${ago}`} color="#3b82f6" icon="download" />
+      <Tile label={tr(locale, { uz: "Bugungi yangi", ru: "Новые сегодня", en: "New today", de: "Heute neu" })} value={a.newToday} hint={delta >= 0 ? `+${delta} ${ago}` : `${delta} ${ago}`} color="#3b82f6" icon="download" />
       {COLUMNS.map((c) => (
         <Tile key={c.key} label={tr(locale, c.label)} value={a.byColumn[c.key] ?? 0} color={c.color} icon={c.icon} />
       ))}
-      <Tile label={tr(locale, { uz: "Konversiya", ru: "Конверсия", en: "Conversion" })} value={`${a.conversion}%`} color="#10b981" icon="chart" />
+      <Tile label={tr(locale, { uz: "Konversiya", ru: "Конверсия", en: "Conversion", de: "Konversion" })} value={`${a.conversion}%`} color="#10b981" icon="chart" />
     </div>
   );
 }

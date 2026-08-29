@@ -18,7 +18,7 @@ export default async function SalesTeamPage({ searchParams }: { searchParams: Pr
   const s = await requireSession();
   const loc0 = s.locale as Locale;
   if (!canRead(s.role, MODULES.REPORTS) && !canRead(s.role, MODULES.CRM)) {
-    return <Forbidden title={tr(loc0, { uz: "Kirish taqiqlangan", ru: "Доступ запрещён", en: "Access denied" })} body={tr(loc0, { uz: "Bu bo'lim savdo bo'limi uchun.", ru: "Этот раздел для отдела продаж.", en: "This section is for the sales department." })} />;
+    return <Forbidden title={tr(loc0, { uz: "Kirish taqiqlangan", ru: "Доступ запрещён", en: "Access denied", de: "Zugriff verweigert" })} body={tr(loc0, { uz: "Bu bo'lim savdo bo'limi uchun.", ru: "Этот раздел для отдела продаж.", en: "This section is for the sales department.", de: "Dieser Bereich ist für die Vertriebsabteilung." })} />;
   }
   const sp = await searchParams;
   const now = new Date();
@@ -77,7 +77,7 @@ export default async function SalesTeamPage({ searchParams }: { searchParams: Pr
   return (
     <div className="space-y-5">
       <div className="flex flex-wrap items-center justify-between gap-3">
-        <h1 className="text-[22px] font-bold tracking-tight text-slate-900 dark:text-slate-100">{tr(loc, { uz: "Savdo bo'limi", ru: "Отдел продаж", en: "Sales department" })}</h1>
+        <h1 className="text-[22px] font-bold tracking-tight text-slate-900 dark:text-slate-100">{tr(loc, { uz: "Savdo bo'limi", ru: "Отдел продаж", en: "Sales department", de: "Vertriebsabteilung" })}</h1>
         <div className="flex flex-wrap items-center gap-2">
           <RopManager locale={loc} operators={ropOps} canManage={canManageRop} />
           <DateNav from={fromStr} to={toStr} />
@@ -85,10 +85,10 @@ export default async function SalesTeamPage({ searchParams }: { searchParams: Pr
       </div>
 
       <div className="grid grid-cols-2 gap-4 lg:grid-cols-4">
-        <StatCard label={tr(loc, { uz: "Operatorlar", ru: "Операторы", en: "Operators" })} value={team.operators} tone="brand" icon="users" />
-        <StatCard label={tr(loc, { uz: "Jami leadlar", ru: "Всего лидов", en: "Total leads" })} value={team.leads} icon="download" />
-        <StatCard label={tr(loc, { uz: "Muvaffaqiyatli", ru: "Успешные", en: "Successful" })} value={team.won} tone="green" icon="check" />
-        <StatCard label={tr(loc, { uz: "O'rtacha konversiya", ru: "Средняя конверсия", en: "Average conversion" })} value={`${team.avgConv}%`} tone="amber" icon="chart" />
+        <StatCard label={tr(loc, { uz: "Operatorlar", ru: "Операторы", en: "Operators", de: "Operatoren" })} value={team.operators} tone="brand" icon="users" />
+        <StatCard label={tr(loc, { uz: "Jami leadlar", ru: "Всего лидов", en: "Total leads", de: "Gesamte Leads" })} value={team.leads} icon="download" />
+        <StatCard label={tr(loc, { uz: "Muvaffaqiyatli", ru: "Успешные", en: "Successful", de: "Erfolgreich" })} value={team.won} tone="green" icon="check" />
+        <StatCard label={tr(loc, { uz: "O'rtacha konversiya", ru: "Средняя конверсия", en: "Average conversion", de: "Durchschnittliche Konversion" })} value={`${team.avgConv}%`} tone="amber" icon="chart" />
       </div>
 
       <div className="overflow-hidden rounded-2xl border border-slate-200/70 bg-white shadow-card dark:border-slate-800 dark:bg-slate-900">
@@ -96,21 +96,21 @@ export default async function SalesTeamPage({ searchParams }: { searchParams: Pr
           <table className="w-full min-w-[1080px] text-left text-sm">
             <thead className="border-b border-slate-200/70 bg-slate-50/80 text-[11px] font-semibold uppercase tracking-wider text-slate-500 dark:border-slate-800 dark:bg-slate-800/50">
               <tr>
-                <th className="w-12 px-4 py-3">№</th><th className="px-4 py-3">{tr(loc, { uz: "Operator", ru: "Оператор", en: "Operator" })}</th><th className="px-4 py-3">{tr(loc, { uz: "Lavozim", ru: "Должность", en: "Position" })}</th>
-                <th className="px-4 py-3 text-right">{tr(loc, { uz: "Fiksa", ru: "Фикса", en: "Fixed" })}</th><th className="px-4 py-3 text-center">KPI</th><th className="px-4 py-3 text-center">{tr(loc, { uz: "Konversiya", ru: "Конверсия", en: "Conversion" })}</th>
-                <th className="px-4 py-3 text-center">{tr(loc, { uz: "Jami leedi", ru: "Всего лидов", en: "Total leads" })}</th><th className="px-4 py-3 text-center">{tr(loc, { uz: "Muvaffaqiyatli", ru: "Успешные", en: "Successful" })}</th>
-                <th className="px-4 py-3 text-center">{tr(loc, { uz: "Umumiy daqiqa", ru: "Всего минут", en: "Total minutes" })}</th><th className="px-4 py-3 text-center">{tr(loc, { uz: "Kunlik daqiqa", ru: "Минут в день", en: "Minutes per day" })}</th><th className="px-4 py-3 text-center">{tr(loc, { uz: "Kuniga leed", ru: "Лидов в день", en: "Leads per day" })}</th>
+                <th className="w-12 px-4 py-3">№</th><th className="px-4 py-3">{tr(loc, { uz: "Operator", ru: "Оператор", en: "Operator", de: "Operator" })}</th><th className="px-4 py-3">{tr(loc, { uz: "Lavozim", ru: "Должность", en: "Position", de: "Position" })}</th>
+                <th className="px-4 py-3 text-right">{tr(loc, { uz: "Fiksa", ru: "Фикса", en: "Fixed", de: "Festgehalt" })}</th><th className="px-4 py-3 text-center">KPI</th><th className="px-4 py-3 text-center">{tr(loc, { uz: "Konversiya", ru: "Конверсия", en: "Conversion", de: "Konversion" })}</th>
+                <th className="px-4 py-3 text-center">{tr(loc, { uz: "Jami leedi", ru: "Всего лидов", en: "Total leads", de: "Gesamte Leads" })}</th><th className="px-4 py-3 text-center">{tr(loc, { uz: "Muvaffaqiyatli", ru: "Успешные", en: "Successful", de: "Erfolgreich" })}</th>
+                <th className="px-4 py-3 text-center">{tr(loc, { uz: "Umumiy daqiqa", ru: "Всего минут", en: "Total minutes", de: "Gesamtminuten" })}</th><th className="px-4 py-3 text-center">{tr(loc, { uz: "Kunlik daqiqa", ru: "Минут в день", en: "Minutes per day", de: "Minuten pro Tag" })}</th><th className="px-4 py-3 text-center">{tr(loc, { uz: "Kuniga leed", ru: "Лидов в день", en: "Leads per day", de: "Leads pro Tag" })}</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-slate-100 dark:divide-slate-800">
               {rows.length === 0 ? (
-                <tr><td colSpan={11} className="py-16 text-center text-slate-400">{tr(loc, { uz: "Savdo komandasi (menejer) topilmadi", ru: "Команда продаж (менеджеры) не найдена", en: "Sales team (managers) not found" })}</td></tr>
+                <tr><td colSpan={11} className="py-16 text-center text-slate-400">{tr(loc, { uz: "Savdo komandasi (menejer) topilmadi", ru: "Команда продаж (менеджеры) не найдена", en: "Sales team (managers) not found", de: "Vertriebsteam (Manager) nicht gefunden" })}</td></tr>
               ) : rows.map((r, i) => (
                 <tr key={r.id} className="hover:bg-slate-50 dark:hover:bg-slate-800/50">
                   <td className="px-4 py-3 text-slate-400">{i + 1}</td>
                   <td className="px-4 py-3 font-medium text-slate-800 dark:text-slate-100">{r.name}</td>
                   <td className="px-4 py-3">
-                    <span className={r.isRop ? "rounded-md bg-amber-100 px-2 py-0.5 text-[11px] font-bold text-amber-700 dark:bg-amber-900/40 dark:text-amber-300" : "text-xs text-slate-500"}>{r.isRop ? "ROP" : tr(loc, { uz: "Operator", ru: "Оператор", en: "Operator" })}</span>
+                    <span className={r.isRop ? "rounded-md bg-amber-100 px-2 py-0.5 text-[11px] font-bold text-amber-700 dark:bg-amber-900/40 dark:text-amber-300" : "text-xs text-slate-500"}>{r.isRop ? "ROP" : tr(loc, { uz: "Operator", ru: "Оператор", en: "Operator", de: "Operator" })}</span>
                   </td>
                   <td className="px-4 py-3 text-right tabular-nums text-slate-600 dark:text-slate-300">{formatMoney(r.fiksa, loc)}</td>
                   <td className="px-4 py-3 text-center"><span className="font-bold" style={{ color: kpiTone(r.kpi) }}>{r.kpi}</span></td>
@@ -126,7 +126,7 @@ export default async function SalesTeamPage({ searchParams }: { searchParams: Pr
           </table>
         </div>
       </div>
-      <p className="text-xs text-slate-400">{tr(loc, { uz: "KPI = konversiya (60%) + qo'ng'iroq faolligi (40%). Umumiy/kunlik daqiqa va \"kuniga leed\" qo'ng'iroqlar jurnalidan (Call) hisoblanadi.", ru: "KPI = конверсия (60%) + активность звонков (40%). Всего/в день минут и \"лидов в день\" считаются из журнала звонков (Call).", en: "KPI = conversion (60%) + call activity (40%). Total/daily minutes and \"leads per day\" are calculated from the call log (Call)." })}</p>
+      <p className="text-xs text-slate-400">{tr(loc, { uz: "KPI = konversiya (60%) + qo'ng'iroq faolligi (40%). Umumiy/kunlik daqiqa va \"kuniga leed\" qo'ng'iroqlar jurnalidan (Call) hisoblanadi.", ru: "KPI = конверсия (60%) + активность звонков (40%). Всего/в день минут и \"лидов в день\" считаются из журнала звонков (Call).", en: "KPI = conversion (60%) + call activity (40%). Total/daily minutes and \"leads per day\" are calculated from the call log (Call).", de: "KPI = Konversion (60%) + Anrufaktivität (40%). Gesamt-/Tagesminuten und \"Leads pro Tag\" werden aus dem Anrufprotokoll (Call) berechnet." })}</p>
     </div>
   );
 }

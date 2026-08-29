@@ -98,8 +98,8 @@ export default function Waveform({
   }, []);
 
   const load = useCallback(async (): Promise<string | null> => {
-    const notFound = tr(locale, { uz: "Yozuv topilmadi", ru: "Запись не найдена", en: "Recording not found" });
-    const empty = tr(locale, { uz: "Yozuv bo'sh", ru: "Запись пуста", en: "Recording is empty" });
+    const notFound = tr(locale, { uz: "Yozuv topilmadi", ru: "Запись не найдена", en: "Recording not found", de: "Aufnahme nicht gefunden" });
+    const empty = tr(locale, { uz: "Yozuv bo'sh", ru: "Запись пуста", en: "Recording is empty", de: "Aufnahme ist leer" });
     try {
       const res = await fetch(src, { cache: "no-store" });
       if (!res.ok) {
@@ -177,7 +177,7 @@ export default function Waveform({
       cancelAnimationFrame(rafRef.current);
     };
     audio.onerror = () => {
-      setErrText(tr(locale, { uz: "Ijro etib bo'lmadi", ru: "Не удалось воспроизвести", en: "Playback failed" }));
+      setErrText(tr(locale, { uz: "Ijro etib bo'lmadi", ru: "Не удалось воспроизвести", en: "Playback failed", de: "Wiedergabe fehlgeschlagen" }));
       setState("error");
     };
     audio.onloadedmetadata = () => {
@@ -202,15 +202,15 @@ export default function Waveform({
   const playing = state === "playing";
   const shown = playing || (state === "ready" && progress > 0) ? current : total;
   const playLabel = playing
-    ? tr(locale, { uz: "Pauza", ru: "Пауза", en: "Pause" })
-    : tr(locale, { uz: "Ijro etish", ru: "Воспроизвести", en: "Play" });
+    ? tr(locale, { uz: "Pauza", ru: "Пауза", en: "Pause", de: "Pause" })
+    : tr(locale, { uz: "Ijro etish", ru: "Воспроизвести", en: "Play", de: "Abspielen" });
 
   return (
     <div className="inline-flex min-w-[220px] max-w-[300px] select-none items-center gap-2.5 rounded-2xl bg-[#2B5278] px-3 py-2">
       <button
         onClick={toggle}
         disabled={state === "loading"}
-        title={state === "error" ? tr(locale, { uz: "Qayta urinish", ru: "Повторить", en: "Retry" }) : playLabel}
+        title={state === "error" ? tr(locale, { uz: "Qayta urinish", ru: "Повторить", en: "Retry", de: "Erneut versuchen" }) : playLabel}
         aria-label={playLabel}
         className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-white/15 transition hover:bg-white/25 disabled:opacity-60"
       >

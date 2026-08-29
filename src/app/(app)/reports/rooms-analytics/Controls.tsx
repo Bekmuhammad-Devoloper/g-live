@@ -16,7 +16,7 @@ export default function Controls({ from, to, period, view, locale }: { from: str
   };
   return (
     <div className="flex flex-wrap items-center gap-2">
-      <button onClick={() => nav({ view: view === "grid" ? "list" : "grid" })} className="flex h-11 w-11 items-center justify-center rounded-xl border border-slate-200 text-slate-500 transition hover:bg-slate-50 dark:border-slate-700 dark:hover:bg-slate-800" title={view === "grid" ? tr(locale, { uz: "Ro'yxat", ru: "Список", en: "List" }) : tr(locale, { uz: "Panjara", ru: "Сетка", en: "Grid" })}>
+      <button onClick={() => nav({ view: view === "grid" ? "list" : "grid" })} className="flex h-11 w-11 items-center justify-center rounded-xl border border-slate-200 text-slate-500 transition hover:bg-slate-50 dark:border-slate-700 dark:hover:bg-slate-800" title={view === "grid" ? tr(locale, { uz: "Ro'yxat", ru: "Список", en: "List", de: "Liste" }) : tr(locale, { uz: "Panjara", ru: "Сетка", en: "Grid", de: "Raster" })}>
         <Icon name={view === "grid" ? "listView" : "grid"} className="h-5 w-5" />
       </button>
       <div className="flex h-11 items-center gap-1 rounded-xl border border-slate-200 bg-white px-3 dark:border-slate-700 dark:bg-slate-800">
@@ -27,9 +27,9 @@ export default function Controls({ from, to, period, view, locale }: { from: str
       </div>
       <div className="relative">
         <select defaultValue={period} onChange={(e) => nav({ period: e.target.value })} className={cn("h-11 appearance-none rounded-xl border border-slate-200 bg-white pl-3 pr-9 text-sm text-slate-600 outline-none focus:border-brand-400 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-100")}>
-          <option value="day">{tr(locale, { uz: "Kun", ru: "День", en: "Day" })}</option>
-          <option value="week">{tr(locale, { uz: "Hafta", ru: "Неделя", en: "Week" })}</option>
-          <option value="month">{tr(locale, { uz: "Oy", ru: "Месяц", en: "Month" })}</option>
+          <option value="day">{tr(locale, { uz: "Kun", ru: "День", en: "Day", de: "Tag" })}</option>
+          <option value="week">{tr(locale, { uz: "Hafta", ru: "Неделя", en: "Week", de: "Woche" })}</option>
+          <option value="month">{tr(locale, { uz: "Oy", ru: "Месяц", en: "Month", de: "Monat" })}</option>
         </select>
         <Icon name="chevronDown" className="pointer-events-none absolute right-3 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400" />
       </div>

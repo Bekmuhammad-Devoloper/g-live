@@ -15,7 +15,7 @@ const fmtDT = (d: Date) => `${p2(d.getDate())}.${p2(d.getMonth() + 1)}.${d.getFu
 export default async function StaffRatingPage() {
   const s = await requireSession();
   if (!canRead(s.role, MODULES.REPORTS)) {
-    return <Forbidden title={tr(s.locale, { uz: "Kirish taqiqlangan", ru: "Доступ запрещён", en: "Access denied" })} body={tr(s.locale, { uz: "Bu bo'lim uchun ruxsat yo'q.", ru: "Нет доступа к этому разделу.", en: "You don't have access to this section." })} />;
+    return <Forbidden title={tr(s.locale, { uz: "Kirish taqiqlangan", ru: "Доступ запрещён", en: "Access denied", de: "Zugriff verweigert" })} body={tr(s.locale, { uz: "Bu bo'lim uchun ruxsat yo'q.", ru: "Нет доступа к этому разделу.", en: "You don't have access to this section.", de: "Sie haben keine Berechtigung für diesen Bereich." })} />;
   }
 
   const [feedback, teachersDb, studentsDb, groupsDb, programsDb] = await Promise.all([
@@ -60,7 +60,7 @@ export default async function StaffRatingPage() {
 
   return (
     <div className="space-y-4">
-      <h1 className="text-[22px] font-bold tracking-tight text-slate-900 dark:text-slate-100">{tr(s.locale, { uz: "Xodimlar reytingi", ru: "Рейтинг сотрудников", en: "Staff rating" })}</h1>
+      <h1 className="text-[22px] font-bold tracking-tight text-slate-900 dark:text-slate-100">{tr(s.locale, { uz: "Xodimlar reytingi", ru: "Рейтинг сотрудников", en: "Staff rating", de: "Mitarbeiterbewertung" })}</h1>
       <StaffRatingView rows={rows} opts={opts} locale={s.locale} />
     </div>
   );

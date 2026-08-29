@@ -73,11 +73,11 @@ export default async function AttendancePage() {
 
   return (
     <>
-      <PageHeader title={t("nav.attendance")} subtitle={tr(s.locale, { uz: "QR-davomat asosidagi darslar (TZ FR-HW-06/07/08)", ru: "Занятия на основе QR-посещаемости (ТЗ FR-HW-06/07/08)", en: "QR-attendance based lessons (spec FR-HW-06/07/08)" })} />
+      <PageHeader title={t("nav.attendance")} subtitle={tr(s.locale, { uz: "QR-davomat asosidagi darslar (TZ FR-HW-06/07/08)", ru: "Занятия на основе QR-посещаемости (ТЗ FR-HW-06/07/08)", en: "QR-attendance based lessons (spec FR-HW-06/07/08)", de: "QR-Anwesenheit-basierte Unterrichte (Spezifikation FR-HW-06/07/08)" })} />
       <AttendanceView lessons={vlessons} canMark={canMark} locale={s.locale} />
       <p className="mt-3 text-xs text-slate-400">
-        ℹ️ {tr(s.locale, { uz: "Dinamik QR-kod generatsiyasi va skanerlash oqimi keyingi iteratsiyada ulanadi.", ru: "Динамическая генерация QR-кода и поток сканирования будут подключены в следующей итерации.", en: "Dynamic QR-code generation and scanning flow will be added in the next iteration." })}
-        {" "}{tr(s.locale, { uz: "Status turlari:", ru: "Типы статусов:", en: "Status types:" })} {ATTENDANCE_STATUS_LABELS && Object.keys(ATTENDANCE_STATUS_LABELS).map((k) => label(ATTENDANCE_STATUS_LABELS, k, s.locale)).join(", ")}.
+        ℹ️ {tr(s.locale, { uz: "Dinamik QR-kod generatsiyasi va skanerlash oqimi keyingi iteratsiyada ulanadi.", ru: "Динамическая генерация QR-кода и поток сканирования будут подключены в следующей итерации.", en: "Dynamic QR-code generation and scanning flow will be added in the next iteration.", de: "Die dynamische QR-Code-Generierung und der Scan-Vorgang werden in der nächsten Iteration hinzugefügt." })}
+        {" "}{tr(s.locale, { uz: "Status turlari:", ru: "Типы статусов:", en: "Status types:", de: "Statustypen:" })} {ATTENDANCE_STATUS_LABELS && Object.keys(ATTENDANCE_STATUS_LABELS).map((k) => label(ATTENDANCE_STATUS_LABELS, k, s.locale)).join(", ")}.
       </p>
     </>
   );

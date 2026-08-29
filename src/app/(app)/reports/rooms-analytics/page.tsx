@@ -13,7 +13,7 @@ const iso = (d: Date) => `${d.getFullYear()}-${p2(d.getMonth() + 1)}-${p2(d.getD
 export default async function RoomsAnalyticsPage({ searchParams }: { searchParams: Promise<Record<string, string | undefined>> }) {
   const s = await requireSession();
   if (!canRead(s.role, MODULES.REPORTS)) {
-    return <Forbidden title={tr(s.locale, { uz: "Kirish taqiqlangan", ru: "Доступ запрещён", en: "Access denied" })} body={tr(s.locale, { uz: "Bu bo'lim uchun ruxsat yo'q.", ru: "Нет доступа к этому разделу.", en: "You don't have access to this section." })} />;
+    return <Forbidden title={tr(s.locale, { uz: "Kirish taqiqlangan", ru: "Доступ запрещён", en: "Access denied", de: "Zugriff verweigert" })} body={tr(s.locale, { uz: "Bu bo'lim uchun ruxsat yo'q.", ru: "Нет доступа к этому разделу.", en: "You don't have access to this section.", de: "Sie haben keinen Zugriff auf diesen Bereich." })} />;
   }
   const sp = await searchParams;
   const now = new Date();
@@ -32,7 +32,7 @@ export default async function RoomsAnalyticsPage({ searchParams }: { searchParam
 
   const map = new Map<string, { room: string; sessions: number; minutes: number; days: Set<string>; groups: Set<string> }>();
   for (const l of lessons) {
-    const room = l.group.room || tr(s.locale, { uz: "Belgilanmagan", ru: "Не указано", en: "Unassigned" });
+    const room = l.group.room || tr(s.locale, { uz: "Belgilanmagan", ru: "Не указано", en: "Unassigned", de: "Nicht zugewiesen" });
     let e = map.get(room);
     if (!e) { e = { room, sessions: 0, minutes: 0, days: new Set(), groups: new Set() }; map.set(room, e); }
     e.sessions++;
@@ -58,8 +58,8 @@ export default async function RoomsAnalyticsPage({ searchParams }: { searchParam
     <div className="space-y-4">
       <div className="flex flex-wrap items-start justify-between gap-3">
         <div>
-          <h1 className="text-[24px] font-bold tracking-tight text-slate-900 dark:text-slate-100">{tr(s.locale, { uz: "Xonalar analitikasi", ru: "Аналитика кабинетов", en: "Rooms analytics" })}</h1>
-          {rows.length === 0 && <p className="mt-1 text-sm text-slate-400">{tr(s.locale, { uz: "Ma'lumotlar topilmadi", ru: "Данные не найдены", en: "No data found" })}</p>}
+          <h1 className="text-[24px] font-bold tracking-tight text-slate-900 dark:text-slate-100">{tr(s.locale, { uz: "Xonalar analitikasi", ru: "Аналитика кабинетов", en: "Rooms analytics", de: "Raumanalyse" })}</h1>
+          {rows.length === 0 && <p className="mt-1 text-sm text-slate-400">{tr(s.locale, { uz: "Ma'lumotlar topilmadi", ru: "Данные не найдены", en: "No data found", de: "Keine Daten gefunden" })}</p>}
         </div>
         <div className="flex flex-wrap items-center gap-2">
           <Controls from={fromStr} to={toStr} period={period} view={view} locale={s.locale} />
@@ -70,7 +70,7 @@ export default async function RoomsAnalyticsPage({ searchParams }: { searchParam
       {rows.length === 0 ? (
         <div className="rounded-2xl border border-dashed border-slate-300 py-20 text-center text-slate-400 dark:border-slate-700">
           <div className="text-4xl opacity-30">🏢</div>
-          <p className="mt-2">{tr(s.locale, { uz: "Tanlangan davrda xona bandligi topilmadi", ru: "За выбранный период занятость кабинетов не найдена", en: "No room usage found for the selected period" })}</p>
+          <p className="mt-2">{tr(s.locale, { uz: "Tanlangan davrda xona bandligi topilmadi", ru: "За выбранный период занятость кабинетов не найдена", en: "No room usage found for the selected period", de: "Für den ausgewählten Zeitraum wurde keine Raumnutzung gefunden" })}</p>
         </div>
       ) : view === "grid" ? (
         <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
@@ -78,10 +78,10 @@ export default async function RoomsAnalyticsPage({ searchParams }: { searchParam
             <div key={r.room} className="rounded-2xl border border-slate-200/70 bg-white p-4 shadow-card dark:border-slate-800 dark:bg-slate-900">
               <div className="flex items-center gap-2 font-semibold text-slate-800 dark:text-slate-100">🏢 {r.room}</div>
               <div className="mt-3 grid grid-cols-2 gap-2 text-center">
-                <Stat value={r.sessions} label={tr(s.locale, { uz: "Seans", ru: "Сеанс", en: "Session" })} />
-                <Stat value={r.hours} label={tr(s.locale, { uz: "Soat", ru: "Час", en: "Hour" })} />
-                <Stat value={r.days} label={tr(s.locale, { uz: "Band kun", ru: "Занятых дней", en: "Busy days" })} />
-                <Stat value={r.groups.length} label={tr(s.locale, { uz: "Guruh", ru: "Группа", en: "Group" })} />
+                <Stat value={r.sessions} label={tr(s.locale, { uz: "Seans", ru: "Сеанс", en: "Session", de: "Sitzung" })} />
+                <Stat value={r.hours} label={tr(s.locale, { uz: "Soat", ru: "Час", en: "Hour", de: "Stunde" })} />
+                <Stat value={r.days} label={tr(s.locale, { uz: "Band kun", ru: "Занятых дней", en: "Busy days", de: "Belegte Tage" })} />
+                <Stat value={r.groups.length} label={tr(s.locale, { uz: "Guruh", ru: "Группа", en: "Group", de: "Gruppe" })} />
               </div>
             </div>
           ))}
@@ -93,11 +93,11 @@ export default async function RoomsAnalyticsPage({ searchParams }: { searchParam
               <thead className="border-b border-slate-200/70 bg-slate-50/80 text-[11px] font-semibold uppercase tracking-wider text-slate-500 dark:border-slate-800 dark:bg-slate-800/50">
                 <tr>
                   <th className="w-12 px-4 py-3">№</th>
-                  <th className="px-4 py-3"><SortHeader col="room" label={tr(s.locale, { uz: "Xona", ru: "Кабинет", en: "Room" })} active={sortKey} dir={dir} locale={s.locale} /></th>
-                  <th className="px-4 py-3 text-center"><SortHeader col="sessions" label={tr(s.locale, { uz: "Seanslar", ru: "Сеансы", en: "Sessions" })} active={sortKey} dir={dir} locale={s.locale} /></th>
-                  <th className="px-4 py-3 text-center"><SortHeader col="hours" label={tr(s.locale, { uz: "Soatlar", ru: "Часы", en: "Hours" })} active={sortKey} dir={dir} locale={s.locale} /></th>
-                  <th className="px-4 py-3 text-center"><SortHeader col="days" label={tr(s.locale, { uz: "Band kunlar", ru: "Занятых дней", en: "Busy days" })} active={sortKey} dir={dir} locale={s.locale} /></th>
-                  <th className="px-4 py-3">{tr(s.locale, { uz: "Guruhlar", ru: "Группы", en: "Groups" })}</th>
+                  <th className="px-4 py-3"><SortHeader col="room" label={tr(s.locale, { uz: "Xona", ru: "Кабинет", en: "Room", de: "Raum" })} active={sortKey} dir={dir} locale={s.locale} /></th>
+                  <th className="px-4 py-3 text-center"><SortHeader col="sessions" label={tr(s.locale, { uz: "Seanslar", ru: "Сеансы", en: "Sessions", de: "Sitzungen" })} active={sortKey} dir={dir} locale={s.locale} /></th>
+                  <th className="px-4 py-3 text-center"><SortHeader col="hours" label={tr(s.locale, { uz: "Soatlar", ru: "Часы", en: "Hours", de: "Stunden" })} active={sortKey} dir={dir} locale={s.locale} /></th>
+                  <th className="px-4 py-3 text-center"><SortHeader col="days" label={tr(s.locale, { uz: "Band kunlar", ru: "Занятых дней", en: "Busy days", de: "Belegte Tage" })} active={sortKey} dir={dir} locale={s.locale} /></th>
+                  <th className="px-4 py-3">{tr(s.locale, { uz: "Guruhlar", ru: "Группы", en: "Groups", de: "Gruppen" })}</th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-slate-100 dark:divide-slate-800">

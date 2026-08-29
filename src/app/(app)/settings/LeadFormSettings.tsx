@@ -54,10 +54,10 @@ export default function LeadFormSettings({ locale, centerName }: { locale: Local
 
   return (
     <div>
-      <h2 className="mb-6 text-2xl font-bold text-slate-800 dark:text-slate-100">{tr(locale, { uz: "Lid forma", ru: "Форма лида", en: "Lead form" })}</h2>
+      <h2 className="mb-6 text-2xl font-bold text-slate-800 dark:text-slate-100">{tr(locale, { uz: "Lid forma", ru: "Форма лида", en: "Lead form", de: "Lead-Formular" })}</h2>
 
       {/* Shakl rasm */}
-      <h3 className="mb-2.5 text-lg font-semibold text-slate-700 dark:text-slate-200">{tr(locale, { uz: "Shakl rasm", ru: "Изображение формы", en: "Form image" })}</h3>
+      <h3 className="mb-2.5 text-lg font-semibold text-slate-700 dark:text-slate-200">{tr(locale, { uz: "Shakl rasm", ru: "Изображение формы", en: "Form image", de: "Formularbild" })}</h3>
       <div className="grid gap-4 md:grid-cols-2">
         <div
           onClick={() => fileRef.current?.click()}
@@ -71,7 +71,7 @@ export default function LeadFormSettings({ locale, centerName }: { locale: Local
         >
           <Icon name="uploadCloud" className="h-10 w-10 text-slate-300 dark:text-slate-600" />
           <p className="mt-2 text-sm text-slate-500 dark:text-slate-400">
-            {tr(locale, { uz: "Faylni bu yerga suring yoki", ru: "Перетащите файл сюда или", en: "Drag the file here or" })} <span className="font-medium text-brand-600 dark:text-brand-400">{tr(locale, { uz: "yuklash uchun bosing", ru: "нажмите для загрузки", en: "click to upload" })}</span>
+            {tr(locale, { uz: "Faylni bu yerga suring yoki", ru: "Перетащите файл сюда или", en: "Drag the file here or", de: "Datei hierher ziehen oder" })} <span className="font-medium text-brand-600 dark:text-brand-400">{tr(locale, { uz: "yuklash uchun bosing", ru: "нажмите для загрузки", en: "click to upload", de: "zum Hochladen klicken" })}</span>
           </p>
           <input ref={fileRef} type="file" accept="image/*" className="hidden" onChange={(e) => { const file = e.target.files?.[0]; if (file) readImage(file); }} />
         </div>
@@ -80,16 +80,16 @@ export default function LeadFormSettings({ locale, centerName }: { locale: Local
           {f.image ? (
             <span className="h-full w-full bg-cover bg-center" style={{ backgroundImage: `url(${f.image})` }} />
           ) : (
-            <span className="text-sm text-slate-400">{tr(locale, { uz: "Rasm oldindan ko'rish", ru: "Предпросмотр изображения", en: "Image preview" })}</span>
+            <span className="text-sm text-slate-400">{tr(locale, { uz: "Rasm oldindan ko'rish", ru: "Предпросмотр изображения", en: "Image preview", de: "Bildvorschau" })}</span>
           )}
         </div>
       </div>
-      <p className="mt-2 text-sm text-slate-400">{tr(locale, { uz: "Rasm o'lchami 610x160px bo'lishini tavsiya etamiz", ru: "Рекомендуем размер изображения 610x160px", en: "We recommend an image size of 610x160px" })}</p>
+      <p className="mt-2 text-sm text-slate-400">{tr(locale, { uz: "Rasm o'lchami 610x160px bo'lishini tavsiya etamiz", ru: "Рекомендуем размер изображения 610x160px", en: "We recommend an image size of 610x160px", de: "Wir empfehlen eine Bildgröße von 610x160px" })}</p>
 
       {/* Forma matni + jonli lid forma preview */}
-      <h3 className="mb-2.5 mt-7 text-lg font-semibold text-slate-700 dark:text-slate-200">{tr(locale, { uz: "Forma matni", ru: "Текст формы", en: "Form text" })}</h3>
+      <h3 className="mb-2.5 mt-7 text-lg font-semibold text-slate-700 dark:text-slate-200">{tr(locale, { uz: "Forma matni", ru: "Текст формы", en: "Form text", de: "Formulartext" })}</h3>
       <div className="grid gap-4 md:grid-cols-2">
-        <RichEditor locale={locale} value={f.formText} onChange={(html) => set("formText", html)} placeholder={tr(locale, { uz: "Matnni bu yerga kiriting ...", ru: "Введите текст здесь ...", en: "Insert text here ..." })} />
+        <RichEditor locale={locale} value={f.formText} onChange={(html) => set("formText", html)} placeholder={tr(locale, { uz: "Matnni bu yerga kiriting ...", ru: "Введите текст здесь ...", en: "Insert text here ...", de: "Text hier eingeben ..." })} />
 
         {/* O'ng: lid forma ko'rinishi (jonli) */}
         <div className="overflow-hidden rounded-xl border border-slate-200 bg-white shadow-sm dark:border-slate-700 dark:bg-slate-900">
@@ -99,33 +99,33 @@ export default function LeadFormSettings({ locale, centerName }: { locale: Local
             {f.formText ? (
               <div className="mb-3 text-sm text-slate-600 dark:text-slate-300" dangerouslySetInnerHTML={{ __html: f.formText }} />
             ) : (
-              <h4 className="mb-3 text-lg font-semibold text-slate-700 dark:text-slate-100">{tr(locale, { uz: `${centerName}ga so'rov qoldirish`, ru: `Оставить заявку в ${centerName}`, en: `Leave a request to ${centerName}` })}</h4>
+              <h4 className="mb-3 text-lg font-semibold text-slate-700 dark:text-slate-100">{tr(locale, { uz: `${centerName}ga so'rov qoldirish`, ru: `Оставить заявку в ${centerName}`, en: `Leave a request to ${centerName}`, de: `Anfrage bei ${centerName} hinterlassen` })}</h4>
             )}
             <div className="space-y-2">
-              <input disabled placeholder={tr(locale, { uz: "Ismingiz", ru: "Ваше имя", en: "Your name" })} className="h-10 w-full rounded-lg border border-slate-200 bg-slate-50 px-3 text-sm dark:border-slate-700 dark:bg-slate-800/50" />
-              <input disabled placeholder={tr(locale, { uz: "Telefon raqamingiz", ru: "Ваш номер телефона", en: "Your phone number" })} className="h-10 w-full rounded-lg border border-slate-200 bg-slate-50 px-3 text-sm dark:border-slate-700 dark:bg-slate-800/50" />
-              <button disabled className="h-10 w-full rounded-lg bg-brand-600 text-sm font-semibold text-white opacity-90">{tr(locale, { uz: "Yuborish", ru: "Отправить", en: "Send" })}</button>
+              <input disabled placeholder={tr(locale, { uz: "Ismingiz", ru: "Ваше имя", en: "Your name", de: "Ihr Name" })} className="h-10 w-full rounded-lg border border-slate-200 bg-slate-50 px-3 text-sm dark:border-slate-700 dark:bg-slate-800/50" />
+              <input disabled placeholder={tr(locale, { uz: "Telefon raqamingiz", ru: "Ваш номер телефона", en: "Your phone number", de: "Ihre Telefonnummer" })} className="h-10 w-full rounded-lg border border-slate-200 bg-slate-50 px-3 text-sm dark:border-slate-700 dark:bg-slate-800/50" />
+              <button disabled className="h-10 w-full rounded-lg bg-brand-600 text-sm font-semibold text-white opacity-90">{tr(locale, { uz: "Yuborish", ru: "Отправить", en: "Send", de: "Senden" })}</button>
             </div>
           </div>
         </div>
       </div>
 
       {/* Forma to'ldirilgandan so'ng chiqadigan matn */}
-      <h3 className="mb-2.5 mt-7 text-lg font-semibold text-slate-700 dark:text-slate-200">{tr(locale, { uz: "Forma to'ldirilgandan so'ng chiqadigan matn", ru: "Текст, показываемый после заполнения формы", en: "Text shown after the form is submitted" })}</h3>
+      <h3 className="mb-2.5 mt-7 text-lg font-semibold text-slate-700 dark:text-slate-200">{tr(locale, { uz: "Forma to'ldirilgandan so'ng chiqadigan matn", ru: "Текст, показываемый после заполнения формы", en: "Text shown after the form is submitted", de: "Text, der nach dem Absenden des Formulars angezeigt wird" })}</h3>
       <div className="grid gap-4 md:grid-cols-2">
-        <RichEditor locale={locale} value={f.afterText} onChange={(html) => set("afterText", html)} placeholder={tr(locale, { uz: "Matnni bu yerga kiriting ...", ru: "Введите текст здесь ...", en: "Insert text here ..." })} />
+        <RichEditor locale={locale} value={f.afterText} onChange={(html) => set("afterText", html)} placeholder={tr(locale, { uz: "Matnni bu yerga kiriting ...", ru: "Введите текст здесь ...", en: "Insert text here ...", de: "Text hier eingeben ..." })} />
         <div className="rounded-xl border border-slate-200 bg-white p-5 text-sm dark:border-slate-700 dark:bg-slate-900">
-          <div className="mb-2 text-[11px] font-semibold uppercase tracking-wider text-slate-400">{tr(locale, { uz: "Oldindan ko'rish", ru: "Предпросмотр", en: "Preview" })}</div>
+          <div className="mb-2 text-[11px] font-semibold uppercase tracking-wider text-slate-400">{tr(locale, { uz: "Oldindan ko'rish", ru: "Предпросмотр", en: "Preview", de: "Vorschau" })}</div>
           {f.afterText ? (
             <div className="text-slate-700 dark:text-slate-200" dangerouslySetInnerHTML={{ __html: f.afterText }} />
           ) : (
-            <p className="text-emerald-600 dark:text-emerald-400">{tr(locale, { uz: "Rahmat! So'rovingiz qabul qilindi.", ru: "Спасибо! Ваша заявка принята.", en: "Thank you! Your request has been received." })}</p>
+            <p className="text-emerald-600 dark:text-emerald-400">{tr(locale, { uz: "Rahmat! So'rovingiz qabul qilindi.", ru: "Спасибо! Ваша заявка принята.", en: "Thank you! Your request has been received.", de: "Vielen Dank! Ihre Anfrage wurde erhalten." })}</p>
           )}
         </div>
       </div>
 
       {/* Shaxsiy CSS */}
-      <h3 className="mb-2 mt-7 text-lg font-semibold text-slate-700 dark:text-slate-200">{tr(locale, { uz: "Shaxsiy CSS", ru: "Пользовательский CSS", en: "Custom CSS" })}</h3>
+      <h3 className="mb-2 mt-7 text-lg font-semibold text-slate-700 dark:text-slate-200">{tr(locale, { uz: "Shaxsiy CSS", ru: "Пользовательский CSS", en: "Custom CSS", de: "Benutzerdefiniertes CSS" })}</h3>
       <p className="mb-2 text-sm text-slate-500">
         example: <code className="font-mono text-rose-500">.lead-form-block {"{"}background-color: #fff;{"}"}</code>
       </p>
@@ -133,12 +133,12 @@ export default function LeadFormSettings({ locale, centerName }: { locale: Local
         value={f.css}
         onChange={(e) => set("css", e.target.value)}
         rows={5}
-        placeholder={tr(locale, { uz: "Formaga shaxsiy CSS qo'shish uchun bu yerga CSS kodini yozing", ru: "Напишите здесь CSS-код, чтобы добавить свой стиль в форму", en: "Write CSS code here to add custom styling to the form" })}
+        placeholder={tr(locale, { uz: "Formaga shaxsiy CSS qo'shish uchun bu yerga CSS kodini yozing", ru: "Напишите здесь CSS-код, чтобы добавить свой стиль в форму", en: "Write CSS code here to add custom styling to the form", de: "Schreiben Sie hier CSS-Code, um dem Formular einen eigenen Stil hinzuzufügen" })}
         className="w-full resize-y rounded-xl border border-slate-200 bg-white px-3.5 py-3 font-mono text-sm text-slate-700 outline-none focus:border-brand-400 focus:ring-2 focus:ring-brand-100 dark:border-slate-700 dark:bg-slate-800/60 dark:text-slate-100 dark:focus:ring-brand-900"
       />
 
       <button onClick={save} className="mt-6 rounded-lg bg-sky-500 px-8 py-2.5 text-sm font-semibold text-white transition hover:bg-sky-600">
-        {saved ? tr(locale, { uz: "Saqlandi ✓", ru: "Сохранено ✓", en: "Saved ✓" }) : tr(locale, { uz: "Saqlash", ru: "Сохранить", en: "Save" })}
+        {saved ? tr(locale, { uz: "Saqlandi ✓", ru: "Сохранено ✓", en: "Saved ✓", de: "Gespeichert ✓" }) : tr(locale, { uz: "Saqlash", ru: "Сохранить", en: "Save", de: "Speichern" })}
       </button>
     </div>
   );

@@ -15,7 +15,7 @@ const isoDay = (d: Date) => `${d.getFullYear()}-${p2(d.getMonth() + 1)}-${p2(d.g
 export default async function GroupStudentsPage() {
   const s = await requireSession();
   if (!ALLOWED.includes(s.role as never)) {
-    return <Forbidden title={tr(s.locale, { uz: "Kirish taqiqlangan", ru: "Доступ запрещён", en: "Access denied" })} body={tr(s.locale, { uz: "Bu bo'lim xodimlar uchun.", ru: "Этот раздел только для сотрудников.", en: "This section is for staff only." })} />;
+    return <Forbidden title={tr(s.locale, { uz: "Kirish taqiqlangan", ru: "Доступ запрещён", en: "Access denied", de: "Zugriff verweigert" })} body={tr(s.locale, { uz: "Bu bo'lim xodimlar uchun.", ru: "Этот раздел только для сотрудников.", en: "This section is for staff only.", de: "Dieser Bereich ist nur für Mitarbeiter." })} />;
   }
 
   // O'qituvchi faqat o'z guruhlaridagi o'quvchilarni ko'radi
@@ -54,7 +54,7 @@ export default async function GroupStudentsPage() {
   return (
     <div className="space-y-4">
       <div className="flex items-center gap-3">
-        <h1 className="text-[22px] font-bold tracking-tight text-slate-900 dark:text-slate-100">{tr(s.locale, { uz: "Guruh o'quvchilari", ru: "Ученики групп", en: "Group students" })}</h1>
+        <h1 className="text-[22px] font-bold tracking-tight text-slate-900 dark:text-slate-100">{tr(s.locale, { uz: "Guruh o'quvchilari", ru: "Ученики групп", en: "Group students", de: "Gruppenschüler" })}</h1>
       </div>
       <GroupStudentsView locale={s.locale} students={vstudents} teacherNames={teacherNames} />
     </div>

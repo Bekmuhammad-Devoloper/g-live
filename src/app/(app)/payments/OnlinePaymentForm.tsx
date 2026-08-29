@@ -33,18 +33,18 @@ export default function OnlinePaymentForm({
   return (
     <>
       <button onClick={() => setOpen((v) => !v)} className="rounded-lg border border-brand-300 bg-white px-4 py-2 text-sm font-semibold text-brand-700 hover:bg-brand-50">
-        ⚡ {tr(locale, { uz: "Onlayn to'lov (demo)", ru: "Онлайн-платёж (демо)", en: "Online payment (demo)" })}
+        ⚡ {tr(locale, { uz: "Onlayn to'lov (demo)", ru: "Онлайн-платёж (демо)", en: "Online payment (demo)", de: "Online-Zahlung (Demo)" })}
       </button>
 
       {open && (
         <div className="fixed inset-0 z-50 flex items-start justify-center overflow-y-auto bg-black/40 p-4 pt-16">
           <form ref={formRef} action={action} className="w-full max-w-md space-y-3 rounded-2xl bg-white p-6 shadow-xl">
             <div className="flex items-center justify-between">
-              <h3 className="text-lg font-bold text-slate-900">{tr(locale, { uz: "Onlayn to'lov (provayder callback demo)", ru: "Онлайн-платёж (демо колбэка провайдера)", en: "Online payment (provider callback demo)" })}</h3>
+              <h3 className="text-lg font-bold text-slate-900">{tr(locale, { uz: "Onlayn to'lov (provayder callback demo)", ru: "Онлайн-платёж (демо колбэка провайдера)", en: "Online payment (provider callback demo)", de: "Online-Zahlung (Demo-Callback des Anbieters)" })}</h3>
               <button type="button" onClick={() => setOpen(false)} className="text-slate-400 hover:text-slate-600">✕</button>
             </div>
             <p className="text-xs text-slate-400">
-              {tr(locale, { uz: "Bu haqiqiy provayder muvaffaqiyatli javobini simulyatsiya qiladi: status avtomatik «To'landi» bo'ladi va chek beriladi.", ru: "Это симулирует успешный ответ реального провайдера: статус автоматически станет «Оплачено» и будет выдан чек.", en: "This simulates a real provider's successful response: the status automatically becomes «Paid» and a receipt is issued." })}
+              {tr(locale, { uz: "Bu haqiqiy provayder muvaffaqiyatli javobini simulyatsiya qiladi: status avtomatik «To'landi» bo'ladi va chek beriladi.", ru: "Это симулирует успешный ответ реального провайдера: статус автоматически станет «Оплачено» и будет выдан чек.", en: "This simulates a real provider's successful response: the status automatically becomes «Paid» and a receipt is issued.", de: "Dies simuliert eine erfolgreiche Antwort eines echten Anbieters: Der Status wird automatisch auf «Bezahlt» gesetzt, und ein Beleg wird ausgestellt." })}
             </p>
 
             <div>
@@ -56,7 +56,7 @@ export default function OnlinePaymentForm({
             </div>
             <div className="grid grid-cols-2 gap-3">
               <div>
-                <label className="mb-1 block text-xs font-medium text-slate-600">{t("common.amount")} ({tr(locale, { uz: "so'm", ru: "сум", en: "soʻm" })}) <span className="text-red-500">*</span></label>
+                <label className="mb-1 block text-xs font-medium text-slate-600">{t("common.amount")} ({tr(locale, { uz: "so'm", ru: "сум", en: "soʻm", de: "UZS" })}) <span className="text-red-500">*</span></label>
                 <input name="amount" type="number" min="1" step="10000" required className={input} />
               </div>
               <div>
@@ -68,20 +68,20 @@ export default function OnlinePaymentForm({
             </div>
             <div>
               <label className="mb-1 block text-xs font-medium text-slate-600">{t("pay.purpose")} <span className="text-red-500">*</span></label>
-              <input name="purpose" required placeholder={tr(locale, { uz: "A1.2 kurs to'lovi", ru: "Оплата курса A1.2", en: "A1.2 course payment" })} className={input} />
+              <input name="purpose" required placeholder={tr(locale, { uz: "A1.2 kurs to'lovi", ru: "Оплата курса A1.2", en: "A1.2 course payment", de: "A1.2-Kursgebühr" })} className={input} />
             </div>
             <div>
-              <label className="mb-1 block text-xs font-medium text-slate-600">{tr(locale, { uz: "Tranzaksiya ID (ixtiyoriy — idempotentlikni sinash uchun)", ru: "ID транзакции (необязательно — для проверки идемпотентности)", en: "Transaction ID (optional — to test idempotency)" })}</label>
+              <label className="mb-1 block text-xs font-medium text-slate-600">{tr(locale, { uz: "Tranzaksiya ID (ixtiyoriy — idempotentlikni sinash uchun)", ru: "ID транзакции (необязательно — для проверки идемпотентности)", en: "Transaction ID (optional — to test idempotency)", de: "Transaktions-ID (optional — zum Testen der Idempotenz)" })}</label>
               <input name="transactionId" placeholder="ONLINE-TEST-001" className={input} />
             </div>
 
             {state.error && (
               <p className="rounded-lg bg-red-50 px-3 py-2 text-sm text-red-700">
                 {state.error === "duplicate"
-                  ? tr(locale, { uz: "Bu tranzaksiya ID allaqachon hisoblangan (ikki marta hisoblanish bloklandi).", ru: "Этот ID транзакции уже учтён (повторный учёт заблокирован).", en: "This transaction ID has already been processed (double-processing blocked)." })
+                  ? tr(locale, { uz: "Bu tranzaksiya ID allaqachon hisoblangan (ikki marta hisoblanish bloklandi).", ru: "Этот ID транзакции уже учтён (повторный учёт заблокирован).", en: "This transaction ID has already been processed (double-processing blocked).", de: "Diese Transaktions-ID wurde bereits verarbeitet (doppelte Verarbeitung blockiert)." })
                   : state.error === "forbidden"
                   ? t("pay.noPermission")
-                  : tr(locale, { uz: "Ma'lumotlar to'liq emas.", ru: "Данные неполные.", en: "The data is incomplete." })}
+                  : tr(locale, { uz: "Ma'lumotlar to'liq emas.", ru: "Данные неполные.", en: "The data is incomplete.", de: "Die Daten sind unvollständig." })}
               </p>
             )}
 
@@ -90,7 +90,7 @@ export default function OnlinePaymentForm({
                 {t("common.cancel")}
               </button>
               <button type="submit" disabled={pending} className="rounded-lg bg-brand-600 px-4 py-2 text-sm font-semibold text-white hover:bg-brand-700 disabled:opacity-60">
-                {pending ? "..." : tr(locale, { uz: "To'lash (demo)", ru: "Оплатить (демо)", en: "Pay (demo)" })}
+                {pending ? "..." : tr(locale, { uz: "To'lash (demo)", ru: "Оплатить (демо)", en: "Pay (demo)", de: "Bezahlen (Demo)" })}
               </button>
             </div>
           </form>

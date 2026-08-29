@@ -72,65 +72,65 @@ export function NewTaskForm({
             {/* Body */}
             <div className="flex-1 space-y-3.5 overflow-y-auto px-6 py-5">
               <div>
-                <label className="mb-1 block text-xs font-semibold text-slate-600 dark:text-slate-400">{tr(locale, { uz: "Sarlavha", ru: "Заголовок", en: "Title" })} <span className="text-red-500">*</span></label>
-                <input name="title" required className={input} placeholder={tr(locale, { uz: "Nima qilish kerak?", ru: "Что нужно сделать?", en: "What needs to be done?" })} />
+                <label className="mb-1 block text-xs font-semibold text-slate-600 dark:text-slate-400">{tr(locale, { uz: "Sarlavha", ru: "Заголовок", en: "Title", de: "Titel" })} <span className="text-red-500">*</span></label>
+                <input name="title" required className={input} placeholder={tr(locale, { uz: "Nima qilish kerak?", ru: "Что нужно сделать?", en: "What needs to be done?", de: "Was muss getan werden?" })} />
               </div>
 
               <div className="grid grid-cols-2 gap-3">
                 <div>
-                  <label className="mb-1 block text-xs font-semibold text-slate-600 dark:text-slate-400">{tr(locale, { uz: "Topshiriq turi", ru: "Тип задачи", en: "Task type" })}</label>
+                  <label className="mb-1 block text-xs font-semibold text-slate-600 dark:text-slate-400">{tr(locale, { uz: "Topshiriq turi", ru: "Тип задачи", en: "Task type", de: "Aufgabentyp" })}</label>
                   <select name="tag" className={input} defaultValue="">
                     <option value="">—</option>
                     {TASK_TYPES.map((x) => <option key={x} value={x}>{x}</option>)}
                   </select>
                 </div>
                 <div>
-                  <label className="mb-1 block text-xs font-semibold text-slate-600 dark:text-slate-400">{tr(locale, { uz: "Mas'ul shaxs", ru: "Ответственный", en: "Assignee" })}</label>
+                  <label className="mb-1 block text-xs font-semibold text-slate-600 dark:text-slate-400">{tr(locale, { uz: "Mas'ul shaxs", ru: "Ответственный", en: "Assignee", de: "Verantwortlicher" })}</label>
                   <select name="assigneeId" className={input} defaultValue="">
-                    <option value="">{tr(locale, { uz: "— (o'zim)", ru: "— (я сам)", en: "— (myself)" })}</option>
+                    <option value="">{tr(locale, { uz: "— (o'zim)", ru: "— (я сам)", en: "— (myself)", de: "— (ich selbst)" })}</option>
                     {staff.map((u) => <option key={u.id} value={u.id}>{u.name}</option>)}
                   </select>
                 </div>
                 <div>
-                  <label className="mb-1 block text-xs font-semibold text-slate-600 dark:text-slate-400">{tr(locale, { uz: "O'quvchi", ru: "Ученик", en: "Student" })}</label>
+                  <label className="mb-1 block text-xs font-semibold text-slate-600 dark:text-slate-400">{tr(locale, { uz: "O'quvchi", ru: "Ученик", en: "Student", de: "Schüler" })}</label>
                   <select name="studentId" className={input} defaultValue="">
                     <option value="">—</option>
                     {students.map((x) => <option key={x.id} value={x.id}>{x.name}</option>)}
                   </select>
                 </div>
                 <div>
-                  <label className="mb-1 block text-xs font-semibold text-slate-600 dark:text-slate-400">{tr(locale, { uz: "Guruh", ru: "Группа", en: "Group" })}</label>
+                  <label className="mb-1 block text-xs font-semibold text-slate-600 dark:text-slate-400">{tr(locale, { uz: "Guruh", ru: "Группа", en: "Group", de: "Gruppe" })}</label>
                   <select name="groupId" className={input} defaultValue="">
                     <option value="">—</option>
                     {groups.map((x) => <option key={x.id} value={x.id}>{x.name}</option>)}
                   </select>
                 </div>
                 <div>
-                  <label className="mb-1 block text-xs font-semibold text-slate-600 dark:text-slate-400">{tr(locale, { uz: "Muddat", ru: "Срок", en: "Due" })}</label>
+                  <label className="mb-1 block text-xs font-semibold text-slate-600 dark:text-slate-400">{tr(locale, { uz: "Muddat", ru: "Срок", en: "Due", de: "Fälligkeit" })}</label>
                   <DateTimePicker name="dueAt" className={input} />
                 </div>
                 <div>
-                  <label className="mb-1 block text-xs font-semibold text-slate-600 dark:text-slate-400">{tr(locale, { uz: "Muhimlik", ru: "Приоритет", en: "Priority" })}</label>
+                  <label className="mb-1 block text-xs font-semibold text-slate-600 dark:text-slate-400">{tr(locale, { uz: "Muhimlik", ru: "Приоритет", en: "Priority", de: "Priorität" })}</label>
                   <select name="priority" className={input} defaultValue="NORMAL">
-                    <option value="LOW">{tr(locale, { uz: "Past", ru: "Низкий", en: "Low" })}</option>
-                    <option value="NORMAL">{tr(locale, { uz: "O'rtacha", ru: "Средний", en: "Normal" })}</option>
-                    <option value="HIGH">{tr(locale, { uz: "Yuqori", ru: "Высокий", en: "High" })}</option>
+                    <option value="LOW">{tr(locale, { uz: "Past", ru: "Низкий", en: "Low", de: "Niedrig" })}</option>
+                    <option value="NORMAL">{tr(locale, { uz: "O'rtacha", ru: "Средний", en: "Normal", de: "Normal" })}</option>
+                    <option value="HIGH">{tr(locale, { uz: "Yuqori", ru: "Высокий", en: "High", de: "Hoch" })}</option>
                   </select>
                 </div>
               </div>
 
               <div>
-                <label className="mb-1 block text-xs font-semibold text-slate-600 dark:text-slate-400">{tr(locale, { uz: "Izoh", ru: "Примечание", en: "Note" })}</label>
+                <label className="mb-1 block text-xs font-semibold text-slate-600 dark:text-slate-400">{tr(locale, { uz: "Izoh", ru: "Примечание", en: "Note", de: "Notiz" })}</label>
                 <textarea name="note" rows={3} className={input} />
               </div>
 
-              {state.error && <p className="rounded-lg bg-red-50 px-3 py-2 text-sm text-red-700">{tr(locale, { uz: "Ma'lumot to'liq emas.", ru: "Данные неполные.", en: "Incomplete data." })}</p>}
+              {state.error && <p className="rounded-lg bg-red-50 px-3 py-2 text-sm text-red-700">{tr(locale, { uz: "Ma'lumot to'liq emas.", ru: "Данные неполные.", en: "Incomplete data.", de: "Unvollständige Angaben." })}</p>}
             </div>
 
             {/* Footer */}
             <div className="flex shrink-0 justify-end gap-2 border-t border-slate-100 px-6 py-4 dark:border-white/10">
-              <button type="button" onClick={() => setOpen(false)} className="btn-ghost">{tr(locale, { uz: "Bekor qilish", ru: "Отмена", en: "Cancel" })}</button>
-              <button type="submit" disabled={pending} className="btn-primary">{pending ? "..." : tr(locale, { uz: "Saqlash", ru: "Сохранить", en: "Save" })}</button>
+              <button type="button" onClick={() => setOpen(false)} className="btn-ghost">{tr(locale, { uz: "Bekor qilish", ru: "Отмена", en: "Cancel", de: "Abbrechen" })}</button>
+              <button type="submit" disabled={pending} className="btn-primary">{pending ? "..." : tr(locale, { uz: "Saqlash", ru: "Сохранить", en: "Save", de: "Speichern" })}</button>
             </div>
           </form>
         </div>
@@ -146,7 +146,7 @@ export function ToggleTask({ id, done, locale }: { id: string; done: boolean; lo
     <button
       onClick={(e) => { e.preventDefault(); e.stopPropagation(); start(async () => { await toggleTask(id); router.refresh(); }); }}
       disabled={pending}
-      title={done ? tr(locale, { uz: "Ochish", ru: "Открыть", en: "Reopen" }) : tr(locale, { uz: "Bajarildi", ru: "Выполнено", en: "Done" })}
+      title={done ? tr(locale, { uz: "Ochish", ru: "Открыть", en: "Reopen", de: "Wieder öffnen" }) : tr(locale, { uz: "Bajarildi", ru: "Выполнено", en: "Done", de: "Erledigt" })}
       className={`flex h-5 w-5 shrink-0 items-center justify-center rounded-md border transition disabled:opacity-50 ${done ? "border-emerald-500 bg-emerald-500 text-white" : "border-slate-300 hover:border-brand-500"}`}
     >
       {done && <span className="text-[11px] leading-none">✓</span>}

@@ -19,7 +19,7 @@ export default function AddCourseButton({ locale }: { locale: Locale }) {
         onClick={() => setOpen(true)}
         className="inline-flex h-10 items-center gap-1.5 rounded-lg bg-brand-600 px-4 text-sm font-semibold text-white shadow-sm transition hover:bg-brand-700"
       >
-        <Icon name="plus" className="h-4 w-4" /> {tr(locale, { uz: "Kurs qo'shish", ru: "Добавить курс", en: "Add course" })}
+        <Icon name="plus" className="h-4 w-4" /> {tr(locale, { uz: "Kurs qo'shish", ru: "Добавить курс", en: "Add course", de: "Kurs hinzufügen" })}
       </button>
       <CourseFormDrawer
         mode="create"

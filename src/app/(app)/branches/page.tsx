@@ -10,7 +10,7 @@ const CAN = [ROLES.DIRECTOR, ROLES.DEPUTY_DIRECTOR];
 
 export default async function BranchesPage() {
   const s = await requireSession();
-  if (!CAN.includes(s.role as never)) return <Forbidden title={tr(s.locale, { uz: "Kirish taqiqlangan", ru: "Доступ запрещён", en: "Access denied" })} body={tr(s.locale, { uz: "Bu bo'lim rahbariyat uchun.", ru: "Этот раздел для руководства.", en: "This section is for management." })} />;
+  if (!CAN.includes(s.role as never)) return <Forbidden title={tr(s.locale, { uz: "Kirish taqiqlangan", ru: "Доступ запрещён", en: "Access denied", de: "Zugriff verweigert" })} body={tr(s.locale, { uz: "Bu bo'lim rahbariyat uchun.", ru: "Этот раздел для руководства.", en: "This section is for management.", de: "Dieser Bereich ist für die Leitung." })} />;
 
   const branches = await prisma.branch.findMany({
     orderBy: { createdAt: "asc" },

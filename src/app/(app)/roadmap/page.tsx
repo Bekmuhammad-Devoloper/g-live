@@ -10,7 +10,7 @@ const ALLOWED = [ROLES.DIRECTOR, ROLES.DEPUTY_DIRECTOR];
 export default async function RoadmapPage() {
   const s = await requireSession();
   if (!ALLOWED.includes(s.role as never)) {
-    return <Forbidden title={tr(s.locale, { uz: "Kirish taqiqlangan", ru: "Доступ запрещён", en: "Access denied" })} body={tr(s.locale, { uz: "Roadmap faqat rahbariyat uchun.", ru: "Roadmap доступен только руководству.", en: "The Roadmap is available only to management." })} />;
+    return <Forbidden title={tr(s.locale, { uz: "Kirish taqiqlangan", ru: "Доступ запрещён", en: "Access denied", de: "Zugriff verweigert" })} body={tr(s.locale, { uz: "Roadmap faqat rahbariyat uchun.", ru: "Roadmap доступен только руководству.", en: "The Roadmap is available only to management.", de: "Die Roadmap steht nur der Geschäftsleitung zur Verfügung." })} />;
   }
 
   let scores: Record<string, number> = {};

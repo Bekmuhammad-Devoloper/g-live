@@ -210,12 +210,12 @@ export default function LeadsWorkspace({ locale, initialLeads, managers, sources
   }, [canWrite]);
 
   const paletteActions: PaletteAction[] = [
-    { id: "view", label: view === "kanban" ? tr(locale, { uz: "Jadval ko'rinishi", ru: "Табличный вид", en: "Table view" }) : tr(locale, { uz: "Kanban ko'rinishi", ru: "Канбан-вид", en: "Kanban view" }), icon: view === "kanban" ? "listView" : "grid", run: () => setView((v) => (v === "kanban" ? "table" : "kanban")) },
-    { id: "refresh", label: tr(locale, { uz: "Yangilash", ru: "Обновить", en: "Refresh" }), icon: "refresh", run: () => router.refresh() },
-    ...(canWrite ? [{ id: "new", label: tr(locale, { uz: "Yangi lid", ru: "Новый лид", en: "New lead" }), icon: "plus", run: () => setCreate({ open: true, stage: "NEW" }) }] : []),
-    ...COLUMNS.map((c) => ({ id: `f-${c.key}`, label: `${tr(locale, { uz: "Filter", ru: "Фильтр", en: "Filter" })}: ${tr(locale, c.label)}`, icon: c.icon, run: () => setActiveCols(new Set([c.key])) })),
-    { id: "clear", label: tr(locale, { uz: "Filtrlarni tozalash", ru: "Очистить фильтры", en: "Clear filters" }), icon: "personX", run: clearFilters },
-    { id: "help", label: tr(locale, { uz: "Klaviatura yorliqlari", ru: "Горячие клавиши", en: "Keyboard shortcuts" }), icon: "info", run: () => setShowHelp(true) },
+    { id: "view", label: view === "kanban" ? tr(locale, { uz: "Jadval ko'rinishi", ru: "Табличный вид", en: "Table view", de: "Tabellenansicht" }) : tr(locale, { uz: "Kanban ko'rinishi", ru: "Канбан-вид", en: "Kanban view", de: "Kanban-Ansicht" }), icon: view === "kanban" ? "listView" : "grid", run: () => setView((v) => (v === "kanban" ? "table" : "kanban")) },
+    { id: "refresh", label: tr(locale, { uz: "Yangilash", ru: "Обновить", en: "Refresh", de: "Aktualisieren" }), icon: "refresh", run: () => router.refresh() },
+    ...(canWrite ? [{ id: "new", label: tr(locale, { uz: "Yangi lid", ru: "Новый лид", en: "New lead", de: "Neuer Lead" }), icon: "plus", run: () => setCreate({ open: true, stage: "NEW" }) }] : []),
+    ...COLUMNS.map((c) => ({ id: `f-${c.key}`, label: `${tr(locale, { uz: "Filter", ru: "Фильтр", en: "Filter", de: "Filter" })}: ${tr(locale, c.label)}`, icon: c.icon, run: () => setActiveCols(new Set([c.key])) })),
+    { id: "clear", label: tr(locale, { uz: "Filtrlarni tozalash", ru: "Очистить фильтры", en: "Clear filters", de: "Filter zurücksetzen" }), icon: "personX", run: clearFilters },
+    { id: "help", label: tr(locale, { uz: "Klaviatura yorliqlari", ru: "Горячие клавиши", en: "Keyboard shortcuts", de: "Tastenkürzel" }), icon: "info", run: () => setShowHelp(true) },
   ];
 
   return (
@@ -229,10 +229,10 @@ export default function LeadsWorkspace({ locale, initialLeads, managers, sources
             </div>
             <div>
               <div className="flex items-center gap-2">
-                <h1 className="text-lg font-bold text-slate-900 dark:text-slate-100">{tr(locale, { uz: "Lidlar bazasi", ru: "База лидов", en: "Leads database" })}</h1>
+                <h1 className="text-lg font-bold text-slate-900 dark:text-slate-100">{tr(locale, { uz: "Lidlar bazasi", ru: "База лидов", en: "Leads database", de: "Lead-Datenbank" })}</h1>
                 <span className="rounded-full bg-emerald-500/15 px-2 py-0.5 text-xs font-bold text-emerald-500">{leads.length}</span>
               </div>
-              <p className="text-xs text-slate-400">{tr(locale, { uz: "Barcha lidlar ro'yxati", ru: "Список всех лидов", en: "List of all leads" })}</p>
+              <p className="text-xs text-slate-400">{tr(locale, { uz: "Barcha lidlar ro'yxati", ru: "Список всех лидов", en: "List of all leads", de: "Liste aller Leads" })}</p>
             </div>
           </div>
 
@@ -245,16 +245,16 @@ export default function LeadsWorkspace({ locale, initialLeads, managers, sources
                 </span>
               ))}
             </div>
-            <button onClick={() => startRefresh(() => { router.refresh(); })} title={tr(locale, { uz: "Yangilash", ru: "Обновить", en: "Refresh" })} className="flex h-9 items-center gap-1.5 rounded-lg border border-slate-200 px-3 text-sm font-medium text-slate-500 hover:bg-slate-50 dark:border-white/[0.1] dark:text-slate-300 dark:hover:bg-white/[0.05]">
-              <Icon name="refresh" className={cn("h-4 w-4", refreshing && "animate-spin")} /> <span className="hidden sm:inline">{tr(locale, { uz: "Yangilash", ru: "Обновить", en: "Refresh" })}</span>
+            <button onClick={() => startRefresh(() => { router.refresh(); })} title={tr(locale, { uz: "Yangilash", ru: "Обновить", en: "Refresh", de: "Aktualisieren" })} className="flex h-9 items-center gap-1.5 rounded-lg border border-slate-200 px-3 text-sm font-medium text-slate-500 hover:bg-slate-50 dark:border-white/[0.1] dark:text-slate-300 dark:hover:bg-white/[0.05]">
+              <Icon name="refresh" className={cn("h-4 w-4", refreshing && "animate-spin")} /> <span className="hidden sm:inline">{tr(locale, { uz: "Yangilash", ru: "Обновить", en: "Refresh", de: "Aktualisieren" })}</span>
             </button>
             <div className="flex rounded-lg border border-slate-200 p-0.5 dark:border-white/[0.1]">
               <ToggleBtn active={view === "kanban"} onClick={() => setView("kanban")} icon="grid" label="Kanban" />
-              <ToggleBtn active={view === "table"} onClick={() => setView("table")} icon="listView" label={tr(locale, { uz: "Jadval", ru: "Таблица", en: "Table" })} />
+              <ToggleBtn active={view === "table"} onClick={() => setView("table")} icon="listView" label={tr(locale, { uz: "Jadval", ru: "Таблица", en: "Table", de: "Tabelle" })} />
             </div>
             {canWrite && (
               <button onClick={() => setCreate({ open: true, stage: "NEW" })} className="flex items-center gap-1.5 rounded-lg bg-brand-600 px-4 py-2 text-sm font-semibold text-white hover:bg-brand-700">
-                <Icon name="plus" className="h-[18px] w-[18px]" /> <span className="hidden sm:inline">{tr(locale, { uz: "Yangi lid", ru: "Новый лид", en: "New lead" })}</span>
+                <Icon name="plus" className="h-[18px] w-[18px]" /> <span className="hidden sm:inline">{tr(locale, { uz: "Yangi lid", ru: "Новый лид", en: "New lead", de: "Neuer Lead" })}</span>
               </button>
             )}
           </div>

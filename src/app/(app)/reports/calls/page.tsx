@@ -26,21 +26,21 @@ function timeLabel(d: Date): string {
 
 function dayLabel(d: Date, today: number, locale: Locale): string {
   const diff = today - dayIdx(d);
-  if (diff === 0) return tr(locale, { uz: "Bugun", ru: "Сегодня", en: "Today" });
-  if (diff === 1) return tr(locale, { uz: "Kecha", ru: "Вчера", en: "Yesterday" });
+  if (diff === 0) return tr(locale, { uz: "Bugun", ru: "Сегодня", en: "Today", de: "Heute" });
+  if (diff === 1) return tr(locale, { uz: "Kecha", ru: "Вчера", en: "Yesterday", de: "Gestern" });
   const t = tzOf(d);
   return `${p2(t.getUTCDate())}.${p2(t.getUTCMonth() + 1)}.${t.getUTCFullYear()}`;
 }
 
 function agoLabel(d: Date, nowMs: number, locale: Locale): string {
   const m = Math.max(0, Math.floor((nowMs - d.getTime()) / 60000));
-  if (m < 1) return tr(locale, { uz: "hozirgina", ru: "только что", en: "just now" });
-  if (m < 60) return `${m} ${tr(locale, { uz: "daq oldin", ru: "мин назад", en: "min ago" })}`;
+  if (m < 1) return tr(locale, { uz: "hozirgina", ru: "только что", en: "just now", de: "gerade eben" });
+  if (m < 60) return `${m} ${tr(locale, { uz: "daq oldin", ru: "мин назад", en: "min ago", de: "Min. her" })}`;
   const h = Math.floor(m / 60);
-  if (h < 24) return `${h} ${tr(locale, { uz: "soat oldin", ru: "ч назад", en: "h ago" })}`;
+  if (h < 24) return `${h} ${tr(locale, { uz: "soat oldin", ru: "ч назад", en: "h ago", de: "Std. her" })}`;
   const days = Math.floor(h / 24);
-  if (days < 7) return `${days} ${tr(locale, { uz: "kun oldin", ru: "дн назад", en: "d ago" })}`;
-  return `${Math.floor(days / 7)} ${tr(locale, { uz: "hafta oldin", ru: "нед назад", en: "w ago" })}`;
+  if (days < 7) return `${days} ${tr(locale, { uz: "kun oldin", ru: "дн назад", en: "d ago", de: "Tg. her" })}`;
+  return `${Math.floor(days / 7)} ${tr(locale, { uz: "hafta oldin", ru: "нед назад", en: "w ago", de: "Wo. her" })}`;
 }
 
 function fmtDur(sec: number): string {
@@ -57,7 +57,7 @@ function isUnknownPhone(phone: string): boolean {
 }
 
 function fmtPhone(phone: string, locale: Locale): string {
-  if (isUnknownPhone(phone)) return tr(locale, { uz: "Noma'lum raqam", ru: "Неизвестный номер", en: "Unknown number" });
+  if (isUnknownPhone(phone)) return tr(locale, { uz: "Noma'lum raqam", ru: "Неизвестный номер", en: "Unknown number", de: "Unbekannte Nummer" });
   const c = phone.replace(/[^0-9]/g, "");
   if (c.length >= 9) {
     const n = c.slice(-9);
@@ -81,8 +81,8 @@ export default async function CallsPage({ searchParams }: { searchParams?: Promi
   if (!ALLOWED.includes(s.role)) {
     return (
       <Forbidden
-        title={tr(s.locale, { uz: "Kirish taqiqlangan", ru: "Доступ запрещён", en: "Access denied" })}
-        body={tr(s.locale, { uz: "Bu bo'lim rahbariyat uchun.", ru: "Этот раздел для руководства.", en: "This section is for management." })}
+        title={tr(s.locale, { uz: "Kirish taqiqlangan", ru: "Доступ запрещён", en: "Access denied", de: "Zugriff verweigert" })}
+        body={tr(s.locale, { uz: "Bu bo'lim rahbariyat uchun.", ru: "Этот раздел для руководства.", en: "This section is for management.", de: "Dieser Bereich ist für die Geschäftsleitung." })}
       />
     );
   }

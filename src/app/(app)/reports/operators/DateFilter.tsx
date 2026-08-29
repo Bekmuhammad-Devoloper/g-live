@@ -17,11 +17,13 @@ const MONTHS: Record<Locale, string[]> = {
   uz: ["Yanvar", "Fevral", "Mart", "Aprel", "May", "Iyun", "Iyul", "Avgust", "Sentabr", "Oktabr", "Noyabr", "Dekabr"],
   ru: ["Январь", "Февраль", "Март", "Апрель", "Май", "Июнь", "Июль", "Август", "Сентябрь", "Октябрь", "Ноябрь", "Декабрь"],
   en: ["January", "February", "March", "April", "May", "June", "July", "August", "September", "October", "November", "December"],
+  de: ["Januar", "Februar", "März", "April", "Mai", "Juni", "Juli", "August", "September", "Oktober", "November", "Dezember"],
 };
 const WEEKDAYS: Record<Locale, string[]> = {
   uz: ["Du", "Se", "Cho", "Pa", "Ju", "Sha", "Ya"],
   ru: ["Пн", "Вт", "Ср", "Чт", "Пт", "Сб", "Вс"],
   en: ["Mo", "Tu", "We", "Th", "Fr", "Sa", "Su"],
+  de: ["Mo", "Di", "Mi", "Do", "Fr", "Sa", "So"],
 };
 
 export default function DateFilter({ locale, value, label }: { locale: Locale; value: string | null; label: string | null }) {
@@ -92,14 +94,14 @@ export default function DateFilter({ locale, value, label }: { locale: Locale; v
         )}
       >
         <Icon name="calendar" className="h-4 w-4" />
-        {label ?? tr(locale, { uz: "Bugun", ru: "Сегодня", en: "Today" })}
+        {label ?? tr(locale, { uz: "Bugun", ru: "Сегодня", en: "Today", de: "Heute" })}
       </button>
 
       {value && (
         <button
           type="button"
           onClick={() => apply(null)}
-          title={tr(locale, { uz: "Tozalash", ru: "Очистить", en: "Clear" })}
+          title={tr(locale, { uz: "Tozalash", ru: "Очистить", en: "Clear", de: "Zurücksetzen" })}
           className="grid h-10 w-9 shrink-0 place-items-center rounded-lg bg-red-50 text-red-500 transition hover:bg-red-100 dark:bg-red-500/10 dark:hover:bg-red-500/20"
         >
           <Icon name="close" className="h-4 w-4" />
@@ -144,10 +146,10 @@ export default function DateFilter({ locale, value, label }: { locale: Locale; v
           </div>
           <div className="flex items-center justify-between border-t border-slate-100 px-3 py-2 dark:border-slate-800">
             <button type="button" onClick={() => apply(null)} className="rounded-lg px-3 py-1.5 text-xs font-medium text-red-500 transition hover:bg-red-50 dark:hover:bg-red-500/10">
-              {tr(locale, { uz: "Tozalash", ru: "Очистить", en: "Clear" })}
+              {tr(locale, { uz: "Tozalash", ru: "Очистить", en: "Clear", de: "Zurücksetzen" })}
             </button>
             <button type="button" onClick={() => apply(todayIso)} className="rounded-lg bg-brand-50 px-3 py-1.5 text-xs font-medium text-brand-600 transition hover:bg-brand-100 dark:bg-brand-500/10 dark:text-brand-300">
-              {tr(locale, { uz: "Bugun", ru: "Сегодня", en: "Today" })}
+              {tr(locale, { uz: "Bugun", ru: "Сегодня", en: "Today", de: "Heute" })}
             </button>
           </div>
         </div>

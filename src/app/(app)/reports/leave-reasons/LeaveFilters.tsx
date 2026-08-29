@@ -23,7 +23,7 @@ export default function LeaveFilters({ from, to, reason, reasons, locale }: { fr
       </div>
       <div className="relative">
         <select defaultValue={reason} onChange={(e) => nav({ reason: e.target.value })} className="h-11 appearance-none rounded-xl border border-slate-200 bg-white pl-3 pr-9 text-sm text-slate-600 outline-none focus:border-brand-400 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-100">
-          <option value="">{tr(locale, { uz: "Sababi", ru: "Причина", en: "Reason" })}</option>
+          <option value="">{tr(locale, { uz: "Sababi", ru: "Причина", en: "Reason", de: "Grund" })}</option>
           {reasons.map((r) => <option key={r} value={r}>{r}</option>)}
         </select>
         <Icon name="chevronDown" className="pointer-events-none absolute right-3 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400" />

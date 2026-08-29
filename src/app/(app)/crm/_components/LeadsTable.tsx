@@ -33,17 +33,17 @@ export default function LeadsTable({ leads, locale, selected, onToggle, onOpen, 
               <th className="w-10 px-3 py-3">
                 <input type="checkbox" checked={allSelected} onChange={onToggleAll} className="h-4 w-4 rounded border-slate-300 accent-brand-600" />
               </th>
-              <th className="px-4 py-3">{tr(locale, { uz: "Ism", ru: "Имя", en: "Name" })}</th>
-              <th className="px-4 py-3">{tr(locale, { uz: "Manba", ru: "Источник", en: "Source" })}</th>
-              <th className="px-4 py-3">{tr(locale, { uz: "Bosqich", ru: "Этап", en: "Stage" })}</th>
-              <th className="px-4 py-3">{tr(locale, { uz: "Menejer", ru: "Менеджер", en: "Manager" })}</th>
-              <th className="px-4 py-3">{tr(locale, { uz: "Byudjet", ru: "Бюджет", en: "Budget" })}</th>
-              <th className="px-4 py-3">{tr(locale, { uz: "Yaratilgan", ru: "Создан", en: "Created" })}</th>
+              <th className="px-4 py-3">{tr(locale, { uz: "Ism", ru: "Имя", en: "Name", de: "Name" })}</th>
+              <th className="px-4 py-3">{tr(locale, { uz: "Manba", ru: "Источник", en: "Source", de: "Quelle" })}</th>
+              <th className="px-4 py-3">{tr(locale, { uz: "Bosqich", ru: "Этап", en: "Stage", de: "Phase" })}</th>
+              <th className="px-4 py-3">{tr(locale, { uz: "Menejer", ru: "Менеджер", en: "Manager", de: "Manager" })}</th>
+              <th className="px-4 py-3">{tr(locale, { uz: "Byudjet", ru: "Бюджет", en: "Budget", de: "Budget" })}</th>
+              <th className="px-4 py-3">{tr(locale, { uz: "Yaratilgan", ru: "Создан", en: "Created", de: "Erstellt" })}</th>
             </tr>
           </thead>
           <tbody className="divide-y divide-slate-100 dark:divide-slate-800">
             {leads.length === 0 ? (
-              <tr><td colSpan={7} className="px-4 py-12 text-center text-sm text-slate-400">{tr(locale, { uz: "Lid topilmadi", ru: "Лиды не найдены", en: "No leads found" })}</td></tr>
+              <tr><td colSpan={7} className="px-4 py-12 text-center text-sm text-slate-400">{tr(locale, { uz: "Lid topilmadi", ru: "Лиды не найдены", en: "No leads found", de: "Keine Leads gefunden" })}</td></tr>
             ) : (
               leads.map((l) => {
                 const col = columnDef(columnOf(l.stage));
@@ -69,7 +69,7 @@ export default function LeadsTable({ leads, locale, selected, onToggle, onOpen, 
                           <button
                             onClick={(e) => { e.preventDefault(); e.stopPropagation(); window.dispatchEvent(new CustomEvent("glive:call", { detail: { number: l.phone, leadId: l.id, contactName: l.fullName } })); }}
                             onDoubleClick={(e) => e.stopPropagation()}
-                            title={tr(locale, { uz: "Qo'ng'iroq qilish", ru: "Позвонить", en: "Call" })}
+                            title={tr(locale, { uz: "Qo'ng'iroq qilish", ru: "Позвонить", en: "Call", de: "Anrufen" })}
                             className="truncate text-xs text-slate-400 transition hover:text-emerald-600 dark:hover:text-emerald-400"
                           >
                             {l.phone}

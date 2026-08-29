@@ -16,7 +16,7 @@ const fmt = (d: Date) => `${p2(d.getDate())}.${p2(d.getMonth() + 1)}.${d.getFull
 export default async function ArchivePage() {
   const s = await requireSession();
   if (!ALLOWED.includes(s.role as never)) {
-    return <Forbidden title={tr(s.locale, { uz: "Kirish taqiqlangan", ru: "Доступ запрещён", en: "Access denied" })} body={tr(s.locale, { uz: "Arxiv faqat rahbariyat uchun.", ru: "Архив доступен только руководству.", en: "The archive is available only to management." })} />;
+    return <Forbidden title={tr(s.locale, { uz: "Kirish taqiqlangan", ru: "Доступ запрещён", en: "Access denied", de: "Zugriff verweigert" })} body={tr(s.locale, { uz: "Arxiv faqat rahbariyat uchun.", ru: "Архив доступен только руководству.", en: "The archive is available only to management.", de: "Das Archiv ist nur für die Geschäftsleitung zugänglich." })} />;
   }
 
   const [users, reasonsRaw] = await Promise.all([
@@ -45,10 +45,10 @@ export default async function ArchivePage() {
   try { if (reasonsRaw) reasons = JSON.parse(reasonsRaw); } catch { reasons = []; }
   // Standart sabablar (bo'sh bo'lsa)
   if (reasons.length === 0) reasons = [
-    tr(s.locale, { uz: "Ishdan bo'shadi", ru: "Уволился", en: "Left the job" }),
-    tr(s.locale, { uz: "Shartnoma tugadi", ru: "Договор завершён", en: "Contract ended" }),
-    tr(s.locale, { uz: "Intizom buzilishi", ru: "Нарушение дисциплины", en: "Disciplinary violation" }),
-    tr(s.locale, { uz: "Boshqa", ru: "Другое", en: "Other" }),
+    tr(s.locale, { uz: "Ishdan bo'shadi", ru: "Уволился", en: "Left the job", de: "Hat die Stelle verlassen" }),
+    tr(s.locale, { uz: "Shartnoma tugadi", ru: "Договор завершён", en: "Contract ended", de: "Vertrag beendet" }),
+    tr(s.locale, { uz: "Intizom buzilishi", ru: "Нарушение дисциплины", en: "Disciplinary violation", de: "Disziplinverstoß" }),
+    tr(s.locale, { uz: "Boshqa", ru: "Другое", en: "Other", de: "Sonstiges" }),
   ];
 
   const roleOptions = STAFF_ROLES.map((r) => ({ value: r, label: label(ROLE_LABELS, r, s.locale as Locale) }));

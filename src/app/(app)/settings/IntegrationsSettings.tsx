@@ -47,20 +47,20 @@ export default function IntegrationsSettings({ locale }: { locale: Locale }) {
     <div className="space-y-6">
       {/* Bog'langan integratsiyalar */}
       <div className="rounded-2xl border border-slate-300 bg-white p-6 shadow-card dark:border-slate-600 dark:bg-slate-900">
-        <h2 className="text-2xl font-bold text-slate-800 dark:text-slate-100">{tr(locale, { uz: "Bog'langan integratsiyalar", ru: "Подключённые интеграции", en: "Connected integrations" })}</h2>
-        <p className="mb-5 mt-1 text-sm text-slate-500 dark:text-slate-400">{tr(locale, { uz: "Ijtimoiy tarmoq hisoblari va CRM tizimlarini ulang va boshqaring", ru: "Подключайте и управляйте аккаунтами соцсетей и CRM-системами", en: "Connect and manage social network accounts and CRM systems" })}</p>
+        <h2 className="text-2xl font-bold text-slate-800 dark:text-slate-100">{tr(locale, { uz: "Bog'langan integratsiyalar", ru: "Подключённые интеграции", en: "Connected integrations", de: "Verbundene Integrationen" })}</h2>
+        <p className="mb-5 mt-1 text-sm text-slate-500 dark:text-slate-400">{tr(locale, { uz: "Ijtimoiy tarmoq hisoblari va CRM tizimlarini ulang va boshqaring", ru: "Подключайте и управляйте аккаунтами соцсетей и CRM-системами", en: "Connect and manage social network accounts and CRM systems", de: "Verbinden und verwalten Sie Social-Media-Konten und CRM-Systeme" })}</p>
 
         <div className="space-y-3">
           <IntegrationRow
             locale={locale}
             badge={<span className="grid h-11 w-11 place-items-center rounded-xl bg-blue-600 text-lg font-bold text-white">f</span>}
-            title={tr(locale, { uz: "Facebook sahifasi", ru: "Страница Facebook", en: "Facebook page" })} desc={tr(locale, { uz: "Facebook biznes sahifangizni ulang", ru: "Подключите вашу бизнес-страницу Facebook", en: "Connect your Facebook business page" })}
+            title={tr(locale, { uz: "Facebook sahifasi", ru: "Страница Facebook", en: "Facebook page", de: "Facebook-Seite" })} desc={tr(locale, { uz: "Facebook biznes sahifangizni ulang", ru: "Подключите вашу бизнес-страницу Facebook", en: "Connect your Facebook business page", de: "Verbinden Sie Ihre Facebook-Unternehmensseite" })}
             connected={f.fbConnected} onToggle={() => set("fbConnected", !f.fbConnected)}
           />
           <IntegrationRow
             locale={locale}
             badge={<span className="grid h-11 w-11 place-items-center rounded-xl bg-emerald-500 text-white"><Icon name="link" className="h-5 w-5" /></span>}
-            title="amoCRM | Kommo" desc={tr(locale, { uz: "Lidlarni amoCRM | Kommo hisobingiz bilan sinxronlang", ru: "Синхронизируйте лиды с аккаунтом amoCRM | Kommo", en: "Sync leads with your amoCRM | Kommo account" })}
+            title="amoCRM | Kommo" desc={tr(locale, { uz: "Lidlarni amoCRM | Kommo hisobingiz bilan sinxronlang", ru: "Синхронизируйте лиды с аккаунтом amoCRM | Kommo", en: "Sync leads with your amoCRM | Kommo account", de: "Synchronisieren Sie Leads mit Ihrem amoCRM | Kommo-Konto" })}
             connected={f.amoConnected} onToggle={() => set("amoConnected", !f.amoConnected)}
           />
         </div>
@@ -97,13 +97,13 @@ export default function IntegrationsSettings({ locale }: { locale: Locale }) {
           <div className="space-y-4">
             <Input value={f.telegramReportId} onChange={(v) => set("telegramReportId", v)} />
             <div className="rounded-xl border border-slate-300 bg-slate-50/60 p-4 text-sm leading-relaxed text-slate-600 dark:border-slate-600 dark:bg-slate-800/40 dark:text-slate-300">
-              <p className="mb-3">{tr(locale, { uz: "Telegram bot orqali avtomatik hisobot yuborilishi uchun quyidagi qadamlarni bajaring:", ru: "Чтобы получать автоматические отчёты через Telegram-бота, выполните следующие шаги:", en: "To receive automatic reports via the Telegram bot, follow these steps:" })}</p>
+              <p className="mb-3">{tr(locale, { uz: "Telegram bot orqali avtomatik hisobot yuborilishi uchun quyidagi qadamlarni bajaring:", ru: "Чтобы получать автоматические отчёты через Telegram-бота, выполните следующие шаги:", en: "To receive automatic reports via the Telegram bot, follow these steps:", de: "Um automatische Berichte über den Telegram-Bot zu erhalten, führen Sie folgende Schritte aus:" })}</p>
               <ol className="space-y-2.5">
-                <li>1. {tr(locale, { uz: "Telegramda", ru: "В Telegram перейдите к", en: "In Telegram, open" })} <TgLink u="getidsbot">@getidsbot</TgLink> {tr(locale, { uz: "ga kiring.", ru: ".", en: "." })}</li>
-                <li>2. {tr(locale, { uz: "ID ni nusxalang.", ru: "Скопируйте ID.", en: "Copy the ID." })}</li>
-                <li>3. {tr(locale, { uz: "\"Telegram for Report\" nomli inputga ID ni joylashtiring.", ru: "Вставьте ID в поле \"Telegram for Report\".", en: "Paste the ID into the \"Telegram for Report\" input." })}</li>
-                <li>4. {tr(locale, { uz: "\"Saqlash\" tugmasiga bosing.", ru: "Нажмите кнопку \"Сохранить\".", en: "Click the \"Save\" button." })}</li>
-                <li>5. {tr(locale, { uz: "Germaniya Live botiga (", ru: "Запустите бота Germaniya Live (", en: "Start the Germaniya Live bot (" })}<TgLink u="germaniya_live_bot">@germaniya_live_bot</TgLink>{tr(locale, { uz: ") ga start bosing.", ru: ").", en: ")." })}</li>
+                <li>1. {tr(locale, { uz: "Telegramda", ru: "В Telegram перейдите к", en: "In Telegram, open", de: "Öffnen Sie in Telegram" })} <TgLink u="getidsbot">@getidsbot</TgLink> {tr(locale, { uz: "ga kiring.", ru: ".", en: ".", de: "." })}</li>
+                <li>2. {tr(locale, { uz: "ID ni nusxalang.", ru: "Скопируйте ID.", en: "Copy the ID.", de: "Kopieren Sie die ID." })}</li>
+                <li>3. {tr(locale, { uz: "\"Telegram for Report\" nomli inputga ID ni joylashtiring.", ru: "Вставьте ID в поле \"Telegram for Report\".", en: "Paste the ID into the \"Telegram for Report\" input.", de: "Fügen Sie die ID in das Feld \"Telegram for Report\" ein." })}</li>
+                <li>4. {tr(locale, { uz: "\"Saqlash\" tugmasiga bosing.", ru: "Нажмите кнопку \"Сохранить\".", en: "Click the \"Save\" button.", de: "Klicken Sie auf die Schaltfläche \"Speichern\"." })}</li>
+                <li>5. {tr(locale, { uz: "Germaniya Live botiga (", ru: "Запустите бота Germaniya Live (", en: "Start the Germaniya Live bot (", de: "Starten Sie den Germaniya Live-Bot (" })}<TgLink u="germaniya_live_bot">@germaniya_live_bot</TgLink>{tr(locale, { uz: ") ga start bosing.", ru: ").", en: ").", de: ")." })}</li>
               </ol>
             </div>
           </div>
@@ -111,7 +111,7 @@ export default function IntegrationsSettings({ locale }: { locale: Locale }) {
       </div>
 
       <button onClick={save} className="rounded-full bg-brand-800 px-8 py-2.5 text-sm font-semibold text-white transition hover:bg-brand-900">
-        {saved ? tr(locale, { uz: "Saqlandi ✓", ru: "Сохранено ✓", en: "Saved ✓" }) : tr(locale, { uz: "Saqlash", ru: "Сохранить", en: "Save" })}
+        {saved ? tr(locale, { uz: "Saqlandi ✓", ru: "Сохранено ✓", en: "Saved ✓", de: "Gespeichert ✓" }) : tr(locale, { uz: "Saqlash", ru: "Сохранить", en: "Save", de: "Speichern" })}
       </button>
     </div>
   );
@@ -127,10 +127,10 @@ function IntegrationRow({ locale, badge, title, desc, connected, onToggle }: { l
       </div>
       <span className={cn("flex items-center gap-1.5 text-sm", connected ? "text-emerald-600 dark:text-emerald-400" : "text-slate-400")}>
         <Icon name={connected ? "check" : "close"} className="h-4 w-4" />
-        {connected ? tr(locale, { uz: "Bog'langan", ru: "Подключено", en: "Connected" }) : tr(locale, { uz: "Bog'lanmagan", ru: "Не подключено", en: "Not connected" })}
+        {connected ? tr(locale, { uz: "Bog'langan", ru: "Подключено", en: "Connected", de: "Verbunden" }) : tr(locale, { uz: "Bog'lanmagan", ru: "Не подключено", en: "Not connected", de: "Nicht verbunden" })}
       </span>
       <button onClick={onToggle} className={cn("rounded-lg px-6 py-2 text-sm font-semibold text-white transition", connected ? "bg-rose-500 hover:bg-rose-600" : "bg-slate-800 hover:bg-slate-900 dark:bg-slate-700 dark:hover:bg-slate-600")}>
-        {connected ? tr(locale, { uz: "Uzish", ru: "Отключить", en: "Disconnect" }) : tr(locale, { uz: "Ulash", ru: "Подключить", en: "Connect" })}
+        {connected ? tr(locale, { uz: "Uzish", ru: "Отключить", en: "Disconnect", de: "Trennen" }) : tr(locale, { uz: "Ulash", ru: "Подключить", en: "Connect", de: "Verbinden" })}
       </button>
     </div>
   );

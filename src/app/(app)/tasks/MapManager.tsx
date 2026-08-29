@@ -12,19 +12,19 @@ interface PickTask { id: string; title: string; status: string; tag: string | nu
 // taskIds: null = barcha eslatmalar (standart xaritalar); massiv = faqat biriktirilganlar (maxsus xarita)
 interface SavedMap { id: string; name: string; lens: Lens; taskIds: string[] | null; archived: boolean; builtin?: boolean }
 
-const LENS_OPTS: { v: Lens; label: { uz: string; ru: string; en: string } }[] = [
-  { v: "all", label: { uz: "To'liq", ru: "Полная", en: "Full" } },
-  { v: "student", label: { uz: "O'quvchi bo'yicha", ru: "По ученику", en: "By student" } },
-  { v: "group", label: { uz: "Guruh bo'yicha", ru: "По группе", en: "By group" } },
-  { v: "staff", label: { uz: "Mas'ul bo'yicha", ru: "По ответственному", en: "By assignee" } },
+const LENS_OPTS: { v: Lens; label: { uz: string; ru: string; en: string; de: string } }[] = [
+  { v: "all", label: { uz: "To'liq", ru: "Полная", en: "Full", de: "Vollständig" } },
+  { v: "student", label: { uz: "O'quvchi bo'yicha", ru: "По ученику", en: "By student", de: "Nach Schüler" } },
+  { v: "group", label: { uz: "Guruh bo'yicha", ru: "По группе", en: "By group", de: "Nach Gruppe" } },
+  { v: "staff", label: { uz: "Mas'ul bo'yicha", ru: "По ответственному", en: "By assignee", de: "Nach Zuständigem" } },
 ];
 
 // Standart xaritalarning nomlari — ID bo'yicha lokalizatsiya (localStorage'da uz saqlanadi)
-const DEFAULT_NAMES: Record<string, { uz: string; ru: string; en: string }> = {
-  all: { uz: "To'liq xarita", ru: "Полная карта", en: "Full map" },
-  "by-student": { uz: "O'quvchi bo'yicha", ru: "По ученику", en: "By student" },
-  "by-group": { uz: "Guruh bo'yicha", ru: "По группе", en: "By group" },
-  "by-staff": { uz: "Mas'ul bo'yicha", ru: "По ответственному", en: "By assignee" },
+const DEFAULT_NAMES: Record<string, { uz: string; ru: string; en: string; de: string }> = {
+  all: { uz: "To'liq xarita", ru: "Полная карта", en: "Full map", de: "Vollständige Karte" },
+  "by-student": { uz: "O'quvchi bo'yicha", ru: "По ученику", en: "By student", de: "Nach Schüler" },
+  "by-group": { uz: "Guruh bo'yicha", ru: "По группе", en: "By group", de: "Nach Gruppe" },
+  "by-staff": { uz: "Mas'ul bo'yicha", ru: "По ответственному", en: "By assignee", de: "Nach Zuständigem" },
 };
 
 function defaults(): SavedMap[] {
@@ -73,7 +73,7 @@ export default function MapManager({ kind, locale, tasks, onSelect }: {
 
   function createMap() {
     // Yangi xarita — BO'SH boshlanadi (taskIds: [])
-    const m: SavedMap = { id: newId(), name: newName.trim() || tr(locale, { uz: "Yangi xarita", ru: "Новая карта", en: "New map" }), lens: newLens, taskIds: [], archived: false };
+    const m: SavedMap = { id: newId(), name: newName.trim() || tr(locale, { uz: "Yangi xarita", ru: "Новая карта", en: "New map", de: "Neue Karte" }), lens: newLens, taskIds: [], archived: false };
     setMaps((p) => [...p, m]);
     setShowNew(false); setNewName(""); setNewLens("all");
     setActiveId(m.id); onSelect(m.lens, m.taskIds);
@@ -103,15 +103,15 @@ export default function MapManager({ kind, locale, tasks, onSelect }: {
               {m.taskIds !== null && <span className="ml-1 rounded-full bg-white/25 px-1.5 text-[10px] font-bold">{m.taskIds.length}</span>}
             </button>
             {!m.builtin && (
-              <button onClick={() => setMenuId(menuId === m.id ? null : m.id)} className="rounded-r-full py-1.5 pl-0.5 pr-2.5 text-xs opacity-60 hover:opacity-100" aria-label={tr(locale, { uz: "Xarita menyusi", ru: "Меню карты", en: "Map menu" })}>⋯</button>
+              <button onClick={() => setMenuId(menuId === m.id ? null : m.id)} className="rounded-r-full py-1.5 pl-0.5 pr-2.5 text-xs opacity-60 hover:opacity-100" aria-label={tr(locale, { uz: "Xarita menyusi", ru: "Меню карты", en: "Map menu", de: "Kartenmenü" })}>⋯</button>
             )}
           </div>
           {menuId === m.id && (
             <>
               <div className="fixed inset-0 z-10" onClick={() => setMenuId(null)} />
               <div className="absolute left-0 top-full z-20 mt-1 w-44 overflow-hidden rounded-xl border border-slate-200 bg-white py-1 shadow-pop dark:border-slate-700 dark:bg-slate-800">
-                <button onClick={() => archiveMap(m.id)} className="flex w-full items-center gap-2 px-3 py-2 text-left text-sm text-slate-700 hover:bg-slate-50 dark:text-slate-200 dark:hover:bg-slate-700">📥 {tr(locale, { uz: "Arxivlash", ru: "Архивировать", en: "Archive" })}</button>
-                <button onClick={() => deleteMap(m.id)} className="flex w-full items-center gap-2 px-3 py-2 text-left text-sm text-rose-600 hover:bg-rose-50 dark:hover:bg-rose-950/40">🗑 {tr(locale, { uz: "O'chirish", ru: "Удалить", en: "Delete" })}</button>
+                <button onClick={() => archiveMap(m.id)} className="flex w-full items-center gap-2 px-3 py-2 text-left text-sm text-slate-700 hover:bg-slate-50 dark:text-slate-200 dark:hover:bg-slate-700">📥 {tr(locale, { uz: "Arxivlash", ru: "Архивировать", en: "Archive", de: "Archivieren" })}</button>
+                <button onClick={() => deleteMap(m.id)} className="flex w-full items-center gap-2 px-3 py-2 text-left text-sm text-rose-600 hover:bg-rose-50 dark:hover:bg-rose-950/40">🗑 {tr(locale, { uz: "O'chirish", ru: "Удалить", en: "Delete", de: "Löschen" })}</button>
               </div>
             </>
           )}
@@ -121,26 +121,26 @@ export default function MapManager({ kind, locale, tasks, onSelect }: {
       {/* Yangi xarita */}
       <div className="relative">
         <button onClick={() => { setShowNew((v) => !v); setShowArchive(false); }} className="flex items-center gap-1 rounded-full border border-dashed border-slate-300 px-3 py-1.5 text-sm font-medium text-slate-500 transition hover:border-brand-400 hover:text-brand-600 dark:border-slate-600 dark:text-slate-400">
-          + {tr(locale, { uz: "Yangi xarita", ru: "Новая карта", en: "New map" })}
+          + {tr(locale, { uz: "Yangi xarita", ru: "Новая карта", en: "New map", de: "Neue Karte" })}
         </button>
         {showNew && (
           <>
             <div className="fixed inset-0 z-10" onClick={() => setShowNew(false)} />
             <div className="absolute left-0 top-full z-20 mt-1.5 w-72 rounded-xl border border-slate-200 bg-white p-3.5 shadow-pop dark:border-slate-700 dark:bg-slate-800">
               <div className="mb-2.5">
-                <label className="mb-1 block text-[11px] font-medium text-slate-400">{tr(locale, { uz: "Xarita nomi", ru: "Название карты", en: "Map name" })}</label>
-                <input value={newName} onChange={(e) => setNewName(e.target.value)} autoFocus placeholder={tr(locale, { uz: "Masalan: Muhim ishlar", ru: "Например: Важные дела", en: "e.g. Important tasks" })} className="h-9 w-full rounded-lg border border-slate-200 bg-white px-2.5 text-sm outline-none focus:border-brand-400 dark:border-slate-600 dark:bg-slate-900 dark:text-slate-100" />
+                <label className="mb-1 block text-[11px] font-medium text-slate-400">{tr(locale, { uz: "Xarita nomi", ru: "Название карты", en: "Map name", de: "Kartenname" })}</label>
+                <input value={newName} onChange={(e) => setNewName(e.target.value)} autoFocus placeholder={tr(locale, { uz: "Masalan: Muhim ishlar", ru: "Например: Важные дела", en: "e.g. Important tasks", de: "z. B. Wichtige Aufgaben" })} className="h-9 w-full rounded-lg border border-slate-200 bg-white px-2.5 text-sm outline-none focus:border-brand-400 dark:border-slate-600 dark:bg-slate-900 dark:text-slate-100" />
               </div>
               <div className="mb-2.5">
-                <label className="mb-1 block text-[11px] font-medium text-slate-400">{tr(locale, { uz: "Ko'rinish (linza)", ru: "Вид (линза)", en: "View (lens)" })}</label>
+                <label className="mb-1 block text-[11px] font-medium text-slate-400">{tr(locale, { uz: "Ko'rinish (linza)", ru: "Вид (линза)", en: "View (lens)", de: "Ansicht (Linse)" })}</label>
                 <select value={newLens} onChange={(e) => setNewLens(e.target.value as Lens)} className="h-9 w-full rounded-lg border border-slate-200 bg-white px-2 text-sm outline-none focus:border-brand-400 dark:border-slate-600 dark:bg-slate-900 dark:text-slate-100">
                   {LENS_OPTS.map((o) => <option key={o.v} value={o.v}>{tr(locale, o.label)}</option>)}
                 </select>
               </div>
-              <p className="mb-3 text-[11px] text-slate-400">{tr(locale, { uz: "Xarita bo'sh ochiladi — keyin unga eslatma biriktirasiz.", ru: "Карта откроется пустой — затем прикрепите к ней напоминания.", en: "The map opens empty — then attach reminders to it." })}</p>
+              <p className="mb-3 text-[11px] text-slate-400">{tr(locale, { uz: "Xarita bo'sh ochiladi — keyin unga eslatma biriktirasiz.", ru: "Карта откроется пустой — затем прикрепите к ней напоминания.", en: "The map opens empty — then attach reminders to it.", de: "Die Karte öffnet sich leer — danach fügen Sie ihr Erinnerungen hinzu." })}</p>
               <div className="flex gap-2">
-                <button onClick={() => setShowNew(false)} className="flex-1 rounded-lg border border-slate-200 py-2 text-sm font-medium text-slate-600 hover:bg-slate-50 dark:border-slate-600 dark:text-slate-300">{tr(locale, { uz: "Bekor", ru: "Отмена", en: "Cancel" })}</button>
-                <button onClick={createMap} className="flex-[1.4] rounded-lg bg-brand-600 py-2 text-sm font-semibold text-white hover:bg-brand-700">{tr(locale, { uz: "Yaratish", ru: "Создать", en: "Create" })}</button>
+                <button onClick={() => setShowNew(false)} className="flex-1 rounded-lg border border-slate-200 py-2 text-sm font-medium text-slate-600 hover:bg-slate-50 dark:border-slate-600 dark:text-slate-300">{tr(locale, { uz: "Bekor", ru: "Отмена", en: "Cancel", de: "Abbrechen" })}</button>
+                <button onClick={createMap} className="flex-[1.4] rounded-lg bg-brand-600 py-2 text-sm font-semibold text-white hover:bg-brand-700">{tr(locale, { uz: "Yaratish", ru: "Создать", en: "Create", de: "Erstellen" })}</button>
               </div>
             </div>
           </>
@@ -150,7 +150,7 @@ export default function MapManager({ kind, locale, tasks, onSelect }: {
       {/* Maxsus xaritaga eslatma biriktirish */}
       {isCustom && (
         <button onClick={() => setPickerOpen(true)} className="flex items-center gap-1.5 rounded-full bg-brand-50 px-3 py-1.5 text-sm font-semibold text-brand-600 transition hover:bg-brand-100 dark:bg-brand-500/10 dark:text-brand-300">
-          ＋ {tr(locale, { uz: "Eslatma biriktirish", ru: "Прикрепить напоминание", en: "Attach reminder" })}
+          ＋ {tr(locale, { uz: "Eslatma biriktirish", ru: "Прикрепить напоминание", en: "Attach reminder", de: "Erinnerung anhängen" })}
         </button>
       )}
 
@@ -158,18 +158,18 @@ export default function MapManager({ kind, locale, tasks, onSelect }: {
       {archived.length > 0 && (
         <div className="relative ml-auto">
           <button onClick={() => { setShowArchive((v) => !v); setShowNew(false); }} className="flex items-center gap-1.5 rounded-full border border-slate-200 px-3 py-1.5 text-sm font-medium text-slate-500 transition hover:bg-slate-50 dark:border-slate-700 dark:text-slate-400">
-            🗄 {tr(locale, { uz: "Arxiv", ru: "Архив", en: "Archive" })} <span className="rounded-full bg-slate-200 px-1.5 text-xs dark:bg-slate-700">{archived.length}</span>
+            🗄 {tr(locale, { uz: "Arxiv", ru: "Архив", en: "Archive", de: "Archiv" })} <span className="rounded-full bg-slate-200 px-1.5 text-xs dark:bg-slate-700">{archived.length}</span>
           </button>
           {showArchive && (
             <>
               <div className="fixed inset-0 z-10" onClick={() => setShowArchive(false)} />
               <div className="absolute right-0 top-full z-20 mt-1.5 w-60 overflow-hidden rounded-xl border border-slate-200 bg-white py-1 shadow-pop dark:border-slate-700 dark:bg-slate-800">
-                <div className="px-3 py-1.5 text-[11px] font-semibold uppercase tracking-wide text-slate-400">{tr(locale, { uz: "Arxivlangan xaritalar", ru: "Архивированные карты", en: "Archived maps" })}</div>
+                <div className="px-3 py-1.5 text-[11px] font-semibold uppercase tracking-wide text-slate-400">{tr(locale, { uz: "Arxivlangan xaritalar", ru: "Архивированные карты", en: "Archived maps", de: "Archivierte Karten" })}</div>
                 {archived.map((m) => (
                   <div key={m.id} className="flex items-center justify-between gap-2 px-3 py-1.5 hover:bg-slate-50 dark:hover:bg-slate-700/50">
                     <span className="min-w-0 flex-1 truncate text-sm text-slate-600 dark:text-slate-300">{mapName(m)}</span>
-                    <button onClick={() => restoreMap(m.id)} className="shrink-0 text-xs font-medium text-brand-600 hover:underline dark:text-brand-300">{tr(locale, { uz: "Tiklash", ru: "Восстановить", en: "Restore" })}</button>
-                    <button onClick={() => deleteMap(m.id)} className="shrink-0 text-xs text-rose-500 hover:underline" title={tr(locale, { uz: "O'chirish", ru: "Удалить", en: "Delete" })}>✕</button>
+                    <button onClick={() => restoreMap(m.id)} className="shrink-0 text-xs font-medium text-brand-600 hover:underline dark:text-brand-300">{tr(locale, { uz: "Tiklash", ru: "Восстановить", en: "Restore", de: "Wiederherstellen" })}</button>
+                    <button onClick={() => deleteMap(m.id)} className="shrink-0 text-xs text-rose-500 hover:underline" title={tr(locale, { uz: "O'chirish", ru: "Удалить", en: "Delete", de: "Löschen" })}>✕</button>
                   </div>
                 ))}
               </div>
@@ -215,17 +215,17 @@ function TaskPicker({ tasks, locale, selected, title, onClose, onSave }: {
       <div className="relative z-10 flex max-h-[80vh] w-full max-w-md flex-col rounded-2xl border border-slate-200 bg-white shadow-pop dark:border-slate-700 dark:bg-slate-900" onMouseDown={(e) => e.stopPropagation()}>
         <div className="flex items-center justify-between border-b border-slate-100 px-5 py-3.5 dark:border-slate-800">
           <div>
-            <h3 className="text-base font-bold text-slate-800 dark:text-slate-100">{tr(locale, { uz: "Eslatma biriktirish", ru: "Прикрепить напоминание", en: "Attach reminder" })}</h3>
-            <p className="text-xs text-slate-400">{tr(locale, { uz: `«${title}» xaritasiga`, ru: `к карте «${title}»`, en: `to map «${title}»` })} · {sel.size} {tr(locale, { uz: "tanlangan", ru: "выбрано", en: "selected" })}</p>
+            <h3 className="text-base font-bold text-slate-800 dark:text-slate-100">{tr(locale, { uz: "Eslatma biriktirish", ru: "Прикрепить напоминание", en: "Attach reminder", de: "Erinnerung anhängen" })}</h3>
+            <p className="text-xs text-slate-400">{tr(locale, { uz: `«${title}» xaritasiga`, ru: `к карте «${title}»`, en: `to map «${title}»`, de: `zur Karte «${title}»` })} · {sel.size} {tr(locale, { uz: "tanlangan", ru: "выбрано", en: "selected", de: "ausgewählt" })}</p>
           </div>
           <button onClick={onClose} className="text-lg text-slate-400 hover:text-slate-600">✕</button>
         </div>
         <div className="border-b border-slate-100 px-5 py-2.5 dark:border-slate-800">
-          <input value={q} onChange={(e) => setQ(e.target.value)} placeholder={tr(locale, { uz: "Eslatma qidirish...", ru: "Поиск напоминаний...", en: "Search reminders..." })} className="h-9 w-full rounded-lg border border-slate-200 bg-white px-3 text-sm outline-none focus:border-brand-400 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-100" />
+          <input value={q} onChange={(e) => setQ(e.target.value)} placeholder={tr(locale, { uz: "Eslatma qidirish...", ru: "Поиск напоминаний...", en: "Search reminders...", de: "Erinnerungen suchen..." })} className="h-9 w-full rounded-lg border border-slate-200 bg-white px-3 text-sm outline-none focus:border-brand-400 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-100" />
         </div>
         <div className="min-h-0 flex-1 overflow-y-auto p-2">
           {shown.length === 0 ? (
-            <p className="py-8 text-center text-sm text-slate-400">{tr(locale, { uz: "Eslatma topilmadi", ru: "Напоминания не найдены", en: "No reminders found" })}</p>
+            <p className="py-8 text-center text-sm text-slate-400">{tr(locale, { uz: "Eslatma topilmadi", ru: "Напоминания не найдены", en: "No reminders found", de: "Keine Erinnerungen gefunden" })}</p>
           ) : shown.map((t) => (
             <label key={t.id} className="flex cursor-pointer items-center gap-3 rounded-lg px-3 py-2 hover:bg-slate-50 dark:hover:bg-slate-800">
               <input type="checkbox" checked={sel.has(t.id)} onChange={() => toggle(t.id)} className="h-4 w-4 shrink-0 rounded border-slate-300 accent-brand-600" />
@@ -235,10 +235,10 @@ function TaskPicker({ tasks, locale, selected, title, onClose, onSave }: {
           ))}
         </div>
         <div className="flex items-center justify-between gap-2 border-t border-slate-100 px-5 py-3.5 dark:border-slate-800">
-          <button onClick={() => setSel(new Set())} className="text-sm text-slate-400 hover:text-slate-600">{tr(locale, { uz: "Tozalash", ru: "Очистить", en: "Clear" })}</button>
+          <button onClick={() => setSel(new Set())} className="text-sm text-slate-400 hover:text-slate-600">{tr(locale, { uz: "Tozalash", ru: "Очистить", en: "Clear", de: "Leeren" })}</button>
           <div className="flex gap-2">
-            <button onClick={onClose} className="rounded-lg border border-slate-200 px-4 py-2 text-sm font-medium text-slate-600 hover:bg-slate-50 dark:border-slate-600 dark:text-slate-300">{tr(locale, { uz: "Bekor", ru: "Отмена", en: "Cancel" })}</button>
-            <button onClick={() => onSave([...sel])} className="rounded-lg bg-brand-600 px-4 py-2 text-sm font-semibold text-white hover:bg-brand-700">{tr(locale, { uz: "Saqlash", ru: "Сохранить", en: "Save" })} ({sel.size})</button>
+            <button onClick={onClose} className="rounded-lg border border-slate-200 px-4 py-2 text-sm font-medium text-slate-600 hover:bg-slate-50 dark:border-slate-600 dark:text-slate-300">{tr(locale, { uz: "Bekor", ru: "Отмена", en: "Cancel", de: "Abbrechen" })}</button>
+            <button onClick={() => onSave([...sel])} className="rounded-lg bg-brand-600 px-4 py-2 text-sm font-semibold text-white hover:bg-brand-700">{tr(locale, { uz: "Saqlash", ru: "Сохранить", en: "Save", de: "Speichern" })} ({sel.size})</button>
           </div>
         </div>
       </div>

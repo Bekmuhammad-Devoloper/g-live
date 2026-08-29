@@ -90,7 +90,7 @@ export default function NewLeadForm({
         <div className="flex-1 overflow-y-auto px-5 py-4">
           <div className="grid grid-cols-2 gap-3">
             <div className="col-span-2">
-              <label className="mb-1 block text-xs font-medium text-slate-600 dark:text-slate-400">{tr(locale, { uz: "F.I.Sh.", ru: "Ф.И.О.", en: "Full name" })} <span className="text-red-500">*</span></label>
+              <label className="mb-1 block text-xs font-medium text-slate-600 dark:text-slate-400">{tr(locale, { uz: "F.I.Sh.", ru: "Ф.И.О.", en: "Full name", de: "Vollständiger Name" })} <span className="text-red-500">*</span></label>
               <input name="fullName" required autoFocus className={input} />
             </div>
             <div>
@@ -104,11 +104,11 @@ export default function NewLeadForm({
               </select>
             </div>
             <div>
-              <label className="mb-1 block text-xs font-medium text-slate-600 dark:text-slate-400">{tr(locale, { uz: "Kurs", ru: "Курс", en: "Course" })}</label>
-              <input name="interestCourse" placeholder={tr(locale, { uz: "Nemis tili A1", ru: "Немецкий язык A1", en: "German A1" })} className={input} />
+              <label className="mb-1 block text-xs font-medium text-slate-600 dark:text-slate-400">{tr(locale, { uz: "Kurs", ru: "Курс", en: "Course", de: "Kurs" })}</label>
+              <input name="interestCourse" placeholder={tr(locale, { uz: "Nemis tili A1", ru: "Немецкий язык A1", en: "German A1", de: "Deutsch A1" })} className={input} />
             </div>
             <div>
-              <label className="mb-1 block text-xs font-medium text-slate-600 dark:text-slate-400">{t("crm.budget")} ({tr(locale, { uz: "so'm", ru: "сум", en: "UZS" })})</label>
+              <label className="mb-1 block text-xs font-medium text-slate-600 dark:text-slate-400">{t("crm.budget")} ({tr(locale, { uz: "so'm", ru: "сум", en: "UZS", de: "UZS" })})</label>
               <input name="budget" type="number" min="0" step="10000" className={input} />
             </div>
             <div className="col-span-2">
@@ -119,9 +119,9 @@ export default function NewLeadForm({
             </div>
             <div className="col-span-2">
               <label className="mb-1 block text-xs font-medium text-slate-600 dark:text-slate-400">
-                {tr(locale, { uz: "Guruh", ru: "Группа", en: "Group" })}
+                {tr(locale, { uz: "Guruh", ru: "Группа", en: "Group", de: "Gruppe" })}
                 <span className="ml-1 font-normal text-slate-400">
-                  ({tr(locale, { uz: "ixtiyoriy", ru: "необязательно", en: "optional" })})
+                  ({tr(locale, { uz: "ixtiyoriy", ru: "необязательно", en: "optional", de: "optional" })})
                 </span>
               </label>
               <GroupPicker locale={locale} groups={groups} inputClass={input} />
@@ -135,18 +135,18 @@ export default function NewLeadForm({
           {state.error && (
             <p className="mt-3 rounded-lg bg-red-50 px-3 py-2 text-sm text-red-700 dark:bg-red-500/10 dark:text-red-300">
               {state.error === "duplicate"
-                ? tr(locale, { uz: "Bu telefon raqami bilan lid allaqachon mavjud (dublikat).", ru: "Лид с этим номером телефона уже существует (дубликат).", en: "A lead with this phone number already exists (duplicate)." })
+                ? tr(locale, { uz: "Bu telefon raqami bilan lid allaqachon mavjud (dublikat).", ru: "Лид с этим номером телефона уже существует (дубликат).", en: "A lead with this phone number already exists (duplicate).", de: "Ein Lead mit dieser Telefonnummer existiert bereits (Duplikat)." })
                 : state.error === "invalid_phone"
-                  ? tr(locale, { uz: "Telefon raqami noto'g'ri — masalan: +998 90 123 45 67", ru: "Неверный номер телефона — например: +998 90 123 45 67", en: "Invalid phone number — e.g. +998 90 123 45 67" })
+                  ? tr(locale, { uz: "Telefon raqami noto'g'ri — masalan: +998 90 123 45 67", ru: "Неверный номер телефона — например: +998 90 123 45 67", en: "Invalid phone number — e.g. +998 90 123 45 67", de: "Ungültige Telefonnummer — z. B. +998 90 123 45 67" })
                   : state.error === "forbidden"
                   ? t("pay.noPermission")
                   : state.error === "group_required"
-                    ? tr(locale, { uz: "\"Qabul qilindi\" bosqichi uchun guruh tanlash majburiy.", ru: "Для этапа «Принят» выбор группы обязателен.", en: "A group is required for the Won stage." })
+                    ? tr(locale, { uz: "\"Qabul qilindi\" bosqichi uchun guruh tanlash majburiy.", ru: "Для этапа «Принят» выбор группы обязателен.", en: "A group is required for the Won stage.", de: "Für die Phase 'Gewonnen' ist eine Gruppe erforderlich." })
                     : state.error === "group_full"
-                      ? tr(locale, { uz: "Tanlangan guruh to'lgan — boshqasini tanlang.", ru: "Выбранная группа заполнена — выберите другую.", en: "The selected group is full — pick another." })
+                      ? tr(locale, { uz: "Tanlangan guruh to'lgan — boshqasini tanlang.", ru: "Выбранная группа заполнена — выберите другую.", en: "The selected group is full — pick another.", de: "Die ausgewählte Gruppe ist voll — wählen Sie eine andere." })
                       : state.error === "group_not_found"
-                        ? tr(locale, { uz: "Guruh topilmadi.", ru: "Группа не найдена.", en: "Group not found." })
-                        : tr(locale, { uz: "Ma'lumotlar to'liq emas.", ru: "Данные заполнены не полностью.", en: "The data is incomplete." })}
+                        ? tr(locale, { uz: "Guruh topilmadi.", ru: "Группа не найдена.", en: "Group not found.", de: "Gruppe nicht gefunden." })
+                        : tr(locale, { uz: "Ma'lumotlar to'liq emas.", ru: "Данные заполнены не полностью.", en: "The data is incomplete.", de: "Die Daten sind unvollständig." })}
             </p>
           )}
         </div>
@@ -191,8 +191,8 @@ function GroupPicker({ locale, groups, inputClass }: { locale: Locale; groups: E
   const [picked, setPicked] = useState("");
   const boxRef = useRef<HTMLDivElement>(null);
 
-  const none = tr(locale, { uz: "— yo'naltirilmagan —", ru: "— не назначена —", en: "— not assigned —" });
-  const fullTxt = tr(locale, { uz: "to'lgan", ru: "заполнена", en: "full" });
+  const none = tr(locale, { uz: "— yo'naltirilmagan —", ru: "— не назначена —", en: "— not assigned —", de: "— nicht zugewiesen —" });
+  const fullTxt = tr(locale, { uz: "to'lgan", ru: "заполнена", en: "full", de: "voll" });
   const optLabel = (g: EnrollGroupOpt) =>
     `${g.courseName} — ${g.name} (${g.taken}/${g.capacity})` +
     (g.schedule ? ` · ${g.schedule}` : "") +

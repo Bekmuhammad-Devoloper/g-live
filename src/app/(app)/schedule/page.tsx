@@ -22,7 +22,7 @@ const isoLocal = (d: Date | null) => (d ? `${d.getFullYear()}-${p2(d.getMonth() 
 export default async function SchedulePage() {
   const s = await requireSession();
   if (!canRead(s.role, MODULES.GROUPS)) {
-    return <Forbidden title={tr(s.locale, { uz: "Kirish taqiqlangan", ru: "Доступ запрещён", en: "Access denied" })} body={tr(s.locale, { uz: "Bu bo'lim uchun ruxsat yo'q.", ru: "Нет доступа к этому разделу.", en: "You do not have access to this section." })} />;
+    return <Forbidden title={tr(s.locale, { uz: "Kirish taqiqlangan", ru: "Доступ запрещён", en: "Access denied", de: "Zugriff verweigert" })} body={tr(s.locale, { uz: "Bu bo'lim uchun ruxsat yo'q.", ru: "Нет доступа к этому разделу.", en: "You do not have access to this section.", de: "Sie haben keine Berechtigung für diesen Bereich." })} />;
   }
 
   let where: Prisma.GroupWhereInput = { status: { not: "CANCELLED" } };
@@ -80,7 +80,7 @@ export default async function SchedulePage() {
 
   return (
     <div className="space-y-4">
-      <h1 className="text-[22px] font-bold tracking-tight text-slate-900 dark:text-slate-100">{tr(s.locale, { uz: "Dars jadvali", ru: "Расписание уроков", en: "Lesson schedule" })}</h1>
+      <h1 className="text-[22px] font-bold tracking-tight text-slate-900 dark:text-slate-100">{tr(s.locale, { uz: "Dars jadvali", ru: "Расписание уроков", en: "Lesson schedule", de: "Stundenplan" })}</h1>
       <LessonCalendar
         locale={s.locale}
         lessons={calLessons}

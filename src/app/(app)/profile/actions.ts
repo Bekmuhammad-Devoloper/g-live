@@ -16,7 +16,7 @@ export async function updateProfile(fd: FormData): Promise<Res> {
   const email = String(fd.get("email") || "").trim().toLowerCase();
   const gender = ["MALE", "FEMALE"].includes(String(fd.get("gender"))) ? String(fd.get("gender")) : null;
   const birthRaw = String(fd.get("birthDate") || "");
-  const locale = ["uz", "ru", "en"].includes(String(fd.get("locale"))) ? String(fd.get("locale")) : undefined;
+  const locale = ["uz", "ru", "en", "de"].includes(String(fd.get("locale"))) ? String(fd.get("locale")) : undefined;
   const imageUrl = String(fd.get("imageUrl") || "").trim() || null;
 
   if (fullName.length < 3) return { error: "F.I.Sh. kamida 3 ta harf bo'lsin" };

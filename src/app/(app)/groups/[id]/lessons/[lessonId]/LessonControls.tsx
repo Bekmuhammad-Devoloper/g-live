@@ -17,17 +17,17 @@ export function GenerateQrButton({ lessonId, hasQr, locale }: { lessonId: string
       className="rounded-lg bg-brand-600 px-4 py-2 text-sm font-semibold text-white hover:bg-brand-700 disabled:opacity-60"
     >
       {pending ? "..." : hasQr
-        ? tr(locale, { uz: "QR yangilash (15 daq)", ru: "Обновить QR (15 мин)", en: "Refresh QR (15 min)" })
-        : tr(locale, { uz: "QR yaratish (15 daq)", ru: "Создать QR (15 мин)", en: "Generate QR (15 min)" })}
+        ? tr(locale, { uz: "QR yangilash (15 daq)", ru: "Обновить QR (15 мин)", en: "Refresh QR (15 min)", de: "QR aktualisieren (15 Min.)" })
+        : tr(locale, { uz: "QR yaratish (15 daq)", ru: "Создать QR (15 мин)", en: "Generate QR (15 min)", de: "QR erstellen (15 Min.)" })}
     </button>
   );
 }
 
 const statusList = (locale: Locale): { key: string; label: string; tone: string }[] => [
-  { key: "PRESENT", label: tr(locale, { uz: "Keldi", ru: "Пришёл", en: "Present" }), tone: "bg-emerald-100 text-emerald-700 border-emerald-300" },
-  { key: "LATE", label: tr(locale, { uz: "Kechikdi", ru: "Опоздал", en: "Late" }), tone: "bg-amber-100 text-amber-700 border-amber-300" },
-  { key: "ABSENT", label: tr(locale, { uz: "Kelmadi", ru: "Отсутствовал", en: "Absent" }), tone: "bg-red-100 text-red-700 border-red-300" },
-  { key: "EXCUSED", label: tr(locale, { uz: "Uzrli", ru: "По уважительной", en: "Excused" }), tone: "bg-blue-100 text-blue-700 border-blue-300" },
+  { key: "PRESENT", label: tr(locale, { uz: "Keldi", ru: "Пришёл", en: "Present", de: "Anwesend" }), tone: "bg-emerald-100 text-emerald-700 border-emerald-300" },
+  { key: "LATE", label: tr(locale, { uz: "Kechikdi", ru: "Опоздал", en: "Late", de: "Verspätet" }), tone: "bg-amber-100 text-amber-700 border-amber-300" },
+  { key: "ABSENT", label: tr(locale, { uz: "Kelmadi", ru: "Отсутствовал", en: "Absent", de: "Abwesend" }), tone: "bg-red-100 text-red-700 border-red-300" },
+  { key: "EXCUSED", label: tr(locale, { uz: "Uzrli", ru: "По уважительной", en: "Excused", de: "Entschuldigt" }), tone: "bg-blue-100 text-blue-700 border-blue-300" },
 ];
 
 export function AttendanceControls({ lessonId, studentId, current, locale }: { lessonId: string; studentId: string; current: string | null; locale: Locale }) {
@@ -61,7 +61,7 @@ export function ConfirmButton({ lessonId, locale }: { lessonId: string; locale: 
       disabled={pending}
       className="rounded-lg border border-emerald-300 bg-emerald-50 px-4 py-2 text-sm font-semibold text-emerald-700 hover:bg-emerald-100 disabled:opacity-60"
     >
-      {pending ? "..." : tr(locale, { uz: "Yakuniy ro'yxatni tasdiqlash", ru: "Подтвердить итоговый список", en: "Confirm final list" })}
+      {pending ? "..." : tr(locale, { uz: "Yakuniy ro'yxatni tasdiqlash", ru: "Подтвердить итоговый список", en: "Confirm final list", de: "Endgültige Liste bestätigen" })}
     </button>
   );
 }

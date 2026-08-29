@@ -62,7 +62,7 @@ export default async function PaymentsPage() {
     <>
       <PageHeader
         title={t("pay.title")}
-        subtitle={writable ? undefined : tr(s.locale, { uz: "Sizda qo'lda to'lov kiritish huquqi yo'q (faqat ko'rish).", ru: "У вас нет прав на ручной ввод платежей (только просмотр).", en: "You do not have permission to enter manual payments (view only)." })}
+        subtitle={writable ? undefined : tr(s.locale, { uz: "Sizda qo'lda to'lov kiritish huquqi yo'q (faqat ko'rish).", ru: "У вас нет прав на ручной ввод платежей (только просмотр).", en: "You do not have permission to enter manual payments (view only).", de: "Sie haben keine Berechtigung, Zahlungen manuell einzugeben (nur Ansicht)." })}
         action={
           <div className="flex flex-wrap gap-2">
             <ExportButton rows={exportData} columns={exportColumns} filename="tolovlar" label={s.locale === "ru" ? "Экспорт" : s.locale === "en" ? "Export" : "Eksport"} />
@@ -78,7 +78,7 @@ export default async function PaymentsPage() {
 
       <div className="mb-5 grid grid-cols-2 gap-4 lg:grid-cols-4">
         <StatCard label={t("reports.revenue")} value={formatMoney(paidAgg._sum.amount ?? 0, s.locale)} tone="green" icon="wallet" />
-        <StatCard label={tr(s.locale, { uz: "Jami yozuvlar", ru: "Всего записей", en: "Total records" })} value={payments.length} icon="card" />
+        <StatCard label={tr(s.locale, { uz: "Jami yozuvlar", ru: "Всего записей", en: "Total records", de: "Datensätze insgesamt" })} value={payments.length} icon="card" />
       </div>
 
       <Table
@@ -125,7 +125,7 @@ export default async function PaymentsPage() {
       </Table>
 
       <p className="mt-3 text-xs text-slate-400">
-        ℹ️ {tr(s.locale, { uz: "To'lov yozuvlarini o'chirish taqiqlangan — faqat «bekor qilish» amali audit bilan qayd etiladi (TZ FR-PAY-04).", ru: "Удаление платёжных записей запрещено — только операция «отмена» фиксируется в аудите (ТЗ FR-PAY-04).", en: "Deleting payment records is prohibited — only the «cancel» action is logged in the audit (TS FR-PAY-04)." })}
+        ℹ️ {tr(s.locale, { uz: "To'lov yozuvlarini o'chirish taqiqlangan — faqat «bekor qilish» amali audit bilan qayd etiladi (TZ FR-PAY-04).", ru: "Удаление платёжных записей запрещено — только операция «отмена» фиксируется в аудите (ТЗ FR-PAY-04).", en: "Deleting payment records is prohibited — only the «cancel» action is logged in the audit (TS FR-PAY-04).", de: "Das Löschen von Zahlungsdatensätzen ist verboten — nur die Aktion «Stornieren» wird im Audit protokolliert (TS FR-PAY-04)." })}
       </p>
     </>
   );

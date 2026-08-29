@@ -43,13 +43,13 @@ export default function BalanceView({ staff, defaultFrom, defaultTo, locale }: {
       `balans_${from}_${to}`,
       [
         { key: "n", label: "№" },
-        { key: "name", label: tr(locale, { uz: "To'liq ismi", ru: "Полное имя", en: "Full name" }) },
-        { key: "phone", label: tr(locale, { uz: "Telefon raqam", ru: "Номер телефона", en: "Phone number" }) },
-        { key: "ishHaqi", label: tr(locale, { uz: "Ish haqi", ru: "Зарплата", en: "Salary" }) },
-        { key: "bonus", label: tr(locale, { uz: "Bonus", ru: "Бонус", en: "Bonus" }) },
-        { key: "avans", label: tr(locale, { uz: "Avans", ru: "Аванс", en: "Advance" }) },
-        { key: "jarima", label: tr(locale, { uz: "Jarima", ru: "Штраф", en: "Penalty" }) },
-        { key: "jami", label: tr(locale, { uz: "Jami", ru: "Итого", en: "Total" }) },
+        { key: "name", label: tr(locale, { uz: "To'liq ismi", ru: "Полное имя", en: "Full name", de: "Vollständiger Name" }) },
+        { key: "phone", label: tr(locale, { uz: "Telefon raqam", ru: "Номер телефона", en: "Phone number", de: "Telefonnummer" }) },
+        { key: "ishHaqi", label: tr(locale, { uz: "Ish haqi", ru: "Зарплата", en: "Salary", de: "Gehalt" }) },
+        { key: "bonus", label: tr(locale, { uz: "Bonus", ru: "Бонус", en: "Bonus", de: "Bonus" }) },
+        { key: "avans", label: tr(locale, { uz: "Avans", ru: "Аванс", en: "Advance", de: "Vorschuss" }) },
+        { key: "jarima", label: tr(locale, { uz: "Jarima", ru: "Штраф", en: "Penalty", de: "Strafe" }) },
+        { key: "jami", label: tr(locale, { uz: "Jami", ru: "Итого", en: "Total", de: "Gesamt" }) },
       ],
       rows.map((r, i) => ({ n: i + 1, name: r.name, phone: r.phone ?? "", ishHaqi: r.ishHaqi, bonus: r.bonus, avans: r.avans, jarima: r.jarima, jami: r.jami })),
     );
@@ -58,7 +58,7 @@ export default function BalanceView({ staff, defaultFrom, defaultTo, locale }: {
   return (
     <div className="space-y-4">
       <div className="flex flex-wrap items-center justify-between gap-3">
-        <h1 className="text-[22px] font-bold tracking-tight text-slate-900 dark:text-slate-100">{tr(locale, { uz: "Balans", ru: "Баланс", en: "Balance" })}</h1>
+        <h1 className="text-[22px] font-bold tracking-tight text-slate-900 dark:text-slate-100">{tr(locale, { uz: "Balans", ru: "Баланс", en: "Balance", de: "Saldo" })}</h1>
         <div className="flex flex-wrap items-center gap-3">
         {/* Sana oralig'i */}
         <div className="flex h-11 items-center gap-1 rounded-xl border border-slate-200 bg-white px-3 dark:border-slate-700 dark:bg-slate-800">
@@ -66,11 +66,11 @@ export default function BalanceView({ staff, defaultFrom, defaultTo, locale }: {
           <input type="date" value={from} onChange={(e) => { setFrom(e.target.value); setPage(1); }} className="w-[120px] bg-transparent text-sm text-slate-700 outline-none dark:text-slate-100" />
           <span className="text-slate-300">–</span>
           <input type="date" value={to} onChange={(e) => { setTo(e.target.value); setPage(1); }} className="w-[120px] bg-transparent text-sm text-slate-700 outline-none dark:text-slate-100" />
-          <button onClick={() => { setFrom(defaultFrom); setTo(defaultTo); }} className="ml-1 text-slate-400 hover:text-slate-600" title={tr(locale, { uz: "Tozalash", ru: "Очистить", en: "Clear" })}><Icon name="refresh" className="h-4 w-4" /></button>
+          <button onClick={() => { setFrom(defaultFrom); setTo(defaultTo); }} className="ml-1 text-slate-400 hover:text-slate-600" title={tr(locale, { uz: "Tozalash", ru: "Очистить", en: "Clear", de: "Zurücksetzen" })}><Icon name="refresh" className="h-4 w-4" /></button>
         </div>
         <button onClick={doExport} disabled={rows.length === 0} className="flex h-11 items-center gap-2 rounded-xl border border-slate-200 bg-white px-4 text-sm font-medium text-slate-700 transition hover:bg-slate-50 disabled:opacity-40 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-100 dark:hover:bg-slate-700">
           <Icon name="download" className="h-4 w-4" />
-          {tr(locale, { uz: "Eksport", ru: "Экспорт", en: "Export" })}
+          {tr(locale, { uz: "Eksport", ru: "Экспорт", en: "Export", de: "Exportieren" })}
         </button>
         </div>
       </div>
@@ -80,13 +80,13 @@ export default function BalanceView({ staff, defaultFrom, defaultTo, locale }: {
           <table className="w-full min-w-[820px] text-left text-sm">
             <thead className="border-b border-slate-200/70 bg-slate-50/80 text-[11px] font-semibold uppercase tracking-wider text-slate-500 dark:border-slate-800 dark:bg-slate-800/50">
               <tr>
-                <th className="w-12 px-4 py-3">№</th><th className="px-4 py-3">{tr(locale, { uz: "To'liq ismi", ru: "Полное имя", en: "Full name" })}</th><th className="px-4 py-3">{tr(locale, { uz: "Telefon raqam", ru: "Номер телефона", en: "Phone number" })}</th>
-                <th className="px-4 py-3 text-right">{tr(locale, { uz: "Ish haqi", ru: "Зарплата", en: "Salary" })}</th><th className="px-4 py-3 text-right">{tr(locale, { uz: "Bonus", ru: "Бонус", en: "Bonus" })}</th><th className="px-4 py-3 text-right">{tr(locale, { uz: "Avans", ru: "Аванс", en: "Advance" })}</th><th className="px-4 py-3 text-right">{tr(locale, { uz: "Jarima", ru: "Штраф", en: "Penalty" })}</th><th className="px-4 py-3 text-right">{tr(locale, { uz: "Jami", ru: "Итого", en: "Total" })}</th>
+                <th className="w-12 px-4 py-3">№</th><th className="px-4 py-3">{tr(locale, { uz: "To'liq ismi", ru: "Полное имя", en: "Full name", de: "Vollständiger Name" })}</th><th className="px-4 py-3">{tr(locale, { uz: "Telefon raqam", ru: "Номер телефона", en: "Phone number", de: "Telefonnummer" })}</th>
+                <th className="px-4 py-3 text-right">{tr(locale, { uz: "Ish haqi", ru: "Зарплата", en: "Salary", de: "Gehalt" })}</th><th className="px-4 py-3 text-right">{tr(locale, { uz: "Bonus", ru: "Бонус", en: "Bonus", de: "Bonus" })}</th><th className="px-4 py-3 text-right">{tr(locale, { uz: "Avans", ru: "Аванс", en: "Advance", de: "Vorschuss" })}</th><th className="px-4 py-3 text-right">{tr(locale, { uz: "Jarima", ru: "Штраф", en: "Penalty", de: "Strafe" })}</th><th className="px-4 py-3 text-right">{tr(locale, { uz: "Jami", ru: "Итого", en: "Total", de: "Gesamt" })}</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-slate-100 dark:divide-slate-800">
               {shown.length === 0 ? (
-                <tr><td colSpan={8} className="py-16 text-center text-slate-400">{tr(locale, { uz: "Ma'lumotlar topilmadi", ru: "Данные не найдены", en: "No data found" })}</td></tr>
+                <tr><td colSpan={8} className="py-16 text-center text-slate-400">{tr(locale, { uz: "Ma'lumotlar topilmadi", ru: "Данные не найдены", en: "No data found", de: "Keine Daten gefunden" })}</td></tr>
               ) : shown.map((r, i) => (
                 <tr key={r.id} className="hover:bg-slate-50 dark:hover:bg-slate-800/50">
                   <td className="px-4 py-3 text-slate-400">{(cur - 1) * pageSize + i + 1}</td>
@@ -103,7 +103,7 @@ export default function BalanceView({ staff, defaultFrom, defaultTo, locale }: {
             {shown.length > 0 && (
               <tfoot className="border-t-2 border-slate-200 bg-slate-50/60 dark:border-slate-700 dark:bg-slate-800/40">
                 <tr className="text-sm font-bold text-slate-700 dark:text-slate-200">
-                  <td className="px-4 py-3" colSpan={3}>{tr(locale, { uz: "Jami", ru: "Итого", en: "Total" })}</td>
+                  <td className="px-4 py-3" colSpan={3}>{tr(locale, { uz: "Jami", ru: "Итого", en: "Total", de: "Gesamt" })}</td>
                   <td className="px-4 py-3 text-right tabular-nums">{formatMoney(totals.ishHaqi, locale)}</td>
                   <td className="px-4 py-3 text-right tabular-nums text-emerald-600 dark:text-emerald-400">{formatMoney(totals.bonus, locale)}</td>
                   <td className="px-4 py-3 text-right tabular-nums">{formatMoney(totals.avans, locale)}</td>

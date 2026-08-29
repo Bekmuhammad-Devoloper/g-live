@@ -68,10 +68,10 @@ export default function OperatorDetail({ locale, op, leads, calls, months, perio
   const prev = months.filter((m) => !m.current && m.won > 0);
 
   const periods: { k: Props["period"]; label: string }[] = [
-    { k: "all", label: tr(locale, { uz: "Barchasi", ru: "Все", en: "All" }) },
-    { k: "today", label: tr(locale, { uz: "Bugun", ru: "Сегодня", en: "Today" }) },
-    { k: "month", label: tr(locale, { uz: "Shu oy", ru: "Этот месяц", en: "This month" }) },
-    { k: "year", label: tr(locale, { uz: "Shu yil", ru: "Этот год", en: "This year" }) },
+    { k: "all", label: tr(locale, { uz: "Barchasi", ru: "Все", en: "All", de: "Alle" }) },
+    { k: "today", label: tr(locale, { uz: "Bugun", ru: "Сегодня", en: "Today", de: "Heute" }) },
+    { k: "month", label: tr(locale, { uz: "Shu oy", ru: "Этот месяц", en: "This month", de: "Dieser Monat" }) },
+    { k: "year", label: tr(locale, { uz: "Shu yil", ru: "Этот год", en: "This year", de: "Dieses Jahr" }) },
   ];
 
   return (
@@ -86,7 +86,7 @@ export default function OperatorDetail({ locale, op, leads, calls, months, perio
           <div>
             <h1 className="text-[22px] font-bold tracking-tight text-slate-900 dark:text-slate-100">{op.name}</h1>
             <p className="text-sm text-slate-400">
-              {op.position || tr(locale, { uz: "Operator profili", ru: "Профиль оператора", en: "Operator profile" })}
+              {op.position || tr(locale, { uz: "Operator profili", ru: "Профиль оператора", en: "Operator profile", de: "Operatorprofil" })}
               {op.branch && <span className="ml-1.5">• {op.branch}</span>}
             </p>
           </div>
@@ -124,7 +124,7 @@ export default function OperatorDetail({ locale, op, leads, calls, months, perio
                   ? "bg-emerald-50 text-emerald-700 ring-emerald-200 dark:bg-emerald-500/15 dark:text-emerald-300 dark:ring-emerald-500/30"
                   : "bg-slate-100 text-slate-500 ring-slate-200 dark:bg-slate-800 dark:text-slate-400 dark:ring-slate-700"
               )}>
-                {op.isActive ? tr(locale, { uz: "Faol", ru: "Активен", en: "Active" }) : tr(locale, { uz: "Nofaol", ru: "Неактивен", en: "Inactive" })}
+                {op.isActive ? tr(locale, { uz: "Faol", ru: "Активен", en: "Active", de: "Aktiv" }) : tr(locale, { uz: "Nofaol", ru: "Неактивен", en: "Inactive", de: "Inaktiv" })}
               </span>
             </div>
           </div>
@@ -132,20 +132,20 @@ export default function OperatorDetail({ locale, op, leads, calls, months, perio
             <InfoRow icon="mail" value={op.email} />
             <InfoRow icon="phone" value={op.phone || "—"} />
             {op.sip && <InfoRow icon="headphones" value={`SIP: ${op.sip}`} />}
-            <InfoRow icon="calendar" value={`${tr(locale, { uz: "Yaratilgan", ru: "Создан", en: "Created" })}: ${op.createdAt}`} />
-            <InfoRow icon="clock" value={`${tr(locale, { uz: "Oxirgi kirish", ru: "Последний вход", en: "Last login" })}: ${op.lastLoginAt ?? tr(locale, { uz: "hech qachon", ru: "никогда", en: "never" })}`} />
-            {op.password && <InfoRow icon="shield" value={`${tr(locale, { uz: "Parol", ru: "Пароль", en: "Password" })}: ${op.password}`} mono />}
+            <InfoRow icon="calendar" value={`${tr(locale, { uz: "Yaratilgan", ru: "Создан", en: "Created", de: "Erstellt" })}: ${op.createdAt}`} />
+            <InfoRow icon="clock" value={`${tr(locale, { uz: "Oxirgi kirish", ru: "Последний вход", en: "Last login", de: "Letzte Anmeldung" })}: ${op.lastLoginAt ?? tr(locale, { uz: "hech qachon", ru: "никогда", en: "never", de: "nie" })}`} />
+            {op.password && <InfoRow icon="shield" value={`${tr(locale, { uz: "Parol", ru: "Пароль", en: "Password", de: "Passwort" })}: ${op.password}`} mono />}
           </div>
         </div>
 
         <div className="rounded-2xl border border-slate-200/70 bg-white p-5 shadow-card dark:border-slate-800 dark:bg-slate-900">
           <div className="mb-4 flex items-center gap-2">
             <Icon name="chart" className="h-5 w-5 text-slate-400" />
-            <h3 className="font-semibold text-slate-800 dark:text-slate-100">{tr(locale, { uz: "Konversiya", ru: "Конверсия", en: "Conversion" })}</h3>
+            <h3 className="font-semibold text-slate-800 dark:text-slate-100">{tr(locale, { uz: "Konversiya", ru: "Конверсия", en: "Conversion", de: "Konversion" })}</h3>
           </div>
           <div className="mb-4 text-center">
             <div className="text-5xl font-bold" style={{ color: kpiColor(stats.conv) }}>{stats.conv}%</div>
-            <div className="mt-1 text-sm text-slate-400">{tr(locale, { uz: "Muvaffaqiyat darajasi", ru: "Уровень успеха", en: "Success rate" })}</div>
+            <div className="mt-1 text-sm text-slate-400">{tr(locale, { uz: "Muvaffaqiyat darajasi", ru: "Уровень успеха", en: "Success rate", de: "Erfolgsquote" })}</div>
           </div>
           <div className="mb-4 h-3 w-full overflow-hidden rounded-full bg-slate-100 dark:bg-slate-800">
             <div className="h-full rounded-full transition-all" style={{ width: `${Math.min(100, stats.conv)}%`, background: kpiColor(stats.conv) }} />
@@ -161,20 +161,20 @@ export default function OperatorDetail({ locale, op, leads, calls, months, perio
 
         <div className="rounded-2xl border border-slate-200/70 bg-white p-5 shadow-card dark:border-slate-800 dark:bg-slate-900">
           <h3 className="mb-4 flex items-center gap-2 font-semibold text-slate-800 dark:text-slate-100">
-            <Icon name="chart" className="h-5 w-5 text-slate-400" /> {tr(locale, { uz: "Statistika", ru: "Статистика", en: "Statistics" })}
+            <Icon name="chart" className="h-5 w-5 text-slate-400" /> {tr(locale, { uz: "Statistika", ru: "Статистика", en: "Statistics", de: "Statistik" })}
           </h3>
           <div className="grid grid-cols-2 gap-2.5">
-            <Mini value={stats.fresh} label={tr(locale, { uz: "Yangi", ru: "Новые", en: "New" })} tone="#3b82f6" />
-            <Mini value={stats.won} label={tr(locale, { uz: "Muvaffaqiyatli", ru: "Успешные", en: "Successful" })} tone="#10b981" />
-            <Mini value={stats.lost} label={tr(locale, { uz: "Yo'qotilgan", ru: "Потерянные", en: "Lost" })} tone="#ef4444" />
-            <Mini value={stats.missedCalls} label={tr(locale, { uz: "Javobsiz qo'ng'iroq", ru: "Без ответа", en: "No answer" })} tone="#f59e0b" />
+            <Mini value={stats.fresh} label={tr(locale, { uz: "Yangi", ru: "Новые", en: "New", de: "Neu" })} tone="#3b82f6" />
+            <Mini value={stats.won} label={tr(locale, { uz: "Muvaffaqiyatli", ru: "Успешные", en: "Successful", de: "Erfolgreich" })} tone="#10b981" />
+            <Mini value={stats.lost} label={tr(locale, { uz: "Yo'qotilgan", ru: "Потерянные", en: "Lost", de: "Verloren" })} tone="#ef4444" />
+            <Mini value={stats.missedCalls} label={tr(locale, { uz: "Javobsiz qo'ng'iroq", ru: "Без ответа", en: "No answer", de: "Ohne Antwort" })} tone="#f59e0b" />
             <div className="col-span-2">
-              <Mini value={stats.total} label={tr(locale, { uz: "Jami lidlar", ru: "Всего лидов", en: "Total leads" })} tone="#8b5cf6" />
+              <Mini value={stats.total} label={tr(locale, { uz: "Jami lidlar", ru: "Всего лидов", en: "Total leads", de: "Leads gesamt" })} tone="#8b5cf6" />
             </div>
           </div>
           <div className="mt-3 flex items-center justify-between border-t border-slate-100 pt-3 text-xs text-slate-400 dark:border-slate-800">
-            <span>{tr(locale, { uz: "Qo'ng'iroqlar", ru: "Звонки", en: "Calls" })}: <b className="text-slate-600 dark:text-slate-300">{stats.callsTotal}</b></span>
-            <span>{tr(locale, { uz: "Gaplashgan", ru: "Наговорено", en: "Talk time" })}: <b className="text-slate-600 dark:text-slate-300">{fmtDur(stats.talkSec)}</b></span>
+            <span>{tr(locale, { uz: "Qo'ng'iroqlar", ru: "Звонки", en: "Calls", de: "Anrufe" })}: <b className="text-slate-600 dark:text-slate-300">{stats.callsTotal}</b></span>
+            <span>{tr(locale, { uz: "Gaplashgan", ru: "Наговорено", en: "Talk time", de: "Gesprächszeit" })}: <b className="text-slate-600 dark:text-slate-300">{fmtDur(stats.talkSec)}</b></span>
           </div>
         </div>
       </div>
@@ -184,26 +184,26 @@ export default function OperatorDetail({ locale, op, leads, calls, months, perio
         <div className="overflow-hidden rounded-2xl border border-slate-200/70 bg-white shadow-card dark:border-slate-800 dark:bg-slate-900">
           <div className="border-b border-slate-100 px-5 py-4 dark:border-slate-800">
             <h2 className="flex items-center gap-2 font-bold text-slate-800 dark:text-slate-100">
-              <Icon name="wallet" className="h-5 w-5 text-violet-500" /> {tr(locale, { uz: "Oylik maosh", ru: "Месячная зарплата", en: "Monthly salary" })}
+              <Icon name="wallet" className="h-5 w-5 text-violet-500" /> {tr(locale, { uz: "Oylik maosh", ru: "Месячная зарплата", en: "Monthly salary", de: "Monatsgehalt" })}
             </h2>
             <p className="mt-1 text-sm text-slate-400">
-              {tr(locale, { uz: "Fiksa va KPI bonus — muvaffaqiyatli lidlar bo'yicha", ru: "Фикса и KPI бонус — по успешным лидам", en: "Fixed salary and KPI bonus — based on successful leads" })}
+              {tr(locale, { uz: "Fiksa va KPI bonus — muvaffaqiyatli lidlar bo'yicha", ru: "Фикса и KPI бонус — по успешным лидам", en: "Fixed salary and KPI bonus — based on successful leads", de: "Festgehalt und KPI-Bonus — basierend auf erfolgreichen Leads" })}
             </p>
           </div>
           <div className="p-5">
             <div className="grid gap-3 sm:grid-cols-3">
-              <Pay icon="coins" tone="#8b5cf6" label={tr(locale, { uz: "Fiksa maosh", ru: "Фикса", en: "Fixed salary" })} value={formatMoney(cur.fiksa, locale)} />
+              <Pay icon="coins" tone="#8b5cf6" label={tr(locale, { uz: "Fiksa maosh", ru: "Фикса", en: "Fixed salary", de: "Festgehalt" })} value={formatMoney(cur.fiksa, locale)} />
               <Pay
                 icon="chart"
                 tone="#f97316"
-                label={`${tr(locale, { uz: "KPI bonus", ru: "KPI бонус", en: "KPI bonus" })} (${cur.label})`}
+                label={`${tr(locale, { uz: "KPI bonus", ru: "KPI бонус", en: "KPI bonus", de: "KPI-Bonus" })} (${cur.label})`}
                 value={formatMoney(cur.bonus, locale)}
-                hint={`${tr(locale, { uz: "Muvaffaqiyatli lidlar", ru: "Успешные лиды", en: "Successful leads" })}: ${cur.won} → ${formatMoney(cur.won * cur.bonus, locale)}`}
+                hint={`${tr(locale, { uz: "Muvaffaqiyatli lidlar", ru: "Успешные лиды", en: "Successful leads", de: "Erfolgreiche Leads" })}: ${cur.won} → ${formatMoney(cur.won * cur.bonus, locale)}`}
               />
               <Pay
                 icon="award"
                 tone="#10b981"
-                label={`${tr(locale, { uz: "Jami oylik", ru: "Итого за месяц", en: "Monthly total" })} (${cur.label})`}
+                label={`${tr(locale, { uz: "Jami oylik", ru: "Итого за месяц", en: "Monthly total", de: "Monatssumme" })} (${cur.label})`}
                 value={formatMoney(cur.total, locale)}
                 hint={`${grp(cur.fiksa)} + ${cur.won} × ${grp(cur.bonus)}`}
                 accent
@@ -213,7 +213,7 @@ export default function OperatorDetail({ locale, op, leads, calls, months, perio
             {prev.length > 0 && (
               <div className="mt-5">
                 <h3 className="mb-3 flex items-center gap-2 text-sm font-semibold text-slate-400">
-                  <Icon name="calendar" className="h-4 w-4" /> {tr(locale, { uz: "Oldingi oylar", ru: "Прошлые месяцы", en: "Previous months" })}
+                  <Icon name="calendar" className="h-4 w-4" /> {tr(locale, { uz: "Oldingi oylar", ru: "Прошлые месяцы", en: "Previous months", de: "Vorherige Monate" })}
                 </h3>
                 <div className="space-y-2">
                   {prev.map((m) => (
@@ -221,7 +221,7 @@ export default function OperatorDetail({ locale, op, leads, calls, months, perio
                       <div>
                         <p className="text-sm font-medium text-slate-700 dark:text-slate-200">{m.label}</p>
                         <p className="text-xs text-slate-400">
-                          {tr(locale, { uz: "Muvaffaqiyatli lidlar", ru: "Успешные лиды", en: "Successful leads" })}: <b className="text-emerald-600 dark:text-emerald-400">{m.won}</b>
+                          {tr(locale, { uz: "Muvaffaqiyatli lidlar", ru: "Успешные лиды", en: "Successful leads", de: "Erfolgreiche Leads" })}: <b className="text-emerald-600 dark:text-emerald-400">{m.won}</b>
                         </p>
                       </div>
                       <p className="text-base font-bold text-emerald-600 dark:text-emerald-400">{formatMoney(m.total, locale)}</p>
@@ -237,10 +237,10 @@ export default function OperatorDetail({ locale, op, leads, calls, months, perio
       {/* Tablar */}
       <div className="overflow-hidden rounded-2xl border border-slate-200/70 bg-white shadow-card dark:border-slate-800 dark:bg-slate-900">
         <div className="flex overflow-x-auto border-b border-slate-100 dark:border-slate-800">
-          <TabBtn active={tab === "all"} onClick={() => setTab("all")} icon="user" label={tr(locale, { uz: "Barcha lidlar", ru: "Все лиды", en: "All leads" })} count={leads.length} tone="slate" />
-          <TabBtn active={tab === "talked"} onClick={() => setTab("talked")} icon="phoneCall" label={tr(locale, { uz: "Gaplashilgan", ru: "Поговорили", en: "Talked" })} count={talked.length} tone="emerald" />
-          <TabBtn active={tab === "no_answer"} onClick={() => setTab("no_answer")} icon="phoneOff" label={tr(locale, { uz: "Javob bermadi", ru: "Не ответили", en: "No answer" })} count={noAnswer.length} tone="red" />
-          <TabBtn active={tab === "calls"} onClick={() => setTab("calls")} icon="phone" label={tr(locale, { uz: "Qo'ng'iroqlar tarixi", ru: "История звонков", en: "Call history" })} count={calls.length} tone="blue" />
+          <TabBtn active={tab === "all"} onClick={() => setTab("all")} icon="user" label={tr(locale, { uz: "Barcha lidlar", ru: "Все лиды", en: "All leads", de: "Alle Leads" })} count={leads.length} tone="slate" />
+          <TabBtn active={tab === "talked"} onClick={() => setTab("talked")} icon="phoneCall" label={tr(locale, { uz: "Gaplashilgan", ru: "Поговорили", en: "Talked", de: "Erreicht" })} count={talked.length} tone="emerald" />
+          <TabBtn active={tab === "no_answer"} onClick={() => setTab("no_answer")} icon="phoneOff" label={tr(locale, { uz: "Javob bermadi", ru: "Не ответили", en: "No answer", de: "Nicht abgenommen" })} count={noAnswer.length} tone="red" />
+          <TabBtn active={tab === "calls"} onClick={() => setTab("calls")} icon="phone" label={tr(locale, { uz: "Qo'ng'iroqlar tarixi", ru: "История звонков", en: "Call history", de: "Anrufverlauf" })} count={calls.length} tone="blue" />
         </div>
         {tab === "calls"
           ? <CallsTable locale={locale} calls={calls} />

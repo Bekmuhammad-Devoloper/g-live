@@ -38,7 +38,7 @@ export function SortHeader({
       type="button"
       onClick={go}
       className={`inline-flex items-center gap-1 text-left hover:text-brand-600 dark:hover:text-brand-300 ${className ?? ""}`}
-      title={tr(locale, { uz: "Saralash", ru: "Сортировка", en: "Sort" })}
+      title={tr(locale, { uz: "Saralash", ru: "Сортировка", en: "Sort", de: "Sortieren" })}
     >
       <span>{label}</span>
       <Icon

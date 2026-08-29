@@ -27,7 +27,7 @@ export default async function LessonPage({ params }: { params: Promise<{ id: str
   const isOwnerTeacher = s.role === ROLES.TEACHER && lesson.group.teacherId === s.userId;
   const canManage = full || isOwnerTeacher;
   const canView = canManage || [ROLES.DIRECTOR, ROLES.ADMIN, ROLES.MANAGER].includes(s.role as never);
-  if (!canView) return <Forbidden title={tr(s.locale, { uz: "Kirish taqiqlangan", ru: "Доступ запрещён", en: "Access denied" })} body={tr(s.locale, { uz: "Bu darsga kirish huquqingiz yo'q.", ru: "У вас нет прав доступа к этому уроку.", en: "You do not have access to this lesson." })} />;
+  if (!canView) return <Forbidden title={tr(s.locale, { uz: "Kirish taqiqlangan", ru: "Доступ запрещён", en: "Access denied", de: "Zugriff verweigert" })} body={tr(s.locale, { uz: "Bu darsga kirish huquqingiz yo'q.", ru: "У вас нет прав доступа к этому уроку.", en: "You do not have access to this lesson.", de: "Sie haben keinen Zugriff auf diesen Unterricht." })} />;
 
   const attMap = new Map(lesson.attendances.map((a) => [a.studentId, a]));
   const qrActive = !!lesson.qrToken && !!lesson.qrExpiresAt && lesson.qrExpiresAt.getTime() > Date.now();
@@ -48,27 +48,27 @@ export default async function LessonPage({ params }: { params: Promise<{ id: str
       <div className="mb-4">
         <Link href={`/groups/${id}`} className="text-sm text-brand-600 hover:underline">← {lesson.group.name}</Link>
       </div>
-      <PageHeader title={lesson.topic ?? tr(s.locale, { uz: "Dars", ru: "Урок", en: "Lesson" })} subtitle={fmt(lesson.startsAt)} />
+      <PageHeader title={lesson.topic ?? tr(s.locale, { uz: "Dars", ru: "Урок", en: "Lesson", de: "Unterricht" })} subtitle={fmt(lesson.startsAt)} />
 
       <div className="grid gap-6 lg:grid-cols-3">
         {/* QR panel */}
         {canManage && (
           <Card className="lg:col-span-1">
-            <h3 className="mb-3 text-sm font-semibold text-slate-700">{tr(s.locale, { uz: "QR-davomat", ru: "QR-посещаемость", en: "QR attendance" })}</h3>
+            <h3 className="mb-3 text-sm font-semibold text-slate-700">{tr(s.locale, { uz: "QR-davomat", ru: "QR-посещаемость", en: "QR attendance", de: "QR-Anwesenheit" })}</h3>
             {qrActive ? (
               <div className="space-y-3 text-center">
                 <div className="mx-auto inline-block rounded-lg border border-slate-200 p-2" dangerouslySetInnerHTML={{ __html: qrSvg }} />
                 <p className="text-xs text-slate-400">
-                  {tr(s.locale, { uz: "Amal muddati", ru: "Срок действия", en: "Valid until" })}: {lesson.qrExpiresAt ? fmt(lesson.qrExpiresAt) : "—"}
+                  {tr(s.locale, { uz: "Amal muddati", ru: "Срок действия", en: "Valid until", de: "Gültig bis" })}: {lesson.qrExpiresAt ? fmt(lesson.qrExpiresAt) : "—"}
                 </p>
                 <Link href={`/checkin/${lesson.qrToken}`} className="block text-xs text-brand-600 hover:underline">
-                  {tr(s.locale, { uz: "Check-in havolasi (sinash uchun)", ru: "Ссылка для отметки (для проверки)", en: "Check-in link (for testing)" })}
+                  {tr(s.locale, { uz: "Check-in havolasi (sinash uchun)", ru: "Ссылка для отметки (для проверки)", en: "Check-in link (for testing)", de: "Check-in-Link (zum Testen)" })}
                 </Link>
                 <GenerateQrButton lessonId={lesson.id} hasQr={true} locale={s.locale} />
               </div>
             ) : (
               <div className="space-y-3 text-center">
-                <p className="text-sm text-slate-400">{tr(s.locale, { uz: "QR hali yaratilmagan yoki muddati tugagan.", ru: "QR ещё не создан или срок его действия истёк.", en: "QR not yet generated or has expired." })}</p>
+                <p className="text-sm text-slate-400">{tr(s.locale, { uz: "QR hali yaratilmagan yoki muddati tugagan.", ru: "QR ещё не создан или срок его действия истёк.", en: "QR not yet generated or has expired.", de: "QR-Code noch nicht erstellt oder abgelaufen." })}</p>
                 <GenerateQrButton lessonId={lesson.id} hasQr={false} locale={s.locale} />
               </div>
             )}
@@ -78,15 +78,15 @@ export default async function LessonPage({ params }: { params: Promise<{ id: str
         {/* Davomat ro'yxati */}
         <Card className={canManage ? "lg:col-span-2" : "lg:col-span-3"}>
           <div className="mb-3 flex items-center justify-between">
-            <h3 className="text-sm font-semibold text-slate-700">{tr(s.locale, { uz: "Davomat", ru: "Посещаемость", en: "Attendance" })} ({lesson.group.students.length})</h3>
+            <h3 className="text-sm font-semibold text-slate-700">{tr(s.locale, { uz: "Davomat", ru: "Посещаемость", en: "Attendance", de: "Anwesenheit" })} ({lesson.group.students.length})</h3>
             {canManage && lesson.attendances.length > 0 && <ConfirmButton lessonId={lesson.id} locale={s.locale} />}
           </div>
           <Table
             head={
               <tr>
-                <th className="px-3 py-2">{tr(s.locale, { uz: "O'quvchi", ru: "Ученик", en: "Student" })}</th>
-                <th className="px-3 py-2">{tr(s.locale, { uz: "Holat", ru: "Статус", en: "Status" })}</th>
-                {canManage && <th className="px-3 py-2">{tr(s.locale, { uz: "Belgilash", ru: "Отметить", en: "Mark" })}</th>}
+                <th className="px-3 py-2">{tr(s.locale, { uz: "O'quvchi", ru: "Ученик", en: "Student", de: "Schüler" })}</th>
+                <th className="px-3 py-2">{tr(s.locale, { uz: "Holat", ru: "Статус", en: "Status", de: "Status" })}</th>
+                {canManage && <th className="px-3 py-2">{tr(s.locale, { uz: "Belgilash", ru: "Отметить", en: "Mark", de: "Markieren" })}</th>}
               </tr>
             }
           >
@@ -96,7 +96,7 @@ export default async function LessonPage({ params }: { params: Promise<{ id: str
                 <tr key={gs.id} className="hover:bg-slate-50">
                   <td className="px-3 py-2 font-medium text-slate-800">
                     {gs.student.fullName}
-                    {a?.anomaly && <Badge tone="amber">{tr(s.locale, { uz: "anomaliya", ru: "аномалия", en: "anomaly" })}</Badge>}
+                    {a?.anomaly && <Badge tone="amber">{tr(s.locale, { uz: "anomaliya", ru: "аномалия", en: "anomaly", de: "Anomalie" })}</Badge>}
                   </td>
                   <td className="px-3 py-2">
                     {a ? (

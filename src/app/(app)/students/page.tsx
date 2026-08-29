@@ -22,8 +22,8 @@ export default async function StudentsPage() {
   if (!ALLOWED.includes(s.role as never)) {
     return (
       <Forbidden
-        title={tr(s.locale, { uz: "Kirish taqiqlangan", ru: "Доступ запрещён", en: "Access denied" })}
-        body={tr(s.locale, { uz: "Bu bo'lim xodimlar uchun.", ru: "Этот раздел для сотрудников.", en: "This section is for staff." })}
+        title={tr(s.locale, { uz: "Kirish taqiqlangan", ru: "Доступ запрещён", en: "Access denied", de: "Zugriff verweigert" })}
+        body={tr(s.locale, { uz: "Bu bo'lim xodimlar uchun.", ru: "Этот раздел для сотрудников.", en: "This section is for staff.", de: "Dieser Bereich ist für Mitarbeiter." })}
       />
     );
   }
@@ -132,23 +132,23 @@ function LicenseBanner({ until, daysLeft, locale }: { until: string; daysLeft: n
       <div className="flex items-center gap-2.5 text-sm">
         <Icon name="calendar" className={soon ? "h-5 w-5 text-amber-600" : "h-5 w-5 text-slate-400"} />
         <span className="text-slate-600 dark:text-slate-300">
-          {tr(locale, { uz: "Litsenziyaning platformaga amal qilish muddati:", ru: "Срок действия лицензии на платформу:", en: "Platform license valid until:" })}{" "}
+          {tr(locale, { uz: "Litsenziyaning platformaga amal qilish muddati:", ru: "Срок действия лицензии на платформу:", en: "Platform license valid until:", de: "Gültigkeit der Plattformlizenz bis:" })}{" "}
           <span className="font-semibold text-slate-800 dark:text-slate-100">{date} — 23:59</span>
         </span>
         <span className={`font-semibold ${soon ? "text-amber-700 dark:text-amber-400" : "text-slate-400"}`}>
           {daysLeft > 0
             ? (soon
-                ? tr(locale, { uz: `${daysLeft} kundan kam vaqt qoldi`, ru: `Осталось меньше ${daysLeft} дней`, en: `Less than ${daysLeft} days left` })
-                : tr(locale, { uz: `${daysLeft} kun qoldi`, ru: `Осталось ${daysLeft} дней`, en: `${daysLeft} days left` }))
-            : tr(locale, { uz: "Muddat tugagan", ru: "Срок истёк", en: "Expired" })}
+                ? tr(locale, { uz: `${daysLeft} kundan kam vaqt qoldi`, ru: `Осталось меньше ${daysLeft} дней`, en: `Less than ${daysLeft} days left`, de: `Weniger als ${daysLeft} Tage übrig` })
+                : tr(locale, { uz: `${daysLeft} kun qoldi`, ru: `Осталось ${daysLeft} дней`, en: `${daysLeft} days left`, de: `${daysLeft} Tage übrig` }))
+            : tr(locale, { uz: "Muddat tugagan", ru: "Срок истёк", en: "Expired", de: "Abgelaufen" })}
         </span>
       </div>
       <div className="flex items-center gap-2">
         <Link href="/settings/billing" className="rounded-lg bg-slate-500 px-4 py-1.5 text-sm font-medium text-white transition hover:bg-slate-600">
-          {tr(locale, { uz: "Batafsil", ru: "Подробнее", en: "Details" })}
+          {tr(locale, { uz: "Batafsil", ru: "Подробнее", en: "Details", de: "Details" })}
         </Link>
         <Link href="/settings/billing" className="rounded-lg bg-amber-500 px-4 py-1.5 text-sm font-semibold text-white transition hover:bg-amber-600">
-          {tr(locale, { uz: "To'lash", ru: "Оплатить", en: "Pay" })}
+          {tr(locale, { uz: "To'lash", ru: "Оплатить", en: "Pay", de: "Bezahlen" })}
         </Link>
       </div>
     </div>

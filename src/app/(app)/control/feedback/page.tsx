@@ -11,9 +11,9 @@ const ALLOWED = [ROLES.DIRECTOR, ROLES.DEPUTY_DIRECTOR, ROLES.ADMIN];
 export default async function FeedbackPage() {
   const s = await requireSession();
   if (!ALLOWED.includes(s.role as never)) {
-    return <Forbidden title={tr(s.locale, { uz: "Kirish taqiqlangan", ru: "Доступ запрещён", en: "Access denied" })} body={tr(s.locale, { uz: "Bu bo'lim rahbariyat uchun.", ru: "Этот раздел для руководства.", en: "This section is for management." })} />;
+    return <Forbidden title={tr(s.locale, { uz: "Kirish taqiqlangan", ru: "Доступ запрещён", en: "Access denied", de: "Zugriff verweigert" })} body={tr(s.locale, { uz: "Bu bo'lim rahbariyat uchun.", ru: "Этот раздел для руководства.", en: "This section is for management.", de: "Dieser Bereich ist für die Geschäftsleitung." })} />;
   }
-  const T = (uz: string, ru: string, en: string) => tr(s.locale, { uz, ru, en });
+  const T = (uz: string, ru: string, en: string, de: string = en) => tr(s.locale, { uz, ru, en, de });
 
   // Feedback'da branchId yo'q — faol filial o'qituvchilari orqali cheklaymiz
   const branchTeachers = s.branchId
@@ -46,26 +46,26 @@ export default async function FeedbackPage() {
 
   return (
     <>
-      <PageHeader title={T("Fikr-mulohaza", "Отзывы", "Feedback")} subtitle={T("O'qituvchilar haqidagi baho va izohlar", "Оценки и отзывы о преподавателях", "Ratings and comments about teachers")} />
+      <PageHeader title={T("Fikr-mulohaza", "Отзывы", "Feedback", "Feedback")} subtitle={T("O'qituvchilar haqidagi baho va izohlar", "Оценки и отзывы о преподавателях", "Ratings and comments about teachers", "Bewertungen und Kommentare zu Lehrern")} />
 
       <div className="mb-6 grid grid-cols-2 gap-4 lg:grid-cols-3">
-        <StatCard label={T("Jami fikrlar", "Всего отзывов", "Total feedback")} value={total} icon="info" />
-        <StatCard label={T("O'rtacha baho", "Средняя оценка", "Average rating")} value={total ? avgAll.toFixed(1) : "—"} tone={avgAll >= 4 ? "green" : avgAll >= 3 ? "amber" : "red"} icon="trophy" />
-        <StatCard label={T("Past baho (1–2)", "Низкие (1–2)", "Low (1–2)")} value={low} tone={low ? "red" : "green"} icon="eye" />
+        <StatCard label={T("Jami fikrlar", "Всего отзывов", "Total feedback", "Feedback gesamt")} value={total} icon="info" />
+        <StatCard label={T("O'rtacha baho", "Средняя оценка", "Average rating", "Durchschnittsnote")} value={total ? avgAll.toFixed(1) : "—"} tone={avgAll >= 4 ? "green" : avgAll >= 3 ? "amber" : "red"} icon="trophy" />
+        <StatCard label={T("Past baho (1–2)", "Низкие (1–2)", "Low (1–2)", "Niedrig (1–2)")} value={low} tone={low ? "red" : "green"} icon="eye" />
       </div>
 
       <div className="grid gap-5 lg:grid-cols-[1fr_360px]">
         <Card padded={false}>
-          <div className="border-b border-slate-100 px-5 py-4"><h3 className="text-sm font-semibold text-slate-700">{T("So'nggi fikrlar", "Последние отзывы", "Recent feedback")}</h3></div>
+          <div className="border-b border-slate-100 px-5 py-4"><h3 className="text-sm font-semibold text-slate-700">{T("So'nggi fikrlar", "Последние отзывы", "Recent feedback", "Neueste Rückmeldungen")}</h3></div>
           <Table head={<tr>
-            <th className="px-4 py-3">{T("O'qituvchi", "Преподаватель", "Teacher")}</th>
-            <th className="px-4 py-3">{T("Baho", "Оценка", "Rating")}</th>
-            <th className="px-4 py-3">{T("Izoh", "Комментарий", "Comment")}</th>
-            <th className="px-4 py-3">{T("Kimdan / guruh", "От кого / группа", "From / group")}</th>
-            <th className="px-4 py-3">{T("Sana", "Дата", "Date")}</th>
+            <th className="px-4 py-3">{T("O'qituvchi", "Преподаватель", "Teacher", "Lehrer")}</th>
+            <th className="px-4 py-3">{T("Baho", "Оценка", "Rating", "Note")}</th>
+            <th className="px-4 py-3">{T("Izoh", "Комментарий", "Comment", "Kommentar")}</th>
+            <th className="px-4 py-3">{T("Kimdan / guruh", "От кого / группа", "From / group", "Von / Gruppe")}</th>
+            <th className="px-4 py-3">{T("Sana", "Дата", "Date", "Datum")}</th>
           </tr>}>
             {items.length === 0 ? (
-              <EmptyRow colSpan={5} text={T("Hozircha fikr-mulohaza yo'q", "Отзывов пока нет", "No feedback yet")} />
+              <EmptyRow colSpan={5} text={T("Hozircha fikr-mulohaza yo'q", "Отзывов пока нет", "No feedback yet", "Noch kein Feedback")} />
             ) : items.map((f) => (
               <tr key={f.id} className="hover:bg-slate-50">
                 <td className="px-4 py-3 font-medium text-slate-800">{tName.get(f.teacherId) ?? "—"}</td>
@@ -79,14 +79,14 @@ export default async function FeedbackPage() {
         </Card>
 
         <Card padded={false}>
-          <div className="border-b border-slate-100 px-5 py-4"><h3 className="text-sm font-semibold text-slate-700">{T("O'qituvchilar reytingi", "Рейтинг преподавателей", "Teacher ratings")}</h3></div>
+          <div className="border-b border-slate-100 px-5 py-4"><h3 className="text-sm font-semibold text-slate-700">{T("O'qituvchilar reytingi", "Рейтинг преподавателей", "Teacher ratings", "Lehrer-Rangliste")}</h3></div>
           <Table head={<tr>
-            <th className="px-4 py-3">{T("O'qituvchi", "Преподаватель", "Teacher")}</th>
-            <th className="px-4 py-3 text-center">{T("Fikrlar", "Отзывы", "Count")}</th>
-            <th className="px-4 py-3 text-right">{T("O'rtacha", "Средняя", "Avg")}</th>
+            <th className="px-4 py-3">{T("O'qituvchi", "Преподаватель", "Teacher", "Lehrer")}</th>
+            <th className="px-4 py-3 text-center">{T("Fikrlar", "Отзывы", "Count", "Anzahl")}</th>
+            <th className="px-4 py-3 text-right">{T("O'rtacha", "Средняя", "Avg", "Ø")}</th>
           </tr>}>
             {perTeacher.length === 0 ? (
-              <EmptyRow colSpan={3} text={T("Hozircha ma'lumot yo'q", "Пока нет данных", "No data yet")} />
+              <EmptyRow colSpan={3} text={T("Hozircha ma'lumot yo'q", "Пока нет данных", "No data yet", "Noch keine Daten")} />
             ) : [...perTeacher].sort((a, b) => (b._avg.rating ?? 0) - (a._avg.rating ?? 0)).map((p) => (
               <tr key={p.teacherId} className="hover:bg-slate-50">
                 <td className="px-4 py-3 font-medium text-slate-800">{tName.get(p.teacherId) ?? "—"}</td>

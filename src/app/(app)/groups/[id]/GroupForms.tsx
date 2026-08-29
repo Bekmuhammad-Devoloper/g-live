@@ -16,20 +16,20 @@ const input = "w-full rounded-lg border border-slate-300 px-3 py-2 text-sm outli
 const btn = "rounded-lg bg-brand-600 px-3 py-2 text-sm font-semibold text-white hover:bg-brand-700 disabled:opacity-60";
 
 const weekdayList = (locale: Locale): { v: number; label: string }[] => [
-  { v: 1, label: tr(locale, { uz: "Du", ru: "Пн", en: "Mo" }) },
-  { v: 2, label: tr(locale, { uz: "Se", ru: "Вт", en: "Tu" }) },
-  { v: 3, label: tr(locale, { uz: "Ch", ru: "Ср", en: "We" }) },
-  { v: 4, label: tr(locale, { uz: "Pa", ru: "Чт", en: "Th" }) },
-  { v: 5, label: tr(locale, { uz: "Ju", ru: "Пт", en: "Fr" }) },
-  { v: 6, label: tr(locale, { uz: "Sh", ru: "Сб", en: "Sa" }) },
-  { v: 7, label: tr(locale, { uz: "Ya", ru: "Вс", en: "Su" }) },
+  { v: 1, label: tr(locale, { uz: "Du", ru: "Пн", en: "Mo", de: "Mo" }) },
+  { v: 2, label: tr(locale, { uz: "Se", ru: "Вт", en: "Tu", de: "Di" }) },
+  { v: 3, label: tr(locale, { uz: "Ch", ru: "Ср", en: "We", de: "Mi" }) },
+  { v: 4, label: tr(locale, { uz: "Pa", ru: "Чт", en: "Th", de: "Do" }) },
+  { v: 5, label: tr(locale, { uz: "Ju", ru: "Пт", en: "Fr", de: "Fr" }) },
+  { v: 6, label: tr(locale, { uz: "Sh", ru: "Сб", en: "Sa", de: "Sa" }) },
+  { v: 7, label: tr(locale, { uz: "Ya", ru: "Вс", en: "Su", de: "So" }) },
 ];
 
 const statusOptions = (locale: Locale): { v: string; label: string }[] => [
-  { v: "PLANNED", label: tr(locale, { uz: "Rejalashtirilgan", ru: "Запланирован", en: "Planned" }) },
-  { v: "ACTIVE", label: tr(locale, { uz: "Faol", ru: "Активен", en: "Active" }) },
-  { v: "FINISHED", label: tr(locale, { uz: "Yakunlangan", ru: "Завершён", en: "Finished" }) },
-  { v: "CANCELLED", label: tr(locale, { uz: "Bekor qilingan", ru: "Отменён", en: "Cancelled" }) },
+  { v: "PLANNED", label: tr(locale, { uz: "Rejalashtirilgan", ru: "Запланирован", en: "Planned", de: "Geplant" }) },
+  { v: "ACTIVE", label: tr(locale, { uz: "Faol", ru: "Активен", en: "Active", de: "Aktiv" }) },
+  { v: "FINISHED", label: tr(locale, { uz: "Yakunlangan", ru: "Завершён", en: "Finished", de: "Abgeschlossen" }) },
+  { v: "CANCELLED", label: tr(locale, { uz: "Bekor qilingan", ru: "Отменён", en: "Cancelled", de: "Storniert" }) },
 ];
 
 export type EditGroupData = {
@@ -66,23 +66,23 @@ export function CreateStudentForm({ groupId, locale }: { groupId: string; locale
     <form ref={ref} action={action} className="flex flex-wrap items-end gap-2">
       <input type="hidden" name="groupId" value={groupId} />
       <div className="flex-1 min-w-[140px]">
-        <label className="mb-1 block text-xs font-medium text-slate-600">{tr(locale, { uz: "Yangi o'quvchi F.I.Sh.", ru: "Ф.И.О. нового ученика", en: "New student full name" })}</label>
-        <input name="fullName" required placeholder={tr(locale, { uz: "Ism Familiya", ru: "Имя Фамилия", en: "First Last" })} className={input} />
+        <label className="mb-1 block text-xs font-medium text-slate-600">{tr(locale, { uz: "Yangi o'quvchi F.I.Sh.", ru: "Ф.И.О. нового ученика", en: "New student full name", de: "Vollständiger Name des neuen Schülers" })}</label>
+        <input name="fullName" required placeholder={tr(locale, { uz: "Ism Familiya", ru: "Имя Фамилия", en: "First Last", de: "Vorname Nachname" })} className={input} />
       </div>
       <div className="min-w-[140px]">
-        <label className="mb-1 block text-xs font-medium text-slate-600">{tr(locale, { uz: "Telefon", ru: "Телефон", en: "Phone" })}</label>
+        <label className="mb-1 block text-xs font-medium text-slate-600">{tr(locale, { uz: "Telefon", ru: "Телефон", en: "Phone", de: "Telefon" })}</label>
         <div className="flex items-center rounded-lg border border-slate-300 px-3 py-2 text-sm focus-within:border-brand-500 focus-within:ring-2 focus-within:ring-brand-100">
           <span className="select-none font-medium text-slate-500">+998</span>
           <input value={phone} onChange={(e) => setPhone(fmtPhone(e.target.value))} inputMode="numeric" placeholder="90 123 45 67" className="ml-2 w-full flex-1 bg-transparent outline-none" />
         </div>
         <input type="hidden" name="phone" value={phone ? "+998 " + phone : ""} />
       </div>
-      <button type="submit" disabled={pending} className={btn}>{pending ? "..." : tr(locale, { uz: "+ Qo'shish", ru: "+ Добавить", en: "+ Add" })}</button>
+      <button type="submit" disabled={pending} className={btn}>{pending ? "..." : tr(locale, { uz: "+ Qo'shish", ru: "+ Добавить", en: "+ Add", de: "+ Hinzufügen" })}</button>
       {state.error && (
         <span className="w-full text-xs text-red-600">
           {state.error === "phone_exists"
-            ? tr(locale, { uz: "Bu telefon raqamli o'quvchi allaqachon mavjud — \"Mavjud o'quvchini biriktirish\" dan foydalaning.", ru: "Ученик с этим номером уже существует — используйте «Привязать существующего».", en: "A student with this phone already exists — use \"Enroll existing\"." })
-            : tr(locale, { uz: "Xatolik", ru: "Ошибка", en: "Error" })}
+            ? tr(locale, { uz: "Bu telefon raqamli o'quvchi allaqachon mavjud — \"Mavjud o'quvchini biriktirish\" dan foydalaning.", ru: "Ученик с этим номером уже существует — используйте «Привязать существующего».", en: "A student with this phone already exists — use \"Enroll existing\".", de: "Ein Schüler mit dieser Telefonnummer existiert bereits — verwenden Sie \"Vorhandenen Schüler einschreiben\"." })
+            : tr(locale, { uz: "Xatolik", ru: "Ошибка", en: "Error", de: "Fehler" })}
         </span>
       )}
     </form>
@@ -99,7 +99,7 @@ export function EnrollExisting({ groupId, candidates, locale }: { groupId: strin
   return (
     <div className="flex flex-wrap items-end gap-2">
       <div className="flex-1 min-w-[180px]">
-        <label className="mb-1 block text-xs font-medium text-slate-600">{tr(locale, { uz: "Mavjud o'quvchini biriktirish", ru: "Прикрепить существующего ученика", en: "Enroll existing student" })}</label>
+        <label className="mb-1 block text-xs font-medium text-slate-600">{tr(locale, { uz: "Mavjud o'quvchini biriktirish", ru: "Прикрепить существующего ученика", en: "Enroll existing student", de: "Vorhandenen Schüler einschreiben" })}</label>
         <select value={sel} onChange={(e) => setSel(e.target.value)} className={input}>
           <option value="">—</option>
           {candidates.map((c) => <option key={c.id} value={c.id}>{c.fullName}</option>)}
@@ -110,7 +110,7 @@ export function EnrollExisting({ groupId, candidates, locale }: { groupId: strin
         onClick={() => start(async () => { await enrollStudent(groupId, sel); setSel(""); router.refresh(); })}
         className={btn}
       >
-        {pending ? "..." : tr(locale, { uz: "Biriktirish", ru: "Прикрепить", en: "Enroll" })}
+        {pending ? "..." : tr(locale, { uz: "Biriktirish", ru: "Прикрепить", en: "Enroll", de: "Einschreiben" })}
       </button>
     </div>
   );
@@ -157,7 +157,7 @@ export function BulkImportStudents({ groupId, locale }: { groupId: string; local
         setText(lines.join("\n"));
         setMsg(null);
       } catch {
-        setMsg(tr(locale, { uz: "Excel faylni o'qib bo'lmadi", ru: "Не удалось прочитать Excel", en: "Could not read Excel file" }));
+        setMsg(tr(locale, { uz: "Excel faylni o'qib bo'lmadi", ru: "Не удалось прочитать Excel", en: "Could not read Excel file", de: "Excel-Datei konnte nicht gelesen werden" }));
       }
     } else {
       const reader = new FileReader();
@@ -171,29 +171,29 @@ export function BulkImportStudents({ groupId, locale }: { groupId: string; local
     setMsg(null);
     start(async () => {
       const r = await bulkAddStudents(groupId, rows.map((x) => ({ name: x.name, phone: x.phone || null })));
-      if (r.ok) { setMsg(tr(locale, { uz: `${r.added} o'quvchi qo'shildi ✓`, ru: `Добавлено ${r.added} ✓`, en: `${r.added} added ✓` })); setText(""); router.refresh(); }
-      else setMsg(tr(locale, { uz: "Xatolik yoki ma'lumot yo'q", ru: "Ошибка или нет данных", en: "Error or no data" }));
+      if (r.ok) { setMsg(tr(locale, { uz: `${r.added} o'quvchi qo'shildi ✓`, ru: `Добавлено ${r.added} ✓`, en: `${r.added} added ✓`, de: `${r.added} hinzugefügt ✓` })); setText(""); router.refresh(); }
+      else setMsg(tr(locale, { uz: "Xatolik yoki ma'lumot yo'q", ru: "Ошибка или нет данных", en: "Error or no data", de: "Fehler oder keine Daten" }));
     });
   };
 
   return (
     <div className="rounded-lg border border-slate-200/70 bg-white p-2 dark:border-slate-700 dark:bg-slate-900/40">
       <button type="button" onClick={() => setOpen((v) => !v)} className="flex w-full items-center justify-between text-xs font-semibold text-slate-600 dark:text-slate-300">
-        <span className="flex items-center gap-1.5"><Icon name="download" className="h-3.5 w-3.5" /> {tr(locale, { uz: "Excel / CSV orqali ko'p o'quvchi qo'shish", ru: "Добавить учеников через Excel / CSV", en: "Add students via Excel / CSV" })}</span>
+        <span className="flex items-center gap-1.5"><Icon name="download" className="h-3.5 w-3.5" /> {tr(locale, { uz: "Excel / CSV orqali ko'p o'quvchi qo'shish", ru: "Добавить учеников через Excel / CSV", en: "Add students via Excel / CSV", de: "Schüler über Excel / CSV hinzufügen" })}</span>
         <Icon name="chevronDown" className={`h-4 w-4 transition ${open ? "rotate-180" : ""}`} />
       </button>
       {open && (
         <div className="mt-2 space-y-2">
-          <p className="text-[11px] text-slate-400">{tr(locale, { uz: "Excel (.xlsx) yoki CSV fayl yuklang, yoki Excel'dan nusxalab joylang. Har qatorda: Ism Familiya, +998... (1-ustun ism, 2-ustun telefon).", ru: "Загрузите Excel (.xlsx) или CSV, либо вставьте из Excel. По строке: Имя Фамилия, +998...", en: "Upload Excel (.xlsx) or CSV, or paste from Excel. Per line: Name, +998..." })}</p>
+          <p className="text-[11px] text-slate-400">{tr(locale, { uz: "Excel (.xlsx) yoki CSV fayl yuklang, yoki Excel'dan nusxalab joylang. Har qatorda: Ism Familiya, +998... (1-ustun ism, 2-ustun telefon).", ru: "Загрузите Excel (.xlsx) или CSV, либо вставьте из Excel. По строке: Имя Фамилия, +998...", en: "Upload Excel (.xlsx) or CSV, or paste from Excel. Per line: Name, +998...", de: "Laden Sie eine Excel- (.xlsx) oder CSV-Datei hoch oder fügen Sie aus Excel ein. Pro Zeile: Name, +998..." })}</p>
           <textarea value={text} onChange={(e) => setText(e.target.value)} rows={5} placeholder={"Ism Familiya, +998901234567\nAli Valiyev, +998907654321"} className={`${input} font-mono text-xs`} />
           <div className="flex flex-wrap items-center gap-2">
             <label className="inline-flex cursor-pointer items-center gap-1.5 rounded-lg border border-slate-200 px-3 py-1.5 text-xs font-medium text-slate-600 transition hover:bg-slate-50 dark:border-slate-700 dark:text-slate-300 dark:hover:bg-slate-800">
-              <Icon name="uploadCloud" className="h-3.5 w-3.5" /> {tr(locale, { uz: "Excel / CSV fayl", ru: "Excel / CSV файл", en: "Excel / CSV file" })}
+              <Icon name="uploadCloud" className="h-3.5 w-3.5" /> {tr(locale, { uz: "Excel / CSV fayl", ru: "Excel / CSV файл", en: "Excel / CSV file", de: "Excel-/CSV-Datei" })}
               <input type="file" accept=".xlsx,.xls,.csv,.txt" className="hidden" onChange={onFile} />
             </label>
-            <span className="text-xs text-slate-400">{rows.length} {tr(locale, { uz: "ta topildi", ru: "найдено", en: "found" })}</span>
+            <span className="text-xs text-slate-400">{rows.length} {tr(locale, { uz: "ta topildi", ru: "найдено", en: "found", de: "gefunden" })}</span>
             <button type="button" onClick={doImport} disabled={pending || !rows.length} className="ml-auto rounded-lg bg-brand-600 px-4 py-1.5 text-xs font-semibold text-white transition hover:bg-brand-700 disabled:opacity-50">
-              {pending ? "..." : tr(locale, { uz: "Import qilish", ru: "Импортировать", en: "Import" })}
+              {pending ? "..." : tr(locale, { uz: "Import qilish", ru: "Импортировать", en: "Import", de: "Importieren" })}
             </button>
           </div>
           {msg && <p className="text-xs font-medium text-emerald-600 dark:text-emerald-400">{msg}</p>}
@@ -209,15 +209,15 @@ export function RemoveStudentButton({ groupId, studentId, locale }: { groupId: s
   return (
     <button
       type="button"
-      title={tr(locale, { uz: "Guruhdan olib tashlash", ru: "Убрать из группы", en: "Remove from group" })}
+      title={tr(locale, { uz: "Guruhdan olib tashlash", ru: "Убрать из группы", en: "Remove from group", de: "Aus der Gruppe entfernen" })}
       disabled={pending}
       onClick={() => {
-        if (!window.confirm(tr(locale, { uz: "O'quvchini guruhdan olib tashlaysizmi?", ru: "Убрать ученика из группы?", en: "Remove the student from the group?" }))) return;
+        if (!window.confirm(tr(locale, { uz: "O'quvchini guruhdan olib tashlaysizmi?", ru: "Убрать ученика из группы?", en: "Remove the student from the group?", de: "Den Schüler aus der Gruppe entfernen?" }))) return;
         start(async () => { await removeStudent(groupId, studentId); router.refresh(); });
       }}
       className="rounded-md px-2 py-1 text-xs font-medium text-red-600 transition hover:bg-red-50 disabled:opacity-50"
     >
-      {pending ? "..." : tr(locale, { uz: "Olib tashlash", ru: "Убрать", en: "Remove" })}
+      {pending ? "..." : tr(locale, { uz: "Olib tashlash", ru: "Убрать", en: "Remove", de: "Entfernen" })}
     </button>
   );
 }
@@ -232,15 +232,15 @@ export function NewLessonForm({ groupId, locale }: { groupId: string; locale: Lo
     <form ref={ref} action={action} className="flex flex-wrap items-end gap-2">
       <input type="hidden" name="groupId" value={groupId} />
       <div className="flex-1 min-w-[160px]">
-        <label className="mb-1 block text-xs font-medium text-slate-600">{tr(locale, { uz: "Dars mavzusi", ru: "Тема урока", en: "Lesson topic" })}</label>
-        <input name="topic" placeholder={tr(locale, { uz: "Perfekt — 2-dars", ru: "Перфект — урок 2", en: "Perfect — lesson 2" })} className={input} />
+        <label className="mb-1 block text-xs font-medium text-slate-600">{tr(locale, { uz: "Dars mavzusi", ru: "Тема урока", en: "Lesson topic", de: "Unterrichtsthema" })}</label>
+        <input name="topic" placeholder={tr(locale, { uz: "Perfekt — 2-dars", ru: "Перфект — урок 2", en: "Perfect — lesson 2", de: "Perfekt — Unterricht 2" })} className={input} />
       </div>
       <div className="min-w-[180px]">
-        <label className="mb-1 block text-xs font-medium text-slate-600">{tr(locale, { uz: "Boshlanish vaqti", ru: "Время начала", en: "Start time" })}</label>
+        <label className="mb-1 block text-xs font-medium text-slate-600">{tr(locale, { uz: "Boshlanish vaqti", ru: "Время начала", en: "Start time", de: "Startzeit" })}</label>
         <input name="startsAt" type="datetime-local" required className={input} />
       </div>
-      <button type="submit" disabled={pending} className={btn}>{pending ? "..." : tr(locale, { uz: "+ Dars", ru: "+ Урок", en: "+ Lesson" })}</button>
-      {state.error && <span className="text-xs text-red-600">{tr(locale, { uz: "Xatolik", ru: "Ошибка", en: "Error" })}</span>}
+      <button type="submit" disabled={pending} className={btn}>{pending ? "..." : tr(locale, { uz: "+ Dars", ru: "+ Урок", en: "+ Lesson", de: "+ Unterricht" })}</button>
+      {state.error && <span className="text-xs text-red-600">{tr(locale, { uz: "Xatolik", ru: "Ошибка", en: "Error", de: "Fehler" })}</span>}
     </form>
   );
 }
@@ -265,7 +265,7 @@ export function EditGroupButton({
         <button
           type="button"
           onClick={() => setOpen(true)}
-          title={tr(locale, { uz: "Tahrirlash", ru: "Редактировать", en: "Edit" })}
+          title={tr(locale, { uz: "Tahrirlash", ru: "Редактировать", en: "Edit", de: "Bearbeiten" })}
           className="grid h-8 w-8 place-items-center rounded-lg text-slate-400 transition hover:bg-slate-100 hover:text-brand-600 dark:hover:bg-slate-800"
         >
           <Icon name="pencil" className="h-4 w-4" />
@@ -276,7 +276,7 @@ export function EditGroupButton({
           onClick={() => setOpen(true)}
           className="rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm font-semibold text-slate-700 transition hover:bg-slate-50"
         >
-          {tr(locale, { uz: "Tahrirlash", ru: "Редактировать", en: "Edit" })}
+          {tr(locale, { uz: "Tahrirlash", ru: "Редактировать", en: "Edit", de: "Bearbeiten" })}
         </button>
       )}
       {open && (
@@ -342,30 +342,30 @@ function EditGroupForm({
         <input type="hidden" name="groupId" value={group.id} />
 
         <div className="flex shrink-0 items-center justify-between border-b border-slate-100 px-5 py-4">
-          <h3 className="text-base font-bold text-slate-800">{tr(locale, { uz: "Guruhni tahrirlash", ru: "Редактировать группу", en: "Edit group" })}</h3>
+          <h3 className="text-base font-bold text-slate-800">{tr(locale, { uz: "Guruhni tahrirlash", ru: "Редактировать группу", en: "Edit group", de: "Gruppe bearbeiten" })}</h3>
           <button type="button" onClick={onClose} className="flex h-8 w-8 items-center justify-center rounded-lg text-lg text-slate-400 transition hover:bg-slate-100 hover:text-slate-600">✕</button>
         </div>
 
         <div className="flex-1 space-y-3.5 overflow-y-auto px-5 py-4">
           <div>
-            <label className={fLabel}>{tr(locale, { uz: "Nomi", ru: "Название", en: "Name" })} <span className="text-rose-500">*</span></label>
+            <label className={fLabel}>{tr(locale, { uz: "Nomi", ru: "Название", en: "Name", de: "Name" })} <span className="text-rose-500">*</span></label>
             <input name="name" required defaultValue={group.name} className={input} />
           </div>
           <div>
-            <label className={fLabel}>{tr(locale, { uz: "Kurs", ru: "Курс", en: "Course" })} <span className="text-rose-500">*</span></label>
+            <label className={fLabel}>{tr(locale, { uz: "Kurs", ru: "Курс", en: "Course", de: "Kurs" })} <span className="text-rose-500">*</span></label>
             <select name="programId" required defaultValue={group.programId} className={input}>
               {programs.map((p) => <option key={p.id} value={p.id}>{p.name}</option>)}
             </select>
           </div>
           <div>
-            <label className={fLabel}>{tr(locale, { uz: "Rang", ru: "Цвет", en: "Color" })}</label>
+            <label className={fLabel}>{tr(locale, { uz: "Rang", ru: "Цвет", en: "Color", de: "Farbe" })}</label>
             <div className="flex flex-wrap items-center gap-2">
               {GROUP_COLORS.map((c) => (
                 <button key={c} type="button" onClick={() => setColor(c)} aria-label={c}
                   className={`h-7 w-7 rounded-full transition ${color === c ? "ring-2 ring-slate-500 ring-offset-2" : "hover:scale-110"}`}
                   style={{ background: c }} />
               ))}
-              <label className="relative flex h-7 w-7 cursor-pointer items-center justify-center rounded-full border border-dashed border-slate-300 text-white/80" style={{ background: color }} title={tr(locale, { uz: "Boshqa rang", ru: "Другой цвет", en: "Custom color" })}>
+              <label className="relative flex h-7 w-7 cursor-pointer items-center justify-center rounded-full border border-dashed border-slate-300 text-white/80" style={{ background: color }} title={tr(locale, { uz: "Boshqa rang", ru: "Другой цвет", en: "Custom color", de: "Eigene Farbe" })}>
                 <span className="text-[11px] font-bold">+</span>
                 <input type="color" value={color} onChange={(e) => setColor(e.target.value)} className="absolute inset-0 h-full w-full cursor-pointer opacity-0" />
               </label>
@@ -374,26 +374,26 @@ function EditGroupForm({
             <input type="hidden" name="color" value={color} />
           </div>
           <div>
-            <label className={fLabel}>{tr(locale, { uz: "O'qituvchi", ru: "Преподаватель", en: "Teacher" })}</label>
+            <label className={fLabel}>{tr(locale, { uz: "O'qituvchi", ru: "Преподаватель", en: "Teacher", de: "Lehrer" })}</label>
             <select name="teacherId" defaultValue={group.teacherId ?? ""} className={`${input} truncate`}>
               <option value="">—</option>
               {teachers.map((tt) => <option key={tt.id} value={tt.id}>{tt.fullName}</option>)}
             </select>
           </div>
           <div>
-            <label className={fLabel}>{tr(locale, { uz: "Daraja", ru: "Уровень", en: "Level" })}</label>
+            <label className={fLabel}>{tr(locale, { uz: "Daraja", ru: "Уровень", en: "Level", de: "Niveau" })}</label>
             <input name="levelCode" defaultValue={group.levelCode ?? ""} placeholder="A1.2" className={input} />
           </div>
 
           <div className="grid grid-cols-2 gap-3">
             <div>
-              <label className={fLabel}>{tr(locale, { uz: "O'quv shakli", ru: "Форма обучения", en: "Format" })}</label>
+              <label className={fLabel}>{tr(locale, { uz: "O'quv shakli", ru: "Форма обучения", en: "Format", de: "Format" })}</label>
               <select name="format" value={format} onChange={(e) => setFormat(e.target.value)} className={input}>
                 {GROUP_FORMATS.map((f) => <option key={f} value={f}>{GROUP_FORMAT_LABELS[f][locale]}</option>)}
               </select>
             </div>
             <div>
-              <label className={fLabel}>{tr(locale, { uz: "Holat", ru: "Статус", en: "Status" })}</label>
+              <label className={fLabel}>{tr(locale, { uz: "Holat", ru: "Статус", en: "Status", de: "Status" })}</label>
               <select name="status" defaultValue={group.status} className={input}>
                 {statusOptions(locale).map((o) => <option key={o.v} value={o.v}>{o.label}</option>)}
               </select>
@@ -402,13 +402,13 @@ function EditGroupForm({
 
           {(format === "ONLINE" || format === "HYBRID") && (
             <div>
-              <label className={fLabel}>{tr(locale, { uz: "Onlayn havola", ru: "Онлайн-ссылка", en: "Online link" })}</label>
+              <label className={fLabel}>{tr(locale, { uz: "Onlayn havola", ru: "Онлайн-ссылка", en: "Online link", de: "Online-Link" })}</label>
               <input name="onlineLink" type="url" defaultValue={group.onlineLink ?? ""} placeholder="https://zoom.us/j/..." className={input} />
             </div>
           )}
 
           <div>
-            <label className={fLabel}>{tr(locale, { uz: "Kunlar", ru: "Дни", en: "Days" })}</label>
+            <label className={fLabel}>{tr(locale, { uz: "Kunlar", ru: "Дни", en: "Days", de: "Tage" })}</label>
             <div className="flex flex-wrap gap-1.5">
               {weekdayList(locale).map((d) => {
                 const active = days.includes(d.v);
@@ -429,52 +429,53 @@ function EditGroupForm({
 
           <div className="grid grid-cols-2 gap-3">
             <div>
-              <label className={fLabel}>{tr(locale, { uz: "Boshlanish vaqti", ru: "Время начала", en: "Start time" })}</label>
+              <label className={fLabel}>{tr(locale, { uz: "Boshlanish vaqti", ru: "Время начала", en: "Start time", de: "Startzeit" })}</label>
               <input name="startTime" type="time" defaultValue={group.startTime ?? ""} className={input} />
             </div>
             <div>
-              <label className={fLabel}>{tr(locale, { uz: "Tugash vaqti", ru: "Время окончания", en: "End time" })}</label>
+              <label className={fLabel}>{tr(locale, { uz: "Tugash vaqti", ru: "Время окончания", en: "End time", de: "Endzeit" })}</label>
               <input name="endTime" type="time" defaultValue={group.endTime ?? ""} className={input} />
             </div>
           </div>
 
           <div className="grid grid-cols-2 gap-3">
             <div>
-              <label className={fLabel}>{tr(locale, { uz: "Xona", ru: "Кабинет", en: "Room" })}</label>
-              <input name="room" defaultValue={group.room ?? ""} placeholder={tr(locale, { uz: "204-xona", ru: "Кабинет 204", en: "Room 204" })} className={input} />
+              <label className={fLabel}>{tr(locale, { uz: "Xona", ru: "Кабинет", en: "Room", de: "Raum" })}</label>
+              <input name="room" defaultValue={group.room ?? ""} placeholder={tr(locale, { uz: "204-xona", ru: "Кабинет 204", en: "Room 204", de: "Raum 204" })} className={input} />
             </div>
             <div>
-              <label className={fLabel}>{tr(locale, { uz: "Sig'im", ru: "Вместимость", en: "Capacity" })}</label>
+              <label className={fLabel}>{tr(locale, { uz: "Sig'im", ru: "Вместимость", en: "Capacity", de: "Kapazität" })}</label>
               <input name="capacity" type="number" min="1" max="100" defaultValue={group.capacity} className={input} />
             </div>
           </div>
           <div className="grid grid-cols-2 gap-3">
             <div>
-              <label className={fLabel}>{tr(locale, { uz: "Boshlanish sanasi", ru: "Дата начала", en: "Start date" })}</label>
+              <label className={fLabel}>{tr(locale, { uz: "Boshlanish sanasi", ru: "Дата начала", en: "Start date", de: "Startdatum" })}</label>
               <input name="startDate" type="date" defaultValue={group.startDate ?? ""} className={input} />
             </div>
             <div>
-              <label className={fLabel}>{tr(locale, { uz: "Tugash sanasi", ru: "Дата окончания", en: "End date" })}</label>
+              <label className={fLabel}>{tr(locale, { uz: "Tugash sanasi", ru: "Дата окончания", en: "End date", de: "Enddatum" })}</label>
               <input name="endDate" type="date" defaultValue={group.endDate ?? ""} className={input} />
             </div>
           </div>
 
           {/* Oylik to'lov — bo'sh qoldirilsa kurs narxi ishlatiladi */}
           <div>
-            <label className={fLabel}>{tr(locale, { uz: "Oylik to'lov (so'm)", ru: "Ежемесячная оплата (сум)", en: "Monthly fee (UZS)" })}</label>
-            <input name="monthlyFee" type="number" min="0" step="10000" defaultValue={group.monthlyFee ?? ""} placeholder={tr(locale, { uz: "kurs narxi", ru: "цена курса", en: "course price" })} className={input} />
+            <label className={fLabel}>{tr(locale, { uz: "Oylik to'lov (so'm)", ru: "Ежемесячная оплата (сум)", en: "Monthly fee (UZS)", de: "Monatliche Gebühr (UZS)" })}</label>
+            <input name="monthlyFee" type="number" min="0" step="10000" defaultValue={group.monthlyFee ?? ""} placeholder={tr(locale, { uz: "kurs narxi", ru: "цена курса", en: "course price", de: "Kurspreis" })} className={input} />
             <p className="mt-1 text-[11px] text-slate-400">
               {tr(locale, {
                 uz: "O'quvchi qo'shilgan oydan boshlab har oy qarzga hisoblanadi.",
                 ru: "Начисляется в долг каждый месяц с месяца зачисления ученика.",
                 en: "Charged monthly from the student's join month.",
+                de: "Wird monatlich ab dem Beitrittsmonat des Schülers berechnet.",
               })}
             </p>
           </div>
 
           {/* Izoh — guruh ma'lumoti ko'rinadigan hamma joyda chiqadi */}
           <div>
-            <label className={fLabel}>{tr(locale, { uz: "Izoh", ru: "Комментарий", en: "Comment" })}</label>
+            <label className={fLabel}>{tr(locale, { uz: "Izoh", ru: "Комментарий", en: "Comment", de: "Kommentar" })}</label>
             <textarea
               name="note"
               rows={3}
@@ -484,6 +485,7 @@ function EditGroupForm({
                 uz: "Guruh haqida qo'shimcha ma'lumot",
                 ru: "Дополнительная информация о группе",
                 en: "Additional info about the group",
+                de: "Zusätzliche Informationen zur Gruppe",
               })}
               className={`${input} h-auto resize-y py-2 leading-relaxed`}
             />
@@ -492,20 +494,20 @@ function EditGroupForm({
           {state.error && (
             <p className="rounded-lg bg-rose-50 px-3 py-2 text-sm text-rose-700 dark:bg-rose-500/10 dark:text-rose-400">
               {state.error === "room_conflict"
-                ? tr(locale, { uz: "Bu xona shu kun va vaqtda band: ", ru: "Этот кабинет занят в это время: ", en: "This room is busy at this time: " }) + (state.detail ?? "")
+                ? tr(locale, { uz: "Bu xona shu kun va vaqtda band: ", ru: "Этот кабинет занят в это время: ", en: "This room is busy at this time: ", de: "Dieser Raum ist zu dieser Zeit belegt: " }) + (state.detail ?? "")
                 : state.error === "forbidden"
-                  ? tr(locale, { uz: "Ruxsat yo'q.", ru: "Нет доступа.", en: "No permission." })
-                  : tr(locale, { uz: "Ma'lumotlar to'liq emas.", ru: "Данные заполнены не полностью.", en: "Data is incomplete." })}
+                  ? tr(locale, { uz: "Ruxsat yo'q.", ru: "Нет доступа.", en: "No permission.", de: "Keine Berechtigung." })
+                  : tr(locale, { uz: "Ma'lumotlar to'liq emas.", ru: "Данные заполнены не полностью.", en: "Data is incomplete.", de: "Die Daten sind unvollständig." })}
             </p>
           )}
         </div>
 
         <div className="flex shrink-0 gap-2 border-t border-slate-100 px-5 py-4">
           <button type="button" onClick={onClose} className="flex-1 rounded-xl border border-slate-200 py-2.5 text-sm font-semibold text-slate-600 transition hover:bg-slate-50">
-            {tr(locale, { uz: "Bekor qilish", ru: "Отмена", en: "Cancel" })}
+            {tr(locale, { uz: "Bekor qilish", ru: "Отмена", en: "Cancel", de: "Abbrechen" })}
           </button>
           <button type="submit" disabled={pending} className="flex-[1.4] rounded-xl bg-brand-600 py-2.5 text-sm font-semibold text-white transition hover:bg-brand-700 disabled:opacity-60">
-            {pending ? tr(locale, { uz: "Saqlanmoqda...", ru: "Сохранение...", en: "Saving..." }) : tr(locale, { uz: "Saqlash", ru: "Сохранить", en: "Save" })}
+            {pending ? tr(locale, { uz: "Saqlanmoqda...", ru: "Сохранение...", en: "Saving...", de: "Wird gespeichert..." }) : tr(locale, { uz: "Saqlash", ru: "Сохранить", en: "Save", de: "Speichern" })}
           </button>
         </div>
       </form>

@@ -14,7 +14,7 @@ const fmtDate = (d: Date) => `${p2(d.getDate())}.${p2(d.getMonth() + 1)}.${d.get
 export default async function ContractPage() {
   const s = await requireSession();
   if (!ALLOWED.includes(s.role as never)) {
-    return <Forbidden title={tr(s.locale, { uz: "Kirish taqiqlangan", ru: "Доступ запрещён", en: "Access denied" })} body={tr(s.locale, { uz: "Shartnomalar bo'limi rahbariyat uchun.", ru: "Раздел договоров для руководства.", en: "The contracts section is for management." })} />;
+    return <Forbidden title={tr(s.locale, { uz: "Kirish taqiqlangan", ru: "Доступ запрещён", en: "Access denied", de: "Zugriff verweigert" })} body={tr(s.locale, { uz: "Shartnomalar bo'limi rahbariyat uchun.", ru: "Раздел договоров для руководства.", en: "The contracts section is for management.", de: "Der Vertragsbereich ist für die Geschäftsleitung." })} />;
   }
 
   const templates = await prisma.contractTemplate.findMany({ orderBy: { createdAt: "desc" } });

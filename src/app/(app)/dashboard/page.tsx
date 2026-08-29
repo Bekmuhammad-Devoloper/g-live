@@ -77,14 +77,14 @@ async function roleContent({
     return (
       <>
         <div className="mb-4 grid grid-cols-2 gap-4 lg:grid-cols-4">
-          <StatCard label={tr(locale, { uz: "Bugungi tushum", ru: "Сегодняшний доход", en: "Today's revenue" })} value={formatMoney(todayAgg._sum.amount ?? 0, locale)} hint={`${todayAgg._count} ${tr(locale, { uz: "ta to'lov", ru: "платежей", en: "payments" })}`} tone="green" icon="wallet" />
-          <StatCard label={tr(locale, { uz: "Bu oy tushum", ru: "Доход за месяц", en: "This month's revenue" })} value={formatMoney(monthAgg._sum.amount ?? 0, locale)} tone="brand" icon="card" />
-          <StatCard label={tr(locale, { uz: "Jami qarzdorlik", ru: "Общая задолженность", en: "Total debt" })} value={formatMoney(debtAgg._sum.amount ?? 0, locale)} tone="amber" icon="alert" />
+          <StatCard label={tr(locale, { uz: "Bugungi tushum", ru: "Сегодняшний доход", en: "Today's revenue", de: "Heutiger Umsatz" })} value={formatMoney(todayAgg._sum.amount ?? 0, locale)} hint={`${todayAgg._count} ${tr(locale, { uz: "ta to'lov", ru: "платежей", en: "payments", de: "Zahlungen" })}`} tone="green" icon="wallet" />
+          <StatCard label={tr(locale, { uz: "Bu oy tushum", ru: "Доход за месяц", en: "This month's revenue", de: "Umsatz diesen Monats" })} value={formatMoney(monthAgg._sum.amount ?? 0, locale)} tone="brand" icon="card" />
+          <StatCard label={tr(locale, { uz: "Jami qarzdorlik", ru: "Общая задолженность", en: "Total debt", de: "Gesamtschulden" })} value={formatMoney(debtAgg._sum.amount ?? 0, locale)} tone="amber" icon="alert" />
         </div>
         <Card>
           <div className="mb-3 flex items-center justify-between">
-            <h3 className="text-sm font-semibold text-slate-700">{tr(locale, { uz: "So'nggi to'lovlar", ru: "Последние платежи", en: "Recent payments" })}</h3>
-            <Link href="/finance" className="text-xs font-medium text-brand-600 hover:underline">{tr(locale, { uz: "Moliya bo'limi →", ru: "Раздел финансов →", en: "Finance section →" })}</Link>
+            <h3 className="text-sm font-semibold text-slate-700">{tr(locale, { uz: "So'nggi to'lovlar", ru: "Последние платежи", en: "Recent payments", de: "Letzte Zahlungen" })}</h3>
+            <Link href="/finance" className="text-xs font-medium text-brand-600 hover:underline">{tr(locale, { uz: "Moliya bo'limi →", ru: "Раздел финансов →", en: "Finance section →", de: "Finanzbereich →" })}</Link>
           </div>
           {recent.length === 0 ? (
             <p className="text-sm text-slate-400">{t("common.noData")}</p>
@@ -135,7 +135,7 @@ async function roleContent({
             </p>
           </Card>
         ))}
-        {(!parent || parent.children.length === 0) && <Card>{tr(locale, { uz: "Bog'langan farzand yo'q.", ru: "Нет привязанных детей.", en: "No linked children." })}</Card>}
+        {(!parent || parent.children.length === 0) && <Card>{tr(locale, { uz: "Bog'langan farzand yo'q.", ru: "Нет привязанных детей.", en: "No linked children.", de: "Keine verknüpften Kinder." })}</Card>}
       </div>
     );
   }
@@ -143,7 +143,7 @@ async function roleContent({
   // ── Boshqa (zaxira) ──
   return (
     <Card>
-      <p className="text-sm text-slate-600">{tr(locale, { uz: "Bosh sahifa.", ru: "Главная.", en: "Home." })}</p>
+      <p className="text-sm text-slate-600">{tr(locale, { uz: "Bosh sahifa.", ru: "Главная.", en: "Home.", de: "Startseite." })}</p>
     </Card>
   );
 }

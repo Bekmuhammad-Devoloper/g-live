@@ -57,11 +57,11 @@ export default function MissedList({ calls, locale, canMark, callback, onCallbac
                 : "border-slate-200 text-slate-500 hover:border-slate-300 dark:border-slate-700 dark:text-slate-400",
             )}
           >
-            <option value="">{tr(locale, { uz: "Barcha qayta bog'lanishlar", ru: "Все перезвоны", en: "All callbacks" })}</option>
+            <option value="">{tr(locale, { uz: "Barcha qayta bog'lanishlar", ru: "Все перезвоны", en: "All callbacks", de: "Alle Rückrufe" })}</option>
             {Object.entries(CALLBACK).map(([k, v]) => (
               <option key={k} value={k}>{tr(locale, v.label)}</option>
             ))}
-            <option value="NONE">{tr(locale, { uz: "Belgilanmagan", ru: "Без отметки", en: "Unmarked" })}</option>
+            <option value="NONE">{tr(locale, { uz: "Belgilanmagan", ru: "Без отметки", en: "Unmarked", de: "Nicht markiert" })}</option>
           </select>
           <Icon name="chevronDown" className="pointer-events-none absolute right-3 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400" />
         </div>
@@ -72,8 +72,8 @@ export default function MissedList({ calls, locale, canMark, callback, onCallbac
         >
           <Icon name="refresh" className={cn("h-4 w-4", syncing && "animate-spin")} />
           {syncing
-            ? tr(locale, { uz: "Yangilanmoqda...", ru: "Обновление...", en: "Refreshing..." })
-            : tr(locale, { uz: "Yangilash", ru: "Обновить", en: "Refresh" })}
+            ? tr(locale, { uz: "Yangilanmoqda...", ru: "Обновление...", en: "Refreshing...", de: "Wird aktualisiert..." })
+            : tr(locale, { uz: "Yangilash", ru: "Обновить", en: "Refresh", de: "Aktualisieren" })}
         </button>
         {note && (
           <span className={cn("text-sm font-medium", note.error ? "text-rose-600 dark:text-rose-400" : "text-emerald-600 dark:text-emerald-400")}>
@@ -88,10 +88,10 @@ export default function MissedList({ calls, locale, canMark, callback, onCallbac
             <Icon name="check" className="h-7 w-7 text-emerald-400" />
           </div>
           <p className="font-medium text-slate-500 dark:text-slate-400">
-            {tr(locale, { uz: "Qabul qilinmagan qo'ng'iroq yo'q", ru: "Пропущенных звонков нет", en: "No missed calls" })}
+            {tr(locale, { uz: "Qabul qilinmagan qo'ng'iroq yo'q", ru: "Пропущенных звонков нет", en: "No missed calls", de: "Keine verpassten Anrufe" })}
           </p>
           <p className="text-xs text-slate-400 dark:text-slate-500">
-            {tr(locale, { uz: "Barcha qo'ng'iroqlarga javob berilgan", ru: "На все звонки ответили", en: "All calls have been answered" })}
+            {tr(locale, { uz: "Barcha qo'ng'iroqlarga javob berilgan", ru: "На все звонки ответили", en: "All calls have been answered", de: "Alle Anrufe wurden beantwortet" })}
           </p>
         </div>
       ) : (
@@ -178,7 +178,7 @@ export default function MissedList({ calls, locale, canMark, callback, onCallbac
                         className="inline-flex items-center gap-2 rounded-xl bg-gradient-to-r from-emerald-500 to-emerald-600 px-5 py-2.5 text-sm font-semibold text-white shadow-md shadow-emerald-500/20 transition hover:from-emerald-600 hover:to-emerald-700 active:scale-95"
                       >
                         <Icon name="phoneCall" className="h-4 w-4" />
-                        {tr(locale, { uz: "Bog'lanish", ru: "Перезвонить", en: "Call back" })}
+                        {tr(locale, { uz: "Bog'lanish", ru: "Перезвонить", en: "Call back", de: "Zurückrufen" })}
                       </button>
                     )}
                     {isPending && canMark && (
@@ -192,7 +192,7 @@ export default function MissedList({ calls, locale, canMark, callback, onCallbac
                         ) : (
                           <Icon name="check" className="h-4 w-4 text-emerald-500" />
                         )}
-                        {tr(locale, { uz: "Bog'landim", ru: "Отметить", en: "Mark done" })}
+                        {tr(locale, { uz: "Bog'landim", ru: "Отметить", en: "Mark done", de: "Als erledigt markieren" })}
                       </button>
                     )}
                   </div>

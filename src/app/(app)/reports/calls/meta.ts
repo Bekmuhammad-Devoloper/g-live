@@ -5,26 +5,27 @@ export interface Tri {
   uz: string;
   ru: string;
   en: string;
+  de?: string;
 }
 
 export const STATUS: Record<string, { label: Tri; icon: string; tone: string }> = {
-  ANSWERED: { label: { uz: "Javob berildi", ru: "Отвечен", en: "Answered" }, icon: "phoneCall", tone: "emerald" },
-  MISSED: { label: { uz: "O'tkazib yuborilgan", ru: "Пропущен", en: "Missed" }, icon: "phoneMissed", tone: "red" },
-  NO_ANSWER: { label: { uz: "Javob yo'q", ru: "Нет ответа", en: "No answer" }, icon: "phoneOff", tone: "slate" },
-  BUSY: { label: { uz: "Band", ru: "Занято", en: "Busy" }, icon: "phoneOff", tone: "orange" },
-  FAILED: { label: { uz: "Xatolik", ru: "Ошибка", en: "Failed" }, icon: "alert", tone: "red" },
-  CANCELLED: { label: { uz: "Bekor qilindi", ru: "Отменён", en: "Cancelled" }, icon: "close", tone: "slate" },
+  ANSWERED: { label: { uz: "Javob berildi", ru: "Отвечен", en: "Answered", de: "Beantwortet" }, icon: "phoneCall", tone: "emerald" },
+  MISSED: { label: { uz: "O'tkazib yuborilgan", ru: "Пропущен", en: "Missed", de: "Verpasst" }, icon: "phoneMissed", tone: "red" },
+  NO_ANSWER: { label: { uz: "Javob yo'q", ru: "Нет ответа", en: "No answer", de: "Keine Antwort" }, icon: "phoneOff", tone: "slate" },
+  BUSY: { label: { uz: "Band", ru: "Занято", en: "Busy", de: "Besetzt" }, icon: "phoneOff", tone: "orange" },
+  FAILED: { label: { uz: "Xatolik", ru: "Ошибка", en: "Failed", de: "Fehler" }, icon: "alert", tone: "red" },
+  CANCELLED: { label: { uz: "Bekor qilindi", ru: "Отменён", en: "Cancelled", de: "Storniert" }, icon: "close", tone: "slate" },
 };
 
 export const DIR: Record<string, { label: Tri; icon: string; tone: string }> = {
-  INCOMING: { label: { uz: "Kiruvchi", ru: "Входящий", en: "Incoming" }, icon: "arrowDownLeft", tone: "blue" },
-  OUTGOING: { label: { uz: "Chiquvchi", ru: "Исходящий", en: "Outgoing" }, icon: "arrowUpRight", tone: "emerald" },
+  INCOMING: { label: { uz: "Kiruvchi", ru: "Входящий", en: "Incoming", de: "Eingehend" }, icon: "arrowDownLeft", tone: "blue" },
+  OUTGOING: { label: { uz: "Chiquvchi", ru: "Исходящий", en: "Outgoing", de: "Ausgehend" }, icon: "arrowUpRight", tone: "emerald" },
 };
 
 export const CALLBACK: Record<string, { label: Tri; icon: string; tone: string }> = {
-  PENDING: { label: { uz: "Kutilmoqda", ru: "В ожидании", en: "Pending" }, icon: "clock", tone: "amber" },
-  CALLED_BACK: { label: { uz: "Bog'lanildi", ru: "Перезвонили", en: "Called back" }, icon: "check", tone: "emerald" },
-  NOT_NEEDED: { label: { uz: "Kerak emas", ru: "Не требуется", en: "Not needed" }, icon: "close", tone: "slate" },
+  PENDING: { label: { uz: "Kutilmoqda", ru: "В ожидании", en: "Pending", de: "Ausstehend" }, icon: "clock", tone: "amber" },
+  CALLED_BACK: { label: { uz: "Bog'lanildi", ru: "Перезвонили", en: "Called back", de: "Zurückgerufen" }, icon: "check", tone: "emerald" },
+  NOT_NEEDED: { label: { uz: "Kerak emas", ru: "Не требуется", en: "Not needed", de: "Nicht nötig" }, icon: "close", tone: "slate" },
 };
 
 // Nishon (badge) ranglari

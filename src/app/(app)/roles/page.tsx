@@ -13,7 +13,7 @@ const CAN_MANAGE = [ROLES.DIRECTOR, ROLES.DEPUTY_DIRECTOR];
 
 export default async function RolesPage() {
   const s = await requireSession();
-  if (!CAN_VIEW.includes(s.role as never)) return <Forbidden title={tr(s.locale, { uz: "Kirish taqiqlangan", ru: "Доступ запрещён", en: "Access denied" })} body={tr(s.locale, { uz: "Bu bo'lim rahbariyat uchun.", ru: "Этот раздел для руководства.", en: "This section is for management." })} />;
+  if (!CAN_VIEW.includes(s.role as never)) return <Forbidden title={tr(s.locale, { uz: "Kirish taqiqlangan", ru: "Доступ запрещён", en: "Access denied", de: "Zugriff verweigert" })} body={tr(s.locale, { uz: "Bu bo'lim rahbariyat uchun.", ru: "Этот раздел для руководства.", en: "This section is for management.", de: "Dieser Bereich ist für die Geschäftsleitung." })} />;
 
   const roles = await prisma.staffRole.findMany({ orderBy: { createdAt: "asc" } });
   const rows: VRole[] = roles.map((r) => ({

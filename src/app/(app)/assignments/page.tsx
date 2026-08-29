@@ -16,7 +16,7 @@ export default async function AssignmentsPage() {
   const s = await requireSession();
 
   if (!canRead(s.role, MODULES.GROUPS)) {
-    return <Forbidden title={tr(s.locale, { uz: "Kirish taqiqlangan", ru: "Доступ запрещён", en: "Access denied" })} body={tr(s.locale, { uz: "Bu bo'lim uchun ruxsat yo'q.", ru: "Нет доступа к этому разделу.", en: "You do not have access to this section." })} />;
+    return <Forbidden title={tr(s.locale, { uz: "Kirish taqiqlangan", ru: "Доступ запрещён", en: "Access denied", de: "Zugriff verweigert" })} body={tr(s.locale, { uz: "Bu bo'lim uchun ruxsat yo'q.", ru: "Нет доступа к этому разделу.", en: "You do not have access to this section.", de: "Sie haben keine Berechtigung für diesen Bereich." })} />;
   }
 
   // Ko'lam: o'qituvchi faqat o'z guruhlari vazifalarini ko'radi
@@ -65,7 +65,7 @@ export default async function AssignmentsPage() {
   return (
     <div className="space-y-4">
       <div className="flex items-center gap-3">
-        <h1 className="text-[22px] font-bold tracking-tight text-slate-900 dark:text-slate-100">{tr(s.locale, { uz: "Barcha vazifalar", ru: "Все задания", en: "All assignments" })}</h1>
+        <h1 className="text-[22px] font-bold tracking-tight text-slate-900 dark:text-slate-100">{tr(s.locale, { uz: "Barcha vazifalar", ru: "Все задания", en: "All assignments", de: "Alle Aufgaben" })}</h1>
       </div>
       <AssignmentsView
         locale={s.locale}

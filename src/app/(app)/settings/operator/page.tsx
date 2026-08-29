@@ -15,6 +15,7 @@ const MONTHS: Record<Locale, string[]> = {
   uz: ["Yanvar", "Fevral", "Mart", "Aprel", "May", "Iyun", "Iyul", "Avgust", "Sentabr", "Oktabr", "Noyabr", "Dekabr"],
   ru: ["Январь", "Февраль", "Март", "Апрель", "Май", "Июнь", "Июль", "Август", "Сентябрь", "Октябрь", "Ноябрь", "Декабрь"],
   en: ["January", "February", "March", "April", "May", "June", "July", "August", "September", "October", "November", "December"],
+  de: ["Januar", "Februar", "März", "April", "Mai", "Juni", "Juli", "August", "September", "Oktober", "November", "Dezember"],
 };
 
 const p2 = (n: number) => String(n).padStart(2, "0");
@@ -27,11 +28,12 @@ export default async function OperatorSettingsPage({ searchParams }: { searchPar
   if (!ALLOWED.includes(s.role)) {
     return (
       <Forbidden
-        title={tr(s.locale, { uz: "Kirish taqiqlangan", ru: "Доступ запрещён", en: "Access denied" })}
+        title={tr(s.locale, { uz: "Kirish taqiqlangan", ru: "Доступ запрещён", en: "Access denied", de: "Zugriff verweigert" })}
         body={tr(s.locale, {
           uz: "Bu sozlamalar operator, ROP va rahbariyat uchun.",
           ru: "Эти настройки доступны оператору, РОПу и руководству.",
           en: "These settings are available to operators, the sales head and management.",
+          de: "Diese Einstellungen stehen Operatoren, dem ROP und der Geschäftsführung zur Verfügung.",
         })}
       />
     );
@@ -98,7 +100,7 @@ export default async function OperatorSettingsPage({ searchParams }: { searchPar
         position: u.position,
         sipExtension: u.sipExtension,
         lastLogin: u.lastLoginAt ? fmtDate(u.lastLoginAt) : null,
-        locale: ["uz", "ru", "en"].includes(u.locale) ? u.locale : "uz",
+        locale: ["uz", "ru", "en", "de"].includes(u.locale) ? u.locale : "uz",
       }}
       prefs={parsePrefs(rawPrefs)}
       salary={{

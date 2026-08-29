@@ -14,7 +14,7 @@ const ASSIGNABLE_ROLES = [ROLES.OPERATOR, ROLES.ROP, ROLES.DEPUTY_DIRECTOR, ROLE
 export default async function StaffSettingsPage() {
   const s = await requireSession();
   if (!ALLOWED.includes(s.role as never)) {
-    return <Forbidden title={tr(s.locale, { uz: "Kirish taqiqlangan", ru: "Доступ запрещён", en: "Access denied" })} body={tr(s.locale, { uz: "Xodimlar bo'limi faqat rahbariyat uchun.", ru: "Раздел сотрудников доступен только руководству.", en: "The staff section is available only to management." })} />;
+    return <Forbidden title={tr(s.locale, { uz: "Kirish taqiqlangan", ru: "Доступ запрещён", en: "Access denied", de: "Zugriff verweigert" })} body={tr(s.locale, { uz: "Xodimlar bo'limi faqat rahbariyat uchun.", ru: "Раздел сотрудников доступен только руководству.", en: "The staff section is available only to management.", de: "Der Personalbereich steht nur der Geschäftsleitung zur Verfügung." })} />;
   }
 
   const users = await prisma.user.findMany({

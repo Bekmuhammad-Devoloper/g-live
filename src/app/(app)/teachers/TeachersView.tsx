@@ -72,13 +72,13 @@ export default function TeachersView({ teachers, canManage, locale, branches }: 
       {/* Sarlavha */}
       <div className="flex flex-wrap items-center justify-between gap-3">
         <div className="flex items-center gap-3">
-          <h1 className="text-[22px] font-bold tracking-tight text-slate-900 dark:text-slate-100">{tr(locale, { uz: "O'qituvchilar", ru: "Преподаватели", en: "Teachers" })}</h1>
+          <h1 className="text-[22px] font-bold tracking-tight text-slate-900 dark:text-slate-100">{tr(locale, { uz: "O'qituvchilar", ru: "Преподаватели", en: "Teachers", de: "Lehrer" })}</h1>
           <span className="rounded-full bg-brand-500/15 px-2.5 py-0.5 text-sm font-bold text-brand-500">{teachers.length}</span>
         </div>
         <div className="flex items-center gap-2">
           <div className="relative">
             <Icon name="search" className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400" />
-            <input value={search} onChange={(e) => setSearch(e.target.value)} placeholder={tr(locale, { uz: "Qidirish...", ru: "Поиск...", en: "Search..." })} className="h-9 w-48 rounded-lg border border-slate-200 bg-white pl-9 pr-3 text-sm outline-none focus:border-brand-400 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-100" />
+            <input value={search} onChange={(e) => setSearch(e.target.value)} placeholder={tr(locale, { uz: "Qidirish...", ru: "Поиск...", en: "Search...", de: "Suchen..." })} className="h-9 w-48 rounded-lg border border-slate-200 bg-white pl-9 pr-3 text-sm outline-none focus:border-brand-400 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-100" />
           </div>
           <div className="flex rounded-lg border border-slate-200 p-0.5 dark:border-slate-700">
             <ViewBtn active={view === "grid"} onClick={() => setView("grid")} icon="grid" />
@@ -89,7 +89,7 @@ export default function TeachersView({ teachers, canManage, locale, branches }: 
               onClick={() => setAddOpen(true)}
               className="flex h-9 items-center gap-1.5 rounded-lg bg-brand-600 px-3.5 text-sm font-semibold text-white shadow-sm transition hover:bg-brand-700"
             >
-              <Icon name="plus" className="h-4 w-4" /> {tr(locale, { uz: "Yangi o'qituvchi", ru: "Новый преподаватель", en: "New teacher" })}
+              <Icon name="plus" className="h-4 w-4" /> {tr(locale, { uz: "Yangi o'qituvchi", ru: "Новый преподаватель", en: "New teacher", de: "Neuer Lehrer" })}
             </button>
           )}
         </div>
@@ -99,18 +99,18 @@ export default function TeachersView({ teachers, canManage, locale, branches }: 
 
       {/* KPI */}
       <div className="grid grid-cols-2 gap-4 lg:grid-cols-5">
-        <StatCard label={tr(locale, { uz: "O'qituvchilar", ru: "Преподаватели", en: "Teachers" })} value={totals.teachers} tone="brand" icon="teacher" />
-        <StatCard label={tr(locale, { uz: "Guruhlar", ru: "Группы", en: "Groups" })} value={totals.groups} icon="layers" />
-        <StatCard label={tr(locale, { uz: "O'quvchilar", ru: "Ученики", en: "Students" })} value={totals.students} tone="green" icon="graduation" />
-        <StatCard label={tr(locale, { uz: "Darslar", ru: "Занятия", en: "Lessons" })} value={totals.lessons} icon="check" />
-        <StatCard label={tr(locale, { uz: "Oylik fond", ru: "Месячный фонд", en: "Monthly fund" })} value={formatMoney(totals.fund, locale)} tone="amber" icon="wallet" />
+        <StatCard label={tr(locale, { uz: "O'qituvchilar", ru: "Преподаватели", en: "Teachers", de: "Lehrer" })} value={totals.teachers} tone="brand" icon="teacher" />
+        <StatCard label={tr(locale, { uz: "Guruhlar", ru: "Группы", en: "Groups", de: "Gruppen" })} value={totals.groups} icon="layers" />
+        <StatCard label={tr(locale, { uz: "O'quvchilar", ru: "Ученики", en: "Students", de: "Schüler" })} value={totals.students} tone="green" icon="graduation" />
+        <StatCard label={tr(locale, { uz: "Darslar", ru: "Занятия", en: "Lessons", de: "Unterrichte" })} value={totals.lessons} icon="check" />
+        <StatCard label={tr(locale, { uz: "Oylik fond", ru: "Месячный фонд", en: "Monthly fund", de: "Monatlicher Fonds" })} value={formatMoney(totals.fund, locale)} tone="amber" icon="wallet" />
       </div>
 
       {/* Kontent */}
       {shown.length === 0 ? (
         <div className="rounded-2xl border border-dashed border-slate-300 py-16 text-center dark:border-slate-700">
           <div className="text-3xl opacity-30">🧑‍🏫</div>
-          <p className="mt-2 text-sm text-slate-400">{tr(locale, { uz: "O'qituvchi topilmadi", ru: "Преподаватели не найдены", en: "No teachers found" })}</p>
+          <p className="mt-2 text-sm text-slate-400">{tr(locale, { uz: "O'qituvchi topilmadi", ru: "Преподаватели не найдены", en: "No teachers found", de: "Keine Lehrer gefunden" })}</p>
         </div>
       ) : view === "grid" ? (
         <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
@@ -122,15 +122,15 @@ export default function TeachersView({ teachers, canManage, locale, branches }: 
             <table className="w-full text-left text-sm">
               <thead className="border-b border-slate-200/70 bg-slate-50/80 text-[11px] font-semibold uppercase tracking-wider text-slate-500 dark:border-slate-800 dark:bg-slate-800/50">
                 <tr>
-                  <th className="px-4 py-3">{tr(locale, { uz: "O'qituvchi", ru: "Преподаватель", en: "Teacher" })}</th>
-                  <th className="px-4 py-3">{tr(locale, { uz: "Telefon", ru: "Телефон", en: "Phone" })}</th>
-                  <th className="px-4 py-3">{tr(locale, { uz: "Filial", ru: "Филиал", en: "Branch" })}</th>
-                  <th className="px-4 py-3">{tr(locale, { uz: "Guruhlar", ru: "Группы", en: "Groups" })}</th>
-                  <th className="px-4 py-3">{tr(locale, { uz: "O'quvchilar", ru: "Ученики", en: "Students" })}</th>
-                  <th className="px-4 py-3">{tr(locale, { uz: "Darslar", ru: "Занятия", en: "Lessons" })}</th>
+                  <th className="px-4 py-3">{tr(locale, { uz: "O'qituvchi", ru: "Преподаватель", en: "Teacher", de: "Lehrer" })}</th>
+                  <th className="px-4 py-3">{tr(locale, { uz: "Telefon", ru: "Телефон", en: "Phone", de: "Telefon" })}</th>
+                  <th className="px-4 py-3">{tr(locale, { uz: "Filial", ru: "Филиал", en: "Branch", de: "Filiale" })}</th>
+                  <th className="px-4 py-3">{tr(locale, { uz: "Guruhlar", ru: "Группы", en: "Groups", de: "Gruppen" })}</th>
+                  <th className="px-4 py-3">{tr(locale, { uz: "O'quvchilar", ru: "Ученики", en: "Students", de: "Schüler" })}</th>
+                  <th className="px-4 py-3">{tr(locale, { uz: "Darslar", ru: "Занятия", en: "Lessons", de: "Unterrichte" })}</th>
                   <th className="px-4 py-3">KPI</th>
-                  <th className="px-4 py-3">{tr(locale, { uz: "Bu oy maosh", ru: "Зарплата за месяц", en: "This month salary" })}</th>
-                  <th className="px-4 py-3">{tr(locale, { uz: "Holat", ru: "Статус", en: "Status" })}</th>
+                  <th className="px-4 py-3">{tr(locale, { uz: "Bu oy maosh", ru: "Зарплата за месяц", en: "This month salary", de: "Gehalt diesen Monat" })}</th>
+                  <th className="px-4 py-3">{tr(locale, { uz: "Holat", ru: "Статус", en: "Status", de: "Status" })}</th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-slate-100 dark:divide-slate-800">
@@ -157,7 +157,7 @@ export default function TeachersView({ teachers, canManage, locale, branches }: 
                       <td className="px-4 py-2.5 text-slate-600 dark:text-slate-300">{t.totalLessons}</td>
                       <td className="px-4 py-2.5">{t.kpi > 0 ? <span className="font-semibold text-violet-600 dark:text-violet-400">+{formatMoney(t.kpi, locale)}</span> : <span className="text-slate-400">—</span>}</td>
                       <td className="px-4 py-2.5 font-semibold text-slate-800 dark:text-slate-100">{formatMoney(t.monthTotal, locale)}</td>
-                      <td className="px-4 py-2.5">{t.active ? <Badge tone="green">{tr(locale, { uz: "Faol", ru: "Активен", en: "Active" })}</Badge> : <Badge tone="slate">{tr(locale, { uz: "Nofaol", ru: "Неактивен", en: "Inactive" })}</Badge>}</td>
+                      <td className="px-4 py-2.5">{t.active ? <Badge tone="green">{tr(locale, { uz: "Faol", ru: "Активен", en: "Active", de: "Aktiv" })}</Badge> : <Badge tone="slate">{tr(locale, { uz: "Nofaol", ru: "Неактивен", en: "Inactive", de: "Inaktiv" })}</Badge>}</td>
                     </tr>
                   );
                 })}

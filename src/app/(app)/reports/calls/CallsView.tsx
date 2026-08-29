@@ -71,15 +71,15 @@ export default function CallsView({ calls, stats, operators, locale, canMark, in
     exportRows(
       `qongiroqlar-${new Date().toISOString().slice(0, 10)}`,
       [
-        { key: "when", label: tr(locale, { uz: "Vaqt", ru: "Время", en: "Time" }) },
-        { key: "direction", label: tr(locale, { uz: "Tur", ru: "Тип", en: "Type" }) },
-        { key: "status", label: tr(locale, { uz: "Holat", ru: "Статус", en: "Status" }) },
-        { key: "operator", label: tr(locale, { uz: "Operator", ru: "Оператор", en: "Operator" }) },
-        { key: "contact", label: tr(locale, { uz: "Abonent", ru: "Абонент", en: "Contact" }) },
-        { key: "phone", label: tr(locale, { uz: "Telefon", ru: "Телефон", en: "Phone" }) },
-        { key: "duration", label: tr(locale, { uz: "Davomiylik", ru: "Длительность", en: "Duration" }) },
-        { key: "recording", label: tr(locale, { uz: "Audio yozuv", ru: "Аудиозапись", en: "Recording" }) },
-        { key: "comment", label: tr(locale, { uz: "Izoh", ru: "Комментарий", en: "Comment" }) },
+        { key: "when", label: tr(locale, { uz: "Vaqt", ru: "Время", en: "Time", de: "Zeit" }) },
+        { key: "direction", label: tr(locale, { uz: "Tur", ru: "Тип", en: "Type", de: "Typ" }) },
+        { key: "status", label: tr(locale, { uz: "Holat", ru: "Статус", en: "Status", de: "Status" }) },
+        { key: "operator", label: tr(locale, { uz: "Operator", ru: "Оператор", en: "Operator", de: "Operator" }) },
+        { key: "contact", label: tr(locale, { uz: "Abonent", ru: "Абонент", en: "Contact", de: "Kontakt" }) },
+        { key: "phone", label: tr(locale, { uz: "Telefon", ru: "Телефон", en: "Phone", de: "Telefon" }) },
+        { key: "duration", label: tr(locale, { uz: "Davomiylik", ru: "Длительность", en: "Duration", de: "Dauer" }) },
+        { key: "recording", label: tr(locale, { uz: "Audio yozuv", ru: "Аудиозапись", en: "Recording", de: "Aufnahme" }) },
+        { key: "comment", label: tr(locale, { uz: "Izoh", ru: "Комментарий", en: "Comment", de: "Kommentar" }) },
       ],
       data.map((c) => ({
         when: `${c.dayLabel} ${c.timeLabel}`,
@@ -97,17 +97,17 @@ export default function CallsView({ calls, stats, operators, locale, canMark, in
 
   const answeredPct = stats.total ? `${Math.round((stats.answered / stats.total) * 100)}%` : undefined;
   const tiles = [
-    { label: tr(locale, { uz: "Jami qo'ng'iroqlar", ru: "Всего звонков", en: "Total calls" }), icon: "phone", tone: "blue", value: String(stats.total) },
-    { label: tr(locale, { uz: "Javob berilgan", ru: "Отвеченные", en: "Answered" }), icon: "phoneCall", tone: "emerald", value: String(stats.answered), sub: answeredPct },
-    { label: tr(locale, { uz: "O'tkazib yuborilgan", ru: "Пропущенные", en: "Missed" }), icon: "phoneMissed", tone: "red", value: String(stats.missed), sub: stats.missedPending ? `${stats.missedPending} ${tr(locale, { uz: "kutmoqda", ru: "в ожидании", en: "pending" })}` : undefined },
-    { label: tr(locale, { uz: "Kiruvchi", ru: "Входящие", en: "Incoming" }), icon: "arrowDownLeft", tone: "indigo", value: String(stats.incoming) },
-    { label: tr(locale, { uz: "Chiquvchi", ru: "Исходящие", en: "Outgoing" }), icon: "arrowUpRight", tone: "violet", value: String(stats.outgoing) },
-    { label: tr(locale, { uz: "O'rtacha davomiylik", ru: "Средняя длительность", en: "Average duration" }), icon: "clock", tone: "purple", value: stats.avgDurationLabel },
+    { label: tr(locale, { uz: "Jami qo'ng'iroqlar", ru: "Всего звонков", en: "Total calls", de: "Anrufe gesamt" }), icon: "phone", tone: "blue", value: String(stats.total) },
+    { label: tr(locale, { uz: "Javob berilgan", ru: "Отвеченные", en: "Answered", de: "Angenommen" }), icon: "phoneCall", tone: "emerald", value: String(stats.answered), sub: answeredPct },
+    { label: tr(locale, { uz: "O'tkazib yuborilgan", ru: "Пропущенные", en: "Missed", de: "Verpasst" }), icon: "phoneMissed", tone: "red", value: String(stats.missed), sub: stats.missedPending ? `${stats.missedPending} ${tr(locale, { uz: "kutmoqda", ru: "в ожидании", en: "pending", de: "ausstehend" })}` : undefined },
+    { label: tr(locale, { uz: "Kiruvchi", ru: "Входящие", en: "Incoming", de: "Eingehend" }), icon: "arrowDownLeft", tone: "indigo", value: String(stats.incoming) },
+    { label: tr(locale, { uz: "Chiquvchi", ru: "Исходящие", en: "Outgoing", de: "Ausgehend" }), icon: "arrowUpRight", tone: "violet", value: String(stats.outgoing) },
+    { label: tr(locale, { uz: "O'rtacha davomiylik", ru: "Средняя длительность", en: "Average duration", de: "Durchschnittliche Dauer" }), icon: "clock", tone: "purple", value: stats.avgDurationLabel },
   ];
 
   const tabs = [
-    { key: "all" as const, label: tr(locale, { uz: "Barcha qo'ng'iroqlar", ru: "Все звонки", en: "All calls" }), count: filtered.length, icon: "phone" },
-    { key: "missed" as const, label: tr(locale, { uz: "Qabul qilinmagan", ru: "Пропущенные", en: "Missed" }), count: missed.length, icon: "phoneMissed" },
+    { key: "all" as const, label: tr(locale, { uz: "Barcha qo'ng'iroqlar", ru: "Все звонки", en: "All calls", de: "Alle Anrufe" }), count: filtered.length, icon: "phone" },
+    { key: "missed" as const, label: tr(locale, { uz: "Qabul qilinmagan", ru: "Пропущенные", en: "Missed", de: "Verpasst" }), count: missed.length, icon: "phoneMissed" },
   ];
 
   return (
@@ -120,10 +120,10 @@ export default function CallsView({ calls, stats, operators, locale, canMark, in
           </div>
           <div>
             <h1 className="text-2xl font-bold tracking-tight text-slate-900 dark:text-white">
-              {tr(locale, { uz: "Qo'ng'iroqlar markazi", ru: "Центр звонков", en: "Call center" })}
+              {tr(locale, { uz: "Qo'ng'iroqlar markazi", ru: "Центр звонков", en: "Call center", de: "Anrufzentrale" })}
             </h1>
             <p className="mt-0.5 text-sm text-slate-500 dark:text-slate-400">
-              {tr(locale, { uz: "Barcha qo'ng'iroqlarni kuzating va boshqaring", ru: "Отслеживайте и управляйте всеми звонками", en: "Track and manage all calls" })}
+              {tr(locale, { uz: "Barcha qo'ng'iroqlarni kuzating va boshqaring", ru: "Отслеживайте и управляйте всеми звонками", en: "Track and manage all calls", de: "Alle Anrufe verfolgen und verwalten" })}
             </p>
           </div>
         </div>
@@ -134,18 +134,18 @@ export default function CallsView({ calls, stats, operators, locale, canMark, in
             className="inline-flex items-center gap-2 rounded-xl border border-slate-200 bg-white px-4 py-2.5 text-sm font-medium text-slate-700 shadow-sm transition hover:bg-slate-50 hover:shadow-md disabled:opacity-50 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-300 dark:hover:bg-slate-700"
           >
             <Icon name="download" className="h-4 w-4" />
-            {tr(locale, { uz: "Eksport (CSV)", ru: "Экспорт (CSV)", en: "Export (CSV)" })}
+            {tr(locale, { uz: "Eksport (CSV)", ru: "Экспорт (CSV)", en: "Export (CSV)", de: "Export (CSV)" })}
           </button>
           <button
             onClick={sync}
             disabled={syncing}
-            title={tr(locale, { uz: "Asterisk'dan yangi qo'ng'iroqlarni yuklash", ru: "Загрузить новые звонки из Asterisk", en: "Load new calls from Asterisk" })}
+            title={tr(locale, { uz: "Asterisk'dan yangi qo'ng'iroqlarni yuklash", ru: "Загрузить новые звонки из Asterisk", en: "Load new calls from Asterisk", de: "Neue Anrufe von Asterisk laden" })}
             className="inline-flex items-center gap-2 rounded-xl border border-slate-200 bg-white px-4 py-2.5 text-sm font-medium text-slate-700 shadow-sm transition hover:bg-slate-50 hover:shadow-md disabled:opacity-60 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-300 dark:hover:bg-slate-700"
           >
             <Icon name="refresh" className={cn("h-4 w-4", syncing && "animate-spin")} />
             {syncing
-              ? tr(locale, { uz: "Yangilanmoqda...", ru: "Обновление...", en: "Refreshing..." })
-              : tr(locale, { uz: "Yangilash", ru: "Обновить", en: "Refresh" })}
+              ? tr(locale, { uz: "Yangilanmoqda...", ru: "Обновление...", en: "Refreshing...", de: "Wird aktualisiert..." })
+              : tr(locale, { uz: "Yangilash", ru: "Обновить", en: "Refresh", de: "Aktualisieren" })}
           </button>
           {note && (
             <span className={cn("self-center text-sm font-medium", note.error ? "text-rose-600 dark:text-rose-400" : "text-emerald-600 dark:text-emerald-400")}>
@@ -225,30 +225,30 @@ export default function CallsView({ calls, stats, operators, locale, canMark, in
                 <input
                   value={q}
                   onChange={(e) => setQ(e.target.value)}
-                  placeholder={tr(locale, { uz: "Ism yoki telefon raqam bo'yicha qidirish...", ru: "Поиск по имени или телефону...", en: "Search by name or phone..." })}
+                  placeholder={tr(locale, { uz: "Ism yoki telefon raqam bo'yicha qidirish...", ru: "Поиск по имени или телефону...", en: "Search by name or phone...", de: "Suche nach Name oder Telefonnummer..." })}
                   className="w-full rounded-xl border border-slate-200 bg-slate-50 py-2.5 pl-11 pr-4 text-sm text-slate-900 outline-none transition placeholder:text-slate-400 focus:border-brand-400 focus:ring-2 focus:ring-brand-500/20 dark:border-slate-700 dark:bg-slate-800 dark:text-white"
                 />
               </div>
-              <Sel value={operator} onChange={setOperator} placeholder={tr(locale, { uz: "Barcha operatorlar", ru: "Все операторы", en: "All operators" })}>
+              <Sel value={operator} onChange={setOperator} placeholder={tr(locale, { uz: "Barcha operatorlar", ru: "Все операторы", en: "All operators", de: "Alle Operatoren" })}>
                 {operators.map((o) => (
                   <option key={o.key} value={o.key}>{o.name}</option>
                 ))}
               </Sel>
-              <Sel value={status} onChange={setStatus} placeholder={tr(locale, { uz: "Barcha statuslar", ru: "Все статусы", en: "All statuses" })}>
+              <Sel value={status} onChange={setStatus} placeholder={tr(locale, { uz: "Barcha statuslar", ru: "Все статусы", en: "All statuses", de: "Alle Status" })}>
                 {Object.entries(STATUS).map(([k, v]) => (
                   <option key={k} value={k}>{tr(locale, v.label)}</option>
                 ))}
               </Sel>
-              <Sel value={type} onChange={setType} placeholder={tr(locale, { uz: "Barcha turlar", ru: "Все типы", en: "All types" })}>
+              <Sel value={type} onChange={setType} placeholder={tr(locale, { uz: "Barcha turlar", ru: "Все типы", en: "All types", de: "Alle Typen" })}>
                 {Object.entries(DIR).map(([k, v]) => (
                   <option key={k} value={k}>{tr(locale, v.label)}</option>
                 ))}
               </Sel>
-              <Sel value={time} onChange={setTime} placeholder={tr(locale, { uz: "Barcha vaqt", ru: "Всё время", en: "All time" })}>
-                <option value="today">{tr(locale, { uz: "Bugun", ru: "Сегодня", en: "Today" })}</option>
-                <option value="yesterday">{tr(locale, { uz: "Kecha", ru: "Вчера", en: "Yesterday" })}</option>
-                <option value="week">{tr(locale, { uz: "Oxirgi 7 kun", ru: "Последние 7 дней", en: "Last 7 days" })}</option>
-                <option value="month">{tr(locale, { uz: "Oxirgi 30 kun", ru: "Последние 30 дней", en: "Last 30 days" })}</option>
+              <Sel value={time} onChange={setTime} placeholder={tr(locale, { uz: "Barcha vaqt", ru: "Всё время", en: "All time", de: "Gesamte Zeit" })}>
+                <option value="today">{tr(locale, { uz: "Bugun", ru: "Сегодня", en: "Today", de: "Heute" })}</option>
+                <option value="yesterday">{tr(locale, { uz: "Kecha", ru: "Вчера", en: "Yesterday", de: "Gestern" })}</option>
+                <option value="week">{tr(locale, { uz: "Oxirgi 7 kun", ru: "Последние 7 дней", en: "Last 7 days", de: "Letzte 7 Tage" })}</option>
+                <option value="month">{tr(locale, { uz: "Oxirgi 30 kun", ru: "Последние 30 дней", en: "Last 30 days", de: "Letzte 30 Tage" })}</option>
               </Sel>
             </div>
 
@@ -261,7 +261,7 @@ export default function CallsView({ calls, stats, operators, locale, canMark, in
               page={safePage}
               pageCount={pageCount}
               onPage={setPage}
-              loadedNote={stats.total > stats.loaded ? tr(locale, { uz: `oxirgi ${stats.loaded} ta qo'ng'iroq`, ru: `последние ${stats.loaded} звонков`, en: `latest ${stats.loaded} calls` }) : null}
+              loadedNote={stats.total > stats.loaded ? tr(locale, { uz: `oxirgi ${stats.loaded} ta qo'ng'iroq`, ru: `последние ${stats.loaded} звонков`, en: `latest ${stats.loaded} calls`, de: `letzte ${stats.loaded} Anrufe` }) : null}
             />
           </div>
         ) : (

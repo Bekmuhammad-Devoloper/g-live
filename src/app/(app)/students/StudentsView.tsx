@@ -48,12 +48,12 @@ const PAGE_SIZE = 15;
 
 // "Ustunlar" menyusidan yashirilishi mumkin bo'lgan ustunlar
 const OPTIONAL_COLS = [
-  { key: "telefon", label: { uz: "Telefon", ru: "Телефон", en: "Phone" } },
-  { key: "guruhlar", label: { uz: "Guruhlar", ru: "Группы", en: "Groups" } },
-  { key: "oqituvchilar", label: { uz: "O'qituvchilar", ru: "Преподаватели", en: "Teachers" } },
-  { key: "sanalar", label: { uz: "Mashg'ulotlar sanalari", ru: "Даты занятий", en: "Lesson dates" } },
-  { key: "balans", label: { uz: "Balans", ru: "Баланс", en: "Balance" } },
-  { key: "izoh", label: { uz: "Izoh", ru: "Примечание", en: "Note" } },
+  { key: "telefon", label: { uz: "Telefon", ru: "Телефон", en: "Phone", de: "Telefon" } },
+  { key: "guruhlar", label: { uz: "Guruhlar", ru: "Группы", en: "Groups", de: "Gruppen" } },
+  { key: "oqituvchilar", label: { uz: "O'qituvchilar", ru: "Преподаватели", en: "Teachers", de: "Lehrer" } },
+  { key: "sanalar", label: { uz: "Mashg'ulotlar sanalari", ru: "Даты занятий", en: "Lesson dates", de: "Unterrichtstermine" } },
+  { key: "balans", label: { uz: "Balans", ru: "Баланс", en: "Balance", de: "Saldo" } },
+  { key: "izoh", label: { uz: "Izoh", ru: "Примечание", en: "Note", de: "Notiz" } },
 ] as const;
 
 const statusTone: Record<string, string> = {
@@ -122,7 +122,7 @@ function StudentAvatar({ id, name, imageUrl, canManage, locale }: { id: string; 
             type="button"
             onClick={() => fileRef.current?.click()}
             disabled={uploading}
-            title={imageUrl ? tr(locale, { uz: "Rasmni almashtirish", ru: "Заменить фото", en: "Change photo" }) : tr(locale, { uz: "Rasm yuklash", ru: "Загрузить фото", en: "Upload photo" })}
+            title={imageUrl ? tr(locale, { uz: "Rasmni almashtirish", ru: "Заменить фото", en: "Change photo", de: "Foto ändern" }) : tr(locale, { uz: "Rasm yuklash", ru: "Загрузить фото", en: "Upload photo", de: "Foto hochladen" })}
             className="absolute inset-0 flex items-center justify-center rounded-full bg-black/45 text-white opacity-0 transition group-hover/av:opacity-100 disabled:opacity-100"
           >
             {uploading ? <Icon name="refresh" className="h-4 w-4 animate-spin" /> : <Icon name="camera" className="h-4 w-4" />}
@@ -192,7 +192,7 @@ export default function StudentsView({ students, courses, locale, canCreate, can
   };
   const handleArchive = () => {
     if (selected.size === 0) return;
-    if (!window.confirm(tr(locale, { uz: `${selected.size} ta o'quvchini arxivlaysizmi?`, ru: `Архивировать ${selected.size} ученик(ов)?`, en: `Archive ${selected.size} student(s)?` }))) return;
+    if (!window.confirm(tr(locale, { uz: `${selected.size} ta o'quvchini arxivlaysizmi?`, ru: `Архивировать ${selected.size} ученик(ов)?`, en: `Archive ${selected.size} student(s)?`, de: `${selected.size} Schüler archivieren?` }))) return;
     runBulk(() => bulkArchiveStudents([...selected]));
   };
 
@@ -249,12 +249,12 @@ export default function StudentsView({ students, courses, locale, canCreate, can
   // CSV eksport (joriy filtrlangan ro'yxat)
   const exportCsv = () => {
     const head = [
-      tr(locale, { uz: "Ism", ru: "Имя", en: "Name" }),
-      tr(locale, { uz: "Telefon", ru: "Телефон", en: "Phone" }),
-      tr(locale, { uz: "Holat", ru: "Статус", en: "Status" }),
-      tr(locale, { uz: "Guruhlar", ru: "Группы", en: "Groups" }),
-      tr(locale, { uz: "O'qituvchilar", ru: "Преподаватели", en: "Teachers" }),
-      tr(locale, { uz: "Balans", ru: "Баланс", en: "Balance" }),
+      tr(locale, { uz: "Ism", ru: "Имя", en: "Name", de: "Name" }),
+      tr(locale, { uz: "Telefon", ru: "Телефон", en: "Phone", de: "Telefon" }),
+      tr(locale, { uz: "Holat", ru: "Статус", en: "Status", de: "Status" }),
+      tr(locale, { uz: "Guruhlar", ru: "Группы", en: "Groups", de: "Gruppen" }),
+      tr(locale, { uz: "O'qituvchilar", ru: "Преподаватели", en: "Teachers", de: "Lehrer" }),
+      tr(locale, { uz: "Balans", ru: "Баланс", en: "Balance", de: "Saldo" }),
     ];
     const lines = filtered.map((s) =>
       [
@@ -285,14 +285,14 @@ export default function StudentsView({ students, courses, locale, canCreate, can
       {/* Sarlavha */}
       <div className="mb-5 flex flex-wrap items-center justify-between gap-3">
         <div className="flex items-center gap-2.5">
-          <h1 className="text-[26px] font-bold tracking-tight text-slate-900 dark:text-slate-100">{tr(locale, { uz: "Talabalar", ru: "Ученики", en: "Students" })}</h1>
+          <h1 className="text-[26px] font-bold tracking-tight text-slate-900 dark:text-slate-100">{tr(locale, { uz: "Talabalar", ru: "Ученики", en: "Students", de: "Schüler" })}</h1>
         </div>
         {canCreate && (
           <button
             onClick={() => setShowCreate(true)}
             className="inline-flex items-center gap-2 rounded-full bg-brand-700 px-6 py-2.5 text-sm font-semibold text-white shadow-sm transition hover:bg-brand-800 active:scale-[.98]"
           >
-            <Icon name="plus" className="h-4 w-4" /> {tr(locale, { uz: "Yangisini qo'shish", ru: "Добавить нового", en: "Add new" })}
+            <Icon name="plus" className="h-4 w-4" /> {tr(locale, { uz: "Yangisini qo'shish", ru: "Добавить нового", en: "Add new", de: "Neu hinzufügen" })}
           </button>
         )}
       </div>
@@ -305,39 +305,39 @@ export default function StudentsView({ students, courses, locale, canCreate, can
             <input
               value={q}
               onChange={(e) => setQ(e.target.value)}
-              placeholder={tr(locale, { uz: "Ism yoki telefon orqali qidir", ru: "Поиск по имени или телефону", en: "Search by name or phone" })}
+              placeholder={tr(locale, { uz: "Ism yoki telefon orqali qidir", ru: "Поиск по имени или телефону", en: "Search by name or phone", de: "Nach Name oder Telefon suchen" })}
               className="h-10 w-full rounded-lg border border-slate-200 bg-white pl-9 pr-3 text-sm outline-none transition placeholder:text-slate-400 focus:border-brand-400 focus:ring-2 focus:ring-brand-100 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-100 dark:focus:ring-brand-900"
             />
           </div>
 
-          <Select value={course} onChange={setCourse} placeholder={tr(locale, { uz: "Kurslar", ru: "Курсы", en: "Courses" })}>
+          <Select value={course} onChange={setCourse} placeholder={tr(locale, { uz: "Kurslar", ru: "Курсы", en: "Courses", de: "Kurse" })}>
             {courses.map((c) => <option key={c} value={c}>{c}</option>)}
           </Select>
 
-          <Select value={status} onChange={setStatus} placeholder={tr(locale, { uz: "Talaba holati", ru: "Статус ученика", en: "Student status" })}>
+          <Select value={status} onChange={setStatus} placeholder={tr(locale, { uz: "Talaba holati", ru: "Статус ученика", en: "Student status", de: "Schülerstatus" })}>
             {EDU_STATUSES.map((st) => (
               <option key={st} value={st}>{label(EDU_STATUS_LABELS, st, locale)}</option>
             ))}
           </Select>
 
-          <Select value={fin} onChange={setFin} placeholder={tr(locale, { uz: "Moliyaviy holati", ru: "Финансовый статус", en: "Financial status" })}>
-            <option value="paid">{tr(locale, { uz: "To'lagan (balans musbat)", ru: "Оплатил (баланс положительный)", en: "Paid (positive balance)" })}</option>
-            <option value="unpaid">{tr(locale, { uz: "To'lamagan (balans nol)", ru: "Не оплатил (баланс ноль)", en: "Unpaid (zero balance)" })}</option>
-            <option value="debtor_month">{tr(locale, { uz: "Bu oydagi qarzdorlar", ru: "Должники этого месяца", en: "This month's debtors" })}</option>
-            <option value="debtor_total">{tr(locale, { uz: "Umumiy qarzdor o'quvchilar", ru: "Общие должники", en: "Total debtor students" })}</option>
+          <Select value={fin} onChange={setFin} placeholder={tr(locale, { uz: "Moliyaviy holati", ru: "Финансовый статус", en: "Financial status", de: "Finanzstatus" })}>
+            <option value="paid">{tr(locale, { uz: "To'lagan (balans musbat)", ru: "Оплатил (баланс положительный)", en: "Paid (positive balance)", de: "Bezahlt (positiver Saldo)" })}</option>
+            <option value="unpaid">{tr(locale, { uz: "To'lamagan (balans nol)", ru: "Не оплатил (баланс ноль)", en: "Unpaid (zero balance)", de: "Unbezahlt (Saldo null)" })}</option>
+            <option value="debtor_month">{tr(locale, { uz: "Bu oydagi qarzdorlar", ru: "Должники этого месяца", en: "This month's debtors", de: "Schuldner diesen Monats" })}</option>
+            <option value="debtor_total">{tr(locale, { uz: "Umumiy qarzdor o'quvchilar", ru: "Общие должники", en: "Total debtor students", de: "Schüler mit Gesamtschulden" })}</option>
           </Select>
 
-          <SelectDisabled locale={locale} placeholder={tr(locale, { uz: "Teglar bo'yicha", ru: "По тегам", en: "By tags" })} />
-          <InputDisabled locale={locale} placeholder={tr(locale, { uz: "Qo'shimcha ID", ru: "Дополнительный ID", en: "Additional ID" })} />
+          <SelectDisabled locale={locale} placeholder={tr(locale, { uz: "Teglar bo'yicha", ru: "По тегам", en: "By tags", de: "Nach Tags" })} />
+          <InputDisabled locale={locale} placeholder={tr(locale, { uz: "Qo'shimcha ID", ru: "Дополнительный ID", en: "Additional ID", de: "Zusätzliche ID" })} />
 
-          <Select value={groupCount} onChange={setGroupCount} placeholder={tr(locale, { uz: "Guruhlar soni", ru: "Количество групп", en: "Number of groups" })}>
-            <option value="0">{tr(locale, { uz: "Guruhsiz", ru: "Без группы", en: "No group" })}</option>
-            <option value="1">{tr(locale, { uz: "1 ta guruh", ru: "1 группа", en: "1 group" })}</option>
-            <option value="2">{tr(locale, { uz: "2+ guruh", ru: "2+ группы", en: "2+ groups" })}</option>
+          <Select value={groupCount} onChange={setGroupCount} placeholder={tr(locale, { uz: "Guruhlar soni", ru: "Количество групп", en: "Number of groups", de: "Anzahl der Gruppen" })}>
+            <option value="0">{tr(locale, { uz: "Guruhsiz", ru: "Без группы", en: "No group", de: "Ohne Gruppe" })}</option>
+            <option value="1">{tr(locale, { uz: "1 ta guruh", ru: "1 группа", en: "1 group", de: "1 Gruppe" })}</option>
+            <option value="2">{tr(locale, { uz: "2+ guruh", ru: "2+ группы", en: "2+ groups", de: "2+ Gruppen" })}</option>
           </Select>
 
-          <InputDisabled locale={locale} placeholder={tr(locale, { uz: "Boshlanish sana", ru: "Дата начала", en: "Start date" })} icon="calendar" />
-          <InputDisabled locale={locale} placeholder={tr(locale, { uz: "Tugash sanasi", ru: "Дата окончания", en: "End date" })} icon="calendar" />
+          <InputDisabled locale={locale} placeholder={tr(locale, { uz: "Boshlanish sana", ru: "Дата начала", en: "Start date", de: "Startdatum" })} icon="calendar" />
+          <InputDisabled locale={locale} placeholder={tr(locale, { uz: "Tugash sanasi", ru: "Дата окончания", en: "End date", de: "Enddatum" })} icon="calendar" />
         </div>
 
         {/* Filtrlar / Ustunlar tugmalari */}
@@ -346,7 +346,7 @@ export default function StudentsView({ students, courses, locale, canCreate, can
             onClick={resetFilters}
             className="inline-flex items-center gap-1.5 rounded-lg border border-slate-200 bg-white px-3.5 py-2 text-sm font-medium text-slate-600 transition hover:bg-slate-50 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-300 dark:hover:bg-slate-800"
           >
-            <Icon name="filter" className="h-4 w-4" /> {tr(locale, { uz: "Filtrlar", ru: "Фильтры", en: "Filters" })}
+            <Icon name="filter" className="h-4 w-4" /> {tr(locale, { uz: "Filtrlar", ru: "Фильтры", en: "Filters", de: "Filter" })}
             {activeFilters > 0 && (
               <span className="ml-0.5 flex h-4 min-w-4 items-center justify-center rounded-full bg-brand-600 px-1 text-[10px] font-bold text-white">
                 {activeFilters}
@@ -359,13 +359,13 @@ export default function StudentsView({ students, courses, locale, canCreate, can
               onClick={() => setColMenu((v) => !v)}
               className="inline-flex items-center gap-1.5 rounded-lg border border-slate-200 bg-white px-3.5 py-2 text-sm font-medium text-brand-600 transition hover:bg-slate-50 dark:border-slate-700 dark:bg-slate-900 dark:hover:bg-slate-800"
             >
-              <Icon name="settings" className="h-4 w-4" /> {tr(locale, { uz: "Ustunlar", ru: "Столбцы", en: "Columns" })}
+              <Icon name="settings" className="h-4 w-4" /> {tr(locale, { uz: "Ustunlar", ru: "Столбцы", en: "Columns", de: "Spalten" })}
             </button>
             {colMenu && (
               <>
                 <div className="fixed inset-0 z-30" onClick={() => setColMenu(false)} />
                 <div className="absolute right-0 top-full z-40 mt-1.5 w-56 overflow-hidden rounded-xl border border-slate-200 bg-white py-1 shadow-pop dark:border-slate-700 dark:bg-slate-800">
-                  <div className="px-3 py-1.5 text-[10px] font-semibold uppercase tracking-wider text-slate-400">{tr(locale, { uz: "Ustunlar", ru: "Столбцы", en: "Columns" })}</div>
+                  <div className="px-3 py-1.5 text-[10px] font-semibold uppercase tracking-wider text-slate-400">{tr(locale, { uz: "Ustunlar", ru: "Столбцы", en: "Columns", de: "Spalten" })}</div>
                   {OPTIONAL_COLS.map((c) => (
                     <label key={c.key} className="flex cursor-pointer items-center gap-2.5 px-3 py-2 text-sm text-slate-700 transition hover:bg-slate-50 dark:text-slate-200 dark:hover:bg-slate-700/60">
                       <input
@@ -400,27 +400,27 @@ export default function StudentsView({ students, courses, locale, canCreate, can
                 <th className="w-10 px-3 py-2.5">
                   <input type="checkbox" checked={allOnPageSelected} onChange={toggleAll} className="h-4 w-4 rounded border-slate-300 accent-brand-600" />
                 </th>
-                <th className="px-3 py-2.5">{tr(locale, { uz: "Foto", ru: "Фото", en: "Photo" })}</th>
+                <th className="px-3 py-2.5">{tr(locale, { uz: "Foto", ru: "Фото", en: "Photo", de: "Foto" })}</th>
                 <th className="px-4 py-2.5">
                   <button onClick={() => setSortDir((d) => (d === "asc" ? "desc" : "asc"))} className="inline-flex items-center gap-1 transition hover:text-slate-700 dark:hover:text-slate-200">
-                    {tr(locale, { uz: "Ism", ru: "Имя", en: "Name" })} <span className="text-brand-500">{sortDir === "asc" ? "↑" : "↓"}</span>
+                    {tr(locale, { uz: "Ism", ru: "Имя", en: "Name", de: "Name" })} <span className="text-brand-500">{sortDir === "asc" ? "↑" : "↓"}</span>
                   </button>
                 </th>
-                {isVisible("telefon") && <th className="px-4 py-2.5">{tr(locale, { uz: "Telefon", ru: "Телефон", en: "Phone" })}</th>}
-                {isVisible("guruhlar") && <th className="px-4 py-2.5">{tr(locale, { uz: "Guruhlar", ru: "Группы", en: "Groups" })}</th>}
-                {isVisible("oqituvchilar") && <th className="px-4 py-2.5">{tr(locale, { uz: "O'qituvchilar", ru: "Преподаватели", en: "Teachers" })}</th>}
-                {isVisible("sanalar") && <th className="px-4 py-2.5">{tr(locale, { uz: "Mashg'ulotlar sanalari", ru: "Даты занятий", en: "Lesson dates" })}</th>}
-                {isVisible("balans") && <th className="px-4 py-2.5">{tr(locale, { uz: "Balans", ru: "Баланс", en: "Balance" })}</th>}
-                {isVisible("izoh") && <th className="px-4 py-2.5">{tr(locale, { uz: "Izoh", ru: "Примечание", en: "Note" })}</th>}
+                {isVisible("telefon") && <th className="px-4 py-2.5">{tr(locale, { uz: "Telefon", ru: "Телефон", en: "Phone", de: "Telefon" })}</th>}
+                {isVisible("guruhlar") && <th className="px-4 py-2.5">{tr(locale, { uz: "Guruhlar", ru: "Группы", en: "Groups", de: "Gruppen" })}</th>}
+                {isVisible("oqituvchilar") && <th className="px-4 py-2.5">{tr(locale, { uz: "O'qituvchilar", ru: "Преподаватели", en: "Teachers", de: "Lehrer" })}</th>}
+                {isVisible("sanalar") && <th className="px-4 py-2.5">{tr(locale, { uz: "Mashg'ulotlar sanalari", ru: "Даты занятий", en: "Lesson dates", de: "Unterrichtstermine" })}</th>}
+                {isVisible("balans") && <th className="px-4 py-2.5">{tr(locale, { uz: "Balans", ru: "Баланс", en: "Balance", de: "Saldo" })}</th>}
+                {isVisible("izoh") && <th className="px-4 py-2.5">{tr(locale, { uz: "Izoh", ru: "Примечание", en: "Note", de: "Notiz" })}</th>}
                 <th className="px-4 py-2.5 text-right">
                   {selected.size > 0 ? (
                     <div className="flex items-center justify-end gap-1">
-                      <HeadAction icon="layers" title={tr(locale, { uz: "Guruhga biriktirish", ru: "Привязать к группе", en: "Assign to group" })} active onClick={() => setBulkModal("assign")} />
-                      <HeadAction icon="mail" title={tr(locale, { uz: "Xabar yuborish", ru: "Отправить сообщение", en: "Send message" })} active onClick={() => setBulkModal("message")} />
-                      <HeadAction icon="fileX" title={tr(locale, { uz: "Arxivlash", ru: "Архивировать", en: "Archive" })} active onClick={handleArchive} />
+                      <HeadAction icon="layers" title={tr(locale, { uz: "Guruhga biriktirish", ru: "Привязать к группе", en: "Assign to group", de: "Gruppe zuweisen" })} active onClick={() => setBulkModal("assign")} />
+                      <HeadAction icon="mail" title={tr(locale, { uz: "Xabar yuborish", ru: "Отправить сообщение", en: "Send message", de: "Nachricht senden" })} active onClick={() => setBulkModal("message")} />
+                      <HeadAction icon="fileX" title={tr(locale, { uz: "Arxivlash", ru: "Архивировать", en: "Archive", de: "Archivieren" })} active onClick={handleArchive} />
                     </div>
                   ) : (
-                    tr(locale, { uz: "Amallar", ru: "Действия", en: "Actions" })
+                    tr(locale, { uz: "Amallar", ru: "Действия", en: "Actions", de: "Aktionen" })
                   )}
                 </th>
               </tr>
@@ -430,7 +430,7 @@ export default function StudentsView({ students, courses, locale, canCreate, can
                 <tr>
                   <td colSpan={colCount} className="px-4 py-16 text-center">
                     <div className="text-3xl opacity-30">📭</div>
-                    <div className="mt-2 text-sm text-slate-400">{tr(locale, { uz: "O'quvchi topilmadi", ru: "Ученики не найдены", en: "No students found" })}</div>
+                    <div className="mt-2 text-sm text-slate-400">{tr(locale, { uz: "O'quvchi topilmadi", ru: "Ученики не найдены", en: "No students found", de: "Keine Schüler gefunden" })}</div>
                   </td>
                 </tr>
               ) : (
@@ -519,7 +519,7 @@ export default function StudentsView({ students, courses, locale, canCreate, can
                             href={`/students/${st.id}`}
                             onClick={(e) => e.stopPropagation()}
                             className="flex h-8 w-8 items-center justify-center rounded-lg text-slate-400 transition hover:bg-slate-100 hover:text-brand-600 dark:hover:bg-slate-800"
-                            title={tr(locale, { uz: "To'liq profil", ru: "Полный профиль", en: "Full profile" })}
+                            title={tr(locale, { uz: "To'liq profil", ru: "Полный профиль", en: "Full profile", de: "Vollständiges Profil" })}
                           >
                             <Icon name="expand" className="h-4 w-4" />
                           </Link>
@@ -527,16 +527,16 @@ export default function StudentsView({ students, courses, locale, canCreate, can
                             <button
                               onClick={() => setEditing(st)}
                               className="flex h-8 w-8 items-center justify-center rounded-lg text-slate-400 transition hover:bg-slate-100 hover:text-brand-600 dark:hover:bg-slate-800"
-                              title={tr(locale, { uz: "Tahrirlash", ru: "Редактировать", en: "Edit" })}
+                              title={tr(locale, { uz: "Tahrirlash", ru: "Редактировать", en: "Edit", de: "Bearbeiten" })}
                             >
                               <Icon name="pencil" className="h-4 w-4" />
                             </button>
                           )}
-                          <Link href={st.groups[0] ? `/groups/${st.groups[0].id}` : "/groups"} className="flex h-8 w-8 items-center justify-center rounded-lg text-slate-400 transition hover:bg-slate-100 hover:text-brand-600 dark:hover:bg-slate-800" title={tr(locale, { uz: "Guruhlar", ru: "Группы", en: "Groups" })}>
+                          <Link href={st.groups[0] ? `/groups/${st.groups[0].id}` : "/groups"} className="flex h-8 w-8 items-center justify-center rounded-lg text-slate-400 transition hover:bg-slate-100 hover:text-brand-600 dark:hover:bg-slate-800" title={tr(locale, { uz: "Guruhlar", ru: "Группы", en: "Groups", de: "Gruppen" })}>
                             <Icon name="layers" className="h-4 w-4" />
                           </Link>
                           {st.phone && (
-                            <a href={`tel:${st.phone}`} className="flex h-8 w-8 items-center justify-center rounded-lg text-slate-400 transition hover:bg-slate-100 hover:text-brand-600 dark:hover:bg-slate-800" title={tr(locale, { uz: "Qo'ng'iroq", ru: "Позвонить", en: "Call" })}>
+                            <a href={`tel:${st.phone}`} className="flex h-8 w-8 items-center justify-center rounded-lg text-slate-400 transition hover:bg-slate-100 hover:text-brand-600 dark:hover:bg-slate-800" title={tr(locale, { uz: "Qo'ng'iroq", ru: "Позвонить", en: "Call", de: "Anruf" })}>
                               <Icon name="phone" className="h-4 w-4" />
                             </a>
                           )}
@@ -556,14 +556,14 @@ export default function StudentsView({ students, courses, locale, canCreate, can
           <div className="flex items-center gap-2">
             <button
               disabled
-              title={tr(locale, { uz: "Import (tez orada)", ru: "Импорт (скоро)", en: "Import (coming soon)" })}
+              title={tr(locale, { uz: "Import (tez orada)", ru: "Импорт (скоро)", en: "Import (coming soon)", de: "Import (bald verfügbar)" })}
               className="flex h-9 w-9 items-center justify-center rounded-full border border-slate-200 text-slate-300 dark:border-slate-700 dark:text-slate-600"
             >
               <Icon name="download" className="h-4 w-4 rotate-180" />
             </button>
             <button
               onClick={exportCsv}
-              title={tr(locale, { uz: "CSV yuklab olish", ru: "Скачать CSV", en: "Download CSV" })}
+              title={tr(locale, { uz: "CSV yuklab olish", ru: "Скачать CSV", en: "Download CSV", de: "CSV herunterladen" })}
               className="flex h-9 w-9 items-center justify-center rounded-full border border-emerald-300 text-emerald-600 transition hover:bg-emerald-50 dark:border-emerald-800 dark:hover:bg-emerald-950/40"
             >
               <Icon name="download" className="h-4 w-4" />
@@ -574,9 +574,9 @@ export default function StudentsView({ students, courses, locale, canCreate, can
 
       {selected.size > 0 && (
         <div className="mt-3 text-xs text-slate-500">
-          {tr(locale, { uz: `${selected.size} ta tanlandi`, ru: `Выбрано: ${selected.size}`, en: `${selected.size} selected` })} ·{" "}
+          {tr(locale, { uz: `${selected.size} ta tanlandi`, ru: `Выбрано: ${selected.size}`, en: `${selected.size} selected`, de: `${selected.size} ausgewählt` })} ·{" "}
           <button onClick={() => setSelected(new Set())} className="font-medium text-brand-600 hover:underline">
-            {tr(locale, { uz: "bekor qilish", ru: "отмена", en: "cancel" })}
+            {tr(locale, { uz: "bekor qilish", ru: "отмена", en: "cancel", de: "abbrechen" })}
           </button>
         </div>
       )}
@@ -689,7 +689,7 @@ function StudentDetailModal({
                 href={`/students/${st.id}`}
                 className="flex items-center gap-1.5 rounded-lg border border-slate-200 px-2.5 py-1.5 text-[11px] font-semibold text-slate-600 transition hover:border-brand-300 hover:text-brand-600 dark:border-white/10 dark:text-slate-300 dark:hover:bg-white/10"
               >
-                <Icon name="expand" className="h-3.5 w-3.5" /> {tr(locale, { uz: "To'liq profil", ru: "Полный профиль", en: "Full profile" })}
+                <Icon name="expand" className="h-3.5 w-3.5" /> {tr(locale, { uz: "To'liq profil", ru: "Полный профиль", en: "Full profile", de: "Vollständiges Profil" })}
               </Link>
               <button onClick={onClose} className="flex h-8 w-8 items-center justify-center rounded-full text-lg text-slate-400 transition hover:bg-slate-100 hover:text-slate-600 dark:hover:bg-white/10">✕</button>
             </div>
@@ -702,16 +702,16 @@ function StudentDetailModal({
             <div>
               <div className="mb-2 flex items-center justify-between gap-2">
                 <div className="flex items-center gap-2 text-xs font-semibold uppercase tracking-wide text-slate-400">
-                  <Icon name="wallet" className="h-3.5 w-3.5" /> {tr(locale, { uz: "To'lov holati", ru: "Статус оплаты", en: "Payment status" })}
+                  <Icon name="wallet" className="h-3.5 w-3.5" /> {tr(locale, { uz: "To'lov holati", ru: "Статус оплаты", en: "Payment status", de: "Zahlungsstatus" })}
                 </div>
                 {canPay && !payForm && !debtForm && (
                   <div className="flex gap-1.5">
                     {/* Qarzdor holatga tushurish — qo'lda qarz yozuvi */}
                     <button onClick={() => setDebtForm(true)} className="flex items-center gap-1 rounded-lg border border-amber-300 px-2.5 py-1 text-[11px] font-semibold text-amber-700 transition hover:bg-amber-50 dark:border-amber-500/40 dark:text-amber-400 dark:hover:bg-amber-500/10">
-                      <Icon name="alert" className="h-3.5 w-3.5" /> {tr(locale, { uz: "Qarz qo'shish", ru: "Добавить долг", en: "Add debt" })}
+                      <Icon name="alert" className="h-3.5 w-3.5" /> {tr(locale, { uz: "Qarz qo'shish", ru: "Добавить долг", en: "Add debt", de: "Schulden hinzufügen" })}
                     </button>
                     <button onClick={() => setPayForm(true)} className="flex items-center gap-1 rounded-lg bg-brand-600 px-2.5 py-1 text-[11px] font-semibold text-white transition hover:bg-brand-700">
-                      <Icon name="plus" className="h-3.5 w-3.5" /> {tr(locale, { uz: "To'lov qabul qilish", ru: "Принять оплату", en: "Accept payment" })}
+                      <Icon name="plus" className="h-3.5 w-3.5" /> {tr(locale, { uz: "To'lov qabul qilish", ru: "Принять оплату", en: "Accept payment", de: "Zahlung annehmen" })}
                     </button>
                   </div>
                 )}
@@ -725,12 +725,13 @@ function StudentDetailModal({
                       <Icon name="alert" className="h-4 w-4 text-rose-600" />
                     </span>
                     <div>
-                      <div className="text-sm font-bold text-rose-700 dark:text-rose-400">{tr(locale, { uz: "TO'LOV MAJBURIY", ru: "ОПЛАТА ОБЯЗАТЕЛЬНА", en: "PAYMENT MANDATORY" })}</div>
+                      <div className="text-sm font-bold text-rose-700 dark:text-rose-400">{tr(locale, { uz: "TO'LOV MAJBURIY", ru: "ОПЛАТА ОБЯЗАТЕЛЬНА", en: "PAYMENT MANDATORY", de: "ZAHLUNG ERFORDERLICH" })}</div>
                       <div className="text-xs text-rose-500 dark:text-rose-400/80">
                         {tr(locale, {
                           uz: `Shu oy ${pay.lessonsThisMonth} dars o'tildi (chegara: ${pay.mandatoryThreshold}), lekin to'lov qilinmagan.`,
                           ru: `В этом месяце проведено ${pay.lessonsThisMonth} уроков (лимит: ${pay.mandatoryThreshold}), оплата не произведена.`,
                           en: `${pay.lessonsThisMonth} lessons this month (limit: ${pay.mandatoryThreshold}), unpaid.`,
+                          de: `${pay.lessonsThisMonth} Unterrichtsstunden diesen Monat (Limit: ${pay.mandatoryThreshold}), unbezahlt.`,
                         })}
                       </div>
                     </div>
@@ -750,7 +751,7 @@ function StudentDetailModal({
               {payForm && (
                 <PayAcceptForm
                   studentId={st.id}
-                  defaultPurpose={st.courses[0] ? `${st.courses[0]} ${tr(locale, { uz: "kurs to'lovi", ru: "оплата курса", en: "course fee" })}` : tr(locale, { uz: "Kurs to'lovi", ru: "Оплата курса", en: "Course fee" })}
+                  defaultPurpose={st.courses[0] ? `${st.courses[0]} ${tr(locale, { uz: "kurs to'lovi", ru: "оплата курса", en: "course fee", de: "Kursgebühr" })}` : tr(locale, { uz: "Kurs to'lovi", ru: "Оплата курса", en: "Course fee", de: "Kursgebühr" })}
                   cashierName={cashierName}
                   receiptMode={receiptMode}
                   locale={locale}
@@ -760,12 +761,12 @@ function StudentDetailModal({
               )}
 
               <div className="grid grid-cols-2 gap-3">
-                <PayTile label={tr(locale, { uz: "Bu oy", ru: "Этот месяц", en: "This month" })} m={pay?.thisMonth} loading={!pay} locale={locale} />
+                <PayTile label={tr(locale, { uz: "Bu oy", ru: "Этот месяц", en: "This month", de: "Diesen Monat" })} m={pay?.thisMonth} loading={!pay} locale={locale} />
                 {pay && !pay.lastMonthApplicable ? (
                   // Hali bir oy bo'lmagan (yaqinda kelgan) — "o'tgan oy" o'rniga qo'shilgan sanasi ko'rsatiladi
                   <JoinDateTile joinDate={pay.joinDate} locale={locale} />
                 ) : (
-                  <PayTile label={tr(locale, { uz: "O'tgan oy", ru: "Прошлый месяц", en: "Last month" })} m={pay?.lastMonth} loading={!pay} locale={locale} />
+                  <PayTile label={tr(locale, { uz: "O'tgan oy", ru: "Прошлый месяц", en: "Last month", de: "Letzten Monat" })} m={pay?.lastMonth} loading={!pay} locale={locale} />
                 )}
               </div>
 
@@ -779,11 +780,11 @@ function StudentDetailModal({
                       <Icon name={pay.debt > 0 ? "info" : "check"} className={cn("h-4 w-4", pay.debt > 0 ? "text-amber-600" : "text-emerald-600")} />
                     </span>
                     <span className={cn("text-sm font-semibold", pay.debt > 0 ? "text-amber-700 dark:text-amber-400" : "text-emerald-700 dark:text-emerald-400")}>
-                      {tr(locale, { uz: "Jami qarzdorlik", ru: "Общая задолженность", en: "Total debt" })}
+                      {tr(locale, { uz: "Jami qarzdorlik", ru: "Общая задолженность", en: "Total debt", de: "Gesamtschulden" })}
                     </span>
                   </div>
                   <span className={cn("text-base font-black tabular-nums", pay.debt > 0 ? "text-amber-700 dark:text-amber-400" : "text-emerald-700 dark:text-emerald-400")}>
-                    {pay.debt > 0 ? formatMoney(pay.debt, locale) : tr(locale, { uz: "Yo'q", ru: "Нет", en: "None" })}
+                    {pay.debt > 0 ? formatMoney(pay.debt, locale) : tr(locale, { uz: "Yo'q", ru: "Нет", en: "None", de: "Keine" })}
                   </span>
                 </div>
               )}
@@ -792,8 +793,8 @@ function StudentDetailModal({
                 pay.recent.length > 0 ? (
                   <div className="mt-3 space-y-1.5">
                     <div className="flex items-center justify-between text-[11px] font-semibold text-slate-400">
-                      <span>{tr(locale, { uz: "So'nggi to'lovlar", ru: "Последние платежи", en: "Recent payments" })}</span>
-                      <span className="tabular-nums">{tr(locale, { uz: "Jami", ru: "Итого", en: "Total" })}: {formatMoney(pay.totalPaid, locale)}</span>
+                      <span>{tr(locale, { uz: "So'nggi to'lovlar", ru: "Последние платежи", en: "Recent payments", de: "Letzte Zahlungen" })}</span>
+                      <span className="tabular-nums">{tr(locale, { uz: "Jami", ru: "Итого", en: "Total", de: "Gesamt" })}: {formatMoney(pay.totalPaid, locale)}</span>
                     </div>
                     {pay.recent.map((p) => (
                       <PaymentRow
@@ -806,24 +807,24 @@ function StudentDetailModal({
                     ))}
                   </div>
                 ) : (
-                  <p className="mt-2 rounded-lg bg-slate-50 px-3 py-2 text-sm text-slate-400 dark:bg-white/[0.03]">{tr(locale, { uz: "Hali to'lov qilinmagan.", ru: "Оплат ещё не было.", en: "No payments yet." })}</p>
+                  <p className="mt-2 rounded-lg bg-slate-50 px-3 py-2 text-sm text-slate-400 dark:bg-white/[0.03]">{tr(locale, { uz: "Hali to'lov qilinmagan.", ru: "Оплат ещё не было.", en: "No payments yet.", de: "Noch keine Zahlungen." })}</p>
                 )
               )}
             </div>
           )}
 
           {/* O'quv ma'lumotlari */}
-          <DSection title={tr(locale, { uz: "O'quv ma'lumotlari", ru: "Учебные данные", en: "Study info" })} icon="graduation">
+          <DSection title={tr(locale, { uz: "O'quv ma'lumotlari", ru: "Учебные данные", en: "Study info", de: "Lerninformationen" })} icon="graduation">
             <div className="grid grid-cols-2 gap-3">
-              <DStat label={tr(locale, { uz: "Balans", ru: "Баланс", en: "Balance" })} value={formatMoney(st.balance, locale)} accent={st.balance > 0} />
-              <DStat label={tr(locale, { uz: "Daraja", ru: "Уровень", en: "Level" })} value={st.currentLevel ?? "—"} />
-              <DStat label={tr(locale, { uz: "Filial", ru: "Филиал", en: "Branch" })} value={st.branchName ?? "—"} />
-              <DStat label={tr(locale, { uz: "Kurslar soni", ru: "Кол-во курсов", en: "Courses" })} value={String(st.courses.length)} />
+              <DStat label={tr(locale, { uz: "Balans", ru: "Баланс", en: "Balance", de: "Saldo" })} value={formatMoney(st.balance, locale)} accent={st.balance > 0} />
+              <DStat label={tr(locale, { uz: "Daraja", ru: "Уровень", en: "Level", de: "Niveau" })} value={st.currentLevel ?? "—"} />
+              <DStat label={tr(locale, { uz: "Filial", ru: "Филиал", en: "Branch", de: "Filiale" })} value={st.branchName ?? "—"} />
+              <DStat label={tr(locale, { uz: "Kurslar soni", ru: "Кол-во курсов", en: "Courses", de: "Kurse" })} value={String(st.courses.length)} />
             </div>
           </DSection>
 
           {/* Kontakt */}
-          <DSection title={tr(locale, { uz: "Kontakt", ru: "Контакт", en: "Contact" })} icon="phone">
+          <DSection title={tr(locale, { uz: "Kontakt", ru: "Контакт", en: "Contact", de: "Kontakt" })} icon="phone">
             {st.phone ? (
               <a href={`tel:${st.phone}`} className="flex items-center gap-2 rounded-lg border border-slate-200 bg-slate-50 px-3 py-2 text-sm font-medium text-slate-700 transition hover:border-brand-300 hover:text-brand-600 dark:border-slate-700 dark:bg-slate-800/60 dark:text-slate-200">
                 <Icon name="phone" className="h-4 w-4 text-brand-500" /> {st.phone}
@@ -834,7 +835,7 @@ function StudentDetailModal({
           </DSection>
 
           {/* Guruhlar — katta boxlar */}
-          <DSection title={tr(locale, { uz: "Guruhlar", ru: "Группы", en: "Groups" })} icon="layers">
+          <DSection title={tr(locale, { uz: "Guruhlar", ru: "Группы", en: "Groups", de: "Gruppen" })} icon="layers">
             {st.groups.length === 0 ? (
               <p className="text-sm text-slate-400">—</p>
             ) : (
@@ -846,7 +847,7 @@ function StudentDetailModal({
 
           {/* O'qituvchilar — katta boxlar */}
           {st.teachers.length > 0 && (
-            <DSection title={tr(locale, { uz: "O'qituvchilar", ru: "Преподаватели", en: "Teachers" })} icon="teacher">
+            <DSection title={tr(locale, { uz: "O'qituvchilar", ru: "Преподаватели", en: "Teachers", de: "Lehrer" })} icon="teacher">
               <div className="space-y-1.5">
                 {st.teachers.map((t, i) => <BigRow key={i} icon="teacher" text={t} />)}
               </div>
@@ -855,7 +856,7 @@ function StudentDetailModal({
 
           {/* Kurslar — katta boxlar */}
           {st.courses.length > 0 && (
-            <DSection title={tr(locale, { uz: "Kurslar", ru: "Курсы", en: "Courses" })} icon="book">
+            <DSection title={tr(locale, { uz: "Kurslar", ru: "Курсы", en: "Courses", de: "Kurse" })} icon="book">
               <div className="space-y-1.5">
                 {st.courses.map((c, i) => <BigRow key={i} icon="book" text={c} />)}
               </div>
@@ -864,7 +865,7 @@ function StudentDetailModal({
 
           {/* Mashg'ulot sanalari — katta boxlar */}
           {st.scheduleDates.length > 0 && (
-            <DSection title={tr(locale, { uz: "Mashg'ulot sanalari", ru: "Даты занятий", en: "Lesson dates" })} icon="calendar">
+            <DSection title={tr(locale, { uz: "Mashg'ulot sanalari", ru: "Даты занятий", en: "Lesson dates", de: "Unterrichtstermine" })} icon="calendar">
               <div className="space-y-1.5">
                 {st.scheduleDates.map((d, i) => <BigRow key={i} icon="calendar" text={fmtDate(d)} />)}
               </div>
@@ -873,7 +874,7 @@ function StudentDetailModal({
 
           {/* Izoh */}
           {st.note && (
-            <DSection title={tr(locale, { uz: "Izoh", ru: "Примечание", en: "Note" })} icon="edit">
+            <DSection title={tr(locale, { uz: "Izoh", ru: "Примечание", en: "Note", de: "Notiz" })} icon="edit">
               <p className="whitespace-pre-wrap rounded-lg bg-slate-50 px-3 py-2 text-sm text-slate-600 dark:bg-white/[0.03] dark:text-slate-300">{st.note}</p>
             </DSection>
           )}
@@ -883,7 +884,7 @@ function StudentDetailModal({
         {canManage && (
           <div className="flex shrink-0 gap-2 border-t border-slate-100 bg-white px-5 py-3 dark:border-white/10 dark:bg-[#15243d]">
             <button onClick={onEdit} className="flex flex-1 items-center justify-center gap-2 rounded-xl bg-brand-600 py-2.5 text-sm font-semibold text-white shadow-sm transition hover:bg-brand-700 active:scale-[.99]">
-              <Icon name="pencil" className="h-4 w-4" /> {tr(locale, { uz: "Tahrirlash", ru: "Редактировать", en: "Edit" })}
+              <Icon name="pencil" className="h-4 w-4" /> {tr(locale, { uz: "Tahrirlash", ru: "Редактировать", en: "Edit", de: "Bearbeiten" })}
             </button>
             {st.phone && (
               <a href={`tel:${st.phone}`} title={st.phone} className="flex shrink-0 items-center justify-center rounded-xl border border-slate-200 px-4 py-2.5 text-slate-600 transition hover:bg-slate-100 dark:border-slate-700 dark:text-slate-300 dark:hover:bg-white/10">
@@ -1175,24 +1176,24 @@ function PayAcceptForm({ studentId, defaultPurpose, cashierName, locale, receipt
     const xhr = new XMLHttpRequest();
     xhr.open("POST", "/api/upload");
     xhr.upload.onprogress = (ev) => { if (ev.lengthComputable) setPct(Math.round((ev.loaded / ev.total) * 100)); };
-    xhr.onload = () => { setUploading(false); try { const j = JSON.parse(xhr.responseText); if (xhr.status < 300 && j.url) setReceiptUrl(j.url); else setErr(tr(locale, { uz: "Chekni yuklab bo'lmadi", ru: "Не удалось загрузить чек", en: "Receipt upload failed" })); } catch { setErr(tr(locale, { uz: "Chekni yuklab bo'lmadi", ru: "Не удалось загрузить чек", en: "Receipt upload failed" })); } };
-    xhr.onerror = () => { setUploading(false); setErr(tr(locale, { uz: "Chekni yuklab bo'lmadi", ru: "Не удалось загрузить чек", en: "Receipt upload failed" })); };
+    xhr.onload = () => { setUploading(false); try { const j = JSON.parse(xhr.responseText); if (xhr.status < 300 && j.url) setReceiptUrl(j.url); else setErr(tr(locale, { uz: "Chekni yuklab bo'lmadi", ru: "Не удалось загрузить чек", en: "Receipt upload failed", de: "Beleg-Upload fehlgeschlagen" })); } catch { setErr(tr(locale, { uz: "Chekni yuklab bo'lmadi", ru: "Не удалось загрузить чек", en: "Receipt upload failed", de: "Beleg-Upload fehlgeschlagen" })); } };
+    xhr.onerror = () => { setUploading(false); setErr(tr(locale, { uz: "Chekni yuklab bo'lmadi", ru: "Не удалось загрузить чек", en: "Receipt upload failed", de: "Beleg-Upload fehlgeschlagen" })); };
     xhr.send(fd);
   };
 
   const submit = () => {
     setErr(null);
     const amount = Number(amountStr.replace(/\s/g, ""));
-    if (!amount || amount <= 0) { setErr(tr(locale, { uz: "Summani kiriting", ru: "Введите сумму", en: "Enter amount" })); return; }
+    if (!amount || amount <= 0) { setErr(tr(locale, { uz: "Summani kiriting", ru: "Введите сумму", en: "Enter amount", de: "Betrag eingeben" })); return; }
     if (isReceiptRequired(receiptMode, method) && !receiptUrl) {
-      setErr(tr(locale, { uz: "Bu to'lov uchun chek yuklash majburiy", ru: "Для этой оплаты чек обязателен", en: "A receipt is required for this payment" }));
+      setErr(tr(locale, { uz: "Bu to'lov uchun chek yuklash majburiy", ru: "Для этой оплаты чек обязателен", en: "A receipt is required for this payment", de: "Für diese Zahlung ist ein Beleg erforderlich" }));
       return;
     }
     startBusy(async () => {
       const r = await acceptPayment(studentId, { amount, method, purpose: defaultPurpose, receiptUrl: receiptUrl || null, paidAt: new Date(paidAt).toISOString() });
       if (r.ok && r.receipt) onDone(r.receipt);
-      else if (r.error === "receipt_required") setErr(tr(locale, { uz: "Karta to'lovi uchun chek yuklang", ru: "Загрузите чек", en: "Upload receipt" }));
-      else setErr(tr(locale, { uz: "Xatolik yuz berdi", ru: "Произошла ошибка", en: "An error occurred" }));
+      else if (r.error === "receipt_required") setErr(tr(locale, { uz: "Karta to'lovi uchun chek yuklang", ru: "Загрузите чек", en: "Upload receipt", de: "Beleg hochladen" }));
+      else setErr(tr(locale, { uz: "Xatolik yuz berdi", ru: "Произошла ошибка", en: "An error occurred", de: "Ein Fehler ist aufgetreten" }));
     });
   };
 
@@ -1203,29 +1204,29 @@ function PayAcceptForm({ studentId, defaultPurpose, cashierName, locale, receipt
     <div className="mb-3 space-y-2.5 rounded-xl border border-brand-200 bg-brand-50/50 p-3 dark:border-brand-900/50 dark:bg-brand-950/20">
       {/* To'lov turi */}
       <div>
-        <label className="mb-1 block text-[11px] font-semibold text-slate-500">{tr(locale, { uz: "To'lov turi", ru: "Тип оплаты", en: "Payment type" })}</label>
+        <label className="mb-1 block text-[11px] font-semibold text-slate-500">{tr(locale, { uz: "To'lov turi", ru: "Тип оплаты", en: "Payment type", de: "Zahlungsart" })}</label>
         <div className="flex gap-2">
-          <button type="button" onClick={() => setMethod("CASH")} className={tab(method === "CASH")}><Icon name="wallet" className="h-4 w-4" /> {tr(locale, { uz: "Naqd", ru: "Наличные", en: "Cash" })}</button>
-          <button type="button" onClick={() => setMethod("CARD")} className={tab(method === "CARD")}><Icon name="card" className="h-4 w-4" /> {tr(locale, { uz: "Karta", ru: "Карта", en: "Card" })}</button>
-          <button type="button" onClick={() => setMethod("BANK")} className={tab(method === "BANK")}><Icon name="building" className="h-4 w-4" /> {tr(locale, { uz: "Bank hisobi", ru: "Банк. счёт", en: "Bank" })}</button>
+          <button type="button" onClick={() => setMethod("CASH")} className={tab(method === "CASH")}><Icon name="wallet" className="h-4 w-4" /> {tr(locale, { uz: "Naqd", ru: "Наличные", en: "Cash", de: "Bar" })}</button>
+          <button type="button" onClick={() => setMethod("CARD")} className={tab(method === "CARD")}><Icon name="card" className="h-4 w-4" /> {tr(locale, { uz: "Karta", ru: "Карта", en: "Card", de: "Karte" })}</button>
+          <button type="button" onClick={() => setMethod("BANK")} className={tab(method === "BANK")}><Icon name="building" className="h-4 w-4" /> {tr(locale, { uz: "Bank hisobi", ru: "Банк. счёт", en: "Bank", de: "Bank" })}</button>
         </div>
       </div>
 
       {/* Summa */}
       <div>
-        <label className="mb-1 block text-[11px] font-semibold text-slate-500">{tr(locale, { uz: "Summa (so'm)", ru: "Сумма (сум)", en: "Amount (sum)" })}</label>
+        <label className="mb-1 block text-[11px] font-semibold text-slate-500">{tr(locale, { uz: "Summa (so'm)", ru: "Сумма (сум)", en: "Amount (sum)", de: "Betrag (UZS)" })}</label>
         <input inputMode="numeric" value={amountStr} onChange={(e) => setAmount(e.target.value)} placeholder="500 000" className={cn(fld, "font-semibold tabular-nums")} autoFocus />
       </div>
 
       {/* Vaqt */}
       <div>
-        <label className="mb-1 block text-[11px] font-semibold text-slate-500">{tr(locale, { uz: "To'lov vaqti", ru: "Время оплаты", en: "Payment time" })}</label>
+        <label className="mb-1 block text-[11px] font-semibold text-slate-500">{tr(locale, { uz: "To'lov vaqti", ru: "Время оплаты", en: "Payment time", de: "Zahlungszeit" })}</label>
         <input type="datetime-local" value={paidAt} onChange={(e) => setPaidAt(e.target.value)} className={fld} />
       </div>
 
       {/* Kim qabul qildi (kassir) */}
       <div className="flex items-center justify-between rounded-lg bg-white/70 px-3 py-2 text-xs dark:bg-slate-800/40">
-        <span className="text-slate-400">{tr(locale, { uz: "Qabul qildi", ru: "Принял", en: "Received by" })}</span>
+        <span className="text-slate-400">{tr(locale, { uz: "Qabul qildi", ru: "Принял", en: "Received by", de: "Angenommen von" })}</span>
         <span className="font-semibold text-slate-600 dark:text-slate-200">{cashierName}</span>
       </div>
 
@@ -1233,14 +1234,14 @@ function PayAcceptForm({ studentId, defaultPurpose, cashierName, locale, receipt
       {(
         <div>
           <label className="mb-1 flex items-center gap-1.5 text-[11px] font-semibold text-slate-500">
-            {tr(locale, { uz: "Chek (rasm yoki PDF)", ru: "Чек (фото или PDF)", en: "Receipt (image or PDF)" })}
+            {tr(locale, { uz: "Chek (rasm yoki PDF)", ru: "Чек (фото или PDF)", en: "Receipt (image or PDF)", de: "Beleg (Bild oder PDF)" })}
             {isReceiptRequired(receiptMode, method) ? (
               <span className="rounded bg-rose-500/15 px-1.5 py-0.5 text-[10px] font-bold text-rose-600 dark:text-rose-400">
-                {tr(locale, { uz: "majburiy", ru: "обязательно", en: "required" })}
+                {tr(locale, { uz: "majburiy", ru: "обязательно", en: "required", de: "erforderlich" })}
               </span>
             ) : (
               <span className="rounded bg-slate-500/10 px-1.5 py-0.5 text-[10px] font-medium text-slate-500">
-                {tr(locale, { uz: "ixtiyoriy", ru: "необязательно", en: "optional" })}
+                {tr(locale, { uz: "ixtiyoriy", ru: "необязательно", en: "optional", de: "optional" })}
               </span>
             )}
           </label>
@@ -1252,12 +1253,12 @@ function PayAcceptForm({ studentId, defaultPurpose, cashierName, locale, receipt
             </div>
           ) : uploading ? (
             <div className="rounded-lg border border-slate-200 p-2.5 dark:border-slate-700">
-              <div className="mb-1 flex justify-between text-[11px] text-slate-500"><span>{tr(locale, { uz: "Yuklanmoqda...", ru: "Загрузка...", en: "Uploading..." })}</span><span className="font-semibold tabular-nums">{pct}%</span></div>
+              <div className="mb-1 flex justify-between text-[11px] text-slate-500"><span>{tr(locale, { uz: "Yuklanmoqda...", ru: "Загрузка...", en: "Uploading...", de: "Wird hochgeladen..." })}</span><span className="font-semibold tabular-nums">{pct}%</span></div>
               <div className="h-1.5 overflow-hidden rounded-full bg-slate-100 dark:bg-slate-800"><div className="h-full rounded-full bg-brand-500 transition-all" style={{ width: `${pct}%` }} /></div>
             </div>
           ) : (
             <button type="button" onClick={() => fileRef.current?.click()} className="flex w-full items-center justify-center gap-2 rounded-lg border border-dashed border-slate-300 py-3 text-sm font-medium text-slate-500 transition hover:border-brand-400 hover:text-brand-600 dark:border-slate-600 dark:text-slate-400">
-              <Icon name="download" className="h-4 w-4 rotate-180" /> {tr(locale, { uz: "Chek yuklash", ru: "Загрузить чек", en: "Upload receipt" })}
+              <Icon name="download" className="h-4 w-4 rotate-180" /> {tr(locale, { uz: "Chek yuklash", ru: "Загрузить чек", en: "Upload receipt", de: "Beleg hochladen" })}
             </button>
           )}
           <input ref={fileRef} type="file" accept="image/*,application/pdf" className="hidden" onChange={onPickChek} />
@@ -1268,10 +1269,10 @@ function PayAcceptForm({ studentId, defaultPurpose, cashierName, locale, receipt
       <div className="flex gap-2 pt-0.5">
         <button onClick={submit} disabled={busy || uploading} className="flex flex-1 items-center justify-center gap-1.5 rounded-lg bg-brand-600 py-2 text-sm font-semibold text-white transition hover:bg-brand-700 disabled:opacity-60">
           {busy ? <Icon name="refresh" className="h-4 w-4 animate-spin" /> : <Icon name="check" className="h-4 w-4" />}
-          {tr(locale, { uz: "Qabul qilish va chek", ru: "Принять и чек", en: "Accept & receipt" })}
+          {tr(locale, { uz: "Qabul qilish va chek", ru: "Принять и чек", en: "Accept & receipt", de: "Annehmen & Beleg" })}
         </button>
         <button onClick={onCancel} disabled={busy} className="rounded-lg border border-slate-300 px-3 py-2 text-sm font-semibold text-slate-500 transition hover:bg-slate-100 dark:border-slate-600 dark:hover:bg-white/10">
-          {tr(locale, { uz: "Bekor", ru: "Отмена", en: "Cancel" })}
+          {tr(locale, { uz: "Bekor", ru: "Отмена", en: "Cancel", de: "Abbrechen" })}
         </button>
       </div>
     </div>
@@ -1279,12 +1280,12 @@ function PayAcceptForm({ studentId, defaultPurpose, cashierName, locale, receipt
 }
 
 const PAY_METHOD_OPTS: { v: string; l: Record<Locale, string> }[] = [
-  { v: "CASH", l: { uz: "Naqd", ru: "Наличные", en: "Cash" } },
-  { v: "CARD", l: { uz: "Karta", ru: "Карта", en: "Card" } },
-  { v: "CLICK", l: { uz: "Click", ru: "Click", en: "Click" } },
-  { v: "PAYME", l: { uz: "Payme", ru: "Payme", en: "Payme" } },
-  { v: "UZUM", l: { uz: "Uzum", ru: "Uzum", en: "Uzum" } },
-  { v: "TRANSFER", l: { uz: "O'tkazma", ru: "Перевод", en: "Transfer" } },
+  { v: "CASH", l: { uz: "Naqd", ru: "Наличные", en: "Cash", de: "Bar" } },
+  { v: "CARD", l: { uz: "Karta", ru: "Карта", en: "Card", de: "Karte" } },
+  { v: "CLICK", l: { uz: "Click", ru: "Click", en: "Click", de: "Click" } },
+  { v: "PAYME", l: { uz: "Payme", ru: "Payme", en: "Payme", de: "Payme" } },
+  { v: "UZUM", l: { uz: "Uzum", ru: "Uzum", en: "Uzum", de: "Uzum" } },
+  { v: "TRANSFER", l: { uz: "O'tkazma", ru: "Перевод", en: "Transfer", de: "Überweisung" } },
 ];
 
 // ─── CHEK (to'lov kviatansiyasi) — chop etsa bo'ladi ───
@@ -1326,7 +1327,7 @@ function ReceiptModal({ receipt: r, locale, onClose }: { receipt: ReceiptData; l
             <div className="my-3 border-t border-dashed border-slate-300" />
 
             <div className="text-center">
-              <div className="text-[11px] font-semibold uppercase tracking-widest text-slate-400">{tr(locale, { uz: "To'lov cheki", ru: "Чек об оплате", en: "Payment receipt" })}</div>
+              <div className="text-[11px] font-semibold uppercase tracking-widest text-slate-400">{tr(locale, { uz: "To'lov cheki", ru: "Чек об оплате", en: "Payment receipt", de: "Zahlungsbeleg" })}</div>
               <div className="mt-1 font-mono text-xs text-slate-500">№ {r.docNumber}</div>
               <div className="text-[11px] text-slate-400">{dateStr}</div>
             </div>
@@ -1334,17 +1335,17 @@ function ReceiptModal({ receipt: r, locale, onClose }: { receipt: ReceiptData; l
             <div className="my-3 border-t border-dashed border-slate-300" />
 
             <div className="space-y-0.5">
-              <div className={row}><span className="text-slate-400">{tr(locale, { uz: "O'quvchi", ru: "Ученик", en: "Student" })}</span><span className="text-right font-semibold text-slate-700">{r.studentName}</span></div>
-              {r.studentPhone && <div className={row}><span className="text-slate-400">{tr(locale, { uz: "Telefon", ru: "Телефон", en: "Phone" })}</span><span className="text-right text-slate-600">{r.studentPhone}</span></div>}
-              <div className={row}><span className="text-slate-400">{tr(locale, { uz: "Maqsad", ru: "Назначение", en: "Purpose" })}</span><span className="text-right text-slate-600">{r.purpose}</span></div>
-              <div className={row}><span className="text-slate-400">{tr(locale, { uz: "Usul", ru: "Способ", en: "Method" })}</span><span className="text-right text-slate-600">{methodLabel ? tr(locale, methodLabel.l) : r.method}</span></div>
-              <div className={row}><span className="text-slate-400">{tr(locale, { uz: "Kassir", ru: "Кассир", en: "Cashier" })}</span><span className="text-right text-slate-600">{r.cashier}</span></div>
+              <div className={row}><span className="text-slate-400">{tr(locale, { uz: "O'quvchi", ru: "Ученик", en: "Student", de: "Schüler" })}</span><span className="text-right font-semibold text-slate-700">{r.studentName}</span></div>
+              {r.studentPhone && <div className={row}><span className="text-slate-400">{tr(locale, { uz: "Telefon", ru: "Телефон", en: "Phone", de: "Telefon" })}</span><span className="text-right text-slate-600">{r.studentPhone}</span></div>}
+              <div className={row}><span className="text-slate-400">{tr(locale, { uz: "Maqsad", ru: "Назначение", en: "Purpose", de: "Zweck" })}</span><span className="text-right text-slate-600">{r.purpose}</span></div>
+              <div className={row}><span className="text-slate-400">{tr(locale, { uz: "Usul", ru: "Способ", en: "Method", de: "Methode" })}</span><span className="text-right text-slate-600">{methodLabel ? tr(locale, methodLabel.l) : r.method}</span></div>
+              <div className={row}><span className="text-slate-400">{tr(locale, { uz: "Kassir", ru: "Кассир", en: "Cashier", de: "Kassierer" })}</span><span className="text-right text-slate-600">{r.cashier}</span></div>
             </div>
 
             <div className="my-3 border-t border-dashed border-slate-300" />
 
             <div className="flex items-center justify-between">
-              <span className="text-sm font-bold uppercase text-slate-500">{tr(locale, { uz: "Jami", ru: "Итого", en: "Total" })}</span>
+              <span className="text-sm font-bold uppercase text-slate-500">{tr(locale, { uz: "Jami", ru: "Итого", en: "Total", de: "Gesamt" })}</span>
               <span className="text-xl font-black tabular-nums text-slate-900">{formatMoney(r.amount, locale)}</span>
             </div>
 
@@ -1354,17 +1355,17 @@ function ReceiptModal({ receipt: r, locale, onClose }: { receipt: ReceiptData; l
           {/* Yuklangan chek fayli (karta to'lovi) — chop etilmaydi */}
           {r.receiptUrl && (
             <a href={r.receiptUrl} target="_blank" rel="noreferrer" className="gl-no-print flex items-center gap-2 bg-white/95 px-4 pt-2 text-xs font-medium text-brand-600 hover:underline">
-              <Icon name="card" className="h-4 w-4" /> {tr(locale, { uz: "Yuklangan chekni ko'rish", ru: "Открыть загруженный чек", en: "View uploaded receipt" })}
+              <Icon name="card" className="h-4 w-4" /> {tr(locale, { uz: "Yuklangan chekni ko'rish", ru: "Открыть загруженный чек", en: "View uploaded receipt", de: "Hochgeladenen Beleg ansehen" })}
             </a>
           )}
 
           {/* Amallar (chekda chop etilmaydi) */}
           <div className="gl-no-print flex gap-2 rounded-b-2xl bg-white/95 px-4 pb-4 pt-1">
             <button onClick={() => window.print()} className="flex flex-1 items-center justify-center gap-2 rounded-lg bg-brand-600 py-2.5 text-sm font-semibold text-white transition hover:bg-brand-700">
-              <Icon name="printer" className="h-4 w-4" /> {tr(locale, { uz: "Chop etish", ru: "Печать", en: "Print" })}
+              <Icon name="printer" className="h-4 w-4" /> {tr(locale, { uz: "Chop etish", ru: "Печать", en: "Print", de: "Drucken" })}
             </button>
             <button onClick={onClose} className="rounded-lg border border-slate-300 px-4 py-2.5 text-sm font-semibold text-slate-500 transition hover:bg-slate-100">
-              {tr(locale, { uz: "Yopish", ru: "Закрыть", en: "Close" })}
+              {tr(locale, { uz: "Yopish", ru: "Закрыть", en: "Close", de: "Schließen" })}
             </button>
           </div>
         </div>
@@ -1405,12 +1406,12 @@ function BigRow({ icon, text, href, onNav }: { icon: string; text: string; href?
 function JoinDateTile({ joinDate, locale }: { joinDate: string | null; locale: Locale }) {
   return (
     <div className="rounded-xl border border-brand-200 bg-brand-50/60 px-3.5 py-2.5 dark:border-brand-900/40 dark:bg-brand-950/20">
-      <div className="text-[11px] font-medium text-slate-400">{tr(locale, { uz: "Kelgan sanasi", ru: "Дата прихода", en: "Join date" })}</div>
+      <div className="text-[11px] font-medium text-slate-400">{tr(locale, { uz: "Kelgan sanasi", ru: "Дата прихода", en: "Join date", de: "Beitrittsdatum" })}</div>
       <div className="mt-1 flex items-center gap-1.5 text-sm font-bold text-brand-700 dark:text-brand-300">
         <span className="flex h-4 w-4 items-center justify-center rounded-full bg-brand-500/15"><Icon name="calendar" className="h-3 w-3" /></span>
         {joinDate ? fmtDate(joinDate) : "—"}
       </div>
-      <div className="mt-0.5 text-[11px] text-slate-400">{tr(locale, { uz: "Hali 1 oy bo'lmagan", ru: "Ещё нет месяца", en: "Less than a month" })}</div>
+      <div className="mt-0.5 text-[11px] text-slate-400">{tr(locale, { uz: "Hali 1 oy bo'lmagan", ru: "Ещё нет месяца", en: "Less than a month", de: "Weniger als ein Monat" })}</div>
     </div>
   );
 }
@@ -1431,7 +1432,7 @@ function PayTile({ label: lbl, m, loading, locale }: { label: string; m?: MonthP
       <div className="text-[11px] font-medium text-slate-400">{lbl}</div>
       <div className={cn("mt-1 flex items-center gap-1.5 text-sm font-bold", m.paid ? "text-emerald-600 dark:text-emerald-400" : "text-rose-600 dark:text-rose-400")}>
         <span className={cn("flex h-4 w-4 items-center justify-center rounded-full", m.paid ? "bg-emerald-500/15" : "bg-rose-500/15")}><Icon name={m.paid ? "check" : "close"} className="h-3 w-3" /></span>
-        {m.paid ? tr(locale, { uz: "To'langan", ru: "Оплачено", en: "Paid" }) : tr(locale, { uz: "To'lanmagan", ru: "Не оплачено", en: "Unpaid" })}
+        {m.paid ? tr(locale, { uz: "To'langan", ru: "Оплачено", en: "Paid", de: "Bezahlt" }) : tr(locale, { uz: "To'lanmagan", ru: "Не оплачено", en: "Unpaid", de: "Unbezahlt" })}
       </div>
       {m.paid && (
         <div className="mt-0.5 text-[11px] font-semibold tabular-nums text-slate-500 dark:text-slate-400">
@@ -1476,7 +1477,7 @@ function Select({
 // Ma'lumot hali yo'q — vizual (o'chirilgan) filtr, Modme ko'rinishiga mos
 function SelectDisabled({ placeholder, locale }: { placeholder: string; locale: Locale }) {
   return (
-    <div className="flex h-10 cursor-not-allowed items-center gap-1.5 rounded-lg border border-slate-200 bg-slate-50/60 px-3 text-sm text-slate-400 dark:border-slate-800 dark:bg-slate-900/40" title={tr(locale, { uz: "Tez orada", ru: "Скоро", en: "Coming soon" })}>
+    <div className="flex h-10 cursor-not-allowed items-center gap-1.5 rounded-lg border border-slate-200 bg-slate-50/60 px-3 text-sm text-slate-400 dark:border-slate-800 dark:bg-slate-900/40" title={tr(locale, { uz: "Tez orada", ru: "Скоро", en: "Coming soon", de: "Demnächst" })}>
       {placeholder}
       <Icon name="chevronDown" className="h-3.5 w-3.5" />
     </div>
@@ -1484,7 +1485,7 @@ function SelectDisabled({ placeholder, locale }: { placeholder: string; locale: 
 }
 function InputDisabled({ placeholder, icon, locale }: { placeholder: string; icon?: string; locale: Locale }) {
   return (
-    <div className="flex h-10 cursor-not-allowed items-center gap-1.5 rounded-lg border border-slate-200 bg-slate-50/60 px-3 text-sm text-slate-400 dark:border-slate-800 dark:bg-slate-900/40" title={tr(locale, { uz: "Tez orada", ru: "Скоро", en: "Coming soon" })}>
+    <div className="flex h-10 cursor-not-allowed items-center gap-1.5 rounded-lg border border-slate-200 bg-slate-50/60 px-3 text-sm text-slate-400 dark:border-slate-800 dark:bg-slate-900/40" title={tr(locale, { uz: "Tez orada", ru: "Скоро", en: "Coming soon", de: "Demnächst" })}>
       {icon && <Icon name={icon} className="h-4 w-4" />}
       {placeholder}
     </div>
@@ -1531,27 +1532,27 @@ function BulkModal({
     <div className="fixed inset-0 z-50 flex items-start justify-center overflow-y-auto bg-black/40 p-4 pt-24" onClick={onClose}>
       <div className="w-full max-w-md space-y-4 rounded-2xl bg-white p-6 shadow-xl dark:bg-slate-900" onClick={(e) => e.stopPropagation()}>
         <div className="flex items-center justify-between">
-          <h3 className="text-lg font-bold text-slate-900 dark:text-slate-100">{mode === "assign" ? tr(locale, { uz: "Guruhga biriktirish", ru: "Привязать к группе", en: "Assign to group" }) : tr(locale, { uz: "Xabar yuborish", ru: "Отправить сообщение", en: "Send message" })}</h3>
+          <h3 className="text-lg font-bold text-slate-900 dark:text-slate-100">{mode === "assign" ? tr(locale, { uz: "Guruhga biriktirish", ru: "Привязать к группе", en: "Assign to group", de: "Gruppe zuweisen" }) : tr(locale, { uz: "Xabar yuborish", ru: "Отправить сообщение", en: "Send message", de: "Nachricht senden" })}</h3>
           <button onClick={onClose} className="text-slate-400 hover:text-slate-600"><Icon name="close" className="h-5 w-5" /></button>
         </div>
-        <p className="text-sm text-slate-500"><b className="text-slate-700 dark:text-slate-200">{count}</b> {tr(locale, { uz: "ta o'quvchi tanlangan.", ru: "ученик(ов) выбрано.", en: "student(s) selected." })}</p>
+        <p className="text-sm text-slate-500"><b className="text-slate-700 dark:text-slate-200">{count}</b> {tr(locale, { uz: "ta o'quvchi tanlangan.", ru: "ученик(ов) выбрано.", en: "student(s) selected.", de: "Schüler ausgewählt." })}</p>
 
         {mode === "assign" ? (
           <>
             <select value={gid} onChange={(e) => setGid(e.target.value)} className={fld}>
-              <option value="">{tr(locale, { uz: "Guruhni tanlang", ru: "Выберите группу", en: "Select a group" })}</option>
+              <option value="">{tr(locale, { uz: "Guruhni tanlang", ru: "Выберите группу", en: "Select a group", de: "Gruppe auswählen" })}</option>
               {groups.map((g) => <option key={g.id} value={g.id}>{g.name}</option>)}
             </select>
-            {groups.length === 0 && <p className="text-xs text-amber-500">{tr(locale, { uz: "Guruhlar topilmadi.", ru: "Группы не найдены.", en: "No groups found." })}</p>}
+            {groups.length === 0 && <p className="text-xs text-amber-500">{tr(locale, { uz: "Guruhlar topilmadi.", ru: "Группы не найдены.", en: "No groups found.", de: "Keine Gruppen gefunden." })}</p>}
             <button disabled={!gid || busy} onClick={() => onAssign(gid)} className="w-full rounded-lg bg-brand-600 py-2.5 text-sm font-semibold text-white transition hover:bg-brand-700 disabled:opacity-50">
-              {busy ? "..." : tr(locale, { uz: "Biriktirish", ru: "Привязать", en: "Assign" })}
+              {busy ? "..." : tr(locale, { uz: "Biriktirish", ru: "Привязать", en: "Assign", de: "Zuweisen" })}
             </button>
           </>
         ) : (
           <>
-            <textarea value={msg} onChange={(e) => setMsg(e.target.value)} rows={4} placeholder={tr(locale, { uz: "Xabar matni...", ru: "Текст сообщения...", en: "Message text..." })} className={fld} />
+            <textarea value={msg} onChange={(e) => setMsg(e.target.value)} rows={4} placeholder={tr(locale, { uz: "Xabar matni...", ru: "Текст сообщения...", en: "Message text...", de: "Nachrichtentext..." })} className={fld} />
             <button disabled={msg.trim().length < 2 || busy} onClick={() => onMessage(msg)} className="w-full rounded-lg bg-brand-600 py-2.5 text-sm font-semibold text-white transition hover:bg-brand-700 disabled:opacity-50">
-              {busy ? "..." : tr(locale, { uz: "Yuborish", ru: "Отправить", en: "Send" })}
+              {busy ? "..." : tr(locale, { uz: "Yuborish", ru: "Отправить", en: "Send", de: "Senden" })}
             </button>
           </>
         )}
@@ -1618,31 +1619,31 @@ function CreateModal({ locale, onClose, onDone }: { locale: Locale; onClose: () 
       >
         {/* Header */}
         <div className="flex shrink-0 items-center justify-between border-b border-slate-100 px-5 py-4 dark:border-white/10">
-          <h3 className="text-base font-bold text-slate-800 dark:text-slate-100">{tr(locale, { uz: "Yangi talaba", ru: "Новый ученик", en: "New student" })}</h3>
+          <h3 className="text-base font-bold text-slate-800 dark:text-slate-100">{tr(locale, { uz: "Yangi talaba", ru: "Новый ученик", en: "New student", de: "Neuer Schüler" })}</h3>
           <button type="button" onClick={onClose} className="flex h-8 w-8 items-center justify-center rounded-lg text-lg text-slate-400 transition hover:bg-slate-100 hover:text-slate-600 dark:hover:bg-white/10">✕</button>
         </div>
 
         {/* Body */}
         <div className="flex-1 space-y-3.5 overflow-y-auto px-5 py-4">
           <div>
-            <label className={labelCls}>{tr(locale, { uz: "F.I.Sh.", ru: "Ф.И.О.", en: "Full name" })} <span className="text-rose-500">*</span></label>
-            <input name="fullName" required className={inputCls} placeholder={tr(locale, { uz: "Ism Familiya", ru: "Имя Фамилия", en: "First Last name" })} />
+            <label className={labelCls}>{tr(locale, { uz: "F.I.Sh.", ru: "Ф.И.О.", en: "Full name", de: "Vollständiger Name" })} <span className="text-rose-500">*</span></label>
+            <input name="fullName" required className={inputCls} placeholder={tr(locale, { uz: "Ism Familiya", ru: "Имя Фамилия", en: "First Last name", de: "Vorname Nachname" })} />
           </div>
           <div className="grid grid-cols-2 gap-3">
             <div>
-              <label className={labelCls}>{tr(locale, { uz: "Telefon", ru: "Телефон", en: "Phone" })}</label>
+              <label className={labelCls}>{tr(locale, { uz: "Telefon", ru: "Телефон", en: "Phone", de: "Telefon" })}</label>
               <input name="phone" className={inputCls} placeholder="+998..." />
             </div>
             <div>
-              <label className={labelCls}>{tr(locale, { uz: "Daraja", ru: "Уровень", en: "Level" })}</label>
+              <label className={labelCls}>{tr(locale, { uz: "Daraja", ru: "Уровень", en: "Level", de: "Niveau" })}</label>
               <input name="currentLevel" className={inputCls} placeholder="A1.1" />
             </div>
           </div>
           {/* Qarzdor qilib qo'shish — kiritilsa qarz yozuvi ochiladi (Qarzdorlar ro'yxatiga tushadi) */}
           <div>
             <label className={labelCls}>
-              {tr(locale, { uz: "Qarz (so'm)", ru: "Долг (сум)", en: "Debt (UZS)" })}
-              <span className="ml-1 font-normal text-slate-400">({tr(locale, { uz: "ixtiyoriy", ru: "необязательно", en: "optional" })})</span>
+              {tr(locale, { uz: "Qarz (so'm)", ru: "Долг (сум)", en: "Debt (UZS)", de: "Schulden (UZS)" })}
+              <span className="ml-1 font-normal text-slate-400">({tr(locale, { uz: "ixtiyoriy", ru: "необязательно", en: "optional", de: "optional" })})</span>
             </label>
             <input name="debt" type="number" min="0" step="10000" className={inputCls} placeholder="0" />
             <p className="mt-1 text-[11px] text-slate-400">
@@ -1650,20 +1651,21 @@ function CreateModal({ locale, onClose, onDone }: { locale: Locale; onClose: () 
                 uz: "Kiritilsa talaba qarzdor sifatida qo'shiladi va Qarzdorlar ro'yxatida ko'rinadi.",
                 ru: "Если указать, ученик будет добавлен как должник и попадёт в список должников.",
                 en: "If set, the student is added as a debtor and appears in the debtors list.",
+                de: "Wenn angegeben, wird der Schüler als Schuldner hinzugefügt und erscheint in der Schuldnerliste.",
               })}
             </p>
           </div>
           {state.error && (
             <p className="rounded-lg bg-rose-50 px-3 py-2 text-sm text-rose-700 dark:bg-rose-500/10 dark:text-rose-400">
-              {state.error === "forbidden" ? tr(locale, { uz: "Sizda talaba qo'shish huquqi yo'q.", ru: "У вас нет права добавлять учеников.", en: "You do not have permission to add students." }) : tr(locale, { uz: "Ma'lumot to'liq emas.", ru: "Данные неполные.", en: "Information is incomplete." })}
+              {state.error === "forbidden" ? tr(locale, { uz: "Sizda talaba qo'shish huquqi yo'q.", ru: "У вас нет права добавлять учеников.", en: "You do not have permission to add students.", de: "Sie haben keine Berechtigung, Schüler hinzuzufügen." }) : tr(locale, { uz: "Ma'lumot to'liq emas.", ru: "Данные неполные.", en: "Information is incomplete.", de: "Die Angaben sind unvollständig." })}
             </p>
           )}
         </div>
 
         {/* Footer */}
         <div className="flex shrink-0 gap-2 border-t border-slate-100 px-5 py-4 dark:border-white/10">
-          <button type="button" onClick={onClose} className="flex-1 rounded-xl border border-slate-200 py-2.5 text-sm font-semibold text-slate-600 transition hover:bg-slate-50 dark:border-white/10 dark:text-slate-300 dark:hover:bg-white/5">{tr(locale, { uz: "Bekor qilish", ru: "Отмена", en: "Cancel" })}</button>
-          <button type="submit" disabled={pending} className="flex-[1.4] rounded-xl bg-brand-600 py-2.5 text-sm font-semibold text-white transition hover:bg-brand-700 disabled:opacity-60">{pending ? tr(locale, { uz: "Saqlanmoqda...", ru: "Сохранение...", en: "Saving..." }) : tr(locale, { uz: "Saqlash", ru: "Сохранить", en: "Save" })}</button>
+          <button type="button" onClick={onClose} className="flex-1 rounded-xl border border-slate-200 py-2.5 text-sm font-semibold text-slate-600 transition hover:bg-slate-50 dark:border-white/10 dark:text-slate-300 dark:hover:bg-white/5">{tr(locale, { uz: "Bekor qilish", ru: "Отмена", en: "Cancel", de: "Abbrechen" })}</button>
+          <button type="submit" disabled={pending} className="flex-[1.4] rounded-xl bg-brand-600 py-2.5 text-sm font-semibold text-white transition hover:bg-brand-700 disabled:opacity-60">{pending ? tr(locale, { uz: "Saqlanmoqda...", ru: "Сохранение...", en: "Saving...", de: "Wird gespeichert..." }) : tr(locale, { uz: "Saqlash", ru: "Сохранить", en: "Save", de: "Speichern" })}</button>
         </div>
       </form>
     </div>
@@ -1691,7 +1693,7 @@ function EditModal({ student, locale, onClose, onDone }: { student: VStudent; lo
     start(async () => {
       const r = await updateStudent(fd);
       if (r.ok) { onDone(); onClose(); }
-      else setError(r.error === "forbidden" ? tr(locale, { uz: "Sizda tahrirlash huquqi yo'q.", ru: "У вас нет права редактировать.", en: "You do not have permission to edit." }) : tr(locale, { uz: "Ma'lumot to'liq emas.", ru: "Данные неполные.", en: "Information is incomplete." }));
+      else setError(r.error === "forbidden" ? tr(locale, { uz: "Sizda tahrirlash huquqi yo'q.", ru: "У вас нет права редактировать.", en: "You do not have permission to edit.", de: "Sie haben keine Berechtigung zum Bearbeiten." }) : tr(locale, { uz: "Ma'lumot to'liq emas.", ru: "Данные неполные.", en: "Information is incomplete.", de: "Die Angaben sind unvollständig." }));
     });
   };
 
@@ -1707,28 +1709,28 @@ function EditModal({ student, locale, onClose, onDone }: { student: VStudent; lo
         className="animate-slide-in-right absolute right-0 top-0 flex h-full w-[440px] max-w-[92%] flex-col border-l border-slate-200 bg-white shadow-pop dark:border-white/10 dark:bg-[#15243d]"
       >
         <div className="flex shrink-0 items-center justify-between border-b border-slate-100 px-5 py-4 dark:border-white/10">
-          <h3 className="text-base font-bold text-slate-800 dark:text-slate-100">{tr(locale, { uz: "Talabani tahrirlash", ru: "Редактировать ученика", en: "Edit student" })}</h3>
+          <h3 className="text-base font-bold text-slate-800 dark:text-slate-100">{tr(locale, { uz: "Talabani tahrirlash", ru: "Редактировать ученика", en: "Edit student", de: "Schüler bearbeiten" })}</h3>
           <button type="button" onClick={onClose} className="flex h-8 w-8 items-center justify-center rounded-lg text-lg text-slate-400 transition hover:bg-slate-100 hover:text-slate-600 dark:hover:bg-white/10">✕</button>
         </div>
 
         <div className="flex-1 space-y-3.5 overflow-y-auto px-5 py-4">
           <div>
-            <label className={labelCls}>{tr(locale, { uz: "F.I.Sh.", ru: "Ф.И.О.", en: "Full name" })} <span className="text-rose-500">*</span></label>
-            <input name="fullName" required defaultValue={student.fullName} className={inputCls} placeholder={tr(locale, { uz: "Ism Familiya", ru: "Имя Фамилия", en: "First Last name" })} />
+            <label className={labelCls}>{tr(locale, { uz: "F.I.Sh.", ru: "Ф.И.О.", en: "Full name", de: "Vollständiger Name" })} <span className="text-rose-500">*</span></label>
+            <input name="fullName" required defaultValue={student.fullName} className={inputCls} placeholder={tr(locale, { uz: "Ism Familiya", ru: "Имя Фамилия", en: "First Last name", de: "Vorname Nachname" })} />
           </div>
           <div className="grid grid-cols-2 gap-3">
             <div>
-              <label className={labelCls}>{tr(locale, { uz: "Telefon", ru: "Телефон", en: "Phone" })}</label>
+              <label className={labelCls}>{tr(locale, { uz: "Telefon", ru: "Телефон", en: "Phone", de: "Telefon" })}</label>
               <input name="phone" defaultValue={student.phone ?? ""} className={inputCls} placeholder="+998..." />
             </div>
             <div>
-              <label className={labelCls}>{tr(locale, { uz: "Daraja", ru: "Уровень", en: "Level" })}</label>
+              <label className={labelCls}>{tr(locale, { uz: "Daraja", ru: "Уровень", en: "Level", de: "Niveau" })}</label>
               <input name="currentLevel" defaultValue={student.currentLevel ?? ""} className={inputCls} placeholder="A1.1" />
             </div>
           </div>
           {/* Izoh — talaba profili, ro'yxat va kartochkada ko'rinadi */}
           <div>
-            <label className={labelCls}>{tr(locale, { uz: "Izoh", ru: "Примечание", en: "Note" })}</label>
+            <label className={labelCls}>{tr(locale, { uz: "Izoh", ru: "Примечание", en: "Note", de: "Notiz" })}</label>
             <textarea
               name="note"
               rows={3}
@@ -1738,12 +1740,13 @@ function EditModal({ student, locale, onClose, onDone }: { student: VStudent; lo
                 uz: "Talaba haqida qo'shimcha ma'lumot (masalan: dars kunlari cheklovi, ota-ona iltimosi)",
                 ru: "Дополнительная информация об ученике (например: ограничения по дням, просьба родителей)",
                 en: "Additional info about the student (e.g. day restrictions, parent request)",
+                de: "Zusätzliche Informationen zum Schüler (z. B. Einschränkungen bei Unterrichtstagen, Elternwunsch)",
               })}
               className={`${inputCls} h-auto resize-y py-2 leading-relaxed`}
             />
           </div>
           <div>
-            <label className={labelCls}>{tr(locale, { uz: "O'quv holati", ru: "Учебный статус", en: "Education status" })}</label>
+            <label className={labelCls}>{tr(locale, { uz: "O'quv holati", ru: "Учебный статус", en: "Education status", de: "Ausbildungsstatus" })}</label>
             <select name="eduStatus" defaultValue={student.eduStatus} className={inputCls}>
               {EDU_STATUSES.map((st) => (
                 <option key={st} value={st}>{label(EDU_STATUS_LABELS, st, locale)}</option>
@@ -1763,6 +1766,7 @@ function EditModal({ student, locale, onClose, onDone }: { student: VStudent; lo
                 uz: "Diqqat: o'quvchi eski filialdagi guruhlardan chiqariladi (to'lov hisobi ham shu oyda to'xtaydi).",
                 ru: "Внимание: ученик будет выведен из групп прежнего филиала (начисление оплаты также прекратится).",
                 en: "Note: the student is removed from the previous branch's groups (fee accrual stops this month).",
+                de: "Hinweis: Der Schüler wird aus den Gruppen der vorherigen Filiale entfernt (die Gebührenberechnung endet diesen Monat).",
               })}
               loadBranches={studentBranchOptions}
               onMove={(branchId) => moveStudentToBranch(student.id, branchId)}
@@ -1771,14 +1775,14 @@ function EditModal({ student, locale, onClose, onDone }: { student: VStudent; lo
 
           {/* Arxivlash va butunlay o'chirish — tahrirlash oynasi ichida */}
           <div className="mt-2 border-t border-slate-100 pt-3.5 dark:border-white/10">
-            <p className={labelCls}>{tr(locale, { uz: "Talabani o'chirish", ru: "Удаление ученика", en: "Remove student" })}</p>
+            <p className={labelCls}>{tr(locale, { uz: "Talabani o'chirish", ru: "Удаление ученика", en: "Remove student", de: "Schüler entfernen" })}</p>
             <StudentDangerActions student={student} locale={locale} onDone={onClose} />
           </div>
         </div>
 
         <div className="flex shrink-0 gap-2 border-t border-slate-100 px-5 py-4 dark:border-white/10">
-          <button type="button" onClick={onClose} className="flex-1 rounded-xl border border-slate-200 py-2.5 text-sm font-semibold text-slate-600 transition hover:bg-slate-50 dark:border-white/10 dark:text-slate-300 dark:hover:bg-white/5">{tr(locale, { uz: "Bekor qilish", ru: "Отмена", en: "Cancel" })}</button>
-          <button type="submit" disabled={pending} className="flex-[1.4] rounded-xl bg-brand-600 py-2.5 text-sm font-semibold text-white transition hover:bg-brand-700 disabled:opacity-60">{pending ? tr(locale, { uz: "Saqlanmoqda...", ru: "Сохранение...", en: "Saving..." }) : tr(locale, { uz: "Saqlash", ru: "Сохранить", en: "Save" })}</button>
+          <button type="button" onClick={onClose} className="flex-1 rounded-xl border border-slate-200 py-2.5 text-sm font-semibold text-slate-600 transition hover:bg-slate-50 dark:border-white/10 dark:text-slate-300 dark:hover:bg-white/5">{tr(locale, { uz: "Bekor qilish", ru: "Отмена", en: "Cancel", de: "Abbrechen" })}</button>
+          <button type="submit" disabled={pending} className="flex-[1.4] rounded-xl bg-brand-600 py-2.5 text-sm font-semibold text-white transition hover:bg-brand-700 disabled:opacity-60">{pending ? tr(locale, { uz: "Saqlanmoqda...", ru: "Сохранение...", en: "Saving...", de: "Wird gespeichert..." }) : tr(locale, { uz: "Saqlash", ru: "Сохранить", en: "Save", de: "Speichern" })}</button>
         </div>
       </form>
     </div>

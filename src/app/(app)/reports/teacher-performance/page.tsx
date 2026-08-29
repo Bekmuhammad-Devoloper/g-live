@@ -23,7 +23,7 @@ const emptyCnt = (): Cnt => ({ active: 0, left: 0, grad: 0, frozen: 0 });
 export default async function TeacherPerformancePage({ searchParams }: { searchParams: Promise<Record<string, string | undefined>> }) {
   const s = await requireSession();
   if (!canRead(s.role, MODULES.REPORTS)) {
-    return <Forbidden title={tr(s.locale, { uz: "Kirish taqiqlangan", ru: "Доступ запрещён", en: "Access denied" })} body={tr(s.locale, { uz: "Bu bo'lim uchun ruxsat yo'q.", ru: "Нет доступа к этому разделу.", en: "You don't have access to this section." })} />;
+    return <Forbidden title={tr(s.locale, { uz: "Kirish taqiqlangan", ru: "Доступ запрещён", en: "Access denied", de: "Zugriff verweigert" })} body={tr(s.locale, { uz: "Bu bo'lim uchun ruxsat yo'q.", ru: "Нет доступа к этому разделу.", en: "You don't have access to this section.", de: "Sie haben keinen Zugriff auf diesen Bereich." })} />;
   }
   const sp = await searchParams;
   const now = new Date();
@@ -88,10 +88,10 @@ export default async function TeacherPerformancePage({ searchParams }: { searchP
   const BUCKET_KEYS = ["active", "left", "grad", "frozen"] as const;
   const GROUP_PREFIX = ["s", "c", "e"] as const;
   const BUCKET_LABELS = [
-    tr(s.locale, { uz: "Aktiv", ru: "Активные", en: "Active" }),
-    tr(s.locale, { uz: "Ketganlar", ru: "Ушедшие", en: "Left" }),
-    tr(s.locale, { uz: "Bitirganlar", ru: "Выпускники", en: "Graduated" }),
-    tr(s.locale, { uz: "Muzlatilgan", ru: "Замороженные", en: "Frozen" }),
+    tr(s.locale, { uz: "Aktiv", ru: "Активные", en: "Active", de: "Aktiv" }),
+    tr(s.locale, { uz: "Ketganlar", ru: "Ушедшие", en: "Left", de: "Ausgetreten" }),
+    tr(s.locale, { uz: "Bitirganlar", ru: "Выпускники", en: "Graduated", de: "Absolventen" }),
+    tr(s.locale, { uz: "Muzlatilgan", ru: "Замороженные", en: "Frozen", de: "Eingefroren" }),
   ];
 
   const th = "px-3 py-2 text-center text-[11px] font-semibold uppercase tracking-wide text-slate-500";
@@ -100,7 +100,7 @@ export default async function TeacherPerformancePage({ searchParams }: { searchP
   return (
     <div className="space-y-4">
       <div className="flex flex-wrap items-center justify-between gap-3">
-        <h1 className="text-[22px] font-bold tracking-tight text-slate-900 dark:text-slate-100">{tr(s.locale, { uz: "O'qituvchilar samaradorligi", ru: "Эффективность преподавателей", en: "Teacher performance" })}</h1>
+        <h1 className="text-[22px] font-bold tracking-tight text-slate-900 dark:text-slate-100">{tr(s.locale, { uz: "O'qituvchilar samaradorligi", ru: "Эффективность преподавателей", en: "Teacher performance", de: "Lehrerleistung" })}</h1>
         <div className="flex items-center gap-2">
           <DateRangeNav from={fromStr} to={toStr} />
           <ExportButton rows={exportRowsData} locale={s.locale} />
@@ -114,11 +114,11 @@ export default async function TeacherPerformancePage({ searchParams }: { searchP
               <tr className="border-b border-slate-100 dark:border-slate-800">
                 <th rowSpan={2} className="px-4 py-2 text-[11px] font-semibold uppercase text-slate-500">№</th>
                 <th rowSpan={2} className="px-4 py-2 text-[11px] font-semibold uppercase text-slate-500">
-                  <SortHeader col="name" label={tr(s.locale, { uz: "O'qituvchi", ru: "Преподаватель", en: "Teacher" })} active={sortKey} dir={dir} locale={s.locale} />
+                  <SortHeader col="name" label={tr(s.locale, { uz: "O'qituvchi", ru: "Преподаватель", en: "Teacher", de: "Lehrer" })} active={sortKey} dir={dir} locale={s.locale} />
                 </th>
-                <th colSpan={4} className="border-l border-slate-200 py-2 text-center text-[11px] font-bold uppercase tracking-wide text-slate-600 dark:border-slate-700 dark:text-slate-300">{tr(s.locale, { uz: "Davr boshidagi holati", ru: "Состояние на начало периода", en: "Status at start of period" })}</th>
-                <th colSpan={4} className="border-l border-slate-200 py-2 text-center text-[11px] font-bold uppercase tracking-wide text-slate-600 dark:border-slate-700 dark:text-slate-300">{tr(s.locale, { uz: "O'zgarishlar", ru: "Изменения", en: "Changes" })}</th>
-                <th colSpan={4} className="border-l border-slate-200 py-2 text-center text-[11px] font-bold uppercase tracking-wide text-slate-600 dark:border-slate-700 dark:text-slate-300">{tr(s.locale, { uz: "Davr oxiridagi holati", ru: "Состояние на конец периода", en: "Status at end of period" })}</th>
+                <th colSpan={4} className="border-l border-slate-200 py-2 text-center text-[11px] font-bold uppercase tracking-wide text-slate-600 dark:border-slate-700 dark:text-slate-300">{tr(s.locale, { uz: "Davr boshidagi holati", ru: "Состояние на начало периода", en: "Status at start of period", de: "Status zu Beginn des Zeitraums" })}</th>
+                <th colSpan={4} className="border-l border-slate-200 py-2 text-center text-[11px] font-bold uppercase tracking-wide text-slate-600 dark:border-slate-700 dark:text-slate-300">{tr(s.locale, { uz: "O'zgarishlar", ru: "Изменения", en: "Changes", de: "Änderungen" })}</th>
+                <th colSpan={4} className="border-l border-slate-200 py-2 text-center text-[11px] font-bold uppercase tracking-wide text-slate-600 dark:border-slate-700 dark:text-slate-300">{tr(s.locale, { uz: "Davr oxiridagi holati", ru: "Состояние на конец периода", en: "Status at end of period", de: "Status am Ende des Zeitraums" })}</th>
               </tr>
               <tr>
                 {[0, 1, 2].map((g) => (
@@ -134,7 +134,7 @@ export default async function TeacherPerformancePage({ searchParams }: { searchP
             </thead>
             <tbody className="divide-y divide-slate-100 dark:divide-slate-800">
               {rows.length === 0 ? (
-                <tr><td colSpan={14} className="py-16 text-center text-slate-400">{tr(s.locale, { uz: "Ma'lumotlar topilmadi", ru: "Данные не найдены", en: "No data found" })}</td></tr>
+                <tr><td colSpan={14} className="py-16 text-center text-slate-400">{tr(s.locale, { uz: "Ma'lumotlar topilmadi", ru: "Данные не найдены", en: "No data found", de: "Keine Daten gefunden" })}</td></tr>
               ) : rows.map((r, i) => (
                 <tr key={r.id} className="hover:bg-slate-50 dark:hover:bg-slate-800/50">
                   <td className="px-4 py-3 text-slate-400">{i + 1}</td>
@@ -153,7 +153,7 @@ export default async function TeacherPerformancePage({ searchParams }: { searchP
           </table>
         </div>
       </div>
-      <p className="text-xs text-slate-400">{tr(s.locale, { uz: "Izoh: holatlar hozirgi o'quvchi statuslari asosida hisoblanadi. \"O'zgarishlar\" — tanlangan davrda guruhga qo'shilgan yangi o'quvchilar.", ru: "Примечание: состояния рассчитываются на основе текущих статусов учеников. \"Изменения\" — новые ученики, добавленные в группу за выбранный период.", en: "Note: statuses are calculated based on current student statuses. \"Changes\" are new students added to the group during the selected period." })}</p>
+      <p className="text-xs text-slate-400">{tr(s.locale, { uz: "Izoh: holatlar hozirgi o'quvchi statuslari asosida hisoblanadi. \"O'zgarishlar\" — tanlangan davrda guruhga qo'shilgan yangi o'quvchilar.", ru: "Примечание: состояния рассчитываются на основе текущих статусов учеников. \"Изменения\" — новые ученики, добавленные в группу за выбранный период.", en: "Note: statuses are calculated based on current student statuses. \"Changes\" are new students added to the group during the selected period.", de: "Hinweis: Die Status werden anhand der aktuellen Schülerstatus berechnet. \"Änderungen\" sind neue Schüler, die im ausgewählten Zeitraum der Gruppe hinzugefügt wurden." })}</p>
     </div>
   );
 }

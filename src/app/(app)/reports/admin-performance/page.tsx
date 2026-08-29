@@ -17,7 +17,7 @@ const isoDay = (d: Date) => `${d.getFullYear()}-${p2(d.getMonth() + 1)}-${p2(d.g
 export default async function AdminPerformancePage() {
   const s = await requireSession();
   if (!ALLOWED.includes(s.role as never)) {
-    return <Forbidden title={tr(s.locale, { uz: "Kirish taqiqlangan", ru: "Доступ запрещён", en: "Access denied" })} body={tr(s.locale, { uz: "Bu hisobot rahbariyat uchun.", ru: "Этот отчёт для руководства.", en: "This report is for management." })} />;
+    return <Forbidden title={tr(s.locale, { uz: "Kirish taqiqlangan", ru: "Доступ запрещён", en: "Access denied", de: "Zugriff verweigert" })} body={tr(s.locale, { uz: "Bu hisobot rahbariyat uchun.", ru: "Этот отчёт для руководства.", en: "This report is for management.", de: "Dieser Bericht ist für die Geschäftsleitung." })} />;
   }
 
   const students = await prisma.student.findMany({
@@ -30,7 +30,7 @@ export default async function AdminPerformancePage() {
   });
 
   const rows: AdminStudent[] = students.map((st) => ({
-    admin: st.lead?.manager?.fullName ?? tr(s.locale, { uz: "Belgilanmagan", ru: "Не указано", en: "Unassigned" }),
+    admin: st.lead?.manager?.fullName ?? tr(s.locale, { uz: "Belgilanmagan", ru: "Не указано", en: "Unassigned", de: "Nicht zugewiesen" }),
     status: st.eduStatus,
     createdAt: st.createdAt.toISOString(),
   }));

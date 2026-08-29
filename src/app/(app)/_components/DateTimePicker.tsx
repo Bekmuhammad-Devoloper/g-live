@@ -11,11 +11,13 @@ const MONTHS: Record<Locale, string[]> = {
   uz: ["Yanvar", "Fevral", "Mart", "Aprel", "May", "Iyun", "Iyul", "Avgust", "Sentabr", "Oktabr", "Noyabr", "Dekabr"],
   ru: ["Январь", "Февраль", "Март", "Апрель", "Май", "Июнь", "Июль", "Август", "Сентябрь", "Октябрь", "Ноябрь", "Декабрь"],
   en: ["January", "February", "March", "April", "May", "June", "July", "August", "September", "October", "November", "December"],
+  de: ["Januar", "Februar", "März", "April", "Mai", "Juni", "Juli", "August", "September", "Oktober", "November", "Dezember"],
 };
 const WEEK: Record<Locale, string[]> = {
   uz: ["Du", "Se", "Ch", "Pa", "Ju", "Sh", "Ya"],
   ru: ["Пн", "Вт", "Ср", "Чт", "Пт", "Сб", "Вс"],
   en: ["Mo", "Tu", "We", "Th", "Fr", "Sa", "Su"],
+  de: ["Mo", "Di", "Mi", "Do", "Fr", "Sa", "So"],
 };
 const p2 = (n: number) => String(n).padStart(2, "0");
 
@@ -35,7 +37,7 @@ export default function DateTimePicker({ name, defaultValue, placeholder, classN
   const triggerRef = useRef<HTMLButtonElement>(null);
 
   const value = sel ? toInput(sel) : "";
-  const ph = placeholder ?? tr(locale, { uz: "Sana va vaqt", ru: "Дата и время", en: "Date & time" });
+  const ph = placeholder ?? tr(locale, { uz: "Sana va vaqt", ru: "Дата и время", en: "Date & time", de: "Datum & Uhrzeit" });
 
   const openPop = () => {
     const r = triggerRef.current?.getBoundingClientRect();
@@ -115,16 +117,16 @@ export default function DateTimePicker({ name, defaultValue, placeholder, classN
               </div>
 
               <div className="flex gap-1">
-                <TimeCol label={tr(locale, { uz: "Soat", ru: "Час", en: "Hour" })} items={24} value={hh} onPick={pickHour} />
-                <TimeCol label={tr(locale, { uz: "Daq", ru: "Мин", en: "Min" })} items={60} value={mm} onPick={pickMin} step={1} />
+                <TimeCol label={tr(locale, { uz: "Soat", ru: "Час", en: "Hour", de: "Stunde" })} items={24} value={hh} onPick={pickHour} />
+                <TimeCol label={tr(locale, { uz: "Daq", ru: "Мин", en: "Min", de: "Min" })} items={60} value={mm} onPick={pickMin} step={1} />
               </div>
             </div>
 
             <div className="mt-2 flex items-center justify-between border-t border-slate-100 pt-2 dark:border-slate-800">
-              <button type="button" onClick={clear} className="rounded-lg px-2 py-1 text-xs font-medium text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800">{tr(locale, { uz: "Tozalash", ru: "Очистить", en: "Clear" })}</button>
+              <button type="button" onClick={clear} className="rounded-lg px-2 py-1 text-xs font-medium text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800">{tr(locale, { uz: "Tozalash", ru: "Очистить", en: "Clear", de: "Zurücksetzen" })}</button>
               <div className="flex gap-1.5">
-                <button type="button" onClick={today} className="rounded-lg px-2.5 py-1 text-xs font-semibold text-brand-600 hover:bg-brand-50 dark:hover:bg-brand-500/10">{tr(locale, { uz: "Bugun", ru: "Сегодня", en: "Today" })}</button>
-                <button type="button" onClick={() => setOpen(false)} className="rounded-lg bg-brand-600 px-3 py-1 text-xs font-semibold text-white hover:bg-brand-700">{tr(locale, { uz: "Tanlash", ru: "Выбрать", en: "Select" })}</button>
+                <button type="button" onClick={today} className="rounded-lg px-2.5 py-1 text-xs font-semibold text-brand-600 hover:bg-brand-50 dark:hover:bg-brand-500/10">{tr(locale, { uz: "Bugun", ru: "Сегодня", en: "Today", de: "Heute" })}</button>
+                <button type="button" onClick={() => setOpen(false)} className="rounded-lg bg-brand-600 px-3 py-1 text-xs font-semibold text-white hover:bg-brand-700">{tr(locale, { uz: "Tanlash", ru: "Выбрать", en: "Select", de: "Auswählen" })}</button>
               </div>
             </div>
           </div>

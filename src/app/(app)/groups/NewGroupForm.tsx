@@ -9,13 +9,13 @@ import { tr } from "@/lib/tr";
 import type { Locale } from "@/lib/constants";
 
 const weekdays = (locale: Locale): { v: number; label: string }[] => [
-  { v: 1, label: tr(locale, { uz: "Du", ru: "Пн", en: "Mon" }) },
-  { v: 2, label: tr(locale, { uz: "Se", ru: "Вт", en: "Tue" }) },
-  { v: 3, label: tr(locale, { uz: "Ch", ru: "Ср", en: "Wed" }) },
-  { v: 4, label: tr(locale, { uz: "Pa", ru: "Чт", en: "Thu" }) },
-  { v: 5, label: tr(locale, { uz: "Ju", ru: "Пт", en: "Fri" }) },
-  { v: 6, label: tr(locale, { uz: "Sh", ru: "Сб", en: "Sat" }) },
-  { v: 7, label: tr(locale, { uz: "Ya", ru: "Вс", en: "Sun" }) },
+  { v: 1, label: tr(locale, { uz: "Du", ru: "Пн", en: "Mon", de: "Mo" }) },
+  { v: 2, label: tr(locale, { uz: "Se", ru: "Вт", en: "Tue", de: "Di" }) },
+  { v: 3, label: tr(locale, { uz: "Ch", ru: "Ср", en: "Wed", de: "Mi" }) },
+  { v: 4, label: tr(locale, { uz: "Pa", ru: "Чт", en: "Thu", de: "Do" }) },
+  { v: 5, label: tr(locale, { uz: "Ju", ru: "Пт", en: "Fri", de: "Fr" }) },
+  { v: 6, label: tr(locale, { uz: "Sh", ru: "Сб", en: "Sat", de: "Sa" }) },
+  { v: 7, label: tr(locale, { uz: "Ya", ru: "Вс", en: "Sun", de: "So" }) },
 ];
 
 export { GROUP_COLORS } from "./groupColor";
@@ -48,12 +48,12 @@ export default function NewGroupForm({
 
   const errMsg = (st: FormState): string => {
     switch (st.error) {
-      case "room_conflict": return tr(locale, { uz: "Bu xona shu kun va vaqtda band: ", ru: "Этот кабинет занят в это время: ", en: "This room is busy at this time: " }) + (st.detail ?? "");
-      case "room_required": return tr(locale, { uz: "Oflayn guruh uchun xonani tanlang.", ru: "Выберите кабинет для оффлайн-группы.", en: "Select a room for the offline group." });
-      case "schedule_required": return tr(locale, { uz: "Kunlar va dars vaqtini to'ldiring.", ru: "Заполните дни и время занятий.", en: "Fill in days and lesson time." });
-      case "bad_time": return tr(locale, { uz: "Tugash vaqti boshlanishdan keyin bo'lishi kerak.", ru: "Время окончания должно быть позже начала.", en: "End time must be after start time." });
-      case "forbidden": return tr(locale, { uz: "Ruxsat yo'q.", ru: "Нет доступа.", en: "No permission." });
-      default: return tr(locale, { uz: "Ma'lumotlar to'liq emas.", ru: "Данные неполные.", en: "Incomplete data." });
+      case "room_conflict": return tr(locale, { uz: "Bu xona shu kun va vaqtda band: ", ru: "Этот кабинет занят в это время: ", en: "This room is busy at this time: ", de: "Dieser Raum ist zu dieser Zeit belegt: " }) + (st.detail ?? "");
+      case "room_required": return tr(locale, { uz: "Oflayn guruh uchun xonani tanlang.", ru: "Выберите кабинет для оффлайн-группы.", en: "Select a room for the offline group.", de: "Wählen Sie einen Raum für die Offline-Gruppe." });
+      case "schedule_required": return tr(locale, { uz: "Kunlar va dars vaqtini to'ldiring.", ru: "Заполните дни и время занятий.", en: "Fill in days and lesson time.", de: "Füllen Sie Tage und Unterrichtszeit aus." });
+      case "bad_time": return tr(locale, { uz: "Tugash vaqti boshlanishdan keyin bo'lishi kerak.", ru: "Время окончания должно быть позже начала.", en: "End time must be after start time.", de: "Die Endzeit muss nach der Startzeit liegen." });
+      case "forbidden": return tr(locale, { uz: "Ruxsat yo'q.", ru: "Нет доступа.", en: "No permission.", de: "Keine Berechtigung." });
+      default: return tr(locale, { uz: "Ma'lumotlar to'liq emas.", ru: "Данные неполные.", en: "Incomplete data.", de: "Unvollständige Daten." });
     }
   };
 
@@ -101,59 +101,59 @@ export default function NewGroupForm({
       >
         {/* Header */}
         <div className="flex shrink-0 items-center justify-between border-b border-slate-100 px-5 py-4 dark:border-white/10">
-          <h3 className="text-base font-bold text-slate-800 dark:text-slate-100">{tr(locale, { uz: "Yangi guruh qo'shish", ru: "Добавить новую группу", en: "Add new group" })}</h3>
+          <h3 className="text-base font-bold text-slate-800 dark:text-slate-100">{tr(locale, { uz: "Yangi guruh qo'shish", ru: "Добавить новую группу", en: "Add new group", de: "Neue Gruppe hinzufügen" })}</h3>
           <button type="button" onClick={onClose} className="flex h-8 w-8 items-center justify-center rounded-lg text-lg text-slate-400 transition hover:bg-slate-100 hover:text-slate-600 dark:hover:bg-white/10">✕</button>
         </div>
 
         {/* Body */}
         <div className="flex-1 space-y-3.5 overflow-y-auto px-5 py-4">
           <div>
-            <label className={label}>{tr(locale, { uz: "Nomi", ru: "Название", en: "Name" })} <span className="text-rose-500">*</span></label>
-            <input name="name" required placeholder={tr(locale, { uz: "A1 ertalabki (Du-Ch-Ju)", ru: "A1 утренняя (Пн-Ср-Пт)", en: "A1 morning (Mon-Wed-Fri)" })} className={input} />
+            <label className={label}>{tr(locale, { uz: "Nomi", ru: "Название", en: "Name", de: "Name" })} <span className="text-rose-500">*</span></label>
+            <input name="name" required placeholder={tr(locale, { uz: "A1 ertalabki (Du-Ch-Ju)", ru: "A1 утренняя (Пн-Ср-Пт)", en: "A1 morning (Mon-Wed-Fri)", de: "A1 morgens (Mo-Mi-Fr)" })} className={input} />
           </div>
           <div>
-            <label className={label}>{tr(locale, { uz: "Kurs tanlash", ru: "Выбрать курс", en: "Select course" })} <span className="text-rose-500">*</span></label>
+            <label className={label}>{tr(locale, { uz: "Kurs tanlash", ru: "Выбрать курс", en: "Select course", de: "Kurs auswählen" })} <span className="text-rose-500">*</span></label>
             <select name="programId" required className={input} defaultValue="">
-              <option value="" disabled>{tr(locale, { uz: "Variantlarni tanlang", ru: "Выберите вариант", en: "Select an option" })}</option>
+              <option value="" disabled>{tr(locale, { uz: "Variantlarni tanlang", ru: "Выберите вариант", en: "Select an option", de: "Option auswählen" })}</option>
               {programs.map((p) => <option key={p.id} value={p.id}>{p.name}</option>)}
             </select>
           </div>
           <div>
-            <label className={label}>{tr(locale, { uz: "O'qituvchini tanlang", ru: "Выберите преподавателя", en: "Select teacher" })}</label>
+            <label className={label}>{tr(locale, { uz: "O'qituvchini tanlang", ru: "Выберите преподавателя", en: "Select teacher", de: "Lehrer auswählen" })}</label>
             <select name="teacherId" className={`${input} truncate`} defaultValue="">
-              <option value="">{tr(locale, { uz: "Variantlarni tanlang", ru: "Выберите вариант", en: "Select an option" })}</option>
+              <option value="">{tr(locale, { uz: "Variantlarni tanlang", ru: "Выберите вариант", en: "Select an option", de: "Option auswählen" })}</option>
               {teachers.map((tt) => <option key={tt.id} value={tt.id}>{tt.fullName}</option>)}
             </select>
           </div>
           <div>
-            <label className={label}>{tr(locale, { uz: "Daraja", ru: "Уровень", en: "Level" })}</label>
+            <label className={label}>{tr(locale, { uz: "Daraja", ru: "Уровень", en: "Level", de: "Niveau" })}</label>
             <input name="levelCode" placeholder="A1.2" className={input} />
           </div>
 
           {/* O'quv shakli */}
           <div>
-            <label className={label}>{tr(locale, { uz: "O'quv shakli", ru: "Формат обучения", en: "Study format" })}</label>
+            <label className={label}>{tr(locale, { uz: "O'quv shakli", ru: "Формат обучения", en: "Study format", de: "Unterrichtsform" })}</label>
             <select name="format" value={format} onChange={(e) => setFormat(e.target.value)} className={input}>
               {GROUP_FORMATS.map((f) => <option key={f} value={f}>{GROUP_FORMAT_LABELS[f][locale]}</option>)}
             </select>
           </div>
           {(format === "ONLINE" || format === "HYBRID") && (
             <div>
-              <label className={label}>{tr(locale, { uz: "Onlayn havola", ru: "Онлайн-ссылка", en: "Online link" })}</label>
+              <label className={label}>{tr(locale, { uz: "Onlayn havola", ru: "Онлайн-ссылка", en: "Online link", de: "Online-Link" })}</label>
               <input name="onlineLink" type="url" placeholder="https://zoom.us/j/..." className={input} />
             </div>
           )}
 
           {/* Rang */}
           <div>
-            <label className={label}>{tr(locale, { uz: "Rang", ru: "Цвет", en: "Color" })}</label>
+            <label className={label}>{tr(locale, { uz: "Rang", ru: "Цвет", en: "Color", de: "Farbe" })}</label>
             <div className="flex flex-wrap items-center gap-2">
               {GROUP_COLORS.map((c) => (
                 <button key={c} type="button" onClick={() => setColor(c)} aria-label={c}
                   className={`h-7 w-7 rounded-full transition ${color === c ? "ring-2 ring-slate-500 ring-offset-2 dark:ring-offset-[#15243d]" : "hover:scale-110"}`}
                   style={{ background: c }} />
               ))}
-              <label className="relative flex h-7 w-7 cursor-pointer items-center justify-center rounded-full border border-dashed border-slate-300 text-white/80 dark:border-slate-600" style={{ background: color }} title={tr(locale, { uz: "Boshqa rang", ru: "Другой цвет", en: "Custom color" })}>
+              <label className="relative flex h-7 w-7 cursor-pointer items-center justify-center rounded-full border border-dashed border-slate-300 text-white/80 dark:border-slate-600" style={{ background: color }} title={tr(locale, { uz: "Boshqa rang", ru: "Другой цвет", en: "Custom color", de: "Andere Farbe" })}>
                 <span className="text-[11px] font-bold">+</span>
                 <input type="color" value={color} onChange={(e) => setColor(e.target.value)} className="absolute inset-0 h-full w-full cursor-pointer opacity-0" />
               </label>
@@ -164,7 +164,7 @@ export default function NewGroupForm({
 
           {/* Kunlar */}
           <div>
-            <label className={label}>{tr(locale, { uz: "Kunlar", ru: "Дни", en: "Days" })}</label>
+            <label className={label}>{tr(locale, { uz: "Kunlar", ru: "Дни", en: "Days", de: "Tage" })}</label>
             <div className="flex flex-wrap gap-1.5">
               {weekdays(locale).map((d) => {
                 const active = days.includes(d.v);
@@ -185,18 +185,18 @@ export default function NewGroupForm({
 
           <div className="grid grid-cols-2 gap-3">
             <div>
-              <label className={label}>{tr(locale, { uz: "Boshlanish vaqti", ru: "Время начала", en: "Start time" })}</label>
+              <label className={label}>{tr(locale, { uz: "Boshlanish vaqti", ru: "Время начала", en: "Start time", de: "Startzeit" })}</label>
               <input name="startTime" type="time" className={input} />
             </div>
             <div>
-              <label className={label}>{tr(locale, { uz: "Tugash vaqti", ru: "Время окончания", en: "End time" })}</label>
+              <label className={label}>{tr(locale, { uz: "Tugash vaqti", ru: "Время окончания", en: "End time", de: "Endzeit" })}</label>
               <input name="endTime" type="time" className={input} />
             </div>
           </div>
 
           <div className="grid grid-cols-2 gap-3">
             <div>
-              <label className={label}>{tr(locale, { uz: "Xona", ru: "Кабинет", en: "Room" })}</label>
+              <label className={label}>{tr(locale, { uz: "Xona", ru: "Кабинет", en: "Room", de: "Raum" })}</label>
               <select
                 name="room"
                 value={room}
@@ -207,42 +207,43 @@ export default function NewGroupForm({
                 }}
                 className={input}
               >
-                <option value="">{rooms.length ? tr(locale, { uz: "— xonani tanlang —", ru: "— выберите кабинет —", en: "— select room —" }) : tr(locale, { uz: "Xona yo'q (Sozlamalar → Xonalar)", ru: "Нет кабинетов", en: "No rooms" })}</option>
-                {rooms.map((r) => <option key={r.id} value={r.name}>{r.name}{r.capacity > 0 ? ` — ${r.capacity} ${tr(locale, { uz: "o'rin", ru: "мест", en: "seats" })}` : ""}</option>)}
+                <option value="">{rooms.length ? tr(locale, { uz: "— xonani tanlang —", ru: "— выберите кабинет —", en: "— select room —", de: "— Raum wählen —" }) : tr(locale, { uz: "Xona yo'q (Sozlamalar → Xonalar)", ru: "Нет кабинетов", en: "No rooms", de: "Keine Räume" })}</option>
+                {rooms.map((r) => <option key={r.id} value={r.name}>{r.name}{r.capacity > 0 ? ` — ${r.capacity} ${tr(locale, { uz: "o'rin", ru: "мест", en: "seats", de: "Plätze" })}` : ""}</option>)}
               </select>
             </div>
             <div>
-              <label className={label}>{tr(locale, { uz: "Sig'im", ru: "Вместимость", en: "Capacity" })} {room && <span className="text-[10px] font-normal text-emerald-500">({tr(locale, { uz: "avto", ru: "авто", en: "auto" })})</span>}</label>
+              <label className={label}>{tr(locale, { uz: "Sig'im", ru: "Вместимость", en: "Capacity", de: "Kapazität" })} {room && <span className="text-[10px] font-normal text-emerald-500">({tr(locale, { uz: "avto", ru: "авто", en: "auto", de: "auto" })})</span>}</label>
               <input name="capacity" type="number" min="1" max="100" value={capacity} onChange={(e) => setCapacity(Number(e.target.value) || 1)} className={input} />
             </div>
           </div>
           <div className="grid grid-cols-2 gap-3">
             <div>
-              <label className={label}>{tr(locale, { uz: "Boshlanish sanasi", ru: "Дата начала", en: "Start date" })}</label>
+              <label className={label}>{tr(locale, { uz: "Boshlanish sanasi", ru: "Дата начала", en: "Start date", de: "Startdatum" })}</label>
               <input name="startDate" type="date" className={input} />
             </div>
             <div>
-              <label className={label}>{tr(locale, { uz: "Tugash sanasi", ru: "Дата окончания", en: "End date" })}</label>
+              <label className={label}>{tr(locale, { uz: "Tugash sanasi", ru: "Дата окончания", en: "End date", de: "Enddatum" })}</label>
               <input name="endDate" type="date" className={input} />
             </div>
           </div>
 
           {/* Oylik to'lov — bo'sh qoldirilsa kurs narxi ishlatiladi */}
           <div>
-            <label className={label}>{tr(locale, { uz: "Oylik to'lov (so'm)", ru: "Ежемесячная оплата (сум)", en: "Monthly fee (UZS)" })}</label>
-            <input name="monthlyFee" type="number" min="0" step="10000" placeholder={tr(locale, { uz: "kurs narxi", ru: "цена курса", en: "course price" })} className={input} />
+            <label className={label}>{tr(locale, { uz: "Oylik to'lov (so'm)", ru: "Ежемесячная оплата (сум)", en: "Monthly fee (UZS)", de: "Monatliche Zahlung (UZS)" })}</label>
+            <input name="monthlyFee" type="number" min="0" step="10000" placeholder={tr(locale, { uz: "kurs narxi", ru: "цена курса", en: "course price", de: "Kurspreis" })} className={input} />
             <p className="mt-1 text-[11px] text-slate-400">
               {tr(locale, {
                 uz: "O'quvchi qo'shilgan oydan boshlab har oy shu summa qarzga hisoblanadi. Bo'sh qoldirilsa kurs narxi olinadi.",
                 ru: "С месяца зачисления ученика эта сумма ежемесячно начисляется в долг. Если пусто — берётся цена курса.",
                 en: "Charged monthly from the student's join month. Left empty — the course price is used.",
+                de: "Wird ab dem Anmeldemonat des Schülers monatlich als Schulden berechnet. Bleibt es leer, wird der Kurspreis verwendet.",
               })}
             </p>
           </div>
 
           {/* Izoh — guruh ma'lumoti ko'rinadigan hamma joyda chiqadi */}
           <div>
-            <label className={label}>{tr(locale, { uz: "Izoh", ru: "Комментарий", en: "Comment" })}</label>
+            <label className={label}>{tr(locale, { uz: "Izoh", ru: "Комментарий", en: "Comment", de: "Kommentar" })}</label>
             <textarea
               name="note"
               rows={3}
@@ -251,6 +252,7 @@ export default function NewGroupForm({
                 uz: "Guruh haqida qo'shimcha ma'lumot (masalan: kuchli guruh, imtihonga tayyorlanmoqda)",
                 ru: "Дополнительная информация о группе (например: сильная группа, готовится к экзамену)",
                 en: "Additional info about the group (e.g. strong group, preparing for the exam)",
+                de: "Zusätzliche Infos zur Gruppe (z. B. starke Gruppe, Prüfungsvorbereitung)",
               })}
               className={`${input} h-auto resize-y py-2 leading-relaxed`}
             />
@@ -266,10 +268,10 @@ export default function NewGroupForm({
         {/* Footer */}
         <div className="flex shrink-0 gap-2 border-t border-slate-100 px-5 py-4 dark:border-white/10">
           <button type="button" onClick={onClose} className="flex-1 rounded-xl border border-slate-200 py-2.5 text-sm font-semibold text-slate-600 transition hover:bg-slate-50 dark:border-white/10 dark:text-slate-300 dark:hover:bg-white/5">
-            {tr(locale, { uz: "Bekor qilish", ru: "Отмена", en: "Cancel" })}
+            {tr(locale, { uz: "Bekor qilish", ru: "Отмена", en: "Cancel", de: "Abbrechen" })}
           </button>
           <button type="submit" disabled={pending} className="flex-[1.4] rounded-xl bg-brand-600 py-2.5 text-sm font-semibold text-white transition hover:bg-brand-700 disabled:opacity-60">
-            {pending ? tr(locale, { uz: "Saqlanmoqda...", ru: "Сохранение...", en: "Saving..." }) : tr(locale, { uz: "Saqlash", ru: "Сохранить", en: "Save" })}
+            {pending ? tr(locale, { uz: "Saqlanmoqda...", ru: "Сохранение...", en: "Saving...", de: "Wird gespeichert..." }) : tr(locale, { uz: "Saqlash", ru: "Сохранить", en: "Save", de: "Speichern" })}
           </button>
         </div>
       </form>

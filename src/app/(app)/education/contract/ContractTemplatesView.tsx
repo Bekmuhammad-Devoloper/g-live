@@ -52,7 +52,7 @@ export default function ContractTemplatesView({
   const shown = filtered.slice((curPage - 1) * pageSize, curPage * pageSize);
 
   function onDelete(id: string) {
-    if (!confirm(tr(locale, { uz: "Ushbu shartnomani o'chirmoqchimisiz?", ru: "Удалить этот договор?", en: "Delete this contract?" }))) return;
+    if (!confirm(tr(locale, { uz: "Ushbu shartnomani o'chirmoqchimisiz?", ru: "Удалить этот договор?", en: "Delete this contract?", de: "Diesen Vertrag löschen?" }))) return;
     setBusyId(id);
     startTransition(async () => {
       await deleteContractTemplate(id);
@@ -69,7 +69,7 @@ export default function ContractTemplatesView({
             onClick={() => setAddOpen(true)}
             className="flex h-10 items-center gap-1.5 rounded-lg bg-brand-600 px-4 text-sm font-semibold text-white shadow-sm transition hover:bg-brand-700"
           >
-            <Icon name="plus" className="h-4 w-4" /> {tr(locale, { uz: "Shartnoma yaratish", ru: "Создать договор", en: "Create contract" })}
+            <Icon name="plus" className="h-4 w-4" /> {tr(locale, { uz: "Shartnoma yaratish", ru: "Создать договор", en: "Create contract", de: "Vertrag erstellen" })}
           </button>
         )}
         <div className="relative ml-auto">
@@ -77,7 +77,7 @@ export default function ContractTemplatesView({
           <input
             value={search}
             onChange={(e) => { setSearch(e.target.value); setPage(1); }}
-            placeholder={tr(locale, { uz: "Qidirish", ru: "Поиск", en: "Search" })}
+            placeholder={tr(locale, { uz: "Qidirish", ru: "Поиск", en: "Search", de: "Suchen" })}
             className="h-10 w-64 rounded-lg border border-slate-200 bg-white pl-9 pr-3 text-sm outline-none focus:border-brand-400 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-100"
           />
         </div>
@@ -86,17 +86,17 @@ export default function ContractTemplatesView({
       {/* Jadval */}
       <div className="overflow-hidden rounded-2xl border border-slate-200/70 bg-white shadow-card dark:border-slate-800 dark:bg-slate-900">
         <div className="flex items-center justify-end border-b border-slate-100 px-4 py-2 dark:border-slate-800">
-          <span className="rounded-lg bg-slate-100 px-2.5 py-1 text-xs font-semibold text-slate-500 dark:bg-slate-800 dark:text-slate-300">{tr(locale, { uz: "Umumiy soni:", ru: "Всего:", en: "Total:" })} {filtered.length}</span>
+          <span className="rounded-lg bg-slate-100 px-2.5 py-1 text-xs font-semibold text-slate-500 dark:bg-slate-800 dark:text-slate-300">{tr(locale, { uz: "Umumiy soni:", ru: "Всего:", en: "Total:", de: "Gesamt:" })} {filtered.length}</span>
         </div>
         <div className="overflow-x-auto">
           <table className="w-full min-w-[720px] text-left text-sm">
             <thead className="border-b border-slate-200/70 bg-slate-50/80 text-[11px] font-semibold uppercase tracking-wider text-slate-500 dark:border-slate-800 dark:bg-slate-800/50">
               <tr>
                 <th className="px-4 py-3 w-12">№</th>
-                <th className="px-4 py-3">{tr(locale, { uz: "Sarlavha", ru: "Заголовок", en: "Title" })}</th>
-                <th className="px-4 py-3">{tr(locale, { uz: "Shartnoma turi", ru: "Тип договора", en: "Contract type" })}</th>
-                <th className="px-4 py-3">{tr(locale, { uz: "Yaratilgan sana", ru: "Дата создания", en: "Created date" })}</th>
-                <th className="px-4 py-3 w-20 text-right">{canManage ? tr(locale, { uz: "Amallar", ru: "Действия", en: "Actions" }) : ""}</th>
+                <th className="px-4 py-3">{tr(locale, { uz: "Sarlavha", ru: "Заголовок", en: "Title", de: "Titel" })}</th>
+                <th className="px-4 py-3">{tr(locale, { uz: "Shartnoma turi", ru: "Тип договора", en: "Contract type", de: "Vertragstyp" })}</th>
+                <th className="px-4 py-3">{tr(locale, { uz: "Yaratilgan sana", ru: "Дата создания", en: "Created date", de: "Erstellungsdatum" })}</th>
+                <th className="px-4 py-3 w-20 text-right">{canManage ? tr(locale, { uz: "Amallar", ru: "Действия", en: "Actions", de: "Aktionen" }) : ""}</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-slate-100 dark:divide-slate-800">
@@ -104,8 +104,8 @@ export default function ContractTemplatesView({
                 <tr>
                   <td colSpan={5} className="px-4 py-16 text-center">
                     <div className="text-3xl opacity-30">📭</div>
-                    <p className="mt-2 font-medium text-slate-500 dark:text-slate-400">{tr(locale, { uz: "Ma'lumotlar topilmadi", ru: "Данные не найдены", en: "No data found" })}</p>
-                    <p className="mt-0.5 text-xs text-slate-400">{tr(locale, { uz: "Ma'lumotlar topilmadi. Filterni o'zgartirib ko'ring.", ru: "Данные не найдены. Попробуйте изменить фильтр.", en: "No data found. Try changing the filter." })}</p>
+                    <p className="mt-2 font-medium text-slate-500 dark:text-slate-400">{tr(locale, { uz: "Ma'lumotlar topilmadi", ru: "Данные не найдены", en: "No data found", de: "Keine Daten gefunden" })}</p>
+                    <p className="mt-0.5 text-xs text-slate-400">{tr(locale, { uz: "Ma'lumotlar topilmadi. Filterni o'zgartirib ko'ring.", ru: "Данные не найдены. Попробуйте изменить фильтр.", en: "No data found. Try changing the filter.", de: "Keine Daten gefunden. Versuchen Sie, den Filter zu ändern." })}</p>
                   </td>
                 </tr>
               ) : (
@@ -114,7 +114,7 @@ export default function ContractTemplatesView({
                     <td className="px-4 py-3 text-slate-400">{(curPage - 1) * pageSize + i + 1}</td>
                     <td className="px-4 py-3">
                       <span className="font-semibold text-slate-800 dark:text-slate-100">{t.title}</span>
-                      {!t.isActive && <span className="ml-2 rounded px-1.5 py-0.5 text-[10px] font-semibold bg-slate-400/20 text-slate-500">{tr(locale, { uz: "Nofaol", ru: "Неактивен", en: "Inactive" })}</span>}
+                      {!t.isActive && <span className="ml-2 rounded px-1.5 py-0.5 text-[10px] font-semibold bg-slate-400/20 text-slate-500">{tr(locale, { uz: "Nofaol", ru: "Неактивен", en: "Inactive", de: "Inaktiv" })}</span>}
                     </td>
                     <td className="px-4 py-3">
                       <span className={cn("inline-flex items-center rounded-md px-2 py-0.5 text-xs font-semibold", typeTone[t.type] ?? typeTone.STANDARD)}>{t.typeLabel}</span>
@@ -125,7 +125,7 @@ export default function ContractTemplatesView({
                         <button
                           onClick={() => onDelete(t.id)}
                           disabled={pending}
-                          title={tr(locale, { uz: "O'chirish", ru: "Удалить", en: "Delete" })}
+                          title={tr(locale, { uz: "O'chirish", ru: "Удалить", en: "Delete", de: "Löschen" })}
                           className="inline-flex h-8 w-8 items-center justify-center rounded-lg text-slate-400 transition hover:bg-rose-50 hover:text-rose-600 disabled:opacity-40 dark:hover:bg-rose-500/10"
                         >
                           <Icon name="trash" className="h-4 w-4" />
@@ -144,7 +144,7 @@ export default function ContractTemplatesView({
           <div className="flex items-center gap-2 text-xs text-slate-500 dark:text-slate-400">
             <Icon name="listView" className="h-4 w-4" />
             <select value={pageSize} onChange={(e) => { setPageSize(Number(e.target.value)); setPage(1); }} className="rounded-lg border border-slate-200 bg-white px-2 py-1 text-xs outline-none dark:border-slate-700 dark:bg-slate-800 dark:text-slate-200">
-              {[10, 20, 50, 100].map((n) => <option key={n} value={n}>{n} {tr(locale, { uz: "qatorda", ru: "в строке", en: "per page" })}</option>)}
+              {[10, 20, 50, 100].map((n) => <option key={n} value={n}>{n} {tr(locale, { uz: "qatorda", ru: "в строке", en: "per page", de: "pro Seite" })}</option>)}
             </select>
           </div>
           {totalPages > 1 && (
@@ -159,7 +159,7 @@ export default function ContractTemplatesView({
 
       {/* FAB */}
       {canManage && (
-        <button onClick={() => setAddOpen(true)} title={tr(locale, { uz: "Yangi shartnoma", ru: "Новый договор", en: "New contract" })} className="fixed bottom-6 right-6 z-30 flex h-12 w-12 items-center justify-center rounded-full bg-brand-600 text-white shadow-pop transition hover:scale-105 hover:bg-brand-700">
+        <button onClick={() => setAddOpen(true)} title={tr(locale, { uz: "Yangi shartnoma", ru: "Новый договор", en: "New contract", de: "Neuer Vertrag" })} className="fixed bottom-6 right-6 z-30 flex h-12 w-12 items-center justify-center rounded-full bg-brand-600 text-white shadow-pop transition hover:scale-105 hover:bg-brand-700">
           <Icon name="plus" className="h-5 w-5" />
         </button>
       )}

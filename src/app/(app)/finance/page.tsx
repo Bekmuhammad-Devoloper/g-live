@@ -29,11 +29,11 @@ export default async function FinancePage() {
 
   const df = new Intl.DateTimeFormat(s.locale === "ru" ? "ru-RU" : "uz-UZ");
   const exportColumns = [
-    { key: "student", label: tr(s.locale, { uz: "O'quvchi", ru: "Ученик", en: "Student" }) },
-    { key: "amount", label: tr(s.locale, { uz: "Summa", ru: "Сумма", en: "Amount" }) },
-    { key: "method", label: tr(s.locale, { uz: "Usul", ru: "Способ", en: "Method" }) },
-    { key: "status", label: tr(s.locale, { uz: "Holat", ru: "Статус", en: "Status" }) },
-    { key: "date", label: tr(s.locale, { uz: "Sana", ru: "Дата", en: "Date" }) },
+    { key: "student", label: tr(s.locale, { uz: "O'quvchi", ru: "Ученик", en: "Student", de: "Schüler" }) },
+    { key: "amount", label: tr(s.locale, { uz: "Summa", ru: "Сумма", en: "Amount", de: "Betrag" }) },
+    { key: "method", label: tr(s.locale, { uz: "Usul", ru: "Способ", en: "Method", de: "Methode" }) },
+    { key: "status", label: tr(s.locale, { uz: "Holat", ru: "Статус", en: "Status", de: "Status" }) },
+    { key: "date", label: tr(s.locale, { uz: "Sana", ru: "Дата", en: "Date", de: "Datum" }) },
   ];
   const exportData = recent.map((p) => ({
     student: p.student.fullName,
@@ -46,8 +46,8 @@ export default async function FinancePage() {
   return (
     <>
       <PageHeader
-        title={tr(s.locale, { uz: "Moliya", ru: "Финансы", en: "Finance" })}
-        subtitle={tr(s.locale, { uz: "To'lovlar, tushum va ish haqi", ru: "Платежи, доход и зарплата", en: "Payments, revenue and salary" })}
+        title={tr(s.locale, { uz: "Moliya", ru: "Финансы", en: "Finance", de: "Finanzen" })}
+        subtitle={tr(s.locale, { uz: "To'lovlar, tushum va ish haqi", ru: "Платежи, доход и зарплата", en: "Payments, revenue and salary", de: "Zahlungen, Einnahmen und Gehalt" })}
         action={
           <ExportButton
             rows={exportData}
@@ -59,35 +59,35 @@ export default async function FinancePage() {
       />
 
       <div className="mb-6 grid grid-cols-2 gap-4 lg:grid-cols-4">
-        <StatCard label={tr(s.locale, { uz: "Umumiy tushum", ru: "Общий доход", en: "Total revenue" })} value={formatMoney(paidAgg._sum.amount ?? 0, s.locale)} tone="green" icon="wallet" />
-        <StatCard label={tr(s.locale, { uz: "Shu oy", ru: "Этот месяц", en: "This month" })} value={formatMoney(monthAgg._sum.amount ?? 0, s.locale)} tone="brand" icon="chart" />
-        <StatCard label={tr(s.locale, { uz: "Qo'lda kiritilgan", ru: "Введено вручную", en: "Entered manually" })} value={manualCount} tone="amber" icon="card" />
-        <StatCard label={tr(s.locale, { uz: "Bekor qilingan", ru: "Отменено", en: "Cancelled" })} value={cancelled} tone="red" icon="history" />
+        <StatCard label={tr(s.locale, { uz: "Umumiy tushum", ru: "Общий доход", en: "Total revenue", de: "Gesamteinnahmen" })} value={formatMoney(paidAgg._sum.amount ?? 0, s.locale)} tone="green" icon="wallet" />
+        <StatCard label={tr(s.locale, { uz: "Shu oy", ru: "Этот месяц", en: "This month", de: "Dieser Monat" })} value={formatMoney(monthAgg._sum.amount ?? 0, s.locale)} tone="brand" icon="chart" />
+        <StatCard label={tr(s.locale, { uz: "Qo'lda kiritilgan", ru: "Введено вручную", en: "Entered manually", de: "Manuell eingegeben" })} value={manualCount} tone="amber" icon="card" />
+        <StatCard label={tr(s.locale, { uz: "Bekor qilingan", ru: "Отменено", en: "Cancelled", de: "Storniert" })} value={cancelled} tone="red" icon="history" />
       </div>
 
       <div className="mb-6 grid gap-3 md:grid-cols-2 xl:grid-cols-3">
-        <HubCard href="/payments" icon="card" title={tr(s.locale, { uz: "To'lovlar", ru: "Платежи", en: "Payments" })} desc={tr(s.locale, { uz: "Onlayn va qo'lda to'lov, bekor qilish, audit", ru: "Онлайн и ручные платежи, отмена, аудит", en: "Online and manual payments, cancellation, audit" })} />
-        <HubCard href="/salary" icon="wallet" title={tr(s.locale, { uz: "Ish haqi", ru: "Зарплата", en: "Salary" })} desc={tr(s.locale, { uz: "O'qituvchilar yuklamasi va hisob-kitob", ru: "Нагрузка преподавателей и расчёт", en: "Teacher workload and calculation" })} />
-        <HubCard href="/reports" icon="chart" title={tr(s.locale, { uz: "Hisobotlar", ru: "Отчёты", en: "Reports" })} desc={tr(s.locale, { uz: "Tushum, konversiya va operatsion ko'rsatkichlar", ru: "Доход, конверсия и операционные показатели", en: "Revenue, conversion and operational metrics" })} />
+        <HubCard href="/payments" icon="card" title={tr(s.locale, { uz: "To'lovlar", ru: "Платежи", en: "Payments", de: "Zahlungen" })} desc={tr(s.locale, { uz: "Onlayn va qo'lda to'lov, bekor qilish, audit", ru: "Онлайн и ручные платежи, отмена, аудит", en: "Online and manual payments, cancellation, audit", de: "Online- und manuelle Zahlungen, Stornierung, Audit" })} />
+        <HubCard href="/salary" icon="wallet" title={tr(s.locale, { uz: "Ish haqi", ru: "Зарплата", en: "Salary", de: "Gehalt" })} desc={tr(s.locale, { uz: "O'qituvchilar yuklamasi va hisob-kitob", ru: "Нагрузка преподавателей и расчёт", en: "Teacher workload and calculation", de: "Lehrerauslastung und Berechnung" })} />
+        <HubCard href="/reports" icon="chart" title={tr(s.locale, { uz: "Hisobotlar", ru: "Отчёты", en: "Reports", de: "Berichte" })} desc={tr(s.locale, { uz: "Tushum, konversiya va operatsion ko'rsatkichlar", ru: "Доход, конверсия и операционные показатели", en: "Revenue, conversion and operational metrics", de: "Einnahmen, Konversion und operative Kennzahlen" })} />
       </div>
 
       <Card padded={false}>
         <div className="border-b border-slate-100 px-5 py-4">
-          <h3 className="text-sm font-semibold text-slate-700">{tr(s.locale, { uz: "Oxirgi to'lovlar", ru: "Последние платежи", en: "Recent payments" })}</h3>
+          <h3 className="text-sm font-semibold text-slate-700">{tr(s.locale, { uz: "Oxirgi to'lovlar", ru: "Последние платежи", en: "Recent payments", de: "Letzte Zahlungen" })}</h3>
         </div>
         <Table
           head={
             <tr>
-              <th className="px-4 py-3">{tr(s.locale, { uz: "O'quvchi", ru: "Ученик", en: "Student" })}</th>
-              <th className="px-4 py-3">{tr(s.locale, { uz: "Summa", ru: "Сумма", en: "Amount" })}</th>
-              <th className="px-4 py-3">{tr(s.locale, { uz: "Usul", ru: "Способ", en: "Method" })}</th>
-              <th className="px-4 py-3">{tr(s.locale, { uz: "Holat", ru: "Статус", en: "Status" })}</th>
-              <th className="px-4 py-3">{tr(s.locale, { uz: "Sana", ru: "Дата", en: "Date" })}</th>
+              <th className="px-4 py-3">{tr(s.locale, { uz: "O'quvchi", ru: "Ученик", en: "Student", de: "Schüler" })}</th>
+              <th className="px-4 py-3">{tr(s.locale, { uz: "Summa", ru: "Сумма", en: "Amount", de: "Betrag" })}</th>
+              <th className="px-4 py-3">{tr(s.locale, { uz: "Usul", ru: "Способ", en: "Method", de: "Methode" })}</th>
+              <th className="px-4 py-3">{tr(s.locale, { uz: "Holat", ru: "Статус", en: "Status", de: "Status" })}</th>
+              <th className="px-4 py-3">{tr(s.locale, { uz: "Sana", ru: "Дата", en: "Date", de: "Datum" })}</th>
             </tr>
           }
         >
           {recent.length === 0 ? (
-            <EmptyRow colSpan={5} text={tr(s.locale, { uz: "To'lov yo'q", ru: "Нет платежей", en: "No payments" })} />
+            <EmptyRow colSpan={5} text={tr(s.locale, { uz: "To'lov yo'q", ru: "Нет платежей", en: "No payments", de: "Keine Zahlungen" })} />
           ) : (
             recent.map((p) => (
               <tr key={p.id} className="hover:bg-slate-50">
@@ -109,7 +109,7 @@ export default async function FinancePage() {
       </Card>
 
       <p className="mt-4 text-xs text-slate-400">
-        ℹ️ {tr(s.locale, { uz: "Keyingi bosqich: 6 xil to'lov rejimi (oylik, kunlik, modul, kurs, individual), xarajatlar va qarzdorlik nazorati.", ru: "Следующий этап: 6 режимов оплаты (месячная, дневная, модуль, курс, индивидуальная), контроль расходов и задолженности.", en: "Next stage: 6 payment modes (monthly, daily, module, course, individual), expense and debt control." })}
+        ℹ️ {tr(s.locale, { uz: "Keyingi bosqich: 6 xil to'lov rejimi (oylik, kunlik, modul, kurs, individual), xarajatlar va qarzdorlik nazorati.", ru: "Следующий этап: 6 режимов оплаты (месячная, дневная, модуль, курс, индивидуальная), контроль расходов и задолженности.", en: "Next stage: 6 payment modes (monthly, daily, module, course, individual), expense and debt control.", de: "Nächste Stufe: 6 Zahlungsmodi (monatlich, täglich, Modul, Kurs, individuell), Ausgaben- und Schuldenkontrolle." })}
       </p>
     </>
   );

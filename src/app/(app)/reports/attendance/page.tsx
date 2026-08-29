@@ -18,18 +18,18 @@ const isoLocal = (d: Date) => `${d.getFullYear()}-${p2(d.getMonth() + 1)}-${p2(d
 
 // Davomat holatlari — ranglar validatordan o'tgan (ΔE≥8, ko'rinadigan yorliqlar bilan)
 const STATUS_META = [
-  { key: "PRESENT", color: "#10b981", uz: "Keldi", ru: "Присутствовал", en: "Present" },
-  { key: "LATE", color: "#f59e0b", uz: "Kechikdi", ru: "Опоздал", en: "Late" },
-  { key: "ABSENT", color: "#ef4444", uz: "Kelmadi", ru: "Отсутствовал", en: "Absent" },
-  { key: "EXCUSED", color: "#3b82f6", uz: "Uzrli", ru: "Уважительная", en: "Excused" },
-  { key: "ONLINE", color: "#06b6d4", uz: "Onlayn", ru: "Онлайн", en: "Online" },
-  { key: "MAKEUP", color: "#8b5cf6", uz: "Qoplama", ru: "Отработка", en: "Makeup" },
+  { key: "PRESENT", color: "#10b981", uz: "Keldi", ru: "Присутствовал", en: "Present", de: "Anwesend" },
+  { key: "LATE", color: "#f59e0b", uz: "Kechikdi", ru: "Опоздал", en: "Late", de: "Verspätet" },
+  { key: "ABSENT", color: "#ef4444", uz: "Kelmadi", ru: "Отсутствовал", en: "Absent", de: "Abwesend" },
+  { key: "EXCUSED", color: "#3b82f6", uz: "Uzrli", ru: "Уважительная", en: "Excused", de: "Entschuldigt" },
+  { key: "ONLINE", color: "#06b6d4", uz: "Onlayn", ru: "Онлайн", en: "Online", de: "Online" },
+  { key: "MAKEUP", color: "#8b5cf6", uz: "Qoplama", ru: "Отработка", en: "Makeup", de: "Nachholstunde" },
 ];
 
 export default async function AttendanceReportPage({ searchParams }: { searchParams: Promise<Record<string, string | undefined>> }) {
   const s = await requireSession();
   if (!canRead(s.role, MODULES.REPORTS)) {
-    return <Forbidden title={tr(s.locale, { uz: "Kirish taqiqlangan", ru: "Доступ запрещён", en: "Access denied" })} body={tr(s.locale, { uz: "Bu bo'lim uchun ruxsat yo'q.", ru: "Нет доступа к этому разделу.", en: "You don't have access to this section." })} />;
+    return <Forbidden title={tr(s.locale, { uz: "Kirish taqiqlangan", ru: "Доступ запрещён", en: "Access denied", de: "Zugriff verweigert" })} body={tr(s.locale, { uz: "Bu bo'lim uchun ruxsat yo'q.", ru: "Нет доступа к этому разделу.", en: "You don't have access to this section.", de: "Sie haben keinen Zugriff auf diesen Bereich." })} />;
   }
   const sp = await searchParams;
 
@@ -100,7 +100,7 @@ export default async function AttendanceReportPage({ searchParams }: { searchPar
   const attended = vals.filter((e) => e.present >= 1).length;
   const absentOnly = vals.filter((e) => e.present === 0 && e.absent >= 1).length;
   const rate = totalPresent + totalAbsent > 0 ? Math.round((totalPresent / (totalPresent + totalAbsent)) * 100) : 0;
-  const statuses = STATUS_META.map((m) => ({ key: m.key, label: tr(s.locale, { uz: m.uz, ru: m.ru, en: m.en }), count: statusCounts[m.key] ?? 0, color: m.color }));
+  const statuses = STATUS_META.map((m) => ({ key: m.key, label: tr(s.locale, { uz: m.uz, ru: m.ru, en: m.en, de: m.de }), count: statusCounts[m.key] ?? 0, color: m.color }));
 
   const dayList: { date: string; present: number; absent: number }[] = [];
   {
@@ -117,10 +117,10 @@ export default async function AttendanceReportPage({ searchParams }: { searchPar
   }
 
   const rows = [
-    { label: tr(s.locale, { uz: "Kelgan talabalar (eng kami bir marta)", ru: "Присутствовавшие ученики (хотя бы раз)", en: "Attended students (at least once)" }), value: kelgan },
-    { label: tr(s.locale, { uz: "Kelmagan (bir martadan ko'p)", ru: "Отсутствовавшие (более одного раза)", en: "Absent (more than once)" }), value: kelmagan },
-    { label: tr(s.locale, { uz: "Davomat bo'sh", ru: "Посещаемость пуста", en: "No attendance" }), value: bosh },
-    { label: tr(s.locale, { uz: "Barchasi", ru: "Все", en: "All" }), value: total, total: true },
+    { label: tr(s.locale, { uz: "Kelgan talabalar (eng kami bir marta)", ru: "Присутствовавшие ученики (хотя бы раз)", en: "Attended students (at least once)", de: "Anwesende Schüler (mindestens einmal)" }), value: kelgan },
+    { label: tr(s.locale, { uz: "Kelmagan (bir martadan ko'p)", ru: "Отсутствовавшие (более одного раза)", en: "Absent (more than once)", de: "Abwesend (mehr als einmal)" }), value: kelmagan },
+    { label: tr(s.locale, { uz: "Davomat bo'sh", ru: "Посещаемость пуста", en: "No attendance", de: "Keine Anwesenheit" }), value: bosh },
+    { label: tr(s.locale, { uz: "Barchasi", ru: "Все", en: "All", de: "Alle" }), value: total, total: true },
   ];
 
   const sel = "h-11 w-full appearance-none rounded-lg border border-slate-200 bg-white pl-3 pr-9 text-sm text-slate-700 outline-none focus:border-brand-400 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-100";
@@ -129,7 +129,7 @@ export default async function AttendanceReportPage({ searchParams }: { searchPar
   return (
     <div className="space-y-5">
       <div className="flex flex-wrap items-center justify-between gap-3">
-        <h1 className="text-[24px] font-bold tracking-tight text-slate-900 dark:text-slate-100">{tr(s.locale, { uz: "Davomat hisobotlari", ru: "Отчёты по посещаемости", en: "Attendance reports" })}</h1>
+        <h1 className="text-[24px] font-bold tracking-tight text-slate-900 dark:text-slate-100">{tr(s.locale, { uz: "Davomat hisobotlari", ru: "Отчёты по посещаемости", en: "Attendance reports", de: "Anwesenheitsberichte" })}</h1>
         <AttendanceExport rows={rows.map((r) => ({ label: r.label, value: r.value }))} locale={s.locale} />
       </div>
 
@@ -167,45 +167,45 @@ export default async function AttendanceReportPage({ searchParams }: { searchPar
 
         {/* O'ng: filtr paneli */}
         <form method="GET" className="w-full shrink-0 rounded-2xl border border-slate-200/70 bg-white p-5 shadow-card dark:border-slate-800 dark:bg-slate-900 lg:w-80">
-          <h3 className="mb-4 text-base font-semibold text-slate-700 dark:text-slate-200">{tr(s.locale, { uz: "Filtr", ru: "Фильтр", en: "Filter" })}</h3>
+          <h3 className="mb-4 text-base font-semibold text-slate-700 dark:text-slate-200">{tr(s.locale, { uz: "Filtr", ru: "Фильтр", en: "Filter", de: "Filter" })}</h3>
           <div className="space-y-4">
             <div>
-              <label className="mb-1 block text-sm text-slate-500 dark:text-slate-400">{tr(s.locale, { uz: "Sanadan boshlab", ru: "С даты", en: "From date" })}</label>
+              <label className="mb-1 block text-sm text-slate-500 dark:text-slate-400">{tr(s.locale, { uz: "Sanadan boshlab", ru: "С даты", en: "From date", de: "Ab Datum" })}</label>
               <div className="relative">
                 <Icon name="calendar" className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400" />
                 <input type="date" name="from" defaultValue={fromStr} className={dateInp} />
               </div>
             </div>
             <div>
-              <label className="mb-1 block text-sm text-slate-500 dark:text-slate-400">{tr(s.locale, { uz: "Sana bo'yicha", ru: "По дату", en: "To date" })}</label>
+              <label className="mb-1 block text-sm text-slate-500 dark:text-slate-400">{tr(s.locale, { uz: "Sana bo'yicha", ru: "По дату", en: "To date", de: "Bis Datum" })}</label>
               <div className="relative">
                 <Icon name="calendar" className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400" />
                 <input type="date" name="to" defaultValue={toStr} className={dateInp} />
               </div>
             </div>
             <div>
-              <label className="mb-1 block text-sm text-slate-500 dark:text-slate-400">{tr(s.locale, { uz: "Filiallar", ru: "Филиалы", en: "Branches" })}</label>
+              <label className="mb-1 block text-sm text-slate-500 dark:text-slate-400">{tr(s.locale, { uz: "Filiallar", ru: "Филиалы", en: "Branches", de: "Filialen" })}</label>
               <div className="relative">
                 <select name="branchId" defaultValue={branchId} className={sel}>
-                  <option value="">{tr(s.locale, { uz: "Barchasi", ru: "Все", en: "All" })}</option>
+                  <option value="">{tr(s.locale, { uz: "Barchasi", ru: "Все", en: "All", de: "Alle" })}</option>
                   {branches.map((b) => <option key={b.id} value={b.id}>{b.name}</option>)}
                 </select>
                 <Icon name="chevronDown" className="pointer-events-none absolute right-3 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400" />
               </div>
             </div>
             <div>
-              <label className="mb-1 block text-sm text-slate-500 dark:text-slate-400">{tr(s.locale, { uz: "Guruh", ru: "Группа", en: "Group" })}</label>
+              <label className="mb-1 block text-sm text-slate-500 dark:text-slate-400">{tr(s.locale, { uz: "Guruh", ru: "Группа", en: "Group", de: "Gruppe" })}</label>
               <div className="relative">
                 <select name="groupId" defaultValue={groupId} className={sel}>
-                  <option value="">{tr(s.locale, { uz: "Select", ru: "Выбрать", en: "Select" })}</option>
+                  <option value="">{tr(s.locale, { uz: "Select", ru: "Выбрать", en: "Select", de: "Auswählen" })}</option>
                   {groups.map((g) => <option key={g.id} value={g.id}>{g.name}</option>)}
                 </select>
                 <Icon name="chevronDown" className="pointer-events-none absolute right-3 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400" />
               </div>
             </div>
             <div className="flex justify-end gap-2 pt-1">
-              <Link href="/reports/attendance" className="rounded-lg border border-slate-200 px-4 py-2 text-sm font-medium text-slate-600 transition hover:bg-slate-50 dark:border-slate-700 dark:text-slate-300">{tr(s.locale, { uz: "Tozalash", ru: "Очистить", en: "Clear" })}</Link>
-              <button type="submit" className="rounded-lg bg-brand-600 px-5 py-2 text-sm font-semibold text-white transition hover:bg-brand-700">{tr(s.locale, { uz: "Filtr", ru: "Фильтр", en: "Filter" })}</button>
+              <Link href="/reports/attendance" className="rounded-lg border border-slate-200 px-4 py-2 text-sm font-medium text-slate-600 transition hover:bg-slate-50 dark:border-slate-700 dark:text-slate-300">{tr(s.locale, { uz: "Tozalash", ru: "Очистить", en: "Clear", de: "Zurücksetzen" })}</Link>
+              <button type="submit" className="rounded-lg bg-brand-600 px-5 py-2 text-sm font-semibold text-white transition hover:bg-brand-700">{tr(s.locale, { uz: "Filtr", ru: "Фильтр", en: "Filter", de: "Filter" })}</button>
             </div>
           </div>
         </form>

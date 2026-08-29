@@ -46,7 +46,7 @@ export async function saveOperatorLocale(fd: FormData): Promise<Res> {
   if (!ALLOWED.includes(s.role)) return { error: "Ruxsat yo'q" };
 
   const locale = String(fd.get("locale") || "");
-  if (!["uz", "ru", "en"].includes(locale)) return { error: "Til noto'g'ri" };
+  if (!["uz", "ru", "en", "de"].includes(locale)) return { error: "Til noto'g'ri" };
 
   await prisma.user.update({ where: { id: s.userId }, data: { locale } });
   await createSession({ ...s, locale: locale as Locale });

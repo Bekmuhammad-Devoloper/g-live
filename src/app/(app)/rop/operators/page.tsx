@@ -11,7 +11,7 @@ import OperatorsMonitor, { type VOperator } from "./OperatorsMonitor";
 export default async function RopOperatorsPage() {
   const s = await requireSession();
   if (!canRead(s.role, MODULES.REPORTS) && !canRead(s.role, MODULES.CRM)) {
-    return <Forbidden title={tr(s.locale, { uz: "Kirish taqiqlangan", ru: "Доступ запрещён", en: "Access denied" })} body={tr(s.locale, { uz: "Bu bo'lim savdo bo'limi uchun.", ru: "Этот раздел для отдела продаж.", en: "This section is for the sales department." })} />;
+    return <Forbidden title={tr(s.locale, { uz: "Kirish taqiqlangan", ru: "Доступ запрещён", en: "Access denied", de: "Zugriff verweigert" })} body={tr(s.locale, { uz: "Bu bo'lim savdo bo'limi uchun.", ru: "Этот раздел для отдела продаж.", en: "This section is for the sales department.", de: "Dieser Bereich ist für die Vertriebsabteilung." })} />;
   }
 
   const now = new Date();

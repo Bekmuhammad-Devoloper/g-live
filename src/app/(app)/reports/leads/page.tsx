@@ -14,7 +14,7 @@ import ExportButton from "./ExportButton";
 const MONTHS: Record<Locale, string[]> = {
   uz: ["Yan", "Fev", "Mar", "Apr", "May", "Iyn", "Iyl", "Avg", "Sen", "Okt", "Noy", "Dek"],
   ru: ["Янв", "Фев", "Мар", "Апр", "Май", "Июн", "Июл", "Авг", "Сен", "Окт", "Ноя", "Дек"],
-  en: ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"],
+  en: ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"], de: ["Jan", "Feb", "Mär", "Apr", "Mai", "Jun", "Jul", "Aug", "Sep", "Okt", "Nov", "Dez"],
 };
 const p2 = (n: number) => String(n).padStart(2, "0");
 const toInput = (d: Date) => `${d.getFullYear()}-${p2(d.getMonth() + 1)}-${p2(d.getDate())}`;
@@ -82,14 +82,14 @@ export default async function LeadsReportPage({
   return (
     <>
       <div className="mb-4">
-        <Link href="/reports" className="text-sm text-brand-600 hover:underline">← {tr(s.locale, { uz: "Hisobotlar", ru: "Отчёты", en: "Reports" })}</Link>
+        <Link href="/reports" className="text-sm text-brand-600 hover:underline">← {tr(s.locale, { uz: "Hisobotlar", ru: "Отчёты", en: "Reports", de: "Berichte" })}</Link>
       </div>
-      <PageHeader title={tr(s.locale, { uz: "Lidlar hisobotlari", ru: "Отчёты по лидам", en: "Leads reports" })} />
+      <PageHeader title={tr(s.locale, { uz: "Lidlar hisobotlari", ru: "Отчёты по лидам", en: "Leads reports", de: "Lead-Berichte" })} />
 
       {/* Lidlar soni kartochkasi */}
       <div className="mb-5 flex items-center justify-between gap-4 rounded-2xl border border-l-4 border-slate-200/70 border-l-brand-500 bg-white p-5 shadow-card dark:border-slate-800 dark:border-l-brand-500 dark:bg-slate-900">
         <div className="text-lg font-semibold text-slate-800 dark:text-slate-100">
-          {tr(s.locale, { uz: "Lidlar soni", ru: "Количество лидов", en: "Number of leads" })}: {total}{" "}
+          {tr(s.locale, { uz: "Lidlar soni", ru: "Количество лидов", en: "Number of leads", de: "Anzahl der Leads" })}: {total}{" "}
           <span className="font-normal text-slate-400">({toDisplay(fromDate)} — {toDisplay(toDate)})</span>
         </div>
         <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-brand-50 text-brand-600 dark:bg-brand-950/40 dark:text-brand-400">
@@ -103,13 +103,13 @@ export default async function LeadsReportPage({
           <input type="date" name="from" defaultValue={toInput(fromDate)} className={inputCls} />
           <input type="date" name="to" defaultValue={toInput(toDate)} className={inputCls} />
           <button type="submit" className="h-10 rounded-full bg-brand-600 px-6 text-sm font-semibold text-white shadow-sm transition hover:bg-brand-700">
-            {tr(s.locale, { uz: "Hisoblang", ru: "Рассчитать", en: "Calculate" })}
+            {tr(s.locale, { uz: "Hisoblang", ru: "Рассчитать", en: "Calculate", de: "Berechnen" })}
           </button>
           <ExportButton filename={`lidlar_${toInput(fromDate)}_${toInput(toDate)}`} rows={data} locale={s.locale} />
         </form>
 
         <div className="rounded-2xl border border-slate-200/70 bg-white p-4 shadow-card dark:border-slate-800 dark:bg-slate-900">
-          <BarChart data={data} seriesLabel={tr(s.locale, { uz: "Lidlar soni", ru: "Количество лидов", en: "Number of leads" })} />
+          <BarChart data={data} seriesLabel={tr(s.locale, { uz: "Lidlar soni", ru: "Количество лидов", en: "Number of leads", de: "Anzahl der Leads" })} />
         </div>
       </div>
     </>

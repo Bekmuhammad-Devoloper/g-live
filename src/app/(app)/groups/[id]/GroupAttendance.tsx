@@ -97,6 +97,7 @@ export function GroupAttendance({ groupId, students, locale }: { groupId: string
               uz: `Davomat yopilgan (${win.closesAtLabel} da muddat tugagan). Belgilanmaganlar avtomatik "yo'q" qilindi. O'zgartirish uchun menejer yoki direktordan ruxsat kerak.`,
               ru: `Посещаемость закрыта (срок истёк ${win.closesAtLabel}). Неотмеченные автоматически «нет». Для изменения нужно разрешение менеджера или директора.`,
               en: `Attendance is closed (window ended ${win.closesAtLabel}). Unmarked were auto-set to absent. Ask a manager or director to unlock.`,
+              de: `Die Anwesenheit ist geschlossen (Frist endete um ${win.closesAtLabel}). Unmarkierte wurden automatisch auf „abwesend" gesetzt. Bitten Sie einen Manager oder Direktor um Freischaltung.`,
             })}
           </span>
         </div>
@@ -111,7 +112,7 @@ export function GroupAttendance({ groupId, students, locale }: { groupId: string
             className="flex items-center gap-1.5 rounded-lg bg-brand-600 px-3 py-1.5 text-xs font-semibold text-white transition hover:bg-brand-700 disabled:opacity-60"
           >
             {unlocking ? <Icon name="refresh" className="h-3.5 w-3.5 animate-spin" /> : <Icon name="check" className="h-3.5 w-3.5" />}
-            {tr(locale, { uz: "Davomatni ochish (24 soat)", ru: "Открыть посещаемость (24 ч)", en: "Unlock attendance (24 h)" })}
+            {tr(locale, { uz: "Davomatni ochish (24 soat)", ru: "Открыть посещаемость (24 ч)", en: "Unlock attendance (24 h)", de: "Anwesenheit freischalten (24 Std.)" })}
           </button>
         </div>
       )}
@@ -124,6 +125,7 @@ export function GroupAttendance({ groupId, students, locale }: { groupId: string
             uz: `Ruxsat bilan ochilgan — ${win.unlockedUntilLabel} gacha tahrirlash mumkin.`,
             ru: `Открыто по разрешению — редактирование до ${win.unlockedUntilLabel}.`,
             en: `Unlocked by permission — editable until ${win.unlockedUntilLabel}.`,
+            de: `Per Genehmigung freigeschaltet — bearbeitbar bis ${win.unlockedUntilLabel}.`,
           })}
         </div>
       )}
@@ -137,6 +139,7 @@ export function GroupAttendance({ groupId, students, locale }: { groupId: string
               uz: "Bu kun davomati yopilgan — menejer yoki direktor ruxsat berishi kerak.",
               ru: "Посещаемость этого дня закрыта — нужно разрешение менеджера или директора.",
               en: "This day's attendance is closed — a manager or director must unlock it.",
+              de: "Die Anwesenheit dieses Tages ist geschlossen — ein Manager oder Direktor muss sie freischalten.",
             })}
           </span>
           <button onClick={() => setClosedNotice(false)} className="shrink-0 text-rose-400 hover:text-rose-600">✕</button>
@@ -152,6 +155,7 @@ export function GroupAttendance({ groupId, students, locale }: { groupId: string
               uz: "Kelajak sanaga davomat oldindan belgilanmaydi — dars kuni belgilanadi.",
               ru: "Посещаемость на будущую дату заранее не отмечается — только в день урока.",
               en: "Attendance cannot be pre-marked for a future date — mark it on the lesson day.",
+              de: "Die Anwesenheit für ein zukünftiges Datum kann nicht im Voraus markiert werden — nur am Unterrichtstag.",
             })}
           </span>
           {futureNotice && <button onClick={() => setFutureNotice(false)} className="shrink-0 text-amber-400 hover:text-amber-600">✕</button>}
@@ -167,6 +171,7 @@ export function GroupAttendance({ groupId, students, locale }: { groupId: string
               uz: `${blockedNotice.name} — shu oy ${blockedNotice.lessons} dars o'tildi, to'lov qilinmagan. Avval to'lovni qabul qiling.`,
               ru: `${blockedNotice.name} — в этом месяце проведено ${blockedNotice.lessons} уроков, оплата не произведена. Сначала примите оплату.`,
               en: `${blockedNotice.name} — ${blockedNotice.lessons} lessons this month, unpaid. Accept payment first.`,
+              de: `${blockedNotice.name} — ${blockedNotice.lessons} Unterrichtsstunden diesen Monat, unbezahlt. Bitte zuerst die Zahlung erfassen.`,
             })}
           </span>
           <button onClick={() => setBlockedNotice(null)} className="shrink-0 text-rose-400 hover:text-rose-600">✕</button>
@@ -181,6 +186,7 @@ export function GroupAttendance({ groupId, students, locale }: { groupId: string
               uz: `${skippedCount} ta o'quvchi to'lov qilinmagani sabab "Hammasi bor"ga qo'shilmadi.`,
               ru: `${skippedCount} учеников не отмечены из-за неоплаты.`,
               en: `${skippedCount} student(s) skipped due to unpaid mandatory payment.`,
+              de: `${skippedCount} Schüler wurden wegen ausstehender Zahlung übersprungen.`,
             })}
           </span>
           <button onClick={() => setSkippedCount(0)} className="shrink-0 text-amber-400 hover:text-amber-600">✕</button>
@@ -193,11 +199,11 @@ export function GroupAttendance({ groupId, students, locale }: { groupId: string
           <Icon name="calendar" className="pointer-events-none absolute left-2.5 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400" />
           <input type="date" value={date} onChange={(e) => setDate(e.target.value)} className="h-9 rounded-lg border border-slate-200 bg-white pl-8 pr-2 text-sm text-slate-700 outline-none focus:border-brand-400 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-100" />
         </div>
-        {isToday && <span className="rounded-full bg-brand-500/10 px-2 py-0.5 text-[11px] font-semibold text-brand-600 dark:text-brand-300">{tr(locale, { uz: "Bugun", ru: "Сегодня", en: "Today" })}</span>}
+        {isToday && <span className="rounded-full bg-brand-500/10 px-2 py-0.5 text-[11px] font-semibold text-brand-600 dark:text-brand-300">{tr(locale, { uz: "Bugun", ru: "Сегодня", en: "Today", de: "Heute" })}</span>}
         {/* Ochiq oynada yopilish vaqti eslatmasi */}
         {win && !win.closed && isToday && (
-          <span className="rounded-full bg-slate-100 px-2 py-0.5 text-[11px] font-medium text-slate-500 dark:bg-slate-800 dark:text-slate-400" title={tr(locale, { uz: "Dars tugagach 3 soat ichida saqlash mumkin", ru: "Можно сохранить в течение 3 часов после урока", en: "Can be saved within 3 hours after the lesson" })}>
-            {tr(locale, { uz: "Yopiladi", ru: "Закроется", en: "Closes" })}: {win.closesAtLabel}
+          <span className="rounded-full bg-slate-100 px-2 py-0.5 text-[11px] font-medium text-slate-500 dark:bg-slate-800 dark:text-slate-400" title={tr(locale, { uz: "Dars tugagach 3 soat ichida saqlash mumkin", ru: "Можно сохранить в течение 3 часов после урока", en: "Can be saved within 3 hours after the lesson", de: "Kann innerhalb von 3 Stunden nach dem Unterricht gespeichert werden" })}>
+            {tr(locale, { uz: "Yopiladi", ru: "Закроется", en: "Closes", de: "Schließt" })}: {win.closesAtLabel}
           </span>
         )}
         <button
@@ -210,17 +216,17 @@ export function GroupAttendance({ groupId, students, locale }: { groupId: string
               : "cursor-not-allowed border-slate-200 bg-slate-50 text-slate-400 dark:border-slate-700 dark:bg-slate-800/40",
           )}
         >
-          ✓ {tr(locale, { uz: "Hammasi bor", ru: "Все присутствуют", en: "All present" })}
+          ✓ {tr(locale, { uz: "Hammasi bor", ru: "Все присутствуют", en: "All present", de: "Alle anwesend" })}
         </button>
         <div className={cn("ml-auto flex items-center gap-2.5 text-xs", loading && "opacity-50")}>
-          <span className="font-semibold text-emerald-600 dark:text-emerald-400">{tr(locale, { uz: "Bor", ru: "Есть", en: "Present" })}: {present}</span>
-          <span className="font-semibold text-rose-500">{tr(locale, { uz: "Yo'q", ru: "Нет", en: "Absent" })}: {absent}</span>
-          <span className="text-slate-400">{tr(locale, { uz: "Belgilanmagan", ru: "Не отмечено", en: "Unmarked" })}: {unmarked}</span>
+          <span className="font-semibold text-emerald-600 dark:text-emerald-400">{tr(locale, { uz: "Bor", ru: "Есть", en: "Present", de: "Anwesend" })}: {present}</span>
+          <span className="font-semibold text-rose-500">{tr(locale, { uz: "Yo'q", ru: "Нет", en: "Absent", de: "Abwesend" })}: {absent}</span>
+          <span className="text-slate-400">{tr(locale, { uz: "Belgilanmagan", ru: "Не отмечено", en: "Unmarked", de: "Nicht markiert" })}: {unmarked}</span>
         </div>
       </div>
 
       {students.length === 0 ? (
-        <p className="py-4 text-center text-sm text-slate-400">{tr(locale, { uz: "O'quvchi yo'q", ru: "Нет учеников", en: "No students" })}</p>
+        <p className="py-4 text-center text-sm text-slate-400">{tr(locale, { uz: "O'quvchi yo'q", ru: "Нет учеников", en: "No students", de: "Keine Schüler" })}</p>
       ) : (
         <ul className="divide-y divide-slate-100 dark:divide-slate-800">
           {students.map((s) => {
@@ -233,14 +239,14 @@ export function GroupAttendance({ groupId, students, locale }: { groupId: string
                 <div className="flex min-w-0 items-center gap-2">
                   <Link
                     href={`/students/${s.id}`}
-                    title={tr(locale, { uz: "O'quvchi ma'lumotlari", ru: "Данные ученика", en: "Student details" })}
+                    title={tr(locale, { uz: "O'quvchi ma'lumotlari", ru: "Данные ученика", en: "Student details", de: "Schülerdetails" })}
                     className="min-w-0 truncate text-sm text-slate-700 transition hover:text-brand-600 hover:underline dark:text-slate-200 dark:hover:text-brand-300"
                   >
                     {s.name}
                   </Link>
                   {isBlocked && (
-                    <span className="inline-flex shrink-0 items-center gap-1 rounded-full bg-rose-500/10 px-2 py-0.5 text-[10px] font-semibold text-rose-600 dark:text-rose-400" title={tr(locale, { uz: `Shu oy ${s.lessonsThisMonth} dars o'tildi — to'lov majburiy`, ru: `В этом месяце ${s.lessonsThisMonth} уроков — оплата обязательна`, en: `${s.lessonsThisMonth} lessons this month — payment required` })}>
-                      <Icon name="alert" className="h-3 w-3" /> {tr(locale, { uz: "To'lov kerak", ru: "Нужна оплата", en: "Payment needed" })}
+                    <span className="inline-flex shrink-0 items-center gap-1 rounded-full bg-rose-500/10 px-2 py-0.5 text-[10px] font-semibold text-rose-600 dark:text-rose-400" title={tr(locale, { uz: `Shu oy ${s.lessonsThisMonth} dars o'tildi — to'lov majburiy`, ru: `В этом месяце ${s.lessonsThisMonth} уроков — оплата обязательна`, en: `${s.lessonsThisMonth} lessons this month — payment required`, de: `${s.lessonsThisMonth} Unterrichtsstunden diesen Monat — Zahlung erforderlich` })}>
+                      <Icon name="alert" className="h-3 w-3" /> {tr(locale, { uz: "To'lov kerak", ru: "Нужна оплата", en: "Payment needed", de: "Zahlung erforderlich" })}
                     </span>
                   )}
                 </div>
@@ -252,7 +258,7 @@ export function GroupAttendance({ groupId, students, locale }: { groupId: string
                       !editable && st !== "PRESENT" ? "cursor-not-allowed border-slate-200 text-slate-300 dark:border-slate-700" :
                       st === "PRESENT" ? "border-emerald-500 bg-emerald-500 text-white" : isBlocked ? "border-rose-200 text-rose-300 hover:border-rose-400 hover:text-rose-500 dark:border-rose-900/40" : "border-slate-200 text-slate-400 hover:border-emerald-400 hover:text-emerald-500 dark:border-slate-700",
                       !editable && "cursor-not-allowed")}
-                    title={!editable ? tr(locale, { uz: "Davomat yopilgan", ru: "Посещаемость закрыта", en: "Attendance closed" }) : isBlocked ? tr(locale, { uz: "To'lov majburiy — avval to'lovni qabul qiling", ru: "Оплата обязательна — сначала примите оплату", en: "Payment required first" }) : tr(locale, { uz: "Bor (keldi)", ru: "Присутствует", en: "Present" })}
+                    title={!editable ? tr(locale, { uz: "Davomat yopilgan", ru: "Посещаемость закрыта", en: "Attendance closed", de: "Anwesenheit geschlossen" }) : isBlocked ? tr(locale, { uz: "To'lov majburiy — avval to'lovni qabul qiling", ru: "Оплата обязательна — сначала примите оплату", en: "Payment required first", de: "Zahlung zuerst erforderlich" }) : tr(locale, { uz: "Bor (keldi)", ru: "Присутствует", en: "Present", de: "Anwesend (da)" })}
                   >✓</button>
                   <button
                     onClick={() => mark(s.id, "ABSENT")}
@@ -260,7 +266,7 @@ export function GroupAttendance({ groupId, students, locale }: { groupId: string
                     className={cn("flex h-8 w-8 items-center justify-center rounded-lg border text-sm font-bold transition",
                       st === "ABSENT" ? "border-rose-500 bg-rose-500 text-white" : "border-slate-200 text-slate-400 hover:border-rose-400 hover:text-rose-500 dark:border-slate-700",
                       !editable && "cursor-not-allowed opacity-70")}
-                    title={!editable ? tr(locale, { uz: "Davomat yopilgan", ru: "Посещаемость закрыта", en: "Attendance closed" }) : tr(locale, { uz: "Yo'q (kelmadi)", ru: "Отсутствует", en: "Absent" })}
+                    title={!editable ? tr(locale, { uz: "Davomat yopilgan", ru: "Посещаемость закрыта", en: "Attendance closed", de: "Anwesenheit geschlossen" }) : tr(locale, { uz: "Yo'q (kelmadi)", ru: "Отсутствует", en: "Absent", de: "Abwesend (nicht da)" })}
                   >✕</button>
                 </div>
               </li>

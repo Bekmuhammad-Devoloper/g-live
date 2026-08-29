@@ -13,7 +13,7 @@ const can = (r: string) => CAN.includes(r as never);
 
 export async function saveBranch(fd: FormData): Promise<{ ok?: boolean; error?: string }> {
   const s = await requireSession();
-  if (!can(s.role)) return { error: tr(s.locale, { uz: "Ruxsat yo'q", ru: "Нет доступа", en: "No permission" }) };
+  if (!can(s.role)) return { error: tr(s.locale, { uz: "Ruxsat yo'q", ru: "Нет доступа", en: "No permission", de: "Keine Berechtigung" }) };
   const id = String(fd.get("id") || "");
   const name = String(fd.get("name") || "").trim();
   const address = String(fd.get("address") || "").trim() || null;
@@ -22,7 +22,7 @@ export async function saveBranch(fd: FormData): Promise<{ ok?: boolean; error?: 
   const lngRaw = Number(fd.get("lng")); const lng = Number.isFinite(lngRaw) && lngRaw !== 0 ? lngRaw : null;
   const radius = Math.max(1, Math.round(Number(fd.get("radius")) || 100));
   const imageUrl = String(fd.get("image") || "").trim() || null;
-  if (name.length < 2) return { error: tr(s.locale, { uz: "Nomi kamida 2 ta belgi bo'lsin", ru: "Название должно быть не менее 2 символов", en: "Name must be at least 2 characters" }) };
+  if (name.length < 2) return { error: tr(s.locale, { uz: "Nomi kamida 2 ta belgi bo'lsin", ru: "Название должно быть не менее 2 символов", en: "Name must be at least 2 characters", de: "Der Name muss mindestens 2 Zeichen lang sein" }) };
   const data = { name, address, phone, lat, lng, radius, imageUrl };
   if (id) await prisma.branch.update({ where: { id }, data });
   else await prisma.branch.create({ data });

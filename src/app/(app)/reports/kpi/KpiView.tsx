@@ -49,19 +49,19 @@ export default function KpiView({ rows, locale, canEdit = false }: { rows: VKpiR
   const best = ops[0];
 
   const t = {
-    title: tr(locale, { uz: "KPI & Reyting", ru: "KPI и Рейтинг", en: "KPI & Rating" }),
-    operator: tr(locale, { uz: "operator", ru: "оператор", en: "operator" }),
-    admin: tr(locale, { uz: "admin", ru: "админ", en: "admin" }),
-    avgKpi: tr(locale, { uz: "O'rtacha KPI", ru: "Средний KPI", en: "Average KPI" }),
-    refresh: tr(locale, { uz: "Yangilash", ru: "Обновить", en: "Refresh" }),
-    bestOperator: tr(locale, { uz: "Eng yaxshi operator", ru: "Лучший оператор", en: "Best operator" }),
-    operators: tr(locale, { uz: "Operatorlar", ru: "Операторы", en: "Operators" }),
-    avgConv: tr(locale, { uz: "O'rtacha konversiya", ru: "Средняя конверсия", en: "Average conversion" }),
-    noData: tr(locale, { uz: "Ma'lumot yo'q", ru: "Нет данных", en: "No data" }),
-    topSub: tr(locale, { uz: "Eng yuqori KPI ko'rsatkichlari", ru: "Самые высокие показатели KPI", en: "Highest KPI performers" }),
-    compare: tr(locale, { uz: "KPI taqqoslash", ru: "Сравнение KPI", en: "KPI comparison" }),
-    employees: tr(locale, { uz: "xodim", ru: "сотрудников", en: "employees" }),
-    lead: tr(locale, { uz: "lid", ru: "лид", en: "leads" }),
+    title: tr(locale, { uz: "KPI & Reyting", ru: "KPI и Рейтинг", en: "KPI & Rating", de: "KPI & Rangliste" }),
+    operator: tr(locale, { uz: "operator", ru: "оператор", en: "operator", de: "Operator" }),
+    admin: tr(locale, { uz: "admin", ru: "админ", en: "admin", de: "Admin" }),
+    avgKpi: tr(locale, { uz: "O'rtacha KPI", ru: "Средний KPI", en: "Average KPI", de: "Durchschnittlicher KPI" }),
+    refresh: tr(locale, { uz: "Yangilash", ru: "Обновить", en: "Refresh", de: "Aktualisieren" }),
+    bestOperator: tr(locale, { uz: "Eng yaxshi operator", ru: "Лучший оператор", en: "Best operator", de: "Bester Operator" }),
+    operators: tr(locale, { uz: "Operatorlar", ru: "Операторы", en: "Operators", de: "Operatoren" }),
+    avgConv: tr(locale, { uz: "O'rtacha konversiya", ru: "Средняя конверсия", en: "Average conversion", de: "Durchschnittliche Konversion" }),
+    noData: tr(locale, { uz: "Ma'lumot yo'q", ru: "Нет данных", en: "No data", de: "Keine Daten" }),
+    topSub: tr(locale, { uz: "Eng yuqori KPI ko'rsatkichlari", ru: "Самые высокие показатели KPI", en: "Highest KPI performers", de: "Höchste KPI-Leistungen" }),
+    compare: tr(locale, { uz: "KPI taqqoslash", ru: "Сравнение KPI", en: "KPI comparison", de: "KPI-Vergleich" }),
+    employees: tr(locale, { uz: "xodim", ru: "сотрудников", en: "employees", de: "Mitarbeiter" }),
+    lead: tr(locale, { uz: "lid", ru: "лид", en: "leads", de: "Leads" }),
   };
 
   const catLabel = tr(locale, CAT_LABEL[tab]);
@@ -107,6 +107,7 @@ export default function KpiView({ rows, locale, canEdit = false }: { rows: VKpiR
             uz: `${highPerformers} ta yuqori darajali`,
             ru: `${highPerformers} высокого уровня`,
             en: `${highPerformers} high performers`,
+            de: `${highPerformers} Top-Performer`,
           })}
         />
         <Stat
@@ -121,14 +122,14 @@ export default function KpiView({ rows, locale, canEdit = false }: { rows: VKpiR
           grad="from-blue-500 to-sky-600"
           label={t.operators}
           value={String(ops.length)}
-          sub={tr(locale, { uz: `${byCat.rop.length} ta ROP`, ru: `РОП: ${byCat.rop.length}`, en: `${byCat.rop.length} ROP` })}
+          sub={tr(locale, { uz: `${byCat.rop.length} ta ROP`, ru: `РОП: ${byCat.rop.length}`, en: `${byCat.rop.length} ROP`, de: `${byCat.rop.length} ROP` })}
         />
         <Stat
           icon="eye"
           grad="from-purple-500 to-violet-600"
           label={t.avgConv}
           value={`${avgConv}%`}
-          sub={tr(locale, { uz: `${totalLeads} ta lid`, ru: `${totalLeads} лидов`, en: `${totalLeads} leads` })}
+          sub={tr(locale, { uz: `${totalLeads} ta lid`, ru: `${totalLeads} лидов`, en: `${totalLeads} leads`, de: `${totalLeads} Leads` })}
         />
       </div>
 
