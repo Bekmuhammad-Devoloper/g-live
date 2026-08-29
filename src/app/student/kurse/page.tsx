@@ -89,37 +89,38 @@ export default async function StudentKursePage() {
             <Link
               key={code}
               href={`/student/kurse/${code}`}
-              className="relative block overflow-hidden rounded-[24px] p-5 text-white shadow-[0_14px_28px_rgba(19,78,94,0.22)]"
+              // Bosh sahifadagi "Dein Fortschritt" kartasi bilan bir xil o'lcham
+              className="relative flex min-h-[168px] flex-col justify-between overflow-hidden rounded-[26px] p-6 text-white shadow-[0_14px_30px_rgba(19,78,94,0.22)]"
               style={{ background: LEVEL_BG[code] }}
             >
               <Mountains />
-              <div className="relative flex items-center gap-3.5">
+              <div className="relative flex items-start gap-4">
                 {/* daraja belgisi */}
-                <span className="grid h-[52px] w-[52px] shrink-0 place-items-center rounded-2xl bg-white/20 text-[19px] font-extrabold backdrop-blur-sm">
+                <span className="grid h-[58px] w-[58px] shrink-0 place-items-center rounded-2xl bg-white/20 text-[21px] font-extrabold backdrop-blur-sm">
                   {code}
                 </span>
                 <div className="min-w-0 flex-1">
                   <div className="flex items-center gap-2">
-                    <span className="truncate text-[19px] font-extrabold leading-tight">{LEVEL_NAME[code]}</span>
+                    <span className="truncate text-[24px] font-extrabold leading-tight">{LEVEL_NAME[code]}</span>
                     {active && (
                       <span className="shrink-0 rounded-full bg-white/25 px-2 py-0.5 text-[10px] font-bold uppercase tracking-wide">
                         aktuell
                       </span>
                     )}
                   </div>
-                  <div className="mt-0.5 text-[13px] text-white/75">
+                  <div className="mt-1 text-[14px] text-white/75">
                     {st.total > 0 ? `${st.total} Lektionen` : "Bald verfügbar"}
                   </div>
                 </div>
-                <IcoChevron />
+                <span className="mt-1.5 shrink-0"><IcoChevron /></span>
               </div>
 
               {/* jarayon chizig'i */}
-              <div className="relative mt-3.5 flex items-center gap-3">
-                <div className="h-[7px] flex-1 overflow-hidden rounded-full bg-white/25">
+              <div className="relative mt-4 flex items-center gap-3">
+                <div className="h-[9px] flex-1 overflow-hidden rounded-full bg-white/25">
                   <div className="h-full rounded-full bg-white" style={{ width: `${pct}%` }} />
                 </div>
-                <span className="text-[13px] font-bold">{pct}%</span>
+                <span className="text-[17px] font-extrabold">{pct}%</span>
               </div>
             </Link>
           );
