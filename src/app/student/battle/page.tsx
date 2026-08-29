@@ -2,7 +2,7 @@ import { redirect } from "next/navigation";
 import { getSession } from "@/lib/auth";
 import { prisma } from "@/lib/db";
 import MissingStudent from "../MissingStudent";
-import BattleSetup, { type WordPair } from "./BattleSetup";
+import Battle, { type WordPair } from "./Battle";
 
 // "Jang" (Battle) — o'yin sozlash ekrani.
 // So'zlar o'quvchi kursidagi darslarning "topic" maydonidan olinadi
@@ -46,5 +46,5 @@ export default async function StudentBattlePage() {
     }
   }
 
-  return <BattleSetup words={words} />;
+  return <Battle words={words} />;
 }
