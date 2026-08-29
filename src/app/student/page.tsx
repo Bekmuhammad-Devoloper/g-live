@@ -383,7 +383,7 @@ export default async function StudentStartPage() {
       {/* ── Dein Fortschritt ── */}
       <Link
         href={kurseHref}
-        className="block rounded-[26px] p-6 shadow-[0_14px_30px_rgba(19,78,94,0.14)]"
+        className="block min-h-[168px] rounded-[26px] p-6 shadow-[0_14px_30px_rgba(19,78,94,0.14)]"
         style={{ background: "linear-gradient(135deg, #cfe7f0 0%, #e7f3f8 55%, #f2f9fc 100%)" }}
       >
         <div className="flex items-center justify-between gap-4">
@@ -430,7 +430,7 @@ export default async function StudentStartPage() {
 
       {/* ── Reklama banneri ── */}
       <div
-        className="relative min-h-[178px] overflow-hidden rounded-[26px] p-6 pb-10 text-white shadow-[0_16px_32px_rgba(14,116,144,0.3)]"
+        className="relative min-h-[168px] overflow-hidden rounded-[26px] p-6 text-white shadow-[0_16px_32px_rgba(14,116,144,0.3)]"
         style={{ background: "linear-gradient(105deg, #0c6a86 0%, #1590b3 45%, #7fd0e6 100%)" }}
       >
         <div className="relative z-10 max-w-[58%]">
@@ -441,17 +441,17 @@ export default async function StudentStartPage() {
           </Link>
         </div>
         {/* o'ng tomondagi illyustratsiya: darvoza (orqada) + bayroq + planshet */}
-        <div className="pointer-events-none absolute bottom-6 right-6 z-0 opacity-70">
-          <Gate w={62} />
+        <div className="pointer-events-none absolute bottom-5 right-6 z-0 opacity-70">
+          <Gate w={54} />
         </div>
         <div className="pointer-events-none absolute right-4 top-4 z-[1] drop-shadow-[0_6px_10px_rgba(0,0,0,0.22)]">
-          <GermanFlag w={78} />
+          <GermanFlag w={70} />
         </div>
-        <div className="pointer-events-none absolute bottom-4 right-3 z-[2] rotate-[-8deg] drop-shadow-[0_6px_10px_rgba(0,0,0,0.25)]">
-          <Tablet w={54} tone="#0b5d76" />
+        <div className="pointer-events-none absolute bottom-3 right-3 z-[2] rotate-[-8deg] drop-shadow-[0_6px_10px_rgba(0,0,0,0.25)]">
+          <Tablet w={48} tone="#0b5d76" />
         </div>
         {/* karusel nuqtalari */}
-        <div className="absolute bottom-2.5 left-1/2 z-10 flex -translate-x-1/2 items-center gap-1.5 rounded-full bg-white/25 px-2.5 py-1.5 backdrop-blur-sm">
+        <div className="absolute bottom-2 left-1/2 z-10 flex -translate-x-1/2 items-center gap-1.5 rounded-full bg-white/25 px-2.5 py-1 backdrop-blur-sm">
           <span className="h-1.5 w-5 rounded-full bg-white" />
           <span className="h-1.5 w-3 rounded-full bg-white/50" />
           <span className="h-1.5 w-3 rounded-full bg-white/50" />
