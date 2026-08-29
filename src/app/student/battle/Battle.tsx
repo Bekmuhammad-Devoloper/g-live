@@ -17,14 +17,14 @@ const ROUNDS = 8;
 const MODES: { key: Mode; title: string; sub: string; ready: boolean }[] = [
   { key: "ai", title: "AI ga qarshi", sub: "Sun'iy intellekt bilan bellashing", ready: true },
   { key: "duel", title: "Duel", sub: "Bir ga bir jang", ready: false },
-  { key: "group", title: "Guruhli o'yin", sub: "4 yoki undan ortiq o'yinchi bilan", ready: false },
+  { key: "group", title: "Guruhli o'yin", sub: "4 va undan ortiq o'yinchi", ready: false },
 ];
 
-const LOBBIES: { key: Lobby; title: string; ready: boolean }[] = [
-  { key: "vocabulary", title: "Vocabulary", ready: true },
-  { key: "wordgame", title: "So'z o'yini", ready: true },
-  { key: "crossword", title: "Krossvord", ready: true },
-  { key: "grammar", title: "Grammatika", ready: false },
+const LOBBIES: { key: Lobby; title: string; sub: string; ready: boolean }[] = [
+  { key: "vocabulary", title: "Lug'at", sub: "To'g'ri so'zni tanlang", ready: true },
+  { key: "wordgame", title: "So'z o'yini", sub: "Harflardan tuzing", ready: true },
+  { key: "crossword", title: "Krossvord", sub: "Ta'rif bo'yicha yozing", ready: true },
+  { key: "grammar", title: "Grammatika", sub: "Qoidalar bo'yicha", ready: false },
 ];
 
 const TASK_TITLE: Record<Lobby, string> = {
@@ -46,107 +46,103 @@ function shuffled<T>(arr: T[], seed: number): T[] {
   return a;
 }
 
-// ── Illyustratsiyalar ──
-function Robot({ s = 58 }: { s?: number }) {
+// ── Ikonkalar: bitta rangli, geometrik gliflar (gradient doira ustida oq) ──
+const GLYPH = { fill: "none", stroke: "white", strokeWidth: 1.9, strokeLinecap: "round" as const, strokeLinejoin: "round" as const };
+
+function GlyphRobot({ s = 26 }: { s?: number }) {
   return (
-    <svg width={s} height={s * 0.8} viewBox="0 0 80 64">
-      <rect x="14" y="16" width="52" height="34" rx="12" fill="#64748b" />
-      <rect x="20" y="24" width="40" height="15" rx="7.5" fill="#1e293b" />
-      <circle cx="49" cy="31.5" r="4" fill="#ef4444" />
-      <rect x="36" y="8" width="8" height="9" rx="4" fill="#94a3b8" />
-      <circle cx="40" cy="6" r="4" fill="#cbd5e1" />
-      <rect x="6" y="28" width="8" height="16" rx="4" fill="#94a3b8" />
-      <rect x="66" y="28" width="8" height="16" rx="4" fill="#94a3b8" />
-      <rect x="24" y="50" width="32" height="8" rx="4" fill="#475569" />
+    <svg width={s} height={s} viewBox="0 0 24 24" {...GLYPH}>
+      <rect x="4" y="8" width="16" height="11" rx="3.5" />
+      <path d="M12 4.4V8" />
+      <circle cx="12" cy="3.4" r="1.4" fill="white" stroke="none" />
+      <circle cx="9" cy="13" r="1.5" fill="white" stroke="none" />
+      <circle cx="15" cy="13" r="1.5" fill="white" stroke="none" />
+      <path d="M2 12.5v3M22 12.5v3" />
     </svg>
   );
 }
-function Duelists({ s = 58 }: { s?: number }) {
+function GlyphSwords({ s = 26 }: { s?: number }) {
   return (
-    <svg width={s} height={s * 0.8} viewBox="0 0 80 64">
-      {[18, 56].map((cx, i) => (
-        <g key={cx}>
-          <circle cx={cx} cy="26" r="13" fill="#e2e8f0" stroke="#94a3b8" strokeWidth="2" />
-          <circle cx={cx - 4} cy="24" r="1.8" fill="#334155" />
-          <circle cx={cx + 4} cy="24" r="1.8" fill="#334155" />
-          <path d={`M${cx - 5} 31 q5 ${i ? -4 : 4} 10 0`} fill="none" stroke="#334155" strokeWidth="1.8" strokeLinecap="round" />
-          <path d={`M${cx - 10} 40 h20 v14 h-20 z`} fill="#cbd5e1" />
-        </g>
-      ))}
-      <path d="M32 44 L44 18" stroke="#94a3b8" strokeWidth="3.5" strokeLinecap="round" />
-      <path d="M48 44 L36 18" stroke="#cbd5e1" strokeWidth="3.5" strokeLinecap="round" />
+    <svg width={s} height={s} viewBox="0 0 24 24" {...GLYPH}>
+      <path d="M4 4.5 14.5 15M19.5 4.5 9 15" />
+      <path d="M4 4.5h2.6M4 4.5v2.6M19.5 4.5h-2.6M19.5 4.5v2.6" />
+      <path d="M13 16.4 15.4 18.8M11 16.4 8.6 18.8" />
     </svg>
   );
 }
-function Crowd({ s = 58 }: { s?: number }) {
+function GlyphGroup({ s = 26 }: { s?: number }) {
   return (
-    <svg width={s} height={s * 0.8} viewBox="0 0 80 64">
-      {[[16, 30], [40, 24], [64, 30], [28, 44], [52, 44]].map(([cx, cy], i) => (
-        <g key={i}>
-          <circle cx={cx} cy={cy} r="9.5" fill="#e2e8f0" stroke="#94a3b8" strokeWidth="1.8" />
-          <circle cx={cx - 3} cy={cy - 1} r="1.4" fill="#334155" />
-          <circle cx={cx + 3} cy={cy - 1} r="1.4" fill="#334155" />
-          <path d={`M${cx - 3.5} ${cy + 4} q3.5 3 7 0`} fill="none" stroke="#334155" strokeWidth="1.5" strokeLinecap="round" />
-        </g>
-      ))}
+    <svg width={s} height={s} viewBox="0 0 24 24" {...GLYPH}>
+      <circle cx="9" cy="8.4" r="3.1" />
+      <path d="M3.4 19c.6-3.1 2.9-4.8 5.6-4.8s5 1.7 5.6 4.8" />
+      <circle cx="17.4" cy="9.4" r="2.4" />
+      <path d="M16 14.6c2.3.2 3.9 1.8 4.4 4.4" />
     </svg>
   );
 }
-function LobbyArt({ kind }: { kind: Lobby }) {
-  if (kind === "grammar") {
-    return (
-      <svg width="66" height="56" viewBox="0 0 72 60">
-        <rect x="14" y="8" width="44" height="44" rx="5" fill="#a3714b" />
-        <rect x="18" y="12" width="36" height="36" rx="3" fill="#c08a5e" />
-        <rect x="24" y="20" width="24" height="4" rx="2" fill="#7a5233" />
-        <rect x="24" y="28" width="18" height="4" rx="2" fill="#7a5233" />
+function GlyphChat({ s = 26 }: { s?: number }) {
+  return (
+    <svg width={s} height={s} viewBox="0 0 24 24" {...GLYPH}>
+      <path d="M4 5.5h16v10H9.5L5.5 19v-3.5H4z" />
+      <path d="M8.5 10.5h7M8.5 13h4" />
+    </svg>
+  );
+}
+function GlyphTiles({ s = 26 }: { s?: number }) {
+  return (
+    <svg width={s} height={s} viewBox="0 0 24 24" {...GLYPH}>
+      <rect x="2.6" y="7" width="6" height="10" rx="1.8" />
+      <rect x="9.4" y="4.6" width="6" height="14.8" rx="1.8" />
+      <rect x="16.2" y="7" width="5.2" height="10" rx="1.8" />
+    </svg>
+  );
+}
+function GlyphGrid({ s = 26 }: { s?: number }) {
+  return (
+    <svg width={s} height={s} viewBox="0 0 24 24" {...GLYPH}>
+      <rect x="3.5" y="3.5" width="17" height="17" rx="2.6" />
+      <path d="M3.5 9.2h17M3.5 14.8h17M9.2 3.5v17M14.8 3.5v17" />
+      <rect x="9.2" y="9.2" width="5.6" height="5.6" fill="white" stroke="none" opacity="0.9" />
+    </svg>
+  );
+}
+function GlyphBook({ s = 26 }: { s?: number }) {
+  return (
+    <svg width={s} height={s} viewBox="0 0 24 24" {...GLYPH}>
+      <path d="M4 4.8h9.2a2.8 2.8 0 0 1 2.8 2.8V20H6.8A2.8 2.8 0 0 1 4 17.2z" />
+      <path d="M16 7.6h4V20h-4" />
+      <path d="M7.4 9.2h5.4M7.4 12.2h3.6" />
+    </svg>
+  );
+}
+
+// Gradient doira ichidagi ikonka
+function Badge({ children, muted = false, s = 52 }: { children: React.ReactNode; muted?: boolean; s?: number }) {
+  return (
+    <span
+      className="grid shrink-0 place-items-center rounded-2xl"
+      style={{
+        width: s,
+        height: s,
+        background: muted ? "linear-gradient(135deg,#cbd5e1,#94a3b8)" : ICON_GRADIENT,
+        boxShadow: muted ? "none" : "0 8px 16px rgba(14,116,144,0.28)",
+      }}
+    >
+      {children}
+    </span>
+  );
+}
+
+// Tanlangan kartadagi belgi
+function Tick({ on }: { on: boolean }) {
+  return on ? (
+    <span className="grid h-6 w-6 shrink-0 place-items-center rounded-full" style={{ background: ICON_GRADIENT }}>
+      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="3.2" strokeLinecap="round" strokeLinejoin="round">
+        <path d="m5 12.5 4.5 4.5L19 7.5" />
       </svg>
-    );
-  }
-  if (kind === "vocabulary") {
-    return (
-      <svg width="66" height="56" viewBox="0 0 72 60">
-        {[["About", 8, 12, 30], ["Home", 36, 20, 26], ["Teach", 14, 34, 34]].map(([t, x, y, w], i) => (
-          <g key={i}>
-            <rect x={x as number} y={y as number} width={w as number} height="14" rx="7" fill="#e2e8f0" stroke="#94a3b8" strokeWidth="1.4" />
-            <text x={(x as number) + (w as number) / 2} y={(y as number) + 10} textAnchor="middle" fontSize="7.5" fill="#475569" fontWeight="700">{t as string}</text>
-          </g>
-        ))}
-      </svg>
-    );
-  }
-  if (kind === "crossword") {
-    return (
-      <svg width="66" height="56" viewBox="0 0 72 60">
-        {Array.from({ length: 4 }).map((_, rr) =>
-          Array.from({ length: 4 }).map((_, c) => (
-            <rect key={`${rr}-${c}`} x={12 + c * 12} y={10 + rr * 12} width="11" height="11" rx="2"
-              fill={(rr + c) % 3 === 0 ? "#334155" : "#f1f5f9"} stroke="#94a3b8" strokeWidth="1" />
-          )),
-        )}
-      </svg>
-    );
-  }
-  return (
-    <svg width="66" height="56" viewBox="0 0 72 60">
-      {["W", "O", "R", "T"].map((ch, i) => (
-        <g key={ch}>
-          <rect x={8 + i * 14} y={20} width="12" height="14" rx="2.5" fill="#fde68a" stroke="#d97706" strokeWidth="1.3" />
-          <text x={14 + i * 14} y={30.5} textAnchor="middle" fontSize="9" fontWeight="800" fill="#92400e">{ch}</text>
-        </g>
-      ))}
-    </svg>
-  );
-}
-function IcoRobotSmall({ s = 20 }: { s?: number }) {
-  return (
-    <svg width={s} height={s} viewBox="0 0 24 24">
-      <rect x="4" y="7" width="16" height="11" rx="4" fill="#64748b" />
-      <rect x="6.5" y="10" width="11" height="4.6" rx="2.3" fill="#1e293b" />
-      <circle cx="14.6" cy="12.3" r="1.3" fill="#ef4444" />
-      <rect x="11" y="3.5" width="2" height="3.5" rx="1" fill="#94a3b8" />
-      <circle cx="12" cy="3" r="1.6" fill="#cbd5e1" />
-    </svg>
+    </span>
+  ) : (
+    <span className="h-6 w-6 shrink-0 rounded-full border-2 border-slate-200" />
   );
 }
 
@@ -215,75 +211,93 @@ export default function Battle({ words }: { words: WordPair[] }) {
 
   // ═══════════ SOZLASH ═══════════
   if (view === "setup") {
+    const MODE_ICON = { ai: GlyphRobot, duel: GlyphSwords, group: GlyphGroup } as const;
+    const LOBBY_ICON = { vocabulary: GlyphChat, wordgame: GlyphTiles, crossword: GlyphGrid, grammar: GlyphBook } as const;
+
     return (
-      <div className="space-y-5 pb-[104px]">
+      <div className="space-y-6 pb-[110px]">
         <PageHeader title="Jang va o'yinlar" subtitle="Bilimingizni sinab ko'ring" back="/student/uben" />
 
+        {/* ── Jang turi ── */}
         <section>
-          <p className="mb-2 px-1 text-[12px] font-bold uppercase tracking-[0.16em] text-slate-400">
-            Jang turini tanlang
+          <p className="mb-2.5 px-1 text-[11px] font-bold uppercase tracking-[0.18em] text-slate-400">
+            Jang turi
           </p>
           <div className="space-y-2.5">
             {MODES.map((m) => {
               const on = mode === m.key;
+              const Icon = MODE_ICON[m.key];
               return (
                 <button
                   key={m.key}
                   type="button"
                   onClick={() => setMode(m.key)}
-                  className={`${CARD} flex w-full items-center gap-3 px-4 py-3.5 text-left transition ${on ? "ring-2 ring-[#0e7490]" : "opacity-95"}`}
+                  aria-pressed={on}
+                  className={`${CARD} flex w-full items-center gap-3.5 px-4 py-3.5 text-left transition ${
+                    on ? "ring-2 ring-[#0e7490]" : m.ready ? "" : "opacity-70"
+                  }`}
                 >
+                  <Badge muted={!m.ready}><Icon /></Badge>
                   <div className="min-w-0 flex-1">
-                    <div className="flex flex-wrap items-center gap-2">
-                      <span className="text-[18px] font-extrabold text-slate-900">{m.title}</span>
+                    <div className="flex flex-wrap items-center gap-x-2 gap-y-1">
+                      <span className="text-[17px] font-extrabold leading-tight text-slate-900">{m.title}</span>
                       {!m.ready && SOON}
                     </div>
-                    <div className="mt-0.5 text-[13px] leading-snug text-slate-500">{m.sub}</div>
+                    <div className="mt-0.5 text-[12.5px] leading-snug text-slate-500">{m.sub}</div>
                   </div>
-                  <span className="shrink-0">
-                    {m.key === "ai" ? <Robot /> : m.key === "duel" ? <Duelists /> : <Crowd />}
-                  </span>
+                  <Tick on={on} />
                 </button>
               );
             })}
           </div>
         </section>
 
+        {/* ── O'yin turi ── */}
         <section>
-          <p className="mb-2 px-1 text-[12px] font-bold uppercase tracking-[0.16em] text-slate-400">
-            O&apos;yin turini tanlang
+          <p className="mb-2.5 px-1 text-[11px] font-bold uppercase tracking-[0.18em] text-slate-400">
+            O&apos;yin turi
           </p>
           <div className="grid grid-cols-2 gap-3">
             {LOBBIES.map((l) => {
               const on = lobby === l.key;
+              const Icon = LOBBY_ICON[l.key];
               return (
                 <button
                   key={l.key}
                   type="button"
                   onClick={() => setLobby(l.key)}
-                  className={`${CARD} overflow-hidden py-4 transition ${on ? "ring-2 ring-[#0e7490]" : "opacity-95"}`}
+                  aria-pressed={on}
+                  className={`${CARD} relative flex flex-col items-start gap-2.5 p-4 text-left transition ${
+                    on ? "ring-2 ring-[#0e7490]" : l.ready ? "" : "opacity-70"
+                  }`}
                 >
-                  <div className="grid h-[58px] place-items-center">
-                    <LobbyArt kind={l.key} />
+                  {on && (
+                    <span className="absolute right-3 top-3">
+                      <Tick on />
+                    </span>
+                  )}
+                  <Badge muted={!l.ready} s={46}><Icon s={23} /></Badge>
+                  <div>
+                    <div className="text-[15.5px] font-extrabold leading-tight text-slate-900">{l.title}</div>
+                    <div className="mt-0.5 text-[11.5px] leading-snug text-slate-500">{l.sub}</div>
                   </div>
-                  <div className="mt-1.5 flex flex-wrap items-center justify-center gap-1.5 px-2">
-                    <span className="text-[15.5px] font-extrabold text-slate-900">{l.title}</span>
-                    {!l.ready && SOON}
-                  </div>
+                  {!l.ready && <span className="mt-0.5">{SOON}</span>}
                 </button>
               );
             })}
           </div>
         </section>
 
-        {/* Boshlash — pastda mahkam turadi */}
-        <div className="fixed inset-x-0 bottom-[92px] z-30 mx-auto max-w-md px-4">
+        {/* ── Boshlash ── */}
+        <div className="fixed inset-x-0 bottom-[88px] z-30 mx-auto max-w-md px-4">
+          {/* fon ostidagi kontent tugma ostida "kesilib" ko'rinmasin */}
+          <div className="pointer-events-none absolute inset-x-0 -top-8 h-8 bg-gradient-to-b from-transparent to-[#e4edf3]" />
           <button
             type="button"
             onClick={startGame}
             disabled={!canStart}
             style={canStart ? { background: ICON_GRADIENT } : undefined}
-            className="w-full rounded-2xl py-3.5 text-[17px] font-extrabold text-white shadow-[0_10px_24px_rgba(14,116,144,0.35)] transition active:translate-y-[2px] disabled:bg-slate-300 disabled:shadow-none"
+            className="relative w-full rounded-2xl py-3.5 text-[17px] font-extrabold text-white shadow-[0_10px_24px_rgba(14,116,144,0.35)] transition active:translate-y-[2px] disabled:bg-slate-300 disabled:shadow-none"
           >
             {words.length < 4 ? "So'zlar yetarli emas" : canStart ? "Jangni boshlang" : "Bu rejim tez orada"}
           </button>
@@ -361,7 +375,7 @@ export default function Battle({ words }: { words: WordPair[] }) {
           {me}
         </span>
         <span className="flex items-center gap-1 rounded-full bg-white px-2.5 py-1.5 shadow-[0_4px_12px_rgba(19,78,94,0.10)]">
-          <IcoRobotSmall />
+          <span className="grid h-5 w-5 place-items-center rounded-md" style={{ background: "linear-gradient(135deg,#94a3b8,#64748b)" }}><GlyphRobot s={14} /></span>
           <span className="text-[14px] font-extrabold text-slate-600">{ai}</span>
         </span>
       </div>
