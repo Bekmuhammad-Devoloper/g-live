@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { useMemo, useState } from "react";
 import type { WordPair } from "../BattleSetup";
+import { CARD, TEAL, ICON_GRADIENT } from "../../_ui";
 
 // Uch xil o'yin — hammasi kurs so'zlaridan tuziladi:
 //   vocabulary — 4 variantli viktorina (AI raqib ham javob beradi)
@@ -29,7 +30,7 @@ function shuffled<T>(arr: T[], seed: number): T[] {
 
 function IcoBack({ s = 24 }: { s?: number }) {
   return (
-    <svg width={s} height={s} viewBox="0 0 24 24" fill="none" stroke="#1d4ed8" strokeWidth="2.4" strokeLinecap="round" strokeLinejoin="round">
+    <svg width={s} height={s} viewBox="0 0 24 24" fill="none" stroke={TEAL} strokeWidth="2.4" strokeLinecap="round" strokeLinejoin="round">
       <path d="M19 12H5M11 6l-6 6 6 6" />
     </svg>
   );
@@ -110,8 +111,8 @@ export default function GamePlay({ words, lobby, seed }: { words: WordPair[]; lo
     const win = me > ai;
     const draw = me === ai;
     return (
-      <div className="-mx-4 -mt-2 min-h-screen bg-[#f4f8ff] px-4 pb-24 pt-2">
-        <div className="mt-10 rounded-3xl bg-white p-6 text-center shadow-sm">
+      <div className="space-y-4 pb-24">
+        <div className={`${CARD} mt-8 p-6 text-center`}>
           <div className="text-[52px] leading-none">{win ? "🏆" : draw ? "🤝" : "💪"}</div>
           <div className="mt-3 text-[24px] font-extrabold text-slate-900">
             {win ? "Siz yutdingiz!" : draw ? "Durrang" : "Keyingi safar!"}
@@ -119,7 +120,7 @@ export default function GamePlay({ words, lobby, seed }: { words: WordPair[]; lo
           <div className="mt-5 flex items-center justify-center gap-6">
             <div>
               <div className="text-[13px] font-semibold text-slate-500">Siz</div>
-              <div className="text-[32px] font-extrabold text-[#1d4ed8]">{me}</div>
+              <div className="text-[32px] font-extrabold text-[#0e7490]">{me}</div>
             </div>
             <div className="text-[22px] font-bold text-slate-300">:</div>
             <div>
@@ -131,7 +132,8 @@ export default function GamePlay({ words, lobby, seed }: { words: WordPair[]; lo
             <Link href="/student/battle" className="flex-1 rounded-2xl border-2 border-slate-200 py-3 text-[15px] font-bold text-slate-600">
               Orqaga
             </Link>
-            <Link href={`/student/battle/spiel?lobby=${lobby}`} className="flex-[1.3] rounded-2xl bg-[#1a90ff] py-3 text-[15px] font-extrabold text-white shadow-[0_8px_18px_rgba(26,144,255,0.4)]">
+            <Link href={`/student/battle/spiel?lobby=${lobby}`} style={{ background: ICON_GRADIENT }}
+              className="flex-[1.3] rounded-2xl py-3 text-[15px] font-extrabold text-white shadow-[0_8px_18px_rgba(14,116,144,0.3)]">
               Yana o'ynash
             </Link>
           </div>
@@ -141,16 +143,16 @@ export default function GamePlay({ words, lobby, seed }: { words: WordPair[]; lo
   }
 
   return (
-    <div className="-mx-4 -mt-2 min-h-screen bg-[#f4f8ff] px-4 pb-24 pt-2">
+    <div className="space-y-4 pb-24">
       {/* Sarlavha + hisob */}
       <div className="flex items-center gap-3">
-        <Link href="/student/battle" className="grid h-10 w-10 shrink-0 place-items-center rounded-full bg-white shadow-sm">
+        <Link href="/student/battle" className="grid h-10 w-10 shrink-0 place-items-center rounded-full bg-white shadow-[0_6px_16px_rgba(19,78,94,0.12)]">
           <IcoBack />
         </Link>
-        <h1 className="min-w-0 flex-1 truncate text-[18px] font-extrabold tracking-tight text-[#1d4ed8]">
+        <h1 className="min-w-0 flex-1 truncate text-[18px] font-extrabold tracking-tight text-[#0e7490]">
           {TITLES[lobby]}
         </h1>
-        <span className="rounded-full bg-white px-3 py-1.5 text-[14px] font-extrabold text-[#1d4ed8] shadow-sm">{me}</span>
+        <span className="rounded-full bg-white px-3 py-1.5 text-[14px] font-extrabold text-[#0e7490] shadow-sm">{me}</span>
         <span className="flex items-center gap-1 rounded-full bg-white px-2.5 py-1.5 shadow-sm">
           <IcoRobot s={20} />
           <span className="text-[14px] font-extrabold text-slate-600">{ai}</span>
@@ -160,13 +162,13 @@ export default function GamePlay({ words, lobby, seed }: { words: WordPair[]; lo
       {/* Jarayon */}
       <div className="mt-4 flex items-center gap-2">
         <div className="h-2 flex-1 overflow-hidden rounded-full bg-white">
-          <div className="h-full rounded-full bg-[#1a90ff]" style={{ width: `${((step + 1) / rounds.length) * 100}%` }} />
+          <div className="h-full rounded-full bg-[#0e7490]" style={{ width: `${((step + 1) / rounds.length) * 100}%` }} />
         </div>
         <span className="text-[12px] font-bold text-slate-500">{step + 1}/{rounds.length}</span>
       </div>
 
       {/* Savol */}
-      <div className="mt-5 rounded-3xl bg-white p-5 shadow-sm">
+      <div className={`${CARD} p-5`}>
         <div className="text-[12px] font-bold uppercase tracking-[0.18em] text-slate-400">
           {lobby === "vocabulary" ? "To'g'ri so'zni tanlang" : lobby === "wordgame" ? "Harflardan so'z tuzing" : "Ta'rif bo'yicha yozing"}
         </div>
@@ -225,7 +227,7 @@ export default function GamePlay({ words, lobby, seed }: { words: WordPair[]; lo
               onKeyDown={(e) => { if (e.key === "Enter") check(); }}
               disabled={!!picked}
               placeholder="Javobingiz…"
-              className="mt-4 h-12 w-full rounded-2xl border-2 border-slate-200 px-4 text-[16px] font-semibold text-slate-800 outline-none focus:border-[#1a90ff]"
+              className="mt-4 h-12 w-full rounded-2xl border-2 border-slate-200 px-4 text-[16px] font-semibold text-slate-800 outline-none focus:border-[#0e7490]"
             />
             {picked && (
               <p className={`mt-2 text-[14px] font-bold ${picked.toLowerCase() === target.toLowerCase() ? "text-emerald-600" : "text-rose-600"}`}>
@@ -236,7 +238,8 @@ export default function GamePlay({ words, lobby, seed }: { words: WordPair[]; lo
               type="button"
               onClick={check}
               disabled={!!picked || !typed.trim()}
-              className="mt-3 w-full rounded-2xl bg-[#1a90ff] py-3 text-[16px] font-extrabold text-white shadow-[0_8px_18px_rgba(26,144,255,0.35)] disabled:bg-slate-300 disabled:shadow-none"
+              style={{ background: typed.trim() && !picked ? ICON_GRADIENT : undefined }}
+              className="mt-3 w-full rounded-2xl bg-slate-300 py-3 text-[16px] font-extrabold text-white shadow-[0_8px_18px_rgba(14,116,144,0.3)] disabled:shadow-none"
             >
               Tekshirish
             </button>

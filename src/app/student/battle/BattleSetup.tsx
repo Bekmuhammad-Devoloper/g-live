@@ -2,7 +2,7 @@
 
 import { useRouter } from "next/navigation";
 import { useState } from "react";
-import Link from "next/link";
+import { CARD, ICON_GRADIENT, PageHeader } from "../_ui";
 
 // Jang (Battle) sozlash ekrani — maketdagidek:
 // 1) jang turi (AI ga qarshi · Duel · Guruhli o'yin)
@@ -126,14 +126,6 @@ function LobbyArt({ kind }: { kind: Lobby }) {
   );
 }
 
-function IcoBack({ s = 24 }: { s?: number }) {
-  return (
-    <svg width={s} height={s} viewBox="0 0 24 24" fill="none" stroke="#1d4ed8" strokeWidth="2.4" strokeLinecap="round" strokeLinejoin="round">
-      <path d="M19 12H5M11 6l-6 6 6 6" />
-    </svg>
-  );
-}
-
 export default function BattleSetup({ words }: { words: WordPair[] }) {
   const router = useRouter();
   const [mode, setMode] = useState<Mode>("ai");
@@ -149,85 +141,84 @@ export default function BattleSetup({ words }: { words: WordPair[] }) {
   };
 
   return (
-    <div className="-mx-4 -mt-2 min-h-screen bg-[#f4f8ff] px-4 pb-28 pt-2">
-      {/* Sarlavha */}
-      <div className="flex items-center gap-3">
-        <Link href="/student/uben" className="grid h-10 w-10 shrink-0 place-items-center rounded-full bg-white shadow-sm">
-          <IcoBack />
-        </Link>
-        <h1 className="text-[20px] font-extrabold tracking-tight text-[#1d4ed8]">Jangni boshlang</h1>
-      </div>
+    <div className="space-y-[18px] pb-24">
+      <PageHeader title="Jang va o'yinlar" subtitle="Bilimingizni sinab ko'ring" back="/student/uben" />
 
       {/* ── Jang turi ── */}
-      <p className="mt-4 text-[13px] font-semibold text-slate-500">Jang turlarini tanlang:</p>
-      <div className="mt-2 space-y-2.5">
-        {MODES.map((m) => {
-          const on = mode === m.key;
-          return (
-            <button
-              key={m.key}
-              type="button"
-              onClick={() => setMode(m.key)}
-              className={`flex w-full items-center gap-3 rounded-2xl border-2 px-4 py-3 text-left transition ${
-                on ? "border-[#4f46e5] bg-[#e8ecff]" : "border-transparent bg-[#eef1f6]"
-              }`}
-            >
-              <div className="min-w-0 flex-1">
-                <div className="flex items-center gap-2">
-                  <span className="text-[19px] font-extrabold text-slate-900">{m.title}</span>
-                  {!m.ready && (
-                    <span className="shrink-0 rounded-full bg-slate-300/70 px-2 py-0.5 text-[10px] font-bold uppercase text-slate-600">
+      <div>
+        <p className="mb-2 px-1 text-[12px] font-bold uppercase tracking-[0.16em] text-slate-400">
+          Jang turini tanlang
+        </p>
+        <div className="space-y-3">
+          {MODES.map((m) => {
+            const on = mode === m.key;
+            return (
+              <button
+                key={m.key}
+                type="button"
+                onClick={() => setMode(m.key)}
+                className={`${CARD} flex w-full items-center gap-3 px-4 py-3.5 text-left transition ${on ? "ring-2 ring-[#0e7490]" : ""}`}
+              >
+                <div className="min-w-0 flex-1">
+                  <div className="flex items-center gap-2">
+                    <span className="text-[19px] font-extrabold text-slate-900">{m.title}</span>
+                    {!m.ready && (
+                      <span className="shrink-0 rounded-full bg-slate-200 px-2 py-0.5 text-[10px] font-bold uppercase text-slate-500">
+                        tez orada
+                      </span>
+                    )}
+                  </div>
+                  <div className="mt-0.5 text-[13px] leading-snug text-slate-500">{m.sub}</div>
+                </div>
+                <span className="shrink-0">
+                  {m.key === "ai" ? <Robot /> : m.key === "duel" ? <Duelists /> : <Crowd />}
+                </span>
+              </button>
+            );
+          })}
+        </div>
+      </div>
+
+      {/* ── O'yin turi ── */}
+      <div>
+        <p className="mb-2 px-1 text-[12px] font-bold uppercase tracking-[0.16em] text-slate-400">
+          O&apos;yin turini tanlang
+        </p>
+        <div className="grid grid-cols-2 gap-3">
+          {LOBBIES.map((l) => {
+            const on = lobby === l.key;
+            return (
+              <button
+                key={l.key}
+                type="button"
+                onClick={() => setLobby(l.key)}
+                className={`${CARD} overflow-hidden pb-4 pt-4 transition ${on ? "ring-2 ring-[#0e7490]" : ""}`}
+              >
+                <div className="grid h-[62px] place-items-center">
+                  <LobbyArt kind={l.key} />
+                </div>
+                <div className="mt-1 flex flex-wrap items-center justify-center gap-1.5 px-2">
+                  <span className="text-[16px] font-extrabold text-slate-900">{l.title}</span>
+                  {!l.ready && (
+                    <span className="rounded-full bg-slate-200 px-1.5 py-0.5 text-[9px] font-bold uppercase text-slate-500">
                       tez orada
                     </span>
                   )}
                 </div>
-                <div className="mt-0.5 text-[13px] leading-snug text-slate-500">{m.sub}</div>
-              </div>
-              <span className="shrink-0">
-                {m.key === "ai" ? <Robot /> : m.key === "duel" ? <Duelists /> : <Crowd />}
-              </span>
-            </button>
-          );
-        })}
-      </div>
-
-      {/* ── Lobbi turi ── */}
-      <p className="mt-5 text-[13px] font-semibold text-slate-500">Lobby turlarini tanlang:</p>
-      <div className="mt-2 grid grid-cols-2 gap-3">
-        {LOBBIES.map((l) => {
-          const on = lobby === l.key;
-          return (
-            <button
-              key={l.key}
-              type="button"
-              onClick={() => setLobby(l.key)}
-              className={`overflow-hidden rounded-2xl border-2 pb-3 pt-4 transition ${
-                on ? "border-[#4f46e5] bg-[#e8ecff]" : "border-transparent bg-[#eef1f6]"
-              }`}
-            >
-              <div className="grid h-[62px] place-items-center">
-                <LobbyArt kind={l.key} />
-              </div>
-              <div className="mt-1 flex items-center justify-center gap-1.5">
-                <span className="text-[17px] font-extrabold text-slate-900">{l.title}</span>
-                {!l.ready && (
-                  <span className="rounded-full bg-slate-300/70 px-1.5 py-0.5 text-[9px] font-bold uppercase text-slate-600">
-                    tez orada
-                  </span>
-                )}
-              </div>
-            </button>
-          );
-        })}
+              </button>
+            );
+          })}
+        </div>
       </div>
 
       {/* ── Boshlash ── */}
-      <div className="fixed inset-x-0 bottom-[86px] z-30 mx-auto max-w-md px-4">
+      <div className="fixed inset-x-0 bottom-[92px] z-30 mx-auto max-w-md px-4">
         <button
           type="button"
           onClick={start}
           disabled={!canStart}
-          className="w-full rounded-2xl bg-[#1a90ff] py-3.5 text-[17px] font-extrabold text-white shadow-[0_10px_22px_rgba(26,144,255,0.4)] transition active:translate-y-[2px] disabled:bg-slate-300 disabled:shadow-none"
+          style={canStart ? { background: ICON_GRADIENT } : undefined}
+          className="w-full rounded-2xl py-3.5 text-[17px] font-extrabold text-white shadow-[0_10px_22px_rgba(14,116,144,0.35)] transition active:translate-y-[2px] disabled:bg-slate-300 disabled:shadow-none"
         >
           {words.length < 4 ? "So'zlar yetarli emas" : canStart ? "Jangni boshlang" : "Bu rejim tez orada"}
         </button>
