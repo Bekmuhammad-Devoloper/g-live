@@ -3,6 +3,7 @@ import HeaderBadges from "../HeaderBadges";
 import { getSession } from "@/lib/auth";
 import { prisma } from "@/lib/db";
 import { PageHeader } from "../_ui";
+import { MESSAGE_SENT } from "../lehrer/const";
 import NotifList, { type VNotif } from "./NotifList";
 
 // "Mitteilungen" — o'quvchining bildirishnomalari (Start ekrani uslubida).
@@ -12,7 +13,7 @@ export default async function StudentMitteilungenPage() {
   if (!session) redirect("/login");
 
   const rows = await prisma.notification.findMany({
-    where: { userId: session.userId },
+    where: { userId: session.userId, NOT: { event: MESSAGE_SENT } },
     orderBy: { createdAt: "desc" },
     take: 50,
     select: { id: true, title: true, body: true, isRead: true, createdAt: true },
