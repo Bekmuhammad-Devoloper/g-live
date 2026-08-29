@@ -1,4 +1,5 @@
 import Link from "next/link";
+import HeaderBadges from "../HeaderBadges";
 import { redirect } from "next/navigation";
 import { getSession } from "@/lib/auth";
 import { prisma } from "@/lib/db";
@@ -78,7 +79,7 @@ export default async function StudentKursePage() {
 
   return (
     <div className="space-y-4">
-      <PageHeader title="Kurse" subtitle={group?.program.name ?? "Deutsch"} />
+      <PageHeader title="Kurse" subtitle={group?.program.name ?? "Deutsch"} right={<HeaderBadges />} />
 
       <div className="space-y-3.5">
         {LEVELS.map((code) => {

@@ -3,6 +3,7 @@ import { getSession } from "@/lib/auth";
 import { prisma } from "@/lib/db";
 import MissingStudent from "../MissingStudent";
 import Battle, { type WordPair } from "./Battle";
+import HeaderBadges from "../HeaderBadges";
 
 // "Jang" (Battle) — o'yin sozlash ekrani.
 // So'zlar o'quvchi kursidagi darslarning "topic" maydonidan olinadi
@@ -46,5 +47,5 @@ export default async function StudentBattlePage() {
     }
   }
 
-  return <Battle words={words} />;
+  return <Battle words={words} badges={<HeaderBadges />} />;
 }

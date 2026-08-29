@@ -1,4 +1,5 @@
 import { redirect } from "next/navigation";
+import HeaderBadges from "../HeaderBadges";
 import { getSession } from "@/lib/auth";
 import { prisma } from "@/lib/db";
 import { computeDebt } from "@/lib/debt";
@@ -90,7 +91,7 @@ export default async function StudentProfilPage() {
 
   return (
     <div className="space-y-[18px]">
-      <PageHeader title="Profil" subtitle="Dein Konto" />
+      <PageHeader title="Profil" subtitle="Dein Konto" right={<HeaderBadges />} />
 
       {/* ── Shaxsiy karta ── */}
       <div className={`${CARD} flex items-center gap-4 p-5`}>

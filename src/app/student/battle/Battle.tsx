@@ -152,7 +152,8 @@ const SOON = (
   </span>
 );
 
-export default function Battle({ words }: { words: WordPair[] }) {
+// badges — server komponenti (seriya + qo'ng'iroq) prop sifatida uzatiladi
+export default function Battle({ words, badges }: { words: WordPair[]; badges?: React.ReactNode }) {
   const [view, setView] = useState<View>("setup");
   const [mode, setMode] = useState<Mode>("ai");
   const [lobby, setLobby] = useState<Lobby>("vocabulary");
@@ -216,7 +217,7 @@ export default function Battle({ words }: { words: WordPair[] }) {
 
     return (
       <div className="space-y-6 pb-[92px]">
-        <PageHeader title="Jang va o'yinlar" subtitle="Bilimingizni sinab ko'ring" back="/student/uben" />
+        <PageHeader title="Jang va o'yinlar" subtitle="Bilimingizni sinab ko'ring" back="/student/uben" right={badges} />
 
         {/* ── Jang turi ── */}
         <section>

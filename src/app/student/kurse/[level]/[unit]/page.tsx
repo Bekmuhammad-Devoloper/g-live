@@ -4,6 +4,7 @@ import { getSession } from "@/lib/auth";
 import { prisma } from "@/lib/db";
 import MissingStudent from "../../../MissingStudent";
 import { LEVELS, LEVEL_BG } from "../../levels";
+import HeaderBadges from "../../../HeaderBadges";
 
 // Unit ichi — Vocabulary / Video lesson (+ Test) / Exercises kartalari.
 
@@ -13,21 +14,6 @@ function IcoBack({ s = 22 }: { s?: number }) {
   return (
     <svg width={s} height={s} viewBox="0 0 24 24" fill="none" stroke="#0f172a" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
       <path d="m15 6-6 6 6 6" />
-    </svg>
-  );
-}
-function IcoKey({ s = 20 }: { s?: number }) {
-  return (
-    <svg width={s} height={s} viewBox="0 0 24 24" fill="none" stroke="#0f172a" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-      <circle cx="8" cy="12" r="4" />
-      <path d="M12 12h9M18 12v3.4M15.4 12v2.4" />
-    </svg>
-  );
-}
-function IcoBookmark({ s = 20 }: { s?: number }) {
-  return (
-    <svg width={s} height={s} viewBox="0 0 24 24" fill="#0f172a" stroke="#0f172a" strokeWidth="2" strokeLinejoin="round">
-      <path d="M6.5 3.5h11a1 1 0 0 1 1 1v16l-6.5-4.2L5.5 20.5v-16a1 1 0 0 1 1-1Z" />
     </svg>
   );
 }
@@ -191,16 +177,11 @@ export default async function StudentUnitPage({ params }: { params: Promise<{ le
         <Link href={`/student/kurse/${code}`} className="grid h-10 w-10 shrink-0 place-items-center rounded-full bg-white shadow-[0_6px_16px_rgba(19,78,94,0.12)]">
           <IcoBack />
         </Link>
-        <div className="min-w-0 flex-1 text-center">
+        <div className="min-w-0 flex-1">
           <div className="truncate text-[18px] font-extrabold text-slate-900">Unit {chapter}.{inChapter}</div>
           <div className="truncate text-[12px] text-slate-400">{lesson.title}</div>
         </div>
-        <span className="grid h-10 w-10 shrink-0 place-items-center rounded-full bg-white shadow-[0_6px_16px_rgba(19,78,94,0.12)]">
-          <IcoKey />
-        </span>
-        <span className="grid h-10 w-10 shrink-0 place-items-center rounded-full bg-white shadow-[0_6px_16px_rgba(19,78,94,0.12)]">
-          <IcoBookmark />
-        </span>
+        <HeaderBadges />
       </div>
 
       <ProgressCard title="Vocabulary" sub={`${words} words`} pct={done ? 100 : 0} bg={LEVEL_BG[code]} />

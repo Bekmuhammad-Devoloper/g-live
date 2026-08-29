@@ -4,6 +4,7 @@ import { getSession } from "@/lib/auth";
 import { prisma } from "@/lib/db";
 import MissingStudent from "../../MissingStudent";
 import { LEVELS, LEVEL_NAME } from "../levels";
+import HeaderBadges from "../../HeaderBadges";
 
 // Daraja ichi — maketdagi "darslar yo'li": unit kafellari zigzag bo'lib
 // joylashadi, orasi uzuq-uzuq chiziq bilan bog'lanadi, orqa fonda bulut va
@@ -11,21 +12,6 @@ import { LEVELS, LEVEL_NAME } from "../levels";
 
 const UNITS_PER_CHAPTER = 3; // Unit 1.1 · 1.2 · 1.3 → keyin 2.1 ...
 
-function IcoStarBadge({ s = 16 }: { s?: number }) {
-  return (
-    <svg width={s} height={s} viewBox="0 0 24 24" fill="#22c55e" stroke="#16a34a" strokeWidth="1.5" strokeLinejoin="round">
-      <path d="M12 3.1l2.75 5.57 6.15.9-4.45 4.34 1.05 6.12L12 17.14l-5.5 2.89 1.05-6.12L3.1 9.57l6.15-.9L12 3.1Z" />
-    </svg>
-  );
-}
-function IcoCoinBadge({ s = 16 }: { s?: number }) {
-  return (
-    <svg width={s} height={s} viewBox="0 0 24 24">
-      <circle cx="12" cy="12" r="9" fill="#facc15" stroke="#eab308" strokeWidth="1.5" />
-      <circle cx="12" cy="12" r="5.4" fill="none" stroke="#eab308" strokeWidth="1.4" />
-    </svg>
-  );
-}
 function IcoBack({ s = 22 }: { s?: number }) {
   return (
     <svg width={s} height={s} viewBox="0 0 24 24" fill="none" stroke="#1d4ed8" strokeWidth="2.4" strokeLinecap="round" strokeLinejoin="round">
@@ -90,7 +76,7 @@ export default async function StudentLevelPage({ params }: { params: Promise<{ l
 
   const group = student.enrollments[0]?.group ?? null;
 
-  const [allLessons, progress, attendance, graded] = await Promise.all([
+  const [allLessons, progress] = await Promise.all([
     group
       ? prisma.courseLesson.findMany({
           where: { programId: group.programId },
@@ -101,16 +87,11 @@ export default async function StudentLevelPage({ params }: { params: Promise<{ l
     group
       ? prisma.groupLessonProgress.findMany({ where: { groupId: group.id, taught: true }, select: { courseLessonId: true } })
       : Promise.resolve([]),
-    prisma.attendance.count({ where: { studentId: student.id, status: { in: ["PRESENT", "LATE", "ONLINE", "MAKEUP"] } } }),
-    prisma.submission.count({ where: { studentId: student.id, status: "GRADED" } }),
   ]);
 
   const fallback = (group?.levelCode ?? student.currentLevel ?? "A1").slice(0, 2).toUpperCase();
   const lessons = allLessons.filter((l) => (l.levelCode ?? fallback).toUpperCase() === code);
   const taught = new Set(progress.map((p) => p.courseLessonId));
-
-  const coins = attendance * 5 + graded * 10;   // sariq belgi
-  const points = attendance * 10 + graded * 25; // yashil belgi
 
   return (
     <div className="-mx-4 -mt-2 min-h-screen bg-[#f4f8ff] px-4 pb-4 pt-2">
@@ -123,14 +104,7 @@ export default async function StudentLevelPage({ params }: { params: Promise<{ l
         <h1 className="min-w-0 flex-1 truncate text-[17px] font-extrabold tracking-tight text-[#4c1d95]">
           {LEVEL_NAME[code]} <span className="text-[#7c3aed]">{code}</span>
         </h1>
-        <span className="flex h-[36px] shrink-0 items-center gap-1 rounded-full bg-white px-2.5 shadow-sm">
-          <IcoStarBadge s={20} />
-          <span className="text-[15px] font-extrabold text-slate-700">{points}</span>
-        </span>
-        <span className="flex h-[36px] shrink-0 items-center gap-1 rounded-full bg-white px-2.5 shadow-sm">
-          <IcoCoinBadge s={20} />
-          <span className="text-[15px] font-extrabold text-slate-700">{coins}</span>
-        </span>
+        <HeaderBadges />
       </div>
 
 

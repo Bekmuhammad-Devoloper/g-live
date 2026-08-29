@@ -1,4 +1,5 @@
 import Link from "next/link";
+import HeaderBadges from "../HeaderBadges";
 import { redirect } from "next/navigation";
 import { getSession } from "@/lib/auth";
 import { prisma } from "@/lib/db";
@@ -74,7 +75,7 @@ export default async function StudentUebenPage() {
 
   return (
     <div className="space-y-[18px]">
-      <PageHeader title="Üben" subtitle="Deine Hausaufgaben" />
+      <PageHeader title="Üben" subtitle="Deine Hausaufgaben" right={<HeaderBadges />} />
 
       {/* ── Jang / o'yinlar ── */}
       <Link
