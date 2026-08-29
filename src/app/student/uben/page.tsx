@@ -1,3 +1,4 @@
+import Link from "next/link";
 import { redirect } from "next/navigation";
 import { getSession } from "@/lib/auth";
 import { prisma } from "@/lib/db";
@@ -74,6 +75,27 @@ export default async function StudentUebenPage() {
   return (
     <div className="space-y-[18px]">
       <PageHeader title="Üben" subtitle="Deine Hausaufgaben" />
+
+      {/* ── Jang / o'yinlar ── */}
+      <Link
+        href="/student/battle"
+        className="relative flex items-center gap-3 overflow-hidden rounded-[24px] p-5 text-white shadow-[0_14px_28px_rgba(29,78,216,0.3)]"
+        style={{ background: "linear-gradient(120deg, #1d4ed8 0%, #3b82f6 55%, #60a5fa 100%)" }}
+      >
+        <span className="grid h-[52px] w-[52px] shrink-0 place-items-center rounded-2xl bg-white/20 backdrop-blur-sm">
+          <svg width="30" height="30" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="2.1" strokeLinecap="round" strokeLinejoin="round">
+            <path d="M5 3.5 19 17.5M19 3.5 5 17.5" />
+            <path d="M3.5 19.5h5M15.5 19.5h5" />
+          </svg>
+        </span>
+        <div className="min-w-0 flex-1">
+          <div className="text-[20px] font-extrabold leading-tight">Jang va o'yinlar</div>
+          <div className="mt-0.5 text-[13px] text-white/80">Vocabulary · So'z o'yini · Krossvord</div>
+        </div>
+        <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="2.6" strokeLinecap="round" strokeLinejoin="round">
+          <path d="m9 6 6 6-6 6" />
+        </svg>
+      </Link>
 
       {/* ── Yig'ma kartalar ── */}
       <div className="grid grid-cols-3 gap-3">
