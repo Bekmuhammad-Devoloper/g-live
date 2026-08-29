@@ -11,7 +11,7 @@ import { createCourseLesson, updateCourseLesson, deleteCourseLesson, moveCourseL
 import { setLessonTaught } from "../../groups/[id]/lessonProgressActions";
 
 export interface VLesson {
-  id: string; order: number; title: string; topic: string | null;
+  id: string; order: number; levelCode?: string | null; title: string; topic: string | null;
   videoUrl: string | null; materialUrl: string | null; assignment: string | null; assignmentFileUrl: string | null; homework: string | null; homeworkFileUrl: string | null;
 }
 
@@ -182,6 +182,7 @@ function Field({ label, value }: { label: string; value: string }) {
 function LessonDrawer({ programId, initial, locale, onClose }: { programId: string; initial: VLesson | null; locale: Locale; onClose: () => void }) {
   const router = useRouter();
   const [title, setTitle] = useState(initial?.title ?? "");
+  const [levelCode, setLevelCode] = useState(initial?.levelCode ?? "");
   const [topic, setTopic] = useState(initial?.topic ?? "");
   const [assignment, setAssignment] = useState(initial?.assignment ?? "");
   const [assignmentFileUrl, setAssignmentFileUrl] = useState(initial?.assignmentFileUrl ?? "");
@@ -208,7 +209,7 @@ function LessonDrawer({ programId, initial, locale, onClose }: { programId: stri
       });
       if (!confirm(msg)) return;
     }
-    const input: LessonInput = { title, topic, assignment, assignmentFileUrl, homework, homeworkFileUrl, videoUrl, materialUrl };
+    const input: LessonInput = { title, levelCode, topic, assignment, assignmentFileUrl, homework, homeworkFileUrl, videoUrl, materialUrl };
     start(async () => {
       const r = initial ? await updateCourseLesson(initial.id, input) : await createCourseLesson(programId, input);
       if (r.ok) { router.refresh(); onClose(); } else setErr(r.error ?? "error");
@@ -235,6 +236,17 @@ function LessonDrawer({ programId, initial, locale, onClose }: { programId: stri
           <div>
             <label className={lbl}>{tr(locale, { uz: "Mavzu (tafsilot)", ru: "Тема (описание)", en: "Topic (details)" })}</label>
             <textarea value={topic} onChange={(e) => setTopic(e.target.value)} rows={2} className={inp} />
+          </div>
+          {/* Daraja — o'quvchi portalida darslar shu bo'yicha bo'limlarga ajraladi */}
+          <div>
+            <label className="mb-1 block text-xs font-medium text-slate-500 dark:text-slate-400">
+              {tr(locale, { uz: "Daraja", ru: "Уровень", en: "Level" })}
+              <span className="ml-1 font-normal text-slate-400">({tr(locale, { uz: "o'quvchi ilovasida bo'limlarga ajratish uchun", ru: "для разделов в приложении ученика", en: "groups lessons in the student app" })})</span>
+            </label>
+            <select value={levelCode} onChange={(e) => setLevelCode(e.target.value)} className={inp}>
+              <option value="">{tr(locale, { uz: "— tanlanmagan —", ru: "— не выбрано —", en: "— none —" })}</option>
+              {["A1", "A2", "B1", "B2", "C1", "C2"].map((c) => <option key={c} value={c}>{c}</option>)}
+            </select>
           </div>
 
           <FileUpload

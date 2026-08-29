@@ -309,6 +309,7 @@ model CourseLesson {
   programId  String
   program    Program  @relation(fields: [programId], references: [id], onDelete: Cascade)
   order      Int      @default(0) // ketma-ketlik
+  levelCode  String? // qaysi darajaga tegishli (A1, A2, B1 ...) — o'quvchi portalida bo'limlarga ajratish uchun
   title      String // dars nomi
   topic      String? // mavzu tafsiloti
   videoUrl   String? // yuklangan video yo'li (/uploads/...)

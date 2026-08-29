@@ -11,6 +11,7 @@ const can = (role: string) => ALLOWED.includes(role as never);
 
 export interface LessonInput {
   title: string;
+  levelCode?: string; // qaysi darajaga tegishli (A1, A2, B1 ...)
   topic?: string;
   videoUrl?: string;
   materialUrl?: string;
@@ -34,6 +35,7 @@ export async function createCourseLesson(programId: string, input: LessonInput):
       programId,
       order: (last?.order ?? 0) + 1,
       title,
+      levelCode: clean(input.levelCode),
       topic: clean(input.topic),
       videoUrl: clean(input.videoUrl),
       materialUrl: clean(input.materialUrl),
@@ -59,6 +61,7 @@ export async function updateCourseLesson(id: string, input: LessonInput): Promis
     where: { id },
     data: {
       title,
+      levelCode: clean(input.levelCode),
       topic: clean(input.topic),
       videoUrl: clean(input.videoUrl),
       materialUrl: clean(input.materialUrl),

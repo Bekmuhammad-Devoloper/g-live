@@ -50,7 +50,7 @@ export default async function CourseDetailPage({ params }: { params: Promise<{ i
       id: m.id, title: m.title, kind: m.kind, url: m.url, levelCode: m.levelCode, note: m.note,
     })),
     courseLessons: program.courseLessons.map((cl) => ({
-      id: cl.id, order: cl.order, title: cl.title, topic: cl.topic, videoUrl: cl.videoUrl, materialUrl: cl.materialUrl, assignment: cl.assignment, assignmentFileUrl: cl.assignmentFileUrl, homework: cl.homework, homeworkFileUrl: cl.homeworkFileUrl,
+      id: cl.id, order: cl.order, levelCode: cl.levelCode, title: cl.title, topic: cl.topic, videoUrl: cl.videoUrl, materialUrl: cl.materialUrl, assignment: cl.assignment, assignmentFileUrl: cl.assignmentFileUrl, homework: cl.homework, homeworkFileUrl: cl.homeworkFileUrl,
     })),
     canManage: true,
     locale: s.locale,
