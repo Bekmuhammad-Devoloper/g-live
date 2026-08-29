@@ -116,27 +116,27 @@ export default async function StudentLevelPage({ params }: { params: Promise<{ l
   return (
     <div className="-mx-4 -mt-2 min-h-screen bg-[#f4f8ff] px-4 pb-4 pt-2">
       {/* ── Yuqori qator: orqaga · sarlavha · ballar ── */}
-      <div className="flex items-center gap-2.5">
-        <Link href="/student/kurse" className="grid h-9 w-9 shrink-0 place-items-center rounded-full bg-white shadow-sm">
-          <IcoBack />
+      <div className="flex items-center gap-3">
+        <Link href="/student/kurse" className="grid h-11 w-11 shrink-0 place-items-center rounded-full bg-white shadow-sm">
+          <IcoBack s={24} />
         </Link>
-        <h1 className="flex-1 text-[20px] font-extrabold tracking-tight text-[#1d4ed8]">Lektionen</h1>
-        <span className="flex items-center gap-1 rounded-full bg-white px-2.5 py-1 shadow-sm">
-          <IcoStarBadge />
-          <span className="text-[13px] font-extrabold text-slate-700">{points}</span>
+        <h1 className="flex-1 text-[24px] font-extrabold tracking-tight text-[#1d4ed8]">Lektionen</h1>
+        <span className="flex items-center gap-1.5 rounded-full bg-white px-3 py-1.5 shadow-sm">
+          <IcoStarBadge s={19} />
+          <span className="text-[15px] font-extrabold text-slate-700">{points}</span>
         </span>
-        <span className="flex items-center gap-1 rounded-full bg-white px-2.5 py-1 shadow-sm">
-          <IcoCoinBadge />
-          <span className="text-[13px] font-extrabold text-slate-700">{coins}</span>
+        <span className="flex items-center gap-1.5 rounded-full bg-white px-3 py-1.5 shadow-sm">
+          <IcoCoinBadge s={19} />
+          <span className="text-[15px] font-extrabold text-slate-700">{coins}</span>
         </span>
       </div>
 
       {/* ── Daraja sarlavhasi + umumiy foiz ── */}
-      <div className="mt-3 flex items-baseline justify-between">
-        <div className="text-[22px] font-extrabold tracking-tight text-[#4c1d95]">
+      <div className="mt-4 flex items-baseline justify-between">
+        <div className="text-[26px] font-extrabold tracking-tight text-[#4c1d95]">
           {LEVEL_NAME[code]} <span className="text-[#7c3aed]">{code}</span>
         </div>
-        <div className="text-[22px] font-extrabold text-[#4c1d95]">{donePct}%</div>
+        <div className="text-[26px] font-extrabold text-[#4c1d95]">{donePct}%</div>
       </div>
 
       {/* ── Darslar yo'li ── */}
