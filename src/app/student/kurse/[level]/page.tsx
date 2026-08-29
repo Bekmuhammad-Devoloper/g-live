@@ -115,21 +115,21 @@ export default async function StudentLevelPage({ params }: { params: Promise<{ l
   return (
     <div className="-mx-4 -mt-2 min-h-screen bg-[#f4f8ff] px-4 pb-4 pt-2">
       {/* ── Yuqori qator: orqaga · sarlavha · ballar ── */}
-      <div className="flex items-center gap-3">
-        <Link href="/student/kurse" className="grid h-11 w-11 shrink-0 place-items-center rounded-full bg-white shadow-sm">
-          <IcoBack s={24} />
+      <div className="flex items-center gap-2.5">
+        <Link href="/student/kurse" className="grid h-[52px] w-[52px] shrink-0 place-items-center rounded-full bg-white shadow-sm">
+          <IcoBack s={28} />
         </Link>
         {/* Sarlavha — daraja nomi (alohida qator va foiz olib tashlandi) */}
-        <h1 className="min-w-0 flex-1 truncate text-[23px] font-extrabold tracking-tight text-[#4c1d95]">
+        <h1 className="min-w-0 flex-1 truncate text-[27px] font-extrabold tracking-tight text-[#4c1d95]">
           {LEVEL_NAME[code]} <span className="text-[#7c3aed]">{code}</span>
         </h1>
-        <span className="flex items-center gap-1.5 rounded-full bg-white px-3 py-1.5 shadow-sm">
-          <IcoStarBadge s={19} />
-          <span className="text-[15px] font-extrabold text-slate-700">{points}</span>
+        <span className="flex h-[38px] shrink-0 items-center gap-1.5 rounded-full bg-white px-3 shadow-sm">
+          <IcoStarBadge s={22} />
+          <span className="text-[17px] font-extrabold text-slate-700">{points}</span>
         </span>
-        <span className="flex items-center gap-1.5 rounded-full bg-white px-3 py-1.5 shadow-sm">
-          <IcoCoinBadge s={19} />
-          <span className="text-[15px] font-extrabold text-slate-700">{coins}</span>
+        <span className="flex h-[38px] shrink-0 items-center gap-1.5 rounded-full bg-white px-3 shadow-sm">
+          <IcoCoinBadge s={22} />
+          <span className="text-[17px] font-extrabold text-slate-700">{coins}</span>
         </span>
       </div>
 
