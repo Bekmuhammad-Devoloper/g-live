@@ -215,7 +215,7 @@ export default function Battle({ words }: { words: WordPair[] }) {
     const LOBBY_ICON = { vocabulary: GlyphChat, wordgame: GlyphTiles, crossword: GlyphGrid, grammar: GlyphBook } as const;
 
     return (
-      <div className="space-y-6 pb-[110px]">
+      <div className="space-y-6 pb-[92px]">
         <PageHeader title="Jang va o'yinlar" subtitle="Bilimingizni sinab ko'ring" back="/student/uben" />
 
         {/* ── Jang turi ── */}
@@ -289,7 +289,7 @@ export default function Battle({ words }: { words: WordPair[] }) {
         </section>
 
         {/* ── Boshlash ── */}
-        <div className="fixed inset-x-0 bottom-[88px] z-30 mx-auto max-w-md px-4">
+        <div className="fixed inset-x-0 bottom-5 z-30 mx-auto max-w-md px-4">
           {/* fon ostidagi kontent tugma ostida "kesilib" ko'rinmasin */}
           <div className="pointer-events-none absolute inset-x-0 -top-8 h-8 bg-gradient-to-b from-transparent to-[#e4edf3]" />
           <button
@@ -311,7 +311,7 @@ export default function Battle({ words }: { words: WordPair[] }) {
     const win = me > ai;
     const draw = me === ai;
     return (
-      <div className="space-y-4 pb-24">
+      <div className="space-y-4 pb-6">
         <div className={`${CARD} mt-6 p-6 text-center`}>
           <div className="text-[52px] leading-none">{win ? "🏆" : draw ? "🤝" : "💪"}</div>
           <div className="mt-3 text-[24px] font-extrabold text-slate-900">
@@ -355,7 +355,7 @@ export default function Battle({ words }: { words: WordPair[] }) {
 
   // ═══════════ O'YIN ═══════════
   return (
-    <div className="space-y-4 pb-24">
+    <div className="space-y-4 pb-6">
       {/* Sarlavha + hisob */}
       <div className="flex items-center gap-2.5 pt-1">
         <button

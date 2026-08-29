@@ -50,6 +50,9 @@ function Ico({ name, active }: { name: string; active: boolean }) {
 
 export default function BottomNav() {
   const pathname = usePathname();
+  // Jang sahifasi to'liq ekranda ochiladi — pastki menyu ko'rinmaydi
+  if (pathname.startsWith("/student/battle")) return null;
+
   // Barcha tablar /student/* ichida — o'quvchi endi xodim (AppShell) sahifalariga chiqib ketmaydi
   const items = [
     { href: "/student", icon: "home", label: "Start", exact: true },
