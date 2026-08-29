@@ -109,7 +109,6 @@ export default async function StudentLevelPage({ params }: { params: Promise<{ l
   const lessons = allLessons.filter((l) => (l.levelCode ?? fallback).toUpperCase() === code);
   const taught = new Set(progress.map((p) => p.courseLessonId));
 
-  const donePct = lessons.length ? Math.round((lessons.filter((l) => taught.has(l.id)).length / lessons.length) * 100) : 0;
   const coins = attendance * 5 + graded * 10;   // sariq belgi
   const points = attendance * 10 + graded * 25; // yashil belgi
 
@@ -120,7 +119,10 @@ export default async function StudentLevelPage({ params }: { params: Promise<{ l
         <Link href="/student/kurse" className="grid h-11 w-11 shrink-0 place-items-center rounded-full bg-white shadow-sm">
           <IcoBack s={24} />
         </Link>
-        <h1 className="flex-1 text-[24px] font-extrabold tracking-tight text-[#1d4ed8]">Lektionen</h1>
+        {/* Sarlavha — daraja nomi (alohida qator va foiz olib tashlandi) */}
+        <h1 className="min-w-0 flex-1 truncate text-[23px] font-extrabold tracking-tight text-[#4c1d95]">
+          {LEVEL_NAME[code]} <span className="text-[#7c3aed]">{code}</span>
+        </h1>
         <span className="flex items-center gap-1.5 rounded-full bg-white px-3 py-1.5 shadow-sm">
           <IcoStarBadge s={19} />
           <span className="text-[15px] font-extrabold text-slate-700">{points}</span>
@@ -131,13 +133,6 @@ export default async function StudentLevelPage({ params }: { params: Promise<{ l
         </span>
       </div>
 
-      {/* ── Daraja sarlavhasi + umumiy foiz ── */}
-      <div className="mt-4 flex items-baseline justify-between">
-        <div className="text-[26px] font-extrabold tracking-tight text-[#4c1d95]">
-          {LEVEL_NAME[code]} <span className="text-[#7c3aed]">{code}</span>
-        </div>
-        <div className="text-[26px] font-extrabold text-[#4c1d95]">{donePct}%</div>
-      </div>
 
       {/* ── Darslar yo'li ── */}
       {lessons.length === 0 ? (
@@ -146,7 +141,7 @@ export default async function StudentLevelPage({ params }: { params: Promise<{ l
           <p className="mt-1 text-[13px] text-slate-400">Die Lehrkraft fügt sie bald hinzu.</p>
         </div>
       ) : (
-        <div className="relative mt-4 pb-6">
+        <div className="relative mt-5 pb-6">
           {/* orqa fon bezaklari */}
           <div className="pointer-events-none absolute inset-0 overflow-hidden">
             <div className="absolute right-8 top-2"><Cloud w={70} /></div>
