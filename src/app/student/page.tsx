@@ -75,46 +75,32 @@ function IcoTarget({ c = "white", s = 34 }: { c?: string; s?: number }) {
     </svg>
   );
 }
-// Münzen — tanga (ikkita ustma-ust tanga, ustidagisida yulduzcha)
+// Maketdagi uchta belgi — bir xil uslub: 26px, oq, bir xil optik og'irlik.
+// Münzen — halqa ichida yulduz (tanga-nishon)
 function IcoCoin({ s = 26 }: { s?: number }) {
   return (
-    <svg width={s} height={s} viewBox="0 0 24 24" fill="none">
-      {/* pastdagi tanga */}
-      <ellipse cx="12" cy="16.4" rx="7.6" ry="3.1" fill="white" opacity="0.45" />
-      {/* ustidagi tanga */}
-      <circle cx="12" cy="10.6" r="7.1" fill="white" />
-      <circle cx="12" cy="10.6" r="5.2" fill="none" stroke="#0e7490" strokeWidth="1.1" opacity="0.55" />
-      <path d="m12 7.6 1 2.1 2.3.33-1.65 1.6.4 2.28L12 12.83l-2.05 1.08.4-2.28-1.65-1.6L11 9.7 12 7.6Z" fill="#0e7490" />
+    <svg width={s} height={s} viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="1.9" strokeLinejoin="round">
+      <circle cx="12" cy="12" r="8.6" />
+      <path d="M12 7.7l1.55 3.14 3.47.5-2.51 2.45.59 3.45L12 15.61l-3.1 1.63.59-3.45-2.51-2.45 3.47-.5L12 7.7Z" fill="white" stroke="none" />
     </svg>
   );
 }
 
-// Streak — olov (ketma-ket kunlar), oq siluet
+// Streak — to'la yulduz
 function IcoFlameWhite({ s = 26 }: { s?: number }) {
   return (
-    <svg width={s} height={s} viewBox="0 0 24 24">
-      <path
-        d="M12 2.4c.6 3.2-1.1 4.8-2.7 6.5C7.6 10.7 5.8 12.6 5.8 15.3a6.2 6.2 0 0 0 12.4 0c0-2.3-1.1-4.2-2.4-5.8-1.5-1.9-3.1-4-3.8-7.1Z"
-        fill="white"
-      />
-      <path
-        d="M12 10.8c.35 1.7-.65 2.6-1.5 3.6-.75.85-1.45 1.7-1.45 2.95a3.05 3.05 0 0 0 6.1 0c0-1.15-.55-2-1.2-2.95-.75-1.05-1.6-2.1-1.95-3.6Z"
-        fill="#0e7490" opacity="0.35"
-      />
+    <svg width={s} height={s} viewBox="0 0 24 24" fill="white" stroke="white" strokeWidth="1.4" strokeLinejoin="round">
+      <path d="M12 3.1l2.75 5.57 6.15.9-4.45 4.34 1.05 6.12L12 17.14l-5.5 2.89 1.05-6.12L3.1 9.57l6.15-.9L12 3.1Z" />
     </svg>
   );
 }
 
-// Rang — o'sish (ustunlar + yuqoriga strelka)
+// Rang — o'sish strelkasi (chiziqli grafik)
 function IcoGrowth({ s = 26 }: { s?: number }) {
   return (
-    <svg width={s} height={s} viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
-      <path d="M4 19.5h16" />
-      <rect x="5" y="13" width="3.4" height="5" rx="1.2" fill="white" stroke="none" opacity="0.75" />
-      <rect x="10.3" y="10" width="3.4" height="8" rx="1.2" fill="white" stroke="none" opacity="0.85" />
-      <rect x="15.6" y="6" width="3.4" height="12" rx="1.2" fill="white" stroke="none" />
-      <path d="m5.5 9.5 4-3.5 3 2.2 5-4.2" strokeWidth="2" opacity="0.9" />
-      <path d="M14.6 3.4h3.2v3.1" strokeWidth="2" opacity="0.9" />
+    <svg width={s} height={s} viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="2.4" strokeLinecap="round" strokeLinejoin="round">
+      <path d="m3.6 16.8 5.6-5.6 3.6 3.6 7.6-7.6" />
+      <path d="M14.6 7.2h6v6" />
     </svg>
   );
 }
