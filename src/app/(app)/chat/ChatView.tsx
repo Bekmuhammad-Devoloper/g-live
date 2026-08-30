@@ -18,6 +18,35 @@ export type VThread = {
 
 export type VMsg = { id: string; fromStudent: boolean; text: string; at: string; author: string | null };
 
+// Telegram (yorug' mavzu) ranglari — o'quvchi ilovasidagi chat bilan bir xil
+const TG = {
+  wall: "#d9e4ec",
+  out: "#effdde", // xodim xabari
+  in: "#ffffff", // o'quvchi xabari
+  outTime: "#5eb35a",
+  inTime: "#a1aab3",
+  text: "#0f1419",
+};
+
+const dayKey = (iso: string) => new Date(iso).toDateString();
+
+function dayLabel(iso: string) {
+  const d = new Date(iso);
+  const now = new Date();
+  const yest = new Date(now);
+  yest.setDate(now.getDate() - 1);
+  if (d.toDateString() === now.toDateString()) return "Bugun";
+  if (d.toDateString() === yest.toDateString()) return "Kecha";
+  const p = (n: number) => String(n).padStart(2, "0");
+  return `${p(d.getDate())}.${p(d.getMonth() + 1)}.${d.getFullYear()}`;
+}
+
+const hhmm = (iso: string) => {
+  const d = new Date(iso);
+  const p = (n: number) => String(n).padStart(2, "0");
+  return `${p(d.getHours())}:${p(d.getMinutes())}`;
+};
+
 const initials = (name: string) =>
   name
     .split(/\s+/)
@@ -161,66 +190,130 @@ export default function ChatView({
           </div>
         ) : (
           <>
-            <div className="flex items-center gap-3 border-b border-slate-100 px-4 py-3">
+            <div className="flex items-center gap-3 border-b border-black/5 bg-white px-3 py-2.5">
               <button
                 type="button"
                 onClick={() => router.replace("/chat", { scroll: false })}
                 className="rounded-lg bg-slate-100 px-2 py-1 text-xs font-semibold text-slate-600 lg:hidden"
               >
-                ← Ro&apos;yxat
+                &larr; Ro&apos;yxat
               </button>
+              <span className="grid h-10 w-10 shrink-0 place-items-center rounded-full bg-cyan-100 text-[13px] font-semibold text-cyan-700">
+                {initials(open.student)}
+              </span>
               <div className="min-w-0">
-                <div className="truncate text-sm font-bold text-slate-800">{open.student}</div>
-                {open.group ? <div className="truncate text-[11.5px] text-slate-400">{open.group}</div> : null}
+                <div className="truncate text-[15.5px] font-semibold leading-tight text-black">{open.student}</div>
+                {open.group ? <div className="truncate text-[13px] leading-tight text-[#707579]">{open.group}</div> : null}
               </div>
             </div>
 
-            <div className="min-h-0 flex-1 space-y-2 overflow-y-auto bg-slate-50/60 px-4 py-3">
-              {messages.map((m) => (
-                <div key={m.id} className={"flex " + (m.fromStudent ? "justify-start" : "justify-end")}>
-                  <div
-                    className={
-                      "max-w-[75%] rounded-2xl px-3.5 py-2 text-sm shadow-sm " +
-                      (m.fromStudent ? "rounded-bl-md bg-white text-slate-800" : "rounded-br-md bg-cyan-600 text-white")
-                    }
-                  >
-                    {!m.fromStudent && m.author ? (
-                      <div className="mb-0.5 text-[11px] font-semibold text-white/80">{m.author}</div>
+            <div
+              className="min-h-0 flex-1 overflow-y-auto px-3 py-3"
+              style={{
+                backgroundColor: TG.wall,
+                backgroundImage:
+                  "radial-gradient(circle at 12px 12px, rgba(255,255,255,0.55) 2.5px, transparent 3px)," +
+                  "radial-gradient(circle at 36px 36px, rgba(255,255,255,0.35) 2px, transparent 2.5px)",
+                backgroundSize: "48px 48px, 48px 48px",
+              }}
+            >
+              {messages.length === 0 ? (
+                <div className="mx-auto mt-6 w-fit rounded-2xl bg-black/15 px-4 py-2 text-[13px] font-medium text-white backdrop-blur-sm">
+                  Yozishma hali boshlanmagan &mdash; birinchi bo&apos;lib yozing
+                </div>
+              ) : null}
+
+              {messages.map((m, i) => {
+                const mine = !m.fromStudent; // xodim xabari o'ngda
+                const k = dayKey(m.at);
+                const newDay = i === 0 || dayKey(messages[i - 1].at) !== k;
+                const next = messages[i + 1];
+                const runEnd = !next || next.fromStudent !== m.fromStudent || dayKey(next.at) !== k;
+                const runStart = newDay || i === 0 || messages[i - 1].fromStudent !== m.fromStudent;
+
+                return (
+                  <div key={m.id}>
+                    {newDay ? (
+                      <div className="my-3 flex justify-center">
+                        <span className="rounded-full bg-black/20 px-2.5 py-[3px] text-[12px] font-medium text-white backdrop-blur-sm">
+                          {dayLabel(m.at)}
+                        </span>
+                      </div>
                     ) : null}
-                    <div className="whitespace-pre-wrap break-words leading-snug">{m.text}</div>
-                    <div className={"mt-0.5 text-right text-[10.5px] " + (m.fromStudent ? "text-slate-400" : "text-white/70")}>
-                      {clock(m.at)}
+
+                    <div className={"flex " + (mine ? "justify-end" : "justify-start") + (runEnd ? " mb-2" : " mb-[2px]")}>
+                      <div
+                        className="relative max-w-[70%] px-2.5 py-[5px] text-[15px] leading-[19px] shadow-[0_1px_1px_rgba(0,0,0,0.10)]"
+                        style={{
+                          background: mine ? TG.out : TG.in,
+                          color: TG.text,
+                          borderRadius: 12,
+                          borderBottomRightRadius: mine && runEnd ? 2 : 12,
+                          borderBottomLeftRadius: !mine && runEnd ? 2 : 12,
+                        }}
+                      >
+                        {mine && m.author && runStart ? (
+                          <div className="mb-[1px] text-[13.5px] font-semibold text-[#0e7490]">{m.author}</div>
+                        ) : null}
+
+                        <span className="whitespace-pre-wrap break-words align-top">{m.text}</span>
+                        <span className="inline-block w-[44px] select-none align-top" aria-hidden />
+
+                        <span
+                          className="absolute bottom-[4px] right-[7px] text-[11px] leading-none"
+                          style={{ color: mine ? TG.outTime : TG.inTime }}
+                        >
+                          {hhmm(m.at)}
+                        </span>
+
+                        {runEnd ? (
+                          <svg
+                            width="9"
+                            height="17"
+                            viewBox="0 0 9 17"
+                            className={"absolute bottom-0 " + (mine ? "-right-[7px]" : "-left-[7px] -scale-x-100")}
+                            style={{ color: mine ? TG.out : TG.in }}
+                          >
+                            <path d="M0 17V0c0 6.5 1.6 12.4 9 17H0Z" fill="currentColor" />
+                          </svg>
+                        ) : null}
+                      </div>
                     </div>
                   </div>
-                </div>
-              ))}
+                );
+              })}
               <div ref={endRef} />
             </div>
 
             {canWrite ? (
-              <div className="border-t border-slate-100 p-3">
-                {err ? <div className="mb-2 rounded-lg bg-rose-50 px-3 py-1.5 text-xs font-medium text-rose-700">{err}</div> : null}
+              <div className="border-t border-black/5 bg-white px-2.5 py-2">
+                {err ? <div className="mb-1.5 px-2 text-xs font-medium text-rose-600">{err}</div> : null}
                 <div className="flex items-end gap-2">
-                  <textarea
-                    value={text}
-                    onChange={(e) => setText(e.target.value.slice(0, 1000))}
-                    onKeyDown={(e) => {
-                      if (e.key === "Enter" && !e.shiftKey) {
-                        e.preventDefault();
-                        send();
-                      }
-                    }}
-                    rows={1}
-                    placeholder="Javob yozing…"
-                    className="max-h-28 min-h-[40px] flex-1 resize-none rounded-lg border border-slate-300 px-3 py-2 text-sm outline-none focus:border-cyan-500"
-                  />
+                  <div className="flex flex-1 items-end rounded-[20px] bg-[#f1f3f4] px-3.5 py-[7px]">
+                    <textarea
+                      value={text}
+                      onChange={(e) => setText(e.target.value.slice(0, 1000))}
+                      onKeyDown={(e) => {
+                        if (e.key === "Enter" && !e.shiftKey) {
+                          e.preventDefault();
+                          send();
+                        }
+                      }}
+                      rows={1}
+                      placeholder="Javob yozing…"
+                      className="max-h-28 min-h-[24px] flex-1 resize-none bg-transparent text-[15px] leading-[24px] text-black outline-none placeholder:text-[#8d9499]"
+                    />
+                  </div>
                   <button
                     type="button"
                     onClick={send}
                     disabled={pending || text.trim().length === 0}
-                    className="rounded-lg bg-cyan-600 px-4 py-2 text-sm font-semibold text-white disabled:opacity-50"
+                    aria-label="Yuborish"
+                    className="grid h-[38px] w-[38px] shrink-0 place-items-center rounded-full bg-gradient-to-br from-[#17a2bf] to-[#0e7490] text-white transition active:scale-95 disabled:opacity-35"
                   >
-                    {pending ? "…" : "Yuborish"}
+                    <svg width="19" height="19" viewBox="0 0 24 24" fill="white">
+                      <path d="M3.4 20.4 21.9 12 3.4 3.6 3.4 10.1l13.2 1.9-13.2 1.9z" />
+                    </svg>
                   </button>
                 </div>
               </div>
