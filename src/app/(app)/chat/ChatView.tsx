@@ -95,9 +95,9 @@ export default function ChatView({
   };
 
   return (
-    <div className="grid gap-4 lg:grid-cols-[320px_1fr]">
+    <div className="grid h-[calc(100dvh-240px)] min-h-[420px] gap-4 lg:grid-cols-[340px_1fr]">
       {/* Suhbatlar */}
-      <div className={"flex flex-col rounded-xl border border-slate-200 bg-white " + (active ? "hidden lg:flex" : "")}>
+      <div className={"flex min-h-0 flex-col overflow-hidden rounded-xl border border-slate-200 bg-white " + (active ? "hidden lg:flex" : "")}>
         <div className="border-b border-slate-100 p-2">
           <input
             value={q}
@@ -108,11 +108,11 @@ export default function ChatView({
         </div>
 
         {shown.length === 0 ? (
-          <div className="px-5 py-14 text-center text-sm text-slate-500">
+          <div className="grid flex-1 place-items-center px-5 text-center text-sm text-slate-500">
             {threads.length === 0 ? "Ilovaga ulangan o'quvchi yo'q" : "Topilmadi"}
           </div>
         ) : (
-          <ul className="max-h-[64vh] overflow-y-auto">
+          <ul className="flex-1 overflow-y-auto">
             {shown.map((th) => (
               <li key={th.studentId}>
                 <button
@@ -154,7 +154,7 @@ export default function ChatView({
       </div>
 
       {/* Suhbat */}
-      <div className={"flex flex-col rounded-xl border border-slate-200 bg-white " + (active ? "" : "hidden lg:flex")}>
+      <div className={"flex min-h-0 flex-col overflow-hidden rounded-xl border border-slate-200 bg-white " + (active ? "" : "hidden lg:flex")}>
         {!open ? (
           <div className="grid flex-1 place-items-center px-6 py-20 text-center text-sm text-slate-400">
             Suhbatni tanlang
@@ -175,7 +175,7 @@ export default function ChatView({
               </div>
             </div>
 
-            <div className="max-h-[56vh] flex-1 space-y-2 overflow-y-auto bg-slate-50/60 px-4 py-3">
+            <div className="min-h-0 flex-1 space-y-2 overflow-y-auto bg-slate-50/60 px-4 py-3">
               {messages.map((m) => (
                 <div key={m.id} className={"flex " + (m.fromStudent ? "justify-start" : "justify-end")}>
                   <div
