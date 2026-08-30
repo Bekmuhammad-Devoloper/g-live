@@ -35,6 +35,7 @@ model Branch {
   leads    Lead[]
   students Student[]
   groups   Group[]
+  marketItems MarketItem[]
 }
 
 // Xodim rollari (boshqaruv)
@@ -236,6 +237,7 @@ model Student {
   certificates Certificate[]
   tasks       Task[]
   seasonalResults SeasonalResult[]
+  marketOrders MarketOrder[]
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
@@ -931,4 +933,46 @@ model SalaryRule {
   createdAt  DateTime @default(now())
 
   @@index([scope])
+}
+
+// ── Market: o'quvchi yiqqan tangalarini sovg'aga almashtiradi ──
+// Tanga balansi hisoblanadi (davomat + baholangan vazifalar), sarflangani
+// esa MarketOrder yozuvlari yig'indisi bilan aniqlanadi.
+
+model MarketItem {
+  id          String  @id @default(cuid())
+  title       String
+  description String?
+  price       Int // tangada
+  imageUrl    String? // data URL yoki /uploads/...
+  stock       Int? // null = cheklanmagan
+  isActive    Boolean @default(true)
+
+  branchId String?
+  branch   Branch? @relation(fields: [branchId], references: [id])
+
+  orders    MarketOrder[]
+  createdAt DateTime      @default(now())
+  updatedAt DateTime      @updatedAt
+
+  @@index([isActive, branchId])
+}
+
+model MarketOrder {
+  id     String @id @default(cuid())
+  itemId String
+  item   MarketItem @relation(fields: [itemId], references: [id])
+
+  studentId String
+  student   Student @relation(fields: [studentId], references: [id], onDelete: Cascade)
+
+  price  Int // sotib olish paytidagi narx (keyin o'zgarsa ham hisob buzilmasin)
+  status String @default("PENDING") // PENDING | DELIVERED | CANCELLED
+  note   String?
+
+  createdAt   DateTime  @default(now())
+  deliveredAt DateTime?
+
+  @@index([studentId, status])
+  @@index([status])
 }

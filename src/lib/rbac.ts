@@ -22,12 +22,21 @@ export const MODULES = {
   SALARY: "SALARY",
   REPORTS: "REPORTS",
   USERS: "USERS",
+  MARKET: "MARKET",
 } as const;
 
 export type ModuleKey = (typeof MODULES)[keyof typeof MODULES];
 
 // Matritsa: [module][role] => Permission
 const M: Record<ModuleKey, Partial<Record<Role, Permission>>> = {
+  // Market — o'quvchilar tangasiga almashtiriladigan sovg'alar va buyurtmalar
+  MARKET: {
+    STUDENT: "READ",
+    MANAGER: "FULL",
+    DEPUTY_DIRECTOR: "FULL",
+    DIRECTOR: "FULL",
+    ADMIN: "FULL", // sovg'ani topshiradigan administrator
+  },
   CRM: {
     OPERATOR: "FULL",  // o'ziga biriktirilgan lidlar bilan ishlaydi
     ROP: "FULL",
