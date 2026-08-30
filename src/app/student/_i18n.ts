@@ -201,6 +201,18 @@ const DICT = {
   ),
   idCard: p("Guvohnoma", "Удостоверение", "ID card", "Ausweis"),
   buy: p("Sotib olish", "Купить", "Buy", "Kaufen"),
+  learnedWords: p("O'zlashtirilgan", "Освоено", "Learned", "Gelernt"),
+  learnedWord: p("O'tilgan", "Пройдено", "Learned", "Gelernt"),
+  notLearnedYet: p("Hali o'tilmagan", "Ещё не пройдено", "Not learned yet", "Noch nicht gelernt"),
+  findInDictionary: p("Lug'atdan qidirish", "Найти в словаре", "Look up in dictionary", "Im Wörterbuch suchen"),
+  posVerb: p("fe'l", "глаг.", "verb", "Verb"),
+  posAdj: p("sifat", "прил.", "adj.", "Adj."),
+  posAdv: p("ravish", "нареч.", "adv.", "Adv."),
+  posNum: p("son", "числ.", "num.", "Num."),
+  posPron: p("olmosh", "мест.", "pron.", "Pron."),
+  posPrep: p("predlog", "предл.", "prep.", "Präp."),
+  posConj: p("bog'lovchi", "союз", "conj.", "Konj."),
+  posInt: p("undov", "межд.", "interj.", "Interj."),
 } as const;
 
 export type StudentStrings = { [K in keyof typeof DICT]: string };

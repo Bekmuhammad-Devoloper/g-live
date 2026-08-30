@@ -62,3 +62,38 @@ export const POS_LABEL: Record<string, string> = {
   konj: "bog'lovchi",
   int: "undov",
 };
+
+// ── Bitta so'zni topish ──
+// Kurs darslaridagi so'zlar ("das Haus", "guten Tag") shu baza bilan
+// bog'lanadi: o'quvchi ustoz tarjima yozmagan bo'lsa ham ma'nosini ko'radi.
+
+const BY_KEY = new Map<string, DictEntry>();
+for (const e of ALL) {
+  const k = e.de.toLowerCase();
+  if (!BY_KEY.has(k)) BY_KEY.set(k, e);
+}
+
+const ARTICLES = new Set(["der", "die", "das", "ein", "eine", "einen", "dem", "den"]);
+
+export function lookup(word: string): DictEntry | null {
+  const w = word.trim().toLowerCase().replace(/[.,;:!?]+$/, "");
+  if (!w) return null;
+
+  const direct = BY_KEY.get(w);
+  if (direct) return direct;
+
+  const parts = w.split(/\s+/);
+  if (parts.length > 1) {
+    // "das Haus" -> "haus"
+    if (ARTICLES.has(parts[0])) {
+      const rest = BY_KEY.get(parts.slice(1).join(" "));
+      if (rest) return rest;
+      const one = BY_KEY.get(parts[1]);
+      if (one) return one;
+    }
+    // "guten Tag" -> asosiy ot odatda oxirida
+    const last = BY_KEY.get(parts[parts.length - 1]);
+    if (last) return last;
+  }
+  return null;
+}

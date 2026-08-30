@@ -1,11 +1,11 @@
 import Link from "next/link";
-import { S } from "../_i18n";
+import { S, type StudentStrings } from "../_i18n";
 import { redirect } from "next/navigation";
 import { getSession } from "@/lib/auth";
 import { prisma } from "@/lib/db";
-import { ARTICLE, DICT_LETTERS, DICT_SIZE, POS_LABEL, searchDict, type DictEntry } from "@/lib/dictionary";
+import { ARTICLE, DICT_LETTERS, DICT_SIZE, searchDict, type DictEntry } from "@/lib/dictionary";
 import MissingStudent from "../MissingStudent";
-import { CARD, PageHeader } from "../_ui";
+import { CARD, ICON_GRADIENT, PageHeader } from "../_ui";
 import DictNav from "./DictNav";
 import WordList, { type VWord } from "./WordList";
 
@@ -136,12 +136,24 @@ export default async function StudentWorterbuchPage({ searchParams }: { searchPa
               </p>
             </div>
           ) : (
-            <div className={CARD + " overflow-hidden"}>
-              <ul>
-                {res!.items.map((e) => (
-                  <Row key={e.de} e={e} />
-                ))}
-              </ul>
+            <div className="space-y-2.5">
+              {groupByLetter(res!.items, !!sp.q).map(([letter, list]) => (
+                <div key={letter} className={CARD + " overflow-hidden"}>
+                  {letter ? (
+                    <div className="flex items-center gap-2.5 bg-slate-50/70 px-4 py-2">
+                      <span className="grid h-6 w-6 shrink-0 place-items-center rounded-lg text-[12px] font-extrabold text-white" style={{ background: ICON_GRADIENT }}>
+                        {letter}
+                      </span>
+                      <span className="text-[11.5px] font-semibold text-slate-400">{list.length}</span>
+                    </div>
+                  ) : null}
+                  <ul>
+                    {list.map((e) => (
+                      <Row key={e.de} e={e} t={t} />
+                    ))}
+                  </ul>
+                </div>
+              ))}
             </div>
           )}
 
@@ -182,15 +194,39 @@ const ART_STYLE: Record<string, { bg: string; fg: string }> = {
   das: { bg: "#d1fae5", fg: "#047857" },
 };
 
-function Row({ e }: { e: DictEntry }) {
+// Qidiruvda tekis ro'yxat, ko'rib chiqishda harf bo'limlari bilan
+function groupByLetter(items: DictEntry[], flat: boolean): [string, DictEntry[]][] {
+  if (flat) return [["", items]];
+  const map = new Map<string, DictEntry[]>();
+  for (const e of items) {
+    const arr = map.get(e.l);
+    if (arr) arr.push(e);
+    else map.set(e.l, [e]);
+  }
+  return [...map.entries()];
+}
+
+const POS_KEY: Record<string, keyof StudentStrings> = {
+  vt: "posVerb",
+  vi: "posVerb",
+  adj: "posAdj",
+  adv: "posAdv",
+  num: "posNum",
+  pron: "posPron",
+  "präp": "posPrep",
+  konj: "posConj",
+  int: "posInt",
+};
+
+function Row({ e, t }: { e: DictEntry; t: StudentStrings }) {
   const art = e.g ? ARTICLE[e.g] : null;
   const st = art ? ART_STYLE[art] : null;
-  const pos = e.p ? POS_LABEL[e.p] : null;
+  const pos = e.p ? t[POS_KEY[e.p] ?? "posVerb"] : null;
 
   return (
     <li className="flex gap-3 border-b border-slate-50 px-4 py-3 last:border-0">
       {/* Chap ustun: artikl yoki so'z turkumi */}
-      <div className="w-[44px] shrink-0 pt-[3px]">
+      <div className="w-[46px] shrink-0 pt-[3px]">
         {st ? (
           <span
             className="grid h-[26px] place-items-center rounded-lg text-[12px] font-extrabold"
