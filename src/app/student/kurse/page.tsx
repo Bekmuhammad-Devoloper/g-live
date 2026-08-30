@@ -7,6 +7,7 @@ import { prisma } from "@/lib/db";
 import { PageHeader } from "../_ui";
 import MissingStudent from "../MissingStudent";
 import { LEVELS, LEVEL_BG, levelName } from "./levels";
+import { getLevelBanners } from "@/lib/levelBanners";
 
 // "Kurse" — umumiy darajalar ro'yxati (A1 · A2 · B1 · B2 · C1 · C2).
 // Har daraja kartasi: nom, darslar soni, o'tilgan foiz.
@@ -51,7 +52,8 @@ export default async function StudentKursePage() {
 
   const group = student.enrollments[0]?.group ?? null;
 
-  const [lessons, progress] = await Promise.all([
+  const [banners, lessons, progress] = await Promise.all([
+    getLevelBanners(),
     group
       ? prisma.courseLesson.findMany({
           where: { programId: group.programId },
@@ -88,15 +90,26 @@ export default async function StudentKursePage() {
           const st = byLevel.get(code)!;
           const pct = st.total ? Math.round((st.done / st.total) * 100) : 0;
           const active = code === currentLevel;
+          // Ma'muriyat banner yuklagan bo'lsa — kartochka foni o'sha rasm
+          const banner = banners[code];
           return (
             <Link
               key={code}
               href={`/student/kurse/${code}`}
               // Bosh sahifadagi t.yourProgress kartasi bilan bir xil o'lcham
               className="relative flex min-h-[168px] flex-col justify-between overflow-hidden rounded-[26px] p-6 text-white shadow-[0_14px_30px_rgba(19,78,94,0.22)]"
-              style={{ background: LEVEL_BG[code] }}
+              style={banner ? { backgroundColor: "#12303f" } : { background: LEVEL_BG[code] }}
             >
-              <Mountains />
+              {banner ? (
+                <>
+                  {/* eslint-disable-next-line @next/next/no-img-element */}
+                  <img src={banner} alt="" className="absolute inset-0 h-full w-full object-cover" />
+                  {/* yozuvlar o'qilishi uchun qoramtir parda */}
+                  <span className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/45 to-black/30" />
+                </>
+              ) : (
+                <Mountains />
+              )}
               <div className="relative flex items-start gap-4">
                 {/* daraja belgisi */}
                 <span className="grid h-[58px] w-[58px] shrink-0 place-items-center rounded-2xl bg-white/20 text-[21px] font-extrabold backdrop-blur-sm">
