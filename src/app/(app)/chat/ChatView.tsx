@@ -18,6 +18,14 @@ export type VThread = {
 
 export type VMsg = { id: string; fromStudent: boolean; text: string; at: string; author: string | null };
 
+const initials = (name: string) =>
+  name
+    .split(/\s+/)
+    .slice(0, 2)
+    .map((w) => w[0])
+    .join("")
+    .toUpperCase();
+
 const clock = (iso: string) => {
   const d = new Date(iso);
   const p = (n: number) => String(n).padStart(2, "0");
@@ -38,11 +46,17 @@ export default function ChatView({
 }) {
   const router = useRouter();
   const [text, setText] = useState("");
+  const [q, setQ] = useState("");
   const [err, setErr] = useState<string | null>(null);
   const [pending, start] = useTransition();
   const endRef = useRef<HTMLDivElement>(null);
 
   const open = threads.find((t) => t.studentId === active) ?? null;
+
+  const needle = q.trim().toLowerCase();
+  const shown = needle
+    ? threads.filter((t) => t.student.toLowerCase().includes(needle) || (t.group ?? "").toLowerCase().includes(needle))
+    : threads;
 
   useEffect(() => {
     endRef.current?.scrollIntoView({ block: "end" });
@@ -83,12 +97,23 @@ export default function ChatView({
   return (
     <div className="grid gap-4 lg:grid-cols-[320px_1fr]">
       {/* Suhbatlar */}
-      <div className={"rounded-xl border border-slate-200 bg-white " + (active ? "hidden lg:block" : "")}>
-        {threads.length === 0 ? (
-          <div className="px-5 py-14 text-center text-sm text-slate-500">Hozircha yozishma yo&apos;q</div>
+      <div className={"flex flex-col rounded-xl border border-slate-200 bg-white " + (active ? "hidden lg:flex" : "")}>
+        <div className="border-b border-slate-100 p-2">
+          <input
+            value={q}
+            onChange={(e) => setQ(e.target.value)}
+            placeholder="O'quvchi qidirish…"
+            className="w-full rounded-lg border border-slate-200 px-3 py-1.5 text-sm outline-none focus:border-cyan-500"
+          />
+        </div>
+
+        {shown.length === 0 ? (
+          <div className="px-5 py-14 text-center text-sm text-slate-500">
+            {threads.length === 0 ? "Ilovaga ulangan o'quvchi yo'q" : "Topilmadi"}
+          </div>
         ) : (
-          <ul className="max-h-[70vh] overflow-y-auto">
-            {threads.map((th) => (
+          <ul className="max-h-[64vh] overflow-y-auto">
+            {shown.map((th) => (
               <li key={th.studentId}>
                 <button
                   type="button"
@@ -98,13 +123,23 @@ export default function ChatView({
                     (th.studentId === active ? "bg-cyan-50/60" : "")
                   }
                 >
+                  <span
+                    className={
+                      "mt-0.5 grid h-8 w-8 shrink-0 place-items-center rounded-full text-[11px] font-bold " +
+                      (th.lastAt ? "bg-cyan-100 text-cyan-700" : "bg-slate-100 text-slate-400")
+                    }
+                  >
+                    {initials(th.student)}
+                  </span>
                   <div className="min-w-0 flex-1">
                     <div className="flex items-baseline justify-between gap-2">
                       <span className="truncate text-sm font-semibold text-slate-800">{th.student}</span>
-                      <span className="shrink-0 text-[11px] text-slate-400">{clock(th.lastAt)}</span>
+                      {th.lastAt ? <span className="shrink-0 text-[11px] text-slate-400">{clock(th.lastAt)}</span> : null}
                     </div>
                     {th.group ? <div className="truncate text-[11.5px] text-slate-400">{th.group}</div> : null}
-                    <div className="mt-0.5 truncate text-[12.5px] text-slate-500">{th.last}</div>
+                    <div className={"mt-0.5 truncate text-[12.5px] " + (th.lastAt ? "text-slate-500" : "text-slate-300")}>
+                      {th.lastAt ? th.last : "yozishma yo'q"}
+                    </div>
                   </div>
                   {th.unread > 0 ? (
                     <span className="mt-1 shrink-0 rounded-full bg-cyan-600 px-1.5 py-[1px] text-[11px] font-bold text-white">
