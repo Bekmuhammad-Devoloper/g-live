@@ -22,10 +22,13 @@ export default function LoginForm() {
     <div>
       <form action={formAction} className="space-y-4">
         <div>
-          <label className="mb-1.5 block text-xs font-semibold text-slate-600">E-mail</label>
+          <label className="mb-1.5 block text-xs font-semibold text-slate-600">E-mail yoki login</label>
           <input
             name="email"
-            type="email"
+            type="text"
+            inputMode="email"
+            spellCheck={false}
+            autoCapitalize="none"
             required
             value={email}
             onChange={(e) => setEmail(e.target.value)}
@@ -47,7 +50,7 @@ export default function LoginForm() {
 
         {state.error && (
           <p className="rounded-lg border border-red-200 bg-red-50 px-3 py-2 text-sm text-red-700">
-            E-mail yoki parol noto&apos;g&apos;ri
+            Login yoki parol noto&apos;g&apos;ri
           </p>
         )}
 

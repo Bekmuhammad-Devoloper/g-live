@@ -25,9 +25,31 @@ export default function AccountBox({
   const [password, setPassword] = useState("");
   const [show, setShow] = useState(false);
   const [msg, setMsg] = useState<{ ok: boolean; text: string } | null>(null);
+  const [copied, setCopied] = useState<string | null>(null);
   const [busy, start] = useTransition();
 
   const L = (uz: string, ru: string, en: string, de: string) => tr(locale, { uz, ru, en, de });
+
+  // Nusxalash — HTTPS da Clipboard API, aks holda eski usul
+  const copy = async (text: string, tag: string) => {
+    try {
+      if (navigator.clipboard?.writeText) await navigator.clipboard.writeText(text);
+      else {
+        const ta = document.createElement("textarea");
+        ta.value = text;
+        ta.style.position = "fixed";
+        ta.style.opacity = "0";
+        document.body.appendChild(ta);
+        ta.select();
+        document.execCommand("copy");
+        ta.remove();
+      }
+      setCopied(tag);
+      setTimeout(() => setCopied((c) => (c === tag ? null : c)), 1600);
+    } catch {
+      setMsg({ ok: false, text: L("Nusxalanmadi", "Не скопировано", "Copy failed", "Nicht kopiert") });
+    }
+  };
 
   useEffect(() => {
     let alive = true;
@@ -63,14 +85,40 @@ export default function AccountBox({
       {acc ? (
         <>
           <div className="grid grid-cols-2 gap-2">
-            <Field label={L("Login", "Логин", "Login", "Anmeldename")} value={acc.login} />
+            <Field
+              label={L("Login", "Логин", "Login", "Anmeldename")}
+              value={acc.login}
+              onCopy={() => copy(acc.login, "login")}
+              copied={copied === "login"}
+            />
             <Field
               label={L("Parol", "Пароль", "Password", "Passwort")}
               value={acc.password ? (show ? acc.password : "•".repeat(Math.min(acc.password.length, 10))) : "—"}
               onToggle={acc.password ? () => setShow((v) => !v) : undefined}
               toggled={show}
+              onCopy={acc.password ? () => copy(acc.password!, "pass") : undefined}
+              copied={copied === "pass"}
             />
           </div>
+
+          {acc.password ? (
+            <button
+              type="button"
+              onClick={() =>
+                copy(
+                  `${L("Login", "Логин", "Login", "Anmeldename")}: ${acc.login}
+${L("Parol", "Пароль", "Password", "Passwort")}: ${acc.password}
+https://germaniya.live`,
+                  "both",
+                )
+              }
+              className="w-full rounded-lg bg-slate-100 px-3 py-1.5 text-xs font-semibold text-slate-600 transition hover:bg-slate-200 dark:bg-slate-700 dark:text-slate-200"
+            >
+              {copied === "both"
+                ? L("Nusxalandi ✓", "Скопировано ✓", "Copied ✓", "Kopiert ✓")
+                : L("Login va parolni nusxalash", "Скопировать логин и пароль", "Copy login and password", "Login und Passwort kopieren")}
+            </button>
+          ) : null}
           {!acc.active ? (
             <p className="rounded-lg bg-amber-50 px-3 py-1.5 text-xs font-semibold text-amber-700">
               {L("Hisob yopilgan — o'quvchi kira olmaydi", "Аккаунт закрыт — вход невозможен", "Account disabled", "Konto deaktiviert")}
@@ -174,20 +222,43 @@ function Field({
   value,
   onToggle,
   toggled,
+  onCopy,
+  copied,
 }: {
   label: string;
   value: string;
   onToggle?: () => void;
   toggled?: boolean;
+  onCopy?: () => void;
+  copied?: boolean;
 }) {
   return (
     <div className="rounded-lg border border-slate-200 bg-slate-50 px-3 py-2 dark:border-slate-700 dark:bg-slate-800/60">
       <div className="text-[11px] font-medium text-slate-400">{label}</div>
-      <div className="flex items-center gap-2">
-        <span className="min-w-0 truncate font-mono text-sm font-semibold text-slate-800 dark:text-slate-100">{value}</span>
+      <div className="flex items-center gap-1.5">
+        <span className="min-w-0 flex-1 truncate font-mono text-sm font-semibold text-slate-800 dark:text-slate-100">{value}</span>
         {onToggle ? (
-          <button type="button" onClick={onToggle} className="ml-auto shrink-0 text-[11px] font-bold text-brand-600">
+          <button type="button" onClick={onToggle} title="ko'rsatish" className="shrink-0 text-[13px] leading-none text-slate-400">
             {toggled ? "•••" : "👁"}
+          </button>
+        ) : null}
+        {onCopy ? (
+          <button
+            type="button"
+            onClick={onCopy}
+            title="nusxalash"
+            className={"shrink-0 transition " + (copied ? "text-emerald-600" : "text-slate-400 hover:text-brand-600")}
+          >
+            {copied ? (
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.6" strokeLinecap="round" strokeLinejoin="round">
+                <path d="m5 13 4.5 4.5L19 7" />
+              </svg>
+            ) : (
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                <rect x="9" y="9" width="11" height="11" rx="2" />
+                <path d="M5 15V5a2 2 0 0 1 2-2h10" />
+              </svg>
+            )}
           </button>
         ) : null}
       </div>
