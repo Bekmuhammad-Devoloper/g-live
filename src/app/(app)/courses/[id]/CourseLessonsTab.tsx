@@ -6,6 +6,7 @@ import { createPortal } from "react-dom";
 import { cn } from "@/lib/cn";
 import { Icon } from "../../_components/Icon";
 import { tr } from "@/lib/tr";
+import { MAX_UPLOAD_MB } from "@/lib/upload";
 import type { Locale } from "@/lib/constants";
 import { createCourseLesson, updateCourseLesson, deleteCourseLesson, moveCourseLesson, type LessonInput } from "./lessonActions";
 import { setLessonTaught } from "../../groups/[id]/lessonProgressActions";
@@ -19,7 +20,11 @@ async function uploadFile(file: File): Promise<{ url: string } | { error: string
   const fd = new FormData();
   fd.set("file", file);
   const res = await fetch("/api/upload", { method: "POST", body: fd });
-  if (!res.ok) { const j = await res.json().catch(() => ({})); return { error: j.error === "too_large" ? "too_large" : "upload_failed" }; }
+  if (!res.ok) {
+    if (res.status === 413) return { error: "too_large" }; // nginx chegarasi — javob JSON emas
+    const j = await res.json().catch(() => ({}));
+    return { error: j.error === "too_large" ? "too_large" : "upload_failed" };
+  }
   const j = await res.json();
   return { url: j.url as string };
 }
@@ -302,6 +307,18 @@ function FileUpload({ label, accept, current, onChange, locale, isVideo }: { lab
     const file = e.target.files?.[0];
     e.target.value = "";
     if (!file) return;
+
+    const mb = file.size / (1024 * 1024);
+    const tooBig = (have: number) => tr(locale, {
+      uz: `Fayl juda katta: ${have.toFixed(0)} MB. Chegara — ${MAX_UPLOAD_MB} MB.`,
+      ru: `Файл слишком большой: ${have.toFixed(0)} МБ. Лимит — ${MAX_UPLOAD_MB} МБ.`,
+      en: `File too large: ${have.toFixed(0)} MB. Limit is ${MAX_UPLOAD_MB} MB.`,
+      de: `Datei zu groß: ${have.toFixed(0)} MB. Limit ${MAX_UPLOAD_MB} MB.`,
+    });
+
+    // Serverga bekorga yubormaymiz — chegaradan katta fayl shu yerda to'xtaydi
+    if (mb > MAX_UPLOAD_MB) { setError(tooBig(mb)); return; }
+
     setError(null); setUploading(true); setPct(0);
     // XHR bilan progress
     const url = await new Promise<{ url?: string; error?: string }>((resolve) => {
@@ -309,13 +326,22 @@ function FileUpload({ label, accept, current, onChange, locale, isVideo }: { lab
       const xhr = new XMLHttpRequest();
       xhr.open("POST", "/api/upload");
       xhr.upload.onprogress = (ev) => { if (ev.lengthComputable) setPct(Math.round((ev.loaded / ev.total) * 100)); };
-      xhr.onload = () => { try { const j = JSON.parse(xhr.responseText); resolve(xhr.status < 300 ? { url: j.url } : { error: j.error }); } catch { resolve({ error: "upload_failed" }); } };
+      xhr.onload = () => {
+        // nginx chegaradan oshganda JSON emas, HTML sahifa qaytaradi —
+        // shuning uchun holat kodiga ham qaraymiz
+        if (xhr.status === 413) return resolve({ error: "too_large" });
+        try {
+          const j = JSON.parse(xhr.responseText);
+          resolve(xhr.status < 300 ? { url: j.url } : { error: j.error });
+        } catch { resolve({ error: "upload_failed" }); }
+      };
       xhr.onerror = () => resolve({ error: "upload_failed" });
       xhr.send(fd);
     });
     setUploading(false);
     if (url.url) onChange(url.url);
-    else setError(url.error === "too_large" ? tr(locale, { uz: "Fayl juda katta (maks 300 MB)", ru: "Файл слишком большой (макс 300 МБ)", en: "File too large (max 300 MB)", de: "Datei zu groß (max. 300 MB)" }) : tr(locale, { uz: "Yuklab bo'lmadi", ru: "Не удалось загрузить", en: "Upload failed", de: "Hochladen fehlgeschlagen" }));
+    else if (url.error === "too_large") setError(tooBig(mb));
+    else setError(tr(locale, { uz: "Yuklab bo'lmadi", ru: "Не удалось загрузить", en: "Upload failed", de: "Hochladen fehlgeschlagen" }));
   };
 
   return (

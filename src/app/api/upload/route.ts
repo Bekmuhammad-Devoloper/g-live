@@ -3,10 +3,10 @@ import { randomUUID } from "node:crypto";
 import { mkdir, writeFile } from "node:fs/promises";
 import path from "node:path";
 import { requireSession } from "@/lib/auth";
+import { MAX_UPLOAD_BYTES, MAX_UPLOAD_MB } from "@/lib/upload";
 
 export const runtime = "nodejs";
 
-const MAX_BYTES = 300 * 1024 * 1024; // 300 MB
 const EXT: Record<string, string> = {
   "video/mp4": "mp4", "video/webm": "webm", "video/quicktime": "mov", "video/x-matroska": "mkv", "video/ogg": "ogv",
   "image/jpeg": "jpg", "image/png": "png", "image/webp": "webp", "image/gif": "gif",
@@ -25,8 +25,8 @@ export async function POST(req: NextRequest) {
   if (!(file instanceof File) || file.size === 0) {
     return NextResponse.json({ error: "no_file" }, { status: 400 });
   }
-  if (file.size > MAX_BYTES) {
-    return NextResponse.json({ error: "too_large", maxMb: 300 }, { status: 413 });
+  if (file.size > MAX_UPLOAD_BYTES) {
+    return NextResponse.json({ error: "too_large", maxMb: MAX_UPLOAD_MB }, { status: 413 });
   }
 
   // Kengaytmani MIME yoki fayl nomidan aniqlaymiz
