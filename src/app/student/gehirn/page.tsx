@@ -1,5 +1,6 @@
 import { redirect } from "next/navigation";
 import { getSession } from "@/lib/auth";
+import { isPortalFeatureOn } from "@/lib/portalFeatures";
 import { prisma } from "@/lib/db";
 import { PageHeader } from "../_ui";
 import { S } from "../_i18n";
@@ -15,6 +16,8 @@ import GraphButton from "./GraphButton";
 export default async function BrainPage() {
   const session = await getSession();
   if (!session) redirect("/login");
+  // Bo'lim menejer tomonidan o'chirilgan bo'lsa — bosh sahifaga
+  if (!(await isPortalFeatureOn("gehirn"))) redirect("/student");
   const t = S(session.locale);
 
   const student = await prisma.student.findUnique({

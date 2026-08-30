@@ -5,7 +5,7 @@ import { PageHeader, Forbidden } from "../_components/ui";
 import EducationTabs, { type EduTab } from "./_components/EducationTabs";
 
 // O'quv bo'limini ko'ra oladigan rollar (nav.ts dagi kabi: rahbariyat + o'qituvchi)
-const ALLOWED = [ROLES.DIRECTOR, ROLES.DEPUTY_DIRECTOR, ROLES.ADMIN, ROLES.TEACHER];
+const ALLOWED = [ROLES.DIRECTOR, ROLES.DEPUTY_DIRECTOR, ROLES.ADMIN, ROLES.TEACHER, ROLES.MANAGER];
 // Faqat rahbariyat ko'radigan bo'limlar (shartnoma)
 const HEAD = [ROLES.DIRECTOR, ROLES.DEPUTY_DIRECTOR, ROLES.ADMIN];
 

@@ -21,7 +21,10 @@ const ALL: NavItem[] = [
   { href: "/teachers", icon: "teacher", i18nKey: "nav.teachers", roles: STAFF },
   { href: "/groups", icon: "layers", i18nKey: "nav.groups", module: MODULES.GROUPS },
   { href: "/students", icon: "graduation", i18nKey: "nav.students", roles: [...STAFF, ROLES.TEACHER] },
-  { href: "/education", icon: "book", i18nKey: "nav.education", roles: [...HEAD, ROLES.TEACHER] },
+  { href: "/education", icon: "book", i18nKey: "nav.education", roles: [...HEAD, ROLES.TEACHER, ROLES.MANAGER] },
+  // Savol-javob: o'quvchi /student/lehrer dan yozadi, ustoz shu yerdan javob beradi.
+  // Ustozda alohida yorliq — u kunda ishlatadi (menejerda /groups submenusida ham bor).
+  { href: "/chat", icon: "mail", i18nKey: "nav.chat", roles: [ROLES.TEACHER] },
   { href: "/reminders", icon: "clock", i18nKey: "nav.reminders", roles: [...STAFF, ROLES.TEACHER] },
   { href: "/tests", icon: "filecheck", i18nKey: "nav.blocktest", roles: [...HEAD, ROLES.TEACHER] },
   { href: "/finance", icon: "wallet", i18nKey: "nav.finance", roles: [ROLES.MANAGER, ROLES.DEPUTY_DIRECTOR, ROLES.DIRECTOR, ROLES.ACCOUNTANT] },

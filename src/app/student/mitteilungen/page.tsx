@@ -2,6 +2,7 @@ import { redirect } from "next/navigation";
 import { S } from "../_i18n";
 import HeaderBadges from "../HeaderBadges";
 import { getSession } from "@/lib/auth";
+import { isPortalFeatureOn } from "@/lib/portalFeatures";
 import { prisma } from "@/lib/db";
 import { PageHeader } from "../_ui";
 import { MESSAGE_SENT } from "../lehrer/const";
@@ -12,6 +13,8 @@ import NotifList, { type VNotif } from "./NotifList";
 export default async function StudentMitteilungenPage() {
   const session = await getSession();
   if (!session) redirect("/login");
+  // Bo'lim menejer tomonidan o'chirilgan bo'lsa — bosh sahifaga
+  if (!(await isPortalFeatureOn("mitteilungen"))) redirect("/student");
   const t = S(session.locale);
 
   const rows = await prisma.notification.findMany({

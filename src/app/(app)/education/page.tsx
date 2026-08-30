@@ -5,7 +5,9 @@ import { branchWhere, branchViaGroup } from "@/lib/branchScope";
 import { tr } from "@/lib/tr";
 import { Card, HubCard, Badge, StatCard, Forbidden } from "../_components/ui";
 
-const ALLOWED = [ROLES.DIRECTOR, ROLES.DEPUTY_DIRECTOR, ROLES.ADMIN, ROLES.TEACHER];
+const ALLOWED = [ROLES.DIRECTOR, ROLES.DEPUTY_DIRECTOR, ROLES.ADMIN, ROLES.TEACHER, ROLES.MANAGER];
+// Kurs katalogi va portal sozlamalari — menejer va rahbariyat
+const CAN_MANAGE = [ROLES.DIRECTOR, ROLES.DEPUTY_DIRECTOR, ROLES.ADMIN, ROLES.MANAGER];
 
 export default async function EducationPage() {
   const s = await requireSession();
@@ -37,6 +39,10 @@ export default async function EducationPage() {
         <HubCard href="/education/online" icon="video" title={tr(s.locale, { uz: "Onlayn kurslar", ru: "Онлайн-курсы", en: "Online courses", de: "Online-Kurse" })} desc={tr(s.locale, { uz: "Masofaviy o'tiladigan guruhlar va havolalar", ru: "Дистанционные группы и ссылки", en: "Remote groups and links", de: "Gruppen und Links für Fernunterricht" })} />
         <HubCard href="/education/offline" icon="building" title={tr(s.locale, { uz: "Offline kurslar", ru: "Офлайн-курсы", en: "Offline courses", de: "Offline-Kurse" })} desc={tr(s.locale, { uz: "Auditoriyada o'tiladigan guruhlar", ru: "Группы в аудитории", en: "In-classroom groups", de: "Gruppen im Unterrichtsraum" })} />
         <HubCard href="/education/assessment" icon="filecheck" title={tr(s.locale, { uz: "Mavsumiy baholash", ru: "Сезонное оценивание", en: "Seasonal assessment", de: "Saisonale Bewertung" })} desc={tr(s.locale, { uz: "Fasl/chorak bo'yicha davriy baholash", ru: "Периодическое оценивание по сезонам/четвертям", en: "Periodic assessment by season/quarter", de: "Regelmäßige Bewertung nach Saison/Quartal" })} />
+        <HubCard href="/courses" icon="book" title={tr(s.locale, { uz: "Kurslar va darslar", ru: "Курсы и уроки", en: "Courses and lessons", de: "Kurse und Lektionen" })} desc={tr(s.locale, { uz: "Kurs yaratish, dars va material yuklash", ru: "Создание курса, загрузка уроков и материалов", en: "Create courses, upload lessons and materials", de: "Kurse anlegen, Lektionen und Materialien hochladen" })} />
+        {CAN_MANAGE.includes(s.role as never) && (
+          <HubCard href="/settings/portal" icon="graduation" title={tr(s.locale, { uz: "O'quvchi portali", ru: "Портал ученика", en: "Student portal", de: "Schülerportal" })} desc={tr(s.locale, { uz: "Portal bo'limlarini yoqish/o'chirish", ru: "Включение/отключение разделов портала", en: "Enable or disable portal sections", de: "Portalbereiche aktivieren/deaktivieren" })} />
+        )}
         <HubCard href="/education/contract" icon="clipboard" title={tr(s.locale, { uz: "Shartnomalar", ru: "Договоры", en: "Contracts", de: "Verträge" })} desc={tr(s.locale, { uz: "O'quv shartnomalari va holati", ru: "Учебные договоры и их статус", en: "Education contracts and their status", de: "Bildungsverträge und ihr Status" })} />
       </div>
 

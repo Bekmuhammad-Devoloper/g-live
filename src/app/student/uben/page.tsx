@@ -3,6 +3,7 @@ import { S } from "../_i18n";
 import RatingBadge from "../RatingBadge";
 import { redirect } from "next/navigation";
 import { getSession } from "@/lib/auth";
+import { isPortalFeatureOn } from "@/lib/portalFeatures";
 import { prisma } from "@/lib/db";
 import { CARD, NAVY, PageHeader, SectionTitle } from "../_ui";
 import MissingStudent from "../MissingStudent";
@@ -15,6 +16,8 @@ import UebenList, { type VAssignment } from "./UebenList";
 export default async function StudentUebenPage() {
   const session = await getSession();
   if (!session) redirect("/login");
+  // Bo'lim menejer tomonidan o'chirilgan bo'lsa — bosh sahifaga
+  if (!(await isPortalFeatureOn("uben"))) redirect("/student");
   const t = S(session.locale);
 
   const student = await prisma.student.findUnique({

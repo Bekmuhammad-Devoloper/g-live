@@ -7,7 +7,7 @@ import { requireSession } from "@/lib/auth";
 import { writeAudit } from "@/lib/audit";
 import { ROLES } from "@/lib/constants";
 
-const ALLOWED = [ROLES.DIRECTOR, ROLES.DEPUTY_DIRECTOR, ROLES.ADMIN];
+const ALLOWED = [ROLES.DIRECTOR, ROLES.DEPUTY_DIRECTOR, ROLES.ADMIN, ROLES.MANAGER];
 
 export type CourseState = { ok?: boolean; error?: string; id?: string };
 

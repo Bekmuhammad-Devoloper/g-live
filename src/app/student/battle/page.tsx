@@ -1,6 +1,7 @@
 import { redirect } from "next/navigation";
 import { S } from "../_i18n";
 import { getSession } from "@/lib/auth";
+import { isPortalFeatureOn } from "@/lib/portalFeatures";
 import { prisma } from "@/lib/db";
 import MissingStudent from "../MissingStudent";
 import Battle, { type WordPair } from "./Battle";
@@ -13,6 +14,8 @@ import HeaderBadges from "../HeaderBadges";
 export default async function StudentBattlePage() {
   const session = await getSession();
   if (!session) redirect("/login");
+  // Bo'lim menejer tomonidan o'chirilgan bo'lsa — bosh sahifaga
+  if (!(await isPortalFeatureOn("battle"))) redirect("/student");
 
   const student = await prisma.student.findUnique({
     where: { userId: session.userId },

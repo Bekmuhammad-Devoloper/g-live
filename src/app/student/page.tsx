@@ -1,3 +1,5 @@
+import fs from "node:fs";
+import path from "node:path";
 import Link from "next/link";
 import { S } from "./_i18n";
 import { redirect } from "next/navigation";
@@ -18,6 +20,30 @@ import MissingStudent from "./MissingStudent";
 //   Rang     — guruhdoshlar orasida davomat bo'yicha O'RIN (1 = birinchi)
 
 const clamp = (n: number) => Math.max(0, Math.min(100, Math.round(n)));
+
+// ── Ko'nikma rasmlari (public/skills/) ──
+// Foiz 5 ta kayfiyat darajasiga bo'linadi: 0-15, 16-40, 41-60, 61-85, 86-100.
+// Rasm hali yuklanmagan bo'lsa — pastdagi SVG ikonka ishlatiladi (sayt buzilmaydi).
+function skillLevel(pct: number): 1 | 2 | 3 | 4 | 5 {
+  if (pct <= 15) return 1;
+  if (pct <= 40) return 2;
+  if (pct <= 60) return 3;
+  if (pct <= 85) return 4;
+  return 5;
+}
+function skillImage(base: string, pct: number): string | null {
+  const lvl = skillLevel(pct);
+  // Ikki xil joylashuv qo'llab-quvvatlanadi:
+  //   public/skills/hoeren/3.png   (papkali)
+  //   public/skills/hoeren-3.png   (yassi)
+  const candidates = [`${base}/${lvl}.png`, `${base}-${lvl}.png`];
+  try {
+    for (const rel of candidates) {
+      if (fs.existsSync(path.join(process.cwd(), "public", "skills", rel))) return `/skills/${rel}`;
+    }
+  } catch { /* fayl tizimi o'qilmasa — SVG ikonka ishlatiladi */ }
+  return null;
+}
 
 const TEAL = "#0e7490"; // asosiy rang (maketdagi to'q moviy-feruza)
 const NAVY = "#134e5e"; // halqa/qiymatlarning to'q varianti
@@ -322,10 +348,10 @@ export default async function StudentStartPage() {
   const avatarUrl = student.imageUrl || student.user?.imageUrl || null;
 
   const skills = [
-    { key: "w", label: t.words, pct: woerter, icon: <span style={{ color: TEAL }} className="text-[34px] font-extrabold leading-none">W</span> },
-    { key: "l", label: t.reading, pct: lesen, icon: <IcoBook /> },
-    { key: "h", label: t.listening, pct: hoeren, icon: <IcoHeadphones /> },
-    { key: "s", label: t.speaking, pct: sprechen, icon: <IcoMic /> },
+    { key: "w", label: t.words, pct: woerter, img: skillImage("woerter", woerter), icon: <span style={{ color: TEAL }} className="text-[34px] font-extrabold leading-none">W</span> },
+    { key: "l", label: t.reading, pct: lesen, img: skillImage("lesen", lesen), icon: <IcoBook /> },
+    { key: "h", label: t.listening, pct: hoeren, img: skillImage("hoeren", hoeren), icon: <IcoHeadphones /> },
+    { key: "s", label: t.speaking, pct: sprechen, img: skillImage("sprechen", sprechen), icon: <IcoMic /> },
   ];
 
   // Maketdagi yumshoq oq karta
@@ -372,7 +398,12 @@ export default async function StudentStartPage() {
       <div className="grid grid-cols-4 gap-3">
         {skills.map((sk) => (
           <div key={sk.key} className={`${card} flex flex-col items-center gap-2.5 px-1 pb-4 pt-5`}>
-            <div className="grid h-10 place-items-center">{sk.icon}</div>
+            <div className="grid h-10 place-items-center">
+              {sk.img
+                // eslint-disable-next-line @next/next/no-img-element
+                ? <img src={sk.img} alt="" className="h-10 w-10 object-contain" />
+                : sk.icon}
+            </div>
             <div className="text-[13px] font-semibold text-slate-800">{sk.label}</div>
             <div className="relative grid place-items-center">
               <Ring pct={sk.pct} size={62} stroke={5} />

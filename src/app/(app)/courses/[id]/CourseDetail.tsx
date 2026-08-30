@@ -24,6 +24,8 @@ export interface CourseData {
   materials: { id: string; title: string; kind: string; url: string | null; levelCode: string | null; note: string | null }[];
   courseLessons: VLesson[];
   canManage: boolean;
+  /** Kursning O'ZINI tahrirlash/o'chirish (o'qituvchida yo'q — u faqat dars yuklaydi) */
+  canEditCourse: boolean;
   locale: Locale;
 }
 
@@ -69,14 +71,16 @@ export default function CourseDetail({ course }: { course: CourseData }) {
             style={course.banners.length ? { backgroundImage: `url(${course.banners[activeBanner] ?? course.banners[0]})`, backgroundSize: "cover", backgroundPosition: "center" } : { backgroundColor: colorFor(course.id) }}
           >
             {course.banners.length > 0 && <div className="absolute inset-0 bg-gradient-to-t from-black/65 via-black/15 to-black/25" />}
-            <div className="absolute right-3 top-3 z-10 flex gap-2">
-              <button onClick={() => setEditOpen(true)} title="Tahrirlash" className="flex h-9 w-9 items-center justify-center rounded-full bg-white/25 text-white transition hover:bg-white/40">
-                <Icon name="edit" className="h-4 w-4" />
-              </button>
-              <button onClick={onDelete} disabled={pending} title="O'chirish" className="flex h-9 w-9 items-center justify-center rounded-full bg-white/25 text-white transition hover:bg-white/40 disabled:opacity-50">
-                <Icon name="trash" className="h-4 w-4" />
-              </button>
-            </div>
+            {course.canEditCourse && (
+              <div className="absolute right-3 top-3 z-10 flex gap-2">
+                <button onClick={() => setEditOpen(true)} title="Tahrirlash" className="flex h-9 w-9 items-center justify-center rounded-full bg-white/25 text-white transition hover:bg-white/40">
+                  <Icon name="edit" className="h-4 w-4" />
+                </button>
+                <button onClick={onDelete} disabled={pending} title="O'chirish" className="flex h-9 w-9 items-center justify-center rounded-full bg-white/25 text-white transition hover:bg-white/40 disabled:opacity-50">
+                  <Icon name="trash" className="h-4 w-4" />
+                </button>
+              </div>
+            )}
             <span className="relative mt-2 line-clamp-2 text-center text-xl font-bold text-white drop-shadow">{course.name}</span>
             {course.banners.length === 0 && <Icon name="graduation" className="mb-4 mt-auto h-16 w-16 text-white/85" />}
           </div>

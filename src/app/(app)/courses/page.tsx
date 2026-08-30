@@ -5,7 +5,9 @@ import { branchWhere } from "@/lib/branchScope";
 import { Forbidden } from "../_components/ui";
 import CoursesView, { type VCourse } from "./CoursesView";
 
-const ALLOWED = [ROLES.DIRECTOR, ROLES.DEPUTY_DIRECTOR, ROLES.ADMIN];
+// Kurslarni boshqarish: rahbariyat + menejer. O'qituvchi ham kiradi, lekin
+// faqat O'Z guruhlari foydalanadigan kurslarni ko'radi (dars yuklash uchun).
+const ALLOWED = [ROLES.DIRECTOR, ROLES.DEPUTY_DIRECTOR, ROLES.ADMIN, ROLES.MANAGER, ROLES.TEACHER];
 
 export default async function CoursesPage() {
   const s = await requireSession();
@@ -14,7 +16,11 @@ export default async function CoursesPage() {
   }
 
   // Kurs katalogi hamma filialda umumiy, lekin guruhlar soni faol filial bo'yicha
+  // O'qituvchi — faqat o'zi dars beradigan guruhlarning kurslari
+  const scope = s.role === ROLES.TEACHER ? { groups: { some: { teacherId: s.userId } } } : {};
+
   const programs = await prisma.program.findMany({
+    where: scope,
     orderBy: { createdAt: "desc" },
     include: { _count: { select: { levels: true, groups: { where: branchWhere(s) } } } },
   });

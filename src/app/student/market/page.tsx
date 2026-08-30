@@ -1,5 +1,6 @@
 import { redirect } from "next/navigation";
 import { getSession } from "@/lib/auth";
+import { isPortalFeatureOn } from "@/lib/portalFeatures";
 import { coinBalance } from "@/lib/coins";
 import { prisma } from "@/lib/db";
 import { S } from "../_i18n";
@@ -29,6 +30,8 @@ const STATUS_CLS: Record<string, string> = {
 export default async function StudentMarketPage() {
   const session = await getSession();
   if (!session) redirect("/login");
+  // Bo'lim menejer tomonidan o'chirilgan bo'lsa — bosh sahifaga
+  if (!(await isPortalFeatureOn("market"))) redirect("/student");
   const t = S(session.locale);
 
   const student = await prisma.student.findUnique({

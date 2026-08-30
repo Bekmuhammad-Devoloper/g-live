@@ -2,6 +2,7 @@ import Link from "next/link";
 import { S, type StudentStrings } from "../_i18n";
 import { redirect } from "next/navigation";
 import { getSession } from "@/lib/auth";
+import { isPortalFeatureOn } from "@/lib/portalFeatures";
 import { prisma } from "@/lib/db";
 import { ARTICLE, DICT_LETTERS, DICT_SIZE, searchDict, type DictEntry } from "@/lib/dictionary";
 import MissingStudent from "../MissingStudent";
@@ -25,6 +26,8 @@ export default async function StudentWorterbuchPage({ searchParams }: { searchPa
 
   const session = await getSession();
   if (!session) redirect("/login");
+  // Bo'lim menejer tomonidan o'chirilgan bo'lsa — bosh sahifaga
+  if (!(await isPortalFeatureOn("worterbuch"))) redirect("/student");
   const t = S(session.locale);
 
   const student = await prisma.student.findUnique({

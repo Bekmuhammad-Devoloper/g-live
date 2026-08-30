@@ -49,7 +49,7 @@ function Ico({ name, active }: { name: string; active: boolean }) {
   );
 }
 
-export default function BottomNav({ t }: { t: StudentStrings }) {
+export default function BottomNav({ t, showUben = true }: { t: StudentStrings; showUben?: boolean }) {
   const pathname = usePathname();
   // Jang, yozishma va bog'lanishlar grafi to'liq ekranda ochiladi — menyu ko'rinmaydi
   if (
@@ -62,7 +62,8 @@ export default function BottomNav({ t }: { t: StudentStrings }) {
   const items = [
     { href: "/student", icon: "home", label: t.navStart, exact: true },
     { href: "/student/kurse", icon: "book", label: t.navCourses },
-    { href: "/student/uben", icon: "target", label: t.navPractice },
+    // Mashqlar bo'limi menejer tomonidan o'chirilgan bo'lishi mumkin
+    ...(showUben ? [{ href: "/student/uben", icon: "target", label: t.navPractice }] : []),
     { href: "/student/profil", icon: "profil", label: t.navProfile },
   ];
   return (

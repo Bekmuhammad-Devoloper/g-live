@@ -5,7 +5,10 @@ import { ROLES } from "@/lib/constants";
 import { Forbidden } from "../../_components/ui";
 import CourseDetail, { type CourseData } from "./CourseDetail";
 
-const ALLOWED = [ROLES.DIRECTOR, ROLES.DEPUTY_DIRECTOR, ROLES.ADMIN];
+// Kurs sahifasi: rahbariyat + menejer to'liq boshqaradi.
+// O'qituvchi kiradi (dars yuklash uchun), lekin kursning o'zini tahrirlay/o'chira olmaydi.
+const ALLOWED = [ROLES.DIRECTOR, ROLES.DEPUTY_DIRECTOR, ROLES.ADMIN, ROLES.MANAGER, ROLES.TEACHER];
+const CAN_EDIT_COURSE = [ROLES.DIRECTOR, ROLES.DEPUTY_DIRECTOR, ROLES.ADMIN, ROLES.MANAGER];
 
 export default async function CourseDetailPage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = await params;
@@ -27,6 +30,9 @@ export default async function CourseDetailPage({ params }: { params: Promise<{ i
     },
   });
   if (!program) notFound();
+
+  // O'qituvchi faqat o'z guruhlari foydalanadigan kursga kira oladi
+  if (s.role === ROLES.TEACHER && !program.groups.some((g) => g.teacherId === s.userId)) notFound();
 
   const studentsTotal = program.groups.reduce((n, g) => n + g._count.students, 0);
 
@@ -53,6 +59,7 @@ export default async function CourseDetailPage({ params }: { params: Promise<{ i
       id: cl.id, order: cl.order, levelCode: cl.levelCode, title: cl.title, topic: cl.topic, videoUrl: cl.videoUrl, materialUrl: cl.materialUrl, assignment: cl.assignment, assignmentFileUrl: cl.assignmentFileUrl, homework: cl.homework, homeworkFileUrl: cl.homeworkFileUrl,
     })),
     canManage: true,
+    canEditCourse: CAN_EDIT_COURSE.includes(s.role as never),
     locale: s.locale,
   };
 

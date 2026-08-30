@@ -1,5 +1,6 @@
 import { redirect } from "next/navigation";
 import { getSession } from "@/lib/auth";
+import { isPortalFeatureOn } from "@/lib/portalFeatures";
 import { prisma } from "@/lib/db";
 import { S } from "../_i18n";
 import MissingStudent from "../MissingStudent";
@@ -11,6 +12,8 @@ import Chat, { type VMsg } from "./Chat";
 export default async function StudentLehrerPage() {
   const session = await getSession();
   if (!session) redirect("/login");
+  // Bo'lim menejer tomonidan o'chirilgan bo'lsa — bosh sahifaga
+  if (!(await isPortalFeatureOn("lehrer"))) redirect("/student");
   const t = S(session.locale);
 
   const student = await prisma.student.findUnique({
