@@ -11,6 +11,7 @@ import { Icon } from "../../_components/Icon";
 import { CreateStudentForm, EnrollExisting, BulkImportStudents, NewLessonForm, RemoveStudentButton, EditGroupButton } from "./GroupForms";
 import { GroupAttendance } from "./GroupAttendance";
 import CourseLessonsTab from "../../courses/[id]/CourseLessonsTab";
+import { getLevelCodes } from "@/lib/studyLevels";
 import { groupColor } from "../groupColor";
 import { isPaymentMandatoryBulk } from "@/lib/paymentPolicy";
 
@@ -54,6 +55,7 @@ export default async function GroupDetailPage({ params }: { params: Promise<{ id
   ]);
   const lessonProgress: Record<string, boolean> = {};
   for (const pr of progressRows) lessonProgress[pr.courseLessonId] = pr.taught;
+  const levelCodes = await getLevelCodes();
   const vLessons = courseLessons.map((cl) => ({ id: cl.id, order: cl.order, levelCode: cl.levelCode, title: cl.title, topic: cl.topic, videoUrl: cl.videoUrl, materialUrl: cl.materialUrl, assignment: cl.assignment, assignmentFileUrl: cl.assignmentFileUrl, homework: cl.homework, homeworkFileUrl: cl.homeworkFileUrl }));
 
   // To'lov majburiy holati (3 dan ko'p dars o'tilgan, to'lanmagan) — davomat blokini ko'rsatish uchun
@@ -152,7 +154,7 @@ export default async function GroupDetailPage({ params }: { params: Promise<{ id
           {tr(s.locale, { uz: "Dars rejasi", ru: "План уроков", en: "Lesson plan", de: "Unterrichtsplan" })}
           <span className="text-xs font-normal text-slate-400">({tr(s.locale, { uz: "video · mavzu · topshiriq · uy vazifasi", ru: "видео · тема · задание · домашка", en: "video · topic · assignment · homework", de: "Video · Thema · Aufgabe · Hausaufgabe" })})</span>
         </h3>
-        <CourseLessonsTab programId={group.programId} lessons={vLessons} canManage={canManage} locale={s.locale} groupId={group.id} progress={lessonProgress} />
+        <CourseLessonsTab programId={group.programId} lessons={vLessons} canManage={canManage} locale={s.locale} levelCodes={levelCodes} groupId={group.id} progress={lessonProgress} />
       </Card>
 
       <div className="grid gap-6 lg:grid-cols-2">

@@ -1,6 +1,7 @@
 import { notFound } from "next/navigation";
 import { requireSession } from "@/lib/auth";
 import { prisma } from "@/lib/db";
+import { getLevelCodes } from "@/lib/studyLevels";
 import { ROLES } from "@/lib/constants";
 import { Forbidden } from "../../_components/ui";
 import CourseDetail, { type CourseData } from "./CourseDetail";
@@ -58,6 +59,7 @@ export default async function CourseDetailPage({ params }: { params: Promise<{ i
     courseLessons: program.courseLessons.map((cl) => ({
       id: cl.id, order: cl.order, levelCode: cl.levelCode, title: cl.title, topic: cl.topic, videoUrl: cl.videoUrl, materialUrl: cl.materialUrl, assignment: cl.assignment, assignmentFileUrl: cl.assignmentFileUrl, homework: cl.homework, homeworkFileUrl: cl.homeworkFileUrl,
     })),
+    levelCodes: await getLevelCodes(),
     canManage: true,
     canEditCourse: CAN_EDIT_COURSE.includes(s.role as never),
     locale: s.locale,

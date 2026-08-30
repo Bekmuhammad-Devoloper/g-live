@@ -24,7 +24,7 @@ async function uploadFile(file: File): Promise<{ url: string } | { error: string
   return { url: j.url as string };
 }
 
-export default function CourseLessonsTab({ programId, lessons, canManage, locale, groupId, progress }: { programId: string; lessons: VLesson[]; canManage: boolean; locale: Locale; groupId?: string; progress?: Record<string, boolean> }) {
+export default function CourseLessonsTab({ programId, lessons, canManage, locale, levelCodes, groupId, progress }: { programId: string; lessons: VLesson[]; canManage: boolean; locale: Locale; /** Sozlamalar > Darajalar ro'yxati */ levelCodes: string[]; groupId?: string; progress?: Record<string, boolean> }) {
   const [edit, setEdit] = useState<VLesson | null>(null);
   const [open, setOpen] = useState(false);
   const openNew = () => { setEdit(null); setOpen(true); };
@@ -58,7 +58,7 @@ export default function CourseLessonsTab({ programId, lessons, canManage, locale
         </ol>
       )}
 
-      {open && canManage && <LessonDrawer programId={programId} initial={edit} locale={locale} onClose={() => setOpen(false)} />}
+      {open && canManage && <LessonDrawer programId={programId} initial={edit} locale={locale} levelCodes={levelCodes} onClose={() => setOpen(false)} />}
     </div>
   );
 }
@@ -179,7 +179,7 @@ function Field({ label, value }: { label: string; value: string }) {
 }
 
 /* ── Qo'shish / tahrirlash drawer ── */
-function LessonDrawer({ programId, initial, locale, onClose }: { programId: string; initial: VLesson | null; locale: Locale; onClose: () => void }) {
+function LessonDrawer({ programId, initial, locale, levelCodes, onClose }: { programId: string; initial: VLesson | null; locale: Locale; levelCodes: string[]; onClose: () => void }) {
   const router = useRouter();
   const [title, setTitle] = useState(initial?.title ?? "");
   const [levelCode, setLevelCode] = useState(initial?.levelCode ?? "");
@@ -246,7 +246,7 @@ function LessonDrawer({ programId, initial, locale, onClose }: { programId: stri
             </label>
             <select value={levelCode} onChange={(e) => setLevelCode(e.target.value)} className={inp}>
               <option value="">{tr(locale, { uz: "— tanlanmagan —", ru: "— не выбрано —", en: "— none —", de: "— nicht ausgewählt —" })}</option>
-              {["A1", "A2", "B1", "B2", "C1", "C2"].map((c) => <option key={c} value={c}>{c}</option>)}
+              {levelCodes.map((c) => <option key={c} value={c}>{c}</option>)}
             </select>
           </div>
 

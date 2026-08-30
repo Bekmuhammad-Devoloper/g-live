@@ -4,6 +4,7 @@ import { revalidatePath } from "next/cache";
 import { prisma } from "@/lib/db";
 import { parseQuestions } from "../../(app)/links/questions";
 import { parseUzPhone } from "@/lib/phone";
+import { getLevelCodes } from "@/lib/studyLevels";
 
 export type ApplyState = { ok?: boolean; error?: string };
 
@@ -34,8 +35,8 @@ export async function submitApplication(
   const ageRaw = parseInt(String(extra.age ?? ""), 10);
   const ageNum = Number.isFinite(ageRaw) && ageRaw >= 3 && ageRaw <= 99 ? ageRaw : null;
   // Daraja — faqat ro'yxatdagi qiymat
-  const LEVELS = ["A1", "A2", "B1", "B2", "C1", "C2"];
-  const levelStr = LEVELS.includes(String(extra.level ?? "")) ? String(extra.level) : null;
+  const levels = await getLevelCodes();
+  const levelStr = levels.includes(String(extra.level ?? "")) ? String(extra.level) : null;
 
   // Qo'shimcha savollar — majburiylari serverda ham tekshiriladi (mijozga ishonmaymiz)
   const questions = parseQuestions(link.vacancy.questions);

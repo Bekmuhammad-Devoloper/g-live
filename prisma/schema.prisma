@@ -347,6 +347,31 @@ model GroupLessonProgress {
   @@index([groupId])
 }
 
+// ─────────────────────────────────────────────────────────────
+// DARAJA KATALOGI — Sozlamalar > Darajalar
+// A1, A2, B1 ... butun tizim bo'ylab bitta ro'yxatdan olinadi:
+// o'quvchi ilovasidagi kurslar, dars oynasidagi tanlov, ariza formasi.
+// Pastdagi `Level` modeli BOSHQA narsa — u aynan bitta kursdagi
+// darajaning reja ko'rsatkichlari (hafta, akademik soat, o'tish balli).
+// ─────────────────────────────────────────────────────────────
+model StudyLevel {
+  id        String  @id @default(cuid())
+  code      String  @unique // A1, A2, B1.1 ...
+  nameUz    String
+  nameRu    String
+  nameEn    String
+  nameDe    String
+  color     String  @default("#0e7490") // kartochka gradienti shundan hosil bo'ladi
+  bannerUrl String? // ilovada kartochka o'rniga ko'rinadigan rasm
+  sortOrder Int     @default(0)
+  isActive  Boolean @default(true) // o'chirilgani ilovada ko'rinmaydi
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([sortOrder])
+}
+
 model Level {
   id        String  @id @default(cuid())
   programId String

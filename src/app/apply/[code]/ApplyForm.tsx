@@ -5,14 +5,13 @@ import { submitApplication } from "./actions";
 import type { ApplyQuestion } from "../../(app)/links/questions";
 import { fmtUzPhoneInput } from "@/lib/phone";
 
-// Ariza formasida taklif etiladigan darajalar
-const LEVELS = ["A1", "A2", "B1", "B2", "C1", "C2"];
-
-export default function ApplyForm({ code, preview, questions = [] }: {
+export default function ApplyForm({ code, preview, questions = [], levels }: {
   code: string;
   preview: boolean;
   /** Havola yaratishda belgilangan qo'shimcha savollar (bo'lmasa — faqat ism/telefon) */
   questions?: ApplyQuestion[];
+  /** Sozlamalar > Darajalar katalogidagi kodlar */
+  levels: string[];
 }) {
   const [pending, start] = useTransition();
   const [error, setError] = useState<string | null>(null);
@@ -101,7 +100,7 @@ export default function ApplyForm({ code, preview, questions = [] }: {
           <span className="mb-1 block text-xs font-semibold text-slate-500">Daraja</span>
           <select value={level} onChange={(e) => setLevel(e.target.value)} className={inp}>
             <option value="">Bilmayman</option>
-            {LEVELS.map((l) => <option key={l} value={l}>{l}</option>)}
+            {levels.map((l) => <option key={l} value={l}>{l}</option>)}
           </select>
         </label>
       </div>

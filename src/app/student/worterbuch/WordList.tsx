@@ -13,8 +13,6 @@ import { CARD, ICON_GRADIENT, TEAL } from "../_ui";
 
 export type VWord = { de: string; uz: string | null; lesson: string; level: string; learned: boolean };
 
-const LEVELS = ["A1", "A2", "B1", "B2", "C1", "C2"];
-
 // Katak daftar varag'i — umumiy lug'at bilan bir xil ko'rinish
 const SHEET: React.CSSProperties = {
   backgroundColor: "#fcfdff",
@@ -24,11 +22,11 @@ const SHEET: React.CSSProperties = {
   backgroundSize: "24px 24px",
 };
 
-export default function WordList({ words, t }: { words: VWord[]; t: StudentStrings }) {
+export default function WordList({ words, t, levelCodes }: { words: VWord[]; t: StudentStrings; /** Sozlamalar > Darajalar tartibi */ levelCodes: string[] }) {
   const [q, setQ] = useState("");
   const [level, setLevel] = useState<string | null>(null);
 
-  const levels = useMemo(() => LEVELS.filter((c) => words.some((w) => w.level === c)), [words]);
+  const levels = useMemo(() => levelCodes.filter((c) => words.some((w) => w.level === c)), [words, levelCodes]);
   const learned = useMemo(() => words.filter((w) => w.learned).length, [words]);
   const pct = words.length ? Math.round((learned / words.length) * 100) : 0;
 

@@ -4,7 +4,7 @@ import { notFound, redirect } from "next/navigation";
 import { getSession } from "@/lib/auth";
 import { prisma } from "@/lib/db";
 import MissingStudent from "../../MissingStudent";
-import { LEVELS, levelName } from "../levels";
+import { getActiveLevels, levelTitle } from "@/lib/studyLevels";
 import HeaderBadges from "../../HeaderBadges";
 
 // Daraja ichi — maketdagi "darslar yo'li": unit kafellari zigzag bo'lib
@@ -56,7 +56,9 @@ function Connector({ toRight }: { toRight: boolean }) {
 export default async function StudentLevelPage({ params }: { params: Promise<{ level: string }> }) {
   const { level } = await params;
   const code = level.toUpperCase();
-  if (!(LEVELS as readonly string[]).includes(code)) notFound();
+  const levels = await getActiveLevels();
+  const lvl = levels.find((l) => l.code.toUpperCase() === code);
+  if (!lvl) notFound();
 
   const session = await getSession();
   if (!session) redirect("/login");
@@ -104,7 +106,7 @@ export default async function StudentLevelPage({ params }: { params: Promise<{ l
         </Link>
         {/* Sarlavha — daraja nomi. Tor ekranda ham sig'ishi uchun kichikroq shrift. */}
         <h1 className="min-w-0 flex-1 truncate text-[17px] font-extrabold tracking-tight text-[#4c1d95]">
-          {levelName(code, session.locale)} <span className="text-[#7c3aed]">{code}</span>
+          {levelTitle(lvl, session.locale)} <span className="text-[#7c3aed]">{lvl.code}</span>
         </h1>
         <HeaderBadges />
       </div>

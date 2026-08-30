@@ -4,9 +4,6 @@ import { tr } from "@/lib/tr";
 import { PORTAL_FEATURES, getPortalFlags } from "@/lib/portalFeatures";
 import { PageHeader, Forbidden } from "../../_components/ui";
 import PortalFeaturesView, { type FeatureRow } from "./PortalFeaturesView";
-import LevelBannersView, { type BannerRow } from "./LevelBannersView";
-import { BANNER_LEVELS, getLevelBanners } from "@/lib/levelBanners";
-import { levelName } from "@/app/student/kurse/levels";
 
 // O'quvchi portalidagi bo'limlarni yoqish/o'chirish — menejer va rahbariyat
 const ALLOWED = [ROLES.DIRECTOR, ROLES.DEPUTY_DIRECTOR, ROLES.ADMIN, ROLES.MANAGER];
@@ -22,7 +19,7 @@ export default async function PortalSettingsPage() {
     );
   }
 
-  const [flags, banners] = await Promise.all([getPortalFlags(), getLevelBanners()]);
+  const flags = await getPortalFlags();
   const rows: FeatureRow[] = PORTAL_FEATURES.map((f) => ({
     key: f.key,
     path: f.path,
@@ -32,20 +29,13 @@ export default async function PortalSettingsPage() {
     on: flags[f.key],
   }));
 
-  const bannerRows: BannerRow[] = BANNER_LEVELS.map((code) => ({
-    code,
-    name: levelName(code, s.locale),
-    url: banners[code],
-  }));
-
   return (
-    <div className="space-y-4">
+    <div>
       <PageHeader
         title={tr(s.locale, { uz: "O'quvchi portali", ru: "Портал ученика", en: "Student portal", de: "Schülerportal" })}
         subtitle={tr(s.locale, { uz: "Qaysi bo'limlar o'quvchilarga ochiq bo'lishini belgilang", ru: "Выберите, какие разделы доступны ученикам", en: "Choose which sections are available to students", de: "Wählen Sie, welche Bereiche für Schüler verfügbar sind" })}
       />
       <PortalFeaturesView rows={rows} locale={s.locale} />
-      <LevelBannersView rows={bannerRows} locale={s.locale} />
     </div>
   );
 }

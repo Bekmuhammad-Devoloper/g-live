@@ -6,8 +6,8 @@ import { getSession } from "@/lib/auth";
 import { prisma } from "@/lib/db";
 import { PageHeader } from "../_ui";
 import MissingStudent from "../MissingStudent";
-import { LEVELS, LEVEL_BG, levelName } from "./levels";
-import { getLevelBanners } from "@/lib/levelBanners";
+import { getActiveLevels, levelTitle, matchLevel } from "@/lib/studyLevels";
+import { levelGradient } from "@/lib/levelColor";
 
 // "Kurse" — umumiy darajalar ro'yxati (A1 · A2 · B1 · B2 · C1 · C2).
 // Har daraja kartasi: nom, darslar soni, o'tilgan foiz.
@@ -52,8 +52,8 @@ export default async function StudentKursePage() {
 
   const group = student.enrollments[0]?.group ?? null;
 
-  const [banners, lessons, progress] = await Promise.all([
-    getLevelBanners(),
+  const [levels, lessons, progress] = await Promise.all([
+    getActiveLevels(),
     group
       ? prisma.courseLesson.findMany({
           where: { programId: group.programId },
@@ -68,37 +68,39 @@ export default async function StudentKursePage() {
 
   const taught = new Set(progress.map((p) => p.courseLessonId));
 
-  // Darajaga biriktirilmagan darslar guruhning o'z darajasiga (yoki A1 ga) qo'shiladi
-  const fallback = (group?.levelCode ?? student.currentLevel ?? "A1").slice(0, 2).toUpperCase();
+  // Darajaga biriktirilmagan darslar guruhning o'z darajasiga (yoki birinchisiga) qo'shiladi
+  const fallback = matchLevel(group?.levelCode ?? student.currentLevel, levels) ?? levels[0] ?? null;
   const byLevel = new Map<string, { total: number; done: number }>();
-  for (const code of LEVELS) byLevel.set(code, { total: 0, done: 0 });
+  for (const l of levels) byLevel.set(l.code, { total: 0, done: 0 });
   for (const l of lessons) {
-    const code = (l.levelCode ?? fallback).toUpperCase();
-    const bucket = byLevel.get(code) ?? byLevel.get("A1")!;
+    const lvl = matchLevel(l.levelCode, levels) ?? fallback;
+    const bucket = lvl ? byLevel.get(lvl.code) : undefined;
+    if (!bucket) continue;
     bucket.total++;
     if (taught.has(l.id)) bucket.done++;
   }
 
-  const currentLevel = (group?.levelCode ?? student.currentLevel ?? "").slice(0, 2).toUpperCase();
+  const currentLevel = matchLevel(group?.levelCode ?? student.currentLevel, levels)?.code ?? "";
 
   return (
     <div className="space-y-4">
       <PageHeader title={t.courses} subtitle={group?.program.name ?? "Deutsch"} right={<KurseActions t={t} />} />
 
       <div className="space-y-3.5">
-        {LEVELS.map((code) => {
+        {levels.map((lvl) => {
+          const code = lvl.code;
           const st = byLevel.get(code)!;
           const pct = st.total ? Math.round((st.done / st.total) * 100) : 0;
           const active = code === currentLevel;
           // Ma'muriyat banner yuklagan bo'lsa — kartochka foni o'sha rasm
-          const banner = banners[code];
+          const banner = lvl.bannerUrl;
           return (
             <Link
               key={code}
               href={`/student/kurse/${code}`}
               // Bosh sahifadagi t.yourProgress kartasi bilan bir xil o'lcham
               className="relative flex min-h-[168px] flex-col justify-between overflow-hidden rounded-[26px] p-6 text-white shadow-[0_14px_30px_rgba(19,78,94,0.22)]"
-              style={banner ? { backgroundColor: "#12303f" } : { background: LEVEL_BG[code] }}
+              style={banner ? { backgroundColor: "#12303f" } : { background: levelGradient(lvl.color) }}
             >
               {banner ? (
                 <>
@@ -117,7 +119,7 @@ export default async function StudentKursePage() {
                 </span>
                 <div className="min-w-0 flex-1">
                   <div className="flex items-center gap-2">
-                    <span className="truncate text-[24px] font-extrabold leading-tight">{levelName(code, session.locale)}</span>
+                    <span className="truncate text-[24px] font-extrabold leading-tight">{levelTitle(lvl, session.locale)}</span>
                     {active && (
                       <span className="shrink-0 rounded-full bg-white/25 px-2 py-0.5 text-[10px] font-bold uppercase tracking-wide">
                         aktuell

@@ -4,7 +4,8 @@ import { notFound, redirect } from "next/navigation";
 import { getSession } from "@/lib/auth";
 import { prisma } from "@/lib/db";
 import MissingStudent from "../../../MissingStudent";
-import { LEVELS, LEVEL_BG } from "../../levels";
+import { getActiveLevels } from "@/lib/studyLevels";
+import { levelGradient } from "@/lib/levelColor";
 import HeaderBadges from "../../../HeaderBadges";
 
 // Unit ichi — Vocabulary / Video lesson (+ Test) / Exercises kartalari.
@@ -114,7 +115,8 @@ function VideoCard({ kind, title, watched, score, href, t }: { kind: string; tit
 export default async function StudentUnitPage({ params }: { params: Promise<{ level: string; unit: string }> }) {
   const { level, unit } = await params;
   const code = level.toUpperCase();
-  if (!(LEVELS as readonly string[]).includes(code)) notFound();
+  const lvl = (await getActiveLevels()).find((l) => l.code.toUpperCase() === code);
+  if (!lvl) notFound();
 
   const session = await getSession();
   if (!session) redirect("/login");
@@ -186,7 +188,7 @@ export default async function StudentUnitPage({ params }: { params: Promise<{ le
         <HeaderBadges />
       </div>
 
-      <ProgressCard title={t.vocabulary} sub={`${words} ${t.words.toLowerCase()}`} pct={done ? 100 : 0} bg={LEVEL_BG[code]} />
+      <ProgressCard title={t.vocabulary} sub={`${words} ${t.words.toLowerCase()}`} pct={done ? 100 : 0} bg={levelGradient(lvl.color)} />
 
       {hasVideo && (
         <VideoCard kind={t.theory} title={lesson.title} watched={done} score={avgScore} href={safeUrl(lesson.videoUrl)} t={t} />

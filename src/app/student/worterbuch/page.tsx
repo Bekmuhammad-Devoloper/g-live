@@ -9,6 +9,7 @@ import MissingStudent from "../MissingStudent";
 import { CARD, ICON_GRADIENT, PageHeader } from "../_ui";
 import DictNav from "./DictNav";
 import WordList, { type VWord } from "./WordList";
+import { getLevelCodes } from "@/lib/studyLevels";
 
 // Wörterbuch — ikki manba:
 //   "Kursim" — o'quvchi darslaridagi so'zlar (CourseLesson.topic)
@@ -98,6 +99,8 @@ export default async function StudentWorterbuchPage({ searchParams }: { searchPa
 
   const fmt = (n: number) => n.toLocaleString("de-DE");
 
+  const levelCodes = await getLevelCodes();
+
   return (
     <div className="space-y-4">
       <PageHeader
@@ -119,7 +122,7 @@ export default async function StudentWorterbuchPage({ searchParams }: { searchPa
       </div>
 
       {tab === "kurs" ? (
-        <WordList words={words} t={t} />
+        <WordList words={words} t={t} levelCodes={levelCodes} />
       ) : (
         <>
           <DictNav letters={DICT_LETTERS} t={t} />

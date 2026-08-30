@@ -20,6 +20,8 @@ export interface CourseData {
   monthlyFee: number | null; // oylik narx (bazadan) — qarz hisobida ishlatiladi
   studentsTotal: number;
   levels: { id: string; code: string; name: string; weeks: number | null; academicHours: number | null; passScore: number | null }[];
+  /** Sozlamalar > Darajalar katalogi (A1, A2 ...) */
+  levelCodes: string[];
   groups: { id: string; name: string; teacher: string | null; students: number; status: string }[];
   materials: { id: string; title: string; kind: string; url: string | null; levelCode: string | null; note: string | null }[];
   courseLessons: VLesson[];
@@ -149,12 +151,12 @@ export default function CourseDetail({ course }: { course: CourseData }) {
           )}
 
           {tab === "lessons" && (
-            <CourseLessonsTab programId={course.id} lessons={course.courseLessons} canManage={course.canManage} locale={course.locale} />
+            <CourseLessonsTab programId={course.id} lessons={course.courseLessons} canManage={course.canManage} locale={course.locale} levelCodes={course.levelCodes} />
           )}
 
           {tab === "levels" && (
             <div className="space-y-3">
-              <LevelForm programId={course.id} />
+              <LevelForm programId={course.id} levelCodes={course.levelCodes} />
               {course.levels.length === 0 ? (
                 <InfoBox>Ushbu kursda darajalar yo&apos;q</InfoBox>
               ) : (
@@ -182,7 +184,7 @@ export default function CourseDetail({ course }: { course: CourseData }) {
 
           {tab === "materials" && (
             <div className="space-y-3">
-              <MaterialForm programId={course.id} levels={course.levels} />
+              <MaterialForm programId={course.id} levelCodes={course.levelCodes} />
               {course.materials.length === 0 ? (
                 <InfoBox>Hozircha materiallar yo&apos;q</InfoBox>
               ) : (
@@ -241,14 +243,15 @@ const fInp = "h-10 w-full rounded-lg border border-slate-200 bg-white px-3 text-
 const kindIcon = (k: string) => (k === "VIDEO" ? "video" : k === "FILE" ? "download" : k === "DOC" ? "clipboard" : "link");
 const kindLabel = (k: string) => (k === "VIDEO" ? "Video" : k === "FILE" ? "Fayl" : k === "DOC" ? "Hujjat" : "Havola");
 
-function LevelForm({ programId }: { programId: string }) {
+function LevelForm({ programId, levelCodes }: { programId: string; levelCodes: string[] }) {
   const [state, action, pending] = useActionState<CourseState, FormData>(createLevel.bind(null, programId), {});
   const ref = useRef<HTMLFormElement>(null);
   useEffect(() => { if (state.ok) ref.current?.reset(); }, [state.ok]);
   return (
     <form ref={ref} action={action} className="rounded-xl border border-slate-200/70 bg-white p-4 shadow-card dark:border-slate-800 dark:bg-slate-900">
       <div className="flex flex-wrap items-end gap-2.5">
-        <input name="code" required placeholder="Kod (A1.1)" className={cn(fInp, "w-28")} />
+        <input name="code" required placeholder="Kod (A1.1)" list="level-codes" className={cn(fInp, "w-28")} />
+        <datalist id="level-codes">{levelCodes.map((c) => <option key={c} value={c} />)}</datalist>
         <input name="name" required placeholder="Daraja nomi" className={cn(fInp, "min-w-[150px] flex-1")} />
         <input name="weeks" type="number" min="0" placeholder="Hafta" className={cn(fInp, "w-20")} />
         <input name="academicHours" type="number" min="0" placeholder="Soat" className={cn(fInp, "w-20")} />
@@ -260,7 +263,7 @@ function LevelForm({ programId }: { programId: string }) {
   );
 }
 
-function MaterialForm({ programId, levels }: { programId: string; levels: { code: string }[] }) {
+function MaterialForm({ programId, levelCodes }: { programId: string; levelCodes: string[] }) {
   const [state, action, pending] = useActionState<CourseState, FormData>(createMaterial.bind(null, programId), {});
   const ref = useRef<HTMLFormElement>(null);
   useEffect(() => { if (state.ok) ref.current?.reset(); }, [state.ok]);
@@ -277,7 +280,7 @@ function MaterialForm({ programId, levels }: { programId: string; levels: { code
         <input name="url" placeholder="Havola (https://...)" className={cn(fInp, "min-w-[170px] flex-1")} />
         <select name="levelCode" defaultValue="" className={cn(fInp, "w-32")}>
           <option value="">Daraja (—)</option>
-          {levels.map((l) => <option key={l.code} value={l.code}>{l.code}</option>)}
+          {levelCodes.map((c) => <option key={c} value={c}>{c}</option>)}
         </select>
         <button type="submit" disabled={pending} className="h-10 shrink-0 rounded-lg bg-brand-600 px-4 text-sm font-semibold text-white transition hover:bg-brand-700 disabled:opacity-60">{pending ? "..." : "+ Material"}</button>
       </div>

@@ -41,7 +41,10 @@ export default async function EducationPage() {
         <HubCard href="/education/assessment" icon="filecheck" title={tr(s.locale, { uz: "Mavsumiy baholash", ru: "Сезонное оценивание", en: "Seasonal assessment", de: "Saisonale Bewertung" })} desc={tr(s.locale, { uz: "Fasl/chorak bo'yicha davriy baholash", ru: "Периодическое оценивание по сезонам/четвертям", en: "Periodic assessment by season/quarter", de: "Regelmäßige Bewertung nach Saison/Quartal" })} />
         <HubCard href="/courses" icon="book" title={tr(s.locale, { uz: "Kurslar va darslar", ru: "Курсы и уроки", en: "Courses and lessons", de: "Kurse und Lektionen" })} desc={tr(s.locale, { uz: "Kurs yaratish, dars va material yuklash", ru: "Создание курса, загрузка уроков и материалов", en: "Create courses, upload lessons and materials", de: "Kurse anlegen, Lektionen und Materialien hochladen" })} />
         {CAN_MANAGE.includes(s.role as never) && (
+          <>
           <HubCard href="/settings/portal" icon="graduation" title={tr(s.locale, { uz: "O'quvchi portali", ru: "Портал ученика", en: "Student portal", de: "Schülerportal" })} desc={tr(s.locale, { uz: "Portal bo'limlarini yoqish/o'chirish", ru: "Включение/отключение разделов портала", en: "Enable or disable portal sections", de: "Portalbereiche aktivieren/deaktivieren" })} />
+          <HubCard href="/settings/levels" icon="layers" title={tr(s.locale, { uz: "Darajalar", ru: "Уровни", en: "Levels", de: "Niveaus" })} desc={tr(s.locale, { uz: "A1, A2, B1 ... — nomi, rangi va banneri", ru: "A1, A2, B1 ... — название, цвет и баннер", en: "A1, A2, B1 ... — name, colour and banner", de: "A1, A2, B1 ... — Name, Farbe und Banner" })} />
+          </>
         )}
         <HubCard href="/education/contract" icon="clipboard" title={tr(s.locale, { uz: "Shartnomalar", ru: "Договоры", en: "Contracts", de: "Verträge" })} desc={tr(s.locale, { uz: "O'quv shartnomalari va holati", ru: "Учебные договоры и их статус", en: "Education contracts and their status", de: "Bildungsverträge und ihr Status" })} />
       </div>
