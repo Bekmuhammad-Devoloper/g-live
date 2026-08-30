@@ -184,6 +184,22 @@ const DICT = {
   learnWithContent: p("Qiziqarli materiallar bilan nemis tilini o'rganing", "Учите немецкий с интересными материалами", "Learn German with engaging content", "Lerne Deutsch mit spannenden Inhalten"),
   everydayBasics: p("Kundalik hayot asoslari", "Основы повседневной жизни", "Everyday basics", "Grundlagen des Alltags"),
   comingSoonBadge: p("Tez orada", "Скоро", "Coming soon", "Bald verfügbar"),
+
+  // ── Guvohnoma (ID-karta) ──
+  birthDate: p("Tug'ilgan sana", "Дата рождения", "Date of birth", "Geburtsdatum"),
+  age: p("Yoshi", "Возраст", "Age", "Alter"),
+  phone2: p("Qo'shimcha telefon", "Доп. телефон", "Second phone", "Zweites Telefon"),
+  photo: p("Rasm", "Фото", "Photo", "Foto"),
+  removePhoto: p("O'chirish", "Удалить", "Remove", "Entfernen"),
+  editProfile: p("Ma'lumotlarni tahrirlash", "Редактировать данные", "Edit details", "Daten bearbeiten"),
+  saved: p("Saqlandi", "Сохранено", "Saved", "Gespeichert"),
+  academicNote: p(
+    "Guruh va daraja o'quv jarayoni ma'lumoti — ularni ma'muriyat biriktiradi.",
+    "Группа и уровень — учебные данные, их назначает администрация.",
+    "Group and level are academic data set by the centre.",
+    "Gruppe und Niveau werden von der Verwaltung festgelegt.",
+  ),
+  idCard: p("Guvohnoma", "Удостоверение", "ID card", "Ausweis"),
 } as const;
 
 export type StudentStrings = { [K in keyof typeof DICT]: string };

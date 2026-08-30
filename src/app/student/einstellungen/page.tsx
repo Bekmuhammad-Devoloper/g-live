@@ -7,6 +7,7 @@ import { S } from "../_i18n";
 import MissingStudent from "../MissingStudent";
 import PasswordForm from "../profil/PasswordForm";
 import LocalePicker from "./LocalePicker";
+import IdCard from "./IdCard";
 import SecretField from "./SecretField";
 
 // Sozlamalar — Profil sarlavhasidagi tishli g'ildirak ostidagi sahifa:
@@ -22,15 +23,6 @@ function IcoGlobe({ s = 20 }: { s?: number }) {
   );
 }
 
-function Row({ label, children }: { label: string; children: React.ReactNode }) {
-  return (
-    <div className="flex items-center justify-between gap-3 border-b border-slate-50 py-2.5 last:border-0">
-      <span className="shrink-0 text-[12.5px] font-semibold text-slate-400">{label}</span>
-      <span className="min-w-0 truncate text-right text-[14px] font-bold text-slate-800">{children}</span>
-    </div>
-  );
-}
-
 export default async function StudentSettingsPage() {
   const session = await getSession();
   if (!session) redirect("/login");
@@ -39,8 +31,13 @@ export default async function StudentSettingsPage() {
   const student = await prisma.student.findUnique({
     where: { userId: session.userId },
     select: {
+      id: true,
       fullName: true,
       phone: true,
+      phone2: true,
+      imageUrl: true,
+      birthDate: true,
+      age: true,
       currentLevel: true,
       // Parol maydonlari RSC yukiga tushmasligi uchun aniq select bilan
       user: { select: { email: true, locale: true, plainPassword: true } },
@@ -61,21 +58,32 @@ export default async function StudentSettingsPage() {
     <div className="space-y-4">
       <PageHeader title={t.settings} subtitle={t.accountControl} back="/student/profil" />
 
-      {/* ── Hisob ma'lumotlari ── */}
-      <SectionTitle>{t.accountData}</SectionTitle>
-      <div className={CARD + " px-4 py-1"}>
-        <Row label={t.fullName}>{student.fullName}</Row>
-        {student.phone ? <Row label={t.phone}>{student.phone}</Row> : null}
-        {group ? <Row label={t.group}>{group.name}</Row> : null}
-        <Row label={t.level}>{group?.levelCode ?? student.currentLevel ?? "—"}</Row>
-        <Row label={t.login}>{student.user?.email ?? "—"}</Row>
-        {student.user?.plainPassword ? (
-          <Row label={t.password}>
-            <SecretField value={student.user.plainPassword} show={t.show} hide={t.hide} />
-          </Row>
-        ) : null}
-      </div>
-      <p className="-mt-1 px-1 text-[11.5px] text-slate-400">{t.contactCenter}</p>
+      {/* ── Guvohnoma ── */}
+      <SectionTitle>{t.idCard}</SectionTitle>
+      <IdCard
+        t={t}
+        p={{
+          fullName: student.fullName,
+          birthDate: student.birthDate ? student.birthDate.toISOString().slice(0, 10) : null,
+          age: student.age,
+          phone: student.phone,
+          phone2: student.phone2,
+          imageUrl: student.imageUrl,
+          level: group?.levelCode ?? student.currentLevel ?? "—",
+          group: group?.name ?? null,
+          login: student.user?.email ?? "—",
+          studentNo: student.id.slice(-6).toUpperCase(),
+        }}
+      />
+      <p className="-mt-1 px-1 text-[11.5px] text-slate-400">{t.academicNote}</p>
+
+      {/* ── Parol ── */}
+      {student.user?.plainPassword ? (
+        <div className={CARD + " flex items-center justify-between gap-3 px-4 py-3"}>
+          <span className="text-[12.5px] font-semibold text-slate-400">{t.password}</span>
+          <SecretField value={student.user.plainPassword} show={t.show} hide={t.hide} />
+        </div>
+      ) : null}
 
       {/* ── Til ── */}
       <SectionTitle>{t.appLanguage}</SectionTitle>
