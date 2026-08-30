@@ -220,6 +220,8 @@ const DICT = {
     "Write your question — the teacher will reply.",
     "Schreiben Sie Ihre Frage — die Lehrkraft antwortet.",
   ),
+  today: p("Bugun", "Сегодня", "Today", "Heute"),
+  yesterday: p("Kecha", "Вчера", "Yesterday", "Gestern"),
 } as const;
 
 export type StudentStrings = { [K in keyof typeof DICT]: string };

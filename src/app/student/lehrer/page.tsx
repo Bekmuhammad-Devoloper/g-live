@@ -2,7 +2,6 @@ import { redirect } from "next/navigation";
 import { getSession } from "@/lib/auth";
 import { prisma } from "@/lib/db";
 import { S } from "../_i18n";
-import { CARD, ICON_GRADIENT, PageHeader } from "../_ui";
 import MissingStudent from "../MissingStudent";
 import Chat, { type VMsg } from "./Chat";
 
@@ -60,6 +59,7 @@ export default async function StudentLehrerPage() {
     text: m.text,
     at: m.createdAt.toISOString(),
     author: m.fromStudent ? null : (m.author?.fullName ?? teacher?.fullName ?? null),
+    read: !!m.readAt,
   }));
 
   const hasUnread = rows.some((m) => !m.fromStudent && !m.readAt);
@@ -72,29 +72,15 @@ export default async function StudentLehrerPage() {
     .toUpperCase();
 
   return (
-    <div className="space-y-3">
-      <PageHeader title={t.writeTeacher} subtitle={group?.name ?? "—"} back="/student/kurse" />
-
-      {/* Ustoz */}
-      <div className={CARD + " flex items-center gap-3 p-3.5"}>
-        {teacher?.imageUrl ? (
-          // eslint-disable-next-line @next/next/no-img-element
-          <img src={teacher.imageUrl} alt={teacher.fullName} className="h-11 w-11 shrink-0 rounded-full object-cover" />
-        ) : (
-          <span
-            className="grid h-11 w-11 shrink-0 place-items-center rounded-full text-[15px] font-extrabold text-white"
-            style={{ background: ICON_GRADIENT }}
-          >
-            {initials}
-          </span>
-        )}
-        <div className="min-w-0 flex-1">
-          <div className="truncate text-[15px] font-extrabold text-slate-900">{teacher?.fullName ?? t.noTeacher}</div>
-          <div className="truncate text-[12px] text-slate-500">{teacher ? t.yourTeacher : t.askAdmin}</div>
-        </div>
-      </div>
-
-      <Chat messages={messages} disabled={!group?.teacherId} t={t} hasUnread={hasUnread} />
-    </div>
+    <Chat
+      messages={messages}
+      disabled={!group?.teacherId}
+      t={t}
+      hasUnread={hasUnread}
+      title={teacher?.fullName ?? t.noTeacher}
+      subtitle={teacher ? (group?.name ?? t.yourTeacher) : t.askAdmin}
+      avatarUrl={teacher?.imageUrl ?? null}
+      initials={initials}
+    />
   );
 }
