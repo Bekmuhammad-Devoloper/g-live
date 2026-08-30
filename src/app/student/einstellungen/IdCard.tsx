@@ -36,12 +36,45 @@ export default function IdCard({ p, t }: { p: VProfile; t: StudentStrings }) {
   const [uploading, setUploading] = useState(false);
   const fileRef = useRef<HTMLInputElement>(null);
 
+  // Telefon surati 3–5 MB bo'ladi; guvohnoma uchun shuncha kerak emas —
+  // yuklashdan oldin brauzerda 900px gacha kichraytiramiz.
+  const shrink = (f: File): Promise<Blob> =>
+    new Promise((resolve, reject) => {
+      const url = URL.createObjectURL(f);
+      const im = new Image();
+      im.onload = () => {
+        URL.revokeObjectURL(url);
+        const max = 900;
+        const k = Math.min(1, max / Math.max(im.width, im.height));
+        const c = document.createElement("canvas");
+        c.width = Math.round(im.width * k);
+        c.height = Math.round(im.height * k);
+        const ctx = c.getContext("2d");
+        if (!ctx) return reject(new Error("canvas"));
+        ctx.drawImage(im, 0, 0, c.width, c.height);
+        c.toBlob((b) => (b ? resolve(b) : reject(new Error("blob"))), "image/jpeg", 0.85);
+      };
+      im.onerror = () => {
+        URL.revokeObjectURL(url);
+        reject(new Error("image"));
+      };
+      im.src = url;
+    });
+
   const pickPhoto = async (f: File) => {
     setMsg(null);
     setUploading(true);
     try {
+      let body: Blob = f;
+      let name = f.name;
+      try {
+        body = await shrink(f);
+        name = "photo.jpg";
+      } catch {
+        // kichraytirib bo'lmasa (masalan HEIC) — aslini yuboramiz
+      }
       const fd = new FormData();
-      fd.append("file", f);
+      fd.append("file", new File([body], name, { type: body.type || f.type }));
       const r = await fetch("/api/upload", { method: "POST", body: fd });
       const j = await r.json();
       if (!r.ok || !j.url) throw new Error(j.error ?? "upload");
