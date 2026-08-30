@@ -1,3 +1,4 @@
+import Link from "next/link";
 import { redirect } from "next/navigation";
 import ProfilActions from "./ProfilActions";
 import { getSession } from "@/lib/auth";
@@ -50,7 +51,7 @@ export default async function StudentProfilPage() {
   });
   if (!student) return <MissingStudent />; // redirect("/dashboard") aylanish hosil qilardi
 
-  const [debt, paidAgg, payments, attendance, attAll, exams, examTotal, examPassed, certificates] = await Promise.all([
+  const [debt, paidAgg, payments, attendance, attAll, exams, examTotal, examPassed, certificates, noteCount] = await Promise.all([
     computeDebt(student.id),
     prisma.payment.aggregate({ where: { studentId: student.id, status: "PAID" }, _sum: { amount: true } }),
     prisma.payment.findMany({
@@ -85,6 +86,8 @@ export default async function StudentProfilPage() {
       orderBy: { issuedAt: "desc" },
       select: { id: true, number: true, programName: true, levelCode: true, qrCode: true, issuedAt: true },
     }),
+    // "Ikkinchi miya" yozuvlari soni — kartochkada ko'rsatiladi
+    prisma.note.count({ where: { studentId: student.id } }),
   ]);
 
   const group = student.enrollments[0]?.group ?? null;
@@ -130,6 +133,30 @@ export default async function StudentProfilPage() {
           </div>
         ))}
       </div>
+
+      {/* ── Ikkinchi miya (shaxsiy rivojlanish) ── */}
+      <Link
+        href="/student/gehirn"
+        className="relative flex items-center gap-3 overflow-hidden rounded-[24px] p-5 text-white shadow-[0_14px_28px_rgba(91,33,182,0.28)]"
+        style={{ background: "linear-gradient(120deg, #4c1d95 0%, #7c3aed 55%, #a78bfa 100%)" }}
+      >
+        <span className="grid h-[52px] w-[52px] shrink-0 place-items-center rounded-2xl bg-white/20 backdrop-blur-sm">
+          <svg width="30" height="30" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="1.7" strokeLinecap="round" strokeLinejoin="round">
+            <path d="M12 4.2a3 3 0 0 0-3 3 2.7 2.7 0 0 0-2 4.4A2.9 2.9 0 0 0 8.6 16 2.8 2.8 0 0 0 12 19.3Z" />
+            <path d="M12 4.2a3 3 0 0 1 3 3 2.7 2.7 0 0 1 2 4.4A2.9 2.9 0 0 1 15.4 16 2.8 2.8 0 0 1 12 19.3Z" />
+            <path d="M12 4.2v15.1" />
+          </svg>
+        </span>
+        <div className="min-w-0 flex-1">
+          <div className="text-[19px] font-extrabold leading-tight">{t.brain}</div>
+          <div className="mt-0.5 truncate text-[12.5px] text-white/80">
+            {noteCount > 0 ? `${noteCount} ${t.notes}` : t.brainSub}
+          </div>
+        </div>
+        <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="2.6" strokeLinecap="round" strokeLinejoin="round">
+          <path d="m9 6 6 6-6 6" />
+        </svg>
+      </Link>
 
       {/* ── To'lovlar ── */}
       <SectionTitle>{t.payments}</SectionTitle>

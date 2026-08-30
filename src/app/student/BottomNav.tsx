@@ -51,8 +51,12 @@ function Ico({ name, active }: { name: string; active: boolean }) {
 
 export default function BottomNav({ t }: { t: StudentStrings }) {
   const pathname = usePathname();
-  // Jang va yozishma sahifalari to'liq ekranda ochiladi — menyu ko'rinmaydi
-  if (pathname.startsWith("/student/battle") || pathname.startsWith("/student/lehrer")) return null;
+  // Jang, yozishma va bog'lanishlar grafi to'liq ekranda ochiladi — menyu ko'rinmaydi
+  if (
+    pathname.startsWith("/student/battle") ||
+    pathname.startsWith("/student/lehrer") ||
+    pathname.startsWith("/student/gehirn/graph")
+  ) return null;
 
   // Barcha tablar /student/* ichida — o'quvchi endi xodim (AppShell) sahifalariga chiqib ketmaydi
   const items = [

@@ -241,6 +241,7 @@ model Student {
   seasonalResults SeasonalResult[]
   marketOrders MarketOrder[]
   chatMessages ChatMessage[]
+  notes        Note[]
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
@@ -1004,4 +1005,31 @@ model ChatMessage {
 
   @@index([studentId, createdAt])
   @@index([teacherId, fromStudent, readAt])
+}
+
+// ── "Ikkinchi miya" (Zweites Gehirn) — o'quvchining shaxsiy bilim bazasi ──
+// Obsidian uslubi: har yozuv sarlavha bilan ataladi, matn ichida [[Sarlavha]]
+// yozilsa boshqa yozuvga bog'lanadi. Bog'lanishlar ALOHIDA jadvalda emas —
+// matndan o'qib olinadi, shunda ular hamisha matn bilan mos bo'ladi va
+// hali yaratilmagan yozuvga ham havola qilish mumkin (Obsidian'dagidek).
+
+model Note {
+  id        String  @id @default(cuid())
+  studentId String
+  student   Student @relation(fields: [studentId], references: [id], onDelete: Cascade)
+
+  title   String
+  content String  @default("")
+  // Vergul bilan ajratilgan teglar (#teg matndan ham yig'iladi)
+  tags    String?
+  // Yo'nalish/kategoriya — grafda rang beradi
+  kind    String  @default("NOTE") // NOTE | IDEA | GOAL | BOOK | PERSON | DAILY
+  pinned  Boolean @default(false)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  // Sarlavha o'quvchi doirasida noyob — [[havola]] shu bo'yicha topiladi
+  @@unique([studentId, title])
+  @@index([studentId, updatedAt])
 }
