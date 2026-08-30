@@ -21,7 +21,7 @@ export default async function StudentMitteilungenPage() {
     where: { userId: session.userId, NOT: { event: MESSAGE_SENT } },
     orderBy: { createdAt: "desc" },
     take: 50,
-    select: { id: true, title: true, body: true, isRead: true, createdAt: true },
+    select: { id: true, title: true, body: true, isRead: true, createdAt: true, event: true },
   });
 
   const items: VNotif[] = rows.map((n) => ({
@@ -30,6 +30,7 @@ export default async function StudentMitteilungenPage() {
     body: n.body,
     isRead: n.isRead,
     createdAt: n.createdAt.toISOString(),
+    event: n.event,
   }));
 
   return (

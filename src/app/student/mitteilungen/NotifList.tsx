@@ -14,7 +14,14 @@ export interface VNotif {
   body: string | null;
   isRead: boolean;
   createdAt: string; // ISO
+  event: string | null;
 }
+
+// Bildirishnoma qaysi bo'limga tegishli — bosilganda o'sha yerga o'tadi
+const LINK: Record<string, string> = {
+  CHAT: "/student/lehrer",
+  MARKET_ORDER: "/student/market",
+};
 
 function fmt(iso: string) {
   const d = new Date(iso);
@@ -45,25 +52,38 @@ export default function NotifList({ items, emptyText }: { items: VNotif[]; empty
           className="w-full rounded-2xl bg-white py-3 text-[13px] font-bold shadow-[0_6px_16px_rgba(19,78,94,0.10)]"
           style={{ color: TEAL }}
         >
-          Alle als gelesen markieren ({unread})
+          Hammasini o&apos;qilgan deb belgilash ({unread})
         </button>
       )}
 
       <div className={`${CARD} divide-y divide-slate-100 px-5 py-1`}>
-        {items.map((n) => (
-          <button
-            key={n.id}
-            onClick={() => { if (!n.isRead) start(async () => { await markRead(n.id); router.refresh(); }); }}
-            className="flex w-full items-start gap-3 py-3.5 text-left"
-          >
-            <span className={`mt-1.5 h-2.5 w-2.5 shrink-0 rounded-full ${n.isRead ? "bg-slate-200" : ""}`} style={n.isRead ? undefined : { background: TEAL }} />
-            <div className="min-w-0 flex-1">
-              <div className={`text-[13.5px] leading-snug ${n.isRead ? "font-semibold text-slate-500" : "font-bold text-slate-900"}`}>{n.title}</div>
-              {n.body && <p className="mt-0.5 whitespace-pre-wrap text-[12.5px] leading-relaxed text-slate-500">{n.body}</p>}
-              <div className="mt-1 text-[11px] text-slate-400">{fmt(n.createdAt)}</div>
-            </div>
-          </button>
-        ))}
+        {items.map((n) => {
+          const href = n.event ? LINK[n.event] : undefined;
+          const open = () => {
+            if (!n.isRead) void markRead(n.id);
+            if (href) router.push(href);
+            else if (!n.isRead) start(() => { router.refresh(); });
+          };
+          return (
+            <button
+              key={n.id}
+              onClick={open}
+              className="flex w-full items-start gap-3 py-3.5 text-left"
+            >
+              <span className={`mt-1.5 h-2.5 w-2.5 shrink-0 rounded-full ${n.isRead ? "bg-slate-200" : ""}`} style={n.isRead ? undefined : { background: TEAL }} />
+              <div className="min-w-0 flex-1">
+                <div className={`text-[13.5px] leading-snug ${n.isRead ? "font-semibold text-slate-500" : "font-bold text-slate-900"}`}>{n.title}</div>
+                {n.body && <p className="mt-0.5 whitespace-pre-wrap text-[12.5px] leading-relaxed text-slate-500">{n.body}</p>}
+                <div className="mt-1 text-[11px] text-slate-400">{fmt(n.createdAt)}</div>
+              </div>
+              {href ? (
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#cbd5e1" strokeWidth="2.4" strokeLinecap="round" strokeLinejoin="round" className="mt-2 shrink-0">
+                  <path d="m9 6 6 6-6 6" />
+                </svg>
+              ) : null}
+            </button>
+          );
+        })}
       </div>
     </div>
   );
