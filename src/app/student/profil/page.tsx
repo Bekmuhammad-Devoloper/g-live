@@ -100,6 +100,7 @@ export default async function StudentProfilPage() {
 
       {/* ── Guvohnoma ── */}
       <IdCard
+        editable={false}
         t={t}
         p={{
           fullName: student.fullName,

@@ -29,7 +29,7 @@ const fmtDate = (iso: string | null) => {
   return `${d}.${m}.${y}`;
 };
 
-export default function IdCard({ p, t }: { p: VProfile; t: StudentStrings }) {
+export default function IdCard({ p, t, editable = true }: { p: VProfile; t: StudentStrings; editable?: boolean }) {
   const [edit, setEdit] = useState(false);
   const [img, setImg] = useState(p.imageUrl);
   const [msg, setMsg] = useState<{ ok: boolean; text: string } | null>(null);
@@ -222,7 +222,7 @@ export default function IdCard({ p, t }: { p: VProfile; t: StudentStrings }) {
           <p className={"mt-3 text-[12.5px] font-semibold " + (msg.ok ? "text-emerald-600" : "text-rose-600")}>{msg.text}</p>
         ) : null}
 
-        {!edit ? (
+        {!edit && editable ? (
           <button
             type="button"
             onClick={() => setEdit(true)}

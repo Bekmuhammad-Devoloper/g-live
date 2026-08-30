@@ -200,6 +200,7 @@ const DICT = {
     "Gruppe und Niveau werden von der Verwaltung festgelegt.",
   ),
   idCard: p("Guvohnoma", "Удостоверение", "ID card", "Ausweis"),
+  buy: p("Sotib olish", "Купить", "Buy", "Kaufen"),
 } as const;
 
 export type StudentStrings = { [K in keyof typeof DICT]: string };
