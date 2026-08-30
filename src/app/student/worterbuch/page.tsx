@@ -265,24 +265,27 @@ function Row({ e, t }: { e: DictEntry; t: StudentStrings }) {
   const st = art ? ART_STYLE[art] : null;
   const pos = e.p ? t[POS_KEY[e.p] ?? "posVerb"] : null;
 
+  // Grammatik shakl va turkum alohida kichik qatorda — uzun qo'shma so'zlar
+  // ("Abberufungsschreiben") ustunga sig'masdan bir-biriga kirib ketmasin.
+  const meta = [e.f, pos].filter(Boolean).join(" · ");
+
   return (
-    <li className="grid grid-cols-[1fr_1.15fr] border-b border-[#bcd8e8]/60 last:border-0">
+    <li className="grid grid-cols-[1fr_1fr] border-b border-[#bcd8e8] last:border-0">
       {/* Nemischa ustun */}
       <div className="min-w-0 border-r-2 border-[#efb0b0] px-3 py-3">
-        <span className="text-[15px] font-extrabold leading-6 text-slate-900">
+        <div className="hyphens-auto break-words text-[15px] font-extrabold leading-6 text-slate-900">
           {art ? (
             <span className="font-semibold" style={{ color: st?.fg }}>
               {art}{" "}
             </span>
           ) : null}
           {e.de}
-        </span>
-        {e.f ? <span className="ml-1.5 font-mono text-[11px] leading-6 text-slate-400">{e.f}</span> : null}
-        {pos && !art ? <span className="ml-1.5 text-[11px] leading-6 text-slate-400">{pos}</span> : null}
+        </div>
+        {meta ? <div className="font-mono text-[11px] leading-6 text-slate-400">{meta}</div> : null}
       </div>
 
       {/* O'zbekcha ustun */}
-      <div className="min-w-0 px-3 py-3 text-[14px] leading-6 text-slate-700">
+      <div className="min-w-0 break-words px-3 py-3 text-[14px] leading-6 text-slate-700">
         {e.s ? <span className="mr-1 text-[11px] font-semibold italic text-slate-400">{e.s}.</span> : null}
         <Senses uz={e.uz} />
       </div>

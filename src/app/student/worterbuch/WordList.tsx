@@ -134,18 +134,20 @@ export default function WordList({ words, t }: { words: VWord[]; t: StudentStrin
             {/* Katak varaq: chapda nemischa, o'ngda o'zbekcha */}
             <ul style={SHEET}>
               {items.map((w) => (
-                <li key={lesson + w.de} className="grid grid-cols-[1fr_1.15fr] border-b border-[#bcd8e8]/60 last:border-0">
+                <li key={lesson + w.de} className="grid grid-cols-[1fr_1fr] border-b border-[#bcd8e8] last:border-0">
                   <div className="flex min-w-0 items-start gap-2 border-r-2 border-[#efb0b0] px-3 py-3">
                     <span
                       className="mt-[9px] h-[6px] w-[6px] shrink-0 rounded-full"
                       style={{ background: w.learned ? TEAL : "#dbe6ee" }}
                       title={w.learned ? t.learnedWord : t.notLearnedYet}
                     />
-                    <span className="min-w-0 truncate text-[15px] font-extrabold leading-6 text-slate-900">{w.de}</span>
+                    <span className="min-w-0 hyphens-auto break-words text-[15px] font-extrabold leading-6 text-slate-900">
+                      {w.de}
+                    </span>
                   </div>
 
                   <div className="flex min-w-0 items-start gap-2 px-3 py-3">
-                    <span className="min-w-0 flex-1 text-[14px] leading-6 text-slate-700">{w.uz ?? ""}</span>
+                    <span className="min-w-0 flex-1 break-words text-[14px] leading-6 text-slate-700">{w.uz ?? ""}</span>
                     <Link
                       href={`/student/worterbuch?tab=lugat&q=${encodeURIComponent(w.de)}`}
                       aria-label={t.findInDictionary}
