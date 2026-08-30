@@ -136,23 +136,32 @@ export default async function StudentWorterbuchPage({ searchParams }: { searchPa
               </p>
             </div>
           ) : (
-            <div className="space-y-2.5">
+            <div className="space-y-3">
               {groupByLetter(res!.items, !!sp.q).map(([letter, list]) => (
-                <div key={letter} className={CARD + " overflow-hidden"}>
-                  {letter ? (
-                    <div className="flex items-center gap-2.5 bg-slate-50/70 px-4 py-2">
-                      <span className="grid h-6 w-6 shrink-0 place-items-center rounded-lg text-[12px] font-extrabold text-white" style={{ background: ICON_GRADIENT }}>
+                <section key={letter} className="overflow-hidden rounded-[18px] shadow-[0_10px_22px_rgba(19,78,94,0.10)]">
+                  {/* Varaq sarlavhasi: harf va ustun nomlari */}
+                  <div className="flex items-center gap-2.5 bg-white px-3 py-2">
+                    {letter ? (
+                      <span
+                        className="grid h-6 w-6 shrink-0 place-items-center rounded-lg text-[12px] font-extrabold text-white"
+                        style={{ background: ICON_GRADIENT }}
+                      >
                         {letter}
                       </span>
-                      <span className="text-[11.5px] font-semibold text-slate-400">{list.length}</span>
+                    ) : null}
+                    <span className="text-[11.5px] font-semibold text-slate-400">{list.length}</span>
+                    <div className="ml-auto grid grid-cols-[1fr_1.15fr] gap-3 text-[10px] font-bold uppercase tracking-wider text-slate-300">
+                      <span className="text-right">Deutsch</span>
+                      <span>O&apos;zbekcha</span>
                     </div>
-                  ) : null}
-                  <ul>
+                  </div>
+
+                  <ul style={SHEET}>
                     {list.map((e) => (
                       <Row key={e.de} e={e} t={t} />
                     ))}
                   </ul>
-                </div>
+                </section>
               ))}
             </div>
           )}
@@ -220,27 +229,36 @@ const POS_KEY: Record<string, keyof StudentStrings> = {
 
 // Bosma lug'atda ma'nolar "1) ... 2) ..." tarzida bir qatorga yozilgan —
 // ekranda ularni alohida qatorlarga ajratsak o'qish ancha oson.
+// Ma'nolar bir katakli qatorga sig'sin — 24px qadam saqlanadi
 function Senses({ uz }: { uz: string }) {
   const parts = uz
     .split(/\s*\d\)\s*/)
     .map((x) => x.trim().replace(/[;,]$/, ""))
     .filter(Boolean);
 
-  if (parts.length < 2) {
-    return <div className="mt-0.5 text-[14px] leading-snug text-slate-600">{uz}</div>;
-  }
+  if (parts.length < 2) return <>{uz}</>;
 
   return (
-    <ol className="mt-1 space-y-[3px]">
+    <>
       {parts.map((x, i) => (
-        <li key={i} className="flex gap-1.5 text-[14px] leading-snug text-slate-600">
-          <span className="mt-[1px] shrink-0 text-[11px] font-bold text-slate-300">{i + 1}</span>
-          <span className="min-w-0">{x}</span>
-        </li>
+        <span key={i} className="block">
+          <span className="mr-1 text-[10.5px] font-bold text-slate-300">{i + 1}</span>
+          {x}
+        </span>
       ))}
-    </ol>
+    </>
   );
 }
+
+// Katak daftar varag'i: chiziqlar 24px, qatorlar ham shu qadamda —
+// matn kataklarga tushadi, o'ng ustunda esa qo'lda yozilgandek tarjima.
+const SHEET: React.CSSProperties = {
+  backgroundColor: "#fcfdff",
+  backgroundImage:
+    "linear-gradient(rgba(120,170,200,0.20) 1px, transparent 1px)," +
+    "linear-gradient(90deg, rgba(120,170,200,0.20) 1px, transparent 1px)",
+  backgroundSize: "24px 24px",
+};
 
 function Row({ e, t }: { e: DictEntry; t: StudentStrings }) {
   const art = e.g ? ARTICLE[e.g] : null;
@@ -248,31 +266,24 @@ function Row({ e, t }: { e: DictEntry; t: StudentStrings }) {
   const pos = e.p ? t[POS_KEY[e.p] ?? "posVerb"] : null;
 
   return (
-    <li className="flex gap-3 border-b border-slate-50 px-4 py-3 last:border-0">
-      {/* Chap ustun: artikl yoki so'z turkumi */}
-      <div className="w-[46px] shrink-0 pt-[3px]">
-        {st ? (
-          <span
-            className="grid h-[26px] place-items-center rounded-lg text-[12px] font-extrabold"
-            style={{ background: st.bg, color: st.fg }}
-          >
-            {art}
-          </span>
-        ) : (
-          <span className="grid h-[26px] place-items-center rounded-lg bg-slate-50 text-[10.5px] font-bold text-slate-400">
-            {pos ?? ""}
-          </span>
-        )}
+    <li className="grid grid-cols-[1fr_1.15fr] border-b border-[#bcd8e8]/60 last:border-0">
+      {/* Nemischa ustun */}
+      <div className="min-w-0 border-r-2 border-[#efb0b0] px-3 py-3">
+        <span className="text-[15px] font-extrabold leading-6 text-slate-900">
+          {art ? (
+            <span className="font-semibold" style={{ color: st?.fg }}>
+              {art}{" "}
+            </span>
+          ) : null}
+          {e.de}
+        </span>
+        {e.f ? <span className="ml-1.5 font-mono text-[11px] leading-6 text-slate-400">{e.f}</span> : null}
+        {pos && !art ? <span className="ml-1.5 text-[11px] leading-6 text-slate-400">{pos}</span> : null}
       </div>
 
-      <div className="min-w-0 flex-1">
-        <div className="flex flex-wrap items-baseline gap-x-2">
-          <span className="text-[16px] font-extrabold leading-tight text-slate-900">{e.de}</span>
-          {e.f ? <span className="font-mono text-[11.5px] text-slate-400">{e.f}</span> : null}
-          {e.s ? (
-            <span className="rounded bg-slate-100 px-1.5 py-[1px] text-[10.5px] font-semibold text-slate-500">{e.s}.</span>
-          ) : null}
-        </div>
+      {/* O'zbekcha ustun */}
+      <div className="min-w-0 px-3 py-3 text-[14px] leading-6 text-slate-700">
+        {e.s ? <span className="mr-1 text-[11px] font-semibold italic text-slate-400">{e.s}.</span> : null}
         <Senses uz={e.uz} />
       </div>
     </li>

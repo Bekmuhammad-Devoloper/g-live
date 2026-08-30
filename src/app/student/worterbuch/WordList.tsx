@@ -15,6 +15,15 @@ export type VWord = { de: string; uz: string | null; lesson: string; level: stri
 
 const LEVELS = ["A1", "A2", "B1", "B2", "C1", "C2"];
 
+// Katak daftar varag'i — umumiy lug'at bilan bir xil ko'rinish
+const SHEET: React.CSSProperties = {
+  backgroundColor: "#fcfdff",
+  backgroundImage:
+    "linear-gradient(rgba(120,170,200,0.20) 1px, transparent 1px)," +
+    "linear-gradient(90deg, rgba(120,170,200,0.20) 1px, transparent 1px)",
+  backgroundSize: "24px 24px",
+};
+
 export default function WordList({ words, t }: { words: VWord[]; t: StudentStrings }) {
   const [q, setQ] = useState("");
   const [level, setLevel] = useState<string | null>(null);
@@ -107,9 +116,9 @@ export default function WordList({ words, t }: { words: VWord[]; t: StudentStrin
         </div>
       ) : (
         groups.map(([lesson, items], gi) => (
-          <div key={lesson} className={CARD + " overflow-hidden"}>
+          <section key={lesson} className="overflow-hidden rounded-[18px] shadow-[0_10px_22px_rgba(19,78,94,0.10)]">
             {/* Dars sarlavhasi */}
-            <div className="flex items-center gap-2.5 bg-slate-50/70 px-4 py-2.5">
+            <div className="flex items-center gap-2.5 bg-white px-3 py-2.5">
               <span
                 className="grid h-6 w-6 shrink-0 place-items-center rounded-lg text-[11px] font-extrabold text-white"
                 style={{ background: ICON_GRADIENT }}
@@ -122,33 +131,37 @@ export default function WordList({ words, t }: { words: VWord[]; t: StudentStrin
               </span>
             </div>
 
-            <ul>
+            {/* Katak varaq: chapda nemischa, o'ngda o'zbekcha */}
+            <ul style={SHEET}>
               {items.map((w) => (
-                <li key={lesson + w.de} className="flex items-center gap-3 border-b border-slate-50 px-4 py-2.5 last:border-0">
-                  <span
-                    className="h-[7px] w-[7px] shrink-0 rounded-full"
-                    style={{ background: w.learned ? TEAL : "#e2e8f0" }}
-                    title={w.learned ? t.learnedWord : t.notLearnedYet}
-                  />
-                  <div className="min-w-0 flex-1">
-                    <div className="truncate text-[15px] font-semibold text-slate-900">{w.de}</div>
-                    {w.uz ? <div className="truncate text-[12.5px] text-slate-500">{w.uz}</div> : null}
+                <li key={lesson + w.de} className="grid grid-cols-[1fr_1.15fr] border-b border-[#bcd8e8]/60 last:border-0">
+                  <div className="flex min-w-0 items-start gap-2 border-r-2 border-[#efb0b0] px-3 py-3">
+                    <span
+                      className="mt-[9px] h-[6px] w-[6px] shrink-0 rounded-full"
+                      style={{ background: w.learned ? TEAL : "#dbe6ee" }}
+                      title={w.learned ? t.learnedWord : t.notLearnedYet}
+                    />
+                    <span className="min-w-0 truncate text-[15px] font-extrabold leading-6 text-slate-900">{w.de}</span>
                   </div>
-                  <Link
-                    href={`/student/worterbuch?tab=lugat&q=${encodeURIComponent(w.de)}`}
-                    aria-label={t.findInDictionary}
-                    title={t.findInDictionary}
-                    className="grid h-7 w-7 shrink-0 place-items-center rounded-lg bg-slate-50 text-slate-400 transition active:scale-95"
-                  >
-                    <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.3" strokeLinecap="round">
-                      <circle cx="11" cy="11" r="7" />
-                      <path d="m20 20-3.5-3.5" />
-                    </svg>
-                  </Link>
+
+                  <div className="flex min-w-0 items-start gap-2 px-3 py-3">
+                    <span className="min-w-0 flex-1 text-[14px] leading-6 text-slate-700">{w.uz ?? ""}</span>
+                    <Link
+                      href={`/student/worterbuch?tab=lugat&q=${encodeURIComponent(w.de)}`}
+                      aria-label={t.findInDictionary}
+                      title={t.findInDictionary}
+                      className="mt-[3px] grid h-[18px] w-[18px] shrink-0 place-items-center text-slate-300 transition active:scale-90"
+                    >
+                      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.4" strokeLinecap="round">
+                        <circle cx="11" cy="11" r="7" />
+                        <path d="m20 20-3.5-3.5" />
+                      </svg>
+                    </Link>
+                  </div>
                 </li>
               ))}
             </ul>
-          </div>
+          </section>
         ))
       )}
     </div>
