@@ -92,6 +92,8 @@ model User {
   studentProfile Student?
   parentProfile  Parent?
   teacherGroups  Group[]  @relation("TeacherGroups")
+  teacherChats   ChatMessage[] @relation("ChatTeacher")
+  authoredChats  ChatMessage[] @relation("ChatAuthor")
 
   // CRM
   managedLeads  Lead[]         @relation("LeadManager")
@@ -238,6 +240,7 @@ model Student {
   tasks       Task[]
   seasonalResults SeasonalResult[]
   marketOrders MarketOrder[]
+  chatMessages ChatMessage[]
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
@@ -975,4 +978,30 @@ model MarketOrder {
 
   @@index([studentId, status])
   @@index([status])
+}
+
+// ── O'quvchi va ustoz yozishmasi ──
+// Suhbat (studentId + teacherId) juftligi bilan aniqlanadi. Ustoz almashsa
+// eski yozishma saqlanib qoladi, yangi suhbat ochiladi.
+
+model ChatMessage {
+  id String @id @default(cuid())
+
+  studentId String
+  student   Student @relation(fields: [studentId], references: [id], onDelete: Cascade)
+
+  teacherId String?
+  teacher   User?   @relation("ChatTeacher", fields: [teacherId], references: [id])
+
+  fromStudent Boolean // true — o'quvchi yozgan, false — ustoz/ma'muriyat
+  authorId    String? // aslida kim yozgani (ustoz o'rniga menejer ham javob berishi mumkin)
+  author      User?   @relation("ChatAuthor", fields: [authorId], references: [id])
+
+  text   String
+  readAt DateTime? // qarshi tomon o'qigan vaqti
+
+  createdAt DateTime @default(now())
+
+  @@index([studentId, createdAt])
+  @@index([teacherId, fromStudent, readAt])
 }

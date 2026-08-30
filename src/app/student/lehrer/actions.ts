@@ -2,54 +2,65 @@
 
 import { revalidatePath } from "next/cache";
 import { requireSession } from "@/lib/auth";
+import { activeTeacherOf, CHAT_MAX } from "@/lib/chat";
 import { prisma } from "@/lib/db";
 import { ROLES } from "@/lib/constants";
-import { MESSAGE_IN, MESSAGE_SENT } from "./const";
+import { notify } from "@/lib/notify";
 
-// O'quvchi ustoziga xabar yozadi. Xabar ustozning CRM bildirishnomalariga
-// tushadi; o'quvchining o'zida esa "yuborilgan" nusxasi tarix uchun saqlanadi
-// (event = MESSAGE_SENT, o'qilgan holatda — hisoblagichni oshirmasin).
 export type Res = { ok?: boolean; error?: string };
 
-export async function sendToTeacher(text: string): Promise<Res> {
+// O'quvchi ustoziga xabar yozadi.
+export async function sendMessage(text: string): Promise<Res> {
   const s = await requireSession();
   if (s.role !== ROLES.STUDENT) return { error: "Ruxsat yo'q" };
 
   const body = text.trim();
-  if (body.length < 2) return { error: "Xabar juda qisqa" };
-  if (body.length > 1000) return { error: "Xabar 1000 belgidan oshmasin" };
+  if (body.length < 1) return { error: "Xabar bo'sh" };
+  if (body.length > CHAT_MAX) return { error: `Xabar ${CHAT_MAX} belgidan oshmasin` };
 
   const student = await prisma.student.findUnique({
     where: { userId: s.userId },
-    select: {
-      fullName: true,
-      enrollments: {
-        where: { isActive: true },
-        orderBy: { joinedAt: "desc" },
-        select: { group: { select: { name: true, teacherId: true } } },
-      },
-    },
+    select: { id: true, fullName: true },
   });
   if (!student) return { error: "O'quvchi topilmadi" };
 
-  const group = student.enrollments[0]?.group ?? null;
-  if (!group?.teacherId) return { error: "Guruhingizga ustoz biriktirilmagan" };
+  const teacherId = await activeTeacherOf(student.id);
 
-  await prisma.notification.createMany({
-    data: [
-      {
-        userId: group.teacherId,
-        title: `${student.fullName} (${group.name}) xabar yubordi`,
-        body,
-        event: MESSAGE_IN,
-        channel: "APP",
-      },
-      // o'quvchidagi nusxa — faqat tarix uchun
-      { userId: s.userId, title: "Ustozga yuborildi", body, event: MESSAGE_SENT, channel: "APP", isRead: true },
-    ],
+  // Ustozni bezovta qilmaslik uchun: o'qilmagan xabar allaqachon bo'lsa,
+  // yangi bildirishnoma yubormaymiz (chat ichida baribir ko'rinadi).
+  const pending = teacherId
+    ? await prisma.chatMessage.count({ where: { teacherId, studentId: student.id, fromStudent: true, readAt: null } })
+    : 0;
+
+  await prisma.chatMessage.create({
+    data: { studentId: student.id, teacherId, fromStudent: true, authorId: s.userId, text: body },
   });
 
+  if (teacherId && pending === 0) {
+    await notify({
+      userId: teacherId,
+      title: `${student.fullName} xabar yozdi`,
+      body: body.slice(0, 120),
+      event: "CHAT",
+    });
+  }
+
   revalidatePath("/student/lehrer");
-  revalidatePath("/notifications");
+  revalidatePath("/chat");
+  return { ok: true };
+}
+
+// Ustozdan kelgan xabarlarni o'qilgan deb belgilash
+export async function markRead(): Promise<Res> {
+  const s = await requireSession();
+  if (s.role !== ROLES.STUDENT) return { error: "Ruxsat yo'q" };
+
+  const student = await prisma.student.findUnique({ where: { userId: s.userId }, select: { id: true } });
+  if (!student) return { error: "O'quvchi topilmadi" };
+
+  await prisma.chatMessage.updateMany({
+    where: { studentId: student.id, fromStudent: false, readAt: null },
+    data: { readAt: new Date() },
+  });
   return { ok: true };
 }

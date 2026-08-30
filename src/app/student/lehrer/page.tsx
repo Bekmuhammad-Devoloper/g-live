@@ -1,13 +1,13 @@
 import { redirect } from "next/navigation";
-import { S } from "../_i18n";
 import { getSession } from "@/lib/auth";
 import { prisma } from "@/lib/db";
+import { S } from "../_i18n";
+import { CARD, ICON_GRADIENT, PageHeader } from "../_ui";
 import MissingStudent from "../MissingStudent";
-import { CARD, ICON_GRADIENT, PageHeader, fmtDate } from "../_ui";
-import MessageForm from "./MessageForm";
-import { MESSAGE_SENT } from "./const";
+import Chat, { type VMsg } from "./Chat";
 
-// "Ustozga yozish" — o'quvchi guruh ustoziga xabar yuboradi.
+// "Ustozga yozish" — o'quvchi va ustoz o'rtasidagi yozishma.
+// Ustoz javobini CRM dagi /chat sahifasidan yozadi.
 
 export default async function StudentLehrerPage() {
   const session = await getSession();
@@ -21,6 +21,7 @@ export default async function StudentLehrerPage() {
       enrollments: {
         where: { isActive: true },
         orderBy: { joinedAt: "desc" },
+        take: 1,
         select: {
           group: {
             select: {
@@ -39,12 +40,29 @@ export default async function StudentLehrerPage() {
   const group = student.enrollments[0]?.group ?? null;
   const teacher = group?.teacher ?? null;
 
-  const sent = await prisma.notification.findMany({
-    where: { userId: session.userId, event: MESSAGE_SENT },
-    orderBy: { createdAt: "desc" },
-    take: 20,
-    select: { id: true, body: true, createdAt: true },
+  const rows = await prisma.chatMessage.findMany({
+    where: { studentId: student.id },
+    orderBy: { createdAt: "asc" },
+    take: 300,
+    select: {
+      id: true,
+      fromStudent: true,
+      text: true,
+      createdAt: true,
+      readAt: true,
+      author: { select: { fullName: true } },
+    },
   });
+
+  const messages: VMsg[] = rows.map((m) => ({
+    id: m.id,
+    mine: m.fromStudent,
+    text: m.text,
+    at: m.createdAt.toISOString(),
+    author: m.fromStudent ? null : (m.author?.fullName ?? teacher?.fullName ?? null),
+  }));
+
+  const hasUnread = rows.some((m) => !m.fromStudent && !m.readAt);
 
   const initials = (teacher?.fullName ?? "?")
     .split(/\s+/)
@@ -54,40 +72,29 @@ export default async function StudentLehrerPage() {
     .toUpperCase();
 
   return (
-    <div className="space-y-4">
+    <div className="space-y-3">
       <PageHeader title={t.writeTeacher} subtitle={group?.name ?? "—"} back="/student/kurse" />
 
-      {/* Ustoz kartasi */}
-      <div className={`${CARD} flex items-center gap-3 p-4`}>
+      {/* Ustoz */}
+      <div className={CARD + " flex items-center gap-3 p-3.5"}>
         {teacher?.imageUrl ? (
-          <img src={teacher.imageUrl} alt={teacher.fullName} className="h-12 w-12 shrink-0 rounded-full object-cover" />
+          // eslint-disable-next-line @next/next/no-img-element
+          <img src={teacher.imageUrl} alt={teacher.fullName} className="h-11 w-11 shrink-0 rounded-full object-cover" />
         ) : (
           <span
-            className="grid h-12 w-12 shrink-0 place-items-center rounded-full text-[16px] font-extrabold text-white"
+            className="grid h-11 w-11 shrink-0 place-items-center rounded-full text-[15px] font-extrabold text-white"
             style={{ background: ICON_GRADIENT }}
           >
             {initials}
           </span>
         )}
         <div className="min-w-0 flex-1">
-          <div className="truncate text-[16px] font-extrabold text-slate-900">{teacher?.fullName ?? t.noTeacher}</div>
-          <div className="truncate text-[12.5px] text-slate-500">{teacher ? t.yourTeacher : t.askAdmin}</div>
+          <div className="truncate text-[15px] font-extrabold text-slate-900">{teacher?.fullName ?? t.noTeacher}</div>
+          <div className="truncate text-[12px] text-slate-500">{teacher ? t.yourTeacher : t.askAdmin}</div>
         </div>
       </div>
 
-      <MessageForm disabled={!group?.teacherId} t={t} />
-
-      {sent.length > 0 && (
-        <div className="space-y-2">
-          <div className="px-1 text-[13px] font-bold text-slate-500">{t.sentMessages}</div>
-          {sent.map((m) => (
-            <div key={m.id} className={`${CARD} p-3.5`}>
-              <div className="whitespace-pre-wrap break-words text-[14px] text-slate-800">{m.body}</div>
-              <div className="mt-1.5 text-[11.5px] text-slate-400">{fmtDate(m.createdAt)}</div>
-            </div>
-          ))}
-        </div>
-      )}
+      <Chat messages={messages} disabled={!group?.teacherId} t={t} hasUnread={hasUnread} />
     </div>
   );
 }

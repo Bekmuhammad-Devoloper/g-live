@@ -23,12 +23,23 @@ export const MODULES = {
   REPORTS: "REPORTS",
   USERS: "USERS",
   MARKET: "MARKET",
+  CHAT: "CHAT",
 } as const;
 
 export type ModuleKey = (typeof MODULES)[keyof typeof MODULES];
 
 // Matritsa: [module][role] => Permission
 const M: Record<ModuleKey, Partial<Record<Role, Permission>>> = {
+  // O'quvchi–ustoz yozishmasi. Ustoz faqat o'z guruhi o'quvchisi bilan
+  // (tekshiruv actions ichida), rahbariyat hammasini ko'radi.
+  CHAT: {
+    STUDENT: "OWN",
+    TEACHER: "OWN",
+    MANAGER: "FULL",
+    DEPUTY_DIRECTOR: "FULL",
+    DIRECTOR: "FULL",
+    ADMIN: "FULL",
+  },
   // Market — o'quvchilar tangasiga almashtiriladigan sovg'alar va buyurtmalar
   MARKET: {
     STUDENT: "READ",

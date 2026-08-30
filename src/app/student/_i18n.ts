@@ -213,6 +213,13 @@ const DICT = {
   posPrep: p("predlog", "предл.", "prep.", "Präp."),
   posConj: p("bog'lovchi", "союз", "conj.", "Konj."),
   posInt: p("undov", "межд.", "interj.", "Interj."),
+  chatEmpty: p("Yozishma bo'sh", "Переписка пуста", "No messages yet", "Noch keine Nachrichten"),
+  chatEmptyHint: p(
+    "Savolingizni yozing — ustoz javob beradi.",
+    "Напишите вопрос — преподаватель ответит.",
+    "Write your question — the teacher will reply.",
+    "Schreiben Sie Ihre Frage — die Lehrkraft antwortet.",
+  ),
 } as const;
 
 export type StudentStrings = { [K in keyof typeof DICT]: string };

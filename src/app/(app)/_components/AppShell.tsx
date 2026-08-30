@@ -47,6 +47,7 @@ const SUBMENUS: Record<string, { title: Record<Locale, string>; groups: SubGroup
         { href: "/schedule", icon: "calendar", label: { uz: "Dars jadvali", ru: "Расписание", en: "Schedule", de: "Stundenplan" } },
         { href: "/rooms", icon: "building", label: { uz: "Xonalar", ru: "Кабинеты", en: "Rooms", de: "Räume" } },
         { href: "/group-students", icon: "graduation", label: { uz: "Guruh o'quvchilari", ru: "Ученики группы", en: "Group students", de: "Schüler der Gruppe" } },
+        { href: "/chat", icon: "mail", label: { uz: "O'quvchilar yozishmasi", ru: "Переписка с учениками", en: "Student chat", de: "Schüler-Chat" } },
         { href: "/market", icon: "trophy", label: { uz: "Market (sovg'alar)", ru: "Маркет (призы)", en: "Market (rewards)", de: "Markt (Preise)" } },
       ] },
     ],
