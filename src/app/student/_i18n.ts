@@ -58,6 +58,10 @@ const DICT = {
   lessonAssignment: p("Dars topshirig'i", "Задание урока", "Lesson assignment", "Lektionsaufgabe"),
   homeworkTask: p("Uyga vazifa", "Домашнее задание", "Homework", "Hausaufgabe"),
   openFile: p("Faylni ochish", "Открыть файл", "Open file", "Datei öffnen"),
+  prevLesson: p("Oldingi", "Предыдущий", "Previous", "Zurück"),
+  nextLesson: p("Keyingi", "Следующий", "Next", "Weiter"),
+  attachment: p("Biriktirilgan fayl", "Прикреплённый файл", "Attachment", "Anhang"),
+  openFull: p("To'liq ochish", "Открыть полностью", "Open full size", "Vollbild öffnen"),
 
   // ── Mashq (Üben) ──
   practice: p("Mashq", "Практика", "Practice", "Üben"),
