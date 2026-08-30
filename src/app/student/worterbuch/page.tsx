@@ -218,6 +218,30 @@ const POS_KEY: Record<string, keyof StudentStrings> = {
   int: "posInt",
 };
 
+// Bosma lug'atda ma'nolar "1) ... 2) ..." tarzida bir qatorga yozilgan —
+// ekranda ularni alohida qatorlarga ajratsak o'qish ancha oson.
+function Senses({ uz }: { uz: string }) {
+  const parts = uz
+    .split(/\s*\d\)\s*/)
+    .map((x) => x.trim().replace(/[;,]$/, ""))
+    .filter(Boolean);
+
+  if (parts.length < 2) {
+    return <div className="mt-0.5 text-[14px] leading-snug text-slate-600">{uz}</div>;
+  }
+
+  return (
+    <ol className="mt-1 space-y-[3px]">
+      {parts.map((x, i) => (
+        <li key={i} className="flex gap-1.5 text-[14px] leading-snug text-slate-600">
+          <span className="mt-[1px] shrink-0 text-[11px] font-bold text-slate-300">{i + 1}</span>
+          <span className="min-w-0">{x}</span>
+        </li>
+      ))}
+    </ol>
+  );
+}
+
 function Row({ e, t }: { e: DictEntry; t: StudentStrings }) {
   const art = e.g ? ARTICLE[e.g] : null;
   const st = art ? ART_STYLE[art] : null;
@@ -235,8 +259,8 @@ function Row({ e, t }: { e: DictEntry; t: StudentStrings }) {
             {art}
           </span>
         ) : (
-          <span className="grid h-[26px] place-items-center rounded-lg bg-slate-100 text-[10.5px] font-bold text-slate-500">
-            {pos ?? "—"}
+          <span className="grid h-[26px] place-items-center rounded-lg bg-slate-50 text-[10.5px] font-bold text-slate-400">
+            {pos ?? ""}
           </span>
         )}
       </div>
@@ -249,7 +273,7 @@ function Row({ e, t }: { e: DictEntry; t: StudentStrings }) {
             <span className="rounded bg-slate-100 px-1.5 py-[1px] text-[10.5px] font-semibold text-slate-500">{e.s}.</span>
           ) : null}
         </div>
-        <div className="mt-0.5 text-[14px] leading-snug text-slate-600">{e.uz}</div>
+        <Senses uz={e.uz} />
       </div>
     </li>
   );
