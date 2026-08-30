@@ -8,10 +8,11 @@ import { tr } from "@/lib/tr";
 import { logout } from "../../(app)/actions";
 import {
   CARD, NAVY, fmtDate, fmtSum, isAttended,
-  PageHeader, FlagAvatar, SectionTitle, Pill,
+  PageHeader, SectionTitle, Pill,
   IcoWallet, IcoTrophy, IcoDoc, IcoLogout, IcoCalendar,
 } from "../_ui";
 import { S } from "../_i18n";
+import IdCard from "../IdCard";
 import MissingStudent from "../MissingStudent";
 import PasswordForm from "./PasswordForm";
 
@@ -36,7 +37,8 @@ export default async function StudentProfilPage() {
   const student = await prisma.student.findUnique({
     where: { userId: session.userId },
     select: {
-      id: true, fullName: true, phone: true, imageUrl: true, currentLevel: true, eduStatus: true, createdAt: true,
+      id: true, fullName: true, phone: true, phone2: true, imageUrl: true, birthDate: true, age: true,
+      currentLevel: true, eduStatus: true, createdAt: true,
       user: { select: { email: true, imageUrl: true } },
       enrollments: {
         where: { isActive: true },
@@ -96,22 +98,23 @@ export default async function StudentProfilPage() {
     <div className="space-y-[18px]">
       <PageHeader title={t.profile} subtitle={t.yourAccount} right={<ProfilActions t={t} />} />
 
-      {/* ── Shaxsiy karta ── */}
-      <div className={`${CARD} flex items-center gap-4 p-5`}>
-        {avatarUrl ? (
-          <img src={avatarUrl} alt={student.fullName} className="h-16 w-16 shrink-0 rounded-full object-cover shadow-[0_8px_16px_rgba(14,116,144,0.3)]" />
-        ) : (
-          <span className="shrink-0 rounded-full shadow-[0_8px_16px_rgba(19,78,94,0.22)]"><FlagAvatar s={64} id="glProfilAvatar" /></span>
-        )}
-        <div className="min-w-0 flex-1">
-          <div className="truncate text-[18px] font-extrabold leading-tight text-slate-900">{student.fullName}</div>
-          <div className="mt-1 flex flex-wrap items-center gap-1.5">
-            <Pill tone="ok">{level}</Pill>
-            <Pill tone="muted">{label(EDU_STATUS_LABELS, student.eduStatus, session.locale)}</Pill>
-          </div>
-          {group && <div className="mt-1.5 truncate text-[12.5px] text-slate-500">{group.name}</div>}
-        </div>
-      </div>
+      {/* ── Guvohnoma ── */}
+      <IdCard
+        t={t}
+        p={{
+          fullName: student.fullName,
+          birthDate: student.birthDate ? student.birthDate.toISOString().slice(0, 10) : null,
+          age: student.age,
+          phone: student.phone,
+          phone2: student.phone2,
+          imageUrl: avatarUrl,
+          level,
+          group: group?.name ?? null,
+          login: student.user?.email ?? "—",
+          studentNo: student.id.slice(-6).toUpperCase(),
+          status: label(EDU_STATUS_LABELS, student.eduStatus, session.locale),
+        }}
+      />
 
       {/* ── Yig'ma ko'rsatkichlar ── */}
       <div className="grid grid-cols-3 gap-3">

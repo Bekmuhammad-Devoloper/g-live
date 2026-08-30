@@ -1,8 +1,8 @@
 "use client";
 
 import { useRef, useState, useTransition } from "react";
-import type { StudentStrings } from "../_i18n";
-import { FlagAvatar, ICON_GRADIENT, TEAL } from "../_ui";
+import type { StudentStrings } from "./_i18n";
+import { FlagAvatar, ICON_GRADIENT, TEAL } from "./_ui";
 import { removePhoto, updateProfile } from "./profileActions";
 
 // O'quvchi guvohnomasi — ID-karta ko'rinishidagi shaxsiy ma'lumot.
@@ -20,6 +20,7 @@ export type VProfile = {
   group: string | null;
   login: string;
   studentNo: string;
+  status?: string | null;
 };
 
 const fmtDate = (iso: string | null) => {
@@ -198,6 +199,11 @@ export default function IdCard({ p, t }: { p: VProfile; t: StudentStrings }) {
             ) : (
               <>
                 <div className="truncate text-[18px] font-extrabold leading-tight text-slate-900">{p.fullName}</div>
+                {p.status ? (
+                  <span className="mt-1 inline-block rounded-full bg-emerald-50 px-2 py-[2px] text-[11px] font-bold text-emerald-700">
+                    {p.status}
+                  </span>
+                ) : null}
                 <dl className="mt-2 space-y-1">
                   <Line k={t.birthDate} v={fmtDate(p.birthDate)} />
                   <Line k={t.age} v={p.age !== null ? String(p.age) : "—"} />

@@ -7,7 +7,7 @@ import { S } from "../_i18n";
 import MissingStudent from "../MissingStudent";
 import PasswordForm from "../profil/PasswordForm";
 import LocalePicker from "./LocalePicker";
-import IdCard from "./IdCard";
+import IdCard from "../IdCard";
 import SecretField from "./SecretField";
 
 // Sozlamalar — Profil sarlavhasidagi tishli g'ildirak ostidagi sahifa:
