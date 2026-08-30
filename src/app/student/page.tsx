@@ -401,10 +401,10 @@ export default async function StudentStartPage() {
       <div className="grid grid-cols-4 gap-3">
         {skills.map((sk) => (
           <div key={sk.key} className={`${card} flex flex-col items-center gap-2.5 px-1 pb-4 pt-5`}>
-            <div className="grid h-10 place-items-center">
+            <div className="grid h-14 place-items-center">
               {sk.img
                 // eslint-disable-next-line @next/next/no-img-element
-                ? <img src={sk.img} alt="" className="h-10 w-10 object-contain" />
+                ? <img src={sk.img} alt="" className="h-14 w-14 object-contain" />
                 : sk.icon}
             </div>
             <div className="text-[13px] font-semibold text-slate-800">{sk.label}</div>
