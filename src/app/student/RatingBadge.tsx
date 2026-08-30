@@ -1,4 +1,5 @@
 import { getSession } from "@/lib/auth";
+import { S } from "./_i18n";
 import { prisma } from "@/lib/db";
 import { ATTENDED } from "./_ui";
 
@@ -49,7 +50,7 @@ export default async function RatingBadge() {
       <IcoTrophy s={26} />
       <div className="leading-none">
         <div className="text-[15px] font-extrabold text-slate-900">{place}</div>
-        <div className="mt-0.5 text-[10px] font-semibold text-slate-500">o&apos;rin</div>
+        <div className="mt-0.5 text-[10px] font-semibold text-slate-500">{S(session.locale).place}</div>
       </div>
     </div>
   );

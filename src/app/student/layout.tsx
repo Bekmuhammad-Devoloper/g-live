@@ -2,6 +2,7 @@ import { redirect } from "next/navigation";
 import { getSession } from "@/lib/auth";
 import { ROLES } from "@/lib/constants";
 import BottomNav from "./BottomNav";
+import { S } from "./_i18n";
 
 // O'quvchining mobil ilova ko'rinishidagi portali (2026-08-28 talab).
 // AppShell (sidebar) ishlatilmaydi — telefon ilovasi kabi bitta ustun + pastki menyu.
@@ -13,7 +14,7 @@ export default async function StudentLayout({ children }: { children: React.Reac
   return (
     <div className="min-h-screen bg-[#e4edf3]">
       <div className="mx-auto min-h-screen max-w-md px-4 pb-28 pt-5">{children}</div>
-      <BottomNav />
+      <BottomNav t={S(session.locale)} />
     </div>
   );
 }

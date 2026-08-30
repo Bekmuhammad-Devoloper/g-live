@@ -1,4 +1,5 @@
 import { redirect } from "next/navigation";
+import { S } from "../_i18n";
 import HeaderBadges from "../HeaderBadges";
 import { getSession } from "@/lib/auth";
 import { prisma } from "@/lib/db";
@@ -11,6 +12,7 @@ import NotifList, { type VNotif } from "./NotifList";
 export default async function StudentMitteilungenPage() {
   const session = await getSession();
   if (!session) redirect("/login");
+  const t = S(session.locale);
 
   const rows = await prisma.notification.findMany({
     where: { userId: session.userId, NOT: { event: MESSAGE_SENT } },
@@ -29,8 +31,8 @@ export default async function StudentMitteilungenPage() {
 
   return (
     <div className="space-y-[18px]">
-      <PageHeader title="Mitteilungen" subtitle="Deine Nachrichten" right={<HeaderBadges />} />
-      <NotifList items={items} />
+      <PageHeader title={t.messages} subtitle={t.yourMessages} right={<HeaderBadges />} />
+      <NotifList items={items} emptyText={t.noMessages} />
     </div>
   );
 }

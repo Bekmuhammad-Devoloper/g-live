@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { S } from "./_i18n";
 import { redirect } from "next/navigation";
 import { getSession } from "@/lib/auth";
 import { prisma } from "@/lib/db";
@@ -231,6 +232,7 @@ function BigHeadphones({ w = 92 }: { w?: number }) {
 export default async function StudentStartPage() {
   const session = await getSession();
   if (!session) redirect("/login");
+  const t = S(session.locale);
 
   const student = await prisma.student.findUnique({
     where: { userId: session.userId },
@@ -320,10 +322,10 @@ export default async function StudentStartPage() {
   const avatarUrl = student.imageUrl || student.user?.imageUrl || null;
 
   const skills = [
-    { key: "w", label: "Wörter", pct: woerter, icon: <span style={{ color: TEAL }} className="text-[34px] font-extrabold leading-none">W</span> },
-    { key: "l", label: "Lesen", pct: lesen, icon: <IcoBook /> },
-    { key: "h", label: "Hören", pct: hoeren, icon: <IcoHeadphones /> },
-    { key: "s", label: "Sprechen", pct: sprechen, icon: <IcoMic /> },
+    { key: "w", label: t.words, pct: woerter, icon: <span style={{ color: TEAL }} className="text-[34px] font-extrabold leading-none">W</span> },
+    { key: "l", label: t.reading, pct: lesen, icon: <IcoBook /> },
+    { key: "h", label: t.listening, pct: hoeren, icon: <IcoHeadphones /> },
+    { key: "s", label: t.speaking, pct: sprechen, icon: <IcoMic /> },
   ];
 
   // Maketdagi yumshoq oq karta
@@ -347,15 +349,15 @@ export default async function StudentStartPage() {
           </span>
         )}
         <div className="min-w-0 flex-1">
-          <h1 className="truncate text-[22px] font-extrabold leading-tight tracking-tight text-slate-900 sm:text-[26px]">Hallo, {firstName}!</h1>
-          <p className="truncate text-[13px] text-slate-500">Bereit, Deutsch zu lernen?</p>
+          <h1 className="truncate text-[22px] font-extrabold leading-tight tracking-tight text-slate-900 sm:text-[26px]">{t.hello}, {firstName}!</h1>
+          <p className="truncate text-[13px] text-slate-500">{t.readyToLearn}</p>
         </div>
         {/* Streak (ketma-ket qatnashuv) kartochkasi — olovcha + kunlar soni */}
         <div className="flex h-11 shrink-0 items-center gap-1 rounded-2xl bg-white px-2.5 shadow-[0_6px_16px_rgba(19,78,94,0.12)]">
           <IcoFlame s={26} />
           <div className="leading-none">
             <div className="text-[15px] font-extrabold text-slate-900">{streak}</div>
-            <div className="mt-0.5 text-[10px] font-semibold text-slate-500">kun</div>
+            <div className="mt-0.5 text-[10px] font-semibold text-slate-500">{t.day}</div>
           </div>
         </div>
         {/* Ikonkalar pastki tab-bar ikonkalari o'lchamida (26px) */}
@@ -388,12 +390,12 @@ export default async function StudentStartPage() {
       >
         <div className="flex items-center justify-between gap-4">
           <div className="min-w-0">
-            <div className="text-[12px] font-bold uppercase tracking-[0.22em]" style={{ color: TEAL }}>Dein Fortschritt</div>
+            <div className="text-[12px] font-bold uppercase tracking-[0.22em]" style={{ color: TEAL }}>{t.yourProgress}</div>
             <div className="mt-1.5 text-[26px] font-extrabold leading-tight tracking-tight text-slate-900 sm:text-[32px]">
-              {level} · Kapitel {chapter}
+              {level} · {t.chapter} {chapter}
             </div>
             <div className="mt-1 truncate text-[15px] text-slate-600">
-              {currentLesson?.topic || currentLesson?.title || group?.program.name || "Grundlagen des Alltags"}
+              {currentLesson?.topic || currentLesson?.title || group?.program.name || t.everydayBasics}
             </div>
           </div>
           <div className="relative grid shrink-0 place-items-center">
@@ -414,9 +416,9 @@ export default async function StudentStartPage() {
       {/* ── Münzen · Streak · Rang ── */}
       <div className="grid grid-cols-3 gap-3">
         {[
-          { icon: <IcoCoin />, label: "Münzen", value: String(coins) },
-          { icon: <IcoFlameWhite />, label: "Streak", value: String(streak) },
-          { icon: <IcoGrowth />, label: "Rang", value: String(rangPos) },
+          { icon: <IcoCoin />, label: t.coins, value: String(coins) },
+          { icon: <IcoFlameWhite />, label: t.streak, value: String(streak) },
+          { icon: <IcoGrowth />, label: t.rank, value: String(rangPos) },
         ].map((t) => (
           <div key={t.label} className={`${card} flex flex-col items-center gap-2.5 px-1.5 pb-4 pt-4`}>
             <span className="grid h-[50px] w-[50px] place-items-center rounded-full shadow-[0_8px_16px_rgba(14,116,144,0.3)]" style={{ background: `linear-gradient(135deg, #17a2bf, ${TEAL})` }}>
@@ -461,10 +463,10 @@ export default async function StudentStartPage() {
       {/* ── Videos & Podcasts ── */}
       <div className={`${card} relative overflow-hidden p-6`}>
         <div className="relative z-10 max-w-[58%]">
-          <h2 className="text-[24px] font-extrabold leading-tight tracking-tight text-slate-900">Videos &amp; Podcasts</h2>
-          <p className="mt-1.5 text-[14px] leading-relaxed text-slate-500">Lerne Deutsch mit spannenden Inhalten</p>
+          <h2 className="text-[24px] font-extrabold leading-tight tracking-tight text-slate-900">{t.videosPodcasts}</h2>
+          <p className="mt-1.5 text-[14px] leading-relaxed text-slate-500">{t.learnWithContent}</p>
           <Link href={kurseHref} className="mt-4 inline-flex items-center gap-1 rounded-2xl px-5 py-2.5 text-[14px] font-bold text-white shadow-[0_8px_16px_rgba(14,116,144,0.3)]" style={{ background: TEAL }}>
-            Entdecken
+            {t.discover}
             <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="m9 6 6 6-6 6" /></svg>
           </Link>
         </div>

@@ -1,11 +1,12 @@
 import Link from "next/link";
+import { S } from "../_i18n";
 import KurseActions from "./KurseActions";
 import { redirect } from "next/navigation";
 import { getSession } from "@/lib/auth";
 import { prisma } from "@/lib/db";
 import { PageHeader } from "../_ui";
 import MissingStudent from "../MissingStudent";
-import { LEVELS, LEVEL_BG, LEVEL_NAME } from "./levels";
+import { LEVELS, LEVEL_BG, levelName } from "./levels";
 
 // "Kurse" — umumiy darajalar ro'yxati (A1 · A2 · B1 · B2 · C1 · C2).
 // Har daraja kartasi: nom, darslar soni, o'tilgan foiz.
@@ -32,6 +33,7 @@ function Mountains() {
 export default async function StudentKursePage() {
   const session = await getSession();
   if (!session) redirect("/login");
+  const t = S(session.locale);
 
   const student = await prisma.student.findUnique({
     where: { userId: session.userId },
@@ -79,7 +81,7 @@ export default async function StudentKursePage() {
 
   return (
     <div className="space-y-4">
-      <PageHeader title="Kurse" subtitle={group?.program.name ?? "Deutsch"} right={<KurseActions />} />
+      <PageHeader title={t.courses} subtitle={group?.program.name ?? "Deutsch"} right={<KurseActions t={t} />} />
 
       <div className="space-y-3.5">
         {LEVELS.map((code) => {
@@ -90,7 +92,7 @@ export default async function StudentKursePage() {
             <Link
               key={code}
               href={`/student/kurse/${code}`}
-              // Bosh sahifadagi "Dein Fortschritt" kartasi bilan bir xil o'lcham
+              // Bosh sahifadagi t.yourProgress kartasi bilan bir xil o'lcham
               className="relative flex min-h-[168px] flex-col justify-between overflow-hidden rounded-[26px] p-6 text-white shadow-[0_14px_30px_rgba(19,78,94,0.22)]"
               style={{ background: LEVEL_BG[code] }}
             >
@@ -102,7 +104,7 @@ export default async function StudentKursePage() {
                 </span>
                 <div className="min-w-0 flex-1">
                   <div className="flex items-center gap-2">
-                    <span className="truncate text-[24px] font-extrabold leading-tight">{LEVEL_NAME[code]}</span>
+                    <span className="truncate text-[24px] font-extrabold leading-tight">{levelName(code, session.locale)}</span>
                     {active && (
                       <span className="shrink-0 rounded-full bg-white/25 px-2 py-0.5 text-[10px] font-bold uppercase tracking-wide">
                         aktuell
@@ -110,7 +112,7 @@ export default async function StudentKursePage() {
                     )}
                   </div>
                   <div className="mt-1 text-[14px] text-white/75">
-                    {st.total > 0 ? `${st.total} Lektionen` : "Bald verfügbar"}
+                    {st.total > 0 ? `${st.total} ${t.lessons}` : t.comingSoonBadge}
                   </div>
                 </div>
                 <span className="mt-1.5 shrink-0"><IcoChevron /></span>

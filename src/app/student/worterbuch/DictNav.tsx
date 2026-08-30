@@ -1,13 +1,14 @@
 "use client";
 
 import { useRouter, useSearchParams } from "next/navigation";
+import type { StudentStrings } from "../_i18n";
 import { useEffect, useRef, useState, useTransition } from "react";
 import { ICON_GRADIENT } from "../_ui";
 
 // Umumiy lug'at uchun qidiruv va A–Z harf tasmasi. Natijani server chiqaradi
 // (6000+ so'z brauzerga yuborilmasin), shu sabab bu yerda faqat URL yangilanadi.
 
-export default function DictNav({ letters }: { letters: string[] }) {
+export default function DictNav({ letters, t }: { letters: string[]; t: StudentStrings }) {
   const router = useRouter();
   const sp = useSearchParams();
   const [q, setQ] = useState(sp.get("q") ?? "");
@@ -54,7 +55,7 @@ export default function DictNav({ letters }: { letters: string[] }) {
         <input
           value={q}
           onChange={(e) => setQ(e.target.value)}
-          placeholder="Nemischa yoki o'zbekcha so'z…"
+          placeholder={t.searchDeUz}
           className="h-12 w-full rounded-2xl border-0 bg-white pl-11 pr-11 text-[15px] text-slate-900 shadow-[0_6px_16px_rgba(19,78,94,0.10)] outline-none placeholder:text-slate-400"
         />
         {q && (
@@ -74,7 +75,7 @@ export default function DictNav({ letters }: { letters: string[] }) {
 
       {/* A–Z tasmasi */}
       <div className="-mx-4 flex gap-1.5 overflow-x-auto px-4 pb-0.5 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
-        <Chip active={!active} onClick={() => push({ l: null })}>Barchasi</Chip>
+        <Chip active={!active} onClick={() => push({ l: null })}>{t.all}</Chip>
         {letters.map((c) => (
           <Chip key={c} active={active === c} onClick={() => push({ l: active === c ? null : c })}>
             {c}

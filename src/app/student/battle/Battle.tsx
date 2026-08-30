@@ -1,6 +1,7 @@
 "use client";
 
 import { useMemo, useState } from "react";
+import type { StudentStrings } from "../_i18n";
 import { CARD, ICON_GRADIENT, TEAL, PageHeader } from "../_ui";
 
 // Jang (Battle) — BITTA sahifa: sozlash → o'yin → natija.
@@ -153,7 +154,7 @@ const SOON = (
 );
 
 // badges — server komponenti (seriya + qo'ng'iroq) prop sifatida uzatiladi
-export default function Battle({ words, badges }: { words: WordPair[]; badges?: React.ReactNode }) {
+export default function Battle({ words, badges, t }: { words: WordPair[]; badges?: React.ReactNode; t: StudentStrings }) {
   const [view, setView] = useState<View>("setup");
   const [mode, setMode] = useState<Mode>("ai");
   const [lobby, setLobby] = useState<Lobby>("vocabulary");
@@ -217,7 +218,7 @@ export default function Battle({ words, badges }: { words: WordPair[]; badges?: 
 
     return (
       <div className="space-y-6 pb-[92px]">
-        <PageHeader title="Jang va o'yinlar" subtitle="Bilimingizni sinab ko'ring" back="/student/uben" right={badges} />
+        <PageHeader title={t.gamesAndBattle} subtitle={t.testKnowledge} back="/student/uben" right={badges} />
 
         {/* ── Jang turi ── */}
         <section>

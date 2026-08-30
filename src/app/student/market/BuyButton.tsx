@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useTransition } from "react";
+import type { StudentStrings } from "../_i18n";
 import { ICON_GRADIENT } from "../_ui";
 import { buyItem } from "./actions";
 
@@ -12,12 +13,14 @@ export default function BuyButton({
   price,
   affordable,
   soldOut,
+  t,
 }: {
   id: string;
   title: string;
   price: number;
   affordable: boolean;
   soldOut: boolean;
+  t: StudentStrings;
 }) {
   const [ask, setAsk] = useState(false);
   const [msg, setMsg] = useState<{ ok: boolean; text: string } | null>(null);
@@ -30,13 +33,13 @@ export default function BuyButton({
     start(async () => {
       const r = await buyItem(id);
       setAsk(false);
-      setMsg(r.ok ? { ok: true, text: "Buyurtma qabul qilindi" } : { ok: false, text: r.error ?? "Xatolik" });
+      setMsg(r.ok ? { ok: true, text: t.ordered } : { ok: false, text: r.error ?? "!" });
     });
   };
 
   if (msg?.ok) {
     return (
-      <span className="rounded-xl bg-emerald-50 px-3 py-1.5 text-[12px] font-bold text-emerald-700">Buyurtma berildi</span>
+      <span className="rounded-xl bg-emerald-50 px-3 py-1.5 text-[12px] font-bold text-emerald-700">{t.ordered}</span>
     );
   }
 
@@ -49,7 +52,7 @@ export default function BuyButton({
             onClick={() => setAsk(false)}
             className="rounded-xl bg-slate-100 px-3 py-1.5 text-[12.5px] font-bold text-slate-500"
           >
-            Yo'q
+            {t.no}
           </button>
           <button
             type="button"
@@ -58,7 +61,7 @@ export default function BuyButton({
             className="rounded-xl px-3 py-1.5 text-[12.5px] font-bold text-white disabled:opacity-50"
             style={{ background: ICON_GRADIENT }}
           >
-            {busy ? "..." : "Tasdiqlash"}
+            {busy ? "…" : t.confirm}
           </button>
         </div>
       ) : (
@@ -73,7 +76,7 @@ export default function BuyButton({
           }
           style={disabled ? undefined : { background: ICON_GRADIENT }}
         >
-          {soldOut ? "Tugagan" : affordable ? "Olish" : price + " kerak"}
+          {soldOut ? t.soldOut : affordable ? t.take : price + " " + t.needed}
         </button>
       )}
       {msg && !msg.ok ? <span className="text-[11px] font-semibold text-rose-600">{msg.text}</span> : null}

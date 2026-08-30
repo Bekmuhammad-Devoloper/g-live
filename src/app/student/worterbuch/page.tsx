@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { S } from "../_i18n";
 import { redirect } from "next/navigation";
 import { getSession } from "@/lib/auth";
 import { prisma } from "@/lib/db";
@@ -24,6 +25,7 @@ export default async function StudentWorterbuchPage({ searchParams }: { searchPa
 
   const session = await getSession();
   if (!session) redirect("/login");
+  const t = S(session.locale);
 
   const student = await prisma.student.findUnique({
     where: { userId: session.userId },
@@ -96,41 +98,41 @@ export default async function StudentWorterbuchPage({ searchParams }: { searchPa
   return (
     <div className="space-y-4">
       <PageHeader
-        title="Wörterbuch"
+        title={t.dictionary}
         subtitle={
           tab === "lugat"
-            ? fmt(DICT_SIZE) + " so'z"
+            ? fmt(DICT_SIZE) + " " + t.wordsCount
             : group
-              ? words.length + " so'z · " + group.program.name
-              : "Lug'at"
+              ? words.length + " " + t.wordsCount + " · " + group.program.name
+              : t.dictionary
         }
         back="/student/kurse"
       />
 
       {/* Manba tanlash */}
       <div className="flex gap-2 rounded-2xl bg-white/70 p-1.5 shadow-[0_6px_16px_rgba(19,78,94,0.08)]">
-        <Tab href="/student/worterbuch" active={tab === "kurs"} label="Kursim" sub={String(words.length)} />
-        <Tab href="/student/worterbuch?tab=lugat" active={tab === "lugat"} label="Umumiy lug'at" sub={fmt(DICT_SIZE)} />
+        <Tab href="/student/worterbuch" active={tab === "kurs"} label={t.myCourse} sub={String(words.length)} />
+        <Tab href="/student/worterbuch?tab=lugat" active={tab === "lugat"} label={t.fullDictionary} sub={fmt(DICT_SIZE)} />
       </div>
 
       {tab === "kurs" ? (
-        <WordList words={words} />
+        <WordList words={words} t={t} />
       ) : (
         <>
-          <DictNav letters={DICT_LETTERS} />
+          <DictNav letters={DICT_LETTERS} t={t} />
 
           <div className="flex items-center justify-between px-1">
             <span className="text-[12.5px] font-semibold text-slate-500">
-              {res!.total === 0 ? "Topilmadi" : fmt(res!.total) + " ta so'z"}
+              {res!.total === 0 ? t.notFound : fmt(res!.total) + " " + t.wordsCount}
             </span>
             {sp.q ? <span className="ml-3 truncate text-[12px] text-slate-400">{sp.q}</span> : null}
           </div>
 
           {res!.total === 0 ? (
             <div className={CARD + " px-5 py-12 text-center"}>
-              <div className="text-[15px] font-semibold text-slate-700">Bunday so'z yo'q</div>
+              <div className="text-[15px] font-semibold text-slate-700">{t.notFound}</div>
               <p className="mt-1 text-[13px] text-slate-400">
-                Boshqacha yozib ko'ring — o'zbekcha ma'nosi bo'yicha ham qidirsa bo'ladi.
+                {t.tryAnother}
               </p>
             </div>
           ) : (
@@ -149,7 +151,7 @@ export default async function StudentWorterbuchPage({ searchParams }: { searchPa
               scroll={false}
               className={CARD + " block px-4 py-3.5 text-center text-[14px] font-bold text-slate-600"}
             >
-              Yana ko'rsatish ({fmt(res!.total - res!.items.length)})
+              {t.showMore} ({fmt(res!.total - res!.items.length)})
             </Link>
           ) : null}
         </>

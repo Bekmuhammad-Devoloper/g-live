@@ -1,6 +1,7 @@
 "use client";
 
 import Link from "next/link";
+import type { StudentStrings } from "./_i18n";
 import { usePathname } from "next/navigation";
 
 const TEAL = "#0e7490";
@@ -48,17 +49,17 @@ function Ico({ name, active }: { name: string; active: boolean }) {
   );
 }
 
-export default function BottomNav() {
+export default function BottomNav({ t }: { t: StudentStrings }) {
   const pathname = usePathname();
   // Jang sahifasi to'liq ekranda ochiladi — pastki menyu ko'rinmaydi
   if (pathname.startsWith("/student/battle")) return null;
 
   // Barcha tablar /student/* ichida — o'quvchi endi xodim (AppShell) sahifalariga chiqib ketmaydi
   const items = [
-    { href: "/student", icon: "home", label: "Start", exact: true },
-    { href: "/student/kurse", icon: "book", label: "Kurse" },
-    { href: "/student/uben", icon: "target", label: "Üben" },
-    { href: "/student/profil", icon: "profil", label: "Profil" },
+    { href: "/student", icon: "home", label: t.navStart, exact: true },
+    { href: "/student/kurse", icon: "book", label: t.navCourses },
+    { href: "/student/uben", icon: "target", label: t.navPractice },
+    { href: "/student/profil", icon: "profil", label: t.navProfile },
   ];
   return (
     <nav className="fixed inset-x-0 bottom-0 z-40 mx-auto max-w-md rounded-t-[26px] bg-white px-3 pb-2 pt-2.5 shadow-[0_-10px_30px_rgba(19,78,94,0.14)]">

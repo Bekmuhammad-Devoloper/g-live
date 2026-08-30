@@ -1,13 +1,14 @@
 "use client";
 
 import { useMemo, useState } from "react";
+import type { StudentStrings } from "../_i18n";
 import { CARD, ICON_GRADIENT, TEAL } from "../_ui";
 
 export type VWord = { de: string; uz: string | null; lesson: string; level: string; learned: boolean };
 
 const LEVELS = ["A1", "A2", "B1", "B2", "C1", "C2"];
 
-export default function WordList({ words }: { words: VWord[] }) {
+export default function WordList({ words, t }: { words: VWord[]; t: StudentStrings }) {
   const [q, setQ] = useState("");
   const [level, setLevel] = useState<string | null>(null);
 
@@ -37,8 +38,8 @@ export default function WordList({ words }: { words: VWord[] }) {
   if (words.length === 0) {
     return (
       <div className={`${CARD} px-5 py-12 text-center`}>
-        <div className="text-[15px] font-semibold text-slate-700">Lug'at hali bo'sh</div>
-        <p className="mt-1 text-[13px] text-slate-400">Ustoz darslarga so'zlar qo'shgach shu yerda chiqadi.</p>
+        <div className="text-[15px] font-semibold text-slate-700">{t.emptyDict}</div>
+        <p className="mt-1 text-[13px] text-slate-400">{t.teacherAddsWords}</p>
       </div>
     );
   }
@@ -56,7 +57,7 @@ export default function WordList({ words }: { words: VWord[] }) {
         <input
           value={q}
           onChange={(e) => setQ(e.target.value)}
-          placeholder="So'z qidirish…"
+          placeholder={t.searchWord}
           className="h-12 w-full rounded-2xl border-0 bg-white pl-11 pr-4 text-[15px] text-slate-900 shadow-[0_6px_16px_rgba(19,78,94,0.10)] outline-none placeholder:text-slate-400"
         />
       </div>
@@ -64,7 +65,7 @@ export default function WordList({ words }: { words: VWord[] }) {
       {/* Daraja filtri */}
       {levels.length > 1 && (
         <div className="flex gap-2 overflow-x-auto pb-0.5">
-          <Chip active={level === null} onClick={() => setLevel(null)}>Hammasi</Chip>
+          <Chip active={level === null} onClick={() => setLevel(null)}>{t.all}</Chip>
           {levels.map((c) => (
             <Chip key={c} active={level === c} onClick={() => setLevel(level === c ? null : c)}>{c}</Chip>
           ))}
@@ -73,8 +74,8 @@ export default function WordList({ words }: { words: VWord[] }) {
 
       {shown.length === 0 ? (
         <div className={`${CARD} px-5 py-10 text-center`}>
-          <div className="text-[14px] font-semibold text-slate-700">Topilmadi</div>
-          <p className="mt-1 text-[12.5px] text-slate-400">Boshqa so'z bilan qidirib ko'ring.</p>
+          <div className="text-[14px] font-semibold text-slate-700">{t.notFound}</div>
+          <p className="mt-1 text-[12.5px] text-slate-400">{t.tryAnother}</p>
         </div>
       ) : (
         groups.map(([lesson, items]) => (

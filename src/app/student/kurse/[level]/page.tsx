@@ -1,9 +1,10 @@
 import Link from "next/link";
+import { S } from "../../_i18n";
 import { notFound, redirect } from "next/navigation";
 import { getSession } from "@/lib/auth";
 import { prisma } from "@/lib/db";
 import MissingStudent from "../../MissingStudent";
-import { LEVELS, LEVEL_NAME } from "../levels";
+import { LEVELS, levelName } from "../levels";
 import HeaderBadges from "../../HeaderBadges";
 
 // Daraja ichi — maketdagi "darslar yo'li": unit kafellari zigzag bo'lib
@@ -59,6 +60,7 @@ export default async function StudentLevelPage({ params }: { params: Promise<{ l
 
   const session = await getSession();
   if (!session) redirect("/login");
+  const t = S(session.locale);
 
   const student = await prisma.student.findUnique({
     where: { userId: session.userId },
@@ -102,7 +104,7 @@ export default async function StudentLevelPage({ params }: { params: Promise<{ l
         </Link>
         {/* Sarlavha — daraja nomi. Tor ekranda ham sig'ishi uchun kichikroq shrift. */}
         <h1 className="min-w-0 flex-1 truncate text-[17px] font-extrabold tracking-tight text-[#4c1d95]">
-          {LEVEL_NAME[code]} <span className="text-[#7c3aed]">{code}</span>
+          {levelName(code, session.locale)} <span className="text-[#7c3aed]">{code}</span>
         </h1>
         <HeaderBadges />
       </div>
@@ -111,8 +113,8 @@ export default async function StudentLevelPage({ params }: { params: Promise<{ l
       {/* ── Darslar yo'li ── */}
       {lessons.length === 0 ? (
         <div className="mt-8 rounded-3xl bg-white px-5 py-12 text-center shadow-sm">
-          <div className="text-[15px] font-semibold text-slate-700">Für {code} sind noch keine Lektionen da.</div>
-          <p className="mt-1 text-[13px] text-slate-400">Die Lehrkraft fügt sie bald hinzu.</p>
+          <div className="text-[15px] font-semibold text-slate-700">{t.noLessons}</div>
+          <p className="mt-1 text-[13px] text-slate-400">{t.teacherAdds}</p>
         </div>
       ) : (
         <div className="relative mt-5 pb-6">

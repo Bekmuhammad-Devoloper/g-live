@@ -7,7 +7,7 @@ import { TEAL, IcoKey } from "../_ui";
 // Parolni almashtirish — (app)/profile dagi changePassword action qayta ishlatiladi
 // (joriy parolni tasdiqlaydi, faqat o'z hisobini o'zgartiradi).
 
-export default function PasswordForm() {
+export default function PasswordForm({ label = "Passwort ändern" }: { label?: string }) {
   const [open, setOpen] = useState(false);
   const [msg, setMsg] = useState<{ ok: boolean; text: string } | null>(null);
   const [busy, start] = useTransition();
@@ -27,7 +27,7 @@ export default function PasswordForm() {
         <span className="grid h-10 w-10 shrink-0 place-items-center rounded-2xl bg-[#eef6fa]">
           <IcoKey s={20} />
         </span>
-        <span className="flex-1 text-[14px] font-semibold text-slate-800">Passwort ändern</span>
+        <span className="flex-1 text-[14px] font-semibold text-slate-800">{label}</span>
         <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#94a3b8" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round" className={open ? "rotate-90 transition" : "transition"}>
           <path d="m9 6 6 6-6 6" />
         </svg>

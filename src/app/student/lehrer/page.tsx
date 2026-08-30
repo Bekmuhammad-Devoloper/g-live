@@ -1,4 +1,5 @@
 import { redirect } from "next/navigation";
+import { S } from "../_i18n";
 import { getSession } from "@/lib/auth";
 import { prisma } from "@/lib/db";
 import MissingStudent from "../MissingStudent";
@@ -11,6 +12,7 @@ import { MESSAGE_SENT } from "./const";
 export default async function StudentLehrerPage() {
   const session = await getSession();
   if (!session) redirect("/login");
+  const t = S(session.locale);
 
   const student = await prisma.student.findUnique({
     where: { userId: session.userId },
@@ -53,7 +55,7 @@ export default async function StudentLehrerPage() {
 
   return (
     <div className="space-y-4">
-      <PageHeader title="Ustozga yozish" subtitle={group?.name ?? "Guruh yo'q"} back="/student/kurse" />
+      <PageHeader title={t.writeTeacher} subtitle={group?.name ?? "—"} back="/student/kurse" />
 
       {/* Ustoz kartasi */}
       <div className={`${CARD} flex items-center gap-3 p-4`}>
@@ -68,16 +70,16 @@ export default async function StudentLehrerPage() {
           </span>
         )}
         <div className="min-w-0 flex-1">
-          <div className="truncate text-[16px] font-extrabold text-slate-900">{teacher?.fullName ?? "Ustoz biriktirilmagan"}</div>
-          <div className="truncate text-[12.5px] text-slate-500">{teacher ? "Sizning ustozingiz" : "Ma'muriyatga murojaat qiling"}</div>
+          <div className="truncate text-[16px] font-extrabold text-slate-900">{teacher?.fullName ?? t.noTeacher}</div>
+          <div className="truncate text-[12.5px] text-slate-500">{teacher ? t.yourTeacher : t.askAdmin}</div>
         </div>
       </div>
 
-      <MessageForm disabled={!group?.teacherId} />
+      <MessageForm disabled={!group?.teacherId} t={t} />
 
       {sent.length > 0 && (
         <div className="space-y-2">
-          <div className="px-1 text-[13px] font-bold text-slate-500">Yuborilgan xabarlar</div>
+          <div className="px-1 text-[13px] font-bold text-slate-500">{t.sentMessages}</div>
           {sent.map((m) => (
             <div key={m.id} className={`${CARD} p-3.5`}>
               <div className="whitespace-pre-wrap break-words text-[14px] text-slate-800">{m.body}</div>

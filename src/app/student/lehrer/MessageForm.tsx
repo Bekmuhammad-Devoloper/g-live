@@ -1,12 +1,13 @@
 "use client";
 
 import { useState, useTransition } from "react";
+import type { StudentStrings } from "../_i18n";
 import { CARD, ICON_GRADIENT } from "../_ui";
 import { sendToTeacher } from "./actions";
 
 const MAX = 1000;
 
-export default function MessageForm({ disabled }: { disabled?: boolean }) {
+export default function MessageForm({ disabled, t }: { disabled?: boolean; t: StudentStrings }) {
   const [text, setText] = useState("");
   const [msg, setMsg] = useState<{ ok?: boolean; error?: string } | null>(null);
   const [pending, start] = useTransition();
@@ -27,7 +28,7 @@ export default function MessageForm({ disabled }: { disabled?: boolean }) {
         onChange={(e) => setText(e.target.value.slice(0, MAX))}
         rows={4}
         disabled={disabled || pending}
-        placeholder="Savolingizni yozing…"
+        placeholder={t.writeQuestion}
         className="w-full resize-none rounded-2xl bg-slate-50 p-3.5 text-[15px] text-slate-900 outline-none placeholder:text-slate-400 disabled:opacity-60"
       />
       <div className="flex items-center gap-3">
@@ -42,11 +43,11 @@ export default function MessageForm({ disabled }: { disabled?: boolean }) {
           <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
             <path d="M21 3 10.5 13.5M21 3l-6.8 18-3.7-7.5L3 9.8 21 3Z" />
           </svg>
-          {pending ? "Yuborilmoqda…" : "Yuborish"}
+          {pending ? t.sending : t.send}
         </button>
       </div>
       {msg?.error && <div className="rounded-xl bg-rose-50 px-3.5 py-2.5 text-[13px] font-semibold text-rose-700">{msg.error}</div>}
-      {msg?.ok && <div className="rounded-xl bg-emerald-50 px-3.5 py-2.5 text-[13px] font-semibold text-emerald-700">Xabar ustozga yuborildi</div>}
+      {msg?.ok && <div className="rounded-xl bg-emerald-50 px-3.5 py-2.5 text-[13px] font-semibold text-emerald-700">{t.sentToTeacher}</div>}
     </div>
   );
 }

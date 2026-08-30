@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { S } from "./_i18n";
 import { getSession } from "@/lib/auth";
 import { prisma } from "@/lib/db";
 import { TEAL, isAttended } from "./_ui";
@@ -59,12 +60,12 @@ export default async function HeaderBadges() {
         <IcoFlame s={26} />
         <div className="leading-none">
           <div className="text-[15px] font-extrabold text-slate-900">{streak}</div>
-          <div className="mt-0.5 text-[10px] font-semibold text-slate-500">kun</div>
+          <div className="mt-0.5 text-[10px] font-semibold text-slate-500">{S(session.locale).day}</div>
         </div>
       </div>
       <Link
         href="/student/mitteilungen"
-        aria-label="Mitteilungen"
+        aria-label={S(session.locale).messages}
         className="relative grid h-11 w-11 shrink-0 place-items-center rounded-full bg-white shadow-[0_6px_16px_rgba(19,78,94,0.12)]"
       >
         <IcoBell s={26} />

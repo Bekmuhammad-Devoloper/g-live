@@ -22,7 +22,7 @@ function fmt(iso: string) {
   return `${p(d.getDate())}.${p(d.getMonth() + 1)}.${d.getFullYear()} ${p(d.getHours())}:${p(d.getMinutes())}`;
 }
 
-export default function NotifList({ items }: { items: VNotif[] }) {
+export default function NotifList({ items, emptyText }: { items: VNotif[]; emptyText: string }) {
   const router = useRouter();
   const [, start] = useTransition();
   const unread = items.filter((n) => !n.isRead).length;
@@ -31,7 +31,7 @@ export default function NotifList({ items }: { items: VNotif[] }) {
     return (
       <div className={`${CARD} flex flex-col items-center gap-3 px-6 py-12 text-center`}>
         <span className="grid h-14 w-14 place-items-center rounded-full bg-[#eef6fa]"><IcoBell s={26} /></span>
-        <div className="text-[17px] font-extrabold text-slate-900">Keine Mitteilungen</div>
+        <div className="text-[17px] font-extrabold text-slate-900">{emptyText}</div>
         <p className="text-[13px] text-slate-500">Hozircha xabar yo&apos;q.</p>
       </div>
     );

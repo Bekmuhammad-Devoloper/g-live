@@ -1,4 +1,5 @@
 import { redirect } from "next/navigation";
+import { S } from "../_i18n";
 import { getSession } from "@/lib/auth";
 import { coinBalance, COIN_PER_LESSON, COIN_PER_TASK } from "@/lib/coins";
 import { prisma } from "@/lib/db";
@@ -19,14 +20,15 @@ function IcoCoin({ s = 26 }: { s?: number }) {
 }
 
 const STATUS: Record<string, { label: string; cls: string }> = {
-  PENDING: { label: "Kutilmoqda", cls: "bg-amber-50 text-amber-700" },
-  DELIVERED: { label: "Berildi", cls: "bg-emerald-50 text-emerald-700" },
-  CANCELLED: { label: "Bekor qilindi", cls: "bg-slate-100 text-slate-500" },
+  PENDING: { label: "PENDING", cls: "bg-amber-50 text-amber-700" },
+  DELIVERED: { label: "DELIVERED", cls: "bg-emerald-50 text-emerald-700" },
+  CANCELLED: { label: "CANCELLED", cls: "bg-slate-100 text-slate-500" },
 };
 
 export default async function StudentMarketPage() {
   const session = await getSession();
   if (!session) redirect("/login");
+  const t = S(session.locale);
 
   const student = await prisma.student.findUnique({
     where: { userId: session.userId },
@@ -54,7 +56,7 @@ export default async function StudentMarketPage() {
 
   return (
     <div className="space-y-4">
-      <PageHeader title="Market" subtitle="Tangangizni sovg'aga almashtiring" back="/student/profil" />
+      <PageHeader title={t.market} subtitle={t.exchangeCoins} back="/student/profil" />
 
       {/* ── Balans ── */}
       <div className="relative overflow-hidden rounded-[26px] p-5 text-white shadow-[0_14px_30px_rgba(19,78,94,0.22)]" style={{ background: DEEP_GRADIENT }}>
@@ -63,25 +65,25 @@ export default async function StudentMarketPage() {
             <IcoCoin s={30} />
           </span>
           <div className="min-w-0 flex-1">
-            <div className="text-[12px] font-semibold uppercase tracking-wider text-white/70">Balans</div>
+            <div className="text-[12px] font-semibold uppercase tracking-wider text-white/70">{t.balance}</div>
             <div className="text-[30px] font-extrabold leading-none">{coins.balance}</div>
           </div>
           <div className="shrink-0 text-right text-[11.5px] leading-tight text-white/75">
-            <div>Yig'ilgan {coins.earned}</div>
-            <div>Sarflangan {coins.spent}</div>
+            <div>{t.earned} {coins.earned}</div>
+            <div>{t.spent} {coins.spent}</div>
           </div>
         </div>
         <p className="mt-3 text-[12px] leading-snug text-white/70">
-          Har qatnashgan dars +{COIN_PER_LESSON}, har baholangan vazifa +{COIN_PER_TASK} tanga.
+          {t.coinRule}
         </p>
       </div>
 
       {/* ── Sovg'alar ── */}
-      <SectionTitle>Sovg&apos;alar</SectionTitle>
+      <SectionTitle>{t.rewards}</SectionTitle>
       {items.length === 0 ? (
         <div className={CARD + " px-5 py-12 text-center"}>
-          <div className="text-[15px] font-semibold text-slate-700">Hozircha sovg&apos;a yo&apos;q</div>
-          <p className="mt-1 text-[13px] text-slate-400">O&apos;quv markazi tez orada qo&apos;shadi.</p>
+          <div className="text-[15px] font-semibold text-slate-700">{t.noRewards}</div>
+          <p className="mt-1 text-[13px] text-slate-400">{t.centerAddsSoon}</p>
         </div>
       ) : (
         <div className="space-y-2.5">
@@ -106,7 +108,7 @@ export default async function StudentMarketPage() {
                     <IcoCoin s={15} />
                     <span className="text-[13px] font-extrabold text-slate-700">{it.price}</span>
                     {it.stock !== null ? (
-                      <span className="ml-1 text-[11.5px] text-slate-400">· {soldOut ? "tugagan" : it.stock + " ta qoldi"}</span>
+                      <span className="ml-1 text-[11.5px] text-slate-400">· {soldOut ? t.soldOut.toLowerCase() : it.stock + " " + t.left}</span>
                     ) : null}
                   </div>
                 </div>
@@ -115,6 +117,7 @@ export default async function StudentMarketPage() {
                   title={it.title}
                   price={it.price}
                   affordable={coins.balance >= it.price}
+                  t={t}
                   soldOut={soldOut}
                 />
               </div>
@@ -126,7 +129,7 @@ export default async function StudentMarketPage() {
       {/* ── Buyurtmalarim ── */}
       {orders.length > 0 ? (
         <>
-          <SectionTitle>Buyurtmalarim</SectionTitle>
+          <SectionTitle>{t.myOrders}</SectionTitle>
           <div className={CARD + " overflow-hidden"}>
             <ul>
               {orders.map((o) => {
@@ -136,10 +139,10 @@ export default async function StudentMarketPage() {
                     <div className="min-w-0 flex-1">
                       <div className="truncate text-[14px] font-bold text-slate-800">{o.item.title}</div>
                       <div className="text-[11.5px] text-slate-400">
-                        {fmtDate(o.createdAt)} · {o.price} tanga
+                        {fmtDate(o.createdAt)} · {o.price} {t.coins}
                       </div>
                     </div>
-                    <span className={"shrink-0 rounded-lg px-2 py-1 text-[11px] font-bold " + st.cls}>{st.label}</span>
+                    <span className={"shrink-0 rounded-lg px-2 py-1 text-[11px] font-bold " + st.cls}>{o.status === "DELIVERED" ? t.delivered : o.status === "CANCELLED" ? t.cancelled : t.waiting}</span>
                   </li>
                 );
               })}

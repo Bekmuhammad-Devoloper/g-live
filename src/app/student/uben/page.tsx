@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { S } from "../_i18n";
 import RatingBadge from "../RatingBadge";
 import { redirect } from "next/navigation";
 import { getSession } from "@/lib/auth";
@@ -14,6 +15,7 @@ import UebenList, { type VAssignment } from "./UebenList";
 export default async function StudentUebenPage() {
   const session = await getSession();
   if (!session) redirect("/login");
+  const t = S(session.locale);
 
   const student = await prisma.student.findUnique({
     where: { userId: session.userId },
@@ -68,14 +70,14 @@ export default async function StudentUebenPage() {
     : null;
 
   const tiles = [
-    { label: "Neu", value: String(neu) },
-    { label: "Wartet", value: String(waiting) },
-    { label: "Ø Note", value: avg === null ? "—" : `${avg}%` },
+    { label: t.isNew, value: String(neu) },
+    { label: t.waiting, value: String(waiting) },
+    { label: t.avgGrade, value: avg === null ? "—" : `${avg}%` },
   ];
 
   return (
     <div className="space-y-[18px]">
-      <PageHeader title="Üben" subtitle="Deine Hausaufgaben" right={<RatingBadge />} />
+      <PageHeader title={t.practice} subtitle={t.yourHomework} right={<RatingBadge />} />
 
       {/* ── Jang / o'yinlar ── */}
       <Link
@@ -90,7 +92,7 @@ export default async function StudentUebenPage() {
           </svg>
         </span>
         <div className="min-w-0 flex-1">
-          <div className="text-[20px] font-extrabold leading-tight">Jang va o'yinlar</div>
+          <div className="text-[20px] font-extrabold leading-tight">{t.gamesAndBattle}</div>
           <div className="mt-0.5 text-[13px] text-white/80">Vocabulary · So'z o'yini · Krossvord</div>
         </div>
         <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="2.6" strokeLinecap="round" strokeLinejoin="round">
@@ -108,8 +110,8 @@ export default async function StudentUebenPage() {
         ))}
       </div>
 
-      <SectionTitle>Aufgaben</SectionTitle>
-      <UebenList items={items} />
+      <SectionTitle>{t.tasks}</SectionTitle>
+      <UebenList items={items} t={t} />
     </div>
   );
 }

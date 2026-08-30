@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useTransition } from "react";
+import type { StudentStrings } from "../_i18n";
 import { useRouter } from "next/navigation";
 import { submitAssignment } from "../../(app)/homework/actions";
 import { CARD, TEAL, Pill, IcoDoc } from "../_ui";
@@ -29,9 +30,9 @@ export interface VAssignment {
   } | null;
 }
 
-const SKILL_LABEL: Record<string, string> = {
-  SPEAKING: "Sprechen", WRITING: "Schreiben", READING: "Lesen", LISTENING: "Hören", GRAMMAR: "Grammatik",
-};
+const skillLabel = (t: StudentStrings): Record<string, string> => ({
+  SPEAKING: t.skillSpeaking, WRITING: t.skillWriting, READING: t.skillReading, LISTENING: t.skillListening, GRAMMAR: t.skillGrammar,
+});
 
 function fmt(iso: string | null) {
   if (!iso) return "";
@@ -40,32 +41,32 @@ function fmt(iso: string | null) {
   return `${p(d.getDate())}.${p(d.getMonth() + 1)}.${d.getFullYear()}`;
 }
 
-function StatusPill({ a }: { a: VAssignment }) {
+function StatusPill({ a, t }: { a: VAssignment; t: StudentStrings }) {
   if (!a.last) {
     const overdue = a.dueAt && new Date(a.dueAt).getTime() < Date.now();
-    return overdue ? <Pill tone="bad">Frist abgelaufen</Pill> : <Pill tone="warn">Neu</Pill>;
+    return overdue ? <Pill tone="bad">{t.overdue}</Pill> : <Pill tone="warn">{t.isNew}</Pill>;
   }
   if (a.last.status === "GRADED") return <Pill tone="ok">{a.last.score ?? 0}/{a.maxScore}</Pill>;
-  if (a.last.status === "RETURNED") return <Pill tone="warn">Zurückgegeben</Pill>;
-  return <Pill tone="muted">Abgegeben</Pill>;
+  if (a.last.status === "RETURNED") return <Pill tone="warn">{t.returned}</Pill>;
+  return <Pill tone="muted">{t.submitted}</Pill>;
 }
 
-function SubmitBox({ assignmentId, again, onDone }: { assignmentId: string; again: boolean; onDone: () => void }) {
+function SubmitBox({ assignmentId, again, onDone, t }: { assignmentId: string; again: boolean; onDone: () => void; t: StudentStrings }) {
   const router = useRouter();
   const [text, setText] = useState("");
   const [err, setErr] = useState<string | null>(null);
   const [busy, start] = useTransition();
 
   const submit = () => {
-    if (text.trim().length < 1) { setErr("Bitte zuerst eine Antwort schreiben"); return; }
+    if (text.trim().length < 1) { setErr(t.writeAnswerFirst); return; }
     setErr(null);
     start(async () => {
       try {
         const r = await submitAssignment(assignmentId, text.trim());
-        if (r?.error) { setErr("Fehler — bitte erneut versuchen"); return; }
+        if (r?.error) { setErr(t.tryAgain); return; }
       } catch {
         // server action kutilmagan xato bilan yiqilsa foydalanuvchi xabarsiz qolmasin
-        setErr("Fehler — bitte erneut versuchen");
+        setErr(t.tryAgain);
         return;
       }
       setText("");
@@ -80,7 +81,7 @@ function SubmitBox({ assignmentId, again, onDone }: { assignmentId: string; agai
         value={text}
         onChange={(e) => setText(e.target.value)}
         rows={4}
-        placeholder={again ? "Neue Antwort schreiben…" : "Deine Antwort…"}
+        placeholder={again ? t.writeNewAnswer : t.yourAnswer}
         className="w-full resize-y rounded-2xl border-0 bg-[#eef6fa] px-3.5 py-3 text-[14px] text-slate-800 outline-none ring-0 placeholder:text-slate-400 focus:bg-[#e6f1f7]"
       />
       {err && <p className="text-[12px] font-semibold text-rose-600">{err}</p>}
@@ -90,21 +91,22 @@ function SubmitBox({ assignmentId, again, onDone }: { assignmentId: string; agai
         className="w-full rounded-2xl py-3 text-[14px] font-bold text-white shadow-[0_8px_16px_rgba(14,116,144,0.3)] transition active:scale-[.99] disabled:opacity-60"
         style={{ background: TEAL }}
       >
-        {busy ? "Wird gesendet…" : "Abgeben"}
+        {busy ? t.sending : t.submit}
       </button>
     </div>
   );
 }
 
-export default function UebenList({ items }: { items: VAssignment[] }) {
+export default function UebenList({ items, t }: { items: VAssignment[]; t: StudentStrings }) {
+  const SKILL = skillLabel(t);
   const [open, setOpen] = useState<string | null>(null);
 
   if (items.length === 0) {
     return (
       <div className={`${CARD} flex flex-col items-center gap-3 px-6 py-12 text-center`}>
         <span className="text-4xl">🎉</span>
-        <div className="text-[17px] font-extrabold text-slate-900">Keine Aufgaben</div>
-        <p className="text-[13px] text-slate-500">Hozircha uy vazifasi yo&apos;q. Dam oling!</p>
+        <div className="text-[17px] font-extrabold text-slate-900">{t.noTasks}</div>
+        <p className="text-[13px] text-slate-500">{t.noTasksHint}</p>
       </div>
     );
   }
@@ -124,12 +126,12 @@ export default function UebenList({ items }: { items: VAssignment[] }) {
               <div className="min-w-0 flex-1">
                 <div className="truncate text-[14px] font-bold text-slate-800">{a.title}</div>
                 <div className="mt-0.5 flex flex-wrap items-center gap-x-2 text-[11.5px] text-slate-400">
-                  {a.skill && <span className="font-semibold" style={{ color: TEAL }}>{SKILL_LABEL[a.skill] ?? a.skill}</span>}
+                  {a.skill && <span className="font-semibold" style={{ color: TEAL }}>{SKILL[a.skill] ?? a.skill}</span>}
                   <span>{a.groupName}</span>
-                  {a.dueAt && <span>Frist: {fmt(a.dueAt)}</span>}
+                  {a.dueAt && <span>{t.deadline}: {fmt(a.dueAt)}</span>}
                 </div>
               </div>
-              <StatusPill a={a} />
+              <StatusPill a={a} t={t} />
             </button>
 
             {isOpen && (
@@ -146,17 +148,17 @@ export default function UebenList({ items }: { items: VAssignment[] }) {
                     {a.last.content && <p className="mt-1.5 whitespace-pre-wrap text-[13px] leading-relaxed text-slate-600">{a.last.content}</p>}
                     {a.last.teacherNote && (
                       <p className="mt-2 rounded-xl bg-amber-50 px-3 py-2 text-[12.5px] leading-relaxed text-amber-800">
-                        <span className="font-bold">Lehrer: </span>{a.last.teacherNote}
+                        <span className="font-bold">{t.teacher}: </span>{a.last.teacherNote}
                       </p>
                     )}
                   </div>
                 )}
 
                 {a.last?.status === "SUBMITTED" && (
-                  <p className="mt-3 text-center text-[12.5px] font-semibold text-slate-400">Deine Antwort wird geprüft…</p>
+                  <p className="mt-3 text-center text-[12.5px] font-semibold text-slate-400">{t.checking}</p>
                 )}
 
-                {canSubmit && <SubmitBox assignmentId={a.id} again={!!a.last} onDone={() => setOpen(null)} />}
+                {canSubmit && <SubmitBox assignmentId={a.id} again={!!a.last} onDone={() => setOpen(null)} t={t} />}
               </div>
             )}
           </div>

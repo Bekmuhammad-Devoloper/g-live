@@ -3,13 +3,15 @@ import ProfilActions from "./ProfilActions";
 import { getSession } from "@/lib/auth";
 import { prisma } from "@/lib/db";
 import { computeDebt } from "@/lib/debt";
-import { EDU_STATUS_LABELS, PAYMENT_METHOD_LABELS, label } from "@/lib/constants";
+import { EDU_STATUS_LABELS, PAYMENT_METHOD_LABELS, label, type LocaleText } from "@/lib/constants";
+import { tr } from "@/lib/tr";
 import { logout } from "../../(app)/actions";
 import {
   CARD, NAVY, fmtDate, fmtSum, isAttended,
   PageHeader, FlagAvatar, SectionTitle, Pill,
   IcoWallet, IcoTrophy, IcoDoc, IcoLogout, IcoCalendar,
 } from "../_ui";
+import { S } from "../_i18n";
 import MissingStudent from "../MissingStudent";
 import PasswordForm from "./PasswordForm";
 
@@ -17,18 +19,19 @@ import PasswordForm from "./PasswordForm";
 // ma'lumotlar, to'lovlar (qarz computeDebt dan), davomat, imtihonlar,
 // sertifikatlar, parol almashtirish va chiqish.
 
-const ATT_PILL: Record<string, { tone: "ok" | "warn" | "bad" | "muted"; de: string }> = {
-  PRESENT: { tone: "ok", de: "Da" },
-  LATE: { tone: "warn", de: "Spät" },
-  ONLINE: { tone: "ok", de: "Online" },
-  MAKEUP: { tone: "muted", de: "Nachhol" },
-  EXCUSED: { tone: "muted", de: "Entschuldigt" },
-  ABSENT: { tone: "bad", de: "Fehlt" },
+const ATT_PILL: Record<string, { tone: "ok" | "warn" | "bad" | "muted"; text: LocaleText }> = {
+  PRESENT: { tone: "ok", text: { uz: "Keldi", ru: "Был", en: "Present", de: "Da" } },
+  LATE: { tone: "warn", text: { uz: "Kechikdi", ru: "Опоздал", en: "Late", de: "Spät" } },
+  ONLINE: { tone: "ok", text: { uz: "Onlayn", ru: "Онлайн", en: "Online", de: "Online" } },
+  MAKEUP: { tone: "muted", text: { uz: "Qayta dars", ru: "Отработка", en: "Make-up", de: "Nachhol" } },
+  EXCUSED: { tone: "muted", text: { uz: "Sababli", ru: "По причине", en: "Excused", de: "Entschuldigt" } },
+  ABSENT: { tone: "bad", text: { uz: "Kelmadi", ru: "Не был", en: "Absent", de: "Fehlt" } },
 };
 
 export default async function StudentProfilPage() {
   const session = await getSession();
   if (!session) redirect("/login");
+  const t = S(session.locale);
 
   const student = await prisma.student.findUnique({
     where: { userId: session.userId },
@@ -91,7 +94,7 @@ export default async function StudentProfilPage() {
 
   return (
     <div className="space-y-[18px]">
-      <PageHeader title="Profil" subtitle="Dein Konto" right={<ProfilActions />} />
+      <PageHeader title={t.profile} subtitle={t.yourAccount} right={<ProfilActions t={t} />} />
 
       {/* ── Shaxsiy karta ── */}
       <div className={`${CARD} flex items-center gap-4 p-5`}>
@@ -113,9 +116,9 @@ export default async function StudentProfilPage() {
       {/* ── Yig'ma ko'rsatkichlar ── */}
       <div className="grid grid-cols-3 gap-3">
         {[
-          { label: "Anwesenheit", value: `${attPct}%` },
-          { label: "Prüfungen", value: `${examPassed}/${examTotal}` },
-          { label: "Zertifikate", value: String(certificates.length) },
+          { label: t.attendance, value: `${attPct}%` },
+          { label: t.exams, value: `${examPassed}/${examTotal}` },
+          { label: t.certificates, value: String(certificates.length) },
         ].map((t) => (
           <div key={t.label} className={`${CARD} flex flex-col items-center gap-1.5 px-1 pb-4 pt-4`}>
             <span className="whitespace-nowrap text-[20px] font-extrabold leading-none" style={{ color: NAVY }}>{t.value}</span>
@@ -125,7 +128,7 @@ export default async function StudentProfilPage() {
       </div>
 
       {/* ── To'lovlar ── */}
-      <SectionTitle>Zahlungen</SectionTitle>
+      <SectionTitle>{t.payments}</SectionTitle>
       <div className={`${CARD} p-5`}>
         <div className="flex items-center gap-3">
           <span className="grid h-11 w-11 shrink-0 place-items-center rounded-2xl bg-[#eef6fa]"><IcoWallet s={22} /></span>
@@ -134,7 +137,7 @@ export default async function StudentProfilPage() {
             <div className="text-[17px] font-extrabold text-slate-900">{fmtSum(totalPaid)}</div>
           </div>
           <div className="text-right">
-            <div className="text-[11px] font-semibold uppercase tracking-wide text-slate-400">Qarz</div>
+            <div className="text-[11px] font-semibold uppercase tracking-wide text-slate-400">{t.debt}</div>
             <div className={`text-[17px] font-extrabold ${debt.debt > 0 ? "text-rose-600" : "text-emerald-600"}`}>
               {debt.debt > 0 ? fmtSum(debt.debt) : "0 so'm"}
             </div>
@@ -155,7 +158,7 @@ export default async function StudentProfilPage() {
                 </div>
                 <div className="text-right">
                   <div className="whitespace-nowrap text-[14px] font-extrabold text-slate-900">{fmtSum(p.amount)}</div>
-                  {p.status === "PENDING" ? <Pill tone="bad">Qarz</Pill> : p.status === "PAID" ? <Pill tone="ok">To&apos;landi</Pill> : <Pill tone="muted">{p.status}</Pill>}
+                  {p.status === "PENDING" ? <Pill tone="bad">{t.debt}</Pill> : p.status === "PAID" ? <Pill tone="ok">To&apos;landi</Pill> : <Pill tone="muted">{p.status}</Pill>}
                 </div>
               </div>
             ))}
@@ -166,7 +169,7 @@ export default async function StudentProfilPage() {
       {/* ── Davomat ── */}
       {attendance.length > 0 && (
         <>
-          <SectionTitle>Anwesenheit</SectionTitle>
+          <SectionTitle>{t.attendance}</SectionTitle>
           <div className={`${CARD} divide-y divide-slate-100 px-5 py-1`}>
             {attendance.map((a) => {
               const s = ATT_PILL[a.status] ?? { tone: "muted" as const, de: a.status };
@@ -174,10 +177,10 @@ export default async function StudentProfilPage() {
                 <div key={a.id} className="flex items-center gap-3 py-3">
                   <span className="grid h-9 w-9 shrink-0 place-items-center rounded-2xl bg-[#eef6fa]"><IcoCalendar s={17} /></span>
                   <div className="min-w-0 flex-1">
-                    <div className="truncate text-[13.5px] font-semibold text-slate-800">{a.lesson.topic || "Unterricht"}</div>
+                    <div className="truncate text-[13.5px] font-semibold text-slate-800">{a.lesson.topic || t.lesson}</div>
                     <div className="text-[11.5px] text-slate-400">{fmtDate(a.lesson.startsAt)}</div>
                   </div>
-                  <Pill tone={s.tone}>{s.de}</Pill>
+                  <Pill tone={s.tone}>{tr(session.locale, s.text)}</Pill>
                 </div>
               );
             })}
@@ -188,7 +191,7 @@ export default async function StudentProfilPage() {
       {/* ── Imtihonlar ── */}
       {exams.length > 0 && (
         <>
-          <SectionTitle>Prüfungen</SectionTitle>
+          <SectionTitle>{t.exams}</SectionTitle>
           <div className={`${CARD} divide-y divide-slate-100 px-5 py-1`}>
             {exams.map((e) => (
               <div key={e.id} className="flex items-center gap-3 py-3">
@@ -199,7 +202,7 @@ export default async function StudentProfilPage() {
                 </div>
                 <div className="flex items-center gap-2">
                   {e.score !== null && <span className="text-[14px] font-extrabold" style={{ color: NAVY }}>{e.score}</span>}
-                  {e.status === "PASSED" ? <Pill tone="ok">Bestanden</Pill> : e.status === "FAILED" ? <Pill tone="bad">Nicht bestanden</Pill> : <Pill tone="muted">Wartet</Pill>}
+                  {e.status === "PASSED" ? <Pill tone="ok">{t.passed}</Pill> : e.status === "FAILED" ? <Pill tone="bad">{t.failed}</Pill> : <Pill tone="muted">{t.waiting}</Pill>}
                 </div>
               </div>
             ))}
@@ -210,7 +213,7 @@ export default async function StudentProfilPage() {
       {/* ── Sertifikatlar ── */}
       {certificates.length > 0 && (
         <>
-          <SectionTitle>Zertifikate</SectionTitle>
+          <SectionTitle>{t.certificates}</SectionTitle>
           <div className={`${CARD} divide-y divide-slate-100 px-5 py-1`}>
             {certificates.map((c) => (
               <a key={c.id} href={`/verify/${c.qrCode}`} target="_blank" rel="noreferrer" className="flex items-center gap-3 py-3.5">
@@ -228,23 +231,9 @@ export default async function StudentProfilPage() {
         </>
       )}
 
-      {/* ── Sozlamalar ── */}
-      <SectionTitle>Einstellungen</SectionTitle>
-      <div className={`${CARD} px-5 py-1`}>
-        <PasswordForm />
-        <div className="border-t border-slate-100">
-          <form action={logout}>
-            <button type="submit" className="flex w-full items-center gap-3 py-3.5 text-left">
-              <span className="grid h-10 w-10 shrink-0 place-items-center rounded-2xl bg-rose-50"><IcoLogout s={20} /></span>
-              <span className="flex-1 text-[14px] font-semibold text-rose-600">Abmelden</span>
-            </button>
-          </form>
-        </div>
-      </div>
-
       {/* Hisob ma'lumoti */}
       <p className="pb-2 text-center text-[11.5px] text-slate-400">
-        {student.user?.email}{student.phone ? ` · ${student.phone}` : ""} · GL {fmtDate(student.createdAt)} dan beri
+        {student.user?.email}{student.phone ? ` · ${student.phone}` : ""} · GL {fmtDate(student.createdAt)}
       </p>
     </div>
   );

@@ -1,4 +1,5 @@
 import { redirect } from "next/navigation";
+import { S } from "../_i18n";
 import { getSession } from "@/lib/auth";
 import { prisma } from "@/lib/db";
 import MissingStudent from "../MissingStudent";
@@ -47,5 +48,5 @@ export default async function StudentBattlePage() {
     }
   }
 
-  return <Battle words={words} badges={<HeaderBadges />} />;
+  return <Battle words={words} badges={<HeaderBadges />} t={S(session.locale)} />;
 }

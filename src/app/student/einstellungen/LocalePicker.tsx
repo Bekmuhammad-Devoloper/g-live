@@ -7,10 +7,10 @@ import { setLocale } from "./actions";
 // Ilova tili — tanlangani darhol saqlanadi (User.locale).
 
 const OPTIONS = [
-  { code: "uz", label: "O'zbekcha", native: "Uzbek" },
-  { code: "ru", label: "Ruscha", native: "Русский" },
-  { code: "en", label: "Inglizcha", native: "English" },
-  { code: "de", label: "Nemischa", native: "Deutsch" },
+  { code: "uz", native: "O'zbekcha" },
+  { code: "ru", native: "Русский" },
+  { code: "en", native: "English" },
+  { code: "de", native: "Deutsch" },
 ];
 
 export default function LocalePicker({ current }: { current: string }) {
@@ -48,10 +48,7 @@ export default function LocalePicker({ current }: { current: string }) {
               }
               style={on ? { background: ICON_GRADIENT } : undefined}
             >
-              <span className="min-w-0">
-                <span className="block truncate text-[14px] font-bold">{o.native}</span>
-                <span className={"block truncate text-[11.5px] " + (on ? "text-white/75" : "text-slate-400")}>{o.label}</span>
-              </span>
+              <span className="block min-w-0 truncate text-[14px] font-bold">{o.native}</span>
               {on ? (
                 <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round">
                   <path d="m5 13 4.5 4.5L19 7" />

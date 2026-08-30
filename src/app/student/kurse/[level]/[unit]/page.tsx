@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { S, type StudentStrings } from "../../../_i18n";
 import { notFound, redirect } from "next/navigation";
 import { getSession } from "@/lib/auth";
 import { prisma } from "@/lib/db";
@@ -79,12 +80,12 @@ function ProgressCard({ title, sub, pct, bg }: { title: string; sub: string; pct
   );
 }
 
-function VideoCard({ kind, title, watched, score, href }: { kind: string; title: string; watched: boolean; score: number | null; href: string | null }) {
+function VideoCard({ kind, title, watched, score, href, t }: { kind: string; title: string; watched: boolean; score: number | null; href: string | null; t: StudentStrings }) {
   return (
     <div className="flex overflow-hidden rounded-[20px] shadow-[0_10px_22px_rgba(19,78,94,0.2)]">
       <div className="relative flex min-h-[104px] flex-1 flex-col justify-end bg-gradient-to-br from-slate-800 via-slate-700 to-slate-900 p-3.5">
         {watched && (
-          <span className="absolute left-3 top-3 rounded-md bg-emerald-600 px-2 py-[3px] text-[10.5px] font-bold text-white">Watched</span>
+          <span className="absolute left-3 top-3 rounded-md bg-emerald-600 px-2 py-[3px] text-[10.5px] font-bold text-white">{t.watched}</span>
         )}
         <span className="absolute left-3.5 top-1/2 grid h-9 w-9 -translate-y-1/2 place-items-center rounded-full bg-white/20 backdrop-blur-sm">
           <IcoPlay />
@@ -103,7 +104,7 @@ function VideoCard({ kind, title, watched, score, href }: { kind: string; title:
       ) : (
         <div className="flex w-[74px] shrink-0 flex-col items-center justify-center gap-1 bg-emerald-600/60 py-3 text-white">
           <span className="text-[12.5px] font-bold">Test</span>
-          <span className="text-[11px] text-white/80">bald</span>
+          <span className="text-[11px] text-white/80">{t.soon}</span>
         </div>
       )}
     </div>
@@ -117,6 +118,7 @@ export default async function StudentUnitPage({ params }: { params: Promise<{ le
 
   const session = await getSession();
   if (!session) redirect("/login");
+  const t = S(session.locale);
 
   const student = await prisma.student.findUnique({
     where: { userId: session.userId },
@@ -184,16 +186,16 @@ export default async function StudentUnitPage({ params }: { params: Promise<{ le
         <HeaderBadges />
       </div>
 
-      <ProgressCard title="Vocabulary" sub={`${words} words`} pct={done ? 100 : 0} bg={LEVEL_BG[code]} />
+      <ProgressCard title={t.vocabulary} sub={`${words} ${t.words.toLowerCase()}`} pct={done ? 100 : 0} bg={LEVEL_BG[code]} />
 
       {hasVideo && (
-        <VideoCard kind="THEORIE" title={lesson.title} watched={done} score={avgScore} href={safeUrl(lesson.videoUrl)} />
+        <VideoCard kind={t.theory} title={lesson.title} watched={done} score={avgScore} href={safeUrl(lesson.videoUrl)} t={t} />
       )}
 
       {hasEx && (
         <ProgressCard
-          title="Exercises"
-          sub={`${[lesson.assignment, lesson.homework].filter(Boolean).length} exercise`}
+          title={t.exercises}
+          sub={`${[lesson.assignment, lesson.homework].filter(Boolean).length} ${t.exercises.toLowerCase()}`}
           pct={done ? 100 : 0}
           bg={exercisesBg}
         />
@@ -201,7 +203,7 @@ export default async function StudentUnitPage({ params }: { params: Promise<{ le
 
       {!hasVideo && !hasEx && (
         <div className="rounded-[20px] bg-white/85 px-5 py-10 text-center shadow-[0_10px_22px_rgba(19,78,94,0.10)]">
-          <div className="text-[14px] font-semibold text-slate-700">Für diese Lektion gibt es noch kein Material.</div>
+          <div className="text-[14px] font-semibold text-slate-700">{t.noMaterial}</div>
         </div>
       )}
     </div>
