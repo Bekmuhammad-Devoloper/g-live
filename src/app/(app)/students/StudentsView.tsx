@@ -1,6 +1,7 @@
 "use client";
 
 import { useActionState, useEffect, useMemo, useRef, useState, useTransition } from "react";
+import AccountBox from "./AccountBox";
 import { createPortal } from "react-dom";
 import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
@@ -822,6 +823,13 @@ function StudentDetailModal({
               <DStat label={tr(locale, { uz: "Kurslar soni", ru: "Кол-во курсов", en: "Courses", de: "Kurse" })} value={String(st.courses.length)} />
             </div>
           </DSection>
+
+          {/* Ilova hisobi — o'quvchi mobil portalga shu login bilan kiradi */}
+          {(canManage || canPay) && (
+            <DSection title={tr(locale, { uz: "Ilova hisobi", ru: "Аккаунт приложения", en: "App account", de: "App-Konto" })} icon="shield">
+              <AccountBox studentId={st.id} locale={locale} canManage={canManage} />
+            </DSection>
+          )}
 
           {/* Kontakt */}
           <DSection title={tr(locale, { uz: "Kontakt", ru: "Контакт", en: "Contact", de: "Kontakt" })} icon="phone">

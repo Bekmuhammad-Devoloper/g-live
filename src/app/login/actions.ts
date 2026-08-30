@@ -7,8 +7,10 @@ import { verifyPassword, createSession } from "@/lib/auth";
 import { writeAudit } from "@/lib/audit";
 import type { Locale } from "@/lib/constants";
 
+// Login — e-mail YOKI foydalanuvchi nomi (o'quvchilarga "ism" ko'rinishida
+// beriladi, xodimlarda avvalgidek e-mail). Ikkalasi ham User.email da saqlanadi.
 const schema = z.object({
-  email: z.string().email(),
+  email: z.string().min(3).max(120).regex(/^[^\s]+$/, "no_spaces"),
   password: z.string().min(1),
 });
 
