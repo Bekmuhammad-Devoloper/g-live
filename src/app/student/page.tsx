@@ -346,7 +346,14 @@ export default async function StudentStartPage() {
   }
 
   const kurseHref = "/student/kurse"; // kurs sahifasi endi portal ichida
-  const firstName = student.fullName.split(/\s+/)[0];
+  // Salomlashish uchun qisqaroq nomni tanlaymiz: CRM da ba'zan "Familiya Ism",
+  // ba'zan "Ism Familiya" yoziladi — uzun familiya sarlavhaga sig'masdi
+  // ("Salom, Abdugaf..."). Ikkitasidan qisqasi odatda ismning o'zi bo'ladi.
+  const nameParts = student.fullName.split(/\s+/).filter(Boolean);
+  const firstName =
+    nameParts.length > 1 && nameParts[0].length > 9 && nameParts[1].length >= 3
+      ? nameParts[1]
+      : (nameParts[0] ?? student.fullName);
   // Profil rasmi: avval o'quvchi rasmi, keyin foydalanuvchi rasmi; ikkalasi ham yo'q bo'lsa — logotip
   const avatarUrl = student.imageUrl || student.user?.imageUrl || null;
 
@@ -363,7 +370,7 @@ export default async function StudentStartPage() {
   return (
     <div className="space-y-[18px]">
       {/* ── Salomlashish ── */}
-      <div className="flex items-center gap-2.5 pt-1">
+      <div className="flex items-start gap-2.5 pt-1">
         {/* Avatar: rasm qo'yilgan bo'lsa — o'sha, bo'lmasa Germaniya bayrog'i (doira).
             Logotip keng bo'lgani uchun doiraga kesib solinganda chiroyli chiqmasdi. */}
         {avatarUrl ? (
@@ -378,8 +385,10 @@ export default async function StudentStartPage() {
           </span>
         )}
         <div className="min-w-0 flex-1">
-          <h1 className="truncate text-[22px] font-extrabold leading-tight tracking-tight text-slate-900 sm:text-[26px]">{t.hello}, {firstName}!</h1>
-          <p className="truncate text-[13px] text-slate-500">{t.readyToLearn}</p>
+          <h1 className="line-clamp-2 break-words text-[19px] font-extrabold leading-tight tracking-tight text-slate-900 min-[380px]:text-[22px] sm:text-[26px]">
+            {t.hello}, {firstName}!
+          </h1>
+          <p className="line-clamp-2 text-[12.5px] leading-snug text-slate-500">{t.readyToLearn}</p>
         </div>
         {/* Streak (ketma-ket qatnashuv) kartochkasi — olovcha + kunlar soni */}
         <div className="flex h-11 shrink-0 items-center gap-1 rounded-2xl bg-white px-2.5 shadow-[0_6px_16px_rgba(19,78,94,0.12)]">
@@ -398,7 +407,7 @@ export default async function StudentStartPage() {
       </div>
 
       {/* ── 4 ko'nikma kartasi ── */}
-      <div className="grid grid-cols-4 gap-3">
+      <div className="mt-1 grid grid-cols-4 gap-2.5">
         {skills.map((sk) => (
           <div key={sk.key} className={`${card} flex flex-col items-center gap-2.5 px-1 pb-4 pt-5`}>
             <div className="grid h-14 place-items-center">
