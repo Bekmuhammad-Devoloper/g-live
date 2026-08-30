@@ -52,6 +52,12 @@ const DICT = {
   watched: p("Ko'rilgan", "Просмотрено", "Watched", "Gesehen"),
   soon: p("tez orada", "скоро", "soon", "bald"),
   noMaterial: p("Bu dars uchun hali material yo'q.", "Для этого урока пока нет материалов.", "No material for this lesson yet.", "Für diese Lektion gibt es noch kein Material."),
+  lessonVideo: p("Dars videosi", "Видео урока", "Lesson video", "Lektionsvideo"),
+  noVideoYet: p("Dars videosi hali yuklanmagan", "Видео урока пока не загружено", "The lesson video is not uploaded yet", "Das Lektionsvideo ist noch nicht hochgeladen"),
+  openVideo: p("Videoni ochish", "Открыть видео", "Open video", "Video öffnen"),
+  lessonAssignment: p("Dars topshirig'i", "Задание урока", "Lesson assignment", "Lektionsaufgabe"),
+  homeworkTask: p("Uyga vazifa", "Домашнее задание", "Homework", "Hausaufgabe"),
+  openFile: p("Faylni ochish", "Открыть файл", "Open file", "Datei öffnen"),
 
   // ── Mashq (Üben) ──
   practice: p("Mashq", "Практика", "Practice", "Üben"),
