@@ -32,14 +32,17 @@ function skillLevel(pct: number): 1 | 2 | 3 | 4 | 5 {
   return 5;
 }
 function skillImage(base: string, pct: number): string | null {
-  const lvl = skillLevel(pct);
   // Ikki xil joylashuv qo'llab-quvvatlanadi:
   //   public/skills/hoeren/3.png   (papkali)
   //   public/skills/hoeren-3.png   (yassi)
-  const candidates = [`${base}/${lvl}.png`, `${base}-${lvl}.png`];
+  // Aniq daraja topilmasa — pastroq darajadagi eng yaqin rasm olinadi.
+  // Shunda rasmlar to'liq yuklanmagan bo'lsa ham kartalar bir xil ko'rinadi
+  // (ba'zisi rasm, ba'zisi SVG bo'lib chalkashmaydi).
   try {
-    for (const rel of candidates) {
-      if (fs.existsSync(path.join(process.cwd(), "public", "skills", rel))) return `/skills/${rel}`;
+    for (let lvl = skillLevel(pct); lvl >= 1; lvl--) {
+      for (const rel of [`${base}/${lvl}.png`, `${base}-${lvl}.png`]) {
+        if (fs.existsSync(path.join(process.cwd(), "public", "skills", rel))) return `/skills/${rel}`;
+      }
     }
   } catch { /* fayl tizimi o'qilmasa — SVG ikonka ishlatiladi */ }
   return null;
