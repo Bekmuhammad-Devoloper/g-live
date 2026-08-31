@@ -1,6 +1,7 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
+import { saveGameResult } from "./actions";
 import type { StudentStrings } from "../_i18n";
 import { CARD, ICON_GRADIENT, TEAL, PageHeader } from "../_ui";
 
@@ -203,6 +204,15 @@ export default function Battle({ words, badges, t }: { words: WordPair[]; badges
       else { setStep((s) => s + 1); setPicked(null); setTyped(""); }
     }, 850);
   };
+
+  // Natija ekraniga o'tilganda o'yin natijasi BIR MARTA serverga yoziladi —
+  // yutuq uchun tanga shu yozuvlardan hisoblanadi.
+  const savedGame = useRef(0);
+  useEffect(() => {
+    if (view !== "result" || savedGame.current === game) return;
+    savedGame.current = game;
+    void saveGameResult({ game: lobby, mode, score: me, total: rounds.length, won: me > ai });
+  }, [view, game, lobby, mode, me, ai, rounds.length]);
 
   const check = () => {
     if (!typed.trim() || picked) return;

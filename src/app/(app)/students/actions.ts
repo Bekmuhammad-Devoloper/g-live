@@ -3,6 +3,7 @@
 import { randomUUID } from "crypto";
 import { revalidatePath } from "next/cache";
 import { prisma } from "@/lib/db";
+import { recordLevelUp } from "@/lib/levelUp";
 import { requireSession } from "@/lib/auth";
 import { ROLES, EDU_STATUSES, PAYMENT_METHODS } from "@/lib/constants";
 import { canWrite, canRead, MODULES } from "@/lib/rbac";
@@ -238,6 +239,9 @@ export async function updateStudent(fd: FormData): Promise<EditState> {
     where: { id },
     data: { fullName, phone, currentLevel, note, ...(eduStatus ? { eduStatus } : {}) },
   });
+
+  // Daraja ko'tarilgan bo'lsa yozib qo'yamiz — o'quvchiga tanga beriladi
+  await recordLevelUp(id, existing.currentLevel, currentLevel);
 
   await writeAudit({
     actorId: s.userId,

@@ -3,6 +3,7 @@
 import { revalidatePath } from "next/cache";
 import { z } from "zod";
 import { prisma } from "@/lib/db";
+import { recordLevelUp } from "@/lib/levelUp";
 import { requireSession, type SessionUser } from "@/lib/auth";
 import { getPermission, MODULES } from "@/lib/rbac";
 import { writeAudit } from "@/lib/audit";
@@ -251,7 +252,18 @@ export async function enrollStudent(groupId: string, studentId: string): Promise
   const exists = await prisma.groupStudent.findUnique({ where: { groupId_studentId: { groupId, studentId } } });
   if (exists) return;
   await prisma.groupStudent.create({ data: { groupId, studentId } });
-  await prisma.student.update({ where: { id: studentId }, data: { eduStatus: "ACTIVE" } });
+
+  // Guruhning darajasi o'quvchinikidan yuqori bo'lsa — ko'tarilish sanaladi
+  const [g, st] = await Promise.all([
+    prisma.group.findUnique({ where: { id: groupId }, select: { levelCode: true } }),
+    prisma.student.findUnique({ where: { id: studentId }, select: { currentLevel: true } }),
+  ]);
+  if (g?.levelCode) await recordLevelUp(studentId, st?.currentLevel, g.levelCode);
+
+  await prisma.student.update({
+    where: { id: studentId },
+    data: { eduStatus: "ACTIVE", ...(g?.levelCode ? { currentLevel: g.levelCode } : {}) },
+  });
   revalidatePath(`/groups/${groupId}`);
 }
 

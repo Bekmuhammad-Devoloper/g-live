@@ -5,6 +5,7 @@ import { S } from "./_i18n";
 import { redirect } from "next/navigation";
 import { getSession } from "@/lib/auth";
 import { prisma } from "@/lib/db";
+import { coinBalance } from "@/lib/coins";
 import { isAttended } from "./_ui";
 import MissingStudent from "./MissingStudent";
 
@@ -325,12 +326,10 @@ export default async function StudentStartPage() {
   const kursPct = sprechen;
 
   // ── Tanga / seriya ──
-  const coins = present.length * 5 + submissions.length * 10;
-  let streak = 0;
-  for (const a of attendance) {
-    if (isAttended(a.status)) streak++;
-    else break;
-  }
+  // Hisob bitta joyda (src/lib/coins.ts) — Market va Sozlamalar bilan bir xil
+  const purse = await coinBalance(student.id);
+  const coins = purse.balance;
+  const streak = purse.streak;
 
   // ── Reyting: guruhdoshlar orasidagi O'RIN (raqam) ──
   let rangPos = 1;

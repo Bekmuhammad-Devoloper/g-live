@@ -155,6 +155,7 @@ const SUBMENUS: Record<string, { title: Record<Locale, string>; groups: SubGroup
         { href: "/settings/grading", icon: "award", label: { uz: "Baholash", ru: "Оценивание", en: "Grading", de: "Bewertung" }, roles: [ROLES.DIRECTOR, ROLES.ADMIN] },
         { href: "/settings/portal", icon: "graduation", label: { uz: "O'quvchi portali", ru: "Портал ученика", en: "Student portal", de: "Schülerportal" }, roles: [ROLES.DIRECTOR, ROLES.DEPUTY_DIRECTOR, ROLES.ADMIN, ROLES.MANAGER] },
         { href: "/settings/levels", icon: "layers", label: { uz: "Darajalar", ru: "Уровни", en: "Levels", de: "Niveaus" }, roles: [ROLES.DIRECTOR, ROLES.DEPUTY_DIRECTOR, ROLES.ADMIN, ROLES.MANAGER] },
+        { href: "/settings/coins", icon: "coins", label: { uz: "Tanga qoidalari", ru: "Правила монет", en: "Coin rules", de: "Münz-Regeln" }, roles: [ROLES.DIRECTOR, ROLES.DEPUTY_DIRECTOR, ROLES.ADMIN] },
         { href: "/settings/operator", icon: "headphones", label: { uz: "Operator sozlamalari", ru: "Настройки оператора", en: "Operator settings", de: "Operator-Einstellungen" } },
       ] },
       // Faqat rahbariyat: direktor va o'rinbosari (administrator KIRMAYDI)

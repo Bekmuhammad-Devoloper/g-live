@@ -3,7 +3,7 @@ import { getSession } from "@/lib/auth";
 import { isPortalFeatureOn } from "@/lib/portalFeatures";
 import { coinBalance } from "@/lib/coins";
 import { prisma } from "@/lib/db";
-import { S } from "../_i18n";
+import { S, type StudentStrings } from "../_i18n";
 import { CARD, DEEP_GRADIENT, PageHeader, SectionTitle, fmtDate, safeUrl } from "../_ui";
 import MissingStudent from "../MissingStudent";
 import ItemCard, { type VItem } from "./ItemCard";
@@ -26,6 +26,15 @@ const STATUS_CLS: Record<string, string> = {
   DELIVERED: "bg-emerald-50 text-emerald-700",
   CANCELLED: "bg-slate-100 text-slate-500",
 };
+
+// Qoida kaliti -> o'quvchi tilidagi nom
+const RULE_LABEL = (t: StudentStrings, k: string) =>
+  k === "lesson" ? t.ruleLesson
+  : k === "homework" ? t.ruleHomework
+  : k === "perfect" ? t.rulePerfect
+  : k === "gameWin" ? t.ruleGameWin
+  : k === "streak7" ? t.ruleStreak
+  : t.ruleLevelUp;
 
 export default async function StudentMarketPage() {
   const session = await getSession();
@@ -80,7 +89,19 @@ export default async function StudentMarketPage() {
             <div>{t.spent} {coins.spent}</div>
           </div>
         </div>
-        <p className="mt-2.5 text-[11.5px] leading-snug text-white/70">{t.coinRule}</p>
+        {/* Qaysi qoidadan qancha yig'ilgani — Sozlamalar > Tanga qoidalari bilan bir xil */}
+        <div className="mt-3 rounded-2xl bg-white/12 p-2.5 backdrop-blur-sm">
+          <div className="mb-1.5 text-[10.5px] font-bold uppercase tracking-wider text-white/60">{t.coinRule}</div>
+          <div className="space-y-[3px]">
+            {coins.lines.map((l) => (
+              <div key={l.key} className="flex items-baseline gap-2 text-[12px]">
+                <span className="min-w-0 flex-1 truncate text-white/80">{RULE_LABEL(t, l.key)}</span>
+                <span className="shrink-0 font-semibold text-white/55">+{l.per} × {l.count}</span>
+                <span className="w-[46px] shrink-0 text-right font-extrabold">{l.total}</span>
+              </div>
+            ))}
+          </div>
+        </div>
       </div>
 
       {/* ── Vitrina ── */}

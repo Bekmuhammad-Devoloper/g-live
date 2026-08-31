@@ -242,6 +242,8 @@ model Student {
   marketOrders MarketOrder[]
   chatMessages ChatMessage[]
   notes        Note[]
+  gameResults  GameResult[]
+  levelUps     StudentLevelUp[]
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
@@ -354,6 +356,39 @@ model GroupLessonProgress {
 // Pastdagi `Level` modeli BOSHQA narsa — u aynan bitta kursdagi
 // darajaning reja ko'rsatkichlari (hafta, akademik soat, o'tish balli).
 // ─────────────────────────────────────────────────────────────
+// ─────────────────────────────────────────────────────────────
+// TANGA MANBALARI
+// Dars qatnashuvi va vazifalar allaqachon boshqa jadvallarda bor;
+// bu ikkitasi yetishmayotgan manbalarni yozib boradi.
+// ─────────────────────────────────────────────────────────────
+
+// "Jang" bo'limidagi o'yin natijasi
+model GameResult {
+  id        String   @id @default(cuid())
+  studentId String
+  student   Student  @relation(fields: [studentId], references: [id], onDelete: Cascade)
+  game      String // vocabulary | wordgame | crossword
+  mode      String // ai | duel | group
+  score     Int // to'g'ri javoblar
+  total     Int // jami savollar
+  won       Boolean
+  createdAt DateTime @default(now())
+
+  @@index([studentId, createdAt])
+}
+
+// Daraja ko'tarilishi (A1 -> A2 ...) — faqat YUQORIGA siljish yoziladi
+model StudentLevelUp {
+  id        String   @id @default(cuid())
+  studentId String
+  student   Student  @relation(fields: [studentId], references: [id], onDelete: Cascade)
+  fromCode  String?
+  toCode    String
+  createdAt DateTime @default(now())
+
+  @@index([studentId])
+}
+
 model StudyLevel {
   id        String  @id @default(cuid())
   code      String  @unique // A1, A2, B1.1 ...
