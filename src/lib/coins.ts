@@ -59,7 +59,7 @@ type Events = Record<CoinRuleKey, number> & { streak: number; spent: number };
 
 /** Ball beriladigan hodisalar soni — tanga va yulduz uchun bir xil */
 async function pointEvents(studentId: string): Promise<Events> {
-  const [attendance, graded, games, levelUps, spentAgg, prog] = await Promise.all([
+  const [attendance, graded, games, levelUps, views, spentAgg, prog] = await Promise.all([
     prisma.attendance.findMany({
       where: { studentId },
       orderBy: { markedAt: "desc" },
@@ -72,6 +72,7 @@ async function pointEvents(studentId: string): Promise<Events> {
     }),
     prisma.gameResult.count({ where: { studentId, won: true } }),
     prisma.studentLevelUp.count({ where: { studentId } }),
+    prisma.lessonView.count({ where: { studentId } }),
     prisma.marketOrder.aggregate({
       where: { studentId, status: { not: "CANCELLED" } },
       _sum: { price: true },
@@ -83,6 +84,7 @@ async function pointEvents(studentId: string): Promise<Events> {
 
   return {
     lesson: attendance.filter((a) => ATTENDED.includes(a.status)).length,
+    lessonView: views,
     homework: graded.length,
     // To'liq ballga bajarilgan vazifa uchun qo'shimcha
     perfect: graded.filter((s) => {
@@ -97,7 +99,7 @@ async function pointEvents(studentId: string): Promise<Events> {
   };
 }
 
-export const POINT_ORDER: CoinRuleKey[] = ["lesson", "homework", "perfect", "gameWin", "streak7", "levelUp"];
+export const POINT_ORDER: CoinRuleKey[] = ["lesson", "lessonView", "homework", "perfect", "gameWin", "streak7", "levelUp"];
 
 async function balanceOf(studentId: string, kind: PointKind): Promise<CoinBalance> {
   const [rules, ev] = await Promise.all([getPointRules(kind), pointEvents(studentId)]);

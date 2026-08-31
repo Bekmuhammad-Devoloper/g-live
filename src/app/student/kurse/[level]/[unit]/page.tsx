@@ -209,7 +209,7 @@ export default async function StudentUnitPage({ params }: { params: Promise<{ le
   const group = student.enrollments[0]?.group ?? null;
   if (!group) notFound();
 
-  const [lesson, allLessons, progress] = await Promise.all([
+  const [lesson, allLessons, progress, view] = await Promise.all([
     prisma.courseLesson.findUnique({ where: { id: unit } }),
     prisma.courseLesson.findMany({
       where: { programId: group.programId },
@@ -217,6 +217,10 @@ export default async function StudentUnitPage({ params }: { params: Promise<{ le
       select: { id: true, levelCode: true, title: true },
     }),
     prisma.groupLessonProgress.findMany({ where: { groupId: group.id, taught: true }, select: { courseLessonId: true } }),
+    prisma.lessonView.findFirst({
+      where: { studentId: student.id, courseLessonId: unit },
+      select: { id: true },
+    }),
   ]);
 
   // Boshqa kursning darsiga URL orqali kirib bo'lmasin
@@ -290,6 +294,10 @@ export default async function StudentUnitPage({ params }: { params: Promise<{ le
           pill={lesson.title}
           openLabel={t.openVideo}
           emptyLabel={t.noVideoYet}
+          lessonId={lesson.id}
+          watched={!!view}
+          markLabel={t.markWatched}
+          doneLabel={t.watchedDone}
         />
 
         {/* ── 2. Dars nomi va tavsifi ── */}

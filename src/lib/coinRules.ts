@@ -12,7 +12,8 @@ import { getSettings, setSetting } from "./settings";
 export type PointKind = "coin" | "star";
 
 export type CoinRuleKey =
-  | "lesson"        // darsga qatnashgani
+  | "lesson"        // darsga qatnashgani (davomat)
+  | "lessonView"    // dars videosini ko'rib chiqqani
   | "homework"      // vazifasi baholangani
   | "perfect"       // vazifani to'liq ballga bajargani (qo'shimcha)
   | "gameWin"       // o'yinda yutgani
@@ -23,6 +24,7 @@ export type CoinRules = Record<CoinRuleKey, number>;
 
 export const COIN_DEFAULTS: CoinRules = {
   lesson: 5,
+  lessonView: 3,
   homework: 10,
   perfect: 5,
   gameWin: 3,
@@ -33,6 +35,7 @@ export const COIN_DEFAULTS: CoinRules = {
 // Yulduz kamroq va "qadrliroq" — sonlar kichik
 export const STAR_DEFAULTS: CoinRules = {
   lesson: 1,
+  lessonView: 1,
   homework: 2,
   perfect: 1,
   gameWin: 1,

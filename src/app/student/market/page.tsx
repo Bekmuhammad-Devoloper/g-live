@@ -30,6 +30,7 @@ const STATUS_CLS: Record<string, string> = {
 // Qoida kaliti -> o'quvchi tilidagi nom
 const RULE_LABEL = (t: StudentStrings, k: string) =>
   k === "lesson" ? t.ruleLesson
+  : k === "lessonView" ? t.ruleLessonView
   : k === "homework" ? t.ruleHomework
   : k === "perfect" ? t.rulePerfect
   : k === "gameWin" ? t.ruleGameWin

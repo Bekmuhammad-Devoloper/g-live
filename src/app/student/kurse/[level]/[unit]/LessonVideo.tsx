@@ -1,6 +1,7 @@
 "use client";
 
-import { useState } from "react";
+import { useRef, useState } from "react";
+import { markLessonWatched } from "./actions";
 
 // Dars videosi — kartaning ustida sarlavha qatlami turadi, video
 // o'ynatilganda u chetga chiqadi (ko'rishga xalaqit bermasin).
@@ -16,10 +17,14 @@ function IcoPlay({ s = 26 }: { s?: number }) {
 }
 
 export default function LessonVideo({
-  mode, src, title, kicker, badge, pill, openLabel, emptyLabel,
+  mode, src, lessonId, watched, title, kicker, badge, pill, openLabel, emptyLabel, markLabel, doneLabel,
 }: {
   mode: VideoMode;
   src: string | null;
+  /** Ball berish uchun dars id si */
+  lessonId: string;
+  /** Bu dars allaqachon ko'rilgan deb belgilanganmi */
+  watched: boolean;
   title: string;
   /** Videodan yuqoridagi kichik yozuv — masalan "Dars 2/3" */
   kicker: string;
@@ -29,8 +34,26 @@ export default function LessonVideo({
   pill: string;
   openLabel: string;
   emptyLabel: string;
+  markLabel: string;
+  doneLabel: string;
 }) {
   const [playing, setPlaying] = useState(false);
+  const [done, setDone] = useState(watched);
+  const sent = useRef(false);
+
+  // Ball bir marta beriladi — takror ko'rish qo'shimcha bermaydi
+  const mark = () => {
+    if (sent.current || done) return;
+    sent.current = true;
+    setDone(true);
+    void markLessonWatched(lessonId);
+  };
+
+  // Yuklangan videoda 80% ko'rilganda avtomatik belgilanadi
+  const onProgress = (e: React.SyntheticEvent<HTMLVideoElement>) => {
+    const v = e.currentTarget;
+    if (v.duration > 0 && v.currentTime / v.duration >= 0.8) mark();
+  };
 
   // YouTube/Vimeo o'z sarlavhasini ko'rsatadi — ustiga yozmaymiz
   const showOverlay = mode !== "embed" && !playing;
@@ -46,7 +69,8 @@ export default function LessonVideo({
           preload="metadata"
           onPlay={() => setPlaying(true)}
           onPause={() => setPlaying(false)}
-          onEnded={() => setPlaying(false)}
+          onEnded={() => { setPlaying(false); mark(); }}
+          onTimeUpdate={onProgress}
           className="mx-auto block max-h-[58vh] w-auto max-w-full"
         />
       ) : mode === "embed" && src ? (
@@ -95,6 +119,29 @@ export default function LessonVideo({
       <span className="pointer-events-none absolute right-3.5 top-3.5 rounded-[12px] bg-[#2f77f2] px-2.5 py-1 text-[13px] font-extrabold text-white shadow-[0_6px_16px_-6px_rgba(47,119,242,0.9)]">
         {badge}
       </span>
+
+      {/* YouTube va tashqi havolada ko'rilganini o'zimiz bila olmaymiz —
+          o'quvchi tugma orqali belgilaydi (ball bir marta beriladi) */}
+      {mode !== "none" && (mode !== "file" || done) ? (
+        <div className="border-t border-white/10 px-3 py-2.5">
+          {done ? (
+            <div className="flex items-center justify-center gap-1.5 text-[13px] font-bold text-emerald-400">
+              <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round">
+                <path d="m4.5 12.5 5 5 10-11" />
+              </svg>
+              {doneLabel}
+            </div>
+          ) : (
+            <button
+              type="button"
+              onClick={mark}
+              className="w-full rounded-xl bg-white/10 py-2.5 text-[13.5px] font-bold text-white ring-1 ring-white/15 transition active:scale-[0.99]"
+            >
+              {markLabel}
+            </button>
+          )}
+        </div>
+      ) : null}
     </div>
   );
 }

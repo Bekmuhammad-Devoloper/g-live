@@ -84,7 +84,7 @@ async function scores(ids: string[], basis: RankBasis): Promise<Map<string, numb
 
   // coins — tanga qoidalari bo'yicha yig'ilgan (seriya bonusisiz: u o'quvchiga xos)
   const rules = await getCoinRules();
-  const [att, graded, wins, ups] = await Promise.all([
+  const [att, graded, wins, ups, views] = await Promise.all([
     prisma.attendance.groupBy({
       by: ["studentId"],
       where: { studentId: { in: ids }, status: { in: ATTENDED } },
@@ -104,6 +104,11 @@ async function scores(ids: string[], basis: RankBasis): Promise<Map<string, numb
       where: { studentId: { in: ids } },
       _count: { _all: true },
     }),
+    prisma.lessonView.groupBy({
+      by: ["studentId"],
+      where: { studentId: { in: ids } },
+      _count: { _all: true },
+    }),
   ]);
 
   const add = (id: string, n: number) => out.set(id, (out.get(id) ?? 0) + n);
@@ -115,6 +120,7 @@ async function scores(ids: string[], basis: RankBasis): Promise<Map<string, numb
   }
   for (const r of wins) add(r.studentId, r._count._all * rules.gameWin);
   for (const r of ups) add(r.studentId, r._count._all * rules.levelUp);
+  for (const r of views) add(r.studentId, r._count._all * rules.lessonView);
   return out;
 }
 

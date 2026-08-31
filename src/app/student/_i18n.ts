@@ -63,6 +63,8 @@ const DICT = {
   nextLesson: p("Keyingi", "Следующий", "Next", "Weiter"),
   attachment: p("Biriktirilgan fayl", "Прикреплённый файл", "Attachment", "Anhang"),
   openFull: p("To'liq ochish", "Открыть полностью", "Open full size", "Vollbild öffnen"),
+  markWatched: p("Darsni ko'rib chiqdim", "Я посмотрел урок", "I have watched the lesson", "Ich habe die Lektion gesehen"),
+  watchedDone: p("Dars ko'rildi", "Урок просмотрен", "Lesson watched", "Lektion gesehen"),
 
   // ── Mashq (Üben) ──
   practice: p("Mashq", "Практика", "Practice", "Üben"),
@@ -137,6 +139,7 @@ const DICT = {
   spent: p("Sarflangan", "Потрачено", "Spent", "Ausgegeben"),
   coinRule: p("Tangani qanday yig'asiz", "Как накопить монеты", "How you earn coins", "So verdienst du Münzen"),
   ruleLesson: p("Darsga qatnashgani", "За посещённый урок", "Attended lesson", "Besuchte Lektion"),
+  ruleLessonView: p("Dars videosini ko'rgani", "За просмотр урока", "Watched the lesson", "Lektion angesehen"),
   ruleHomework: p("Vazifa bajargani", "За проверенное задание", "Graded task", "Bewertete Aufgabe"),
   rulePerfect: p("To'liq ballga bajargani", "За максимальный балл", "Perfect score", "Volle Punktzahl"),
   ruleGameWin: p("O'yinda yutgani", "За победу в игре", "Game win", "Spielsieg"),

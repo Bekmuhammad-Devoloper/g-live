@@ -27,8 +27,9 @@ export default async function CoinRulesPage() {
   const [rules, stars, prog] = await Promise.all([getCoinRules(), getStarRules(), getProgressRules()]);
 
   // Butun markaz bo'yicha hodisalar soni — qoida qancha tanga bergani ko'rinsin
-  const [lessons, graded, perfect, gameWins, levelUps, spentAgg, students] = await Promise.all([
+  const [lessons, views, graded, perfect, gameWins, levelUps, spentAgg, students] = await Promise.all([
     prisma.attendance.count({ where: { status: { in: ATTENDED } } }),
+    prisma.lessonView.count(),
     prisma.submission.count({ where: { status: "GRADED" } }),
     prisma.submission.findMany({
       where: { status: "GRADED" },
@@ -55,6 +56,16 @@ export default async function CoinRulesPage() {
         "Каждый урок, отмеченный как посещённый (пришёл, опоздал, онлайн, отработка).",
         "Every lesson marked as attended (present, late, online, make-up).",
         "Jede als besucht markierte Lektion (anwesend, verspätet, online, Nachholstunde).",
+      ),
+    },
+    {
+      key: "lessonView", icon: "video", auto: true, events: views,
+      title: L("Dars videosini ko'rgani", "За просмотр урока", "Watched the lesson", "Lektion angesehen"),
+      desc: L(
+        "Ilovada dars videosini ko'rib chiqqani. Yuklangan videoda 80% ko'rilganda o'zi belgilanadi, YouTube havolasida o'quvchi \"Ko'rib chiqdim\" tugmasini bosadi. Har dars uchun bir marta.",
+        "Просмотр видео урока в приложении. Для загруженного видео — автоматически на 80%, для YouTube ученик нажимает кнопку. Один раз на урок.",
+        "Watching the lesson video in the app. Automatic at 80% for uploaded video; for YouTube the student taps a button. Once per lesson.",
+        "Ansehen des Lektionsvideos. Bei hochgeladenem Video automatisch ab 80%, bei YouTube per Knopf. Einmal pro Lektion.",
       ),
     },
     {

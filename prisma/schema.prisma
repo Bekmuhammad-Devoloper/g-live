@@ -243,6 +243,7 @@ model Student {
   chatMessages ChatMessage[]
   notes        Note[]
   gameResults  GameResult[]
+  lessonViews  LessonView[]
   levelUps     StudentLevelUp[]
 
   createdAt DateTime @default(now())
@@ -361,6 +362,18 @@ model GroupLessonProgress {
 // Dars qatnashuvi va vazifalar allaqachon boshqa jadvallarda bor;
 // bu ikkitasi yetishmayotgan manbalarni yozib boradi.
 // ─────────────────────────────────────────────────────────────
+
+// Dars videosini ko'rgani — har darsga BIR marta yoziladi
+model LessonView {
+  id             String   @id @default(cuid())
+  studentId      String
+  student        Student  @relation(fields: [studentId], references: [id], onDelete: Cascade)
+  courseLessonId String
+  createdAt      DateTime @default(now())
+
+  @@unique([studentId, courseLessonId])
+  @@index([studentId])
+}
 
 // "Jang" bo'limidagi o'yin natijasi
 model GameResult {
