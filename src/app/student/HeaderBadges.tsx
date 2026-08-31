@@ -2,7 +2,8 @@ import Link from "next/link";
 import { S } from "./_i18n";
 import { getSession } from "@/lib/auth";
 import { prisma } from "@/lib/db";
-import { TEAL, isAttended } from "./_ui";
+import { TEAL } from "./_ui";
+import { studentStreak } from "@/lib/coins";
 
 // Portalning HAR BIR sahifasida yuqori o'ng burchakda turadigan ikki belgi:
 // seriya (ketma-ket qatnashgan kunlar) va bildirishnoma qo'ng'irog'i.
@@ -35,24 +36,11 @@ export default async function HeaderBadges() {
     select: { id: true },
   });
 
-  const [attendance, unread] = await Promise.all([
-    student
-      ? prisma.attendance.findMany({
-          where: { studentId: student.id },
-          orderBy: { markedAt: "desc" },
-          select: { status: true },
-          take: 200,
-        })
-      : Promise.resolve([] as { status: string }[]),
+  // Seriya hisobi bitta joyda (src/lib/coins.ts) — sozlamaga bo'ysunadi
+  const [streak, unread] = await Promise.all([
+    student ? studentStreak(student.id) : Promise.resolve(0),
     prisma.notification.count({ where: { userId: session.userId, isRead: false } }),
   ]);
-
-  // Seriya — oxirgi darsdan orqaga qarab uzluksiz qatnashgan kunlar
-  let streak = 0;
-  for (const a of attendance) {
-    if (isAttended(a.status)) streak++;
-    else break;
-  }
 
   return (
     <div className="flex shrink-0 items-center gap-2">

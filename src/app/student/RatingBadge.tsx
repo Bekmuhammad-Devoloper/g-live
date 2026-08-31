@@ -1,12 +1,12 @@
 import { getSession } from "@/lib/auth";
 import { S } from "./_i18n";
 import { prisma } from "@/lib/db";
-import { ATTENDED } from "./_ui";
+import { studentRank } from "@/lib/rank";
 
-// Umumiy reyting belgisi — o'quvchining butun platforma bo'yicha o'rni.
-// Hisob Start ekranidagi "Rang" bilan bir xil formulada: qatnashgan darslar
-// soni (PRESENT / LATE / ONLINE / MAKEUP), faqat guruhdoshlar emas, hamma
-// o'quvchilar orasida taqqoslanadi.
+// Umumiy reyting belgisi — o'quvchining o'rni.
+// Hisob src/lib/rank.ts da: taqqoslash doirasi (guruh / filial / markaz) va
+// mezoni (davomat / tanga / o'rtacha ball) sozlamadan olinadi. Start
+// ekranidagi "Reyting" kartochkasi ham aynan shu funksiyani ishlatadi.
 
 function IcoTrophy({ s = 26 }: { s?: number }) {
   return (
@@ -35,15 +35,8 @@ export default async function RatingBadge() {
   });
   if (!student) return null;
 
-  const counts = await prisma.attendance.groupBy({
-    by: ["studentId"],
-    where: { status: { in: [...ATTENDED] } },
-    _count: { _all: true },
-  });
-
-  const mine = counts.find((c) => c.studentId === student.id)?._count._all ?? 0;
-  // Hali darsi yo'q o'quvchi — qatnashganlarning hammasidan keyin turadi
-  const place = mine === 0 ? counts.length + 1 : counts.filter((c) => c._count._all > mine).length + 1;
+  // Doira va mezon Sozlamalar > Ball va mukofotlar bo'limida belgilanadi
+  const { place } = await studentRank(student.id);
 
   return (
     <div className="flex h-11 shrink-0 items-center gap-1 rounded-2xl bg-white px-2.5 shadow-[0_6px_16px_rgba(19,78,94,0.12)]">

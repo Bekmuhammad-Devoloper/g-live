@@ -1,6 +1,7 @@
 import "server-only";
 import { prisma } from "./db";
-import { getCoinRules, STREAK_STEP, type CoinRuleKey } from "./coinRules";
+import { getCoinRules, type CoinRuleKey } from "./coinRules";
+import { getProgressRules } from "./progressRules";
 
 // Tanga (Münzen) — o'quvchining faolligi uchun beriladigan ichki ball.
 //
@@ -22,18 +23,37 @@ export type CoinBalance = {
   streak: number;
 };
 
-/** Oxirgi darsdan orqaga qarab uzluksiz qatnashgan darslar soni */
-export function streakOf(rows: { status: string }[]): number {
+/**
+ * Oxirgi darsdan orqaga qarab uzluksiz qatnashgan darslar soni.
+ * Sababli qoldirish (EXCUSED) sozlamaga qarab seriyani uzadi yoki
+ * umuman hisobga olinmaydi (na uzadi, na qo'shadi).
+ */
+export function streakOf(rows: { status: string }[], excusedBreaks = false): number {
   let n = 0;
   for (const a of rows) {
-    if (ATTENDED.includes(a.status)) n++;
-    else break;
+    if (ATTENDED.includes(a.status)) { n++; continue; }
+    if (a.status === "EXCUSED" && !excusedBreaks) continue; // o'tkazib yuboramiz
+    break;
   }
   return n;
 }
 
+/** Portal sahifalari uchun qisqa yo'l — sozlamani o'zi o'qiydi */
+export async function studentStreak(studentId: string): Promise<number> {
+  const [rows, rules] = await Promise.all([
+    prisma.attendance.findMany({
+      where: { studentId },
+      orderBy: { markedAt: "desc" },
+      select: { status: true },
+      take: 400,
+    }),
+    getProgressRules(),
+  ]);
+  return streakOf(rows, rules.streakExcusedBreaks);
+}
+
 export async function coinBalance(studentId: string): Promise<CoinBalance> {
-  const rules = await getCoinRules();
+  const [rules, prog] = await Promise.all([getCoinRules(), getProgressRules()]);
 
   const [attendance, graded, games, levelUps, spentAgg] = await Promise.all([
     prisma.attendance.findMany({
@@ -61,8 +81,8 @@ export async function coinBalance(studentId: string): Promise<CoinBalance> {
     return max > 0 && (s.score ?? 0) >= max;
   }).length;
 
-  const streak = streakOf(attendance);
-  const streakSteps = Math.floor(streak / STREAK_STEP);
+  const streak = streakOf(attendance, prog.streakExcusedBreaks);
+  const streakSteps = Math.floor(streak / prog.streakStep);
 
   const lines: CoinLine[] = [
     { key: "lesson", count: lessons, per: rules.lesson, total: lessons * rules.lesson },

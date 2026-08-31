@@ -2,10 +2,12 @@ import { requireSession } from "@/lib/auth";
 import { ROLES } from "@/lib/constants";
 import { tr } from "@/lib/tr";
 import { prisma } from "@/lib/db";
-import { getCoinRules, STREAK_STEP } from "@/lib/coinRules";
+import { getCoinRules } from "@/lib/coinRules";
+import { getProgressRules } from "@/lib/progressRules";
 import { ATTENDED } from "@/lib/coins";
 import { PageHeader, Forbidden } from "../../_components/ui";
 import CoinRulesView, { type RuleRow } from "./CoinRulesView";
+import ProgressRulesView from "./ProgressRulesView";
 
 // Tanga qoidalari — rahbariyat ko'radi va o'zgartiradi
 const ALLOWED = [ROLES.DIRECTOR, ROLES.DEPUTY_DIRECTOR, ROLES.ADMIN];
@@ -22,7 +24,7 @@ export default async function CoinRulesPage() {
   }
 
   const L = (uz: string, ru: string, en: string, de: string) => tr(s.locale, { uz, ru, en, de });
-  const rules = await getCoinRules();
+  const [rules, prog] = await Promise.all([getCoinRules(), getProgressRules()]);
 
   // Butun markaz bo'yicha hodisalar soni — qoida qancha tanga bergani ko'rinsin
   const [lessons, graded, perfect, gameWins, levelUps, spentAgg, students] = await Promise.all([
@@ -87,12 +89,12 @@ export default async function CoinRulesPage() {
     },
     {
       key: "streak7", icon: "history", auto: true, events: 0,
-      title: L(`Seriya (har ${STREAK_STEP} dars)`, `Серия (каждые ${STREAK_STEP} уроков)`, `Streak (every ${STREAK_STEP} lessons)`, `Serie (alle ${STREAK_STEP} Lektionen)`),
+      title: L(`Seriya (har ${prog.streakStep} dars)`, `Серия (каждые ${prog.streakStep} уроков)`, `Streak (every ${prog.streakStep} lessons)`, `Serie (alle ${prog.streakStep} Lektionen)`),
       desc: L(
-        `Ketma-ket ${STREAK_STEP} dars qoldirmaganda beriladi. Bitta dars qoldirilsa seriya noldan boshlanadi.`,
-        `Начисляется за ${STREAK_STEP} уроков подряд без пропусков. Один пропуск обнуляет серию.`,
-        `Awarded for ${STREAK_STEP} lessons in a row without an absence. One absence resets the streak.`,
-        `Für ${STREAK_STEP} Lektionen ohne Fehlzeit. Eine Fehlzeit setzt die Serie zurück.`,
+        `Ketma-ket ${prog.streakStep} dars qoldirmaganda beriladi. Bitta dars qoldirilsa seriya noldan boshlanadi.`,
+        `Начисляется за ${prog.streakStep} уроков подряд без пропусков. Один пропуск обнуляет серию.`,
+        `Awarded for ${prog.streakStep} lessons in a row without an absence. One absence resets the streak.`,
+        `Für ${prog.streakStep} Lektionen ohne Fehlzeit. Eine Fehlzeit setzt die Serie zurück.`,
       ),
     },
     {
@@ -125,18 +127,32 @@ export default async function CoinRulesPage() {
   return (
     <div>
       <PageHeader
-        title={L("Tanga qoidalari", "Правила монет", "Coin rules", "Münz-Regeln")}
+        title={L("Ball va mukofotlar", "Баллы и награды", "Points and rewards", "Punkte und Belohnungen")}
         subtitle={L(
-          "O'quvchi nima uchun necha tanga oladi",
-          "За что и сколько монет получает ученик",
-          "What earns a student coins, and how many",
-          "Wofür und wie viele Münzen ein Schüler erhält",
+          "Tanga, seriya va reyting qanday hisoblanadi",
+          "Как считаются монеты, серия и рейтинг",
+          "How coins, streak and rank are calculated",
+          "Wie Münzen, Serie und Rangliste berechnet werden",
         )}
       />
+      <h2 className="mb-3 text-base font-bold text-slate-800 dark:text-slate-100">
+        {L("Tanga qoidalari", "Правила монет", "Coin rules", "Münz-Regeln")}
+      </h2>
       <CoinRulesView
         rows={rows}
         locale={s.locale}
         stats={{ earned, spent, balance: Math.max(0, earned - spent), students }}
+      />
+
+      <ProgressRulesView
+        locale={s.locale}
+        streakBonus={rules.streak7}
+        initial={{
+          streakExcusedBreaks: prog.streakExcusedBreaks,
+          streakStep: prog.streakStep,
+          rankScope: prog.rankScope,
+          rankBasis: prog.rankBasis,
+        }}
       />
     </div>
   );

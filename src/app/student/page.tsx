@@ -6,6 +6,7 @@ import { redirect } from "next/navigation";
 import { getSession } from "@/lib/auth";
 import { prisma } from "@/lib/db";
 import { coinBalance } from "@/lib/coins";
+import { studentRank } from "@/lib/rank";
 import { isAttended } from "./_ui";
 import MissingStudent from "./MissingStudent";
 
@@ -331,18 +332,10 @@ export default async function StudentStartPage() {
   const coins = purse.balance;
   const streak = purse.streak;
 
-  // ── Reyting: guruhdoshlar orasidagi O'RIN (raqam) ──
-  let rangPos = 1;
-  if (mates.length > 1) {
-    const counts = await prisma.attendance.groupBy({
-      by: ["studentId"],
-      where: { studentId: { in: mates.map((m) => m.studentId) }, status: { in: ["PRESENT", "LATE", "ONLINE", "MAKEUP"] } },
-      _count: { _all: true },
-    });
-    const mine = counts.find((c) => c.studentId === student.id)?._count._all ?? 0;
-    const better = counts.filter((c) => c._count._all > mine).length;
-    rangPos = better + 1; // 1 = birinchi o'rin
-  }
+  // ── Reyting: o'rin (raqam) ──
+  // Doira va mezon Sozlamalar > Ball va mukofotlar bo'limidan olinadi;
+  // yuqoridagi kubok belgisi ham aynan shu hisobni ko'rsatadi.
+  const { place: rangPos } = await studentRank(student.id);
 
   const kurseHref = "/student/kurse"; // kurs sahifasi endi portal ichida
   // Salomlashish uchun qisqaroq nomni tanlaymiz: CRM da ba'zan "Familiya Ism",

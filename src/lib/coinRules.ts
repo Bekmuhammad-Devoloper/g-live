@@ -56,6 +56,3 @@ export async function setCoinRules(input: Partial<Record<CoinRuleKey, unknown>>)
   }
   return next;
 }
-
-/** Seriya bonusi necha darsda bir beriladi */
-export const STREAK_STEP = 7;
