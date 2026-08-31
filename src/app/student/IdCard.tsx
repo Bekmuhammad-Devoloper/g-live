@@ -129,6 +129,14 @@ export default function IdCard({ p, t, editable = true }: { p: VProfile; t: Stud
                 </span>
               )}
             </div>
+            {/* Yosh va daraja — rasm ostida, o'ng ustunga joy qolsin */}
+            {!edit ? (
+              <div className="mt-2 space-y-1.5">
+                <Chip k={t.age} v={p.age !== null ? String(p.age) : "—"} />
+                <Chip k={t.level} v={p.level} />
+              </div>
+            ) : null}
+
             {edit ? (
               <div className="mt-1.5 flex flex-col gap-1">
                 <input
@@ -206,8 +214,6 @@ export default function IdCard({ p, t, editable = true }: { p: VProfile; t: Stud
                 ) : null}
                 <dl className="mt-2 space-y-1">
                   <Line k={t.birthDate} v={fmtDate(p.birthDate)} />
-                  <Line k={t.age} v={p.age !== null ? String(p.age) : "—"} />
-                  <Line k={t.level} v={p.level} />
                   <Line k={t.group} v={p.group ?? "—"} />
                   <Line k={t.phone} v={p.phone ?? "—"} />
                   {p.phone2 ? <Line k={t.phone2} v={p.phone2} /> : null}
@@ -251,6 +257,16 @@ function Field({ label, children }: { label: string; children: React.ReactNode }
 // Guvohnoma qatori — yorliq chapda, qiymat o'ngda.
 // Qiymat kesilmaydi: sig'masa butunlay keyingi qatorga tushadi
 // (uzun telefon raqami yoki guruh nomi to'liq ko'rinishi uchun).
+// Rasm ostidagi ixcham qiymat (yosh, daraja)
+function Chip({ k, v }: { k: string; v: string }) {
+  return (
+    <div className="rounded-xl bg-slate-50 px-1.5 py-1.5 text-center">
+      <div className="text-[9px] font-bold uppercase tracking-[0.04em] text-slate-400">{k}</div>
+      <div className="mt-[1px] truncate text-[14px] font-extrabold leading-none text-slate-800">{v}</div>
+    </div>
+  );
+}
+
 function Line({ k, v, mono }: { k: string; v: string; mono?: boolean }) {
   return (
     <div className="flex flex-wrap items-baseline gap-x-2.5">

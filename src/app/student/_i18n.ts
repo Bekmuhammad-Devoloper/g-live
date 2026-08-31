@@ -198,7 +198,7 @@ const DICT = {
   // ── Guvohnoma (ID-karta) ──
   birthDate: p("Tug'ilgan sana", "Дата рождения", "Date of birth", "Geburtsdatum"),
   age: p("Yoshi", "Возраст", "Age", "Alter"),
-  phone2: p("Qo'shimcha telefon", "Доп. телефон", "Second phone", "Zweites Telefon"),
+  phone2: p("2-chi raqam", "2-й номер", "2nd number", "2. Nummer"),
   photo: p("Rasm", "Фото", "Photo", "Foto"),
   removePhoto: p("O'chirish", "Удалить", "Remove", "Entfernen"),
   editProfile: p("Ma'lumotlarni tahrirlash", "Редактировать данные", "Edit details", "Daten bearbeiten"),
