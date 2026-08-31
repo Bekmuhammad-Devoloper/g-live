@@ -1,0 +1,26 @@
+{
+  "id": "/student",
+  "name": "Germaniya Live — O'quvchi",
+  "short_name": "Germaniya Live",
+  "description": "Nemis tili darslari, uy vazifalari va natijalaringiz — bitta ilovada.",
+  "start_url": "/student",
+  "scope": "/student",
+  "display": "standalone",
+  "orientation": "portrait",
+  "background_color": "#e4edf3",
+  "theme_color": "#0e7490",
+  "lang": "uz",
+  "dir": "ltr",
+  "categories": ["education"],
+  "icons": [
+    { "src": "/icons/icon-192.png", "sizes": "192x192", "type": "image/png", "purpose": "any" },
+    { "src": "/icons/icon-512.png", "sizes": "512x512", "type": "image/png", "purpose": "any" },
+    { "src": "/icons/maskable-192.png", "sizes": "192x192", "type": "image/png", "purpose": "maskable" },
+    { "src": "/icons/maskable-512.png", "sizes": "512x512", "type": "image/png", "purpose": "maskable" }
+  ],
+  "shortcuts": [
+    { "name": "Kurslar", "url": "/student/kurse" },
+    { "name": "Mashq", "url": "/student/uben" },
+    { "name": "Profil", "url": "/student/profil" }
+  ]
+}
