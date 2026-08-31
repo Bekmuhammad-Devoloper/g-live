@@ -198,7 +198,7 @@ export default function IdCard({ p, t, editable = true }: { p: VProfile; t: Stud
               </form>
             ) : (
               <>
-                <div className="truncate text-[18px] font-extrabold leading-tight text-slate-900">{p.fullName}</div>
+                <div className="break-words text-[18px] font-extrabold leading-tight text-slate-900">{p.fullName}</div>
                 {p.status ? (
                   <span className="mt-1 inline-block rounded-full bg-emerald-50 px-2 py-[2px] text-[11px] font-bold text-emerald-700">
                     {p.status}
@@ -248,11 +248,14 @@ function Field({ label, children }: { label: string; children: React.ReactNode }
   );
 }
 
+// Guvohnoma qatori — yorliq chapda, qiymat o'ngda.
+// Qiymat kesilmaydi: sig'masa butunlay keyingi qatorga tushadi
+// (uzun telefon raqami yoki guruh nomi to'liq ko'rinishi uchun).
 function Line({ k, v, mono }: { k: string; v: string; mono?: boolean }) {
   return (
-    <div className="flex items-baseline justify-between gap-3">
-      <dt className="shrink-0 text-[11.5px] font-semibold uppercase tracking-wide text-slate-400">{k}</dt>
-      <dd className={"min-w-0 truncate text-right text-[13.5px] font-bold text-slate-800" + (mono ? " font-mono text-[12.5px]" : "")}>
+    <div className="flex flex-wrap items-baseline gap-x-2.5">
+      <dt className="whitespace-nowrap text-[11px] font-semibold uppercase tracking-[0.03em] text-slate-400">{k}</dt>
+      <dd className={"ml-auto break-words text-right text-[13.5px] font-bold text-slate-800" + (mono ? " font-mono text-[12.5px]" : "")}>
         {v}
       </dd>
     </div>
