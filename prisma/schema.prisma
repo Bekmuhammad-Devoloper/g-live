@@ -363,6 +363,43 @@ model GroupLessonProgress {
 // bu ikkitasi yetishmayotgan manbalarni yozib boradi.
 // ─────────────────────────────────────────────────────────────
 
+// ─────────────────────────────────────────────────────────────
+// O'QUVCHI BOSH SAHIFASI MAZMUNI
+// Direktor va menejer Sozlamalar > Bosh sahifa bo'limidan boshqaradi.
+// ─────────────────────────────────────────────────────────────
+
+// Reklama banneri (karusel)
+model PortalBanner {
+  id        String   @id @default(cuid())
+  title     String
+  subtitle  String?
+  btnLabel  String?
+  href      String? // ichki yo'l (/student/kurse) yoki tashqi havola
+  imageUrl  String? // yuklangan rasm; bo'lmasa rangli gradient
+  color     String   @default("#0e7490")
+  sortOrder Int      @default(0)
+  isActive  Boolean  @default(true)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([sortOrder])
+}
+
+// Video va podkastlar — YouTube havolalari
+model PortalVideo {
+  id        String   @id @default(cuid())
+  title     String
+  note      String?
+  url       String // YouTube/Vimeo havolasi yoki /uploads/... fayl
+  kind      String   @default("VIDEO") // VIDEO | PODCAST
+  sortOrder Int      @default(0)
+  isActive  Boolean  @default(true)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([sortOrder])
+}
+
 // Dars videosini ko'rgani — har darsga BIR marta yoziladi
 model LessonView {
   id             String   @id @default(cuid())

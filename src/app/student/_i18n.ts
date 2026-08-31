@@ -37,6 +37,7 @@ const DICT = {
   streak: p("Seriya", "Серия", "Streak", "Streak"),
   rank: p("Reyting", "Рейтинг", "Rank", "Rang"),
   videosPodcasts: p("Video va podkastlar", "Видео и подкасты", "Videos & podcasts", "Videos & Podcasts"),
+  noVideosYet: p("Hali video yo'q", "Видео пока нет", "No videos yet", "Noch keine Videos"),
   lesson: p("Dars", "Урок", "Lesson", "Lektion"),
   chapter: p("Bo'lim", "Раздел", "Chapter", "Kapitel"),
 
