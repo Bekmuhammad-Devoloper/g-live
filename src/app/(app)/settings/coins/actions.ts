@@ -4,7 +4,7 @@ import { revalidatePath } from "next/cache";
 import { requireSession } from "@/lib/auth";
 import { ROLES } from "@/lib/constants";
 import { writeAudit } from "@/lib/audit";
-import { COIN_RULE_KEYS, setCoinRules, type CoinRules } from "@/lib/coinRules";
+import { COIN_RULE_KEYS, setPointRules, type CoinRuleKey, type PointKind } from "@/lib/coinRules";
 import { RANK_BASES, RANK_SCOPES, setProgressRules, type RankBasis, type RankScope } from "@/lib/progressRules";
 
 // Tanga qoidalari — rahbariyat belgilaydi
@@ -12,11 +12,12 @@ const ALLOWED = [ROLES.DIRECTOR, ROLES.DEPUTY_DIRECTOR, ROLES.ADMIN];
 
 export type CoinState = { ok?: boolean; error?: string };
 
-export async function saveCoinRules(input: Record<string, number>): Promise<CoinState> {
+export async function savePointRules(kind: PointKind, input: Record<string, number>): Promise<CoinState> {
   const s = await requireSession();
   if (!ALLOWED.includes(s.role as never)) return { error: "Ruxsat yo'q" };
+  if (kind !== "coin" && kind !== "star") return { error: "Noma'lum ball turi" };
 
-  const patch: Partial<Record<keyof CoinRules, unknown>> = {};
+  const patch: Partial<Record<CoinRuleKey, unknown>> = {};
   for (const k of COIN_RULE_KEYS) {
     if (input[k] === undefined) continue;
     const n = Number(input[k]);
@@ -24,13 +25,13 @@ export async function saveCoinRules(input: Record<string, number>): Promise<Coin
     patch[k] = n;
   }
 
-  const saved = await setCoinRules(patch);
+  const saved = await setPointRules(kind, patch);
   await writeAudit({
     actorId: s.userId,
     action: "UPDATE",
-    entityType: "CoinRules",
+    entityType: kind === "coin" ? "CoinRules" : "StarRules",
     newValue: saved,
-    reason: "Tanga qoidalari o'zgartirildi",
+    reason: kind === "coin" ? "Tanga qoidalari o'zgartirildi" : "Yulduz qoidalari o'zgartirildi",
   });
 
   // Balanslar qoidadan qayta hisoblanadi — o'quvchi portali ham yangilansin

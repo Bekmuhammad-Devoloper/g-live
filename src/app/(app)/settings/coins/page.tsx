@@ -2,7 +2,7 @@ import { requireSession } from "@/lib/auth";
 import { ROLES } from "@/lib/constants";
 import { tr } from "@/lib/tr";
 import { prisma } from "@/lib/db";
-import { getCoinRules } from "@/lib/coinRules";
+import { getCoinRules, getStarRules } from "@/lib/coinRules";
 import { getProgressRules } from "@/lib/progressRules";
 import { ATTENDED } from "@/lib/coins";
 import { PageHeader, Forbidden } from "../../_components/ui";
@@ -24,7 +24,7 @@ export default async function CoinRulesPage() {
   }
 
   const L = (uz: string, ru: string, en: string, de: string) => tr(s.locale, { uz, ru, en, de });
-  const [rules, prog] = await Promise.all([getCoinRules(), getProgressRules()]);
+  const [rules, stars, prog] = await Promise.all([getCoinRules(), getStarRules(), getProgressRules()]);
 
   // Butun markaz bo'yicha hodisalar soni — qoida qancha tanga bergani ko'rinsin
   const [lessons, graded, perfect, gameWins, levelUps, spentAgg, students] = await Promise.all([
@@ -109,19 +109,24 @@ export default async function CoinRulesPage() {
     },
   ];
 
-  const rows: RuleRow[] = defs.map((d) => ({
-    key: d.key,
-    icon: d.icon,
-    title: d.title,
-    desc: d.desc,
-    auto: d.auto,
-    value: rules[d.key],
-    events: d.events,
-    issued: d.events * rules[d.key],
-  }));
+  const toRows = (values: typeof rules): RuleRow[] =>
+    defs.map((d) => ({
+      key: d.key,
+      icon: d.icon,
+      title: d.title,
+      desc: d.desc,
+      auto: d.auto,
+      value: values[d.key],
+      events: d.events,
+      issued: d.events * values[d.key],
+    }));
+
+  const rows = toRows(rules);
+  const starRows = toRows(stars);
 
   // Seriya bonusi o'quvchi bo'yicha hisoblanadi — umumiy summani bermaymiz
   const earned = rows.reduce((n, r) => n + r.issued, 0);
+  const starEarned = starRows.reduce((n, r) => n + r.issued, 0);
   const spent = spentAgg._sum.price ?? 0;
 
   return (
@@ -139,9 +144,22 @@ export default async function CoinRulesPage() {
         {L("Tanga qoidalari", "Правила монет", "Coin rules", "Münz-Regeln")}
       </h2>
       <CoinRulesView
+        kind="coin"
+        unit={L("tanga", "монет", "coins", "Münzen")}
         rows={rows}
         locale={s.locale}
         stats={{ earned, spent, balance: Math.max(0, earned - spent), students }}
+      />
+
+      <h2 className="mb-3 mt-6 text-base font-bold text-slate-800 dark:text-slate-100">
+        {L("Yulduz qoidalari", "Правила звёзд", "Star rules", "Sternen-Regeln")}
+      </h2>
+      <CoinRulesView
+        kind="star"
+        unit={L("yulduz", "звёзд", "stars", "Sterne")}
+        rows={starRows}
+        locale={s.locale}
+        stats={{ earned: starEarned, spent: 0, balance: starEarned, students }}
       />
 
       <ProgressRulesView

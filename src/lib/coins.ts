@@ -1,15 +1,18 @@
 import "server-only";
 import { prisma } from "./db";
-import { getCoinRules, type CoinRuleKey } from "./coinRules";
+import { getPointRules, type CoinRuleKey, type PointKind } from "./coinRules";
 import { getProgressRules } from "./progressRules";
 
-// Tanga (Münzen) — o'quvchining faolligi uchun beriladigan ichki ball.
+// Tanga va yulduz — o'quvchining faolligi uchun beriladigan ballar.
+//
+// Ikkalasi bir xil hodisalardan hisoblanadi, faqat qiymatlari boshqa:
+//   tanga  — Market'da sovg'aga sarflanadi
+//   yulduz — sarflanmaydi, yig'ilib boradi (umumiy yutuq)
 //
 // Alohida "balans" ustuni yo'q: hamma narsa mavjud yozuvlardan qayta
 // hisoblanadi (davomat, baholangan vazifalar, o'yin natijalari, daraja
-// ko'tarilishi), sarflangani esa Market buyurtmalaridan olinadi. Shu sabab
-// qoida o'zgarsa — barcha o'quvchining balansi darhol yangi qoida bo'yicha
-// qayta hisoblanadi, hech qayerni "to'g'rilash" kerak emas.
+// ko'tarilishi). Shu sabab qoida o'zgarsa — barcha o'quvchining balansi
+// darhol yangi qoida bo'yicha qayta hisoblanadi.
 
 export const ATTENDED = ["PRESENT", "LATE", "ONLINE", "MAKEUP"];
 
@@ -52,10 +55,11 @@ export async function studentStreak(studentId: string): Promise<number> {
   return streakOf(rows, rules.streakExcusedBreaks);
 }
 
-export async function coinBalance(studentId: string): Promise<CoinBalance> {
-  const [rules, prog] = await Promise.all([getCoinRules(), getProgressRules()]);
+type Events = Record<CoinRuleKey, number> & { streak: number; spent: number };
 
-  const [attendance, graded, games, levelUps, spentAgg] = await Promise.all([
+/** Ball beriladigan hodisalar soni — tanga va yulduz uchun bir xil */
+async function pointEvents(studentId: string): Promise<Events> {
+  const [attendance, graded, games, levelUps, spentAgg, prog] = await Promise.all([
     prisma.attendance.findMany({
       where: { studentId },
       orderBy: { markedAt: "desc" },
@@ -72,28 +76,44 @@ export async function coinBalance(studentId: string): Promise<CoinBalance> {
       where: { studentId, status: { not: "CANCELLED" } },
       _sum: { price: true },
     }),
+    getProgressRules(),
   ]);
 
-  const lessons = attendance.filter((a) => ATTENDED.includes(a.status)).length;
-  // To'liq ballga bajarilgan vazifa uchun qo'shimcha
-  const perfect = graded.filter((s) => {
-    const max = s.assignment?.maxScore || 0;
-    return max > 0 && (s.score ?? 0) >= max;
-  }).length;
-
   const streak = streakOf(attendance, prog.streakExcusedBreaks);
-  const streakSteps = Math.floor(streak / prog.streakStep);
 
-  const lines: CoinLine[] = [
-    { key: "lesson", count: lessons, per: rules.lesson, total: lessons * rules.lesson },
-    { key: "homework", count: graded.length, per: rules.homework, total: graded.length * rules.homework },
-    { key: "perfect", count: perfect, per: rules.perfect, total: perfect * rules.perfect },
-    { key: "gameWin", count: games, per: rules.gameWin, total: games * rules.gameWin },
-    { key: "streak7", count: streakSteps, per: rules.streak7, total: streakSteps * rules.streak7 },
-    { key: "levelUp", count: levelUps, per: rules.levelUp, total: levelUps * rules.levelUp },
-  ];
+  return {
+    lesson: attendance.filter((a) => ATTENDED.includes(a.status)).length,
+    homework: graded.length,
+    // To'liq ballga bajarilgan vazifa uchun qo'shimcha
+    perfect: graded.filter((s) => {
+      const max = s.assignment?.maxScore || 0;
+      return max > 0 && (s.score ?? 0) >= max;
+    }).length,
+    gameWin: games,
+    streak7: Math.floor(streak / prog.streakStep),
+    levelUp: levelUps,
+    streak,
+    spent: spentAgg._sum.price ?? 0,
+  };
+}
+
+export const POINT_ORDER: CoinRuleKey[] = ["lesson", "homework", "perfect", "gameWin", "streak7", "levelUp"];
+
+async function balanceOf(studentId: string, kind: PointKind): Promise<CoinBalance> {
+  const [rules, ev] = await Promise.all([getPointRules(kind), pointEvents(studentId)]);
+
+  const lines: CoinLine[] = POINT_ORDER.map((k) => ({
+    key: k,
+    count: ev[k],
+    per: rules[k],
+    total: ev[k] * rules[k],
+  }));
 
   const earned = lines.reduce((n, l) => n + l.total, 0);
-  const spent = spentAgg._sum.price ?? 0;
-  return { earned, spent, balance: Math.max(0, earned - spent), lines, streak };
+  // Yulduz sarflanmaydi — faqat tangada Market xarajati ayriladi
+  const spent = kind === "coin" ? ev.spent : 0;
+  return { earned, spent, balance: Math.max(0, earned - spent), lines, streak: ev.streak };
 }
+
+export const coinBalance = (studentId: string) => balanceOf(studentId, "coin");
+export const starBalance = (studentId: string) => balanceOf(studentId, "star");

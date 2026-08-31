@@ -5,7 +5,7 @@ import { cn } from "@/lib/cn";
 import { tr } from "@/lib/tr";
 import type { Locale } from "@/lib/constants";
 import { Icon } from "../../_components/Icon";
-import { saveCoinRules } from "./actions";
+import { savePointRules } from "./actions";
 
 // Tanga qoidalari — nima uchun necha tanga beriladi.
 
@@ -24,11 +24,15 @@ export type RuleRow = {
 };
 
 export default function CoinRulesView({
-  rows, locale, stats,
+  kind, rows, locale, stats, unit,
 }: {
+  /** "coin" — sarflanadigan tanga, "star" — yig'iladigan yulduz */
+  kind: "coin" | "star";
   rows: RuleRow[];
   locale: Locale;
   stats: { earned: number; spent: number; balance: number; students: number };
+  /** Ball nomi — "tanga" yoki "yulduz" */
+  unit: string;
 }) {
   const T = (uz: string, ru: string, en: string, de: string) => tr(locale, { uz, ru, en, de });
   const [vals, setVals] = useState<Record<string, number>>(Object.fromEntries(rows.map((r) => [r.key, r.value])));
@@ -40,7 +44,7 @@ export default function CoinRulesView({
   const save = () => {
     setMsg(null);
     start(async () => {
-      const res = await saveCoinRules(vals);
+      const res = await savePointRules(kind, vals);
       if (res.error) setMsg({ ok: false, text: res.error });
       else setMsg({ ok: true, text: T("Saqlandi", "Сохранено", "Saved", "Gespeichert") });
     });
@@ -51,20 +55,31 @@ export default function CoinRulesView({
   return (
     <div className="space-y-4">
       <div className="rounded-xl bg-amber-50 px-4 py-3 text-sm text-amber-900 dark:bg-amber-950/25 dark:text-amber-200">
-        {T(
-          "Tanga alohida saqlanmaydi — u har safar shu qoidalar bo'yicha qayta hisoblanadi. Ya'ni qiymatni o'zgartirsangiz, barcha o'quvchining balansi darhol yangilanadi.",
-          "Монеты не хранятся отдельно — они каждый раз пересчитываются по этим правилам. Изменив значение, вы сразу меняете баланс всех учеников.",
-          "Coins are not stored — they are recomputed from these rules. Changing a value instantly updates every student's balance.",
-          "Münzen werden nicht gespeichert, sondern jedes Mal nach diesen Regeln neu berechnet. Eine Änderung wirkt sofort auf alle Guthaben.",
-        )}
+        {kind === "coin"
+          ? T(
+              "Tanga Market'da sovg'aga almashtiriladi. Alohida saqlanmaydi — har safar shu qoidalar bo'yicha qayta hisoblanadi, ya'ni qiymatni o'zgartirsangiz barcha o'quvchining balansi darhol yangilanadi.",
+              "Монеты обмениваются на призы в Маркете. Не хранятся отдельно — пересчитываются по этим правилам, поэтому изменение сразу меняет баланс всех учеников.",
+              "Coins are exchanged for rewards in the Market. They are not stored — they are recomputed from these rules, so a change updates every balance instantly.",
+              "Münzen werden im Markt gegen Preise getauscht. Sie werden nicht gespeichert, sondern neu berechnet — eine Änderung wirkt sofort.",
+            )
+          : T(
+              "Yulduz sarflanmaydi — u o'quvchining umumiy yutug'i bo'lib yig'ilib boradi. Tanga bilan bir xil hodisalardan beriladi, faqat miqdori boshqa.",
+              "Звёзды не тратятся — это общий счёт достижений ученика. Начисляются за те же события, что и монеты, но в другом размере.",
+              "Stars are never spent — they are the student's lifetime achievement score. Awarded for the same events as coins, in different amounts.",
+              "Sterne werden nie ausgegeben — sie sind der Gesamterfolg des Schülers. Für dieselben Ereignisse wie Münzen, aber in anderer Höhe.",
+            )}
       </div>
 
       {/* ── Umumiy holat ── */}
-      <div className="grid gap-3 sm:grid-cols-4">
+      <div className={cn("grid gap-3", kind === "coin" ? "sm:grid-cols-4" : "sm:grid-cols-2")}>
         <Stat label={T("O'quvchilar", "Ученики", "Students", "Schüler")} value={nf.format(stats.students)} icon="users" tone="text-slate-500" />
-        <Stat label={T("Yig'ilgan", "Начислено", "Earned", "Verdient")} value={nf.format(stats.earned)} icon="coins" tone="text-emerald-500" />
-        <Stat label={T("Sarflangan", "Потрачено", "Spent", "Ausgegeben")} value={nf.format(stats.spent)} icon="card" tone="text-violet-500" />
-        <Stat label={T("Qoldiq", "Остаток", "Balance", "Guthaben")} value={nf.format(stats.balance)} icon="wallet" tone="text-brand-500" />
+        <Stat label={T("Yig'ilgan", "Начислено", "Earned", "Verdient")} value={nf.format(stats.earned)} icon={kind === "coin" ? "coins" : "trophy"} tone={kind === "coin" ? "text-emerald-500" : "text-amber-500"} />
+        {kind === "coin" ? (
+          <>
+            <Stat label={T("Sarflangan", "Потрачено", "Spent", "Ausgegeben")} value={nf.format(stats.spent)} icon="card" tone="text-violet-500" />
+            <Stat label={T("Qoldiq", "Остаток", "Balance", "Guthaben")} value={nf.format(stats.balance)} icon="wallet" tone="text-brand-500" />
+          </>
+        ) : null}
       </div>
 
       {/* ── Qoidalar ── */}
@@ -93,7 +108,7 @@ export default function CoinRulesView({
               </div>
               <p className="mt-0.5 text-[13px] leading-snug text-slate-500">{r.desc}</p>
               <p className="mt-1 text-[12px] font-medium text-slate-400">
-                {nf.format(r.events)} {T("marta", "раз", "times", "mal")} · {nf.format(r.issued)} {T("tanga berilgan", "монет начислено", "coins issued", "Münzen vergeben")}
+                {nf.format(r.events)} {T("marta", "раз", "times", "mal")} · {nf.format(r.issued)} {unit} {T("berilgan", "начислено", "issued", "vergeben")}
               </p>
             </div>
 

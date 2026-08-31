@@ -5,7 +5,7 @@ import { S } from "./_i18n";
 import { redirect } from "next/navigation";
 import { getSession } from "@/lib/auth";
 import { prisma } from "@/lib/db";
-import { coinBalance } from "@/lib/coins";
+import { coinBalance, starBalance } from "@/lib/coins";
 import { studentRank } from "@/lib/rank";
 import { isAttended } from "./_ui";
 import MissingStudent from "./MissingStudent";
@@ -109,7 +109,7 @@ function IcoTarget({ c = "white", s = 34 }: { c?: string; s?: number }) {
 }
 // Maketdagi uchta belgi — bir xil uslub: 26px, oq, bir xil optik og'irlik.
 // Münzen — halqa ichida yulduz (tanga-nishon)
-function IcoCoin({ s = 26 }: { s?: number }) {
+function IcoCoin({ s = 24 }: { s?: number }) {
   return (
     <svg width={s} height={s} viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="1.9" strokeLinejoin="round">
       <circle cx="12" cy="12" r="8.6" />
@@ -118,8 +118,8 @@ function IcoCoin({ s = 26 }: { s?: number }) {
   );
 }
 
-// Streak — to'la yulduz
-function IcoFlameWhite({ s = 26 }: { s?: number }) {
+// Yulduz — yig'ilgan yutuq (sarflanmaydi)
+function IcoStarWhite({ s = 24 }: { s?: number }) {
   return (
     <svg width={s} height={s} viewBox="0 0 24 24" fill="white" stroke="white" strokeWidth="1.4" strokeLinejoin="round">
       <path d="M12 3.1l2.75 5.57 6.15.9-4.45 4.34 1.05 6.12L12 17.14l-5.5 2.89 1.05-6.12L3.1 9.57l6.15-.9L12 3.1Z" />
@@ -127,8 +127,18 @@ function IcoFlameWhite({ s = 26 }: { s?: number }) {
   );
 }
 
+// Seriya — olov (yuqoridagi belgi bilan bir xil shakl)
+function IcoFlameWhite({ s = 24 }: { s?: number }) {
+  return (
+    <svg width={s} height={s} viewBox="0 0 24 24" fill="white">
+      <path d="M12 2.5c.5 3-1 4.6-2.6 6.2C7.7 10.4 6 12.2 6 15a6 6 0 0 0 12 0c0-2.2-1-4-2.2-5.6C14.4 7.5 13 5.5 12 2.5Z" />
+      <path d="M12 10.5c.3 1.6-.6 2.5-1.4 3.4-.7.8-1.4 1.6-1.4 2.8a2.9 2.9 0 0 0 5.8 0c0-1.1-.5-1.9-1.1-2.8-.7-1-1.5-2-1.9-3.4Z" fill="#ffd7a8" />
+    </svg>
+  );
+}
+
 // Rang — o'sish strelkasi (chiziqli grafik)
-function IcoGrowth({ s = 26 }: { s?: number }) {
+function IcoGrowth({ s = 24 }: { s?: number }) {
   return (
     <svg width={s} height={s} viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="2.4" strokeLinecap="round" strokeLinejoin="round">
       <path d="m3.6 16.8 5.6-5.6 3.6 3.6 7.6-7.6" />
@@ -328,8 +338,9 @@ export default async function StudentStartPage() {
 
   // ── Tanga / seriya ──
   // Hisob bitta joyda (src/lib/coins.ts) — Market va Sozlamalar bilan bir xil
-  const purse = await coinBalance(student.id);
+  const [purse, starPurse] = await Promise.all([coinBalance(student.id), starBalance(student.id)]);
   const coins = purse.balance;
+  const stars = starPurse.earned; // yulduz sarflanmaydi
   const streak = purse.streak;
 
   // ── Reyting: o'rin (raqam) ──
@@ -448,19 +459,23 @@ export default async function StudentStartPage() {
         </div>
       </Link>
 
-      {/* ── Münzen · Streak · Rang ── */}
-      <div className="grid grid-cols-3 gap-3">
+      {/* ── Tanga · Yulduz · Seriya · Reyting ── */}
+      <div className="grid grid-cols-4 gap-2">
         {[
           { icon: <IcoCoin />, label: t.coins, value: String(coins) },
+          { icon: <IcoStarWhite />, label: t.stars, value: String(stars), gold: true },
           { icon: <IcoFlameWhite />, label: t.streak, value: String(streak) },
           { icon: <IcoGrowth />, label: t.rank, value: String(rangPos) },
         ].map((t) => (
-          <div key={t.label} className={`${card} flex flex-col items-center gap-2.5 px-1.5 pb-4 pt-4`}>
-            <span className="grid h-[50px] w-[50px] place-items-center rounded-full shadow-[0_8px_16px_rgba(14,116,144,0.3)]" style={{ background: `linear-gradient(135deg, #17a2bf, ${TEAL})` }}>
+          <div key={t.label} className={`${card} flex flex-col items-center gap-2 px-1 pb-3.5 pt-3.5`}>
+            <span
+              className="grid h-[46px] w-[46px] place-items-center rounded-full shadow-[0_8px_16px_rgba(14,116,144,0.3)]"
+              style={{ background: t.gold ? "linear-gradient(135deg, #fbbf24, #f59e0b)" : `linear-gradient(135deg, #17a2bf, ${TEAL})` }}
+            >
               {t.icon}
             </span>
-            <span className="text-[13px] font-medium leading-none text-slate-500">{t.label}</span>
-            <span className="whitespace-nowrap text-[24px] font-extrabold leading-none text-slate-900">{t.value}</span>
+            <span className="text-[11.5px] font-medium leading-none text-slate-500">{t.label}</span>
+            <span className="whitespace-nowrap text-[21px] font-extrabold leading-none text-slate-900">{t.value}</span>
           </div>
         ))}
       </div>

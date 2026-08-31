@@ -24,6 +24,7 @@ const DICT = {
   day: p("kun", "дн.", "days", "Tage"),
   place: p("o'rin", "место", "place", "Platz"),
   coins: p("tanga", "монет", "coins", "Münzen"),
+  stars: p("yulduz", "звёзд", "stars", "Sterne"),
 
   // ── Start ekrani ──
   hello: p("Salom", "Привет", "Hello", "Hallo"),
