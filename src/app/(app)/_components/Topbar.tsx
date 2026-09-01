@@ -80,7 +80,6 @@ export default function Topbar(p: TopbarProps) {
         <button onClick={p.onMenu} className={cn(iconBtn, "md:hidden")} aria-label="Menu">
           <Icon name="menu" className="h-5 w-5" />
         </button>
-        <span className="text-sm font-bold text-slate-900 md:hidden">{p.appName}</span>
 
         {/* 1) + Yaratish */}
         {(p.canCreateStudent || p.canCreatePayment) && (
@@ -109,15 +108,15 @@ export default function Topbar(p: TopbarProps) {
           </div>
         )}
 
-        {/* 2) Filiallar */}
-        <div className="relative hidden sm:block">
+        {/* 2) Filiallar — telefonda faqat belgisi ko'rinadi */}
+        <div className="relative">
           <button
             onClick={() => toggle("branch")}
             className="flex h-9 items-center gap-1.5 rounded-lg border border-slate-200 px-2.5 text-xs font-medium text-slate-600 transition hover:bg-slate-50 dark:border-slate-700 dark:text-slate-300 dark:hover:bg-slate-800"
             title={t("top.branches")}
           >
             <Icon name="building" className="h-4 w-4 text-slate-400" />
-            <span className="max-w-[110px] truncate">{p.user.branchName ?? t("top.branches")}</span>
+            <span className="hidden max-w-[110px] truncate sm:block">{p.user.branchName ?? t("top.branches")}</span>
             <Icon name="chevronDown" className="h-3.5 w-3.5 text-slate-400" />
           </button>
           {menu === "branch" && (
@@ -381,7 +380,7 @@ function SearchBox({ locale, placeholder, noResults }: { locale: Locale; placeho
   };
 
   return (
-    <div ref={boxRef} className="relative hidden min-w-0 flex-1 md:block md:max-w-md">
+    <div ref={boxRef} className="relative min-w-0 flex-1 md:max-w-md">
       <Icon name="search" className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400" />
       <input
         value={q}

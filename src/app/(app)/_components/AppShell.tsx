@@ -277,6 +277,54 @@ function MobileRow({ href, icon, label, active, onNav }: { href: string; icon: s
   );
 }
 
+// ── Telefon uchun pastki menyu ──
+// Kompyuterda chap tomondagi menyu bor, telefonda esa har safar
+// gamburgerni ochish noqulay. Shu sabab eng ko'p ishlatiladigan 4 ta
+// bo'lim doim qo'l ostida turadi; 5-tugma to'liq menyuni ochadi.
+function BottomNav({
+  items, pathname, onMenu, menuLabel,
+}: {
+  items: { href: string; icon: string; label: string }[];
+  pathname: string;
+  onMenu: () => void;
+  menuLabel: string;
+}) {
+  const isOn = (href: string) => (href === "/dashboard" ? pathname === href : pathname.startsWith(href));
+
+  return (
+    <nav className="fixed inset-x-0 bottom-0 z-40 border-t border-slate-200 bg-white/95 backdrop-blur-lg md:hidden dark:border-slate-800 dark:bg-slate-900/95">
+      <div className="flex items-stretch pb-[env(safe-area-inset-bottom)]">
+        {items.map((it) => {
+          const on = isOn(it.href);
+          return (
+            <Link
+              key={it.href}
+              href={it.href}
+              className={cn(
+                "flex min-w-0 flex-1 flex-col items-center gap-1 py-2 transition",
+                on ? "text-brand-600 dark:text-brand-300" : "text-slate-400",
+              )}
+            >
+              <Icon name={it.icon} className="h-[22px] w-[22px]" />
+              <span className="w-full truncate px-1 text-center text-[10px] font-semibold leading-none">{it.label}</span>
+              <span className={cn("h-[3px] w-6 rounded-full transition", on ? "bg-brand-600 dark:bg-brand-300" : "bg-transparent")} />
+            </Link>
+          );
+        })}
+        <button
+          type="button"
+          onClick={onMenu}
+          className="flex min-w-0 flex-1 flex-col items-center gap-1 py-2 text-slate-400"
+        >
+          <Icon name="menu" className="h-[22px] w-[22px]" />
+          <span className="w-full truncate px-1 text-center text-[10px] font-semibold leading-none">{menuLabel}</span>
+          <span className="h-[3px] w-6 rounded-full bg-transparent" />
+        </button>
+      </div>
+    </nav>
+  );
+}
+
 export default function AppShell({ navItems, role, portal, user, locale, labels, unreadCount, topbar, children }: Props) {
   const pathname = usePathname();
 
@@ -337,6 +385,12 @@ export default function AppShell({ navItems, role, portal, user, locale, labels,
 
   // Nazorat menyusi bor rollarda (rahbariyat) nazorat yo'llari Nazoratni yoqadi.
   // O'qituvchida Nazorat yo'q — unda bu sahifalar odatdagidek Hisobotlarni yoqadi.
+  // Pastki menyuga eng kerakli 4 ta band (rolga qarab o'zi shakllanadi)
+  const bottomItems = (portalNav
+    ? portalNav.map((it) => ({ href: it.href, icon: it.icon, label: it.label[locale] ?? it.label.uz }))
+    : navItems
+  ).slice(0, 4);
+
   const hasControl = navItems.some((it) => it.href === "/control");
   const hasMarketing = navItems.some((it) => it.href === "/marketing");
   const isActive = (href: string) => {
@@ -618,12 +672,12 @@ export default function AppShell({ navItems, role, portal, user, locale, labels,
           onMenu={() => setOpen(true)}
         />
 
-        <main className="min-w-0 flex-1 p-4 md:p-6">
+        <main className="min-w-0 flex-1 p-4 pb-24 md:p-6 md:pb-6">
           <div className="mx-auto max-w-[1500px]">{children}</div>
         </main>
 
         {/* Global footer — Modme uslubida */}
-        <footer className="flex flex-wrap items-center justify-between gap-3 border-t border-slate-200/70 bg-white px-4 py-3 dark:border-slate-800 dark:bg-slate-900 md:px-6">
+        <footer className="hidden flex-wrap items-center justify-between gap-3 border-t border-slate-200/70 bg-white px-4 py-3 dark:border-slate-800 dark:bg-slate-900 md:flex md:px-6">
           <div className="flex flex-wrap items-center gap-x-5 gap-y-1.5 text-xs text-slate-500 dark:text-slate-400">
             <a
               href={SUPPORT_TELEGRAM}
@@ -660,6 +714,8 @@ export default function AppShell({ navItems, role, portal, user, locale, labels,
           </div>
         </footer>
       </div>
+
+      <BottomNav items={bottomItems} pathname={pathname} onMenu={() => setOpen(true)} menuLabel={L("Menyu", "Меню", "Menu", "Menü")[locale] ?? "Menyu"} />
     </div>
   );
 }
