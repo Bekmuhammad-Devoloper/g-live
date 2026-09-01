@@ -43,3 +43,6 @@ next-env.d.ts
 deploy/gcp/.env.b
 cook.txt
 op.html
+
+# Android ilovasi — imzo kaliti va yig'ilgan APK serverda qoladi
+/apk/
