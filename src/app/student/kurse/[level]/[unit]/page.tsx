@@ -7,6 +7,7 @@ import MissingStudent from "../../../MissingStudent";
 import { getActiveLevels } from "@/lib/studyLevels";
 import HeaderBadges from "../../../HeaderBadges";
 import LessonVideo, { type VideoMode } from "./LessonVideo";
+import LessonTasks, { type VTask } from "./LessonTasks";
 
 // Dars sahifasi — tepada video, ostida dars nomi va tavsifi, so'ng dars
 // topshirig'i va uyga vazifa, pastida oldingi/keyingi darsga o'tish.
@@ -209,7 +210,7 @@ export default async function StudentUnitPage({ params }: { params: Promise<{ le
   const group = student.enrollments[0]?.group ?? null;
   if (!group) notFound();
 
-  const [lesson, allLessons, progress, view] = await Promise.all([
+  const [lesson, allLessons, progress, view, tasks] = await Promise.all([
     prisma.courseLesson.findUnique({ where: { id: unit } }),
     prisma.courseLesson.findMany({
       where: { programId: group.programId },
@@ -220,6 +221,24 @@ export default async function StudentUnitPage({ params }: { params: Promise<{ le
     prisma.lessonView.findFirst({
       where: { studentId: student.id, courseLessonId: unit },
       select: { id: true },
+    }),
+    // Shu darsga bog'langan vazifalar (faqat o'quvchining o'z guruhidan)
+    prisma.assignment.findMany({
+      where: { courseLessonId: unit, groupId: group.id },
+      orderBy: { createdAt: "asc" },
+      select: {
+        id: true, title: true, type: true, maxScore: true, dueAt: true, note: true, createdAt: true,
+        submissions: {
+          where: { studentId: student.id },
+          orderBy: { attempt: "desc" },
+          select: {
+            id: true, attempt: true, content: true, fileUrl: true, score: true,
+            status: true, teacherNote: true, gradedAt: true, createdAt: true,
+            gradedBy: { select: { fullName: true } },
+          },
+        },
+        _count: { select: { submissions: { where: { status: "GRADED" } } } },
+      },
     }),
   ]);
 
@@ -238,6 +257,29 @@ export default async function StudentUnitPage({ params }: { params: Promise<{ le
   const next = idx >= 0 && idx < levelLessons.length - 1 ? levelLessons[idx + 1] : null;
 
   const done = new Set(progress.map((p) => p.courseLessonId)).has(lesson.id);
+
+  const vTasks: VTask[] = tasks.map((a) => ({
+    id: a.id,
+    title: a.title,
+    type: a.type,
+    maxScore: a.maxScore,
+    dueAt: a.dueAt ? a.dueAt.toISOString() : null,
+    note: a.note,
+    createdAt: a.createdAt.toISOString(),
+    passed: a._count.submissions,
+    subs: a.submissions.map((x) => ({
+      id: x.id,
+      attempt: x.attempt,
+      content: x.content,
+      fileUrl: x.fileUrl,
+      score: x.score,
+      status: x.status,
+      teacherNote: x.teacherNote,
+      gradedBy: x.gradedBy?.fullName ?? null,
+      gradedAt: x.gradedAt ? x.gradedAt.toISOString() : null,
+      createdAt: x.createdAt.toISOString(),
+    })),
+  }));
 
   const video = safeUrl(lesson.videoUrl);
   const embed = video && !isUpload(video) ? embedUrl(video) : null;
@@ -362,7 +404,10 @@ export default async function StudentUnitPage({ params }: { params: Promise<{ le
           />
         )}
 
-        {!video && !hasAssignment && !hasHomework && (
+        {/* ── 5. Vazifalar (topshirish va o'qituvchi izohi) ── */}
+        <LessonTasks tasks={vTasks} />
+
+        {!video && !hasAssignment && !hasHomework && vTasks.length === 0 && (
           <div className="rounded-[26px] bg-white px-5 py-12 text-center shadow-[0_16px_38px_-22px_rgba(15,60,80,0.55)] ring-1 ring-slate-900/[0.04]">
             <div className="text-[14.5px] font-semibold text-slate-700">{t.noMaterial}</div>
           </div>

@@ -10,6 +10,7 @@ import { MAX_UPLOAD_MB } from "@/lib/upload";
 import type { Locale } from "@/lib/constants";
 import { createCourseLesson, updateCourseLesson, deleteCourseLesson, moveCourseLesson, type LessonInput } from "./lessonActions";
 import { setLessonTaught } from "../../groups/[id]/lessonProgressActions";
+import { createAssignment } from "../../homework/actions";
 
 export interface VLesson {
   id: string; order: number; levelCode?: string | null; title: string; topic: string | null;
@@ -75,6 +76,7 @@ function LessonCard({ lesson: l, index, count, canManage, locale, onEdit, groupI
   const router = useRouter();
   const del = () => { if (confirm(tr(locale, { uz: "Bu darsni o'chirasizmi?", ru: "Удалить этот урок?", en: "Delete this lesson?", de: "Möchten Sie diese Lektion löschen?" }))) start(async () => { await deleteCourseLesson(l.id); router.refresh(); }); };
   const move = (dir: "up" | "down") => start(async () => { await moveCourseLesson(l.id, dir); router.refresh(); });
+  const [taskOpen, setTaskOpen] = useState(false);
   const toggleTaught = () => { if (!groupId) return; const next = !isTaught; setIsTaught(next); start(async () => { await setLessonTaught(groupId, l.id, next); }); };
 
   const hasDetails = l.topic || l.videoUrl || l.assignment || l.assignmentFileUrl || l.homework || l.homeworkFileUrl || l.materialUrl;
@@ -118,10 +120,19 @@ function LessonCard({ lesson: l, index, count, canManage, locale, onEdit, groupI
             <button onClick={onEdit} className="flex h-8 items-center gap-1 rounded-lg border border-slate-200 px-2.5 text-xs font-semibold text-slate-600 transition hover:border-brand-300 hover:bg-brand-50 hover:text-brand-600 dark:border-slate-700 dark:text-slate-300 dark:hover:bg-brand-950/30">
               <Icon name="edit" className="h-3.5 w-3.5" /> {tr(locale, { uz: "Tahrir", ru: "Изм.", en: "Edit", de: "Bearb." })}
             </button>
+            {groupId && (
+              <button onClick={() => setTaskOpen(true)} className="flex h-8 items-center gap-1 rounded-lg border border-slate-200 px-2.5 text-xs font-semibold text-slate-600 transition hover:border-emerald-300 hover:bg-emerald-50 hover:text-emerald-600 dark:border-slate-700 dark:text-slate-300" title={tr(locale, { uz: "O'quvchi topshiradigan vazifa", ru: "Задание для сдачи", en: "Task for submission", de: "Abzugebende Aufgabe" })}>
+                <Icon name="clipboard" className="h-3.5 w-3.5" /> {tr(locale, { uz: "Vazifa", ru: "Задание", en: "Task", de: "Aufgabe" })}
+              </button>
+            )}
             <button onClick={del} className="grid h-8 w-8 place-items-center rounded-lg text-rose-500 transition hover:bg-rose-50 dark:hover:bg-rose-500/10" title={tr(locale, { uz: "O'chirish", ru: "Удалить", en: "Delete", de: "Löschen" })}><Icon name="fileX" className="h-4 w-4" /></button>
           </div>
         )}
       </div>
+
+      {taskOpen && groupId && (
+        <TaskDialog groupId={groupId} lessonId={l.id} lessonTitle={l.title} locale={locale} onClose={() => setTaskOpen(false)} />
+      )}
 
       {expanded && hasDetails && (
         <div className="space-y-3 border-t border-slate-100 bg-slate-50/50 px-4 py-4 dark:border-slate-800 dark:bg-white/[0.02]">
@@ -371,6 +382,108 @@ function FileUpload({ label, accept, current, onChange, locale, isVideo }: { lab
       )}
       {error && <p className="mt-1 text-xs text-rose-500">{error}</p>}
       <input ref={ref} type="file" accept={accept} className="hidden" onChange={onPick} />
+    </div>
+  );
+}
+
+
+/* ── Darsga baholanadigan vazifa biriktirish ──
+   Bu "Dars topshirig'i" matnidan farq qiladi: bunda o'quvchi javob
+   yuboradi, o'qituvchi baholaydi va ball tanga/yulduzga aylanadi. */
+function TaskDialog({
+  groupId, lessonId, lessonTitle, locale, onClose,
+}: {
+  groupId: string;
+  lessonId: string;
+  lessonTitle: string;
+  locale: Locale;
+  onClose: () => void;
+}) {
+  const router = useRouter();
+  const [title, setTitle] = useState(lessonTitle + " — vazifa");
+  const [note, setNote] = useState("");
+  const [maxScore, setMaxScore] = useState(100);
+  const [dueAt, setDueAt] = useState("");
+  const [type, setType] = useState("HOMEWORK");
+  const [err, setErr] = useState<string | null>(null);
+  const [pending, start] = useTransition();
+  const T = (uz: string, ru: string, en: string, de: string) => tr(locale, { uz, ru, en, de });
+
+  const save = () => {
+    setErr(null);
+    const fd = new FormData();
+    fd.set("groupId", groupId);
+    fd.set("courseLessonId", lessonId);
+    fd.set("title", title);
+    fd.set("type", type);
+    fd.set("maxScore", String(maxScore));
+    if (dueAt) fd.set("dueAt", dueAt);
+    if (note.trim()) fd.set("note", note.trim());
+    start(async () => {
+      const r = await createAssignment({}, fd);
+      if (r.error) setErr(r.error === "forbidden" ? T("Ruxsat yo'q", "Нет доступа", "No access", "Kein Zugriff") : T("Maydonlarni tekshiring", "Проверьте поля", "Check the fields", "Felder prüfen"));
+      else { onClose(); router.refresh(); }
+    });
+  };
+
+  const inp = "h-10 w-full rounded-lg border border-slate-200 bg-white px-3 text-sm text-slate-800 outline-none focus:border-brand-400 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-100";
+  const lbl = "mb-1 block text-xs font-medium text-slate-500 dark:text-slate-400";
+
+  return (
+    <div className="fixed inset-0 z-50 grid place-items-center bg-black/45 p-4" onClick={onClose}>
+      <div className="w-full max-w-md rounded-2xl bg-white p-5 shadow-xl dark:bg-slate-900" onClick={(e) => e.stopPropagation()}>
+        <h2 className="mb-1 text-lg font-bold text-slate-800 dark:text-slate-100">
+          {T("Darsga vazifa", "Задание к уроку", "Task for the lesson", "Aufgabe zur Lektion")}
+        </h2>
+        <p className="mb-4 text-sm text-slate-500">
+          {T(
+            "O'quvchi ilovada shu dars ichida javob yuboradi, siz baholaysiz.",
+            "Ученик отправит ответ внутри этого урока в приложении, вы оцените.",
+            "The student submits inside this lesson in the app; you grade it.",
+            "Der Schüler reicht in dieser Lektion ein; Sie bewerten.",
+          )}
+        </p>
+
+        <div className="space-y-3">
+          <div>
+            <label className={lbl}>{T("Sarlavha", "Заголовок", "Title", "Titel")} *</label>
+            <input value={title} onChange={(e) => setTitle(e.target.value)} className={inp} />
+          </div>
+          <div>
+            <label className={lbl}>{T("Shart (izoh)", "Условие", "Instructions", "Aufgabenstellung")}</label>
+            <textarea value={note} onChange={(e) => setNote(e.target.value)} rows={3} className={inp + " h-auto py-2"} />
+          </div>
+          <div className="grid grid-cols-3 gap-3">
+            <div>
+              <label className={lbl}>{T("Turi", "Тип", "Type", "Art")}</label>
+              <select value={type} onChange={(e) => setType(e.target.value)} className={inp}>
+                <option value="HOMEWORK">{T("Uy vazifa", "Домашка", "Homework", "Hausaufgabe")}</option>
+                <option value="TASK">{T("Topshiriq", "Задание", "Task", "Aufgabe")}</option>
+                <option value="EXAM">{T("Imtihon", "Экзамен", "Exam", "Prüfung")}</option>
+              </select>
+            </div>
+            <div>
+              <label className={lbl}>{T("Maks. ball", "Макс. балл", "Max score", "Max. Punkte")}</label>
+              <input type="number" min={1} max={1000} value={maxScore} onChange={(e) => setMaxScore(Math.max(1, Math.min(1000, Number(e.target.value) || 100)))} className={inp} />
+            </div>
+            <div>
+              <label className={lbl}>{T("Muddat", "Срок", "Due", "Frist")}</label>
+              <input type="datetime-local" value={dueAt} onChange={(e) => setDueAt(e.target.value)} className={inp} />
+            </div>
+          </div>
+        </div>
+
+        {err && <p className="mt-3 text-sm font-medium text-rose-600">{err}</p>}
+
+        <div className="mt-5 flex gap-2.5">
+          <button type="button" onClick={onClose} className="h-11 flex-1 rounded-xl border border-slate-200 text-sm font-semibold text-slate-600 dark:border-slate-700 dark:text-slate-300">
+            {T("Bekor", "Отмена", "Cancel", "Abbrechen")}
+          </button>
+          <button type="button" onClick={save} disabled={pending || title.trim().length < 2} className="h-11 flex-1 rounded-xl bg-brand-600 text-sm font-semibold text-white transition hover:bg-brand-700 disabled:opacity-60">
+            {pending ? "…" : T("Qo'shish", "Добавить", "Add", "Hinzufügen")}
+          </button>
+        </div>
+      </div>
     </div>
   );
 }

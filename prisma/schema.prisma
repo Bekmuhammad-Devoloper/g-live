@@ -82,6 +82,7 @@ model User {
   archiveReason String? // arxivlash/o'chirish sababi
   archiveNote   String? // arxiv izohi
   lastLoginAt  DateTime?
+  gradedSubmissions Submission[] @relation("SubmissionGrader")
   createdAt    DateTime  @default(now())
   updatedAt    DateTime  @updatedAt
 
@@ -643,6 +644,9 @@ model Assignment {
   id        String   @id @default(cuid())
   groupId   String
   group     Group    @relation(fields: [groupId], references: [id], onDelete: Cascade)
+  // Vazifa qaysi darsga tegishli — o'quvchi ilovasida shu dars sahifasida
+  // ko'rinadi. Bo'sh bo'lsa faqat umumiy "Mashq" ro'yxatida turadi.
+  courseLessonId String?
   title     String
   type      String   @default("TASK") // TASK | EXAM | HOMEWORK | TEST
   skill     String? // SPEAKING | WRITING | READING | LISTENING | GRAMMAR
@@ -653,6 +657,8 @@ model Assignment {
   submissions Submission[]
 
   createdAt DateTime @default(now())
+
+  @@index([courseLessonId])
 }
 
 model Room {
@@ -672,11 +678,14 @@ model Submission {
   assignment   Assignment @relation(fields: [assignmentId], references: [id], onDelete: Cascade)
   studentId    String
   student      Student  @relation(fields: [studentId], references: [id], onDelete: Cascade)
-  content      String?
+  content      String? // matn yoki havola (masalan github)
+  fileUrl      String? // yuklangan fayl (/uploads/...)
   attempt      Int      @default(1)
   score        Int?
   teacherNote  String? // past baho uchun majburiy izoh
   status       String   @default("SUBMITTED") // SUBMITTED | GRADED | RETURNED
+  gradedById   String? // kim tekshirgani
+  gradedBy     User?    @relation("SubmissionGrader", fields: [gradedById], references: [id])
   gradedAt     DateTime?
   createdAt    DateTime @default(now())
 

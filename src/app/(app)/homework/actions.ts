@@ -24,6 +24,8 @@ const createSchema = z.object({
   skill: z.string().optional(),
   maxScore: z.coerce.number().int().positive().max(1000),
   dueAt: z.string().optional(),
+  // Vazifa darsga bog'langan bo'lsa — o'quvchi ilovasida shu dars ichida chiqadi
+  courseLessonId: z.string().optional(),
 });
 
 export async function createAssignment(_prev: FormState, formData: FormData): Promise<FormState> {
@@ -38,6 +40,7 @@ export async function createAssignment(_prev: FormState, formData: FormData): Pr
     skill: formData.get("skill") || undefined,
     maxScore: formData.get("maxScore") || 100,
     dueAt: formData.get("dueAt") || undefined,
+    courseLessonId: formData.get("courseLessonId") || undefined,
   });
   if (!parsed.success) return { error: "invalid" };
 
@@ -49,6 +52,7 @@ export async function createAssignment(_prev: FormState, formData: FormData): Pr
       skill: parsed.data.skill || null,
       maxScore: parsed.data.maxScore,
       dueAt: parsed.data.dueAt ? new Date(parsed.data.dueAt) : null,
+      courseLessonId: parsed.data.courseLessonId || null,
     },
   });
 
@@ -62,15 +66,19 @@ export async function createAssignment(_prev: FormState, formData: FormData): Pr
   }
 
   revalidatePath("/homework");
+  revalidatePath("/student", "layout");
   return { ok: true };
 }
 
 // ─── O'quvchi vazifani topshiradi ───
-export async function submitAssignment(assignmentId: string, content: string): Promise<FormState> {
+export async function submitAssignment(assignmentId: string, content: string, fileUrl?: string | null): Promise<FormState> {
   const s = await requireSession();
   const student = await prisma.student.findUnique({ where: { userId: s.userId } });
   if (!student) return { error: "forbidden" };
-  if (!content || content.trim().length < 1) return { error: "invalid" };
+  const file = (fileUrl ?? "").trim();
+  if (file && !/^\/uploads\/[\w.-]+$/.test(file)) return { error: "invalid" };
+  // Matn yoki fayl — kamida bittasi bo'lsin
+  if (!content.trim() && !file) return { error: "invalid" };
   if (content.length > 20_000) return { error: "invalid" }; // cheksiz matn bazaga yozilmasin
 
   // Topshiriq mavjudligini VA o'quvchi o'sha guruhning faol a'zosi ekanini tekshirish.
@@ -90,9 +98,17 @@ export async function submitAssignment(assignmentId: string, content: string): P
   // Oldingi urinishlar soni
   const prev = await prisma.submission.count({ where: { assignmentId, studentId: student.id } });
   await prisma.submission.create({
-    data: { assignmentId, studentId: student.id, content: content.trim(), attempt: prev + 1, status: "SUBMITTED" },
+    data: {
+      assignmentId,
+      studentId: student.id,
+      content: content.trim() || null,
+      fileUrl: file || null,
+      attempt: prev + 1,
+      status: "SUBMITTED",
+    },
   });
   revalidatePath(`/homework/${assignmentId}`);
+  revalidatePath("/student", "layout");
   return { ok: true };
 }
 
@@ -113,9 +129,10 @@ export async function gradeSubmission(submissionId: string, score: number, note:
 
   await prisma.submission.update({
     where: { id: submissionId },
-    data: { score: clamped, teacherNote: note?.trim() || null, status: "GRADED", gradedAt: new Date() },
+    data: { score: clamped, teacherNote: note?.trim() || null, status: "GRADED", gradedAt: new Date(), gradedById: s.userId },
   });
   await writeAudit({ actorId: s.userId, action: "UPDATE", entityType: "Submission", entityId: submissionId, newValue: { score: clamped } });
+  revalidatePath("/student", "layout");
 
   const student = await prisma.student.findUnique({ where: { id: sub.studentId } });
   if (student?.userId) await notify({ userId: student.userId, title: "Vazifa baholandi", body: `${sub.assignment.title}: ${clamped}/${max}`, event: "graded" });
