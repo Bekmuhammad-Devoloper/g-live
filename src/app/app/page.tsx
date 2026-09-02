@@ -309,70 +309,119 @@ export default async function LandingPage() {
   );
 }
 
-/* ── Telefon maketi — ilovaning haqiqiy ko'rinishi ── */
+/* ── Telefon maketi — ilovaning haqiqiy ko'rinishi ──
+   Ramka ingichka, tepada holat qatori va "orolcha", pastda uy chizig'i —
+   haqiqiy telefonda qanday ko'rinsa shunday. */
 function PhoneMock() {
   return (
-    <div className="relative mx-auto w-full max-w-[360px] lg:max-w-[400px]">
-      <div aria-hidden className="absolute -inset-8 -z-10 rounded-[64px] bg-gradient-to-br from-[#17a2bf]/25 to-[#7c3aed]/15 blur-3xl" />
-      <div className="rounded-[52px] bg-slate-900 p-3 shadow-[0_60px_110px_-45px_rgba(9,32,53,0.9)] ring-1 ring-white/10">
-        <div className="relative overflow-hidden rounded-[42px] bg-[#e6eef4]">
-          <div className="absolute left-1/2 top-3 z-10 h-[26px] w-[112px] -translate-x-1/2 rounded-full bg-slate-900" />
+    <div className="relative mx-auto w-full max-w-[330px] lg:max-w-[352px]">
+      <div aria-hidden className="absolute -inset-8 -z-10 rounded-[70px] bg-gradient-to-br from-[#17a2bf]/25 to-[#7c3aed]/15 blur-3xl" />
 
-          <div className="space-y-3 px-4 pb-6 pt-12">
-            {/* sarlavha */}
-            <div className="flex items-center gap-3">
+      {/* Yon tugmalar */}
+      <span aria-hidden className="absolute -left-[3px] top-[132px] h-[52px] w-[3px] rounded-l-sm bg-slate-700" />
+      <span aria-hidden className="absolute -left-[3px] top-[196px] h-[52px] w-[3px] rounded-l-sm bg-slate-700" />
+      <span aria-hidden className="absolute -right-[3px] top-[168px] h-[74px] w-[3px] rounded-r-sm bg-slate-700" />
+
+      {/* Ramka */}
+      <div
+        className="rounded-[46px] p-[9px] shadow-[0_50px_100px_-40px_rgba(9,32,53,0.9)] ring-1 ring-white/10"
+        style={{ background: "linear-gradient(160deg,#3f4855 0%,#151b24 22%,#0b0f16 60%,#2a323d 100%)" }}
+      >
+        <div className="relative overflow-hidden rounded-[38px] bg-[#e9f0f6]">
+          {/* ── Holat qatori ── */}
+          <div className="relative flex h-[42px] items-center justify-between px-6 pt-1.5">
+            <span className="text-[12.5px] font-bold tracking-tight text-slate-900">9:41</span>
+            {/* orolcha */}
+            <span className="absolute left-1/2 top-[9px] h-[26px] w-[92px] -translate-x-1/2 rounded-full bg-black" />
+            <span className="flex items-center gap-[5px] text-slate-900">
+              <svg width="16" height="11" viewBox="0 0 18 12" fill="currentColor" aria-hidden>
+                <rect x="0" y="8" width="3" height="4" rx="1" />
+                <rect x="4.5" y="6" width="3" height="6" rx="1" />
+                <rect x="9" y="3.5" width="3" height="8.5" rx="1" />
+                <rect x="13.5" y="0.5" width="3" height="11.5" rx="1" />
+              </svg>
+              <svg width="15" height="11" viewBox="0 0 16 12" fill="none" stroke="currentColor" strokeWidth="1.7" strokeLinecap="round" aria-hidden>
+                <path d="M1 4.3a10 10 0 0 1 14 0M3.6 7a6.4 6.4 0 0 1 8.8 0" />
+                <circle cx="8" cy="10" r="1" fill="currentColor" stroke="none" />
+              </svg>
+              <svg width="22" height="11" viewBox="0 0 24 12" fill="none" aria-hidden>
+                <rect x="0.7" y="0.7" width="19" height="10.6" rx="3.2" stroke="currentColor" strokeOpacity="0.4" strokeWidth="1.2" />
+                <rect x="2.3" y="2.3" width="14" height="7.4" rx="2" fill="currentColor" />
+                <path d="M21.4 4.2v3.6a2 2 0 0 0 0-3.6Z" fill="currentColor" fillOpacity="0.45" />
+              </svg>
+            </span>
+          </div>
+
+          {/* ── Ekran mazmuni ── */}
+          <div className="space-y-2.5 px-3.5 pb-2 pt-1">
+            <div className="flex items-center gap-2.5">
               {/* eslint-disable-next-line @next/next/no-img-element */}
-              <img src="/icons/icon-192.png" alt="" className="h-11 w-11 rounded-2xl" />
+              <img src="/icons/icon-192.png" alt="" className="h-[38px] w-[38px] rounded-[13px]" />
               <div className="min-w-0 flex-1">
-                <div className="text-[15.5px] font-extrabold leading-tight">Salom, Ezoza!</div>
-                <div className="text-[11.5px] text-slate-500">Bugungi darsingiz tayyor</div>
+                <div className="text-[14px] font-extrabold leading-tight tracking-[-0.01em]">Salom, Ezoza!</div>
+                <div className="text-[10.5px] leading-tight text-slate-500">Bugungi darsingiz tayyor</div>
               </div>
-              <span className="rounded-2xl bg-white px-2.5 py-1.5 text-[12px] font-bold text-orange-500 shadow-sm">🔥 7</span>
+              <span className="flex items-center gap-1 rounded-2xl bg-white px-2 py-1.5 shadow-[0_4px_10px_-6px_rgba(15,60,80,0.6)]">
+                <span className="text-[12px] leading-none">🔥</span>
+                <span className="text-[12.5px] font-extrabold leading-none text-slate-800">7</span>
+              </span>
             </div>
 
-            {/* ballar */}
-            <div className="grid grid-cols-4 gap-2">
+            <div className="grid grid-cols-4 gap-[7px]">
               {[
                 { v: "45", l: "tanga" },
                 { v: "12", l: "yulduz" },
                 { v: "7", l: "seriya" },
                 { v: "3", l: "o'rin" },
               ].map((x) => (
-                <div key={x.l} className="rounded-2xl bg-white py-2.5 text-center shadow-[0_6px_14px_-8px_rgba(15,60,80,0.55)]">
-                  <div className="text-[16px] font-extrabold leading-none">{x.v}</div>
-                  <div className="mt-1 text-[9px] text-slate-400">{x.l}</div>
+                <div key={x.l} className="rounded-[15px] bg-white py-2 text-center shadow-[0_5px_12px_-8px_rgba(15,60,80,0.55)]">
+                  <div className="text-[14px] font-extrabold leading-none text-slate-900">{x.v}</div>
+                  <div className="mt-[3px] text-[8px] font-medium leading-none text-slate-400">{x.l}</div>
                 </div>
               ))}
             </div>
 
-            {/* bugungi dars */}
-            <div className="rounded-3xl p-4 text-white shadow-[0_14px_28px_-16px_rgba(15,60,80,0.9)]" style={{ background: levelGradient(TEAL) }}>
-              <div className="text-[10px] font-bold uppercase tracking-[0.14em] text-white/70">Bugungi dars</div>
-              <div className="mt-1 text-[21px] font-extrabold leading-tight">Unit 1.1</div>
-              <div className="mt-3 flex items-center gap-2.5">
-                <div className="h-2 flex-1 overflow-hidden rounded-full bg-white/25">
+            <div className="rounded-[20px] p-3.5 text-white shadow-[0_12px_24px_-16px_rgba(15,60,80,0.9)]" style={{ background: levelGradient(TEAL) }}>
+              <div className="text-[8.5px] font-bold uppercase tracking-[0.16em] text-white/70">Bugungi dars</div>
+              <div className="mt-0.5 text-[18px] font-extrabold leading-tight tracking-[-0.02em]">Unit 1.1</div>
+              <div className="mt-2.5 flex items-center gap-2">
+                <div className="h-[6px] flex-1 overflow-hidden rounded-full bg-white/25">
                   <div className="h-full w-[38%] rounded-full bg-white" />
                 </div>
-                <span className="text-[12px] font-extrabold">38%</span>
+                <span className="text-[10.5px] font-extrabold">38%</span>
               </div>
             </div>
 
-            {/* video */}
-            <div className="flex items-center gap-3 rounded-3xl bg-white p-3.5 shadow-[0_8px_18px_-12px_rgba(15,60,80,0.6)]">
-              <span className="grid h-11 w-11 shrink-0 place-items-center rounded-2xl text-white" style={{ background: "linear-gradient(135deg,#46d8b8,#0f9a90)" }}>
-                <Ico name="play" className="h-5 w-5" />
+            <div className="flex items-center gap-2.5 rounded-[20px] bg-white p-3 shadow-[0_6px_16px_-12px_rgba(15,60,80,0.7)]">
+              <span className="grid h-[38px] w-[38px] shrink-0 place-items-center rounded-[13px] text-white" style={{ background: "linear-gradient(135deg,#46d8b8,#0f9a90)" }}>
+                <Ico name="play" className="h-[17px] w-[17px]" />
               </span>
               <div className="min-w-0">
-                <div className="text-[14px] font-extrabold leading-tight">Video va podkastlar</div>
-                <div className="mt-0.5 text-[11px] text-slate-400">Qiziqarli materiallar</div>
+                <div className="text-[12.5px] font-extrabold leading-tight">Video va podkastlar</div>
+                <div className="mt-[1px] text-[10px] leading-tight text-slate-400">Qiziqarli materiallar</div>
               </div>
             </div>
+          </div>
 
-            {/* pastki menyu */}
-            <div className="mt-1 flex items-center justify-around rounded-3xl bg-white py-2.5 shadow-[0_8px_18px_-12px_rgba(15,60,80,0.6)]">
-              {(["home", "book", "target", "user"] as IcoName[]).map((n, i) => (
-                <Ico key={n} name={n} className={"h-[22px] w-[22px] " + (i === 0 ? "text-[#0e7490]" : "text-slate-300")} />
+          {/* ── Pastki menyu ── */}
+          <div className="border-t border-slate-900/[0.06] bg-white/95 px-2 pt-1.5 backdrop-blur">
+            <div className="flex items-stretch">
+              {([
+                { n: "home", l: "Boshi" },
+                { n: "book", l: "Kurslar" },
+                { n: "target", l: "Mashq" },
+                { n: "user", l: "Profil" },
+              ] as { n: IcoName; l: string }[]).map((it, i) => (
+                <span key={it.n} className={"flex flex-1 flex-col items-center gap-[3px] py-1 " + (i === 0 ? "text-[#0e7490]" : "text-slate-300")}>
+                  <Ico name={it.n} className="h-[19px] w-[19px]" />
+                  <span className="text-[8.5px] font-bold leading-none">{it.l}</span>
+                  <span className={"h-[2.5px] w-5 rounded-full " + (i === 0 ? "bg-[#0e7490]" : "bg-transparent")} />
+                </span>
               ))}
+            </div>
+            {/* uy chizig'i */}
+            <div className="flex justify-center pb-1.5 pt-1">
+              <span className="h-[4px] w-[104px] rounded-full bg-slate-900/80" />
             </div>
           </div>
         </div>
