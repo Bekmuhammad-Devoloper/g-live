@@ -1,7 +1,8 @@
-// import Link from "next/link"; // "Ikkinchi miya" kartochkasi bilan birga vaqtincha o'chirilgan
+import Link from "next/link";
 import { redirect } from "next/navigation";
 import ProfilActions from "./ProfilActions";
 import { getSession } from "@/lib/auth";
+import { isPortalFeatureOn } from "@/lib/portalFeatures";
 import { prisma } from "@/lib/db";
 import { computeDebt } from "@/lib/debt";
 import { EDU_STATUS_LABELS, PAYMENT_METHOD_LABELS, label, type LocaleText } from "@/lib/constants";
@@ -51,7 +52,7 @@ export default async function StudentProfilPage() {
   });
   if (!student) return <MissingStudent />; // redirect("/dashboard") aylanish hosil qilardi
 
-  const [debt, paidAgg, payments, attendance, attAll, exams, examTotal, examPassed, certificates] = await Promise.all([
+  const [debt, paidAgg, payments, attendance, attAll, exams, examTotal, examPassed, certificates, noteCount, brainOn] = await Promise.all([
     computeDebt(student.id),
     prisma.payment.aggregate({ where: { studentId: student.id, status: "PAID" }, _sum: { amount: true } }),
     prisma.payment.findMany({
@@ -86,10 +87,11 @@ export default async function StudentProfilPage() {
       orderBy: { issuedAt: "desc" },
       select: { id: true, number: true, programName: true, levelCode: true, qrCode: true, issuedAt: true },
     }),
-    // VAQTINCHA O'CHIRILGAN — "Ikkinchi miya" kartochkasi bilan birga
-    // (pastdagi izohga olingan blokni qaytarsangiz, shu qatorni ham
-    //  ro'yxat oxiriga qaytaring va destrukturaga noteCount ni qo'shing):
-    // prisma.note.count({ where: { studentId: student.id } }),
+    // "Ikkinchi miya" yozuvlari soni — kartochkada ko'rsatiladi
+    prisma.note.count({ where: { studentId: student.id } }),
+    // Bo'lim menejer tomonidan yoqilganmi (Sozlamalar > O'quvchi portali).
+    // O'chiq bo'lsa kartochka ko'rinmaydi — sahifasi ham bloklangan.
+    isPortalFeatureOn("gehirn"),
   ]);
 
   const group = student.enrollments[0]?.group ?? null;
@@ -137,11 +139,9 @@ export default async function StudentProfilPage() {
       </div>
 
       {/* ── Ikkinchi miya (shaxsiy rivojlanish) ──
-          VAQTINCHA O'CHIRILGAN (foydalanuvchi so'roviga ko'ra).
-          Qaytarish uchun: shu izohni olib tashlang + yuqoridagi
-          prisma.note.count() so'rovini va noteCount destrukturasini tiklang.
-          Sahifalarning o'zi joyida: /student/gehirn, /[id], /graph.
-
+          Ko'rinishi Sozlamalar > O'quvchi portali dan boshqariladi.
+          Hozir o'chirilgan (portal.gehirn = off) — yoqilsa shu yerda chiqadi. */}
+      {brainOn && (
       <Link
         href="/student/gehirn"
         className="relative flex items-center gap-3 overflow-hidden rounded-[24px] p-5 text-white shadow-[0_14px_28px_rgba(91,33,182,0.28)]"
@@ -164,7 +164,7 @@ export default async function StudentProfilPage() {
           <path d="m9 6 6 6-6 6" />
         </svg>
       </Link>
-      */}
+      )}
 
       {/* ── To'lovlar ── */}
       <SectionTitle>{t.payments}</SectionTitle>
