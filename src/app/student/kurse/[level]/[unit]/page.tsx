@@ -107,12 +107,37 @@ function Wash({ color }: { color: string }) {
 
 /* ── Biriktirilgan fayl ── */
 function Attachment({ url, tint, accent, t }: { url: string; tint: string; accent: string; t: StudentStrings }) {
-  const row = (
+  // Rasm bo'lsa — bitta blok: ustida rasmning o'zi, ostida ingichka qator.
+  // Ilgari rasm ham, alohida "Faylni ochish" qatori ham chizilar edi va
+  // bitta narsa ikki marta ko'rinardi.
+  if (isImage(url)) {
+    return (
+      <a
+        href={url}
+        target="_blank"
+        rel="noreferrer"
+        className="mt-3 block overflow-hidden rounded-[18px] ring-1 ring-slate-900/[0.06] transition active:scale-[0.99]"
+      >
+        {/* eslint-disable-next-line @next/next/no-img-element */}
+        <img src={url} alt={t.attachment} className="max-h-[290px] w-full bg-white object-contain" />
+        <span className="flex items-center gap-2.5 px-3 py-2.5" style={{ background: tint }}>
+          <span className="grid h-7 w-7 shrink-0 place-items-center rounded-lg bg-white" style={{ color: accent }}>
+            <IcoExpand s={13} />
+          </span>
+          <span className="min-w-0 flex-1 truncate text-[12.5px] font-bold text-slate-700">{t.openFull}</span>
+          <span className="shrink-0 text-[11px] font-semibold text-slate-400">{fileKind(url)}</span>
+          <IcoChevron s={15} />
+        </span>
+      </a>
+    );
+  }
+
+  return (
     <a
       href={url}
       target="_blank"
       rel="noreferrer"
-      className="flex items-center gap-3 rounded-[18px] px-3 py-2.5 transition active:scale-[0.985]"
+      className="mt-3 flex items-center gap-3 rounded-[18px] px-3 py-2.5 transition active:scale-[0.985]"
       style={{ background: tint }}
     >
       <span className="grid h-10 w-10 shrink-0 place-items-center rounded-[13px] bg-white shadow-[0_4px_10px_-4px_rgba(15,60,80,0.4)]" style={{ color: accent }}>
@@ -124,22 +149,6 @@ function Attachment({ url, tint, accent, t }: { url: string; tint: string; accen
       </span>
       <IcoChevron />
     </a>
-  );
-
-  if (!isImage(url)) return <div className="mt-3">{row}</div>;
-
-  // Rasm bo'lsa avval o'zi ko'rinadi — ochib o'tirish shart emas
-  return (
-    <div className="mt-3 space-y-2">
-      <a href={url} target="_blank" rel="noreferrer" className="relative block overflow-hidden rounded-[18px]" style={{ background: tint }}>
-        {/* eslint-disable-next-line @next/next/no-img-element */}
-        <img src={url} alt={t.attachment} className="max-h-[360px] w-full object-contain" />
-        <span className="pointer-events-none absolute bottom-2 right-2 flex items-center gap-1.5 rounded-full bg-black/55 px-2.5 py-1 text-[11px] font-semibold text-white backdrop-blur-sm">
-          <IcoExpand /> {t.openFull}
-        </span>
-      </a>
-      {row}
-    </div>
   );
 }
 
@@ -426,9 +435,7 @@ export default async function StudentUnitPage({ params }: { params: Promise<{ le
                   <span className="block truncate text-[12.5px] font-semibold leading-tight">{prev.title}</span>
                 </span>
               </Link>
-            ) : (
-              <span className="flex-1" />
-            )}
+            ) : null}
 
             {next ? (
               <Link href={`/student/kurse/${code}/${next.id}`} className={navBtn}>
@@ -440,9 +447,7 @@ export default async function StudentUnitPage({ params }: { params: Promise<{ le
                   <IcoChevron s={16} color="currentColor" />
                 </span>
               </Link>
-            ) : (
-              <span className="flex-1" />
-            )}
+            ) : null}
           </nav>
         )}
       </div>
