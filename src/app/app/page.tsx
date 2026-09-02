@@ -38,8 +38,6 @@ const FEATURES: { emoji: string; title: string; text: string; bg: string; ring: 
   { emoji: "📊", title: "Natijalaringiz", text: "Davomat, baholar va daraja bo'yicha jarayon.", bg: "bg-[#f0fdfa]", ring: "ring-[#99f6e4]" },
 ];
 
-const LEVEL_EMOJI = ["🌱", "🌿", "🌳", "🔥", "⭐", "👑"];
-
 export default async function LandingPage() {
   const [session, levels, apk, students, teachers, groups, qr] = await Promise.all([
     getSession(),
@@ -103,11 +101,7 @@ export default async function LandingPage() {
           {/* bezaklar */}
           <span aria-hidden className="pointer-events-none absolute -left-10 -top-10 h-48 w-48 rounded-full bg-white/10" />
           <span aria-hidden className="pointer-events-none absolute -bottom-16 -right-10 h-64 w-64 rounded-full bg-white/[0.07]" />
-          <span aria-hidden className="pointer-events-none absolute left-[7%] top-[24%] hidden text-[42px] md:block">✨</span>
-          <span aria-hidden className="pointer-events-none absolute right-[9%] top-[20%] hidden text-[38px] md:block">🇩🇪</span>
-          <span aria-hidden className="pointer-events-none absolute bottom-[16%] left-[13%] hidden text-[34px] md:block">📚</span>
-          <span aria-hidden className="pointer-events-none absolute bottom-[20%] right-[14%] hidden text-[36px] md:block">🏆</span>
-
+          
           <div className="relative mx-auto max-w-2xl">
             <span className="inline-flex items-center gap-2 rounded-full bg-white/15 px-4 py-2 text-[12.5px] font-extrabold uppercase tracking-[0.1em] text-white ring-1 ring-white/25 backdrop-blur-sm">
               <span className="h-2 w-2 rounded-full bg-[#4ade80]" />
@@ -117,7 +111,7 @@ export default async function LandingPage() {
             <h1 className="mt-6 text-[42px] font-black leading-[1.02] tracking-[-0.035em] text-white sm:text-[68px]">
               Nemis tilini
               <br />
-              o&apos;rganing 🚀
+              o&apos;rganing
             </h1>
 
             <p className="mx-auto mt-5 max-w-lg text-[17px] font-medium leading-relaxed text-white/85">
@@ -237,7 +231,7 @@ export default async function LandingPage() {
 
       {/* ══════════ Darajalar ══════════ */}
       {levels.length > 0 && (
-        <section id="darajalar" className="scroll-mt-24 px-4 pb-14 md:pb-20">
+        <section id="darajalar" className="scroll-mt-24 px-4 pb-16 md:pb-24">
           <div className="mx-auto max-w-6xl">
             <h2 className="text-center text-[32px] font-black tracking-[-0.03em] md:text-[42px]">Darajalar</h2>
             <p className="mx-auto mt-3 max-w-lg text-center text-[16px] font-medium text-slate-500">
@@ -245,26 +239,45 @@ export default async function LandingPage() {
             </p>
 
             <div className="mt-10 grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-              {levels.map((l, i) => (
+              {levels.map((l) => (
                 <div
                   key={l.id}
-                  className="relative flex min-h-[150px] flex-col justify-between overflow-hidden rounded-[30px] p-6 text-white"
-                  style={l.bannerUrl ? { backgroundColor: "#12303f" } : { background: levelGradient(l.color) }}
+                  className="group relative overflow-hidden rounded-[28px] bg-white ring-1 ring-slate-900/[0.06] transition hover:-translate-y-1 hover:ring-slate-900/[0.12]"
                 >
+                  {/* Banner qo'yilgan bo'lsa — tepada tasma */}
                   {l.bannerUrl ? (
-                    <>
-                      {/* eslint-disable-next-line @next/next/no-img-element */}
-                      <img src={l.bannerUrl} alt="" className="absolute inset-0 h-full w-full object-cover" />
-                      <span className="absolute inset-0 bg-gradient-to-t from-black/80 to-black/25" />
-                    </>
+                    // eslint-disable-next-line @next/next/no-img-element
+                    <img src={l.bannerUrl} alt="" className="h-[104px] w-full object-cover" />
                   ) : (
-                    <span aria-hidden className="pointer-events-none absolute -right-6 -top-6 h-28 w-28 rounded-full bg-white/10" />
+                    <span
+                      aria-hidden
+                      className="pointer-events-none absolute -right-10 -top-10 h-32 w-32 rounded-full opacity-[0.13] blur-xl"
+                      style={{ background: l.color }}
+                    />
                   )}
-                  <div className="relative flex items-start justify-between gap-2">
-                    <span className="text-[32px] font-black leading-none tracking-[-0.03em]">{l.code}</span>
-                    <span className="text-[26px] leading-none">{LEVEL_EMOJI[i] ?? "📘"}</span>
+
+                  <div className="relative flex items-center gap-4 p-5">
+                    <span
+                      className="grid h-[54px] w-[54px] shrink-0 place-items-center rounded-[18px] text-[19px] font-black text-white"
+                      style={{ background: levelGradient(l.color) }}
+                    >
+                      {l.code}
+                    </span>
+                    <span className="min-w-0 flex-1">
+                      <span className="block truncate text-[18px] font-black tracking-[-0.02em] text-slate-900">
+                        {levelTitle(l, "uz")}
+                      </span>
+                      <span className="mt-0.5 block text-[13px] font-semibold text-slate-400">Deutsch · {l.code}</span>
+                    </span>
+                    <span
+                      className="grid h-9 w-9 shrink-0 place-items-center rounded-full text-white transition group-hover:translate-x-0.5"
+                      style={{ background: l.color }}
+                    >
+                      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.8" strokeLinecap="round" strokeLinejoin="round">
+                        <path d="m9 6 6 6-6 6" />
+                      </svg>
+                    </span>
                   </div>
-                  <span className="relative text-[16px] font-bold text-white/85">{levelTitle(l, "uz")}</span>
                 </div>
               ))}
             </div>
@@ -273,30 +286,49 @@ export default async function LandingPage() {
       )}
 
       {/* ══════════ Aloqa ══════════ */}
-      <footer className="px-4 pb-12">
-        <div className="mx-auto max-w-6xl rounded-[40px] bg-[#f1f5f9] px-6 py-12 text-center">
-          {/* eslint-disable-next-line @next/next/no-img-element */}
-          <img src="/logo.png" alt="Germaniya Live" className="mx-auto h-10 w-auto" />
-          <p className="mx-auto mt-4 max-w-md text-[15.5px] font-medium leading-relaxed text-slate-500">
-            Nemis tili o&apos;quv markazi. Kursga yozilish va savollar uchun bog&apos;laning.
-          </p>
-          <div className="mt-6 flex flex-wrap justify-center gap-3">
-            <a
-              href="tel:+998995500055"
-              className="rounded-2xl bg-[#0e7490] px-6 py-3.5 text-[15px] font-extrabold text-white shadow-[0_4px_0_#0a4f66] transition-all active:translate-y-[3px] active:shadow-none"
-            >
-              📞 +998 99 550 00 55
-            </a>
-            <a
-              href="https://t.me/germaniyalive"
-              target="_blank"
-              rel="noreferrer"
-              className="rounded-2xl bg-white px-6 py-3.5 text-[15px] font-extrabold text-slate-700 shadow-[0_4px_0_#cbd5e1] transition-all active:translate-y-[3px] active:shadow-none"
-            >
-              ✈️ Telegram
-            </a>
+      <footer className="border-t border-slate-900/[0.07] bg-white px-4 py-12">
+        <div className="mx-auto grid max-w-6xl gap-9 md:grid-cols-3 md:gap-6">
+          <div>
+            {/* eslint-disable-next-line @next/next/no-img-element */}
+            <img src="/logo.png" alt="Germaniya Live" className="h-9 w-auto" />
+            <p className="mt-3 max-w-xs text-[14.5px] font-medium leading-relaxed text-slate-500">
+              Nemis tili o&apos;quv markazi. A1 dan C2 gacha kurslar va o&apos;quvchi ilovasi.
+            </p>
           </div>
-          <div className="mt-8 text-[13px] font-semibold text-slate-400">© {new Date().getFullYear()} Germaniya Live</div>
+
+          <div className="md:justify-self-center">
+            <div className="text-[12px] font-black uppercase tracking-[0.14em] text-slate-400">Sahifalar</div>
+            <div className="mt-3 flex flex-col gap-2 text-[14.5px] font-bold text-slate-600">
+              <a href="#ilova" className="transition hover:text-slate-900">Ilovani olish</a>
+              <a href="#imkoniyat" className="transition hover:text-slate-900">Imkoniyatlar</a>
+              <a href="#darajalar" className="transition hover:text-slate-900">Darajalar</a>
+              <Link href="/login" className="transition hover:text-slate-900">Hisobga kirish</Link>
+            </div>
+          </div>
+
+          <div className="md:justify-self-end">
+            <div className="text-[12px] font-black uppercase tracking-[0.14em] text-slate-400">Bog&apos;lanish</div>
+            <div className="mt-3 flex flex-col items-start gap-2.5">
+              <a
+                href="tel:+998995500055"
+                className="rounded-2xl bg-[#0e7490] px-5 py-3 text-[14.5px] font-extrabold text-white shadow-[0_4px_0_#0a4f66] transition-all active:translate-y-[3px] active:shadow-none"
+              >
+                +998 99 550 00 55
+              </a>
+              <a
+                href="https://t.me/germaniyalive"
+                target="_blank"
+                rel="noreferrer"
+                className="rounded-2xl bg-slate-100 px-5 py-3 text-[14.5px] font-extrabold text-slate-700 transition hover:bg-slate-200"
+              >
+                Telegram
+              </a>
+            </div>
+          </div>
+        </div>
+
+        <div className="mx-auto mt-10 max-w-6xl border-t border-slate-100 pt-6 text-[13px] font-semibold text-slate-400">
+          © {new Date().getFullYear()} Germaniya Live
         </div>
       </footer>
     </div>
