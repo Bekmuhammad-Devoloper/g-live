@@ -21,6 +21,7 @@ export interface VNotif {
 const LINK: Record<string, string> = {
   CHAT: "/student/lehrer",
   MARKET_ORDER: "/student/market",
+  BATTLE: "/student/battle",
 };
 
 function fmt(iso: string) {

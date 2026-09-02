@@ -97,3 +97,48 @@ export function lookup(word: string): DictEntry | null {
   }
   return null;
 }
+
+// ── "Jang" o'yinlari uchun so'z tanlash ──
+// O'yinga har so'z ham to'g'ri kelmaydi: qo'shma iboralar, juda qisqa yoki
+// juda uzun so'zlar, tarjimasi bo'sh yozuvlar chiqarib tashlanadi.
+
+const clean = (e: DictEntry) =>
+  !e.de.includes(" ") &&
+  e.de.length >= 3 &&
+  e.de.length <= 12 &&
+  /^[A-Za-zÄÖÜäöüß-]+$/.test(e.de) &&
+  e.uz.trim().length >= 2;
+
+// Tarjimadagi qavs ichidagi izoh va sinonimlar olib tashlanadi —
+// savolda faqat asosiy ma'no ko'rinsin
+export const shortUz = (uz: string) =>
+  uz.replace(/\([^)]*\)/g, "").split(/[,;]/)[0].trim().slice(0, 60);
+
+const GAME_POOL = ALL.filter(clean);
+
+/** O'yin uchun tasodifiy so'zlar (nemischa + o'zbekcha) */
+export function gameWords(limit = 200): { de: string; uz: string }[] {
+  const pool = [...GAME_POOL];
+  const out: { de: string; uz: string }[] = [];
+  for (let i = 0; i < limit && pool.length; i++) {
+    const k = Math.floor(Math.random() * pool.length);
+    const e = pool.splice(k, 1)[0];
+    out.push({ de: e.de, uz: shortUz(e.uz) });
+  }
+  return out;
+}
+
+/** Grammatika o'yini uchun — rodi aniq otlar (der / die / das) */
+export function genderNouns(limit = 200): { de: string; uz: string; g: string }[] {
+  const pool = GAME_POOL.filter((e) => e.g === "m" || e.g === "f" || e.g === "n");
+  const out: { de: string; uz: string; g: string }[] = [];
+  const used = new Set<number>();
+  for (let i = 0; i < limit && used.size < pool.length; i++) {
+    let k = Math.floor(Math.random() * pool.length);
+    while (used.has(k)) k = (k + 1) % pool.length;
+    used.add(k);
+    const e = pool[k];
+    out.push({ de: e.de, uz: shortUz(e.uz), g: e.g! });
+  }
+  return out;
+}

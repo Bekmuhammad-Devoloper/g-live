@@ -243,6 +243,9 @@ model Student {
   chatMessages ChatMessage[]
   notes        Note[]
   gameResults  GameResult[]
+  challengesMade     GameChallenge[] @relation("ChallengeAuthor")
+  challengesReceived GameChallenge[] @relation("ChallengeOpponent")
+  challengeEntries   GameChallengeEntry[]
   lessonViews  LessonView[]
   levelUps     StudentLevelUp[]
 
@@ -410,6 +413,44 @@ model LessonView {
 
   @@unique([studentId, courseLessonId])
   @@index([studentId])
+}
+
+// "Jang" chaqiruvi — duel (bir ga bir) yoki guruhli o'yin.
+// Ikkala o'yinchi BIR XIL savollarni oladi (seed bir xil), lekin bir vaqtda
+// o'ynashi shart emas: kim qachon ulgursa o'shanda o'ynaydi, natija ikkalasi
+// ham tugatgach aniqlanadi.
+model GameChallenge {
+  id          String   @id @default(cuid())
+  kind        String // DUEL | GROUP
+  lobby       String // vocabulary | wordgame | crossword | grammar
+  seed        Int // savollar shu raqamdan hosil bo'ladi
+  createdById String
+  createdBy   Student  @relation("ChallengeAuthor", fields: [createdById], references: [id], onDelete: Cascade)
+  opponentId  String? // DUEL uchun
+  opponent    Student? @relation("ChallengeOpponent", fields: [opponentId], references: [id], onDelete: Cascade)
+  groupId     String? // GROUP uchun
+  expiresAt   DateTime
+  createdAt   DateTime @default(now())
+
+  entries GameChallengeEntry[]
+
+  @@index([opponentId])
+  @@index([groupId])
+  @@index([createdById])
+}
+
+// Chaqiruvdagi bitta o'yinchining natijasi
+model GameChallengeEntry {
+  id          String        @id @default(cuid())
+  challengeId String
+  challenge   GameChallenge @relation(fields: [challengeId], references: [id], onDelete: Cascade)
+  studentId   String
+  student     Student       @relation(fields: [studentId], references: [id], onDelete: Cascade)
+  score       Int
+  total       Int
+  createdAt   DateTime      @default(now())
+
+  @@unique([challengeId, studentId])
 }
 
 // "Jang" bo'limidagi o'yin natijasi
