@@ -25,6 +25,10 @@ import MissingStudent from "./MissingStudent";
 
 const clamp = (n: number) => Math.max(0, Math.min(100, Math.round(n)));
 
+// Ma'lumot hali yo'q ko'nikma uchun rasm darajasi — o'rtacha (xafa ham emas,
+// xursand ham emas). skillLevel() bo'yicha 41-60 oralig'i 3-darajaga tushadi.
+const NEUTRAL_SKILL = 55;
+
 // ── Ko'nikma rasmlari (public/skills/) ──
 // Foiz 5 ta kayfiyat darajasiga bo'linadi: 0-15, 16-40, 41-60, 61-85, 86-100.
 // Rasm hali yuklanmagan bo'lsa — pastdagi SVG ikonka ishlatiladi (sayt buzilmaydi).
@@ -102,22 +106,40 @@ function IcoStarGold({ s = 24 }: { s?: number }) {
   );
 }
 
-// Seriya — olov (yuqoridagi belgi bilan bir xil shakl)
-function IcoFlameWhite({ s = 24 }: { s?: number }) {
+// Seriya — olov. Oq holida feruza doira ichida SUV TOMCHISIGA o'xshab
+// qolgan edi: uchi tik va simmetrik edi. Endi uchi o'ngga egilgan, ichida
+// yorqin yadro bor va rangi tilla — olov ekani bir qarashda o'qiladi.
+function IcoFlameGold({ s = 24 }: { s?: number }) {
   return (
-    <svg width={s} height={s} viewBox="0 0 24 24" fill="white">
-      <path d="M12 2.5c.5 3-1 4.6-2.6 6.2C7.7 10.4 6 12.2 6 15a6 6 0 0 0 12 0c0-2.2-1-4-2.2-5.6C14.4 7.5 13 5.5 12 2.5Z" />
-      <path d="M12 10.5c.3 1.6-.6 2.5-1.4 3.4-.7.8-1.4 1.6-1.4 2.8a2.9 2.9 0 0 0 5.8 0c0-1.1-.5-1.9-1.1-2.8-.7-1-1.5-2-1.9-3.4Z" fill="#ffd7a8" />
+    <svg width={s} height={s} viewBox="0 0 24 24">
+      <defs>
+        <linearGradient id="glFlameGold" x1="0.3" y1="0" x2="0.7" y2="1">
+          <stop offset="0%" stopColor="#ffe9a3" />
+          <stop offset="52%" stopColor="#fbc63f" />
+          <stop offset="100%" stopColor="#ef9f21" />
+        </linearGradient>
+      </defs>
+      <path d="M13.1 2.2c.9 2.9-.4 4.4-2 6C9.2 10 7 11.9 7 14.9a5.9 5.9 0 0 0 11.8.4c.1-2.3-.9-4-2-5.6-.4 1-1.1 1.7-2 2.1.6-3.3-.4-6.5-1.7-9.6Z"
+        fill="url(#glFlameGold)" stroke="#fff7de" strokeOpacity="0.55" strokeWidth="0.8" strokeLinejoin="round" />
+      <path d="M12.4 11.4c.4 1.6-.5 2.5-1.2 3.4-.6.8-1.1 1.5-1.1 2.5a2.7 2.7 0 0 0 5.4.1c0-1-.5-1.8-1.1-2.6-.7-.9-1.6-1.9-2-3.4Z"
+        fill="#fff6d8" fillOpacity="0.9" />
     </svg>
   );
 }
 
-// Rang — o'sish strelkasi (chiziqli grafik)
-function IcoGrowth({ s = 24 }: { s?: number }) {
+// Reyting — o'sish strelkasi (chiziqli grafik), tilla rangda
+function IcoGrowthGold({ s = 24 }: { s?: number }) {
   return (
-    <svg width={s} height={s} viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="2.4" strokeLinecap="round" strokeLinejoin="round">
-      <path d="m3.6 16.8 5.6-5.6 3.6 3.6 7.6-7.6" />
-      <path d="M14.6 7.2h6v6" />
+    <svg width={s} height={s} viewBox="0 0 24 24" fill="none" strokeWidth="2.4" strokeLinecap="round" strokeLinejoin="round">
+      <defs>
+        <linearGradient id="glGrowthGold" x1="0" y1="1" x2="1" y2="0">
+          <stop offset="0%" stopColor="#ef9f21" />
+          <stop offset="55%" stopColor="#fbc63f" />
+          <stop offset="100%" stopColor="#ffe9a3" />
+        </linearGradient>
+      </defs>
+      <path d="m3.6 16.8 5.6-5.6 3.6 3.6 7.6-7.6" stroke="url(#glGrowthGold)" />
+      <path d="M14.6 7.2h6v6" stroke="url(#glGrowthGold)" />
     </svg>
   );
 }
@@ -320,10 +342,15 @@ export default async function StudentStartPage() {
   // darajadagi (xafa) ko'nikma rasmi tanlanardi. Shu sabab har ko'nikma uchun
   // "manbasi bormi" belgisi olib yuriladi: bo'lmasa foiz o'rniga chiziqcha.
   const skills = [
-    { key: "w", label: t.words, pct: woerter, has: exams.length > 0, img: exams.length ? skillImage("woerter", woerter) : null, icon: <span style={{ color: TEAL }} className="text-[28px] font-extrabold leading-none">W</span> },
-    { key: "l", label: t.reading, pct: lesen, has: submissions.length > 0, img: submissions.length ? skillImage("lesen", lesen) : null, icon: <IcoBook s={34} /> },
-    { key: "h", label: t.listening, pct: hoeren, has: attendance.length > 0, img: attendance.length ? skillImage("hoeren", hoeren) : null, icon: <IcoHeadphones s={34} /> },
-    { key: "s", label: t.speaking, pct: sprechen, has: courseLessons.length > 0, img: courseLessons.length ? skillImage("sprechen", sprechen) : null, icon: <IcoMic s={34} /> },
+    // Ma'lumot yo'q bo'lsa rasm YASHIRILMAYDI, balki NEYTRAL daraja (3)
+    // ko'rsatiladi. Aks holda qator aralash chiqadi — bittasi rasm, bittasi
+    // chiziqli ikonka — va yagona rasmli karta eng past (xafa) darajada
+    // bo'lib, yangi o'quvchiga "yomon boshladingiz" degan taassurot beradi.
+    // Foiz o'rnidagi chiziqcha ma'lumot yo'qligini o'zi aytib turadi.
+    { key: "w", label: t.words, pct: woerter, has: exams.length > 0, img: skillImage("woerter", exams.length ? woerter : NEUTRAL_SKILL), icon: <span style={{ color: TEAL }} className="text-[28px] font-extrabold leading-none">W</span> },
+    { key: "l", label: t.reading, pct: lesen, has: submissions.length > 0, img: skillImage("lesen", submissions.length ? lesen : NEUTRAL_SKILL), icon: <IcoBook s={34} /> },
+    { key: "h", label: t.listening, pct: hoeren, has: attendance.length > 0, img: skillImage("hoeren", attendance.length ? hoeren : NEUTRAL_SKILL), icon: <IcoHeadphones s={34} /> },
+    { key: "s", label: t.speaking, pct: sprechen, has: courseLessons.length > 0, img: skillImage("sprechen", courseLessons.length ? sprechen : NEUTRAL_SKILL), icon: <IcoMic s={34} /> },
   ];
 
   // Karta uslubi — yagona manba `_ui.tsx` dagi CARD ("gl-glass").
@@ -428,8 +455,8 @@ export default async function StudentStartPage() {
           // Tanga — doira ichidagi belgi emas, tanganing o'zi (shu sabab `bare`)
           { icon: <CoinGold s={46} />, bare: true, label: t.coins, value: String(coins) },
           { icon: <IcoStarGold />, bare: false, label: t.stars, value: String(stars) },
-          { icon: <IcoFlameWhite />, bare: false, label: t.streak, value: String(streak) },
-          { icon: <IcoGrowth />, bare: false, label: t.rank, value: String(rangPos) },
+          { icon: <IcoFlameGold />, bare: false, label: t.streak, value: String(streak) },
+          { icon: <IcoGrowthGold />, bare: false, label: t.rank, value: String(rangPos) },
         ].map((it) => (
           <div key={it.label} className={`${card} flex flex-col items-center gap-2 rounded-[22px] px-1 pb-3 pt-3`}>
             {it.bare ? (

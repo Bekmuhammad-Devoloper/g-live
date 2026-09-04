@@ -10,6 +10,12 @@
 # emas. APK ni faqat ilova nomi/ikonkasi yoki manzili o'zgarsa qayta
 # yig'ish kerak.
 #
+# DIQQAT: ikonka APK ichiga YIG'ISH PAYTIDA joylanadi. Ikonka o'zgarganda
+# shu skriptni qayta ishga tushirish VA appVersionCode ni oshirish kerak,
+# aks holda telefon eski nusxani yangilanish deb bilmaydi.
+# 1.1.0 / code 2 — ilova ikonkasi wordmark'dan "G + burgut" monogrammasiga
+# almashtirildi (2026-09-04).
+#
 # Imzo kaliti: /opt/gl-edu/apk/android.keystore (gitga TUSHMAYDI).
 # Kalit yo'qolsa ilovani yangilab bo'lmaydi — ZAXIRALAB QO'YING:
 #   scp uzbekmen94@SERVER:/opt/gl-edu/apk/android.keystore .
@@ -111,8 +117,8 @@ cat > twa-manifest.json <<JSON
   "maskableIconUrl": "$HOST/icons/maskable-512.png",
   "splashScreenFadeOutDuration": 300,
   "signingKey": { "path": "$WORK/android.keystore", "alias": "gl" },
-  "appVersionName": "1.0.0",
-  "appVersionCode": 1,
+  "appVersionName": "1.1.0",
+  "appVersionCode": 2,
   "shortcuts": [],
   "generatorApp": "bubblewrap-cli",
   "webManifestUrl": "$HOST/student.webmanifest",
@@ -128,7 +134,7 @@ cat > twa-manifest.json <<JSON
   "fingerprints": [],
   "additionalTrustedOrigins": [],
   "retainedBundles": [],
-  "appVersion": "1.0.0"
+  "appVersion": "1.1.0"
 }
 JSON
 

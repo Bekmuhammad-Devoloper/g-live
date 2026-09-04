@@ -30,13 +30,18 @@ export const viewport = {
 // va telefonda skrollni sekinlashtirmaydi. Qatlam `fixed`: fon qimirlamaydi,
 // shisha uning ustidan suriladi — haqiqiy oyna hissi shundan.
 const AMBIENT = [
-  "radial-gradient(700px 420px at 8% -10%, rgba(23,162,191,0.46), transparent 62%)",
-  "radial-gradient(560px 360px at 100% 8%, rgba(96,196,224,0.52), transparent 58%)",
-  "radial-gradient(620px 420px at 50% 40%, rgba(255,255,255,0.82), transparent 62%)",
-  "radial-gradient(680px 500px at -4% 74%, rgba(14,116,144,0.30), transparent 60%)",
-  "radial-gradient(620px 430px at 104% 92%, rgba(245,193,68,0.24), transparent 56%)",
-  "radial-gradient(520px 380px at 40% 106%, rgba(23,162,191,0.24), transparent 62%)",
-  "linear-gradient(180deg, #e6f0f6 0%, #dbe8f0 50%, #e4eef4 100%)",
+  // Feruza ATAYLAB kam: ilgari dog'lar 0.3-0.5 shaffofsizlikda edi va butun
+  // sahifa moviy bo'lib ketardi — bu "premium" emas, "rangli" taassurot
+  // qoldiradi. Premium his sadaf (pearl) neytral asosdan, rang esa faqat
+  // ishora bo'lib chiqadi: shisha qirrasi, soya va yorug'lik ishlaydi,
+  // fon emas. Dog'lar baribir saqlanadi — shishaga sindirish uchun har
+  // qator ostida boshqacha tus kerak, aks holda shisha "o'lik" ko'rinadi.
+  "radial-gradient(780px 470px at 14% -14%, rgba(23,162,191,0.17), transparent 64%)",
+  "radial-gradient(620px 400px at 102% 4%, rgba(96,196,224,0.19), transparent 60%)",
+  "radial-gradient(700px 470px at 50% 36%, rgba(255,255,255,0.92), transparent 66%)",
+  "radial-gradient(740px 540px at -8% 78%, rgba(14,116,144,0.11), transparent 62%)",
+  "radial-gradient(620px 430px at 106% 96%, rgba(214,170,86,0.13), transparent 58%)",
+  "linear-gradient(180deg, #eff3f6 0%, #e8edf1 48%, #f1f4f6 100%)",
 ].join(",");
 
 export default async function StudentLayout({ children }: { children: React.ReactNode }) {
