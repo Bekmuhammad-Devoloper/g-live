@@ -6,8 +6,8 @@ import { cn } from "@/lib/cn";
 import { tr } from "@/lib/tr";
 import type { Locale } from "@/lib/constants";
 import { Icon } from "../../_components/Icon";
-import { COLUMNS, columnDef, columnOf, type VLead } from "../_lib/leadColumns";
-import { moveLeadStage } from "../actions";
+import { COLUMNS, columnDef, columnOf, columnOfLead, groupIdOfCol, isGroupCol, type GroupColumn, type VLead } from "../_lib/leadColumns";
+import { enrollLeadToGroup, moveLeadStage, unpinKanbanGroup } from "../actions";
 import { type Analytics } from "./AnalyticsTiles";
 import FilterBar from "./FilterBar";
 import LeadsKanban from "./LeadsKanban";
@@ -17,7 +17,8 @@ import NewLeadForm from "../NewLeadForm";
 import CommandPalette, { type PaletteAction } from "./CommandPalette";
 import KeyboardHelpOverlay from "./KeyboardHelpOverlay";
 import RejectReasonModal from "./modals/RejectReasonModal";
-import WonAddModal from "./modals/WonAddModal";
+import WonAddDrawer from "./WonAddDrawer";
+import GroupLeadPicker from "./GroupLeadPicker";
 import EnrollDrawer from "./EnrollDrawer";
 import LeadQuickView from "./LeadQuickView";
 import { useDoubleClickOpen } from "../../_components/useDoubleClickOpen";
@@ -31,9 +32,11 @@ interface Props {
   sources: string[];
   analytics: Analytics;
   canWrite: boolean;
+  /** Kanbanga biriktirilgan guruh ustunlari */
+  initialGroupColumns: GroupColumn[];
 }
 
-export default function LeadsWorkspace({ locale, initialLeads, managers, sources, analytics, canWrite }: Props) {
+export default function LeadsWorkspace({ locale, initialLeads, managers, sources, analytics, canWrite, initialGroupColumns }: Props) {
   const router = useRouter();
   const pathname = usePathname();
   const params = useSearchParams();
@@ -54,6 +57,10 @@ export default function LeadsWorkspace({ locale, initialLeads, managers, sources
   const [enroll, setEnroll] = useState<{ id: string; name: string; groupId: string | null; editCount: number } | null>(null);
   // "Qabul qilindi" ustunidagi "+" — guruh biriktirish yoki yangi o'quvchi
   const [wonAdd, setWonAdd] = useState(false);
+  // Kanbanga biriktirilgan guruhlar (ustun bo'lib chiqadi)
+  const [groupColumns, setGroupColumns] = useState<GroupColumn[]>(initialGroupColumns);
+  // Guruh ustunidagi "+" — mavjud lidni shu guruhga biriktirish
+  const [pickForGroup, setPickForGroup] = useState<string | null>(null);
   // Yonboshdan ochiladigan tezkor ko'rish oynasi (1 marta bosilganda)
   const [quickId, setQuickId] = useState<string | null>(null);
   const { single, double, cancel: cancelOpen } = useDoubleClickOpen();
@@ -62,6 +69,9 @@ export default function LeadsWorkspace({ locale, initialLeads, managers, sources
 
   // Server yangilanganda (router.refresh) mahalliy holatni sinxronlash
   useEffect(() => { setLeads(initialLeads); }, [initialLeads]);
+  useEffect(() => { setGroupColumns(initialGroupColumns); }, [initialGroupColumns]);
+
+  const pinnedIds = useMemo(() => new Set(groupColumns.map((g) => g.groupId)), [groupColumns]);
 
   // URL sync
   useEffect(() => {
@@ -110,9 +120,12 @@ export default function LeadsWorkspace({ locale, initialLeads, managers, sources
   );
   const shownTotals = useMemo(() => {
     const c: Record<string, number> = {};
-    for (const l of shown) c[columnOf(l.stage)] = (c[columnOf(l.stage)] ?? 0) + 1;
+    for (const l of shown) {
+      const k = columnOfLead(l, pinnedIds);
+      c[k] = (c[k] ?? 0) + 1;
+    }
     return c;
-  }, [shown]);
+  }, [shown, pinnedIds]);
 
   const sortedShown = useMemo(() => {
     const arr = [...shown];
@@ -155,8 +168,41 @@ export default function LeadsWorkspace({ locale, initialLeads, managers, sources
     setSelection((prev) => (prev.size === shown.length && shown.length > 0 ? new Set() : new Set(shown.map((l) => l.id))));
   }, [shown]);
 
+  /**
+   * Lidni guruhga yozish — guruh ustuniga tashlanganda ham, ustundagi "+"
+   * orqali tanlanganda ham shu chaqiriladi. Guruh biriktirilishi bilan lid
+   * "Qabul qilindi" bosqichiga o'tadi, shuning uchun alohida qadam kerak emas.
+   */
+  const enrollToGroup = useCallback((leadId: string, groupId: string) => {
+    const gname = groupColumns.find((g) => g.groupId === groupId)?.name ?? "";
+    setLeads((prev) => prev.map((l) => (l.id === leadId ? { ...l, stage: "WON", groupId, groupName: gname } : l))); // optimistik
+    startRefresh(async () => {
+      const r = await enrollLeadToGroup(leadId, groupId);
+      if (r.error) {
+        // Server rad etdi — ko'rinishni haqiqatga qaytaramiz
+        setLeads(initialLeads);
+        setFlash(
+          r.error === "group_full"
+            ? tr(locale, { uz: "Guruh to'lgan", ru: "Группа заполнена", en: "The group is full", de: "Die Gruppe ist voll" })
+            : r.error === "edit_limit"
+              ? tr(locale, { uz: "Guruhni faqat bir marta o'zgartirish mumkin", ru: "Группу можно сменить только один раз", en: "The group can only be changed once", de: "Die Gruppe kann nur einmal geaendert werden" })
+              : tr(locale, { uz: "Biriktirib bo'lmadi", ru: "Не удалось привязать", en: "Could not enrol", de: "Einschreiben fehlgeschlagen" }),
+        );
+      } else {
+        setFlash(tr(locale, { uz: `Guruhga yozildi: ${r.groupName ?? gname}`, ru: `Записан в группу: ${r.groupName ?? gname}`, en: `Enrolled in ${r.groupName ?? gname}`, de: `Eingeschrieben: ${r.groupName ?? gname}` }));
+      }
+      router.refresh();
+      setTimeout(() => setFlash(null), 4000);
+    });
+  }, [groupColumns, initialLeads, locale, router]);
+
   const onDropToColumn = useCallback((colKey: string, leadId: string) => {
     if (!canWrite) return;
+    // Guruh ustuni — lid to'g'ridan-to'g'ri o'sha guruhga yoziladi
+    if (isGroupCol(colKey)) {
+      enrollToGroup(leadId, groupIdOfCol(colKey));
+      return;
+    }
     // Yo'qotilganga tashlash — sabab so'raladi
     if (colKey === "lost") {
       const lead = leads.find((l) => l.id === leadId);
@@ -172,7 +218,7 @@ export default function LeadsWorkspace({ locale, initialLeads, managers, sources
     const target = columnDef(colKey).defaultStage;
     setLeads((prev) => prev.map((l) => (l.id === leadId ? { ...l, stage: target } : l))); // optimistik
     startRefresh(async () => { await moveLeadStage(leadId, target); router.refresh(); });
-  }, [canWrite, router, leads]);
+  }, [canWrite, router, leads, enrollToGroup]);
 
   const confirmReject = useCallback((reason: string) => {
     if (!reject) return;
@@ -278,7 +324,15 @@ export default function LeadsWorkspace({ locale, initialLeads, managers, sources
       </div>
 
       {view === "kanban" ? (
-        <LeadsKanban leads={sortedShown} totals={shownTotals} locale={locale} selected={selection} onOpen={openLead} onOpenFull={openLeadFull} onDropToColumn={onDropToColumn} onAdd={(stage) => (stage === "WON" ? setWonAdd(true) : setCreate({ open: true, stage }))} />
+        <LeadsKanban leads={sortedShown} totals={shownTotals} locale={locale} selected={selection} onOpen={openLead} onOpenFull={openLeadFull} onDropToColumn={onDropToColumn}
+          groupColumns={groupColumns}
+          onAdd={(stage) => (stage === "WON" ? setWonAdd(true) : setCreate({ open: true, stage }))}
+          onAddToGroup={(groupId) => setPickForGroup(groupId)}
+          onRemoveGroupCol={(groupId) => {
+            setGroupColumns((prev) => prev.filter((g) => g.groupId !== groupId));
+            startRefresh(async () => { await unpinKanbanGroup(groupId); router.refresh(); });
+          }}
+        />
       ) : (
         <LeadsTable leads={sortedShown} locale={locale} selected={selection} onToggle={(id) => toggleSelect(id)} onOpen={openLead} onOpenFull={openLeadFull} allSelected={selection.size === shown.length && shown.length > 0} onToggleAll={toggleAll} />
       )}
@@ -291,13 +345,24 @@ export default function LeadsWorkspace({ locale, initialLeads, managers, sources
       <RejectReasonModal locale={locale} open={!!reject} leadName={reject?.name ?? ""} onClose={() => setReject(null)} onConfirm={confirmReject} pending={refreshing} />
 
       {canWrite && (
-        <WonAddModal
+        <WonAddDrawer
           locale={locale}
           open={wonAdd}
-          leads={leads}
+          pinned={groupColumns}
           onClose={() => setWonAdd(false)}
-          onPickLead={(l) => setEnroll({ id: l.id, name: l.fullName, groupId: l.groupId, editCount: l.enrollEditCount })}
           onNewLead={() => setCreate({ open: true, stage: "WON" })}
+          onPinned={(cols) => { setGroupColumns(cols); router.refresh(); }}
+        />
+      )}
+
+      {canWrite && pickForGroup && (
+        <GroupLeadPicker
+          locale={locale}
+          leads={leads}
+          pinnedIds={pinnedIds}
+          group={groupColumns.find((g) => g.groupId === pickForGroup) ?? null}
+          onClose={() => setPickForGroup(null)}
+          onPick={(leadId) => { enrollToGroup(leadId, pickForGroup); setPickForGroup(null); }}
         />
       )}
 

@@ -6,7 +6,7 @@ import { cn } from "@/lib/cn";
 import { tr } from "@/lib/tr";
 import type { Locale } from "@/lib/constants";
 import { Icon } from "../../_components/Icon";
-import { COLUMNS, columnOf, type VLead } from "../_lib/leadColumns";
+import { COLUMNS, columnOfLead, groupColKey, type GroupColumn, type VLead } from "../_lib/leadColumns";
 import LeadCard from "./LeadCard";
 
 interface Props {
@@ -14,20 +14,60 @@ interface Props {
   totals: Record<string, number>;
   locale: Locale;
   selected: Set<string>;
+  /** Kanbanga biriktirilgan guruhlar — har biri alohida ustun */
+  groupColumns: GroupColumn[];
   onOpen: (id: string, e: React.MouseEvent) => void;
   /** Ikki marta bosilganda — lidning to'liq sahifasi */
   onOpenFull: (id: string) => void;
   onDropToColumn: (columnKey: string, leadId: string) => void;
   onAdd: (defaultStage: string) => void;
+  /** Guruh ustunidagi "+" — mavjud lidni shu guruhga biriktirish */
+  onAddToGroup: (groupId: string) => void;
+  /** Guruh ustunini olib tashlash (o'quvchilar guruhda qoladi) */
+  onRemoveGroupCol: (groupId: string) => void;
 }
 
-export default function LeadsKanban({ leads, totals, locale, selected, onOpen, onOpenFull, onDropToColumn, onAdd }: Props) {
+/** Standart va guruh ustunlari bitta ko'rinishga keltiriladi */
+interface ViewCol {
+  key: string;
+  title: string;
+  sub: string | null;
+  color: string;
+  icon: string;
+  defaultStage: string;
+  groupId: string | null;
+}
+
+export default function LeadsKanban({
+  leads, totals, locale, selected, groupColumns,
+  onOpen, onOpenFull, onDropToColumn, onAdd, onAddToGroup, onRemoveGroupCol,
+}: Props) {
   const [dragId, setDragId] = useState<string | null>(null);
   const [overCol, setOverCol] = useState<string | null>(null);
 
+  const pinnedIds = useMemo(() => new Set(groupColumns.map((g) => g.groupId)), [groupColumns]);
+
+  // Guruh ustunlari "Qabul qilindi"dan keyin, "Yo'qotilgan"dan oldin turadi
+  const cols = useMemo<ViewCol[]>(() => {
+    const std = (key: string): ViewCol => {
+      const c = COLUMNS.find((x) => x.key === key)!;
+      return { key: c.key, title: tr(locale, c.label), sub: null, color: c.color, icon: c.icon, defaultStage: c.defaultStage, groupId: null };
+    };
+    const groups = groupColumns.map<ViewCol>((g) => ({
+      key: groupColKey(g.groupId),
+      title: g.name,
+      sub: g.program,
+      color: g.color,
+      icon: g.icon,
+      defaultStage: "WON",
+      groupId: g.groupId,
+    }));
+    return [std("new"), std("work"), std("offer"), std("won"), ...groups, std("lost")];
+  }, [groupColumns, locale]);
+
   const byCol: Record<string, VLead[]> = {};
-  for (const c of COLUMNS) byCol[c.key] = [];
-  for (const l of leads) (byCol[columnOf(l.stage)] ??= []).push(l);
+  for (const c of cols) byCol[c.key] = [];
+  for (const l of leads) (byCol[columnOfLead(l, pinnedIds)] ??= []).push(l);
 
   const onDragStart = (id: string, e: React.DragEvent) => {
     e.dataTransfer.setData("text/plain", id);
@@ -37,12 +77,18 @@ export default function LeadsKanban({ leads, totals, locale, selected, onOpen, o
   const onDragEnd = () => { setDragId(null); setOverCol(null); };
 
   return (
-    <div className="grid auto-cols-[minmax(272px,1fr)] grid-flow-col gap-4 overflow-x-auto pb-4 lg:grid-flow-row lg:grid-cols-5">
-      {COLUMNS.map((col) => {
+    <div
+      className={cn(
+        "grid auto-cols-[minmax(272px,1fr)] grid-flow-col gap-4 overflow-x-auto pb-4",
+        // Guruh ustunlari qo'shilsa 5 ta ustunga sig'maydi — gorizontal scroll qoladi
+        groupColumns.length === 0 && "lg:grid-flow-row lg:grid-cols-5",
+      )}
+    >
+      {cols.map((col) => {
         const items = byCol[col.key] ?? [];
         const isOver = overCol === col.key;
-        const draggingFrom = leads.find((l) => l.id === dragId)?.stage;
-        const differentCol = dragId !== null && columnOf(draggingFrom ?? "") !== col.key;
+        const dragging = leads.find((l) => l.id === dragId) ?? null;
+        const differentCol = dragging !== null && columnOfLead(dragging, pinnedIds) !== col.key;
         return (
           <div
             key={col.key}
@@ -53,7 +99,7 @@ export default function LeadsKanban({ leads, totals, locale, selected, onOpen, o
               e.preventDefault();
               const id = e.dataTransfer.getData("text/plain") || dragId;
               const lead = id ? leads.find((l) => l.id === id) : null;
-              if (id && lead && columnOf(lead.stage) !== col.key) onDropToColumn(col.key, id);
+              if (id && lead && columnOfLead(lead, pinnedIds) !== col.key) onDropToColumn(col.key, id);
               setDragId(null);
               setOverCol(null);
             }}
@@ -62,16 +108,32 @@ export default function LeadsKanban({ leads, totals, locale, selected, onOpen, o
             {/* Sarlavha */}
             <div className="flex items-center justify-between gap-2 px-1">
               <div className="flex min-w-0 items-center gap-2">
-                <span className="flex h-7 w-7 items-center justify-center rounded-lg" style={{ color: col.color, background: `${col.color}1f` }}>
+                <span className="flex h-7 w-7 shrink-0 items-center justify-center rounded-lg" style={{ color: col.color, background: `${col.color}1f` }}>
                   <Icon name={col.icon} className="h-4 w-4" strokeWidth={2} />
                 </span>
-                <span className="truncate text-sm font-semibold text-slate-700 dark:text-slate-100">{tr(locale, col.label)}</span>
+                <span className="min-w-0">
+                  <span className="block truncate text-sm font-semibold text-slate-700 dark:text-slate-100">{col.title}</span>
+                  {col.sub && <span className="block truncate text-[11px] text-slate-400">{col.sub}</span>}
+                </span>
               </div>
-              <div className="flex items-center gap-1">
+              <div className="flex shrink-0 items-center gap-1">
                 <span className="text-sm font-bold" style={{ color: col.color }}>{totals[col.key] ?? items.length}</span>
-                <button onClick={() => onAdd(col.defaultStage)} title={tr(locale, { uz: "Qo'shish", ru: "Добавить", en: "Add", de: "Hinzufügen" })} className="flex h-6 w-6 items-center justify-center rounded-md text-slate-400 transition hover:bg-slate-200/60 hover:text-slate-600 dark:hover:bg-white/[0.06]">
+                <button
+                  onClick={() => (col.groupId ? onAddToGroup(col.groupId) : onAdd(col.defaultStage))}
+                  title={tr(locale, { uz: "Qo'shish", ru: "Добавить", en: "Add", de: "Hinzufügen" })}
+                  className="flex h-6 w-6 items-center justify-center rounded-md text-slate-400 transition hover:bg-slate-200/60 hover:text-slate-600 dark:hover:bg-white/[0.06]"
+                >
                   <Icon name="plus" className="h-4 w-4" />
                 </button>
+                {col.groupId && (
+                  <button
+                    onClick={() => onRemoveGroupCol(col.groupId!)}
+                    title={tr(locale, { uz: "Ustunni olib tashlash", ru: "Убрать столбец", en: "Remove column", de: "Spalte entfernen" })}
+                    className="flex h-6 w-6 items-center justify-center rounded-md text-slate-300 transition hover:bg-red-50 hover:text-red-500 dark:hover:bg-white/[0.06]"
+                  >
+                    <Icon name="close" className="h-3.5 w-3.5" />
+                  </button>
+                )}
               </div>
             </div>
 
@@ -96,8 +158,12 @@ export default function LeadsKanban({ leads, totals, locale, selected, onOpen, o
                 />
               ) : items.length === 0 ? (
                 <div className="rounded-xl border border-dashed border-slate-200 py-8 text-center dark:border-white/[0.08]">
-                  <div className="text-2xl opacity-30">📭</div>
-                  <p className="mt-1 text-xs text-slate-400">{tr(locale, { uz: "Lid yo'q", ru: "Нет лидов", en: "No leads", de: "Keine Leads" })}</p>
+                  <div className="text-2xl opacity-30">{col.groupId ? "🎯" : "📭"}</div>
+                  <p className="mt-1 px-3 text-xs text-slate-400">
+                    {col.groupId
+                      ? tr(locale, { uz: "Lidni shu yerga tashlang — guruhga yoziladi", ru: "Перетащите лид сюда — он попадёт в группу", en: "Drop a lead here to enrol it", de: "Lead hierher ziehen zum Einschreiben" })
+                      : tr(locale, { uz: "Lid yo'q", ru: "Нет лидов", en: "No leads", de: "Keine Leads" })}
+                  </p>
                 </div>
               ) : (
                 items.map((lead) => (

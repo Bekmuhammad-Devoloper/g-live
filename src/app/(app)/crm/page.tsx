@@ -6,6 +6,7 @@ import { ROLES } from "@/lib/constants";
 import { branchWhere } from "@/lib/branchScope";
 import { Forbidden } from "../_components/ui";
 import LeadsWorkspace from "./_components/LeadsWorkspace";
+import { listKanbanGroups } from "./actions";
 import { columnOf, type VLead } from "./_lib/leadColumns";
 import type { Analytics } from "./_components/AnalyticsTiles";
 
@@ -16,7 +17,7 @@ export default async function CrmPage() {
     return <Forbidden title={t("err.forbidden")} body={t("err.forbiddenBody")} />;
   }
 
-  const [leads, managers] = await Promise.all([
+  const [leads, managers, groupColumns] = await Promise.all([
     prisma.lead.findMany({
       where: branchWhere(s), // faol filial lidlarigina (filialsiz eski yozuvlar ham)
       orderBy: { createdAt: "desc" },
@@ -24,6 +25,7 @@ export default async function CrmPage() {
       take: 2000,
     }),
     prisma.user.findMany({ where: { role: ROLES.OPERATOR, isActive: true }, select: { id: true, fullName: true }, orderBy: { fullName: "asc" } }),
+    listKanbanGroups(),   // Kanbanga biriktirilgan guruh ustunlari
   ]);
 
   const vleads: VLead[] = leads.map((l) => ({
@@ -74,6 +76,7 @@ export default async function CrmPage() {
       sources={sources}
       analytics={analytics}
       canWrite={canWrite(s.role, MODULES.CRM)}
+      initialGroupColumns={groupColumns}
     />
   );
 }

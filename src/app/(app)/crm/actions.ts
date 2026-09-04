@@ -8,6 +8,8 @@ import { canRead, canWrite, MODULES } from "@/lib/rbac";
 import { writeAudit } from "@/lib/audit";
 import { ROLES, LEAD_STAGES, isSalesRole } from "@/lib/constants";
 import { parseUzPhone } from "@/lib/phone";
+import { getSetting, setSetting } from "@/lib/settings";
+import { GROUP_COL_COLORS, GROUP_COL_ICONS, type GroupColumn } from "./_lib/leadColumns";
 
 const schema = z.object({
   fullName: z.string().min(2),
@@ -531,4 +533,79 @@ export async function deleteLeadPermanently(leadId: string): Promise<{ ok?: bool
 
   revalidatePath("/crm");
   return { ok: true };
+}
+
+/* ─── Kanbanga guruh biriktirish ─────────────────────────────────────
+   Guruh Kanbanga biriktirilsa alohida ustun bo'lib chiqadi; unga
+   tashlangan lid o'sha guruhga yoziladi. Ro'yxat Setting'da JSON bo'lib
+   saqlanadi — bitta kalit, alohida jadval kerak emas.                  */
+
+const KANBAN_GROUPS_KEY = "crm.kanbanGroups";
+
+type PinnedRaw = { groupId: string; color: string; icon: string };
+
+async function readPinned(): Promise<PinnedRaw[]> {
+  const raw = await getSetting(KANBAN_GROUPS_KEY);
+  if (!raw) return [];
+  try {
+    const arr = JSON.parse(raw);
+    if (!Array.isArray(arr)) return [];
+    return arr
+      .filter((x): x is PinnedRaw => !!x && typeof x.groupId === "string")
+      .map((x) => ({ groupId: x.groupId, color: String(x.color || "#10b981"), icon: String(x.icon || "layers") }));
+  } catch {
+    return [];
+  }
+}
+
+/** Biriktirilgan ustunlar — nomi bilan. O'chirilgan guruhlar tashlab yuboriladi. */
+export async function listKanbanGroups(): Promise<GroupColumn[]> {
+  const pinned = await readPinned();
+  if (pinned.length === 0) return [];
+
+  const groups = await prisma.group.findMany({
+    where: { id: { in: pinned.map((p) => p.groupId) } },
+    select: { id: true, name: true, program: { select: { name: true } } },
+  });
+  const byId = new Map(groups.map((g) => [g.id, g]));
+
+  return pinned
+    .filter((p) => byId.has(p.groupId))
+    .map((p) => {
+      const g = byId.get(p.groupId)!;
+      return { groupId: g.id, name: g.name, program: g.program?.name ?? null, color: p.color, icon: p.icon };
+    });
+}
+
+export type PinResult = { ok?: boolean; error?: string; columns?: GroupColumn[] };
+
+export async function pinKanbanGroup(groupId: string, color: string, icon: string): Promise<PinResult> {
+  const s = await requireSession();
+  if (!canWrite(s.role, MODULES.CRM)) return { error: "forbidden" };
+
+  const group = await prisma.group.findUnique({ where: { id: groupId }, select: { id: true } });
+  if (!group) return { error: "group_not_found" };
+
+  const safeColor = GROUP_COL_COLORS.includes(color) ? color : GROUP_COL_COLORS[0];
+  const safeIcon = GROUP_COL_ICONS.includes(icon) ? icon : GROUP_COL_ICONS[0];
+
+  const pinned = await readPinned();
+  const next = pinned.filter((p) => p.groupId !== groupId);
+  next.push({ groupId, color: safeColor, icon: safeIcon });
+  await setSetting(KANBAN_GROUPS_KEY, JSON.stringify(next));
+
+  revalidatePath("/crm");
+  return { ok: true, columns: await listKanbanGroups() };
+}
+
+/** Ustunni olib tashlash — o'quvchilar guruhda qoladi, faqat ko'rinish o'zgaradi */
+export async function unpinKanbanGroup(groupId: string): Promise<PinResult> {
+  const s = await requireSession();
+  if (!canWrite(s.role, MODULES.CRM)) return { error: "forbidden" };
+
+  const pinned = await readPinned();
+  await setSetting(KANBAN_GROUPS_KEY, JSON.stringify(pinned.filter((p) => p.groupId !== groupId)));
+
+  revalidatePath("/crm");
+  return { ok: true, columns: await listKanbanGroups() };
 }

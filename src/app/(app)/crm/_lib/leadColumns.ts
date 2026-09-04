@@ -67,3 +67,53 @@ export function canTransition(fromStage: string, toColumnKey: string): boolean {
 export function initials(name: string): string {
   return name.split(" ").filter(Boolean).slice(0, 2).map((w) => w[0]).join("").toUpperCase();
 }
+
+/* ─── Guruh ustunlari ────────────────────────────────────────────────
+   Direktor/administrator guruhni Kanbanga "biriktirsa", shu guruh uchun
+   alohida ustun paydo bo'ladi. Ustunga tashlangan lid o'sha guruhga
+   yoziladi va "Qabul qilindi" bosqichiga o'tadi.                       */
+
+export interface GroupColumn {
+  groupId: string;
+  name: string;
+  /** Kurs nomi — ustun tagida ko'rsatiladi */
+  program: string | null;
+  color: string;
+  icon: string;
+}
+
+export const GROUP_COL_PREFIX = "grp:";
+
+export function groupColKey(groupId: string): string {
+  return GROUP_COL_PREFIX + groupId;
+}
+
+export function isGroupCol(key: string): boolean {
+  return key.startsWith(GROUP_COL_PREFIX);
+}
+
+export function groupIdOfCol(key: string): string {
+  return key.slice(GROUP_COL_PREFIX.length);
+}
+
+/**
+ * Lid qaysi ustunda ko'rinadi. Qabul qilingan lidning guruhi Kanbanga
+ * biriktirilgan bo'lsa — o'sha guruh ustunida, aks holda "Qabul qilindi"da.
+ */
+export function columnOfLead(lead: { stage: string; groupId: string | null }, pinned: Set<string>): string {
+  const base = columnOf(lead.stage);
+  if (base === "won" && lead.groupId && pinned.has(lead.groupId)) return groupColKey(lead.groupId);
+  return base;
+}
+
+/** Ustun uchun tayyor ranglar — Kanban sarlavhasi shu rangda bo'ladi */
+export const GROUP_COL_COLORS = [
+  "#10b981", "#0ea5e9", "#6366f1", "#a855f7",
+  "#ec4899", "#f97316", "#eab308", "#14b8a6",
+];
+
+/** Ustun uchun tayyor belgilar (Icon nomlari) */
+export const GROUP_COL_ICONS = [
+  "layers", "graduation", "users", "book",
+  "trophy", "award", "calendar", "globe",
+];
