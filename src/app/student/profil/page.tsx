@@ -138,9 +138,15 @@ export default async function StudentProfilPage() {
         ))}
       </div>
 
-      {/* ── Ikkinchi miya (shaxsiy rivojlanish) ──
+      {/* ── Ikkinchi miya (shaxsiy rivojlanish) — VAQTINCHA O'CHIRILGAN ──
+          Talab (2026-09-04): bo'lim to'liq kommentga olindi.
+          Qaytarish uchun: shu sarlavha qatorlarini va eng pastdagi yopuvchi
+          qatorni olib tashlang, so'ng ichidagi << va >> belgilarini JSX
+          komment belgilariga qaytaring.
+
+      << ── Ikkinchi miya (shaxsiy rivojlanish) ──
           Ko'rinishi Sozlamalar > O'quvchi portali dan boshqariladi.
-          Hozir o'chirilgan (portal.gehirn = off) — yoqilsa shu yerda chiqadi. */}
+          Hozir o'chirilgan (portal.gehirn = off) — yoqilsa shu yerda chiqadi. >>
       {brainOn && (
       <Link
         href="/student/gehirn"
@@ -165,6 +171,7 @@ export default async function StudentProfilPage() {
         </svg>
       </Link>
       )}
+      */}
 
       {/* ── To'lovlar ── */}
       <SectionTitle>{t.payments}</SectionTitle>

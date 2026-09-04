@@ -31,9 +31,13 @@ export const PORTAL_FEATURES: {
   { key: "market", path: "/student/market", icon: "coins",
     label: { uz: "Market", ru: "Маркет", en: "Market", de: "Markt" },
     desc: { uz: "Tangalarga sovg'a almashish", ru: "Обмен монет на призы", en: "Exchange coins for rewards", de: "Münzen gegen Preise" } },
-  { key: "gehirn", path: "/student/gehirn", icon: "layers",
-    label: { uz: "Ikkinchi miya", ru: "Второй мозг", en: "Second brain", de: "Zweites Gehirn" },
-    desc: { uz: "Shaxsiy bilim bazasi", ru: "Личная база знаний", en: "Personal knowledge base", de: "Persönliche Wissensbasis" } },
+  // ── Ikkinchi miya — VAQTINCHA O'CHIRILGAN (2026-09-04) ──
+  // Kartochkasi /student/profil da kommentga olingan, shuning uchun
+  // menejer panelida ham "o'lik" tugma qolmasin deb chiqarib qo'yildi.
+  // Qaytarish: pastdagi kommentni oching.
+  // { key: "gehirn", path: "/student/gehirn", icon: "layers",
+  //   label: { uz: "Ikkinchi miya", ru: "Второй мозг", en: "Second brain", de: "Zweites Gehirn" },
+  //   desc: { uz: "Shaxsiy bilim bazasi", ru: "Личная база знаний", en: "Personal knowledge base", de: "Persönliche Wissensbasis" } },
   { key: "mitteilungen", path: "/student/mitteilungen", icon: "bell",
     label: { uz: "Bildirishnomalar", ru: "Уведомления", en: "Notifications", de: "Mitteilungen" },
     desc: { uz: "Markazdan kelgan xabarlar", ru: "Сообщения от центра", en: "Messages from the centre", de: "Nachrichten vom Zentrum" } },

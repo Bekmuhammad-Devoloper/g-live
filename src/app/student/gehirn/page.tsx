@@ -16,8 +16,17 @@ import GraphButton from "./GraphButton";
 export default async function BrainPage() {
   const session = await getSession();
   if (!session) redirect("/login");
-  // Bo'lim menejer tomonidan o'chirilgan bo'lsa — bosh sahifaga
-  if (!(await isPortalFeatureOn("gehirn"))) redirect("/student");
+  // ── Ikkinchi miya VAQTINCHA O'CHIRILGAN (2026-09-04) ──
+  // Kartochkasi /student/profil da kommentga olingan; manzil orqali ham
+  // kirilmasin deb shu yerda to'xtatiladi.
+  // Qaytarish: BRAIN_ENABLED ni true qiling (yoki shu blokni o'chirib,
+  // pastdagi eski qatorni tiklang).
+  // ("as boolean" — TypeScript qolgan kodni "yetib bo'lmaydi" deb
+  //  hisoblab, tip tekshiruvini buzmasligi uchun.)
+  const BRAIN_ENABLED = false as boolean;
+  if (!BRAIN_ENABLED) redirect("/student");
+  // Eski holat (menejer paneli orqali boshqarish):
+  // if (!(await isPortalFeatureOn("gehirn"))) redirect("/student");
   const t = S(session.locale);
 
   const student = await prisma.student.findUnique({
