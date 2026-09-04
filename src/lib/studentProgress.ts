@@ -35,13 +35,19 @@ export interface StudentProgress {
 }
 
 /**
- * Bitta darsning to'lish foizi uchta belgidan yig'iladi, LEKIN faqat
- * o'sha darsga tegishlilari sanaladi:
- *   · o'qituvchi darsni o'tdi     — har doim
- *   · o'quvchi videoni ko'rdi     — faqat video bo'lsa
- *   · o'quvchi vazifani topshirdi — faqat vazifa berilgan bo'lsa
- * Bo'lmagan bosqich maxrajga qo'shilmaydi: videosi yo'q dars hech qachon
- * to'lmay qolmasin.
+ * Bitta darsning to'lish foizi.
+ *
+ * Bu ko'rsatkich "SIZNING natijangiz" deb ataladi, shuning uchun u
+ * O'QUVCHINING O'Z ishiga qarab hisoblanadi:
+ *   · videoni ko'rdimi     — dars videosi bo'lsa
+ *   · vazifani topshirdimi — vazifa berilgan bo'lsa
+ * Ikkalasi ham yo'q dars (o'quvchi bajaradigan narsa yo'q) — o'qituvchining
+ * "o'tildi" belgisiga qarab yopiladi.
+ *
+ * O'qituvchining belgisi o'quvchining foiziga QO'SHILMAYDI: aks holda
+ * darslarni to'liq ko'rib chiqqan o'quvchi ham, ustoz jurnalni to'ldirmaguncha,
+ * 100% ga yetolmasdi (aynan shu shikoyat bo'lgan). Guruhning sur'ati
+ * alohida ko'rsatiladi — Kurslar sahifasidagi "X / N o'tildi".
  */
 export async function getStudentProgress(
   studentId: string,
@@ -89,8 +95,8 @@ export async function getStudentProgress(
 
   const pcts = new Map<string, number>();
   for (const l of lessons) {
-    let total = 1;
-    let got = taught.has(l.id) ? 1 : 0;
+    let total = 0;
+    let got = 0;
     if (l.videoUrl) {
       total += 1;
       if (watched.has(l.id)) got += 1;
@@ -98,6 +104,11 @@ export async function getStudentProgress(
     if (hasTask.has(l.id)) {
       total += 1;
       if (didTask.has(l.id)) got += 1;
+    }
+    // O'quvchi bajaradigan narsa yo'q — ustozning belgisiga qaraymiz
+    if (total === 0) {
+      total = 1;
+      got = taught.has(l.id) ? 1 : 0;
     }
     pcts.set(l.id, Math.round((got / total) * 100));
   }
