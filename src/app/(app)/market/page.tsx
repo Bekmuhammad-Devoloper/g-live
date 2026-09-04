@@ -37,6 +37,7 @@ export default async function MarketPage() {
         stock: true,
         imageUrl: true,
         isActive: true,
+        branch: { select: { name: true } },
         _count: { select: { orders: true } },
       },
     }),
@@ -73,6 +74,8 @@ export default async function MarketPage() {
     stock: i.stock,
     imageUrl: i.imageUrl,
     isActive: i.isActive,
+    // Filialsiz sovg'a — barcha filial o'quvchilariga ko'rinadi
+    branchName: i.branch?.name ?? null,
     orders: i._count.orders,
   }));
 

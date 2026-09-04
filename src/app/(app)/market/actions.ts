@@ -29,20 +29,21 @@ export async function saveItem(fd: FormData): Promise<Res> {
   const stock = stockRaw === "" ? null : Number(stockRaw);
   if (stock !== null && (!Number.isInteger(stock) || stock < 0)) return { error: "Zaxira noto'g'ri" };
 
+  // Filial doirasi formadan: "Barcha filiallar uchun" belgilansa — branchId yo'q
+  // (o'quvchi tomonida filialsiz sovg'a hamma filialga ko'rinadi).
+  const allBranches = String(fd.get("allBranches") ?? "") === "1";
+
   const data = {
     title,
     description: description || null,
     price: Math.round(price),
     stock,
     imageUrl: imageUrl || null,
-    // Filial doirasi: joriy filialga bog'lanadi (filialsiz sessiyada — hammaga)
-    branchId: s.branchId ?? null,
+    branchId: allBranches ? null : s.branchId ?? null,
   };
 
   if (id) {
-    // Tahrirda filial biriktirmasi o'zgarmaydi
-    const { branchId: _skip, ...rest } = data;
-    await prisma.marketItem.update({ where: { id }, data: rest });
+    await prisma.marketItem.update({ where: { id }, data });
   } else {
     await prisma.marketItem.create({ data });
   }

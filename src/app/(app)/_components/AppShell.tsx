@@ -48,7 +48,6 @@ const SUBMENUS: Record<string, { title: Record<Locale, string>; groups: SubGroup
         { href: "/rooms", icon: "building", label: { uz: "Xonalar", ru: "Кабинеты", en: "Rooms", de: "Räume" } },
         { href: "/group-students", icon: "graduation", label: { uz: "Guruh o'quvchilari", ru: "Ученики группы", en: "Group students", de: "Schüler der Gruppe" } },
         { href: "/chat", icon: "mail", label: { uz: "O'quvchilar yozishmasi", ru: "Переписка с учениками", en: "Student chat", de: "Schüler-Chat" } },
-        { href: "/market", icon: "trophy", label: { uz: "Market (sovg'alar)", ru: "Маркет (призы)", en: "Market (rewards)", de: "Markt (Preise)" } },
       ] },
     ],
   },
@@ -176,8 +175,12 @@ const SUBMENUS: Record<string, { title: Record<Locale, string>; groups: SubGroup
   },
 };
 
+// Portal sidebar bandi. `roles` berilsa — faqat shu rollarda ko'rinadi
+// (masalan Market: menejerda bor, operator/ROP da yo'q — RBAC ham shunday).
+type PortalItem = { href: string; icon: string; label: Record<Locale, string>; exact?: boolean; roles?: string[] };
+
 // ROP (sotuv bo'limi boshlig'i) uchun alohida sidebar bandlari
-const ROP_NAV: { href: string; icon: string; label: Record<Locale, string>; exact?: boolean }[] = [
+const ROP_NAV: PortalItem[] = [
   { href: "/rop", icon: "grid", label: L("Bosh sahifa", "Главная", "Home", "Startseite"), exact: true },
   { href: "/crm", icon: "download", label: L("Lidlar", "Лиды", "Leads", "Leads") },
   { href: "/reports/operators", icon: "headphones", label: L("Operatorlar", "Операторы", "Operators", "Operatoren") },
@@ -188,6 +191,7 @@ const ROP_NAV: { href: string; icon: string; label: Record<Locale, string>; exac
   { href: "/links", icon: "link", label: L("Havolalar", "Ссылки", "Links", "Links") },
   { href: "/tasks", icon: "clipboard", label: L("Vazifalar", "Задачи", "Tasks", "Aufgaben") },
   { href: "/marketing", icon: "bell", label: L("Xabarlar", "Сообщения", "Messages", "Nachrichten") },
+  { href: "/market", icon: "coins", label: L("Market (sovg'alar)", "Маркет (призы)", "Market (rewards)", "Markt (Preise)"), roles: [ROLES.MANAGER] },
   { href: "/settings/operator", icon: "settings", label: L("Sozlamalar", "Настройки", "Settings", "Einstellungen") },
 ];
 
@@ -196,12 +200,13 @@ const ROP_NAV: { href: string; icon: string; label: Record<Locale, string>; exac
 //   /operator → /operator/leads → /operator/calls → /operator/reminders
 //   → /operator/notifications → /operator/settings
 // Bu loyihadagi mavjud sahifalarga moslashtirilgan.
-const OPERATOR_NAV: { href: string; icon: string; label: Record<Locale, string>; exact?: boolean }[] = [
+const OPERATOR_NAV: PortalItem[] = [
   { href: "/operator", icon: "grid", label: L("Bosh sahifa", "Главная", "Dashboard", "Startseite"), exact: true },
   { href: "/crm", icon: "download", label: L("Lidlar", "Лиды", "Leads", "Leads") },
   { href: "/reports/calls", icon: "phone", label: L("Qo'ng'iroqlar", "Звонки", "Calls", "Anrufe") },
   { href: "/reminders", icon: "clock", label: L("Eslatmalar", "Напоминания", "Reminders", "Erinnerungen") },
   { href: "/notifications", icon: "bell", label: L("Bildirishnomalar", "Уведомления", "Notifications", "Benachrichtigungen") },
+  { href: "/market", icon: "coins", label: L("Market (sovg'alar)", "Маркет (призы)", "Market (rewards)", "Markt (Preise)"), roles: [ROLES.MANAGER] },
   { href: "/settings/operator", icon: "settings", label: L("Sozlamalar", "Настройки", "Settings", "Einstellungen") },
 ];
 
@@ -330,7 +335,9 @@ export default function AppShell({ navItems, role, portal, user, locale, labels,
 
   // ROP va operator o'z sidebar'iga ega (umumiy xodim menyusi o'rniga).
   // portalNav null bo'lsa — oddiy rolga mos menyu ko'rsatiladi.
-  const portalNav = portal === "rop" ? ROP_NAV : portal === "operator" ? OPERATOR_NAV : null;
+  const portalNav = (portal === "rop" ? ROP_NAV : portal === "operator" ? OPERATOR_NAV : null)?.filter(
+    (it) => !it.roles || it.roles.includes(role),
+  ) ?? null;
 
   // Submenu guruhlari — o'qituvchi rolida /reports faqat mos hisobotlarga cheklanadi
   const submenuGroups = (href: string): SubGroup[] => {

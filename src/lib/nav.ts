@@ -29,6 +29,10 @@ const ALL: NavItem[] = [
   { href: "/tests", icon: "filecheck", i18nKey: "nav.blocktest", roles: [...HEAD, ROLES.TEACHER] },
   { href: "/finance", icon: "wallet", i18nKey: "nav.finance", roles: [ROLES.MANAGER, ROLES.DEPUTY_DIRECTOR, ROLES.DIRECTOR, ROLES.ACCOUNTANT] },
   { href: "/rating", icon: "trophy", i18nKey: "nav.rating", roles: [...STAFF, ROLES.TEACHER] },
+  // Sovg'alar do'koni — o'quvchi tangasini shu yerdagi sovg'alarga almashtiradi.
+  // Ilgari faqat "Guruhlar" submenusida edi va rahbariyat uni topolmasdi.
+  // (module emas — MARKET o'quvchida ham READ, sidebar esa faqat xodimlar uchun)
+  { href: "/market", icon: "coins", i18nKey: "nav.market", roles: STAFF },
   { href: "/control", icon: "shieldCheck", i18nKey: "nav.control", roles: HEAD },
   { href: "/teacher-attendance", icon: "calendar", i18nKey: "nav.teacherAttendance", roles: HEAD },
   { href: "/management", icon: "layout", i18nKey: "nav.management", roles: TOP },
