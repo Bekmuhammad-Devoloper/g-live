@@ -470,3 +470,12 @@ select:not(.appearance-none):not([multiple]):not([size]) {
     }
   }
 }
+
+/* To'liq ekranga chiqqan har qanday element qora fonda bo'lsin.
+   Sababi: videoning o'z to'liq ekran tugmasi bosilganda brauzer elementni
+   sahifadan ajratib ko'rsatadi va uning ortida `body` ning OCH foni
+   ko'rinib qoladi — video yon tomonlarida oq chiziqlar paydo bo'lardi. */
+:fullscreen,
+::backdrop {
+  background-color: #000;
+}

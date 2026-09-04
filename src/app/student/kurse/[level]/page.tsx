@@ -64,6 +64,10 @@ function surfacePath(pct: number): string {
   return `M0 ${y} C20 ${y - WAVE}, 40 ${y + WAVE}, 60 ${y} C80 ${y - WAVE}, 100 ${y + WAVE}, 120 ${y}`;
 }
 
+// Shaklning o'lchangan markazi — halqa va foiz shunga nisbatan qo'yiladi
+const BRAIN_CX = 61.15;
+const BRAIN_CY = 50.65;
+
 interface BrainProps {
   /** 0..100 — miya shu foizgacha to'ladi */
   pct: number;
@@ -71,6 +75,8 @@ interface BrainProps {
   /** clipPath id lari sahifada takrorlanmasligi uchun — DARS TARTIBI ishlatiladi
       (id ning oxirgi belgilari emas: ular tasodifan bir xil chiqishi mumkin) */
   id: string;
+  /** Joriy dars — atrofida halqa chiziladi */
+  current?: boolean;
 }
 
 // Uch qatlam: bo'sh asos → suv (miya shakli bilan kesilgan, ustida oq
@@ -80,9 +86,16 @@ interface BrainProps {
 //
 // viewBox shaklning o'z chegarasiga toraytirilgan (5 4 112 93): aks holda
 // kvadrat quticha ichida miya yuqorida turib, atrofidagi halqa siljirdi.
-function Brain({ pct, size = 88, id }: BrainProps) {
+function Brain({ pct, size = 88, id, current = false }: BrainProps) {
   const filled = pct > 0;
   const water = waterPath(pct);
+
+  // Foiz miyaning ICHIDA turadi. Suv sathi matndan yuqori ko'tarilganda matn
+  // suv ostida qoladi — o'shanda oq, aks holda to'q. Kontur qarama-qarshi
+  // rangda: matn burma chiziqlari ustida ham aniq ajralib turadi.
+  const submerged = waterY(pct) < BRAIN_CY;
+  const textFill = submerged ? "#ffffff" : NAVY;
+  const textEdge = submerged ? "rgba(10,95,120,0.55)" : "rgba(255,255,255,0.9)";
 
   return (
     <svg width={size} height={Math.round((size * 93) / 112)} viewBox="5 4 112 93" aria-hidden overflow="visible">
@@ -103,6 +116,21 @@ function Brain({ pct, size = 88, id }: BrainProps) {
           <feDropShadow dx="0" dy="3" stdDeviation="3" floodColor="#0a3b4c" floodOpacity="0.26" />
         </filter>
       </defs>
+
+      {/* Joriy dars halqasi — DOIRA emas, miya shaklining o'zi 1.15 barobar
+          kattalashtirilgani. Doira miyaning kengligiga to'g'ri kelmasdi va
+          shaklning chetlari halqadan chiqib qolardi. */}
+      {current && (
+        <path
+          d={BRAIN_OUTER}
+          fill="none"
+          stroke={TEAL}
+          strokeOpacity="0.32"
+          strokeWidth="2.2"
+          strokeLinejoin="round"
+          transform={`translate(${BRAIN_CX} ${BRAIN_CY}) scale(1.15) translate(${-BRAIN_CX} ${-BRAIN_CY})`}
+        />
+      )}
 
       <g filter={`url(#brainShadow-${id})`}>
         {/* bo'sh miya */}
@@ -143,6 +171,25 @@ function Brain({ pct, size = 88, id }: BrainProps) {
           transform="rotate(-22 42 26)"
           clipPath={`url(#brainClip-${id})`}
         />
+
+        {/* Foiz — miyaning ICHIDA. Ilgari pastida alohida yorliq bo'lib,
+            tugundan ajralib turardi va qatorni uzaytirardi. */}
+        <text
+          x={BRAIN_CX}
+          y={BRAIN_CY}
+          textAnchor="middle"
+          dominantBaseline="central"
+          fontFamily="var(--font-sans)"
+          fontSize="25"
+          fontWeight="800"
+          fill={textFill}
+          stroke={textEdge}
+          strokeWidth="4"
+          paintOrder="stroke"
+          strokeLinejoin="round"
+        >
+          {pct}%
+        </text>
       </g>
     </svg>
   );
@@ -427,17 +474,7 @@ export default async function StudentLevelPage({ params }: { params: Promise<{ l
                       href={`/student/kurse/${code}/${lesson.id}`}
                       className="flex w-[46%] flex-col items-center transition active:scale-[0.96]"
                     >
-                      <span className="relative block">
-                        {/* Halqa miyaning haqiqiy markaziga qo'yiladi: shakl
-                            kvadrat emas (112×93), shuning uchun markazlashtiriladi. */}
-                        {isCurrent && (
-                          <span
-                            className="absolute left-1/2 top-1/2 h-[104px] w-[104px] -translate-x-1/2 -translate-y-1/2 rounded-full"
-                            style={{ border: `2.5px solid ${TEAL}`, opacity: 0.32 }}
-                          />
-                        )}
-                        <Brain pct={pct} id={String(i)} />
-                      </span>
+                      <Brain pct={pct} id={String(i)} current={isCurrent} />
 
                       <span className="mt-1.5 text-[15px] font-extrabold leading-none text-slate-900">
                         Unit {chapter}.{inChapter}
@@ -449,20 +486,6 @@ export default async function StudentLevelPage({ params }: { params: Promise<{ l
                         {lesson.title}
                       </span>
 
-                      {/* Yorliq holat nomi emas, FOIZ ko'rsatadi — miyadagi suv
-                          sathi bilan bir xil ma'lumot, raqam bilan tasdiqlangan. */}
-                      <span
-                        className="mt-1 rounded-full px-2.5 py-[2px] text-[11px] font-extrabold tabular-nums"
-                        style={
-                          pct >= 100
-                            ? { background: "rgba(14,116,144,0.16)", color: NAVY }
-                            : pct > 0
-                              ? { background: "rgba(63,201,228,0.22)", color: NAVY }
-                              : { background: "rgba(92,132,150,0.18)", color: "#3f5c6b" }
-                        }
-                      >
-                        {pct}%
-                      </span>
                     </Link>
                   </div>
                 </div>

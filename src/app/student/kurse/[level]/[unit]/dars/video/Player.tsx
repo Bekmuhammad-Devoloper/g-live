@@ -1,7 +1,7 @@
 "use client";
 
 import { useCallback, useEffect, useRef, useState } from "react";
-import { createPortal } from "react-dom";
+import { createPortal, flushSync } from "react-dom";
 import { markLessonWatched } from "../../actions";
 
 // Gorizontal (to'liq ekran) video pleyer.
@@ -11,11 +11,14 @@ import { markLessonWatched } from "../../actions";
 // bo'lsa yon holatga buriladi — o'quvchi telefonni burishi shart emas.
 //
 // Ikki texnik nozik joy:
-//   1. To'liq ekran QATLAMNING O'ZIDA emas, `document.documentElement` da
-//      so'raladi. Sabab: qatlam yopiq holatda DOM da bo'lmaydi (yoki
-//      `display:none` bo'ladi), `display:none` elementda esa
-//      requestFullscreen ishlamaydi — to'liq ekran hech qachon ochilmasdi.
-//      Hujjat ildizi esa doim ko'rinadi, qatlam uning ichida chiziladi.
+//   1. To'liq ekran QATLAMNING O'ZIDA so'raladi. Ilgari `documentElement`
+//      da so'ralardi va videoning yon tomonlarida OQ joy qolardi: to'liq
+//      ekranga chiqqan element hujjat ildizi bo'lib, uning ichidagi `body`
+//      ning och foni ko'rinib turardi. Endi to'liq ekran — qora qatlamning
+//      o'zi, ya'ni videodan tashqari hamma joy qora.
+//      Qatlam bosish paytida DOM da bo'lishi uchun `flushSync` ishlatiladi:
+//      React holatni odatda keyinroq qo'llaydi, o'shanda element hali yo'q
+//      bo'lib, requestFullscreen xato berardi.
 //   2. Qatlam `document.body` ga PORTAL orqali chiziladi. Sababi: layout'da
 //      kontent o'rami `relative z-10` — bu stacking context yaratadi va
 //      ichidagi hech narsa undan tashqariga chiqa olmaydi. Pastki menyu esa
@@ -43,6 +46,7 @@ export default function Player({
   const [portrait, setPortrait] = useState(false);
   // Portal faqat brauzerda ishlaydi — serverda `document` yo'q
   const [mounted, setMounted] = useState(false);
+  const boxRef = useRef<HTMLDivElement>(null);
   const sent = useRef(false);
 
   useEffect(() => setMounted(true), []);
@@ -69,10 +73,12 @@ export default function Player({
   }, []);
 
   const play = async () => {
-    setOpen(true);
+    // Qatlamni DARHOL chizamiz — keyingi qatorda unga murojaat qilamiz
+    flushSync(() => setOpen(true));
     try {
       // Foydalanuvchi harakati ichida — shu sabab brauzer ruxsat beradi
-      if (!document.fullscreenElement) await document.documentElement.requestFullscreen();
+      const box = boxRef.current;
+      if (box && !document.fullscreenElement) await box.requestFullscreen();
     } catch {
       /* to'liq ekran bo'lmasa ham qatlam ochiq qoladi */
     }
@@ -119,7 +125,7 @@ export default function Player({
 
       {open && mounted &&
         createPortal(
-          <div className="fixed inset-0 z-[60] bg-black" role="dialog" aria-modal="true">
+          <div ref={boxRef} className="fixed inset-0 z-[60] bg-black" role="dialog" aria-modal="true">
             {mode === "file" && src ? (
               <video
                 src={src}
