@@ -336,7 +336,7 @@ export default async function StudentStartPage() {
     { key: "w", label: t.words, pct: woerter, has: exams.length > 0, img: skillImage("woerter", exams.length ? woerter : NEUTRAL_SKILL), icon: <span style={{ color: TEAL }} className="text-[28px] font-extrabold leading-none">W</span> },
     { key: "l", label: t.reading, pct: lesen, has: submissions.length > 0, img: skillImage("lesen", submissions.length ? lesen : NEUTRAL_SKILL), icon: <IcoBook s={34} /> },
     { key: "h", label: t.listening, pct: hoeren, has: attendance.length > 0, img: skillImage("hoeren", attendance.length ? hoeren : NEUTRAL_SKILL), icon: <IcoHeadphones s={34} /> },
-    { key: "s", label: t.speaking, pct: sprechen, has: courseLessons.length > 0, img: skillImage("sprechen", courseLessons.length ? sprechen : NEUTRAL_SKILL), icon: <IcoMic s={34} /> },
+    { key: "s", label: t.speaking, pct: sprechen, has: prog.lessons.length > 0, img: skillImage("sprechen", prog.lessons.length ? sprechen : NEUTRAL_SKILL), icon: <IcoMic s={34} /> },
   ];
 
   // Karta uslubi — yagona manba `_ui.tsx` dagi CARD ("gl-glass").

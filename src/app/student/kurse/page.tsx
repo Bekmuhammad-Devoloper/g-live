@@ -10,6 +10,7 @@ import { PageHeader } from "../_ui";
 import MissingStudent from "../MissingStudent";
 import { getActiveLevels, levelTitle, matchLevel } from "@/lib/studyLevels";
 import { levelGradient } from "@/lib/levelColor";
+import { getStudentProgress } from "@/lib/studentProgress";
 
 // "Kurse" — umumiy darajalar ro'yxati (A1 · A2 · B1 · B2 · C1 · C2).
 // Har daraja kartasi: nom, darslar soni, o'tilgan foiz.
@@ -56,32 +57,24 @@ export default async function StudentKursePage() {
 
   const group = student.enrollments[0]?.group ?? null;
 
-  const [levels, lessons, progress] = await Promise.all([
-    getActiveLevels(),
-    group
-      ? prisma.courseLesson.findMany({
-          where: { programId: group.programId },
-          orderBy: { order: "asc" },
-          select: { id: true, levelCode: true },
-        })
-      : Promise.resolve([]),
-    group
-      ? prisma.groupLessonProgress.findMany({ where: { groupId: group.id, taught: true }, select: { courseLessonId: true } })
-      : Promise.resolve([]),
-  ]);
-
-  const taught = new Set(progress.map((p) => p.courseLessonId));
+  // Jarayon YAGONA joyda hisoblanadi (src/lib/studentProgress.ts): o'qituvchi
+  // o'tgani + o'quvchi ko'rgani + topshirgani. Ilgari bu yerda faqat
+  // "o'qituvchi o'tdi" sanalardi, shu sabab darslarni ko'rib chiqqan
+  // o'quvchida ham 0% turardi.
+  const [levels, prog] = await Promise.all([getActiveLevels(), getStudentProgress(student.id, group)]);
 
   // Darajaga biriktirilmagan darslar guruhning o'z darajasiga (yoki birinchisiga) qo'shiladi
   const fallback = matchLevel(group?.levelCode ?? student.currentLevel, levels) ?? levels[0] ?? null;
-  const byLevel = new Map<string, { total: number; done: number }>();
-  for (const l of levels) byLevel.set(l.code, { total: 0, done: 0 });
-  for (const l of lessons) {
+  const byLevel = new Map<string, { total: number; done: number; sum: number }>();
+  for (const l of levels) byLevel.set(l.code, { total: 0, done: 0, sum: 0 });
+  for (const l of prog.lessons) {
     const lvl = matchLevel(l.levelCode, levels) ?? fallback;
     const bucket = lvl ? byLevel.get(lvl.code) : undefined;
     if (!bucket) continue;
+    const p = prog.pctOf(l.id);
     bucket.total++;
-    if (taught.has(l.id)) bucket.done++;
+    bucket.sum += p;
+    if (p >= 100) bucket.done++;
   }
 
   const currentLevel = matchLevel(group?.levelCode ?? student.currentLevel, levels)?.code ?? "";
@@ -94,7 +87,8 @@ export default async function StudentKursePage() {
         {levels.map((lvl) => {
           const code = lvl.code;
           const st = byLevel.get(code)!;
-          const pct = st.total ? Math.round((st.done / st.total) * 100) : 0;
+          // Foiz — darslarning O'RTACHA to'lishi (faqat tugallanganlar emas)
+          const pct = st.total ? Math.round(st.sum / st.total) : 0;
           const active = code === currentLevel;
           // Ma'muriyat banner yuklagan bo'lsa — kartochka foni o'sha rasm
           const banner = lvl.bannerUrl;
