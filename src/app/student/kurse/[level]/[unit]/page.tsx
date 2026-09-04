@@ -31,6 +31,12 @@ function embedUrl(u: string): string | null {
   return null;
 }
 
+/** YouTube videoning muqova rasmi — pleyer bosilgunча shu ko'rinadi */
+function youtubePoster(u: string): string | null {
+  const yt = /(?:youtube\.com\/(?:watch\?v=|embed\/|shorts\/)|youtu\.be\/)([\w-]{6,})/.exec(u);
+  return yt ? `https://i.ytimg.com/vi/${yt[1]}/hqdefault.jpg` : null;
+}
+
 /* ── Ikonkalar ── */
 function IcoBack({ s = 21 }: { s?: number }) {
   return (
@@ -355,6 +361,7 @@ export default async function StudentUnitPage({
   const video = safeUrl(lesson.videoUrl);
   const embed = video && !isUpload(video) ? embedUrl(video) : null;
   const mode: VideoMode = !video ? "none" : isUpload(video) ? "file" : embed ? "embed" : "link";
+  const poster = video && !isUpload(video) ? youtubePoster(video) : null;
 
   const assignmentFile = safeUrl(lesson.assignmentFileUrl);
   const homeworkFile = safeUrl(lesson.homeworkFileUrl);
@@ -471,6 +478,7 @@ export default async function StudentUnitPage({
           kicker={`${t.lesson} ${pos + 1}/${Math.max(levelLessons.length, 1)}`}
           badge={unitNo}
           pill={lesson.title}
+          poster={poster}
           openLabel={t.openVideo}
           emptyLabel={t.noVideoYet}
           lessonId={lesson.id}

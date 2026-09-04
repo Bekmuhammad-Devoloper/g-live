@@ -17,10 +17,12 @@ function IcoPlay({ s = 26 }: { s?: number }) {
 }
 
 export default function LessonVideo({
-  mode, src, lessonId, watched, title, kicker, badge, pill, openLabel, emptyLabel, markLabel, doneLabel,
+  mode, src, poster, lessonId, watched, title, kicker, badge, pill, openLabel, emptyLabel, markLabel, doneLabel,
 }: {
   mode: VideoMode;
   src: string | null;
+  /** YouTube muqova rasmi — pleyer bosilgunча shu ko'rinadi */
+  poster?: string | null;
   /** Ball berish uchun dars id si */
   lessonId: string;
   /** Bu dars allaqachon ko'rilgan deb belgilanganmi */
@@ -55,8 +57,9 @@ export default function LessonVideo({
     if (v.duration > 0 && v.currentTime / v.duration >= 0.8) mark();
   };
 
-  // YouTube/Vimeo o'z sarlavhasini ko'rsatadi — ustiga yozmaymiz
-  const showOverlay = mode !== "embed" && !playing;
+  // Sarlavha qatlami muqova ustida ham ko'rinadi — endi muqova BIZNIKI
+  // (YouTube'ning o'zi faqat bosilgandan keyin yuklanadi).
+  const showOverlay = !playing;
 
   return (
     <div className="relative overflow-hidden rounded-[26px] bg-slate-950 shadow-[0_22px_46px_-24px_rgba(9,32,53,0.85)] ring-1 ring-white/10">
@@ -74,13 +77,35 @@ export default function LessonVideo({
           className="mx-auto block max-h-[58vh] w-auto max-w-full"
         />
       ) : mode === "embed" && src ? (
-        <iframe
-          src={src}
-          title={title}
-          allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; fullscreen"
-          allowFullScreen
-          className="aspect-video w-full border-0"
-        />
+        playing ? (
+          <iframe
+            src={`${src}?autoplay=1&rel=0&modestbranding=1&playsinline=1`}
+            title={title}
+            allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; fullscreen"
+            allowFullScreen
+            className="aspect-video w-full border-0"
+          />
+        ) : (
+          // Iframe ATAYLAB darhol yuklanmaydi: YouTube ochilishi bilan o'z
+          // brendi, tavsiyalari va bir necha yuz kilobayt skriptini olib
+          // keladi. Bosilgunча faqat muqova rasmi turadi — sahifa tez
+          // ochiladi va ko'rinish ilovaniki bo'lib qoladi.
+          <button
+            type="button"
+            onClick={() => setPlaying(true)}
+            aria-label={`${openLabel}: ${title}`}
+            className="relative block aspect-video w-full bg-[radial-gradient(125%_105%_at_50%_0%,#24455e_0%,#0a1622_100%)]"
+          >
+            {poster ? (
+              // eslint-disable-next-line @next/next/no-img-element
+              <img src={poster} alt="" className="absolute inset-0 h-full w-full object-cover opacity-90" />
+            ) : null}
+            <span className="absolute inset-0 bg-gradient-to-t from-black/55 via-black/10 to-black/25" />
+            <span className="absolute left-1/2 top-1/2 grid h-[68px] w-[68px] -translate-x-1/2 -translate-y-1/2 place-items-center rounded-full bg-white/95 pl-1 shadow-[0_10px_30px_-8px_rgba(0,0,0,0.7)] transition active:scale-95">
+              <span className="text-[#0f172a]"><IcoPlay s={30} /></span>
+            </span>
+          </button>
+        )
       ) : mode === "link" && src ? (
         <a
           href={src}
