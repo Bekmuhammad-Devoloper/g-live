@@ -7,6 +7,7 @@ import { S, type StudentStrings } from "../_i18n";
 import { CARD, CoinGold, DEEP_GRADIENT, PageHeader, SectionTitle, fmtDate, safeUrl } from "../_ui";
 import MissingStudent from "../MissingStudent";
 import ItemCard, { type VItem } from "./ItemCard";
+import CoinRules, { type RuleSlide } from "./CoinRules";
 
 // Market — do'kon ko'rinishidagi vitrina: tanga balansi, sovg'alar to'ri va
 // o'quvchining buyurtmalari. Sovg'alarni ma'muriyat CRM dagi /market dan
@@ -27,6 +28,16 @@ const RULE_LABEL = (t: StudentStrings, k: string) =>
   : k === "gameWin" ? t.ruleGameWin
   : k === "streak7" ? t.ruleStreak
   : t.ruleLevelUp;
+
+// Qoida kaliti -> qisqa tushuntirish (aylanuvchi banner uchun)
+const RULE_HINT = (t: StudentStrings, k: string) =>
+  k === "lesson" ? t.hintLesson
+  : k === "lessonView" ? t.hintLessonView
+  : k === "homework" ? t.hintHomework
+  : k === "perfect" ? t.hintPerfect
+  : k === "gameWin" ? t.hintGameWin
+  : k === "streak7" ? t.hintStreak
+  : t.hintLevelUp;
 
 export default async function StudentMarketPage() {
   const session = await getSession();
@@ -70,61 +81,72 @@ export default async function StudentMarketPage() {
     ? 0
     : Math.max(0, Math.min(100, Math.round((coins.balance / cheapest) * 100)));
 
-  // Qoidalar: yig'ilganlari alohida, hali yig'ilmaganlari alohida
-  const earnedLines = coins.lines.filter((l) => l.count > 0);
-  const restLines = coins.lines.filter((l) => l.count === 0);
+  // Aylanuvchi banner uchun: avval o'quvchi allaqachon yig'ganlari
+  // (o'ziga tegishli bo'lgani uchun qiziqarliroq), keyin qolganlari
+  const slides: RuleSlide[] = [...coins.lines]
+    .sort((a, b) => (b.count > 0 ? 1 : 0) - (a.count > 0 ? 1 : 0))
+    .map((l) => ({
+      key: l.key,
+      label: RULE_LABEL(t, l.key),
+      hint: RULE_HINT(t, l.key),
+      per: l.per,
+      count: l.count,
+      total: l.total,
+    }));
 
   return (
     <div className="space-y-4">
       <PageHeader title={t.market} subtitle={t.exchangeCoins} backLabel={t.back} back="/student/profil" />
 
       {/* ── Hamyon ──
-          Balans — kartaning bosh raqami. Ostida eng arzon sovg'agacha qancha
-          qolgani (o'quvchiga aniq maqsad beradi), so'ng tanga qanday
-          yig'ilishi. Qoidalar ikkiga ajratiladi: YIG'ILGANLARI tepada,
-          natijasi bilan; hali yig'ilmaganlari pastda, faqat qiymati bilan
-          (ilgari ular ham "+5 × 0   0" bo'lib turardi va o'qishga xalaqit
-          berardi). */}
-      <div className="relative overflow-hidden rounded-[24px] p-5 text-white shadow-[0_14px_30px_rgba(19,78,94,0.22)]" style={{ background: DEEP_GRADIENT }}>
+          Bank kartasi o'lchamidagi ixcham karta: faqat balans, yig'ilgan /
+          sarflangan va eng arzon sovg'agacha qolgan yo'l. Tanga qanday
+          yig'ilishi — pastdagi aylanuvchi bannerda (ilgari yettala qoida
+          shu kartaning ichida turib, uni uzun va o'qishga og'ir qilardi). */}
+      <div
+        className="relative flex aspect-[1.62/1] max-h-[230px] flex-col justify-between overflow-hidden rounded-[22px] p-5 text-white shadow-[0_14px_30px_rgba(19,78,94,0.22)]"
+        style={{ background: DEEP_GRADIENT }}
+      >
         {/* Orqa fondagi katta tanga — yumshoq bezak */}
-        <span className="pointer-events-none absolute -right-6 -top-8 opacity-[0.10]">
-          <CoinGold s={132} />
+        <span className="pointer-events-none absolute -right-7 -top-9 opacity-[0.10]">
+          <CoinGold s={140} />
         </span>
 
+        {/* Yuqori qator: balans */}
         <div className="relative flex items-center gap-3.5">
-          <span className="grid h-14 w-14 shrink-0 place-items-center rounded-2xl bg-white/20 backdrop-blur-sm">
-            <CoinGold s={34} />
+          <span className="grid h-12 w-12 shrink-0 place-items-center rounded-2xl bg-white/20 backdrop-blur-sm">
+            <CoinGold s={30} />
           </span>
           <div className="min-w-0 flex-1">
-            <div className="text-[11px] font-bold uppercase tracking-[0.16em] text-white/70">{t.balance}</div>
+            <div className="text-[10.5px] font-bold uppercase tracking-[0.18em] text-white/70">{t.balance}</div>
             <div className="flex items-baseline gap-1.5">
-              <span className="text-[40px] font-extrabold leading-none tracking-tight">{coins.balance}</span>
-              <span className="text-[14px] font-semibold text-white/70">{t.coins}</span>
+              <span className="text-[36px] font-extrabold leading-none tracking-tight">{coins.balance}</span>
+              <span className="text-[13px] font-semibold text-white/70">{t.coins}</span>
             </div>
           </div>
         </div>
 
-        {/* Yig'ilgan / sarflangan — kichik yozuv o'rniga aniq belgilar */}
-        <div className="relative mt-3 flex flex-wrap gap-2">
-          <span className="rounded-full bg-white/15 px-3 py-1 text-[12px] font-semibold backdrop-blur-sm">
+        {/* O'rta qator: yig'ilgan / sarflangan */}
+        <div className="relative flex flex-wrap gap-1.5">
+          <span className="rounded-full bg-white/15 px-2.5 py-1 text-[11.5px] font-semibold backdrop-blur-sm">
             {t.earned} <b className="font-extrabold">{coins.earned}</b>
           </span>
-          <span className="rounded-full bg-white/15 px-3 py-1 text-[12px] font-semibold backdrop-blur-sm">
+          <span className="rounded-full bg-white/15 px-2.5 py-1 text-[11.5px] font-semibold backdrop-blur-sm">
             {t.spent} <b className="font-extrabold">{coins.spent}</b>
           </span>
         </div>
 
-        {/* Eng arzon sovg'agacha qancha qolgani */}
+        {/* Pastki qator: eng arzon sovg'agacha */}
         {cheapest !== null ? (
-          <div className="relative mt-4">
-            <div className="mb-1.5 flex items-baseline justify-between gap-2 text-[12px]">
-              <span className="font-semibold text-white/80">
+          <div className="relative">
+            <div className="mb-1 flex items-baseline justify-between gap-2 text-[11.5px]">
+              <span className="truncate font-semibold text-white/80">
                 {needed > 0 ? t.toCheapest : t.canBuyNow}
               </span>
               {needed > 0 ? (
                 <span className="shrink-0 font-extrabold">{needed} {t.coins}</span>
               ) : (
-                <span className="shrink-0 text-[16px] leading-none">✓</span>
+                <span className="shrink-0 text-[15px] leading-none">✓</span>
               )}
             </div>
             <div className="h-2 w-full overflow-hidden rounded-full bg-white/20">
@@ -132,41 +154,10 @@ export default async function StudentMarketPage() {
             </div>
           </div>
         ) : null}
-
-        {/* Tanga qanday yig'iladi */}
-        <div className="relative mt-4 rounded-2xl bg-white/12 p-3 backdrop-blur-sm">
-          <div className="mb-2 text-[10.5px] font-bold uppercase tracking-[0.16em] text-white/70">{t.coinRule}</div>
-
-          {earnedLines.length > 0 ? (
-            <div className="space-y-1.5">
-              {earnedLines.map((l) => (
-                <div key={l.key} className="flex items-center gap-2.5 text-[12.5px]">
-                  <span className="h-1.5 w-1.5 shrink-0 rounded-full bg-white" />
-                  <span className="min-w-0 flex-1 truncate font-medium text-white">{RULE_LABEL(t, l.key)}</span>
-                  <span className="shrink-0 rounded-md bg-white/15 px-1.5 py-0.5 text-[11px] font-semibold text-white/85">
-                    {l.count} × {l.per}
-                  </span>
-                  <span className="w-[42px] shrink-0 text-right text-[14px] font-extrabold tabular-nums">{l.total}</span>
-                </div>
-              ))}
-            </div>
-          ) : null}
-
-          {restLines.length > 0 ? (
-            <>
-              {earnedLines.length > 0 ? <div className="my-2.5 h-px bg-white/15" /> : null}
-              <div className="mb-1.5 text-[10px] font-semibold uppercase tracking-wider text-white/50">{t.notEarnedYet}</div>
-              <div className="flex flex-wrap gap-1.5">
-                {restLines.map((l) => (
-                  <span key={l.key} className="rounded-full bg-white/10 px-2.5 py-1 text-[11.5px] text-white/70">
-                    {RULE_LABEL(t, l.key)} <b className="font-bold text-white/90">+{l.per}</b>
-                  </span>
-                ))}
-              </div>
-            </>
-          ) : null}
-        </div>
       </div>
+
+      {/* ── Tangani qanday yig'asiz — birin-ketin aylanadigan banner ── */}
+      <CoinRules slides={slides} title={t.coinRule} timesLabel={t.timesEarned} />
 
       {/* ── Vitrina ── */}
       <div className="flex items-baseline justify-between px-1">
