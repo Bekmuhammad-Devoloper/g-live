@@ -27,8 +27,6 @@ const DICT = {
   stars: p("yulduz", "звёзд", "stars", "Sterne"),
 
   // ── Start ekrani ──
-  hello: p("Salom", "Привет", "Hello", "Hallo"),
-  readyToLearn: p("Nemis tilini o'rganishga tayyormisiz?", "Готовы учить немецкий?", "Ready to learn German?", "Bereit, Deutsch zu lernen?"),
   words: p("So'zlar", "Слова", "Words", "Wörter"),
   reading: p("O'qish", "Чтение", "Reading", "Lesen"),
   listening: p("Tinglash", "Аудирование", "Listening", "Hören"),

@@ -340,8 +340,13 @@ export default async function StudentStartPage() {
 
   return (
     <div className="space-y-[18px]">
-      {/* ── Salomlashish ── */}
-      <div className="flex items-start gap-2.5 pt-1">
+      {/* ── Yuqori qator: o'quvchi, seriya va bildirishnoma ── */}
+      {/* Salomlashish matni ("Salom, ..." va "Nemis tilini o'rganishga
+          tayyormisiz?") olib tashlandi: har ochilganda takrorlanadigan,
+          hech qanday ma'lumot bermaydigan matn edi va ekranning eng
+          qimmatli joyidan — tepasidan — ikki qator yer yerdi.
+          Qator endi bitta satr, shu sabab o'rtaga tekislangan. */}
+      <div className="flex items-center gap-2.5 pt-1">
         {/* Avatar: rasm qo'yilgan bo'lsa — o'sha, bo'lmasa Germaniya bayrog'i (doira).
             Logotip keng bo'lgani uchun doiraga kesib solinganda chiroyli chiqmasdi. */}
         {avatarUrl ? (
@@ -355,15 +360,13 @@ export default async function StudentStartPage() {
             <FlagAvatar s={44} />
           </span>
         )}
-        <div className="min-w-0 flex-1">
-          <h1 className="line-clamp-2 text-[18px] font-extrabold leading-tight tracking-tight text-slate-900 [overflow-wrap:anywhere] min-[380px]:text-[19px] sm:text-[24px]">
-            {t.hello}, {fullName}!
-          </h1>
-          <p className="mt-0.5 line-clamp-2 text-[12.5px] leading-snug text-slate-600">{t.readyToLearn}</p>
-        </div>
-        {/* Seriya — ixcham belgi. Ism endi ikki qatorga tusha oladi, shu
-            sabab bu yerda joy bor; o'quvchi uchun kunlik seriya ko'rinib
-            turgani muhim (bosh sahifadan pastdagi kartochkaga qaramasdan). */}
+        <h1 className="min-w-0 flex-1 truncate text-[19px] font-extrabold leading-tight tracking-[-0.015em] text-slate-900 min-[380px]:text-[21px] sm:text-[23px]">
+          {fullName}
+        </h1>
+        {/* Seriya — ixcham belgi. Salomlashish matni olib tashlangach qator
+            bitta satr bo'ldi, shu sabab bu yerda joy yetarli; o'quvchi uchun
+            kunlik seriya ko'rinib turgani muhim (pastdagi kartochkaga
+            qaramasdan). */}
         <span className="gl-glass flex h-11 shrink-0 items-center gap-1 rounded-full px-2.5" aria-label={t.streak}>
           <IcoFlameGold s={22} />
           <span className="leading-none">
