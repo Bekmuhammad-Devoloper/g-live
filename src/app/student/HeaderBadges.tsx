@@ -28,7 +28,10 @@ function IcoBell({ s = 26 }: { s?: number }) {
   );
 }
 
-export default async function HeaderBadges() {
+// `showStreak` — ba'zi sahifalarda sarlavha o'rtada turishi kerak va
+// seriya belgisi qatorni tortib yuboradi. Sukut bo'yicha ko'rinadi, ya'ni
+// mavjud sahifalar o'zgarmaydi.
+export default async function HeaderBadges({ showStreak = true }: { showStreak?: boolean }) {
   const session = await getSession();
   if (!session) return null;
 
@@ -47,13 +50,15 @@ export default async function HeaderBadges() {
 
   return (
     <div className="flex shrink-0 items-center gap-2">
-      <div className="gl-glass flex h-11 shrink-0 items-center gap-1 rounded-2xl px-2.5">
-        <IcoFlame s={26} />
-        <div className="leading-none">
-          <div className="text-[15px] font-extrabold text-slate-900">{streak}</div>
-          <div className="mt-0.5 text-[10px] font-semibold text-slate-600">{S(session.locale).day}</div>
+      {showStreak && (
+        <div className="gl-glass flex h-11 shrink-0 items-center gap-1 rounded-2xl px-2.5">
+          <IcoFlame s={26} />
+          <div className="leading-none">
+            <div className="text-[15px] font-extrabold text-slate-900">{streak}</div>
+            <div className="mt-0.5 text-[10px] font-semibold text-slate-600">{S(session.locale).day}</div>
+          </div>
         </div>
-      </div>
+      )}
       {notifOn && (
       <Link
         href="/student/mitteilungen"

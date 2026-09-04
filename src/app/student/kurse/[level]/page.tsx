@@ -414,12 +414,17 @@ export default async function StudentLevelPage({ params }: { params: Promise<{ l
     <div>
       <BrainDefs />
 
-      {/* ── Yuqori qator ── */}
-      <div className="flex items-center gap-2.5 pt-1">
-        <Link href="/student/kurse" aria-label={t.back} className="gl-glass grid h-11 w-11 shrink-0 place-items-center rounded-full">
+      {/* ── Yuqori qator ──
+          Sarlavha ATAYLAB mutlaq joylashuvda va o'rtada: chap va o'ngdagi
+          tugmalarning eni har xil (qo'ng'iroq bo'lim o'chirilgan bo'lsa
+          umuman bo'lmasligi mumkin), oddiy flex'da esa sarlavha o'shanga
+          qarab siljib turardi. */}
+      <div className="relative flex min-h-[44px] items-center pt-1">
+        <Link href="/student/kurse" aria-label={t.back} className="gl-glass relative z-10 grid h-11 w-11 shrink-0 place-items-center rounded-full">
           <IcoBack />
         </Link>
-        <div className="min-w-0 flex-1">
+
+        <div className="pointer-events-none absolute inset-x-[52px] top-1 text-center">
           {/* Sarlavha urg'usi darajaning O'Z rangidan olinadi. Ilgari bu yerda
               binafsha qattiq yozilgandi: daraja rangi feruza bo'lsa ham
               sarlavha binafsha chiqib, tizimdan chetda turardi. */}
@@ -427,23 +432,47 @@ export default async function StudentLevelPage({ params }: { params: Promise<{ l
             {levelTitle(lvl, session.locale)} <span style={{ color: lvl.color }}>{lvl.code}</span>
           </h1>
           {n > 0 && (
-            <div className="text-[12px] font-semibold text-slate-600">
+            <div className="truncate text-[12px] font-semibold text-slate-600">
               {doneCount} / {n} {t.pathProgress}
             </div>
           )}
         </div>
-        <HeaderBadges />
+
+        {/* Seriya bu sahifada ko'rinmaydi — sarlavha o'rtada turishi kerak */}
+        <div className="relative z-10 ml-auto">
+          <HeaderBadges showStreak={false} />
+        </div>
       </div>
 
-      {/* ── Daraja jarayoni ── */}
+      {/* ── Daraja jarayoni ──
+          Raqam to'lgan qismning ICHIDA turadi — chiziq butun kenglikdan
+          foydalanadi va ko'rsatkich yaxlit bir element bo'lib o'qiladi.
+          Foiz kichik bo'lganda raqam ichkariga sig'maydi, shu sabab o'shanda
+          tashqariga chiqadi. */}
       {n > 0 && (
-        <div className="mt-3 flex items-center gap-2.5">
-          <div className="h-[8px] flex-1 overflow-hidden rounded-full bg-white/55 shadow-[inset_0_1px_2px_rgba(19,78,94,0.12)]">
-            <div className="h-full rounded-full" style={{ width: `${levelPct}%`, background: `linear-gradient(90deg, #3fc9e4, ${TEAL})` }} />
+        <div className="mt-3.5 flex items-center gap-2.5">
+          <div className="relative h-[20px] flex-1 overflow-hidden rounded-full bg-white/60 shadow-[inset_0_1px_3px_rgba(19,78,94,0.14)]">
+            <div
+              className="absolute inset-y-0 left-0 rounded-full"
+              style={{ width: `${Math.max(levelPct, 2)}%`, background: `linear-gradient(90deg, #5fd8ee, ${TEAL})` }}
+            >
+              {/* yuza aksi — miyadagi suv bilan bir uslub */}
+              <span className="absolute inset-x-[4px] top-[3px] h-[4px] rounded-full bg-white/40" />
+            </div>
+            {levelPct >= 18 && (
+              <span
+                className="absolute inset-y-0 flex items-center text-[12px] font-extrabold tabular-nums text-white"
+                style={{ left: `calc(${levelPct}% - 42px)` }}
+              >
+                {levelPct}%
+              </span>
+            )}
           </div>
-          <span className="text-[13px] font-extrabold" style={{ color: NAVY }}>
-            {levelPct}%
-          </span>
+          {levelPct < 18 && (
+            <span className="text-[14px] font-extrabold tabular-nums" style={{ color: NAVY }}>
+              {levelPct}%
+            </span>
+          )}
         </div>
       )}
 
