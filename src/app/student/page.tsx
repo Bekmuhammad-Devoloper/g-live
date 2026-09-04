@@ -360,21 +360,13 @@ export default async function StudentStartPage() {
             <FlagAvatar s={44} />
           </span>
         )}
-        <h1 className="min-w-0 flex-1 truncate text-[19px] font-extrabold leading-tight tracking-[-0.015em] text-slate-900 min-[380px]:text-[21px] sm:text-[23px]">
+        {/* Shrift o'lchami bo'sh joyga qarab tanlangan: 360px ekranda ism
+            uchun 220px qoladi (rasm 44 + bildirishnoma 44 + oraliqlar),
+            16px extrabold da esa ~24 ta belgi sig'adi — eng uzun ism-familiya
+            ham to'liq chiqadi, kesilmaydi. */}
+        <h1 className="min-w-0 flex-1 truncate text-[16px] font-extrabold leading-tight tracking-[-0.015em] text-slate-900 min-[380px]:text-[17px] sm:text-[19px]">
           {fullName}
         </h1>
-        {/* Seriya — ixcham belgi. Salomlashish matni olib tashlangach qator
-            bitta satr bo'ldi, shu sabab bu yerda joy yetarli; o'quvchi uchun
-            kunlik seriya ko'rinib turgani muhim (pastdagi kartochkaga
-            qaramasdan). */}
-        <span className="gl-glass flex h-11 shrink-0 items-center gap-1 rounded-full px-2.5" aria-label={t.streak}>
-          <IcoFlameGold s={22} />
-          <span className="leading-none">
-            <span className="block text-[14px] font-extrabold text-slate-900">{streak}</span>
-            <span className="mt-0.5 block text-[9.5px] font-semibold text-slate-500">{t.day}</span>
-          </span>
-        </span>
-
         {/* Ikonkalar pastki tab-bar ikonkalari o'lchamida (26px) */}
         {notifOn && (
         <Link href="/student/mitteilungen" aria-label={t.notifications} className="gl-glass grid h-11 w-11 shrink-0 place-items-center rounded-full">
