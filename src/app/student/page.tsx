@@ -310,9 +310,9 @@ export default async function StudentStartPage() {
   const { place: rangPos } = await studentRank(student.id);
 
   const kurseHref = "/student/kurse"; // kurs sahifasi endi portal ichida
-  // Salomlashishda TO'LIQ ism-familiya, bitta qatorda. Seriya belgisi
-  // olib tashlangani uchun bu qatorda endi joy bor; juda uzun ism bo'lsa
-  // oxiri uch nuqta bilan qisqaradi (ikkinchi qatorga tushmaydi).
+  // Salomlashishda TO'LIQ ism-familiya. Bitta qatorga sig'masa ikkinchi
+  // qatorga tushadi — uch nuqta bilan qirqilgani ismni o'qib bo'lmaydigan
+  // qilib qo'yardi ("Abdugaffarova Ezo...").
   const fullName = student.fullName.trim();
   // Profil rasmi: avval o'quvchi rasmi, keyin foydalanuvchi rasmi; ikkalasi ham yo'q bo'lsa — logotip
   const avatarUrl = student.imageUrl || student.user?.imageUrl || null;
@@ -356,10 +356,10 @@ export default async function StudentStartPage() {
           </span>
         )}
         <div className="min-w-0 flex-1">
-          <h1 className="truncate text-[18px] font-extrabold leading-tight tracking-tight text-slate-900 min-[380px]:text-[20px] sm:text-[24px]">
+          <h1 className="line-clamp-2 text-[18px] font-extrabold leading-tight tracking-tight text-slate-900 [overflow-wrap:anywhere] min-[380px]:text-[19px] sm:text-[24px]">
             {t.hello}, {fullName}!
           </h1>
-          <p className="line-clamp-2 text-[12.5px] leading-snug text-slate-600">{t.readyToLearn}</p>
+          <p className="mt-0.5 line-clamp-2 text-[12.5px] leading-snug text-slate-600">{t.readyToLearn}</p>
         </div>
         {/* Ikonkalar pastki tab-bar ikonkalari o'lchamida (26px) */}
         {notifOn && (
