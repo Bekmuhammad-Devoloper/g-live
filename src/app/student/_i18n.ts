@@ -130,6 +130,15 @@ const DICT = {
   savedInstantly: p("Tanlov darhol saqlanadi", "Выбор сохраняется сразу", "Saved instantly", "Wird sofort gespeichert"),
   notifications: p("Bildirishnomalar", "Уведомления", "Notifications", "Benachrichtigungen"),
   security: p("Xavfsizlik", "Безопасность", "Security", "Sicherheit"),
+
+  // ── Sozlamalar sahifasi ──
+  accountSection: p("Hisob", "Аккаунт", "Account", "Konto"),
+  appSection: p("Ilova", "Приложение", "App", "App"),
+  installApp: p("Ilovani o'rnatish", "Установить приложение", "Install the app", "App installieren"),
+  installAppSub: p("Telefon bosh ekraniga qo'shish", "Добавить на главный экран", "Add to your home screen", "Zum Startbildschirm hinzufügen"),
+  askTeacher: p("Ustozga savol", "Вопрос преподавателю", "Ask the teacher", "Frag die Lehrkraft"),
+  askTeacherSub: p("Yozishma orqali savol bering", "Задайте вопрос в переписке", "Ask in the chat", "Frage im Chat"),
+  appVersion: p("Ilova versiyasi", "Версия приложения", "App version", "App-Version"),
   accountData: p("Hisob ma'lumotlari", "Данные аккаунта", "Account details", "Kontodaten"),
   fullName: p("Ism-familiya", "Имя и фамилия", "Full name", "Name"),
   phone: p("Telefon", "Телефон", "Phone", "Telefon"),
