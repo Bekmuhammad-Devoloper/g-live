@@ -101,7 +101,7 @@ export default async function StudentLevelPage({ params }: { params: Promise<{ l
     <div className="-mx-4 -mt-2 min-h-screen px-4 pb-4 pt-2">
       {/* ── Yuqori qator: orqaga · sarlavha · ballar ── */}
       <div className="flex items-center gap-2">
-        <Link href="/student/kurse" className="gl-glass grid h-[46px] w-[46px] shrink-0 place-items-center rounded-full">
+        <Link href="/student/kurse" className="gl-glass grid h-11 w-11 shrink-0 place-items-center rounded-full">
           <IcoBack s={26} />
         </Link>
         {/* Sarlavha — daraja nomi. Tor ekranda ham sig'ishi uchun kichikroq shrift. */}

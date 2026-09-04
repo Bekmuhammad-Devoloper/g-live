@@ -9,7 +9,7 @@ import { coinBalance, starBalance } from "@/lib/coins";
 import { studentRank } from "@/lib/rank";
 import { getActiveBanners, getActiveVideos } from "@/lib/portalContent";
 import BannerCarousel from "./BannerCarousel";
-import { CARD, CoinGold, isAttended } from "./_ui";
+import { CARD, CoinGold, FlagAvatar, IcoBell, IcoBook, NAVY, Ring, TEAL, isAttended } from "./_ui";
 import MissingStudent from "./MissingStudent";
 
 // O'quvchi "Start" ekrani — berilgan maket bilan birma-bir.
@@ -52,36 +52,9 @@ function skillImage(base: string, pct: number): string | null {
   return null;
 }
 
-const TEAL = "#0e7490"; // asosiy rang (maketdagi to'q moviy-feruza)
-const NAVY = "#134e5e"; // halqa/qiymatlarning to'q varianti
-
-// ── Halqali foiz (progress ring) ──
-function Ring({ pct, size = 64, stroke = 5.5, color = NAVY }: { pct: number; size?: number; stroke?: number; color?: string }) {
-  const r = (size - stroke - 3) / 2;
-  const c = 2 * Math.PI * r;
-  return (
-    <svg width={size} height={size} viewBox={`0 0 ${size} ${size}`} className="-rotate-90">
-      {/* Markaz shaffof — ostidagi shisha ko'rinib tursin (oq disk uni berkitardi).
-          Yo'lakcha (track) ham oq-yarim tiniq: shishaning bir qismidek o'qiladi. */}
-      <circle cx={size / 2} cy={size / 2} r={r} fill="rgba(255,255,255,0.42)" stroke="rgba(255,255,255,0.8)" strokeWidth={stroke} />
-      <circle
-        cx={size / 2} cy={size / 2} r={r} fill="none" stroke={color} strokeWidth={stroke}
-        strokeLinecap="round" strokeDasharray={c} strokeDashoffset={c * (1 - pct / 100)}
-      />
-    </svg>
-  );
-}
 
 // ── Maket ikonkalari (SVG, chiziqli uslub) ──
 const sw = 2; // stroke-width
-function IcoBook({ c = TEAL, s = 40 }: { c?: string; s?: number }) {
-  return (
-    <svg width={s} height={s} viewBox="0 0 24 24" fill="none" stroke={c} strokeWidth={sw} strokeLinecap="round" strokeLinejoin="round">
-      <path d="M12 6c-1.5-1.6-3.6-2.2-6-2.2-1 0-2 .15-3 .45V19c1-.3 2-.45 3-.45 2.4 0 4.5.6 6 2.2 1.5-1.6 3.6-2.2 6-2.2 1 0 2 .15 3 .45V4.25c-1-.3-2-.45-3-.45-2.4 0-4.5.6-6 2.2Z" />
-      <path d="M12 6v14.75" />
-    </svg>
-  );
-}
 function IcoHeadphones({ c = TEAL, s = 40 }: { c?: string; s?: number }) {
   return (
     <svg width={s} height={s} viewBox="0 0 24 24" fill="none" stroke={c} strokeWidth={sw} strokeLinecap="round" strokeLinejoin="round">
@@ -149,14 +122,6 @@ function IcoGrowth({ s = 24 }: { s?: number }) {
   );
 }
 
-function IcoBell({ s = 22 }: { s?: number }) {
-  return (
-    <svg width={s} height={s} viewBox="0 0 24 24" fill="none" stroke={TEAL} strokeWidth={sw} strokeLinecap="round" strokeLinejoin="round">
-      <path d="M18 8a6 6 0 0 0-12 0c0 7-3 8-3 8h18s-3-1-3-8" />
-      <path d="M13.7 20a2 2 0 0 1-3.4 0" />
-    </svg>
-  );
-}
 function IcoFlame({ s = 30 }: { s?: number }) {
   return (
     <svg width={s} height={s} viewBox="0 0 24 24">
@@ -175,23 +140,6 @@ function IcoFlame({ s = 30 }: { s?: number }) {
   );
 }
 
-// ── Doira shaklidagi Germaniya bayrog'i (rasm qo'yilmagan avatar uchun) ──
-function FlagAvatar({ s = 44 }: { s?: number }) {
-  return (
-    <svg width={s} height={s} viewBox="0 0 44 44" className="shrink-0">
-      <defs>
-        <clipPath id="glAvatarClip"><circle cx="22" cy="22" r="22" /></clipPath>
-      </defs>
-      <g clipPath="url(#glAvatarClip)">
-        <rect x="0" y="0" width="44" height="14.67" fill="#111111" />
-        <rect x="0" y="14.67" width="44" height="14.67" fill="#DD0000" />
-        <rect x="0" y="29.34" width="44" height="14.66" fill="#FFCE00" />
-      </g>
-      {/* yengil ichki halqa — chetini yumshatadi */}
-      <circle cx="22" cy="22" r="21.25" fill="none" stroke="rgba(255,255,255,0.55)" strokeWidth="1.5" />
-    </svg>
-  );
-}
 
 // ── Germaniya bayrog'i (silliq to'lqin, rasmiy ranglar) ──
 // Uch rangni alohida to'lqinlantirish o'rniga butun bayroq shakli clipPath
