@@ -93,7 +93,12 @@ if ! "$SDKMAN" --sdk_root="$BW/android_sdk" \
 fi
 tail -2 "$WORK/sdk.log" | tr -d '\r' 
 
-cat > "$BW/config.json" <<JSON
+# Bubblewrap konfiguratsiyani QAT'IY $HOME/.bubblewrap/config.json dan
+# o'qiydi. Serverda BW ham o'sha papka bo'lgani uchun bu sezilmasdi; BW_HOME
+# boshqa joyga qo'yilganda esa konfig topilmay, bubblewrap "JDK o'rnataymi?"
+# deb interaktiv savol berardi va CI shu yerda muzlab qolardi.
+mkdir -p "$HOME/.bubblewrap"
+cat > "$HOME/.bubblewrap/config.json" <<JSON
 { "jdkPath": "$BW/jdk", "androidSdkPath": "$BW/android_sdk" }
 JSON
 
