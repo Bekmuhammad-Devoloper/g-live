@@ -47,6 +47,15 @@ const DICT = {
   current: p("JORIY", "ТЕКУЩИЙ", "CURRENT", "AKTUELL"),
   noLessons: p("Bu daraja uchun hali dars yo'q.", "Для этого уровня уроков пока нет.", "No lessons for this level yet.", "Für dieses Niveau gibt es noch keine Lektionen."),
   teacherAdds: p("Ustoz tez orada qo'shadi.", "Преподаватель скоро добавит.", "The teacher will add them soon.", "Die Lehrkraft fügt sie bald hinzu."),
+
+  // ── Darslar yo'li (daraja ichi) ──
+  pathDone: p("O'tildi", "Пройден", "Completed", "Abgeschlossen"),
+  pathCurrent: p("Joriy dars", "Текущий урок", "Current lesson", "Aktuelle Lektion"),
+  pathUpcoming: p("Navbatda", "Далее", "Up next", "Als Nächstes"),
+  pathProgress: p("dars o'tildi", "уроков пройдено", "lessons done", "Lektionen geschafft"),
+  levelFinish: p("Daraja yakuni", "Конец уровня", "End of level", "Ende des Niveaus"),
+  levelFinishHint: p("Barcha darsni o'tsangiz shu yerga yetasiz", "Пройдите все уроки, чтобы дойти сюда", "Finish every lesson to reach this point", "Schließe alle Lektionen ab, um hierher zu gelangen"),
+  levelFinished: p("Bu darajani yakunladingiz!", "Вы завершили этот уровень!", "You finished this level!", "Du hast dieses Niveau abgeschlossen!"),
   vocabulary: p("Lug'at", "Словарь", "Vocabulary", "Vocabulary"),
   exercises: p("Mashqlar", "Упражнения", "Exercises", "Exercises"),
   theory: p("NAZARIYA", "ТЕОРИЯ", "THEORY", "THEORIE"),
