@@ -264,6 +264,8 @@ const DICT = {
   ),
   idCard: p("Guvohnoma", "Удостоверение", "ID card", "Ausweis"),
   buy: p("Sotib olish", "Купить", "Buy", "Kaufen"),
+  yourBalance: p("Sizda", "У вас", "You have", "Sie haben"),
+  priceLabel: p("Narxi", "Цена", "Price", "Preis"),
   learnedWords: p("O'zlashtirilgan", "Освоено", "Learned", "Gelernt"),
   learnedWord: p("O'tilgan", "Пройдено", "Learned", "Gelernt"),
   notLearnedYet: p("Hali o'tilmagan", "Ещё не пройдено", "Not learned yet", "Noch nicht gelernt"),

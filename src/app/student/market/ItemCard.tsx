@@ -1,8 +1,9 @@
 "use client";
 
-import { useState, useTransition } from "react";
+import { useEffect, useState, useTransition } from "react";
+import { createPortal } from "react-dom";
 import type { StudentStrings } from "../_i18n";
-import { CoinGold, ICON_GRADIENT } from "../_ui";
+import { CoinGold, ICON_GRADIENT, TEAL } from "../_ui";
 import { buyItem } from "./actions";
 
 // Do'kon kartochkasi: rasm, narx yorlig'i, zaxira va sotib olish tugmasi.
@@ -10,6 +11,10 @@ import { buyItem } from "./actions";
 // bo'sh kulrang katak o'rniga jonli vitrina bo'lsin.
 // Kartaning RAMKASI shisha (`.gl-glass`), rasm maydoni esa qattiq qoladi —
 // sovg'a surati ostidan fon ko'rinib ketmasin.
+//
+// Kartochka BOSILADI: plitkada rasm qirqilgan, tavsif esa ikki qatorga
+// kesilgan bo'ladi; tanga yetmasa tugma ham o'chiq turadi va sovg'ani
+// umuman ko'rib bo'lmasdi. Bosilganda to'liq ma'lumot oynasi ochiladi.
 
 export type VItem = {
   id: string;
@@ -20,7 +25,9 @@ export type VItem = {
   imageUrl: string | null;
 };
 
-const THEMES = [
+type Theme = { bg: string; soft: string };
+
+const THEMES: Theme[] = [
   { bg: "linear-gradient(140deg,#0ea5e9,#0369a1)", soft: "#e0f2fe" },
   { bg: "linear-gradient(140deg,#f59e0b,#b45309)", soft: "#fef3c7" },
   { bg: "linear-gradient(140deg,#10b981,#047857)", soft: "#d1fae5" },
@@ -71,6 +78,7 @@ export default function ItemCard({
   const [done, setDone] = useState(false);
   const [err, setErr] = useState<string | null>(null);
   const [busy, start] = useTransition();
+  const [open, setOpen] = useState(false);
 
   const theme = THEMES[index % THEMES.length];
   const soldOut = item.stock !== null && item.stock <= 0;
@@ -89,8 +97,14 @@ export default function ItemCard({
 
   return (
     <div className="gl-glass overflow-hidden rounded-[20px]">
-      {/* Vitrina */}
-      <div className="relative aspect-[4/3] w-full" style={{ background: item.imageUrl ? undefined : theme.bg }}>
+      {/* Vitrina — bosilsa to'liq ma'lumot ochiladi */}
+      <button
+        type="button"
+        onClick={() => setOpen(true)}
+        aria-label={item.title}
+        className="relative block aspect-[4/3] w-full"
+        style={{ background: item.imageUrl ? undefined : theme.bg }}
+      >
         {item.imageUrl ? (
           // eslint-disable-next-line @next/next/no-img-element
           <img src={item.imageUrl} alt={item.title} className="h-full w-full object-cover" />
@@ -117,14 +131,16 @@ export default function ItemCard({
             {t.soldOut}
           </span>
         ) : null}
-      </div>
+      </button>
 
       {/* Matn */}
       <div className="p-3">
-        <div className="line-clamp-2 min-h-[36px] text-[14px] font-extrabold leading-tight text-slate-900">{item.title}</div>
-        {item.description ? (
-          <div className="mt-0.5 line-clamp-2 text-[11.5px] leading-snug text-slate-500">{item.description}</div>
-        ) : null}
+        <button type="button" onClick={() => setOpen(true)} className="block w-full text-left">
+          <div className="line-clamp-2 min-h-[36px] text-[14px] font-extrabold leading-tight text-slate-900">{item.title}</div>
+          {item.description ? (
+            <div className="mt-0.5 line-clamp-2 text-[11.5px] leading-snug text-slate-500">{item.description}</div>
+          ) : null}
+        </button>
 
         {/* Amal */}
         <div className="mt-2.5">
@@ -152,11 +168,11 @@ export default function ItemCard({
           ) : (
             <button
               type="button"
-              onClick={() => setAsk(true)}
-              disabled={blocked}
+              // Tanga yetmasa ham bosiladi — sovg'ani ko'rish uchun oyna ochiladi
+              onClick={() => (blocked ? setOpen(true) : setAsk(true))}
               className={
                 "min-h-[44px] w-full rounded-xl py-2 text-[12.5px] font-bold transition " +
-                (blocked ? "bg-slate-100 text-slate-400" : "text-white shadow-[0_6px_14px_rgba(14,116,144,0.22)] active:translate-y-[1px]")
+                (blocked ? "bg-slate-100 text-slate-500" : "text-white shadow-[0_6px_14px_rgba(14,116,144,0.22)] active:translate-y-[1px]")
               }
               style={blocked ? undefined : { background: ICON_GRADIENT }}
             >
@@ -166,6 +182,177 @@ export default function ItemCard({
           {err ? <div className="mt-1 text-center text-[11px] font-semibold text-rose-600">{err}</div> : null}
         </div>
       </div>
+
+      {open ? (
+        <DetailSheet
+          item={item}
+          t={t}
+          theme={theme}
+          balance={balance}
+          soldOut={soldOut}
+          affordable={affordable}
+          done={done}
+          busy={busy}
+          err={err}
+          onBuy={confirm}
+          onClose={() => setOpen(false)}
+        />
+      ) : null}
     </div>
+  );
+}
+
+// ───────────── To'liq ma'lumot oynasi (pastdan chiqadi) ─────────────
+
+function DetailSheet({
+  item, t, theme, balance, soldOut, affordable, done, busy, err, onBuy, onClose,
+}: {
+  item: VItem;
+  t: StudentStrings;
+  theme: Theme;
+  balance: number;
+  soldOut: boolean;
+  affordable: boolean;
+  done: boolean;
+  busy: boolean;
+  err: string | null;
+  onBuy: () => void;
+  onClose: () => void;
+}) {
+  const [mounted, setMounted] = useState(false);
+  const [ask, setAsk] = useState(false);
+
+  useEffect(() => {
+    setMounted(true);
+    const onKey = (e: KeyboardEvent) => { if (e.key === "Escape") onClose(); };
+    document.addEventListener("keydown", onKey);
+    const prev = document.body.style.overflow;
+    document.body.style.overflow = "hidden";
+    return () => { document.removeEventListener("keydown", onKey); document.body.style.overflow = prev; };
+  }, [onClose]);
+
+  if (!mounted) return null;
+
+  const missing = Math.max(0, item.price - balance);
+  const pct = item.price > 0 ? Math.max(0, Math.min(100, Math.round((balance / item.price) * 100))) : 100;
+
+  return createPortal(
+    <div className="fixed inset-0 z-[70] flex items-end justify-center" onMouseDown={onClose}>
+      <div className="absolute inset-0 bg-slate-900/45 backdrop-blur-sm" />
+      <div
+        onMouseDown={(e) => e.stopPropagation()}
+        className="relative max-h-[90vh] w-full max-w-md overflow-y-auto rounded-t-[26px] bg-white pb-7 shadow-[0_-10px_30px_rgba(19,78,94,0.22)]"
+      >
+        <div className="sticky top-0 z-10 flex justify-center bg-white pb-1 pt-3">
+          <span className="h-1 w-10 rounded-full bg-slate-200" />
+        </div>
+
+        {/* Rasm — plitkadagidan katta, to'liq ko'rinadi */}
+        <div className="relative aspect-[4/3] w-full" style={{ background: item.imageUrl ? undefined : theme.bg }}>
+          {item.imageUrl ? (
+            // eslint-disable-next-line @next/next/no-img-element
+            <img src={item.imageUrl} alt={item.title} className="h-full w-full object-cover" />
+          ) : (
+            <span className="grid h-full w-full place-items-center opacity-90">
+              <Glyph kind={glyphFor(item.title)} s={78} />
+            </span>
+          )}
+          {soldOut ? (
+            <span className="absolute inset-0 grid place-items-center bg-slate-900/45 text-[15px] font-extrabold uppercase tracking-wide text-white">
+              {t.soldOut}
+            </span>
+          ) : null}
+        </div>
+
+        <div className="px-5 pt-4">
+          <h2 className="text-[20px] font-extrabold leading-tight text-slate-900">{item.title}</h2>
+
+          <div className="mt-2 flex flex-wrap items-center gap-2">
+            <span className="inline-flex items-center gap-1.5 rounded-full bg-amber-50 px-3 py-1.5">
+              <CoinGold s={17} />
+              <span className="text-[14px] font-extrabold text-slate-800">{item.price}</span>
+            </span>
+            {item.stock !== null && !soldOut ? (
+              <span className="rounded-full bg-slate-100 px-3 py-1.5 text-[12px] font-semibold text-slate-600">
+                {item.stock} {t.left}
+              </span>
+            ) : null}
+          </div>
+
+          {/* To'liq tavsif — plitkada u ikki qatorga kesilgan edi */}
+          {item.description ? (
+            <p className="mt-3 whitespace-pre-wrap text-[13.5px] leading-relaxed text-slate-600">{item.description}</p>
+          ) : null}
+
+          {/* Tanga yetmasa — qancha qolgani ko'rinadi */}
+          {!affordable && !soldOut ? (
+            <div className="mt-4 rounded-2xl bg-[#eef6fa] p-3.5">
+              <div className="mb-1.5 flex items-baseline justify-between gap-2 text-[12.5px]">
+                <span className="font-semibold text-slate-600">
+                  {t.yourBalance} {balance} · {t.needed} {missing}
+                </span>
+                <span className="shrink-0 font-extrabold" style={{ color: TEAL }}>{pct}%</span>
+              </div>
+              <div className="h-2 w-full overflow-hidden rounded-full bg-white">
+                <div className="h-full rounded-full transition-all" style={{ width: `${pct}%`, background: TEAL }} />
+              </div>
+            </div>
+          ) : null}
+
+          {err ? <p className="mt-3 text-center text-[12.5px] font-semibold text-rose-600">{err}</p> : null}
+
+          {/* Amal */}
+          <div className="mt-4 flex gap-2">
+            {done ? (
+              <div className="grid min-h-[48px] flex-1 place-items-center rounded-2xl bg-emerald-50 text-[14px] font-bold text-emerald-700">
+                {t.ordered}
+              </div>
+            ) : ask ? (
+              <>
+                <button
+                  type="button"
+                  onClick={() => setAsk(false)}
+                  className="min-h-[48px] rounded-2xl bg-slate-100 px-5 text-[14px] font-bold text-slate-500"
+                >
+                  {t.no}
+                </button>
+                <button
+                  type="button"
+                  onClick={onBuy}
+                  disabled={busy}
+                  className="min-h-[48px] flex-1 rounded-2xl text-[14px] font-bold text-white disabled:opacity-60"
+                  style={{ background: ICON_GRADIENT }}
+                >
+                  {busy ? "…" : t.confirm}
+                </button>
+              </>
+            ) : (
+              <>
+                <button
+                  type="button"
+                  onClick={onClose}
+                  className="min-h-[48px] rounded-2xl bg-slate-100 px-5 text-[14px] font-bold text-slate-500"
+                >
+                  {t.cancel}
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setAsk(true)}
+                  disabled={soldOut || !affordable}
+                  className={
+                    "min-h-[48px] flex-1 rounded-2xl text-[14px] font-bold transition " +
+                    (soldOut || !affordable ? "bg-slate-100 text-slate-400" : "text-white active:translate-y-[1px]")
+                  }
+                  style={soldOut || !affordable ? undefined : { background: ICON_GRADIENT }}
+                >
+                  {soldOut ? t.soldOut : affordable ? t.buy : `${missing} ${t.needed}`}
+                </button>
+              </>
+            )}
+          </div>
+        </div>
+      </div>
+    </div>,
+    document.body,
   );
 }
