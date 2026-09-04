@@ -10,7 +10,7 @@ import { getStudentProgress } from "@/lib/studentProgress";
 import { getActiveLevels, levelTitle, matchLevel } from "@/lib/studyLevels";
 import { coinBalance, starBalance } from "@/lib/coins";
 import { studentRank } from "@/lib/rank";
-import { getActiveBanners, getActiveVideos } from "@/lib/portalContent";
+import { getActiveBanners, getActiveVideos, videoThumb } from "@/lib/portalContent";
 import BannerCarousel from "./BannerCarousel";
 import { CARD, CoinGold, FlagAvatar, IcoBell, IcoBook, NAVY, Ring, TEAL, isAttended } from "./_ui";
 import MissingStudent from "./MissingStudent";
@@ -309,6 +309,10 @@ export default async function StudentStartPage() {
   const stars = starPurse.earned; // yulduz sarflanmaydi
   const streak = purse.streak;
 
+  // Kartada oxirgi videoning rasmi turadi. Vimeo rasm bermaydi — shuning uchun
+  // rasmi bori topilguncha oxiridan boshlab qaraymiz, topilmasa chizma qoladi.
+  const lastThumb = [...videoList].reverse().map((v) => videoThumb(v.url)).find(Boolean) ?? null;
+
   // ── Reyting: o'rin (raqam) ──
   // Doira va mezon Sozlamalar > Ball va mukofotlar bo'limidan olinadi;
   // yuqoridagi kubok belgisi ham aynan shu hisobni ko'rsatadi.
@@ -523,7 +527,7 @@ export default async function StudentStartPage() {
 
       {/* ── Videos & Podcasts ── */}
       <div className={`${card} relative overflow-hidden p-6`}>
-        <div className="relative z-10 max-w-[58%]">
+        <div className={`relative z-10 ${lastThumb ? "pr-[122px]" : "max-w-[58%]"}`}>
           <h2 className="text-[24px] font-extrabold leading-tight tracking-tight text-slate-900">{t.videosPodcasts}</h2>
           {videoList.length > 0 ? (
             <div className="mt-1 text-[12.5px] font-semibold text-slate-600">{videoList.length}</div>
@@ -534,13 +538,29 @@ export default async function StudentStartPage() {
             <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="m9 6 6 6-6 6" /></svg>
           </Link>
         </div>
-        {/* o'ng tomonda: quloqchin + planshet */}
-        <div className="pointer-events-none absolute -right-2 top-1 z-0">
-          <BigHeadphones w={96} />
-        </div>
-        <div className="pointer-events-none absolute bottom-3 right-14 z-0 rotate-[-10deg]">
-          <Tablet w={70} />
-        </div>
+        {lastThumb ? (
+          /* O'ng tomonda — oxirgi qo'yilgan videoning rasmi */
+          <div className="pointer-events-none absolute right-4 top-1/2 z-0 w-[114px] -translate-y-1/2 rotate-[-6deg]">
+            <div className="relative aspect-video overflow-hidden rounded-2xl bg-slate-200 shadow-[0_14px_26px_-12px_rgba(15,60,80,0.75)] ring-[3px] ring-white">
+              {/* eslint-disable-next-line @next/next/no-img-element */}
+              <img src={lastThumb} alt="" className="absolute inset-0 h-full w-full object-cover" />
+              <span className="absolute inset-0 bg-black/15" />
+              <span className="absolute left-1/2 top-1/2 grid h-8 w-8 -translate-x-1/2 -translate-y-1/2 place-items-center rounded-full bg-white/90 pl-[2px] shadow-md">
+                <svg width="13" height="13" viewBox="0 0 24 24" fill="#0f172a"><path d="M8 5.2v13.6L19 12 8 5.2Z" /></svg>
+              </span>
+            </div>
+          </div>
+        ) : (
+          /* Video yo'q — avvalgidek chizma: quloqchin + planshet */
+          <>
+            <div className="pointer-events-none absolute -right-2 top-1 z-0">
+              <BigHeadphones w={96} />
+            </div>
+            <div className="pointer-events-none absolute bottom-3 right-14 z-0 rotate-[-10deg]">
+              <Tablet w={70} />
+            </div>
+          </>
+        )}
       </div>
     </div>
   );
