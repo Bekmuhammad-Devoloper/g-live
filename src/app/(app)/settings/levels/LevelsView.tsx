@@ -247,6 +247,7 @@ export default function LevelsView({ rows, locale }: { rows: LevelRow[]; locale:
             if (saved) setItems((xs) => xs.map((x) => (x.id === saved.id ? { ...x, ...saved } : x)));
             else location.reload(); // yangi daraja — ro'yxatni serverdan qayta olamiz
           }}
+          onBanner={(id, url) => setItems((xs) => xs.map((x) => (x.id === id ? { ...x, bannerUrl: url } : x)))}
         />
       ) : null}
     </div>
@@ -255,12 +256,14 @@ export default function LevelsView({ rows, locale }: { rows: LevelRow[]; locale:
 
 // ── Qo'shish / tahrirlash oynasi ──
 function LevelDialog({
-  row, locale, onClose, onSaved,
+  row, locale, onClose, onSaved, onBanner,
 }: {
   row: LevelRow | null;
   locale: Locale;
   onClose: () => void;
   onSaved: (v: (LevelInput & { id: string }) | null) => void;
+  /** Banner darhol saqlanadi — ro'yxatdagi kartochka ham yangilansin */
+  onBanner: (id: string, url: string | null) => void;
 }) {
   const T = (uz: string, ru: string, en: string, de: string) => tr(locale, { uz, ru, en, de });
   const [f, setF] = useState<LevelInput>(
@@ -271,6 +274,48 @@ function LevelDialog({
   const [err, setErr] = useState<string | null>(null);
   const [pending, start] = useTransition();
   const set = (k: keyof LevelInput, v: string) => setF((x) => ({ ...x, [k]: v }));
+
+  // ── Banner ──
+  // Ilgari banner faqat ro'yxatdagi qatordan yuklanardi, lekin izoh shu oynada
+  // turgani uchun foydalanuvchi uni shu yerdan qidirardi. Endi shu yerda ham bor.
+  // Banner darhol saqlanadi (Saqlash tugmasini kutmaydi) — chunki u alohida
+  // maydon va rasm serverga yuklangach ortga qaytarishning ma'nosi yo'q.
+  const [banner, setBanner] = useState<string | null>(row?.bannerUrl ?? null);
+  const [upBusy, setUpBusy] = useState(false);
+  const fileRef = useRef<HTMLInputElement | null>(null);
+
+  const pickBanner = async (file: File) => {
+    if (!row) return; // yangi daraja — avval saqlanishi kerak
+    setErr(null);
+    setUpBusy(true);
+    try {
+      const blob = await shrink(file);
+      const fd = new FormData();
+      fd.append("file", new File([blob], "banner.jpg", { type: "image/jpeg" }));
+      const r = await fetch("/api/upload", { method: "POST", body: fd });
+      const j = await r.json();
+      if (!r.ok || !j.url) throw new Error("upload");
+      const res = await setLevelBanner(row.id, j.url);
+      if (res.error) throw new Error(res.error);
+      setBanner(j.url);
+      onBanner(row.id, j.url);
+    } catch {
+      setErr(T("Rasmni yuklab bo'lmadi", "Не удалось загрузить", "Upload failed", "Upload fehlgeschlagen"));
+    } finally {
+      setUpBusy(false);
+    }
+  };
+
+  const dropBanner = () => {
+    if (!row) return;
+    setUpBusy(true);
+    start(async () => {
+      const res = await setLevelBanner(row.id, null);
+      if (res.error) setErr(res.error);
+      else { setBanner(null); onBanner(row.id, null); }
+      setUpBusy(false);
+    });
+  };
 
   const save = () => {
     setErr(null);
@@ -298,9 +343,19 @@ function LevelDialog({
           </button>
         </div>
 
-        {/* Ilovada qanday ko'rinishi — shu zahoti */}
-        <div className="mb-4 grid h-[92px] place-items-center rounded-2xl text-white" style={{ background: levelGradient(f.color) }}>
-          <span className="text-[26px] font-extrabold drop-shadow">{f.code || "A1"}</span>
+        {/* Ilovada qanday ko'rinishi — shu zahoti (banner bo'lsa rang o'rniga o'sha) */}
+        <div
+          className="relative mb-4 grid h-[92px] place-items-center overflow-hidden rounded-2xl text-white"
+          style={banner ? { backgroundColor: "#12303f" } : { background: levelGradient(f.color) }}
+        >
+          {banner ? (
+            <>
+              {/* eslint-disable-next-line @next/next/no-img-element */}
+              <img src={banner} alt="" className="absolute inset-0 h-full w-full object-cover" />
+              <span className="absolute inset-0 bg-black/25" />
+            </>
+          ) : null}
+          <span className="relative text-[26px] font-extrabold drop-shadow">{f.code || "A1"}</span>
         </div>
 
         <div className="space-y-3">
@@ -349,6 +404,57 @@ function LevelDialog({
             <p className="mt-1.5 text-xs text-slate-400">
               {T("Banner yuklansa rang o'rniga o'sha rasm ko'rinadi.", "Если загружен баннер, вместо цвета будет он.", "A banner image replaces the colour.", "Ein Banner ersetzt die Farbe.")}
             </p>
+          </div>
+
+          {/* ── Banner ── */}
+          <div>
+            <label className={lbl}>{T("Banner", "Баннер", "Banner", "Banner")}</label>
+            {row ? (
+              <>
+                <input
+                  ref={fileRef}
+                  type="file" accept="image/*" hidden
+                  onChange={(e) => { const x = e.target.files?.[0]; if (x) void pickBanner(x); e.target.value = ""; }}
+                />
+                <div className="flex flex-wrap items-center gap-2">
+                  <button
+                    type="button" disabled={upBusy} onClick={() => fileRef.current?.click()}
+                    className="h-10 rounded-xl bg-slate-100 px-4 text-sm font-semibold text-slate-600 disabled:opacity-50 dark:bg-slate-800 dark:text-slate-200"
+                  >
+                    {upBusy
+                      ? T("Yuklanmoqda…", "Загрузка…", "Uploading…", "Wird hochgeladen…")
+                      : banner
+                        ? T("Rasmni almashtirish", "Заменить", "Replace image", "Bild ersetzen")
+                        : T("Rasm yuklash", "Загрузить", "Upload image", "Bild hochladen")}
+                  </button>
+                  {banner ? (
+                    <button
+                      type="button" disabled={upBusy} onClick={dropBanner}
+                      className="h-10 rounded-xl px-4 text-sm font-semibold text-rose-600 disabled:opacity-50"
+                    >
+                      {T("O'chirish", "Удалить", "Remove", "Entfernen")}
+                    </button>
+                  ) : null}
+                </div>
+                <p className="mt-1.5 text-xs text-slate-400">
+                  {T(
+                    "Banner darhol saqlanadi — “Saqlash” ni kutmaydi.",
+                    "Баннер сохраняется сразу — не ждёт кнопки “Сохранить”.",
+                    "The banner is saved immediately — it does not wait for “Save”.",
+                    "Das Banner wird sofort gespeichert — unabhängig von „Speichern“.",
+                  )}
+                </p>
+              </>
+            ) : (
+              <p className="text-xs text-slate-400">
+                {T(
+                  "Bannerni darajani saqlagandan keyin qo'shasiz.",
+                  "Баннер можно добавить после сохранения.",
+                  "You can add a banner after saving the level.",
+                  "Das Banner können Sie nach dem Speichern hinzufügen.",
+                )}
+              </p>
+            )}
           </div>
         </div>
 
