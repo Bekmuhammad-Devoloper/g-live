@@ -1,17 +1,75 @@
 import Link from "next/link";
-import { prisma } from "@/lib/db";
 import MissingStudent from "../../../../MissingStudent";
 import { loadUnit } from "../_load";
-import { SectionHeader, TaskCard, IcoClipboard, embedUrl, isUpload, safeUrl, youtubePoster } from "../_parts";
-import LessonVideo, { type VideoMode } from "../LessonVideo";
+import { loadUnitProgress } from "../_progress";
+import { SectionHeader, IcoPlayCircle } from "../_parts";
+import { CoinGold, NAVY, TEAL } from "../../../../_ui";
 
-// Darsning o'zi: video, nomi, tavsifi va dars topshirig'i.
-// Uy vazifasi bu yerda EMAS — u alohida bo'limda (../vazifa).
+// "Dars" bo'limi — darsning videolari ro'yxati.
+//
+// Har karta ikki qatordan: VIDEO (ko'rilganmi) va MASHQ (topshirilganmi).
+// Har qatorda o'sha ish uchun beriladigan tanga va yulduz ko'rinadi —
+// o'quvchi nima uchun nima olishini oldindan biladi.
+//
+// Ma'lumot modelida bitta darsda BITTA video bor, shuning uchun ro'yxatda
+// hozircha bitta karta bo'ladi. Tuzilma ro'yxat qilib qurilgan: dasturga
+// darsga bir nechta video qo'shilsa, ro'yxat o'zi kengayadi.
 
 const ACCENT = "linear-gradient(150deg, #2fb9dc 0%, #0e7490 100%)";
-const TEALG = "linear-gradient(150deg, #46d8b8 0%, #0f9a90 100%)";
 
-export default async function LessonMainPage({
+/** Kichik yulduz — mukofot chipida */
+function StarSmall({ s = 15 }: { s?: number }) {
+  return (
+    <svg width={s} height={s} viewBox="0 0 24 24" aria-hidden>
+      <path
+        d="M12 3.1l2.75 5.57 6.15.9-4.45 4.34 1.05 6.12L12 17.14l-5.5 2.89 1.05-6.12L3.1 9.57l6.15-.9L12 3.1Z"
+        fill="#fbc63f"
+        stroke="#fff7de"
+        strokeOpacity="0.6"
+        strokeWidth="0.9"
+      />
+    </svg>
+  );
+}
+
+/** Mukofot chipi: ikonka + olingan/jami */
+function Reward({ icon, got, total }: { icon: React.ReactNode; got: number; total: number }) {
+  return (
+    <span className="flex items-center gap-1 rounded-full bg-white/75 px-2 py-[3px]">
+      {icon}
+      <span className="text-[12px] font-extrabold tabular-nums text-slate-800">
+        {got}/{total}
+      </span>
+    </span>
+  );
+}
+
+/** Bitta qator: nom, mukofotlar va jarayon chizig'i */
+function Row({
+  label, pct, coinGot, coinTotal, starGot, starTotal,
+}: {
+  label: string;
+  pct: number;
+  coinGot: number;
+  coinTotal: number;
+  starGot: number;
+  starTotal: number;
+}) {
+  return (
+    <div>
+      <div className="flex items-center gap-2">
+        <span className="min-w-0 flex-1 truncate text-[13px] font-bold text-slate-800">{label}:</span>
+        <Reward icon={<CoinGold s={15} />} got={coinGot} total={coinTotal} />
+        <Reward icon={<StarSmall />} got={starGot} total={starTotal} />
+      </div>
+      <div className="mt-1.5 h-[7px] overflow-hidden rounded-full bg-white/70">
+        <div className="h-full rounded-full" style={{ width: `${pct}%`, background: `linear-gradient(90deg,#3fc9e4,${TEAL})` }} />
+      </div>
+    </div>
+  );
+}
+
+export default async function LessonVideosPage({
   params,
 }: {
   params: Promise<{ level: string; unit: string }>;
@@ -20,105 +78,81 @@ export default async function LessonMainPage({
   const ctx = await loadUnit(level, unit);
   if (ctx.missing) return <MissingStudent />;
 
-  const { t, code, lesson, unitLabel, unitNo, position, totalInLevel, prev, next } = ctx;
+  const { t, code, lesson, unitLabel } = ctx;
+  const p = await loadUnitProgress(ctx);
 
-  const view = await prisma.lessonView.findFirst({
-    where: { studentId: ctx.studentId, courseLessonId: lesson.id },
-    select: { id: true },
-  });
+  // Video mukofoti — bitta hodisa, shuning uchun "olingan/jami" 0/3 yoki 3/3
+  const vCoinTotal = p.reward.viewCoin;
+  const vStarTotal = p.reward.viewStar;
+  const vCoinGot = p.lesson.watched ? vCoinTotal : 0;
+  const vStarGot = p.lesson.watched ? vStarTotal : 0;
 
-  const video = safeUrl(lesson.videoUrl);
-  const embed = video && !isUpload(video) ? embedUrl(video) : null;
-  const mode: VideoMode = !video ? "none" : isUpload(video) ? "file" : embed ? "embed" : "link";
-  const poster = video && !isUpload(video) ? youtubePoster(video) : null;
+  // Mashq mukofoti — har topshirilgan vazifa uchun
+  const eCoinTotal = p.reward.taskCoin * p.homework.total;
+  const eStarTotal = p.reward.taskStar * p.homework.total;
+  const eCoinGot = p.reward.taskCoin * p.homework.done;
+  const eStarGot = p.reward.taskStar * p.homework.done;
 
-  const assignmentFile = safeUrl(lesson.assignmentFileUrl);
-  const hasAssignment = !!(lesson.assignment || assignmentFile);
-
-  // Mavzu maydoni lug'at bo'lsa u "Lug'at" bo'limida chiqadi — bu yerda
-  // tavsif sifatida takrorlanmaydi.
-  const topicIsDescription = !!lesson.topic && !/[-–—]/.test(lesson.topic) && lesson.topic.split(/[,;\n]/).length < 3;
-
-  const navBtn =
-    "gl-glass flex h-[54px] flex-1 items-center gap-2.5 rounded-[20px] px-3.5 text-slate-700 transition active:scale-[0.98]";
+  const base = `/student/kurse/${code}/${lesson.id}`;
 
   return (
     <div>
       <SectionHeader
-        backHref={`/student/kurse/${code}/${lesson.id}`}
+        backHref={base}
         backLabel={t.back}
         title={t.lesson}
         subtitle={`${unitLabel} · ${lesson.title}`}
         accent={ACCENT}
       />
 
-      <div className="mt-4 space-y-3.5">
-        <LessonVideo
-          mode={mode}
-          src={mode === "embed" ? embed : video}
-          poster={poster}
-          title={unitLabel}
-          kicker={`${t.lesson} ${position + 1}/${Math.max(totalInLevel, 1)}`}
-          badge={unitNo}
-          pill={lesson.title}
-          openLabel={t.openVideo}
-          emptyLabel={t.noVideoYet}
-          lessonId={lesson.id}
-          watched={!!view}
-          markLabel={t.markWatched}
-          doneLabel={t.watchedDone}
-        />
+      <div className="mt-4 space-y-3">
+        {p.lesson.hasVideo ? (
+          <Link
+            href={`${base}/dars/video`}
+            className="gl-glass block rounded-[24px] p-4 transition active:scale-[0.985]"
+          >
+            <div className="flex items-center gap-2.5">
+              <span className="grid h-9 w-9 shrink-0 place-items-center rounded-[13px] text-white" style={{ background: ACCENT }}>
+                <IcoPlayCircle s={20} />
+              </span>
+              <span className="min-w-0 flex-1 truncate text-[17px] font-extrabold tracking-[-0.015em] text-slate-900">
+                1-{t.videoSection.toLowerCase()}
+              </span>
+              {p.lesson.watched && (
+                <span className="shrink-0 rounded-full px-2.5 py-[3px] text-[11px] font-bold" style={{ background: "rgba(14,116,144,0.14)", color: NAVY }}>
+                  {t.watched}
+                </span>
+              )}
+            </div>
 
-        {topicIsDescription && (
-          <section className="gl-glass rounded-[26px] p-4">
-            <h2 className="break-words text-[20px] font-extrabold leading-[1.2] tracking-[-0.02em] text-slate-900">
-              {lesson.title}
-            </h2>
-            <p className="mt-1.5 whitespace-pre-wrap break-words text-[14.5px] leading-[1.6] text-slate-600">
-              {lesson.topic}
-            </p>
-          </section>
-        )}
-
-        {hasAssignment && (
-          <TaskCard
-            title={t.lessonAssignment}
-            icon={<IcoClipboard />}
-            accent={TEALG}
-            tint="#eafaf5"
-            wash="rgba(52,211,153,0.22)"
-            body={lesson.assignment}
-            fileUrl={assignmentFile}
-            t={t}
-          />
-        )}
-
-        {!video && !hasAssignment && (
-          <div className="gl-glass rounded-[26px] px-5 py-12 text-center">
-            <div className="text-[14.5px] font-semibold text-slate-700">{t.noMaterial}</div>
+            <div className="mt-3 space-y-3">
+              <Row
+                label={t.videoSection}
+                pct={p.lesson.pct}
+                coinGot={vCoinGot}
+                coinTotal={vCoinTotal}
+                starGot={vStarGot}
+                starTotal={vStarTotal}
+              />
+              {p.homework.total > 0 && (
+                <Row
+                  label={t.exercise}
+                  pct={p.homework.pct}
+                  coinGot={eCoinGot}
+                  coinTotal={eCoinTotal}
+                  starGot={eStarGot}
+                  starTotal={eStarTotal}
+                />
+              )}
+            </div>
+          </Link>
+        ) : (
+          <div className="gl-glass rounded-[26px] px-5 py-14 text-center">
+            <span className="mx-auto mb-3 grid h-14 w-14 place-items-center rounded-full bg-white/60 text-slate-400">
+              <IcoPlayCircle s={26} />
+            </span>
+            <div className="text-[14.5px] font-semibold text-slate-700">{t.noVideoYet}</div>
           </div>
-        )}
-
-        {/* Oldingi / keyingi dars */}
-        {(prev || next) && (
-          <nav className="flex gap-2.5 pt-0.5">
-            {prev ? (
-              <Link href={`/student/kurse/${code}/${prev.id}/dars`} className={navBtn}>
-                <span className="min-w-0 flex-1 text-left">
-                  <span className="block text-[10px] font-bold uppercase tracking-[0.06em] text-slate-500">{t.prevLesson}</span>
-                  <span className="block truncate text-[12.5px] font-semibold leading-tight">{prev.title}</span>
-                </span>
-              </Link>
-            ) : null}
-            {next ? (
-              <Link href={`/student/kurse/${code}/${next.id}/dars`} className={navBtn}>
-                <span className="min-w-0 flex-1 text-right">
-                  <span className="block text-[10px] font-bold uppercase tracking-[0.06em] text-slate-500">{t.nextLesson}</span>
-                  <span className="block truncate text-[12.5px] font-semibold leading-tight">{next.title}</span>
-                </span>
-              </Link>
-            ) : null}
-          </nav>
         )}
       </div>
     </div>

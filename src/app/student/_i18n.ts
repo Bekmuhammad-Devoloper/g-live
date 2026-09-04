@@ -77,6 +77,15 @@ const DICT = {
   lessonWordsSub: p("Shu darsning so'zlari", "Слова этого урока", "Words from this lesson", "Wörter dieser Lektion"),
   lessonVideoSub: p("Video va dars topshirig'i", "Видео и задание урока", "Video and lesson assignment", "Video und Lektionsaufgabe"),
   lessonHomeworkSub: p("Uyga vazifa va topshirish", "Домашнее задание и сдача", "Homework and submission", "Hausaufgabe und Abgabe"),
+
+  // ── Video bo'limi ──
+  videoSection: p("Video", "Видео", "Video", "Video"),
+  exercise: p("Mashq", "Упражнение", "Exercise", "Übung"),
+  videoExercise: p("Video mashq", "Упражнение к видео", "Video exercise", "Video-Übung"),
+  watchVideo: p("Ko'rish", "Смотреть", "Play", "Ansehen"),
+  closePlayer: p("Yopish", "Закрыть", "Close", "Schließen"),
+  rotateHint: p("Telefonni yon holatga buring", "Поверните телефон горизонтально", "Turn your phone sideways", "Drehe dein Telefon quer"),
+  noExercise: p("Bu darsda mashq yo'q", "В этом уроке нет упражнения", "No exercise in this lesson", "Keine Übung in dieser Lektion"),
   openFile: p("Faylni ochish", "Открыть файл", "Open file", "Datei öffnen"),
   prevLesson: p("Oldingi", "Предыдущий", "Previous", "Zurück"),
   nextLesson: p("Keyingi", "Следующий", "Next", "Weiter"),

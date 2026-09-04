@@ -3,47 +3,52 @@ import MissingStudent from "../../../MissingStudent";
 import HeaderBadges from "../../../HeaderBadges";
 import { NAVY, TEAL } from "../../../_ui";
 import { loadUnit } from "./_load";
-import { looksLikeVocabulary, parseLessonWords } from "@/lib/lessonWords";
-import { prisma } from "@/lib/db";
-import { IcoBack, IcoChevron, IcoClipboard, IcoPlayCircle, IcoWords, safeUrl } from "./_parts";
+import { loadUnitProgress } from "./_progress";
+import { IcoBack, IcoChevron, IcoClipboard, IcoPlayCircle, IcoWords } from "./_parts";
 
 // Dars ichi — FAQAT uchta kirish kartasi: Lug'at · Dars · Uy vazifasi.
 //
-// Ilgari bu sahifa bitta uzun skroll edi: video, tavsif, topshiriq, uy
-// vazifasi va topshirish bloki ketma-ket turardi. O'quvchi kerakli joyni
-// topish uchun butun sahifani aylantirar edi.
+// Karta o'zi progress chizig'i: fon bo'lim rangi bilan chapdan o'ngga
+// foizgacha to'ladi. Shu sabab o'quvchi bosishdan oldin ham qaysi bo'lim
+// qancha bajarilganini ko'radi — alohida progress element kerak emas.
 //
-// Endi har bo'lim O'Z MARSHRUTIDA (./lugat, ./dars, ./vazifa). Bu tab'dan
-// afzal: har bo'limga to'g'ridan-to'g'ri havola beriladi, telefonning
-// "orqaga" tugmasi to'g'ri ishlaydi va har bo'limni alohida rivojlantirsa
-// bo'ladi — bittasini o'zgartirish qolganiga tegmaydi.
+// Har bo'lim O'Z MARSHRUTIDA (./lugat, ./dars, ./vazifa): har biriga
+// to'g'ridan-to'g'ri havola beriladi, telefonning "orqaga" tugmasi to'g'ri
+// ishlaydi va bo'limlarni alohida rivojlantirsa bo'ladi.
 
 interface SectionCardProps {
   href: string;
   icon: React.ReactNode;
+  /** To'lish rangi (to'q) */
   accent: string;
+  /** To'lish rangi (och) — kartaning to'lmagan qismi */
+  soft: string;
   title: string;
   subtitle: string;
-  /** O'ng tomondagi qiymat — so'z soni, holat yoki vazifa soni */
-  meta: string;
-  /** Qiymat bo'sh bo'lsa yorliq so'niq ko'rinadi */
-  muted?: boolean;
+  /** 0..100 */
+  pct: number;
+  /** Bo'lim uchun material bormi — bo'lmasa foiz o'rniga chiziqcha */
+  has: boolean;
 }
 
-function SectionCard({ href, icon, accent, title, subtitle, meta, muted }: SectionCardProps) {
+function SectionCard({ href, icon, accent, soft, title, subtitle, pct, has }: SectionCardProps) {
   return (
     <Link
       href={href}
-      className="gl-glass flex items-center gap-3.5 rounded-[24px] px-4 py-4 transition active:scale-[0.985]"
+      className="gl-glass relative flex items-center gap-3.5 overflow-hidden rounded-[24px] px-4 py-4 transition active:scale-[0.985]"
     >
+      {/* To'lish qatlami — kontentning ORQASIDA, shuning uchun matn har doim
+          o'qiladi va foiz o'zgarganda hech narsa siljimaydi. */}
+      <span aria-hidden className="absolute inset-y-0 left-0" style={{ width: `${has ? pct : 0}%`, background: soft }} />
+
       <span
-        className="grid h-[54px] w-[54px] shrink-0 place-items-center rounded-[18px] text-white shadow-[0_10px_20px_-8px_rgba(15,60,80,0.65)]"
+        className="relative grid h-[54px] w-[54px] shrink-0 place-items-center rounded-[18px] text-white shadow-[0_10px_20px_-8px_rgba(15,60,80,0.65)]"
         style={{ background: accent }}
       >
         {icon}
       </span>
 
-      <span className="min-w-0 flex-1">
+      <span className="relative min-w-0 flex-1">
         <span className="block truncate text-[17px] font-extrabold leading-tight tracking-[-0.015em] text-slate-900">
           {title}
         </span>
@@ -52,17 +57,12 @@ function SectionCard({ href, icon, accent, title, subtitle, meta, muted }: Secti
         </span>
       </span>
 
-      <span
-        className="shrink-0 rounded-full px-3 py-[6px] text-[13px] font-extrabold"
-        style={
-          muted
-            ? { background: "rgba(148,163,184,0.16)", color: "#475569" }
-            : { background: "rgba(14,116,144,0.12)", color: NAVY }
-        }
-      >
-        {meta}
+      <span className="relative shrink-0 text-[19px] font-extrabold tabular-nums text-slate-900">
+        {has ? `${pct}%` : "—"}
       </span>
-      <IcoChevron s={17} />
+      <span className="relative">
+        <IcoChevron s={17} />
+      </span>
     </Link>
   );
 }
@@ -77,24 +77,8 @@ export default async function StudentUnitPage({
   if (ctx.missing) return <MissingStudent />;
 
   const { t, code, lesson, unitLabel, position, totalInLevel, taught } = ctx;
+  const p = await loadUnitProgress(ctx);
 
-  // Uchta bo'lim uchun qisqa hisob — kartadagi o'ng tomondagi qiymat
-  const words = parseLessonWords(lesson.topic);
-  const hasVocab = words.length > 0 && looksLikeVocabulary(words);
-
-  const hasVideo = !!safeUrl(lesson.videoUrl);
-  const hasAssignment = !!(lesson.assignment || safeUrl(lesson.assignmentFileUrl));
-  const hasHomework = !!(lesson.homework || safeUrl(lesson.homeworkFileUrl));
-
-  const [view, taskCount] = await Promise.all([
-    prisma.lessonView.findFirst({
-      where: { studentId: ctx.studentId, courseLessonId: lesson.id },
-      select: { id: true },
-    }),
-    prisma.assignment.count({ where: { courseLessonId: lesson.id, groupId: ctx.groupId } }),
-  ]);
-
-  const homeworkCount = taskCount + (hasHomework ? 1 : 0);
   const base = `/student/kurse/${code}/${lesson.id}`;
 
   return (
@@ -119,14 +103,15 @@ export default async function StudentUnitPage({
         <HeaderBadges />
       </div>
 
-      {/* Dars raqami va o'tilgan holati — sahifada boshqa hech narsa yo'q,
-          shu sabab bu bitta qator kontekstni beradi. */}
       <div className="mt-3 flex items-center gap-2">
         <span className="rounded-full bg-white/60 px-3 py-[5px] text-[11.5px] font-bold text-slate-700">
           {t.lesson} {position + 1}/{Math.max(totalInLevel, 1)}
         </span>
         {taught && (
-          <span className="flex items-center gap-1 rounded-full px-3 py-[5px] text-[11.5px] font-bold" style={{ background: "rgba(224,146,23,0.16)", color: "#9a5f14" }}>
+          <span
+            className="flex items-center gap-1 rounded-full px-3 py-[5px] text-[11.5px] font-bold"
+            style={{ background: "rgba(14,116,144,0.14)", color: NAVY }}
+          >
             <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3.2" strokeLinecap="round" strokeLinejoin="round">
               <path d="m5 12.5 4.5 4.5L19 7.5" />
             </svg>
@@ -141,30 +126,33 @@ export default async function StudentUnitPage({
           href={`${base}/lugat`}
           icon={<IcoWords s={26} />}
           accent="linear-gradient(150deg, #f6c453 0%, #e09217 100%)"
+          soft="rgba(246,196,83,0.30)"
           title={t.vocabulary}
-          subtitle={t.lessonWordsSub}
-          meta={hasVocab ? `${words.length}` : "—"}
-          muted={!hasVocab}
+          subtitle={p.vocab.has ? `${p.vocab.words} ${t.wordCount}` : t.lessonWordsSub}
+          pct={p.vocab.pct}
+          has={p.vocab.has}
         />
 
         <SectionCard
           href={`${base}/dars`}
           icon={<IcoPlayCircle s={26} />}
           accent="linear-gradient(150deg, #2fb9dc 0%, #0e7490 100%)"
+          soft="rgba(63,201,228,0.28)"
           title={t.lesson}
           subtitle={t.lessonVideoSub}
-          meta={view ? t.watched : hasVideo || hasAssignment ? t.openVideo : "—"}
-          muted={!hasVideo && !hasAssignment}
+          pct={p.lesson.pct}
+          has={p.lesson.has}
         />
 
         <SectionCard
           href={`${base}/vazifa`}
           icon={<IcoClipboard s={26} />}
           accent="linear-gradient(150deg, #b07bff 0%, #7c3aed 100%)"
+          soft="rgba(176,123,255,0.26)"
           title={t.homeworkTask}
-          subtitle={t.lessonHomeworkSub}
-          meta={homeworkCount > 0 ? `${homeworkCount}` : "—"}
-          muted={homeworkCount === 0}
+          subtitle={p.homework.has ? `${p.homework.done}/${p.homework.total}` : t.lessonHomeworkSub}
+          pct={p.homework.pct}
+          has={p.homework.has}
         />
       </div>
     </div>

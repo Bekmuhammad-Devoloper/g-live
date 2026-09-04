@@ -2,6 +2,8 @@ import MissingStudent from "../../../../MissingStudent";
 import { loadUnit } from "../_load";
 import { SectionHeader, IcoWords } from "../_parts";
 import { looksLikeVocabulary, parseLessonWords } from "@/lib/lessonWords";
+import { loadUnitProgress } from "../_progress";
+import { NAVY, TEAL } from "../../../../_ui";
 
 // Darsning lug'ati.
 //
@@ -23,6 +25,7 @@ export default async function LessonVocabPage({
   const { t, code, lesson, unitLabel } = ctx;
   const words = parseLessonWords(lesson.topic);
   const hasVocab = words.length > 0 && looksLikeVocabulary(words);
+  const p = await loadUnitProgress(ctx);
 
   return (
     <div>
@@ -33,6 +36,19 @@ export default async function LessonVocabPage({
         subtitle={`${unitLabel} · ${lesson.title}`}
         accent={ACCENT}
       />
+
+      {/* O'rganilgan ulushi — dars sahifasidagi karta bilan bir xil manba,
+          shu sabab ikki joyda ikki xil raqam chiqmaydi. */}
+      {hasVocab && (
+        <div className="mt-3 flex items-center gap-2.5">
+          <div className="h-[8px] flex-1 overflow-hidden rounded-full bg-white/55 shadow-[inset_0_1px_2px_rgba(19,78,94,0.12)]">
+            <div className="h-full rounded-full" style={{ width: `${p.vocab.pct}%`, background: `linear-gradient(90deg,#f6c453,#e09217)` }} />
+          </div>
+          <span className="text-[13px] font-extrabold tabular-nums" style={{ color: NAVY }}>
+            {p.vocab.pct}%
+          </span>
+        </div>
+      )}
 
       {hasVocab ? (
         <section className="gl-glass mt-4 overflow-hidden rounded-[26px]">
