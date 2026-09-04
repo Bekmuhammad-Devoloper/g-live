@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { cn } from "@/lib/cn";
 import { S } from "../_i18n";
 import KurseActions from "./KurseActions";
 import { getPortalFlags } from "@/lib/portalFeatures";
@@ -101,20 +102,23 @@ export default async function StudentKursePage() {
             <Link
               key={code}
               href={`/student/kurse/${code}`}
-              // Bosh sahifadagi t.yourProgress kartasi bilan bir xil o'lcham
-              className="relative flex min-h-[168px] flex-col justify-between overflow-hidden rounded-[26px] p-6 text-white shadow-[0_14px_30px_rgba(19,78,94,0.22)]"
-              style={banner ? { backgroundColor: "#12303f" } : { background: levelGradient(lvl.color) }}
+              className="relative block overflow-hidden rounded-[26px] text-white shadow-[0_14px_30px_rgba(19,78,94,0.22)]"
+              style={{ background: levelGradient(lvl.color) }}
             >
+              {/* Banner — TO'LIQ ko'rinadi va ustiga yozuv tushmaydi.
+                  Ilgari rasm butun kartochkaga cho'zilib qirqilardi, yozuvlar
+                  esa uning ustida turib o'qilmasdi. Endi rasm o'z nisbatida
+                  yuqorida, matn esa ostidagi rangli yo'lakda. */}
               {banner ? (
-                <>
-                  {/* eslint-disable-next-line @next/next/no-img-element */}
-                  <img src={banner} alt="" className="absolute inset-0 h-full w-full object-cover" />
-                  {/* yozuvlar o'qilishi uchun qoramtir parda */}
-                  <span className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/45 to-black/30" />
-                </>
-              ) : (
-                <Mountains />
-              )}
+                // eslint-disable-next-line @next/next/no-img-element
+                <img src={banner} alt="" className="block max-h-[280px] w-full object-cover" />
+              ) : null}
+
+              <div className={cn(
+                "relative flex flex-col justify-between p-6",
+                banner ? "min-h-[112px]" : "min-h-[168px]",
+              )}>
+              {banner ? null : <Mountains />}
               <div className="relative flex items-start gap-4">
                 {/* daraja belgisi */}
                 <span className="grid h-[58px] w-[58px] shrink-0 place-items-center rounded-2xl bg-white/20 text-[21px] font-extrabold backdrop-blur-sm">
@@ -122,7 +126,11 @@ export default async function StudentKursePage() {
                 </span>
                 <div className="min-w-0 flex-1">
                   <div className="flex items-center gap-2">
-                    <span className="truncate text-[24px] font-extrabold leading-tight">{levelTitle(lvl, session.locale)}</span>
+                    {/* Qo'lda yozilgan shrift (Caveat) — nozikroq, shu sabab
+                        kattaroq o'lchamda beriladi. Kesilmasin: eng ko'pi 2 qator. */}
+                    <span className="font-hand line-clamp-2 text-[30px] font-bold leading-[1.05]">
+                      {levelTitle(lvl, session.locale)}
+                    </span>
                     {active && (
                       <span className="shrink-0 rounded-full bg-white/25 px-2 py-0.5 text-[10px] font-bold uppercase tracking-wide">
                         aktuell
@@ -142,6 +150,7 @@ export default async function StudentKursePage() {
                   <div className="h-full rounded-full bg-white" style={{ width: `${pct}%` }} />
                 </div>
                 <span className="text-[17px] font-extrabold">{pct}%</span>
+              </div>
               </div>
             </Link>
           );
