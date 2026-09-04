@@ -143,7 +143,7 @@ export default function Chat({
 
       {/* ── Xabarlar ── */}
       <div
-        className="flex-1 overflow-y-auto px-2.5 py-3"
+        className="flex-1 overflow-y-auto overscroll-contain px-2.5 py-3"
         style={{
           backgroundColor: TG.wall,
           backgroundImage:

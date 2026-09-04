@@ -617,6 +617,11 @@ export default function Battle({
               onKeyDown={(e) => { if (e.key === "Enter") check(); }}
               disabled={!!picked}
               placeholder="Javobingiz…"
+              autoCapitalize="off"
+              autoCorrect="off"
+              autoComplete="off"
+              spellCheck={false}
+              enterKeyHint="done"
               className="mt-4 h-12 w-full rounded-2xl border-2 border-slate-200 px-4 text-[16px] font-semibold text-slate-800 outline-none focus:border-[#0e7490]"
             />
 

@@ -173,16 +173,16 @@ export default function IdCard({ p, t, editable = true }: { p: VProfile; t: Stud
             {edit ? (
               <form action={submit} className="space-y-2">
                 <Field label={t.fullName}>
-                  <input name="fullName" defaultValue={p.fullName} required className={INPUT} />
+                  <input name="fullName" autoComplete="name" defaultValue={p.fullName} required className={INPUT} />
                 </Field>
                 <Field label={t.birthDate}>
                   <input name="birthDate" type="date" defaultValue={p.birthDate ?? ""} className={INPUT} />
                 </Field>
                 <Field label={t.phone}>
-                  <input name="phone" defaultValue={p.phone ?? ""} placeholder="90 123 45 67" className={INPUT} />
+                  <input name="phone" type="tel" inputMode="tel" autoComplete="tel" defaultValue={p.phone ?? ""} placeholder="90 123 45 67" className={INPUT} />
                 </Field>
                 <Field label={t.phone2}>
-                  <input name="phone2" defaultValue={p.phone2 ?? ""} placeholder="—" className={INPUT} />
+                  <input name="phone2" type="tel" inputMode="tel" autoComplete="tel" defaultValue={p.phone2 ?? ""} placeholder="—" className={INPUT} />
                 </Field>
                 <div className="flex gap-2 pt-1">
                   <button
@@ -245,7 +245,7 @@ export default function IdCard({ p, t, editable = true }: { p: VProfile; t: Stud
 }
 
 const INPUT =
-  "w-full rounded-xl border-0 bg-slate-50 px-3 py-2 text-[16px] font-semibold text-slate-800 outline-none focus:bg-slate-100";
+  "w-full rounded-xl border-0 bg-slate-50 px-3 py-2 text-[16px] font-semibold text-slate-800 outline-none focus:bg-slate-100 focus:ring-2 focus:ring-[#0e7490]/40";
 
 function Field({ label, children }: { label: string; children: React.ReactNode }) {
   return (

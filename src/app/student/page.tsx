@@ -367,11 +367,15 @@ export default async function StudentStartPage() {
   // Profil rasmi: avval o'quvchi rasmi, keyin foydalanuvchi rasmi; ikkalasi ham yo'q bo'lsa — logotip
   const avatarUrl = student.imageUrl || student.user?.imageUrl || null;
 
+  // Yangi o'quvchida hali hech qanday ma'lumot yo'q. Bunda 0% ko'rsatish
+  // "ma'lumot yo'q" emas, "yiqilding" degan ma'no beradi — ustiga eng past
+  // darajadagi (xafa) ko'nikma rasmi tanlanardi. Shu sabab har ko'nikma uchun
+  // "manbasi bormi" belgisi olib yuriladi: bo'lmasa foiz o'rniga chiziqcha.
   const skills = [
-    { key: "w", label: t.words, pct: woerter, img: skillImage("woerter", woerter), icon: <span style={{ color: TEAL }} className="text-[28px] font-extrabold leading-none">W</span> },
-    { key: "l", label: t.reading, pct: lesen, img: skillImage("lesen", lesen), icon: <IcoBook s={34} /> },
-    { key: "h", label: t.listening, pct: hoeren, img: skillImage("hoeren", hoeren), icon: <IcoHeadphones s={34} /> },
-    { key: "s", label: t.speaking, pct: sprechen, img: skillImage("sprechen", sprechen), icon: <IcoMic s={34} /> },
+    { key: "w", label: t.words, pct: woerter, has: exams.length > 0, img: exams.length ? skillImage("woerter", woerter) : null, icon: <span style={{ color: TEAL }} className="text-[28px] font-extrabold leading-none">W</span> },
+    { key: "l", label: t.reading, pct: lesen, has: submissions.length > 0, img: submissions.length ? skillImage("lesen", lesen) : null, icon: <IcoBook s={34} /> },
+    { key: "h", label: t.listening, pct: hoeren, has: attendance.length > 0, img: attendance.length ? skillImage("hoeren", hoeren) : null, icon: <IcoHeadphones s={34} /> },
+    { key: "s", label: t.speaking, pct: sprechen, has: courseLessons.length > 0, img: courseLessons.length ? skillImage("sprechen", sprechen) : null, icon: <IcoMic s={34} /> },
   ];
 
   // Karta uslubi — yagona manba `_ui.tsx` dagi CARD ("gl-glass").
@@ -433,8 +437,8 @@ export default async function StudentStartPage() {
                 o'zgarib ketardi (uz/ru/de yorliqlari har xil). */}
             <div className="px-0.5 text-center text-[12px] font-semibold leading-[15px] text-slate-800">{sk.label}</div>
             <div className="relative grid place-items-center">
-              <Ring pct={sk.pct} size={52} stroke={4.5} />
-              <span className="absolute text-[11px] font-bold leading-none text-slate-800">{sk.pct}%</span>
+              <Ring pct={sk.has ? sk.pct : 0} size={52} stroke={4.5} />
+              <span className="absolute text-[11px] font-bold leading-none text-slate-800">{sk.has ? `${sk.pct}%` : "—"}</span>
             </div>
           </div>
         ))}

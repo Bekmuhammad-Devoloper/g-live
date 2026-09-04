@@ -29,7 +29,7 @@ export default function VideoItem({ v, openLabel }: { v: VVideo; openLabel: stri
           className="aspect-video w-full border-0 bg-black"
         />
       ) : v.embed ? (
-        <button type="button" onClick={() => setOpen(true)} className="relative block aspect-video w-full bg-slate-900">
+        <button type="button" onClick={() => setOpen(true)} aria-label={`${openLabel}: ${v.title}`} className="relative block aspect-video w-full bg-slate-900">
           {v.thumb ? (
             // eslint-disable-next-line @next/next/no-img-element
             <img src={v.thumb} alt="" className="absolute inset-0 h-full w-full object-cover" />

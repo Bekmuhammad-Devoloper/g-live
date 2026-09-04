@@ -56,7 +56,7 @@ export default function DictNav({ letters, t }: { letters: string[]; t: StudentS
           value={q}
           onChange={(e) => setQ(e.target.value)}
           placeholder={t.searchDeUz}
-          className="h-12 w-full rounded-2xl border-0 bg-white pl-11 pr-11 text-[16px] text-slate-900 shadow-[0_6px_16px_rgba(19,78,94,0.10)] outline-none placeholder:text-slate-400"
+          className="h-12 w-full rounded-2xl border-0 bg-white pl-11 pr-11 text-[16px] text-slate-900 shadow-[0_6px_16px_rgba(19,78,94,0.10)] outline-none placeholder:text-slate-400 focus:ring-2 focus:ring-[#0e7490]/40"
         />
         {q && (
           <button

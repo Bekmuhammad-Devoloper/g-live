@@ -89,7 +89,7 @@ export default function NotesView({
           value={q}
           onChange={(e) => setQ(e.target.value)}
           placeholder={t.searchNotes}
-          className="w-full rounded-2xl border-0 bg-white px-4 py-3 text-[16px] text-slate-800 shadow-[0_6px_16px_rgba(19,78,94,0.08)] outline-none placeholder:text-slate-400"
+          className="w-full rounded-2xl border-0 bg-white px-4 py-3 text-[16px] text-slate-800 shadow-[0_6px_16px_rgba(19,78,94,0.08)] outline-none placeholder:text-slate-400 focus:ring-2 focus:ring-[#0e7490]/40"
         />
       )}
 
