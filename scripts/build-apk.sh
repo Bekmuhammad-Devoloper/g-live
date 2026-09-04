@@ -71,10 +71,27 @@ ln -sfn cmdline-tools/latest/bin "$BW/android_sdk/bin"
 ln -sfn cmdline-tools/latest/lib "$BW/android_sdk/lib"
 export ANDROID_HOME="$BW/android_sdk"
 
+SDKMAN="$BW/android_sdk/cmdline-tools/latest/bin/sdkmanager"
+
+# Litsenziyalar ALOHIDA qabul qilinadi va bu qadamning holati e'tiborga
+# olinmaydi. Sabab: `yes` sdkmanager tugagach SIGPIPE olib 141 qaytaradi,
+# `set -o pipefail` esa shuni butun skriptning xatosi deb biladi. Serverda
+# litsenziyalar allaqachon qabul qilinganidan bu sezilmasdi, toza runner'da
+# esa har safar shu yerda yiqilardi.
+echo "══ SDK litsenziyalari ══"
+yes 2>/dev/null | "$SDKMAN" --sdk_root="$BW/android_sdk" --licenses > /dev/null 2>&1 || true
+
+# Paket o'rnatishning xatosi esa YASHIRILMAYDI — paketsiz build baribir
+# yiqiladi, lekin tushunarsiz joyda. Jurnal faylga yozilib, xato bo'lsa
+# oxirgi qatorlari ko'rsatiladi (sdkmanager chiqishi juda uzun).
 echo "══ SDK paketlari ══"
-yes 2>/dev/null | "$BW/android_sdk/cmdline-tools/latest/bin/sdkmanager" \
-  --sdk_root="$BW/android_sdk" \
-  "platform-tools" "build-tools;$BUILD_TOOLS" "platforms;$PLATFORM" 2>&1 | tr -d '\r' | tail -2
+if ! "$SDKMAN" --sdk_root="$BW/android_sdk" \
+      "platform-tools" "build-tools;$BUILD_TOOLS" "platforms;$PLATFORM" > "$WORK/sdk.log" 2>&1; then
+  echo "sdkmanager yiqildi:"
+  tail -25 "$WORK/sdk.log"
+  exit 1
+fi
+tail -2 "$WORK/sdk.log" | tr -d '\r' 
 
 cat > "$BW/config.json" <<JSON
 { "jdkPath": "$BW/jdk", "androidSdkPath": "$BW/android_sdk" }
