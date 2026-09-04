@@ -536,11 +536,6 @@ export default async function StudentStartPage() {
             <img src={lastThumb} alt="" className="absolute inset-0 h-full w-full object-cover" />
             <span className="absolute inset-0 bg-gradient-to-t from-black/90 via-black/45 to-black/10" />
 
-            {/* Yuqori o'ngda — bu video ekanini bildiradi */}
-            <span className="absolute right-3.5 top-3.5 grid h-10 w-10 place-items-center rounded-full bg-white/90 pl-[2px] shadow-lg">
-              <svg width="16" height="16" viewBox="0 0 24 24" fill="#0f172a"><path d="M8 5.2v13.6L19 12 8 5.2Z" /></svg>
-            </span>
-
             <div className="absolute inset-x-0 bottom-0 p-5">
               <h2 className="text-[22px] font-extrabold leading-tight tracking-tight text-white">{t.videosPodcasts}</h2>
               <p className="mt-1 max-w-[85%] text-[13.5px] leading-snug text-white/80">{t.learnWithContent}</p>
