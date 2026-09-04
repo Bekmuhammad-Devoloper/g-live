@@ -1,6 +1,6 @@
 "use client";
 
-import { useRef, useState, useTransition } from "react";
+import { useEffect, useRef, useState, useTransition } from "react";
 import { cn } from "@/lib/cn";
 import { tr } from "@/lib/tr";
 import type { Locale } from "@/lib/constants";
@@ -306,18 +306,33 @@ function Arrows({ first, last, onUp, onDown }: { first: boolean; last: boolean; 
   );
 }
 
-function Modal({ title, onClose, children, footer }: { title: string; onClose: () => void; children: React.ReactNode; footer: React.ReactNode }) {
+// Banner va video oynalari yonboshdan ochiladi — CRM panellari bilan bir xil.
+// Sarlavha va tugmalar joyida qotib turadi, o'rtasi aylanadi: uzun forma ham
+// "Saqlash"ni ekrandan chiqarib yubormaydi.
+function Drawer({ title, onClose, children, footer }: { title: string; onClose: () => void; children: React.ReactNode; footer: React.ReactNode }) {
+  useEffect(() => {
+    const onKey = (e: KeyboardEvent) => { if (e.key === "Escape") onClose(); };
+    window.addEventListener("keydown", onKey);
+    return () => window.removeEventListener("keydown", onKey);
+  }, [onClose]);
+
   return (
-    <div className="fixed inset-0 z-50 grid place-items-center bg-black/45 p-4" onClick={onClose}>
-      <div className="max-h-[90vh] w-full max-w-lg overflow-y-auto rounded-2xl bg-white p-5 shadow-xl dark:bg-slate-900" onClick={(e) => e.stopPropagation()}>
-        <div className="mb-4 flex items-center justify-between">
-          <h2 className="text-lg font-bold text-slate-800 dark:text-slate-100">{title}</h2>
-          <button type="button" onClick={onClose} className="grid h-9 w-9 place-items-center rounded-lg text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800">
-            <Icon name="close" className="h-5 w-5" />
+    <div className="fixed inset-0 z-50" onMouseDown={onClose}>
+      <div className="absolute inset-0 bg-slate-900/50 backdrop-blur-sm" />
+      <div
+        onMouseDown={(e) => e.stopPropagation()}
+        className="animate-slide-in-right absolute right-0 top-0 flex h-full w-[440px] max-w-[92%] flex-col border-l border-slate-200 bg-white shadow-xl dark:border-slate-800 dark:bg-slate-900"
+      >
+        <div className="flex items-center justify-between gap-2 border-b border-slate-200 px-4 py-3.5 dark:border-slate-800">
+          <h2 className="truncate text-[15px] font-bold text-slate-900 dark:text-slate-100">{title}</h2>
+          <button type="button" onClick={onClose} className="grid h-8 w-8 shrink-0 place-items-center rounded-lg text-slate-400 transition hover:bg-slate-100 hover:text-slate-600 dark:hover:bg-slate-800">
+            <Icon name="close" className="h-4 w-4" />
           </button>
         </div>
-        {children}
-        <div className="mt-5 flex gap-2.5">{footer}</div>
+
+        <div className="min-h-0 flex-1 overflow-y-auto p-4">{children}</div>
+
+        <div className="flex gap-2.5 border-t border-slate-200 p-4 dark:border-slate-800">{footer}</div>
       </div>
     </div>
   );
@@ -358,7 +373,7 @@ function BannerDialog({ row, locale, onClose, onSaved }: { row: VBanner | null; 
   };
 
   return (
-    <Modal
+    <Drawer
       title={row ? T("Bannerni tahrirlash", "Изменить баннер", "Edit banner", "Banner bearbeiten") : T("Yangi banner", "Новый баннер", "New banner", "Neues Banner")}
       onClose={onClose}
       footer={
@@ -453,7 +468,7 @@ function BannerDialog({ row, locale, onClose, onSaved }: { row: VBanner | null; 
       </div>
 
       {err ? <p className="mt-3 text-sm font-medium text-rose-600">{err}</p> : null}
-    </Modal>
+    </Drawer>
   );
 }
 
@@ -471,7 +486,7 @@ function VideoDialog({ row, locale, onClose, onSaved }: { row: VVideo | null; lo
   const set = (k: keyof VideoInput, v: string) => setF((x) => ({ ...x, [k]: v }));
 
   return (
-    <Modal
+    <Drawer
       title={row ? T("Videoni tahrirlash", "Изменить видео", "Edit video", "Video bearbeiten") : T("Yangi video", "Новое видео", "New video", "Neues Video")}
       onClose={onClose}
       footer={
@@ -525,6 +540,6 @@ function VideoDialog({ row, locale, onClose, onSaved }: { row: VVideo | null; lo
       </div>
 
       {err ? <p className="mt-3 text-sm font-medium text-rose-600">{err}</p> : null}
-    </Modal>
+    </Drawer>
   );
 }
