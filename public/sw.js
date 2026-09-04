@@ -5,12 +5,15 @@
 // ma'lumotlari doim yangi bo'lishi kerak, eski nusxa ko'rsatilsa chalkashlik
 // chiqadi. Faqat ikonka va shrift kabi o'zgarmas fayllar keshlanadi.
 
-const CACHE = "gl-static-v1";
+const CACHE = "gl-static-v2";
 const STATIC = [
   "/icons/icon-192.png",
   "/icons/icon-512.png",
   "/icons/maskable-192.png",
   "/logo.png",
+  // Shrift ilova bilan birga keladi. Keshda bo'lsa ikkinchi ochilishda
+  // matn darhol o'z shriftida chiziladi — zaxira shriftdan "sakrash" yo'q.
+  "/fonts/inter-latin.woff2",
 ];
 
 self.addEventListener("install", (e) => {
@@ -33,7 +36,7 @@ self.addEventListener("fetch", (e) => {
   if (url.origin !== self.location.origin) return;
 
   // O'zgarmas fayllar — avval keshdan
-  if (/^\/(icons|_next\/static)\//.test(url.pathname) || url.pathname === "/logo.png") {
+  if (/^\/(icons|fonts|_next\/static)\//.test(url.pathname) || url.pathname === "/logo.png") {
     e.respondWith(
       caches.match(req).then((hit) =>
         hit ?? fetch(req).then((res) => {

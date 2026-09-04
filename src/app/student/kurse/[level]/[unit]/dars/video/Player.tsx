@@ -1,6 +1,7 @@
 "use client";
 
 import { useCallback, useEffect, useRef, useState } from "react";
+import { createPortal } from "react-dom";
 import { markLessonWatched } from "../../actions";
 
 // Gorizontal (to'liq ekran) video pleyer.
@@ -15,7 +16,12 @@ import { markLessonWatched } from "../../actions";
 //      `display:none` bo'ladi), `display:none` elementda esa
 //      requestFullscreen ishlamaydi — to'liq ekran hech qachon ochilmasdi.
 //      Hujjat ildizi esa doim ko'rinadi, qatlam uning ichida chiziladi.
-//   2. screen.orientation.lock faqat Android'da va faqat to'liq ekranda
+//   2. Qatlam `document.body` ga PORTAL orqali chiziladi. Sababi: layout'da
+//      kontent o'rami `relative z-10` — bu stacking context yaratadi va
+//      ichidagi hech narsa undan tashqariga chiqa olmaydi. Pastki menyu esa
+//      o'ramning TASHQARISIDA `z-40` da turadi, shuning uchun pleyerning
+//      `z-[60]` i foyda bermay, menyu video ustida ko'rinib turardi.
+//   3. screen.orientation.lock faqat Android'da va faqat to'liq ekranda
 //      ishlaydi; iOS uni umuman qo'llab-quvvatlamaydi. Shuning uchun
 //      xatosi yutiladi va o'sha holatda ekranda "telefonni buring" eslatmasi
 //      ko'rsatiladi.
@@ -35,7 +41,11 @@ export default function Player({
 }) {
   const [open, setOpen] = useState(false);
   const [portrait, setPortrait] = useState(false);
+  // Portal faqat brauzerda ishlaydi — serverda `document` yo'q
+  const [mounted, setMounted] = useState(false);
   const sent = useRef(false);
+
+  useEffect(() => setMounted(true), []);
 
   // Ball bir marta beriladi — takror ko'rish qo'shimcha bermaydi
   const mark = useCallback(() => {
@@ -107,8 +117,9 @@ export default function Player({
         </svg>
       </button>
 
-      {open && (
-        <div className="fixed inset-0 z-[60] bg-black" role="dialog" aria-modal="true">
+      {open && mounted &&
+        createPortal(
+          <div className="fixed inset-0 z-[60] bg-black" role="dialog" aria-modal="true">
             {mode === "file" && src ? (
               <video
                 src={src}
@@ -146,8 +157,9 @@ export default function Player({
               <path d="M6 6l12 12M18 6L6 18" />
             </svg>
           </button>
-        </div>
-      )}
+          </div>,
+          document.body,
+        )}
     </>
   );
 }

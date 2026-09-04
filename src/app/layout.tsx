@@ -29,6 +29,16 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
   return (
     <html lang="uz" suppressHydrationWarning>
       <head>
+        {/* Shrift ilova bilan birga keladi (public/fonts). Lotin qismi
+            oldindan yuklanadi: aks holda birinchi chizishda zaxira shrift
+            ko'rinib, keyin Inter kelganda matn "sakrardi". */}
+        <link
+          rel="preload"
+          href="/fonts/inter-latin.woff2"
+          as="font"
+          type="font/woff2"
+          crossOrigin="anonymous"
+        />
         <script dangerouslySetInnerHTML={{ __html: themeScript }} />
       </head>
       <body>{children}</body>
