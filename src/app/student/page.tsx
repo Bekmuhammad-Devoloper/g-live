@@ -28,13 +28,12 @@ import MissingStudent from "./MissingStudent";
 
 const clamp = (n: number) => Math.max(0, Math.min(100, Math.round(n)));
 
-// Ma'lumot hali yo'q ko'nikma uchun rasm darajasi — o'rtacha (xafa ham emas,
-// xursand ham emas). skillLevel() bo'yicha 26-50 oralig'i 2-darajaga tushadi.
-const NEUTRAL_SKILL = 40;
-
 // ── Ko'nikma rasmlari (public/skills/) ──
-// Foiz 4 ta kayfiyat darajasiga teng bo'linadi (2026-09-04 talab):
+// Rasm FAQAT kartadagi foizga qarab tanlanadi — 4 ta teng bo'lak:
 //   1 -> 0-25%   2 -> 26-50%   3 -> 51-75%   4 -> 76-100%
+// Ilgari "ma'lumot hali yo'q" holatida o'rtacha rasm qo'yilardi, natijada
+// kartada 0% yozilib, 2-rasm turardi — foiz bilan rasm bir-biriga mos
+// kelmasdi. Endi bunday istisno yo'q.
 // Rasm hali yuklanmagan bo'lsa — pastdagi SVG ikonka ishlatiladi (sayt buzilmaydi).
 function skillLevel(pct: number): 1 | 2 | 3 | 4 {
   if (pct <= 25) return 1;
@@ -333,10 +332,10 @@ export default async function StudentStartPage() {
     // chiziqli ikonka — va yagona rasmli karta eng past (xafa) darajada
     // bo'lib, yangi o'quvchiga "yomon boshladingiz" degan taassurot beradi.
     // Foiz o'rnidagi chiziqcha ma'lumot yo'qligini o'zi aytib turadi.
-    { key: "w", label: t.words, pct: woerter, has: exams.length > 0, img: skillImage("woerter", exams.length ? woerter : NEUTRAL_SKILL), icon: <span style={{ color: TEAL }} className="text-[28px] font-extrabold leading-none">W</span> },
-    { key: "l", label: t.reading, pct: lesen, has: submissions.length > 0, img: skillImage("lesen", submissions.length ? lesen : NEUTRAL_SKILL), icon: <IcoBook s={34} /> },
-    { key: "h", label: t.listening, pct: hoeren, has: attendance.length > 0, img: skillImage("hoeren", attendance.length ? hoeren : NEUTRAL_SKILL), icon: <IcoHeadphones s={34} /> },
-    { key: "s", label: t.speaking, pct: sprechen, has: prog.lessons.length > 0, img: skillImage("sprechen", prog.lessons.length ? sprechen : NEUTRAL_SKILL), icon: <IcoMic s={34} /> },
+    { key: "w", label: t.words, pct: woerter, img: skillImage("woerter", woerter), icon: <span style={{ color: TEAL }} className="text-[28px] font-extrabold leading-none">W</span> },
+    { key: "l", label: t.reading, pct: lesen, img: skillImage("lesen", lesen), icon: <IcoBook s={34} /> },
+    { key: "h", label: t.listening, pct: hoeren, img: skillImage("hoeren", hoeren), icon: <IcoHeadphones s={34} /> },
+    { key: "s", label: t.speaking, pct: sprechen, img: skillImage("sprechen", sprechen), icon: <IcoMic s={34} /> },
   ];
 
   // Karta uslubi — yagona manba `_ui.tsx` dagi CARD ("gl-glass").
