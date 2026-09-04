@@ -269,11 +269,21 @@ function Chip({ k, v }: { k: string; v: string }) {
   );
 }
 
+// Yorliq + qiymat bitta qatorda. Ilgari qator o'ralar edi va tor telefonlarda
+// "2-chi raqam" tagidagi raqam pastga tushib ketardi. Endi qiymat hech qachon
+// bo'linmaydi (telefon raqamini o'qib bo'lmay qoladi), joy yetmasa YORLIQ
+// qisqaradi — uni kontekstdan tushunsa bo'ladi.
 function Line({ k, v, mono }: { k: string; v: string; mono?: boolean }) {
   return (
-    <div className="flex flex-wrap items-baseline gap-x-2.5">
-      <dt className="whitespace-nowrap text-[11px] font-semibold uppercase tracking-[0.03em] text-slate-400">{k}</dt>
-      <dd className={"ml-auto break-words text-right text-[13.5px] font-bold text-slate-800" + (mono ? " font-mono text-[12.5px]" : "")}>
+    <div className="flex items-baseline gap-x-2">
+      <dt className="min-w-0 flex-1 truncate text-[10.5px] font-semibold uppercase text-slate-400">{k}</dt>
+      <dd
+        className={
+          // max-w — uzun guruh nomi yorliqni siqib chiqarib yubormasin
+          "max-w-[70%] shrink-0 truncate text-right text-[13.5px] font-bold tabular-nums text-slate-800" +
+          (mono ? " font-mono text-[12.5px]" : "")
+        }
+      >
         {v}
       </dd>
     </div>
