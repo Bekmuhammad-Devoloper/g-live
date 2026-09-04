@@ -181,6 +181,10 @@ const DICT = {
   ruleStreak: p("7 dars ketma-ket", "7 уроков подряд", "7 lessons in a row", "7 Lektionen in Folge"),
   ruleLevelUp: p("Yangi darajaga o'tgani", "За новый уровень", "Level up", "Neues Niveau"),
   rewards: p("Sovg'alar", "Призы", "Rewards", "Preise"),
+  // Hamyon kartasi
+  toCheapest: p("Eng arzon sovg'agacha", "До самого дешёвого приза", "To the cheapest reward", "Bis zum günstigsten Preis"),
+  canBuyNow: p("Sovg'a olishga yetadi", "Хватает на приз", "Enough for a reward", "Reicht für einen Preis"),
+  notEarnedYet: p("Hali yig'ilmagan", "Пока не начислено", "Not earned yet", "Noch nicht verdient"),
   noRewards: p("Hozircha sovg'a yo'q", "Пока призов нет", "No rewards yet", "Noch keine Preise"),
   centerAddsSoon: p("O'quv markazi tez orada qo'shadi.", "Центр скоро добавит.", "The centre will add them soon.", "Das Zentrum fügt sie bald hinzu."),
   myOrders: p("Buyurtmalarim", "Мои заказы", "My orders", "Meine Bestellungen"),
