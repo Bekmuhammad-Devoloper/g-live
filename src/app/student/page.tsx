@@ -526,42 +526,53 @@ export default async function StudentStartPage() {
       />
 
       {/* ── Videos & Podcasts ── */}
-      <div className={`${card} relative overflow-hidden p-6`}>
-        <div className={`relative z-10 ${lastThumb ? "pr-[122px]" : "max-w-[58%]"}`}>
-          <h2 className="text-[24px] font-extrabold leading-tight tracking-tight text-slate-900">{t.videosPodcasts}</h2>
-          {videoList.length > 0 ? (
-            <div className="mt-1 text-[12.5px] font-semibold text-slate-600">{videoList.length}</div>
-          ) : null}
-          <p className="mt-1.5 text-[14px] leading-relaxed text-slate-600">{t.learnWithContent}</p>
-          <Link href="/student/videos" className="mt-4 inline-flex items-center gap-1 rounded-2xl px-5 py-2.5 text-[14px] font-bold text-white shadow-[0_8px_16px_rgba(14,116,144,0.3)]" style={{ background: TEAL }}>
-            {t.discover}
-            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="m9 6 6 6-6 6" /></svg>
-          </Link>
-        </div>
-        {lastThumb ? (
-          /* O'ng tomonda — oxirgi qo'yilgan videoning rasmi */
-          <div className="pointer-events-none absolute right-4 top-1/2 z-0 w-[114px] -translate-y-1/2 rotate-[-6deg]">
-            <div className="relative aspect-video overflow-hidden rounded-2xl bg-slate-200 shadow-[0_14px_26px_-12px_rgba(15,60,80,0.75)] ring-[3px] ring-white">
-              {/* eslint-disable-next-line @next/next/no-img-element */}
-              <img src={lastThumb} alt="" className="absolute inset-0 h-full w-full object-cover" />
-              <span className="absolute inset-0 bg-black/15" />
-              <span className="absolute left-1/2 top-1/2 grid h-8 w-8 -translate-x-1/2 -translate-y-1/2 place-items-center rounded-full bg-white/90 pl-[2px] shadow-md">
-                <svg width="13" height="13" viewBox="0 0 24 24" fill="#0f172a"><path d="M8 5.2v13.6L19 12 8 5.2Z" /></svg>
+      {lastThumb ? (
+        // Oxirgi videoning rasmi butun kartani egallaydi. Matn pastda,
+        // qora gradient ustida turadi — rasm qanday bo'lishidan qat'i nazar
+        // oq harflar o'qiladi.
+        <Link href="/student/videos" className={`${card} relative block overflow-hidden active:scale-[0.99]`}>
+          <div className="relative aspect-[16/9] w-full bg-slate-800">
+            {/* eslint-disable-next-line @next/next/no-img-element */}
+            <img src={lastThumb} alt="" className="absolute inset-0 h-full w-full object-cover" />
+            <span className="absolute inset-0 bg-gradient-to-t from-black/90 via-black/45 to-black/10" />
+
+            {/* Yuqori o'ngda — bu video ekanini bildiradi */}
+            <span className="absolute right-3.5 top-3.5 grid h-10 w-10 place-items-center rounded-full bg-white/90 pl-[2px] shadow-lg">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="#0f172a"><path d="M8 5.2v13.6L19 12 8 5.2Z" /></svg>
+            </span>
+
+            <div className="absolute inset-x-0 bottom-0 p-5">
+              <h2 className="text-[22px] font-extrabold leading-tight tracking-tight text-white">{t.videosPodcasts}</h2>
+              <p className="mt-1 max-w-[85%] text-[13.5px] leading-snug text-white/80">{t.learnWithContent}</p>
+              <span
+                className="mt-3.5 inline-flex items-center gap-1 rounded-2xl px-5 py-2.5 text-[14px] font-bold text-white shadow-[0_8px_18px_rgba(0,0,0,0.35)]"
+                style={{ background: TEAL }}
+              >
+                {t.discover}
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="m9 6 6 6-6 6" /></svg>
               </span>
             </div>
           </div>
-        ) : (
-          /* Video yo'q — avvalgidek chizma: quloqchin + planshet */
-          <>
-            <div className="pointer-events-none absolute -right-2 top-1 z-0">
-              <BigHeadphones w={96} />
-            </div>
-            <div className="pointer-events-none absolute bottom-3 right-14 z-0 rotate-[-10deg]">
-              <Tablet w={70} />
-            </div>
-          </>
-        )}
-      </div>
+        </Link>
+      ) : (
+        // Video yo'q — avvalgidek chizma
+        <div className={`${card} relative overflow-hidden p-6`}>
+          <div className="relative z-10 max-w-[58%]">
+            <h2 className="text-[24px] font-extrabold leading-tight tracking-tight text-slate-900">{t.videosPodcasts}</h2>
+            <p className="mt-1.5 text-[14px] leading-relaxed text-slate-600">{t.learnWithContent}</p>
+            <Link href="/student/videos" className="mt-4 inline-flex items-center gap-1 rounded-2xl px-5 py-2.5 text-[14px] font-bold text-white shadow-[0_8px_16px_rgba(14,116,144,0.3)]" style={{ background: TEAL }}>
+              {t.discover}
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="m9 6 6 6-6 6" /></svg>
+            </Link>
+          </div>
+          <div className="pointer-events-none absolute -right-2 top-1 z-0">
+            <BigHeadphones w={96} />
+          </div>
+          <div className="pointer-events-none absolute bottom-3 right-14 z-0 rotate-[-10deg]">
+            <Tablet w={70} />
+          </div>
+        </div>
+      )}
     </div>
   );
 }
