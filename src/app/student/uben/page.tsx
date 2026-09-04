@@ -3,7 +3,7 @@ import { S } from "../_i18n";
 import RatingBadge from "../RatingBadge";
 import { redirect } from "next/navigation";
 import { getSession } from "@/lib/auth";
-import { isPortalFeatureOn } from "@/lib/portalFeatures";
+import { getPortalFlags } from "@/lib/portalFeatures";
 import { prisma } from "@/lib/db";
 import { CARD, NAVY, PageHeader, SectionTitle } from "../_ui";
 import MissingStudent from "../MissingStudent";
@@ -17,7 +17,8 @@ export default async function StudentUebenPage() {
   const session = await getSession();
   if (!session) redirect("/login");
   // Bo'lim menejer tomonidan o'chirilgan bo'lsa — bosh sahifaga
-  if (!(await isPortalFeatureOn("uben"))) redirect("/student");
+  const flags = await getPortalFlags();
+  if (!flags.uben) redirect("/student");
   const t = S(session.locale);
 
   const student = await prisma.student.findUnique({
@@ -82,7 +83,11 @@ export default async function StudentUebenPage() {
     <div className="space-y-[18px]">
       <PageHeader title={t.practice} subtitle={t.yourHomework} backLabel={t.back} right={<RatingBadge />} />
 
-      {/* ── Jang / o'yinlar ── */}
+      {/* ── Jang / o'yinlar ──
+          Bo'lim o'chirilgan bo'lsa kartochka ham ko'rinmasin: aks holda
+          bosilganda sahifa /student ga qaytarib yuboradi va "ochilmayapti"
+          degan taassurot qoladi. */}
+      {flags.battle && (
       <Link
         href="/student/battle"
         className="relative flex items-center gap-3 overflow-hidden rounded-[24px] p-5 text-white shadow-[0_14px_28px_rgba(29,78,216,0.3)]"
@@ -102,6 +107,7 @@ export default async function StudentUebenPage() {
           <path d="m9 6 6 6-6 6" />
         </svg>
       </Link>
+      )}
 
       {/* ── Yig'ma kartalar ── */}
       <div className="grid grid-cols-3 gap-3">

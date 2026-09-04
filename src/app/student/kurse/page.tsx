@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { S } from "../_i18n";
 import KurseActions from "./KurseActions";
+import { getPortalFlags } from "@/lib/portalFeatures";
 import { redirect } from "next/navigation";
 import { getSession } from "@/lib/auth";
 import { prisma } from "@/lib/db";
@@ -35,6 +36,8 @@ export default async function StudentKursePage() {
   const session = await getSession();
   if (!session) redirect("/login");
   const t = S(session.locale);
+  // Sarlavhadagi tugmalar o'chirilgan bo'limga olib bormasin
+  const flags = await getPortalFlags();
 
   const student = await prisma.student.findUnique({
     where: { userId: session.userId },
@@ -84,7 +87,7 @@ export default async function StudentKursePage() {
 
   return (
     <div className="space-y-4">
-      <PageHeader title={t.courses} subtitle={group?.program.name ?? "Deutsch"} backLabel={t.back} right={<KurseActions t={t} />} />
+      <PageHeader title={t.courses} subtitle={group?.program.name ?? "Deutsch"} backLabel={t.back} right={<KurseActions t={t} showDict={flags.worterbuch} showTeacher={flags.lehrer} />} />
 
       <div className="space-y-3.5">
         {levels.map((lvl) => {

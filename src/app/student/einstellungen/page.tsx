@@ -1,6 +1,7 @@
 import { redirect } from "next/navigation";
 import { getSession } from "@/lib/auth";
 import { prisma } from "@/lib/db";
+import { isPortalFeatureOn } from "@/lib/portalFeatures";
 import { logout } from "../../(app)/actions";
 import { CARD, PageHeader, SectionTitle, IcoLogout, IcoBell } from "../_ui";
 import { S } from "../_i18n";
@@ -52,6 +53,7 @@ export default async function StudentSettingsPage() {
   if (!student) return <MissingStudent />;
 
   const unread = await prisma.notification.count({ where: { userId: session.userId, isRead: false } });
+  const notifOn = await isPortalFeatureOn("mitteilungen");
   const group = student.enrollments[0]?.group ?? null;
 
   return (
@@ -100,7 +102,11 @@ export default async function StudentSettingsPage() {
         <LocalePicker current={student.user?.locale ?? "uz"} />
       </div>
 
-      {/* ── Bildirishnomalar ── */}
+      {/* ── Bildirishnomalar ──
+          Bo'lim o'chirilgan bo'lsa butun blok ko'rinmaydi (havola sahifaga
+          olib bormas edi — /student ga qaytarardi). */}
+      {notifOn && (
+      <>
       <SectionTitle>{t.notifications}</SectionTitle>
       <a href="/student/mitteilungen" className={CARD + " flex items-center gap-3 p-4"}>
         <span className="grid h-10 w-10 shrink-0 place-items-center rounded-2xl bg-cyan-50">
@@ -114,6 +120,8 @@ export default async function StudentSettingsPage() {
           <span className="rounded-full bg-[#2ea8c9] px-2 py-[3px] text-[11px] font-bold text-white">{unread}</span>
         ) : null}
       </a>
+      </>
+      )}
 
       {/* ── Xavfsizlik ── */}
       <SectionTitle>{t.security}</SectionTitle>

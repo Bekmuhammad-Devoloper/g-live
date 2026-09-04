@@ -8,15 +8,19 @@ import { TEAL } from "../_ui";
 const BTN =
   "gl-glass grid h-11 w-11 shrink-0 place-items-center rounded-full transition active:translate-y-[1px]";
 
-export default function ProfilActions({ t }: { t: StudentStrings }) {
+// Market o'chirilgan bo'lsa tugma ko'rinmaydi (bosilganda /student ga
+// qaytarib yuborishdan ko'ra umuman ko'rsatmagan tushunarli).
+export default function ProfilActions({ t, showMarket = true }: { t: StudentStrings; showMarket?: boolean }) {
   return (
     <div className="flex shrink-0 items-center gap-2">
+      {showMarket && (
       <Link href="/student/market" aria-label={t.market} title={t.market} className={BTN}>
         <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke={TEAL} strokeWidth="1.9" strokeLinecap="round" strokeLinejoin="round">
           <path d="M5.6 8.4h12.8l-1 10.2a1.6 1.6 0 0 1-1.6 1.4H8.2a1.6 1.6 0 0 1-1.6-1.4L5.6 8.4Z" />
           <path d="M9 10.2V7.3a3 3 0 0 1 6 0v2.9" />
         </svg>
       </Link>
+      )}
       <Link href="/student/einstellungen" aria-label={t.settings} title={t.settings} className={BTN}>
         <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke={TEAL} strokeWidth="1.9" strokeLinecap="round" strokeLinejoin="round">
           <circle cx="12" cy="12" r="3.1" />

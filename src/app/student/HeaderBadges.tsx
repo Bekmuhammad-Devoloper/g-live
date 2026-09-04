@@ -4,6 +4,7 @@ import { getSession } from "@/lib/auth";
 import { prisma } from "@/lib/db";
 import { TEAL } from "./_ui";
 import { studentStreak } from "@/lib/coins";
+import { isPortalFeatureOn } from "@/lib/portalFeatures";
 
 // Portalning HAR BIR sahifasida yuqori o'ng burchakda turadigan ikki belgi:
 // seriya (ketma-ket qatnashgan kunlar) va bildirishnoma qo'ng'irog'i.
@@ -37,9 +38,11 @@ export default async function HeaderBadges() {
   });
 
   // Seriya hisobi bitta joyda (src/lib/coins.ts) — sozlamaga bo'ysunadi
-  const [streak, unread] = await Promise.all([
+  const [streak, unread, notifOn] = await Promise.all([
     student ? studentStreak(student.id) : Promise.resolve(0),
     prisma.notification.count({ where: { userId: session.userId, isRead: false } }),
+    // Bo'lim o'chirilgan bo'lsa qo'ng'iroqcha ham ko'rinmaydi
+    isPortalFeatureOn("mitteilungen"),
   ]);
 
   return (
@@ -51,6 +54,7 @@ export default async function HeaderBadges() {
           <div className="mt-0.5 text-[10px] font-semibold text-slate-600">{S(session.locale).day}</div>
         </div>
       </div>
+      {notifOn && (
       <Link
         href="/student/mitteilungen"
         aria-label={S(session.locale).messages}
@@ -59,6 +63,7 @@ export default async function HeaderBadges() {
         <IcoBell s={26} />
         {unread > 0 && <span className="absolute right-[9px] top-[8px] h-2 w-2 rounded-full" style={{ background: "#2ea8c9" }} />}
       </Link>
+      )}
     </div>
   );
 }
