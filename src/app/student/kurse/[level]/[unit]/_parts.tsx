@@ -47,12 +47,14 @@ export function IcoBook({ s = 26 }: { s?: number }) {
     </svg>
   );
 }
+// Vazifa — planshet va bajarilganlik belgisi. Ilgari ichida chiziqlar
+// turardi: u "hujjat" edi, "bajariladigan ish" emas.
 export function IcoClipboard({ s = 24 }: { s?: number }) {
   return (
     <svg width={s} height={s} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.9" strokeLinecap="round" strokeLinejoin="round">
-      <rect x="8.5" y="2.8" width="7" height="3.6" rx="1.2" />
-      <path d="M15.5 4.6h2A1.5 1.5 0 0 1 19 6.1v13.4a1.5 1.5 0 0 1-1.5 1.5h-11A1.5 1.5 0 0 1 5 19.5V6.1a1.5 1.5 0 0 1 1.5-1.5h2" />
-      <path d="M8.5 12h7M8.5 16h4.5" />
+      <rect x="8.6" y="2.6" width="6.8" height="3.4" rx="1.2" />
+      <path d="M15.4 4.4h2.1A1.5 1.5 0 0 1 19 5.9v13.6a1.5 1.5 0 0 1-1.5 1.5h-11A1.5 1.5 0 0 1 5 19.5V5.9a1.5 1.5 0 0 1 1.5-1.5h2.1" />
+      <path d="m8.4 12.4 2.1 2.1 4.6-4.9" strokeWidth="2.2" />
     </svg>
   );
 }
@@ -95,20 +97,25 @@ export function IcoExpand({ s = 14 }: { s?: number }) {
   );
 }
 
+// Dars — ekran va o'ynatish belgisi. Oddiy doira ichidagi uchburchak
+// har qanday tugmani bildirardi; ekran esa aynan VIDEO darsni.
 export function IcoPlayCircle({ s = 24 }: { s?: number }) {
   return (
     <svg width={s} height={s} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.9" strokeLinecap="round" strokeLinejoin="round">
-      <circle cx="12" cy="12" r="9.2" />
-      <path d="M10.2 8.6v6.8l5.6-3.4-5.6-3.4Z" fill="currentColor" stroke="none" />
+      <rect x="2.6" y="4.4" width="18.8" height="13" rx="2.8" />
+      <path d="M8.4 21h7.2M12 17.4V21" />
+      <path d="M10.4 8.2v5.6l4.6-2.8-4.6-2.8Z" fill="currentColor" stroke="none" />
     </svg>
   );
 }
+// Lug'at — ochiq kitob va xatcho'p. Ilgari ikki ustunli belgi turardi: u
+// "ustunlar" bo'lib o'qilib, lug'atga ishora qilmasdi.
 export function IcoWords({ s = 24 }: { s?: number }) {
   return (
     <svg width={s} height={s} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.9" strokeLinecap="round" strokeLinejoin="round">
-      <path d="M4 5.2h7.2v13.6H4z" />
-      <path d="M12.8 5.2H20v13.6h-7.2z" />
-      <path d="M6.2 9.2h2.8M6.2 12.4h2.8M15 9.2h2.8M15 12.4h2.8" />
+      <path d="M12 6.6C10.4 5.1 8.2 4.5 4.4 4.6v12.9c3.8-.1 6 .5 7.6 2 1.6-1.5 3.8-2.1 7.6-2V4.6c-3.8-.1-6 .5-7.6 2Z" />
+      <path d="M12 6.6v12.9" />
+      <path d="M15.6 4.8v5.4l2-1.4 2 1.4V4.8" fill="currentColor" stroke="none" opacity="0.9" />
     </svg>
   );
 }

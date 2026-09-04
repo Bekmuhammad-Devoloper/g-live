@@ -144,24 +144,6 @@ function IcoGrowthGold({ s = 24 }: { s?: number }) {
   );
 }
 
-function IcoFlame({ s = 30 }: { s?: number }) {
-  return (
-    <svg width={s} height={s} viewBox="0 0 24 24">
-      {/* tashqi olov */}
-      <path
-        d="M12 2.5c.5 3-1 4.6-2.6 6.2C7.7 10.4 6 12.2 6 15a6 6 0 0 0 12 0c0-2.2-1-4-2.2-5.6C14.4 7.5 13 5.5 12 2.5Z"
-        fill="#f4511e"
-      />
-      <path
-        d="M12 2.5c.5 3-1 4.6-2.6 6.2C7.7 10.4 6 12.2 6 15a6 6 0 0 0 12 0c0-2.2-1-4-2.2-5.6C14.4 7.5 13 5.5 12 2.5Z"
-        fill="#ff7a2f" opacity="0.55"
-      />
-      {/* ichki olov */}
-      <path d="M12 10.5c.3 1.6-.6 2.5-1.4 3.4-.7.8-1.4 1.6-1.4 2.8a2.9 2.9 0 0 0 5.8 0c0-1.1-.5-1.9-1.1-2.8-.7-1-1.5-2-1.9-3.4Z" fill="#ffc93c" />
-    </svg>
-  );
-}
-
 
 // ── Germaniya bayrog'i (silliq to'lqin, rasmiy ranglar) ──
 // Uch rangni alohida to'lqinlantirish o'rniga butun bayroq shakli clipPath
@@ -326,14 +308,10 @@ export default async function StudentStartPage() {
   const { place: rangPos } = await studentRank(student.id);
 
   const kurseHref = "/student/kurse"; // kurs sahifasi endi portal ichida
-  // Salomlashish uchun qisqaroq nomni tanlaymiz: CRM da ba'zan "Familiya Ism",
-  // ba'zan "Ism Familiya" yoziladi — uzun familiya sarlavhaga sig'masdi
-  // ("Salom, Abdugaf..."). Ikkitasidan qisqasi odatda ismning o'zi bo'ladi.
-  const nameParts = student.fullName.split(/\s+/).filter(Boolean);
-  const firstName =
-    nameParts.length > 1 && nameParts[0].length > 9 && nameParts[1].length >= 3
-      ? nameParts[1]
-      : (nameParts[0] ?? student.fullName);
+  // Salomlashishda TO'LIQ ism-familiya, bitta qatorda. Seriya belgisi
+  // olib tashlangani uchun bu qatorda endi joy bor; juda uzun ism bo'lsa
+  // oxiri uch nuqta bilan qisqaradi (ikkinchi qatorga tushmaydi).
+  const fullName = student.fullName.trim();
   // Profil rasmi: avval o'quvchi rasmi, keyin foydalanuvchi rasmi; ikkalasi ham yo'q bo'lsa — logotip
   const avatarUrl = student.imageUrl || student.user?.imageUrl || null;
 
@@ -376,18 +354,10 @@ export default async function StudentStartPage() {
           </span>
         )}
         <div className="min-w-0 flex-1">
-          <h1 className="line-clamp-2 break-words text-[19px] font-extrabold leading-tight tracking-tight text-slate-900 min-[380px]:text-[22px] sm:text-[26px]">
-            {t.hello}, {firstName}!
+          <h1 className="truncate text-[18px] font-extrabold leading-tight tracking-tight text-slate-900 min-[380px]:text-[20px] sm:text-[24px]">
+            {t.hello}, {fullName}!
           </h1>
           <p className="line-clamp-2 text-[12.5px] leading-snug text-slate-600">{t.readyToLearn}</p>
-        </div>
-        {/* Streak (ketma-ket qatnashuv) kartochkasi — olovcha + kunlar soni */}
-        <div className="gl-glass flex h-11 shrink-0 items-center gap-1 rounded-2xl px-2.5">
-          <IcoFlame s={26} />
-          <div className="leading-none">
-            <div className="text-[15px] font-extrabold text-slate-900">{streak}</div>
-            <div className="mt-0.5 text-[10px] font-semibold text-slate-600">{t.day}</div>
-          </div>
         </div>
         {/* Ikonkalar pastki tab-bar ikonkalari o'lchamida (26px) */}
         <Link href="/student/mitteilungen" aria-label={t.notifications} className="gl-glass grid h-11 w-11 shrink-0 place-items-center rounded-full">

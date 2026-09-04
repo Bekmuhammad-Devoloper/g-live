@@ -49,11 +49,19 @@ const BRAIN_TOP = 4.5;
 const BRAIN_BOTTOM = 96.8;
 const BRAIN_SPAN = BRAIN_BOTTOM - BRAIN_TOP;
 
+const waterY = (pct: number) => BRAIN_BOTTOM - (BRAIN_SPAN * Math.max(0, Math.min(100, pct))) / 100;
+const WAVE = 3.2; // to'lqin balandligi
+
 /** Suv yuzasi — yengil to'lqin, so'ng pastga to'ldiriladi */
 function waterPath(pct: number): string {
-  const y = BRAIN_BOTTOM - (BRAIN_SPAN * Math.max(0, Math.min(100, pct))) / 100;
-  const a = 3.2; // to'lqin balandligi
-  return `M0 ${y} C20 ${y - a}, 40 ${y + a}, 60 ${y} C80 ${y - a}, 100 ${y + a}, 120 ${y} L120 110 L0 110 Z`;
+  const y = waterY(pct);
+  return `M0 ${y} C20 ${y - WAVE}, 40 ${y + WAVE}, 60 ${y} C80 ${y - WAVE}, 100 ${y + WAVE}, 120 ${y} L120 110 L0 110 Z`;
+}
+
+/** Faqat yuza chizig'i — ustiga yorqin aks chiziladi (suv "ho'l" ko'rinadi) */
+function surfacePath(pct: number): string {
+  const y = waterY(pct);
+  return `M0 ${y} C20 ${y - WAVE}, 40 ${y + WAVE}, 60 ${y} C80 ${y - WAVE}, 100 ${y + WAVE}, 120 ${y}`;
 }
 
 interface BrainProps {
@@ -77,7 +85,7 @@ function Brain({ pct, size = 88, id }: BrainProps) {
   const water = waterPath(pct);
 
   return (
-    <svg width={size} height={Math.round((size * 93) / 112)} viewBox="5 4 112 93" aria-hidden>
+    <svg width={size} height={Math.round((size * 93) / 112)} viewBox="5 4 112 93" aria-hidden overflow="visible">
       <defs>
         <clipPath id={`brainClip-${id}`}>
           <path d={BRAIN_OUTER} />
@@ -85,33 +93,57 @@ function Brain({ pct, size = 88, id }: BrainProps) {
         <clipPath id={`waterClip-${id}`}>
           <path d={water} />
         </clipPath>
+        {/* Chuqurlik: chetlari to'qroq — shakl yassi qog'oz emas, hajmli */}
+        <radialGradient id={`brainDepth-${id}`} cx="0.5" cy="0.35" r="0.75">
+          <stop offset="55%" stopColor="#000000" stopOpacity="0" />
+          <stop offset="100%" stopColor="#0a3b4c" stopOpacity="0.22" />
+        </radialGradient>
+        {/* Yerdagi soya — tugun fonda "suzib" turadi */}
+        <filter id={`brainShadow-${id}`} x="-30%" y="-20%" width="160%" height="160%">
+          <feDropShadow dx="0" dy="3" stdDeviation="3" floodColor="#0a3b4c" floodOpacity="0.26" />
+        </filter>
       </defs>
 
-      {/* bo'sh miya */}
-      <path d={BRAIN_OUTER} fill={EMPTY_BODY} />
-      {BRAIN_FOLDS.map((d) => (
-        <path key={d} d={d} fill="none" stroke={EMPTY_FOLD} strokeWidth="2.2" strokeLinecap="round" />
-      ))}
+      <g filter={`url(#brainShadow-${id})`}>
+        {/* bo'sh miya */}
+        <path d={BRAIN_OUTER} fill={EMPTY_BODY} />
+        {BRAIN_FOLDS.map((d) => (
+          <path key={d} d={d} fill="none" stroke={EMPTY_FOLD} strokeWidth="2.2" strokeLinecap="round" />
+        ))}
 
-      {/* suv */}
-      {filled && (
-        <g clipPath={`url(#brainClip-${id})`}>
-          <path d={water} fill="url(#glWater)" />
-          <g clipPath={`url(#waterClip-${id})`}>
-            {BRAIN_FOLDS.map((d) => (
-              <path key={d} d={d} fill="none" stroke="rgba(255,255,255,0.85)" strokeWidth="2.2" strokeLinecap="round" />
-            ))}
+        {/* suv */}
+        {filled && (
+          <g clipPath={`url(#brainClip-${id})`}>
+            <path d={water} fill="url(#glWater)" />
+            <g clipPath={`url(#waterClip-${id})`}>
+              {BRAIN_FOLDS.map((d) => (
+                <path key={d} d={d} fill="none" stroke="rgba(255,255,255,0.8)" strokeWidth="2.2" strokeLinecap="round" />
+              ))}
+            </g>
+            {/* suv yuzasidagi yorqin aks — "ho'l" ko'rinish shundan */}
+            <path d={surfacePath(pct)} fill="none" stroke="#dffaff" strokeOpacity="0.95" strokeWidth="2" />
           </g>
-        </g>
-      )}
+        )}
 
-      {/* kontur: suv ustida to'q, suv ostida oq */}
-      <path d={BRAIN_OUTER} fill="none" stroke={EMPTY_EDGE} strokeWidth="2.4" strokeLinejoin="round" />
-      {filled && (
-        <g clipPath={`url(#waterClip-${id})`}>
-          <path d={BRAIN_OUTER} fill="none" stroke="rgba(255,255,255,0.92)" strokeWidth="2.4" strokeLinejoin="round" />
-        </g>
-      )}
+        {/* chuqurlik qatlami */}
+        <path d={BRAIN_OUTER} fill={`url(#brainDepth-${id})`} clipPath={`url(#brainClip-${id})`} />
+
+        {/* kontur: suv ustida to'q, suv ostida oq */}
+        <path d={BRAIN_OUTER} fill="none" stroke={EMPTY_EDGE} strokeWidth="2.4" strokeLinejoin="round" />
+        {filled && (
+          <g clipPath={`url(#waterClip-${id})`}>
+            <path d={BRAIN_OUTER} fill="none" stroke="rgba(255,255,255,0.95)" strokeWidth="2.4" strokeLinejoin="round" />
+          </g>
+        )}
+
+        {/* tepa-chapdagi yaltiroq — shisha/ho'l sirt hissi */}
+        <ellipse
+          cx="42" cy="26" rx="24" ry="14"
+          fill="url(#glGloss)"
+          transform="rotate(-22 42 26)"
+          clipPath={`url(#brainClip-${id})`}
+        />
+      </g>
     </svg>
   );
 }
@@ -124,9 +156,16 @@ function BrainDefs() {
   return (
     <svg aria-hidden width="0" height="0" className="absolute h-0 w-0 overflow-hidden">
       <defs>
-        <linearGradient id="glWater" x1="0" y1="0" x2="0.55" y2="1">
-          <stop offset="0%" stopColor="#3fc9e4" />
-          <stop offset="100%" stopColor={TEAL} />
+        {/* Suv: uch pog'ona — yuzasi yorqin, tubi to'q */}
+        <linearGradient id="glWater" x1="0.1" y1="0" x2="0.6" y2="1">
+          <stop offset="0%" stopColor="#5fd8ee" />
+          <stop offset="45%" stopColor="#22a8c8" />
+          <stop offset="100%" stopColor="#0a5f78" />
+        </linearGradient>
+        {/* Yaltiroq har tugunda bir xil — bir marta e'lon qilinadi */}
+        <linearGradient id="glGloss" x1="0.15" y1="0" x2="0.6" y2="0.75">
+          <stop offset="0%" stopColor="#ffffff" stopOpacity="0.75" />
+          <stop offset="100%" stopColor="#ffffff" stopOpacity="0" />
         </linearGradient>
       </defs>
     </svg>
