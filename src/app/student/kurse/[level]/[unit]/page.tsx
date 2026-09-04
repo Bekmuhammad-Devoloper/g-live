@@ -8,6 +8,7 @@ import { getActiveLevels } from "@/lib/studyLevels";
 import HeaderBadges from "../../../HeaderBadges";
 import LessonVideo, { type VideoMode } from "./LessonVideo";
 import LessonTasks, { type VTask } from "./LessonTasks";
+import { looksLikeVocabulary, parseLessonWords } from "@/lib/lessonWords";
 
 // Dars sahifasi — tepada video, ostida dars nomi va tavsifi, so'ng dars
 // topshirig'i va uyga vazifa, pastida oldingi/keyingi darsga o'tish.
@@ -91,6 +92,60 @@ function IcoExpand({ s = 14 }: { s?: number }) {
     <svg width={s} height={s} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.4" strokeLinecap="round" strokeLinejoin="round">
       <path d="M14 4h6v6M20 4l-7.5 7.5M10 20H4v-6M4 20l7.5-7.5" />
     </svg>
+  );
+}
+
+function IcoPlayCircle({ s = 24 }: { s?: number }) {
+  return (
+    <svg width={s} height={s} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.9" strokeLinecap="round" strokeLinejoin="round">
+      <circle cx="12" cy="12" r="9.2" />
+      <path d="M10.2 8.6v6.8l5.6-3.4-5.6-3.4Z" fill="currentColor" stroke="none" />
+    </svg>
+  );
+}
+function IcoWords({ s = 24 }: { s?: number }) {
+  return (
+    <svg width={s} height={s} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.9" strokeLinecap="round" strokeLinejoin="round">
+      <path d="M4 5.2h7.2v13.6H4z" />
+      <path d="M12.8 5.2H20v13.6h-7.2z" />
+      <path d="M6.2 9.2h2.8M6.2 12.4h2.8M15 9.2h2.8M15 12.4h2.8" />
+    </svg>
+  );
+}
+
+/* ── Dars ichidagi bo'lim kartasi (uch ustun) ── */
+// Bo'lim `?tab=` orqali almashadi: sahifa server komponenti bo'lib qoladi,
+// har bo'limga to'g'ridan-to'g'ri havola berish mumkin va telefonning
+// "orqaga" tugmasi ham to'g'ri ishlaydi.
+function TabCard({
+  href, active, icon, label, meta, accent,
+}: {
+  href: string;
+  active: boolean;
+  icon: React.ReactNode;
+  label: string;
+  meta: string;
+  accent: string;
+}) {
+  return (
+    <Link
+      href={href}
+      aria-current={active ? "page" : undefined}
+      className={
+        "flex min-h-[104px] flex-col items-center justify-center gap-1.5 rounded-[22px] px-1.5 py-3 text-center transition active:scale-[0.97] " +
+        (active ? "text-white shadow-[0_12px_24px_-12px_rgba(15,60,80,0.75)]" : "gl-glass text-slate-700")
+      }
+      style={active ? { background: accent } : undefined}
+    >
+      <span
+        className="grid h-[38px] w-[38px] place-items-center rounded-[13px]"
+        style={active ? { background: "rgba(255,255,255,0.22)" } : { background: "rgba(255,255,255,0.6)", color: "#0e7490" }}
+      >
+        {icon}
+      </span>
+      <span className="text-[13px] font-extrabold leading-none">{label}</span>
+      <span className={"text-[10.5px] font-semibold leading-none " + (active ? "text-white/80" : "text-slate-600")}>{meta}</span>
+    </Link>
   );
 }
 
@@ -192,8 +247,15 @@ function TaskCard({
   );
 }
 
-export default async function StudentUnitPage({ params }: { params: Promise<{ level: string; unit: string }> }) {
+export default async function StudentUnitPage({
+  params,
+  searchParams,
+}: {
+  params: Promise<{ level: string; unit: string }>;
+  searchParams: Promise<{ tab?: string }>;
+}) {
   const { level, unit } = await params;
+  const sp = await searchParams;
   const code = level.toUpperCase();
   const lvl = (await getActiveLevels()).find((l) => l.code.toUpperCase() === code);
   if (!lvl) notFound();
@@ -299,6 +361,15 @@ export default async function StudentUnitPage({ params }: { params: Promise<{ le
   const hasAssignment = !!(lesson.assignment || assignmentFile);
   const hasHomework = !!(lesson.homework || homeworkFile);
 
+  // Darsning lug'ati mavzu maydonidan ajratiladi (lib/lessonWords.ts).
+  // O'qituvchi u yerga gap ko'rinishidagi tavsif yozgan bo'lsa lug'at
+  // sifatida ko'rsatilmaydi — o'sha holda tavsif "Dars" bo'limida chiqadi.
+  const words = parseLessonWords(lesson.topic);
+  const hasVocab = words.length > 0 && looksLikeVocabulary(words);
+  const taskCount = vTasks.length + (hasHomework ? 1 : 0);
+
+  const tab = sp.tab === "lugat" || sp.tab === "vazifa" ? sp.tab : "dars";
+
   const BLUE = "linear-gradient(150deg, #5aa0fb 0%, #2f6ef0 100%)";
   const TEALG = "linear-gradient(150deg, #46d8b8 0%, #0f9a90 100%)";
   const VIOLET = "linear-gradient(150deg, #b07bff 0%, #7c3aed 100%)";
@@ -332,7 +403,66 @@ export default async function StudentUnitPage({ params }: { params: Promise<{ le
         <HeaderBadges />
       </header>
 
-      <div className="space-y-3.5">
+      {/* ── Uch bo'lim: Lug'at · Dars · Vazifa ── */}
+      <div className="grid grid-cols-3 gap-2">
+        <TabCard
+          href="?tab=lugat"
+          active={tab === "lugat"}
+          icon={<IcoWords s={22} />}
+          label={t.vocabulary}
+          meta={hasVocab ? `${words.length} ${t.wordCount}` : "—"}
+          accent="linear-gradient(150deg, #f6c453 0%, #e09217 100%)"
+        />
+        <TabCard
+          href="?tab=dars"
+          active={tab === "dars"}
+          icon={<IcoPlayCircle s={22} />}
+          label={t.lesson}
+          meta={view ? t.watched : mode === "none" ? "—" : t.openVideo}
+          accent="linear-gradient(150deg, #2fb9dc 0%, #0e7490 100%)"
+        />
+        <TabCard
+          href="?tab=vazifa"
+          active={tab === "vazifa"}
+          icon={<IcoClipboard s={22} />}
+          label={t.tabTasks}
+          meta={taskCount > 0 ? String(taskCount) : "—"}
+          accent="linear-gradient(150deg, #b07bff 0%, #7c3aed 100%)"
+        />
+      </div>
+
+      <div className="mt-3.5 space-y-3.5">
+        {/* ── Lug'at bo'limi ── */}
+        {tab === "lugat" &&
+          (hasVocab ? (
+            <section className="gl-glass overflow-hidden rounded-[26px]">
+              <div className="flex items-center gap-2.5 px-4 py-3">
+                <span className="grid h-9 w-9 shrink-0 place-items-center rounded-[13px] text-white" style={{ background: "linear-gradient(150deg,#f6c453,#e09217)" }}>
+                  <IcoWords s={19} />
+                </span>
+                <span className="min-w-0 flex-1 truncate text-[15px] font-extrabold text-slate-900">{t.vocabulary}</span>
+                <span className="shrink-0 text-[12px] font-bold text-slate-600">
+                  {words.length} {t.wordCount}
+                </span>
+              </div>
+              <ul className="border-t border-white/50">
+                {words.map((w) => (
+                  <li key={w.de} className="grid grid-cols-[1fr_1fr] gap-3 border-b border-white/40 px-4 py-2.5 last:border-0">
+                    <span className="break-words text-[14.5px] font-bold leading-snug text-slate-900">{w.de}</span>
+                    <span className="break-words text-[14px] leading-snug text-slate-600">{w.uz ?? "—"}</span>
+                  </li>
+                ))}
+              </ul>
+            </section>
+          ) : (
+            <div className="gl-glass rounded-[26px] px-5 py-12 text-center">
+              <div className="text-[14.5px] font-semibold text-slate-700">{t.noWordsInLesson}</div>
+            </div>
+          ))}
+
+        {/* ── Dars bo'limi ── */}
+        {tab === "dars" && (
+        <>
         {/* ── 1. Dars videosi ── */}
         <LessonVideo
           mode={mode}
@@ -376,8 +506,10 @@ export default async function StudentUnitPage({ params }: { params: Promise<{ le
                 {lesson.title}
               </h1>
 
-              {lesson.topic ? (
-                <p className="mt-1 whitespace-pre-wrap break-words text-[14.5px] leading-[1.6] text-slate-500">{lesson.topic}</p>
+              {/* Mavzu maydoni lug'at bo'lsa u "Lug'at" bo'limida chiqadi —
+                  bu yerda takrorlanmaydi. Tavsif bo'lsa esa shu yerda. */}
+              {lesson.topic && !hasVocab ? (
+                <p className="mt-1 whitespace-pre-wrap break-words text-[14.5px] leading-[1.6] text-slate-600">{lesson.topic}</p>
               ) : null}
             </div>
           </div>
@@ -397,7 +529,17 @@ export default async function StudentUnitPage({ params }: { params: Promise<{ le
           />
         )}
 
-        {/* ── 4. Uyga vazifa ── */}
+        {!video && !hasAssignment && (
+          <div className="gl-glass rounded-[26px] px-5 py-12 text-center">
+            <div className="text-[14.5px] font-semibold text-slate-700">{t.noMaterial}</div>
+          </div>
+        )}
+        </>
+        )}
+
+        {/* ── Vazifa bo'limi ── */}
+        {tab === "vazifa" && (
+        <>
         {hasHomework && (
           <TaskCard
             title={t.homeworkTask}
@@ -411,13 +553,15 @@ export default async function StudentUnitPage({ params }: { params: Promise<{ le
           />
         )}
 
-        {/* ── 5. Vazifalar (topshirish va o'qituvchi izohi) ── */}
+        {/* Topshirish va o'qituvchi izohi */}
         <LessonTasks tasks={vTasks} />
 
-        {!video && !hasAssignment && !hasHomework && vTasks.length === 0 && (
+        {!hasHomework && vTasks.length === 0 && (
           <div className="gl-glass rounded-[26px] px-5 py-12 text-center">
-            <div className="text-[14.5px] font-semibold text-slate-700">{t.noMaterial}</div>
+            <div className="text-[14.5px] font-semibold text-slate-700">{t.noTasksInLesson}</div>
           </div>
+        )}
+        </>
         )}
 
         {/* ── 5. Oldingi / keyingi dars ── */}

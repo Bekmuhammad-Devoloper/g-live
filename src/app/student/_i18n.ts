@@ -68,6 +68,12 @@ const DICT = {
   openVideo: p("Videoni ochish", "Открыть видео", "Open video", "Video öffnen"),
   lessonAssignment: p("Dars topshirig'i", "Задание урока", "Lesson assignment", "Lektionsaufgabe"),
   homeworkTask: p("Uyga vazifa", "Домашнее задание", "Homework", "Hausaufgabe"),
+
+  // ── Dars ichidagi uch bo'lim ──
+  tabTasks: p("Vazifa", "Задание", "Tasks", "Aufgabe"),
+  noWordsInLesson: p("Bu darsga hali so'z qo'shilmagan", "К этому уроку ещё не добавлены слова", "No words added to this lesson yet", "Zu dieser Lektion wurden noch keine Wörter hinzugefügt"),
+  noTasksInLesson: p("Bu darsda vazifa yo'q", "В этом уроке нет заданий", "No tasks in this lesson", "Keine Aufgaben in dieser Lektion"),
+  wordCount: p("so'z", "слов", "words", "Wörter"),
   openFile: p("Faylni ochish", "Открыть файл", "Open file", "Datei öffnen"),
   prevLesson: p("Oldingi", "Предыдущий", "Previous", "Zurück"),
   nextLesson: p("Keyingi", "Следующий", "Next", "Weiter"),

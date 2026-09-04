@@ -6,6 +6,7 @@ import { isPortalFeatureOn } from "@/lib/portalFeatures";
 import { prisma } from "@/lib/db";
 import { ARTICLE, DICT_LETTERS, DICT_SIZE, searchDict, type DictEntry } from "@/lib/dictionary";
 import MissingStudent from "../MissingStudent";
+import { parseLessonWords } from "@/lib/lessonWords";
 import { CARD, ICON_GRADIENT, PageHeader } from "../_ui";
 import DictNav from "./DictNav";
 import WordList, { type VWord } from "./WordList";
@@ -66,12 +67,9 @@ export default async function StudentWorterbuchPage({ searchParams }: { searchPa
   const words: VWord[] = [];
   const seen = new Set<string>();
   for (const l of lessons) {
-    for (const raw of (l.topic ?? "").split(/[,;\n]/)) {
-      const part = raw.trim();
-      if (part.length < 2) continue;
-      const m = part.match(/^(.+?)\s+[-–—]\s+(.+)$/);
-      const de = (m ? m[1] : part).trim();
-      const uz = m ? m[2].trim() : null;
+    // Ajratish mantig'i `lib/lessonWords.ts` da — dars sahifasi ham aynan
+    // shu so'zlarni ko'rsatadi, ikki nusxa bo'lmasligi kerak.
+    for (const { de, uz } of parseLessonWords(l.topic)) {
       const key = de.toLowerCase();
       if (seen.has(key)) continue;
       seen.add(key);
