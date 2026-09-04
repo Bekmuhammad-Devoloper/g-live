@@ -99,30 +99,31 @@ export default async function StudentKursePage() {
               className="relative block overflow-hidden rounded-[26px] text-white shadow-[0_14px_30px_rgba(19,78,94,0.22)]"
               style={{ background: levelGradient(lvl.color) }}
             >
-              {/* Banner — TO'LIQ ko'rinadi va ustiga yozuv tushmaydi.
-                  Ilgari rasm butun kartochkaga cho'zilib qirqilardi, yozuvlar
-                  esa uning ustida turib o'qilmasdi. Endi rasm o'z nisbatida
-                  yuqorida, matn esa ostidagi rangli yo'lakda. */}
+              {/* Banner — TO'LIQ ko'rinadi (qirqilmaydi) va atrofida darajaning
+                  o'z rangidan ramka qoladi: rasm chetdan bir oz ichkarida
+                  turadi, kartochka gradienti ramka bo'lib ko'rinadi.
+                  object-cover EMAS — aks holda rasmning usti-osti kesilardi. */}
               {banner ? (
-                // eslint-disable-next-line @next/next/no-img-element
-                <img src={banner} alt="" className="block max-h-[280px] w-full object-cover" />
+                <div className="px-2.5 pt-2.5">
+                  {/* eslint-disable-next-line @next/next/no-img-element */}
+                  <img src={banner} alt="" className="block w-full rounded-[18px]" />
+                </div>
               ) : null}
 
               <div className={cn(
-                "relative flex flex-col justify-between p-6",
-                banner ? "min-h-[112px]" : "min-h-[168px]",
+                "relative flex flex-col justify-between",
+                banner ? "p-4 pt-3.5" : "min-h-[168px] p-6",
               )}>
               {banner ? null : <Mountains />}
-              <div className="relative flex items-start gap-4">
+              <div className="relative flex items-start gap-3">
                 {/* daraja belgisi */}
-                <span className="grid h-[58px] w-[58px] shrink-0 place-items-center rounded-2xl bg-white/20 text-[21px] font-extrabold backdrop-blur-sm">
+                <span className="grid h-[46px] w-[46px] shrink-0 place-items-center rounded-xl bg-white/20 text-[16px] font-extrabold backdrop-blur-sm">
                   {code}
                 </span>
                 <div className="min-w-0 flex-1">
                   <div className="flex items-center gap-2">
-                    {/* Qo'lda yozilgan shrift (Caveat) — nozikroq, shu sabab
-                        kattaroq o'lchamda beriladi. Kesilmasin: eng ko'pi 2 qator. */}
-                    <span className="font-hand line-clamp-2 text-[30px] font-bold leading-[1.05]">
+                    {/* Qo'lda yozilgan shrift (Caveat). Kesilmasin: eng ko'pi 2 qator. */}
+                    <span className="font-hand line-clamp-2 text-[22px] font-bold leading-[1.08]">
                       {levelTitle(lvl, session.locale)}
                     </span>
                     {active && (
@@ -131,19 +132,19 @@ export default async function StudentKursePage() {
                       </span>
                     )}
                   </div>
-                  <div className="mt-1 text-[14px] text-white/75">
+                  <div className="mt-0.5 text-[12.5px] text-white/75">
                     {st.total > 0 ? `${st.total} ${t.lessons}` : t.comingSoonBadge}
                   </div>
                 </div>
-                <span className="mt-1.5 shrink-0"><IcoChevron /></span>
+                <span className="mt-1 shrink-0"><IcoChevron /></span>
               </div>
 
               {/* jarayon chizig'i */}
-              <div className="relative mt-4 flex items-center gap-3">
-                <div className="h-[9px] flex-1 overflow-hidden rounded-full bg-white/25">
+              <div className="relative mt-3 flex items-center gap-2.5">
+                <div className="h-[7px] flex-1 overflow-hidden rounded-full bg-white/25">
                   <div className="h-full rounded-full bg-white" style={{ width: `${pct}%` }} />
                 </div>
-                <span className="text-[17px] font-extrabold">{pct}%</span>
+                <span className="text-[13.5px] font-extrabold tabular-nums">{pct}%</span>
               </div>
               </div>
             </Link>
