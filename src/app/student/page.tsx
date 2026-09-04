@@ -361,6 +361,17 @@ export default async function StudentStartPage() {
           </h1>
           <p className="mt-0.5 line-clamp-2 text-[12.5px] leading-snug text-slate-600">{t.readyToLearn}</p>
         </div>
+        {/* Seriya — ixcham belgi. Ism endi ikki qatorga tusha oladi, shu
+            sabab bu yerda joy bor; o'quvchi uchun kunlik seriya ko'rinib
+            turgani muhim (bosh sahifadan pastdagi kartochkaga qaramasdan). */}
+        <span className="gl-glass flex h-11 shrink-0 items-center gap-1 rounded-full px-2.5" aria-label={t.streak}>
+          <IcoFlameGold s={22} />
+          <span className="leading-none">
+            <span className="block text-[14px] font-extrabold text-slate-900">{streak}</span>
+            <span className="mt-0.5 block text-[9.5px] font-semibold text-slate-500">{t.day}</span>
+          </span>
+        </span>
+
         {/* Ikonkalar pastki tab-bar ikonkalari o'lchamida (26px) */}
         {notifOn && (
         <Link href="/student/mitteilungen" aria-label={t.notifications} className="gl-glass grid h-11 w-11 shrink-0 place-items-center rounded-full">
