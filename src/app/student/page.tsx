@@ -5,6 +5,7 @@ import { S } from "./_i18n";
 import { redirect } from "next/navigation";
 import { getSession } from "@/lib/auth";
 import { prisma } from "@/lib/db";
+import { isPortalFeatureOn } from "@/lib/portalFeatures";
 import { coinBalance, starBalance } from "@/lib/coins";
 import { studentRank } from "@/lib/rank";
 import { getActiveBanners, getActiveVideos } from "@/lib/portalContent";
@@ -292,6 +293,7 @@ export default async function StudentStartPage() {
 
   // ── Tanga / seriya ──
   // Hisob bitta joyda (src/lib/coins.ts) — Market va Sozlamalar bilan bir xil
+  const notifOn = await isPortalFeatureOn("mitteilungen"); // o'chirilgan bo'lsa qo'ng'iroqcha yo'q
   const [purse, starPurse, banners, videoList] = await Promise.all([
     coinBalance(student.id),
     starBalance(student.id),
@@ -360,11 +362,13 @@ export default async function StudentStartPage() {
           <p className="line-clamp-2 text-[12.5px] leading-snug text-slate-600">{t.readyToLearn}</p>
         </div>
         {/* Ikonkalar pastki tab-bar ikonkalari o'lchamida (26px) */}
+        {notifOn && (
         <Link href="/student/mitteilungen" aria-label={t.notifications} className="gl-glass grid h-11 w-11 shrink-0 place-items-center rounded-full">
           <IcoBell s={26} />
           {/* bildirishnoma nuqtasi — faqat o'qilmagan xabar bo'lsa */}
           {unread > 0 && <span className="absolute right-[9px] top-[8px] h-2 w-2 rounded-full" style={{ background: "#2ea8c9" }} />}
         </Link>
+        )}
       </div>
 
       {/* ── 4 ko'nikma kartasi ── */}
@@ -382,8 +386,10 @@ export default async function StudentStartPage() {
                 o'zgarib ketardi (uz/ru/de yorliqlari har xil). */}
             <div className="px-0.5 text-center text-[12px] font-semibold leading-[15px] text-slate-800">{sk.label}</div>
             <div className="relative grid place-items-center">
-              <Ring pct={sk.has ? sk.pct : 0} size={52} stroke={4.5} />
-              <span className="absolute text-[11px] font-bold leading-none text-slate-800">{sk.has ? `${sk.pct}%` : "—"}</span>
+              <Ring pct={sk.pct} size={52} stroke={4.5} />
+              {/* Ma'lumot bo'lmasa ham foiz ko'rsatiladi (0%) — chiziqcha
+                  o'quvchida "ishlamayapti" degan taassurot qoldirardi */}
+              <span className="absolute text-[11px] font-bold leading-none text-slate-800">{sk.pct}%</span>
             </div>
           </div>
         ))}
@@ -426,25 +432,37 @@ export default async function StudentStartPage() {
           { icon: <CoinGold s={46} />, bare: true, label: t.coins, value: String(coins) },
           { icon: <IcoStarGold />, bare: false, label: t.stars, value: String(stars) },
           { icon: <IcoFlameGold />, bare: false, label: t.streak, value: String(streak) },
-          { icon: <IcoGrowthGold />, bare: false, label: t.rank, value: String(rangPos) },
-        ].map((it) => (
-          <div key={it.label} className={`${card} flex flex-col items-center gap-2 rounded-[22px] px-1 pb-3 pt-3`}>
-            {it.bare ? (
-              <span className="grid h-[46px] w-[46px] place-items-center drop-shadow-[0_8px_14px_rgba(166,110,18,0.45)]">
-                {it.icon}
-              </span>
-            ) : (
-              <span
-                className="grid h-[46px] w-[46px] place-items-center rounded-full shadow-[0_8px_16px_rgba(14,116,144,0.3)]"
-                style={{ background: `linear-gradient(135deg, #17a2bf, ${TEAL})` }}
-              >
-                {it.icon}
-              </span>
-            )}
-            <span className="text-[11.5px] font-semibold leading-none text-slate-600">{it.label}</span>
-            <span className="whitespace-nowrap text-[21px] font-extrabold leading-none text-slate-900">{it.value}</span>
-          </div>
-        ))}
+          { icon: <IcoGrowthGold />, bare: false, label: t.rank, value: String(rangPos), href: "/student/reyting" },
+        ].map((it) => {
+          const inner = (
+            <>
+              {it.bare ? (
+                <span className="grid h-[46px] w-[46px] place-items-center drop-shadow-[0_8px_14px_rgba(166,110,18,0.45)]">
+                  {it.icon}
+                </span>
+              ) : (
+                <span
+                  className="grid h-[46px] w-[46px] place-items-center rounded-full shadow-[0_8px_16px_rgba(14,116,144,0.3)]"
+                  style={{ background: `linear-gradient(135deg, #17a2bf, ${TEAL})` }}
+                >
+                  {it.icon}
+                </span>
+              )}
+              <span className="text-[11.5px] font-semibold leading-none text-slate-600">{it.label}</span>
+              <span className="whitespace-nowrap text-[21px] font-extrabold leading-none text-slate-900">{it.value}</span>
+            </>
+          );
+          const cls = `${card} flex flex-col items-center gap-2 rounded-[22px] px-1 pb-3 pt-3`;
+
+          // Reyting bosilganda to'liq ro'yxat ochiladi, qolganlari oddiy karta
+          return it.href ? (
+            <Link key={it.label} href={it.href} className={`${cls} transition active:scale-[0.97]`}>
+              {inner}
+            </Link>
+          ) : (
+            <div key={it.label} className={cls}>{inner}</div>
+          );
+        })}
       </div>
 
       {/* ── Reklama banneri (Sozlamalar > Bosh sahifa) ── */}

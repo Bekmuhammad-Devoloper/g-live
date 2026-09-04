@@ -137,3 +137,57 @@ export async function studentRank(studentId: string): Promise<Rank> {
 
   return { place: better + 1, total: ids.length, scope: rankScope, basis: rankBasis };
 }
+
+/* ── Reyting jadvali ── */
+
+export type BoardRow = {
+  id: string;
+  name: string;
+  imageUrl: string | null;
+  value: number;
+  place: number;
+  isMe: boolean;
+};
+
+/**
+ * O'quvchilar ro'yxati o'rin bo'yicha. Teng natijalilar bir xil o'rinda
+ * turadi (1, 2, 2, 4 — sport hisobidagidek).
+ */
+export async function rankBoard(
+  studentId: string,
+  limit = 50,
+): Promise<{ rows: BoardRow[]; me: BoardRow | null; total: number; scope: RankScope; basis: RankBasis }> {
+  const { rankScope, rankBasis } = await getProgressRules();
+  const ids = await scopeIds(studentId, rankScope);
+  if (!ids.includes(studentId)) ids.push(studentId);
+
+  const [map, people] = await Promise.all([
+    scores(ids, rankBasis),
+    prisma.student.findMany({
+      where: { id: { in: ids } },
+      select: { id: true, fullName: true, imageUrl: true },
+    }),
+  ]);
+
+  const sorted = people
+    .map((p) => ({ ...p, value: map.get(p.id) ?? 0 }))
+    .sort((a, b) => b.value - a.value || a.fullName.localeCompare(b.fullName, "uz"));
+
+  let place = 0;
+  let prev: number | null = null;
+  const all: BoardRow[] = sorted.map((p, i) => {
+    if (prev === null || p.value !== prev) place = i + 1;
+    prev = p.value;
+    return {
+      id: p.id,
+      name: p.fullName,
+      imageUrl: p.imageUrl,
+      value: p.value,
+      place,
+      isMe: p.id === studentId,
+    };
+  });
+
+  const me = all.find((r) => r.isMe) ?? null;
+  return { rows: all.slice(0, limit), me, total: all.length, scope: rankScope, basis: rankBasis };
+}
