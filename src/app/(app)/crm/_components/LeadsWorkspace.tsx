@@ -17,6 +17,7 @@ import NewLeadForm from "../NewLeadForm";
 import CommandPalette, { type PaletteAction } from "./CommandPalette";
 import KeyboardHelpOverlay from "./KeyboardHelpOverlay";
 import RejectReasonModal from "./modals/RejectReasonModal";
+import WonAddModal from "./modals/WonAddModal";
 import EnrollDrawer from "./EnrollDrawer";
 import LeadQuickView from "./LeadQuickView";
 import { useDoubleClickOpen } from "../../_components/useDoubleClickOpen";
@@ -51,6 +52,8 @@ export default function LeadsWorkspace({ locale, initialLeads, managers, sources
   const [reject, setReject] = useState<{ id: string; name: string } | null>(null);
   // Guruhga yo'naltirish paneli — "Qabul qilindi" uchun majburiy qadam
   const [enroll, setEnroll] = useState<{ id: string; name: string; groupId: string | null; editCount: number } | null>(null);
+  // "Qabul qilindi" ustunidagi "+" — guruh biriktirish yoki yangi o'quvchi
+  const [wonAdd, setWonAdd] = useState(false);
   // Yonboshdan ochiladigan tezkor ko'rish oynasi (1 marta bosilganda)
   const [quickId, setQuickId] = useState<string | null>(null);
   const { single, double, cancel: cancelOpen } = useDoubleClickOpen();
@@ -275,7 +278,7 @@ export default function LeadsWorkspace({ locale, initialLeads, managers, sources
       </div>
 
       {view === "kanban" ? (
-        <LeadsKanban leads={sortedShown} totals={shownTotals} locale={locale} selected={selection} onOpen={openLead} onOpenFull={openLeadFull} onDropToColumn={onDropToColumn} onAdd={(stage) => setCreate({ open: true, stage })} />
+        <LeadsKanban leads={sortedShown} totals={shownTotals} locale={locale} selected={selection} onOpen={openLead} onOpenFull={openLeadFull} onDropToColumn={onDropToColumn} onAdd={(stage) => (stage === "WON" ? setWonAdd(true) : setCreate({ open: true, stage }))} />
       ) : (
         <LeadsTable leads={sortedShown} locale={locale} selected={selection} onToggle={(id) => toggleSelect(id)} onOpen={openLead} onOpenFull={openLeadFull} allSelected={selection.size === shown.length && shown.length > 0} onToggleAll={toggleAll} />
       )}
@@ -286,6 +289,17 @@ export default function LeadsWorkspace({ locale, initialLeads, managers, sources
       <CommandPalette locale={locale} open={showPalette} onClose={() => setShowPalette(false)} leads={leads} actions={paletteActions} onOpenLead={(id) => router.push(`/crm/${id}`)} />
       <KeyboardHelpOverlay locale={locale} open={showHelp} onClose={() => setShowHelp(false)} />
       <RejectReasonModal locale={locale} open={!!reject} leadName={reject?.name ?? ""} onClose={() => setReject(null)} onConfirm={confirmReject} pending={refreshing} />
+
+      {canWrite && (
+        <WonAddModal
+          locale={locale}
+          open={wonAdd}
+          leads={leads}
+          onClose={() => setWonAdd(false)}
+          onPickLead={(l) => setEnroll({ id: l.id, name: l.fullName, groupId: l.groupId, editCount: l.enrollEditCount })}
+          onNewLead={() => setCreate({ open: true, stage: "WON" })}
+        />
+      )}
 
       {quickLead && (
         <LeadQuickView
