@@ -23,8 +23,12 @@
 # ════════════════════════════════════════════════════════════════════
 set -euo pipefail
 
-BW="$HOME/.bubblewrap"
-WORK=/opt/gl-edu/apk
+# Yo'llar sozlanadigan: xuddi shu skript ham B SERVERDA, ham GITHUB ACTIONS
+# runner'ida ishlaydi (ikkalasi ham Linux). Shu sabab yig'ish mantig'i bitta
+# joyda qoladi — ikki xil nusxa vaqt o'tib bir-biridan uzilib ketmaydi.
+BW="${BW_HOME:-$HOME/.bubblewrap}"
+WORK="${APK_WORK:-/opt/gl-edu/apk}"
+ENV_FILE="${GL_ENV:-/opt/gl-edu/.env}"
 TWA="$WORK/twa"
 HOST=https://germaniya.live
 PKG=live.germaniya.app
@@ -154,7 +158,7 @@ FP=$("$JAVA_HOME/bin/keytool" -list -v -keystore "$WORK/android.keystore" -alias
   -storepass "$PASS" 2>/dev/null | grep -i "SHA256:" | head -1 | sed 's/.*SHA256: *//' | tr -d ' \r')
 echo ""
 echo "SHA-256: $FP"
-if grep -q "ANDROID_CERT_SHA256=$FP" /opt/gl-edu/.env 2>/dev/null; then
+if grep -q "ANDROID_CERT_SHA256=$FP" "$ENV_FILE" 2>/dev/null; then
   echo ".env allaqachon to'g'ri"
 else
   echo "⚠️  .env ga yozing va servisni qayta ishga tushiring:"

@@ -1,0 +1,109 @@
+# ════════════════════════════════════════════════════════════════════
+# ANDROID ILOVASI (APK) — GitHub'da yig'iladi, serverga kirish shart emas.
+#
+# Ishga tushirish: Actions → "Android ilovasi (APK)" → Run workflow
+#
+# Nima bo'ladi:
+#   1. Imzo kaliti B serverdan olinadi (mavjud B_SSH_KEY siri orqali).
+#      YANGI kalit YARATILMAYDI — aks holda ilova Android uchun "boshqa
+#      ilova" bo'lib qoladi: eskisi ustiga o'rnatilmaydi va TWA bog'lanishi
+#      uzilib, ilovada brauzer manzil qatori paydo bo'ladi.
+#   2. APK aynan scripts/build-apk.sh bilan yig'iladi — serverdagi bilan
+#      BITTA skript, ikki xil nusxa emas.
+#   3. Natija ikki joyga qo'yiladi:
+#        · GitHub artifact — bu yerdan to'g'ridan-to'g'ri yuklab olinadi
+#        · B server /opt/gl-edu/apk/ — germaniya.live/app shu fayldan beradi
+#
+# Kalit hech qachon jurnalga chiqmaydi va artifact'ga tushmaydi.
+# ════════════════════════════════════════════════════════════════════
+name: Android ilovasi (APK)
+
+on:
+  workflow_dispatch:
+    inputs:
+      publish:
+        description: "Yig'ilgan APK serverga qo'yilsinmi (germaniya.live/app yangilanadi)"
+        type: boolean
+        default: true
+
+concurrency:
+  group: build-apk
+  cancel-in-progress: false
+
+jobs:
+  build:
+    name: Yig'ish
+    runs-on: ubuntu-latest
+    timeout-minutes: 40
+
+    env:
+      SSH_HOST: 34.179.202.164
+      SSH_USER: uzbekmen94
+      REMOTE_APK_DIR: /opt/gl-edu/apk
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: SSH kalitni tayyorlash
+        run: |
+          mkdir -p ~/.ssh
+          echo "${{ secrets.B_SSH_KEY }}" > ~/.ssh/deploy_key
+          chmod 600 ~/.ssh/deploy_key
+          ssh-keyscan -H "$SSH_HOST" >> ~/.ssh/known_hosts 2>/dev/null
+
+      # Imzo kaliti — serverdagi mavjud kalit. Ilova "o'sha ilova" bo'lib
+      # qolishi uchun boshqa kalit ishlatib bo'lmaydi.
+      - name: Imzo kalitini olish
+        run: |
+          mkdir -p "$GITHUB_WORKSPACE/apk"
+          scp -i ~/.ssh/deploy_key -o BatchMode=yes \
+            "$SSH_USER@$SSH_HOST:$REMOTE_APK_DIR/android.keystore" \
+            "$SSH_USER@$SSH_HOST:$REMOTE_APK_DIR/keystore.pass" \
+            "$GITHUB_WORKSPACE/apk/"
+          chmod 600 "$GITHUB_WORKSPACE/apk/android.keystore" "$GITHUB_WORKSPACE/apk/keystore.pass"
+          echo "kalit olindi ($(wc -c < "$GITHUB_WORKSPACE/apk/android.keystore") bayt)"
+
+      # Serverdagi bilan AYNAN bir xil skript. Yo'llar env orqali beriladi,
+      # shuning uchun runner'da ham ishlaydi.
+      - name: APK yig'ish
+        run: bash scripts/build-apk.sh
+        env:
+          APK_WORK: ${{ github.workspace }}/apk
+          BW_HOME: ${{ github.workspace }}/.bubblewrap
+          GL_ENV: /dev/null # barmoq izi tekshiruvi serverdagi .env ga tegmaydi
+
+      - name: Natijani ko'rsatish
+        run: |
+          ls -la "$GITHUB_WORKSPACE/apk/germaniya-live.apk"
+          echo "### APK tayyor" >> "$GITHUB_STEP_SUMMARY"
+          echo "Hajm: $(du -h "$GITHUB_WORKSPACE/apk/germaniya-live.apk" | cut -f1)" >> "$GITHUB_STEP_SUMMARY"
+
+      - name: APK ni artifact sifatida yuklash
+        uses: actions/upload-artifact@v4
+        with:
+          name: germaniya-live-apk
+          path: ${{ github.workspace }}/apk/germaniya-live.apk
+          retention-days: 90
+          if-no-files-found: error
+
+      # germaniya.live/app shu fayldan beradi (src/lib/appRelease.ts)
+      - name: APK ni serverga qo'yish
+        if: ${{ inputs.publish }}
+        run: |
+          scp -i ~/.ssh/deploy_key -o BatchMode=yes \
+            "$GITHUB_WORKSPACE/apk/germaniya-live.apk" \
+            "$SSH_USER@$SSH_HOST:$REMOTE_APK_DIR/germaniya-live.apk.new"
+          ssh -i ~/.ssh/deploy_key -o BatchMode=yes "$SSH_USER@$SSH_HOST" \
+            "mv $REMOTE_APK_DIR/germaniya-live.apk.new $REMOTE_APK_DIR/germaniya-live.apk && chmod 644 $REMOTE_APK_DIR/germaniya-live.apk && ls -la $REMOTE_APK_DIR/germaniya-live.apk"
+
+      - name: Yuklab olish sahifasini tekshirish
+        if: ${{ inputs.publish }}
+        run: |
+          CODE=$(curl -sL -o /dev/null -w "%{http_code}" --max-time 60 https://germaniya.live/api/app/android)
+          echo "germaniya.live/api/app/android → HTTP $CODE"
+          [ "$CODE" = "200" ]
+
+      # Kalit runner bilan birga yo'q qilinadi, lekin ataylab ham o'chiramiz
+      - name: Maxfiy fayllarni o'chirish
+        if: always()
+        run: rm -f ~/.ssh/deploy_key "$GITHUB_WORKSPACE/apk/android.keystore" "$GITHUB_WORKSPACE/apk/keystore.pass"
