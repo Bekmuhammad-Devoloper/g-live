@@ -6,6 +6,8 @@ import { redirect } from "next/navigation";
 import { getSession } from "@/lib/auth";
 import { prisma } from "@/lib/db";
 import { isPortalFeatureOn } from "@/lib/portalFeatures";
+import { getStudentProgress } from "@/lib/studentProgress";
+import { getActiveLevels, levelTitle, matchLevel } from "@/lib/studyLevels";
 import { coinBalance, starBalance } from "@/lib/coins";
 import { studentRank } from "@/lib/rank";
 import { getActiveBanners, getActiveVideos } from "@/lib/portalContent";
@@ -27,18 +29,18 @@ import MissingStudent from "./MissingStudent";
 const clamp = (n: number) => Math.max(0, Math.min(100, Math.round(n)));
 
 // Ma'lumot hali yo'q ko'nikma uchun rasm darajasi — o'rtacha (xafa ham emas,
-// xursand ham emas). skillLevel() bo'yicha 41-60 oralig'i 3-darajaga tushadi.
-const NEUTRAL_SKILL = 55;
+// xursand ham emas). skillLevel() bo'yicha 26-50 oralig'i 2-darajaga tushadi.
+const NEUTRAL_SKILL = 40;
 
 // ── Ko'nikma rasmlari (public/skills/) ──
-// Foiz 5 ta kayfiyat darajasiga bo'linadi: 0-15, 16-40, 41-60, 61-85, 86-100.
+// Foiz 4 ta kayfiyat darajasiga teng bo'linadi (2026-09-04 talab):
+//   1 -> 0-25%   2 -> 26-50%   3 -> 51-75%   4 -> 76-100%
 // Rasm hali yuklanmagan bo'lsa — pastdagi SVG ikonka ishlatiladi (sayt buzilmaydi).
-function skillLevel(pct: number): 1 | 2 | 3 | 4 | 5 {
-  if (pct <= 15) return 1;
-  if (pct <= 40) return 2;
-  if (pct <= 60) return 3;
-  if (pct <= 85) return 4;
-  return 5;
+function skillLevel(pct: number): 1 | 2 | 3 | 4 {
+  if (pct <= 25) return 1;
+  if (pct <= 50) return 2;
+  if (pct <= 75) return 3;
+  return 4;
 }
 function skillImage(base: string, pct: number): string | null {
   // Ikki xil joylashuv qo'llab-quvvatlanadi:
@@ -251,7 +253,7 @@ export default async function StudentStartPage() {
 
   const group = student.enrollments[0]?.group ?? null;
 
-  const [attendance, submissions, exams, progress, courseLessons, mates, unread] = await Promise.all([
+  const [attendance, submissions, exams, prog, levels, mates, unread] = await Promise.all([
     prisma.attendance.findMany({
       where: { studentId: student.id },
       orderBy: { markedAt: "desc" },
@@ -260,8 +262,10 @@ export default async function StudentStartPage() {
     }),
     prisma.submission.findMany({ where: { studentId: student.id, status: "GRADED" }, select: { score: true, assignment: { select: { maxScore: true } } } }),
     prisma.examResult.findMany({ where: { studentId: student.id }, select: { score: true } }),
-    group ? prisma.groupLessonProgress.findMany({ where: { groupId: group.id, taught: true }, orderBy: { taughtAt: "desc" }, select: { courseLessonId: true } }) : Promise.resolve([]),
-    group ? prisma.courseLesson.findMany({ where: { programId: group.programId }, orderBy: { order: "asc" }, select: { id: true, title: true, topic: true } }) : Promise.resolve([]),
+    // Jarayon YAGONA joyda (src/lib/studentProgress.ts) — o'quvchi ko'rgan
+    // darslar ham hisobga olinadi, faqat o'qituvchi belgilagani emas
+    getStudentProgress(student.id, group),
+    getActiveLevels(),
     group
       ? prisma.groupStudent.findMany({ where: { groupId: group.id, isActive: true }, select: { studentId: true } })
       : Promise.resolve([]),
@@ -280,16 +284,18 @@ export default async function StudentStartPage() {
   // (sprechen quyida, doneInProgram aniqlangach hisoblanadi)
 
   // ── Kurs jarayoni ──
-  const level = group?.levelCode ?? student.currentLevel ?? "A1";
-  const taughtIds = new Set(progress.map((p) => p.courseLessonId));
-  // Faqat JORIY kurs dasturidagi o'tilgan darslar sanaladi (guruh dasturi
-  // almashtirilgan bo'lsa eski progress yozuvlari Kapitel raqamini oshirmasin
-  // — Kurse sahifasi bilan bir xil hisob)
-  const doneInProgram = courseLessons.filter((cl) => taughtIds.has(cl.id)).length;
-  const chapter = Math.max(1, doneInProgram);
-  const sprechen = courseLessons.length ? clamp((doneInProgram / courseLessons.length) * 100) : 0;
-  const currentLesson = courseLessons.find((cl) => !taughtIds.has(cl.id)) ?? courseLessons[courseLessons.length - 1] ?? null;
-  const kursPct = sprechen;
+  // Kartochka JORIY daraja haqida gapiradi ("A1 · Bo'lim 3"), shuning uchun
+  // foiz ham o'sha darajaniki bo'lishi kerak — butun dasturniki emas.
+  const curLevel = matchLevel(group?.levelCode ?? student.currentLevel, levels);
+  const level = curLevel?.code ?? group?.levelCode ?? student.currentLevel ?? "A1";
+  const lvlStat = prog.byLevel.get(level) ?? null;
+  const chapter = Math.max(1, lvlStat?.done ?? prog.doneCount);
+  const kursPct = lvlStat?.pct ?? prog.overallPct;
+  const sprechen = prog.overallPct; // "Gapirish" ko'nikmasi — butun dastur bo'yicha
+  const currentLesson = prog.currentLesson;
+  // Kartochka foni — shu darajaning banneri (ma'muriyat yuklagan bo'lsa)
+  const levelBanner = curLevel?.bannerUrl ?? null;
+  const levelName = curLevel ? levelTitle(curLevel, session.locale) : null;
 
   // ── Tanga / seriya ──
   // Hisob bitta joyda (src/lib/coins.ts) — Market va Sozlamalar bilan bir xil
@@ -401,33 +407,70 @@ export default async function StudentStartPage() {
         ))}
       </div>
 
-      {/* ── Dein Fortschritt ── */}
+      {/* ── Sizning natijangiz ──
+          Ayni damda o'qilayotgan darajaning banneri fon bo'ladi (ma'muriyat
+          yuklagan bo'lsa), yozuvlar esa o'sha kursga tegishli: daraja nomi,
+          bo'lim raqami va joriy dars mavzusi. Banner bo'lmasa — avvalgi
+          shisha ko'rinish. */}
       <Link
         href={kurseHref}
-        className="gl-glass-hero block min-h-[168px] p-6 transition active:scale-[0.985]"
+        className={
+          levelBanner
+            ? "relative block min-h-[168px] overflow-hidden rounded-[26px] p-6 text-white shadow-[0_14px_30px_rgba(19,78,94,0.22)] transition active:scale-[0.985]"
+            : "gl-glass-hero block min-h-[168px] p-6 transition active:scale-[0.985]"
+        }
       >
-        <div className="flex items-center justify-between gap-4">
+        {levelBanner ? (
+          <>
+            {/* eslint-disable-next-line @next/next/no-img-element */}
+            <img src={levelBanner} alt="" className="absolute inset-0 h-full w-full object-cover" />
+            {/* Yozuvlar rasm ustida ham aniq o'qilishi uchun — chapdan o'ngga
+                so'nuvchi qoramtir parda (matn chap tomonda turadi) */}
+            <span className="absolute inset-0 bg-gradient-to-r from-black/85 via-black/60 to-black/25" />
+          </>
+        ) : null}
+
+        <div className="relative flex items-center justify-between gap-4">
           <div className="min-w-0">
-            <div className="text-[12px] font-bold uppercase tracking-[0.22em]" style={{ color: TEAL }}>{t.yourProgress}</div>
-            <div className="mt-1.5 text-[26px] font-extrabold leading-tight tracking-tight text-slate-900 sm:text-[32px]">
+            <div
+              className="text-[12px] font-bold uppercase tracking-[0.22em]"
+              style={levelBanner ? { color: "rgba(255,255,255,0.85)" } : { color: TEAL }}
+            >
+              {t.yourProgress}
+            </div>
+            <div className={
+              levelBanner
+                ? "font-hand mt-1.5 text-[32px] font-bold leading-[1.05] sm:text-[38px]"
+                : "font-hand mt-1.5 text-[32px] font-bold leading-[1.05] text-slate-900 sm:text-[38px]"
+            }>
+              {levelName ?? level}
+            </div>
+            <div className={levelBanner ? "mt-0.5 text-[14px] font-semibold text-white/85" : "mt-0.5 text-[14px] font-semibold text-slate-700"}>
               {level} · {t.chapter} {chapter}
             </div>
-            <div className="mt-1 truncate text-[15px] font-medium text-slate-700">
+            <div className={levelBanner ? "mt-1 line-clamp-2 text-[14px] text-white/75" : "mt-1 line-clamp-2 text-[14px] font-medium text-slate-700"}>
               {currentLesson?.topic || currentLesson?.title || group?.program.name || t.everydayBasics}
             </div>
           </div>
           <div className="relative grid shrink-0 place-items-center">
-            <Ring pct={kursPct} size={96} stroke={6} />
-            <span className="absolute grid h-[66px] w-[66px] place-items-center rounded-full bg-white/60 shadow-[0_4px_12px_rgba(19,78,94,0.15)]">
+            <Ring pct={kursPct} size={96} stroke={6} color={levelBanner ? "#ffffff" : NAVY} />
+            <span
+              className="absolute grid h-[66px] w-[66px] place-items-center rounded-full shadow-[0_4px_12px_rgba(19,78,94,0.15)]"
+              style={{ background: levelBanner ? "rgba(255,255,255,0.9)" : "rgba(255,255,255,0.6)" }}
+            >
               <IcoTarget c={NAVY} s={38} />
             </span>
           </div>
         </div>
-        <div className="mt-4 flex items-center gap-3">
-          <div className="h-[10px] flex-1 overflow-hidden rounded-full bg-white/55 shadow-[inset_0_1px_2px_rgba(19,78,94,0.12)]">
-            <div className="h-full rounded-full" style={{ width: `${kursPct}%`, background: NAVY }} />
+        <div className="relative mt-4 flex items-center gap-3">
+          <div className={
+            levelBanner
+              ? "h-[10px] flex-1 overflow-hidden rounded-full bg-white/30"
+              : "h-[10px] flex-1 overflow-hidden rounded-full bg-white/55 shadow-[inset_0_1px_2px_rgba(19,78,94,0.12)]"
+          }>
+            <div className="h-full rounded-full" style={{ width: `${kursPct}%`, background: levelBanner ? "#ffffff" : NAVY }} />
           </div>
-          <span className="text-[20px] font-extrabold" style={{ color: NAVY }}>{kursPct}%</span>
+          <span className="text-[20px] font-extrabold" style={{ color: levelBanner ? "#ffffff" : NAVY }}>{kursPct}%</span>
         </div>
       </Link>
 

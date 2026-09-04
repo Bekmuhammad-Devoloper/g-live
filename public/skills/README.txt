@@ -2,24 +2,23 @@ Ko'nikma kartalari rasmlari (o'quvchi portali — Start ekrani).
 
 JOYLASHUV
   public/skills/<konikma>/<daraja>.png
-  Ko'nikmalar: woerter, lesen, hoeren, sprechen   (ASCII! "hören" EMAS)
-  Daraja: 1 = 0-15%   2 = 16-40%   3 = 41-60%   4 = 61-85%   5 = 86-100%
+  Ko'nikmalar: woerter, lesen, hoeren, sprechen   (ASCII! "hoeren" yozing)
+
+DARAJALAR (4 ta, teng bo'linadi)
+  1.png -> 0-25%     3.png -> 51-75%
+  2.png -> 26-50%    4.png -> 76-100%
 
 TALAB
   O'lcham: 120x120 px, PNG, SHAFFOF fon (oq fon emas!)
-  Har papkada 1.png ... 5.png (jami 20 ta)
+  Har papkada 1.png ... 4.png (jami 16 ta)
 
 YANGI RASM QO'SHSANGIZ
-  GPT 1024x1024 oq fonda beradi. Uni qo'lda kichraytirish shart emas —
+  GPT 1024x1024 oq fonda beradi. Qo'lda kichraytirish shart emas —
   faylni shu papkaga tashlab, aytsangiz kichraytirib, fonini shaffof
   qilib beraman (sharp bilan, 13 MB -> 89 KB bo'lgan).
 
-ZAXIRA
-  Asl 1024x1024 nusxalar Claude scratchpad papkasida saqlangan.
+Rasm yo'q bo'lsa kod pastroq darajadagi eng yaqin rasmni oladi;
+umuman rasm bo'lmasa — src/app/student/page.tsx dagi SVG ikonka.
 
-HOZIRGI HOLAT
-  hoeren   — 5 ta (to'liq)
-  lesen    — 4 ta (5.png yetishmaydi)
-  sprechen — 4 ta (5.png yetishmaydi)
-  woerter  — 4 ta (5.png yetishmaydi)
-  5.png yo'q bo'lsa 86-100% uchun 4.png ko'rsatiladi (kod o'zi hal qiladi).
+ESLATMA
+  hoeren/5.png ishlatilmaydi — daraja 5 ta emas, 4 ta.
