@@ -479,3 +479,75 @@ select:not(.appearance-none):not([multiple]):not([size]) {
 ::backdrop {
   background-color: #000;
 }
+
+/* ═══════════════════════════════════════════════════════════════
+   ILOVA HISSI (o'quvchi portali)
+   ═══════════════════════════════════════════════════════════════
+   TWA/PWA ichida sahifa baribir "sayt" bo'lib turishining sabablari
+   quyidagilar edi — har biri shu yerda yopiladi:
+
+     · barmoq bilan tortilganda sahifa cho'ziladi (rubber-band) va
+       tepaga tortilsa "yangilash" ishga tushadi — haqiqiy ilovada bunday
+       bo'lmaydi
+     · har bosishda kulrang chaqnash (tap highlight)
+     · uzoq bosilsa matn belgilanadi va "Nusxa olish" menyusi chiqadi
+     · ikki marta bosilganda sahifa kattalashadi va shu sabab har bosishda
+       ~300ms kechikish bo'ladi
+
+   Qoidalar FAQAT `.gl-native` ichida — CRM (kompyuterdagi sayt) tegilmaydi:
+   u yerda matn belgilash va yaqinlashtirish kerak. */
+
+.gl-native {
+  -webkit-tap-highlight-color: transparent;
+  /* ikki marta bosib kattalashtirishni o'chiradi (barmoq bilan
+     yaqinlashtirish saqlanadi — bu qulaylik uchun kerak) */
+  touch-action: manipulation;
+}
+
+/* Uzoq bosilganda chiqadigan tizim menyusi (rasmni saqlash va h.k.) */
+.gl-native img,
+.gl-native button,
+.gl-native a {
+  -webkit-touch-callout: none;
+}
+
+/* Quyidagilar faqat O'RNATILGAN ilovada: brauzerda ochilganda sahifa
+   odatdagidek qolsin (matn belgilanadi, sahifa cho'ziladi). */
+@media (display-mode: standalone) {
+  html,
+  body {
+    /* tepaga tortib "yangilash" va chetlardagi cho'zilish yo'qoladi */
+    overscroll-behavior: none;
+  }
+
+  .gl-native {
+    user-select: none;
+    -webkit-user-select: none;
+  }
+
+  /* Yozish va o'qish kerak bo'lgan joylar bundan mustasno */
+  .gl-native input,
+  .gl-native textarea,
+  .gl-native [contenteditable],
+  .gl-native .gl-selectable {
+    user-select: text;
+    -webkit-user-select: text;
+  }
+}
+
+/* Ekrandan ekranga o'tish — ilovadagidek yumshoq kirish.
+   ATAYLAB qisqa (200ms) va faqat opacity + kichik siljish: uzun animatsiya
+   sekin ilova taassurotini beradi. Animatsiya tugagach transform QOLMAYDI,
+   shuning uchun ichidagi `fixed` elementlar (suzuvchi tugmalar) buzilmaydi. */
+@keyframes gl-screen-in {
+  from { opacity: 0; transform: translateY(8px); }
+  to   { opacity: 1; transform: none; }
+}
+
+.gl-screen {
+  animation: gl-screen-in 200ms cubic-bezier(0.22, 0.61, 0.36, 1) both;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .gl-screen { animation: none; }
+}

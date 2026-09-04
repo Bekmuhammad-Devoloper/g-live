@@ -5,6 +5,7 @@ import BottomNav from "./BottomNav";
 import { S } from "./_i18n";
 import { getPortalFlags } from "@/lib/portalFeatures";
 import PwaSetup from "./PwaSetup";
+import Screen from "./Screen";
 
 // O'quvchining mobil ilova ko'rinishidagi portali (2026-08-28 talab).
 // AppShell (sidebar) ishlatilmaydi — telefon ilovasi kabi bitta ustun + pastki menyu.
@@ -52,8 +53,10 @@ export default async function StudentLayout({ children }: { children: React.Reac
   // Menejer o'chirib qo'ygan bo'limlar pastki menyuda ko'rinmaydi
   const flags = await getPortalFlags();
 
+  // `gl-native` — ilova hissi qoidalari (globals.css): teginish chaqnashi,
+  // uzoq bosish menyusi va sahifaning cho'zilishi (rubber-band) o'chadi.
   return (
-    <div className="relative min-h-screen bg-[#e4edf3]">
+    <div className="gl-native relative min-h-screen bg-[#e4edf3]">
       {/* O'quvchi ilovasi FAQAT och rejimda ishlaydi — maket ham, shisha ham
           och fonga qurilgan. Ildiz layout esa qurilma sozlamasiga qarab <html>
           ga `dark` sinfini qo'yadi va globals.css dagi tungi fallback qoidalari
@@ -70,7 +73,7 @@ export default async function StudentLayout({ children }: { children: React.Reac
       {/* Pastdagi bo'shliq: menyu balandligi + telefonning xavfsiz zonasi
           (jest chizig'i). `viewportFit: cover` bilan bu majburiy. */}
       <div className="relative z-10 mx-auto min-h-screen max-w-md px-4 pt-5 pb-[calc(112px+env(safe-area-inset-bottom))]">
-        {children}
+        <Screen>{children}</Screen>
       </div>
       <BottomNav t={S(session.locale)} showUben={flags.uben} />
       <PwaSetup />

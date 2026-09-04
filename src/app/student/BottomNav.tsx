@@ -72,7 +72,15 @@ export default function BottomNav({ t, showUben = true }: { t: StudentStrings; s
         {items.map((it) => {
           const active = it.exact ? pathname === it.href : pathname.startsWith(it.href);
           return (
-            <Link key={it.label} href={it.href} aria-current={active ? "page" : undefined} className="flex flex-1 flex-col items-center gap-1 px-1 py-1">
+            <Link
+              key={it.label}
+              href={it.href}
+              aria-current={active ? "page" : undefined}
+              // Tab almashganda qisqa titrash — haqiqiy ilovadagidek javob
+              // (qo'llab-quvvatlamaydigan qurilmada shunchaki e'tiborsiz qoladi)
+              onClick={() => { if (!active) navigator.vibrate?.(8); }}
+              className="flex flex-1 flex-col items-center gap-1 px-1 py-1"
+            >
               <Ico name={it.icon} active={active} />
               <span className="text-[12.5px] font-semibold leading-none" style={{ color: active ? TEAL : GRAY }}>
                 {it.label}
