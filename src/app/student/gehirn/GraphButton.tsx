@@ -8,7 +8,7 @@ export default function GraphButton({ title }: { title: string }) {
       href="/student/gehirn/graph"
       aria-label={title}
       title={title}
-      className="grid h-11 w-11 shrink-0 place-items-center rounded-full bg-white shadow-[0_6px_16px_rgba(19,78,94,0.12)] transition active:translate-y-[1px]"
+      className="gl-glass grid h-11 w-11 shrink-0 place-items-center rounded-full transition active:translate-y-[1px]"
     >
       <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke={TEAL} strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
         <circle cx="12" cy="5" r="2.4" />

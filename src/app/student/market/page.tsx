@@ -4,22 +4,13 @@ import { isPortalFeatureOn } from "@/lib/portalFeatures";
 import { coinBalance } from "@/lib/coins";
 import { prisma } from "@/lib/db";
 import { S, type StudentStrings } from "../_i18n";
-import { CARD, DEEP_GRADIENT, PageHeader, SectionTitle, fmtDate, safeUrl } from "../_ui";
+import { CARD, CoinGold, DEEP_GRADIENT, PageHeader, SectionTitle, fmtDate, safeUrl } from "../_ui";
 import MissingStudent from "../MissingStudent";
 import ItemCard, { type VItem } from "./ItemCard";
 
 // Market — do'kon ko'rinishidagi vitrina: tanga balansi, sovg'alar to'ri va
 // o'quvchining buyurtmalari. Sovg'alarni ma'muriyat CRM dagi /market dan
 // boshqaradi.
-
-function IcoCoin({ s = 26 }: { s?: number }) {
-  return (
-    <svg width={s} height={s} viewBox="0 0 24 24">
-      <circle cx="12" cy="12" r="9.2" fill="#facc15" stroke="#eab308" strokeWidth="1.6" />
-      <circle cx="12" cy="12" r="5.6" fill="none" stroke="#eab308" strokeWidth="1.4" />
-    </svg>
-  );
-}
 
 const STATUS_CLS: Record<string, string> = {
   PENDING: "bg-amber-50 text-amber-700",
@@ -73,13 +64,13 @@ export default async function StudentMarketPage() {
 
   return (
     <div className="space-y-4">
-      <PageHeader title={t.market} subtitle={t.exchangeCoins} back="/student/profil" />
+      <PageHeader title={t.market} subtitle={t.exchangeCoins} backLabel={t.back} back="/student/profil" />
 
       {/* ── Hamyon ── */}
       <div className="relative overflow-hidden rounded-[24px] p-4 text-white shadow-[0_14px_30px_rgba(19,78,94,0.22)]" style={{ background: DEEP_GRADIENT }}>
         <div className="flex items-center gap-3">
           <span className="grid h-11 w-11 shrink-0 place-items-center rounded-full bg-white/20 backdrop-blur-sm">
-            <IcoCoin s={26} />
+            <CoinGold s={28} />
           </span>
           <div className="min-w-0 flex-1">
             <div className="text-[11px] font-semibold uppercase tracking-wider text-white/70">{t.balance}</div>
@@ -109,7 +100,7 @@ export default async function StudentMarketPage() {
       <div className="flex items-baseline justify-between px-1">
         <SectionTitle>{t.rewards}</SectionTitle>
         {shelf.length > 0 ? (
-          <span className="text-[11.5px] font-semibold text-slate-400">
+          <span className="text-[11.5px] font-semibold text-slate-500">
             {affordable}/{shelf.length}
           </span>
         ) : null}
@@ -118,7 +109,7 @@ export default async function StudentMarketPage() {
       {shelf.length === 0 ? (
         <div className={CARD + " px-5 py-12 text-center"}>
           <div className="text-[15px] font-semibold text-slate-700">{t.noRewards}</div>
-          <p className="mt-1 text-[13px] text-slate-400">{t.centerAddsSoon}</p>
+          <p className="mt-1 text-[13px] text-slate-500">{t.centerAddsSoon}</p>
         </div>
       ) : (
         <div className="grid grid-cols-2 gap-3">
@@ -138,7 +129,7 @@ export default async function StudentMarketPage() {
                 <li key={o.id} className="flex items-center gap-3 border-b border-slate-50 px-4 py-3 last:border-0">
                   <div className="min-w-0 flex-1">
                     <div className="truncate text-[14px] font-bold text-slate-800">{o.item.title}</div>
-                    <div className="text-[11.5px] text-slate-400">
+                    <div className="text-[11.5px] text-slate-500">
                       {fmtDate(o.createdAt)} · {o.price} {t.coins}
                     </div>
                   </div>

@@ -72,7 +72,7 @@ export default function LessonTasks({ tasks }: { tasks: VTask[] }) {
   const hasScore = tasks.some((t) => t.subs.some((s) => s.score !== null));
 
   return (
-    <section className="overflow-hidden rounded-[26px] bg-white shadow-[0_16px_38px_-22px_rgba(15,60,80,0.55)] ring-1 ring-slate-900/[0.04]">
+    <section className="gl-glass overflow-hidden rounded-[26px]">
       {/* Sarlavha qatori — chapda bo'lim nomi, o'ngda ball */}
       <div className="flex items-center justify-between border-b border-slate-100 px-4 pt-3.5">
         <span className="border-b-2 border-[#c08a4a] pb-2.5 text-[15px] font-bold text-[#a5713a]">Vazifalar</span>
@@ -132,6 +132,7 @@ function TaskCard({ task }: { task: VTask }) {
   };
 
   return (
+    // Iliq krem maydon ataylab shisha EMAS: shisha ustiga shisha qo'yilmaydi
     <div className="space-y-3 rounded-[20px] bg-[#faf6f2] p-3">
       {/* ── Muddat ── */}
       {task.dueAt && (

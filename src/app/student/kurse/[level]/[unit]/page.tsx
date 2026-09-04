@@ -166,7 +166,7 @@ function TaskCard({
   t: StudentStrings;
 }) {
   return (
-    <section className="relative overflow-hidden rounded-[26px] bg-white p-4 shadow-[0_16px_38px_-22px_rgba(15,60,80,0.55)] ring-1 ring-slate-900/[0.04]">
+    <section className="gl-glass relative overflow-hidden rounded-[26px] p-4">
       <Wash color={wash} />
       <div className="relative flex gap-3.5">
         <span
@@ -178,7 +178,7 @@ function TaskCard({
         <div className="min-w-0 flex-1 pt-1">
           <h2 className="text-[17px] font-extrabold leading-tight tracking-[-0.015em] text-slate-900">{title}</h2>
           {body ? (
-            <p className="mt-1 whitespace-pre-wrap break-words text-[14.5px] leading-[1.6] text-slate-400">{body}</p>
+            <p className="mt-1 whitespace-pre-wrap break-words text-[14.5px] leading-[1.6] text-slate-500">{body}</p>
           ) : null}
         </div>
       </div>
@@ -304,19 +304,17 @@ export default async function StudentUnitPage({ params }: { params: Promise<{ le
   const VIOLET = "linear-gradient(150deg, #b07bff 0%, #7c3aed 100%)";
 
   const navBtn =
-    "flex h-[54px] flex-1 items-center gap-2.5 rounded-[20px] bg-white px-3.5 text-slate-700 shadow-[0_12px_28px_-18px_rgba(15,60,80,0.6)] ring-1 ring-slate-900/[0.04] transition active:scale-[0.98]";
+    "gl-glass flex h-[54px] flex-1 items-center gap-2.5 rounded-[20px] px-3.5 text-slate-700 transition active:scale-[0.98]";
 
   return (
     <div className="pb-2">
-      {/* Sahifa foni — maketdagi moviy-siyohrang o'tish */}
-      <div
-        aria-hidden
-        className="pointer-events-none fixed inset-0 -z-10"
-        style={{ background: "linear-gradient(178deg, #e7f0fd 0%, #e9ecfb 48%, #f0eafb 100%)" }}
-      />
+      {/* Sahifa o'z fonini CHIZMAYDI: layout'dagi ambient qatlam ko'rinib
+          tursin — shisha kartalar aynan o'shani sindiradi. Bu yerda `-z-10`
+          qatlam layout'ning `relative z-10` o'ramidan chiqa olmasdi va
+          ambientni berkitib, butun sahifadagi shishani bekor qilardi. */}
 
       {/* ── Yopishqoq sarlavha ── */}
-      <header className="sticky top-0 z-30 -mx-4 -mt-5 mb-3.5 flex items-center gap-3 px-4 pb-2.5 pt-5 backdrop-blur-xl [background:linear-gradient(180deg,rgba(231,240,253,0.94)_0%,rgba(233,238,252,0.78)_100%)]">
+      <header className="sticky top-0 z-30 -mx-4 -mt-5 mb-3.5 flex items-center gap-3 bg-[#e6f0f6] px-4 pb-2.5 pt-5">
         <Link
           href={`/student/kurse/${code}`}
           aria-label={t.back}
@@ -328,7 +326,7 @@ export default async function StudentUnitPage({ params }: { params: Promise<{ le
 
         <div className="min-w-0 flex-1">
           <div className="truncate text-[19px] font-extrabold tracking-[-0.02em] text-slate-900">{unitLabel}</div>
-          <div className="truncate text-[13px] font-medium text-slate-400">{lesson.title}</div>
+          <div className="truncate text-[13px] font-medium text-slate-600">{lesson.title}</div>
         </div>
 
         <HeaderBadges />
@@ -352,7 +350,7 @@ export default async function StudentUnitPage({ params }: { params: Promise<{ le
         />
 
         {/* ── 2. Dars nomi va tavsifi ── */}
-        <section className="relative overflow-hidden rounded-[26px] bg-white p-4 shadow-[0_16px_38px_-22px_rgba(15,60,80,0.55)] ring-1 ring-slate-900/[0.04]">
+        <section className="gl-glass relative overflow-hidden rounded-[26px] p-4">
           <Wash color="rgba(96,165,250,0.20)" />
           <div className="relative flex gap-3.5">
             <span
@@ -379,7 +377,7 @@ export default async function StudentUnitPage({ params }: { params: Promise<{ le
               </h1>
 
               {lesson.topic ? (
-                <p className="mt-1 whitespace-pre-wrap break-words text-[14.5px] leading-[1.6] text-slate-400">{lesson.topic}</p>
+                <p className="mt-1 whitespace-pre-wrap break-words text-[14.5px] leading-[1.6] text-slate-500">{lesson.topic}</p>
               ) : null}
             </div>
           </div>
@@ -417,7 +415,7 @@ export default async function StudentUnitPage({ params }: { params: Promise<{ le
         <LessonTasks tasks={vTasks} />
 
         {!video && !hasAssignment && !hasHomework && vTasks.length === 0 && (
-          <div className="rounded-[26px] bg-white px-5 py-12 text-center shadow-[0_16px_38px_-22px_rgba(15,60,80,0.55)] ring-1 ring-slate-900/[0.04]">
+          <div className="gl-glass rounded-[26px] px-5 py-12 text-center">
             <div className="text-[14.5px] font-semibold text-slate-700">{t.noMaterial}</div>
           </div>
         )}
@@ -431,7 +429,7 @@ export default async function StudentUnitPage({ params }: { params: Promise<{ le
                   <IcoBack s={16} />
                 </span>
                 <span className="min-w-0 flex-1 text-left">
-                  <span className="block text-[10px] font-bold uppercase tracking-[0.06em] text-slate-400">{t.prevLesson}</span>
+                  <span className="block text-[10px] font-bold uppercase tracking-[0.06em] text-slate-500">{t.prevLesson}</span>
                   <span className="block truncate text-[12.5px] font-semibold leading-tight">{prev.title}</span>
                 </span>
               </Link>
@@ -440,7 +438,7 @@ export default async function StudentUnitPage({ params }: { params: Promise<{ le
             {next ? (
               <Link href={`/student/kurse/${code}/${next.id}`} className={navBtn}>
                 <span className="min-w-0 flex-1 text-right">
-                  <span className="block text-[10px] font-bold uppercase tracking-[0.06em] text-slate-400">{t.nextLesson}</span>
+                  <span className="block text-[10px] font-bold uppercase tracking-[0.06em] text-slate-500">{t.nextLesson}</span>
                   <span className="block truncate text-[12.5px] font-semibold leading-tight">{next.title}</span>
                 </span>
                 <span className="grid h-8 w-8 shrink-0 place-items-center rounded-full bg-[#eef3fd] text-[#2f6ef0]">

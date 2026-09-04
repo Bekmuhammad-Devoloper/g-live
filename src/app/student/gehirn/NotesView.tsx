@@ -71,7 +71,7 @@ export default function NotesView({
         {tiles.map((x) => (
           <div key={x.label} className={`${CARD} flex flex-col items-center gap-1.5 px-1 pb-4 pt-4`}>
             <span className="text-[22px] font-extrabold leading-none" style={{ color: NAVY }}>{x.value}</span>
-            <span className="truncate text-[11.5px] font-medium text-slate-500">{x.label}</span>
+            <span className="truncate text-[11.5px] font-medium text-slate-600">{x.label}</span>
           </div>
         ))}
       </div>
@@ -89,7 +89,7 @@ export default function NotesView({
           value={q}
           onChange={(e) => setQ(e.target.value)}
           placeholder={t.searchNotes}
-          className="w-full rounded-2xl border-0 bg-white px-4 py-3 text-[14px] text-slate-800 shadow-[0_6px_16px_rgba(19,78,94,0.08)] outline-none placeholder:text-slate-400"
+          className="w-full rounded-2xl border-0 bg-white px-4 py-3 text-[16px] text-slate-800 shadow-[0_6px_16px_rgba(19,78,94,0.08)] outline-none placeholder:text-slate-400"
         />
       )}
 
@@ -119,7 +119,7 @@ export default function NotesView({
           <div className="text-[16px] font-extrabold text-slate-900">
             {notes.length === 0 ? t.noBrainNotes : t.nothingFound}
           </div>
-          {notes.length === 0 && <p className="text-[13px] text-slate-500">{t.brainStart}</p>}
+          {notes.length === 0 && <p className="text-[13px] text-slate-600">{t.brainStart}</p>}
         </div>
       ) : (
         <div className="space-y-3">
@@ -143,8 +143,8 @@ export default function NotesView({
                     )}
                     <div className="truncate text-[14.5px] font-bold text-slate-800">{n.title}</div>
                   </div>
-                  {text && <p className="mt-0.5 line-clamp-2 text-[12.5px] leading-relaxed text-slate-500">{text}</p>}
-                  <div className="mt-1.5 flex flex-wrap items-center gap-x-2 gap-y-1 text-[11px] text-slate-400">
+                  {text && <p className="mt-0.5 line-clamp-2 text-[12.5px] leading-relaxed text-slate-600">{text}</p>}
+                  <div className="mt-1.5 flex flex-wrap items-center gap-x-2 gap-y-1 text-[11px] text-slate-500">
                     <span>{fmtShort(n.updatedAt)}</span>
                     {links > 0 && (
                       <span className="inline-flex items-center gap-1">
@@ -156,7 +156,7 @@ export default function NotesView({
                       </span>
                     )}
                     {n.tags.slice(0, 3).map((x) => (
-                      <span key={x} className="rounded-full bg-slate-100 px-1.5 py-0.5 font-semibold text-slate-500">#{x}</span>
+                      <span key={x} className="rounded-full bg-white/60 px-1.5 py-0.5 font-semibold text-slate-600">#{x}</span>
                     ))}
                   </div>
                 </div>
@@ -170,7 +170,7 @@ export default function NotesView({
           Pastki menyu bilan bir xil usulda joylashtiriladi: butun kenglikdagi
           fixed qatlam + mx-auto max-w-md — shunda keng ekranda ham ustun
           chetiga tegib turadi, o'rtaga qochib ketmaydi. */}
-      <div className="pointer-events-none fixed inset-x-0 bottom-[104px] z-30 mx-auto flex max-w-md justify-end px-4">
+      <div className="pointer-events-none fixed inset-x-0 bottom-[calc(104px+env(safe-area-inset-bottom))] z-30 mx-auto flex max-w-md justify-end px-4">
         <button
           onClick={() => setAdding(true)}
           aria-label={t.newNote}
@@ -217,6 +217,7 @@ function NewNoteSheet({ t, onClose, onCreated }: { t: StudentStrings; onClose: (
   return (
     <div className="fixed inset-0 z-50 flex items-end justify-center" onMouseDown={onClose}>
       <div className="absolute inset-0 bg-slate-900/40 backdrop-blur-sm" />
+      {/* Oyna SHISHA emas — ostida ixtiyoriy matn turadi, fon quyuq qolsin */}
       <div
         onMouseDown={(e) => e.stopPropagation()}
         className="relative w-full max-w-md rounded-t-[26px] bg-white px-5 pb-7 pt-4 shadow-[0_-10px_30px_rgba(19,78,94,0.2)]"

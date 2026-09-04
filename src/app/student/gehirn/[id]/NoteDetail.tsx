@@ -88,7 +88,7 @@ export default function NoteDetail({
               onClick={togglePin}
               aria-label={t.pin}
               title={t.pin}
-              className="grid h-11 w-11 place-items-center rounded-full bg-white shadow-[0_6px_16px_rgba(19,78,94,0.12)]"
+              className="gl-glass grid h-11 w-11 place-items-center rounded-full"
             >
               <svg width="22" height="22" viewBox="0 0 24 24" fill={note.pinned ? TEAL : "none"} stroke={TEAL} strokeWidth="1.9" strokeLinecap="round" strokeLinejoin="round">
                 <path d="M14 3.5 20.5 10l-2.4.6-3 3 .5 4.6-2-2-3.9 3.9-1.4-1.4 3.9-3.9-2-2 4.6.5 3-3L14 3.5Z" />
@@ -97,7 +97,7 @@ export default function NoteDetail({
             <button
               onClick={() => { setEdit(!edit); setErr(null); }}
               aria-label={t.save}
-              className="grid h-11 w-11 place-items-center rounded-full bg-white shadow-[0_6px_16px_rgba(19,78,94,0.12)]"
+              className="gl-glass grid h-11 w-11 place-items-center rounded-full"
             >
               {edit ? (
                 <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#94a3b8" strokeWidth="2.2" strokeLinecap="round"><path d="M6 6l12 12M18 6 6 18" /></svg>
@@ -148,10 +148,10 @@ export default function NoteDetail({
           />
 
           {/* Sintaksis eslatmasi */}
-          <p className="text-[11.5px] leading-relaxed text-slate-400">
-            <code className="rounded bg-slate-100 px-1">[[Sarlavha]]</code> · <code className="rounded bg-slate-100 px-1">#teg</code> ·{" "}
-            <code className="rounded bg-slate-100 px-1"># bo&apos;lim</code> · <code className="rounded bg-slate-100 px-1">- ro&apos;yxat</code> ·{" "}
-            <code className="rounded bg-slate-100 px-1">- [ ] belgi</code>
+          <p className="text-[11.5px] leading-relaxed text-slate-600">
+            <code className="rounded bg-white/60 px-1">[[Sarlavha]]</code> · <code className="rounded bg-white/60 px-1">#teg</code> ·{" "}
+            <code className="rounded bg-white/60 px-1"># bo&apos;lim</code> · <code className="rounded bg-white/60 px-1">- ro&apos;yxat</code> ·{" "}
+            <code className="rounded bg-white/60 px-1">- [ ] belgi</code>
           </p>
 
           {err && <p className="text-[12.5px] font-semibold text-rose-600">{err}</p>}
@@ -205,7 +205,7 @@ export default function NoteDetail({
                 {kindLabel[note.kind] ?? t.kindNOTE}
               </span>
               {note.shownTags.map((x) => (
-                <span key={x} className="rounded-full bg-slate-100 px-2 py-0.5 text-[11.5px] font-semibold text-slate-500">#{x}</span>
+                <span key={x} className="rounded-full bg-white/60 px-2 py-0.5 text-[11.5px] font-semibold text-slate-600">#{x}</span>
               ))}
             </div>
             <h1 className="mb-2 text-[19px] font-extrabold leading-tight text-slate-900">{note.title}</h1>
@@ -240,8 +240,8 @@ function LinkList({ title, items, t }: { title: string; items: LinkRef[]; t: Stu
                 <KindIcon kind={l.kind} s={17} c={l.id ? kindColor(l.kind) : "#94a3b8"} />
               </span>
               <div className="min-w-0 flex-1">
-                <div className={`truncate text-[13.5px] font-semibold ${l.id ? "text-slate-800" : "text-slate-400"}`}>{l.title}</div>
-                {!l.id && <div className="text-[11px] text-slate-400">{t.notCreatedYet}</div>}
+                <div className={`truncate text-[13.5px] font-semibold ${l.id ? "text-slate-800" : "text-slate-500"}`}>{l.title}</div>
+                {!l.id && <div className="text-[11px] text-slate-500">{t.notCreatedYet}</div>}
               </div>
               <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#94a3b8" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round"><path d="m9 6 6 6-6 6" /></svg>
             </>

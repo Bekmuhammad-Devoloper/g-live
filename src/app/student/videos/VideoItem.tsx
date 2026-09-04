@@ -19,7 +19,7 @@ export default function VideoItem({ v, openLabel }: { v: VVideo; openLabel: stri
   const [open, setOpen] = useState(false);
 
   return (
-    <div className="overflow-hidden rounded-[22px] bg-white shadow-[0_12px_28px_-16px_rgba(15,60,80,0.5)] ring-1 ring-slate-900/[0.05]">
+    <div className="gl-glass overflow-hidden rounded-[22px]">
       {open && v.embed ? (
         <iframe
           src={`${v.embed}?autoplay=1`}
@@ -49,7 +49,7 @@ export default function VideoItem({ v, openLabel }: { v: VVideo; openLabel: stri
 
       <div className="px-4 py-3">
         <h2 className="break-words text-[16px] font-extrabold leading-snug tracking-[-0.01em] text-slate-900">{v.title}</h2>
-        {v.note ? <p className="mt-1 break-words text-[13.5px] leading-relaxed text-slate-500">{v.note}</p> : null}
+        {v.note ? <p className="mt-1 break-words text-[13.5px] leading-relaxed text-slate-600">{v.note}</p> : null}
       </div>
     </div>
   );

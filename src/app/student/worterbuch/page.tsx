@@ -116,7 +116,7 @@ export default async function StudentWorterbuchPage({ searchParams }: { searchPa
       />
 
       {/* Manba tanlash */}
-      <div className="flex gap-2 rounded-2xl bg-white/70 p-1.5 shadow-[0_6px_16px_rgba(19,78,94,0.08)]">
+      <div className="gl-glass flex gap-2 rounded-2xl p-1.5">
         <Tab href="/student/worterbuch" active={tab === "kurs"} label={t.myCourse} sub={String(words.length)} />
         <Tab href="/student/worterbuch?tab=lugat" active={tab === "lugat"} label={t.fullDictionary} sub={fmt(DICT_SIZE)} />
       </div>
@@ -128,25 +128,26 @@ export default async function StudentWorterbuchPage({ searchParams }: { searchPa
           <DictNav letters={DICT_LETTERS} t={t} />
 
           <div className="flex items-center justify-between px-1">
-            <span className="text-[12.5px] font-semibold text-slate-500">
+            <span className="text-[12.5px] font-semibold text-slate-600">
               {res!.total === 0 ? t.notFound : fmt(res!.total) + " " + t.wordsCount}
             </span>
-            {sp.q ? <span className="ml-3 truncate text-[12px] text-slate-400">{sp.q}</span> : null}
+            {sp.q ? <span className="ml-3 truncate text-[12px] text-slate-500">{sp.q}</span> : null}
           </div>
 
           {res!.total === 0 ? (
             <div className={CARD + " px-5 py-12 text-center"}>
               <div className="text-[15px] font-semibold text-slate-700">{t.notFound}</div>
-              <p className="mt-1 text-[13px] text-slate-400">
+              <p className="mt-1 text-[13px] text-slate-500">
                 {t.tryAnother}
               </p>
             </div>
           ) : (
             <div className="space-y-3">
+              {/* Ramka shisha; katak varaqning o'zi qattiq qoladi — chiziqlar aniq ko'rinsin */}
               {groupByLetter(res!.items, !!sp.q).map(([letter, list]) => (
                 <section key={letter} className="overflow-hidden rounded-[18px] shadow-[0_10px_22px_rgba(19,78,94,0.10)]">
                   {/* Varaq sarlavhasi: harf va ustun nomlari */}
-                  <div className="flex items-center gap-2.5 bg-white px-3 py-2">
+                  <div className="flex items-center gap-2.5 px-3 py-2">
                     {letter ? (
                       <span
                         className="grid h-6 w-6 shrink-0 place-items-center rounded-lg text-[12px] font-extrabold text-white"
@@ -155,8 +156,8 @@ export default async function StudentWorterbuchPage({ searchParams }: { searchPa
                         {letter}
                       </span>
                     ) : null}
-                    <span className="text-[11.5px] font-semibold text-slate-400">{list.length}</span>
-                    <div className="ml-auto grid grid-cols-[1fr_1.15fr] gap-3 text-[10px] font-bold uppercase tracking-wider text-slate-300">
+                    <span className="text-[11.5px] font-semibold text-slate-500">{list.length}</span>
+                    <div className="ml-auto grid grid-cols-[1fr_1.15fr] gap-3 text-[10px] font-bold uppercase tracking-wider text-slate-400">
                       <span className="text-right">Deutsch</span>
                       <span>O&apos;zbekcha</span>
                     </div>
@@ -193,11 +194,11 @@ function Tab({ href, active, label, sub }: { href: string; active: boolean; labe
       href={href}
       className={
         "flex flex-1 flex-col items-center rounded-xl py-2 transition " +
-        (active ? "bg-white shadow-[0_4px_12px_rgba(19,78,94,0.12)]" : "")
+        (active ? "bg-white/55 shadow-[0_4px_12px_rgba(19,78,94,0.12)]" : "")
       }
     >
-      <span className={"text-[14px] font-extrabold " + (active ? "text-slate-900" : "text-slate-400")}>{label}</span>
-      <span className={"text-[11px] font-semibold " + (active ? "text-[#0e7490]" : "text-slate-400")}>{sub}</span>
+      <span className={"text-[14px] font-extrabold " + (active ? "text-slate-900" : "text-slate-500")}>{label}</span>
+      <span className={"text-[11px] font-semibold " + (active ? "text-[#0e7490]" : "text-slate-500")}>{sub}</span>
     </Link>
   );
 }

@@ -40,7 +40,7 @@ export default function NotifList({ items, emptyText }: { items: VNotif[]; empty
       <div className={`${CARD} flex flex-col items-center gap-3 px-6 py-12 text-center`}>
         <span className="grid h-14 w-14 place-items-center rounded-full bg-[#eef6fa]"><IcoBell s={26} /></span>
         <div className="text-[17px] font-extrabold text-slate-900">{emptyText}</div>
-        <p className="text-[13px] text-slate-500">Hozircha xabar yo&apos;q.</p>
+        <p className="text-[13px] text-slate-600">Hozircha xabar yo&apos;q.</p>
       </div>
     );
   }
@@ -50,7 +50,7 @@ export default function NotifList({ items, emptyText }: { items: VNotif[]; empty
       {unread > 0 && (
         <button
           onClick={() => start(async () => { await markAllRead(); router.refresh(); })}
-          className="w-full rounded-2xl bg-white py-3 text-[13px] font-bold shadow-[0_6px_16px_rgba(19,78,94,0.10)]"
+          className="gl-glass w-full rounded-2xl py-3 text-[13px] font-bold"
           style={{ color: TEAL }}
         >
           Hammasini o&apos;qilgan deb belgilash ({unread})
@@ -73,9 +73,9 @@ export default function NotifList({ items, emptyText }: { items: VNotif[]; empty
             >
               <span className={`mt-1.5 h-2.5 w-2.5 shrink-0 rounded-full ${n.isRead ? "bg-slate-200" : ""}`} style={n.isRead ? undefined : { background: TEAL }} />
               <div className="min-w-0 flex-1">
-                <div className={`text-[13.5px] leading-snug ${n.isRead ? "font-semibold text-slate-500" : "font-bold text-slate-900"}`}>{n.title}</div>
-                {n.body && <p className="mt-0.5 whitespace-pre-wrap text-[12.5px] leading-relaxed text-slate-500">{n.body}</p>}
-                <div className="mt-1 text-[11px] text-slate-400">{fmt(n.createdAt)}</div>
+                <div className={`text-[13.5px] leading-snug ${n.isRead ? "font-semibold text-slate-600" : "font-bold text-slate-900"}`}>{n.title}</div>
+                {n.body && <p className="mt-0.5 whitespace-pre-wrap text-[12.5px] leading-relaxed text-slate-600">{n.body}</p>}
+                <div className="mt-1 text-[11px] text-slate-500">{fmt(n.createdAt)}</div>
               </div>
               {href ? (
                 <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#cbd5e1" strokeWidth="2.4" strokeLinecap="round" strokeLinejoin="round" className="mt-2 shrink-0">

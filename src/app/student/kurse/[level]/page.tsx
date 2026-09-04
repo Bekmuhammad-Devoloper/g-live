@@ -98,10 +98,10 @@ export default async function StudentLevelPage({ params }: { params: Promise<{ l
   const taught = new Set(progress.map((p) => p.courseLessonId));
 
   return (
-    <div className="-mx-4 -mt-2 min-h-screen bg-[#f4f8ff] px-4 pb-4 pt-2">
+    <div className="-mx-4 -mt-2 min-h-screen px-4 pb-4 pt-2">
       {/* ── Yuqori qator: orqaga · sarlavha · ballar ── */}
       <div className="flex items-center gap-2">
-        <Link href="/student/kurse" className="grid h-[46px] w-[46px] shrink-0 place-items-center rounded-full bg-white shadow-sm">
+        <Link href="/student/kurse" className="gl-glass grid h-[46px] w-[46px] shrink-0 place-items-center rounded-full">
           <IcoBack s={26} />
         </Link>
         {/* Sarlavha — daraja nomi. Tor ekranda ham sig'ishi uchun kichikroq shrift. */}
@@ -114,9 +114,9 @@ export default async function StudentLevelPage({ params }: { params: Promise<{ l
 
       {/* ── Darslar yo'li ── */}
       {lessons.length === 0 ? (
-        <div className="mt-8 rounded-3xl bg-white px-5 py-12 text-center shadow-sm">
+        <div className="gl-glass mt-8 rounded-3xl px-5 py-12 text-center">
           <div className="text-[15px] font-semibold text-slate-700">{t.noLessons}</div>
-          <p className="mt-1 text-[13px] text-slate-400">{t.teacherAdds}</p>
+          <p className="mt-1 text-[13px] text-slate-500">{t.teacherAdds}</p>
         </div>
       ) : (
         <div className="relative mt-5 pb-6">

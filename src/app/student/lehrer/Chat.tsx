@@ -114,7 +114,7 @@ export default function Chat({
   return (
     <div className="fixed inset-0 z-40 mx-auto flex max-w-md flex-col bg-[#e9eef2]">
       {/* ── Sarlavha ── */}
-      <header className="flex shrink-0 items-center gap-2 border-b border-black/5 bg-white px-1.5 py-2">
+      <header className="flex shrink-0 items-center gap-2 border-b border-black/5 bg-white px-1.5 py-2 pt-[calc(8px+env(safe-area-inset-top))]">
         <button
           type="button"
           onClick={() => router.push("/student/kurse")}

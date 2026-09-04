@@ -44,17 +44,17 @@ export default async function HeaderBadges() {
 
   return (
     <div className="flex shrink-0 items-center gap-2">
-      <div className="flex h-11 shrink-0 items-center gap-1 rounded-2xl bg-white px-2.5 shadow-[0_6px_16px_rgba(19,78,94,0.12)]">
+      <div className="gl-glass flex h-11 shrink-0 items-center gap-1 rounded-2xl px-2.5">
         <IcoFlame s={26} />
         <div className="leading-none">
           <div className="text-[15px] font-extrabold text-slate-900">{streak}</div>
-          <div className="mt-0.5 text-[10px] font-semibold text-slate-500">{S(session.locale).day}</div>
+          <div className="mt-0.5 text-[10px] font-semibold text-slate-600">{S(session.locale).day}</div>
         </div>
       </div>
       <Link
         href="/student/mitteilungen"
         aria-label={S(session.locale).messages}
-        className="relative grid h-11 w-11 shrink-0 place-items-center rounded-full bg-white shadow-[0_6px_16px_rgba(19,78,94,0.12)]"
+        className="gl-glass relative grid h-11 w-11 shrink-0 place-items-center rounded-full"
       >
         <IcoBell s={26} />
         {unread > 0 && <span className="absolute right-[9px] top-[8px] h-2 w-2 rounded-full" style={{ background: "#2ea8c9" }} />}

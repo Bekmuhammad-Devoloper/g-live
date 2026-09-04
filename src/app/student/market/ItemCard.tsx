@@ -2,12 +2,14 @@
 
 import { useState, useTransition } from "react";
 import type { StudentStrings } from "../_i18n";
-import { ICON_GRADIENT } from "../_ui";
+import { CoinGold, ICON_GRADIENT } from "../_ui";
 import { buyItem } from "./actions";
 
 // Do'kon kartochkasi: rasm, narx yorlig'i, zaxira va sotib olish tugmasi.
 // Rasm qo'yilmagan sovg'a uchun nomiga qarab mos belgi va rang tanlanadi —
 // bo'sh kulrang katak o'rniga jonli vitrina bo'lsin.
+// Kartaning RAMKASI shisha (`.gl-glass`), rasm maydoni esa qattiq qoladi —
+// sovg'a surati ostidan fon ko'rinib ketmasin.
 
 export type VItem = {
   id: string;
@@ -54,15 +56,6 @@ function Glyph({ kind, s = 46 }: { kind: string; s?: number }) {
   );
 }
 
-function Coin({ s = 15 }: { s?: number }) {
-  return (
-    <svg width={s} height={s} viewBox="0 0 24 24">
-      <circle cx="12" cy="12" r="9.2" fill="#facc15" stroke="#eab308" strokeWidth="1.6" />
-      <circle cx="12" cy="12" r="5.6" fill="none" stroke="#eab308" strokeWidth="1.4" />
-    </svg>
-  );
-}
-
 export default function ItemCard({
   item,
   balance,
@@ -95,7 +88,7 @@ export default function ItemCard({
   };
 
   return (
-    <div className="overflow-hidden rounded-[20px] bg-white shadow-[0_10px_22px_rgba(19,78,94,0.10)]">
+    <div className="gl-glass overflow-hidden rounded-[20px]">
       {/* Vitrina */}
       <div className="relative aspect-[4/3] w-full" style={{ background: item.imageUrl ? undefined : theme.bg }}>
         {item.imageUrl ? (
@@ -109,12 +102,12 @@ export default function ItemCard({
 
         {/* Narx yorlig'i */}
         <span className="absolute left-2 top-2 flex items-center gap-1 rounded-full bg-white/95 px-2 py-[3px] shadow-sm">
-          <Coin />
+          <CoinGold s={15} />
           <span className="text-[12px] font-extrabold text-slate-800">{item.price}</span>
         </span>
 
         {item.stock !== null && !soldOut ? (
-          <span className="absolute right-2 top-2 rounded-full bg-black/35 px-2 py-[3px] text-[10.5px] font-bold text-white backdrop-blur-sm">
+          <span className="absolute right-2 top-2 rounded-full bg-black/50 px-2 py-[3px] text-[10.5px] font-bold text-white">
             {item.stock} {t.left}
           </span>
         ) : null}
@@ -130,19 +123,19 @@ export default function ItemCard({
       <div className="p-3">
         <div className="line-clamp-2 min-h-[36px] text-[14px] font-extrabold leading-tight text-slate-900">{item.title}</div>
         {item.description ? (
-          <div className="mt-0.5 line-clamp-2 text-[11.5px] leading-snug text-slate-400">{item.description}</div>
+          <div className="mt-0.5 line-clamp-2 text-[11.5px] leading-snug text-slate-500">{item.description}</div>
         ) : null}
 
         {/* Amal */}
         <div className="mt-2.5">
           {done ? (
-            <div className="rounded-xl bg-emerald-50 py-2 text-center text-[12.5px] font-bold text-emerald-700">{t.ordered}</div>
+            <div className="grid min-h-[44px] place-items-center rounded-xl bg-emerald-50 px-2 text-center text-[12.5px] font-bold text-emerald-700">{t.ordered}</div>
           ) : ask ? (
-            <div className="flex gap-1.5">
+            <div className="flex gap-2">
               <button
                 type="button"
                 onClick={() => setAsk(false)}
-                className="rounded-xl bg-slate-100 px-3 py-2 text-[12.5px] font-bold text-slate-500"
+                className="min-h-[44px] rounded-xl bg-slate-100 px-3 py-2 text-[12.5px] font-bold text-slate-500"
               >
                 {t.no}
               </button>
@@ -150,7 +143,7 @@ export default function ItemCard({
                 type="button"
                 onClick={confirm}
                 disabled={busy}
-                className="flex-1 rounded-xl py-2 text-[12.5px] font-bold text-white disabled:opacity-60"
+                className="min-h-[44px] flex-1 rounded-xl py-2 text-[12.5px] font-bold text-white disabled:opacity-60"
                 style={{ background: ICON_GRADIENT }}
               >
                 {busy ? "…" : t.confirm}
@@ -162,7 +155,7 @@ export default function ItemCard({
               onClick={() => setAsk(true)}
               disabled={blocked}
               className={
-                "w-full rounded-xl py-2 text-[12.5px] font-bold transition " +
+                "min-h-[44px] w-full rounded-xl py-2 text-[12.5px] font-bold transition " +
                 (blocked ? "bg-slate-100 text-slate-400" : "text-white shadow-[0_6px_14px_rgba(14,116,144,0.22)] active:translate-y-[1px]")
               }
               style={blocked ? undefined : { background: ICON_GRADIENT }}

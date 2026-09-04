@@ -313,7 +313,7 @@ export default function BrainGraph({
       />
 
       {/* ── Yuqori panel ── */}
-      <div className="pointer-events-none absolute inset-x-0 top-0 mx-auto flex max-w-md items-center gap-3 p-4">
+      <div className="pointer-events-none absolute inset-x-0 top-0 mx-auto flex max-w-md items-center gap-3 p-4 pt-[calc(16px+env(safe-area-inset-top))]">
         <Link
           href="/student/gehirn"
           aria-label={t.back}

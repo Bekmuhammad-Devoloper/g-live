@@ -106,7 +106,7 @@ export default function UebenList({ items, t }: { items: VAssignment[]; t: Stude
       <div className={`${CARD} flex flex-col items-center gap-3 px-6 py-12 text-center`}>
         <span className="text-4xl">🎉</span>
         <div className="text-[17px] font-extrabold text-slate-900">{t.noTasks}</div>
-        <p className="text-[13px] text-slate-500">{t.noTasksHint}</p>
+        <p className="text-[13px] text-slate-600">{t.noTasksHint}</p>
       </div>
     );
   }
@@ -125,7 +125,7 @@ export default function UebenList({ items, t }: { items: VAssignment[]; t: Stude
               </span>
               <div className="min-w-0 flex-1">
                 <div className="truncate text-[14px] font-bold text-slate-800">{a.title}</div>
-                <div className="mt-0.5 flex flex-wrap items-center gap-x-2 text-[11.5px] text-slate-400">
+                <div className="mt-0.5 flex flex-wrap items-center gap-x-2 text-[11.5px] text-slate-500">
                   {a.skill && <span className="font-semibold" style={{ color: TEAL }}>{SKILL[a.skill] ?? a.skill}</span>}
                   <span>{a.groupName}</span>
                   {a.dueAt && <span>{t.deadline}: {fmt(a.dueAt)}</span>}
@@ -138,10 +138,11 @@ export default function UebenList({ items, t }: { items: VAssignment[]; t: Stude
               <div className="mt-3 border-t border-slate-100 pt-3">
                 {a.note && <p className="whitespace-pre-wrap rounded-2xl bg-[#eef6fa] px-3.5 py-2.5 text-[13px] leading-relaxed text-slate-700">{a.note}</p>}
 
-                {/* Oxirgi urinish */}
+                {/* Oxirgi urinish — shisha karta ustida yana shisha bo'lmaydi,
+                    shuning uchun oddiy yarim tiniq oq chuqurcha */}
                 {a.last && (
-                  <div className="mt-3 rounded-2xl bg-slate-50 px-3.5 py-2.5">
-                    <div className="flex items-center justify-between text-[11.5px] font-semibold text-slate-400">
+                  <div className="mt-3 rounded-2xl bg-white/45 px-3.5 py-2.5">
+                    <div className="flex items-center justify-between text-[11.5px] font-semibold text-slate-500">
                       <span>Versuch {a.last.attempt} · {fmt(a.last.createdAt)}</span>
                       {a.last.status === "GRADED" && <span className="font-extrabold" style={{ color: TEAL }}>{a.last.score ?? 0}/{a.maxScore}</span>}
                     </div>
@@ -155,7 +156,7 @@ export default function UebenList({ items, t }: { items: VAssignment[]; t: Stude
                 )}
 
                 {a.last?.status === "SUBMITTED" && (
-                  <p className="mt-3 text-center text-[12.5px] font-semibold text-slate-400">{t.checking}</p>
+                  <p className="mt-3 text-center text-[12.5px] font-semibold text-slate-500">{t.checking}</p>
                 )}
 
                 {canSubmit && <SubmitBox assignmentId={a.id} again={!!a.last} onDone={() => setOpen(null)} t={t} />}

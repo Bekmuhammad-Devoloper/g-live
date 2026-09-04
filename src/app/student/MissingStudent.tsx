@@ -12,7 +12,7 @@ export default function MissingStudent() {
     <div className={`${CARD} mt-10 flex flex-col items-center gap-4 px-6 py-12 text-center`}>
       <FlagAvatar s={56} id="glMissingAvatar" />
       <div className="text-[18px] font-extrabold text-slate-900">Hisob bog&apos;lanmagan</div>
-      <p className="text-[13.5px] leading-relaxed text-slate-500">
+      <p className="text-[13.5px] leading-relaxed text-slate-600">
         Sizning hisobingizga o&apos;quvchi profili biriktirilmagan yoki u o&apos;chirilgan.
         Administratorga murojaat qiling.
       </p>

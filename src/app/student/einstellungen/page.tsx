@@ -56,7 +56,7 @@ export default async function StudentSettingsPage() {
 
   return (
     <div className="space-y-4">
-      <PageHeader title={t.settings} subtitle={t.accountControl} back="/student/profil" />
+      <PageHeader title={t.settings} subtitle={t.accountControl} backLabel={t.back} back="/student/profil" />
 
       {/* ── Guvohnoma ── */}
       <SectionTitle>{t.idCard}</SectionTitle>
@@ -75,12 +75,12 @@ export default async function StudentSettingsPage() {
           studentNo: student.id.slice(-6).toUpperCase(),
         }}
       />
-      <p className="-mt-1 px-1 text-[11.5px] text-slate-400">{t.academicNote}</p>
+      <p className="-mt-1 px-1 text-[11.5px] text-slate-500">{t.academicNote}</p>
 
       {/* ── Parol ── */}
       {student.user?.plainPassword ? (
         <div className={CARD + " flex items-center justify-between gap-3 px-4 py-3"}>
-          <span className="text-[12.5px] font-semibold text-slate-400">{t.password}</span>
+          <span className="text-[12.5px] font-semibold text-slate-500">{t.password}</span>
           <SecretField value={student.user.plainPassword} show={t.show} hide={t.hide} />
         </div>
       ) : null}
@@ -94,7 +94,7 @@ export default async function StudentSettingsPage() {
           </span>
           <div className="min-w-0 flex-1">
             <div className="text-[14px] font-bold text-slate-800">{t.interfaceLanguage}</div>
-            <div className="text-[12px] text-slate-400">{t.savedInstantly}</div>
+            <div className="text-[12px] text-slate-500">{t.savedInstantly}</div>
           </div>
         </div>
         <LocalePicker current={student.user?.locale ?? "uz"} />
@@ -108,7 +108,7 @@ export default async function StudentSettingsPage() {
         </span>
         <div className="min-w-0 flex-1">
           <div className="text-[14px] font-bold text-slate-800">{t.messages}</div>
-          <div className="text-[12px] text-slate-400">{unread > 0 ? unread + " " + t.unreadCount : t.allRead}</div>
+          <div className="text-[12px] text-slate-500">{unread > 0 ? unread + " " + t.unreadCount : t.allRead}</div>
         </div>
         {unread > 0 ? (
           <span className="rounded-full bg-[#2ea8c9] px-2 py-[3px] text-[11px] font-bold text-white">{unread}</span>

@@ -56,7 +56,7 @@ export default function DictNav({ letters, t }: { letters: string[]; t: StudentS
           value={q}
           onChange={(e) => setQ(e.target.value)}
           placeholder={t.searchDeUz}
-          className="h-12 w-full rounded-2xl border-0 bg-white pl-11 pr-11 text-[15px] text-slate-900 shadow-[0_6px_16px_rgba(19,78,94,0.10)] outline-none placeholder:text-slate-400"
+          className="h-12 w-full rounded-2xl border-0 bg-white pl-11 pr-11 text-[16px] text-slate-900 shadow-[0_6px_16px_rgba(19,78,94,0.10)] outline-none placeholder:text-slate-400"
         />
         {q && (
           <button
@@ -73,7 +73,8 @@ export default function DictNav({ letters, t }: { letters: string[]; t: StudentS
         {pending && <span className="absolute -bottom-[7px] left-4 right-4 h-[2px] animate-pulse rounded-full bg-[#17a2bf]/40" />}
       </div>
 
-      {/* A–Z tasmasi */}
+      {/* A–Z tasmasi. Harflar shisha QILINMAYDI: bir ekranda 30 ga yaqin
+          backdrop-filter GPU ni bo'g'adi va kichik harf o'qilmay qoladi. */}
       <div className="-mx-4 flex gap-1.5 overflow-x-auto px-4 pb-0.5 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
         <Chip active={!active} onClick={() => push({ l: null })}>{t.all}</Chip>
         {letters.map((c) => (

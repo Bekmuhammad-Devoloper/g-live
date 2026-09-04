@@ -5,8 +5,9 @@ import { TEAL } from "../_ui";
 // Kurse sahifasi sarlavhasidagi ikki tugma: lug'at va ustozga yozish
 // (seriya/qo'ng'iroq o'rniga — bu yerda shular kerakroq).
 
+// Shisha tugma — PageHeader'dagi orqaga tugmasi bilan bir xil o'lchov va uslub
 const BTN =
-  "grid h-11 w-11 shrink-0 place-items-center rounded-full bg-white shadow-[0_6px_16px_rgba(19,78,94,0.12)] transition active:translate-y-[1px]";
+  "gl-glass grid h-11 w-11 shrink-0 place-items-center rounded-full transition active:translate-y-[1px]";
 
 export default function KurseActions({ t }: { t: StudentStrings }) {
   return (

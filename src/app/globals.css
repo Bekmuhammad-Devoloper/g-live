@@ -252,3 +252,136 @@ select:not(.appearance-none):not([multiple]):not([size]) {
 .dark [class~="dark:divide-slate-800"] > :not([hidden]) ~ :not([hidden]) {
   border-color: #334155;
 }
+
+/* ═══════════════════════════════════════════════════════════════
+   SHISHA (glassmorphism) — o'quvchi ilovasi (/student)
+   ───────────────────────────────────────────────────────────────
+   Haqiqiy shisha uchun uch qatlam kerak:
+     1) orqadagi ambient dog'lar (layout.tsx) — bulanadigan narsa;
+        tekis fon ustida backdrop-filter umuman ko'rinmaydi;
+     2) juda kam oq (alpha ~0.2-0.5) + backdrop-filter — TINIQ bo'lsin;
+     3) chetidagi soch tolasidek yorug'lik chizig'i (::before) —
+        yorug'lik shisha qirrasida sinadi.
+
+   `@layer components` ichida: shunda Tailwind utility'lari (masalan
+   `rounded-2xl`) shu yerdagi qiymatlarni bemalol qayta yoza oladi.
+
+   Rang qiymatlari `bg-white/85` kabi Tailwind sinflari orqali emas,
+   shu yerda beriladi: quyidagi `.dark :where(.bg-white/..)` fallback
+   qoidalari o'quvchi ilovasining kartalarini qoraytirib yubormasin
+   (ilova faqat och rejimda ishlaydi).
+
+   Blur 18px — 12+ shisha qatlami bir ekranda turgani uchun ataylab
+   o'rtacha: yuqorisi o'rta darajali Android'da skrollni sekinlashtiradi.
+   ═══════════════════════════════════════════════════════════════ */
+@layer components {
+  .gl-glass,
+  .gl-glass-hero,
+  .gl-glass-nav {
+    position: relative;
+  }
+
+  /* Kartalar ortida FAQAT ambient gradient turadi — silliq gradientni bulash
+     deyarli hech narsani o'zgartirmaydi, lekin GPU'ni yeydi. Shu sabab blur
+     kichik (8px): fon aniq ko'rinadi va shisha FROSTED (muzli) emas, TINIQ
+     bo'lib o'qiladi. Shisha hissi to'yinganlik, yorqinlik, qirra yorug'ligi
+     va soyadan chiqadi. */
+  .gl-glass,
+  .gl-glass-hero {
+    -webkit-backdrop-filter: blur(8px) saturate(190%) brightness(1.05);
+    backdrop-filter: blur(8px) saturate(190%) brightness(1.05);
+  }
+
+  /* Menyu — bundan farqli o'laroq ostidan HAQIQIY kontent suriladi,
+     shuning uchun bu yerda kuchli blur o'z ishini qiladi. */
+  .gl-glass-nav {
+    -webkit-backdrop-filter: blur(20px) saturate(180%);
+    backdrop-filter: blur(20px) saturate(180%);
+  }
+
+  /* Oddiy karta — eng tiniqi */
+  .gl-glass {
+    border-radius: 26px;
+    /* Diagonal bo'ylab o'zgaruvchan tiniqlik — yassi plyonka emas, hajmli oyna.
+       Tepa-chapda yorug'lik yig'iladi, o'rtasi deyarli ko'rinmas (0.20). */
+    background: linear-gradient(
+      142deg,
+      rgba(255, 255, 255, 0.54) 0%,
+      rgba(255, 255, 255, 0.24) 34%,
+      rgba(255, 255, 255, 0.17) 63%,
+      rgba(255, 255, 255, 0.36) 100%
+    );
+    box-shadow:
+      /* yerdagi yumshoq soya — karta suzib turgandek */
+      0 16px 34px -12px rgba(19, 78, 94, 0.28),
+      0 3px 10px -3px rgba(19, 78, 94, 0.09),
+      /* ichki yorug'lik: tepadan tushib, pastda qaytadi */
+      inset 0 1px 0 rgba(255, 255, 255, 0.95),
+      inset 0 -1px 0 rgba(255, 255, 255, 0.32);
+  }
+
+  /* Asosiy (hero) karta — feruza tusli shisha, boshqalardan ajralib tursin */
+  .gl-glass-hero {
+    border-radius: 26px;
+    background: linear-gradient(
+      140deg,
+      rgba(255, 255, 255, 0.6) 0%,
+      rgba(186, 231, 244, 0.34) 46%,
+      rgba(23, 162, 191, 0.24) 100%
+    );
+    box-shadow:
+      0 18px 38px -12px rgba(19, 78, 94, 0.3),
+      inset 0 1px 0 rgba(255, 255, 255, 0.95),
+      inset 0 -1px 0 rgba(255, 255, 255, 0.3);
+  }
+
+  /* Pastki menyu — ustidan matn suriladi, shuning uchun quyuqroq */
+  .gl-glass-nav {
+    background: linear-gradient(180deg, rgba(255, 255, 255, 0.82), rgba(255, 255, 255, 0.7));
+    box-shadow:
+      0 -10px 30px rgba(19, 78, 94, 0.14),
+      inset 0 1px 0 rgba(255, 255, 255, 0.95);
+  }
+
+  /* Qirra — 1px gradient ramka. Niqob (mask) bilan faqat chekka bo'yaladi:
+     tepa-chapda oq yorug'lik, past-o'ngda feruza aks-sado. Ichki maydon
+     niqoblanadi — shuning uchun karta matnini hech qachon to'smaydi. */
+  .gl-glass::before,
+  .gl-glass-hero::before {
+    content: "";
+    position: absolute;
+    inset: 0;
+    border-radius: inherit;
+    padding: 1px;
+    pointer-events: none;
+    background: linear-gradient(
+      150deg,
+      rgba(255, 255, 255, 0.98) 0%,
+      rgba(255, 255, 255, 0.3) 36%,
+      rgba(255, 255, 255, 0.12) 62%,
+      rgba(14, 116, 144, 0.34) 100%
+    );
+    -webkit-mask:
+      linear-gradient(#000 0 0) content-box,
+      linear-gradient(#000 0 0);
+    -webkit-mask-composite: xor;
+    mask:
+      linear-gradient(#000 0 0) content-box,
+      linear-gradient(#000 0 0);
+    mask-composite: exclude;
+  }
+
+  /* backdrop-filter yo'q brauzer (eski WebView) — shisha o'rniga
+     quyuqroq sut oyna beriladi, matn baribir o'qiladi. */
+  @supports not ((-webkit-backdrop-filter: blur(1px)) or (backdrop-filter: blur(1px))) {
+    .gl-glass {
+      background: linear-gradient(142deg, rgba(255, 255, 255, 0.93), rgba(255, 255, 255, 0.85));
+    }
+    .gl-glass-hero {
+      background: linear-gradient(140deg, rgba(255, 255, 255, 0.94), rgba(196, 232, 243, 0.9));
+    }
+    .gl-glass-nav {
+      background: rgba(255, 255, 255, 0.97);
+    }
+  }
+}

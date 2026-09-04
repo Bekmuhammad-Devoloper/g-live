@@ -6,7 +6,7 @@ import { TEAL } from "../_ui";
 // (seriya/qo'ng'iroq o'rniga — bu bo'limda shular kerakroq).
 
 const BTN =
-  "grid h-11 w-11 shrink-0 place-items-center rounded-full bg-white shadow-[0_6px_16px_rgba(19,78,94,0.12)] transition active:translate-y-[1px]";
+  "gl-glass grid h-11 w-11 shrink-0 place-items-center rounded-full transition active:translate-y-[1px]";
 
 export default function ProfilActions({ t }: { t: StudentStrings }) {
   return (

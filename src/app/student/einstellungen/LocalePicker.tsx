@@ -42,9 +42,11 @@ export default function LocalePicker({ current }: { current: string }) {
               key={o.code}
               type="button"
               onClick={() => choose(o.code)}
+              // Tanlanmagani shisha kartaning ustida turadi — shisha ichida
+              // yana shisha bo'lmaydi, oddiy yarim tiniq oq yetadi
               className={
                 "flex items-center justify-between rounded-2xl px-3.5 py-3 text-left transition " +
-                (on ? "text-white shadow-[0_8px_18px_rgba(14,116,144,0.25)]" : "bg-slate-50 text-slate-700")
+                (on ? "text-white shadow-[0_8px_18px_rgba(14,116,144,0.25)]" : "bg-white/55 text-slate-700")
               }
               style={on ? { background: ICON_GRADIENT } : undefined}
             >

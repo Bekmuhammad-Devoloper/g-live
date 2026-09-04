@@ -15,7 +15,7 @@ export default function SecretField({ value, show, hide }: { value: string; show
       <button
         type="button"
         onClick={() => setOpen((v) => !v)}
-        className="rounded-lg bg-slate-100 px-2 py-[3px] text-[11px] font-bold text-slate-500"
+        className="rounded-lg bg-white/60 px-2 py-[3px] text-[11px] font-bold text-slate-600"
       >
         {open ? hide : show}
       </button>

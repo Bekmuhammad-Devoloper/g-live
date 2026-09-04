@@ -103,7 +103,7 @@ export default async function StudentProfilPage() {
 
   return (
     <div className="space-y-[18px]">
-      <PageHeader title={t.profile} subtitle={t.yourAccount} right={<ProfilActions t={t} />} />
+      <PageHeader title={t.profile} subtitle={t.yourAccount} backLabel={t.back} right={<ProfilActions t={t} />} />
 
       {/* ── Guvohnoma ── */}
       <IdCard
@@ -133,7 +133,7 @@ export default async function StudentProfilPage() {
         ].map((t) => (
           <div key={t.label} className={`${CARD} flex flex-col items-center gap-1.5 px-1 pb-4 pt-4`}>
             <span className="whitespace-nowrap text-[20px] font-extrabold leading-none" style={{ color: NAVY }}>{t.value}</span>
-            <span className="text-[11.5px] font-medium text-slate-500">{t.label}</span>
+            <span className="text-[11.5px] font-medium text-slate-600">{t.label}</span>
           </div>
         ))}
       </div>
@@ -172,11 +172,11 @@ export default async function StudentProfilPage() {
         <div className="flex items-center gap-3">
           <span className="grid h-11 w-11 shrink-0 place-items-center rounded-2xl bg-[#eef6fa]"><IcoWallet s={22} /></span>
           <div className="flex-1">
-            <div className="text-[11px] font-semibold uppercase tracking-wide text-slate-400">Jami to&apos;langan</div>
+            <div className="text-[11px] font-semibold uppercase tracking-wide text-slate-500">Jami to&apos;langan</div>
             <div className="text-[17px] font-extrabold text-slate-900">{fmtSum(totalPaid)}</div>
           </div>
           <div className="text-right">
-            <div className="text-[11px] font-semibold uppercase tracking-wide text-slate-400">{t.debt}</div>
+            <div className="text-[11px] font-semibold uppercase tracking-wide text-slate-500">{t.debt}</div>
             <div className={`text-[17px] font-extrabold ${debt.debt > 0 ? "text-rose-600" : "text-emerald-600"}`}>
               {debt.debt > 0 ? fmtSum(debt.debt) : "0 so'm"}
             </div>
@@ -191,7 +191,7 @@ export default async function StudentProfilPage() {
                   <div className="truncate text-[13.5px] font-semibold text-slate-800">
                     {p.purpose || label(PAYMENT_METHOD_LABELS, p.method, session.locale)}
                   </div>
-                  <div className="text-[11.5px] text-slate-400">
+                  <div className="text-[11.5px] text-slate-500">
                     {fmtDate(p.createdAt)} · {label(PAYMENT_METHOD_LABELS, p.method, session.locale)}
                   </div>
                 </div>
@@ -217,7 +217,7 @@ export default async function StudentProfilPage() {
                   <span className="grid h-9 w-9 shrink-0 place-items-center rounded-2xl bg-[#eef6fa]"><IcoCalendar s={17} /></span>
                   <div className="min-w-0 flex-1">
                     <div className="truncate text-[13.5px] font-semibold text-slate-800">{a.lesson.topic || t.lesson}</div>
-                    <div className="text-[11.5px] text-slate-400">{fmtDate(a.lesson.startsAt)}</div>
+                    <div className="text-[11.5px] text-slate-500">{fmtDate(a.lesson.startsAt)}</div>
                   </div>
                   <Pill tone={s.tone}>{tr(session.locale, s.text)}</Pill>
                 </div>
@@ -237,7 +237,7 @@ export default async function StudentProfilPage() {
                 <span className="grid h-9 w-9 shrink-0 place-items-center rounded-2xl bg-[#eef6fa]"><IcoTrophy s={17} /></span>
                 <div className="min-w-0 flex-1">
                   <div className="truncate text-[13.5px] font-semibold text-slate-800">{e.exam.title}</div>
-                  <div className="text-[11.5px] text-slate-400">{fmtDate(e.takenAt)}</div>
+                  <div className="text-[11.5px] text-slate-500">{fmtDate(e.takenAt)}</div>
                 </div>
                 <div className="flex items-center gap-2">
                   {e.score !== null && <span className="text-[14px] font-extrabold" style={{ color: NAVY }}>{e.score}</span>}
@@ -261,7 +261,7 @@ export default async function StudentProfilPage() {
                   <div className="truncate text-[13.5px] font-semibold text-slate-800">
                     {c.programName}{c.levelCode ? ` · ${c.levelCode}` : ""}
                   </div>
-                  <div className="text-[11.5px] text-slate-400">№ {c.number} · {fmtDate(c.issuedAt)}</div>
+                  <div className="text-[11.5px] text-slate-500">№ {c.number} · {fmtDate(c.issuedAt)}</div>
                 </div>
                 <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#94a3b8" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round"><path d="m9 6 6 6-6 6" /></svg>
               </a>
@@ -271,7 +271,7 @@ export default async function StudentProfilPage() {
       )}
 
       {/* Hisob ma'lumoti */}
-      <p className="pb-2 text-center text-[11.5px] text-slate-400">
+      <p className="pb-2 text-center text-[11.5px] text-slate-500">
         {student.user?.email}{student.phone ? ` · ${student.phone}` : ""} · GL {fmtDate(student.createdAt)}
       </p>
     </div>

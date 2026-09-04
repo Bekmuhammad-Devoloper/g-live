@@ -26,12 +26,12 @@ export default async function StudentVideosPage() {
 
   return (
     <div className="space-y-4">
-      <PageHeader title={t.videosPodcasts} subtitle={t.learnWithContent} back="/student" />
+      <PageHeader title={t.videosPodcasts} subtitle={t.learnWithContent} backLabel={t.back} back="/student" />
 
       {items.length === 0 ? (
         <div className={CARD + " px-5 py-12 text-center"}>
           <div className="text-[15px] font-semibold text-slate-700">{t.noVideosYet}</div>
-          <p className="mt-1 text-[13px] text-slate-400">{t.centerAddsSoon}</p>
+          <p className="mt-1 text-[13px] text-slate-500">{t.centerAddsSoon}</p>
         </div>
       ) : (
         <div className="space-y-3.5">

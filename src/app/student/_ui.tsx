@@ -7,9 +7,11 @@ import Link from "next/link";
 export const TEAL = "#0e7490"; // asosiy rang (maketdagi to'q moviy-feruza)
 export const NAVY = "#134e5e"; // halqa/qiymatlarning to'q varianti
 
-// Yumshoq oq karta (Start ekranidagi bilan bir xil)
-export const CARD =
-  "rounded-[26px] bg-white/85 shadow-[0_12px_28px_rgba(19,78,94,0.10),inset_0_1px_0_rgba(255,255,255,0.9)]";
+// Shisha karta (Start ekranidagi bilan bir xil).
+// Uslub globals.css `.gl-glass` da: backdrop-filter + qirra yorug'ligi.
+// Ostidagi rangli ambient qatlam layout.tsx da — shisha aynan o'shani
+// sindirib ko'rsatadi, shu sabab ikkalasi birga o'zgaradi.
+export const CARD = "gl-glass";
 
 // Ochiq feruza gradient (Dein Fortschritt kartasi foni)
 export const SOFT_GRADIENT = "linear-gradient(135deg, #cfe7f0 0%, #e7f3f8 55%, #f2f9fc 100%)";
@@ -27,13 +29,68 @@ export const fmtDate = (d: Date | string | null | undefined) => {
 
 export const fmtSum = (n: number) => `${new Intl.NumberFormat("ru-RU").format(n)} so'm`;
 
+// ── Tanga — HAQIQIY zarb qilingan tanga ──
+// Belgi emas, buyum: qirrasi (gurt) tishli, yuzi botiq, yorug'lik tepa-chapdan
+// tushib past-o'ngda soya beradi. Markazda "G" (Germaniya Live) bo'rtma qilib
+// bosilgan — pastda och nusxa, ustida to'q nusxa: metall bo'rtma shundan chiqadi.
+export function CoinGold({ s = 46 }: { s?: number }) {
+  // 26px dan kichigida tishlar va "G" loyqa bo'lib ketadi — o'sha o'lchamda
+  // faqat disk, qirra va porlash chiziladi (bir oiladan, lekin toza).
+  const detail = s >= 26;
+  return (
+    <svg width={s} height={s} viewBox="0 0 48 48" aria-hidden>
+      <defs>
+        <linearGradient id="glCoinRim" x1="0.15" y1="0" x2="0.85" y2="1">
+          <stop offset="0%" stopColor="#f2bb4a" />
+          <stop offset="52%" stopColor="#d3901f" />
+          <stop offset="100%" stopColor="#a76614" />
+        </linearGradient>
+        <radialGradient id="glCoinFace" cx="0.34" cy="0.28" r="0.82">
+          <stop offset="0%" stopColor="#fff6d4" />
+          <stop offset="34%" stopColor="#fbd869" />
+          <stop offset="72%" stopColor="#efb03a" />
+          <stop offset="100%" stopColor="#cf8b1f" />
+        </radialGradient>
+        <linearGradient id="glCoinShade" x1="0.2" y1="0.1" x2="0.85" y2="0.95">
+          <stop offset="0%" stopColor="#fff" stopOpacity="0.5" />
+          <stop offset="46%" stopColor="#fff" stopOpacity="0" />
+          <stop offset="100%" stopColor="#7a4a0c" stopOpacity="0.28" />
+        </linearGradient>
+      </defs>
+
+      {/* qirra (gurt) */}
+      <circle cx="24" cy="24" r="23" fill="url(#glCoinRim)" />
+      {/* gurtdagi tishlar — chizilgan emas, uzuq chiziq bilan taqlid qilinadi */}
+      {detail && <circle cx="24" cy="24" r="21.1" fill="none" stroke="#8f560f" strokeOpacity="0.38" strokeWidth="3.6" strokeDasharray="1.5 2.5" />}
+      {/* tanga yuzi */}
+      <circle cx="24" cy="24" r="19" fill="url(#glCoinFace)" />
+      {/* yuzi bilan qirra orasidagi zinapoya */}
+      <circle cx="24" cy="24" r="19" fill="none" stroke="#fff8e0" strokeOpacity="0.75" strokeWidth="1" />
+      <circle cx="24" cy="24" r="15.4" fill="none" stroke="#a86a15" strokeOpacity="0.3" strokeWidth="0.9" />
+
+      {/* bo'rtma "G" */}
+      {detail && <text x="24" y="24" textAnchor="middle" dominantBaseline="central"
+        fontFamily="var(--font-sans)" fontSize="19" fontWeight="800" fill="#fff5cf" fillOpacity="0.85"
+        transform="translate(0,1)">G</text>}
+      {detail && <text x="24" y="24" textAnchor="middle" dominantBaseline="central"
+        fontFamily="var(--font-sans)" fontSize="19" fontWeight="800" fill="#96590d">G</text>}
+
+      {/* umumiy yorug'lik/soya qatlami — tangaga hajm beradi */}
+      <circle cx="24" cy="24" r="23" fill="url(#glCoinShade)" />
+      {/* tepa-chapdagi porlash */}
+      <ellipse cx="16.5" cy="13.5" rx="8.5" ry="4.6" fill="#fff" fillOpacity="0.42" transform="rotate(-32 16.5 13.5)" />
+    </svg>
+  );
+}
+
 // ── Halqali foiz (progress ring) ──
 export function Ring({ pct, size = 64, stroke = 5.5, color = NAVY }: { pct: number; size?: number; stroke?: number; color?: string }) {
   const r = (size - stroke - 3) / 2;
   const c = 2 * Math.PI * r;
   return (
     <svg width={size} height={size} viewBox={`0 0 ${size} ${size}`} className="-rotate-90">
-      <circle cx={size / 2} cy={size / 2} r={r} fill="white" stroke="#dce9f0" strokeWidth={stroke} />
+      {/* Markaz shaffof — ostidagi shisha ko'rinib tursin (oq disk uni berkitardi) */}
+      <circle cx={size / 2} cy={size / 2} r={r} fill="rgba(255,255,255,0.42)" stroke="rgba(255,255,255,0.8)" strokeWidth={stroke} />
       <circle
         cx={size / 2} cy={size / 2} r={r} fill="none" stroke={color} strokeWidth={stroke}
         strokeLinecap="round" strokeDasharray={c} strokeDashoffset={c * (1 - Math.max(0, Math.min(100, pct)) / 100)}
@@ -60,13 +117,13 @@ export function FlagAvatar({ s = 44, id = "glUiAvatarClip" }: { s?: number; id?:
 }
 
 // ── Ichki sahifa sarlavhasi: orqaga tugma + katta sarlavha ──
-export function PageHeader({ title, subtitle, back = "/student", right }: { title: string; subtitle?: string; back?: string; right?: React.ReactNode }) {
+export function PageHeader({ title, subtitle, back = "/student", backLabel, right }: { title: string; subtitle?: string; back?: string; backLabel?: string; right?: React.ReactNode }) {
   return (
     <div className="flex items-center gap-3 pt-1">
       <Link
         href={back}
-        aria-label="Zurück"
-        className="grid h-11 w-11 shrink-0 place-items-center rounded-full bg-white shadow-[0_6px_16px_rgba(19,78,94,0.12)]"
+        aria-label={backLabel ?? "Orqaga"}
+        className="gl-glass grid h-11 w-11 shrink-0 place-items-center rounded-full"
       >
         <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke={TEAL} strokeWidth="2.4" strokeLinecap="round" strokeLinejoin="round">
           <path d="M15 5.5 8.5 12l6.5 6.5" />
@@ -74,7 +131,7 @@ export function PageHeader({ title, subtitle, back = "/student", right }: { titl
       </Link>
       <div className="min-w-0 flex-1">
         <h1 className="truncate text-[22px] font-extrabold leading-tight tracking-tight text-slate-900">{title}</h1>
-        {subtitle && <p className="truncate text-[13px] text-slate-500">{subtitle}</p>}
+        {subtitle && <p className="truncate text-[13px] text-slate-600">{subtitle}</p>}
       </div>
       {right}
     </div>

@@ -289,12 +289,12 @@ export default function Battle({
 
     return (
       <div className="space-y-6 pb-[92px]">
-        <PageHeader title={t.gamesAndBattle} subtitle={t.testKnowledge} back="/student/uben" right={badges} />
+        <PageHeader title={t.gamesAndBattle} subtitle={t.testKnowledge} backLabel={t.back} back="/student/uben" right={badges} />
 
         {/* ── Kutayotgan chaqiruvlar ── */}
         {waiting.length > 0 && (
           <section>
-            <p className="mb-2.5 px-1 text-[11px] font-bold uppercase tracking-[0.18em] text-slate-400">
+            <p className="mb-2.5 px-1 text-[11px] font-bold uppercase tracking-[0.18em] text-slate-500">
               Sizni kutmoqda
             </p>
             <div className="space-y-2.5">
@@ -303,14 +303,14 @@ export default function Battle({
                   key={inv.id}
                   type="button"
                   onClick={() => acceptInvite(inv)}
-                  className={`${CARD} flex w-full items-center gap-3.5 px-4 py-3.5 text-left ring-2 ring-amber-300`}
+                  className={`${CARD} flex w-full items-center gap-3.5 px-4 py-3.5 text-left outline outline-2 -outline-offset-2 outline-amber-300`}
                 >
                   <Badge>{inv.kind === "DUEL" ? <GlyphSwords /> : <GlyphGroup />}</Badge>
                   <div className="min-w-0 flex-1">
                     <div className="text-[16px] font-extrabold leading-tight text-slate-900">
                       {inv.kind === "DUEL" ? `${inv.from} chaqirdi` : "Guruh chempionati"}
                     </div>
-                    <div className="mt-0.5 text-[12.5px] text-slate-500">
+                    <div className="mt-0.5 text-[12.5px] text-slate-600">
                       {LOBBIES.find((l) => l.key === inv.lobby)?.title}
                       {inv.kind === "GROUP" && inv.played > 0 ? ` · ${inv.played} kishi o'ynadi` : ""}
                     </div>
@@ -326,7 +326,7 @@ export default function Battle({
 
         {/* ── Jang turi ── */}
         <section>
-          <p className="mb-2.5 px-1 text-[11px] font-bold uppercase tracking-[0.18em] text-slate-400">Jang turi</p>
+          <p className="mb-2.5 px-1 text-[11px] font-bold uppercase tracking-[0.18em] text-slate-500">Jang turi</p>
           <div className="space-y-2.5">
             {MODES.map((m) => {
               const on = mode === m.key;
@@ -337,12 +337,12 @@ export default function Battle({
                   type="button"
                   onClick={() => { setMode(m.key); setErr(null); }}
                   aria-pressed={on}
-                  className={`${CARD} flex w-full items-center gap-3.5 px-4 py-3.5 text-left transition ${on ? "ring-2 ring-[#0e7490]" : ""}`}
+                  className={`${CARD} flex w-full items-center gap-3.5 px-4 py-3.5 text-left transition ${on ? "outline outline-2 -outline-offset-2 outline-[#0e7490]" : ""}`}
                 >
                   <Badge><Icon /></Badge>
                   <div className="min-w-0 flex-1">
                     <span className="text-[17px] font-extrabold leading-tight text-slate-900">{m.title}</span>
-                    <div className="mt-0.5 text-[12.5px] leading-snug text-slate-500">
+                    <div className="mt-0.5 text-[12.5px] leading-snug text-slate-600">
                       {m.key === "group" && groupName ? groupName : m.sub}
                     </div>
                   </div>
@@ -356,11 +356,11 @@ export default function Battle({
         {/* ── Raqib tanlash (duel) ── */}
         {mode === "duel" && (
           <section>
-            <p className="mb-2.5 px-1 text-[11px] font-bold uppercase tracking-[0.18em] text-slate-400">Raqibingiz</p>
+            <p className="mb-2.5 px-1 text-[11px] font-bold uppercase tracking-[0.18em] text-slate-500">Raqibingiz</p>
             {rivals.length === 0 ? (
               <div className={`${CARD} px-5 py-8 text-center`}>
                 <div className="text-[14.5px] font-semibold text-slate-700">Guruhingizda ilovaga ulangan boshqa o&apos;quvchi yo&apos;q</div>
-                <p className="mt-1 text-[13px] text-slate-400">Ular ilovaga kirgach shu yerda chiqadi.</p>
+                <p className="mt-1 text-[13px] text-slate-500">Ular ilovaga kirgach shu yerda chiqadi.</p>
               </div>
             ) : (
               <div className="space-y-2">
@@ -372,7 +372,7 @@ export default function Battle({
                       type="button"
                       onClick={() => setRivalId(v.id)}
                       aria-pressed={on}
-                      className={`${CARD} flex w-full items-center gap-3 px-3.5 py-2.5 text-left transition ${on ? "ring-2 ring-[#0e7490]" : ""}`}
+                      className={`${CARD} flex w-full items-center gap-3 px-3.5 py-2.5 text-left transition ${on ? "outline outline-2 -outline-offset-2 outline-[#0e7490]" : ""}`}
                     >
                       {v.imageUrl ? (
                         // eslint-disable-next-line @next/next/no-img-element
@@ -394,7 +394,7 @@ export default function Battle({
 
         {/* ── O'yin turi ── */}
         <section>
-          <p className="mb-2.5 px-1 text-[11px] font-bold uppercase tracking-[0.18em] text-slate-400">O&apos;yin turi</p>
+          <p className="mb-2.5 px-1 text-[11px] font-bold uppercase tracking-[0.18em] text-slate-500">O&apos;yin turi</p>
           <div className="grid grid-cols-2 gap-3">
             {LOBBIES.map((l) => {
               const on = lobby === l.key;
@@ -405,13 +405,13 @@ export default function Battle({
                   type="button"
                   onClick={() => setLobby(l.key)}
                   aria-pressed={on}
-                  className={`${CARD} relative flex flex-col items-start gap-2.5 p-4 text-left transition ${on ? "ring-2 ring-[#0e7490]" : ""}`}
+                  className={`${CARD} relative flex flex-col items-start gap-2.5 p-4 text-left transition ${on ? "outline outline-2 -outline-offset-2 outline-[#0e7490]" : ""}`}
                 >
                   {on && <span className="absolute right-3 top-3"><Tick on /></span>}
                   <Badge s={46}><Icon s={23} /></Badge>
                   <div>
                     <div className="text-[15.5px] font-extrabold leading-tight text-slate-900">{l.title}</div>
-                    <div className="mt-0.5 text-[11.5px] leading-snug text-slate-500">{l.sub}</div>
+                    <div className="mt-0.5 text-[11.5px] leading-snug text-slate-600">{l.sub}</div>
                   </div>
                 </button>
               );
@@ -422,8 +422,8 @@ export default function Battle({
         {err && <p className="px-1 text-[13.5px] font-semibold text-rose-600">{err}</p>}
 
         {/* ── Boshlash ── */}
-        <div className="fixed inset-x-0 bottom-5 z-30 mx-auto max-w-md px-4">
-          <div className="pointer-events-none absolute inset-x-0 -top-8 h-8 bg-gradient-to-b from-transparent to-[#e4edf3]" />
+        <div className="fixed inset-x-0 bottom-[calc(20px+env(safe-area-inset-bottom))] z-30 mx-auto max-w-md px-4">
+          <div className="pointer-events-none absolute inset-x-0 -top-8 bottom-[-20px] bg-gradient-to-b from-transparent to-white/70" />
           <button
             type="button"
             onClick={startGame}
@@ -460,29 +460,29 @@ export default function Battle({
           <div className="mt-3 text-[24px] font-extrabold text-slate-900">
             {solo ? (win ? "Siz yutdingiz!" : draw ? "Durrang" : "Keyingi safar!") : "Natijangiz yozildi"}
           </div>
-          <div className="mt-1 text-[13px] text-slate-500">{LOBBIES.find((l) => l.key === lobby)?.title}</div>
+          <div className="mt-1 text-[13px] text-slate-600">{LOBBIES.find((l) => l.key === lobby)?.title}</div>
 
           {solo ? (
             <div className="mt-5 flex items-center justify-center gap-7">
               <div>
-                <div className="text-[13px] font-semibold text-slate-500">Siz</div>
+                <div className="text-[13px] font-semibold text-slate-600">Siz</div>
                 <div className="text-[34px] font-extrabold" style={{ color: TEAL }}>{me}</div>
               </div>
               <div className="text-[22px] font-bold text-slate-300">:</div>
               <div>
-                <div className="text-[13px] font-semibold text-slate-500">AI</div>
-                <div className="text-[34px] font-extrabold text-slate-500">{ai}</div>
+                <div className="text-[13px] font-semibold text-slate-600">AI</div>
+                <div className="text-[34px] font-extrabold text-slate-600">{ai}</div>
               </div>
             </div>
           ) : (
             <>
               <div className="mt-5">
                 <div className="text-[40px] font-extrabold leading-none" style={{ color: TEAL }}>
-                  {me}<span className="text-[22px] text-slate-400">/{rounds.length}</span>
+                  {me}<span className="text-[22px] text-slate-500">/{rounds.length}</span>
                 </div>
-                <div className="mt-1 text-[13px] font-semibold text-slate-500">{pct}% to&apos;g&apos;ri</div>
+                <div className="mt-1 text-[13px] font-semibold text-slate-600">{pct}% to&apos;g&apos;ri</div>
               </div>
-              <p className="mx-auto mt-4 max-w-[280px] text-[13px] leading-relaxed text-slate-400">
+              <p className="mx-auto mt-4 max-w-[280px] text-[13px] leading-relaxed text-slate-500">
                 {mode === "duel"
                   ? "Raqibingiz ham o'ynagach, natija bildirishnoma bo'lib keladi."
                   : "Guruhdoshlaringiz o'ynagach, kim oldinda ekani ko'rinadi."}
@@ -523,7 +523,7 @@ export default function Battle({
           type="button"
           onClick={() => setView("setup")}
           aria-label="Orqaga"
-          className="grid h-11 w-11 shrink-0 place-items-center rounded-full bg-white shadow-[0_6px_16px_rgba(19,78,94,0.12)]"
+          className="gl-glass grid h-11 w-11 shrink-0 place-items-center rounded-full"
         >
           <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke={TEAL} strokeWidth="2.4" strokeLinecap="round" strokeLinejoin="round">
             <path d="M15 5.5 8.5 12l6.5 6.5" />
@@ -532,11 +532,11 @@ export default function Battle({
         <h1 className="min-w-0 flex-1 truncate text-[18px] font-extrabold tracking-tight text-slate-900">
           {LOBBIES.find((l) => l.key === lobby)?.title}
         </h1>
-        <span className="rounded-full bg-white px-3 py-1.5 text-[14px] font-extrabold shadow-[0_4px_12px_rgba(19,78,94,0.10)]" style={{ color: TEAL }}>
+        <span className="gl-glass rounded-full px-3 py-1.5 text-[14px] font-extrabold" style={{ color: TEAL }}>
           {me}
         </span>
         {mode === "ai" && (
-          <span className="flex items-center gap-1 rounded-full bg-white px-2.5 py-1.5 shadow-[0_4px_12px_rgba(19,78,94,0.10)]">
+          <span className="gl-glass flex items-center gap-1 rounded-full px-2.5 py-1.5">
             <span className="grid h-5 w-5 place-items-center rounded-md" style={{ background: "linear-gradient(135deg,#94a3b8,#64748b)" }}>
               <GlyphRobot s={14} />
             </span>
@@ -545,22 +545,23 @@ export default function Battle({
         )}
       </div>
 
-      {/* Jarayon */}
+      {/* Jarayon — yo'lakcha shisha EMAS: ingichka element uchun backdrop-filter
+          faqat GPU yeydi, shu sabab oddiy yarim tiniq oq to'ldirish. */}
       <div className="flex items-center gap-2.5">
-        <div className="h-2 flex-1 overflow-hidden rounded-full bg-white">
+        <div className="h-2 flex-1 overflow-hidden rounded-full bg-white/55 shadow-[inset_0_1px_2px_rgba(19,78,94,0.12)]">
           <div className="h-full rounded-full transition-all" style={{ width: `${((step + 1) / rounds.length) * 100}%`, background: ICON_GRADIENT }} />
         </div>
-        <span className="text-[12px] font-bold text-slate-500">{step + 1}/{rounds.length}</span>
+        <span className="text-[12px] font-bold text-slate-600">{step + 1}/{rounds.length}</span>
       </div>
 
       {/* Savol */}
       <div className={`${CARD} p-5`}>
-        <div className="text-[12px] font-bold uppercase tracking-[0.18em] text-slate-400">{TASK_TITLE[lobby]}</div>
+        <div className="text-[12px] font-bold uppercase tracking-[0.18em] text-slate-500">{TASK_TITLE[lobby]}</div>
 
         {r?.options ? (
           <>
             <div className="mt-2 text-[22px] font-extrabold leading-snug text-slate-900">{r.prompt}</div>
-            {r.sub && <p className="mt-0.5 text-[13.5px] text-slate-400">{r.sub}</p>}
+            {r.sub && <p className="mt-0.5 text-[13.5px] text-slate-500">{r.sub}</p>}
 
             <div className={"mt-4 " + (lobby === "grammar" ? "grid grid-cols-3 gap-2.5" : "space-y-2.5")}>
               {r.options.map((opt) => {
@@ -590,7 +591,7 @@ export default function Battle({
           </>
         ) : (
           <>
-            <div className="mt-2 text-[15px] font-semibold text-slate-500">{r?.prompt}</div>
+            <div className="mt-2 text-[15px] font-semibold text-slate-600">{r?.prompt}</div>
 
             {lobby === "wordgame" ? (
               <div className="mt-4 flex flex-wrap justify-center gap-2">

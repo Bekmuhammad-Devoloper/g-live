@@ -80,7 +80,7 @@ export default async function StudentUebenPage() {
 
   return (
     <div className="space-y-[18px]">
-      <PageHeader title={t.practice} subtitle={t.yourHomework} right={<RatingBadge />} />
+      <PageHeader title={t.practice} subtitle={t.yourHomework} backLabel={t.back} right={<RatingBadge />} />
 
       {/* ── Jang / o'yinlar ── */}
       <Link
@@ -108,7 +108,7 @@ export default async function StudentUebenPage() {
         {tiles.map((t) => (
           <div key={t.label} className={`${CARD} flex flex-col items-center gap-1.5 px-1.5 pb-4 pt-4`}>
             <span className="text-[22px] font-extrabold leading-none" style={{ color: NAVY }}>{t.value}</span>
-            <span className="text-[12px] font-medium text-slate-500">{t.label}</span>
+            <span className="text-[12px] font-medium text-slate-600">{t.label}</span>
           </div>
         ))}
       </div>

@@ -57,7 +57,7 @@ export default function WordList({ words, t, levelCodes }: { words: VWord[]; t: 
     return (
       <div className={CARD + " px-5 py-12 text-center"}>
         <div className="text-[15px] font-semibold text-slate-700">{t.emptyDict}</div>
-        <p className="mt-1 text-[13px] text-slate-400">{t.teacherAddsWords}</p>
+        <p className="mt-1 text-[13px] text-slate-500">{t.teacherAddsWords}</p>
       </div>
     );
   }
@@ -72,7 +72,7 @@ export default function WordList({ words, t, levelCodes }: { words: VWord[]; t: 
             {learned}/{words.length}
           </span>
         </div>
-        <div className="mt-2 h-[7px] overflow-hidden rounded-full bg-slate-100">
+        <div className="mt-2 h-[7px] overflow-hidden rounded-full bg-white/55">
           <div className="h-full rounded-full transition-all" style={{ width: `${pct}%`, background: ICON_GRADIENT }} />
         </div>
       </div>
@@ -89,7 +89,7 @@ export default function WordList({ words, t, levelCodes }: { words: VWord[]; t: 
           value={q}
           onChange={(e) => setQ(e.target.value)}
           placeholder={t.searchWord}
-          className="h-12 w-full rounded-2xl border-0 bg-white pl-11 pr-4 text-[15px] text-slate-900 shadow-[0_6px_16px_rgba(19,78,94,0.10)] outline-none placeholder:text-slate-400"
+          className="h-12 w-full rounded-2xl border-0 bg-white pl-11 pr-4 text-[16px] text-slate-900 shadow-[0_6px_16px_rgba(19,78,94,0.10)] outline-none placeholder:text-slate-400"
         />
       </div>
 
@@ -110,13 +110,13 @@ export default function WordList({ words, t, levelCodes }: { words: VWord[]; t: 
       {shown.length === 0 ? (
         <div className={CARD + " px-5 py-10 text-center"}>
           <div className="text-[14px] font-semibold text-slate-700">{t.notFound}</div>
-          <p className="mt-1 text-[12.5px] text-slate-400">{t.tryAnother}</p>
+          <p className="mt-1 text-[12.5px] text-slate-500">{t.tryAnother}</p>
         </div>
       ) : (
         groups.map(([lesson, items], gi) => (
           <section key={lesson} className="overflow-hidden rounded-[18px] shadow-[0_10px_22px_rgba(19,78,94,0.10)]">
             {/* Dars sarlavhasi */}
-            <div className="flex items-center gap-2.5 bg-white px-3 py-2.5">
+            <div className="flex items-center gap-2.5 px-3 py-2.5">
               <span
                 className="grid h-6 w-6 shrink-0 place-items-center rounded-lg text-[11px] font-extrabold text-white"
                 style={{ background: ICON_GRADIENT }}
@@ -124,7 +124,7 @@ export default function WordList({ words, t, levelCodes }: { words: VWord[]; t: 
                 {gi + 1}
               </span>
               <div className="min-w-0 flex-1 truncate text-[13px] font-bold text-slate-700">{lesson}</div>
-              <span className="shrink-0 text-[11px] font-semibold text-slate-400">
+              <span className="shrink-0 text-[11px] font-semibold text-slate-500">
                 {items[0].level} · {items.length}
               </span>
             </div>
@@ -150,7 +150,7 @@ export default function WordList({ words, t, levelCodes }: { words: VWord[]; t: 
                       href={`/student/worterbuch?tab=lugat&q=${encodeURIComponent(w.de)}`}
                       aria-label={t.findInDictionary}
                       title={t.findInDictionary}
-                      className="mt-[3px] grid h-[18px] w-[18px] shrink-0 place-items-center text-slate-300 transition active:scale-90"
+                      className="-mb-3 -mr-3 -mt-[10px] grid h-11 w-11 shrink-0 place-items-center text-slate-300 transition active:scale-90"
                     >
                       <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.4" strokeLinecap="round">
                         <circle cx="11" cy="11" r="7" />

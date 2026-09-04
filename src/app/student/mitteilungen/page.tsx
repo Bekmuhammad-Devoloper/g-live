@@ -35,7 +35,7 @@ export default async function StudentMitteilungenPage() {
 
   return (
     <div className="space-y-[18px]">
-      <PageHeader title={t.messages} subtitle={t.yourMessages} right={<HeaderBadges />} />
+      <PageHeader title={t.messages} subtitle={t.yourMessages} backLabel={t.back} right={<HeaderBadges />} />
       <NotifList items={items} emptyText={t.noMessages} />
     </div>
   );

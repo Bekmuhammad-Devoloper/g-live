@@ -51,7 +51,7 @@ function Inline({ text, ids, onTag }: { text: string; ids: Record<string, string
               const r = await createFromLink(title);
               if (r.id) router.push(`/student/gehirn/${r.id}`);
             })}
-            className="rounded px-0.5 font-semibold text-slate-400 underline decoration-dashed underline-offset-2"
+            className="rounded px-0.5 font-semibold text-slate-500 underline decoration-dashed underline-offset-2"
             title={title}
           >
             {shown}
@@ -68,7 +68,7 @@ function Inline({ text, ids, onTag }: { text: string; ids: Record<string, string
         <button
           key={k++}
           onClick={() => onTag?.(tag)}
-          className="rounded-full bg-slate-100 px-1.5 py-0.5 text-[12px] font-semibold text-slate-500"
+          className="rounded-full bg-white/60 px-1.5 py-0.5 text-[12px] font-semibold text-slate-600"
         >
           #{tag}
         </button>,
@@ -87,7 +87,7 @@ export default function NoteText({
   empty: string;
 }) {
   const lines = content.split("\n");
-  if (!content.trim()) return <p className="py-2 text-[13.5px] italic text-slate-400">{empty}</p>;
+  if (!content.trim()) return <p className="py-2 text-[13.5px] italic text-slate-500">{empty}</p>;
 
   const out: React.ReactNode[] = [];
   lines.forEach((line, i) => {
@@ -123,7 +123,7 @@ export default function NoteText({
               </svg>
             )}
           </span>
-          <span className={done ? "text-[13.5px] leading-relaxed text-slate-400 line-through" : "text-[13.5px] leading-relaxed text-slate-700"}>
+          <span className={done ? "text-[13.5px] leading-relaxed text-slate-500 line-through" : "text-[13.5px] leading-relaxed text-slate-700"}>
             <Inline text={c[2]} ids={ids} />
           </span>
         </div>,
@@ -147,7 +147,7 @@ export default function NoteText({
     const q = /^>\s?(.*)$/.exec(trimmed);
     if (q) {
       out.push(
-        <div key={i} className="my-1 border-l-[3px] pl-3 text-[13.5px] italic leading-relaxed text-slate-500" style={{ borderColor: `${TEAL}55` }}>
+        <div key={i} className="my-1 border-l-[3px] pl-3 text-[13.5px] italic leading-relaxed text-slate-600" style={{ borderColor: `${TEAL}55` }}>
           <Inline text={q[1]} ids={ids} />
         </div>,
       );

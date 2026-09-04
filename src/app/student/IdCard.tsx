@@ -8,6 +8,8 @@ import { removePhoto, updateProfile } from "./profileActions";
 // O'quvchi guvohnomasi — ID-karta ko'rinishidagi shaxsiy ma'lumot.
 // Rasm, ism, tug'ilgan sana va telefonlarni o'quvchining o'zi tahrirlaydi;
 // guruh va daraja o'quv jarayoni ma'lumoti bo'lgani uchun faqat ko'rinadi.
+// ATAYIN shisha (.gl-glass) EMAS: bu bosma guvohnoma taqlidi — qattiq oq fon
+// va o'z soyasi saqlanadi, shunda haqiqiy plastik kartadek ko'rinadi.
 
 export type VProfile = {
   fullName: string;
@@ -243,7 +245,7 @@ export default function IdCard({ p, t, editable = true }: { p: VProfile; t: Stud
 }
 
 const INPUT =
-  "w-full rounded-xl border-0 bg-slate-50 px-3 py-2 text-[14px] font-semibold text-slate-800 outline-none focus:bg-slate-100";
+  "w-full rounded-xl border-0 bg-slate-50 px-3 py-2 text-[16px] font-semibold text-slate-800 outline-none focus:bg-slate-100";
 
 function Field({ label, children }: { label: string; children: React.ReactNode }) {
   return (

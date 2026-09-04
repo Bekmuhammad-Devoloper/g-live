@@ -39,11 +39,11 @@ export default async function RatingBadge() {
   const { place } = await studentRank(student.id);
 
   return (
-    <div className="flex h-11 shrink-0 items-center gap-1 rounded-2xl bg-white px-2.5 shadow-[0_6px_16px_rgba(19,78,94,0.12)]">
+    <div className="gl-glass flex h-11 shrink-0 items-center gap-1 rounded-2xl px-2.5">
       <IcoTrophy s={26} />
       <div className="leading-none">
         <div className="text-[15px] font-extrabold text-slate-900">{place}</div>
-        <div className="mt-0.5 text-[10px] font-semibold text-slate-500">{S(session.locale).place}</div>
+        <div className="mt-0.5 text-[10px] font-semibold text-slate-600">{S(session.locale).place}</div>
       </div>
     </div>
   );

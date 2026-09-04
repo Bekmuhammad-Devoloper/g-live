@@ -48,7 +48,7 @@ export default async function BrainPage() {
 
   return (
     <div className="space-y-[18px]">
-      <PageHeader title={t.brain} subtitle={t.brainSub} back="/student/profil" right={<GraphButton title={t.graph} />} />
+      <PageHeader title={t.brain} subtitle={t.brainSub} backLabel={t.back} back="/student/profil" right={<GraphButton title={t.graph} />} />
       <NotesView notes={notes} tags={tags} linkCount={links.length} t={t} />
     </div>
   );

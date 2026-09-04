@@ -84,7 +84,7 @@ export default async function StudentKursePage() {
 
   return (
     <div className="space-y-4">
-      <PageHeader title={t.courses} subtitle={group?.program.name ?? "Deutsch"} right={<KurseActions t={t} />} />
+      <PageHeader title={t.courses} subtitle={group?.program.name ?? "Deutsch"} backLabel={t.back} right={<KurseActions t={t} />} />
 
       <div className="space-y-3.5">
         {levels.map((lvl) => {

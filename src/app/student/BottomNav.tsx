@@ -67,12 +67,12 @@ export default function BottomNav({ t, showUben = true }: { t: StudentStrings; s
     { href: "/student/profil", icon: "profil", label: t.navProfile },
   ];
   return (
-    <nav className="fixed inset-x-0 bottom-0 z-40 mx-auto max-w-md rounded-t-[26px] bg-white px-3 pb-2 pt-2.5 shadow-[0_-10px_30px_rgba(19,78,94,0.14)]">
+    <nav className="gl-glass-nav fixed inset-x-0 bottom-0 z-40 mx-auto max-w-md rounded-t-[26px] px-3 pt-2.5 pb-[calc(8px+env(safe-area-inset-bottom))]">
       <div className="flex items-stretch justify-around">
         {items.map((it) => {
           const active = it.exact ? pathname === it.href : pathname.startsWith(it.href);
           return (
-            <Link key={it.label} href={it.href} className="flex flex-1 flex-col items-center gap-1 px-1 py-1">
+            <Link key={it.label} href={it.href} aria-current={active ? "page" : undefined} className="flex flex-1 flex-col items-center gap-1 px-1 py-1">
               <Ico name={it.icon} active={active} />
               <span className="text-[12.5px] font-semibold leading-none" style={{ color: active ? TEAL : GRAY }}>
                 {it.label}
@@ -83,8 +83,6 @@ export default function BottomNav({ t, showUben = true }: { t: StudentStrings; s
           );
         })}
       </div>
-      {/* telefon "home indicator" chizig'i */}
-      <div className="mx-auto mt-1 h-[5px] w-[134px] rounded-full bg-slate-900/85" />
     </nav>
   );
 }
