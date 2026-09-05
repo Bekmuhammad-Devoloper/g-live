@@ -1,0 +1,34 @@
+# Qator oxirlari.
+#
+# Loyiha Windows'da yoziladi, lekin serverda va GitHub Actions'da Linux'da
+# ishlaydi. Git odatda Windows'ga chiqarayotganda LF ni CRLF ga aylantiradi —
+# skript fayllari uchun bu HALOKATLI: Linux `#!/bin/sh` dan keyingi \r ni
+# buyruqning bir qismi deb o'qiydi va "bad interpreter" xatosi chiqadi.
+#
+# Shu sabab bajariladigan fayllarni doim LF da saqlaymiz.
+
+* text=auto
+
+# Gradle ishga tushirgichi — APK aynan shu skript orqali yig'iladi
+android/gradlew text eol=lf
+gradlew          text eol=lf
+
+# Qobiq skriptlari (deploy, APK yig'ish, tunnel)
+*.sh             text eol=lf
+
+# Ikkilik fayllar — Git ularga umuman tegmasin
+*.png  binary
+*.jpg  binary
+*.jpeg binary
+*.gif  binary
+*.webp binary
+*.ico  binary
+*.pdf  binary
+*.woff  binary
+*.woff2 binary
+*.jar  binary
+*.keystore binary
+*.jks  binary
+*.apk  binary
+*.aab  binary
+*.db   binary

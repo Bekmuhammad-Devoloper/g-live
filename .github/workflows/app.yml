@@ -1,0 +1,148 @@
+# ════════════════════════════════════════════════════════════════════
+# ANDROID ILOVASI (Capacitor) — GitHub'da yig'iladi
+#
+# Ishga tushirish: Actions → "Android ilovasi (Capacitor)" → Run workflow
+#
+# TWA dan farqi: bu haqiqiy Android ilovasi. Oyna butunlay bizniki —
+# hech qanday brauzer belgisi yo'q, ochilish ekrani o'zimizniki, "orqaga"
+# tugmasi ilovadagidek ishlaydi, keyinchalik push bildirishnoma qo'shiladi.
+# Mazmun baribir germaniya.live dan keladi, chunki ilova Next.js server
+# komponentlari va bazaga tayanadi — saytdagi yangilik APK ni qayta
+# tarqatmasdan ko'rinaveradi.
+#
+# IMZO KALITI: serverdagi mavjud kalit ishlatiladi (B_SSH_KEY orqali
+# olinadi). YANGI kalit YARATILMAYDI — aks holda Android buni "boshqa
+# ilova" deb biladi: eskisining ustiga o'rnatilmaydi va saytdagi
+# assetlinks.json mos kelmay qoladi. Kalit jurnalga ham, artifact'ga ham
+# chiqmaydi.
+# ════════════════════════════════════════════════════════════════════
+name: Android ilovasi (Capacitor)
+
+on:
+  workflow_dispatch:
+    inputs:
+      publish:
+        description: "Yig'ilgan APK serverga qo'yilsinmi (germaniya.live/app yangilanadi)"
+        type: boolean
+        default: true
+
+concurrency:
+  group: build-app
+  cancel-in-progress: false
+
+jobs:
+  build:
+    name: Yig'ish
+    runs-on: ubuntu-latest
+    timeout-minutes: 40
+
+    env:
+      SSH_HOST: 34.179.202.164
+      SSH_USER: uzbekmen94
+      REMOTE_APK_DIR: /opt/gl-edu/apk
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+          cache: npm
+
+      # Android uchun JDK 21 kerak (Gradle 8 + AGP 8)
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: "21"
+
+      - name: Bog'liqliklarni o'rnatish
+        run: npm ci
+
+      - name: SSH kalitni tayyorlash
+        run: |
+          mkdir -p ~/.ssh
+          echo "${{ secrets.B_SSH_KEY }}" > ~/.ssh/deploy_key
+          chmod 600 ~/.ssh/deploy_key
+          ssh-keyscan -H "$SSH_HOST" >> ~/.ssh/known_hosts 2>/dev/null
+
+      # Kalit ish maydonidan TASHQARIDA saqlanadi, shunda uni tasodifan
+      # artifact'ga qo'shib yuborish ehtimoli ham qolmaydi.
+      - name: Imzo kalitini olish
+        run: |
+          mkdir -p "$RUNNER_TEMP/signing"
+          chmod 700 "$RUNNER_TEMP/signing"
+          scp -i ~/.ssh/deploy_key -o BatchMode=yes \
+            "$SSH_USER@$SSH_HOST:$REMOTE_APK_DIR/android.keystore" \
+            "$RUNNER_TEMP/signing/android.keystore"
+          scp -i ~/.ssh/deploy_key -o BatchMode=yes \
+            "$SSH_USER@$SSH_HOST:$REMOTE_APK_DIR/keystore.pass" \
+            "$RUNNER_TEMP/signing/keystore.pass"
+          chmod 600 "$RUNNER_TEMP/signing/"*
+          # Parol jurnalda ko'rinmasin
+          echo "::add-mask::$(cat "$RUNNER_TEMP/signing/keystore.pass")"
+
+      - name: Capacitor sinxronizatsiyasi
+        run: npx cap sync android
+
+      - name: APK yig'ish
+        env:
+          GL_KEYSTORE: ${{ runner.temp }}/signing/android.keystore
+        run: |
+          export GL_KEYSTORE_PASS="$(cat "$RUNNER_TEMP/signing/keystore.pass")"
+          chmod +x android/gradlew
+          ( cd android && ./gradlew --no-daemon assembleRelease )
+          cp android/app/build/outputs/apk/release/app-release.apk germaniya-live.apk
+          ls -la germaniya-live.apk
+
+      # Imzo saytdagi assetlinks.json bilan mos kelmasa havolalar ilovada
+      # ochilmaydi va eski ilova ustiga o'rnatilmaydi — shu sabab tekshiramiz.
+      - name: Imzoni tekshirish
+        run: |
+          EXPECTED="2A:2F:FE:32:B1:DA:BE:16:26:98:F1:2F:06:37:CA:AF:99:E5:D4:8A:5C:52:E0:45:E8:99:55:D7:68:0E:F3:4C"
+          GOT=$(keytool -printcert -jarfile germaniya-live.apk \
+                | grep -i "SHA256:" | head -1 | sed 's/.*SHA256: *//' | tr -d ' \r')
+          echo "kutilgan: $EXPECTED"
+          echo "olingan : $GOT"
+          if [ "$GOT" != "$EXPECTED" ]; then
+            echo "❌ Imzo mos emas — bu APK eski ilova ustiga o'rnatilmaydi."
+            exit 1
+          fi
+          echo "✅ Imzo to'g'ri"
+
+      - name: Kalitni o'chirish
+        if: always()
+        run: rm -rf "$RUNNER_TEMP/signing"
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: germaniya-live-app
+          path: germaniya-live.apk
+          retention-days: 30
+
+      - name: Serverga qo'yish
+        if: ${{ inputs.publish }}
+        run: |
+          scp -i ~/.ssh/deploy_key -o BatchMode=yes \
+            germaniya-live.apk "$SSH_USER@$SSH_HOST:/tmp/germaniya-live.apk"
+          ssh -i ~/.ssh/deploy_key -o BatchMode=yes "$SSH_USER@$SSH_HOST" '
+            set -e
+            cd /opt/gl-edu/apk
+            # Eskisini saqlab qo'yamiz: yangisida kutilmagan nosozlik chiqsa
+            # bitta buyruq bilan qaytarish mumkin bo'lsin.
+            [ -f germaniya-live.apk ] && cp germaniya-live.apk "germaniya-live.apk.bak-$(date +%Y%m%d-%H%M)"
+            mv /tmp/germaniya-live.apk germaniya-live.apk
+            chmod 644 germaniya-live.apk
+            ls -la germaniya-live.apk
+            # Faqat oxirgi 5 zaxira qolsin
+            ls -1t germaniya-live.apk.bak-* 2>/dev/null | tail -n +6 | xargs -r rm --
+          '
+
+      - name: Saytda tekshirish
+        if: ${{ inputs.publish }}
+        run: |
+          CODE=$(curl -s -o /dev/null -w "%{http_code}" https://germaniya.live/api/app/android)
+          SIZE=$(curl -sI https://germaniya.live/api/app/android \
+                 | tr -d '\r' | awk -F': ' 'tolower($1)=="content-length"{print $2}')
+          echo "javob: $CODE, hajm: $SIZE"
+          [ "$CODE" = "200" ] || exit 1
+          echo "✅ germaniya.live/app dan yuklab olish mumkin"

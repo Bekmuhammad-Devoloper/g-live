@@ -12,12 +12,22 @@
     "db:seed": "tsx prisma/seed.ts",
     "db:reset": "prisma db push --force-reset && npm run db:seed",
     "postinstall": "prisma generate",
-    "sync-cdr": "node --env-file=.env scripts/sync-cdr.mjs"
+    "sync-cdr": "node --env-file=.env scripts/sync-cdr.mjs",
+    "app:sync": "cap sync android",
+    "app:icons": "node scripts/make-icons.mjs && npx -y @capacitor/assets@latest generate --android --assetPath capacitor/assets"
   },
   "prisma": {
     "seed": "tsx prisma/seed.ts"
   },
   "dependencies": {
+    "@capacitor/android": "^8.5.1",
+    "@capacitor/app": "^8.1.1",
+    "@capacitor/browser": "^8.0.4",
+    "@capacitor/core": "^8.5.1",
+    "@capacitor/haptics": "^8.0.2",
+    "@capacitor/keyboard": "^8.0.5",
+    "@capacitor/splash-screen": "^8.0.2",
+    "@capacitor/status-bar": "^8.0.3",
     "@prisma/client": "^6.2.1",
     "bcryptjs": "^2.4.3",
     "clsx": "^2.1.1",
@@ -31,6 +41,7 @@
     "zod": "^3.24.1"
   },
   "devDependencies": {
+    "@capacitor/cli": "^8.5.1",
     "@types/bcryptjs": "^2.4.6",
     "@types/node": "^22.10.7",
     "@types/qrcode": "^1.5.6",

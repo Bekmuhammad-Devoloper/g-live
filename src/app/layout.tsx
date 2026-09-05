@@ -1,5 +1,6 @@
 import type { Metadata, Viewport } from "next";
 import "./globals.css";
+import NativeShell from "./NativeShell";
 
 // Eslatma: sidebar "handwriting" shrifti CSS fallback (Segoe Script / cursive)
 // orqali beriladi — globals.css `.font-hand`. Bu ilovani tashqi Google Fonts
@@ -13,6 +14,11 @@ export const metadata: Metadata = {
 export const viewport: Viewport = {
   width: "device-width",
   initialScale: 1,
+  // Android ilovasida ekranning kesik (notch) va pastki chiziq ostigacha
+  // bo'yalsin — chetlarda oq yo'l qolib ketmasin. Xavfsiz masofalarni
+  // `env(safe-area-inset-*)` bilan komponentlarning o'zi hisobga oladi.
+  viewportFit: "cover",
+  themeColor: "#0b3c4d",
 };
 
 // Sahifa chizilishidan oldin mavzuni qo'llash (dark mode "miltillashi"ning oldini oladi)
@@ -41,7 +47,12 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
         />
         <script dangerouslySetInnerHTML={{ __html: themeScript }} />
       </head>
-      <body>{children}</body>
+      <body>
+        {/* Android ilovasi ichida ishlaydigan qatlam (brauzerda jim turadi):
+            ochilish ekrani, holat qatori, "orqaga" tugmasi, tashqi havolalar */}
+        <NativeShell />
+        {children}
+      </body>
     </html>
   );
 }

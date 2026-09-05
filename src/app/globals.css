@@ -535,6 +535,34 @@ select:not(.appearance-none):not([multiple]):not([size]) {
   }
 }
 
+/* ── Android ilovasi (Capacitor) ──
+   Belgini NativeShell qo'yadi va u FAQAT haqiqiy ilovada qo'yiladi.
+
+   Nega yuqoridagi `@media (display-mode: standalone)` yetarli emas: u
+   ilovaning o'zini qanday e'lon qilganiga bog'liq va qurilmadan qurilmaga
+   farq qiladi. `html.gl-app` esa ishlayotgan muhitdan olingan aniq javob —
+   shu sabab ilovaga xos qoidalarni shu yerda takrorlaymiz. */
+html.gl-app,
+html.gl-app body {
+  /* tepaga tortib "yangilash" va chetlardagi cho'zilish yo'q */
+  overscroll-behavior: none;
+}
+
+html.gl-app {
+  user-select: none;
+  -webkit-user-select: none;
+  -webkit-tap-highlight-color: transparent;
+}
+
+/* Yozish va nusxa olish kerak bo'lgan joylar bundan mustasno */
+html.gl-app input,
+html.gl-app textarea,
+html.gl-app [contenteditable],
+html.gl-app .gl-selectable {
+  user-select: text;
+  -webkit-user-select: text;
+}
+
 /* Ekrandan ekranga o'tish — ilovadagidek yumshoq kirish.
    ATAYLAB qisqa (200ms) va faqat opacity + kichik siljish: uzun animatsiya
    sekin ilova taassurotini beradi. Animatsiya tugagach transform QOLMAYDI,

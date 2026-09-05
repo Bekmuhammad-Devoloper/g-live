@@ -1,0 +1,7 @@
+<?xml version='1.0' encoding='utf-8'?>
+<resources>
+    <string name="app_name">Germaniya Live</string>
+    <string name="title_activity_main">Germaniya Live</string>
+    <string name="package_name">live.germaniya.app</string>
+    <string name="custom_url_scheme">live.germaniya.app</string>
+</resources>

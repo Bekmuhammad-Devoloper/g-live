@@ -112,3 +112,88 @@ await make(512, 0.5, "maskable-512.png");
 
 // Apple "bosh ekranga qo'shish" — shaffof fon ishlatmaydi, radiusni o'zi qo'yadi
 await make(180, 0.66, "apple-touch-icon.png");
+
+// ────────────────────────────────────────────────────────────────────
+// Capacitor (Android ilovasi) uchun manba rasmlar
+//
+// @capacitor/assets shu papkadan o'qib, Android talab qiladigan o'nlab
+// o'lchamni (mdpi...xxxhdpi, adaptiv ikonka, splash) o'zi yasaydi.
+//
+// Android 8 dan beri ikonka ADAPTIV: tizim old qatlamni orqa qatlam
+// ustiga qo'yib, qurilma shakli bo'yicha (doira, kvadrat, tomchi)
+// qirqadi. Shu sabab old qatlam SHAFFOF fonli va markazda kichikroq
+// bo'lishi kerak — chetlari qirqilib ketmasin.
+// ────────────────────────────────────────────────────────────────────
+
+const CAP = "capacitor/assets";
+await mkdir(CAP, { recursive: true });
+
+/** To'liq ikonka (fon + monogramma) — 1024px, adaptiv bo'lmagan joylar uchun */
+async function capIcon() {
+  const size = 1024;
+  const target = Math.round(size * 0.66);
+  const logo = await sharp(mark).resize({ width: target, height: target, fit: "inside" }).toBuffer();
+  const lm = await sharp(logo).metadata();
+  await sharp(background(size))
+    .composite([{ input: logo, top: Math.round((size - (lm.height ?? 0)) / 2), left: Math.round((size - (lm.width ?? 0)) / 2) }])
+    .png()
+    .toFile(`${CAP}/icon.png`);
+  console.log(`capacitor/assets/icon.png  ${size}x${size}`);
+}
+
+/** Adaptiv ikonkaning old qatlami — shaffof fon, xavfsiz zonada monogramma */
+async function capForeground() {
+  const size = 1024;
+  // 0.45: adaptiv ikonkada tashqi ~33% qirqilishi mumkin, monogramma
+  // markazdagi xavfsiz doiradan chiqmasligi shart.
+  const target = Math.round(size * 0.45);
+  const logo = await sharp(mark).resize({ width: target, height: target, fit: "inside" }).toBuffer();
+  const lm = await sharp(logo).metadata();
+  await sharp({ create: { width: size, height: size, channels: 4, background: { r: 0, g: 0, b: 0, alpha: 0 } } })
+    .composite([{ input: logo, top: Math.round((size - (lm.height ?? 0)) / 2), left: Math.round((size - (lm.width ?? 0)) / 2) }])
+    .png()
+    .toFile(`${CAP}/icon-foreground.png`);
+  console.log(`capacitor/assets/icon-foreground.png  ${size}x${size}`);
+}
+
+/** Adaptiv ikonkaning orqa qatlami — faqat gradient */
+async function capBackground() {
+  const size = 1024;
+  await sharp(background(size)).png().toFile(`${CAP}/icon-background.png`);
+  console.log(`capacitor/assets/icon-background.png  ${size}x${size}`);
+}
+
+/**
+ * Ochilish ekrani — 2732x2732 kvadrat.
+ * Android uni CENTER_CROP bilan ko'rsatadi: telefon qanday nisbatda
+ * bo'lmasin, markaz doim ko'rinadi. Shu sabab monogramma kichik (12%)
+ * va qat'iy markazda — hech qaysi qurilmada kesilmaydi.
+ */
+async function capSplash(name, top, bottom) {
+  const size = 2732;
+  const bg = Buffer.from(`
+<svg xmlns="http://www.w3.org/2000/svg" width="${size}" height="${size}">
+  <defs>
+    <linearGradient id="g" x1="0" y1="0" x2="0.35" y2="1">
+      <stop offset="0%" stop-color="${top}"/>
+      <stop offset="100%" stop-color="${bottom}"/>
+    </linearGradient>
+  </defs>
+  <rect width="${size}" height="${size}" fill="url(#g)"/>
+</svg>`);
+  const target = Math.round(size * 0.12);
+  const logo = await sharp(mark).resize({ width: target, height: target, fit: "inside" }).toBuffer();
+  const lm = await sharp(logo).metadata();
+  await sharp(bg)
+    .composite([{ input: logo, top: Math.round((size - (lm.height ?? 0)) / 2), left: Math.round((size - (lm.width ?? 0)) / 2) }])
+    .png()
+    .toFile(`${CAP}/${name}`);
+  console.log(`capacitor/assets/${name}  ${size}x${size}`);
+}
+
+await capIcon();
+await capForeground();
+await capBackground();
+await capSplash("splash.png", "#12708c", "#0a3b4c");
+// Qorong'i rejim uchun to'qroq variant
+await capSplash("splash-dark.png", "#0a3b4c", "#062634");
