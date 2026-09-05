@@ -36,13 +36,29 @@ export default function NativeShell() {
       // CSS shu belgiga qarab ilovaga xos qoidalarni yoqadi
       document.documentElement.classList.add("gl-app");
 
-      // Holat qatori — ilova sarlavhasining to'q ko'ki bilan bir xil
+      // ── Holat qatori (soat, batareya turadigan tepa qator) ──
+      //
+      // Android 15 dan boshlab ilova MAJBURAN butun ekranga, holat qatori
+      // ostiga ham chiziladi — buni o'chirib bo'lmaydi. CSS dagi
+      // `env(safe-area-inset-top)` esa Android'da ko'pincha 0 qaytaradi:
+      // u faqat ekran kesigini (notch) hisoblaydi, oddiy holat qatorini
+      // emas. Natijada sarlavha soatga taqalib qolardi.
+      //
+      // Shu sabab balandlikni Capacitor'dan SO'RAYMIZ va uni CSS
+      // o'zgaruvchisiga yozamiz — maket o'shanga tayanadi.
       try {
         const { StatusBar, Style } = await import("@capacitor/status-bar");
         await StatusBar.setStyle({ style: Style.Dark });
         await StatusBar.setBackgroundColor({ color: "#0b3c4d" });
+
+        const info = await StatusBar.getInfo();
+        // Balandlik dp da keladi, WebView'da bu CSS piksel bilan bir xil
+        if (info?.height && info.height > 0) {
+          document.documentElement.style.setProperty("--gl-safe-top", `${info.height}px`);
+        }
       } catch {
-        // Ba'zi qurilmalarda holat qatorini boshqarib bo'lmaydi — muhim emas
+        // Ba'zi qurilmalarda holat qatorini boshqarib bo'lmaydi —
+        // maket `env(safe-area-inset-top)` ga qaytadi
       }
 
       // Sahifa chizilgach ochilish ekranini yopamiz. Avtomatik yopilish ham

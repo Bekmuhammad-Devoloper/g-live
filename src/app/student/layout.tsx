@@ -78,12 +78,20 @@ export default async function StudentLayout({ children }: { children: React.Reac
       />
       <div aria-hidden className="pointer-events-none fixed inset-0 z-0" style={{ background: AMBIENT }} />
       {/* Chetlardagi bo'shliq: `viewportFit: cover` sahifani ekranning eng
-          chetigacha cho'zadi, shu sabab telefonning xavfsiz zonalarini
-          O'ZIMIZ hisobga olamiz:
-            · tepada — soat va batareya turadigan qator. Busiz sarlavha va
-              avatar soatga taqalib qolardi (ilovada aynan shu ko'rindi).
-            · pastda — menyu balandligi + jest chizig'i */}
-      <div className="relative z-10 mx-auto min-h-screen max-w-md px-4 pt-[calc(20px+env(safe-area-inset-top))] pb-[calc(112px+env(safe-area-inset-bottom))]">
+          chetigacha cho'zadi, shu sabab xavfsiz zonalarni O'ZIMIZ hisobga
+          olamiz.
+
+          Tepada ikki manba bor va shu tartibda ishlatiladi:
+            1. `--gl-safe-top` — Android ilovasida NativeShell yozib qo'yadi.
+               Kerak, chunki Android 15 dan ilova majburan holat qatori
+               ostiga chiziladi, `env(safe-area-inset-top)` esa u yerda
+               ko'pincha 0: u faqat ekran kesigini (notch) hisoblaydi.
+               Busiz sarlavha va avatar soatga taqalib qolardi.
+            2. `env(safe-area-inset-top)` — brauzer va iOS uchun zaxira. */}
+      <div
+        className="relative z-10 mx-auto min-h-screen max-w-md px-4 pb-[calc(112px+env(safe-area-inset-bottom))]"
+        style={{ paddingTop: "calc(20px + var(--gl-safe-top, env(safe-area-inset-top)))" }}
+      >
         <Screen>{children}</Screen>
       </div>
       <BottomNav t={S(session.locale)} showUben={flags.uben} />
