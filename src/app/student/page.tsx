@@ -301,6 +301,7 @@ export default async function StudentStartPage() {
   // ── Tanga / seriya ──
   // Hisob bitta joyda (src/lib/coins.ts) — Market va Sozlamalar bilan bir xil
   const notifOn = await isPortalFeatureOn("mitteilungen"); // o'chirilgan bo'lsa qo'ng'iroqcha yo'q
+  const marketOn = await isPortalFeatureOn("market");        // o'chiq bo'lsa tanga plitkasi havola bo'lmaydi
   const [purse, starPurse, banners, videoList, starRanks] = await Promise.all([
     coinBalance(student.id),
     starBalance(student.id),
@@ -500,8 +501,9 @@ export default async function StudentStartPage() {
       <div className="grid grid-cols-4 gap-2">
         {[
           // Tanga — doira ichidagi belgi emas, tanganing o'zi (shu sabab `bare`)
-          { icon: <CoinGold s={46} />, bare: true, label: t.coins, value: String(coins) },
-          { icon: <IcoStarGold />, bare: false, label: t.stars, value: String(stars) },
+          // Tanga -> Market (sarflanadigan joy), yulduz -> qanday yig'ish
+          { icon: <CoinGold s={46} />, bare: true, label: t.coins, value: String(coins), href: marketOn ? "/student/market" : undefined },
+          { icon: <IcoStarGold />, bare: false, label: t.stars, value: String(stars), href: "/student/yulduz" },
           // Seriya yuqori qatorga (olov belgisiga) ko'chdi — bu yerda uning
           // o'rnida yulduz pog'onasi turadi: o'quvchi qaysi bosqichdaligi
           // raqamdan ko'ra ko'proq narsa aytadi.
