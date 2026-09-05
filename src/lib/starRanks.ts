@@ -25,12 +25,14 @@ export type StarRankRow = {
   stars: number;
   reward: number;
   color: string;
+  /** Ma'muriyat yuklagan belgi; bo'lmasa pog'ona raqami ko'rsatiladi */
+  iconUrl: string | null;
   isActive: boolean;
 };
 
 const SELECT = {
   id: true, nameUz: true, nameRu: true, nameEn: true, nameDe: true,
-  stars: true, reward: true, color: true, isActive: true,
+  stars: true, reward: true, color: true, iconUrl: true, isActive: true,
 } as const;
 
 // Birinchi ishga tushirishda quyiladigan pog'onalar. Birinchisi 0 yulduz —

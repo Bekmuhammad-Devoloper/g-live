@@ -1,13 +1,13 @@
 "use client";
 
-import { useEffect, useState, useTransition } from "react";
+import { useEffect, useRef, useState, useTransition } from "react";
 import { createPortal } from "react-dom";
 import { cn } from "@/lib/cn";
 import { tr } from "@/lib/tr";
 import type { Locale } from "@/lib/constants";
 import { Icon } from "../../_components/Icon";
 import { PRESET_COLORS } from "@/lib/levelColor";
-import { createStarRank, updateStarRank, deleteStarRank, toggleStarRank, type RankInput } from "./actions";
+import { createStarRank, updateStarRank, deleteStarRank, toggleStarRank, setStarRankIcon, type RankInput } from "./actions";
 
 // Yulduz pog'onalari — qo'shish, tahrirlash, o'chirish.
 // Tartib qo'lda emas: ro'yxat YULDUZ CHEGARASI bo'yicha tuziladi, shu sabab
@@ -23,6 +23,7 @@ export type RankRow = {
   stars: number;
   reward: number;
   color: string;
+  iconUrl: string | null;
   isActive: boolean;
 };
 
@@ -36,7 +37,9 @@ export default function StarRanksView({ rows, locale }: { rows: RankRow[]; local
   const [items, setItems] = useState(rows);
   const [editing, setEditing] = useState<RankRow | "new" | null>(null);
   const [err, setErr] = useState<string | null>(null);
+  const [busy, setBusy] = useState<string | null>(null);
   const [, start] = useTransition();
+  const files = useRef<Record<string, HTMLInputElement | null>>({});
 
   const T = (uz: string, ru: string, en: string, de: string) => tr(locale, { uz, ru, en, de });
 
@@ -51,6 +54,32 @@ export default function StarRanksView({ rows, locale }: { rows: RankRow[]; local
     setErr(null);
     setItems((xs) => xs.map((x) => (x.id === it.id ? { ...x, isActive: !x.isActive } : x)));
     start(async () => after(await toggleStarRank(it.id, !it.isActive)));
+  };
+
+  // Belgini yuklash — /api/upload manzilni qaytaradi, keyin pog'onaga bog'lanadi
+  const uploadIcon = async (it: RankRow, fl: File) => {
+    setErr(null);
+    setBusy(it.id);
+    try {
+      const fd = new FormData();
+      fd.append("file", fl);
+      const r = await fetch("/api/upload", { method: "POST", body: fd });
+      const j = await r.json();
+      if (!r.ok || !j.url) throw new Error();
+      const res = await setStarRankIcon(it.id, j.url);
+      if (res.error) setErr(res.error);
+      else setItems((xs) => xs.map((x) => (x.id === it.id ? { ...x, iconUrl: j.url } : x)));
+    } catch {
+      setErr(T("Rasmni yuklab bo'lmadi", "Не удалось загрузить", "Upload failed", "Upload fehlgeschlagen"));
+    } finally {
+      setBusy(null);
+    }
+  };
+
+  const clearIcon = (it: RankRow) => {
+    setErr(null);
+    setItems((xs) => xs.map((x) => (x.id === it.id ? { ...x, iconUrl: null } : x)));
+    start(async () => after(await setStarRankIcon(it.id, null)));
   };
 
   const remove = (it: RankRow) => {
@@ -97,10 +126,15 @@ export default function StarRanksView({ rows, locale }: { rows: RankRow[]; local
               )}
             >
               <span
-                className="grid h-11 w-11 shrink-0 place-items-center rounded-xl text-[15px] font-extrabold tabular-nums text-white"
+                className="relative grid h-11 w-11 shrink-0 place-items-center overflow-hidden rounded-xl text-[15px] font-extrabold tabular-nums text-white"
                 style={{ background: it.color }}
               >
-                {i + 1}
+                {it.iconUrl ? (
+                  // eslint-disable-next-line @next/next/no-img-element
+                  <img src={it.iconUrl} alt="" className="h-full w-full object-contain p-1" />
+                ) : (
+                  i + 1
+                )}
               </span>
 
               <div className="min-w-[150px] flex-1">
@@ -122,6 +156,29 @@ export default function StarRanksView({ rows, locale }: { rows: RankRow[]; local
               </div>
 
               <div className="flex shrink-0 items-center gap-1.5">
+                <input
+                  ref={(el) => { files.current[it.id] = el; }}
+                  type="file" accept="image/*" hidden
+                  onChange={(e) => { const x = e.target.files?.[0]; if (x) void uploadIcon(it, x); e.target.value = ""; }}
+                />
+                <button
+                  type="button"
+                  disabled={busy === it.id}
+                  onClick={() => files.current[it.id]?.click()}
+                  className="h-9 rounded-lg bg-slate-100 px-3 text-xs font-semibold text-slate-600 transition hover:bg-slate-200 disabled:opacity-50 dark:bg-slate-800 dark:text-slate-200"
+                >
+                  {busy === it.id ? "…" : it.iconUrl ? T("Belgini almashtirish", "Заменить значок", "Replace icon", "Symbol ersetzen") : T("Belgi yuklash", "Загрузить значок", "Upload icon", "Symbol hochladen")}
+                </button>
+                {it.iconUrl ? (
+                  <button
+                    type="button"
+                    onClick={() => clearIcon(it)}
+                    className="h-9 rounded-lg bg-slate-100 px-2.5 text-xs font-semibold text-slate-500 transition hover:bg-slate-200 dark:bg-slate-800"
+                    title={T("Belgini olib tashlash", "Убрать значок", "Remove icon", "Symbol entfernen")}
+                  >
+                    <Icon name="close" className="h-3.5 w-3.5" />
+                  </button>
+                ) : null}
                 <button
                   type="button"
                   onClick={() => toggle(it)}

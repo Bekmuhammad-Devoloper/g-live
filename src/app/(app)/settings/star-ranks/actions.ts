@@ -5,6 +5,7 @@ import { requireSession } from "@/lib/auth";
 import { ROLES } from "@/lib/constants";
 import { prisma } from "@/lib/db";
 import { writeAudit } from "@/lib/audit";
+import { isSafeBanner } from "@/lib/levelColor";
 
 // Yulduz pog'onalari — menejer va rahbariyat boshqaradi.
 // Pog'ona chegarasi (yulduz) va mukofoti (tanga) shu yerdan o'zgaradi;
@@ -97,6 +98,18 @@ export async function updateStarRank(id: string, input: RankInput): Promise<Rank
 
   await prisma.starRank.update({ where: { id }, data: c.data });
   await writeAudit({ actorId: s.userId, action: "UPDATE", entityType: "StarRank", entityId: id, oldValue: cur, newValue: c.data, reason: "Pog'ona tahrirlandi" });
+  refresh();
+  return { ok: true };
+}
+
+/** Pog'ona belgisi — /api/upload qaytargan manzil (yoki null: olib tashlash) */
+export async function setStarRankIcon(id: string, url: string | null): Promise<RankState> {
+  const s = await guard();
+  if (!s) return { error: "Ruxsat yo'q" };
+  if (url !== null && !isSafeBanner(url)) return { error: "Rasm manzili noto'g'ri" };
+
+  await prisma.starRank.update({ where: { id }, data: { iconUrl: url } });
+  await writeAudit({ actorId: s.userId, action: "UPDATE", entityType: "StarRank", entityId: id, newValue: { iconUrl: url }, reason: url ? "Pog'ona belgisi yuklandi" : "Pog'ona belgisi o'chirildi" });
   refresh();
   return { ok: true };
 }

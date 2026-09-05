@@ -30,6 +30,7 @@ export default async function StarRanksSettingsPage() {
     stars: r.stars,
     reward: r.reward,
     color: r.color,
+    iconUrl: r.iconUrl,
     isActive: r.isActive,
   }));
 

@@ -55,11 +55,20 @@ export default async function StudentStarRankPage() {
         <span className="pointer-events-none absolute -right-10 -top-14 h-40 w-40 rounded-full bg-white/10 blur-2xl" />
 
         <div className="relative">
-          <div className="text-[11px] font-bold uppercase tracking-[0.14em] text-white/70">
-            {step.place}/{step.total}
-          </div>
-          <div className="mt-1 text-[26px] font-extrabold leading-tight">
-            {step.current ? rankName(step.current, session.locale) : "—"}
+          <div className="flex items-start gap-3">
+            {/* Ma'muriyat yuklagan belgi — pog'onani nomidan oldin tanitadi */}
+            {step.current?.iconUrl ? (
+              // eslint-disable-next-line @next/next/no-img-element
+              <img src={step.current.iconUrl} alt="" className="h-14 w-14 shrink-0 object-contain drop-shadow-[0_6px_12px_rgba(0,0,0,0.3)]" />
+            ) : null}
+            <div className="min-w-0">
+              <div className="text-[11px] font-bold uppercase tracking-[0.14em] text-white/70">
+                {step.place}/{step.total}
+              </div>
+              <div className="mt-1 text-[26px] font-extrabold leading-tight">
+                {step.current ? rankName(step.current, session.locale) : "—"}
+              </div>
+            </div>
           </div>
           <div className="mt-1 flex items-center gap-1.5 text-[13px] font-semibold text-white/85">
             <IcoStar s={15} />
@@ -104,13 +113,24 @@ export default async function StudentStarRankPage() {
                     (isNow ? "bg-[#0e7490]/[0.08]" : "")
                   }
                 >
-                  {/* Pog'ona raqami — ochilgani rangli, ochilmagani kulrang */}
-                  <span
-                    className="grid h-9 w-9 shrink-0 place-items-center rounded-xl text-[13px] font-extrabold tabular-nums text-white"
-                    style={{ background: reached ? r.color : "#cbd5e1" }}
-                  >
-                    {i + 1}
-                  </span>
+                  {/* Belgi yuklangan bo'lsa — o'sha, bo'lmasa pog'ona raqami.
+                      Ochilmagan pog'ona kulrangda: nima kutayotgani ko'rinadi,
+                      lekin allaqachon qo'lga kiritilgandek turmaydi. */}
+                  {r.iconUrl ? (
+                    // eslint-disable-next-line @next/next/no-img-element
+                    <img
+                      src={r.iconUrl}
+                      alt=""
+                      className={"h-10 w-10 shrink-0 object-contain " + (reached ? "" : "opacity-45 grayscale")}
+                    />
+                  ) : (
+                    <span
+                      className="grid h-9 w-9 shrink-0 place-items-center rounded-xl text-[13px] font-extrabold tabular-nums text-white"
+                      style={{ background: reached ? r.color : "#cbd5e1" }}
+                    >
+                      {i + 1}
+                    </span>
+                  )}
 
                   <span className="min-w-0 flex-1">
                     <span className={"block truncate text-[14.5px] " + (reached ? "font-extrabold text-slate-900" : "font-semibold text-slate-500")}>

@@ -506,8 +506,12 @@ export default async function StudentStartPage() {
           // o'rnida yulduz pog'onasi turadi: o'quvchi qaysi bosqichdaligi
           // raqamdan ko'ra ko'proq narsa aytadi.
           {
-            icon: <IcoMedalGold />,
-            bare: false,
+            // Ma'muriyat pog'onaga belgi yuklagan bo'lsa — o'sha turadi
+            icon: starStep.current?.iconUrl
+              // eslint-disable-next-line @next/next/no-img-element
+              ? <img src={starStep.current.iconUrl} alt="" className="h-[46px] w-[46px] object-contain" />
+              : <IcoMedalGold />,
+            bare: Boolean(starStep.current?.iconUrl),
             label: t.starRank,
             value: starStep.current ? rankName(starStep.current, session.locale) : "—",
             small: true,
@@ -530,10 +534,15 @@ export default async function StudentStartPage() {
                 </span>
               )}
               <span className="text-[11.5px] font-semibold leading-none text-slate-600">{it.label}</span>
+              {/* Pog'ona nomi bitta qatorga sig'maydi (masalan "Yangi boshlovchi")
+                  — kesib tashlash o'rniga ikki qatorga bo'linadi. Plitkalar
+                  grid ichida bo'lgani uchun balandligi baribir tenglashadi. */}
               <span
                 className={
-                  "w-full truncate px-0.5 text-center font-extrabold leading-none text-slate-900 " +
-                  (it.small ? "text-[13px]" : "text-[21px]")
+                  "w-full px-0.5 text-center font-extrabold text-slate-900 " +
+                  (it.small
+                    ? "line-clamp-2 text-[11.5px] leading-[13px]"
+                    : "truncate text-[21px] leading-none")
                 }
               >
                 {it.value}
