@@ -6,6 +6,7 @@ import Link from "next/link";
 
 export const TEAL = "#0e7490"; // asosiy rang (maketdagi to'q moviy-feruza)
 export const NAVY = "#134e5e"; // halqa/qiymatlarning to'q varianti
+export const INK = "#111827";  // yuqori qatordagi chiziqli ikonkalar (qo'ng'iroq)
 
 // Shisha karta (Start ekranidagi bilan bir xil).
 // Uslub globals.css `.gl-glass` da: backdrop-filter + qirra yorug'ligi.
@@ -282,14 +283,33 @@ export function IcoBell({ c = TEAL, s = 24 }: IcoProps) {
     </svg>
   );
 }
-// Seriya (streak) olovi — yuqori qatordagi belgi. Rangi qat'iy: olov
-// ko'k-feruza muhitda darhol ko'zga tashlanishi kerak.
+// Seriya (streak) olovi — emoji uslubida: to'q sariq-qizil tana va ichida
+// sariq yadro. Bir rangli tekis olov kichik o'lchamda dog'ga o'xshab
+// qolardi; ikki qatlam va gradient uni 24px da ham olov qilib ko'rsatadi.
 export function IcoFlame({ s = 26 }: { s?: number }) {
   return (
     <svg width={s} height={s} viewBox="0 0 24 24">
-      <path d="M12 2.5c.5 3-1 4.6-2.6 6.2C7.7 10.4 6 12.2 6 15a6 6 0 0 0 12 0c0-2.2-1-4-2.2-5.6C14.4 7.5 13 5.5 12 2.5Z" fill="#f4511e" />
-      <path d="M12 2.5c.5 3-1 4.6-2.6 6.2C7.7 10.4 6 12.2 6 15a6 6 0 0 0 12 0c0-2.2-1-4-2.2-5.6C14.4 7.5 13 5.5 12 2.5Z" fill="#ff7a2f" opacity="0.55" />
-      <path d="M12 10.5c.3 1.6-.6 2.5-1.4 3.4-.7.8-1.4 1.6-1.4 2.8a2.9 2.9 0 0 0 5.8 0c0-1.1-.5-1.9-1.1-2.8-.7-1-1.5-2-1.9-3.4Z" fill="#ffc93c" />
+      <defs>
+        <linearGradient id="glFlameBody" x1="0.5" y1="0" x2="0.5" y2="1">
+          <stop offset="0%" stopColor="#ff8a1f" />
+          <stop offset="55%" stopColor="#f4501a" />
+          <stop offset="100%" stopColor="#e02b1d" />
+        </linearGradient>
+        <linearGradient id="glFlameCore" x1="0.5" y1="0" x2="0.5" y2="1">
+          <stop offset="0%" stopColor="#ffe27a" />
+          <stop offset="100%" stopColor="#ffa41b" />
+        </linearGradient>
+      </defs>
+      {/* Tashqi olov — uchi o'ngga egilgan, chap qirrasi to'lqinli */}
+      <path
+        d="M13.4 1.8c.6 2.6-.2 4.2-1.6 5.7C10 9.4 7.7 10.8 6.6 13c-1.5 3-.5 6.6 2.2 8.3 3.1 2 7.6 1 9.4-2.2 1.5-2.7.9-5.6-.7-7.9-.4-.6-.9-1.2-1.5-1.7-.2 1.1-.8 1.9-1.7 2.4.9-3.6.3-7.1-1-10.1Z"
+        fill="url(#glFlameBody)"
+      />
+      {/* Ichki yadro */}
+      <path
+        d="M12.3 11.2c.4 1.8-.5 2.9-1.4 3.9-.8.9-1.4 1.7-1.4 2.9a3 3 0 0 0 6 .1c0-1.2-.5-2-1.3-3-.8-1-1.6-2.2-1.9-3.9Z"
+        fill="url(#glFlameCore)"
+      />
     </svg>
   );
 }

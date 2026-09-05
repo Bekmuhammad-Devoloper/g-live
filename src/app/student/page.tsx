@@ -12,7 +12,7 @@ import { coinBalance, starBalance } from "@/lib/coins";
 import { studentRank } from "@/lib/rank";
 import { getActiveBanners, getActiveVideos, videoThumb } from "@/lib/portalContent";
 import BannerCarousel from "./BannerCarousel";
-import { CARD, CoinGold, FlagAvatar, IcoBell, IcoBook, IcoFlame, NAVY, Ring, TEAL, isAttended } from "./_ui";
+import { CARD, CoinGold, FlagAvatar, IcoBell, IcoBook, IcoFlame, INK, NAVY, Ring, TEAL, isAttended } from "./_ui";
 import MissingStudent from "./MissingStudent";
 
 // O'quvchi "Start" ekrani — berilgan maket bilan birma-bir.
@@ -380,24 +380,24 @@ export default async function StudentStartPage() {
             bir xil ko'rinish va bir xil tartibda. `relative` shart: nuqta
             qo'ng'iroqning o'zida turishi kerak, aks holda u eng yaqin
             joylashtirilgan ota-elementga nisbatan suzib ketadi. */}
+        {/* Seriya — har kuni ko'rinib tursin: pastdagi plitkalargacha
+            aylantirmasdan ham necha kun ketma-ket kelgani bilinadi. */}
+        <div className="gl-glass flex h-11 shrink-0 items-center gap-1.5 rounded-2xl px-3">
+          <IcoFlame s={26} />
+          <div className="leading-none">
+            <div className="text-[17px] font-extrabold tabular-nums text-slate-900">{streak}</div>
+            <div className="mt-[3px] text-[10px] font-semibold text-slate-500">{t.day}</div>
+          </div>
+        </div>
         {notifOn && (
         <Link href="/student/mitteilungen" aria-label={t.notifications} className="gl-glass relative grid h-11 w-11 shrink-0 place-items-center rounded-2xl">
-          <IcoBell s={26} />
+          <IcoBell c={INK} s={25} />
           {/* bildirishnoma nuqtasi — faqat o'qilmagan xabar bo'lsa */}
           {unread > 0 && (
             <span className="absolute right-[9px] top-[9px] h-[9px] w-[9px] rounded-full ring-2 ring-white" style={{ background: "#f4511e" }} />
           )}
         </Link>
         )}
-        {/* Seriya — har kuni ko'rinib tursin: pastdagi plitkalargacha
-            aylantirmasdan ham necha kun ketma-ket kelgani bilinadi. */}
-        <div className="gl-glass flex h-11 shrink-0 items-center gap-1.5 rounded-2xl px-3">
-          <IcoFlame s={24} />
-          <div className="leading-none">
-            <div className="text-[16px] font-extrabold tabular-nums text-slate-900">{streak}</div>
-            <div className="mt-[3px] text-[10px] font-semibold text-slate-500">{t.day}</div>
-          </div>
-        </div>
       </div>
 
       {/* ── 4 ko'nikma kartasi ── */}
