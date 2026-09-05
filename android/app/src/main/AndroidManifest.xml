@@ -56,7 +56,5 @@
         Android 10 (API 29) dan boshlab bu ruxsat KERAK EMAS — tizim
         papkaga o'zi yozadi. Faqat eski telefonlar uchun so'raladi.
     -->
-    <uses-permission
-        android:name="android.permission.WRITE_EXTERNAL_STORAGE"
-        android:maxSdkVersion="28" />
+    <uses-permission android:name="android.permission.WRITE_EXTERNAL_STORAGE" android:maxSdkVersion="28" />
 </manifest>

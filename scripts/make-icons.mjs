@@ -1,33 +1,39 @@
-// Ilova ikonkalari — PWA va Android (TWA/APK) uchun.
+// Ilova ikonkalari — PWA va Android (Capacitor) uchun.
 //
 //   node scripts/make-icons.mjs
 //
-// MUHIM: ilova ikonkasi WORDMARK BO'LMAYDI. Ilgari bu skript butun
-// gorizontal logotipni (1979x757, "G" + GERMANIYA LIVE yozuvi) kvadratga
-// siqardi: launcher'da 48dp da yozuv o'qilmasdi, qora matn to'q feruzada
-// yo'qolardi va atrofi bo'm-bo'sh qolardi — ikonka "buzuq" ko'rinardi.
+// Ikonka — TO'LIQ LOGOTIP: "G + burgut" monogrammasi va "GERMANIYA LIVE"
+// yozuvi birga, feruza gradient fonda. Foydalanuvchi shuni so'radi
+// (2026-09-05): "ilova ikonasi Germaniya Live logotipi bo'lsin, orqasi
+// hozirgidek feruza".
 //
-// Endi logotipdan faqat "G + burgut" MONOGRAMMASI olinadi. U kvadratga
-// yaqin, o'ziga xos va kichik o'lchamda ham tanilib turadi.
+// Manba — public/logo-dark.png. Bu public/logo.png ning aynan o'zi, faqat
+// yozuvi OQ: to'q feruzada qora yozuv yo'qolib ketardi, oq esa aniq
+// ko'rinadi. (Ilgari shu sababdan faqat monogramma ishlatilgan edi; endi
+// oq yozuvli manba borligi uchun to'liq logotip ham o'qiladi.)
 //
-// Monogramma qo'lda kesilmaydi — skript uni RANG bo'yicha topadi: monogramma
-// to'q sariq/qizil, yozuv esa qora. Shu sabab logotip yangilansa ham ishlaydi.
+// Logotip qo'lda kesilmaydi — skript uning chegarasini shaffof bo'lmagan
+// piksellar bo'yicha topadi. Manba fayl yangilansa ham ishlayveradi.
+//
+// Logotip 2.6:1 nisbatda (eni bo'yidan ancha katta). Kvadrat ikonkada u
+// eni bo'yicha to'ldiradi va tepa-pastda bo'sh joy qoladi — bu normal,
+// gradient fon shu joyni "dizayn" qilib ko'rsatadi.
 
 import sharp from "sharp";
 import { mkdir } from "node:fs/promises";
 
-const SRC = "public/logo.png";
+const SRC = "public/logo-dark.png";
 const OUT = "public/icons";
 
-// Fon — brend feruzasining chuqur varianti. To'q sariq monogramma unda
-// yorqin ko'rinadi; tekis rang o'rniga gradient + yumshoq nur beriladi.
+// Fon — brend feruzasining chuqur varianti. To'q sariq monogramma va oq
+// yozuv unda yorqin ko'rinadi; tekis rang o'rniga gradient + yumshoq nur.
 const BG_TOP = "#12708c";
 const BG_BOTTOM = "#0a3b4c";
 
 await mkdir(OUT, { recursive: true });
 
-/** Logotipdagi rangli (to'q sariq) monogramma chegarasini topadi */
-async function monogramBox() {
+/** Logotipning shaffof bo'lmagan qismi chegarasi */
+async function logoBox() {
   const { data, info } = await sharp(SRC).ensureAlpha().raw().toBuffer({ resolveWithObject: true });
   const { width: W, height: H, channels: C } = info;
 
@@ -35,39 +41,34 @@ async function monogramBox() {
   for (let y = 0; y < H; y++) {
     for (let x = 0; x < W; x++) {
       const i = (y * W + x) * C;
-      const [r, g, b, a] = [data[i], data[i + 1], data[i + 2], data[i + 3]];
-      if (a < 40) continue;
-      // To'q sariq/qizil: qizil kanal ko'k kanaldan sezilarli baland.
-      // Qora yozuvda uch kanal ham deyarli teng, shu sabab u tushib qoladi.
-      if (r > 110 && r - b > 55 && r >= g - 10) {
-        n++;
-        if (x < x0) x0 = x;
-        if (x > x1) x1 = x;
-        if (y < y0) y0 = y;
-        if (y > y1) y1 = y;
-      }
+      if (data[i + 3] < 40) continue;
+      n++;
+      if (x < x0) x0 = x;
+      if (x > x1) x1 = x;
+      if (y < y0) y0 = y;
+      if (y > y1) y1 = y;
     }
   }
-  if (n < 500) throw new Error("monogramma topilmadi — logotip ranglari o'zgardimi?");
+  if (n < 500) throw new Error("logotip topilmadi — manba fayl bo'shmi?");
   return { left: x0, top: y0, width: x1 - x0 + 1, height: y1 - y0 + 1, pixels: n };
 }
 
-const box = await monogramBox();
-console.log(`monogramma: ${box.width}x${box.height} @ ${box.left},${box.top} (${box.pixels} piksel)`);
+const box = await logoBox();
+console.log(`logotip: ${box.width}x${box.height} @ ${box.left},${box.top} (${box.pixels} piksel)`);
 
-// Monogrammani bir marta kesib, shaffof fonli buferga olamiz
+// Logotipni bir marta kesib, shaffof fonli buferga olamiz
 const mark = await sharp(SRC)
   .extract({ left: box.left, top: box.top, width: box.width, height: box.height })
   .png()
   .toBuffer();
 
 /** Gradient fon (SVG) — sharp uni to'g'ridan-to'g'ri rasterlaydi */
-const background = (size) => Buffer.from(`
+const background = (size, top = BG_TOP, bottom = BG_BOTTOM) => Buffer.from(`
 <svg xmlns="http://www.w3.org/2000/svg" width="${size}" height="${size}">
   <defs>
     <linearGradient id="g" x1="0" y1="0" x2="0.35" y2="1">
-      <stop offset="0%" stop-color="${BG_TOP}"/>
-      <stop offset="100%" stop-color="${BG_BOTTOM}"/>
+      <stop offset="0%" stop-color="${top}"/>
+      <stop offset="100%" stop-color="${bottom}"/>
     </linearGradient>
     <radialGradient id="s" cx="0.3" cy="0.22" r="0.75">
       <stop offset="0%" stop-color="#ffffff" stop-opacity="0.20"/>
@@ -79,39 +80,38 @@ const background = (size) => Buffer.from(`
 </svg>`);
 
 /**
- * @param size    kvadrat tomoni
- * @param ratio   monogramma egallaydigan ulush (maskable'da kichikroq)
- * @param name    fayl nomi
+ * Logotipni berilgan ENGA moslab, kvadrat markaziga qo'yadi.
+ * @param base   fon buferi (gradient yoki shaffof)
+ * @param size   kvadrat tomoni
+ * @param ratio  logotip eni kvadrat enining qancha ulushi
  */
-async function make(size, ratio, name) {
-  const target = Math.round(size * ratio);
-  // Monogramma bo'yi enidan uzunroq, shuning uchun "inside": ikkala o'lcham
-  // ham chegaradan chiqmaydi va nisbat saqlanadi.
-  const logo = await sharp(mark).resize({ width: target, height: target, fit: "inside" }).toBuffer();
+async function place(base, size, ratio) {
+  const logo = await sharp(mark).resize({ width: Math.round(size * ratio), fit: "inside" }).toBuffer();
   const lm = await sharp(logo).metadata();
-
-  await sharp(background(size))
-    .composite([{
-      input: logo,
-      top: Math.round((size - (lm.height ?? 0)) / 2),
-      left: Math.round((size - (lm.width ?? 0)) / 2),
-    }])
-    .png()
-    .toFile(`${OUT}/${name}`);
-  console.log(`${name}  ${size}x${size}  monogramma ${lm.width}x${lm.height}`);
+  return sharp(base).composite([{
+    input: logo,
+    top: Math.round((size - (lm.height ?? 0)) / 2),
+    left: Math.round((size - (lm.width ?? 0)) / 2),
+  }]);
 }
 
-// "any" — ikonka to'liq ko'rinadi, monogramma kattaroq bo'lishi mumkin
-await make(192, 0.66, "icon-192.png");
-await make(512, 0.66, "icon-512.png");
+async function make(size, ratio, name) {
+  await (await place(background(size), size, ratio)).png().toFile(`${OUT}/${name}`);
+  console.log(`${name}  ${size}x${size}  logotip eni ${Math.round(ratio * 100)}%`);
+}
+
+// ── PWA / brauzer ikonkalari ──
+// "any" — ikonka to'liq ko'rinadi, logotip kengroq bo'lishi mumkin
+await make(192, 0.86, "icon-192.png");
+await make(512, 0.86, "icon-512.png");
 
 // "maskable" — Android ikonkani doira/kvadrat qilib QIRQADI. Xavfsiz zona
-// markazdagi 80% doira; monogramma unga bemalol sig'ishi uchun 0.5.
-await make(192, 0.5, "maskable-192.png");
-await make(512, 0.5, "maskable-512.png");
+// markazdagi 80% doira; keng logotip unga sig'ishi uchun 0.68.
+await make(192, 0.68, "maskable-192.png");
+await make(512, 0.68, "maskable-512.png");
 
 // Apple "bosh ekranga qo'shish" — shaffof fon ishlatmaydi, radiusni o'zi qo'yadi
-await make(180, 0.66, "apple-touch-icon.png");
+await make(180, 0.86, "apple-touch-icon.png");
 
 // ────────────────────────────────────────────────────────────────────
 // Capacitor (Android ilovasi) uchun manba rasmlar
@@ -119,55 +119,41 @@ await make(180, 0.66, "apple-touch-icon.png");
 // @capacitor/assets shu papkadan o'qib, Android talab qiladigan o'nlab
 // o'lchamni (mdpi...xxxhdpi, adaptiv ikonka, splash) o'zi yasaydi.
 //
-// Android 8 dan beri ikonka ADAPTIV: tizim old qatlamni orqa qatlam
-// ustiga qo'yib, qurilma shakli bo'yicha (doira, kvadrat, tomchi)
-// qirqadi. Shu sabab old qatlam SHAFFOF fonli va markazda kichikroq
-// bo'lishi kerak — chetlari qirqilib ketmasin.
+// Android 8 dan beri ikonka ADAPTIV: 108dp kanvasdan tizim markazdagi
+// ~72dp ni ko'rsatadi va qurilma shakli bo'yicha (doira, kvadrat, tomchi)
+// qirqadi. Ya'ni 108 kanvasdagi 0.56 ulush = ko'rinadigan 72 ning 0.84
+// ulushi. Doira maskada ham sig'adi: logotip bo'yi eni ning 26% i,
+// shuning uchun uning yuqori-pastki chetlari doira qirrasidan ancha ichkarida.
+//
+// DIQQAT: @capacitor/assets adaptiv XML ga qo'shimcha <inset 16.7%> qo'yadi
+// va ikonkani yana kichraytiradi — scripts/fix-adaptive-icon.mjs uni olib
+// tashlaydi (npm run app:icons ichida avtomatik).
 // ────────────────────────────────────────────────────────────────────
 
 const CAP = "capacitor/assets";
 await mkdir(CAP, { recursive: true });
 
-/** To'liq ikonka (fon + monogramma) — 1024px, adaptiv bo'lmagan joylar uchun */
-async function capIcon() {
-  const size = 1024;
-  const target = Math.round(size * 0.66);
-  const logo = await sharp(mark).resize({ width: target, height: target, fit: "inside" }).toBuffer();
-  const lm = await sharp(logo).metadata();
-  await sharp(background(size))
-    .composite([{ input: logo, top: Math.round((size - (lm.height ?? 0)) / 2), left: Math.round((size - (lm.width ?? 0)) / 2) }])
-    .png()
-    .toFile(`${CAP}/icon.png`);
-  console.log(`capacitor/assets/icon.png  ${size}x${size}`);
-}
+const S = 1024;
+const transparent = { create: { width: S, height: S, channels: 4, background: { r: 0, g: 0, b: 0, alpha: 0 } } };
 
-/** Adaptiv ikonkaning old qatlami — shaffof fon, xavfsiz zonada monogramma */
-async function capForeground() {
-  const size = 1024;
-  // 0.45: adaptiv ikonkada tashqi ~33% qirqilishi mumkin, monogramma
-  // markazdagi xavfsiz doiradan chiqmasligi shart.
-  const target = Math.round(size * 0.45);
-  const logo = await sharp(mark).resize({ width: target, height: target, fit: "inside" }).toBuffer();
-  const lm = await sharp(logo).metadata();
-  await sharp({ create: { width: size, height: size, channels: 4, background: { r: 0, g: 0, b: 0, alpha: 0 } } })
-    .composite([{ input: logo, top: Math.round((size - (lm.height ?? 0)) / 2), left: Math.round((size - (lm.width ?? 0)) / 2) }])
-    .png()
-    .toFile(`${CAP}/icon-foreground.png`);
-  console.log(`capacitor/assets/icon-foreground.png  ${size}x${size}`);
-}
+// To'liq ikonka (fon + logotip) — adaptiv bo'lmagan joylar uchun
+await (await place(background(S), S, 0.86)).png().toFile(`${CAP}/icon.png`);
+console.log(`capacitor/assets/icon.png  ${S}x${S}`);
 
-/** Adaptiv ikonkaning orqa qatlami — faqat gradient */
-async function capBackground() {
-  const size = 1024;
-  await sharp(background(size)).png().toFile(`${CAP}/icon-background.png`);
-  console.log(`capacitor/assets/icon-background.png  ${size}x${size}`);
-}
+// Adaptiv old qatlam — shaffof fon, 108 kanvasning 56% i (= ko'rinadigan 72 ning 84% i)
+await (await place(transparent, S, 0.56)).png().toFile(`${CAP}/icon-foreground.png`);
+console.log(`capacitor/assets/icon-foreground.png  ${S}x${S}`);
+
+// Adaptiv orqa qatlam — faqat gradient
+await sharp(background(S)).png().toFile(`${CAP}/icon-background.png`);
+console.log(`capacitor/assets/icon-background.png  ${S}x${S}`);
 
 /**
  * Ochilish ekrani — 2732x2732 kvadrat.
  * Android uni CENTER_CROP bilan ko'rsatadi: telefon qanday nisbatda
- * bo'lmasin, markaz doim ko'rinadi. Shu sabab monogramma kichik (12%)
- * va qat'iy markazda — hech qaysi qurilmada kesilmaydi.
+ * bo'lmasin, markaz doim ko'rinadi. Shu sabab logotip ixcham (eni 34%)
+ * va qat'iy markazda — hech qaysi qurilmada kesilmaydi. Nur (radial)
+ * splash'da yo'q — tekis gradient.
  */
 async function capSplash(name, top, bottom) {
   const size = 2732;
@@ -181,19 +167,10 @@ async function capSplash(name, top, bottom) {
   </defs>
   <rect width="${size}" height="${size}" fill="url(#g)"/>
 </svg>`);
-  const target = Math.round(size * 0.12);
-  const logo = await sharp(mark).resize({ width: target, height: target, fit: "inside" }).toBuffer();
-  const lm = await sharp(logo).metadata();
-  await sharp(bg)
-    .composite([{ input: logo, top: Math.round((size - (lm.height ?? 0)) / 2), left: Math.round((size - (lm.width ?? 0)) / 2) }])
-    .png()
-    .toFile(`${CAP}/${name}`);
+  await (await place(bg, size, 0.34)).png().toFile(`${CAP}/${name}`);
   console.log(`capacitor/assets/${name}  ${size}x${size}`);
 }
 
-await capIcon();
-await capForeground();
-await capBackground();
 await capSplash("splash.png", "#12708c", "#0a3b4c");
 // Qorong'i rejim uchun to'qroq variant
 await capSplash("splash-dark.png", "#0a3b4c", "#062634");

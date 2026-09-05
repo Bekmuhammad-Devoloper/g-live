@@ -1,6 +1,7 @@
 package live.germaniya.app;
 
-import android.view.WindowManager;
+import android.app.Activity;
+import android.webkit.WebView;
 
 import com.getcapacitor.Plugin;
 import com.getcapacitor.PluginCall;
@@ -8,51 +9,41 @@ import com.getcapacitor.PluginMethod;
 import com.getcapacitor.annotation.CapacitorPlugin;
 
 /**
- * Ekranni himoyalash — dars videolarini yozib olish va skrinshot qilishni
- * to'sadi.
+ * Veb tomon uchun ko'prik: "video ochildi" → himoya yoq, "yopildi" → o'chir.
  *
- * Android'da buni FLAG_SECURE bayrog'i qiladi. U yoqilganda:
- *   · skrinshot olinmaydi (tizim "ruxsat berilmagan" deb xabar beradi)
- *   · ekran yozuvida bu oyna qora bo'lib chiqadi
- *   · oxirgi ilovalar ro'yxatida ham mazmun ko'rinmaydi
- *   · tashqi ekranga (HDMI, translatsiya) uzatilmaydi
+ * Asosiy himoya MainActivity da, sahifa manzili bo'yicha (ScreenGuard
+ * sinfiga qarang) — u JS ga bog'liq emas. Bu plagin unga QO'SHIMCHA:
+ * kelajakda boshqa sahifada ham vaqtincha himoya kerak bo'lsa, veb tomon
+ * shu orqali so'raydi.
  *
- * Bayroq BUTUN oynaga tegishli, shu sabab uni faqat video ochilganda
- * yoqamiz va yopilganda darhol o'chiramiz — o'quvchi guvohnomasini yoki
- * natijasini skrinshot qilib ulasha olsin.
- *
- * Bayroqni asosiy (UI) oqimda o'zgartirish shart, aks holda Android
- * istisno ko'taradi — shuning uchun runOnUiThread.
+ * `disable()` himoyalangan sahifada turib chaqirilsa E'TIBORSIZ qoladi:
+ * o'quvchi videoni yopib, sahifada qolgan bo'lsa ham himoya turishi kerak
+ * (qoida — butun sahifa, faqat ochiq video emas).
  */
 @CapacitorPlugin(name = "ScreenGuard")
 public class ScreenGuardPlugin extends Plugin {
 
     @PluginMethod
     public void enable(PluginCall call) {
-        final android.app.Activity activity = getActivity();
-        if (activity == null) {
-            call.resolve();
-            return;
-        }
-        activity.runOnUiThread(() ->
-            activity.getWindow().setFlags(
-                WindowManager.LayoutParams.FLAG_SECURE,
-                WindowManager.LayoutParams.FLAG_SECURE
-            )
-        );
+        ScreenGuard.apply(getActivity(), true);
         call.resolve();
     }
 
     @PluginMethod
     public void disable(PluginCall call) {
-        final android.app.Activity activity = getActivity();
+        final Activity activity = getActivity();
         if (activity == null) {
             call.resolve();
             return;
         }
-        activity.runOnUiThread(() ->
-            activity.getWindow().clearFlags(WindowManager.LayoutParams.FLAG_SECURE)
-        );
+        // WebView.getUrl() faqat UI oqimida chaqiriladi
+        activity.runOnUiThread(() -> {
+            WebView webView = getBridge() != null ? getBridge().getWebView() : null;
+            String url = webView != null ? webView.getUrl() : null;
+            if (!ScreenGuard.isProtectedUrl(url)) {
+                ScreenGuard.apply(activity, false);
+            }
+        });
         call.resolve();
     }
 }

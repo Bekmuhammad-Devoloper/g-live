@@ -11,6 +11,7 @@ import PasswordForm from "../profil/PasswordForm";
 import LocalePicker from "./LocalePicker";
 import IdCard from "../IdCard";
 import SecretField from "./SecretField";
+import AppVersion from "./AppVersion";
 
 // Sozlamalar — Profil sarlavhasidagi tishli g'ildirak ostidagi sahifa.
 //
@@ -219,10 +220,9 @@ export default async function StudentSettingsPage() {
         </form>
       </div>
 
-      {/* Versiya — qo'llab-quvvatlashga murojaat qilganda so'raladi */}
-      <p className="pb-2 text-center text-[11.5px] text-slate-500">
-        {t.appVersion} 1.1.0
-      </p>
+      {/* Versiya — Android ilovasi o'zidan o'qiydi (APK ichidagi versionName),
+          brauzerda "veb". Qo'llab-quvvatlashga murojaat qilganda so'raladi. */}
+      <AppVersion label={t.appVersion} />
     </div>
   );
 }

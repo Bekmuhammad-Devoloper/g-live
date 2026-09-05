@@ -46,9 +46,11 @@ const config: CapacitorConfig = {
     backgroundColor: "#e4edf3",
   },
 
-  // Server "bu native ilova" ekanini bilishi uchun (masalan "ilovani
-  // yuklab oling" bannerini ko'rsatmaslik uchun) — User-Agent ga qo'shimcha
-  appendUserAgent: "GermaniyaLiveApp/2.0",
+  // User-Agent ga "GermaniyaLiveApp/<versiya>" qo'shimchasi bu yerda EMAS,
+  // MainActivity.java da qo'shiladi: u yerda versiya APK ning o'zidan
+  // o'qiladi va har yig'ishda o'zi yangilanadi. Bu yerda yozilsa qo'lda
+  // yangilab yurish kerak bo'lardi va server jurnalida hamma versiya bir
+  // xil ko'rinardi (aynan shu bo'ldi: "2.0" deb qotib qolgan edi).
 
   plugins: {
     SplashScreen: {
