@@ -2,6 +2,7 @@ import "server-only";
 import { prisma } from "./db";
 import { getPointRules, type CoinRuleKey, type PointKind } from "./coinRules";
 import { getProgressRules } from "./progressRules";
+import { getActiveStarRanks, rankReward, ranksGained } from "./starRanks";
 
 // Tanga va yulduz — o'quvchining faolligi uchun beriladigan ballar.
 //
@@ -16,7 +17,11 @@ import { getProgressRules } from "./progressRules";
 
 export const ATTENDED = ["PRESENT", "LATE", "ONLINE", "MAKEUP"];
 
-export type CoinLine = { key: CoinRuleKey; count: number; per: number; total: number };
+/** "rankUp" — yulduz pog'onasiga chiqqani uchun mukofot (qoidalar jadvalida yo'q) */
+export type CoinLineKey = CoinRuleKey | "rankUp";
+/** `per` — bir hodisaga necha ball. Pog'ona mukofoti har pog'onada har xil,
+ *  shuning uchun u yerda null bo'ladi va faqat jami ko'rsatiladi. */
+export type CoinLine = { key: CoinLineKey; count: number; per: number | null; total: number };
 export type CoinBalance = {
   earned: number;
   spent: number;
@@ -102,7 +107,12 @@ async function pointEvents(studentId: string): Promise<Events> {
 export const POINT_ORDER: CoinRuleKey[] = ["lesson", "lessonView", "homework", "perfect", "gameWin", "streak7", "levelUp"];
 
 async function balanceOf(studentId: string, kind: PointKind): Promise<CoinBalance> {
-  const [rules, ev] = await Promise.all([getPointRules(kind), pointEvents(studentId)]);
+  const [rules, starRules, ev, ranks] = await Promise.all([
+    getPointRules(kind),
+    getPointRules("star"),
+    pointEvents(studentId),
+    getActiveStarRanks(),
+  ]);
 
   const lines: CoinLine[] = POINT_ORDER.map((k) => ({
     key: k,
@@ -110,6 +120,14 @@ async function balanceOf(studentId: string, kind: PointKind): Promise<CoinBalanc
     per: rules[k],
     total: ev[k] * rules[k],
   }));
+
+  // Yulduz pog'onasi. Yulduz hisobi SHU qatorsiz olinadi — aks holda
+  // "pog'ona -> yulduz -> pog'ona" halqasi hosil bo'lardi. Shu sabab
+  // pog'ona faqat TANGA beradi, yulduz emas.
+  if (kind === "coin") {
+    const stars = POINT_ORDER.reduce((n, k) => n + ev[k] * starRules[k], 0);
+    lines.push({ key: "rankUp", count: ranksGained(ranks, stars), per: null, total: rankReward(ranks, stars) });
+  }
 
   const earned = lines.reduce((n, l) => n + l.total, 0);
   // Yulduz sarflanmaydi — faqat tangada Market xarajati ayriladi

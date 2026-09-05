@@ -15,7 +15,7 @@ export interface RuleSlide {
   key: string;
   label: string;   // "Dars videosini ko'rgani"
   hint: string;    // "Dars videosini oxirigacha ko'rsangiz"
-  per: number;     // bir marta uchun nechta tanga
+  per: number | null; // bir marta uchun nechta tanga (pog'ona mukofoti har xil — null)
   count: number;   // necha marta bajarilgan
   total: number;   // jami yig'ilgan
 }
@@ -45,13 +45,16 @@ function Ico({ name, s = 26 }: { name: string; s?: number }) {
   if (name === "streak7") return (
     <svg width={s} height={s} viewBox="0 0 24 24"><path d="M12 2.5c.5 3-1 4.6-2.6 6.2C7.7 10.4 6 12.2 6 15a6 6 0 0 0 12 0c0-2.2-1-4-2.2-5.6C14.4 7.5 13 5.5 12 2.5Z" fill="white" /></svg>
   );
+  if (name === "rankUp") return (
+    <svg {...base}><path d="M4 20.5h4.5v-6H4v6ZM9.8 20.5h4.4V9h-4.4v11.5ZM15.5 20.5H20V4h-4.5v16.5Z" /><path d="m12 2.2.9 1.9 2 .3-1.5 1.4.4 2-1.8-1-1.8 1 .4-2L9.1 4.4l2-.3.9-1.9Z" fill="white" stroke="none" /></svg>
+  );
   // levelUp
   return (
     <svg {...base}><path d="M4 19.5h16" /><path d="m5.5 15 4-4.5 3 2.5 5.5-6" /><path d="M14.5 6.5h3.6v3.6" /></svg>
   );
 }
 
-export default function CoinRules({ slides, title, timesLabel }: { slides: RuleSlide[]; title: string; timesLabel: string }) {
+export default function CoinRules({ slides, title, timesLabel, totalLabel }: { slides: RuleSlide[]; title: string; timesLabel: string; totalLabel: string }) {
   const [i, setI] = useState(0);
   const [auto, setAuto] = useState(true);
   const trackRef = useRef<HTMLDivElement | null>(null);
@@ -123,9 +126,13 @@ export default function CoinRules({ slides, title, timesLabel }: { slides: RuleS
                   ) : null}
                 </div>
 
-                {/* Bir marta uchun qancha berilishi */}
+                {/* Bir marta uchun qancha berilishi. Pog'ona mukofoti har
+                    pog'onada har xil — u yerda jami ko'rsatiladi. */}
                 <span className="shrink-0 rounded-2xl bg-white/20 px-3 py-2 text-center backdrop-blur-sm">
-                  <span className="block text-[19px] font-extrabold leading-none">+{s.per}</span>
+                  <span className="block text-[19px] font-extrabold leading-none">+{s.per ?? s.total}</span>
+                  {s.per === null ? (
+                    <span className="mt-0.5 block text-[9.5px] font-semibold uppercase tracking-wide text-white/70">{totalLabel}</span>
+                  ) : null}
                 </span>
               </div>
             </div>

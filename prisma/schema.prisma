@@ -482,6 +482,27 @@ model StudentLevelUp {
   @@index([studentId])
 }
 
+// Yulduz darajalari — o'quvchi yulduz yig'ib ko'tariladigan pog'onalar.
+// StudyLevel (A1/A2) dan MUTLAQO boshqa narsa: u kurs darajasi, bu esa
+// o'yin darajasi. Har pog'onaga chiqqanda `reward` tanga beriladi.
+// Boshqaruvi: Sozlamalar > Yulduz darajalari (direktor va menejer).
+model StarRank {
+  id        String  @id @default(cuid())
+  nameUz    String
+  nameRu    String
+  nameEn    String
+  nameDe    String
+  stars     Int     @default(0) // shu pog'onaga chiqish uchun kerak yulduz
+  reward    Int     @default(0) // ko'tarilgani uchun beriladigan tanga
+  color     String  @default("#0e7490")
+  isActive  Boolean @default(true)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([stars])
+}
+
 model StudyLevel {
   id        String  @id @default(cuid())
   code      String  @unique // A1, A2, B1.1 ...

@@ -10,6 +10,7 @@ import { getStudentProgress } from "@/lib/studentProgress";
 import { getActiveLevels, levelTitle, matchLevel } from "@/lib/studyLevels";
 import { coinBalance, starBalance } from "@/lib/coins";
 import { studentRank } from "@/lib/rank";
+import { getActiveStarRanks, progressOf, rankName } from "@/lib/starRanks";
 import { getActiveBanners, getActiveVideos, videoThumb } from "@/lib/portalContent";
 import BannerCarousel from "./BannerCarousel";
 import { CARD, CoinGold, FlagAvatar, IcoBell, IcoBook, IcoFlame, INK, NAVY, Ring, TEAL, isAttended } from "./_ui";
@@ -108,23 +109,24 @@ function IcoStarGold({ s = 24 }: { s?: number }) {
   );
 }
 
-// Seriya — olov. Oq holida feruza doira ichida SUV TOMCHISIGA o'xshab
-// qolgan edi: uchi tik va simmetrik edi. Endi uchi o'ngga egilgan, ichida
-// yorqin yadro bor va rangi tilla — olov ekani bir qarashda o'qiladi.
-function IcoFlameGold({ s = 24 }: { s?: number }) {
+// Yulduz pog'onasi — medal. Ichida yulduz bor: pog'ona aynan yulduz
+// yig'ib ochilishi bir qarashda o'qilsin.
+function IcoMedalGold({ s = 26 }: { s?: number }) {
   return (
     <svg width={s} height={s} viewBox="0 0 24 24">
       <defs>
-        <linearGradient id="glFlameGold" x1="0.3" y1="0" x2="0.7" y2="1">
+        <linearGradient id="glMedalGold" x1="0.25" y1="0" x2="0.75" y2="1">
           <stop offset="0%" stopColor="#ffe9a3" />
           <stop offset="52%" stopColor="#fbc63f" />
           <stop offset="100%" stopColor="#ef9f21" />
         </linearGradient>
       </defs>
-      <path d="M13.1 2.2c.9 2.9-.4 4.4-2 6C9.2 10 7 11.9 7 14.9a5.9 5.9 0 0 0 11.8.4c.1-2.3-.9-4-2-5.6-.4 1-1.1 1.7-2 2.1.6-3.3-.4-6.5-1.7-9.6Z"
-        fill="url(#glFlameGold)" stroke="#fff7de" strokeOpacity="0.55" strokeWidth="0.8" strokeLinejoin="round" />
-      <path d="M12.4 11.4c.4 1.6-.5 2.5-1.2 3.4-.6.8-1.1 1.5-1.1 2.5a2.7 2.7 0 0 0 5.4.1c0-1-.5-1.8-1.1-2.6-.7-.9-1.6-1.9-2-3.4Z"
-        fill="#fff6d8" fillOpacity="0.9" />
+      {/* Lentalar */}
+      <path d="M8.2 2.5h3L8.6 8.2 5.6 6.9 8.2 2.5Zm7.6 0h-3l2.6 5.7 3-1.3-2.6-4.4Z" fill="#fff" fillOpacity="0.85" />
+      {/* Disk */}
+      <circle cx="12" cy="15" r="6.6" fill="url(#glMedalGold)" stroke="#fff7de" strokeOpacity="0.6" strokeWidth="0.9" />
+      {/* Ichidagi yulduz */}
+      <path d="M12 11.3l1.16 2.35 2.59.38-1.87 1.82.44 2.58L12 17.2l-2.32 1.23.44-2.58-1.87-1.82 2.59-.38L12 11.3Z" fill="#fff8e1" />
     </svg>
   );
 }
@@ -299,15 +301,18 @@ export default async function StudentStartPage() {
   // ── Tanga / seriya ──
   // Hisob bitta joyda (src/lib/coins.ts) — Market va Sozlamalar bilan bir xil
   const notifOn = await isPortalFeatureOn("mitteilungen"); // o'chirilgan bo'lsa qo'ng'iroqcha yo'q
-  const [purse, starPurse, banners, videoList] = await Promise.all([
+  const [purse, starPurse, banners, videoList, starRanks] = await Promise.all([
     coinBalance(student.id),
     starBalance(student.id),
     getActiveBanners(),
     getActiveVideos(),
+    getActiveStarRanks(),
   ]);
   const coins = purse.balance;
   const stars = starPurse.earned; // yulduz sarflanmaydi
   const streak = purse.streak;
+  // Yulduz pog'onasi — plitkada nomi turadi, batafsili /student/daraja da
+  const starStep = progressOf(starRanks, starPurse.earned);
 
   // Kartada oxirgi videoning rasmi turadi. Vimeo rasm bermaydi — shuning uchun
   // rasmi bori topilguncha oxiridan boshlab qaraymiz, topilmasa chizma qoladi.
@@ -497,7 +502,17 @@ export default async function StudentStartPage() {
           // Tanga — doira ichidagi belgi emas, tanganing o'zi (shu sabab `bare`)
           { icon: <CoinGold s={46} />, bare: true, label: t.coins, value: String(coins) },
           { icon: <IcoStarGold />, bare: false, label: t.stars, value: String(stars) },
-          { icon: <IcoFlameGold />, bare: false, label: t.streak, value: String(streak) },
+          // Seriya yuqori qatorga (olov belgisiga) ko'chdi — bu yerda uning
+          // o'rnida yulduz pog'onasi turadi: o'quvchi qaysi bosqichdaligi
+          // raqamdan ko'ra ko'proq narsa aytadi.
+          {
+            icon: <IcoMedalGold />,
+            bare: false,
+            label: t.starRank,
+            value: starStep.current ? rankName(starStep.current, session.locale) : "—",
+            small: true,
+            href: "/student/daraja",
+          },
           { icon: <IcoGrowthGold />, bare: false, label: t.rank, value: String(rangPos), href: "/student/reyting" },
         ].map((it) => {
           const inner = (
@@ -515,7 +530,14 @@ export default async function StudentStartPage() {
                 </span>
               )}
               <span className="text-[11.5px] font-semibold leading-none text-slate-600">{it.label}</span>
-              <span className="whitespace-nowrap text-[21px] font-extrabold leading-none text-slate-900">{it.value}</span>
+              <span
+                className={
+                  "w-full truncate px-0.5 text-center font-extrabold leading-none text-slate-900 " +
+                  (it.small ? "text-[13px]" : "text-[21px]")
+                }
+              >
+                {it.value}
+              </span>
             </>
           );
           const cls = `${card} flex flex-col items-center gap-2 rounded-[22px] px-1 pb-3 pt-3`;

@@ -27,6 +27,7 @@ const RULE_LABEL = (t: StudentStrings, k: string) =>
   : k === "perfect" ? t.rulePerfect
   : k === "gameWin" ? t.ruleGameWin
   : k === "streak7" ? t.ruleStreak
+  : k === "rankUp" ? t.ruleRankUp
   : t.ruleLevelUp;
 
 // Qoida kaliti -> qisqa tushuntirish (aylanuvchi banner uchun)
@@ -37,6 +38,7 @@ const RULE_HINT = (t: StudentStrings, k: string) =>
   : k === "perfect" ? t.hintPerfect
   : k === "gameWin" ? t.hintGameWin
   : k === "streak7" ? t.hintStreak
+  : k === "rankUp" ? t.hintRankUp
   : t.hintLevelUp;
 
 export default async function StudentMarketPage() {
@@ -157,7 +159,7 @@ export default async function StudentMarketPage() {
       </div>
 
       {/* ── Tangani qanday yig'asiz — birin-ketin aylanadigan banner ── */}
-      <CoinRules slides={slides} title={t.coinRule} timesLabel={t.timesEarned} />
+      <CoinRules slides={slides} title={t.coinRule} timesLabel={t.timesEarned} totalLabel={t.inTotal} />
 
       {/* ── Vitrina ── */}
       <div className="flex items-baseline justify-between px-1">
