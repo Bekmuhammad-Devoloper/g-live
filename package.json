@@ -14,7 +14,7 @@
     "postinstall": "prisma generate",
     "sync-cdr": "node --env-file=.env scripts/sync-cdr.mjs",
     "app:sync": "cap sync android",
-    "app:icons": "node scripts/make-icons.mjs && npx -y @capacitor/assets@latest generate --android --assetPath capacitor/assets"
+    "app:icons": "node scripts/make-icons.mjs && npx -y @capacitor/assets@latest generate --android --assetPath capacitor/assets && node scripts/fix-adaptive-icon.mjs"
   },
   "prisma": {
     "seed": "tsx prisma/seed.ts"

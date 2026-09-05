@@ -1,6 +1,7 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
+import { protectScreen, unprotectScreen } from "@/lib/screenGuard";
 
 // Ro'yxatdagi bitta material. Bosilguncha faqat rasm turadi —
 // shu bilan sahifada o'nlab YouTube pleyeri birdan yuklanmaydi.
@@ -17,6 +18,15 @@ export type VVideo = {
 
 export default function VideoItem({ v, openLabel }: { v: VVideo; openLabel: string }) {
   const [open, setOpen] = useState(false);
+
+  // Video ijro etilayotganda Android ilovasida skrinshot va ekran yozuvi
+  // to'siladi — dars materiali tarqalib ketmasin. Brauzerda e'tiborsiz
+  // qoldiriladi (sahifa qurilma skrinshotini to'sa olmaydi).
+  useEffect(() => {
+    if (!open) return;
+    void protectScreen();
+    return () => { void unprotectScreen(); };
+  }, [open]);
 
   return (
     <div className="gl-glass overflow-hidden rounded-[22px]">

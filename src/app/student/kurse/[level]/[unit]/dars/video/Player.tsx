@@ -3,6 +3,7 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import { createPortal, flushSync } from "react-dom";
 import { markLessonWatched } from "../../actions";
+import { protectScreen, unprotectScreen } from "@/lib/screenGuard";
 
 // Gorizontal (to'liq ekran) video pleyer.
 //
@@ -99,6 +100,20 @@ export default function Player({
     document.addEventListener("fullscreenchange", onFs);
     return () => document.removeEventListener("fullscreenchange", onFs);
   }, []);
+
+  // ── Video ochiq ekan, ekranni himoyalaymiz ──
+  // Android ilovasida skrinshot va ekran yozuvi to'siladi (dars materiali
+  // tarqalib ketmasin). Yopilganda darhol o'chiriladi: qolgan sahifalarni
+  // o'quvchi bemalol skrinshot qila olsin.
+  //
+  // Tozalash funksiyasi HAR HOLDA himoyani o'chiradi — sahifadan chiqib
+  // ketilsa yoki ilova qayta yuklansa ham telefon "himoyalangan" holatda
+  // qolib ketmasligi kerak.
+  useEffect(() => {
+    if (!open) return;
+    void protectScreen();
+    return () => { void unprotectScreen(); };
+  }, [open]);
 
   // Ekran tik holatda qolgan bo'lsa (iOS) — burishni so'raymiz
   useEffect(() => {

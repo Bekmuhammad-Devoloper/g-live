@@ -20,6 +20,13 @@ export const metadata = {
 export const viewport = {
   themeColor: "#0e7490",
   viewportFit: "cover" as const,
+  // Ilovada barmoq bilan kattalashtirish O'CHIRILADI. Maket telefon eniga
+  // aniq moslangan; kattalashtirilsa sahifa yon tomonga suriladi va pastki
+  // menyu joyidan chiqib ketadi — ba'zi telefonlarda shu holat kuzatildi.
+  // Bu FAQAT o'quvchi portaliga tegishli: CRM (kompyuterdagi sayt) da
+  // kattalashtirish kerak bo'ladi va u yerda o'z holicha qoladi.
+  maximumScale: 1,
+  userScalable: false,
 };
 
 // ── Ambient fon ──
@@ -70,9 +77,13 @@ export default async function StudentLayout({ children }: { children: React.Reac
         }}
       />
       <div aria-hidden className="pointer-events-none fixed inset-0 z-0" style={{ background: AMBIENT }} />
-      {/* Pastdagi bo'shliq: menyu balandligi + telefonning xavfsiz zonasi
-          (jest chizig'i). `viewportFit: cover` bilan bu majburiy. */}
-      <div className="relative z-10 mx-auto min-h-screen max-w-md px-4 pt-5 pb-[calc(112px+env(safe-area-inset-bottom))]">
+      {/* Chetlardagi bo'shliq: `viewportFit: cover` sahifani ekranning eng
+          chetigacha cho'zadi, shu sabab telefonning xavfsiz zonalarini
+          O'ZIMIZ hisobga olamiz:
+            · tepada — soat va batareya turadigan qator. Busiz sarlavha va
+              avatar soatga taqalib qolardi (ilovada aynan shu ko'rindi).
+            · pastda — menyu balandligi + jest chizig'i */}
+      <div className="relative z-10 mx-auto min-h-screen max-w-md px-4 pt-[calc(20px+env(safe-area-inset-top))] pb-[calc(112px+env(safe-area-inset-bottom))]">
         <Screen>{children}</Screen>
       </div>
       <BottomNav t={S(session.locale)} showUben={flags.uben} />

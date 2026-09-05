@@ -251,7 +251,10 @@ const DICT = {
   // ── Guvohnoma (ID-karta) ──
   birthDate: p("Tug'ilgan sana", "Дата рождения", "Date of birth", "Geburtsdatum"),
   age: p("Yoshi", "Возраст", "Age", "Alter"),
-  phone2: p("2-chi raqam", "2-й номер", "2nd number", "2. Nummer"),
+  // Guvohnomadagi yorliq ustuni tor: "2-chi raqam" sig'may, "2-CHI RA..."
+  // bo'lib kesilardi. Qatorda raqamning o'zi ko'rinib turgani uchun uni
+  // "nechanchi" ekanini yozish shart emas — oddiy "Telefon" tushunarli.
+  phone2: p("Telefon", "Телефон", "Phone", "Telefon"),
   photo: p("Rasm", "Фото", "Photo", "Foto"),
   removePhoto: p("O'chirish", "Удалить", "Remove", "Entfernen"),
   editProfile: p("Ma'lumotlarni tahrirlash", "Редактировать данные", "Edit details", "Daten bearbeiten"),
