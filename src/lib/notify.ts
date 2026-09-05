@@ -1,14 +1,25 @@
 import "server-only";
 import { prisma } from "./db";
+import { sendPush, sendPushMany } from "./push";
 
 // Bildirishnoma yaratish (TZ 4.11 bildirishnomalar matritsasi).
-// MVP: ilova ichi (APP) kanali. Telegram/e-mail/SMS keyingi bosqichda ulanadi.
+//
+// Bildirishnoma DOIM bazaga yoziladi — foydalanuvchi uni ilova ichida
+// ko'radi. Bundan tashqari, agar Android ilovasi o'rnatilgan bo'lsa,
+// telefonga push ham yuboriladi.
+//
+// Push YUBORILMASA ham bu funksiya muvaffaqiyatli tugaydi: uni chaqirgan
+// amal (baho qo'yish, to'lov qabul qilish) push tufayli bekor bo'lib
+// qolmasligi kerak. Firebase sozlanmagan bo'lsa esa umuman urinilmaydi.
+
 export async function notify(params: {
   userId: string;
   title: string;
   body?: string;
   event?: string;
   channel?: string;
+  /** Push bosilganda ochiladigan sahifa */
+  url?: string;
 }): Promise<void> {
   await prisma.notification.create({
     data: {
@@ -19,12 +30,22 @@ export async function notify(params: {
       channel: params.channel ?? "APP",
     },
   });
+
+  await sendPush(params.userId, {
+    title: params.title,
+    body: params.body,
+    url: params.url,
+  }).catch(() => {});
 }
 
 // Bir nechta foydalanuvchiga (masalan barcha menejerlarga)
-export async function notifyMany(userIds: string[], data: { title: string; body?: string; event?: string }) {
+export async function notifyMany(
+  userIds: string[],
+  data: { title: string; body?: string; event?: string; url?: string },
+) {
   const unique = [...new Set(userIds)].filter(Boolean);
   if (unique.length === 0) return;
+
   await prisma.notification.createMany({
     data: unique.map((userId) => ({
       userId,
@@ -34,4 +55,6 @@ export async function notifyMany(userIds: string[], data: { title: string; body?
       channel: "APP",
     })),
   });
+
+  await sendPushMany(unique, { title: data.title, body: data.body, url: data.url }).catch(() => {});
 }

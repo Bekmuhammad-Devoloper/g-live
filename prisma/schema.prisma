@@ -104,6 +104,7 @@ model User {
   auditLogs     AuditLog[]
   createdPayments Payment[]    @relation("PaymentAuthor")
   notifications Notification[]
+  pushDevices   PushDevice[]
 
   // Topshiriq / eslatma
   assignedTasks Task[] @relation("TaskAssignee")
@@ -811,6 +812,27 @@ model Notification {
   createdAt DateTime @default(now())
 
   @@index([userId, isRead])
+}
+
+// Android ilovasidagi qurilma — push bildirishnoma yuborish uchun.
+//
+// Bitta odamda bir nechta qurilma bo'lishi mumkin (telefon, planshet), shu
+// sabab userId bo'yicha ko'plik. `token` esa Firebase bergan manzil: u
+// qurilmaga emas, ILOVA O'RNATMASIGA tegishli va vaqti-vaqti bilan
+// yangilanadi — shuning uchun unique va yangilanganda upsert qilinadi.
+//
+// Firebase "token yaroqsiz" deb javob qaytarsa yozuv o'chiriladi: ilova
+// o'chirilgan yoki ma'lumotlari tozalangan degani.
+model PushDevice {
+  id         String   @id @default(cuid())
+  userId     String
+  user       User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  token      String   @unique
+  platform   String   @default("android") // android | ios
+  createdAt  DateTime @default(now())
+  lastSeenAt DateTime @default(now())
+
+  @@index([userId])
 }
 
 // Topshiriq va eslatma (bitta model, kind bilan ajratiladi)
