@@ -282,6 +282,18 @@ export function IcoBell({ c = TEAL, s = 24 }: IcoProps) {
     </svg>
   );
 }
+// Seriya (streak) olovi — yuqori qatordagi belgi. Rangi qat'iy: olov
+// ko'k-feruza muhitda darhol ko'zga tashlanishi kerak.
+export function IcoFlame({ s = 26 }: { s?: number }) {
+  return (
+    <svg width={s} height={s} viewBox="0 0 24 24">
+      <path d="M12 2.5c.5 3-1 4.6-2.6 6.2C7.7 10.4 6 12.2 6 15a6 6 0 0 0 12 0c0-2.2-1-4-2.2-5.6C14.4 7.5 13 5.5 12 2.5Z" fill="#f4511e" />
+      <path d="M12 2.5c.5 3-1 4.6-2.6 6.2C7.7 10.4 6 12.2 6 15a6 6 0 0 0 12 0c0-2.2-1-4-2.2-5.6C14.4 7.5 13 5.5 12 2.5Z" fill="#ff7a2f" opacity="0.55" />
+      <path d="M12 10.5c.3 1.6-.6 2.5-1.4 3.4-.7.8-1.4 1.6-1.4 2.8a2.9 2.9 0 0 0 5.8 0c0-1.1-.5-1.9-1.1-2.8-.7-1-1.5-2-1.9-3.4Z" fill="#ffc93c" />
+    </svg>
+  );
+}
+
 export function IcoKey({ c = TEAL, s = 24 }: IcoProps) {
   return (
     <svg width={s} height={s} viewBox="0 0 24 24" fill="none" stroke={c} strokeWidth={sw} strokeLinecap="round" strokeLinejoin="round">
