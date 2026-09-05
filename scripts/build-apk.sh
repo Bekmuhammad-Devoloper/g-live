@@ -123,6 +123,11 @@ fi
 
 # ── 4. Loyiha sozlamasi ──
 cd "$TWA"
+# Qamrov (fullScopeUrl) ATAYLAB butun sayt — "$HOST/student" EMAS.
+# Qamrovdan tashqaridagi sahifani Android brauzer oynasida, manzil qatori
+# bilan ochadi. Ilova /student ga kiradi, seans tugagan bo'lsa u /login ga
+# yo'naltiradi — ya'ni ENG BIRINCHI ekran qamrovdan tashqarida qolib,
+# ilova brauzerdek ko'rinardi. /logout va /uploads ham shunday.
 cat > twa-manifest.json <<JSON
 {
   "packageId": "$PKG",
@@ -143,8 +148,8 @@ cat > twa-manifest.json <<JSON
   "maskableIconUrl": "$HOST/icons/maskable-512.png",
   "splashScreenFadeOutDuration": 300,
   "signingKey": { "path": "$WORK/android.keystore", "alias": "gl" },
-  "appVersionName": "1.1.0",
-  "appVersionCode": 2,
+  "appVersionName": "1.2.0",
+  "appVersionCode": 3,
   "shortcuts": [],
   "generatorApp": "bubblewrap-cli",
   "webManifestUrl": "$HOST/student.webmanifest",
@@ -154,13 +159,13 @@ cat > twa-manifest.json <<JSON
   "enableSiteSettingsShortcut": true,
   "isChromeOSOnly": false,
   "isMetaQuest": false,
-  "fullScopeUrl": "$HOST/student",
+  "fullScopeUrl": "$HOST/",
   "minSdkVersion": 23,
   "orientation": "portrait",
   "fingerprints": [],
   "additionalTrustedOrigins": [],
   "retainedBundles": [],
-  "appVersion": "1.1.0"
+  "appVersion": "1.2.0"
 }
 JSON
 

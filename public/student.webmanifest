@@ -4,7 +4,7 @@
   "short_name": "Germaniya Live",
   "description": "Nemis tili darslari, uy vazifalari va natijalaringiz — bitta ilovada.",
   "start_url": "/student",
-  "scope": "/student",
+  "scope": "/",
   "display": "standalone",
   "orientation": "portrait",
   "background_color": "#e4edf3",

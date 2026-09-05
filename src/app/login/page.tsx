@@ -6,8 +6,11 @@ export default async function LoginPage() {
   const session = await getSession();
   if (session) redirect("/dashboard");
 
+  // `gl-native` — kirish sahifasi Android ilovasining BIRINCHI ekrani: seans
+  // tugaganda /student shu yerga yo'naltiradi. Shu sabab unda ham ilova hissi
+  // qoidalari amal qilsin (teginish chaqnashi, uzoq bosish menyusi va h.k.).
   return (
-    <div className="relative flex min-h-screen items-center justify-center overflow-hidden bg-slate-100 px-4 py-10">
+    <div className="gl-native relative flex min-h-screen items-center justify-center overflow-hidden bg-slate-100 px-4 py-10">
       {/* Fon bezaklari */}
       <div className="pointer-events-none absolute -left-32 -top-32 h-96 w-96 rounded-full bg-brand-200/40 blur-3xl" />
       <div className="pointer-events-none absolute -bottom-40 -right-24 h-96 w-96 rounded-full bg-brand-300/30 blur-3xl" />
