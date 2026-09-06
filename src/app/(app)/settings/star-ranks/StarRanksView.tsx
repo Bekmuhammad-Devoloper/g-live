@@ -31,7 +31,7 @@ const inp =
   "h-10 w-full rounded-lg border border-slate-200 bg-white px-3 text-sm text-slate-800 outline-none transition focus:border-brand-400 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-100";
 const lbl = "mb-1 block text-xs font-medium text-slate-500 dark:text-slate-400";
 
-const EMPTY: RankInput = { nameUz: "", nameRu: "", nameEn: "", nameDe: "", stars: 0, reward: 0, color: PRESET_COLORS[1] };
+const EMPTY: RankInput = { nameUz: "", nameRu: "", nameEn: "", nameDe: "", stars: 0, reward: 0, color: PRESET_COLORS[1], iconUrl: null };
 
 export default function StarRanksView({ rows, locale }: { rows: RankRow[]; locale: Locale }) {
   const [items, setItems] = useState(rows);
@@ -236,13 +236,34 @@ function RankDrawer({
   const [mounted, setMounted] = useState(false);
   const [f, setF] = useState<RankInput>(
     row
-      ? { nameUz: row.nameUz, nameRu: row.nameRu, nameEn: row.nameEn, nameDe: row.nameDe, stars: row.stars, reward: row.reward, color: row.color }
+      ? { nameUz: row.nameUz, nameRu: row.nameRu, nameEn: row.nameEn, nameDe: row.nameDe, stars: row.stars, reward: row.reward, color: row.color, iconUrl: row.iconUrl }
       : EMPTY,
   );
   const [err, setErr] = useState<string | null>(null);
+  const [busy, setBusy] = useState(false);
   const [pending, start] = useTransition();
+  const file = useRef<HTMLInputElement>(null);
 
   const set = <K extends keyof RankInput>(k: K, v: RankInput[K]) => setF((x) => ({ ...x, [k]: v }));
+
+  // Rasm avval serverga yuklanadi, manzili esa "Saqlash" bilan birga ketadi —
+  // shu sabab yangi pog'onaga ham darhol belgi qo'yish mumkin.
+  const upload = async (fl: File) => {
+    setErr(null);
+    setBusy(true);
+    try {
+      const fd = new FormData();
+      fd.append("file", fl);
+      const r = await fetch("/api/upload", { method: "POST", body: fd });
+      const j = await r.json();
+      if (!r.ok || !j.url) throw new Error();
+      set("iconUrl", j.url);
+    } catch {
+      setErr(T("Rasmni yuklab bo'lmadi", "Не удалось загрузить", "Upload failed", "Upload fehlgeschlagen"));
+    } finally {
+      setBusy(false);
+    }
+  };
 
   useEffect(() => setMounted(true), []);
   useEffect(() => {
@@ -337,6 +358,52 @@ function RankDrawer({
             </div>
           </div>
 
+          <div>
+            <label className={lbl}>{T("Belgi (rasm)", "Значок (картинка)", "Icon (image)", "Symbol (Bild)")}</label>
+            <div className="flex items-center gap-3">
+              <span
+                className="grid h-14 w-14 shrink-0 place-items-center overflow-hidden rounded-xl text-[15px] font-extrabold text-white"
+                style={{ background: f.color }}
+              >
+                {f.iconUrl ? (
+                  // eslint-disable-next-line @next/next/no-img-element
+                  <img src={f.iconUrl} alt="" className="h-full w-full object-contain p-1" />
+                ) : (
+                  "?"
+                )}
+              </span>
+
+              <div className="flex flex-wrap items-center gap-2">
+                <input
+                  ref={file} type="file" accept="image/*" hidden
+                  onChange={(e) => { const x = e.target.files?.[0]; if (x) void upload(x); e.target.value = ""; }}
+                />
+                <button
+                  type="button" disabled={busy} onClick={() => file.current?.click()}
+                  className="h-10 rounded-lg bg-slate-100 px-3.5 text-xs font-semibold text-slate-600 transition hover:bg-slate-200 disabled:opacity-50 dark:bg-slate-800 dark:text-slate-200"
+                >
+                  {busy ? "…" : f.iconUrl ? T("Almashtirish", "Заменить", "Replace", "Ersetzen") : T("Yuklash", "Загрузить", "Upload", "Hochladen")}
+                </button>
+                {f.iconUrl ? (
+                  <button
+                    type="button" onClick={() => set("iconUrl", null)}
+                    className="h-10 rounded-lg bg-rose-50 px-3.5 text-xs font-semibold text-rose-600 transition hover:bg-rose-100 dark:bg-rose-950/30"
+                  >
+                    {T("Olib tashlash", "Убрать", "Remove", "Entfernen")}
+                  </button>
+                ) : null}
+              </div>
+            </div>
+            <p className="mt-1.5 text-xs text-slate-400">
+              {T(
+                "512×512 PNG, shaffof fon. Belgi qo'yilmasa pog'ona raqami ko'rinadi.",
+                "512×512 PNG, прозрачный фон. Без значка показывается номер ступени.",
+                "512×512 PNG, transparent background. Without an icon the rank number is shown.",
+                "512×512 PNG, transparenter Hintergrund. Ohne Symbol wird die Stufennummer angezeigt.",
+              )}
+            </p>
+          </div>
+
           {err ? <p className="text-sm font-medium text-rose-600">{err}</p> : null}
         </div>
 
@@ -346,7 +413,7 @@ function RankDrawer({
           </button>
           <button
             type="button"
-            disabled={pending}
+            disabled={pending || busy}
             onClick={() => start(async () => {
               const r = row ? await updateStarRank(row.id, f) : await createStarRank(f);
               if (r.error) setErr(r.error);

@@ -33,6 +33,8 @@ export type RankInput = {
   stars: number;
   reward: number;
   color: string;
+  /** Belgi — oynadan yuklanganda keladi (yo'q bo'lsa o'zgarmaydi) */
+  iconUrl?: string | null;
 };
 
 function clean(input: RankInput) {
@@ -45,6 +47,9 @@ function clean(input: RankInput) {
   if (!Number.isFinite(reward) || reward < 0) return { error: "Mukofot 0 dan kichik bo'lmasin" } as const;
   if (!/^#[\da-fA-F]{6}$/.test(input.color)) return { error: "Rang noto'g'ri" } as const;
 
+  const icon = input.iconUrl ?? null;
+  if (icon !== null && !isSafeBanner(icon)) return { error: "Rasm manzili noto'g'ri" } as const;
+
   return {
     data: {
       nameUz,
@@ -55,6 +60,7 @@ function clean(input: RankInput) {
       stars,
       reward,
       color: input.color.toLowerCase(),
+      iconUrl: icon,
     },
   } as const;
 }
@@ -91,7 +97,7 @@ export async function updateStarRank(id: string, input: RankInput): Promise<Rank
 
   const cur = await prisma.starRank.findUnique({
     where: { id },
-    select: { nameUz: true, stars: true, reward: true, color: true },
+    select: { nameUz: true, stars: true, reward: true, color: true, iconUrl: true },
   });
   if (!cur) return { error: "Pog'ona topilmadi" };
   if (await starsTaken(c.data.stars, id)) return { error: "Bu yulduz chegarasi allaqachon band" };
