@@ -567,13 +567,21 @@ html.gl-app .gl-selectable {
    ATAYLAB qisqa (200ms) va faqat opacity + kichik siljish: uzun animatsiya
    sekin ilova taassurotini beradi. Animatsiya tugagach transform QOLMAYDI,
    shuning uchun ichidagi `fixed` elementlar (suzuvchi tugmalar) buzilmaydi. */
+/* Sahifa almashganda yumshoq paydo bo'lish.
+   FAQAT `opacity` — `transform` ATAYLAB ishlatilmaydi.
+   Sababi: `transform` animatsiyasi bo'lgan element `position: fixed`
+   avlodlari uchun "asos" (containing block) bo'lib qoladi, `fill-mode: both`
+   bilan esa bu holat animatsiya tugagach ham saqlanadi. Natijada ichkaridagi
+   `fixed inset-0` ekranga emas, shu blokka nisbatan hisoblanardi va u
+   yig'ilib qolardi — o'qituvchi bilan chat, miya grafigi, eslatma oynasi,
+   to'liq ekran video pleyeri va Market kartasi shu sabab buzuq ochilardi. */
 @keyframes gl-screen-in {
-  from { opacity: 0; transform: translateY(8px); }
-  to   { opacity: 1; transform: none; }
+  from { opacity: 0; }
+  to   { opacity: 1; }
 }
 
 .gl-screen {
-  animation: gl-screen-in 200ms cubic-bezier(0.22, 0.61, 0.36, 1) both;
+  animation: gl-screen-in 180ms ease-out both;
 }
 
 @media (prefers-reduced-motion: reduce) {
