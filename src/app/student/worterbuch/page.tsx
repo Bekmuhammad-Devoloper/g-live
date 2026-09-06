@@ -6,7 +6,7 @@ import { isPortalFeatureOn } from "@/lib/portalFeatures";
 import { prisma } from "@/lib/db";
 import { ARTICLE, DICT_LETTERS, DICT_SIZE, searchDict, type DictEntry } from "@/lib/dictionary";
 import MissingStudent from "../MissingStudent";
-import { parseLessonWords } from "@/lib/lessonWords";
+import { lessonVocabText, parseLessonWords } from "@/lib/lessonWords";
 import { CARD, ICON_GRADIENT, PageHeader } from "../_ui";
 import DictNav from "./DictNav";
 import WordList, { type VWord } from "./WordList";
@@ -53,7 +53,7 @@ export default async function StudentWorterbuchPage({ searchParams }: { searchPa
       ? prisma.courseLesson.findMany({
           where: { programId: group.programId },
           orderBy: { order: "asc" },
-          select: { id: true, title: true, topic: true, levelCode: true },
+          select: { id: true, title: true, topic: true, vocabText: true, levelCode: true },
         })
       : Promise.resolve([]),
     group
@@ -69,7 +69,7 @@ export default async function StudentWorterbuchPage({ searchParams }: { searchPa
   for (const l of lessons) {
     // Ajratish mantig'i `lib/lessonWords.ts` da — dars sahifasi ham aynan
     // shu so'zlarni ko'rsatadi, ikki nusxa bo'lmasligi kerak.
-    for (const { de, uz } of parseLessonWords(l.topic)) {
+    for (const { de, uz } of parseLessonWords(lessonVocabText(l))) {
       const key = de.toLowerCase();
       if (seen.has(key)) continue;
       seen.add(key);

@@ -327,6 +327,7 @@ model CourseLesson {
   title      String // dars nomi
   topic      String? // mavzu tafsiloti
   videoUrl   String? // yuklangan video yo'li (/uploads/...)
+  vocabText  String? // lug'at, qo'lda yozilgan: "der Hund - it" (har qatorda bitta)
   vocabFileUrl String? // lug'at fayli (pdf/word/txt) — o'quvchi ilovasidagi "Lug'at" bo'limida ochiladi
   materialUrl String? // qo'shimcha material/fayl yo'li
   assignment String? // dars topshirig'i (matn)

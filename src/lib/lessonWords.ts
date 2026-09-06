@@ -10,6 +10,21 @@
 // ham xuddi shu so'zlarni ko'rsatgani uchun bir joyga chiqarildi — ikki nusxa
 // vaqt o'tib bir-biridan uzilib ketmasin.
 
+/**
+ * Lug'at matni qaysi maydondan olinishi.
+ *
+ * Yangi darslarda so'zlar ALOHIDA "Lug'at" maydonida (`vocabText`) yoziladi.
+ * Undan oldin esa ular "Mavzu" maydoniga yozilardi — bu yozilmagan qoida edi
+ * va ustoz buni bilishi mumkin emasdi. Eski darslar ishlashda davom etishi
+ * uchun `vocabText` bo'sh bo'lsa `topic` ga qaraladi.
+ *
+ * Ikkalasi birdan O'QILMAYDI: aks holda mavzu tavsifi lug'atga qo'shilib
+ * ketardi.
+ */
+export function lessonVocabText(l: { vocabText?: string | null; topic?: string | null }): string | null {
+  return l.vocabText && l.vocabText.trim() ? l.vocabText : (l.topic ?? null);
+}
+
 export interface LessonWord {
   /** Nemischa so'z */
   de: string;

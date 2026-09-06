@@ -14,8 +14,14 @@ import { createAssignment } from "../../homework/actions";
 
 export interface VLesson {
   id: string; order: number; levelCode?: string | null; title: string; topic: string | null;
-  videoUrl: string | null; vocabFileUrl?: string | null; materialUrl: string | null; assignment: string | null; assignmentFileUrl: string | null; homework: string | null; homeworkFileUrl: string | null;
+  videoUrl: string | null; vocabText?: string | null; vocabFileUrl?: string | null; materialUrl: string | null; assignment: string | null; assignmentFileUrl: string | null; homework: string | null; homeworkFileUrl: string | null;
 }
+
+/** Lug'at maydonidagi so'zlar soni — yozayotganda darhol ko'rinsin.
+    Ajratish qoidasi o'quvchi ilovasidagi bilan bir xil (lib/lessonWords.ts):
+    vergul, nuqta-vergul yoki yangi qator. */
+const countWords = (text: string) =>
+  text.split(/[,;\n]/).filter((s) => s.trim().length >= 2).length;
 
 async function uploadFile(file: File): Promise<{ url: string } | { error: string }> {
   const fd = new FormData();
@@ -79,7 +85,7 @@ function LessonCard({ lesson: l, index, count, canManage, locale, onEdit, groupI
   const [taskOpen, setTaskOpen] = useState(false);
   const toggleTaught = () => { if (!groupId) return; const next = !isTaught; setIsTaught(next); start(async () => { await setLessonTaught(groupId, l.id, next); }); };
 
-  const hasDetails = l.topic || l.videoUrl || l.vocabFileUrl || l.assignment || l.assignmentFileUrl || l.homework || l.homeworkFileUrl || l.materialUrl;
+  const hasDetails = l.topic || l.videoUrl || l.vocabText || l.vocabFileUrl || l.assignment || l.assignmentFileUrl || l.homework || l.homeworkFileUrl || l.materialUrl;
 
   const done = !!(groupId && isTaught);
   return (
@@ -103,7 +109,7 @@ function LessonCard({ lesson: l, index, count, canManage, locale, onEdit, groupI
           </div>
           <div className="mt-1.5 flex flex-wrap items-center gap-1.5">
             {l.videoUrl && <Tag emoji="🎬" text={tr(locale, { uz: "Video", ru: "Видео", en: "Video", de: "Video" })} tone="rose" />}
-            {l.vocabFileUrl && <Tag emoji="📖" text={tr(locale, { uz: "Lug'at", ru: "Словарь", en: "Vocabulary", de: "Wortschatz" })} tone="amber" />}
+            {(l.vocabText || l.vocabFileUrl) && <Tag emoji="📖" text={tr(locale, { uz: "Lug'at", ru: "Словарь", en: "Vocabulary", de: "Wortschatz" })} tone="amber" />}
             {(l.assignment || l.assignmentFileUrl) && <Tag emoji="📝" text={tr(locale, { uz: "Topshiriq", ru: "Задание", en: "Assignment", de: "Aufgabe" })} tone="amber" />}
             {(l.homework || l.homeworkFileUrl) && <Tag emoji="🏠" text={tr(locale, { uz: "Uy vazifa", ru: "Домашка", en: "Homework", de: "Hausaufgabe" })} tone="emerald" />}
             {l.materialUrl && <Tag emoji="📎" text={tr(locale, { uz: "Material", ru: "Материал", en: "Material", de: "Material" })} tone="blue" />}
@@ -144,6 +150,7 @@ function LessonCard({ lesson: l, index, count, canManage, locale, onEdit, groupI
               <video controls preload="metadata" className="max-h-[360px] w-full rounded-xl bg-black shadow-sm" src={l.videoUrl} />
             </div>
           )}
+          {l.vocabText && <Field label={tr(locale, { uz: "Lug'at", ru: "Словарь", en: "Vocabulary", de: "Wortschatz" })} value={l.vocabText} />}
           {l.vocabFileUrl && (
             <a href={l.vocabFileUrl} target="_blank" rel="noreferrer" className="inline-flex items-center gap-1.5 rounded-lg border border-amber-200 bg-amber-50 px-3 py-1.5 text-sm font-medium text-amber-700 transition hover:bg-amber-100 dark:border-amber-800 dark:bg-amber-500/10 dark:text-amber-400">
               <Icon name="download" className="h-4 w-4" /> {tr(locale, { uz: "Lug'at faylini ochish", ru: "Открыть файл словаря", en: "Open vocabulary file", de: "Wortschatzdatei öffnen" })}
@@ -211,6 +218,7 @@ function LessonDrawer({ programId, initial, locale, levelCodes, onClose }: { pro
   const [homework, setHomework] = useState(initial?.homework ?? "");
   const [homeworkFileUrl, setHomeworkFileUrl] = useState(initial?.homeworkFileUrl ?? "");
   const [videoUrl, setVideoUrl] = useState(initial?.videoUrl ?? "");
+  const [vocabText, setVocabText] = useState(initial?.vocabText ?? "");
   const [vocabFileUrl, setVocabFileUrl] = useState(initial?.vocabFileUrl ?? "");
   const [materialUrl, setMaterialUrl] = useState(initial?.materialUrl ?? "");
   const [saving, start] = useTransition();
@@ -233,7 +241,7 @@ function LessonDrawer({ programId, initial, locale, levelCodes, onClose }: { pro
       });
       if (!confirm(msg)) return;
     }
-    const input: LessonInput = { title, levelCode, topic, assignment, assignmentFileUrl, homework, homeworkFileUrl, videoUrl, vocabFileUrl, materialUrl };
+    const input: LessonInput = { title, levelCode, topic, assignment, assignmentFileUrl, homework, homeworkFileUrl, videoUrl, vocabText, vocabFileUrl, materialUrl };
     start(async () => {
       const r = initial ? await updateCourseLesson(initial.id, input) : await createCourseLesson(programId, input);
       if (r.ok) { router.refresh(); onClose(); } else setErr(r.error ?? "error");
@@ -273,9 +281,36 @@ function LessonDrawer({ programId, initial, locale, levelCodes, onClose }: { pro
             </select>
           </div>
 
-          {/* Lug'at fayli — o'quvchi ilovasidagi "Lug'at" bo'limida ochiladi.
-              Mavzu maydonidagi "so'z - tarjima" ro'yxatiga QO'SHIMCHA: ustoz
-              tayyor lug'atni pdf/word/txt ko'rinishida ham bera oladi. */}
+          {/* ── Lug'at ──
+              Ikki yo'l: qo'lda yozish yoki tayyor fayl. Ikkalasi ham
+              bo'lishi mumkin, birortasi ham.
+
+              Qo'lda yozilgani ilovada ikki ustunli ro'yxat bo'lib chiqadi va
+              "So'zlar" bo'limiga ham tushadi; fayl esa ochib o'qish uchun.
+              Ilgari so'zlar "Mavzu" maydoniga yozilardi — bu hech qayerda
+              yozilmagan qoida edi, shu sabab alohida maydon ajratildi.
+              Eski darslar uchun mavzu maydoni zaxira bo'lib qolaveradi. */}
+          <div>
+            <label className={lbl}>
+              {tr(locale, { uz: "Lug'at (qo'lda yozish)", ru: "Словарь (вручную)", en: "Vocabulary (type here)", de: "Wortschatz (manuell)" })}
+              <span className="ml-1 font-normal text-slate-400">
+                ({tr(locale, { uz: "har qatorda bitta: so'z - tarjima", ru: "по одному в строке: слово - перевод", en: "one per line: word - translation", de: "eins pro Zeile: Wort - Übersetzung" })})
+              </span>
+            </label>
+            <textarea
+              value={vocabText}
+              onChange={(e) => setVocabText(e.target.value)}
+              rows={5}
+              placeholder={"der Hund - it\ndie Katze - mushuk\ndas Haus - uy"}
+              className={cn(inp, "font-mono text-[13px] leading-relaxed")}
+            />
+            {vocabText.trim() && (
+              <p className="mt-1 text-xs text-slate-400">
+                {countWords(vocabText)} {tr(locale, { uz: "ta so'z", ru: "слов", en: "words", de: "Wörter" })}
+              </p>
+            )}
+          </div>
+
           <FileUpload
             label={tr(locale, { uz: "Lug'at fayli (pdf/word/txt)", ru: "Файл словаря (pdf/word/txt)", en: "Vocabulary file (pdf/word/txt)", de: "Wortschatzdatei (pdf/word/txt)" })}
             accept="application/pdf,.doc,.docx,.txt,.rtf" current={vocabFileUrl} onChange={setVocabFileUrl} locale={locale}

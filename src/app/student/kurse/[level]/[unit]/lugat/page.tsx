@@ -1,7 +1,7 @@
 import MissingStudent from "../../../../MissingStudent";
 import { loadUnit } from "../_load";
 import { SectionHeader, IcoWords, Attachment } from "../_parts";
-import { looksLikeVocabulary, parseLessonWords } from "@/lib/lessonWords";
+import { lessonVocabText, looksLikeVocabulary, parseLessonWords } from "@/lib/lessonWords";
 import { loadUnitProgress } from "../_progress";
 import { NAVY, TEAL } from "../../../../_ui";
 
@@ -23,7 +23,7 @@ export default async function LessonVocabPage({
   if (ctx.missing) return <MissingStudent />;
 
   const { t, code, lesson, unitLabel } = ctx;
-  const words = parseLessonWords(lesson.topic);
+  const words = parseLessonWords(lessonVocabText(lesson));
   const hasVocab = words.length > 0 && looksLikeVocabulary(words);
   const p = await loadUnitProgress(ctx);
 

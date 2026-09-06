@@ -1,7 +1,7 @@
 import "server-only";
 import { prisma } from "@/lib/db";
 import { getPointRules } from "@/lib/coinRules";
-import { looksLikeVocabulary, parseLessonWords } from "@/lib/lessonWords";
+import { lessonVocabText, looksLikeVocabulary, parseLessonWords } from "@/lib/lessonWords";
 import type { UnitContext } from "./_load";
 
 // Darsning uchta bo'limi bo'yicha jarayon — BITTA joyda hisoblanadi.
@@ -52,7 +52,7 @@ export async function loadUnitProgress(ctx: UnitContext): Promise<UnitProgress> 
     getPointRules("star"),
   ]);
 
-  const words = parseLessonWords(ctx.lesson.topic);
+  const words = parseLessonWords(lessonVocabText(ctx.lesson));
   const hasVocab = words.length > 0 && looksLikeVocabulary(words);
 
   const hasVideo = !!ctx.lesson.videoUrl;
