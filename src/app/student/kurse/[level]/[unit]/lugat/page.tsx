@@ -20,11 +20,11 @@ const ACCENT_SOLID = "linear-gradient(135deg, #e8a52a 0%, #d4820f 100%)";
 
 // Artikl rangi — nemis tilida ot artikli bilan yodlanadi. Rang jinsni
 // bir qarashda ajratib beradi: takror ko'rgan sari "die Katze" ning
-// pushti chipi esda qoladi, artiklsiz so'z esa keyin gapda xato beradi.
-const ARTICLE: Record<string, { bg: string; fg: string }> = {
-  der: { bg: "rgba(37,99,235,0.12)", fg: "#1d4ed8" },
-  die: { bg: "rgba(219,39,119,0.12)", fg: "#be185d" },
-  das: { bg: "rgba(5,150,105,0.13)", fg: "#047857" },
+// pushti artikli esda qoladi, artiklsiz so'z esa keyin gapda xato beradi.
+const ARTICLE: Record<string, { fg: string }> = {
+  der: { fg: "#1d4ed8" }, // ko'k
+  die: { fg: "#be185d" }, // pushti
+  das: { fg: "#047857" }, // yashil
 };
 
 /** "der Hund" -> artikl va otni ajratadi; artikl bo'lmasa null */
@@ -158,35 +158,32 @@ export default async function LessonVocabPage({
   );
 }
 
-/** Bitta so'z qatori — artikl rangli chipda, tarjimasi ostida */
+/**
+ * Bitta so'z qatori — IKKI USTUN: chapda nemischa, o'ngda tarjimasi.
+ *
+ * Ikkisini ustma-ust qo'yib ham ko'rilgan edi, lekin yonma-yon turgani
+ * yaxshiroq: ko'z bir qatorda ikkalasini birdan oladi va ro'yxat ikki
+ * baravar kalta bo'ladi.
+ *
+ * Artikl rangi saqlanadi (der ko'k, die pushti, das yashil), lekin fon
+ * berilgan "chip" emas — tor ustunda chip so'zni ikkinchi qatorga surib
+ * yuborardi. Rangli yozuvning o'zi ham jinsni bir qarashda ajratadi.
+ */
 function WordRow({ word, index }: { word: LessonWord; index: number }) {
   const { article, rest } = splitArticle(word.de);
   const tone = article ? ARTICLE[article] : null;
 
   return (
-    <li className="flex items-start gap-3 border-b border-white/45 px-4 py-3.5 last:border-0">
-      <span className="w-5 shrink-0 pt-[3px] text-right text-[11.5px] font-bold tabular-nums text-slate-400">
-        {index}
+    <li className="grid grid-cols-[1fr_1fr] items-start gap-3 border-b border-white/45 px-4 py-3 last:border-0">
+      <span className="flex min-w-0 items-baseline gap-2">
+        <span className="w-4 shrink-0 text-[11.5px] font-bold tabular-nums text-slate-400">{index}</span>
+        <span className="min-w-0 break-words text-[15px] font-extrabold leading-snug" style={{ color: NAVY }}>
+          {tone && <span style={{ color: tone.fg }}>{article} </span>}
+          {rest}
+        </span>
       </span>
 
-      <span className="min-w-0 flex-1">
-        <span className="flex flex-wrap items-baseline gap-x-1.5 gap-y-1">
-          {tone && (
-            <span
-              className="rounded-md px-1.5 py-[1px] text-[11.5px] font-extrabold"
-              style={{ background: tone.bg, color: tone.fg }}
-            >
-              {article}
-            </span>
-          )}
-          <span className="break-words text-[16px] font-extrabold leading-snug" style={{ color: NAVY }}>
-            {rest}
-          </span>
-        </span>
-        {word.uz && (
-          <span className="mt-0.5 block break-words text-[14px] leading-snug text-slate-500">{word.uz}</span>
-        )}
-      </span>
+      <span className="break-words text-[14.5px] leading-snug text-slate-600">{word.uz ?? "—"}</span>
     </li>
   );
 }
