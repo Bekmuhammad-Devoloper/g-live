@@ -279,14 +279,18 @@ export default async function LandingPage() {
               {levels.map((l) => (
                 <div
                   key={l.id}
-                  className="group relative overflow-hidden rounded-[26px] border border-slate-900/[0.06] bg-white transition hover:-translate-y-0.5 hover:shadow-[0_20px_44px_-28px_rgba(15,60,80,0.6)]"
+                  className="group relative flex flex-col overflow-hidden rounded-[26px] border border-slate-900/[0.06] bg-white transition hover:-translate-y-0.5 hover:shadow-[0_20px_44px_-28px_rgba(15,60,80,0.6)]"
                 >
+                  {/* Banner TO'LIQ ko'rinadi. Ilgari `h-[96px] object-cover`
+                      edi va rasmning usti-osti kesilardi — daraja belgisi
+                      ("A1 TIL KURSI") yarmigacha qirqilib ketardi.
+                      Balandlik rasmning o'z nisbatidan kelib chiqadi. */}
                   {l.bannerUrl ? (
                     // eslint-disable-next-line @next/next/no-img-element
-                    <img src={l.bannerUrl} alt="" className="h-[96px] w-full object-cover" />
+                    <img src={l.bannerUrl} alt="" className="block w-full bg-slate-100" />
                   ) : null}
 
-                  <div className="flex items-center gap-4 p-5">
+                  <div className="mt-auto flex items-center gap-4 p-5">
                     <span
                       className="grid h-[52px] w-[52px] shrink-0 place-items-center rounded-2xl text-[18px] font-extrabold tracking-[-0.02em] text-white"
                       style={{ background: levelGradient(l.color) }}
