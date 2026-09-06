@@ -14,6 +14,7 @@ export interface LessonInput {
   levelCode?: string; // qaysi darajaga tegishli (A1, A2, B1 ...)
   topic?: string;
   videoUrl?: string;
+  vocabFileUrl?: string; // lug'at fayli (pdf/word/txt)
   materialUrl?: string;
   assignment?: string;
   assignmentFileUrl?: string;
@@ -38,6 +39,7 @@ export async function createCourseLesson(programId: string, input: LessonInput):
       levelCode: clean(input.levelCode),
       topic: clean(input.topic),
       videoUrl: clean(input.videoUrl),
+      vocabFileUrl: clean(input.vocabFileUrl),
       materialUrl: clean(input.materialUrl),
       assignment: clean(input.assignment),
       assignmentFileUrl: clean(input.assignmentFileUrl),
@@ -64,6 +66,7 @@ export async function updateCourseLesson(id: string, input: LessonInput): Promis
       levelCode: clean(input.levelCode),
       topic: clean(input.topic),
       videoUrl: clean(input.videoUrl),
+      vocabFileUrl: clean(input.vocabFileUrl),
       materialUrl: clean(input.materialUrl),
       assignment: clean(input.assignment),
       assignmentFileUrl: clean(input.assignmentFileUrl),

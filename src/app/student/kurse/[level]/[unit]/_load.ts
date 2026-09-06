@@ -30,6 +30,8 @@ export interface UnitContext {
     title: string;
     topic: string | null;
     videoUrl: string | null;
+    /** Lug'at fayli (pdf/word/txt) — "Lug'at" bo'limida ochiladi */
+    vocabFileUrl: string | null;
     assignment: string | null;
     assignmentFileUrl: string | null;
     homework: string | null;
@@ -121,6 +123,7 @@ export async function loadUnit(level: string, unit: string): Promise<UnitLoad> {
       title: lesson.title,
       topic: lesson.topic,
       videoUrl: lesson.videoUrl,
+      vocabFileUrl: lesson.vocabFileUrl,
       assignment: lesson.assignment,
       assignmentFileUrl: lesson.assignmentFileUrl,
       homework: lesson.homework,

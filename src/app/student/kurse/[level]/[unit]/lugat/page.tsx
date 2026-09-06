@@ -1,6 +1,6 @@
 import MissingStudent from "../../../../MissingStudent";
 import { loadUnit } from "../_load";
-import { SectionHeader, IcoWords } from "../_parts";
+import { SectionHeader, IcoWords, Attachment } from "../_parts";
 import { looksLikeVocabulary, parseLessonWords } from "@/lib/lessonWords";
 import { loadUnitProgress } from "../_progress";
 import { NAVY, TEAL } from "../../../../_ui";
@@ -50,6 +50,23 @@ export default async function LessonVocabPage({
         </div>
       )}
 
+      {/* Ustoz yuklagan lug'at fayli (pdf/word/txt). So'zlar ro'yxatiga
+          QO'SHIMCHA — ikkalasi ham bo'lishi mumkin, birortasi ham. */}
+      {lesson.vocabFileUrl && (
+        <section className="gl-glass mt-4 rounded-[26px] px-4 pb-4 pt-3.5">
+          <div className="flex items-center gap-2.5">
+            <span className="grid h-10 w-10 shrink-0 place-items-center rounded-[14px] text-white" style={{ background: ACCENT }}>
+              <IcoWords s={21} />
+            </span>
+            <span className="min-w-0 flex-1">
+              <span className="block truncate text-[15px] font-extrabold text-slate-900">{t.vocabFile}</span>
+              <span className="block truncate text-[12px] text-slate-500">{t.vocabFileHint}</span>
+            </span>
+          </div>
+          <Attachment url={lesson.vocabFileUrl} tint="rgba(246,196,83,0.18)" accent="#e09217" t={t} />
+        </section>
+      )}
+
       {hasVocab ? (
         <section className="gl-glass mt-4 overflow-hidden rounded-[26px]">
           <div className="flex items-center gap-2.5 px-4 py-3.5">
@@ -75,7 +92,7 @@ export default async function LessonVocabPage({
             ))}
           </ul>
         </section>
-      ) : (
+      ) : lesson.vocabFileUrl ? null : (
         <div className="gl-glass mt-4 rounded-[26px] px-5 py-14 text-center">
           <span className="mx-auto mb-3 grid h-14 w-14 place-items-center rounded-full bg-white/60 text-slate-400">
             <IcoWords s={26} />

@@ -61,7 +61,10 @@ const DICT = {
   levelFinish: p("Daraja yakuni", "Конец уровня", "End of level", "Ende des Niveaus"),
   levelFinishHint: p("Barcha darsni o'tsangiz shu yerga yetasiz", "Пройдите все уроки, чтобы дойти сюда", "Finish every lesson to reach this point", "Schließe alle Lektionen ab, um hierher zu gelangen"),
   levelFinished: p("Bu darajani yakunladingiz!", "Вы завершили этот уровень!", "You finished this level!", "Du hast dieses Niveau abgeschlossen!"),
-  vocabulary: p("Lug'at", "Словарь", "Vocabulary", "Vocabulary"),
+  vocabulary: p("Lug'at", "Словарь", "Vocabulary", "Wortschatz"),
+  // Ustoz yuklagan lug'at fayli (pdf/word/txt) — "Lug'at" bo'limidagi karta
+  vocabFile: p("Lug'at fayli", "Файл словаря", "Vocabulary file", "Wortschatzdatei"),
+  vocabFileHint: p("Ustoz tayyorlagan so'zlar ro'yxati", "Список слов от преподавателя", "Word list prepared by your teacher", "Wortliste von der Lehrkraft"),
   exercises: p("Mashqlar", "Упражнения", "Exercises", "Exercises"),
   theory: p("NAZARIYA", "ТЕОРИЯ", "THEORY", "THEORIE"),
   test: p("Test", "Тест", "Test", "Test"),

@@ -11,6 +11,11 @@ const EXT: Record<string, string> = {
   "video/mp4": "mp4", "video/webm": "webm", "video/quicktime": "mov", "video/x-matroska": "mkv", "video/ogg": "ogv",
   "image/jpeg": "jpg", "image/png": "png", "image/webp": "webp", "image/gif": "gif",
   "application/pdf": "pdf",
+  // Hujjatlar — lug'at va topshiriq fayllari
+  "application/msword": "doc",
+  "application/vnd.openxmlformats-officedocument.wordprocessingml.document": "docx",
+  "text/plain": "txt",
+  "application/rtf": "rtf",
 };
 
 export async function POST(req: NextRequest) {
