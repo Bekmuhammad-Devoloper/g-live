@@ -26,7 +26,7 @@ export interface SectionProgress {
 }
 
 export interface UnitProgress {
-  vocab: SectionProgress & { words: number };
+  vocab: SectionProgress & { words: number; mastered: boolean };
   lesson: SectionProgress & { watched: boolean; hasVideo: boolean };
   homework: SectionProgress & { done: number; total: number };
   /** Mukofot qoidalari — video ko'rgani va vazifa uchun */
@@ -39,8 +39,12 @@ export interface UnitProgress {
 }
 
 export async function loadUnitProgress(ctx: UnitContext): Promise<UnitProgress> {
-  const [view, tasks, coins, stars] = await Promise.all([
+  const [view, mastery, tasks, coins, stars] = await Promise.all([
     prisma.lessonView.findFirst({
+      where: { studentId: ctx.studentId, courseLessonId: ctx.lesson.id },
+      select: { id: true },
+    }),
+    prisma.vocabMastery.findFirst({
       where: { studentId: ctx.studentId, courseLessonId: ctx.lesson.id },
       select: { id: true },
     }),
@@ -65,8 +69,14 @@ export async function loadUnitProgress(ctx: UnitContext): Promise<UnitProgress> 
     vocab: {
       has: hasVocab,
       words: words.length,
-      // So'zlar dars o'tilganda o'rganilgan hisoblanadi
-      pct: hasVocab ? (ctx.taught ? 100 : 0) : 0,
+      mastered: !!mastery,
+      // Ikki yo'l ham 100% beradi:
+      //   · o'quvchi mashqda hamma so'zni to'g'ri tanlab chiqqan
+      //   · yoki o'qituvchi darsni "o'tildi" deb belgilagan
+      // Ilgari faqat ikkinchisi bor edi va o'quvchi kutib o'tirishdan
+      // boshqa ilojsiz edi. Birinchisi olib tashlanmadi: dars o'tilgani
+      // ham haqiqiy manba.
+      pct: hasVocab ? (mastery || ctx.taught ? 100 : 0) : 0,
     },
     lesson: {
       has: hasVideo,

@@ -249,6 +249,7 @@ model Student {
   challengesReceived GameChallenge[] @relation("ChallengeOpponent")
   challengeEntries   GameChallengeEntry[]
   lessonViews  LessonView[]
+  vocabMastery VocabMastery[]
   levelUps     StudentLevelUp[]
 
   createdAt DateTime @default(now())
@@ -413,6 +414,27 @@ model LessonView {
   studentId      String
   student        Student  @relation(fields: [studentId], references: [id], onDelete: Cascade)
   courseLessonId String
+  createdAt      DateTime @default(now())
+
+  @@unique([studentId, courseLessonId])
+  @@index([studentId])
+}
+
+// Darsning lug'ati o'zlashtirilgani.
+//
+// O'quvchi mashqda darsdagi HAR BIR so'zni to'g'ri tanlab chiqqanda bitta
+// yozuv qo'shiladi. Ilgari lug'at faqat o'qituvchi darsni "o'tildi" deb
+// belgilaganda 100% bo'lardi — o'quvchining o'zi qilgan ishi hech qayerda
+// ko'rinmasdi va u kutib o'tirishdan boshqa ilojsiz edi.
+//
+// `words` — o'sha paytdagi so'zlar soni. Ustoz keyin so'z qo'shsa, eski
+// natija qancha so'zdan olinganini bilib turamiz.
+model VocabMastery {
+  id             String   @id @default(cuid())
+  studentId      String
+  student        Student  @relation(fields: [studentId], references: [id], onDelete: Cascade)
+  courseLessonId String
+  words          Int      @default(0)
   createdAt      DateTime @default(now())
 
   @@unique([studentId, courseLessonId])

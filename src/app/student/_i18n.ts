@@ -65,6 +65,21 @@ const DICT = {
   // Ustoz yuklagan lug'at fayli (pdf/word/txt) — "Lug'at" bo'limidagi karta
   vocabFile: p("Lug'at fayli", "Файл словаря", "Vocabulary file", "Wortschatzdatei"),
   vocabFileHint: p("Ustoz tayyorlagan so'zlar ro'yxati", "Список слов от преподавателя", "Word list prepared by your teacher", "Wortliste von der Lehrkraft"),
+
+  // ── So'z mashqi ──
+  practiceWords: p("So'zlarni mashq qilish", "Потренировать слова", "Practise the words", "Wörter üben"),
+  practiceHint: p("Tarjimasiga qarab nemischasini tanlang", "По переводу выберите немецкое слово", "Pick the German word for each translation", "Wähle zur Übersetzung das deutsche Wort"),
+  practiceAgain: p("Yana mashq qilish", "Потренироваться ещё", "Practise again", "Nochmal üben"),
+  chooseGerman: p("Nemischasi qaysi?", "Какое немецкое слово?", "Which German word?", "Welches deutsche Wort?"),
+  vocabLearned: p("O'rganildi", "Изучено", "Learned", "Gelernt"),
+  vocabMasteredNote: p("Bu darsning barcha so'zlarini bilasiz", "Вы знаете все слова этого урока", "You know every word in this lesson", "Du kennst alle Wörter dieser Lektion"),
+  vocabDone: p("Barcha so'zlar to'g'ri!", "Все слова верно!", "Every word correct!", "Alle Wörter richtig!"),
+  vocabDoneNote: p("Xato qilgan so'z yana qaytib keldi — endi hammasini bilasiz", "Слова с ошибками повторились — теперь вы знаете все", "Missed words came back around — now you know them all", "Falsche Wörter kamen zurück — jetzt kennst du alle"),
+  correctAnswer: p("To'g'ri javob", "Правильный ответ", "Correct answer", "Richtige Antwort"),
+  attempts: p("urinish", "попыток", "attempts", "Versuche"),
+  accuracy: p("aniqlik", "точность", "accuracy", "Genauigkeit"),
+  close: p("Yopish", "Закрыть", "Close", "Schließen"),
+  vocabTooFew: p("Mashq uchun kamida 2 ta tarjimali so'z kerak", "Для тренировки нужно минимум 2 слова с переводом", "Practice needs at least 2 words with translations", "Zum Üben braucht es mindestens 2 Wörter mit Übersetzung"),
   exercises: p("Mashqlar", "Упражнения", "Exercises", "Exercises"),
   theory: p("NAZARIYA", "ТЕОРИЯ", "THEORY", "THEORIE"),
   test: p("Test", "Тест", "Test", "Test"),
