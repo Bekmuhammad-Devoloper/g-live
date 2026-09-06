@@ -2,7 +2,7 @@
 
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { createPortal } from "react-dom";
-import type { LessonWord } from "@/lib/lessonWords";
+import { practicableWords, type LessonWord } from "@/lib/lessonWords";
 import type { StudentStrings } from "../../../../_i18n";
 import { markVocabMastered } from "../actions";
 
@@ -18,9 +18,6 @@ import { markVocabMastered } from "../actions";
 // esa javobni eslab qoladi-yu, so'zni emas. Uch qadam — oraliq masofa.
 
 const REQUEUE_AFTER = 3;
-
-/** Faqat tarjimasi bor so'zlar mashqqa kiradi — savol o'zbekcha beriladi */
-export const practicable = (words: LessonWord[]) => words.filter((w): w is LessonWord & { uz: string } => !!w.uz);
 
 function shuffle<T>(arr: T[]): T[] {
   const a = [...arr];
@@ -47,7 +44,7 @@ export default function VocabTrainer({
   /** Tugmadagi yozuv */
   label: string;
 }) {
-  const pool = useMemo(() => practicable(words), [words]);
+  const pool = useMemo(() => practicableWords(words), [words]);
   const [open, setOpen] = useState(false);
 
   if (pool.length < 2) return null;
@@ -101,7 +98,17 @@ function Session({
   const q: Q | null = useMemo(() => {
     if (idx === undefined) return null;
     const word = pool[idx];
-    const others = pool.filter((_, i) => i !== idx).map((w) => w.de);
+
+    // Chalg'ituvchi variantlar. Tarjimasi AYNAN SHU so'z bilan bir xil
+    // bo'lganlari chiqarib tashlanadi: "das Auto - mashina" va
+    // "der Wagen - mashina" bo'lsa, savol "mashina" bo'lib, ikkala variant
+    // ham to'g'ri bo'lardi-yu, bittasi xato deb belgilanardi.
+    const key = word.uz.trim().toLowerCase();
+    const safe = pool.filter((w, i) => i !== idx && w.uz.trim().toLowerCase() !== key);
+    // Hammasining tarjimasi bir xil bo'lib qolgan chekka holat — o'shanda
+    // hech bo'lmasa boshqa so'zlarni ko'rsatamiz, savolsiz qolmasin.
+    const others = (safe.length > 0 ? safe : pool.filter((_, i) => i !== idx)).map((w) => w.de);
+
     const distractors = shuffle(others).slice(0, Math.min(3, others.length));
     return { word, options: shuffle([word.de, ...distractors]) };
   }, [idx, pool]);

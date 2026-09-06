@@ -1,10 +1,10 @@
 import MissingStudent from "../../../../MissingStudent";
 import { loadUnit } from "../_load";
 import { SectionHeader, IcoWords, Attachment } from "../_parts";
-import { lessonVocabText, looksLikeVocabulary, parseLessonWords, type LessonWord } from "@/lib/lessonWords";
+import { lessonVocabText, looksLikeVocabulary, parseLessonWords, practicableWords, type LessonWord } from "@/lib/lessonWords";
 import { loadUnitProgress } from "../_progress";
 import { NAVY } from "../../../../_ui";
-import VocabTrainer, { practicable } from "./VocabTrainer";
+import VocabTrainer from "./VocabTrainer";
 
 // Darsning lug'ati.
 //
@@ -47,7 +47,7 @@ export default async function LessonVocabPage({
   const words = parseLessonWords(lessonVocabText(lesson));
   const hasVocab = words.length > 0 && looksLikeVocabulary(words);
   const p = await loadUnitProgress(ctx);
-  const canPractise = practicable(words).length >= 2;
+  const canPractise = practicableWords(words).length >= 2;
 
   return (
     <div>

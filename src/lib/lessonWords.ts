@@ -58,6 +58,24 @@ export function parseLessonWords(topic: string | null | undefined): LessonWord[]
 }
 
 /**
+ * Mashq qilinadigan so'zlar — faqat tarjimasi borlari.
+ *
+ * Mashqda savol o'zbekcha beriladi ("mushuk" -> die Katze), shu sabab
+ * tarjimasiz so'zni umuman so'rab bo'lmaydi.
+ *
+ * DIQQAT: bu funksiya SHU YERDA turishi shart. Ilgari u VocabTrainer.tsx
+ * ("use client") ichida edi va lug'at sahifasi (server komponenti) uni
+ * chaqirardi — Next uni ishga tushirishdan bosh tortadi:
+ * "Attempted to call practicable() from the server but practicable is on
+ * the client". `next build` buni TUTMAYDI, xato faqat sahifa ochilganda
+ * chiqadi. Ikkala tomon ham ishlatadigan mantiq mijoz fayliga
+ * qo'yilmasin.
+ */
+export function practicableWords(words: LessonWord[]): (LessonWord & { uz: string })[] {
+  return words.filter((w): w is LessonWord & { uz: string } => !!w.uz);
+}
+
+/**
  * Mavzu maydoni LUG'ATmi yoki oddiy tavsifmi.
  *
  * O'qituvchi ba'zan u yerga darsning tavsifini gap ko'rinishida yozadi.

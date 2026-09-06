@@ -4,7 +4,7 @@ import { revalidatePath } from "next/cache";
 import { getSession } from "@/lib/auth";
 import { ROLES } from "@/lib/constants";
 import { prisma } from "@/lib/db";
-import { lessonVocabText, parseLessonWords } from "@/lib/lessonWords";
+import { lessonVocabText, parseLessonWords, practicableWords } from "@/lib/lessonWords";
 
 // Dars videosi ko'rib chiqilgani — har darsga BIR marta yoziladi.
 // Shu yozuv bo'yicha o'quvchiga tanga va yulduz beriladi.
@@ -75,7 +75,7 @@ export async function markVocabMastered(lessonId: string): Promise<{ ok?: boolea
   if (!student.enrollments.some((e) => e.group.programId === lesson.programId)) return { error: "forbidden" };
 
   // Mashq qilinadigan so'zlar — tarjimasi borlari (savol o'zbekcha beriladi)
-  const words = parseLessonWords(lessonVocabText(lesson)).filter((w) => w.uz);
+  const words = practicableWords(parseLessonWords(lessonVocabText(lesson)));
   if (words.length < 2) return { error: "invalid" };
 
   await prisma.vocabMastery.upsert({
