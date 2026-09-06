@@ -6,7 +6,7 @@
     "dev": "node scripts/tunnel.mjs && next dev --turbopack",
     "dev:notunnel": "next dev --turbopack",
     "tunnel": "node scripts/tunnel.mjs",
-    "build": "node scripts/check-dev-free.mjs && prisma generate && next build",
+    "build": "node scripts/check-dev-free.mjs && node scripts/check-client-boundary.mjs && prisma generate && next build",
     "start": "next start",
     "db:push": "prisma db push",
     "db:seed": "tsx prisma/seed.ts",
