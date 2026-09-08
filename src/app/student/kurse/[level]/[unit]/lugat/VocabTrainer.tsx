@@ -17,7 +17,8 @@ import { markVocabMastered } from "../actions";
 // oxiriga tashlansa o'quvchi uni allaqachon unutgan bo'ladi, darhol qaytsa
 // esa javobni eslab qoladi-yu, so'zni emas. Uch qadam — oraliq masofa.
 
-const REQUEUE_AFTER = 3;
+const REQUEUE_MIN = 3;
+const REQUEUE_SPREAD = 3; // 3, 4 yoki 5 qadam nari
 
 function shuffle<T>(arr: T[]): T[] {
   const a = [...arr];
@@ -86,6 +87,8 @@ function Session({
   const [picked, setPicked] = useState<string | null>(null);
   const [tries, setTries] = useState(0);
   const [right, setRight] = useState(0);
+  /** Nechanchi savol — variantlarni qayta aralashtirish uchun */
+  const [round, setRound] = useState(0);
   const [saved, setSaved] = useState(false);
   const timer = useRef<ReturnType<typeof setTimeout> | null>(null);
 
@@ -93,8 +96,16 @@ function Session({
   const idx = queue[0];
 
   // Savol — joriy so'z va uchta chalg'ituvchi variant.
-  // `idx` o'zgarmaguncha qayta hisoblanmaydi, aks holda har chizishda
-  // variantlar joyini almashtirib, o'quvchini chalg'itardi.
+  //
+  // `round` HAR JAVOBDAN keyin oshadi va shu sabab variantlar har safar
+  // qaytadan aralashadi — AYNI SO'Z qayta so'ralganda ham. Busiz oxirgi
+  // so'z qolganda (navbatda boshqa so'z yo'q) `idx` o'zgarmasdi, `useMemo`
+  // eski javobni qaytaraverardi va o'quvchi so'zni emas, yashil bo'lgan
+  // TUGMA JOYINI eslab qolardi.
+  //
+  // `round` javob berilgan zahoti emas, natija ko'rsatilib bo'lgach oshadi
+  // (setTimeout ichida): aks holda yashil/qizil belgi turgan payt variantlar
+  // ko'z oldida joyini almashtirib yuborardi.
   const q: Q | null = useMemo(() => {
     if (idx === undefined) return null;
     const word = pool[idx];
@@ -111,7 +122,8 @@ function Session({
 
     const distractors = shuffle(others).slice(0, Math.min(3, others.length));
     return { word, options: shuffle([word.de, ...distractors]) };
-  }, [idx, pool]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [idx, round, pool]);
 
   useEffect(() => () => { if (timer.current) clearTimeout(timer.current); }, []);
 
@@ -139,11 +151,14 @@ function Session({
     // ulgurishi uchun uzunroq turadi.
     timer.current = setTimeout(() => {
       setPicked(null);
+      setRound((n) => n + 1); // variantlar qaytadan aralashsin
       setQueue((prev) => {
         const [head, ...rest] = prev;
         if (ok) return rest;
-        // Xato — so'zni uch qadam narida qaytaramiz
-        const at = Math.min(REQUEUE_AFTER, rest.length);
+        // Xato — so'zni bir necha qadam narida qaytaramiz. Masofa qat'iy
+        // emas, 3-5 oralig'ida: doim bir xil bo'lsa o'quvchi "xato qilsam
+        // uchtadan keyin qaytadi" deb tartibni ham yodlab olardi.
+        const at = Math.min(REQUEUE_MIN + Math.floor(Math.random() * REQUEUE_SPREAD), rest.length);
         return [...rest.slice(0, at), head, ...rest.slice(at)];
       });
     }, ok ? 480 : 1250);
