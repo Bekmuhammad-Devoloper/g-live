@@ -375,12 +375,15 @@ export default async function StudentStartPage() {
             <FlagAvatar s={44} />
           </span>
         )}
-        {/* Shrift o'lchami bo'sh joyga qarab tanlangan: 360px ekranda ism
-            uchun 220px qoladi (rasm 44 + bildirishnoma 44 + oraliqlar),
-            16px extrabold da esa ~24 ta belgi sig'adi — eng uzun ism-familiya
-            ham to'liq chiqadi, kesilmaydi. */}
-        <h1 className="min-w-0 flex-1 truncate text-[16px] font-extrabold leading-tight tracking-[-0.015em] text-slate-900 min-[380px]:text-[17px] sm:text-[19px]">
-          {fullName}
+        {/* Ism IKKI QATORGACHA cho'ziladi, kesilmaydi.
+            Ilgari bitta qatorda `truncate` edi va uzun familiya "Abdugaffarova…"
+            bo'lib qirqilardi: qatorda rasm (44) + seriya (~86) + qo'ng'iroq (44)
+            turgani uchun ismga 360px ekranda atigi ~135px qoladi — bu 16px
+            extrabold da 13-14 ta belgi.
+            Ikki qator 17px dan = 34px, ya'ni avatardan (44px) past — shu sabab
+            qator balandligi umuman o'zgarmaydi. */}
+        <h1 className="min-w-0 flex-1 text-[15.5px] font-extrabold leading-[1.1] tracking-[-0.015em] text-slate-900 min-[380px]:text-[16.5px] sm:text-[18px]">
+          <span className="line-clamp-2">{fullName}</span>
         </h1>
         {/* Qo'ng'iroq va seriya — ichki sahifalardagi HeaderBadges bilan
             bir xil ko'rinish va bir xil tartibda. `relative` shart: nuqta
