@@ -52,6 +52,14 @@
     <uses-permission android:name="android.permission.INTERNET" />
 
     <!--
+        Mikrofon — lug'at mashqining talaffuz bosqichi uchun.
+        Ruxsat ilova ochilganda emas, o'quvchi birinchi marta mikrofon
+        tugmasini bosganda so'raladi (Capacitor WebView getUserMedia
+        so'rovini shunda yuboradi).
+    -->
+    <uses-permission android:name="android.permission.RECORD_AUDIO" />
+
+    <!--
         Fayl yuklab olish "Yuklamalar" papkasiga tushadi.
         Android 10 (API 29) dan boshlab bu ruxsat KERAK EMAS — tizim
         papkaga o'zi yozadi. Faqat eski telefonlar uchun so'raladi.

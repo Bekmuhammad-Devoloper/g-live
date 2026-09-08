@@ -5,20 +5,26 @@ import { createPortal } from "react-dom";
 import { practicableWords, splitArticle, type LessonWord } from "@/lib/lessonWords";
 import type { StudentStrings } from "../../../../_i18n";
 import { markVocabMastered } from "../actions";
+import SpeakStage from "./SpeakStage";
 
-// So'z mashqi — UCH BOSQICH, har biri oldingisidan qiyinroq.
+// So'z mashqi — TO'RT BOSQICH, har biri oldingisidan qiyinroq.
 //
 //   1. Tanish   — tarjimasi beriladi, nemischasi variantlardan tanlanadi
 //   2. Teskari  — nemischasi beriladi, tarjimasi variantlardan tanlanadi
 //   3. Yasash   — tarjimasi beriladi, nemischasi HARFLARDAN yig'iladi
+//   4. Talaffuz — so'z ko'rsatiladi, o'quvchi uni OVOZ CHIQARIB aytadi
 //
 // Nega shu tartib: tanish eng oson (javob ko'z oldida turadi), teskarisi
-// so'zni boshqa yo'nalishda tekshiradi, yig'ish esa eng qiyini — o'quvchi
-// so'zni o'zi tiklaydi, tanlamaydi. Ya'ni tanishdan yozishga o'tiladi.
+// so'zni boshqa yo'nalishda tekshiradi, yig'ish so'zni yozma tiklashni
+// talab qiladi, talaffuz esa eng qiyini — so'z endi ekranda emas, og'izda.
+// Ya'ni tanishdan gapirishga o'tiladi.
+//
+// 4-bosqich mikrofon va tashqi xizmat (Gemini) ga tayanadi. Ular yo'q
+// bo'lsa mashq UCH bosqichda tugaydi — `canSpeak` shuni belgilaydi.
 //
 // ASOSIY QOIDA (har bosqichda): bosqich HAMMA so'z to'g'ri bajarilgunicha
 // tugamaydi. Xato qilingan so'z navbatdan chiqmaydi, birozdan keyin qaytib
-// keladi. Uchala bosqich tugagach lug'at o'zlashtirilgan hisoblanadi.
+// keladi. Barcha bosqich tugagach lug'at o'zlashtirilgan hisoblanadi.
 //
 // Xato qilingan so'z navbatning OXIRIGA emas, bir necha qadam narisiga
 // qo'yiladi: oxiriga tashlansa o'quvchi uni allaqachon unutgan bo'ladi,
@@ -27,8 +33,7 @@ import { markVocabMastered } from "../actions";
 
 const REQUEUE_MIN = 3;
 const REQUEUE_SPREAD = 3;
-const STAGES = [1, 2, 3] as const;
-type Stage = (typeof STAGES)[number];
+type Stage = 1 | 2 | 3 | 4;
 
 function shuffle<T>(arr: T[]): T[] {
   const a = [...arr];
@@ -42,7 +47,7 @@ function shuffle<T>(arr: T[]): T[] {
 type Word = LessonWord & { uz: string };
 
 export default function VocabTrainer({
-  words, lessonId, t, accent, label,
+  words, lessonId, t, accent, label, canSpeak = false,
 }: {
   words: LessonWord[];
   lessonId: string;
@@ -51,6 +56,8 @@ export default function VocabTrainer({
   accent: string;
   /** Tugmadagi yozuv */
   label: string;
+  /** Talaffuz bosqichi mumkinmi (serverda Gemini kaliti sozlanganmi) */
+  canSpeak?: boolean;
 }) {
   const pool = useMemo(() => practicableWords(words), [words]);
   const [open, setOpen] = useState(false);
@@ -73,18 +80,29 @@ export default function VocabTrainer({
         {label}
       </button>
 
-      {open && <Session pool={pool} lessonId={lessonId} t={t} accent={accent} onClose={() => setOpen(false)} />}
+      {open && (
+        <Session
+          pool={pool}
+          lessonId={lessonId}
+          t={t}
+          accent={accent}
+          lastStage={canSpeak ? 4 : 3}
+          onClose={() => setOpen(false)}
+        />
+      )}
     </>
   );
 }
 
 function Session({
-  pool, lessonId, t, accent, onClose,
+  pool, lessonId, t, accent, lastStage, onClose,
 }: {
   pool: Word[];
   lessonId: string;
   t: StudentStrings;
   accent: string;
+  /** Oxirgi bosqich — talaffuz mumkin bo'lmasa 3 */
+  lastStage: Stage;
   onClose: () => void;
 }) {
   const total = pool.length;
@@ -101,12 +119,12 @@ function Session({
   const timer = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   const stageDone = queue.length === 0;
-  const allDone = stageDone && stage === 3;
+  const allDone = stageDone && stage >= lastStage;
   const idx = queue[0];
 
   useEffect(() => () => { if (timer.current) clearTimeout(timer.current); }, []);
 
-  // Uchala bosqich tugagach natijani saqlaymiz — bir marta
+  // Barcha bosqich tugagach natijani saqlaymiz — bir marta
   useEffect(() => {
     if (!allDone || saved) return;
     setSaved(true);
@@ -114,11 +132,17 @@ function Session({
   }, [allDone, saved, lessonId]);
 
   const nextStage = useCallback(() => {
-    setStage((s) => (s < 3 ? ((s + 1) as Stage) : s));
+    setStage((s) => (s < lastStage ? ((s + 1) as Stage) : s));
     setQueue(shuffle(pool.map((_, i) => i)));
     setRound((n) => n + 1);
     setPicked(null);
-  }, [pool]);
+  }, [pool, lastStage]);
+
+  /** Talaffuz bosqichini o'tkazib yuborish — mikrofon ishlamasa */
+  const skipStage = useCallback(() => {
+    setQueue([]);
+    setPicked(null);
+  }, []);
 
   /**
    * Javob qabul qilinadi. `ok` — to'g'rimi.
@@ -152,10 +176,11 @@ function Session({
   }, []);
 
   const learned = total - queue.length;
-  // Umumiy jarayon — uchala bosqich bo'yicha
-  const overall = Math.round((((stage - 1) * total + learned) / (total * 3)) * 100);
+  // Umumiy jarayon — barcha bosqich bo'yicha
+  const overall = Math.round((((stage - 1) * total + learned) / (total * lastStage)) * 100);
 
-  const stageName = stage === 1 ? t.stage1Name : stage === 2 ? t.stage2Name : t.stage3Name;
+  const stageName =
+    stage === 1 ? t.stage1Name : stage === 2 ? t.stage2Name : stage === 3 ? t.stage3Name : t.stage4Name;
 
   return createPortal(
     <div className="fixed inset-0 z-[70] flex flex-col bg-[#f4f7f9]" role="dialog" aria-modal="true">
@@ -188,10 +213,10 @@ function Session({
           </span>
         </div>
 
-        {/* Bosqich belgisi — uchta chiziqcha va nomi */}
+        {/* Bosqich belgisi — har bosqichga bitta chiziqcha va nomi */}
         <div className="mt-2.5 flex items-center gap-2">
           <div className="flex gap-1">
-            {STAGES.map((s) => (
+            {Array.from({ length: lastStage }, (_, i) => i + 1).map((s) => (
               <span
                 key={s}
                 className="h-[3px] w-6 rounded-full transition-colors"
@@ -211,7 +236,19 @@ function Session({
         <StageBreak t={t} accent={accent} nextStage={(stage + 1) as Stage} onNext={nextStage} />
       ) : (
         <div className="flex min-h-0 flex-1 flex-col px-4 pb-[calc(20px+env(safe-area-inset-bottom))]">
-          {stage === 3 ? (
+          {stage === 4 ? (
+            <SpeakStage
+              key={`${idx}-${round}`}
+              word={pool[idx].de}
+              wordIndex={idx}
+              lessonId={lessonId}
+              t={t}
+              accent={accent}
+              picked={picked}
+              onAnswer={answer}
+              onSkip={skipStage}
+            />
+          ) : stage === 3 ? (
             <BuildStage key={`${idx}-${round}`} word={pool[idx]} t={t} accent={accent} picked={picked} onAnswer={answer} />
           ) : (
             <ChoiceStage
@@ -500,8 +537,8 @@ function StageBreak({
   nextStage: Stage;
   onNext: () => void;
 }) {
-  const name = nextStage === 2 ? t.stage2Name : t.stage3Name;
-  const hint = nextStage === 2 ? t.stage2Hint : t.stage3Hint;
+  const name = nextStage === 2 ? t.stage2Name : nextStage === 3 ? t.stage3Name : t.stage4Name;
+  const hint = nextStage === 2 ? t.stage2Hint : nextStage === 3 ? t.stage3Hint : t.stage4Hint;
 
   return (
     <div className="flex min-h-0 flex-1 flex-col items-center justify-center px-6 pb-[calc(24px+env(safe-area-inset-bottom))] text-center">

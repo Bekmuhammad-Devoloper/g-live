@@ -86,9 +86,24 @@ const DICT = {
   stage1Name: p("Tanish", "Узнавание", "Recognise", "Erkennen"),
   stage2Name: p("Teskari", "Обратно", "Reverse", "Umgekehrt"),
   stage3Name: p("Yasash", "Собрать", "Build", "Bauen"),
+  stage4Name: p("Talaffuz", "Произношение", "Speak", "Aussprache"),
   stage1Hint: p("Tarjimasiga qarab nemischasini tanlang", "По переводу выберите немецкое слово", "Pick the German word for each translation", "Wähle zur Übersetzung das deutsche Wort"),
   stage2Hint: p("Nemischasiga qarab tarjimasini tanlang", "По немецкому слову выберите перевод", "Pick the translation for each German word", "Wähle zum deutschen Wort die Übersetzung"),
   stage3Hint: p("Harflardan so'zni yig'ing", "Соберите слово из букв", "Build the word from its letters", "Setze das Wort aus den Buchstaben zusammen"),
+  stage4Hint: p("So'zni ovoz chiqarib ayting", "Произнесите слово вслух", "Say the word out loud", "Sprich das Wort laut aus"),
+
+  // ── Talaffuz bosqichi ──
+  sayWord: p("Shu so'zni ayting", "Произнесите это слово", "Say this word", "Sprich dieses Wort"),
+  tapToSpeak: p("Bosing va ayting", "Нажмите и говорите", "Tap and speak", "Tippen und sprechen"),
+  // `listening` va `checking` nomlari allaqachon band ("Tinglash" ko'nikmasi
+  // va vazifa tekshiruvi), shu sabab mikrofon holatlari `mic` bilan
+  micListening: p("Eshitilmoqda…", "Слушаю…", "Listening…", "Ich höre zu…"),
+  micChecking: p("Tekshirilmoqda…", "Проверяю…", "Checking…", "Wird geprüft…"),
+  heardYou: p("Eshitildi", "Услышано", "Heard", "Gehört"),
+  noVoice: p("Ovoz eshitilmadi — balandroq ayting", "Голос не слышен — говорите громче", "No voice heard — speak louder", "Keine Stimme gehört — sprich lauter"),
+  micDenied: p("Mikrofonga ruxsat berilmadi", "Доступ к микрофону запрещён", "Microphone access denied", "Mikrofonzugriff verweigert"),
+  speakUnavailable: p("Hozir tekshirib bo'lmadi, qaytadan urinib ko'ring", "Сейчас не удалось проверить, попробуйте снова", "Could not check right now, try again", "Konnte gerade nicht prüfen, versuche es erneut"),
+  skipStage: p("Bu bosqichni o'tkazib yuborish", "Пропустить этот этап", "Skip this stage", "Diese Stufe überspringen"),
   chooseUzbek: p("Tarjimasi qaysi?", "Какой перевод?", "Which translation?", "Welche Übersetzung?"),
   buildWord: p("Shu so'zni yig'ing", "Соберите это слово", "Build this word", "Setze dieses Wort zusammen"),
   stageDone: p("Bosqich tugadi", "Этап пройден", "Stage complete", "Stufe geschafft"),
