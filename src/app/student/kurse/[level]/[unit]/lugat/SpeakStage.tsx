@@ -2,8 +2,23 @@
 
 import { useCallback, useEffect, useRef, useState } from "react";
 import type { StudentStrings } from "../../../../_i18n";
+import { listenNative, nativeSpeechAvailable, stopNative } from "@/lib/nativeSpeech";
 
 // Talaffuz bosqichi — o'quvchi so'zni ovoz chiqarib aytadi.
+//
+// IKKI YO'L BOR va birinchisi afzal:
+//
+//   1. ANDROIDNING O'ZI taniydi (NativeSpeechPlugin). Bepul, kvotasiz,
+//      odatda bir soniyada va o'quvchining ovozi telefondan umuman
+//      chiqmaydi — serverga faqat tanilgan MATN boradi.
+//
+//   2. Yozib olib, serverga yuborish (Gemini). Brauzer uchun va nutq
+//      tanish xizmati yo'q telefonlar uchun zaxira.
+//
+// Nega birinchisi kerak bo'ldi: Gemini bepul kvotasi KUNIGA 20 ta so'rov
+// (quotaValue 20). Bitta o'quvchi bitta darsni mashq qilsa 10 tasi ketadi
+// — 125 o'quvchi uchun mutlaqo yetmaydi. Ustiga, 5 soniyalik yozuvga
+// ~30 soniya javob kutilardi.
 //
 // NEGA WAV. Brauzer MediaRecorder bilan `audio/webm` yozadi, Gemini esa
 // hujjatlarida WAV/MP3/OGG/FLAC ni sanaydi. Formatni serverda o'girish
@@ -102,6 +117,8 @@ export default function SpeakStage({
   const [heard, setHeard] = useState<string | null>(null);
   const [problem, setProblem] = useState<string | null>(null);
   const [micBlocked, setMicBlocked] = useState(false);
+  /** Androidning o'z nutq tanish tizimi mavjudmi. null — hali aniqlanmadi */
+  const [native, setNative] = useState<boolean | null>(null);
 
   const recorder = useRef<MediaRecorder | null>(null);
   const stream = useRef<MediaStream | null>(null);
@@ -117,11 +134,20 @@ export default function SpeakStage({
 
   useEffect(() => cleanup, [cleanup]);
 
-  const send = useCallback(async (wav: Blob) => {
+  // Qaysi yo'l borligini bir marta aniqlaymiz
+  useEffect(() => {
+    let cancelled = false;
+    void nativeSpeechAvailable().then((v) => { if (!cancelled) setNative(v); });
+    return () => { cancelled = true; };
+  }, []);
+
+  /** Yozuvni yoki tanilgan matnni serverga yuboradi va javobni ko'rsatadi */
+  const send = useCallback(async (payload: { wav: Blob } | { transcript: string }) => {
     setPhase("checking");
     try {
       const fd = new FormData();
-      fd.set("audio", wav, "speech.wav");
+      if ("wav" in payload) fd.set("audio", payload.wav, "speech.wav");
+      else fd.set("transcript", payload.transcript);
       fd.set("lessonId", lessonId);
       fd.set("wordIndex", String(wordIndex));
 
@@ -141,14 +167,41 @@ export default function SpeakStage({
   }, [lessonId, wordIndex, t, onAnswer]);
 
   const stop = useCallback(() => {
+    if (native) { void stopNative(); return; }
     if (recorder.current?.state === "recording") recorder.current.stop();
-  }, []);
+  }, [native]);
 
-  const start = useCallback(async () => {
-    if (phase !== "idle" && phase !== "error") return;
-    setProblem(null);
-    setHeard(null);
+  /** 1-yo'l: Androidning o'zi taniydi */
+  const startNative = useCallback(async () => {
+    setPhase("recording");
+    navigator.vibrate?.(10);
 
+    const r = await listenNative("de-DE");
+    if (!r) {
+      // Plagin yo'q (eski APK) — bu yo'lni butunlay unutamiz
+      setNative(false);
+      setPhase("idle");
+      return;
+    }
+    if ("error" in r) {
+      if (r.error === "denied") { setMicBlocked(true); setProblem(t.micDenied); }
+      else if (r.error === "no_match") setProblem(t.noVoice);
+      else if (r.error === "unavailable") {
+        // Xizmat nosoz — zaxira yo'lga o'tamiz
+        setNative(false);
+        setPhase("idle");
+        return;
+      }
+      else setProblem(t.speakUnavailable);
+      setPhase("error");
+      return;
+    }
+    if (!r.text.trim()) { setProblem(t.noVoice); setPhase("error"); return; }
+    await send({ transcript: r.text });
+  }, [t, send]);
+
+  /** 2-yo'l: yozib olib, serverga yuborish */
+  const startRecording = useCallback(async () => {
     let ms: MediaStream;
     try {
       ms = await navigator.mediaDevices.getUserMedia({
@@ -188,7 +241,7 @@ export default function SpeakStage({
 
         // Jim yozuvni serverga umuman yubormaymiz — javob darhol
         if (!hasVoice(pcm)) { setProblem(t.noVoice); setPhase("error"); return; }
-        await send(encodeWav(pcm, SAMPLE_RATE));
+        await send({ wav: encodeWav(pcm, SAMPLE_RATE) });
       } catch {
         setProblem(t.speakUnavailable);
         setPhase("error");
@@ -199,7 +252,17 @@ export default function SpeakStage({
     setPhase("recording");
     navigator.vibrate?.(10);
     stopTimer.current = setTimeout(stop, MAX_MS);
-  }, [phase, t, cleanup, send, stop]);
+  }, [t, cleanup, send, stop]);
+
+  /** Tugma bosilganda: qaysi yo'l mavjud bo'lsa o'sha */
+  const start = useCallback(async () => {
+    if (phase !== "idle" && phase !== "error") return;
+    setProblem(null);
+    setHeard(null);
+    if (native === null) return;           // hali aniqlanmadi
+    if (native) await startNative();
+    else await startRecording();
+  }, [phase, native, startNative, startRecording]);
 
   const ok = picked !== null && heard !== null && phase === "result";
   const wrong = phase === "result" && picked !== null && !ok;

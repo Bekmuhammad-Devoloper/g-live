@@ -39,6 +39,23 @@ const CASES: [string, string, boolean, string][] = [
   ["das Haus", "Haus", true, "to'g'ri"],
   ["das Buch", "Bus", false, "ikki harf farq"],
   ["die Milch", "Milch bitte", true, "ortiqcha so'z bilan"],
+
+  // ── Bir harf farq qiladigan BOSHQA so'zlar ──
+  // Chetlanish transkripsiya sirpanishini kechirish uchun, so'z
+  // almashtirish uchun emas. So'z BOSHIDAGI farq -- boshqa so'z.
+  ["der Tisch", "Fisch", false, "Fisch — boshqa so'z, bir harf farq"],
+  ["das Haus", "Maus", false, "Maus — boshqa so'z, bir harf farq"],
+  ["das Buch", "Tuch", false, "Tuch — boshqa so'z"],
+  ["der Hund", "Hunt", true, "so'z OXIRIDAGI d/t — nemis jarangsizlanishi"],
+  ["das Fenster", "Fenstor", true, "oxiriga yaqin bitta harf"],
+
+  // ── Android bir nechta variant qaytaradi ──
+  ["der Tisch", "Tisch | Fisch | tisch", true, "birinchi variant to'g'ri"],
+  ["der Tisch", "Fisch | Tisch", true, "ikkinchi variant to'g'ri"],
+  ["der Tisch", "Fisch | Wisch | misch", false, "hech biri to'g'ri emas"],
+  ["der Hund", "die Katze | Katze", false, "darsdagi boshqa so'z"],
+  ["die Schule", "der Schule | Schule", true, "artikli xato, o'zi to'g'ri"],
+  ["die Tür", "Tur | Tour", true, "umlautsiz variant"],
 ];
 
 let bad = 0;

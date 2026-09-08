@@ -25,6 +25,9 @@ public class MainActivity extends BridgeActivity {
         // ko'prik (bridge) o'sha yerda quriladi va keyin qo'shilgan plagin
         // veb tomonga ko'rinmay qoladi.
         registerPlugin(ScreenGuardPlugin.class);
+        // Androidning o'z nutq tanish tizimi — talaffuz bosqichi uchun.
+        // Bepul va kvotasiz; tashqi xizmat (Gemini) faqat zaxira.
+        registerPlugin(NativeSpeechPlugin.class);
         super.onCreate(savedInstanceState);
 
         enableDownloads();

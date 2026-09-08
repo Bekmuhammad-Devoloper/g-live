@@ -21,11 +21,13 @@ const ARTICLES = new Set([
   "ein", "eine", "einen", "einem", "einer", "eines",
 ]);
 
-/** Tinish belgilarini olib tashlaydi, kichik harfga o'tkazadi */
+/** Tinish belgilarini olib tashlaydi, kichik harfga o'tkazadi.
+ *  `|` ham ajratkich: Androidning nutq tanish tizimi bir nechta variant
+ *  qaytaradi va ular shu belgi bilan ulanadi. */
 export function normalizeSpeech(s: string): string {
   return s
     .toLowerCase()
-    .replace(/[.,!?;:"'`´()[\]{}…—–\-_/\\]/g, " ")
+    .replace(/[.,!?;:"'`´()[\]{}…—–\-_/\\|]/g, " ")
     .replace(/\s+/g, " ")
     .trim();
 }
@@ -52,13 +54,24 @@ export function editDistance(a: string, b: string): number {
 }
 
 /**
+ * Umlaut va ß ni oddiy harflarga keltiradi: ä→a, ö→o, ü→u, ß→ss.
+ *
+ * Nutq tanish tizimi "Tür" ni ko'pincha "Tur" deb yozadi — bu BOSHQA so'z
+ * emas, o'sha so'zning umlautsiz yozilishi. Shu farq solishtirishdan
+ * oldin yo'qotiladi, aks holda to'g'ri aytgan o'quvchi xato hisoblanardi.
+ */
+export function foldUmlauts(s: string): string {
+  return s
+    .replace(/ä/g, "a").replace(/ö/g, "o").replace(/ü/g, "u").replace(/ß/g, "ss")
+    .normalize("NFD").replace(/[̀-ͯ]/g, "");
+}
+
+/**
  * Qanchalik chetlanishga yo'l qo'yamiz.
  *
- * Nol bo'lsa transkripsiyadagi bitta harf xatosi ham to'g'ri javobni rad
- * etardi; juda katta bo'lsa "Haus" o'rniga "Maus" ham o'tib ketardi. Shu
- * sabab qisqa so'zda 1, uzunida 2 — va bundan tashqari, eshitilgan so'z
- * darsdagi BOSHQA so'zga aynan to'g'ri kelsa, u har doim xato hisoblanadi
- * (quyida).
+ * Nol bo'lsa transkripsiyaning kichik sirpanishi ham to'g'ri javobni rad
+ * etardi ("Hund" nemis tilida [hunt] deb aytiladi va ko'pincha "Hunt" deb
+ * yoziladi). Juda katta bo'lsa boshqa so'z o'tib ketardi.
  */
 const tolerance = (len: number) => (len >= 8 ? 2 : 1);
 
@@ -85,11 +98,13 @@ export function checkPronunciation(
   const said = normalizeSpeech(transcript);
   if (!target || !said) return { ok: false, target, matched: null };
 
+  const goal = foldUmlauts(target);
+
   // Boshqa so'zlarning o'zaklari — aynan shular aytilgan bo'lsa xato
   const rivals = new Set(
     others
-      .map((w) => normalizeSpeech(splitArticle(w).rest))
-      .filter((w) => w && w !== target),
+      .map((w) => foldUmlauts(normalizeSpeech(splitArticle(w).rest)))
+      .filter((w) => w && w !== goal),
   );
 
   // Artikllarni tashlab, so'zlarga ajratamiz. Butun ibora ham nomzod:
@@ -97,22 +112,33 @@ export function checkPronunciation(
   const tokens = said.split(" ").filter((w) => w && !ARTICLES.has(w));
   const candidates = [said.replace(/\s+/g, ""), ...tokens];
 
-  const tol = tolerance(target.length);
-  let best: { word: string; d: number } | null = null;
+  const tol = tolerance(goal.length);
+  let best: { word: string; folded: string; d: number } | null = null;
 
   for (const c of candidates) {
     if (!c) continue;
-    const d = editDistance(c, target);
-    if (!best || d < best.d) best = { word: c, d };
+    const folded = foldUmlauts(c);
+    const d = editDistance(folded, goal);
+    if (!best || d < best.d) best = { word: c, folded, d };
   }
   if (!best) return { ok: false, target, matched: null };
 
   // Eshitilgani darsdagi boshqa so'zga AYNAN to'g'ri kelsa — boshqa so'z
   // aytilgan, chetlanishga yo'l qo'yilmaydi.
-  const saidARival = candidates.some((c) => rivals.has(c));
+  const saidARival = candidates.some((c) => rivals.has(foldUmlauts(c)));
+
+  // BIRINCHI HARF mos kelishi shart.
+  //
+  // Chetlanish transkripsiyaning kichik sirpanishini kechirish uchun, so'z
+  // almashtirish uchun emas. Nemis tilida so'z OXIRIDAGI jarangsizlanish
+  // ("Hund" -> [hunt]) tabiiy va kechiriladi; so'z BOSHIDAGI farq esa
+  // boshqa so'z demakdir — "Tisch" va "Fisch", "Haus" va "Maus" orasi ham
+  // bir harf, lekin ular butunlay boshqa so'zlar va ularni qabul qilish
+  // mashqni ma'nosiz qilardi.
+  const sameStart = best.folded.charAt(0) === goal.charAt(0);
 
   return {
-    ok: best.d === 0 || (!saidARival && best.d <= tol),
+    ok: best.d === 0 || (!saidARival && sameStart && best.d <= tol),
     target,
     matched: best.word || null,
   };

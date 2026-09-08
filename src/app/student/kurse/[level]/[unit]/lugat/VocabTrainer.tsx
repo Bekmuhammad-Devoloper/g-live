@@ -3,6 +3,7 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { createPortal } from "react-dom";
 import { practicableWords, splitArticle, type LessonWord } from "@/lib/lessonWords";
+import { nativeSpeechAvailable } from "@/lib/nativeSpeech";
 import type { StudentStrings } from "../../../../_i18n";
 import { markVocabMastered } from "../actions";
 import SpeakStage from "./SpeakStage";
@@ -56,11 +57,21 @@ export default function VocabTrainer({
   accent: string;
   /** Tugmadagi yozuv */
   label: string;
-  /** Talaffuz bosqichi mumkinmi (serverda Gemini kaliti sozlanganmi) */
+  /** Serverda Gemini kaliti sozlanganmi (talaffuzning zaxira yo'li) */
   canSpeak?: boolean;
 }) {
   const pool = useMemo(() => practicableWords(words), [words]);
   const [open, setOpen] = useState(false);
+  /** Androidning o'z nutq tanish tizimi bormi */
+  const [nativeSpeech, setNativeSpeech] = useState(false);
+
+  // Talaffuz bosqichi IKKI yo'ldan biri bo'lsa mumkin: telefon nutqni o'zi
+  // taniydi (afzal — bepul va tez) yoki serverda Gemini kaliti bor.
+  useEffect(() => {
+    let cancelled = false;
+    void nativeSpeechAvailable().then((v) => { if (!cancelled) setNativeSpeech(v); });
+    return () => { cancelled = true; };
+  }, []);
 
   if (pool.length < 2) return null;
 
@@ -86,7 +97,7 @@ export default function VocabTrainer({
           lessonId={lessonId}
           t={t}
           accent={accent}
-          lastStage={canSpeak ? 4 : 3}
+          lastStage={canSpeak || nativeSpeech ? 4 : 3}
           onClose={() => setOpen(false)}
         />
       )}

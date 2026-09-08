@@ -85,20 +85,23 @@ export async function POST(req: Request) {
   if (!s || s.role !== ROLES.STUDENT) {
     return NextResponse.json({ error: "unauthorized" }, { status: 401 });
   }
-  if (!isGeminiConfigured()) {
-    return NextResponse.json({ error: "not_configured" }, { status: 503 });
-  }
-
   const form = await req.formData().catch(() => null);
   const audio = form?.get("audio");
+  // Androidning o'z nutq tanish tizimi matnni telefonda tayyorlaydi va shu
+  // yerga faqat MATNNI yuboradi — audio umuman jo'natilmaydi. Tekshiruv
+  // qoidalari (qaysi javob qabul qilinishi) baribir shu yerda, bitta joyda.
+  const transcript = String(form?.get("transcript") ?? "").slice(0, 300);
   const lessonId = String(form?.get("lessonId") ?? "");
   const wordIndex = Number(form?.get("wordIndex"));
 
-  if (!(audio instanceof File) || !lessonId || !Number.isInteger(wordIndex) || wordIndex < 0) {
+  const hasAudio = audio instanceof File;
+  if ((!hasAudio && !transcript.trim()) || !lessonId || !Number.isInteger(wordIndex) || wordIndex < 0) {
     return NextResponse.json({ error: "invalid" }, { status: 400 });
   }
-  if (audio.size > MAX_BYTES) return NextResponse.json({ error: "too_large" }, { status: 413 });
-  if (audio.size < MIN_BYTES) return NextResponse.json({ error: "no_voice" });
+  if (hasAudio) {
+    if (audio.size > MAX_BYTES) return NextResponse.json({ error: "too_large" }, { status: 413 });
+    if (audio.size < MIN_BYTES) return NextResponse.json({ error: "no_voice" });
+  }
 
   const student = await prisma.student.findUnique({
     where: { userId: s.userId },
@@ -124,20 +127,33 @@ export async function POST(req: Request) {
   const word = words[wordIndex];
   if (!word) return NextResponse.json({ error: "invalid" }, { status: 400 });
 
-  const buf = Buffer.from(await audio.arrayBuffer());
-  if (!hasVoice(buf)) return NextResponse.json({ error: "no_voice" });
+  let said: string;
+  if (hasAudio) {
+    // Audio yo'li tashqi xizmatga tayanadi. Matn yo'li (Android o'zi
+    // taniganida) unga muhtoj emas, shuning uchun tekshiruv shu yerda —
+    // yuqorida bo'lsa kalitsiz serverda native yo'l ham to'silib qolardi.
+    if (!isGeminiConfigured()) {
+      return NextResponse.json({ error: "not_configured" }, { status: 503 });
+    }
+    const buf = Buffer.from(await audio.arrayBuffer());
+    if (!hasVoice(buf)) return NextResponse.json({ error: "no_voice" });
 
-  const heard = await transcribeAudio(buf);
-  if (!heard) return NextResponse.json({ error: "unavailable" }, { status: 503 });
-  if (!heard.speech || !heard.text.trim()) return NextResponse.json({ error: "no_voice" });
+    const heard = await transcribeAudio(buf);
+    if (!heard) return NextResponse.json({ error: "unavailable" }, { status: 503 });
+    if (!heard.speech || !heard.text.trim()) return NextResponse.json({ error: "no_voice" });
+    said = heard.text;
+  } else {
+    said = transcript;
+  }
 
   const others = words.filter((_, i) => i !== wordIndex).map((w) => w.de);
-  const result = checkPronunciation(word.de, heard.text, others);
+  const result = checkPronunciation(word.de, said, others);
 
   return NextResponse.json({
     ok: result.ok,
     // O'quvchi nima eshitilganini ko'rsin — "noto'g'ri" deyishdan ko'ra
-    // ancha foydali, chunki xatosi qayerdaligi ko'rinadi.
-    heard: heard.text.trim().slice(0, 80),
+    // ancha foydali, chunki xatosi qayerdaligi ko'rinadi. Androidda bir
+    // nechta variant kelishi mumkin, birinchisini ko'rsatamiz.
+    heard: said.split("|")[0].trim().slice(0, 80),
   });
 }
