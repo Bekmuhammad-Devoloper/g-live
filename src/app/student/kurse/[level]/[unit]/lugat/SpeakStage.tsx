@@ -151,7 +151,13 @@ export default function SpeakStage({
       fd.set("lessonId", lessonId);
       fd.set("wordIndex", String(wordIndex));
 
-      const res = await fetch("/api/pronounce", { method: "POST", body: fd });
+      // Muddat: sekin tarmoqda so'rov osilib qolsa tugma "Tekshirilmoqda…"
+      // holatida abadiy o'chib qolardi va o'quvchi qayta urina olmasdi.
+      const res = await fetch("/api/pronounce", {
+        method: "POST",
+        body: fd,
+        signal: AbortSignal.timeout(30_000),
+      });
       const data = (await res.json().catch(() => ({}))) as { ok?: boolean; heard?: string; error?: string };
 
       if (data.error === "no_voice") { setProblem(t.noVoice); setPhase("error"); return; }
@@ -166,41 +172,19 @@ export default function SpeakStage({
     }
   }, [lessonId, wordIndex, t, onAnswer]);
 
+  /**
+   * To'xtatish.
+   *
+   * Holatga (`native`) TAYANMAYDI: u tinglash paytida o'zgargan bo'lishi
+   * mumkin va o'shanda noto'g'ri tomon to'xtatilardi. Buning o'rniga
+   * yozgichning haqiqiy holati qaraladi.
+   */
   const stop = useCallback(() => {
-    if (native) { void stopNative(); return; }
-    if (recorder.current?.state === "recording") recorder.current.stop();
-  }, [native]);
+    if (recorder.current?.state === "recording") { recorder.current.stop(); return; }
+    void stopNative();
+  }, []);
 
-  /** 1-yo'l: Androidning o'zi taniydi */
-  const startNative = useCallback(async () => {
-    setPhase("recording");
-    navigator.vibrate?.(10);
-
-    const r = await listenNative("de-DE");
-    if (!r) {
-      // Plagin yo'q (eski APK) — bu yo'lni butunlay unutamiz
-      setNative(false);
-      setPhase("idle");
-      return;
-    }
-    if ("error" in r) {
-      if (r.error === "denied") { setMicBlocked(true); setProblem(t.micDenied); }
-      else if (r.error === "no_match") setProblem(t.noVoice);
-      else if (r.error === "unavailable") {
-        // Xizmat nosoz — zaxira yo'lga o'tamiz
-        setNative(false);
-        setPhase("idle");
-        return;
-      }
-      else setProblem(t.speakUnavailable);
-      setPhase("error");
-      return;
-    }
-    if (!r.text.trim()) { setProblem(t.noVoice); setPhase("error"); return; }
-    await send({ transcript: r.text });
-  }, [t, send]);
-
-  /** 2-yo'l: yozib olib, serverga yuborish */
+  /** 2-yo'l: yozib olib, serverga yuborish (zaxira) */
   const startRecording = useCallback(async () => {
     let ms: MediaStream;
     try {
@@ -253,6 +237,39 @@ export default function SpeakStage({
     navigator.vibrate?.(10);
     stopTimer.current = setTimeout(stop, MAX_MS);
   }, [t, cleanup, send, stop]);
+
+  /**
+   * 1-yo'l: Androidning o'zi taniydi.
+   *
+   * `startRecording` DAN KEYIN e'lon qilinadi: u zaxira sifatida shu
+   * yerdan chaqiriladi va oldin turgan bo'lsa eskirgan nusxasini
+   * ushlab qolardi.
+   */
+  const startNative = useCallback(async () => {
+    setPhase("recording");
+    navigator.vibrate?.(10);
+
+    const r = await listenNative("de-DE");
+
+    // Plagin yo'q (eski APK) yoki xizmat nosoz — zaxira yo'lga DARHOL
+    // o'tamiz. Ilgari bu yerda shunchaki "idle" ga qaytilardi va bosish
+    // behuda ketardi: ekran bir lahzaga jonlanib, yana jim bo'lib qolardi.
+    if (!r || ("error" in r && (r.error === "unavailable" || r.error === "busy"))) {
+      setNative(false);
+      await startRecording();
+      return;
+    }
+
+    if ("error" in r) {
+      if (r.error === "denied") { setMicBlocked(true); setProblem(t.micDenied); }
+      else if (r.error === "no_match") setProblem(t.noVoice);
+      else setProblem(t.speakUnavailable);
+      setPhase("error");
+      return;
+    }
+    if (!r.text.trim()) { setProblem(t.noVoice); setPhase("error"); return; }
+    await send({ transcript: r.text });
+  }, [t, send, startRecording]);
 
   /**
    * Tugma bosilganda: qaysi yo'l mavjud bo'lsa o'sha.
