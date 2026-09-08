@@ -56,8 +56,19 @@
         Ruxsat ilova ochilganda emas, o'quvchi birinchi marta mikrofon
         tugmasini bosganda so'raladi (Capacitor WebView getUserMedia
         so'rovini shunda yuboradi).
+
+        IKKALASI HAM SHART. Capacitor'ning BridgeWebChromeClient'i audio
+        uchun RECORD_AUDIO bilan birga MODIFY_AUDIO_SETTINGS ni ham
+        so'raydi va javobni "hammasi berilgan bo'lsagina ruxsat" deb
+        hisoblaydi (BridgeWebChromeClient.java:59-67, 107-110).
+
+        Manifestda e'lon qilinmagan ruxsatni Android so'ramasdan, darhol
+        RAD ETADI. Shu sabab 2.4.0 da MODIFY_AUDIO_SETTINGS tushib qolgani
+        uchun sozlamalarda mikrofon "ruxsat berilgan" turgani holda ham
+        getUserMedia rad etilardi.
     -->
     <uses-permission android:name="android.permission.RECORD_AUDIO" />
+    <uses-permission android:name="android.permission.MODIFY_AUDIO_SETTINGS" />
 
     <!--
         Fayl yuklab olish "Yuklamalar" papkasiga tushadi.

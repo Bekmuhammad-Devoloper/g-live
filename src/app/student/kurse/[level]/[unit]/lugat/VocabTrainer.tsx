@@ -424,6 +424,17 @@ function BuildStage({
 
   const wrong = picked !== null && picked !== rest;
 
+  // Kataklar bitta qatorga sig'ishi uchun uzun so'zda kichrayadi. Enini
+  // flex hal qiladi, balandlik va shrift esa harflar soniga qarab tanlanadi
+  // — aks holda 14 harfli so'zda ingichka va baland kataklar chiqardi.
+  const n = buildable.length;
+  const slotH = n > 12 ? 38 : n > 9 ? 42 : 46;
+  const slotFont = n > 12 ? 14 : n > 9 ? 17 : 20;
+  // Sochilgan harflar ham shunga yarasha: pastda ular ikki qatorga
+  // sig'ishi mumkin, lekin uch qatorga cho'zilib ketmasin.
+  const tileH = n > 12 ? 44 : n > 9 ? 48 : 52;
+  const tileFont = n > 12 ? 17 : n > 9 ? 19 : 21;
+
   return (
     <>
       <div className="flex flex-1 flex-col items-center justify-center gap-3 py-3 text-center">
@@ -432,22 +443,27 @@ function BuildStage({
           {word.uz}
         </span>
 
-        {/* Yig'ilayotgan so'z */}
-        <div className="mt-3 flex flex-wrap items-center justify-center gap-1.5">
+        {/* Yig'ilayotgan so'z — DOIM BITTA QATORDA.
+            Ilgari `flex-wrap` edi va uzun so'zlarda kataklar pastga tushib
+            ketardi: so'z ikkiga bo'linib, qaysi harf qayerga tegishli
+            ekani ko'rinmay qolardi. Endi kataklar bo'sh joyni teng bo'lib
+            oladi (`flex-1`) va uzun so'zda o'zi kichrayadi. */}
+        <div className="mt-3 flex w-full flex-nowrap items-center justify-center gap-[3px] px-1">
           {article && (
-            <span className="mr-1 text-[19px] font-bold text-slate-400">{article}</span>
+            <span className="mr-1 shrink-0 text-[17px] font-bold text-slate-400">{article}</span>
           )}
           {letters.map((ch, i) =>
             ch.trim() === "" ? (
-              <span key={i} className="w-2" />
+              <span key={i} className="w-1.5 shrink-0" />
             ) : (
               <button
                 key={i}
                 type="button"
                 onClick={() => filled[i] !== null && take(i)}
                 disabled={!!picked || filled[i] === null}
+                style={{ height: slotH, fontSize: slotFont }}
                 className={
-                  "grid h-[46px] min-w-[36px] place-items-center rounded-[12px] border-2 px-1.5 text-[20px] font-extrabold transition " +
+                  "grid min-w-0 flex-1 place-items-center rounded-[10px] border-2 font-extrabold transition " +
                   (filled[i] === null
                     ? "border-dashed border-slate-300 bg-white/40 text-transparent"
                     : wrong
@@ -480,8 +496,9 @@ function BuildStage({
               type="button"
               onClick={() => put(ti)}
               disabled={!!picked || tile.slot !== null}
+              style={{ height: tileH, minWidth: tileH - 8, fontSize: tileFont }}
               className={
-                "grid h-[52px] min-w-[44px] place-items-center rounded-[14px] px-2 text-[21px] font-extrabold transition active:scale-95 " +
+                "grid place-items-center rounded-[14px] px-2 font-extrabold transition active:scale-95 " +
                 (tile.slot !== null
                   ? "bg-white/40 text-transparent"
                   : "bg-white text-slate-900 shadow-[0_6px_16px_-10px_rgba(15,60,80,0.8)]")
