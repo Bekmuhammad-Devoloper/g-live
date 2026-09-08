@@ -254,13 +254,20 @@ export default function SpeakStage({
     stopTimer.current = setTimeout(stop, MAX_MS);
   }, [t, cleanup, send, stop]);
 
-  /** Tugma bosilganda: qaysi yo'l mavjud bo'lsa o'sha */
+  /**
+   * Tugma bosilganda: qaysi yo'l mavjud bo'lsa o'sha.
+   *
+   * DIQQAT: bu yerda "hali aniqlanmadi, keyinroq bosing" degan yo'l
+   * BO'LMASLIGI kerak. Ilgari `native === null` bo'lganda jimgina
+   * qaytilardi va foydalanuvchi uchun bu "tugma bosilmayapti" bo'lib
+   * ko'rinardi — hech qanday belgi, hech qanday xabar. Endi aniqlanmagan
+   * bo'lsa ham ish boshlanadi: yozib olish yo'li har doim mavjud.
+   */
   const start = useCallback(async () => {
     if (phase !== "idle" && phase !== "error") return;
     setProblem(null);
     setHeard(null);
-    if (native === null) return;           // hali aniqlanmadi
-    if (native) await startNative();
+    if (native === true) await startNative();
     else await startRecording();
   }, [phase, native, startNative, startRecording]);
 

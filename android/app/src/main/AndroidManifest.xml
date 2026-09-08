@@ -1,5 +1,22 @@
 <?xml version="1.0" encoding="utf-8" ?>
 <manifest xmlns:android="http://schemas.android.com/apk/res/android">
+
+    <!--
+        Android 11 (API 30) dan boshlab ilova boshqa ilovalarni "ko'rmaydi":
+        qidirmoqchi bo'lgan xizmatni manifestda OLDINDAN e'lon qilishi kerak.
+
+        Busiz SpeechRecognizer.isRecognitionAvailable() qurilmada nutq tanish
+        xizmati BOR bo'lsa ham false qaytaradi va talaffuz bosqichi
+        telefonning o'z tizimidan foydalana olmaydi.
+    -->
+    <queries>
+        <intent>
+            <action android:name="android.speech.RecognitionService" />
+        </intent>
+        <intent>
+            <action android:name="android.speech.action.RECOGNIZE_SPEECH" />
+        </intent>
+    </queries>
     <application
         android:allowBackup="false"
         android:fullBackupContent="false"

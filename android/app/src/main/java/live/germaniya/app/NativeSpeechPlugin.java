@@ -54,8 +54,10 @@ public class NativeSpeechPlugin extends Plugin {
         boolean ok = false;
         try {
             ok = SpeechRecognizer.isRecognitionAvailable(getContext());
-        } catch (Exception ignored) {
-            // qurilmada xizmat yo'q — false qoladi
+        } catch (Throwable ignored) {
+            // Qurilmada xizmat yo'q yoki manifestda <queries> e'lon
+            // qilinmagan (Android 11+) — false qoladi va veb tomon zaxira
+            // yo'lga o'tadi.
         }
         res.put("available", ok);
         call.resolve(res);
@@ -80,9 +82,30 @@ public class NativeSpeechPlugin extends Plugin {
         start(call);
     }
 
+    /**
+     * Nutq tanish xizmati javob bermay qolsa — shuncha vaqtdan keyin
+     * chaqiruv baribir yopiladi.
+     *
+     * ZARUR: PluginCall javobsiz qolsa veb tomondagi va'da HECH QACHON
+     * tugamaydi, ekranda hech narsa o'zgarmaydi va `pending` band qolgani
+     * uchun keyingi bosishlar ham "busy" bo'lib qaytadi — foydalanuvchi
+     * uchun bu "tugma butunlay ishlamay qoldi" demakdir.
+     */
+    private static final long WATCHDOG_MS = 25_000;
+    private final android.os.Handler watchdog = new android.os.Handler(android.os.Looper.getMainLooper());
+    private final Runnable giveUp = () -> finishError("unavailable");
+
     private void start(final PluginCall call) {
-        // SpeechRecognizer FAQAT asosiy oqimda yaratiladi va boshqariladi
-        getActivity().runOnUiThread(() -> {
+        final android.app.Activity activity = getActivity();
+        if (activity == null) {
+            fail(call, "unavailable");
+            return;
+        }
+
+        // SpeechRecognizer FAQAT asosiy oqimda yaratiladi va boshqariladi.
+        // Butun blok try/catch ichida: bu yerda kutilmagan istisno chiqsa
+        // chaqiruv javobsiz qolib ketardi.
+        activity.runOnUiThread(() -> {
             if (pending != null) {
                 fail(call, "busy");
                 return;
@@ -90,32 +113,30 @@ public class NativeSpeechPlugin extends Plugin {
             try {
                 release();
                 recognizer = SpeechRecognizer.createSpeechRecognizer(getContext());
-            } catch (Exception e) {
-                fail(call, "unavailable");
-                return;
-            }
-            if (recognizer == null) {
-                fail(call, "unavailable");
-                return;
-            }
+                if (recognizer == null) {
+                    fail(call, "unavailable");
+                    return;
+                }
 
-            pending = call;
-            recognizer.setRecognitionListener(new Listener());
+                pending = call;
+                recognizer.setRecognitionListener(new Listener());
 
-            String locale = call.getString("locale", "de-DE");
-            Intent intent = new Intent(RecognizerIntent.ACTION_RECOGNIZE_SPEECH);
-            intent.putExtra(RecognizerIntent.EXTRA_LANGUAGE_MODEL, RecognizerIntent.LANGUAGE_MODEL_FREE_FORM);
-            intent.putExtra(RecognizerIntent.EXTRA_LANGUAGE, locale);
-            intent.putExtra(RecognizerIntent.EXTRA_LANGUAGE_PREFERENCE, locale);
-            // Bir nechta variant: o'quvchi to'g'ri aytgan bo'lsa-yu, birinchi
-            // variant boshqa so'z bo'lsa, qolganlarida topilishi mumkin.
-            intent.putExtra(RecognizerIntent.EXTRA_MAX_RESULTS, 5);
-            intent.putExtra(RecognizerIntent.EXTRA_PARTIAL_RESULTS, false);
-            intent.putExtra(RecognizerIntent.EXTRA_CALLING_PACKAGE, getContext().getPackageName());
+                String locale = call.getString("locale", "de-DE");
+                Intent intent = new Intent(RecognizerIntent.ACTION_RECOGNIZE_SPEECH);
+                intent.putExtra(RecognizerIntent.EXTRA_LANGUAGE_MODEL, RecognizerIntent.LANGUAGE_MODEL_FREE_FORM);
+                intent.putExtra(RecognizerIntent.EXTRA_LANGUAGE, locale);
+                intent.putExtra(RecognizerIntent.EXTRA_LANGUAGE_PREFERENCE, locale);
+                // Bir nechta variant: o'quvchi to'g'ri aytgan bo'lsa-yu, birinchi
+                // variant boshqa so'z bo'lsa, qolganlarida topilishi mumkin.
+                intent.putExtra(RecognizerIntent.EXTRA_MAX_RESULTS, 5);
+                intent.putExtra(RecognizerIntent.EXTRA_PARTIAL_RESULTS, false);
+                intent.putExtra(RecognizerIntent.EXTRA_CALLING_PACKAGE, getContext().getPackageName());
 
-            try {
+                watchdog.removeCallbacks(giveUp);
+                watchdog.postDelayed(giveUp, WATCHDOG_MS);
                 recognizer.startListening(intent);
-            } catch (Exception e) {
+            } catch (Throwable e) {
+                watchdog.removeCallbacks(giveUp);
                 pending = null;
                 release();
                 fail(call, "unavailable");
@@ -154,6 +175,7 @@ public class NativeSpeechPlugin extends Plugin {
     }
 
     private void finish(String text) {
+        watchdog.removeCallbacks(giveUp);
         PluginCall call = pending;
         pending = null;
         release();
@@ -164,6 +186,7 @@ public class NativeSpeechPlugin extends Plugin {
     }
 
     private void finishError(String error) {
+        watchdog.removeCallbacks(giveUp);
         PluginCall call = pending;
         pending = null;
         release();
