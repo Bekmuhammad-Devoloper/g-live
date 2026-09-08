@@ -104,6 +104,8 @@ const DICT = {
   micDenied: p("Mikrofonga ruxsat berilmadi", "Доступ к микрофону запрещён", "Microphone access denied", "Mikrofonzugriff verweigert"),
   speakUnavailable: p("Hozir tekshirib bo'lmadi, qaytadan urinib ko'ring", "Сейчас не удалось проверить, попробуйте снова", "Could not check right now, try again", "Konnte gerade nicht prüfen, versuche es erneut"),
   skipStage: p("Bu bosqichni o'tkazib yuborish", "Пропустить этот этап", "Skip this stage", "Diese Stufe überspringen"),
+  // Ilovaning eski versiyasida nutq tanish plagini yo'q
+  updateApp: p("Talaffuz uchun ilovani yangilang: Sozlamalar → Ilovani o'rnatish", "Для произношения обновите приложение: Настройки → Установить приложение", "Update the app for pronunciation: Settings → Install app", "Für die Aussprache App aktualisieren: Einstellungen → App installieren"),
   chooseUzbek: p("Tarjimasi qaysi?", "Какой перевод?", "Which translation?", "Welche Übersetzung?"),
   buildWord: p("Shu so'zni yig'ing", "Соберите это слово", "Build this word", "Setze dieses Wort zusammen"),
   stageDone: p("Bosqich tugadi", "Этап пройден", "Stage complete", "Stufe geschafft"),

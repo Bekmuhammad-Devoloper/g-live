@@ -46,6 +46,22 @@ function withTimeout<T>(p: Promise<T>, ms: number, fallback: T): Promise<T> {
   });
 }
 
+/**
+ * Android ilovasi ichidamizmi (brauzer emas).
+ *
+ * Plagin yo'qligi ikki xil ma'noga ega: brauzerda bu tabiiy, ilovada esa
+ * eski APK degani — ikkinchisida foydalanuvchiga "ilovani yangilang"
+ * deyish kerak, Gemini'ga behuda urinish emas.
+ */
+export async function isNativeApp(): Promise<boolean> {
+  try {
+    const { Capacitor } = await import("@capacitor/core");
+    return Capacitor.isNativePlatform();
+  } catch {
+    return false;
+  }
+}
+
 /** Aniqlangan javob — sahifadan sahifaga qayta so'ralmasin */
 let cached: boolean | undefined;
 

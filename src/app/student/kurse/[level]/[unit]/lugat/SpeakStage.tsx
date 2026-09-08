@@ -2,7 +2,7 @@
 
 import { useCallback, useEffect, useRef, useState } from "react";
 import type { StudentStrings } from "../../../../_i18n";
-import { listenNative, nativeSpeechAvailable, stopNative } from "@/lib/nativeSpeech";
+import { isNativeApp, listenNative, nativeSpeechAvailable, stopNative } from "@/lib/nativeSpeech";
 
 // Talaffuz bosqichi — o'quvchi so'zni ovoz chiqarib aytadi.
 //
@@ -251,9 +251,19 @@ export default function SpeakStage({
 
     const r = await listenNative("de-DE");
 
-    // Plagin yo'q (eski APK) yoki xizmat nosoz — zaxira yo'lga DARHOL
-    // o'tamiz. Ilgari bu yerda shunchaki "idle" ga qaytilardi va bosish
-    // behuda ketardi: ekran bir lahzaga jonlanib, yana jim bo'lib qolardi.
+    // Plagin umuman yo'q. Brauzerda bu tabiiy — zaxira yo'lga o'tamiz.
+    // ILOVADA esa bu eski APK degani: Gemini'ga urinish behuda (kvota
+    // kuniga 20 ta, ustiga tez-tez 503), foydalanuvchi esa "tekshirib
+    // bo'lmadi" deb o'ylab, sababini bilmay qolardi. Aniq aytamiz.
+    if (!r && (await isNativeApp())) {
+      setMicBlocked(true);
+      setProblem(t.updateApp);
+      setPhase("error");
+      return;
+    }
+
+    // Brauzer yoki xizmat nosoz — zaxira yo'lga DARHOL o'tamiz. Ilgari bu
+    // yerda shunchaki "idle" ga qaytilardi va bosish behuda ketardi.
     if (!r || ("error" in r && (r.error === "unavailable" || r.error === "busy"))) {
       setNative(false);
       await startRecording();
