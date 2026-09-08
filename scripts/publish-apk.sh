@@ -39,7 +39,14 @@ cp "$NEW" "$CUR"
 chmod 644 "$CUR"
 
 # Versiya: "versionCode='11' versionName='2.7.0'" -> "2.7.0 (11)"
-BADGING="$("$AAPT" dump badging "$CUR" 2>/dev/null | head -1)"
+#
+# DIQQAT: `| head -1` ISHLATILMAYDI. head birinchi qatordan keyin quvurni
+# yopadi, aapt2 SIGPIPE oladi va `set -o pipefail` bilan butun skript
+# 141 kodi bilan to'xtaydi — APK ko'chirilgan, lekin versiya fayli
+# yozilmagan holda. Aynan shu bo'lgan. Shu sabab chiqish to'liq o'qiladi,
+# birinchi qator keyin ajratiladi.
+BADGING="$("$AAPT" dump badging "$CUR" 2>/dev/null || true)"
+BADGING="${BADGING%%$'\n'*}"
 CODE="$(printf '%s' "$BADGING" | sed -n "s/.*versionCode='\([0-9]*\)'.*/\1/p")"
 NAME="$(printf '%s' "$BADGING" | sed -n "s/.*versionName='\([^']*\)'.*/\1/p")"
 if [ -n "$NAME" ] && [ -n "$CODE" ]; then
