@@ -259,6 +259,7 @@ export default async function LandingPage() {
               apkReady={apk.available}
               apkSize={apk.sizeMb}
               apkDate={fmt(apk.updatedAt)}
+              apkVersion={apk.version}
             />
           </div>
         </div>

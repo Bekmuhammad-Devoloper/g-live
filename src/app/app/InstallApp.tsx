@@ -17,12 +17,14 @@ interface BipEvent extends Event {
 }
 
 export default function InstallApp({
-  apkHref, apkReady, apkSize, apkDate,
+  apkHref, apkReady, apkSize, apkDate, apkVersion,
 }: {
   apkHref: string;
   apkReady: boolean;
   apkSize: number | null;
   apkDate: string | null;
+  /** "2.7.0 (11)" — chiqarish skripti yozmagan bo'lsa null */
+  apkVersion: string | null;
 }) {
   const [platform, setPlatform] = useState<Platform>("desktop");
   const [installed, setInstalled] = useState(false);
@@ -109,8 +111,15 @@ export default function InstallApp({
         </div>
       ) : null}
 
-      {apkReady && apkDate ? (
-        <div className="text-center text-[12px] text-white/55">Yangilangan: {apkDate}</div>
+      {/* Versiya — hajm va sana yetarli emas: hajm versiyalar orasida deyarli
+          o'zgarmaydi, bir kunda bir nechta chiqarilsa sana ham bir xil.
+          Telefondagi Sozlamalar → "Ilova versiyasi" bilan solishtiriladi. */}
+      {apkReady && (apkVersion || apkDate) ? (
+        <div className="text-center text-[12px] text-white/55">
+          {apkVersion ? <span className="font-semibold text-white/80">Versiya {apkVersion}</span> : null}
+          {apkVersion && apkDate ? " · " : null}
+          {apkDate ? <>Yangilangan: {apkDate}</> : null}
+        </div>
       ) : null}
     </div>
   );
