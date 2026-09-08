@@ -1,7 +1,7 @@
 import MissingStudent from "../../../../MissingStudent";
 import { loadUnit } from "../_load";
 import { SectionHeader, IcoWords, Attachment } from "../_parts";
-import { lessonVocabText, looksLikeVocabulary, parseLessonWords, practicableWords, type LessonWord } from "@/lib/lessonWords";
+import { lessonVocabText, looksLikeVocabulary, parseLessonWords, practicableWords, splitArticle, type LessonWord } from "@/lib/lessonWords";
 import { loadUnitProgress } from "../_progress";
 import { NAVY } from "../../../../_ui";
 import VocabTrainer from "./VocabTrainer";
@@ -26,13 +26,6 @@ const ARTICLE: Record<string, { fg: string }> = {
   die: { fg: "#be185d" }, // pushti
   das: { fg: "#047857" }, // yashil
 };
-
-/** "der Hund" -> artikl va otni ajratadi; artikl bo'lmasa null */
-function splitArticle(de: string): { article: string | null; rest: string } {
-  const m = /^(der|die|das)\s+(.+)$/i.exec(de.trim());
-  if (!m) return { article: null, rest: de };
-  return { article: m[1].toLowerCase(), rest: m[2] };
-}
 
 export default async function LessonVocabPage({
   params,

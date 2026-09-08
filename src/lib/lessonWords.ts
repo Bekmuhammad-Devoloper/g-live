@@ -58,6 +58,24 @@ export function parseLessonWords(topic: string | null | undefined): LessonWord[]
 }
 
 /**
+ * "der Hund" -> artikl va otni ajratadi; artikl bo'lmasa `article: null`.
+ *
+ * Ikki joyda kerak: lug'at ro'yxatida artikl boshqa rangda chiziladi, so'z
+ * yig'ish mashqida esa artikl tayyor beriladi va faqat ot harflardan
+ * yig'iladi (aks holda "der" ning uch harfi ham sochilib, mashq uzun va
+ * ma'nosiz bo'lardi).
+ *
+ * Shu sabab bu funksiya NEYTRAL faylda — uni server sahifasi ham, mijoz
+ * komponenti ham ishlatadi. ("use client" fayldagi funksiyani server
+ * chaqira olmaydi — bir marta shu xatoga tushilgan.)
+ */
+export function splitArticle(de: string): { article: string | null; rest: string } {
+  const m = /^(der|die|das)\s+(.+)$/i.exec(de.trim());
+  if (!m) return { article: null, rest: de.trim() };
+  return { article: m[1].toLowerCase(), rest: m[2] };
+}
+
+/**
  * Mashq qilinadigan so'zlar — faqat tarjimasi borlari.
  *
  * Mashqda savol o'zbekcha beriladi ("mushuk" -> die Katze), shu sabab

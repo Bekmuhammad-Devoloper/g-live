@@ -2,23 +2,33 @@
 
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { createPortal } from "react-dom";
-import { practicableWords, type LessonWord } from "@/lib/lessonWords";
+import { practicableWords, splitArticle, type LessonWord } from "@/lib/lessonWords";
 import type { StudentStrings } from "../../../../_i18n";
 import { markVocabMastered } from "../actions";
 
-// So'z mashqi — tarjimasi ko'rsatiladi, nemischasi variantlardan tanlanadi.
+// So'z mashqi — UCH BOSQICH, har biri oldingisidan qiyinroq.
 //
-// ASOSIY QOIDA: mashq HAMMA so'z to'g'ri tanlangunicha tugamaydi. Xato
-// qilingan so'z navbatdan chiqmaydi, birozdan keyin qaytib keladi. Shu sabab
-// "o'tib ketdim, lekin bilmayman" degan holat bo'lmaydi — chiqish uchun har
-// bir so'zni bilish shart.
+//   1. Tanish   — tarjimasi beriladi, nemischasi variantlardan tanlanadi
+//   2. Teskari  — nemischasi beriladi, tarjimasi variantlardan tanlanadi
+//   3. Yasash   — tarjimasi beriladi, nemischasi HARFLARDAN yig'iladi
 //
-// Xato qilingan so'z navbatning OXIRIGA emas, uch qadam narisiga qo'yiladi:
-// oxiriga tashlansa o'quvchi uni allaqachon unutgan bo'ladi, darhol qaytsa
-// esa javobni eslab qoladi-yu, so'zni emas. Uch qadam — oraliq masofa.
+// Nega shu tartib: tanish eng oson (javob ko'z oldida turadi), teskarisi
+// so'zni boshqa yo'nalishda tekshiradi, yig'ish esa eng qiyini — o'quvchi
+// so'zni o'zi tiklaydi, tanlamaydi. Ya'ni tanishdan yozishga o'tiladi.
+//
+// ASOSIY QOIDA (har bosqichda): bosqich HAMMA so'z to'g'ri bajarilgunicha
+// tugamaydi. Xato qilingan so'z navbatdan chiqmaydi, birozdan keyin qaytib
+// keladi. Uchala bosqich tugagach lug'at o'zlashtirilgan hisoblanadi.
+//
+// Xato qilingan so'z navbatning OXIRIGA emas, bir necha qadam narisiga
+// qo'yiladi: oxiriga tashlansa o'quvchi uni allaqachon unutgan bo'ladi,
+// darhol qaytsa esa javobni eslab qoladi-yu, so'zni emas. Masofa qat'iy
+// emas (3-5), aks holda tartibning o'zi yodlanib qolardi.
 
 const REQUEUE_MIN = 3;
-const REQUEUE_SPREAD = 3; // 3, 4 yoki 5 qadam nari
+const REQUEUE_SPREAD = 3;
+const STAGES = [1, 2, 3] as const;
+type Stage = (typeof STAGES)[number];
 
 function shuffle<T>(arr: T[]): T[] {
   const a = [...arr];
@@ -29,10 +39,7 @@ function shuffle<T>(arr: T[]): T[] {
   return a;
 }
 
-interface Q {
-  word: LessonWord & { uz: string };
-  options: string[];
-}
+type Word = LessonWord & { uz: string };
 
 export default function VocabTrainer({
   words, lessonId, t, accent, label,
@@ -74,7 +81,7 @@ export default function VocabTrainer({
 function Session({
   pool, lessonId, t, accent, onClose,
 }: {
-  pool: (LessonWord & { uz: string })[];
+  pool: Word[];
   lessonId: string;
   t: StudentStrings;
   accent: string;
@@ -82,7 +89,8 @@ function Session({
 }) {
   const total = pool.length;
 
-  // Navbat — so'zlarning tartib raqamlari. Boshida aralashtiriladi.
+  const [stage, setStage] = useState<Stage>(1);
+  // Navbat — so'zlarning tartib raqamlari, har bosqich boshida aralashadi
   const [queue, setQueue] = useState<number[]>(() => shuffle(pool.map((_, i) => i)));
   const [picked, setPicked] = useState<string | null>(null);
   const [tries, setTries] = useState(0);
@@ -92,54 +100,36 @@ function Session({
   const [saved, setSaved] = useState(false);
   const timer = useRef<ReturnType<typeof setTimeout> | null>(null);
 
-  const done = queue.length === 0;
+  const stageDone = queue.length === 0;
+  const allDone = stageDone && stage === 3;
   const idx = queue[0];
-
-  // Savol — joriy so'z va uchta chalg'ituvchi variant.
-  //
-  // `round` HAR JAVOBDAN keyin oshadi va shu sabab variantlar har safar
-  // qaytadan aralashadi — AYNI SO'Z qayta so'ralganda ham. Busiz oxirgi
-  // so'z qolganda (navbatda boshqa so'z yo'q) `idx` o'zgarmasdi, `useMemo`
-  // eski javobni qaytaraverardi va o'quvchi so'zni emas, yashil bo'lgan
-  // TUGMA JOYINI eslab qolardi.
-  //
-  // `round` javob berilgan zahoti emas, natija ko'rsatilib bo'lgach oshadi
-  // (setTimeout ichida): aks holda yashil/qizil belgi turgan payt variantlar
-  // ko'z oldida joyini almashtirib yuborardi.
-  const q: Q | null = useMemo(() => {
-    if (idx === undefined) return null;
-    const word = pool[idx];
-
-    // Chalg'ituvchi variantlar. Tarjimasi AYNAN SHU so'z bilan bir xil
-    // bo'lganlari chiqarib tashlanadi: "das Auto - mashina" va
-    // "der Wagen - mashina" bo'lsa, savol "mashina" bo'lib, ikkala variant
-    // ham to'g'ri bo'lardi-yu, bittasi xato deb belgilanardi.
-    const key = word.uz.trim().toLowerCase();
-    const safe = pool.filter((w, i) => i !== idx && w.uz.trim().toLowerCase() !== key);
-    // Hammasining tarjimasi bir xil bo'lib qolgan chekka holat — o'shanda
-    // hech bo'lmasa boshqa so'zlarni ko'rsatamiz, savolsiz qolmasin.
-    const others = (safe.length > 0 ? safe : pool.filter((_, i) => i !== idx)).map((w) => w.de);
-
-    const distractors = shuffle(others).slice(0, Math.min(3, others.length));
-    return { word, options: shuffle([word.de, ...distractors]) };
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [idx, round, pool]);
 
   useEffect(() => () => { if (timer.current) clearTimeout(timer.current); }, []);
 
-  // Hammasi to'g'ri tanlangach natijani saqlaymiz — bir marta
+  // Uchala bosqich tugagach natijani saqlaymiz — bir marta
   useEffect(() => {
-    if (!done || saved) return;
+    if (!allDone || saved) return;
     setSaved(true);
     void markVocabMastered(lessonId);
-  }, [done, saved, lessonId]);
+  }, [allDone, saved, lessonId]);
 
-  const pick = useCallback((opt: string) => {
-    if (picked || !q) return;
-    setPicked(opt);
+  const nextStage = useCallback(() => {
+    setStage((s) => (s < 3 ? ((s + 1) as Stage) : s));
+    setQueue(shuffle(pool.map((_, i) => i)));
+    setRound((n) => n + 1);
+    setPicked(null);
+  }, [pool]);
+
+  /**
+   * Javob qabul qilinadi. `ok` — to'g'rimi.
+   *
+   * Navbat va bosqich holati faqat SHU YERDA o'zgaradi, uchala bosqich
+   * uchun bir xil: bosqichlar faqat savol ko'rinishi bilan farq qiladi,
+   * qoidalari emas.
+   */
+  const answer = useCallback((ok: boolean, mark: string) => {
+    setPicked(mark);
     setTries((n) => n + 1);
-
-    const ok = opt === q.word.de;
     if (ok) {
       setRight((n) => n + 1);
       navigator.vibrate?.(8);
@@ -151,27 +141,27 @@ function Session({
     // ulgurishi uchun uzunroq turadi.
     timer.current = setTimeout(() => {
       setPicked(null);
-      setRound((n) => n + 1); // variantlar qaytadan aralashsin
+      setRound((n) => n + 1); // variantlar/harflar qaytadan aralashsin
       setQueue((prev) => {
         const [head, ...rest] = prev;
         if (ok) return rest;
-        // Xato — so'zni bir necha qadam narida qaytaramiz. Masofa qat'iy
-        // emas, 3-5 oralig'ida: doim bir xil bo'lsa o'quvchi "xato qilsam
-        // uchtadan keyin qaytadi" deb tartibni ham yodlab olardi.
         const at = Math.min(REQUEUE_MIN + Math.floor(Math.random() * REQUEUE_SPREAD), rest.length);
         return [...rest.slice(0, at), head, ...rest.slice(at)];
       });
     }, ok ? 480 : 1250);
-  }, [picked, q]);
+  }, []);
 
   const learned = total - queue.length;
-  const pct = Math.round((learned / total) * 100);
+  // Umumiy jarayon — uchala bosqich bo'yicha
+  const overall = Math.round((((stage - 1) * total + learned) / (total * 3)) * 100);
+
+  const stageName = stage === 1 ? t.stage1Name : stage === 2 ? t.stage2Name : t.stage3Name;
 
   return createPortal(
     <div className="fixed inset-0 z-[70] flex flex-col bg-[#f4f7f9]" role="dialog" aria-modal="true">
-      {/* ── Tepa qator: jarayon va yopish ── */}
+      {/* ── Tepa qator: bosqich, jarayon, yopish ── */}
       <div
-        className="shrink-0 px-4 pb-4"
+        className="shrink-0 px-4 pb-3"
         style={{ paddingTop: "calc(14px + var(--gl-safe-top, env(safe-area-inset-top)))" }}
       >
         <div className="flex items-center gap-3">
@@ -189,7 +179,7 @@ function Session({
           <div className="h-[10px] flex-1 overflow-hidden rounded-full bg-white shadow-[inset_0_1px_3px_rgba(19,78,94,0.14)]">
             <div
               className="h-full rounded-full transition-[width] duration-500 ease-out"
-              style={{ width: `${pct}%`, background: accent }}
+              style={{ width: `${overall}%`, background: accent }}
             />
           </div>
 
@@ -197,60 +187,286 @@ function Session({
             {learned}/{total}
           </span>
         </div>
+
+        {/* Bosqich belgisi — uchta chiziqcha va nomi */}
+        <div className="mt-2.5 flex items-center gap-2">
+          <div className="flex gap-1">
+            {STAGES.map((s) => (
+              <span
+                key={s}
+                className="h-[3px] w-6 rounded-full transition-colors"
+                style={{ background: s <= stage ? accent : "rgba(19,78,94,0.16)" }}
+              />
+            ))}
+          </div>
+          <span className="text-[11.5px] font-bold uppercase tracking-[0.12em] text-slate-500">
+            {t.stage} {stage} · {stageName}
+          </span>
+        </div>
       </div>
 
-      {done ? (
+      {allDone ? (
         <Finished t={t} accent={accent} tries={tries} right={right} total={total} onClose={onClose} />
-      ) : q ? (
+      ) : stageDone ? (
+        <StageBreak t={t} accent={accent} nextStage={(stage + 1) as Stage} onNext={nextStage} />
+      ) : (
         <div className="flex min-h-0 flex-1 flex-col px-4 pb-[calc(20px+env(safe-area-inset-bottom))]">
-          {/* ── Savol ── */}
-          <div className="flex flex-1 flex-col items-center justify-center gap-3 py-4 text-center">
-            <span className="text-[12px] font-bold uppercase tracking-[0.18em] text-slate-400">
-              {t.chooseGerman}
-            </span>
-            <span className="max-w-full break-words px-2 text-[34px] font-extrabold leading-[1.1] tracking-[-0.02em] text-slate-900">
-              {q.word.uz}
-            </span>
-          </div>
-
-          {/* ── Variantlar ── */}
-          <div className="grid shrink-0 gap-2.5">
-            {q.options.map((opt) => {
-              const isRight = opt === q.word.de;
-              const chosen = picked === opt;
-              // Javob berilgunicha hamma variant bir xil. Berilgach: to'g'risi
-              // doim yashil (o'quvchi to'g'risini ko'rsin), tanlangan xato qizil.
-              const state = !picked ? "idle" : isRight ? "right" : chosen ? "wrong" : "dim";
-              return (
-                <button
-                  key={opt}
-                  type="button"
-                  onClick={() => pick(opt)}
-                  disabled={!!picked}
-                  className={
-                    "flex min-h-[62px] items-center gap-3 rounded-[18px] border-2 px-4 py-3 text-left transition active:scale-[0.985] " +
-                    (state === "right"
-                      ? "border-emerald-400 bg-emerald-50"
-                      : state === "wrong"
-                        ? "border-rose-400 bg-rose-50"
-                        : state === "dim"
-                          ? "border-transparent bg-white/50 opacity-45"
-                          : "border-transparent bg-white shadow-[0_6px_16px_-10px_rgba(15,60,80,0.7)]")
-                  }
-                >
-                  <span className="min-w-0 flex-1 break-words text-[17px] font-extrabold leading-snug text-slate-900">
-                    {opt}
-                  </span>
-                  {state === "right" && <Mark kind="right" />}
-                  {state === "wrong" && <Mark kind="wrong" />}
-                </button>
-              );
-            })}
-          </div>
+          {stage === 3 ? (
+            <BuildStage key={`${idx}-${round}`} word={pool[idx]} t={t} accent={accent} picked={picked} onAnswer={answer} />
+          ) : (
+            <ChoiceStage
+              key={`${idx}-${round}`}
+              stage={stage}
+              word={pool[idx]}
+              pool={pool}
+              idx={idx}
+              t={t}
+              picked={picked}
+              onAnswer={answer}
+            />
+          )}
         </div>
-      ) : null}
+      )}
     </div>,
     document.body,
+  );
+}
+
+/* ── 1 va 2-bosqich: variantlardan tanlash ── */
+
+function ChoiceStage({
+  stage, word, pool, idx, t, picked, onAnswer,
+}: {
+  stage: Stage;
+  word: Word;
+  pool: Word[];
+  idx: number;
+  t: StudentStrings;
+  picked: string | null;
+  onAnswer: (ok: boolean, mark: string) => void;
+}) {
+  // 1-bosqich: savol tarjimasi, javob nemischa. 2-bosqich — teskarisi.
+  const asking = stage === 1 ? word.uz : word.de;
+  const correct = stage === 1 ? word.de : word.uz;
+
+  // Chalg'ituvchi variantlar. JAVOBI aynan shu so'z bilan bir xil bo'lganlari
+  // chiqarib tashlanadi: "das Auto - mashina" va "der Wagen - mashina" bo'lsa,
+  // savol "mashina" bo'lib, ikkala variant ham to'g'ri bo'lardi-yu, bittasi
+  // xato deb belgilanardi. Ikkinchi bosqichda ham xuddi shunday, faqat
+  // tomonlari almashgan.
+  const options = useMemo(() => {
+    const norm = (s: string) => s.trim().toLowerCase();
+    const key = norm(correct);
+    const safe = pool.filter((w, i) => i !== idx && norm(stage === 1 ? w.de : w.uz) !== key);
+    const source = safe.length > 0 ? safe : pool.filter((_, i) => i !== idx);
+    const others = source.map((w) => (stage === 1 ? w.de : w.uz));
+    return shuffle([correct, ...shuffle(others).slice(0, Math.min(3, others.length))]);
+  }, [correct, pool, idx, stage]);
+
+  return (
+    <>
+      <div className="flex flex-1 flex-col items-center justify-center gap-3 py-4 text-center">
+        <span className="text-[12px] font-bold uppercase tracking-[0.18em] text-slate-400">
+          {stage === 1 ? t.chooseGerman : t.chooseUzbek}
+        </span>
+        <span className="max-w-full break-words px-2 text-[34px] font-extrabold leading-[1.1] tracking-[-0.02em] text-slate-900">
+          {asking}
+        </span>
+      </div>
+
+      <div className="grid shrink-0 gap-2.5">
+        {options.map((opt) => {
+          const isRight = opt === correct;
+          const chosen = picked === opt;
+          // Javob berilgunicha hamma variant bir xil. Berilgach: to'g'risi doim
+          // yashil (o'quvchi to'g'risini ko'rsin), tanlangan xato qizil.
+          const state = !picked ? "idle" : isRight ? "right" : chosen ? "wrong" : "dim";
+          return (
+            <button
+              key={opt}
+              type="button"
+              onClick={() => !picked && onAnswer(isRight, opt)}
+              disabled={!!picked}
+              className={
+                "flex min-h-[62px] items-center gap-3 rounded-[18px] border-2 px-4 py-3 text-left transition active:scale-[0.985] " +
+                (state === "right"
+                  ? "border-emerald-400 bg-emerald-50"
+                  : state === "wrong"
+                    ? "border-rose-400 bg-rose-50"
+                    : state === "dim"
+                      ? "border-transparent bg-white/50 opacity-45"
+                      : "border-transparent bg-white shadow-[0_6px_16px_-10px_rgba(15,60,80,0.7)]")
+              }
+            >
+              <span className="min-w-0 flex-1 break-words text-[17px] font-extrabold leading-snug text-slate-900">
+                {opt}
+              </span>
+              {state === "right" && <Mark kind="right" />}
+              {state === "wrong" && <Mark kind="wrong" />}
+            </button>
+          );
+        })}
+      </div>
+    </>
+  );
+}
+
+/* ── 3-bosqich: harflardan so'zni yig'ish ── */
+
+interface Tile {
+  /** Harfning o'zi */
+  ch: string;
+  /** Qaysi katakka qo'yilgani; qo'yilmagan bo'lsa null */
+  slot: number | null;
+}
+
+function BuildStage({
+  word, t, accent, picked, onAnswer,
+}: {
+  word: Word;
+  t: StudentStrings;
+  accent: string;
+  picked: string | null;
+  onAnswer: (ok: boolean, mark: string) => void;
+}) {
+  // Artikl TAYYOR beriladi, faqat ot yig'iladi: "der" ning uch harfi ham
+  // sochilib yursa mashq uzun va ma'nosiz bo'lardi.
+  const { article, rest } = useMemo(() => splitArticle(word.de), [word.de]);
+
+  // Bo'sh joy ("guten Morgen" kabi ikki so'zli yozuvlarda) yig'ilmaydi —
+  // u ham tayyor turadi, aks holda o'quvchi ko'rinmas harfni qidirardi.
+  const letters = useMemo(() => [...rest], [rest]);
+  const buildable = useMemo(
+    () => letters.map((ch, i) => ({ ch, i })).filter(({ ch }) => ch.trim() !== ""),
+    [letters],
+  );
+
+  const [tiles, setTiles] = useState<Tile[]>(() =>
+    shuffle(buildable.map(({ ch }) => ch)).map((ch) => ({ ch, slot: null })),
+  );
+
+  // Kataklar: bo'sh joylar boshidan to'la, harf kataklari bo'sh
+  const filled = useMemo(() => {
+    const out: (string | null)[] = letters.map((ch) => (ch.trim() === "" ? ch : null));
+    for (const tile of tiles) {
+      if (tile.slot !== null) out[tile.slot] = tile.ch;
+    }
+    return out;
+  }, [letters, tiles]);
+
+  const emptySlots = useMemo(
+    () => buildable.map(({ i }) => i).filter((i) => filled[i] === null),
+    [buildable, filled],
+  );
+
+  const put = (ti: number) => {
+    if (picked || tiles[ti].slot !== null || emptySlots.length === 0) return;
+    const target = emptySlots[0];
+    setTiles((prev) => prev.map((x, i) => (i === ti ? { ...x, slot: target } : x)));
+  };
+
+  const take = (slot: number) => {
+    if (picked) return;
+    setTiles((prev) => prev.map((x) => (x.slot === slot ? { ...x, slot: null } : x)));
+  };
+
+  const clear = () => {
+    if (picked) return;
+    setTiles((prev) => prev.map((x) => ({ ...x, slot: null })));
+  };
+
+  // Hamma katak to'lgach o'zi tekshiradi — alohida "Tekshirish" tugmasi
+  // qo'shimcha bosish demakdir, javob esa allaqachon tayyor.
+  const answered = useRef(false);
+  useEffect(() => {
+    if (answered.current || picked || emptySlots.length > 0) return;
+    answered.current = true;
+    const built = filled.join("");
+    onAnswer(built === rest, built);
+  }, [emptySlots.length, filled, rest, onAnswer, picked]);
+
+  const wrong = picked !== null && picked !== rest;
+
+  return (
+    <>
+      <div className="flex flex-1 flex-col items-center justify-center gap-3 py-3 text-center">
+        <span className="text-[12px] font-bold uppercase tracking-[0.18em] text-slate-400">{t.buildWord}</span>
+        <span className="max-w-full break-words px-2 text-[30px] font-extrabold leading-[1.1] tracking-[-0.02em] text-slate-900">
+          {word.uz}
+        </span>
+
+        {/* Yig'ilayotgan so'z */}
+        <div className="mt-3 flex flex-wrap items-center justify-center gap-1.5">
+          {article && (
+            <span className="mr-1 text-[19px] font-bold text-slate-400">{article}</span>
+          )}
+          {letters.map((ch, i) =>
+            ch.trim() === "" ? (
+              <span key={i} className="w-2" />
+            ) : (
+              <button
+                key={i}
+                type="button"
+                onClick={() => filled[i] !== null && take(i)}
+                disabled={!!picked || filled[i] === null}
+                className={
+                  "grid h-[46px] min-w-[36px] place-items-center rounded-[12px] border-2 px-1.5 text-[20px] font-extrabold transition " +
+                  (filled[i] === null
+                    ? "border-dashed border-slate-300 bg-white/40 text-transparent"
+                    : wrong
+                      ? "border-rose-400 bg-rose-50 text-rose-700"
+                      : picked
+                        ? "border-emerald-400 bg-emerald-50 text-emerald-700"
+                        : "border-transparent bg-white text-slate-900 shadow-[0_4px_10px_-8px_rgba(15,60,80,0.9)]")
+                }
+              >
+                {filled[i] ?? "·"}
+              </button>
+            ),
+          )}
+        </div>
+
+        {/* Xato bo'lsa to'g'ri javob ko'rsatiladi */}
+        {wrong && (
+          <div className="mt-1 text-[13px] font-semibold text-slate-500">
+            {t.correctAnswer}: <span className="font-extrabold text-slate-800">{word.de}</span>
+          </div>
+        )}
+      </div>
+
+      {/* Sochilgan harflar */}
+      <div className="shrink-0">
+        <div className="flex flex-wrap justify-center gap-2">
+          {tiles.map((tile, ti) => (
+            <button
+              key={ti}
+              type="button"
+              onClick={() => put(ti)}
+              disabled={!!picked || tile.slot !== null}
+              className={
+                "grid h-[52px] min-w-[44px] place-items-center rounded-[14px] px-2 text-[21px] font-extrabold transition active:scale-95 " +
+                (tile.slot !== null
+                  ? "bg-white/40 text-transparent"
+                  : "bg-white text-slate-900 shadow-[0_6px_16px_-10px_rgba(15,60,80,0.8)]")
+              }
+            >
+              {tile.ch}
+            </button>
+          ))}
+        </div>
+
+        {/* Tozalash — hech narsa qo'yilmagan bo'lsa o'chiq turadi */}
+        <button
+          type="button"
+          onClick={clear}
+          disabled={!!picked || emptySlots.length === buildable.length}
+          className="mt-4 w-full rounded-[16px] bg-white/70 py-3 text-[14px] font-bold transition active:scale-[0.985] disabled:opacity-40"
+          style={{ color: accent.includes("gradient") ? "#c8790c" : accent }}
+        >
+          {t.clearLetters}
+        </button>
+      </div>
+    </>
   );
 }
 
@@ -275,6 +491,47 @@ function Mark({ kind }: { kind: "right" | "wrong" }) {
   );
 }
 
+/* ── Bosqichlar orasi ── */
+function StageBreak({
+  t, accent, nextStage, onNext,
+}: {
+  t: StudentStrings;
+  accent: string;
+  nextStage: Stage;
+  onNext: () => void;
+}) {
+  const name = nextStage === 2 ? t.stage2Name : t.stage3Name;
+  const hint = nextStage === 2 ? t.stage2Hint : t.stage3Hint;
+
+  return (
+    <div className="flex min-h-0 flex-1 flex-col items-center justify-center px-6 pb-[calc(24px+env(safe-area-inset-bottom))] text-center">
+      <span
+        className="mb-5 grid h-20 w-20 place-items-center rounded-full text-white shadow-[0_16px_34px_-16px_rgba(224,146,23,0.95)]"
+        style={{ background: accent }}
+      >
+        <svg width="38" height="38" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.8" strokeLinecap="round" strokeLinejoin="round">
+          <path d="m4.5 12.5 5 5 10-11" />
+        </svg>
+      </span>
+
+      <div className="text-[12px] font-bold uppercase tracking-[0.18em] text-slate-400">{t.stageDone}</div>
+      <h2 className="mt-2 text-[24px] font-extrabold leading-tight tracking-[-0.02em] text-slate-900">
+        {t.stage} {nextStage} · {name}
+      </h2>
+      <p className="mt-2 max-w-[300px] text-[14px] leading-relaxed text-slate-500">{hint}</p>
+
+      <button
+        type="button"
+        onClick={onNext}
+        className="mt-8 w-full max-w-[320px] rounded-[18px] py-3.5 text-[15px] font-extrabold text-white shadow-[0_10px_22px_-10px_rgba(224,146,23,0.9)] transition active:scale-[0.985]"
+        style={{ background: accent }}
+      >
+        {t.continueNext}
+      </button>
+    </div>
+  );
+}
+
 /* ── Tugash ekrani ── */
 function Finished({
   t, accent, tries, right, total, onClose,
@@ -286,9 +543,9 @@ function Finished({
   total: number;
   onClose: () => void;
 }) {
-  // Aniqlik — birinchi urinishdan to'g'ri chiqqanlar ulushi.
-  // `right` har doim `total` ga teng bo'ladi (mashq shundan tugaydi),
-  // shuning uchun ma'noli ko'rsatkich urinishlar soniga nisbatan.
+  // Aniqlik — birinchi urinishdan to'g'ri chiqqanlar ulushi. `right` uchala
+  // bosqichdagi to'g'ri javoblar (ya'ni total*3), shuning uchun ma'noli
+  // ko'rsatkich urinishlar soniga nisbatan.
   const acc = tries > 0 ? Math.round((right / tries) * 100) : 100;
 
   return (
