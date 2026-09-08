@@ -80,7 +80,12 @@ export async function nativeSpeechAvailable(): Promise<boolean> {
   return cached;
 }
 
-export type NativeError = "denied" | "no_match" | "network" | "unavailable" | "busy";
+/**
+ * Ma'lum xatolar + Android'dan kelgan raqamli kodlar ("err_5", "language").
+ * Raqamli kod ekranda ko'rsatiladi: qurilmasiz turib nima bo'lganini
+ * aniqlashning yagona yo'li shu.
+ */
+export type NativeError = "denied" | "no_match" | "network" | "unavailable" | "busy" | "language" | (string & {});
 export type NativeResult = { text: string } | { error: NativeError };
 
 /**

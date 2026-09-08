@@ -93,6 +93,10 @@ export async function POST(req: Request) {
   const transcript = String(form?.get("transcript") ?? "").slice(0, 300);
   const lessonId = String(form?.get("lessonId") ?? "");
   const wordIndex = Number(form?.get("wordIndex"));
+  // Qaysi yo'l ishlatilgani — jurnalda ko'rinsin ("native" yoki audio).
+  // Qurilmaga kirolmaymiz; jurnal va ekrandagi sabab — yagona ko'zimiz.
+  const via = String(form?.get("via") ?? (form?.get("audio") ? "audio" : "?")).slice(0, 20);
+  console.log(`[pronounce] via=${via} word=${wordIndex}`);
 
   const hasAudio = audio instanceof File;
   if ((!hasAudio && !transcript.trim()) || !lessonId || !Number.isInteger(wordIndex) || wordIndex < 0) {

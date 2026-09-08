@@ -119,6 +119,8 @@ export default function SpeakStage({
   const [micBlocked, setMicBlocked] = useState(false);
   /** Androidning o'z nutq tanish tizimi mavjudmi. null — hali aniqlanmadi */
   const [native, setNative] = useState<boolean | null>(null);
+  /** Nima uchun ishlamagani — xato ostida kichik yozuvda (masalan "err_5") */
+  const [diag, setDiag] = useState<string | null>(null);
 
   const recorder = useRef<MediaRecorder | null>(null);
   const stream = useRef<MediaStream | null>(null);
@@ -142,12 +144,12 @@ export default function SpeakStage({
   }, []);
 
   /** Yozuvni yoki tanilgan matnni serverga yuboradi va javobni ko'rsatadi */
-  const send = useCallback(async (payload: { wav: Blob } | { transcript: string }) => {
+  const send = useCallback(async (payload: { wav: Blob } | { transcript: string; via: string }) => {
     setPhase("checking");
     try {
       const fd = new FormData();
       if ("wav" in payload) fd.set("audio", payload.wav, "speech.wav");
-      else fd.set("transcript", payload.transcript);
+      else { fd.set("transcript", payload.transcript); fd.set("via", payload.via); }
       fd.set("lessonId", lessonId);
       fd.set("wordIndex", String(wordIndex));
 
@@ -250,35 +252,43 @@ export default function SpeakStage({
     navigator.vibrate?.(10);
 
     const r = await listenNative("de-DE");
+    const inApp = await isNativeApp();
 
-    // Plagin umuman yo'q. Brauzerda bu tabiiy — zaxira yo'lga o'tamiz.
-    // ILOVADA esa bu eski APK degani: Gemini'ga urinish behuda (kvota
-    // kuniga 20 ta, ustiga tez-tez 503), foydalanuvchi esa "tekshirib
-    // bo'lmadi" deb o'ylab, sababini bilmay qolardi. Aniq aytamiz.
-    if (!r && (await isNativeApp())) {
-      setMicBlocked(true);
-      setProblem(t.updateApp);
-      setPhase("error");
-      return;
-    }
+    // ILOVADA Gemini zaxirasi ISHLATILMAYDI. Sinovda u noto'g'ri aytilgan
+    // so'zni "to'g'ri" deb o'tkazdi (o'ylab topishga moyil) va kvotasi
+    // kuniga 20 ta — ya'ni ishonchsiz va tez tugaydi. Tekshirmagan
+    // holatdan noto'g'ri tekshirgani yomonroq. Shu sabab ilovada native
+    // yo'l ishlamasa — sababi ekranda ko'rsatiladi va bosqichni o'tkazib
+    // yuborish taklif qilinadi. Brauzerda esa zaxira yo'l qoladi.
 
-    // Brauzer yoki xizmat nosoz — zaxira yo'lga DARHOL o'tamiz. Ilgari bu
-    // yerda shunchaki "idle" ga qaytilardi va bosish behuda ketardi.
-    if (!r || ("error" in r && (r.error === "unavailable" || r.error === "busy"))) {
+    if (!r) {
+      // Plagin umuman yo'q: ilovada bu eski APK, brauzerda tabiiy
+      if (inApp) { setDiag("no_plugin"); setMicBlocked(true); setProblem(t.updateApp); setPhase("error"); return; }
       setNative(false);
       await startRecording();
       return;
     }
 
     if ("error" in r) {
-      if (r.error === "denied") { setMicBlocked(true); setProblem(t.micDenied); }
-      else if (r.error === "no_match") setProblem(t.noVoice);
-      else setProblem(t.speakUnavailable);
-      setPhase("error");
+      if (r.error === "denied") { setMicBlocked(true); setProblem(t.micDenied); setPhase("error"); return; }
+      if (r.error === "no_match") { setProblem(t.noVoice); setPhase("error"); return; }
+      if (r.error === "network") { setDiag(r.error); setProblem(t.speakUnavailable); setPhase("error"); return; }
+
+      // Xizmat nosoz / til yo'q / boshqa kod
+      if (inApp) {
+        setDiag(r.error);
+        setMicBlocked(true);
+        setProblem(t.speechServiceMissing);
+        setPhase("error");
+        return;
+      }
+      setNative(false);
+      await startRecording();
       return;
     }
+
     if (!r.text.trim()) { setProblem(t.noVoice); setPhase("error"); return; }
-    await send({ transcript: r.text });
+    await send({ transcript: r.text, via: "native" });
   }, [t, send, startRecording]);
 
   /**
@@ -294,7 +304,11 @@ export default function SpeakStage({
     if (phase !== "idle" && phase !== "error") return;
     setProblem(null);
     setHeard(null);
-    if (native === true) await startNative();
+    setDiag(null);
+    // Ilovada HAR DOIM native yo'l sinab ko'riladi — oldindan tekshiruv
+    // (`native`) faqat ishora. U xato "yo'q" desa ham, haqiqiy urinish
+    // aniq sababni beradi va u ekranda ko'rinadi.
+    if (native === true || (await isNativeApp())) await startNative();
     else await startRecording();
   }, [phase, native, startNative, startRecording]);
 
@@ -316,6 +330,11 @@ export default function SpeakStage({
         )}
         {phase === "error" && problem && (
           <div className="mt-1 max-w-[280px] text-[13.5px] font-semibold text-rose-600">{problem}</div>
+        )}
+        {/* Texnik sabab — qurilmasiz turib nima bo'lganini bilishning
+            yagona yo'li. Foydalanuvchi shuni aytadi. */}
+        {phase === "error" && diag && (
+          <div className="text-[11px] font-medium text-slate-400">({diag})</div>
         )}
       </div>
 

@@ -217,8 +217,17 @@ public class NativeSpeechPlugin extends Plugin {
                 case SpeechRecognizer.ERROR_NETWORK_TIMEOUT:
                     err = "network";
                     break;
+                // 12 / 13 — nemis tili shu qurilmada tanilmaydi (til paketi yo'q)
+                case 12:
+                case 13:
+                    err = "language";
+                    break;
                 default:
-                    err = "unavailable";   // xizmat band yoki nosoz
+                    // Qolganlari ("unavailable" deb bir xil yopilardi) endi raqami
+                    // bilan qaytadi: 3 audio, 4 server, 5 mijoz, 8 band, 10 ko'p
+                    // so'rov, 11 xizmat ulanmadi... Sababi ekranda ko'rinadi va
+                    // qurilmasiz turib aniqlash mumkin bo'ladi.
+                    err = "err_" + code;
             }
             finishError(err);
         }
