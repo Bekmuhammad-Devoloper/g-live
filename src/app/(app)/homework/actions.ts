@@ -7,6 +7,7 @@ import { requireSession, type SessionUser } from "@/lib/auth";
 import { getPermission, MODULES } from "@/lib/rbac";
 import { writeAudit } from "@/lib/audit";
 import { notify } from "@/lib/notify";
+import { awardSkill } from "@/lib/skills";
 
 export type FormState = { ok?: boolean; error?: string };
 
@@ -132,6 +133,12 @@ export async function gradeSubmission(submissionId: string, score: number, note:
     data: { score: clamped, teacherNote: note?.trim() || null, status: "GRADED", gradedAt: new Date(), gradedById: s.userId },
   });
   await writeAudit({ actorId: s.userId, action: "UPDATE", entityType: "Submission", entityId: submissionId, newValue: { score: clamped } });
+
+  // "O'qish" ko'nikmasi — vazifa baholandi; to'liq ballga qo'shimcha.
+  // Kalit topshiriq bo'yicha: qayta baholash ikkinchi marta bermaydi.
+  await awardSkill(sub.studentId, "homework", `hw:${submissionId}`);
+  if (max > 0 && clamped >= max) await awardSkill(sub.studentId, "homeworkPerfect", `hwp:${submissionId}`);
+
   revalidatePath("/student", "layout");
 
   const student = await prisma.student.findUnique({ where: { id: sub.studentId } });

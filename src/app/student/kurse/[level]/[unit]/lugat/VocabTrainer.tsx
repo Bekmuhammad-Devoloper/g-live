@@ -5,7 +5,7 @@ import { createPortal } from "react-dom";
 import { practicableWords, splitArticle, type LessonWord } from "@/lib/lessonWords";
 import { nativeSpeechAvailable } from "@/lib/nativeSpeech";
 import type { StudentStrings } from "../../../../_i18n";
-import { markVocabMastered } from "../actions";
+import { markVocabMastered, recordVocabStage } from "../actions";
 import SpeakStage from "./SpeakStage";
 
 // So'z mashqi — TO'RT BOSQICH, har biri oldingisidan qiyinroq.
@@ -142,6 +142,16 @@ function Session({
     setSaved(true);
     void markVocabMastered(lessonId);
   }, [allDone, saved, lessonId]);
+
+  // Har bosqich tugaganda ko'nikma balli (bosh sahifadagi plitkalar).
+  // Bir bosqich uchun bir marta — ref to'plami; server ham kalit bo'yicha
+  // takrorni o'tkazmaydi, bu yerdagisi ortiqcha so'rov bo'lmasin uchun.
+  const recorded = useRef<Set<number>>(new Set());
+  useEffect(() => {
+    if (!stageDone || recorded.current.has(stage)) return;
+    recorded.current.add(stage);
+    void recordVocabStage(lessonId, stage);
+  }, [stageDone, stage, lessonId]);
 
   const nextStage = useCallback(() => {
     setStage((s) => (s < lastStage ? ((s + 1) as Stage) : s));

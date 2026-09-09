@@ -7,13 +7,14 @@ import { getSession } from "@/lib/auth";
 import { prisma } from "@/lib/db";
 import { isPortalFeatureOn } from "@/lib/portalFeatures";
 import { getStudentProgress } from "@/lib/studentProgress";
+import { getSkills } from "@/lib/skills";
 import { getActiveLevels, levelTitle, matchLevel } from "@/lib/studyLevels";
 import { coinBalance, starBalance } from "@/lib/coins";
 import { studentRank } from "@/lib/rank";
 import { getActiveStarRanks, progressOf, rankName } from "@/lib/starRanks";
 import { getActiveBanners, getActiveVideos, videoThumb } from "@/lib/portalContent";
 import BannerCarousel from "./BannerCarousel";
-import { CARD, CoinGold, FlagAvatar, IcoBell, IcoBook, IcoFlame, INK, NAVY, Ring, TEAL, isAttended } from "./_ui";
+import { CARD, CoinGold, FlagAvatar, IcoBell, IcoBook, IcoFlame, INK, NAVY, Ring, TEAL } from "./_ui";
 import MissingStudent from "./MissingStudent";
 
 // O'quvchi "Start" ekrani — berilgan maket bilan birma-bir.
@@ -27,7 +28,6 @@ import MissingStudent from "./MissingStudent";
 //   Streak   — so'nggi ketma-ket qatnashgan darslar
 //   Rang     — guruhdoshlar orasida davomat bo'yicha O'RIN (1 = birinchi)
 
-const clamp = (n: number) => Math.max(0, Math.min(100, Math.round(n)));
 
 // ── Ko'nikma rasmlari (public/skills/) ──
 // Rasm FAQAT kartadagi foizga qarab tanlanadi — 4 ta teng bo'lak:
@@ -254,15 +254,7 @@ export default async function StudentStartPage() {
 
   const group = student.enrollments[0]?.group ?? null;
 
-  const [attendance, submissions, exams, prog, levels, mates, unread] = await Promise.all([
-    prisma.attendance.findMany({
-      where: { studentId: student.id },
-      orderBy: { markedAt: "desc" },
-      select: { status: true },
-      take: 200,
-    }),
-    prisma.submission.findMany({ where: { studentId: student.id, status: "GRADED" }, select: { score: true, assignment: { select: { maxScore: true } } } }),
-    prisma.examResult.findMany({ where: { studentId: student.id }, select: { score: true } }),
+  const [prog, levels, mates, unread, skillScores] = await Promise.all([
     // Jarayon YAGONA joyda (src/lib/studentProgress.ts) — o'quvchi ko'rgan
     // darslar ham hisobga olinadi, faqat o'qituvchi belgilagani emas
     getStudentProgress(student.id, group),
@@ -271,18 +263,18 @@ export default async function StudentStartPage() {
       ? prisma.groupStudent.findMany({ where: { groupId: group.id, isActive: true }, select: { studentId: true } })
       : Promise.resolve([]),
     prisma.notification.count({ where: { userId: session.userId, isRead: false } }),
+    // Ko'nikma plitkalari. Ilgari davomat/vazifa/imtihon o'rtachasidan
+    // hisoblanardi — o'quvchining mashqiga bog'liq emas edi va hech qachon
+    // pasaymasdi. Endi lib/skills.ts: to'g'ri bajarilgan mashq/vazifa ball
+    // qo'shadi, ilova ochilmagan har kun ball ayiradi.
+    getSkills(student.id),
   ]);
 
   // ── Ko'nikmalar ──
-  // Kanonik davomat formulasi (Profil va admin hisobotlari bilan bir xil)
-  const present = attendance.filter((a) => isAttended(a.status));
-  const hoeren = attendance.length ? clamp((present.length / attendance.length) * 100) : 0;
-  // Ball maxScore ga normalizatsiya qilinadi — 10 ballik vazifada 9 ball 90% bo'lsin
-  const lesen = submissions.length
-    ? clamp(submissions.reduce((n, x) => n + ((x.score ?? 0) / (x.assignment.maxScore || 100)) * 100, 0) / submissions.length)
-    : 0;
-  const woerter = exams.length ? clamp(exams.reduce((n, x) => n + (x.score ?? 0), 0) / exams.length) : 0;
-  // (sprechen quyida, doneInProgram aniqlangach hisoblanadi)
+  const woerter = skillScores.words;
+  const lesen = skillScores.reading;
+  const hoeren = skillScores.listening;
+  const sprechen = skillScores.speaking;
 
   // ── Kurs jarayoni ──
   // Kartochka JORIY daraja haqida gapiradi ("A1 · Bo'lim 3"), shuning uchun
@@ -292,7 +284,6 @@ export default async function StudentStartPage() {
   const lvlStat = prog.byLevel.get(level) ?? null;
   const chapter = Math.max(1, lvlStat?.done ?? prog.doneCount);
   const kursPct = lvlStat?.pct ?? prog.overallPct;
-  const sprechen = prog.overallPct; // "Gapirish" ko'nikmasi — butun dastur bo'yicha
   const currentLesson = prog.currentLesson;
   // Kartochka foni — shu darajaning banneri (ma'muriyat yuklagan bo'lsa)
   const levelBanner = curLevel?.bannerUrl ?? null;

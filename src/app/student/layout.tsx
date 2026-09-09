@@ -4,6 +4,8 @@ import { ROLES } from "@/lib/constants";
 import BottomNav from "./BottomNav";
 import { S } from "./_i18n";
 import { getPortalFlags } from "@/lib/portalFeatures";
+import { prisma } from "@/lib/db";
+import { touchActivity } from "@/lib/skills";
 import PwaSetup from "./PwaSetup";
 import Screen from "./Screen";
 
@@ -59,6 +61,11 @@ export default async function StudentLayout({ children }: { children: React.Reac
 
   // Menejer o'chirib qo'ygan bo'limlar pastki menyuda ko'rinmaydi
   const flags = await getPortalFlags();
+
+  // Ilova ochildi — ko'nikma ballari uchun faollik belgisi (soatiga bir
+  // yozuv). Bir kun ochilmasa ballar pasayadi (lib/skills.ts).
+  const me = await prisma.student.findUnique({ where: { userId: session.userId }, select: { id: true } });
+  if (me) await touchActivity(me.id);
 
   // `gl-native` — ilova hissi qoidalari (globals.css): teginish chaqnashi,
   // uzoq bosish menyusi va sahifaning cho'zilishi (rubber-band) o'chadi.

@@ -46,6 +46,7 @@ export async function saveProgressRules(input: {
   streakStep: number;
   rankScope: string;
   rankBasis: string;
+  skillDecayPerDay: number;
 }): Promise<CoinState> {
   const s = await requireSession();
   if (!ALLOWED.includes(s.role as never)) return { error: "Ruxsat yo'q" };
@@ -54,12 +55,15 @@ export async function saveProgressRules(input: {
   if (!Number.isFinite(step) || step < 2 || step > 100) return { error: "Seriya qadami 2 dan 100 gacha bo'lishi kerak" };
   if (!RANK_SCOPES.includes(input.rankScope as never)) return { error: "Reyting doirasi noto'g'ri" };
   if (!RANK_BASES.includes(input.rankBasis as never)) return { error: "Reyting mezoni noto'g'ri" };
+  const decay = Math.round(Number(input.skillDecayPerDay));
+  if (!Number.isFinite(decay) || decay < 0 || decay > 100) return { error: "Kunlik pasayish 0 dan 100 gacha bo'lishi kerak" };
 
   const data = {
     streakExcusedBreaks: !!input.streakExcusedBreaks,
     streakStep: step,
     rankScope: input.rankScope as RankScope,
     rankBasis: input.rankBasis as RankBasis,
+    skillDecayPerDay: decay,
   };
   await setProgressRules(data);
 

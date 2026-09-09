@@ -15,6 +15,8 @@ export type ProgressForm = {
   streakStep: number;
   rankScope: string;
   rankBasis: string;
+  /** Ko'nikma plitkalari ilova ochilmagan har kun uchun necha foiz pasayadi */
+  skillDecayPerDay: number;
 };
 
 export default function ProgressRulesView({
@@ -121,6 +123,56 @@ export default function ProgressRulesView({
               max={100}
               value={f.streakStep}
               onChange={(e) => set("streakStep", Math.max(2, Math.min(100, Math.round(Number(e.target.value) || 2))))}
+              className="h-10 w-[74px] shrink-0 rounded-lg border border-slate-200 bg-white text-center text-[15px] font-bold text-slate-800 outline-none focus:border-brand-400 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-100"
+            />
+          </div>
+        </div>
+      </section>
+
+      {/* ── Ko'nikmalar ── */}
+      <section className="rounded-xl border border-slate-200/70 bg-white p-4 shadow-card dark:border-slate-800 dark:bg-slate-900">
+        <div className="flex items-center gap-3">
+          <span className="grid h-11 w-11 shrink-0 place-items-center rounded-xl bg-teal-50 text-teal-600 dark:bg-teal-500/15">
+            <Icon name="chart" className="h-5 w-5" />
+          </span>
+          <div>
+            <div className="text-[15px] font-semibold text-slate-800 dark:text-slate-100">
+              {T("Ko'nikmalar", "Навыки", "Skills", "Fertigkeiten")}
+            </div>
+            <p className="text-[13px] text-slate-500">
+              {T(
+                "O'quvchi bosh sahifasidagi So'zlar, O'qish, Tinglash, Gapirish foizlari. Mashq va vazifalar to'g'ri bajarilganda o'sadi; ilova ochilmagan har to'liq kun uchun pasayadi.",
+                "Проценты «Слова, Чтение, Аудирование, Говорение» на главной ученика. Растут за верно выполненные упражнения и задания; снижаются за каждый полный день без входа в приложение.",
+                "The Words, Reading, Listening and Speaking percentages on the student home. They grow with correct practice and tasks and drop for every full day the app is not opened.",
+                "Die Prozente Wörter, Lesen, Hören, Sprechen auf der Startseite. Sie steigen bei richtig gelösten Übungen und sinken für jeden vollen Tag ohne App-Öffnung.",
+              )}
+            </p>
+          </div>
+        </div>
+
+        <div className="mt-4">
+          <div className="flex flex-wrap items-center justify-between gap-3 rounded-lg bg-slate-50 px-3.5 py-3 dark:bg-slate-800/60">
+            <span className="min-w-0">
+              <span className="block text-[14px] font-semibold text-slate-700 dark:text-slate-200">
+                {T("Har kirilmagan kun uchun pasayish (%)", "Снижение за каждый день без входа (%)", "Drop per day without opening (%)", "Abzug pro Tag ohne Öffnen (%)")}
+              </span>
+              <span className="mt-0.5 block text-[12.5px] text-slate-500">
+                {f.skillDecayPerDay === 0
+                  ? T("Hozir: pasaymaydi.", "Сейчас: не снижается.", "Now: no drop.", "Aktuell: kein Abzug.")
+                  : T(
+                      `1 kun kirmasa har plitka ${f.skillDecayPerDay}% ga, 2 kun kirmasa ${f.skillDecayPerDay * 2}% ga tushadi. Qaytgach pasayish to'xtaydi.`,
+                      `Один день без входа — минус ${f.skillDecayPerDay}% с каждой плитки, два дня — минус ${f.skillDecayPerDay * 2}%. После возвращения снижение прекращается.`,
+                      `One day away drops each tile by ${f.skillDecayPerDay}%, two days by ${f.skillDecayPerDay * 2}%. It stops once the student returns.`,
+                      `Ein Tag ohne Öffnen: jede Kachel −${f.skillDecayPerDay}%, zwei Tage: −${f.skillDecayPerDay * 2}%. Nach der Rückkehr stoppt der Abzug.`,
+                    )}
+              </span>
+            </span>
+            <input
+              type="number"
+              min={0}
+              max={100}
+              value={f.skillDecayPerDay}
+              onChange={(e) => set("skillDecayPerDay", Math.max(0, Math.min(100, Math.round(Number(e.target.value) || 0))))}
               className="h-10 w-[74px] shrink-0 rounded-lg border border-slate-200 bg-white text-center text-[15px] font-bold text-slate-800 outline-none focus:border-brand-400 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-100"
             />
           </div>

@@ -181,6 +181,7 @@ export default async function CoinRulesPage() {
           streakStep: prog.streakStep,
           rankScope: prog.rankScope,
           rankBasis: prog.rankBasis,
+          skillDecayPerDay: prog.skillDecayPerDay,
         }}
       />
     </div>

@@ -6,6 +6,7 @@ import { lessonVocabText, parseLessonWords, practicableWords, splitArticle } fro
 import { isGeminiConfigured, recognizeWord } from "@/lib/gemini";
 import { checkPronunciation, normalizeSpeech, foldUmlauts } from "@/lib/pronounce";
 import { wavHasVoice } from "@/lib/voiceGate";
+import { awardSkill } from "@/lib/skills";
 
 export const runtime = "nodejs";
 
@@ -131,6 +132,9 @@ export async function POST(req: Request) {
       `[pronounce] via=native target="${word.de}" heard="${transcript.slice(0, 80).replace(/\n/g, " ")}" ok=${ok} matched="${result.matched ?? ""}"`,
     );
   }
+
+  // "Gapirish" ko'nikmasi — har so'z uchun bir marta (kalit dars+so'z)
+  if (ok) await awardSkill(student.id, "sayWord", `say:${lessonId}:${wordIndex}`);
 
   return NextResponse.json({
     ok,

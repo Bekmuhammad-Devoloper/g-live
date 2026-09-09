@@ -250,6 +250,7 @@ model Student {
   challengeEntries   GameChallengeEntry[]
   lessonViews  LessonView[]
   vocabMastery VocabMastery[]
+  skill        StudentSkill?
   levelUps     StudentLevelUp[]
 
   createdAt DateTime @default(now())
@@ -439,6 +440,51 @@ model VocabMastery {
 
   @@unique([studentId, courseLessonId])
   @@index([studentId])
+}
+
+// O'quvchining to'rt ko'nikmasi (bosh sahifadagi plitkalar): So'zlar,
+// O'qish, Tinglash, Gapirish — 0..100.
+//
+// Ilgari bu foizlar boshqa narsalardan olinardi (imtihon o'rtachasi,
+// davomat, dastur jarayoni) va hech qachon pasaymasdi. Endi ular
+// MASHQ bilan o'sadi (har to'g'ri bajarilgan bosqich/vazifa — ball) va
+// FAOLSIZLIK bilan pasayadi: ilova bir kun ochilmasa — kamayadi, ikki kun
+// — yana. Pasayish qaytmaydi, faqat yangi mashq bilan tiklanadi.
+//
+// Qiymat SAQLANADI (tanga kabi qayta hisoblanmaydi), chunki pasayish
+// tarixga bog'liq: "3 kun kirmadi, keyin qaytdi" holatini hodisalardan
+// qayta hisoblab bo'lmaydi.
+model StudentSkill {
+  id           String   @id @default(cuid())
+  studentId    String   @unique
+  student      Student  @relation(fields: [studentId], references: [id], onDelete: Cascade)
+  words        Int      @default(0)
+  reading      Int      @default(0)
+  listening    Int      @default(0)
+  speaking     Int      @default(0)
+  /** Ilova oxirgi marta ochilgan / mashq qilingan vaqt */
+  lastActiveAt DateTime @default(now())
+  /** Qaysi vaqtgacha pasayish qo'llangan — ikki marta ayirilmasin */
+  decayedAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+
+  events SkillEvent[]
+}
+
+// Ball berilgan hodisa. `key` bir marta beriladigan narsani belgilaydi
+// ("vocab:<dars>:s1" — shu darsning 1-bosqichi): xuddi shu mashqni qayta-
+// qayta bajarib ball yig'ib bo'lmaydi.
+model SkillEvent {
+  id        String       @id @default(cuid())
+  skillId   String
+  skill     StudentSkill @relation(fields: [skillId], references: [id], onDelete: Cascade)
+  key       String
+  kind      String // words | reading | listening | speaking
+  points    Int
+  createdAt DateTime     @default(now())
+
+  @@unique([skillId, key])
+  @@index([skillId, createdAt])
 }
 
 // "Jang" chaqiruvi — duel (bir ga bir) yoki guruhli o'yin.
