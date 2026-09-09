@@ -6,6 +6,7 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { cn } from "@/lib/cn";
 import { getT } from "@/lib/i18n";
+import { tr } from "@/lib/tr";
 import { LOCALES, intlLocale, PAYMENT_METHODS, PAYMENT_METHOD_LABELS, label, type Locale } from "@/lib/constants";
 import { logout, setLocale, setBranch, quickCreateStudent, type QuickState } from "../actions";
 import { createManualPayment, type PayState } from "../payments/actions";
@@ -77,7 +78,7 @@ export default function Topbar(p: TopbarProps) {
 
       <header className="sticky top-0 z-40 flex h-16 items-center gap-2 border-b border-slate-200/70 bg-white px-3 dark:border-slate-800 dark:bg-slate-900 md:px-4">
         {/* Mobil menyu */}
-        <button onClick={p.onMenu} className={cn(iconBtn, "md:hidden")} aria-label="Menu">
+        <button onClick={p.onMenu} className={cn(iconBtn, "md:hidden")} aria-label={tr(p.locale, { uz: "Menyu", ru: "Меню", en: "Menu", de: "Menü" })}>
           <Icon name="menu" className="h-5 w-5" />
         </button>
 
@@ -140,7 +141,7 @@ export default function Topbar(p: TopbarProps) {
                 </button>
               ))}
               {!p.canSwitchBranch && (
-                <p className="px-3 py-2 text-[11px] text-slate-400">Filial almashtirish huquqi yo&apos;q</p>
+                <p className="px-3 py-2 text-[11px] text-slate-400">{tr(p.locale, { uz: "Filial almashtirish huquqi yo'q", ru: "Нет права переключать филиал", en: "No permission to switch branch", de: "Keine Berechtigung zum Filialwechsel" })}</p>
               )}
               {p.canSwitchBranch && (
                 <>
@@ -203,7 +204,7 @@ export default function Topbar(p: TopbarProps) {
         </div>
 
         {/* Light / Dark rejim */}
-        <ThemeToggle />
+        <ThemeToggle locale={p.locale} />
 
         {/* 7) Butun ekran */}
         <button onClick={toggleFs} className={cn(iconBtn, "hidden sm:flex")} title={t("top.fullscreen")}>
@@ -285,7 +286,7 @@ export default function Topbar(p: TopbarProps) {
               </Link>
               <Link href="/profile" onClick={() => setMenu(null)} className="flex w-full items-center gap-2.5 border-b border-slate-100 px-3 py-2.5 text-left text-sm text-slate-600 transition hover:bg-slate-50 dark:border-slate-800 dark:text-slate-300 dark:hover:bg-slate-800">
                 <Icon name="user" className="h-4 w-4 text-slate-400" />
-                {p.locale === "ru" ? "Мой профиль" : p.locale === "en" ? "My profile" : "Mening profilim"}
+                {tr(p.locale, { uz: "Mening profilim", ru: "Мой профиль", en: "My profile", de: "Mein Profil" })}
               </Link>
               {/* Kichik ekranda valyuta kursi navbarga sig'maydi — menyuda ko'rsatamiz */}
               <div className="xl:hidden">
@@ -373,10 +374,10 @@ function SearchBox({ locale, placeholder, noResults }: { locale: Locale; placeho
   }, []);
 
   const typeLabel: Record<string, string> = {
-    student: locale === "ru" ? "Ученик" : locale === "en" ? "Student" : "O'quvchi",
-    lead: locale === "ru" ? "Лид" : "Lead",
-    group: locale === "ru" ? "Группа" : locale === "en" ? "Group" : "Guruh",
-    teacher: locale === "ru" ? "Препод." : locale === "en" ? "Teacher" : "O'qituvchi",
+    student: tr(locale, { uz: "O'quvchi", ru: "Ученик", en: "Student", de: "Schüler" }),
+    lead: tr(locale, { uz: "Lead", ru: "Лид", en: "Lead", de: "Lead" }),
+    group: tr(locale, { uz: "Guruh", ru: "Группа", en: "Group", de: "Gruppe" }),
+    teacher: tr(locale, { uz: "O'qituvchi", ru: "Препод.", en: "Teacher", de: "Lehrer" }),
   };
 
   return (
@@ -462,6 +463,7 @@ function QuickStudentModal({ locale, groups, onClose }: { locale: Locale; groups
   const t = getT(locale);
   const router = useRouter();
   const [state, action, pending] = useActionState<QuickState, FormData>(quickCreateStudent, {});
+  const T = (uz: string, ru: string, en: string, de: string) => tr(locale, { uz, ru, en, de });
   useEffect(() => { if (state.ok) { onClose(); router.refresh(); } }, [state.ok, onClose, router]);
 
   const lbl = "mb-1 block text-xs font-semibold text-slate-600 dark:text-slate-300";
@@ -471,12 +473,12 @@ function QuickStudentModal({ locale, groups, onClose }: { locale: Locale; groups
       <form action={action} className="space-y-3">
         <div className="grid grid-cols-2 gap-3">
           <div>
-            <label className={lbl}>Ism <span className="text-red-500">*</span></label>
-            <input name="firstName" required className="input" placeholder="Ism" />
+            <label className={lbl}>{T("Ism", "Имя", "First name", "Vorname")} <span className="text-red-500">*</span></label>
+            <input name="firstName" required className="input" placeholder={T("Ism", "Имя", "First name", "Vorname")} />
           </div>
           <div>
-            <label className={lbl}>Familiya</label>
-            <input name="lastName" className="input" placeholder="Familiya" />
+            <label className={lbl}>{T("Familiya", "Фамилия", "Last name", "Nachname")}</label>
+            <input name="lastName" className="input" placeholder={T("Familiya", "Фамилия", "Last name", "Nachname")} />
           </div>
         </div>
 
@@ -486,35 +488,35 @@ function QuickStudentModal({ locale, groups, onClose }: { locale: Locale; groups
             <input name="phone" className="input" placeholder="+998..." />
           </div>
           <div>
-            <label className={lbl}>Qo&apos;shimcha raqam</label>
-            <input name="phone2" className="input" placeholder="+998... (ixtiyoriy)" />
+            <label className={lbl}>{T("Qo'shimcha raqam", "Доп. номер", "Additional number", "Zusätzliche Nummer")}</label>
+            <input name="phone2" className="input" placeholder={T("+998... (ixtiyoriy)", "+998... (необязательно)", "+998... (optional)", "+998... (optional)")} />
           </div>
         </div>
 
         <div className="grid grid-cols-2 gap-3">
           <div>
-            <label className={lbl}>Yosh</label>
+            <label className={lbl}>{T("Yosh", "Возраст", "Age", "Alter")}</label>
             <input name="age" type="number" min="3" max="100" className="input" placeholder="18" />
           </div>
           <div>
-            <label className={lbl}>Daraja</label>
+            <label className={lbl}>{T("Daraja", "Уровень", "Level", "Niveau")}</label>
             <input name="currentLevel" className="input" placeholder="A1.1" />
           </div>
         </div>
 
         {/* Guruhga yo'naltirish — tanlansa talaba darhol guruhga biriktiriladi */}
         <div>
-          <label className={lbl}>Guruhga yo&apos;naltirish</label>
+          <label className={lbl}>{T("Guruhga yo'naltirish", "Направить в группу", "Assign to a group", "Einer Gruppe zuweisen")}</label>
           <select name="groupId" className="input" defaultValue="">
-            <option value="">Guruhsiz (keyinroq biriktiriladi)</option>
+            <option value="">{T("Guruhsiz (keyinroq biriktiriladi)", "Без группы (назначить позже)", "No group (assign later)", "Ohne Gruppe (später zuweisen)")}</option>
             {groups.map((g) => <option key={g.id} value={g.id}>{g.name}</option>)}
           </select>
-          <p className="mt-1 text-[11px] text-slate-400">Guruh tanlansa — talaba faol holatga o&apos;tadi.</p>
+          <p className="mt-1 text-[11px] text-slate-400">{T("Guruh tanlansa — talaba faol holatga o'tadi.", "Если выбрать группу — ученик станет активным.", "If a group is selected, the student becomes active.", "Wird eine Gruppe gewählt, wird der Schüler aktiv.")}</p>
         </div>
 
         {state.error && (
           <p className="rounded-lg bg-red-50 px-3 py-2 text-sm text-red-700 dark:bg-red-950/40 dark:text-red-400">
-            {state.error === "forbidden" ? t("err.forbiddenBody") : "Ma'lumot to'liq emas."}
+            {state.error === "forbidden" ? t("err.forbiddenBody") : T("Ma'lumot to'liq emas.", "Данные неполные.", "The data is incomplete.", "Die Angaben sind unvollständig.")}
           </p>
         )}
         <div className="flex justify-end gap-2 pt-1">
@@ -532,6 +534,7 @@ function QuickPaymentModal({
   const t = getT(locale);
   const router = useRouter();
   const [state, action, pending] = useActionState<PayState, FormData>(createManualPayment, {});
+  const T = (uz: string, ru: string, en: string, de: string) => tr(locale, { uz, ru, en, de });
   useEffect(() => { if (state.ok) { onClose(); router.refresh(); } }, [state.ok, onClose, router]);
 
   return (
@@ -558,7 +561,7 @@ function QuickPaymentModal({
         </div>
         <div>
           <label className="mb-1 block text-xs font-semibold text-slate-600">{t("pay.purpose")} <span className="text-red-500">*</span></label>
-          <input name="purpose" required className="input" placeholder="A1.2 kurs to'lovi" />
+          <input name="purpose" required className="input" placeholder={T("A1.2 kurs to'lovi", "Оплата курса A1.2", "A1.2 course fee", "Kursgebühr A1.2")} />
         </div>
         <div>
           <label className="mb-1 block text-xs font-semibold text-slate-600">{t("pay.docNumber")} <span className="text-red-500">*</span></label>
@@ -566,7 +569,7 @@ function QuickPaymentModal({
         </div>
         {state.error && (
           <p className="rounded-lg bg-red-50 px-3 py-2 text-sm text-red-700">
-            {state.error === "forbidden" ? t("pay.noPermission") : "Barcha majburiy maydonlarni to'ldiring."}
+            {state.error === "forbidden" ? t("pay.noPermission") : T("Barcha majburiy maydonlarni to'ldiring.", "Заполните все обязательные поля.", "Fill in all required fields.", "Füllen Sie alle Pflichtfelder aus.")}
           </p>
         )}
         <div className="flex justify-end gap-2 pt-1">

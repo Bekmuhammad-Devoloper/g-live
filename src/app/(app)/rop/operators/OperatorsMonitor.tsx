@@ -39,13 +39,16 @@ function ago(iso: string | null, locale: Locale): string {
   const days = Math.floor(h / 24);
   return tr(locale, { uz: `${days} kun oldin`, ru: `${days} дн назад`, en: `${days} days ago`, de: `vor ${days} Tg.` });
 }
-function fmtTalk(min: number): string {
-  if (min < 60) return `${min}m`;
-  return `${Math.floor(min / 60)}s ${min % 60}m`;
+function fmtTalk(min: number, locale: Locale): string {
+  const hu = tr(locale, { uz: "s", ru: "ч", en: "h", de: "Std" });
+  const mu = tr(locale, { uz: "m", ru: "м", en: "m", de: "Min" });
+  if (min < 60) return `${min}${mu}`;
+  return `${Math.floor(min / 60)}${hu} ${min % 60}${mu}`;
 }
 
 export default function OperatorsMonitor({ operators, totalLeads, todayCalls, writable, locale }: { operators: VOperator[]; totalLeads: number; todayCalls: number; writable: boolean; locale: Locale }) {
   const router = useRouter();
+  const T = (uz: string, ru: string, en: string, de: string) => tr(locale, { uz, ru, en, de });
   const [q, setQ] = useState("");
   const [tab, setTab] = useState<"all" | "online" | "offline">("all");
 
@@ -87,22 +90,22 @@ export default function OperatorsMonitor({ operators, totalLeads, todayCalls, wr
 
       {/* Stat strip */}
       <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-5">
-        <Stat icon="users" tone="brand" value={operators.length} label="Jami" />
+        <Stat icon="users" tone="brand" value={operators.length} label={T("Jami", "Всего", "Total", "Gesamt")} />
         <Stat icon="check" tone="green" value={onlineCount} label="Online" />
-        <Stat icon="chart" tone="amber" value={`${avgKpi}%`} label="O'rtacha KPI" />
-        <Stat icon="download" tone="violet" value={totalLeads} label="Jami lidlar" />
-        <Stat icon="phone" tone="brand" value={todayCalls} label="Bugungi qo'ng'iroqlar" />
+        <Stat icon="chart" tone="amber" value={`${avgKpi}%`} label={T("O'rtacha KPI", "Средний KPI", "Average KPI", "Durchschnittlicher KPI")} />
+        <Stat icon="download" tone="violet" value={totalLeads} label={T("Jami lidlar", "Всего лидов", "Total leads", "Leads gesamt")} />
+        <Stat icon="phone" tone="brand" value={todayCalls} label={T("Bugungi qo'ng'iroqlar", "Звонки сегодня", "Today's calls", "Anrufe heute")} />
       </div>
 
       {/* Search + tabs */}
       <div className="flex flex-wrap items-center gap-3">
         <div className="relative min-w-[220px] flex-1">
           <Icon name="search" className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400" />
-          <input value={q} onChange={(e) => setQ(e.target.value)} placeholder="Operator qidirish..."
+          <input value={q} onChange={(e) => setQ(e.target.value)} placeholder={T("Operator qidirish...", "Поиск оператора...", "Search operator...", "Operator suchen...")}
             className="h-11 w-full rounded-lg border border-slate-300 bg-white pl-9 pr-3 text-sm text-slate-700 outline-none transition focus:border-brand-400 dark:border-slate-600 dark:bg-slate-800/60 dark:text-slate-100" />
         </div>
         <div className="flex items-center gap-1 rounded-lg border border-slate-200 bg-slate-50/60 p-1 dark:border-slate-700 dark:bg-slate-800/40">
-          {([["all", "Barchasi"], ["online", "Online"], ["offline", "Offline"]] as const).map(([k, lb]) => (
+          {([["all", T("Barchasi", "Все", "All", "Alle")], ["online", "Online"], ["offline", "Offline"]] as const).map(([k, lb]) => (
             <button key={k} onClick={() => setTab(k)}
               className={cn("rounded-md px-4 py-1.5 text-sm font-medium transition", tab === k ? "bg-brand-600 text-white shadow-sm" : "text-slate-500 hover:text-slate-700 dark:text-slate-400 dark:hover:text-slate-200")}>
               {lb}
@@ -113,7 +116,7 @@ export default function OperatorsMonitor({ operators, totalLeads, todayCalls, wr
 
       {/* Cards */}
       {filtered.length === 0 ? (
-        <div className="rounded-2xl border border-slate-200/70 bg-white px-5 py-16 text-center text-sm text-slate-400 shadow-card dark:border-slate-800 dark:bg-slate-900">Operator topilmadi</div>
+        <div className="rounded-2xl border border-slate-200/70 bg-white px-5 py-16 text-center text-sm text-slate-400 shadow-card dark:border-slate-800 dark:bg-slate-900">{T("Operator topilmadi", "Оператор не найден", "No operator found", "Kein Operator gefunden")}</div>
       ) : (
         <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
           {filtered.map((o) => (
@@ -127,7 +130,7 @@ export default function OperatorsMonitor({ operators, totalLeads, todayCalls, wr
                     {o.phone && (
                       <button
                         onClick={(e) => { e.preventDefault(); e.stopPropagation(); window.dispatchEvent(new CustomEvent("glive:call", { detail: { number: o.phone, contactName: o.name } })); }}
-                        title="Qo'ng'iroq"
+                        title={T("Qo'ng'iroq", "Позвонить", "Call", "Anrufen")}
                         className="text-slate-400 transition hover:text-emerald-600 dark:hover:text-emerald-400"
                       >
                         · {o.phone}
@@ -140,36 +143,36 @@ export default function OperatorsMonitor({ operators, totalLeads, todayCalls, wr
               <div className="mt-4 grid grid-cols-2 gap-2.5">
                 <div className="rounded-lg bg-slate-50/70 px-3 py-2 dark:bg-slate-800/40">
                   <div className="text-lg font-bold text-slate-800 dark:text-slate-100">{o.todayCalls}</div>
-                  <div className="text-[11px] text-slate-400">Bugun qo&apos;ng&apos;iroq</div>
+                  <div className="text-[11px] text-slate-400">{T("Bugun qo'ng'iroq", "Звонков сегодня", "Calls today", "Anrufe heute")}</div>
                 </div>
                 <div className="rounded-lg bg-slate-50/70 px-3 py-2 dark:bg-slate-800/40">
-                  <div className="text-lg font-bold text-slate-800 dark:text-slate-100">{fmtTalk(o.talkMin)}</div>
-                  <div className="text-[11px] text-slate-400">Gaplashgan</div>
+                  <div className="text-lg font-bold text-slate-800 dark:text-slate-100">{fmtTalk(o.talkMin, locale)}</div>
+                  <div className="text-[11px] text-slate-400">{T("Gaplashgan", "Наговорено", "Talk time", "Gesprächszeit")}</div>
                 </div>
               </div>
 
               <div className="mt-4">
                 <div className="mb-1 flex items-center justify-between text-xs">
-                  <span className="flex items-center gap-1 text-slate-500 dark:text-slate-400"><Icon name="chart" className="h-3.5 w-3.5" /> Konversiya</span>
+                  <span className="flex items-center gap-1 text-slate-500 dark:text-slate-400"><Icon name="chart" className="h-3.5 w-3.5" /> {T("Konversiya", "Конверсия", "Conversion", "Konversion")}</span>
                   <span className={cn("font-bold", o.conv >= 30 ? "text-emerald-600 dark:text-emerald-400" : o.conv > 0 ? "text-amber-600 dark:text-amber-400" : "text-rose-500")}>{o.conv}%</span>
                 </div>
                 <div className="h-2 overflow-hidden rounded-full bg-slate-100 dark:bg-slate-800">
                   <div className={cn("h-full rounded-full", o.conv >= 30 ? "bg-emerald-500" : "bg-amber-500")} style={{ width: `${Math.min(100, o.conv)}%` }} />
                 </div>
                 <div className="mt-1 flex justify-between text-[11px] text-slate-400">
-                  <span>Muvaffaqiyatli: <b className="text-slate-600 dark:text-slate-300">{o.won}</b></span>
-                  <span>Jami: <b className="text-slate-600 dark:text-slate-300">{o.total}</b></span>
+                  <span>{T("Muvaffaqiyatli", "Успешные", "Successful", "Erfolgreich")}: <b className="text-slate-600 dark:text-slate-300">{o.won}</b></span>
+                  <span>{T("Jami", "Всего", "Total", "Gesamt")}: <b className="text-slate-600 dark:text-slate-300">{o.total}</b></span>
                 </div>
               </div>
 
               <div className="mt-4 space-y-1.5 border-t border-slate-100 pt-3 text-xs dark:border-slate-800">
-                <div className="flex justify-between"><span className="text-slate-400">Oxirgi online:</span><span className="text-slate-600 dark:text-slate-300">{ago(o.lastOnline, locale)}</span></div>
-                <div className="flex justify-between"><span className="text-slate-400">Oxirgi lid:</span><span className="truncate pl-2 text-slate-600 dark:text-slate-300">{o.lastLead ?? "—"}</span></div>
+                <div className="flex justify-between"><span className="text-slate-400">{T("Oxirgi online", "Последний онлайн", "Last online", "Zuletzt online")}:</span><span className="text-slate-600 dark:text-slate-300">{ago(o.lastOnline, locale)}</span></div>
+                <div className="flex justify-between"><span className="text-slate-400">{T("Oxirgi lid", "Последний лид", "Last lead", "Letzter Lead")}:</span><span className="truncate pl-2 text-slate-600 dark:text-slate-300">{o.lastLead ?? "—"}</span></div>
               </div>
 
               <div className="mt-3 flex items-center justify-between border-t border-slate-100 pt-3 dark:border-slate-800">
-                <span className="text-[11px] text-slate-400">Yaratilgan: {fmtDate(o.createdAt)}</span>
-                <Link href="/reports/operators" className="inline-flex items-center gap-1 text-xs font-medium text-brand-600 hover:underline dark:text-brand-300"><Icon name="eye" className="h-3.5 w-3.5" /> Batafsil</Link>
+                <span className="text-[11px] text-slate-400">{T("Yaratilgan", "Создан", "Created", "Erstellt")}: {fmtDate(o.createdAt)}</span>
+                <Link href="/reports/operators" className="inline-flex items-center gap-1 text-xs font-medium text-brand-600 hover:underline dark:text-brand-300"><Icon name="eye" className="h-3.5 w-3.5" /> {T("Batafsil", "Подробнее", "Details", "Details")}</Link>
               </div>
             </div>
           ))}

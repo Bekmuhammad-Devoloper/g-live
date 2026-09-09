@@ -63,7 +63,9 @@ export async function createTask(_prev: TaskState, formData: FormData): Promise<
   if (task.assigneeId && task.assigneeId !== s.userId) {
     await notify({
       userId: task.assigneeId,
-      title: parsed.data.kind === "REMINDER" ? "Yangi eslatma" : "Yangi topshiriq",
+      title: parsed.data.kind === "REMINDER"
+        ? { uz: "Yangi eslatma", ru: "Новое напоминание", en: "New reminder", de: "Neue Erinnerung" }
+        : { uz: "Yangi topshiriq", ru: "Новая задача", en: "New task", de: "Neue Aufgabe" },
       body: task.title,
       event: "task",
     });

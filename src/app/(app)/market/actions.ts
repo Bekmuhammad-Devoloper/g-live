@@ -6,6 +6,7 @@ import { prisma } from "@/lib/db";
 import { canWrite, MODULES } from "@/lib/rbac";
 import { writeAudit } from "@/lib/audit";
 import { notify } from "@/lib/notify";
+import { tr } from "@/lib/tr";
 
 export type Res = { ok?: boolean; error?: string };
 
@@ -15,7 +16,7 @@ const MAX_PRICE = 1_000_000;
 
 export async function saveItem(fd: FormData): Promise<Res> {
   const s = await requireSession();
-  if (!canWrite(s.role, MODULES.MARKET)) return { error: "Ruxsat yo'q" };
+  if (!canWrite(s.role, MODULES.MARKET)) return { error: tr(s.locale, { uz: "Ruxsat yo'q", ru: "Нет доступа", en: "No permission", de: "Keine Berechtigung" }) };
 
   const id = String(fd.get("id") ?? "").trim();
   const title = String(fd.get("title") ?? "").trim();
@@ -24,10 +25,10 @@ export async function saveItem(fd: FormData): Promise<Res> {
   const stockRaw = String(fd.get("stock") ?? "").trim();
   const imageUrl = String(fd.get("imageUrl") ?? "").trim();
 
-  if (title.length < 2) return { error: "Nomi juda qisqa" };
-  if (!Number.isFinite(price) || price < 1 || price > MAX_PRICE) return { error: "Narx noto'g'ri" };
+  if (title.length < 2) return { error: tr(s.locale, { uz: "Nomi juda qisqa", ru: "Название слишком короткое", en: "Name is too short", de: "Der Name ist zu kurz" }) };
+  if (!Number.isFinite(price) || price < 1 || price > MAX_PRICE) return { error: tr(s.locale, { uz: "Narx noto'g'ri", ru: "Неверная цена", en: "Invalid price", de: "Ungültiger Preis" }) };
   const stock = stockRaw === "" ? null : Number(stockRaw);
-  if (stock !== null && (!Number.isInteger(stock) || stock < 0)) return { error: "Zaxira noto'g'ri" };
+  if (stock !== null && (!Number.isInteger(stock) || stock < 0)) return { error: tr(s.locale, { uz: "Zaxira noto'g'ri", ru: "Неверный остаток", en: "Invalid stock", de: "Ungültiger Bestand" }) };
 
   // Filial doirasi formadan: "Barcha filiallar uchun" belgilansa — branchId yo'q
   // (o'quvchi tomonida filialsiz sovg'a hamma filialga ko'rinadi).
@@ -55,7 +56,7 @@ export async function saveItem(fd: FormData): Promise<Res> {
 
 export async function toggleItem(id: string, isActive: boolean): Promise<Res> {
   const s = await requireSession();
-  if (!canWrite(s.role, MODULES.MARKET)) return { error: "Ruxsat yo'q" };
+  if (!canWrite(s.role, MODULES.MARKET)) return { error: tr(s.locale, { uz: "Ruxsat yo'q", ru: "Нет доступа", en: "No permission", de: "Keine Berechtigung" }) };
   await prisma.marketItem.update({ where: { id }, data: { isActive } });
   revalidatePath("/market");
   revalidatePath("/student/market");
@@ -64,10 +65,10 @@ export async function toggleItem(id: string, isActive: boolean): Promise<Res> {
 
 export async function deleteItem(id: string): Promise<Res> {
   const s = await requireSession();
-  if (!canWrite(s.role, MODULES.MARKET)) return { error: "Ruxsat yo'q" };
+  if (!canWrite(s.role, MODULES.MARKET)) return { error: tr(s.locale, { uz: "Ruxsat yo'q", ru: "Нет доступа", en: "No permission", de: "Keine Berechtigung" }) };
 
   const used = await prisma.marketOrder.count({ where: { itemId: id } });
-  if (used > 0) return { error: "Buyurtmalari bor — o'chirib bo'lmaydi, faolsizlantiring" };
+  if (used > 0) return { error: tr(s.locale, { uz: "Buyurtmalari bor — o'chirib bo'lmaydi, faolsizlantiring", ru: "Есть заказы — удалить нельзя, деактивируйте", en: "It has orders — cannot delete, deactivate it instead", de: "Es gibt Bestellungen — Löschen nicht möglich, bitte deaktivieren" }) };
 
   await prisma.marketItem.delete({ where: { id } });
   await writeAudit({ actorId: s.userId, action: "DELETE", entityType: "MarketItem", entityId: id });
@@ -80,7 +81,7 @@ export async function deleteItem(id: string): Promise<Res> {
 
 export async function setOrderStatus(id: string, status: "DELIVERED" | "CANCELLED" | "PENDING"): Promise<Res> {
   const s = await requireSession();
-  if (!canWrite(s.role, MODULES.MARKET)) return { error: "Ruxsat yo'q" };
+  if (!canWrite(s.role, MODULES.MARKET)) return { error: tr(s.locale, { uz: "Ruxsat yo'q", ru: "Нет доступа", en: "No permission", de: "Keine Berechtigung" }) };
 
   const order = await prisma.marketOrder.findUnique({
     where: { id },
@@ -91,7 +92,7 @@ export async function setOrderStatus(id: string, status: "DELIVERED" | "CANCELLE
       student: { select: { fullName: true, userId: true } },
     },
   });
-  if (!order) return { error: "Buyurtma topilmadi" };
+  if (!order) return { error: tr(s.locale, { uz: "Buyurtma topilmadi", ru: "Заказ не найден", en: "Order not found", de: "Bestellung nicht gefunden" }) };
   if (order.status === status) return { ok: true };
 
   await prisma.$transaction(async (tx) => {
@@ -111,7 +112,12 @@ export async function setOrderStatus(id: string, status: "DELIVERED" | "CANCELLE
   if (order.student.userId) {
     await notify({
       userId: order.student.userId,
-      title: status === "DELIVERED" ? "Sovg'angiz topshirildi" : status === "CANCELLED" ? "Buyurtma bekor qilindi" : "Buyurtma qayta ochildi",
+      title:
+        status === "DELIVERED"
+          ? { uz: "Sovg'angiz topshirildi", ru: "Ваш подарок выдан", en: "Your gift has been delivered", de: "Ihr Geschenk wurde übergeben" }
+          : status === "CANCELLED"
+            ? { uz: "Buyurtma bekor qilindi", ru: "Заказ отменён", en: "Order cancelled", de: "Bestellung storniert" }
+            : { uz: "Buyurtma qayta ochildi", ru: "Заказ снова открыт", en: "Order reopened", de: "Bestellung wieder geöffnet" },
       body: order.item.title,
       event: "MARKET_ORDER",
     });

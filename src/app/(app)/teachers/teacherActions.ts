@@ -5,6 +5,7 @@ import { prisma } from "@/lib/db";
 import { requireSession, hashPassword } from "@/lib/auth";
 import { ROLES } from "@/lib/constants";
 import { writeAudit } from "@/lib/audit";
+import { tr } from "@/lib/tr";
 
 function canManage(role: string) {
   return [ROLES.DIRECTOR, ROLES.DEPUTY_DIRECTOR].includes(role as never);
@@ -25,7 +26,7 @@ export type CreateTeacherResult = { ok: true; id: string } | { ok: false; error:
 
 export async function createTeacher(input: NewTeacherInput): Promise<CreateTeacherResult> {
   const s = await requireSession();
-  if (!canManage(s.role)) return { ok: false, error: "Ruxsat yo'q" };
+  if (!canManage(s.role)) return { ok: false, error: tr(s.locale, { uz: "Ruxsat yo'q", ru: "Нет доступа", en: "No permission", de: "Keine Berechtigung" }) };
 
   const fullName = (input.fullName || "").trim();
   const email = (input.email || "").trim().toLowerCase();
@@ -36,12 +37,12 @@ export async function createTeacher(input: NewTeacherInput): Promise<CreateTeach
   const kpiBonus = Math.max(0, Math.round(input.kpiBonus ?? 200000));
   const gender = input.gender === "MALE" || input.gender === "FEMALE" ? input.gender : null;
 
-  if (fullName.length < 3) return { ok: false, error: "Ism-familiya kamida 3 ta harf bo'lsin" };
-  if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) return { ok: false, error: "Email noto'g'ri kiritildi" };
-  if (password.length < 4) return { ok: false, error: "Parol kamida 4 ta belgi bo'lsin" };
+  if (fullName.length < 3) return { ok: false, error: tr(s.locale, { uz: "Ism-familiya kamida 3 ta harf bo'lsin", ru: "Имя и фамилия — не менее 3 букв", en: "Full name must be at least 3 characters", de: "Der Name muss mindestens 3 Zeichen lang sein" }) };
+  if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) return { ok: false, error: tr(s.locale, { uz: "Email noto'g'ri kiritildi", ru: "Email введён неверно", en: "Invalid email address", de: "Ungültige E-Mail-Adresse" }) };
+  if (password.length < 4) return { ok: false, error: tr(s.locale, { uz: "Parol kamida 4 ta belgi bo'lsin", ru: "Пароль должен быть не менее 4 символов", en: "Password must be at least 4 characters", de: "Das Passwort muss mindestens 4 Zeichen lang sein" }) };
 
   const exists = await prisma.user.findUnique({ where: { email } });
-  if (exists) return { ok: false, error: "Bu email allaqachon ro'yxatdan o'tgan" };
+  if (exists) return { ok: false, error: tr(s.locale, { uz: "Bu email allaqachon ro'yxatdan o'tgan", ru: "Этот email уже зарегистрирован", en: "This email is already registered", de: "Diese E-Mail ist bereits registriert" }) };
 
   const passwordHash = await hashPassword(password);
   const now = new Date();
@@ -80,17 +81,17 @@ export async function createTeacher(input: NewTeacherInput): Promise<CreateTeach
 // O'qituvchi profil rasmini o'rnatish/o'chirish (data URL). null → o'chirish.
 export async function setTeacherImage(teacherId: string, dataUrl: string | null): Promise<{ ok: boolean; error?: string }> {
   const s = await requireSession();
-  if (!canManage(s.role)) return { ok: false, error: "Ruxsat yo'q" };
+  if (!canManage(s.role)) return { ok: false, error: tr(s.locale, { uz: "Ruxsat yo'q", ru: "Нет доступа", en: "No permission", de: "Keine Berechtigung" }) };
 
   let value: string | null = null;
   if (dataUrl) {
-    if (!/^data:image\/(png|jpe?g|webp|gif);base64,/.test(dataUrl)) return { ok: false, error: "Rasm formati noto'g'ri" };
-    if (dataUrl.length > 900_000) return { ok: false, error: "Rasm hajmi juda katta" };
+    if (!/^data:image\/(png|jpe?g|webp|gif);base64,/.test(dataUrl)) return { ok: false, error: tr(s.locale, { uz: "Rasm formati noto'g'ri", ru: "Неверный формат изображения", en: "Invalid image format", de: "Ungültiges Bildformat" }) };
+    if (dataUrl.length > 900_000) return { ok: false, error: tr(s.locale, { uz: "Rasm hajmi juda katta", ru: "Изображение слишком большое", en: "Image is too large", de: "Das Bild ist zu groß" }) };
     value = dataUrl;
   }
 
   const t = await prisma.user.findUnique({ where: { id: teacherId }, select: { role: true } });
-  if (!t || t.role !== ROLES.TEACHER) return { ok: false, error: "O'qituvchi topilmadi" };
+  if (!t || t.role !== ROLES.TEACHER) return { ok: false, error: tr(s.locale, { uz: "O'qituvchi topilmadi", ru: "Преподаватель не найден", en: "Teacher not found", de: "Lehrer nicht gefunden" }) };
 
   await prisma.user.update({ where: { id: teacherId }, data: { imageUrl: value } });
   await writeAudit({
@@ -110,20 +111,20 @@ export async function setTeacherImage(teacherId: string, dataUrl: string | null)
 // Talab bo'yicha olinadi — parol sahifa HTML'iga oldindan yozilmaydi.
 export async function getTeacherCredentials(teacherId: string): Promise<{ ok: boolean; email?: string; password?: string | null; error?: string }> {
   const s = await requireSession();
-  if (!canManage(s.role)) return { ok: false, error: "Ruxsat yo'q" };
+  if (!canManage(s.role)) return { ok: false, error: tr(s.locale, { uz: "Ruxsat yo'q", ru: "Нет доступа", en: "No permission", de: "Keine Berechtigung" }) };
   const t = await prisma.user.findUnique({ where: { id: teacherId }, select: { role: true, email: true, plainPassword: true } });
-  if (!t || t.role !== ROLES.TEACHER) return { ok: false, error: "O'qituvchi topilmadi" };
+  if (!t || t.role !== ROLES.TEACHER) return { ok: false, error: tr(s.locale, { uz: "O'qituvchi topilmadi", ru: "Преподаватель не найден", en: "Teacher not found", de: "Lehrer nicht gefunden" }) };
   return { ok: true, email: t.email, password: t.plainPassword };
 }
 
 // Parolni yangilash — passwordHash (kirish uchun) + plainPassword (ko'rish uchun) ikkalasi yangilanadi. Rahbariyat.
 export async function setTeacherPassword(teacherId: string, newPassword: string): Promise<{ ok: boolean; error?: string }> {
   const s = await requireSession();
-  if (!canManage(s.role)) return { ok: false, error: "Ruxsat yo'q" };
+  if (!canManage(s.role)) return { ok: false, error: tr(s.locale, { uz: "Ruxsat yo'q", ru: "Нет доступа", en: "No permission", de: "Keine Berechtigung" }) };
   const pw = (newPassword || "").trim();
-  if (pw.length < 4) return { ok: false, error: "Parol kamida 4 ta belgi bo'lsin" };
+  if (pw.length < 4) return { ok: false, error: tr(s.locale, { uz: "Parol kamida 4 ta belgi bo'lsin", ru: "Пароль должен быть не менее 4 символов", en: "Password must be at least 4 characters", de: "Das Passwort muss mindestens 4 Zeichen lang sein" }) };
   const t = await prisma.user.findUnique({ where: { id: teacherId }, select: { role: true } });
-  if (!t || t.role !== ROLES.TEACHER) return { ok: false, error: "O'qituvchi topilmadi" };
+  if (!t || t.role !== ROLES.TEACHER) return { ok: false, error: tr(s.locale, { uz: "O'qituvchi topilmadi", ru: "Преподаватель не найден", en: "Teacher not found", de: "Lehrer nicht gefunden" }) };
   const passwordHash = await hashPassword(pw);
   await prisma.user.update({ where: { id: teacherId }, data: { passwordHash, plainPassword: pw } });
   await writeAudit({ actorId: s.userId, action: "UPDATE", entityType: "User", entityId: teacherId, reason: "O'qituvchi paroli yangilandi" });

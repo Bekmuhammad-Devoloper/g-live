@@ -127,7 +127,7 @@ export default function LeadFormSettings({ locale, centerName }: { locale: Local
       {/* Shaxsiy CSS */}
       <h3 className="mb-2 mt-7 text-lg font-semibold text-slate-700 dark:text-slate-200">{tr(locale, { uz: "Shaxsiy CSS", ru: "Пользовательский CSS", en: "Custom CSS", de: "Benutzerdefiniertes CSS" })}</h3>
       <p className="mb-2 text-sm text-slate-500">
-        example: <code className="font-mono text-rose-500">.lead-form-block {"{"}background-color: #fff;{"}"}</code>
+        {tr(locale, { uz: "misol:", ru: "пример:", en: "example:", de: "Beispiel:" })} <code className="font-mono text-rose-500">.lead-form-block {"{"}background-color: #fff;{"}"}</code>
       </p>
       <textarea
         value={f.css}

@@ -3,6 +3,7 @@
 import { revalidatePath } from "next/cache";
 import { prisma } from "@/lib/db";
 import { requireSession, createSession } from "@/lib/auth";
+import { tr } from "@/lib/tr";
 import { ROLES, type Locale } from "@/lib/constants";
 import { setSetting } from "@/lib/settings";
 import { writeAudit } from "@/lib/audit";
@@ -15,10 +16,10 @@ export type Res = { ok?: boolean; error?: string };
 // Bildirishnoma + avtomatik chiqish sozlamalari — Setting jadvaliga (o'z hisobiga).
 export async function saveOperatorPrefs(fd: FormData): Promise<Res> {
   const s = await requireSession();
-  if (!ALLOWED.includes(s.role)) return { error: "Ruxsat yo'q" };
+  if (!ALLOWED.includes(s.role)) return { error: tr(s.locale, { uz: "Ruxsat yo'q", ru: "Нет доступа", en: "No permission", de: "Keine Berechtigung" }) };
 
   const mins = Number(fd.get("autoLogoutMinutes"));
-  if (!AUTO_LOGOUT_OPTIONS.includes(mins)) return { error: "Vaqt qiymati noto'g'ri" };
+  if (!AUTO_LOGOUT_OPTIONS.includes(mins)) return { error: tr(s.locale, { uz: "Vaqt qiymati noto'g'ri", ru: "Неверное значение времени", en: "Invalid time value", de: "Ungültiger Zeitwert" }) };
 
   const prefs: OperatorPrefs = {
     notifyEmail: fd.get("notifyEmail") === "1",
@@ -43,10 +44,10 @@ export async function saveOperatorPrefs(fd: FormData): Promise<Res> {
 // shuning uchun til qayta kirmasdan darhol qo'llanadi.
 export async function saveOperatorLocale(fd: FormData): Promise<Res> {
   const s = await requireSession();
-  if (!ALLOWED.includes(s.role)) return { error: "Ruxsat yo'q" };
+  if (!ALLOWED.includes(s.role)) return { error: tr(s.locale, { uz: "Ruxsat yo'q", ru: "Нет доступа", en: "No permission", de: "Keine Berechtigung" }) };
 
   const locale = String(fd.get("locale") || "");
-  if (!["uz", "ru", "en", "de"].includes(locale)) return { error: "Til noto'g'ri" };
+  if (!["uz", "ru", "en", "de"].includes(locale)) return { error: tr(s.locale, { uz: "Til noto'g'ri", ru: "Неверный язык", en: "Invalid language", de: "Ungültige Sprache" }) };
 
   await prisma.user.update({ where: { id: s.userId }, data: { locale } });
   await createSession({ ...s, locale: locale as Locale });

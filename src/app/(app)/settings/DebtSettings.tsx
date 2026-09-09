@@ -57,7 +57,7 @@ export default function DebtSettings({ locale, defaultFee }: { locale: Locale; d
             placeholder="0"
             className={`${input} pr-12 tabular-nums`}
           />
-          <span className="pointer-events-none absolute right-3.5 top-1/2 -translate-y-1/2 text-xs font-medium text-slate-400">so&apos;m</span>
+          <span className="pointer-events-none absolute right-3.5 top-1/2 -translate-y-1/2 text-xs font-medium text-slate-400">{L("so'm", "сум", "UZS", "UZS")}</span>
         </div>
 
         <div className="mt-3 flex items-start gap-1.5 text-xs leading-relaxed text-slate-500 dark:text-slate-400">

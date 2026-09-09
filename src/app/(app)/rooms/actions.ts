@@ -4,6 +4,7 @@ import { revalidatePath } from "next/cache";
 import { z } from "zod";
 import { prisma } from "@/lib/db";
 import { requireSession } from "@/lib/auth";
+import { tr } from "@/lib/tr";
 import { ROLES } from "@/lib/constants";
 import { writeAudit } from "@/lib/audit";
 
@@ -43,13 +44,13 @@ export async function createRoom(_prev: FormState, formData: FormData): Promise<
 // Yaratish yoki tahrirlash (id bo'lsa — update). Modme uslubidagi drawer shuni ishlatadi.
 export async function saveRoom(fd: FormData): Promise<FormState> {
   const s = await requireSession();
-  if (!canManage(s.role)) return { error: "Ruxsat yo'q" };
+  if (!canManage(s.role)) return { error: tr(s.locale, { uz: "Ruxsat yo'q", ru: "Нет доступа", en: "No permission", de: "Keine Berechtigung" }) };
   const id = String(fd.get("id") || "");
   const name = String(fd.get("name") || "").trim();
   const capacity = Math.max(0, Math.min(1000, Math.round(Number(fd.get("capacity")) || 0)));
   const noteProvided = fd.has("note");
   const note = String(fd.get("note") || "").trim() || null;
-  if (name.length < 1) return { error: "Xona nomini kiriting" };
+  if (name.length < 1) return { error: tr(s.locale, { uz: "Xona nomini kiriting", ru: "Введите название комнаты", en: "Enter the room name", de: "Raumnamen eingeben" }) };
 
   if (id) {
     await prisma.room.update({ where: { id }, data: { name, capacity, ...(noteProvided ? { note } : {}) } });

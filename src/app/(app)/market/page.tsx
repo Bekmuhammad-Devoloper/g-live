@@ -92,13 +92,17 @@ export default async function MarketPage() {
   return (
     <div className="space-y-4">
       <div>
-        <h1 className="text-xl font-bold text-slate-800">Market</h1>
+        <h1 className="text-xl font-bold text-slate-800">{tr(s.locale, { uz: "Market", ru: "Маркет", en: "Market", de: "Markt" })}</h1>
         <p className="text-sm text-slate-500">
-          O&apos;quvchilar yiqqan tangasini shu sovg&apos;alarga almashtiradi. Buyurtma kelgach, sovg&apos;ani topshirib
-          &laquo;Berildi&raquo; tugmasini bosing.
+          {tr(s.locale, {
+            uz: "O'quvchilar yiqqan tangasini shu sovg'alarga almashtiradi. Buyurtma kelgach, sovg'ani topshirib «Berildi» tugmasini bosing.",
+            ru: "Ученики обменивают накопленные монеты на эти подарки. Когда поступит заказ, выдайте подарок и нажмите «Выдано».",
+            en: "Students exchange the coins they have collected for these gifts. When an order arrives, hand over the gift and press «Delivered».",
+            de: "Schüler tauschen ihre gesammelten Münzen gegen diese Geschenke. Wenn eine Bestellung eingeht, übergeben Sie das Geschenk und klicken Sie auf «Ausgegeben».",
+          })}
         </p>
       </div>
-      <MarketView items={items} orders={orders} canEdit={canWrite(s.role, MODULES.MARKET)} />
+      <MarketView items={items} orders={orders} canEdit={canWrite(s.role, MODULES.MARKET)} locale={s.locale} />
     </div>
   );
 }

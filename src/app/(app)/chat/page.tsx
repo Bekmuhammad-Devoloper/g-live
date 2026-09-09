@@ -140,7 +140,7 @@ export default async function ChatPage({ searchParams }: { searchParams: Promise
     <div className="space-y-4">
       <div>
         <h1 className="text-xl font-bold text-slate-800">
-          O&apos;quvchilar yozishmasi
+          {tr(s.locale, { uz: "O'quvchilar yozishmasi", ru: "Переписка с учениками", en: "Student messages", de: "Nachrichten der Schüler" })}
           {unreadTotal > 0 ? (
             <span className="ml-2 rounded-full bg-cyan-600 px-2 py-[2px] align-middle text-xs font-bold text-white">
               {unreadTotal}
@@ -148,10 +148,15 @@ export default async function ChatPage({ searchParams }: { searchParams: Promise
           ) : null}
         </h1>
         <p className="text-sm text-slate-500">
-          O&apos;quvchi ilovadagi &laquo;Ustozga yozish&raquo; bo&apos;limidan yozadi — javobingiz o&apos;sha yerda chiqadi.
+          {tr(s.locale, {
+            uz: "O'quvchi ilovadagi «Ustozga yozish» bo'limidan yozadi — javobingiz o'sha yerda chiqadi.",
+            ru: "Ученик пишет из раздела «Написать учителю» в приложении — ваш ответ появится там же.",
+            en: "Students write from the «Message the teacher» section of the app — your reply appears there.",
+            de: "Schüler schreiben über den Bereich «Lehrer schreiben» in der App — Ihre Antwort erscheint dort.",
+          })}
         </p>
       </div>
-      <ChatView threads={threads} active={active} messages={messages} canWrite={canWrite(s.role, MODULES.CHAT)} />
+      <ChatView threads={threads} active={active} messages={messages} canWrite={canWrite(s.role, MODULES.CHAT)} locale={s.locale} />
     </div>
   );
 }

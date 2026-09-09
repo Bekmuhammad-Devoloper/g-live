@@ -3,6 +3,8 @@
 import { useEffect, useMemo, useState } from "react";
 import { createPortal } from "react-dom";
 import { cn } from "@/lib/cn";
+import { tr } from "@/lib/tr";
+import type { Locale } from "@/lib/constants";
 import { Icon } from "../../_components/Icon";
 
 interface Holiday {
@@ -30,7 +32,8 @@ function persist(list: Holiday[]) {
   try { localStorage.setItem(KEY, JSON.stringify(list)); } catch { /* ignore */ }
 }
 
-export default function HolidaysView() {
+export default function HolidaysView({ locale }: { locale: Locale }) {
+  const T = (uz: string, ru: string, en: string, de: string) => tr(locale, { uz, ru, en, de });
   const [items, setItems] = useState<Holiday[]>([]);
   const [tab, setTab] = useState<"upcoming" | "past">("upcoming");
   const [drawer, setDrawer] = useState<{ open: boolean; edit?: Holiday }>({ open: false });
@@ -52,7 +55,7 @@ export default function HolidaysView() {
     });
   }
   function remove(id: string) {
-    if (!confirm("Ushbu kunni o'chirmoqchimisiz?")) return;
+    if (!confirm(T("Ushbu kunni o'chirmoqchimisiz?", "Удалить этот день?", "Delete this day?", "Diesen Tag löschen?"))) return;
     setItems((cur) => { const next = cur.filter((x) => x.id !== id); persist(next); return next; });
   }
 
@@ -60,18 +63,18 @@ export default function HolidaysView() {
     <div>
       {/* Sarlavha + qo'shish */}
       <div className="mb-5 flex flex-wrap items-center justify-between gap-3">
-        <h1 className="text-3xl font-bold tracking-tight text-slate-900 dark:text-slate-100">Dam olish kunlari</h1>
+        <h1 className="text-3xl font-bold tracking-tight text-slate-900 dark:text-slate-100">{T("Dam olish kunlari", "Выходные дни", "Holidays", "Feiertage")}</h1>
         <button
           onClick={() => setDrawer({ open: true })}
           className="rounded-lg bg-blue-500 px-6 py-3 text-sm font-semibold text-white shadow-sm transition hover:bg-blue-600"
         >
-          Yangisini qo&apos;shish
+          {T("Yangisini qo'shish", "Добавить новый", "Add new", "Neu hinzufügen")}
         </button>
       </div>
 
       {/* Tab'lar */}
       <div className="mb-5 flex gap-6 border-b border-slate-200/70 dark:border-slate-800">
-        {([["upcoming", "Kelajakdagi"], ["past", "Yakunlangan"]] as const).map(([k, lbl]) => (
+        {([["upcoming", T("Kelajakdagi", "Предстоящие", "Upcoming", "Bevorstehend")], ["past", T("Yakunlangan", "Прошедшие", "Past", "Vergangen")]] as const).map(([k, lbl]) => (
           <button
             key={k}
             onClick={() => setTab(k)}
@@ -92,17 +95,17 @@ export default function HolidaysView() {
           <table className="w-full min-w-[760px] text-left text-sm">
             <thead className="border-b border-slate-200/70 text-slate-500 dark:border-slate-800">
               <tr>
-                <th className="px-5 py-4 font-medium">Ism</th>
-                <th className="px-5 py-4 font-medium">Bayram sanasi</th>
-                <th className="px-5 py-4 font-medium">Yaratilgan</th>
-                <th className="px-5 py-4 font-medium">To&apos;lovga ta&apos;sir qiladi</th>
-                <th className="px-5 py-4 text-right font-medium">Amallar</th>
+                <th className="px-5 py-4 font-medium">{T("Ism", "Название", "Name", "Name")}</th>
+                <th className="px-5 py-4 font-medium">{T("Bayram sanasi", "Дата праздника", "Holiday date", "Feiertagsdatum")}</th>
+                <th className="px-5 py-4 font-medium">{T("Yaratilgan", "Создано", "Created", "Erstellt")}</th>
+                <th className="px-5 py-4 font-medium">{T("To'lovga ta'sir qiladi", "Влияет на оплату", "Affects payment", "Beeinflusst die Zahlung")}</th>
+                <th className="px-5 py-4 text-right font-medium">{T("Amallar", "Действия", "Actions", "Aktionen")}</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-slate-100 dark:divide-slate-800">
               {shown.length === 0 ? (
                 <tr>
-                  <td colSpan={5} className="px-5 py-16 text-center text-slate-400">Bo&apos;sh</td>
+                  <td colSpan={5} className="px-5 py-16 text-center text-slate-400">{T("Bo'sh", "Пусто", "Empty", "Leer")}</td>
                 </tr>
               ) : (
                 shown.map((h) => (
@@ -112,15 +115,15 @@ export default function HolidaysView() {
                     <td className="px-5 py-3.5 tabular-nums text-slate-500">{fmt(h.createdAt)}</td>
                     <td className="px-5 py-3.5">
                       {h.affectsPayment
-                        ? <span className="inline-flex rounded-full bg-emerald-50 px-2.5 py-0.5 text-xs font-medium text-emerald-700 ring-1 ring-inset ring-emerald-200 dark:bg-emerald-500/10 dark:text-emerald-400">Ha</span>
-                        : <span className="inline-flex rounded-full bg-slate-100 px-2.5 py-0.5 text-xs font-medium text-slate-500 ring-1 ring-inset ring-slate-200 dark:bg-slate-800 dark:text-slate-400">Yo&apos;q</span>}
+                        ? <span className="inline-flex rounded-full bg-emerald-50 px-2.5 py-0.5 text-xs font-medium text-emerald-700 ring-1 ring-inset ring-emerald-200 dark:bg-emerald-500/10 dark:text-emerald-400">{T("Ha", "Да", "Yes", "Ja")}</span>
+                        : <span className="inline-flex rounded-full bg-slate-100 px-2.5 py-0.5 text-xs font-medium text-slate-500 ring-1 ring-inset ring-slate-200 dark:bg-slate-800 dark:text-slate-400">{T("Yo'q", "Нет", "No", "Nein")}</span>}
                     </td>
                     <td className="px-5 py-3.5">
                       <div className="flex items-center justify-end gap-1">
-                        <button onClick={() => setDrawer({ open: true, edit: h })} title="Tahrirlash" className="flex h-8 w-8 items-center justify-center rounded-lg text-slate-400 transition hover:bg-slate-100 hover:text-brand-600 dark:hover:bg-slate-800">
+                        <button onClick={() => setDrawer({ open: true, edit: h })} title={T("Tahrirlash", "Редактировать", "Edit", "Bearbeiten")} className="flex h-8 w-8 items-center justify-center rounded-lg text-slate-400 transition hover:bg-slate-100 hover:text-brand-600 dark:hover:bg-slate-800">
                           <Icon name="edit" className="h-4 w-4" />
                         </button>
-                        <button onClick={() => remove(h.id)} title="O'chirish" className="flex h-8 w-8 items-center justify-center rounded-lg text-slate-400 transition hover:bg-rose-50 hover:text-rose-600 dark:hover:bg-rose-500/10">
+                        <button onClick={() => remove(h.id)} title={T("O'chirish", "Удалить", "Delete", "Löschen")} className="flex h-8 w-8 items-center justify-center rounded-lg text-slate-400 transition hover:bg-rose-50 hover:text-rose-600 dark:hover:bg-rose-500/10">
                           <Icon name="trash" className="h-4 w-4" />
                         </button>
                       </div>
@@ -135,6 +138,7 @@ export default function HolidaysView() {
 
       {drawer.open && (
         <HolidayDrawer
+          locale={locale}
           edit={drawer.edit}
           onClose={() => setDrawer({ open: false })}
           onSave={(h) => { save(h); setDrawer({ open: false }); }}
@@ -144,7 +148,8 @@ export default function HolidaysView() {
   );
 }
 
-function HolidayDrawer({ edit, onClose, onSave }: { edit?: Holiday; onClose: () => void; onSave: (h: Holiday) => void }) {
+function HolidayDrawer({ locale, edit, onClose, onSave }: { locale: Locale; edit?: Holiday; onClose: () => void; onSave: (h: Holiday) => void }) {
+  const T = (uz: string, ru: string, en: string, de: string) => tr(locale, { uz, ru, en, de });
   const [mounted, setMounted] = useState(false);
   const [name, setName] = useState(edit?.name ?? "");
   const [date, setDate] = useState(edit?.date ?? "");
@@ -163,7 +168,7 @@ function HolidayDrawer({ edit, onClose, onSave }: { edit?: Holiday; onClose: () 
   if (!mounted) return null;
 
   function submit() {
-    if (name.trim().length < 2 || !date) { setErr("Ism va sana majburiy."); return; }
+    if (name.trim().length < 2 || !date) { setErr(T("Ism va sana majburiy.", "Название и дата обязательны.", "Name and date are required.", "Name und Datum sind erforderlich.")); return; }
     onSave({
       id: edit?.id ?? newId(),
       name: name.trim(),
@@ -184,21 +189,21 @@ function HolidayDrawer({ edit, onClose, onSave }: { edit?: Holiday; onClose: () 
         className="animate-slide-in-right absolute right-0 top-0 flex h-full w-[440px] max-w-[92%] flex-col bg-white shadow-pop dark:bg-[#15243d]"
       >
         <div className="flex shrink-0 items-center justify-between border-b border-slate-100 px-6 py-4 dark:border-white/10">
-          <h3 className="text-lg font-bold text-slate-800 dark:text-slate-100">{edit ? "Tahrirlash" : "Yangi element qo'shish"}</h3>
+          <h3 className="text-lg font-bold text-slate-800 dark:text-slate-100">{edit ? T("Tahrirlash", "Редактировать", "Edit", "Bearbeiten") : T("Yangi element qo'shish", "Добавить новый элемент", "Add new item", "Neues Element hinzufügen")}</h3>
           <button onClick={onClose} className="flex h-8 w-8 items-center justify-center rounded-lg text-xl text-slate-400 transition hover:bg-slate-100 hover:text-slate-600 dark:hover:bg-white/10">✕</button>
         </div>
 
         <div className="flex-1 space-y-4 overflow-y-auto px-6 py-5">
           <div>
-            <label className={label}>Ism <span className="text-rose-500">*</span></label>
-            <input value={name} onChange={(e) => { setName(e.target.value); setErr(""); }} className={input} placeholder="Masalan: Navro'z" />
+            <label className={label}>{T("Ism", "Название", "Name", "Name")} <span className="text-rose-500">*</span></label>
+            <input value={name} onChange={(e) => { setName(e.target.value); setErr(""); }} className={input} placeholder={T("Masalan: Navro'z", "Например: Навруз", "e.g. Navruz", "z. B. Nouruz")} />
           </div>
           <div>
-            <label className={label}>Bayram sanasi <span className="text-rose-500">*</span></label>
+            <label className={label}>{T("Bayram sanasi", "Дата праздника", "Holiday date", "Feiertagsdatum")} <span className="text-rose-500">*</span></label>
             <input type="date" value={date} onChange={(e) => { setDate(e.target.value); setErr(""); }} className={input} />
           </div>
           <div className="flex items-center justify-between rounded-lg border border-slate-200 px-3.5 py-3 dark:border-slate-700">
-            <span className="text-sm text-slate-600 dark:text-slate-300">To&apos;lovga ta&apos;sir qiladi</span>
+            <span className="text-sm text-slate-600 dark:text-slate-300">{T("To'lovga ta'sir qiladi", "Влияет на оплату", "Affects payment", "Beeinflusst die Zahlung")}</span>
             <button
               type="button"
               role="switch"
@@ -215,7 +220,7 @@ function HolidayDrawer({ edit, onClose, onSave }: { edit?: Holiday; onClose: () 
 
         <div className="shrink-0 border-t border-slate-100 px-6 py-4 dark:border-white/10">
           <button onClick={submit} className="rounded-full bg-blue-500 px-8 py-2.5 text-sm font-semibold text-white shadow-sm transition hover:bg-blue-600">
-            Saqlash
+            {T("Saqlash", "Сохранить", "Save", "Speichern")}
           </button>
         </div>
       </div>

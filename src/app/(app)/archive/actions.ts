@@ -3,6 +3,7 @@
 import { revalidatePath } from "next/cache";
 import { prisma } from "@/lib/db";
 import { requireSession } from "@/lib/auth";
+import { tr } from "@/lib/tr";
 import { ROLES } from "@/lib/constants";
 import { setSetting } from "@/lib/settings";
 import { writeAudit } from "@/lib/audit";
@@ -19,8 +20,8 @@ export type Res = { ok?: boolean; error?: string; count?: number; failed?: numbe
 // Qayta tiklash — foydalanuvchini faollashtiradi
 export async function restoreUsers(ids: string[]): Promise<Res> {
   const s = await requireSession();
-  if (!can(s.role)) return { error: "Ruxsat yo'q" };
-  if (ids.length === 0) return { error: "Hech kim tanlanmagan" };
+  if (!can(s.role)) return { error: tr(s.locale, { uz: "Ruxsat yo'q", ru: "Нет доступа", en: "No permission", de: "Keine Berechtigung" }) };
+  if (ids.length === 0) return { error: tr(s.locale, { uz: "Hech kim tanlanmagan", ru: "Никто не выбран", en: "No one selected", de: "Niemand ausgewählt" }) };
   await prisma.user.updateMany({ where: { id: { in: ids } }, data: { isActive: true, archivedAt: null, archiveReason: null } });
   await writeAudit({ actorId: s.userId, action: "UPDATE", entityType: "User", newValue: { restored: ids.length } });
   revalidatePath("/archive");
@@ -31,8 +32,8 @@ export async function restoreUsers(ids: string[]): Promise<Res> {
 // Butunlay o'chirish — bog'liq ma'lumotlari borlarni o'chirib bo'lmaydi (FK), ular failed ga tushadi
 export async function deleteUsersPermanent(ids: string[]): Promise<Res> {
   const s = await requireSession();
-  if (!canPurge(s.role)) return { error: "Ruxsat yo'q" };
-  if (ids.length === 0) return { error: "Hech kim tanlanmagan" };
+  if (!canPurge(s.role)) return { error: tr(s.locale, { uz: "Ruxsat yo'q", ru: "Нет доступа", en: "No permission", de: "Keine Berechtigung" }) };
+  if (ids.length === 0) return { error: tr(s.locale, { uz: "Hech kim tanlanmagan", ru: "Никто не выбран", en: "No one selected", de: "Niemand ausgewählt" }) };
   let count = 0, failed = 0;
   for (const id of ids) {
     if (id === s.userId) { failed++; continue; }
@@ -47,8 +48,8 @@ export async function deleteUsersPermanent(ids: string[]): Promise<Res> {
 // Belgilanganlarga ilova ichida xabar
 export async function messageUsers(ids: string[], text: string): Promise<Res> {
   const s = await requireSession();
-  if (!can(s.role)) return { error: "Ruxsat yo'q" };
-  if (ids.length === 0) return { error: "Hech kim tanlanmagan" };
+  if (!can(s.role)) return { error: tr(s.locale, { uz: "Ruxsat yo'q", ru: "Нет доступа", en: "No permission", de: "Keine Berechtigung" }) };
+  if (ids.length === 0) return { error: tr(s.locale, { uz: "Hech kim tanlanmagan", ru: "Никто не выбран", en: "No one selected", de: "Niemand ausgewählt" }) };
   // Sarlavha (va bo'sh matn o'rnidagi zaxira) oluvchining tilida
   await notifyMany(ids, {
     title: { uz: "Xabar", ru: "Сообщение", en: "Message", de: "Nachricht" },
@@ -61,7 +62,7 @@ export async function messageUsers(ids: string[], text: string): Promise<Res> {
 // Arxivlash sabablari ro'yxatini saqlash (Setting: archive.reasons = JSON string[])
 export async function saveArchiveReasons(list: string[]): Promise<Res> {
   const s = await requireSession();
-  if (!can(s.role)) return { error: "Ruxsat yo'q" };
+  if (!can(s.role)) return { error: tr(s.locale, { uz: "Ruxsat yo'q", ru: "Нет доступа", en: "No permission", de: "Keine Berechtigung" }) };
   const clean = Array.from(new Set(list.map((x) => x.trim()).filter(Boolean))).slice(0, 50);
   await setSetting("archive.reasons", JSON.stringify(clean));
   revalidatePath("/archive");

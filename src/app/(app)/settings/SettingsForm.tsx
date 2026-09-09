@@ -1,13 +1,16 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import { tr } from "@/lib/tr";
+import type { Locale } from "@/lib/constants";
 import { Icon } from "../_components/Icon";
 
 const KEY = "gl:settings";
 
 interface Prefs { centerName: string; qrMinutes: number; lowScore: number }
 
-export default function SettingsForm({ defaults }: { defaults: { qrMinutes: number; lowScore: number } }) {
+export default function SettingsForm({ defaults, locale = "uz" }: { defaults: { qrMinutes: number; lowScore: number }; locale?: Locale }) {
+  const T = (uz: string, ru: string, en: string, de: string) => tr(locale, { uz, ru, en, de });
   // SSR bilan mos bo'lishi uchun boshlang'ich qiymatlar serverdan, keyin localStorage'dan yuklanadi
   const [prefs, setPrefs] = useState<Prefs>({ centerName: "", qrMinutes: defaults.qrMinutes, lowScore: defaults.lowScore });
   const [saved, setSaved] = useState(false);
@@ -44,34 +47,34 @@ export default function SettingsForm({ defaults }: { defaults: { qrMinutes: numb
 
   return (
     <div className="rounded-2xl border border-slate-200/70 bg-white p-5 shadow-card dark:border-slate-800 dark:bg-slate-900">
-      <h3 className="mb-3 text-sm font-semibold text-slate-700 dark:text-slate-200">Biznes qoidalari</h3>
+      <h3 className="mb-3 text-sm font-semibold text-slate-700 dark:text-slate-200">{T("Biznes qoidalari", "Бизнес-правила", "Business rules", "Geschäftsregeln")}</h3>
       <div className="space-y-3">
         <div>
-          <label className={lbl}>O&apos;quv markazi nomi</label>
+          <label className={lbl}>{T("O'quv markazi nomi", "Название учебного центра", "Learning centre name", "Name des Bildungszentrums")}</label>
           <input value={prefs.centerName} onChange={(e) => set("centerName", e.target.value)} placeholder="Germaniya Live" className={inp} />
         </div>
         <div className="grid grid-cols-2 gap-3">
           <div>
-            <label className={lbl}>QR amal muddati (daqiqa)</label>
+            <label className={lbl}>{T("QR amal muddati (daqiqa)", "Срок действия QR (мин)", "QR validity (minutes)", "QR-Gültigkeit (Minuten)")}</label>
             <input type="number" min="1" max="120" value={prefs.qrMinutes} onChange={(e) => set("qrMinutes", Number(e.target.value))} className={inp} />
           </div>
           <div>
-            <label className={lbl}>Past baho chegarasi (%)</label>
+            <label className={lbl}>{T("Past baho chegarasi (%)", "Порог низкой оценки (%)", "Low score threshold (%)", "Schwelle für niedrige Note (%)")}</label>
             <input type="number" min="0" max="100" value={prefs.lowScore} onChange={(e) => set("lowScore", Number(e.target.value))} className={inp} />
           </div>
         </div>
       </div>
       <div className="mt-4 flex items-center gap-3">
         <button onClick={save} className="flex h-10 items-center gap-1.5 rounded-lg bg-brand-600 px-4 text-sm font-semibold text-white shadow-sm transition hover:bg-brand-700">
-          Saqlash
+          {T("Saqlash", "Сохранить", "Save", "Speichern")}
         </button>
         {saved && (
           <span className="flex items-center gap-1 text-sm font-medium text-emerald-600 dark:text-emerald-400">
-            <Icon name="check" className="h-4 w-4" /> Saqlandi
+            <Icon name="check" className="h-4 w-4" /> {T("Saqlandi", "Сохранено", "Saved", "Gespeichert")}
           </span>
         )}
       </div>
-      <p className="mt-3 text-[11px] text-slate-400">Bu parametrlar shu brauzerda saqlanadi (localStorage).</p>
+      <p className="mt-3 text-[11px] text-slate-400">{T("Bu parametrlar shu brauzerda saqlanadi (localStorage).", "Эти параметры сохраняются в этом браузере (localStorage).", "These settings are stored in this browser (localStorage).", "Diese Einstellungen werden in diesem Browser gespeichert (localStorage).")}</p>
     </div>
   );
 }

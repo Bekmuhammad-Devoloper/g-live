@@ -201,9 +201,9 @@ export default function CreateLinkModal({ locale, mode, vacancies, courses, pres
             <summary className="cursor-pointer px-3 py-2 text-xs font-semibold text-slate-500 dark:text-slate-400">{tr(locale, { uz: "Qo'shimcha (UTM, muddat)", ru: "Дополнительно (UTM, срок)", en: "Additional (UTM, expiry)", de: "Zusätzlich (UTM, Ablauf)" })}</summary>
             <div className="space-y-3 border-t border-slate-100 px-3 py-3 dark:border-slate-800">
               <div className="grid grid-cols-3 gap-2">
-                <Field label="UTM source"><input name="utmSource" placeholder="telegram" className={inp} /></Field>
-                <Field label="UTM medium"><input name="utmMedium" placeholder="social" className={inp} /></Field>
-                <Field label="UTM campaign"><input name="utmCampaign" placeholder="q3-2026" className={inp} /></Field>
+                <Field label={tr(locale, { uz: "UTM source", ru: "UTM-источник", en: "UTM source", de: "UTM-Quelle" })}><input name="utmSource" placeholder="telegram" className={inp} /></Field>
+                <Field label={tr(locale, { uz: "UTM medium", ru: "UTM-канал", en: "UTM medium", de: "UTM-Medium" })}><input name="utmMedium" placeholder="social" className={inp} /></Field>
+                <Field label={tr(locale, { uz: "UTM campaign", ru: "UTM-кампания", en: "UTM campaign", de: "UTM-Kampagne" })}><input name="utmCampaign" placeholder="q3-2026" className={inp} /></Field>
               </div>
               <div className="grid grid-cols-2 gap-2">
                 <Field label={tr(locale, { uz: "Amal muddati", ru: "Срок действия", en: "Expiry date", de: "Ablaufdatum" })}><input name="expiresAt" type="date" className={inp} /></Field>

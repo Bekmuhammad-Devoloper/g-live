@@ -13,10 +13,12 @@ import type { VOperator } from "./OperatorsBoard";
 // oxirgi faollik, kirish ma'lumotlari (yopiladigan) va amallar.
 
 export const kpiColor = (v: number) => (v >= 35 ? "#10b981" : v >= 25 ? "#f59e0b" : "#ef4444");
-export const fmtTalk = (sec: number) => {
+export const fmtTalk = (sec: number, locale?: Locale) => {
   const h = Math.floor(sec / 3600);
   const m = Math.floor((sec % 3600) / 60);
-  return h > 0 ? `${h}s ${m}m` : `${m}m`;
+  const hu = locale ? tr(locale, { uz: "s", ru: "ч", en: "h", de: "Std" }) : "s";
+  const mu = locale ? tr(locale, { uz: "m", ru: "м", en: "m", de: "Min" }) : "m";
+  return h > 0 ? `${h}${hu} ${m}${mu}` : `${m}${mu}`;
 };
 
 interface Props {
@@ -84,7 +86,7 @@ export default function OperatorCard({ locale, op, canManage, onTask, onNotify, 
         {/* Kunlik ko'rsatkichlar */}
         <div className="mb-3 grid grid-cols-2 gap-2">
           <MiniStat icon="phoneCall" tone="text-cyan-500" value={String(op.dayCalls)} label={tr(locale, { uz: "Kunlik qo'ng'iroq", ru: "Звонков за день", en: "Calls that day", de: "Anrufe an diesem Tag" })} />
-          <MiniStat icon="clock" tone="text-amber-500" value={fmtTalk(op.dayTalkSec)} label={tr(locale, { uz: "Gaplashgan", ru: "Наговорено", en: "Talk time", de: "Gesprächszeit" })} />
+          <MiniStat icon="clock" tone="text-amber-500" value={fmtTalk(op.dayTalkSec, locale)} label={tr(locale, { uz: "Gaplashgan", ru: "Наговорено", en: "Talk time", de: "Gesprächszeit" })} />
         </div>
 
         <div className="h-px w-full bg-slate-100 dark:bg-slate-800" />

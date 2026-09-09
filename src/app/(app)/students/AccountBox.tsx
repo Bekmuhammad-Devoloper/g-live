@@ -86,12 +86,14 @@ export default function AccountBox({
         <>
           <div className="grid grid-cols-2 gap-2">
             <Field
+              locale={locale}
               label={L("Login", "Логин", "Login", "Anmeldename")}
               value={acc.login}
               onCopy={() => copy(acc.login, "login")}
               copied={copied === "login"}
             />
             <Field
+              locale={locale}
               label={L("Parol", "Пароль", "Password", "Passwort")}
               value={acc.password ? (show ? acc.password : "•".repeat(Math.min(acc.password.length, 10))) : "—"}
               onToggle={acc.password ? () => setShow((v) => !v) : undefined}
@@ -218,6 +220,7 @@ https://germaniya.live`,
 }
 
 function Field({
+  locale,
   label,
   value,
   onToggle,
@@ -225,6 +228,7 @@ function Field({
   onCopy,
   copied,
 }: {
+  locale: Locale;
   label: string;
   value: string;
   onToggle?: () => void;
@@ -238,7 +242,7 @@ function Field({
       <div className="flex items-center gap-1.5">
         <span className="min-w-0 flex-1 truncate font-mono text-sm font-semibold text-slate-800 dark:text-slate-100">{value}</span>
         {onToggle ? (
-          <button type="button" onClick={onToggle} title="ko'rsatish" className="shrink-0 text-[13px] leading-none text-slate-400">
+          <button type="button" onClick={onToggle} title={tr(locale, { uz: "ko'rsatish", ru: "показать", en: "show", de: "anzeigen" })} className="shrink-0 text-[13px] leading-none text-slate-400">
             {toggled ? "•••" : "👁"}
           </button>
         ) : null}
@@ -246,7 +250,7 @@ function Field({
           <button
             type="button"
             onClick={onCopy}
-            title="nusxalash"
+            title={tr(locale, { uz: "nusxalash", ru: "копировать", en: "copy", de: "kopieren" })}
             className={"shrink-0 transition " + (copied ? "text-emerald-600" : "text-slate-400 hover:text-brand-600")}
           >
             {copied ? (

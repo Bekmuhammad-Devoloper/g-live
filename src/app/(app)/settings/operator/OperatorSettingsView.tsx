@@ -219,6 +219,7 @@ export default function OperatorSettingsView({ locale, initialTab, me, prefs: pr
               <option value="uz">O&apos;zbekcha</option>
               <option value="ru">Русский</option>
               <option value="en">English</option>
+              <option value="de">Deutsch</option>
             </select>
             <SaveBtn locale={locale} pending={pending} onClick={saveLang} />
           </Card>

@@ -2,6 +2,8 @@
 
 import { useEffect, useRef, useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
+import { tr } from "@/lib/tr";
+import type { Locale } from "@/lib/constants";
 import { markThreadRead, replyToStudent } from "./actions";
 
 // O'quvchilar bilan yozishma: chapda suhbatlar, o'ngda tanlangan suhbat.
@@ -30,13 +32,13 @@ const TG = {
 
 const dayKey = (iso: string) => new Date(iso).toDateString();
 
-function dayLabel(iso: string) {
+function dayLabel(iso: string, locale: Locale) {
   const d = new Date(iso);
   const now = new Date();
   const yest = new Date(now);
   yest.setDate(now.getDate() - 1);
-  if (d.toDateString() === now.toDateString()) return "Bugun";
-  if (d.toDateString() === yest.toDateString()) return "Kecha";
+  if (d.toDateString() === now.toDateString()) return tr(locale, { uz: "Bugun", ru: "Сегодня", en: "Today", de: "Heute" });
+  if (d.toDateString() === yest.toDateString()) return tr(locale, { uz: "Kecha", ru: "Вчера", en: "Yesterday", de: "Gestern" });
   const p = (n: number) => String(n).padStart(2, "0");
   return `${p(d.getDate())}.${p(d.getMonth() + 1)}.${d.getFullYear()}`;
 }
@@ -67,12 +69,15 @@ export default function ChatView({
   active,
   messages,
   canWrite,
+  locale,
 }: {
   threads: VThread[];
   active: string | null;
   messages: VMsg[];
   canWrite: boolean;
+  locale: Locale;
 }) {
+  const T = (uz: string, ru: string, en: string, de: string) => tr(locale, { uz, ru, en, de });
   const router = useRouter();
   const [text, setText] = useState("");
   const [q, setQ] = useState("");
@@ -131,14 +136,16 @@ export default function ChatView({
           <input
             value={q}
             onChange={(e) => setQ(e.target.value)}
-            placeholder="O'quvchi qidirish…"
+            placeholder={T("O'quvchi qidirish…", "Поиск ученика…", "Search student…", "Schüler suchen…")}
             className="w-full rounded-lg border border-slate-200 px-3 py-1.5 text-sm outline-none focus:border-cyan-500"
           />
         </div>
 
         {shown.length === 0 ? (
           <div className="grid flex-1 place-items-center px-5 text-center text-sm text-slate-500">
-            {threads.length === 0 ? "Ilovaga ulangan o'quvchi yo'q" : "Topilmadi"}
+            {threads.length === 0
+              ? T("Ilovaga ulangan o'quvchi yo'q", "Нет учеников, подключённых к приложению", "No students connected to the app", "Keine mit der App verbundenen Schüler")
+              : T("Topilmadi", "Не найдено", "Not found", "Nicht gefunden")}
           </div>
         ) : (
           <ul className="flex-1 overflow-y-auto">
@@ -167,7 +174,7 @@ export default function ChatView({
                     </div>
                     {th.group ? <div className="truncate text-[11.5px] text-slate-400">{th.group}</div> : null}
                     <div className={"mt-0.5 truncate text-[12.5px] " + (th.lastAt ? "text-slate-500" : "text-slate-300")}>
-                      {th.lastAt ? th.last : "yozishma yo'q"}
+                      {th.lastAt ? th.last : T("yozishma yo'q", "нет сообщений", "no messages", "keine Nachrichten")}
                     </div>
                   </div>
                   {th.unread > 0 ? (
@@ -186,7 +193,7 @@ export default function ChatView({
       <div className={"flex min-h-0 flex-col overflow-hidden rounded-xl border border-slate-200 bg-white " + (active ? "" : "hidden lg:flex")}>
         {!open ? (
           <div className="grid flex-1 place-items-center px-6 py-20 text-center text-sm text-slate-400">
-            Suhbatni tanlang
+            {T("Suhbatni tanlang", "Выберите чат", "Select a conversation", "Wählen Sie einen Chat")}
           </div>
         ) : (
           <>
@@ -196,7 +203,7 @@ export default function ChatView({
                 onClick={() => router.replace("/chat", { scroll: false })}
                 className="rounded-lg bg-slate-100 px-2 py-1 text-xs font-semibold text-slate-600 lg:hidden"
               >
-                &larr; Ro&apos;yxat
+                &larr; {T("Ro'yxat", "Список", "List", "Liste")}
               </button>
               <span className="grid h-10 w-10 shrink-0 place-items-center rounded-full bg-cyan-100 text-[13px] font-semibold text-cyan-700">
                 {initials(open.student)}
@@ -219,7 +226,7 @@ export default function ChatView({
             >
               {messages.length === 0 ? (
                 <div className="mx-auto mt-6 w-fit rounded-2xl bg-black/15 px-4 py-2 text-[13px] font-medium text-white backdrop-blur-sm">
-                  Yozishma hali boshlanmagan &mdash; birinchi bo&apos;lib yozing
+                  {T("Yozishma hali boshlanmagan — birinchi bo'lib yozing", "Переписка ещё не начата — напишите первым", "No messages yet — write first", "Noch keine Nachrichten — schreiben Sie zuerst")}
                 </div>
               ) : null}
 
@@ -236,7 +243,7 @@ export default function ChatView({
                     {newDay ? (
                       <div className="my-3 flex justify-center">
                         <span className="rounded-full bg-black/20 px-2.5 py-[3px] text-[12px] font-medium text-white backdrop-blur-sm">
-                          {dayLabel(m.at)}
+                          {dayLabel(m.at, locale)}
                         </span>
                       </div>
                     ) : null}
@@ -300,7 +307,7 @@ export default function ChatView({
                         }
                       }}
                       rows={1}
-                      placeholder="Javob yozing…"
+                      placeholder={T("Javob yozing…", "Напишите ответ…", "Write a reply…", "Antwort schreiben…")}
                       className="max-h-28 min-h-[24px] flex-1 resize-none bg-transparent text-[15px] leading-[24px] text-black outline-none placeholder:text-[#8d9499]"
                     />
                   </div>
@@ -308,7 +315,7 @@ export default function ChatView({
                     type="button"
                     onClick={send}
                     disabled={pending || text.trim().length === 0}
-                    aria-label="Yuborish"
+                    aria-label={T("Yuborish", "Отправить", "Send", "Senden")}
                     className="grid h-[38px] w-[38px] shrink-0 place-items-center rounded-full bg-gradient-to-br from-[#17a2bf] to-[#0e7490] text-white transition active:scale-95 disabled:opacity-35"
                   >
                     <svg width="19" height="19" viewBox="0 0 24 24" fill="white">

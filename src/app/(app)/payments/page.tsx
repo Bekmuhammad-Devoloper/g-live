@@ -65,7 +65,7 @@ export default async function PaymentsPage() {
         subtitle={writable ? undefined : tr(s.locale, { uz: "Sizda qo'lda to'lov kiritish huquqi yo'q (faqat ko'rish).", ru: "У вас нет прав на ручной ввод платежей (только просмотр).", en: "You do not have permission to enter manual payments (view only).", de: "Sie haben keine Berechtigung, Zahlungen manuell einzugeben (nur Ansicht)." })}
         action={
           <div className="flex flex-wrap gap-2">
-            <ExportButton rows={exportData} columns={exportColumns} filename="tolovlar" label={s.locale === "ru" ? "Экспорт" : s.locale === "en" ? "Export" : "Eksport"} />
+            <ExportButton rows={exportData} columns={exportColumns} filename="tolovlar" label={tr(s.locale, { uz: "Eksport", ru: "Экспорт", en: "Export", de: "Export" })} />
             {writable && (
               <>
                 <OnlinePaymentForm locale={s.locale} students={students} />

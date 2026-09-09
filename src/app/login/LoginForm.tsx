@@ -1,19 +1,23 @@
 "use client";
 
 import { useActionState, useState } from "react";
+import { tr } from "@/lib/tr";
+import type { Locale, LocaleText } from "@/lib/constants";
 import { login, type LoginState } from "./actions";
 
-const demoAccounts: [string, string][] = [
-  ["director@gl.uz", "Direktor"],
-  ["deputy@gl.uz", "Dir. o'rinbosari"],
-  ["manager@gl.uz", "Menejer"],
-  ["teacher@gl.uz", "O'qituvchi"],
-  ["student@gl.uz", "O'quvchi"],
-  ["parent@gl.uz", "Ota-ona"],
-  ["admin@gl.uz", "Administrator"],
+const demoAccounts: [string, LocaleText][] = [
+  ["director@gl.uz", { uz: "Direktor", ru: "Директор", en: "Director", de: "Direktor" }],
+  ["deputy@gl.uz", { uz: "Dir. o'rinbosari", ru: "Зам. директора", en: "Deputy director", de: "Stellv. Direktor" }],
+  ["manager@gl.uz", { uz: "Menejer", ru: "Менеджер", en: "Manager", de: "Manager" }],
+  ["teacher@gl.uz", { uz: "O'qituvchi", ru: "Преподаватель", en: "Teacher", de: "Lehrer" }],
+  ["student@gl.uz", { uz: "O'quvchi", ru: "Ученик", en: "Student", de: "Schüler" }],
+  ["parent@gl.uz", { uz: "Ota-ona", ru: "Родитель", en: "Parent", de: "Eltern" }],
+  ["admin@gl.uz", { uz: "Administrator", ru: "Администратор", en: "Administrator", de: "Administrator" }],
 ];
 
-export default function LoginForm() {
+// Kirish sahifasida sessiya yo'q — `locale` brauzer tilidan (page.tsx) keladi.
+export default function LoginForm({ locale }: { locale: Locale }) {
+  const T = (uz: string, ru: string, en: string, de: string) => tr(locale, { uz, ru, en, de });
   const [state, formAction, pending] = useActionState<LoginState, FormData>(login, {});
   const [email, setEmail] = useState("director@gl.uz");
   const [showDemo, setShowDemo] = useState(false);
@@ -22,7 +26,7 @@ export default function LoginForm() {
     <div>
       <form action={formAction} className="space-y-4">
         <div>
-          <label className="mb-1.5 block text-xs font-semibold text-slate-600">E-mail yoki login</label>
+          <label className="mb-1.5 block text-xs font-semibold text-slate-600">{T("E-mail yoki login", "E-mail или логин", "E-mail or login", "E-Mail oder Login")}</label>
           <input
             name="email"
             type="text"
@@ -37,7 +41,7 @@ export default function LoginForm() {
           />
         </div>
         <div>
-          <label className="mb-1.5 block text-xs font-semibold text-slate-600">Parol</label>
+          <label className="mb-1.5 block text-xs font-semibold text-slate-600">{T("Parol", "Пароль", "Password", "Passwort")}</label>
           <input
             name="password"
             type="password"
@@ -50,12 +54,12 @@ export default function LoginForm() {
 
         {state.error && (
           <p className="rounded-lg border border-red-200 bg-red-50 px-3 py-2 text-sm text-red-700">
-            Login yoki parol noto&apos;g&apos;ri
+            {T("Login yoki parol noto'g'ri", "Неверный логин или пароль", "Invalid login or password", "Login oder Passwort falsch")}
           </p>
         )}
 
         <button type="submit" disabled={pending} className="btn-primary w-full py-2.5">
-          {pending ? "Kirilmoqda..." : "Kirish"}
+          {pending ? T("Kirilmoqda...", "Вход...", "Signing in...", "Anmeldung...") : T("Kirish", "Войти", "Sign in", "Anmelden")}
         </button>
       </form>
 
@@ -66,7 +70,8 @@ export default function LoginForm() {
           className="flex w-full items-center justify-between text-xs font-semibold text-slate-500 hover:text-slate-700"
         >
           <span>
-            Demo hisoblar <span className="font-normal text-slate-400">(parol: 12345678)</span>
+            {T("Demo hisoblar", "Демо-аккаунты", "Demo accounts", "Demo-Konten")}{" "}
+            <span className="font-normal text-slate-400">{T("(parol: 12345678)", "(пароль: 12345678)", "(password: 12345678)", "(Passwort: 12345678)")}</span>
           </span>
           <span className="text-slate-400">{showDemo ? "▲" : "▼"}</span>
         </button>
@@ -85,7 +90,7 @@ export default function LoginForm() {
                 }`}
               >
                 <span className="font-mono">{mail}</span>
-                <span className="text-slate-400">{role}</span>
+                <span className="text-slate-400">{tr(locale, role)}</span>
               </button>
             ))}
           </div>

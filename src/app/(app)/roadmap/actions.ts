@@ -2,6 +2,7 @@
 
 import { revalidatePath } from "next/cache";
 import { requireSession } from "@/lib/auth";
+import { tr } from "@/lib/tr";
 import { ROLES } from "@/lib/constants";
 import { setSetting } from "@/lib/settings";
 import { writeAudit } from "@/lib/audit";
@@ -12,7 +13,7 @@ const ALLOWED = [ROLES.DIRECTOR, ROLES.ADMIN, ROLES.DEPUTY_DIRECTOR];
 // Roadmap ballarini saqlash (Setting: roadmap.scores = JSON {qid: 0..10}).
 export async function saveRoadmap(scores: Record<string, number>): Promise<{ ok?: boolean; error?: string }> {
   const s = await requireSession();
-  if (!ALLOWED.includes(s.role as never)) return { error: "Ruxsat yo'q" };
+  if (!ALLOWED.includes(s.role as never)) return { error: tr(s.locale, { uz: "Ruxsat yo'q", ru: "Нет доступа", en: "No permission", de: "Keine Berechtigung" }) };
 
   const valid = new Set(ALL_QUESTIONS.map((q) => q.id));
   const clean: Record<string, number> = {};

@@ -427,7 +427,7 @@ function BannerDialog({ row, locale, onClose, onSaved }: { row: VBanner | null; 
         <div className="grid gap-3 sm:grid-cols-2">
           <div>
             <label className={lbl}>{T("Tugma yozuvi", "Текст кнопки", "Button label", "Button-Text")}</label>
-            <input value={f.btnLabel} onChange={(e) => set("btnLabel", e.target.value)} placeholder="Ko'rish" className={inp} />
+            <input value={f.btnLabel} onChange={(e) => set("btnLabel", e.target.value)} placeholder={T("Ko'rish", "Смотреть", "View", "Ansehen")} className={inp} />
           </div>
           <div>
             <label className={lbl}>{T("Havola", "Ссылка", "Link", "Link")}</label>

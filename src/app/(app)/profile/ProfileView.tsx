@@ -151,6 +151,7 @@ export default function ProfileView({ locale, me, stats }: {
                 <option value="uz">O&apos;zbekcha</option>
                 <option value="ru">Русский</option>
                 <option value="en">English</option>
+                <option value="de">Deutsch</option>
               </select>
             </Field>
           </div>

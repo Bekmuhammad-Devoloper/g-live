@@ -53,7 +53,7 @@ export default async function FinancePage() {
             rows={exportData}
             columns={exportColumns}
             filename="moliya-oxirgi-tolovlar"
-            label={s.locale === "ru" ? "Экспорт" : s.locale === "en" ? "Export" : "Eksport"}
+            label={tr(s.locale, { uz: "Eksport", ru: "Экспорт", en: "Export", de: "Export" })}
           />
         }
       />

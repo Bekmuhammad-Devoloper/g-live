@@ -301,7 +301,7 @@ function LessonDrawer({ programId, initial, locale, levelCodes, onClose }: { pro
               value={vocabText}
               onChange={(e) => setVocabText(e.target.value)}
               rows={5}
-              placeholder={"der Hund - it\ndie Katze - mushuk\ndas Haus - uy"}
+              placeholder={tr(locale, { uz: "der Hund - it\ndie Katze - mushuk\ndas Haus - uy", ru: "der Hund - собака\ndie Katze - кошка\ndas Haus - дом", en: "der Hund - dog\ndie Katze - cat\ndas Haus - house", de: "der Hund - it\ndie Katze - mushuk\ndas Haus - uy" })}
               className={cn(inp, "font-mono text-[13px] leading-relaxed")}
             />
             {vocabText.trim() && (

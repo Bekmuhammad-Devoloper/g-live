@@ -1,4 +1,5 @@
 import { requireSession } from "@/lib/auth";
+import { tr } from "@/lib/tr";
 import { prisma } from "@/lib/db";
 import { ROLES } from "@/lib/constants";
 import { branchWhere } from "@/lib/branchScope";
@@ -12,7 +13,7 @@ const ALLOWED = [ROLES.DIRECTOR, ROLES.DEPUTY_DIRECTOR, ROLES.ADMIN, ROLES.MANAG
 export default async function CoursesPage() {
   const s = await requireSession();
   if (!ALLOWED.includes(s.role as never)) {
-    return <Forbidden title="Kirish taqiqlangan" body="Bu bo'lim rahbariyat uchun." />;
+    return <Forbidden title={tr(s.locale, { uz: "Kirish taqiqlangan", ru: "Доступ запрещён", en: "Access denied", de: "Zugriff verweigert" })} body={tr(s.locale, { uz: "Bu bo'lim rahbariyat uchun.", ru: "Этот раздел только для руководства.", en: "This section is for management only.", de: "Dieser Bereich ist nur für die Leitung." })} />;
   }
 
   // Kurs katalogi hamma filialda umumiy, lekin guruhlar soni faol filial bo'yicha
@@ -39,5 +40,5 @@ export default async function CoursesPage() {
     monthlyFee: p.monthlyFee,
   }));
 
-  return <CoursesView courses={courses} />;
+  return <CoursesView courses={courses} locale={s.locale} />;
 }

@@ -4,6 +4,7 @@ import { canRead, MODULES } from "@/lib/rbac";
 import { ROLES, type Locale } from "@/lib/constants";
 import { branchWhere } from "@/lib/branchScope";
 import { getSetting } from "@/lib/settings";
+import { tr } from "@/lib/tr";
 import { Forbidden } from "../../_components/ui";
 import KpiSettingsView, { type VRatingRow } from "./KpiSettingsView";
 import { DEFAULT_KPI, kpiSettingsSchema, type RopKpiSettings } from "./schema";
@@ -14,7 +15,7 @@ const MANAGE = [ROLES.DIRECTOR, ROLES.DEPUTY_DIRECTOR, ROLES.ADMIN];
 export default async function RopKpiSettingsPage() {
   const s = await requireSession();
   if (!canRead(s.role, MODULES.REPORTS) && !canRead(s.role, MODULES.CRM)) {
-    return <Forbidden title="Kirish taqiqlangan" body="Bu bo'lim savdo bo'limi uchun." />;
+    return <Forbidden title={tr(s.locale, { uz: "Kirish taqiqlangan", ru: "Доступ запрещён", en: "Access denied", de: "Zugriff verweigert" })} body={tr(s.locale, { uz: "Bu bo'lim savdo bo'limi uchun.", ru: "Этот раздел для отдела продаж.", en: "This section is for the sales department.", de: "Dieser Bereich ist für die Vertriebsabteilung." })} />;
   }
 
   const [raw, operators, leads] = await Promise.all([

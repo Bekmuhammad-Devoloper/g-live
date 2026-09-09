@@ -18,6 +18,7 @@ export interface RoleOpt { value: string; label: string }
 
 export default function ArchiveView({ locale, rows, reasons, roleOptions, canPurge }: { locale: Locale; rows: VArchived[]; reasons: string[]; roleOptions: RoleOpt[]; canPurge: boolean }) {
   const router = useRouter();
+  const T = (uz: string, ru: string, en: string, de: string) => tr(locale, { uz, ru, en, de });
   const [, start] = useTransition();
   const [search, setSearch] = useState("");
   const [roleF, setRoleF] = useState("");
@@ -71,31 +72,31 @@ export default function ArchiveView({ locale, rows, reasons, roleOptions, canPur
       {/* Header */}
       <div className="flex flex-wrap items-center justify-between gap-3">
         <div className="flex items-baseline gap-3">
-          <h1 className="text-[26px] font-bold tracking-tight text-slate-900 dark:text-slate-100">Arxiv</h1>
-          <span className="text-sm text-slate-400">Miqdor — <b className="text-slate-600 dark:text-slate-300">{filtered.length}</b></span>
+          <h1 className="text-[26px] font-bold tracking-tight text-slate-900 dark:text-slate-100">{T("Arxiv", "Архив", "Archive", "Archiv")}</h1>
+          <span className="text-sm text-slate-400">{T("Miqdor", "Количество", "Count", "Anzahl")} — <b className="text-slate-600 dark:text-slate-300">{filtered.length}</b></span>
         </div>
-        <button onClick={() => setReasonsOpen(true)} className="flex h-10 items-center gap-1.5 rounded-lg border border-slate-200 bg-white px-4 text-sm font-semibold text-slate-600 transition hover:bg-slate-50 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-300 dark:hover:bg-slate-800">Arxivlash sabablari</button>
+        <button onClick={() => setReasonsOpen(true)} className="flex h-10 items-center gap-1.5 rounded-lg border border-slate-200 bg-white px-4 text-sm font-semibold text-slate-600 transition hover:bg-slate-50 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-300 dark:hover:bg-slate-800">{T("Arxivlash sabablari", "Причины архивирования", "Archive reasons", "Archivierungsgründe")}</button>
       </div>
 
       {/* Filter bar */}
       <div className="flex flex-wrap items-center gap-2">
         <div className="relative min-w-[180px] flex-1">
-          <input value={search} onChange={(e) => setSearch(e.target.value)} placeholder="Ism yoki Telefon" className={fInp} />
+          <input value={search} onChange={(e) => setSearch(e.target.value)} placeholder={T("Ism yoki Telefon", "Имя или телефон", "Name or phone", "Name oder Telefon")} className={fInp} />
         </div>
         <select value={roleF} onChange={(e) => setRoleF(e.target.value)} className={cn(fInp, "min-w-[170px]")}>
-          <option value="">Rollar bo&apos;yicha filtr</option>
+          <option value="">{T("Rollar bo'yicha filtr", "Фильтр по ролям", "Filter by role", "Nach Rolle filtern")}</option>
           {roleOptions.map((o) => <option key={o.value} value={o.value}>{o.label}</option>)}
         </select>
         <select value={reasonF} onChange={(e) => setReasonF(e.target.value)} className={cn(fInp, "min-w-[170px]")}>
-          <option value="">Sabab bo&apos;yicha filtr</option>
+          <option value="">{T("Sabab bo'yicha filtr", "Фильтр по причине", "Filter by reason", "Nach Grund filtern")}</option>
           {allReasons.map((r) => <option key={r} value={r}>{r}</option>)}
         </select>
-        <input type="date" value={from} onChange={(e) => setFrom(e.target.value)} className={cn(fInp, "w-[160px]")} title="Boshlanish sanasi" />
-        <input type="date" value={to} onChange={(e) => setTo(e.target.value)} className={cn(fInp, "w-[160px]")} title="Tugash sanasi" />
+        <input type="date" value={from} onChange={(e) => setFrom(e.target.value)} className={cn(fInp, "w-[160px]")} title={T("Boshlanish sanasi", "Дата начала", "Start date", "Startdatum")} />
+        <input type="date" value={to} onChange={(e) => setTo(e.target.value)} className={cn(fInp, "w-[160px]")} title={T("Tugash sanasi", "Дата окончания", "End date", "Enddatum")} />
         {/* Butunlay o'chirish — faqat direktor va o'rinbosarida */}
-        {canPurge && <button onClick={() => need() && onDelete(selIds())} className="flex h-10 items-center gap-1.5 rounded-lg border border-rose-200 bg-white px-4 text-sm font-semibold text-rose-600 transition hover:bg-rose-50 dark:border-rose-500/30 dark:bg-slate-900 dark:hover:bg-rose-500/10"><Icon name="trash" className="h-4 w-4" /> O&apos;chirish</button>}
-        <button onClick={() => need() && onRestore(selIds())} className="flex h-10 items-center gap-1.5 rounded-lg border border-emerald-200 bg-white px-4 text-sm font-semibold text-emerald-600 transition hover:bg-emerald-50 dark:border-emerald-500/30 dark:bg-slate-900 dark:hover:bg-emerald-500/10"><Icon name="refresh" className="h-4 w-4" /> Qayta tiklash</button>
-        <button onClick={onMessage} title="Belgilanganlarga xabar" className="grid h-10 w-11 place-items-center rounded-lg border border-slate-200 bg-white text-amber-500 transition hover:bg-slate-50 dark:border-slate-700 dark:bg-slate-900 dark:hover:bg-slate-800"><Icon name="mail" className="h-5 w-5" /></button>
+        {canPurge && <button onClick={() => need() && onDelete(selIds())} className="flex h-10 items-center gap-1.5 rounded-lg border border-rose-200 bg-white px-4 text-sm font-semibold text-rose-600 transition hover:bg-rose-50 dark:border-rose-500/30 dark:bg-slate-900 dark:hover:bg-rose-500/10"><Icon name="trash" className="h-4 w-4" /> {T("O'chirish", "Удалить", "Delete", "Löschen")}</button>}
+        <button onClick={() => need() && onRestore(selIds())} className="flex h-10 items-center gap-1.5 rounded-lg border border-emerald-200 bg-white px-4 text-sm font-semibold text-emerald-600 transition hover:bg-emerald-50 dark:border-emerald-500/30 dark:bg-slate-900 dark:hover:bg-emerald-500/10"><Icon name="refresh" className="h-4 w-4" /> {T("Qayta tiklash", "Восстановить", "Restore", "Wiederherstellen")}</button>
+        <button onClick={onMessage} title={T("Belgilanganlarga xabar", "Сообщение выбранным", "Message selected", "Nachricht an Ausgewählte")} className="grid h-10 w-11 place-items-center rounded-lg border border-slate-200 bg-white text-amber-500 transition hover:bg-slate-50 dark:border-slate-700 dark:bg-slate-900 dark:hover:bg-slate-800"><Icon name="mail" className="h-5 w-5" /></button>
       </div>
 
       {/* Jadval */}
@@ -105,18 +106,18 @@ export default function ArchiveView({ locale, rows, reasons, roleOptions, canPur
             <thead className="border-b border-slate-200/70 text-[13px] font-semibold text-slate-600 dark:border-slate-800 dark:text-slate-300">
               <tr>
                 <th className="w-12 px-4 py-4"><input type="checkbox" checked={allShownSelected} onChange={toggleAll} className="h-4 w-4 rounded accent-brand-600" /></th>
-                <th className="px-4 py-4">Ism</th>
-                <th className="px-4 py-4">Telefon</th>
-                <th className="px-4 py-4">Roli</th>
-                <th className="px-4 py-4">Ochirib tashlash sababi</th>
-                <th className="px-4 py-4">Izoh</th>
-                <th className="px-4 py-4">Arxivlandi</th>
-                <th className="px-4 py-4 text-right">Harakatlar</th>
+                <th className="px-4 py-4">{T("Ism", "Имя", "Name", "Name")}</th>
+                <th className="px-4 py-4">{T("Telefon", "Телефон", "Phone", "Telefon")}</th>
+                <th className="px-4 py-4">{T("Roli", "Роль", "Role", "Rolle")}</th>
+                <th className="px-4 py-4">{T("Ochirib tashlash sababi", "Причина удаления", "Removal reason", "Löschgrund")}</th>
+                <th className="px-4 py-4">{T("Izoh", "Примечание", "Note", "Notiz")}</th>
+                <th className="px-4 py-4">{T("Arxivlandi", "Архивировано", "Archived", "Archiviert")}</th>
+                <th className="px-4 py-4 text-right">{T("Harakatlar", "Действия", "Actions", "Aktionen")}</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-slate-100 dark:divide-slate-800">
               {shown.length === 0 ? (
-                <tr><td colSpan={8} className="py-16 text-center text-slate-400">Bo&apos;sh</td></tr>
+                <tr><td colSpan={8} className="py-16 text-center text-slate-400">{T("Bo'sh", "Пусто", "Empty", "Leer")}</td></tr>
               ) : shown.map((r) => (
                 <tr key={r.id} className={cn("transition hover:bg-slate-50 dark:hover:bg-slate-800/40", sel.has(r.id) && "bg-brand-50/50 dark:bg-brand-500/10")}>
                   <td className="px-4 py-3"><input type="checkbox" checked={sel.has(r.id)} onChange={() => toggle(r.id)} className="h-4 w-4 rounded accent-brand-600" /></td>
@@ -128,8 +129,8 @@ export default function ArchiveView({ locale, rows, reasons, roleOptions, canPur
                   <td className="px-4 py-3 tabular-nums text-slate-500">{r.archivedAt}</td>
                   <td className="px-4 py-3">
                     <div className="flex items-center justify-end gap-2">
-                      <button onClick={() => onRestore([r.id])} title="Qayta tiklash" className="grid h-8 w-8 place-items-center rounded-lg text-emerald-500 transition hover:bg-emerald-50 dark:hover:bg-emerald-500/10"><Icon name="refresh" className="h-4 w-4" /></button>
-                      {canPurge && <button onClick={() => onDelete([r.id])} title="Butunlay o'chirish" className="grid h-8 w-8 place-items-center rounded-lg text-rose-500 transition hover:bg-rose-50 dark:hover:bg-rose-500/10"><Icon name="trash" className="h-4 w-4" /></button>}
+                      <button onClick={() => onRestore([r.id])} title={T("Qayta tiklash", "Восстановить", "Restore", "Wiederherstellen")} className="grid h-8 w-8 place-items-center rounded-lg text-emerald-500 transition hover:bg-emerald-50 dark:hover:bg-emerald-500/10"><Icon name="refresh" className="h-4 w-4" /></button>
+                      {canPurge && <button onClick={() => onDelete([r.id])} title={T("Butunlay o'chirish", "Удалить навсегда", "Delete permanently", "Endgültig löschen")} className="grid h-8 w-8 place-items-center rounded-lg text-rose-500 transition hover:bg-rose-50 dark:hover:bg-rose-500/10"><Icon name="trash" className="h-4 w-4" /></button>}
                     </div>
                   </td>
                 </tr>
@@ -146,10 +147,10 @@ export default function ArchiveView({ locale, rows, reasons, roleOptions, canPur
           <span className="grid h-8 min-w-8 place-items-center rounded-lg bg-brand-600 px-2 text-sm font-semibold text-white">{curPage}</span>
           <PageBtn disabled={curPage >= totalPages} onClick={() => setPage(curPage + 1)}>›</PageBtn>
         </div>
-        <button onClick={exportCsv} title="Eksport (CSV)" className="grid h-10 w-10 place-items-center rounded-lg border border-slate-200 text-slate-500 transition hover:bg-slate-50 dark:border-slate-700 dark:hover:bg-slate-800"><Icon name="download" className="h-4 w-4" /></button>
+        <button onClick={exportCsv} title={T("Eksport (CSV)", "Экспорт (CSV)", "Export (CSV)", "Export (CSV)")} className="grid h-10 w-10 place-items-center rounded-lg border border-slate-200 text-slate-500 transition hover:bg-slate-50 dark:border-slate-700 dark:hover:bg-slate-800"><Icon name="download" className="h-4 w-4" /></button>
       </div>
 
-      {reasonsOpen && <ReasonsModal reasons={reasons} onClose={() => setReasonsOpen(false)} onSaved={() => { setReasonsOpen(false); router.refresh(); flash("Sabablar saqlandi"); }} />}
+      {reasonsOpen && <ReasonsModal locale={locale} reasons={reasons} onClose={() => setReasonsOpen(false)} onSaved={() => { setReasonsOpen(false); router.refresh(); flash(T("Sabablar saqlandi", "Причины сохранены", "Reasons saved", "Gründe gespeichert")); }} />}
       {toast && <div className="fixed bottom-6 left-1/2 z-[90] -translate-x-1/2 rounded-xl bg-slate-900 px-4 py-2.5 text-sm font-medium text-white shadow-pop dark:bg-slate-700">{toast}</div>}
     </div>
   );
@@ -161,7 +162,8 @@ function PageBtn({ children, disabled, onClick }: { children: React.ReactNode; d
   return <button onClick={onClick} disabled={disabled} className="grid h-8 w-8 place-items-center rounded-lg border border-slate-200 text-slate-500 transition hover:bg-slate-50 disabled:opacity-40 dark:border-slate-700 dark:hover:bg-slate-800">{children}</button>;
 }
 
-function ReasonsModal({ reasons, onClose, onSaved }: { reasons: string[]; onClose: () => void; onSaved: () => void }) {
+function ReasonsModal({ locale, reasons, onClose, onSaved }: { locale: Locale; reasons: string[]; onClose: () => void; onSaved: () => void }) {
+  const T = (uz: string, ru: string, en: string, de: string) => tr(locale, { uz, ru, en, de });
   const [mounted, setMounted] = useState(false);
   const [list, setList] = useState<string[]>(reasons);
   const [val, setVal] = useState("");
@@ -183,16 +185,16 @@ function ReasonsModal({ reasons, onClose, onSaved }: { reasons: string[]; onClos
     <div className="fixed inset-0 z-[85] flex items-center justify-center bg-slate-900/50 p-4 backdrop-blur-sm" onMouseDown={onClose}>
       <div className="w-full max-w-md rounded-2xl border border-slate-200 bg-white shadow-pop dark:border-slate-800 dark:bg-slate-900" onMouseDown={(e) => e.stopPropagation()}>
         <div className="flex items-center justify-between border-b border-slate-100 px-5 py-4 dark:border-slate-800">
-          <h3 className="text-base font-bold text-slate-800 dark:text-slate-100">Arxivlash sabablari</h3>
+          <h3 className="text-base font-bold text-slate-800 dark:text-slate-100">{T("Arxivlash sabablari", "Причины архивирования", "Archive reasons", "Archivierungsgründe")}</h3>
           <button onClick={onClose} className="text-slate-400 hover:text-slate-600"><Icon name="close" className="h-5 w-5" /></button>
         </div>
         <div className="space-y-3 px-5 py-4">
           <div className="flex gap-2">
-            <input value={val} onChange={(e) => setVal(e.target.value)} onKeyDown={(e) => { if (e.key === "Enter") { e.preventDefault(); add(); } }} placeholder="Yangi sabab..." className={fInp} />
-            <button onClick={add} className="h-10 shrink-0 rounded-lg bg-brand-600 px-4 text-sm font-semibold text-white hover:bg-brand-700">Qo&apos;shish</button>
+            <input value={val} onChange={(e) => setVal(e.target.value)} onKeyDown={(e) => { if (e.key === "Enter") { e.preventDefault(); add(); } }} placeholder={T("Yangi sabab...", "Новая причина...", "New reason...", "Neuer Grund...")} className={fInp} />
+            <button onClick={add} className="h-10 shrink-0 rounded-lg bg-brand-600 px-4 text-sm font-semibold text-white hover:bg-brand-700">{T("Qo'shish", "Добавить", "Add", "Hinzufügen")}</button>
           </div>
           <div className="max-h-64 space-y-1.5 overflow-y-auto">
-            {list.length === 0 ? <p className="py-6 text-center text-sm text-slate-400">Sabab yo&apos;q</p> : list.map((r) => (
+            {list.length === 0 ? <p className="py-6 text-center text-sm text-slate-400">{T("Sabab yo'q", "Нет причин", "No reasons", "Keine Gründe")}</p> : list.map((r) => (
               <div key={r} className="flex items-center justify-between rounded-lg bg-slate-50 px-3 py-2 text-sm dark:bg-white/[0.03]">
                 <span className="text-slate-700 dark:text-slate-200">{r}</span>
                 <button onClick={() => setList((l) => l.filter((x) => x !== r))} className="text-slate-400 hover:text-rose-500"><Icon name="close" className="h-4 w-4" /></button>
@@ -201,8 +203,8 @@ function ReasonsModal({ reasons, onClose, onSaved }: { reasons: string[]; onClos
           </div>
         </div>
         <div className="flex gap-2 border-t border-slate-100 px-5 py-4 dark:border-slate-800">
-          <button onClick={onClose} className="flex-1 rounded-xl border border-slate-200 py-2.5 text-sm font-semibold text-slate-600 hover:bg-slate-50 dark:border-slate-700 dark:text-slate-300 dark:hover:bg-slate-800">Bekor</button>
-          <button onClick={save} disabled={pending} className="flex-[1.4] rounded-xl bg-brand-600 py-2.5 text-sm font-semibold text-white hover:bg-brand-700 disabled:opacity-60">{pending ? "Saqlanmoqda..." : "Saqlash"}</button>
+          <button onClick={onClose} className="flex-1 rounded-xl border border-slate-200 py-2.5 text-sm font-semibold text-slate-600 hover:bg-slate-50 dark:border-slate-700 dark:text-slate-300 dark:hover:bg-slate-800">{T("Bekor", "Отмена", "Cancel", "Abbrechen")}</button>
+          <button onClick={save} disabled={pending} className="flex-[1.4] rounded-xl bg-brand-600 py-2.5 text-sm font-semibold text-white hover:bg-brand-700 disabled:opacity-60">{pending ? T("Saqlanmoqda...", "Сохранение...", "Saving...", "Speichern...") : T("Saqlash", "Сохранить", "Save", "Speichern")}</button>
         </div>
       </div>
     </div>,

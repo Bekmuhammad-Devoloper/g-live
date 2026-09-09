@@ -3,6 +3,7 @@
 import { useState, useTransition } from "react";
 import { cn } from "@/lib/cn";
 import { formatMoney, type Locale } from "@/lib/constants";
+import { tr } from "@/lib/tr";
 import { Icon } from "../../_components/Icon";
 import UserAvatar from "../../_components/UserAvatar";
 import { saveRopKpi } from "./actions";
@@ -27,6 +28,7 @@ function tierColor(kpi: number): string {
 }
 
 export default function KpiSettingsView({ settings, rating, canManage, locale }: { settings: RopKpiSettings; rating: VRatingRow[]; canManage: boolean; locale: Locale }) {
+  const T = (uz: string, ru: string, en: string, de: string) => tr(locale, { uz, ru, en, de });
   const [f, setF] = useState<RopKpiSettings>(settings);
   const [pending, start] = useTransition();
   const [saved, setSaved] = useState(false);
@@ -40,7 +42,7 @@ export default function KpiSettingsView({ settings, rating, canManage, locale }:
     start(async () => {
       const res = await saveRopKpi(JSON.stringify(f));
       if (res.ok) { setSaved(true); setTimeout(() => setSaved(false), 2200); }
-      else setErr(res.error === "forbidden" ? "Ruxsat yo'q" : "Qiymatlar noto'g'ri");
+      else setErr(res.error === "forbidden" ? T("Ruxsat yo'q", "Нет доступа", "No permission", "Keine Berechtigung") : T("Qiymatlar noto'g'ri", "Неверные значения", "Invalid values", "Ungültige Werte"));
     });
   };
 
@@ -57,12 +59,12 @@ export default function KpiSettingsView({ settings, rating, canManage, locale }:
       {/* Header */}
       <div className="flex flex-wrap items-center justify-between gap-4">
         <div>
-          <h1 className="text-[24px] font-bold tracking-tight text-slate-900 dark:text-slate-100">KPI Sozlamalari</h1>
-          <p className="text-sm text-slate-500 dark:text-slate-400">Operator samaradorligini baholash va to&apos;lov parametrlari</p>
+          <h1 className="text-[24px] font-bold tracking-tight text-slate-900 dark:text-slate-100">{T("KPI Sozlamalari", "Настройки KPI", "KPI Settings", "KPI-Einstellungen")}</h1>
+          <p className="text-sm text-slate-500 dark:text-slate-400">{T("Operator samaradorligini baholash va to'lov parametrlari", "Оценка эффективности операторов и параметры оплаты", "Operator performance evaluation and payment parameters", "Bewertung der Operator-Leistung und Zahlungsparameter")}</p>
         </div>
         {canManage && (
           <button onClick={save} disabled={pending} className="inline-flex h-11 items-center gap-2 rounded-lg bg-brand-600 px-6 text-sm font-semibold text-white transition hover:bg-brand-700 disabled:opacity-60">
-            <Icon name="check" className="h-4 w-4" /> {pending ? "..." : saved ? "Saqlandi ✓" : "Saqlash"}
+            <Icon name="check" className="h-4 w-4" /> {pending ? "..." : saved ? T("Saqlandi ✓", "Сохранено ✓", "Saved ✓", "Gespeichert ✓") : T("Saqlash", "Сохранить", "Save", "Speichern")}
           </button>
         )}
       </div>
@@ -71,68 +73,68 @@ export default function KpiSettingsView({ settings, rating, canManage, locale }:
       <div className="grid gap-4 lg:grid-cols-2">
         {/* Asosiy sozlamalar */}
         <div className="rounded-2xl border border-slate-200/70 bg-white p-5 shadow-card dark:border-slate-800 dark:bg-slate-900">
-          <h2 className="mb-4 flex items-center gap-2 text-base font-semibold text-slate-700 dark:text-slate-200"><Icon name="settings" className="h-5 w-5 text-slate-400" /> Asosiy sozlamalar</h2>
+          <h2 className="mb-4 flex items-center gap-2 text-base font-semibold text-slate-700 dark:text-slate-200"><Icon name="settings" className="h-5 w-5 text-slate-400" /> {T("Asosiy sozlamalar", "Основные настройки", "Main settings", "Grundeinstellungen")}</h2>
           <div className="space-y-4">
-            <Field label="Kunlik minimum lidlar"><input type="number" min={0} disabled={!canManage} value={f.dailyMinLeads} onChange={(e) => set("dailyMinLeads", +e.target.value)} className={num} /></Field>
-            <Field label="Maqsad konversiya (%)"><input type="number" min={0} max={100} disabled={!canManage} value={f.targetConversion} onChange={(e) => set("targetConversion", +e.target.value)} className={num} /></Field>
-            <Field label="Bonus chegarasi (%)"><input type="number" min={0} max={100} disabled={!canManage} value={f.bonusThreshold} onChange={(e) => set("bonusThreshold", +e.target.value)} className={num} /></Field>
-            <Field label="Jarima chegarasi (%)"><input type="number" min={0} max={100} disabled={!canManage} value={f.penaltyThreshold} onChange={(e) => set("penaltyThreshold", +e.target.value)} className={num} /></Field>
+            <Field label={T("Kunlik minimum lidlar", "Минимум лидов в день", "Daily minimum leads", "Tägliches Lead-Minimum")}><input type="number" min={0} disabled={!canManage} value={f.dailyMinLeads} onChange={(e) => set("dailyMinLeads", +e.target.value)} className={num} /></Field>
+            <Field label={T("Maqsad konversiya (%)", "Целевая конверсия (%)", "Target conversion (%)", "Zielkonversion (%)")}><input type="number" min={0} max={100} disabled={!canManage} value={f.targetConversion} onChange={(e) => set("targetConversion", +e.target.value)} className={num} /></Field>
+            <Field label={T("Bonus chegarasi (%)", "Порог бонуса (%)", "Bonus threshold (%)", "Bonusschwelle (%)")}><input type="number" min={0} max={100} disabled={!canManage} value={f.bonusThreshold} onChange={(e) => set("bonusThreshold", +e.target.value)} className={num} /></Field>
+            <Field label={T("Jarima chegarasi (%)", "Порог штрафа (%)", "Penalty threshold (%)", "Strafschwelle (%)")}><input type="number" min={0} max={100} disabled={!canManage} value={f.penaltyThreshold} onChange={(e) => set("penaltyThreshold", +e.target.value)} className={num} /></Field>
 
-            <Check label="Avtomatik taqsimlash" checked={f.autoDistribution} disabled={!canManage} onChange={(v) => set("autoDistribution", v)} />
-            <Check label="Yuqori KPI → ko'proq lid" checked={f.highKpiMoreLeads} disabled={!canManage} onChange={(v) => set("highKpiMoreLeads", v)} />
+            <Check label={T("Avtomatik taqsimlash", "Автоматическое распределение", "Automatic distribution", "Automatische Verteilung")} checked={f.autoDistribution} disabled={!canManage} onChange={(v) => set("autoDistribution", v)} />
+            <Check label={T("Yuqori KPI → ko'proq lid", "Высокий KPI → больше лидов", "Higher KPI → more leads", "Höherer KPI → mehr Leads")} checked={f.highKpiMoreLeads} disabled={!canManage} onChange={(v) => set("highKpiMoreLeads", v)} />
 
             <div className="rounded-xl border border-brand-200/60 bg-brand-50/50 p-4 dark:border-brand-500/30 dark:bg-brand-950/20">
-              <div className="flex items-center gap-2 text-sm font-semibold text-brand-700 dark:text-brand-300"><Icon name="chart" className="h-4 w-4" /> KPI hisoblash</div>
-              <p className="mt-1 text-sm text-slate-600 dark:text-slate-300">KPI = (Muvaffaqiyatli sotuvlar / Jami lidlar) × 100</p>
+              <div className="flex items-center gap-2 text-sm font-semibold text-brand-700 dark:text-brand-300"><Icon name="chart" className="h-4 w-4" /> {T("KPI hisoblash", "Расчёт KPI", "KPI calculation", "KPI-Berechnung")}</div>
+              <p className="mt-1 text-sm text-slate-600 dark:text-slate-300">{T("KPI = (Muvaffaqiyatli sotuvlar / Jami lidlar) × 100", "KPI = (Успешные продажи / Все лиды) × 100", "KPI = (Successful sales / Total leads) × 100", "KPI = (Erfolgreiche Verkäufe / Alle Leads) × 100")}</p>
             </div>
           </div>
         </div>
 
         {/* Oylik to'lov sozlamalari */}
         <div className="rounded-2xl border border-slate-200/70 bg-white p-5 shadow-card dark:border-slate-800 dark:bg-slate-900">
-          <h2 className="flex items-center gap-2 text-base font-semibold text-slate-700 dark:text-slate-200"><Icon name="coins" className="h-5 w-5 text-emerald-500" /> Oylik to&apos;lov sozlamalari</h2>
-          <p className="mb-4 text-sm text-brand-600 dark:text-brand-300">Umumiy (barcha operatorlar uchun)</p>
+          <h2 className="flex items-center gap-2 text-base font-semibold text-slate-700 dark:text-slate-200"><Icon name="coins" className="h-5 w-5 text-emerald-500" /> {T("Oylik to'lov sozlamalari", "Настройки ежемесячной оплаты", "Monthly payment settings", "Einstellungen der monatlichen Zahlung")}</h2>
+          <p className="mb-4 text-sm text-brand-600 dark:text-brand-300">{T("Umumiy (barcha operatorlar uchun)", "Общие (для всех операторов)", "General (for all operators)", "Allgemein (für alle Operatoren)")}</p>
           <div className="space-y-3">
             {f.monthlyPayments.map((p, i) => (
               <div key={i} className="flex items-center gap-2">
                 <input type="number" min={1} disabled={!canManage} value={p.month} onChange={(e) => editMonth(i, "month", +e.target.value)} className={cn(num, "w-20")} />
-                <span className="text-sm text-slate-400">oy</span>
+                <span className="text-sm text-slate-400">{T("oy", "мес.", "mo.", "Mon.")}</span>
                 <input type="number" min={0} disabled={!canManage} value={p.amount} onChange={(e) => editMonth(i, "amount", +e.target.value)} className={cn(num, "flex-1")} />
-                <span className="text-sm text-slate-400">so&apos;m</span>
+                <span className="text-sm text-slate-400">{T("so'm", "сум", "UZS", "UZS")}</span>
                 {canManage && (
                   i === f.monthlyPayments.length - 1
-                    ? <button onClick={addMonth} title="Qo'shish" className="flex h-11 w-11 shrink-0 items-center justify-center rounded-lg border border-emerald-300 text-emerald-600 transition hover:bg-emerald-50 dark:border-emerald-800 dark:hover:bg-emerald-950/30"><Icon name="plus" className="h-5 w-5" /></button>
-                    : <button onClick={() => removeMonth(i)} title="O'chirish" className="flex h-11 w-11 shrink-0 items-center justify-center rounded-lg border border-rose-200 text-rose-500 transition hover:bg-rose-50 dark:border-rose-900/50 dark:hover:bg-rose-950/30"><Icon name="trash" className="h-4 w-4" /></button>
+                    ? <button onClick={addMonth} title={T("Qo'shish", "Добавить", "Add", "Hinzufügen")} className="flex h-11 w-11 shrink-0 items-center justify-center rounded-lg border border-emerald-300 text-emerald-600 transition hover:bg-emerald-50 dark:border-emerald-800 dark:hover:bg-emerald-950/30"><Icon name="plus" className="h-5 w-5" /></button>
+                    : <button onClick={() => removeMonth(i)} title={T("O'chirish", "Удалить", "Delete", "Löschen")} className="flex h-11 w-11 shrink-0 items-center justify-center rounded-lg border border-rose-200 text-rose-500 transition hover:bg-rose-50 dark:border-rose-900/50 dark:hover:bg-rose-950/30"><Icon name="trash" className="h-4 w-4" /></button>
                 )}
               </div>
             ))}
           </div>
-          <p className="mt-3 text-xs text-slate-500 dark:text-slate-400">Har bir oy uchun alohida summa belgilang. Qo&apos;shimcha oy qo&apos;shish uchun «+» tugmasini bosing.</p>
+          <p className="mt-3 text-xs text-slate-500 dark:text-slate-400">{T("Har bir oy uchun alohida summa belgilang. Qo'shimcha oy qo'shish uchun «+» tugmasini bosing.", "Укажите отдельную сумму для каждого месяца. Чтобы добавить месяц, нажмите «+».", "Set a separate amount for each month. Press «+» to add another month.", "Legen Sie für jeden Monat einen eigenen Betrag fest. Drücken Sie «+», um einen weiteren Monat hinzuzufügen.")}</p>
         </div>
       </div>
 
       {/* Operatorlar reytingi */}
       <div className="overflow-hidden rounded-2xl border border-slate-200/70 bg-white shadow-card dark:border-slate-800 dark:bg-slate-900">
         <div className="border-b border-slate-200/70 px-5 py-4 dark:border-slate-800">
-          <h2 className="flex items-center gap-2 text-base font-semibold text-slate-700 dark:text-slate-200"><Icon name="users" className="h-5 w-5 text-brand-500" /> Operatorlar reytingi <span className="text-sm font-normal text-slate-400">({rating.length} ta)</span></h2>
+          <h2 className="flex items-center gap-2 text-base font-semibold text-slate-700 dark:text-slate-200"><Icon name="users" className="h-5 w-5 text-brand-500" /> {T("Operatorlar reytingi", "Рейтинг операторов", "Operator rating", "Operator-Rangliste")} <span className="text-sm font-normal text-slate-400">({T(`${rating.length} ta`, `${rating.length} чел.`, `${rating.length} total`, `${rating.length} gesamt`)})</span></h2>
         </div>
         <div className="overflow-x-auto">
           <table className="w-full min-w-[760px] text-left text-sm">
             <thead className="border-b border-slate-200/70 bg-slate-50/60 text-[12px] font-semibold text-slate-600 dark:border-slate-800 dark:bg-slate-800/40 dark:text-slate-300">
               <tr>
                 <th className="px-4 py-3.5">#</th>
-                <th className="px-4 py-3.5">Operator</th>
-                <th className="px-4 py-3.5">Jami</th>
-                <th className="px-4 py-3.5">Muvaffaq</th>
-                <th className="px-4 py-3.5">Rad etilgan</th>
-                <th className="px-4 py-3.5">Konversiya</th>
+                <th className="px-4 py-3.5">{T("Operator", "Оператор", "Operator", "Operator")}</th>
+                <th className="px-4 py-3.5">{T("Jami", "Всего", "Total", "Gesamt")}</th>
+                <th className="px-4 py-3.5">{T("Muvaffaq", "Успешно", "Won", "Erfolgreich")}</th>
+                <th className="px-4 py-3.5">{T("Rad etilgan", "Отклонено", "Rejected", "Abgelehnt")}</th>
+                <th className="px-4 py-3.5">{T("Konversiya", "Конверсия", "Conversion", "Konversion")}</th>
                 <th className="px-4 py-3.5">KPI</th>
-                <th className="px-4 py-3.5">Oylik to&apos;lov</th>
+                <th className="px-4 py-3.5">{T("Oylik to'lov", "Ежемесячная оплата", "Monthly payment", "Monatliche Zahlung")}</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-slate-100 dark:divide-slate-800">
               {rating.length === 0 ? (
-                <tr><td colSpan={8} className="px-4 py-12 text-center text-slate-400">Operatorlar yo&apos;q</td></tr>
+                <tr><td colSpan={8} className="px-4 py-12 text-center text-slate-400">{T("Operatorlar yo'q", "Нет операторов", "No operators", "Keine Operatoren")}</td></tr>
               ) : (
                 rating.map((r, i) => (
                   <tr key={r.id} className="transition hover:bg-slate-50 dark:hover:bg-slate-800/40">

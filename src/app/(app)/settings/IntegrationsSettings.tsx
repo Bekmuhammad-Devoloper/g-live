@@ -84,7 +84,7 @@ export default function IntegrationsSettings({ locale }: { locale: Locale }) {
             </div>
           </Fieldset>
 
-          <Fieldset title="Social Media">
+          <Fieldset title={tr(locale, { uz: "Ijtimoiy tarmoqlar", ru: "Социальные сети", en: "Social Media", de: "Soziale Medien" })}>
             <div className="space-y-4">
               <div><Label>Facebook pixel</Label><Input value={f.facebookPixel} onChange={(v) => set("facebookPixel", v)} /></div>
               <div><Label>Telegram</Label><Input value={f.telegramSocial} onChange={(v) => set("telegramSocial", v)} /></div>
@@ -93,7 +93,7 @@ export default function IntegrationsSettings({ locale }: { locale: Locale }) {
         </div>
 
         {/* O'ng ustun — Telegram Reports */}
-        <Fieldset title="Telegram Reports">
+        <Fieldset title={tr(locale, { uz: "Telegram hisobotlari", ru: "Отчёты в Telegram", en: "Telegram Reports", de: "Telegram-Berichte" })}>
           <div className="space-y-4">
             <Input value={f.telegramReportId} onChange={(v) => set("telegramReportId", v)} />
             <div className="rounded-xl border border-slate-300 bg-slate-50/60 p-4 text-sm leading-relaxed text-slate-600 dark:border-slate-600 dark:bg-slate-800/40 dark:text-slate-300">

@@ -185,7 +185,7 @@ export function BulkImportStudents({ groupId, locale }: { groupId: string; local
       {open && (
         <div className="mt-2 space-y-2">
           <p className="text-[11px] text-slate-400">{tr(locale, { uz: "Excel (.xlsx) yoki CSV fayl yuklang, yoki Excel'dan nusxalab joylang. Har qatorda: Ism Familiya, +998... (1-ustun ism, 2-ustun telefon).", ru: "Загрузите Excel (.xlsx) или CSV, либо вставьте из Excel. По строке: Имя Фамилия, +998...", en: "Upload Excel (.xlsx) or CSV, or paste from Excel. Per line: Name, +998...", de: "Laden Sie eine Excel- (.xlsx) oder CSV-Datei hoch oder fügen Sie aus Excel ein. Pro Zeile: Name, +998..." })}</p>
-          <textarea value={text} onChange={(e) => setText(e.target.value)} rows={5} placeholder={"Ism Familiya, +998901234567\nAli Valiyev, +998907654321"} className={`${input} font-mono text-xs`} />
+          <textarea value={text} onChange={(e) => setText(e.target.value)} rows={5} placeholder={tr(locale, { uz: "Ism Familiya, +998901234567\nAli Valiyev, +998907654321", ru: "Имя Фамилия, +998901234567\nАли Валиев, +998907654321", en: "First Last, +998901234567\nAli Valiyev, +998907654321", de: "Vorname Nachname, +998901234567\nAli Valiyev, +998907654321" })} className={`${input} font-mono text-xs`} />
           <div className="flex flex-wrap items-center gap-2">
             <label className="inline-flex cursor-pointer items-center gap-1.5 rounded-lg border border-slate-200 px-3 py-1.5 text-xs font-medium text-slate-600 transition hover:bg-slate-50 dark:border-slate-700 dark:text-slate-300 dark:hover:bg-slate-800">
               <Icon name="uploadCloud" className="h-3.5 w-3.5" /> {tr(locale, { uz: "Excel / CSV fayl", ru: "Excel / CSV файл", en: "Excel / CSV file", de: "Excel-/CSV-Datei" })}

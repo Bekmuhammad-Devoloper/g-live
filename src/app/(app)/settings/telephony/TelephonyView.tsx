@@ -67,7 +67,7 @@ export default function TelephonyView({ locale, domain: domain0, hasKey, keyHint
         <form onSubmit={submit} className="rounded-2xl border border-slate-200/70 bg-white p-5 shadow-card dark:border-slate-800 dark:bg-slate-900">
           <div className="space-y-4">
             <label className="block">
-              <span className="mb-1 block text-sm font-medium text-slate-600 dark:text-slate-300">OnlinePBX domain</span>
+              <span className="mb-1 block text-sm font-medium text-slate-600 dark:text-slate-300">{tr(locale, { uz: "OnlinePBX domeni", ru: "Домен OnlinePBX", en: "OnlinePBX domain", de: "OnlinePBX-Domain" })}</span>
               <input value={domain} onChange={(e) => setDomain(e.target.value)} placeholder="pbx00000.onpbx.ru" className={inp} />
             </label>
 
