@@ -8,7 +8,7 @@
 //   · sahifa bir kunda ko'p ochilsa o'sha kun uchun QAYTA ayirilmaydimi
 //   · 0 dan pastga, 100 dan yuqoriga chiqmaydimi
 
-import { addPoints, applyDecay, DAY_MS, pendingDecayDays, type SkillScores } from "../src/lib/skillMath";
+import { addPoints, applyDecay, DAY_MS, dayKey, GAME_MIN_ACCURACY, pendingDecayDays, type SkillScores } from "../src/lib/skillMath";
 
 const RATE = 5;
 const base: SkillScores = { words: 40, reading: 3, listening: 100, speaking: 0 };
@@ -75,6 +75,13 @@ function check(name: string, cond: boolean, detail = "") {
 {
   const s = addPoints(base, "speaking", 8);
   check("speaking +8, boshqalar o'zgarmaydi", s.speaking === 8 && s.words === base.words && s.reading === base.reading);
+}
+
+// 8. So'z jangi: kunlik kalit mahalliy sana bo'yicha, chegara 70%
+{
+  const k = dayKey(new Date(2026, 8, 9, 23, 59)); // 9-sentabr kech — 10-sentabr bo'lib ketmasin
+  check("dayKey mahalliy sana", k === "2026-09-09", k);
+  check("7/10 ball beradi, 6/10 bermaydi", 7 / 10 >= GAME_MIN_ACCURACY && !(6 / 10 >= GAME_MIN_ACCURACY));
 }
 
 console.log(bad === 0 ? "\nOK — hammasi kutilganidek" : `\n${bad} ta holat mos kelmadi`);

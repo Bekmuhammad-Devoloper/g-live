@@ -68,5 +68,18 @@ export const SKILL_POINTS = {
   homework: { kind: "reading" as const, points: 8 },
   /** Vazifa to'liq ballga */
   homeworkPerfect: { kind: "reading" as const, points: 4 },
+  /** So'z jangi: lug'at / so'z o'yini / krossvord — har o'yin turiga kuniga bir */
+  gameWords: { kind: "words" as const, points: 4 },
+  /** So'z jangi: grammatika (der/die/das) — kuniga bir */
+  gameGrammar: { kind: "reading" as const, points: 4 },
 } as const;
+
+/** So'z jangi natijasi shu ulushdan past bo'lsa ball berilmaydi (to'g'ri/jami) */
+export const GAME_MIN_ACCURACY = 0.7;
+
+/** Kunlik kalit uchun mahalliy sana (server TZ=Asia/Tashkent) */
+export function dayKey(d: Date): string {
+  const p = (n: number) => String(n).padStart(2, "0");
+  return `${d.getFullYear()}-${p(d.getMonth() + 1)}-${p(d.getDate())}`;
+}
 export type SkillEventType = keyof typeof SKILL_POINTS;

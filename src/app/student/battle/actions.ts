@@ -5,6 +5,8 @@ import { getSession } from "@/lib/auth";
 import { ROLES } from "@/lib/constants";
 import { prisma } from "@/lib/db";
 import { isPortalFeatureOn } from "@/lib/portalFeatures";
+import { awardSkill } from "@/lib/skills";
+import { dayKey, GAME_MIN_ACCURACY } from "@/lib/skillMath";
 
 // O'yin natijasini saqlash va chaqiruvlar (duel / guruhli o'yin).
 // Ballni mijoz yuboradi, shu sabab cheklovlar shu yerda: raund soni
@@ -66,6 +68,14 @@ export async function saveGameResult(input: {
   await prisma.gameResult.create({
     data: { studentId: student.id, game, mode, score, total, won: !!input.won },
   });
+
+  // Ko'nikma plitkasi: yaxshi o'ynalgan o'yin — har o'yin turiga KUNIGA BIR
+  // marta (kalit tur+sana), aks holda bir o'yinni 20 marta o'ynab ball
+  // yig'ib bo'lardi. Duel/guruhli o'yin ham shu yerdan o'tadi
+  // (submitChallenge alohida bermaydi — bir o'yin ikki marta sanalmasin).
+  if (score / total >= GAME_MIN_ACCURACY) {
+    await awardSkill(student.id, game === "grammar" ? "gameGrammar" : "gameWords", `game:${game}:${dayKey(new Date())}`);
+  }
 
   revalidatePath("/student", "layout");
   return { ok: true };
