@@ -6,6 +6,7 @@ import { coinBalance } from "@/lib/coins";
 import { prisma } from "@/lib/db";
 import { ROLES } from "@/lib/constants";
 import { notifyMany } from "@/lib/notify";
+import { fill, LT, S } from "../_i18n";
 
 export type Res = { ok?: boolean; error?: string };
 
@@ -13,27 +14,28 @@ export type Res = { ok?: boolean; error?: string };
 // mijoz tomonidagi tekshiruvga ishonib bo'lmaydi.
 export async function buyItem(itemId: string): Promise<Res> {
   const s = await requireSession();
-  if (s.role !== ROLES.STUDENT) return { error: "Ruxsat yo'q" };
+  const t = S(s.locale); // xato xabarlari o'quvchi tilida
+  if (s.role !== ROLES.STUDENT) return { error: t.forbidden };
 
   const student = await prisma.student.findUnique({
     where: { userId: s.userId },
     select: { id: true, fullName: true, branchId: true },
   });
-  if (!student) return { error: "O'quvchi topilmadi" };
+  if (!student) return { error: t.studentNotFound };
 
   const item = await prisma.marketItem.findUnique({
     where: { id: itemId },
     select: { id: true, title: true, price: true, stock: true, isActive: true, branchId: true },
   });
-  if (!item || !item.isActive) return { error: "Sovg'a mavjud emas" };
+  if (!item || !item.isActive) return { error: t.giftUnavailable };
   if (item.branchId && student.branchId && item.branchId !== student.branchId) {
-    return { error: "Bu sovg'a boshqa filialda" };
+    return { error: t.giftOtherBranch };
   }
 
-  if (item.stock !== null && item.stock <= 0) return { error: "Zaxira tugagan" };
+  if (item.stock !== null && item.stock <= 0) return { error: t.outOfStock };
 
   const { balance } = await coinBalance(student.id);
-  if (balance < item.price) return { error: `Tanga yetarli emas (${balance}/${item.price})` };
+  if (balance < item.price) return { error: fill(t.notEnoughCoins, { have: balance, need: item.price }) };
 
   await prisma.$transaction(async (tx) => {
     if (item.stock !== null) {
@@ -53,12 +55,14 @@ export async function buyItem(itemId: string): Promise<Res> {
     },
     select: { id: true },
   });
+  // Har xodimga o'z tilida (notifyMany oluvchi tilini o'zi tanlaydi)
   await notifyMany(
     staff.map((u) => u.id),
     {
-      title: "Market: yangi buyurtma",
-      body: `${student.fullName} — ${item.title} (${item.price} tanga)`,
+      title: LT("marketNewOrder"),
+      body: LT("marketOrderBody", { name: student.fullName, item: item.title, price: item.price }),
       event: "MARKET_ORDER",
+      url: "/market",
     },
   );
 

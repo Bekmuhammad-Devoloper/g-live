@@ -6,6 +6,7 @@ import { requireSession } from "@/lib/auth";
 import { ROLES } from "@/lib/constants";
 import { setSetting } from "@/lib/settings";
 import { writeAudit } from "@/lib/audit";
+import { notifyMany } from "@/lib/notify";
 
 const ALLOWED = [ROLES.DIRECTOR, ROLES.ADMIN, ROLES.DEPUTY_DIRECTOR];
 const can = (r: string) => ALLOWED.includes(r as never);
@@ -47,9 +48,13 @@ export async function deleteUsersPermanent(ids: string[]): Promise<Res> {
 export async function messageUsers(ids: string[], text: string): Promise<Res> {
   const s = await requireSession();
   if (!can(s.role)) return { error: "Ruxsat yo'q" };
-  const body = text.trim() || "Sizga xabar bor.";
   if (ids.length === 0) return { error: "Hech kim tanlanmagan" };
-  await prisma.notification.createMany({ data: ids.map((userId) => ({ userId, title: "Xabar", body, channel: "APP", event: "message" })) });
+  // Sarlavha (va bo'sh matn o'rnidagi zaxira) oluvchining tilida
+  await notifyMany(ids, {
+    title: { uz: "Xabar", ru: "Сообщение", en: "Message", de: "Nachricht" },
+    body: text.trim() || { uz: "Sizga xabar bor.", ru: "Для вас есть сообщение.", en: "You have a message.", de: "Sie haben eine Nachricht." },
+    event: "message",
+  });
   return { ok: true, count: ids.length };
 }
 

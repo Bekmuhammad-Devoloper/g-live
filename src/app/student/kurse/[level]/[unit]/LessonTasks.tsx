@@ -3,6 +3,7 @@
 import { useRef, useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
 import { submitAssignment } from "../../../../(app)/homework/actions";
+import type { StudentStrings } from "../../../_i18n";
 
 // Dars vazifasi — muddat, shart, biriktirilgan fayl, o'quvchining
 // jo'natmalari va o'qituvchining izohi. Ketma-ketlik maketdagidek:
@@ -59,36 +60,38 @@ function IcoFile({ s = 18 }: { s?: number }) {
   );
 }
 
-const STATUS: Record<string, { label: string; cls: string }> = {
-  GRADED: { label: "Vazifa qabul qilindi", cls: "text-emerald-600" },
-  RETURNED: { label: "Qayta ishlash kerak", cls: "text-amber-600" },
-  SUBMITTED: { label: "Tekshirilmoqda", cls: "text-slate-400" },
-};
+// Jo'natma holati — matn o'quvchi tilida (t), rang doimiy
+const statusOf = (t: StudentStrings): Record<string, { label: string; cls: string }> => ({
+  GRADED: { label: t.taskAccepted, cls: "text-emerald-600" },
+  RETURNED: { label: t.taskReturned, cls: "text-amber-600" },
+  SUBMITTED: { label: t.taskChecking, cls: "text-slate-400" },
+});
 
-export default function LessonTasks({ tasks }: { tasks: VTask[] }) {
+export default function LessonTasks({ tasks, t }: { tasks: VTask[]; t: StudentStrings }) {
   if (tasks.length === 0) return null;
 
-  const totalScore = tasks.reduce((n, t) => n + (t.subs.find((s) => s.score !== null)?.score ?? 0), 0);
-  const hasScore = tasks.some((t) => t.subs.some((s) => s.score !== null));
+  const totalScore = tasks.reduce((n, x) => n + (x.subs.find((s) => s.score !== null)?.score ?? 0), 0);
+  const hasScore = tasks.some((x) => x.subs.some((s) => s.score !== null));
 
   return (
     <section className="gl-glass overflow-hidden rounded-[26px]">
       {/* Sarlavha qatori — chapda bo'lim nomi, o'ngda ball */}
       <div className="flex items-center justify-between border-b border-slate-100 px-4 pt-3.5">
-        <span className="border-b-2 border-[#c08a4a] pb-2.5 text-[15px] font-bold text-[#a5713a]">Vazifalar</span>
-        {hasScore && <span className="pb-2.5 text-[14px] font-bold text-[#a5713a]">Ball: {totalScore}</span>}
+        <span className="border-b-2 border-[#c08a4a] pb-2.5 text-[15px] font-bold text-[#a5713a]">{t.tasks}</span>
+        {hasScore && <span className="pb-2.5 text-[14px] font-bold text-[#a5713a]">{t.score}: {totalScore}</span>}
       </div>
 
       <div className="space-y-3 p-3">
         {tasks.map((task) => (
-          <TaskCard key={task.id} task={task} />
+          <TaskCard key={task.id} task={task} t={t} />
         ))}
       </div>
     </section>
   );
 }
 
-function TaskCard({ task }: { task: VTask }) {
+function TaskCard({ task, t }: { task: VTask; t: StudentStrings }) {
+  const STATUS = statusOf(t);
   const router = useRouter();
   const [text, setText] = useState("");
   const [fileUrl, setFileUrl] = useState<string | null>(null);
@@ -111,7 +114,7 @@ function TaskCard({ task }: { task: VTask }) {
       if (!r.ok || !j.url) throw new Error();
       setFileUrl(j.url);
     } catch {
-      setErr("Faylni yuklab bo'lmadi");
+      setErr(t.uploadFailed);
     } finally {
       setBusy(false);
     }
@@ -122,7 +125,7 @@ function TaskCard({ task }: { task: VTask }) {
     setErr(null);
     start(async () => {
       const r = await submitAssignment(task.id, text, fileUrl);
-      if (r.error) setErr(r.error === "invalid" ? "Matn yoki fayl qo'shing" : "Yuborib bo'lmadi");
+      if (r.error) setErr(r.error === "invalid" ? t.addTextOrFile : t.sendFailed);
       else {
         setText("");
         setFileUrl(null);
@@ -144,7 +147,7 @@ function TaskCard({ task }: { task: VTask }) {
         >
           <span className="mt-[1px] shrink-0"><IcoAlert /></span>
           <div className="text-[14px] font-bold leading-snug">
-            {task.type === "EXAM" ? "Imtihon muddati:" : "Topshirish muddati:"}
+            {task.type === "EXAM" ? t.examDue : t.submitDue}
             <br />
             {dt(task.dueAt)}
           </div>
@@ -155,7 +158,7 @@ function TaskCard({ task }: { task: VTask }) {
       <div>
         <div className="flex flex-wrap items-baseline justify-between gap-2">
           <h3 className="text-[16.5px] font-bold text-slate-800">{task.title}</h3>
-          <span className="text-[13px] text-slate-500">Maks. ball: {task.maxScore}</span>
+          <span className="text-[13px] text-slate-500">{t.maxScore}: {task.maxScore}</span>
         </div>
         {task.note && <p className="mt-2 whitespace-pre-wrap break-words text-[13.5px] leading-relaxed text-slate-500">{task.note}</p>}
         <div className="mt-2 text-right text-[12px] text-slate-400">{dt(task.createdAt)}</div>
@@ -164,12 +167,12 @@ function TaskCard({ task }: { task: VTask }) {
       {/* ── Mening jo'natmalarim ── */}
       <div className="rounded-2xl bg-white p-3.5">
         <div className="flex flex-wrap items-baseline justify-between gap-2">
-          <h4 className="text-[15px] font-bold text-slate-800">Mening jo&apos;natmalarim</h4>
-          <span className="text-[12.5px] text-slate-500">Fayllar soni: {task.subs.filter((s) => s.fileUrl).length}</span>
+          <h4 className="text-[15px] font-bold text-slate-800">{t.mySubmissions}</h4>
+          <span className="text-[12.5px] text-slate-500">{t.filesCount}: {task.subs.filter((s) => s.fileUrl).length}</span>
         </div>
 
         {task.subs.length === 0 ? (
-          <p className="mt-1.5 text-[13px] text-slate-400">Hali hech narsa yuborilmagan.</p>
+          <p className="mt-1.5 text-[13px] text-slate-400">{t.nothingSentYet}</p>
         ) : (
           <div className="mt-2.5 space-y-2.5">
             {task.subs.map((s) => (
@@ -206,7 +209,7 @@ function TaskCard({ task }: { task: VTask }) {
             value={text}
             onChange={(e) => setText(e.target.value.slice(0, 4000))}
             rows={2}
-            placeholder="Javobingiz yoki havola (masalan github.com/...)"
+            placeholder={t.answerPlaceholder}
             className="w-full resize-none rounded-xl border border-slate-200 bg-white px-3 py-2.5 text-[14px] text-slate-800 outline-none focus:border-[#0e7490]"
           />
 
@@ -225,11 +228,11 @@ function TaskCard({ task }: { task: VTask }) {
               className="flex items-center gap-1.5 rounded-xl bg-slate-100 px-3.5 py-2.5 text-[13px] font-bold text-slate-600 disabled:opacity-50"
             >
               <IcoFile s={15} />
-              {busy ? "…" : fileUrl ? "Fayl tanlandi" : "Fayl qo'shish"}
+              {busy ? "…" : fileUrl ? t.fileChosen : t.addFile}
             </button>
             {fileUrl && (
               <button type="button" onClick={() => setFileUrl(null)} className="rounded-xl bg-rose-50 px-3 py-2.5 text-[13px] font-bold text-rose-600">
-                Olib tashlash
+                {t.remove}
               </button>
             )}
             <button
@@ -238,7 +241,7 @@ function TaskCard({ task }: { task: VTask }) {
               disabled={pending || (!text.trim() && !fileUrl)}
               className="ml-auto rounded-xl bg-[#0e7490] px-5 py-2.5 text-[13.5px] font-bold text-white disabled:bg-slate-300"
             >
-              {pending ? "…" : "Yuborish"}
+              {pending ? "…" : t.send}
             </button>
           </div>
 
@@ -250,7 +253,7 @@ function TaskCard({ task }: { task: VTask }) {
       {graded && (
         <div className="rounded-2xl bg-white p-3.5">
           <div className="flex flex-wrap items-baseline justify-between gap-2">
-            <h4 className="text-[15px] font-bold text-slate-800">O&apos;qituvchi izohi</h4>
+            <h4 className="text-[15px] font-bold text-slate-800">{t.teacherNote}</h4>
             <span className={"text-[13px] font-bold " + (STATUS[graded.status]?.cls ?? "text-slate-400")}>
               {STATUS[graded.status]?.label ?? graded.status}
             </span>
@@ -267,14 +270,14 @@ function TaskCard({ task }: { task: VTask }) {
           )}
 
           <div className="mt-3 flex flex-wrap items-baseline justify-between gap-2">
-            {graded.gradedBy && <span className="text-[12.5px] text-slate-500">Tekshiruvchi: {graded.gradedBy}</span>}
+            {graded.gradedBy && <span className="text-[12.5px] text-slate-500">{t.checkedBy}: {graded.gradedBy}</span>}
             {graded.gradedAt && <span className="text-[11.5px] text-slate-400">{dt(graded.gradedAt)}</span>}
           </div>
         </div>
       )}
 
       {task.passed > 0 && (
-        <div className="text-[13px] font-semibold text-emerald-600">O&apos;tganlar: {task.passed} nafar</div>
+        <div className="text-[13px] font-semibold text-emerald-600">{t.passedCount}: {task.passed} {t.persons}</div>
       )}
     </div>
   );

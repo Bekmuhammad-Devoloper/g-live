@@ -162,9 +162,17 @@ export async function acceptPayment(
   // O'quvchi (va ota-onasi)ga bildirishnoma
   const full = await prisma.student.findUnique({ where: { id: studentId }, include: { parents: { include: { parent: true } } } });
   if (full) {
-    const body = `To'lov qabul qilindi: ${amount.toLocaleString("ru-RU")} so'm. Chek № ${docNumber}.`;
-    if (full.userId) await notify({ userId: full.userId, title: "To'lov qabul qilindi", body, event: "payment_success" });
-    for (const link of full.parents) if (link.parent.userId) await notify({ userId: link.parent.userId, title: "To'lov qabul qilindi", body, event: "payment_success" });
+    // Oluvchining tilida (notify tilni o'zi tanlaydi)
+    const sum = amount.toLocaleString("ru-RU");
+    const title = { uz: "To'lov qabul qilindi", ru: "Платёж принят", en: "Payment received", de: "Zahlung erhalten" };
+    const body = {
+      uz: `To'lov qabul qilindi: ${sum} so'm. Chek № ${docNumber}.`,
+      ru: `Платёж принят: ${sum} сум. Чек № ${docNumber}.`,
+      en: `Payment received: ${sum} UZS. Receipt No. ${docNumber}.`,
+      de: `Zahlung erhalten: ${sum} UZS. Beleg Nr. ${docNumber}.`,
+    };
+    if (full.userId) await notify({ userId: full.userId, title, body, event: "payment_success" });
+    for (const link of full.parents) if (link.parent.userId) await notify({ userId: link.parent.userId, title, body, event: "payment_success" });
   }
 
   // Chek sarlavhasi — CEO sozlamalaridan (bo'lmasa standart)
@@ -330,9 +338,24 @@ export async function bulkNotifyStudents(ids: string[], message: string): Promis
 
   let count = 0;
   for (const st of students) {
-    if (st.userId) { await notify({ userId: st.userId, title: "Yangi xabar", body: text, event: "bulk_message" }); count++; }
+    if (st.userId) {
+      await notify({
+        userId: st.userId,
+        title: { uz: "Yangi xabar", ru: "Новое сообщение", en: "New message", de: "Neue Nachricht" },
+        body: text,
+        event: "bulk_message",
+      });
+      count++;
+    }
     for (const link of st.parents) {
-      if (link.parent.userId) await notify({ userId: link.parent.userId, title: "Farzandingiz bo'yicha xabar", body: text, event: "bulk_message" });
+      if (link.parent.userId) {
+        await notify({
+          userId: link.parent.userId,
+          title: { uz: "Farzandingiz bo'yicha xabar", ru: "Сообщение о вашем ребёнке", en: "Message about your child", de: "Nachricht zu Ihrem Kind" },
+          body: text,
+          event: "bulk_message",
+        });
+      }
     }
   }
 

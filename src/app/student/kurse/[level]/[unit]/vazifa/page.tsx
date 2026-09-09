@@ -89,7 +89,7 @@ export default async function LessonHomeworkPage({
           />
         )}
 
-        <LessonTasks tasks={vTasks} />
+        <LessonTasks tasks={vTasks} t={t} />
 
         {!hasHomework && vTasks.length === 0 && (
           <div className="gl-glass rounded-[26px] px-5 py-14 text-center">

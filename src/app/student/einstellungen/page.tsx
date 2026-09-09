@@ -208,7 +208,7 @@ export default async function StudentSettingsPage() {
       <SectionTitle>{t.security}</SectionTitle>
       <div className={CARD + " divide-y divide-white/50 px-4"}>
         <div className="py-1">
-          <PasswordForm label={t.changePassword} />
+          <PasswordForm t={t} />
         </div>
         <form action={logout}>
           <button type="submit" className="flex min-h-[62px] w-full items-center gap-3 py-3 text-left transition active:opacity-70">

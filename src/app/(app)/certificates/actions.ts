@@ -57,7 +57,14 @@ export async function issueCertificate(_prev: FormState, formData: FormData): Pr
   await writeAudit({ actorId: s.userId, action: "CREATE", entityType: "Certificate", entityId: cert.id, newValue: { number } });
 
   const student = await prisma.student.findUnique({ where: { id: parsed.data.studentId } });
-  if (student?.userId) await notify({ userId: student.userId, title: "Sertifikat berildi", body: `${cert.programName} — ${number}`, event: "certificate" });
+  if (student?.userId) {
+    await notify({
+      userId: student.userId,
+      title: { uz: "Sertifikat berildi", ru: "Выдан сертификат", en: "Certificate issued", de: "Zertifikat ausgestellt" },
+      body: `${cert.programName} — ${number}`,
+      event: "certificate",
+    });
+  }
 
   revalidatePath("/certificates");
   return { ok: true };

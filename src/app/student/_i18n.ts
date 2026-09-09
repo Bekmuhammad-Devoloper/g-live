@@ -403,6 +403,157 @@ const DICT = {
   kindBOOK: p("Kitob", "Книга", "Book", "Buch"),
   kindPERSON: p("Inson", "Человек", "Person", "Person"),
   kindDAILY: p("Kundalik", "Дневник", "Daily", "Tagebuch"),
+
+  // ── Server amallarining xatolari (o'quvchiga ko'rinadi) ──
+  forbidden: p("Ruxsat yo'q", "Нет доступа", "No access", "Kein Zugriff"),
+  studentNotFound: p("O'quvchi topilmadi", "Ученик не найден", "Student not found", "Schüler nicht gefunden"),
+  unknownLocale: p("Noma'lum til", "Неизвестный язык", "Unknown language", "Unbekannte Sprache"),
+
+  // ── Profil tahriri ──
+  nameTooShort: p("Ism-familiya juda qisqa", "Имя и фамилия слишком короткие", "Name is too short", "Name ist zu kurz"),
+  nameTooLong: p("Ism-familiya juda uzun", "Имя и фамилия слишком длинные", "Name is too long", "Name ist zu lang"),
+  birthInvalid: p("Tug'ilgan sana noto'g'ri", "Неверная дата рождения", "Invalid date of birth", "Ungültiges Geburtsdatum"),
+  phoneInvalid: p("Telefon raqami noto'g'ri", "Неверный номер телефона", "Invalid phone number", "Ungültige Telefonnummer"),
+  phone2Invalid: p("Qo'shimcha telefon noto'g'ri", "Неверный дополнительный номер", "Invalid second phone number", "Ungültige zweite Telefonnummer"),
+  imageInvalid: p("Rasm manzili noto'g'ri", "Неверный адрес изображения", "Invalid image address", "Ungültige Bildadresse"),
+  paid: p("To'landi", "Оплачено", "Paid", "Bezahlt"),
+  passwordChanged: p("Parol o'zgartirildi ✓", "Пароль изменён ✓", "Password changed ✓", "Passwort geändert ✓"),
+  currentPassword: p("Joriy parol", "Текущий пароль", "Current password", "Aktuelles Passwort"),
+  newPassword: p("Yangi parol", "Новый пароль", "New password", "Neues Passwort"),
+  repeatPassword: p("Yangi parol (takror)", "Новый пароль (повторите)", "New password (repeat)", "Neues Passwort (wiederholen)"),
+  saving: p("Saqlanmoqda…", "Сохранение…", "Saving…", "Wird gespeichert…"),
+
+  // ── Dars vazifalari ──
+  score: p("Ball", "Балл", "Score", "Punkte"),
+  taskAccepted: p("Vazifa qabul qilindi", "Задание принято", "Task accepted", "Aufgabe angenommen"),
+  taskReturned: p("Qayta ishlash kerak", "Нужно доработать", "Needs rework", "Überarbeitung nötig"),
+  taskChecking: p("Tekshirilmoqda", "На проверке", "Being checked", "Wird geprüft"),
+  uploadFailed: p("Faylni yuklab bo'lmadi", "Не удалось загрузить файл", "Could not upload the file", "Datei konnte nicht hochgeladen werden"),
+  addTextOrFile: p("Matn yoki fayl qo'shing", "Добавьте текст или файл", "Add text or a file", "Text oder Datei hinzufügen"),
+  sendFailed: p("Yuborib bo'lmadi", "Не удалось отправить", "Could not send", "Senden fehlgeschlagen"),
+  examDue: p("Imtihon muddati:", "Срок экзамена:", "Exam deadline:", "Prüfungstermin:"),
+  submitDue: p("Topshirish muddati:", "Срок сдачи:", "Due date:", "Abgabefrist:"),
+  maxScore: p("Maks. ball", "Макс. балл", "Max score", "Max. Punkte"),
+  mySubmissions: p("Mening jo'natmalarim", "Мои отправки", "My submissions", "Meine Abgaben"),
+  filesCount: p("Fayllar soni", "Файлов", "Files", "Dateien"),
+  nothingSentYet: p("Hali hech narsa yuborilmagan.", "Пока ничего не отправлено.", "Nothing sent yet.", "Noch nichts gesendet."),
+  answerPlaceholder: p("Javobingiz yoki havola (masalan github.com/...)", "Ваш ответ или ссылка (например github.com/...)", "Your answer or a link (e.g. github.com/...)", "Ihre Antwort oder ein Link (z. B. github.com/...)"),
+  fileChosen: p("Fayl tanlandi", "Файл выбран", "File chosen", "Datei gewählt"),
+  addFile: p("Fayl qo'shish", "Добавить файл", "Add file", "Datei hinzufügen"),
+  remove: p("Olib tashlash", "Убрать", "Remove", "Entfernen"),
+  teacherNote: p("O'qituvchi izohi", "Комментарий преподавателя", "Teacher's note", "Kommentar der Lehrkraft"),
+  checkedBy: p("Tekshiruvchi", "Проверил", "Checked by", "Geprüft von"),
+  passedCount: p("O'tganlar", "Сдали", "Passed", "Bestanden"),
+  persons: p("nafar", "чел.", "students", "Schüler"),
+
+  // ── Reyting ──
+  scopeGroup: p("Guruh ichida", "Внутри группы", "Within the group", "In der Gruppe"),
+  scopeBranch: p("Filial bo'yicha", "По филиалу", "Across the branch", "Nach Filiale"),
+  scopeCenter: p("Butun markaz", "Весь центр", "Whole centre", "Ganzes Zentrum"),
+  basisAttendance: p("qatnashgan darslar soni", "посещённых уроков", "lessons attended", "besuchte Lektionen"),
+  basisCoins: p("yig'ilgan tanga", "заработанных монет", "coins earned", "gesammelte Münzen"),
+  basisScore: p("o'rtacha ball, %", "средний балл, %", "average score, %", "Durchschnitt, %"),
+  yourPlace: p("Sizning o'rningiz", "Ваше место", "Your place", "Ihr Platz"),
+  totalLabel: p("jami", "всего", "total", "gesamt"),
+  studentsUnit: p("o'quvchi", "учеников", "students", "Schüler"),
+  noRatingYet: p("Reyting hali tuzilmagan", "Рейтинг ещё не составлен", "No rating yet", "Noch keine Rangliste"),
+  ratingAfterLessons: p("Darslar boshlangach shu yerda ko'rinadi.", "Появится после начала уроков.", "It appears once lessons begin.", "Erscheint, sobald der Unterricht beginnt."),
+  youTag: p("siz", "вы", "you", "Sie"),
+  tiedResult: p("teng natija", "равный результат", "tied", "gleichauf"),
+  firstShownOf: p("Birinchi {n} ta ko'rsatilgan — jami {total} o'quvchi", "Показаны первые {n} — всего {total} учеников", "First {n} shown — {total} students in total", "Die ersten {n} angezeigt — insgesamt {total} Schüler"),
+
+  // ── Jang (o'yinlar) ──
+  modeAi: p("AI ga qarshi", "Против ИИ", "Against AI", "Gegen KI"),
+  modeAiSub: p("Sun'iy intellekt bilan bellashing", "Сразитесь с искусственным интеллектом", "Compete against the AI", "Tritt gegen die KI an"),
+  modeDuel: p("Duel", "Дуэль", "Duel", "Duell"),
+  modeDuelSub: p("Guruhdoshingizni jangga chaqiring", "Вызовите одногруппника", "Challenge a classmate", "Fordere einen Mitschüler heraus"),
+  modeGroup: p("Guruhli o'yin", "Групповая игра", "Group game", "Gruppenspiel"),
+  modeGroupSub: p("Butun guruh bitta savollar bilan", "Вся группа — одни и те же вопросы", "The whole group, same questions", "Die ganze Gruppe, gleiche Fragen"),
+  lobbyVocabSub: p("To'g'ri so'zni tanlang", "Выберите верное слово", "Pick the right word", "Wähle das richtige Wort"),
+  lobbyWordgame: p("So'z o'yini", "Игра в слова", "Word game", "Wortspiel"),
+  lobbyWordgameSub: p("Harflardan tuzing", "Соберите из букв", "Build from letters", "Aus Buchstaben bilden"),
+  lobbyCrossword: p("Krossvord", "Кроссворд", "Crossword", "Kreuzworträtsel"),
+  lobbyCrosswordSub: p("Ta'rif bo'yicha yozing", "Напишите по описанию", "Write from the definition", "Nach der Beschreibung schreiben"),
+  lobbyGrammar: p("Grammatika", "Грамматика", "Grammar", "Grammatik"),
+  lobbyGrammarSub: p("der, die yoki das", "der, die или das", "der, die or das", "der, die oder das"),
+  taskWordgame: p("Harflardan so'z tuzing", "Соберите слово из букв", "Build the word from letters", "Bilde das Wort aus Buchstaben"),
+  taskGrammar: p("Artiklni tanlang", "Выберите артикль", "Pick the article", "Wähle den Artikel"),
+  waitingForYou: p("Sizni kutmoqda", "Ждут вас", "Waiting for you", "Wartet auf dich"),
+  challengedYou: p("{name} chaqirdi", "{name} вызвал(а) вас", "{name} challenged you", "{name} hat dich herausgefordert"),
+  groupChampionship: p("Guruh chempionati", "Чемпионат группы", "Group championship", "Gruppenmeisterschaft"),
+  playedPeople: p("{n} kishi o'ynadi", "сыграли: {n}", "{n} played", "{n} haben gespielt"),
+  play: p("O'ynash", "Играть", "Play", "Spielen"),
+  battleType: p("Jang turi", "Тип битвы", "Battle type", "Kampfart"),
+  yourRival: p("Raqibingiz", "Ваш соперник", "Your rival", "Dein Gegner"),
+  noRivals: p("Guruhingizda ilovaga ulangan boshqa o'quvchi yo'q", "В вашей группе нет других учеников с приложением", "No other classmates are using the app yet", "Kein anderer Mitschüler nutzt bisher die App"),
+  rivalsAppear: p("Ular ilovaga kirgach shu yerda chiqadi.", "Они появятся здесь, когда войдут в приложение.", "They will appear here once they sign in.", "Sie erscheinen hier, sobald sie sich anmelden."),
+  gameType: p("O'yin turi", "Тип игры", "Game type", "Spielart"),
+  notEnoughWords: p("So'zlar yetarli emas", "Недостаточно слов", "Not enough words", "Nicht genug Wörter"),
+  chooseRival: p("Raqibingizni tanlang", "Выберите соперника", "Choose a rival", "Wähle einen Gegner"),
+  sendChallenge: p("Chaqiruv yuborish", "Отправить вызов", "Send challenge", "Herausforderung senden"),
+  startBattle: p("Jangni boshlang", "Начать битву", "Start the battle", "Kampf starten"),
+  openChallengeFailed: p("Chaqiruvni ochib bo'lmadi", "Не удалось открыть вызов", "Could not open the challenge", "Herausforderung konnte nicht geöffnet werden"),
+  youWon: p("Siz yutdingiz!", "Вы победили!", "You won!", "Du hast gewonnen!"),
+  drawResult: p("Durrang", "Ничья", "Draw", "Unentschieden"),
+  nextTime: p("Keyingi safar!", "В следующий раз!", "Next time!", "Nächstes Mal!"),
+  youLost: p("Bu safar yutqazdingiz", "В этот раз вы проиграли", "You lost this time", "Diesmal verloren"),
+  resultSaved: p("Natijangiz yozildi", "Ваш результат записан", "Your result is saved", "Dein Ergebnis wurde gespeichert"),
+  you: p("Siz", "Вы", "You", "Du"),
+  pctCorrect: p("{p}% to'g'ri", "{p}% верно", "{p}% correct", "{p}% richtig"),
+  duelWait: p("Raqibingiz ham o'ynagach, natija bildirishnoma bo'lib keladi.", "Когда соперник тоже сыграет, результат придёт уведомлением.", "Once your rival plays too, the result arrives as a notification.", "Sobald dein Gegner gespielt hat, kommt das Ergebnis als Mitteilung."),
+  groupWait: p("Guruhdoshlaringiz o'ynagach, kim oldinda ekani ko'rinadi.", "Когда сыграют одногруппники, будет видно, кто впереди.", "Once your classmates play, you will see who leads.", "Sobald deine Mitschüler gespielt haben, siehst du, wer vorne liegt."),
+  playAgain: p("Yana o'ynash", "Играть ещё", "Play again", "Nochmal spielen"),
+  answerPh: p("Javobingiz…", "Ваш ответ…", "Your answer…", "Deine Antwort…"),
+  correctBang: p("To'g'ri!", "Верно!", "Correct!", "Richtig!"),
+  check: p("Tekshirish", "Проверить", "Check", "Prüfen"),
+  rival: p("Raqib", "Соперник", "Rival", "Gegner"),
+  cantChallengeSelf: p("O'zingizga chaqiruv yubora olmaysiz", "Нельзя вызвать самого себя", "You cannot challenge yourself", "Du kannst dich nicht selbst herausfordern"),
+  notInGroup: p("Siz hali guruhga biriktirilmagansiz", "Вы ещё не прикреплены к группе", "You are not assigned to a group yet", "Du bist noch keiner Gruppe zugeordnet"),
+  rivalNotInGroup: p("Bu o'quvchi guruhingizda topilmadi", "Этот ученик не найден в вашей группе", "This student is not in your group", "Dieser Schüler ist nicht in deiner Gruppe"),
+  challengeNotFound: p("Chaqiruv topilmadi", "Вызов не найден", "Challenge not found", "Herausforderung nicht gefunden"),
+  challengeExpired: p("Chaqiruv muddati tugagan", "Срок вызова истёк", "The challenge has expired", "Die Herausforderung ist abgelaufen"),
+  challengeNotYours: p("Bu chaqiruv sizga tegishli emas", "Этот вызов не для вас", "This challenge is not yours", "Diese Herausforderung gilt nicht dir"),
+  duelInviteTitle: p("Sizga duel chaqiruvi", "Вам вызов на дуэль", "Duel challenge for you", "Duell-Herausforderung für dich"),
+  duelInviteBody: p("{name} sizni jangga chaqirdi. Jang bo'limida javob bering.", "{name} вызвал(а) вас на битву. Ответьте в разделе «Битва».", "{name} challenged you to a battle. Reply in the Battle section.", "{name} hat dich zum Kampf herausgefordert. Antworte im Bereich Kampf."),
+  duelResultTitle: p("Duel yakuni: {verdict}", "Итог дуэли: {verdict}", "Duel result: {verdict}", "Duell-Ergebnis: {verdict}"),
+  duelResultBody: p("{a} : {b} ({name})", "{a} : {b} ({name})", "{a} : {b} ({name})", "{a} : {b} ({name})"),
+
+  // ── Market ──
+  giftUnavailable: p("Sovg'a mavjud emas", "Подарок недоступен", "Gift unavailable", "Geschenk nicht verfügbar"),
+  giftOtherBranch: p("Bu sovg'a boshqa filialda", "Этот подарок в другом филиале", "This gift is at another branch", "Dieses Geschenk ist in einer anderen Filiale"),
+  outOfStock: p("Zaxira tugagan", "Закончился", "Out of stock", "Ausverkauft"),
+  notEnoughCoins: p("Tanga yetarli emas ({have}/{need})", "Недостаточно монет ({have}/{need})", "Not enough coins ({have}/{need})", "Nicht genug Münzen ({have}/{need})"),
+  marketNewOrder: p("Market: yangi buyurtma", "Маркет: новый заказ", "Market: new order", "Markt: neue Bestellung"),
+  marketOrderBody: p("{name} — {item} ({price} tanga)", "{name} — {item} ({price} монет)", "{name} — {item} ({price} coins)", "{name} — {item} ({price} Münzen)"),
+
+  // ── Ustoz bilan chat ──
+  messageEmpty: p("Xabar bo'sh", "Пустое сообщение", "Message is empty", "Nachricht ist leer"),
+  messageTooLong: p("Xabar {n} belgidan oshmasin", "Сообщение не длиннее {n} символов", "Message must be at most {n} characters", "Nachricht darf höchstens {n} Zeichen haben"),
+  studentWroteYou: p("{name} xabar yozdi", "{name} написал(а) сообщение", "{name} sent a message", "{name} hat geschrieben"),
+
+  // ── Xato sahifasi ──
+  errTitle: p("Nimadir noto'g'ri ketdi", "Что-то пошло не так", "Something went wrong", "Etwas ist schiefgelaufen"),
+  errBody: p("Sahifani ochib bo'lmadi. Internetni tekshirib, qaytadan urinib ko'ring. Takrorlansa — administratorga xabar bering.", "Не удалось открыть страницу. Проверьте интернет и попробуйте снова. Если повторится — сообщите администратору.", "The page could not be opened. Check your connection and try again. If it repeats, tell the administrator.", "Die Seite konnte nicht geöffnet werden. Prüfe die Verbindung und versuche es erneut. Bei Wiederholung den Administrator informieren."),
+  retry: p("Qaytadan urinish", "Попробовать снова", "Try again", "Erneut versuchen"),
+  toHome: p("Bosh sahifaga", "На главную", "To home", "Zur Startseite"),
+
+  // ── Hisob bog'lanmagan ──
+  accountNotLinked: p("Hisob bog'lanmagan", "Аккаунт не привязан", "Account not linked", "Konto nicht verknüpft"),
+  accountNotLinkedBody: p("Sizning hisobingizga o'quvchi profili biriktirilmagan yoki u o'chirilgan. Administratorga murojaat qiling.", "К вашему аккаунту не привязан профиль ученика или он удалён. Обратитесь к администратору.", "No student profile is linked to your account, or it was removed. Contact the administrator.", "Mit deinem Konto ist kein Schülerprofil verknüpft oder es wurde entfernt. Wende dich an die Verwaltung."),
+
+  // ── Bildirishnomalar ro'yxati ──
+  noMessagesHint: p("Hozircha xabar yo'q.", "Пока сообщений нет.", "No messages yet.", "Noch keine Mitteilungen."),
+  markAllRead: p("Hammasini o'qilgan deb belgilash", "Отметить всё прочитанным", "Mark all as read", "Alle als gelesen markieren"),
+
+  // ── Yozuv sintaksisi eslatmasi ──
+  mdLink: p("[[Sarlavha]]", "[[Заголовок]]", "[[Title]]", "[[Titel]]"),
+  mdTag: p("#teg", "#тег", "#tag", "#tag"),
+  mdHeading: p("# bo'lim", "# раздел", "# section", "# Abschnitt"),
+  mdList: p("- ro'yxat", "- список", "- list", "- Liste"),
+  mdCheck: p("- [ ] belgi", "- [ ] отметка", "- [ ] checkbox", "- [ ] Kästchen"),
+
+  // ── Lug'at ustuni ──
+  uzbekLabel: p("O'zbekcha", "Узбекский", "Uzbek", "Usbekisch"),
 } as const;
 
 export type StudentStrings = { [K in keyof typeof DICT]: string };
@@ -411,4 +562,32 @@ export function S(locale: Locale): StudentStrings {
   const out = {} as Record<string, string>;
   for (const [k, v] of Object.entries(DICT)) out[k] = v[locale] ?? v.uz;
   return out as StudentStrings;
+}
+
+export type StudentKey = keyof typeof DICT;
+export type StudentText = T;
+
+/** "{name}" kabi joy tutuvchilarni to'ldiradi: fill("{n} kishi", { n: 3 }) → "3 kishi" */
+export function fill(s: string, vars: Record<string, string | number>): string {
+  let out = s;
+  for (const [k, v] of Object.entries(vars)) out = out.split(`{${k}}`).join(String(v));
+  return out;
+}
+
+/**
+ * Bitta kalitning TO'RT tili — oluvchining tili keyin aniqlanadigan joylar
+ * uchun (bildirishnoma: yozayotgan o'quvchi emas, OLUVCHI tilida ko'rinsin).
+ * Joy tutuvchi qiymati satr, son yoki o'zi to'rt tilli matn bo'lishi mumkin.
+ */
+export function LT(key: StudentKey, vars: Record<string, string | number | T> = {}): T {
+  const v = DICT[key];
+  const one = (locale: Locale) => {
+    let out: string = v[locale];
+    for (const [k, val] of Object.entries(vars)) {
+      const s = typeof val === "object" ? val[locale] : String(val);
+      out = out.split(`{${k}}`).join(s);
+    }
+    return out;
+  };
+  return { uz: one("uz"), ru: one("ru"), en: one("en"), de: one("de") };
 }

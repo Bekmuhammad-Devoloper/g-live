@@ -70,7 +70,7 @@ export default async function StudentLayout({ children }: { children: React.Reac
   // `gl-native` — ilova hissi qoidalari (globals.css): teginish chaqnashi,
   // uzoq bosish menyusi va sahifaning cho'zilishi (rubber-band) o'chadi.
   return (
-    <div className="gl-native relative min-h-screen bg-[#e4edf3]">
+    <div className="gl-native relative min-h-screen bg-[#e4edf3]" data-locale={session.locale}>
       {/* O'quvchi ilovasi FAQAT och rejimda ishlaydi — maket ham, shisha ham
           och fonga qurilgan. Ildiz layout esa qurilma sozlamasiga qarab <html>
           ga `dark` sinfini qo'yadi va globals.css dagi tungi fallback qoidalari

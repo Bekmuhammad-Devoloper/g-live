@@ -30,7 +30,14 @@ function fmt(iso: string) {
   return `${p(d.getDate())}.${p(d.getMonth() + 1)}.${d.getFullYear()} ${p(d.getHours())}:${p(d.getMinutes())}`;
 }
 
-export default function NotifList({ items, emptyText }: { items: VNotif[]; emptyText: string }) {
+export default function NotifList({
+  items, emptyText, emptyHint, markAllText,
+}: {
+  items: VNotif[];
+  emptyText: string;
+  emptyHint: string;
+  markAllText: string;
+}) {
   const router = useRouter();
   const [, start] = useTransition();
   const unread = items.filter((n) => !n.isRead).length;
@@ -40,7 +47,7 @@ export default function NotifList({ items, emptyText }: { items: VNotif[]; empty
       <div className={`${CARD} flex flex-col items-center gap-3 px-6 py-12 text-center`}>
         <span className="grid h-14 w-14 place-items-center rounded-full bg-[#eef6fa]"><IcoBell s={26} /></span>
         <div className="text-[17px] font-extrabold text-slate-900">{emptyText}</div>
-        <p className="text-[13px] text-slate-600">Hozircha xabar yo&apos;q.</p>
+        <p className="text-[13px] text-slate-600">{emptyHint}</p>
       </div>
     );
   }
@@ -53,7 +60,7 @@ export default function NotifList({ items, emptyText }: { items: VNotif[]; empty
           className="gl-glass w-full rounded-2xl py-3 text-[13px] font-bold"
           style={{ color: TEAL }}
         >
-          Hammasini o&apos;qilgan deb belgilash ({unread})
+          {markAllText} ({unread})
         </button>
       )}
 

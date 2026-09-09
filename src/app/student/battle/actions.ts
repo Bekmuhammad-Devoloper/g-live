@@ -7,6 +7,8 @@ import { prisma } from "@/lib/db";
 import { isPortalFeatureOn } from "@/lib/portalFeatures";
 import { awardSkill } from "@/lib/skills";
 import { dayKey, GAME_MIN_ACCURACY } from "@/lib/skillMath";
+import { notify } from "@/lib/notify";
+import { LT, S } from "../_i18n";
 
 // O'yin natijasini saqlash va chaqiruvlar (duel / guruhli o'yin).
 // Ballni mijoz yuboradi, shu sabab cheklovlar shu yerda: raund soni
@@ -18,11 +20,12 @@ const MAX_ROUNDS = 30;
 const MAX_PER_DAY = 20; // kuniga shuncha o'yin yoziladi, ortig'i saqlanmaydi
 const CHALLENGE_DAYS = 3; // chaqiruv shuncha kun kutadi
 
+// O'quvchi + uning tilidagi matnlar (xato xabarlari o'quvchi tilida qaytsin)
 async function me() {
   const s = await getSession();
   if (!s || s.role !== ROLES.STUDENT) return null;
   if (!(await isPortalFeatureOn("battle"))) return null;
-  return prisma.student.findUnique({
+  const student = await prisma.student.findUnique({
     where: { userId: s.userId },
     select: {
       id: true,
@@ -36,6 +39,8 @@ async function me() {
       },
     },
   });
+  if (!student) return null;
+  return { ...student, t: S(s.locale) };
 }
 
 const clampRounds = (score: unknown, total: unknown) => {
@@ -87,18 +92,18 @@ export async function saveGameResult(input: {
 export async function createDuel(opponentId: string, lobby: string): Promise<{ id?: string; seed?: number; error?: string }> {
   const student = await me();
   if (!student) return { error: "forbidden" };
-  if (opponentId === student.id) return { error: "O'zingizga chaqiruv yubora olmaysiz" };
+  if (opponentId === student.id) return { error: student.t.cantChallengeSelf };
   if (!GAMES.includes(lobby)) return { error: "invalid" };
 
   const groupId = student.enrollments[0]?.groupId;
-  if (!groupId) return { error: "Siz hali guruhga biriktirilmagansiz" };
+  if (!groupId) return { error: student.t.notInGroup };
 
   // Faqat o'z guruhidagi, ilovaga ulangan o'quvchi
   const ok = await prisma.groupStudent.findFirst({
     where: { groupId, studentId: opponentId, isActive: true, student: { userId: { not: null } } },
     select: { id: true },
   });
-  if (!ok) return { error: "Bu o'quvchi guruhingizda topilmadi" };
+  if (!ok) return { error: student.t.rivalNotInGroup };
 
   const expiresAt = new Date(Date.now() + CHALLENGE_DAYS * 864e5);
   const ch = await prisma.gameChallenge.create({
@@ -113,16 +118,15 @@ export async function createDuel(opponentId: string, lobby: string): Promise<{ i
     select: { id: true, seed: true },
   });
 
-  // Raqibga xabar — ilovada bildirishnoma bo'limida ko'rinadi
+  // Raqibga xabar — ilovada bildirishnoma bo'limida, RAQIBNING tilida
   const opp = await prisma.student.findUnique({ where: { id: opponentId }, select: { userId: true } });
   if (opp?.userId) {
-    await prisma.notification.create({
-      data: {
-        userId: opp.userId,
-        event: "BATTLE",
-        title: "Sizga duel chaqiruvi",
-        body: `${student.fullName} sizni jangga chaqirdi. Jang bo'limida javob bering.`,
-      },
+    await notify({
+      userId: opp.userId,
+      event: "BATTLE",
+      title: LT("duelInviteTitle"),
+      body: LT("duelInviteBody", { name: student.fullName }),
+      url: "/student/battle",
     });
   }
 
@@ -137,7 +141,7 @@ export async function joinGroupGame(lobby: string): Promise<{ id?: string; seed?
   if (!GAMES.includes(lobby)) return { error: "invalid" };
 
   const groupId = student.enrollments[0]?.groupId;
-  if (!groupId) return { error: "Siz hali guruhga biriktirilmagansiz" };
+  if (!groupId) return { error: student.t.notInGroup };
 
   // Guruhda shu o'yin turi bo'yicha ochiq chaqiruv bo'lsa — o'shanga qo'shiladi
   const open = await prisma.gameChallenge.findFirst({
@@ -176,8 +180,8 @@ export async function submitChallenge(
     where: { id: challengeId },
     select: { id: true, kind: true, createdById: true, opponentId: true, groupId: true, expiresAt: true, lobby: true },
   });
-  if (!ch) return { error: "Chaqiruv topilmadi" };
-  if (ch.expiresAt < new Date()) return { error: "Chaqiruv muddati tugagan" };
+  if (!ch) return { error: student.t.challengeNotFound };
+  if (ch.expiresAt < new Date()) return { error: student.t.challengeExpired };
 
   // Qatnashish huquqi
   const allowed =
@@ -187,7 +191,7 @@ export async function submitChallenge(
           where: { groupId: ch.groupId, studentId: student.id, isActive: true },
           select: { id: true },
         }));
-  if (!allowed) return { error: "Bu chaqiruv sizga tegishli emas" };
+  if (!allowed) return { error: student.t.challengeNotYours };
 
   const c = clampRounds(score, total);
   if (c.total === 0) return { error: "invalid" };
@@ -220,15 +224,15 @@ export async function submitChallenge(
         if (!u?.userId) continue;
         const mineScore = e.score;
         const other = e.studentId === a.studentId ? b : a;
-        const otherName = byId.get(other.studentId)?.fullName ?? "Raqib";
-        const verdict = mineScore > other.score ? "Siz yutdingiz!" : mineScore < other.score ? "Bu safar yutqazdingiz" : "Durrang";
-        await prisma.notification.create({
-          data: {
-            userId: u.userId,
-            event: "BATTLE",
-            title: `Duel yakuni: ${verdict}`,
-            body: `${mineScore} : ${other.score} (${otherName})`,
-          },
+        const otherName = byId.get(other.studentId)?.fullName ?? LT("rival");
+        const verdict = LT(mineScore > other.score ? "youWon" : mineScore < other.score ? "youLost" : "drawResult");
+        // Har o'yinchiga O'Z tilida (notify oluvchining tilini o'zi tanlaydi)
+        await notify({
+          userId: u.userId,
+          event: "BATTLE",
+          title: LT("duelResultTitle", { verdict }),
+          body: LT("duelResultBody", { a: mineScore, b: other.score, name: otherName }),
+          url: "/student/battle",
         });
       }
     }

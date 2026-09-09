@@ -57,11 +57,13 @@ export async function replyToStudent(studentId: string, text: string): Promise<R
 
   // O'quvchini ortiqcha bezovta qilmaymiz: o'qilmagani bo'lsa xabar bermaymiz
   if (student.userId && pending === 0) {
+    // O'quvchining tilida (notify oluvchi tilini o'zi tanlaydi)
     await notify({
       userId: student.userId,
-      title: "Ustozdan javob",
+      title: { uz: "Ustozdan javob", ru: "Ответ преподавателя", en: "Reply from your teacher", de: "Antwort der Lehrkraft" },
       body: body.slice(0, 120),
       event: "CHAT",
+      url: "/student/lehrer",
     });
   }
 

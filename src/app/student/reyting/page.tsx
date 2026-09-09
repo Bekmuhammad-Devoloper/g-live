@@ -2,32 +2,33 @@ import { redirect } from "next/navigation";
 import { getSession } from "@/lib/auth";
 import { prisma } from "@/lib/db";
 import { rankBoard, type BoardRow } from "@/lib/rank";
-import { S } from "../_i18n";
+import { fill, S, type StudentStrings } from "../_i18n";
 import { CARD, FlagAvatar, PageHeader, TEAL } from "../_ui";
 import MissingStudent from "../MissingStudent";
 
 // Reyting — o'quvchi o'z o'rnini va oldindagilarni ko'radi.
 // Taqqoslash doirasi (guruh / filial / markaz) va mezoni (davomat / tanga /
 // o'rtacha ball) Sozlamalar > Ball va mukofotlar bo'limida belgilanadi.
+// Yorliqlar o'quvchi tilida (t) — shu sabab funksiya.
 
-const SCOPE_LABEL: Record<string, string> = {
-  group: "Guruh ichida",
-  branch: "Filial bo'yicha",
-  center: "Butun markaz",
-};
+const scopeLabel = (t: StudentStrings): Record<string, string> => ({
+  group: t.scopeGroup,
+  branch: t.scopeBranch,
+  center: t.scopeCenter,
+});
 
-const BASIS_LABEL: Record<string, string> = {
-  attendance: "qatnashgan darslar soni",
-  coins: "yig'ilgan tanga",
-  score: "o'rtacha ball, %",
-};
+const basisLabel = (t: StudentStrings): Record<string, string> => ({
+  attendance: t.basisAttendance,
+  coins: t.basisCoins,
+  score: t.basisScore,
+});
 
 // Ustundagi raqam ostidagi qisqa birlik (uzun matn sig'maydi)
-const UNIT: Record<string, string> = {
-  attendance: "dars",
-  coins: "tanga",
+const unitOf = (t: StudentStrings): Record<string, string> => ({
+  attendance: t.lessons,
+  coins: t.coins,
   score: "%",
-};
+});
 
 // Birinchi uchta o'rin — medal ranglari
 const MEDAL: Record<number, { bg: string; ring: string }> = {
@@ -65,7 +66,9 @@ export default async function StudentRatingPage() {
   if (!student) return <MissingStudent />;
 
   const { rows, me, total, scope, basis } = await rankBoard(student.id, 50);
-  const unit = UNIT[basis] ?? "";
+  const SCOPE_LABEL = scopeLabel(t);
+  const BASIS_LABEL = basisLabel(t);
+  const unit = unitOf(t)[basis] ?? "";
 
   // Nechta o'quvchi bir xil o'rinda turibdi — "teng natija" belgisi uchun
   const samePlace = new Map<number, number>();
@@ -90,7 +93,7 @@ export default async function StudentRatingPage() {
             </span>
 
             <div className="min-w-0 flex-1">
-              <div className="text-[11px] font-bold uppercase tracking-[0.14em] text-white/70">Sizning o&apos;rningiz</div>
+              <div className="text-[11px] font-bold uppercase tracking-[0.14em] text-white/70">{t.yourPlace}</div>
               <div className="mt-1 flex items-center gap-2">
                 <Avatar row={me} size={26} />
                 <span className="min-w-0 truncate text-[18px] font-extrabold leading-tight">{me.name}</span>
@@ -101,9 +104,9 @@ export default async function StudentRatingPage() {
             </div>
 
             <div className="shrink-0 text-right">
-              <div className="text-[11px] text-white/60">jami</div>
+              <div className="text-[11px] text-white/60">{t.totalLabel}</div>
               <div className="text-[17px] font-extrabold tabular-nums">{total}</div>
-              <div className="text-[10.5px] text-white/60">o&apos;quvchi</div>
+              <div className="text-[10.5px] text-white/60">{t.studentsUnit}</div>
             </div>
           </div>
         </div>
@@ -112,8 +115,8 @@ export default async function StudentRatingPage() {
       {/* ── Ro'yxat ── */}
       {rows.length === 0 ? (
         <div className={CARD + " rounded-[26px] px-5 py-12 text-center"}>
-          <div className="text-[15px] font-semibold text-slate-700">Reyting hali tuzilmagan</div>
-          <p className="mt-1 text-[13px] text-slate-400">Darslar boshlangach shu yerda ko&apos;rinadi.</p>
+          <div className="text-[15px] font-semibold text-slate-700">{t.noRatingYet}</div>
+          <p className="mt-1 text-[13px] text-slate-400">{t.ratingAfterLessons}</p>
         </div>
       ) : (
         <div className={CARD + " overflow-hidden rounded-[26px]"}>
@@ -153,10 +156,10 @@ export default async function StudentRatingPage() {
                     <span className="mt-0.5 flex items-center gap-1.5">
                       {r.isMe && (
                         <span className="rounded-md px-1.5 py-[1px] text-[10px] font-bold text-white" style={{ background: TEAL }}>
-                          siz
+                          {t.youTag}
                         </span>
                       )}
-                      {tied && <span className="text-[10.5px] text-slate-400">teng natija</span>}
+                      {tied && <span className="text-[10.5px] text-slate-400">{t.tiedResult}</span>}
                     </span>
                   )}
                 </span>
@@ -175,7 +178,7 @@ export default async function StudentRatingPage() {
 
       {total > rows.length && (
         <p className="px-1 text-center text-[12.5px] text-slate-400">
-          Birinchi {rows.length} ta ko&apos;rsatilgan — jami {total} o&apos;quvchi
+          {fill(t.firstShownOf, { n: rows.length, total })}
         </p>
       )}
     </div>

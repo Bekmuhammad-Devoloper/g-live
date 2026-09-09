@@ -63,7 +63,15 @@ export async function createAssignment(_prev: FormState, formData: FormData): Pr
     include: { student: true },
   });
   for (const m of members) {
-    if (m.student.userId) await notify({ userId: m.student.userId, title: "Yangi vazifa", body: a.title, event: "new_assignment" });
+    if (m.student.userId) {
+      await notify({
+        userId: m.student.userId,
+        title: { uz: "Yangi vazifa", ru: "Новое задание", en: "New assignment", de: "Neue Aufgabe" },
+        body: a.title,
+        event: "new_assignment",
+        url: "/student/uben",
+      });
+    }
   }
 
   revalidatePath("/homework");
@@ -142,7 +150,15 @@ export async function gradeSubmission(submissionId: string, score: number, note:
   revalidatePath("/student", "layout");
 
   const student = await prisma.student.findUnique({ where: { id: sub.studentId } });
-  if (student?.userId) await notify({ userId: student.userId, title: "Vazifa baholandi", body: `${sub.assignment.title}: ${clamped}/${max}`, event: "graded" });
+  if (student?.userId) {
+    await notify({
+      userId: student.userId,
+      title: { uz: "Vazifa baholandi", ru: "Задание оценено", en: "Assignment graded", de: "Aufgabe bewertet" },
+      body: `${sub.assignment.title}: ${clamped}/${max}`,
+      event: "graded",
+      url: "/student/uben",
+    });
+  }
 
   revalidatePath(`/homework/${sub.assignmentId}`);
   return { ok: true };

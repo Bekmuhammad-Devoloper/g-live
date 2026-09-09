@@ -149,9 +149,9 @@ export default function NoteDetail({
 
           {/* Sintaksis eslatmasi */}
           <p className="text-[11.5px] leading-relaxed text-slate-600">
-            <code className="rounded bg-white/60 px-1">[[Sarlavha]]</code> · <code className="rounded bg-white/60 px-1">#teg</code> ·{" "}
-            <code className="rounded bg-white/60 px-1"># bo&apos;lim</code> · <code className="rounded bg-white/60 px-1">- ro&apos;yxat</code> ·{" "}
-            <code className="rounded bg-white/60 px-1">- [ ] belgi</code>
+            <code className="rounded bg-white/60 px-1">{t.mdLink}</code> · <code className="rounded bg-white/60 px-1">{t.mdTag}</code> ·{" "}
+            <code className="rounded bg-white/60 px-1">{t.mdHeading}</code> · <code className="rounded bg-white/60 px-1">{t.mdList}</code> ·{" "}
+            <code className="rounded bg-white/60 px-1">{t.mdCheck}</code>
           </p>
 
           {err && <p className="text-[12.5px] font-semibold text-rose-600">{err}</p>}

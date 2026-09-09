@@ -157,7 +157,7 @@ export default async function StudentWorterbuchPage({ searchParams }: { searchPa
                     <span className="text-[11.5px] font-semibold text-slate-500">{list.length}</span>
                     <div className="ml-auto grid grid-cols-[1fr_1.15fr] gap-3 text-[10px] font-bold uppercase tracking-wider text-slate-400">
                       <span className="text-right">Deutsch</span>
-                      <span>O&apos;zbekcha</span>
+                      <span>{t.uzbekLabel}</span>
                     </div>
                   </div>
 

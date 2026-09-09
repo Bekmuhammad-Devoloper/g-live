@@ -1,6 +1,8 @@
 "use client";
 
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
+import type { Locale } from "@/lib/constants";
+import { S } from "./_i18n";
 
 // Kutilmagan xatolik yuz berganda ko'rinadigan sahifa.
 //
@@ -8,14 +10,26 @@ import { useEffect } from "react";
 // oq fonda, ilovaning uslubiga umuman o'xshamaydigan. O'quvchi uchun bu
 // "ilova buzildi" degan taassurot qoldirardi va qaytadan urinish yo'li yo'q edi.
 //
-// Matn o'zbekchada: xato chegarasi klient komponenti bo'lgani uchun serverdagi
-// sessiya tilini o'qiy olmaydi, ilovaning asosiy tili esa o'zbekcha.
+// Til: xato chegarasi klient komponenti, serverdagi sessiyani o'qiy olmaydi.
+// O'quvchi layout'i o'ramga `data-locale` yozib qo'yadi — shu o'qiladi.
+// Birinchi chizilishda o'zbekcha, mount bo'lgach tanlangan til (bir lahza).
+
+const isLocale = (l: string | null | undefined): l is Locale => l === "uz" || l === "ru" || l === "en" || l === "de";
 
 export default function StudentError({ error, reset }: { error: Error & { digest?: string }; reset: () => void }) {
+  const [locale, setLocale] = useState<Locale>("uz");
+
   useEffect(() => {
     // Server jurnalida izlash uchun digest bilan birga yoziladi
     console.error("student portal xatosi:", error);
   }, [error]);
+
+  useEffect(() => {
+    const l = document.querySelector("[data-locale]")?.getAttribute("data-locale");
+    if (isLocale(l)) setLocale(l);
+  }, []);
+
+  const t = S(locale);
 
   return (
     <div className="gl-glass mt-10 flex flex-col items-center gap-4 px-6 py-12 text-center">
@@ -27,11 +41,8 @@ export default function StudentError({ error, reset }: { error: Error & { digest
         </svg>
       </span>
 
-      <div className="text-[18px] font-extrabold text-slate-900">Nimadir noto&apos;g&apos;ri ketdi</div>
-      <p className="text-[13.5px] leading-relaxed text-slate-600">
-        Sahifani ochib bo&apos;lmadi. Internetni tekshirib, qaytadan urinib ko&apos;ring.
-        Takrorlansa — administratorga xabar bering.
-      </p>
+      <div className="text-[18px] font-extrabold text-slate-900">{t.errTitle}</div>
+      <p className="text-[13.5px] leading-relaxed text-slate-600">{t.errBody}</p>
 
       <div className="flex w-full flex-col gap-2 pt-1">
         <button
@@ -40,13 +51,13 @@ export default function StudentError({ error, reset }: { error: Error & { digest
           className="min-h-[44px] w-full rounded-2xl text-[14px] font-bold text-white shadow-[0_8px_16px_rgba(14,116,144,0.3)] transition active:scale-[0.98]"
           style={{ background: "linear-gradient(135deg, #17a2bf, #0e7490)" }}
         >
-          Qaytadan urinish
+          {t.retry}
         </button>
         <a
           href="/student"
           className="grid min-h-[44px] w-full place-items-center rounded-2xl bg-white/60 text-[14px] font-bold text-slate-600"
         >
-          Bosh sahifaga
+          {t.toHome}
         </a>
       </div>
 

@@ -179,7 +179,7 @@ export default async function StudentProfilPage() {
         <div className="flex items-center gap-3">
           <span className="grid h-11 w-11 shrink-0 place-items-center rounded-2xl bg-[#eef6fa]"><IcoWallet s={22} /></span>
           <div className="flex-1">
-            <div className="text-[11px] font-semibold uppercase tracking-wide text-slate-500">Jami to&apos;langan</div>
+            <div className="text-[11px] font-semibold uppercase tracking-wide text-slate-500">{t.totalPaid}</div>
             <div className="text-[17px] font-extrabold text-slate-900">{fmtSum(totalPaid)}</div>
           </div>
           <div className="text-right">
@@ -204,7 +204,7 @@ export default async function StudentProfilPage() {
                 </div>
                 <div className="text-right">
                   <div className="whitespace-nowrap text-[14px] font-extrabold text-slate-900">{fmtSum(p.amount)}</div>
-                  {p.status === "PENDING" ? <Pill tone="bad">{t.debt}</Pill> : p.status === "PAID" ? <Pill tone="ok">To&apos;landi</Pill> : <Pill tone="muted">{p.status}</Pill>}
+                  {p.status === "PENDING" ? <Pill tone="bad">{t.debt}</Pill> : p.status === "PAID" ? <Pill tone="ok">{t.paid}</Pill> : <Pill tone="muted">{p.status}</Pill>}
                 </div>
               </div>
             ))}

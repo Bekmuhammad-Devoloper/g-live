@@ -2,7 +2,7 @@
 
 import { useEffect, useMemo, useRef, useState } from "react";
 import { createDuel, joinGroupGame, saveGameResult, submitChallenge } from "./actions";
-import type { StudentStrings } from "../_i18n";
+import { fill, type StudentStrings } from "../_i18n";
 import { CARD, ICON_GRADIENT, TEAL, PageHeader } from "../_ui";
 
 // Jang (Battle) — BITTA sahifa: sozlash → o'yin → natija.
@@ -35,25 +35,26 @@ const ROUNDS = 8;
 const ARTICLES = ["der", "die", "das"];
 const ART: Record<string, string> = { m: "der", f: "die", n: "das" };
 
-const MODES: { key: Mode; title: string; sub: string }[] = [
-  { key: "ai", title: "AI ga qarshi", sub: "Sun'iy intellekt bilan bellashing" },
-  { key: "duel", title: "Duel", sub: "Guruhdoshingizni jangga chaqiring" },
-  { key: "group", title: "Guruhli o'yin", sub: "Butun guruh bitta savollar bilan" },
+// Matnlar o'quvchi tilida (t) — shu sabab ro'yxatlar funksiya
+const modesOf = (t: StudentStrings): { key: Mode; title: string; sub: string }[] => [
+  { key: "ai", title: t.modeAi, sub: t.modeAiSub },
+  { key: "duel", title: t.modeDuel, sub: t.modeDuelSub },
+  { key: "group", title: t.modeGroup, sub: t.modeGroupSub },
 ];
 
-const LOBBIES: { key: Lobby; title: string; sub: string }[] = [
-  { key: "vocabulary", title: "Lug'at", sub: "To'g'ri so'zni tanlang" },
-  { key: "wordgame", title: "So'z o'yini", sub: "Harflardan tuzing" },
-  { key: "crossword", title: "Krossvord", sub: "Ta'rif bo'yicha yozing" },
-  { key: "grammar", title: "Grammatika", sub: "der, die yoki das" },
+const lobbiesOf = (t: StudentStrings): { key: Lobby; title: string; sub: string }[] => [
+  { key: "vocabulary", title: t.vocabulary, sub: t.lobbyVocabSub },
+  { key: "wordgame", title: t.lobbyWordgame, sub: t.lobbyWordgameSub },
+  { key: "crossword", title: t.lobbyCrossword, sub: t.lobbyCrosswordSub },
+  { key: "grammar", title: t.lobbyGrammar, sub: t.lobbyGrammarSub },
 ];
 
-const TASK_TITLE: Record<Lobby, string> = {
-  vocabulary: "To'g'ri so'zni tanlang",
-  wordgame: "Harflardan so'z tuzing",
-  crossword: "Ta'rif bo'yicha yozing",
-  grammar: "Artiklni tanlang",
-};
+const taskTitleOf = (t: StudentStrings): Record<Lobby, string> => ({
+  vocabulary: t.lobbyVocabSub,
+  wordgame: t.taskWordgame,
+  crossword: t.lobbyCrosswordSub,
+  grammar: t.taskGrammar,
+});
 
 // Barqaror (urug'li) aralashtirish — ikkala o'yinchi bir xil savol oladi
 function shuffled<T>(arr: T[], seed: number): T[] {
@@ -185,6 +186,10 @@ export default function Battle({
   const [picked, setPicked] = useState<string | null>(null);
   const [typed, setTyped] = useState("");
 
+  const MODES = modesOf(t);
+  const LOBBIES = lobbiesOf(t);
+  const TASK_TITLE = taskTitleOf(t);
+
   const pool = lobby === "grammar" ? nouns : words;
   const enough = lobby === "grammar" ? nouns.length >= 4 : words.length >= 4;
 
@@ -239,7 +244,7 @@ export default function Battle({
     const res = mode === "duel" ? await createDuel(rivalId!, lobby) : await joinGroupGame(lobby);
     setStarting(false);
     if (res.error || !res.id || res.seed === undefined) {
-      setErr(res.error ?? "Chaqiruvni ochib bo'lmadi");
+      setErr(res.error ?? t.openChallengeFailed);
       return;
     }
     begin(res.seed, res.id);
@@ -295,7 +300,7 @@ export default function Battle({
         {waiting.length > 0 && (
           <section>
             <p className="mb-2.5 px-1 text-[11px] font-bold uppercase tracking-[0.18em] text-slate-500">
-              Sizni kutmoqda
+              {t.waitingForYou}
             </p>
             <div className="space-y-2.5">
               {waiting.map((inv) => (
@@ -308,15 +313,15 @@ export default function Battle({
                   <Badge>{inv.kind === "DUEL" ? <GlyphSwords /> : <GlyphGroup />}</Badge>
                   <div className="min-w-0 flex-1">
                     <div className="text-[16px] font-extrabold leading-tight text-slate-900">
-                      {inv.kind === "DUEL" ? `${inv.from} chaqirdi` : "Guruh chempionati"}
+                      {inv.kind === "DUEL" ? fill(t.challengedYou, { name: inv.from }) : t.groupChampionship}
                     </div>
                     <div className="mt-0.5 text-[12.5px] text-slate-600">
                       {LOBBIES.find((l) => l.key === inv.lobby)?.title}
-                      {inv.kind === "GROUP" && inv.played > 0 ? ` · ${inv.played} kishi o'ynadi` : ""}
+                      {inv.kind === "GROUP" && inv.played > 0 ? ` · ${fill(t.playedPeople, { n: inv.played })}` : ""}
                     </div>
                   </div>
                   <span className="shrink-0 rounded-xl px-3 py-1.5 text-[12.5px] font-bold text-white" style={{ background: TEAL }}>
-                    O&apos;ynash
+                    {t.play}
                   </span>
                 </button>
               ))}
@@ -326,7 +331,7 @@ export default function Battle({
 
         {/* ── Jang turi ── */}
         <section>
-          <p className="mb-2.5 px-1 text-[11px] font-bold uppercase tracking-[0.18em] text-slate-500">Jang turi</p>
+          <p className="mb-2.5 px-1 text-[11px] font-bold uppercase tracking-[0.18em] text-slate-500">{t.battleType}</p>
           <div className="space-y-2.5">
             {MODES.map((m) => {
               const on = mode === m.key;
@@ -356,11 +361,11 @@ export default function Battle({
         {/* ── Raqib tanlash (duel) ── */}
         {mode === "duel" && (
           <section>
-            <p className="mb-2.5 px-1 text-[11px] font-bold uppercase tracking-[0.18em] text-slate-500">Raqibingiz</p>
+            <p className="mb-2.5 px-1 text-[11px] font-bold uppercase tracking-[0.18em] text-slate-500">{t.yourRival}</p>
             {rivals.length === 0 ? (
               <div className={`${CARD} px-5 py-8 text-center`}>
-                <div className="text-[14.5px] font-semibold text-slate-700">Guruhingizda ilovaga ulangan boshqa o&apos;quvchi yo&apos;q</div>
-                <p className="mt-1 text-[13px] text-slate-500">Ular ilovaga kirgach shu yerda chiqadi.</p>
+                <div className="text-[14.5px] font-semibold text-slate-700">{t.noRivals}</div>
+                <p className="mt-1 text-[13px] text-slate-500">{t.rivalsAppear}</p>
               </div>
             ) : (
               <div className="space-y-2">
@@ -394,7 +399,7 @@ export default function Battle({
 
         {/* ── O'yin turi ── */}
         <section>
-          <p className="mb-2.5 px-1 text-[11px] font-bold uppercase tracking-[0.18em] text-slate-500">O&apos;yin turi</p>
+          <p className="mb-2.5 px-1 text-[11px] font-bold uppercase tracking-[0.18em] text-slate-500">{t.gameType}</p>
           <div className="grid grid-cols-2 gap-3">
             {LOBBIES.map((l) => {
               const on = lobby === l.key;
@@ -434,12 +439,12 @@ export default function Battle({
             {starting
               ? "…"
               : !enough
-                ? "So'zlar yetarli emas"
+                ? t.notEnoughWords
                 : mode === "duel" && !rivalId
-                  ? "Raqibingizni tanlang"
+                  ? t.chooseRival
                   : mode === "duel"
-                    ? "Chaqiruv yuborish"
-                    : "Jangni boshlang"}
+                    ? t.sendChallenge
+                    : t.startBattle}
           </button>
         </div>
       </div>
@@ -458,14 +463,14 @@ export default function Battle({
         <div className={`${CARD} mt-6 p-6 text-center`}>
           <div className="text-[52px] leading-none">{solo ? (win ? "🏆" : draw ? "🤝" : "💪") : "📤"}</div>
           <div className="mt-3 text-[24px] font-extrabold text-slate-900">
-            {solo ? (win ? "Siz yutdingiz!" : draw ? "Durrang" : "Keyingi safar!") : "Natijangiz yozildi"}
+            {solo ? (win ? t.youWon : draw ? t.drawResult : t.nextTime) : t.resultSaved}
           </div>
           <div className="mt-1 text-[13px] text-slate-600">{LOBBIES.find((l) => l.key === lobby)?.title}</div>
 
           {solo ? (
             <div className="mt-5 flex items-center justify-center gap-7">
               <div>
-                <div className="text-[13px] font-semibold text-slate-600">Siz</div>
+                <div className="text-[13px] font-semibold text-slate-600">{t.you}</div>
                 <div className="text-[34px] font-extrabold" style={{ color: TEAL }}>{me}</div>
               </div>
               <div className="text-[22px] font-bold text-slate-300">:</div>
@@ -480,12 +485,10 @@ export default function Battle({
                 <div className="text-[40px] font-extrabold leading-none" style={{ color: TEAL }}>
                   {me}<span className="text-[22px] text-slate-500">/{rounds.length}</span>
                 </div>
-                <div className="mt-1 text-[13px] font-semibold text-slate-600">{pct}% to&apos;g&apos;ri</div>
+                <div className="mt-1 text-[13px] font-semibold text-slate-600">{fill(t.pctCorrect, { p: pct })}</div>
               </div>
               <p className="mx-auto mt-4 max-w-[280px] text-[13px] leading-relaxed text-slate-500">
-                {mode === "duel"
-                  ? "Raqibingiz ham o'ynagach, natija bildirishnoma bo'lib keladi."
-                  : "Guruhdoshlaringiz o'ynagach, kim oldinda ekani ko'rinadi."}
+                {mode === "duel" ? t.duelWait : t.groupWait}
               </p>
             </>
           )}
@@ -496,7 +499,7 @@ export default function Battle({
               onClick={() => { setChallengeId(null); setView("setup"); }}
               className="flex-1 rounded-2xl border-2 border-slate-200 py-3 text-[15px] font-bold text-slate-600"
             >
-              Orqaga
+              {t.back}
             </button>
             {solo && (
               <button
@@ -505,7 +508,7 @@ export default function Battle({
                 style={{ background: ICON_GRADIENT }}
                 className="flex-[1.3] rounded-2xl py-3 text-[15px] font-extrabold text-white shadow-[0_8px_18px_rgba(14,116,144,0.3)]"
               >
-                Yana o&apos;ynash
+                {t.playAgain}
               </button>
             )}
           </div>
@@ -522,7 +525,7 @@ export default function Battle({
         <button
           type="button"
           onClick={() => setView("setup")}
-          aria-label="Orqaga"
+          aria-label={t.back}
           className="gl-glass grid h-11 w-11 shrink-0 place-items-center rounded-full"
         >
           <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke={TEAL} strokeWidth="2.4" strokeLinecap="round" strokeLinejoin="round">
@@ -616,7 +619,7 @@ export default function Battle({
               onChange={(e) => setTyped(e.target.value)}
               onKeyDown={(e) => { if (e.key === "Enter") check(); }}
               disabled={!!picked}
-              placeholder="Javobingiz…"
+              placeholder={t.answerPh}
               autoCapitalize="off"
               autoCorrect="off"
               autoComplete="off"
@@ -627,7 +630,7 @@ export default function Battle({
 
             {picked && (
               <p className={`mt-2 text-[14px] font-bold ${picked.toLowerCase() === target.toLowerCase() ? "text-emerald-600" : "text-rose-600"}`}>
-                {picked.toLowerCase() === target.toLowerCase() ? "To'g'ri!" : `To'g'ri javob: ${target}`}
+                {picked.toLowerCase() === target.toLowerCase() ? t.correctBang : `${t.correctAnswer}: ${target}`}
               </p>
             )}
 
@@ -638,7 +641,7 @@ export default function Battle({
               style={!picked && typed.trim() ? { background: ICON_GRADIENT } : undefined}
               className="mt-3 w-full rounded-2xl py-3 text-[15.5px] font-extrabold text-white transition disabled:bg-slate-300"
             >
-              Tekshirish
+              {t.check}
             </button>
           </>
         )}

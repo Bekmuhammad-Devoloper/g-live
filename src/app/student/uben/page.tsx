@@ -101,7 +101,7 @@ export default async function StudentUebenPage() {
         </span>
         <div className="min-w-0 flex-1">
           <div className="text-[20px] font-extrabold leading-tight">{t.gamesAndBattle}</div>
-          <div className="mt-0.5 text-[13px] text-white/80">Vocabulary · So'z o'yini · Krossvord</div>
+          <div className="mt-0.5 text-[13px] text-white/80">{t.vocabulary} · {t.lobbyWordgame} · {t.lobbyCrossword}</div>
         </div>
         <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="2.6" strokeLinecap="round" strokeLinejoin="round">
           <path d="m9 6 6 6-6 6" />
