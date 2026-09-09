@@ -3,23 +3,23 @@ import { getSession } from "@/lib/auth";
 import { ROLES } from "@/lib/constants";
 import { prisma } from "@/lib/db";
 import { lessonVocabText, parseLessonWords, practicableWords } from "@/lib/lessonWords";
-import { transcribeAudio, isGeminiConfigured } from "@/lib/gemini";
 import { checkPronunciation } from "@/lib/pronounce";
 
 export const runtime = "nodejs";
 
 // Talaffuz tekshiruvi — lug'at mashqining 4-bosqichi.
 //
-// O'quvchi so'zni aytadi, ilova yozuvni shu yerga yuboradi. Bu yerda:
+// Nutqni telefonning o'zi taniydi (NativeSpeechPlugin) va bu yerga faqat
+// tanilgan MATN keladi. Bu yerda:
 //   1. seans va dars tekshiriladi (boshqa kursning so'zini mashq qilib
 //      bo'lmasin — markLessonWatched dagi tekshiruv bilan bir xil)
 //   2. MAQSAD SO'Z SERVERDA aniqlanadi. Mijoz "men shu so'zni aytdim" deb
-//      yuborgan matnga ishonilmaydi: aks holda javobni o'zi yozib yuborardi.
-//   3. yozuvda haqiqatan ovoz bormi — o'zimiz o'lchaymiz (pastda)
-//   4. Gemini eshitganini yozadi, solishtirishni lib/pronounce.ts qiladi
-
-const MAX_BYTES = 2 * 1024 * 1024; // ~1 daqiqalik 16kHz mono WAV dan ko'p
-const MIN_BYTES = 2000;
+//      yuborgan matnga ishonilmaydi: u faqat tartib raqamini yuboradi.
+//   3. solishtirishni lib/pronounce.ts bajaradi — qoidalar bitta joyda
+//
+// ILGARI audio ham qabul qilinardi (brauzerda yozib olib, Gemini orqali
+// matnga o'girish). Olib tashlandi: Gemini noto'g'ri aytilganini "to'g'ri"
+// deb o'tkazardi (o'ylab topadi), kvotasi kuniga 20 ta, javobi ~30 s.
 
 /** Bir o'quvchi bir daqiqada nechta tekshiruv so'rashi mumkin */
 const RATE_LIMIT = 40;
@@ -31,7 +31,6 @@ function rateLimited(studentId: string): boolean {
   const cur = hits.get(studentId);
   if (!cur || cur.until < now) {
     hits.set(studentId, { n: 1, until: now + RATE_WINDOW_MS });
-    // Xotira o'smasin: eskirganlarni vaqti-vaqti bilan tozalaymiz
     if (hits.size > 500) for (const [k, v] of hits) if (v.until < now) hits.delete(k);
     return false;
   }
@@ -39,72 +38,19 @@ function rateLimited(studentId: string): boolean {
   return cur.n > RATE_LIMIT;
 }
 
-/**
- * WAV yozuvida haqiqatan gapirilganmi.
- *
- * ZARUR: sinovda Gemini MUTLAQ JIMLIKKA ham "Guten Tag" deb javob berdi.
- * Ya'ni faqat modelga tayanib bo'lmaydi — hech narsa demasdan ham bosqichni
- * o'tib ketish mumkin bo'lardi. Shuning uchun ovoz kuchini o'zimiz
- * o'lchaymiz va jim yozuvni modelga umuman yubormaymiz.
- *
- * Tekshiruv SERVERDA: mijozdagisini chetlab o'tish mumkin.
- */
-function hasVoice(buf: Buffer): boolean {
-  // "data" bo'lagini topamiz (WAV sarlavhasi doim 44 bayt bo'lavermaydi)
-  let at = 12;
-  let start = 44;
-  let size = buf.length - 44;
-  while (at + 8 <= buf.length) {
-    const id = buf.toString("ascii", at, at + 4);
-    const len = buf.readUInt32LE(at + 4);
-    if (id === "data") { start = at + 8; size = Math.min(len, buf.length - start); break; }
-    at += 8 + len + (len % 2);
-  }
-  if (size <= 0) return false;
-
-  // 20 ms li bo'laklarga bo'lib, har birining kuchini o'lchaymiz
-  const samples = Math.floor(size / 2);
-  const frame = 320; // 16 kHz da 20 ms
-  let loud = 0;
-  let frames = 0;
-  for (let i = 0; i + frame <= samples; i += frame) {
-    let sum = 0;
-    for (let j = 0; j < frame; j++) {
-      const v = buf.readInt16LE(start + (i + j) * 2) / 32768;
-      sum += v * v;
-    }
-    frames++;
-    if (Math.sqrt(sum / frame) > 0.02) loud++; // ~ -34 dB
-  }
-  // Kamida 250 ms davomida ovoz bo'lsin (12 ta bo'lak)
-  return frames > 0 && loud >= 12;
-}
-
 export async function POST(req: Request) {
   const s = await getSession();
   if (!s || s.role !== ROLES.STUDENT) {
     return NextResponse.json({ error: "unauthorized" }, { status: 401 });
   }
+
   const form = await req.formData().catch(() => null);
-  const audio = form?.get("audio");
-  // Androidning o'z nutq tanish tizimi matnni telefonda tayyorlaydi va shu
-  // yerga faqat MATNNI yuboradi — audio umuman jo'natilmaydi. Tekshiruv
-  // qoidalari (qaysi javob qabul qilinishi) baribir shu yerda, bitta joyda.
   const transcript = String(form?.get("transcript") ?? "").slice(0, 300);
   const lessonId = String(form?.get("lessonId") ?? "");
   const wordIndex = Number(form?.get("wordIndex"));
-  // Qaysi yo'l ishlatilgani — jurnalda ko'rinsin ("native" yoki audio).
-  // Qurilmaga kirolmaymiz; jurnal va ekrandagi sabab — yagona ko'zimiz.
-  const via = String(form?.get("via") ?? (form?.get("audio") ? "audio" : "?")).slice(0, 20);
-  console.log(`[pronounce] via=${via} word=${wordIndex}`);
 
-  const hasAudio = audio instanceof File;
-  if ((!hasAudio && !transcript.trim()) || !lessonId || !Number.isInteger(wordIndex) || wordIndex < 0) {
+  if (!transcript.trim() || !lessonId || !Number.isInteger(wordIndex) || wordIndex < 0) {
     return NextResponse.json({ error: "invalid" }, { status: 400 });
-  }
-  if (hasAudio) {
-    if (audio.size > MAX_BYTES) return NextResponse.json({ error: "too_large" }, { status: 413 });
-    if (audio.size < MIN_BYTES) return NextResponse.json({ error: "no_voice" });
   }
 
   const student = await prisma.student.findUnique({
@@ -131,33 +77,21 @@ export async function POST(req: Request) {
   const word = words[wordIndex];
   if (!word) return NextResponse.json({ error: "invalid" }, { status: 400 });
 
-  let said: string;
-  if (hasAudio) {
-    // Audio yo'li tashqi xizmatga tayanadi. Matn yo'li (Android o'zi
-    // taniganida) unga muhtoj emas, shuning uchun tekshiruv shu yerda —
-    // yuqorida bo'lsa kalitsiz serverda native yo'l ham to'silib qolardi.
-    if (!isGeminiConfigured()) {
-      return NextResponse.json({ error: "not_configured" }, { status: 503 });
-    }
-    const buf = Buffer.from(await audio.arrayBuffer());
-    if (!hasVoice(buf)) return NextResponse.json({ error: "no_voice" });
-
-    const heard = await transcribeAudio(buf);
-    if (!heard) return NextResponse.json({ error: "unavailable" }, { status: 503 });
-    if (!heard.speech || !heard.text.trim()) return NextResponse.json({ error: "no_voice" });
-    said = heard.text;
-  } else {
-    said = transcript;
-  }
-
   const others = words.filter((_, i) => i !== wordIndex).map((w) => w.de);
-  const result = checkPronunciation(word.de, said, others);
+  const result = checkPronunciation(word.de, transcript, others);
+
+  // QAROR jurnalga yoziladi: nima kutilgan, nima eshitilgan, nima deyilgan.
+  // "Noto'g'ri aytsam ham to'g'ri deydi" degan shikoyatni faqat shu bilan
+  // tekshirib bo'ladi — qurilma ham, mikrofon ham bizda yo'q.
+  console.log(
+    `[pronounce] target="${word.de}" heard="${transcript.slice(0, 80).replace(/\n/g, " ")}" ok=${result.ok} matched="${result.matched ?? ""}"`,
+  );
 
   return NextResponse.json({
     ok: result.ok,
     // O'quvchi nima eshitilganini ko'rsin — "noto'g'ri" deyishdan ko'ra
-    // ancha foydali, chunki xatosi qayerdaligi ko'rinadi. Androidda bir
-    // nechta variant kelishi mumkin, birinchisini ko'rsatamiz.
-    heard: said.split("|")[0].trim().slice(0, 80),
+    // foydali, xatosi qayerdaligi ko'rinadi. Android bir nechta variant
+    // qaytarishi mumkin, birinchisini ko'rsatamiz.
+    heard: transcript.split("|")[0].trim().slice(0, 80),
   });
 }

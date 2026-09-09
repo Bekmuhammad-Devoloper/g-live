@@ -48,7 +48,7 @@ function shuffle<T>(arr: T[]): T[] {
 type Word = LessonWord & { uz: string };
 
 export default function VocabTrainer({
-  words, lessonId, t, accent, label, canSpeak = false,
+  words, lessonId, t, accent, label,
 }: {
   words: LessonWord[];
   lessonId: string;
@@ -57,16 +57,15 @@ export default function VocabTrainer({
   accent: string;
   /** Tugmadagi yozuv */
   label: string;
-  /** Serverda Gemini kaliti sozlanganmi (talaffuzning zaxira yo'li) */
-  canSpeak?: boolean;
 }) {
   const pool = useMemo(() => practicableWords(words), [words]);
   const [open, setOpen] = useState(false);
   /** Androidning o'z nutq tanish tizimi bormi */
   const [nativeSpeech, setNativeSpeech] = useState(false);
 
-  // Talaffuz bosqichi IKKI yo'ldan biri bo'lsa mumkin: telefon nutqni o'zi
-  // taniydi (afzal — bepul va tez) yoki serverda Gemini kaliti bor.
+  // Talaffuz bosqichi FAQAT telefon nutqni o'zi taniganda bo'ladi (Android
+  // ilovasi). Brauzerda mashq uch bosqichda tugaydi — Gemini zaxirasi olib
+  // tashlangan: u noto'g'ri aytilganini "to'g'ri" deb o'tkazardi.
   useEffect(() => {
     let cancelled = false;
     void nativeSpeechAvailable().then((v) => { if (!cancelled) setNativeSpeech(v); });
@@ -97,7 +96,7 @@ export default function VocabTrainer({
           lessonId={lessonId}
           t={t}
           accent={accent}
-          lastStage={canSpeak || nativeSpeech ? 4 : 3}
+          lastStage={nativeSpeech ? 4 : 3}
           onClose={() => setOpen(false)}
         />
       )}

@@ -104,6 +104,8 @@ const DICT = {
   micDenied: p("Mikrofonga ruxsat berilmadi", "Доступ к микрофону запрещён", "Microphone access denied", "Mikrofonzugriff verweigert"),
   speakUnavailable: p("Hozir tekshirib bo'lmadi, qaytadan urinib ko'ring", "Сейчас не удалось проверить, попробуйте снова", "Could not check right now, try again", "Konnte gerade nicht prüfen, versuche es erneut"),
   skipStage: p("Bu bosqichni o'tkazib yuborish", "Пропустить этот этап", "Skip this stage", "Diese Stufe überspringen"),
+  // Brauzerda talaffuz bosqichi yo'q — nutqni faqat telefonning o'zi taniydi
+  speechOnlyInApp: p("Talaffuz bosqichi faqat Android ilovasida ishlaydi", "Этап произношения работает только в приложении Android", "The pronunciation stage works only in the Android app", "Die Aussprache-Stufe funktioniert nur in der Android-App"),
   // Telefonda nutq tanish xizmati ishlamadi (Google xizmati yo'q yoki til yo'q)
   speechServiceMissing: p("Telefonda nutq tanish ishlamadi — Google ilovasi va nemis tili paketi kerak", "Распознавание речи на телефоне не работает — нужны приложение Google и немецкий язык", "Speech recognition failed on this phone — the Google app and German language pack are needed", "Spracherkennung auf diesem Telefon fehlgeschlagen — Google-App und deutsches Sprachpaket nötig"),
   // Ilovaning eski versiyasida nutq tanish plagini yo'q
