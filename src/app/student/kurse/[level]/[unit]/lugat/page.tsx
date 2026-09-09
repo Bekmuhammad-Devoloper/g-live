@@ -4,6 +4,7 @@ import { SectionHeader, IcoWords, Attachment } from "../_parts";
 import { lessonVocabText, looksLikeVocabulary, parseLessonWords, practicableWords, splitArticle, type LessonWord } from "@/lib/lessonWords";
 import { loadUnitProgress } from "../_progress";
 import { NAVY } from "../../../../_ui";
+import { isGeminiConfigured } from "@/lib/gemini";
 import VocabTrainer from "./VocabTrainer";
 
 // Darsning lug'ati.
@@ -107,6 +108,9 @@ export default async function LessonVocabPage({
               t={t}
               accent={ACCENT_SOLID}
               label={p.vocab.mastered ? t.practiceAgain : t.practiceWords}
+              // Brauzerdagi talaffuz Gemini orqali (yopiq tanlov). Kalit
+              // bo'lmasa brauzerda uch bosqich — ishlamaydigan tugma chiqmasin.
+              canSpeak={isGeminiConfigured()}
             />
           ) : (
             <p className="relative mt-3 text-[12px] font-medium text-white/70">{t.vocabTooFew}</p>

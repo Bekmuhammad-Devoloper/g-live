@@ -1,28 +1,73 @@
 "use client";
 
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import type { StudentStrings } from "../../../../_i18n";
 import { isNativeApp, listenNative, stopNative } from "@/lib/nativeSpeech";
 
 // Talaffuz bosqichi — o'quvchi so'zni ovoz chiqarib aytadi.
 //
-// FAQAT ANDROID ILOVASIDA. Nutqni telefonning o'zi taniydi
-// (NativeSpeechPlugin): bepul, kvotasiz, odatda bir soniyada, o'quvchining
-// ovozi telefondan chiqmaydi — serverga faqat tanilgan MATN boradi va
-// solishtirish o'sha yerda (lib/pronounce.ts).
+// IKKI YO'L:
+//   1. ANDROID ILOVASI — nutqni telefonning o'zi taniydi (NativeSpeechPlugin).
+//      Bepul, kvotasiz, ovoz telefondan chiqmaydi; serverga faqat MATN boradi.
+//   2. BRAUZER — yozib olinadi, WAV ga o'giriladi, serverga yuboriladi;
+//      u yerda Gemini YOPIQ TANLOV bilan baholaydi (darsdagi so'zlar
+//      ro'yxatidan qaysi biri aytilgani, yoki hech qaysi) va server uch
+//      shartni birga tekshiradi. Ochiq transkripsiya o'ylab topardi —
+//      shuning uchun bu ko'rinishga o'tildi.
 //
-// ILGARI zaxira yo'l bor edi: brauzerda yozib olib, Gemini'ga yuborish.
-// U OLIB TASHLANDI, chunki:
-//   · noto'g'ri aytilganini "to'g'ri" deb o'tkazardi (o'ylab topadi —
-//     ohangga, shovqinga, hatto jimlikka ham so'z "eshitardi"). Foydalanuvchi
-//     buni ikki marta ko'rdi. Tekshirmagan holatdan noto'g'ri tekshirgani
-//     yomonroq.
-//   · bepul kvota kuniga 20 ta so'rov, 5 s audioga ~30 s kutish.
-// Brauzerda mashq uch bosqichda tugaydi (VocabTrainer `lastStage`).
-// Bu komponent brauzerda umuman chizilmaydi; ehtiyot uchun chizilsa ham
-// "faqat ilovada" deb aytadi va o'tkazib yuborishni taklif qiladi.
+// NEGA WAV. Brauzer MediaRecorder bilan webm yozadi; Gemini WAV ni aniq
+// qabul qiladi. Yozuv brauzerning O'ZIDA o'giriladi (decodeAudioData →
+// 16 kHz mono → WAV). 4 soniya ≈ 128 KB.
+//
+// NEGA OVOZ KUCHI O'LCHANADI. Gemini jimlikka ham so'z "eshitadi". Jim
+// yozuv serverga umuman yuborilmaydi (server ham o'lchaydi — u haqiqiy
+// himoya, bu esa tezkor javob uchun).
+
+const SAMPLE_RATE = 16000;
+/** Bitta so'z uchun 4 soniya yetarli; uzunroq yozuv — sekinroq javob */
+const MAX_MS = 4000;
+const VOICE_RMS = 0.02;
+const VOICE_FRAMES = 12; // 20 ms li bo'laklar → 250 ms
 
 type Phase = "idle" | "listening" | "checking" | "result" | "error";
+
+function downsample(input: Float32Array, from: number, to: number): Float32Array {
+  if (to >= from) return input;
+  const ratio = from / to;
+  const out = new Float32Array(Math.floor(input.length / ratio));
+  for (let i = 0; i < out.length; i++) {
+    const start = Math.floor(i * ratio);
+    const end = Math.min(Math.floor((i + 1) * ratio), input.length);
+    let sum = 0;
+    for (let j = start; j < end; j++) sum += input[j];
+    out[i] = end > start ? sum / (end - start) : 0;
+  }
+  return out;
+}
+
+function encodeWav(pcm: Float32Array, rate: number): Blob {
+  const buf = new ArrayBuffer(44 + pcm.length * 2);
+  const v = new DataView(buf);
+  const put = (o: number, s: string) => { for (let i = 0; i < s.length; i++) v.setUint8(o + i, s.charCodeAt(i)); };
+  put(0, "RIFF"); v.setUint32(4, 36 + pcm.length * 2, true); put(8, "WAVE");
+  put(12, "fmt "); v.setUint32(16, 16, true); v.setUint16(20, 1, true); v.setUint16(22, 1, true);
+  v.setUint32(24, rate, true); v.setUint32(28, rate * 2, true); v.setUint16(32, 2, true); v.setUint16(34, 16, true);
+  put(36, "data"); v.setUint32(40, pcm.length * 2, true);
+  let o = 44;
+  for (const s of pcm) { const c = Math.max(-1, Math.min(1, s)); v.setInt16(o, c < 0 ? c * 0x8000 : c * 0x7fff, true); o += 2; }
+  return new Blob([buf], { type: "audio/wav" });
+}
+
+function hasVoice(pcm: Float32Array): boolean {
+  const frame = SAMPLE_RATE / 50;
+  let loud = 0;
+  for (let i = 0; i + frame <= pcm.length; i += frame) {
+    let sum = 0;
+    for (let j = 0; j < frame; j++) sum += pcm[i + j] * pcm[i + j];
+    if (Math.sqrt(sum / frame) > VOICE_RMS) loud++;
+  }
+  return loud >= VOICE_FRAMES;
+}
 
 export default function SpeakStage({
   word, wordIndex, lessonId, t, accent, picked, onAnswer, onSkip,
@@ -36,87 +81,137 @@ export default function SpeakStage({
   accent: string;
   picked: string | null;
   onAnswer: (ok: boolean, mark: string) => void;
-  /** Nutq tanish umuman ishlamasa — bosqichni o'tkazib yuborish */
+  /** Tekshiruv umuman ishlamasa — bosqichni o'tkazib yuborish */
   onSkip: () => void;
 }) {
   const [phase, setPhase] = useState<Phase>("idle");
   const [heard, setHeard] = useState<string | null>(null);
   const [problem, setProblem] = useState<string | null>(null);
   const [canSkip, setCanSkip] = useState(false);
-  /** Nima uchun ishlamagani — xato ostida kichik yozuvda (masalan "err_5") */
+  /** Texnik sabab — xato ostida kichik yozuvda (masalan "err_5", "quota") */
   const [diag, setDiag] = useState<string | null>(null);
+  /** Ilovadamizmi — null: hali aniqlanmadi */
+  const [inApp, setInApp] = useState<boolean | null>(null);
 
-  // Brauzerda bu bosqich ma'nosiz — darhol aytamiz
+  const recorder = useRef<MediaRecorder | null>(null);
+  const stream = useRef<MediaStream | null>(null);
+  const stopTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  const cleanup = useCallback(() => {
+    if (stopTimer.current) clearTimeout(stopTimer.current);
+    stopTimer.current = null;
+    stream.current?.getTracks().forEach((tr) => tr.stop());
+    stream.current = null;
+    recorder.current = null;
+  }, []);
+
+  useEffect(() => cleanup, [cleanup]);
   useEffect(() => {
     let cancelled = false;
-    void isNativeApp().then((inApp) => {
-      if (cancelled || inApp) return;
-      setCanSkip(true);
-      setProblem(t.speechOnlyInApp);
-      setPhase("error");
-    });
+    void isNativeApp().then((v) => { if (!cancelled) setInApp(v); });
     return () => { cancelled = true; };
-  }, [t]);
+  }, []);
 
-  /** Tanilgan matnni serverga yuboradi — solishtirish u yerda */
-  const send = useCallback(async (transcript: string) => {
+  const showError = useCallback((msg: string, code?: string, skip = false) => {
+    setProblem(msg);
+    setDiag(code ?? null);
+    if (skip) setCanSkip(true);
+    setPhase("error");
+  }, []);
+
+  /** Yozuvni yoki tanilgan matnni serverga yuboradi — qaror u yerda */
+  const send = useCallback(async (payload: { wav: Blob } | { transcript: string }) => {
     setPhase("checking");
     try {
       const fd = new FormData();
-      fd.set("transcript", transcript);
+      if ("wav" in payload) fd.set("audio", payload.wav, "speech.wav");
+      else fd.set("transcript", payload.transcript);
       fd.set("lessonId", lessonId);
       fd.set("wordIndex", String(wordIndex));
-      // Muddat: sekin tarmoqda so'rov osilib qolsa tugma abadiy o'chib qolardi
-      const res = await fetch("/api/pronounce", { method: "POST", body: fd, signal: AbortSignal.timeout(30_000) });
+      // Muddat: so'rov osilib qolsa tugma abadiy o'chib qolardi
+      const res = await fetch("/api/pronounce", { method: "POST", body: fd, signal: AbortSignal.timeout(40_000) });
       const data = (await res.json().catch(() => ({}))) as { ok?: boolean; heard?: string; error?: string };
-      if (data.error) { setDiag(data.error); setProblem(t.speakUnavailable); setPhase("error"); return; }
+
+      if (data.error === "no_voice") { showError(t.noVoice); return; }
+      if (data.error === "quota") { showError(t.quotaReached, "quota", true); return; }
+      if (data.error === "not_configured") { showError(t.speechOnlyInApp, "not_configured", true); return; }
+      if (data.error) { showError(t.speakUnavailable, data.error); return; }
+
       setHeard(data.heard ?? null);
       setPhase("result");
       onAnswer(!!data.ok, data.heard || "?");
     } catch {
-      setDiag("network");
-      setProblem(t.speakUnavailable);
-      setPhase("error");
+      showError(t.speakUnavailable, "network");
     }
-  }, [lessonId, wordIndex, t, onAnswer]);
+  }, [lessonId, wordIndex, t, onAnswer, showError]);
+
+  /** 2-yo'l (brauzer): yozib olib, serverga yuborish */
+  const startRecording = useCallback(async () => {
+    let ms: MediaStream;
+    try {
+      ms = await navigator.mediaDevices.getUserMedia({ audio: { channelCount: 1, echoCancellation: true, noiseSuppression: true } });
+    } catch {
+      showError(t.micDenied, "mic_denied", true);
+      return;
+    }
+    stream.current = ms;
+    const chunks: Blob[] = [];
+    let rec: MediaRecorder;
+    try { rec = new MediaRecorder(ms); } catch { cleanup(); showError(t.speakUnavailable, "no_recorder", true); return; }
+    recorder.current = rec;
+
+    rec.ondataavailable = (e) => { if (e.data.size > 0) chunks.push(e.data); };
+    rec.onstop = async () => {
+      cleanup();
+      try {
+        const raw = new Blob(chunks, { type: rec.mimeType || "audio/webm" });
+        const ctx = new AudioContext();
+        const decoded = await ctx.decodeAudioData(await raw.arrayBuffer());
+        const pcm = downsample(decoded.getChannelData(0), decoded.sampleRate, SAMPLE_RATE);
+        void ctx.close();
+        if (!hasVoice(pcm)) { showError(t.noVoice); return; }
+        await send({ wav: encodeWav(pcm, SAMPLE_RATE) });
+      } catch {
+        showError(t.speakUnavailable, "decode");
+      }
+    };
+
+    rec.start();
+    setPhase("listening");
+    navigator.vibrate?.(10);
+    stopTimer.current = setTimeout(() => { if (recorder.current?.state === "recording") recorder.current.stop(); }, MAX_MS);
+  }, [t, cleanup, send, showError]);
+
+  /** 1-yo'l (ilova): telefonning o'zi taniydi */
+  const startNative = useCallback(async () => {
+    setPhase("listening");
+    navigator.vibrate?.(10);
+    const r = await listenNative("de-DE");
+
+    if (!r) { showError(t.updateApp, "no_plugin", true); return; }
+    if ("error" in r) {
+      if (r.error === "denied") showError(t.micDenied, undefined, true);
+      else if (r.error === "no_match") showError(t.noVoice);
+      else if (r.error === "network") showError(t.speakUnavailable, r.error);
+      else showError(t.speechServiceMissing, r.error, true); // sababi qavsda
+      return;
+    }
+    if (!r.text.trim()) { showError(t.noVoice); return; }
+    await send({ transcript: r.text });
+  }, [t, send, showError]);
 
   const start = useCallback(async () => {
     if (phase !== "idle" && phase !== "error") return;
-    if (canSkip && problem === t.speechOnlyInApp) return; // brauzer — urinmaymiz
-    setProblem(null);
-    setHeard(null);
-    setDiag(null);
-    setPhase("listening");
-    navigator.vibrate?.(10);
+    setProblem(null); setHeard(null); setDiag(null);
+    // Ilovada HAR DOIM telefonning o'zi; brauzerda yozib olish
+    if (inApp ?? (await isNativeApp())) await startNative();
+    else await startRecording();
+  }, [phase, inApp, startNative, startRecording]);
 
-    const r = await listenNative("de-DE");
-
-    if (!r) {
-      // Plagin yo'q: ilovada bu eski APK
-      setDiag("no_plugin");
-      setCanSkip(true);
-      setProblem(t.updateApp);
-      setPhase("error");
-      return;
-    }
-    if ("error" in r) {
-      if (r.error === "denied") { setCanSkip(true); setProblem(t.micDenied); }
-      else if (r.error === "no_match") setProblem(t.noVoice);
-      else if (r.error === "network") { setDiag(r.error); setProblem(t.speakUnavailable); }
-      else {
-        // Xizmat nosoz / til yo'q / oyna ham ochilmadi — sababi qavsda
-        setDiag(r.error);
-        setCanSkip(true);
-        setProblem(t.speechServiceMissing);
-      }
-      setPhase("error");
-      return;
-    }
-    if (!r.text.trim()) { setProblem(t.noVoice); setPhase("error"); return; }
-    await send(r.text);
-  }, [phase, canSkip, problem, t, send]);
-
-  const stop = useCallback(() => { void stopNative(); }, []);
+  const stop = useCallback(() => {
+    if (recorder.current?.state === "recording") { recorder.current.stop(); return; }
+    void stopNative();
+  }, []);
 
   const ok = phase === "result" && picked !== null && heard !== null;
   const wrong = phase === "result" && picked !== null && !ok;
@@ -154,10 +249,7 @@ export default function SpeakStage({
             "grid h-[92px] w-[92px] place-items-center rounded-full text-white transition active:scale-95 disabled:opacity-60 " +
             (phase === "listening" ? "animate-pulse" : "")
           }
-          style={{
-            background: wrong ? "#e11d48" : ok ? "#059669" : accent,
-            boxShadow: "0 14px 30px -14px rgba(15,60,80,0.85)",
-          }}
+          style={{ background: wrong ? "#e11d48" : ok ? "#059669" : accent, boxShadow: "0 14px 30px -14px rgba(15,60,80,0.85)" }}
         >
           {phase === "checking" ? (
             <svg width="34" height="34" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.6" strokeLinecap="round" className="animate-spin">
@@ -174,9 +266,7 @@ export default function SpeakStage({
               </svg>
             )
           ) : phase === "listening" ? (
-            <svg width="30" height="30" viewBox="0 0 24 24" fill="currentColor">
-              <rect x="6" y="6" width="12" height="12" rx="2.5" />
-            </svg>
+            <svg width="30" height="30" viewBox="0 0 24 24" fill="currentColor"><rect x="6" y="6" width="12" height="12" rx="2.5" /></svg>
           ) : (
             <svg width="36" height="36" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
               <rect x="9" y="2.6" width="6" height="11" rx="3" />
@@ -190,14 +280,9 @@ export default function SpeakStage({
           {phase === "listening" ? t.micListening : phase === "checking" ? t.micChecking : phase === "idle" || phase === "error" ? t.tapToSpeak : ""}
         </span>
 
-        {/* Nutq tanish umuman ishlamasa — bosqichni o'tkazib yuborish.
-            O'quvchining aybi emas, shu sabab uni cheksiz to'sib qo'ymaymiz. */}
+        {/* Tekshiruv umuman ishlamasa — o'quvchining aybi emas, to'sib qo'ymaymiz */}
         {canSkip && (
-          <button
-            type="button"
-            onClick={onSkip}
-            className="mt-1 rounded-[14px] px-4 py-2 text-[13px] font-bold text-slate-500 underline underline-offset-4"
-          >
+          <button type="button" onClick={onSkip} className="mt-1 rounded-[14px] px-4 py-2 text-[13px] font-bold text-slate-500 underline underline-offset-4">
             {t.skipStage}
           </button>
         )}
