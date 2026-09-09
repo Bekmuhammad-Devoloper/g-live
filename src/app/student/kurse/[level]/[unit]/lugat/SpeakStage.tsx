@@ -86,6 +86,13 @@ export default function SpeakStage({
 }) {
   const [phase, setPhase] = useState<Phase>("idle");
   const [heard, setHeard] = useState<string | null>(null);
+  /**
+   * Serverning QARORI — to'g'rimi. Ilgari yashil/qizil rang "eshitilgan
+   * matn bormi" ga qarab chizilardi: noto'g'ri aytilganda ham server rad
+   * etardi-yu, tugma yashil bo'lib, so'z jimgina navbatga qaytardi. O'quvchi
+   * buni "to'g'ri deb oldi" deb tushunardi.
+   */
+  const [verdict, setVerdict] = useState<boolean | null>(null);
   const [problem, setProblem] = useState<string | null>(null);
   const [canSkip, setCanSkip] = useState(false);
   /** Texnik sabab — xato ostida kichik yozuvda (masalan "err_5", "quota") */
@@ -138,7 +145,9 @@ export default function SpeakStage({
       if (data.error) { showError(t.speakUnavailable, data.error); return; }
 
       setHeard(data.heard ?? null);
+      setVerdict(!!data.ok);
       setPhase("result");
+      navigator.vibrate?.(data.ok ? 8 : [12, 60, 12]);
       onAnswer(!!data.ok, data.heard || "?");
     } catch {
       showError(t.speakUnavailable, "network");
@@ -202,7 +211,7 @@ export default function SpeakStage({
 
   const start = useCallback(async () => {
     if (phase !== "idle" && phase !== "error") return;
-    setProblem(null); setHeard(null); setDiag(null);
+    setProblem(null); setHeard(null); setDiag(null); setVerdict(null);
     // Ilovada HAR DOIM telefonning o'zi; brauzerda yozib olish
     if (inApp ?? (await isNativeApp())) await startNative();
     else await startRecording();
@@ -213,8 +222,9 @@ export default function SpeakStage({
     void stopNative();
   }, []);
 
-  const ok = phase === "result" && picked !== null && heard !== null;
-  const wrong = phase === "result" && picked !== null && !ok;
+  // Rang faqat serverning qaroriga qarab — "eshitildi"ga emas
+  const ok = phase === "result" && verdict === true;
+  const wrong = phase === "result" && verdict === false;
 
   return (
     <>
@@ -225,8 +235,14 @@ export default function SpeakStage({
         </span>
 
         {phase === "result" && heard && (
-          <div className="mt-1 text-[13.5px] text-slate-500">
-            {t.heardYou}: <span className="font-extrabold text-slate-800">{heard}</span>
+          <div className={"mt-1 text-[13.5px] " + (wrong ? "text-rose-600" : "text-slate-500")}>
+            {t.heardYou}: <span className={"font-extrabold " + (wrong ? "text-rose-700" : "text-emerald-700")}>{heard}</span>
+          </div>
+        )}
+        {/* Xato bo'lsa — nima kutilgani aniq ko'rinsin, yasash bosqichidagidek */}
+        {wrong && (
+          <div className="text-[13px] font-semibold text-slate-500">
+            {t.correctAnswer}: <span className="font-extrabold text-slate-800">{word}</span>
           </div>
         )}
         {phase === "error" && problem && (
