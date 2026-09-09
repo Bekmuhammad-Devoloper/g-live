@@ -92,11 +92,20 @@ export async function awardSkill(studentId: string, type: SkillEventType, key: s
     const row = await rowFor(studentId);
     const settled = await settleDecay(row, now);
 
-    // Hodisa allaqachon bo'lganmi — unique kalit
-    try {
-      await prisma.skillEvent.create({ data: { skillId: row.id, key, kind, points } });
-    } catch {
-      // P2002 — bor. Faollikni baribir belgilaymiz.
+    // Hodisa allaqachon bo'lganmi — unique kalit. Avval o'qib ko'ramiz:
+    // takror mashq oddiy holat, uni P2002 xatosi (jurnalda prisma:error)
+    // bilan aniqlash shart emas. Poyga bo'lsa create baribir yiqiladi —
+    // o'sha ham "bor" degani.
+    const dup = await prisma.skillEvent.findUnique({ where: { skillId_key: { skillId: row.id, key } }, select: { id: true } });
+    if (!dup) {
+      try {
+        await prisma.skillEvent.create({ data: { skillId: row.id, key, kind, points } });
+      } catch {
+        await prisma.studentSkill.update({ where: { id: row.id }, data: { lastActiveAt: now } });
+        return false;
+      }
+    } else {
+      // Faollikni baribir belgilaymiz — o'quvchi mashq qildi
       await prisma.studentSkill.update({ where: { id: row.id }, data: { lastActiveAt: now } });
       return false;
     }
