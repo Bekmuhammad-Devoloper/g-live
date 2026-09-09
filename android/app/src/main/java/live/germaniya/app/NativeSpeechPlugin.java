@@ -1,16 +1,23 @@
 package live.germaniya.app;
 
 import android.Manifest;
+import android.app.Activity;
 import android.content.Intent;
 import android.os.Bundle;
+import android.os.Handler;
+import android.os.Looper;
 import android.speech.RecognitionListener;
 import android.speech.RecognizerIntent;
 import android.speech.SpeechRecognizer;
 
+import androidx.activity.result.ActivityResult;
+
 import com.getcapacitor.JSObject;
+import com.getcapacitor.PermissionState;
 import com.getcapacitor.Plugin;
 import com.getcapacitor.PluginCall;
 import com.getcapacitor.PluginMethod;
+import com.getcapacitor.annotation.ActivityCallback;
 import com.getcapacitor.annotation.CapacitorPlugin;
 import com.getcapacitor.annotation.Permission;
 import com.getcapacitor.annotation.PermissionCallback;
@@ -23,18 +30,29 @@ import java.util.ArrayList;
  *
  * NEGA KERAK BO'LDI. Dastlab talaffuz Gemini orqali tekshirilardi: yozuv
  * serverga yuborilib, u yerdan matnga o'girilardi. Amalda bu ishlamadi:
- *   · bepul kvota KUNIGA 20 ta so'rov (GenerateRequestsPerDayPerProject
- *     ModelFreeTier, quotaValue 20). Bitta o'quvchi bitta darsni mashq
- *     qilsa 10 tasi ketadi — 125 o'quvchi uchun mutlaqo yetmaydi.
+ *   · bepul kvota KUNIGA 20 ta so'rov — 125 o'quvchi uchun yetmaydi
  *   · 5 soniyalik yozuvga ~30 soniya javob kutilardi
- *   · "gemini-flash-latest" doimiy 503 "high demand" qaytarardi
+ *   · noto'g'ri aytilganini "to'g'ri" deb o'tkazdi (o'ylab topishga moyil)
  *
  * Android esa nutqni O'ZI taniydi: bepul, kvotasiz, odatda bir soniyada va
- * yozuv hech qayerga yuborilmaydi (o'quvchining ovozi telefondan
- * chiqmaydi). Nemis tili qo'llab-quvvatlanadi.
+ * yozuv hech qayerga yuborilmaydi. Nemis tili qo'llab-quvvatlanadi.
  *
- * Xizmat topilmasa (ba'zi telefonlarda Google ilovasi yo'q) `available`
- * false qaytadi va veb tomon eski yo'lga — Gemini ga qaytadi.
+ * IKKI YO'L, KETMA-KET:
+ *
+ *   1. SpeechRecognizer — ilova ichida, oynasiz. Eng qulay.
+ *      Lekin ba'zi telefonlarda (Xiaomi va boshqa OEM qobiqlari) u ulanadi-yu,
+ *      HECH QACHON tayyor bo'lmaydi: na natija, na xato — "Eshitilmoqda…"
+ *      da osilib qoladi. Aynan shu kuzatildi (2.8.0, serverga bitta ham
+ *      so'rov yetib kelmagan).
+ *
+ *   2. Shu sabab 4 soniyada `onReadyForSpeech` kelmasa — Google'ning o'z
+ *      "Gapiring" oynasiga (ACTION_RECOGNIZE_SPEECH) o'tiladi. Bu oynani
+ *      Google ilovasining o'zi boshqaradi va OEM qobiqlarida ancha ishonchli.
+ *      Natija ActivityResult orqali qaytadi.
+ *
+ * Ikkalasi ham ishlamasa — sabab kodi bilan qaytadi ("err_nodialog",
+ * "err_5"...). Veb tomon uni ekranda ko'rsatadi: qurilmaga kirib
+ * bo'lmaydi, shu yagona diagnostika.
  */
 @CapacitorPlugin(
     name = "NativeSpeech",
@@ -44,9 +62,23 @@ public class NativeSpeechPlugin extends Plugin {
 
     static final String MIC = "mic";
 
+    /** Shuncha vaqtda xizmat "tayyorman" demasa — oynali yo'lga o'tamiz */
+    private static final long READY_MS = 4_000;
+    /**
+     * Umumiy chegara. Veb tomondagi 20 soniyadan KICHIK bo'lishi shart:
+     * shunda sabab shu yerdan ("err_timeout") keladi, veb tomonning umumiy
+     * "timeout" idan emas — birinchisi aniqroq.
+     */
+    private static final long WATCHDOG_MS = 18_000;
+
     private SpeechRecognizer recognizer;
     /** Ayni paytda kutilayotgan chaqiruv — bir vaqtda faqat bittasi */
     private PluginCall pending;
+    private String locale = "de-DE";
+
+    private final Handler handler = new Handler(Looper.getMainLooper());
+    private final Runnable giveUp = () -> finishError("err_timeout");
+    private final Runnable notReady = this::fallbackToDialog;
 
     @PluginMethod
     public void available(PluginCall call) {
@@ -55,9 +87,7 @@ public class NativeSpeechPlugin extends Plugin {
         try {
             ok = SpeechRecognizer.isRecognitionAvailable(getContext());
         } catch (Throwable ignored) {
-            // Qurilmada xizmat yo'q yoki manifestda <queries> e'lon
-            // qilinmagan (Android 11+) — false qoladi va veb tomon zaxira
-            // yo'lga o'tadi.
+            // Qurilmada xizmat yo'q yoki manifestda <queries> yo'q — false qoladi
         }
         res.put("available", ok);
         call.resolve(res);
@@ -65,8 +95,7 @@ public class NativeSpeechPlugin extends Plugin {
 
     @PluginMethod
     public void listen(PluginCall call) {
-        if (getPermissionState(MIC) != com.getcapacitor.PermissionState.GRANTED) {
-            // Ruxsat so'raymiz va javob kelgach shu chaqiruvni davom ettiramiz
+        if (getPermissionState(MIC) != PermissionState.GRANTED) {
             requestPermissionForAlias(MIC, call, "micResult");
             return;
         }
@@ -75,78 +104,124 @@ public class NativeSpeechPlugin extends Plugin {
 
     @PermissionCallback
     private void micResult(PluginCall call) {
-        if (getPermissionState(MIC) != com.getcapacitor.PermissionState.GRANTED) {
+        if (getPermissionState(MIC) != PermissionState.GRANTED) {
             fail(call, "denied");
             return;
         }
         start(call);
     }
 
-    /**
-     * Nutq tanish xizmati javob bermay qolsa — shuncha vaqtdan keyin
-     * chaqiruv baribir yopiladi.
-     *
-     * ZARUR: PluginCall javobsiz qolsa veb tomondagi va'da HECH QACHON
-     * tugamaydi, ekranda hech narsa o'zgarmaydi va `pending` band qolgani
-     * uchun keyingi bosishlar ham "busy" bo'lib qaytadi — foydalanuvchi
-     * uchun bu "tugma butunlay ishlamay qoldi" demakdir.
-     */
-    private static final long WATCHDOG_MS = 25_000;
-    private final android.os.Handler watchdog = new android.os.Handler(android.os.Looper.getMainLooper());
-    private final Runnable giveUp = () -> finishError("unavailable");
-
     private void start(final PluginCall call) {
-        final android.app.Activity activity = getActivity();
+        final Activity activity = getActivity();
         if (activity == null) {
             fail(call, "unavailable");
             return;
         }
 
         // SpeechRecognizer FAQAT asosiy oqimda yaratiladi va boshqariladi.
-        // Butun blok try/catch ichida: bu yerda kutilmagan istisno chiqsa
-        // chaqiruv javobsiz qolib ketardi.
+        // Butun blok try/catch ichida: istisno chiqsa chaqiruv javobsiz
+        // qolib ketardi.
         activity.runOnUiThread(() -> {
             if (pending != null) {
                 fail(call, "busy");
                 return;
             }
             try {
+                locale = call.getString("locale", "de-DE");
                 release();
                 recognizer = SpeechRecognizer.createSpeechRecognizer(getContext());
                 if (recognizer == null) {
-                    fail(call, "unavailable");
+                    // Ilova ichidagi yo'l umuman yo'q — to'g'ridan-to'g'ri oynaga
+                    pending = call;
+                    fallbackToDialog();
                     return;
                 }
 
                 pending = call;
                 recognizer.setRecognitionListener(new Listener());
 
-                String locale = call.getString("locale", "de-DE");
-                Intent intent = new Intent(RecognizerIntent.ACTION_RECOGNIZE_SPEECH);
-                intent.putExtra(RecognizerIntent.EXTRA_LANGUAGE_MODEL, RecognizerIntent.LANGUAGE_MODEL_FREE_FORM);
-                intent.putExtra(RecognizerIntent.EXTRA_LANGUAGE, locale);
-                intent.putExtra(RecognizerIntent.EXTRA_LANGUAGE_PREFERENCE, locale);
-                // Bir nechta variant: o'quvchi to'g'ri aytgan bo'lsa-yu, birinchi
-                // variant boshqa so'z bo'lsa, qolganlarida topilishi mumkin.
-                intent.putExtra(RecognizerIntent.EXTRA_MAX_RESULTS, 5);
-                intent.putExtra(RecognizerIntent.EXTRA_PARTIAL_RESULTS, false);
-                intent.putExtra(RecognizerIntent.EXTRA_CALLING_PACKAGE, getContext().getPackageName());
-
-                watchdog.removeCallbacks(giveUp);
-                watchdog.postDelayed(giveUp, WATCHDOG_MS);
-                recognizer.startListening(intent);
+                handler.removeCallbacksAndMessages(null);
+                handler.postDelayed(giveUp, WATCHDOG_MS);
+                handler.postDelayed(notReady, READY_MS);
+                recognizer.startListening(buildIntent(false));
             } catch (Throwable e) {
-                watchdog.removeCallbacks(giveUp);
+                handler.removeCallbacksAndMessages(null);
                 pending = null;
                 release();
-                fail(call, "unavailable");
+                fail(call, "err_start");
             }
         });
     }
 
+    private Intent buildIntent(boolean forDialog) {
+        Intent intent = new Intent(RecognizerIntent.ACTION_RECOGNIZE_SPEECH);
+        intent.putExtra(RecognizerIntent.EXTRA_LANGUAGE_MODEL, RecognizerIntent.LANGUAGE_MODEL_FREE_FORM);
+        intent.putExtra(RecognizerIntent.EXTRA_LANGUAGE, locale);
+        intent.putExtra(RecognizerIntent.EXTRA_LANGUAGE_PREFERENCE, locale);
+        // Bir nechta variant: birinchisi boshqa so'z bo'lsa, qolganlarida topilishi mumkin
+        intent.putExtra(RecognizerIntent.EXTRA_MAX_RESULTS, 5);
+        intent.putExtra(RecognizerIntent.EXTRA_CALLING_PACKAGE, getContext().getPackageName());
+        if (forDialog) {
+            intent.putExtra(RecognizerIntent.EXTRA_PROMPT, "So'zni nemischa ayting");
+        } else {
+            intent.putExtra(RecognizerIntent.EXTRA_PARTIAL_RESULTS, false);
+        }
+        return intent;
+    }
+
+    /**
+     * Ilova ichidagi tanish tayyor bo'lmadi — Google'ning o'z oynasiga o'tamiz.
+     * Asosiy oqimda chaqiriladi (handler shu oqimda).
+     */
+    private void fallbackToDialog() {
+        PluginCall call = pending;
+        if (call == null) return;
+
+        handler.removeCallbacksAndMessages(null);
+        release();
+
+        Intent intent = buildIntent(true);
+        if (intent.resolveActivity(getContext().getPackageManager()) == null) {
+            // Oynani ko'rsatadigan ilova ham yo'q (Google ilovasi o'chirilgan)
+            pending = null;
+            fail(call, "err_nodialog");
+            return;
+        }
+
+        // Chaqiruv endi ActivityResult orqali yopiladi. `pending` bo'shatiladi:
+        // oyna modal, WebView'ga bosib bo'lmaydi, ikkinchi chaqiruv kelmaydi.
+        pending = null;
+        try {
+            startActivityForResult(call, intent, "dialogResult");
+        } catch (Throwable e) {
+            fail(call, "err_dialog_start");
+        }
+    }
+
+    @ActivityCallback
+    private void dialogResult(PluginCall call, ActivityResult result) {
+        if (call == null) return;
+        if (result.getResultCode() != Activity.RESULT_OK || result.getData() == null) {
+            // Foydalanuvchi oynani yopdi yoki hech narsa demadi
+            fail(call, "no_match");
+            return;
+        }
+        ArrayList<String> list = result.getData().getStringArrayListExtra(RecognizerIntent.EXTRA_RESULTS);
+        if (list == null || list.isEmpty()) {
+            fail(call, "no_match");
+            return;
+        }
+        JSObject res = new JSObject();
+        res.put("text", String.join(" | ", list));
+        call.resolve(res);
+    }
+
     @PluginMethod
     public void stop(PluginCall call) {
-        getActivity().runOnUiThread(() -> {
+        Activity activity = getActivity();
+        if (activity == null) { call.resolve(); return; }
+        activity.runOnUiThread(() -> {
+            handler.removeCallbacks(notReady);
             if (recognizer != null) {
                 try { recognizer.stopListening(); } catch (Exception ignored) {}
             }
@@ -161,12 +236,9 @@ public class NativeSpeechPlugin extends Plugin {
     }
 
     /**
-     * Xato ham `resolve` bilan qaytariladi (reject emas).
-     *
-     * Veb tomonda reject qilingan va'da `catch` ga tushib, sababi yo'qoladi;
-     * bu yerda esa sabab kerak: "denied" bo'lsa ruxsat so'raladi,
-     * "unavailable" bo'lsa Gemini ga qaytiladi, "no_match" bo'lsa esa
-     * o'quvchiga "eshitilmadi" deyiladi.
+     * Xato ham `resolve` bilan qaytariladi (reject emas): veb tomonda sabab
+     * kerak — "denied" bo'lsa ruxsat, "no_match" bo'lsa "eshitilmadi",
+     * "err_*" bo'lsa ekranda kod.
      */
     private void fail(PluginCall call, String error) {
         JSObject res = new JSObject();
@@ -175,7 +247,7 @@ public class NativeSpeechPlugin extends Plugin {
     }
 
     private void finish(String text) {
-        watchdog.removeCallbacks(giveUp);
+        handler.removeCallbacksAndMessages(null);
         PluginCall call = pending;
         pending = null;
         release();
@@ -186,7 +258,7 @@ public class NativeSpeechPlugin extends Plugin {
     }
 
     private void finishError(String error) {
-        watchdog.removeCallbacks(giveUp);
+        handler.removeCallbacksAndMessages(null);
         PluginCall call = pending;
         pending = null;
         release();
@@ -194,7 +266,12 @@ public class NativeSpeechPlugin extends Plugin {
     }
 
     private class Listener implements RecognitionListener {
-        @Override public void onReadyForSpeech(Bundle params) {}
+        @Override
+        public void onReadyForSpeech(Bundle params) {
+            // Xizmat tayyor — oynali yo'lga o'tish endi kerak emas
+            handler.removeCallbacks(notReady);
+        }
+
         @Override public void onBeginningOfSpeech() {}
         @Override public void onRmsChanged(float rmsdB) {}
         @Override public void onBufferReceived(byte[] buffer) {}
@@ -208,7 +285,7 @@ public class NativeSpeechPlugin extends Plugin {
             switch (code) {
                 case SpeechRecognizer.ERROR_NO_MATCH:
                 case SpeechRecognizer.ERROR_SPEECH_TIMEOUT:
-                    err = "no_match";      // ovoz eshitilmadi yoki tanilmadi
+                    err = "no_match";
                     break;
                 case SpeechRecognizer.ERROR_INSUFFICIENT_PERMISSIONS:
                     err = "denied";
@@ -217,16 +294,18 @@ public class NativeSpeechPlugin extends Plugin {
                 case SpeechRecognizer.ERROR_NETWORK_TIMEOUT:
                     err = "network";
                     break;
-                // 12 / 13 — nemis tili shu qurilmada tanilmaydi (til paketi yo'q)
-                case 12:
-                case 13:
+                case 12: // ERROR_LANGUAGE_NOT_SUPPORTED
+                case 13: // ERROR_LANGUAGE_UNAVAILABLE
                     err = "language";
                     break;
+                case SpeechRecognizer.ERROR_CLIENT:
+                case SpeechRecognizer.ERROR_RECOGNIZER_BUSY:
+                case SpeechRecognizer.ERROR_SERVER:
+                case 11: // ERROR_SERVER_DISCONNECTED
+                    // Ilova ichidagi yo'l nosoz — oynali yo'lni sinab ko'ramiz
+                    fallbackToDialog();
+                    return;
                 default:
-                    // Qolganlari ("unavailable" deb bir xil yopilardi) endi raqami
-                    // bilan qaytadi: 3 audio, 4 server, 5 mijoz, 8 band, 10 ko'p
-                    // so'rov, 11 xizmat ulanmadi... Sababi ekranda ko'rinadi va
-                    // qurilmasiz turib aniqlash mumkin bo'ladi.
                     err = "err_" + code;
             }
             finishError(err);
@@ -239,9 +318,7 @@ public class NativeSpeechPlugin extends Plugin {
                 finishError("no_match");
                 return;
             }
-            // Barcha variantlar bitta qatorda: solishtirish ularning
-            // ichidan mos kelganini topadi (lib/pronounce.ts so'zlarga
-            // ajratib qaraydi).
+            // Barcha variantlar bitta qatorda: solishtirish ichidan mosini topadi
             finish(String.join(" | ", list));
         }
     }

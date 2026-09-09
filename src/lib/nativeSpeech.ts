@@ -99,7 +99,10 @@ export async function listenNative(locale = "de-DE"): Promise<NativeResult | nul
   try {
     const p = await get();
     if (!p) return null;
-    const r = await withTimeout(p.listen({ locale }), 20_000, { error: "unavailable" as const });
+    // "timeout" — Java tomon ham, Android xizmati ham 20 soniyada javob
+    // bermadi. Ekranda "(timeout)" ko'rinadi va bu "(unavailable)" dan
+    // farq qiladi: xizmat rad etmagan, shunchaki jim qolgan.
+    const r = await withTimeout(p.listen({ locale }), 20_000, { error: "timeout" as const });
     if (r.error) return { error: r.error as NativeError };
     return { text: r.text ?? "" };
   } catch {
