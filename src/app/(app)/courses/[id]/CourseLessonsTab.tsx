@@ -6,7 +6,7 @@ import { createPortal } from "react-dom";
 import { cn } from "@/lib/cn";
 import { Icon } from "../../_components/Icon";
 import { tr } from "@/lib/tr";
-import { MAX_UPLOAD_MB } from "@/lib/upload";
+import { MAX_UPLOAD_MB, formatUploadLimit } from "@/lib/upload";
 import type { Locale } from "@/lib/constants";
 import { createCourseLesson, updateCourseLesson, deleteCourseLesson, moveCourseLesson, type LessonInput } from "./lessonActions";
 import { setLessonTaught } from "../../groups/[id]/lessonProgressActions";
@@ -22,19 +22,6 @@ export interface VLesson {
     vergul, nuqta-vergul yoki yangi qator. */
 const countWords = (text: string) =>
   text.split(/[,;\n]/).filter((s) => s.trim().length >= 2).length;
-
-async function uploadFile(file: File): Promise<{ url: string } | { error: string }> {
-  const fd = new FormData();
-  fd.set("file", file);
-  const res = await fetch("/api/upload", { method: "POST", body: fd });
-  if (!res.ok) {
-    if (res.status === 413) return { error: "too_large" }; // nginx chegarasi — javob JSON emas
-    const j = await res.json().catch(() => ({}));
-    return { error: j.error === "too_large" ? "too_large" : "upload_failed" };
-  }
-  const j = await res.json();
-  return { url: j.url as string };
-}
 
 export default function CourseLessonsTab({ programId, lessons, canManage, locale, levelCodes, groupId, progress }: { programId: string; lessons: VLesson[]; canManage: boolean; locale: Locale; /** Sozlamalar > Darajalar ro'yxati */ levelCodes: string[]; groupId?: string; progress?: Record<string, boolean> }) {
   const [edit, setEdit] = useState<VLesson | null>(null);
@@ -371,21 +358,24 @@ function FileUpload({ label, accept, current, onChange, locale, isVideo }: { lab
 
     const mb = file.size / (1024 * 1024);
     const tooBig = (have: number) => tr(locale, {
-      uz: `Fayl juda katta: ${have.toFixed(0)} MB. Chegara — ${MAX_UPLOAD_MB} MB.`,
-      ru: `Файл слишком большой: ${have.toFixed(0)} МБ. Лимит — ${MAX_UPLOAD_MB} МБ.`,
-      en: `File too large: ${have.toFixed(0)} MB. Limit is ${MAX_UPLOAD_MB} MB.`,
-      de: `Datei zu groß: ${have.toFixed(0)} MB. Limit ${MAX_UPLOAD_MB} MB.`,
+      uz: `Fayl juda katta: ${have.toFixed(0)} MB. Chegara — ${formatUploadLimit(MAX_UPLOAD_MB)}.`,
+      ru: `Файл слишком большой: ${have.toFixed(0)} МБ. Лимит — ${formatUploadLimit(MAX_UPLOAD_MB)}.`,
+      en: `File too large: ${have.toFixed(0)} MB. Limit is ${formatUploadLimit(MAX_UPLOAD_MB)}.`,
+      de: `Datei zu groß: ${have.toFixed(0)} MB. Limit ${formatUploadLimit(MAX_UPLOAD_MB)}.`,
     });
 
     // Serverga bekorga yubormaymiz — chegaradan katta fayl shu yerda to'xtaydi
     if (mb > MAX_UPLOAD_MB) { setError(tooBig(mb)); return; }
 
     setError(null); setUploading(true); setPct(0);
-    // XHR bilan progress
+    // XHR bilan progress. Fayl multipart'siz, TO'G'RIDAN-TO'G'RI tana sifatida
+    // yuboriladi — server uni oqim bilan diskka yozadi, xotiraga olmaydi
+    // (5 GB video shu tufayli mumkin). Nomi sarlavhada, kengaytma uchun.
     const url = await new Promise<{ url?: string; error?: string }>((resolve) => {
-      const fd = new FormData(); fd.set("file", file);
       const xhr = new XMLHttpRequest();
       xhr.open("POST", "/api/upload");
+      xhr.setRequestHeader("Content-Type", file.type || "application/octet-stream");
+      xhr.setRequestHeader("X-File-Name", encodeURIComponent(file.name));
       xhr.upload.onprogress = (ev) => { if (ev.lengthComputable) setPct(Math.round((ev.loaded / ev.total) * 100)); };
       xhr.onload = () => {
         // nginx chegaradan oshganda JSON emas, HTML sahifa qaytaradi —
@@ -397,7 +387,7 @@ function FileUpload({ label, accept, current, onChange, locale, isVideo }: { lab
         } catch { resolve({ error: "upload_failed" }); }
       };
       xhr.onerror = () => resolve({ error: "upload_failed" });
-      xhr.send(fd);
+      xhr.send(file);
     });
     setUploading(false);
     if (url.url) onChange(url.url);
