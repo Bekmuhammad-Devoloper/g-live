@@ -26,6 +26,7 @@ export default function SalaryModal({ teacher: t, canManage, locale, onClose }: 
   const [kpi, setKpi] = useState(t.kpi);
   const [pending, start] = useTransition();
   const [mounted, setMounted] = useState(false);
+  const [err, setErr] = useState<string | null>(null);
 
   const total = Math.max(0, fiksa) + Math.max(0, bonus) + Math.max(0, kpi) - Math.max(0, penalty);
 
@@ -39,9 +40,13 @@ export default function SalaryModal({ teacher: t, canManage, locale, onClose }: 
   }, [onClose]);
 
   function save() {
+    setErr(null);
     start(async () => {
-      await setTeacherFiksa(t.id, fiksa);
-      await updateCurrentSalary(t.id, bonus, penalty, kpi);
+      // Summa chegaradan oshsa server rad etadi — oynani yopmay xatoni ko'rsatamiz
+      const r1 = await setTeacherFiksa(t.id, fiksa);
+      if (!r1.ok) { setErr(r1.error); return; }
+      const r2 = await updateCurrentSalary(t.id, bonus, penalty, kpi);
+      if (!r2.ok) { setErr(r2.error); return; }
       onClose();
     });
   }
@@ -90,6 +95,12 @@ export default function SalaryModal({ teacher: t, canManage, locale, onClose }: 
             <span className="text-sm font-medium text-slate-500 dark:text-slate-300">{tr(locale, { uz: "Bu oy jami", ru: "Итого за месяц", en: "Total this month", de: "Summe diesen Monat" })}</span>
             <span className="text-lg font-extrabold text-slate-900 dark:text-white">{formatMoney(total, locale)}</span>
           </div>
+
+          {err && (
+            <div className="mt-3 rounded-lg bg-rose-50 px-3 py-2 text-sm font-medium text-rose-700 dark:bg-rose-950/30 dark:text-rose-300">
+              {err}
+            </div>
+          )}
 
           {canManage && (
             <button

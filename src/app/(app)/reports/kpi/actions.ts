@@ -5,6 +5,7 @@ import { prisma } from "@/lib/db";
 import { requireSession } from "@/lib/auth";
 import { getPermission, MODULES } from "@/lib/rbac";
 import { writeAudit } from "@/lib/audit";
+import { parseMoney } from "@/lib/constants";
 
 export type KpiPayState = { ok?: boolean; error?: string };
 
@@ -19,9 +20,11 @@ export async function saveKpiPay(userId: string, fiksa: number, kpiBonus: number
   if (getPermission(s.role, MODULES.SALARY) !== "FULL") return { error: "forbidden" };
   if (!userId) return { error: "invalid" };
 
-  const f = Math.max(0, Math.round(Number(fiksa) || 0));
-  const b = Math.max(0, Math.round(Number(kpiBonus) || 0));
-  if (!Number.isFinite(f) || !Number.isFinite(b)) return { error: "invalid" };
+  // parseMoney: manfiy/cheksiz/1 mlrd dan katta -> null (Int'ga sig'maydigan
+  // qiymat SQLite'ga yozilib, keyin sahifani butunlay yiqitgan — 2026-09-11)
+  const f = parseMoney(fiksa);
+  const b = parseMoney(kpiBonus);
+  if (f === null || b === null) return { error: "invalid" };
 
   const before = await prisma.user.findUnique({ where: { id: userId }, select: { fullName: true, fiksa: true, kpiBonus: true } });
   if (!before) return { error: "notfound" };

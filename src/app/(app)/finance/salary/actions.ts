@@ -2,6 +2,7 @@
 
 import { revalidatePath } from "next/cache";
 import { z } from "zod";
+import { MAX_MONEY } from "@/lib/constants";
 import { prisma } from "@/lib/db";
 import { requireSession } from "@/lib/auth";
 import { getPermission, MODULES } from "@/lib/rbac";
@@ -14,7 +15,7 @@ const canManage = (role: string) => getPermission(role, MODULES.SALARY) === "FUL
 const schema = z.object({
   scope: z.enum(["ALL", "TEACHER", "COURSE", "GROUP", "STUDENT"]),
   amountType: z.enum(["FIXED", "PERCENT"]),
-  amount: z.coerce.number().int().positive(),
+  amount: z.coerce.number().int().positive().max(MAX_MONEY), // Int'ga sig'masa sahifa yiqiladi (2026-09-11)
   targetId: z.string().optional(),
   targetName: z.string().optional(),
   isDefault: z.coerce.boolean().optional(),

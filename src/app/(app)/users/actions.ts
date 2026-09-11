@@ -3,7 +3,7 @@
 import { revalidatePath } from "next/cache";
 import { prisma } from "@/lib/db";
 import { requireSession, hashPassword } from "@/lib/auth";
-import { ROLES, ROLE_LABELS, label, isRopPosition } from "@/lib/constants";
+import { ROLES, ROLE_LABELS, label, isRopPosition, parseMoney } from "@/lib/constants";
 import { tr } from "@/lib/tr";
 import { writeAudit } from "@/lib/audit";
 
@@ -55,7 +55,9 @@ export async function createStaff(fd: FormData): Promise<{ ok?: boolean; error?:
   const gender = ["MALE", "FEMALE"].includes(String(fd.get("gender"))) ? String(fd.get("gender")) : null;
   const birthRaw = String(fd.get("birthDate") || "");
   const birthDate = birthRaw ? new Date(birthRaw) : null;
-  const fiksa = Math.max(0, Math.round(Number(fd.get("fiksa")) || 0));
+  // Yuqori chegara SHART (Int'ga sig'maydigan qiymat sahifani yiqitadi — 2026-09-11)
+  const fiksa = parseMoney(fd.get("fiksa"));
+  if (fiksa === null) return { error: tr(s.locale, { uz: "Summa juda katta (eng ko'pi 1 mlrd so'm) — nollar sonini tekshiring", ru: "Сумма слишком велика (макс. 1 млрд сум) — проверьте количество нулей", en: "Amount too large (max 1 billion) — check the number of zeros", de: "Betrag zu groß (max. 1 Mrd.) — Anzahl der Nullen prüfen" }) };
 
   if (ism.length < 2) return { error: tr(s.locale, { uz: "Ism kamida 2 ta harf bo'lsin", ru: "Имя должно содержать не менее 2 букв", en: "First name must be at least 2 letters", de: "Der Vorname muss mindestens 2 Buchstaben enthalten" }) };
   if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) return { error: tr(s.locale, { uz: "Email noto'g'ri", ru: "Неверный email", en: "Invalid email", de: "Ungültige E-Mail" }) };

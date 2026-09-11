@@ -8,13 +8,13 @@ import { requireSession } from "@/lib/auth";
 import { canWrite, MODULES } from "@/lib/rbac";
 import { writeAudit } from "@/lib/audit";
 import { notify } from "@/lib/notify";
-import { formatMoney } from "@/lib/constants";
+import { formatMoney, MAX_MONEY } from "@/lib/constants";
 
 const PURPOSE = "Yechib olish";
 
 const schema = z.object({
   studentId: z.string().min(1),
-  amount: z.coerce.number().int().positive(),
+  amount: z.coerce.number().int().positive().max(MAX_MONEY), // Int'ga sig'masa sahifa yiqiladi (2026-09-11)
   note: z.string().optional(),
 });
 

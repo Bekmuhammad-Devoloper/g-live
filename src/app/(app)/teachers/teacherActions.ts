@@ -3,7 +3,7 @@
 import { revalidatePath } from "next/cache";
 import { prisma } from "@/lib/db";
 import { requireSession, hashPassword } from "@/lib/auth";
-import { ROLES } from "@/lib/constants";
+import { ROLES, parseMoney } from "@/lib/constants";
 import { writeAudit } from "@/lib/audit";
 import { tr } from "@/lib/tr";
 
@@ -33,8 +33,10 @@ export async function createTeacher(input: NewTeacherInput): Promise<CreateTeach
   const phone = (input.phone || "").trim() || null;
   const password = input.password || "";
   const branchId = input.branchId || null;
-  const fiksa = Math.max(0, Math.round(input.fiksa || 0) || 0);
-  const kpiBonus = Math.max(0, Math.round(input.kpiBonus ?? 200000));
+  // Yuqori chegara SHART (Int'ga sig'maydigan qiymat sahifani yiqitadi — 2026-09-11)
+  const fiksa = parseMoney(input.fiksa || 0);
+  const kpiBonus = parseMoney(input.kpiBonus ?? 200000);
+  if (fiksa === null || kpiBonus === null) return { ok: false, error: tr(s.locale, { uz: "Summa juda katta (eng ko'pi 1 mlrd so'm) — nollar sonini tekshiring", ru: "Сумма слишком велика (макс. 1 млрд сум) — проверьте количество нулей", en: "Amount too large (max 1 billion) — check the number of zeros", de: "Betrag zu groß (max. 1 Mrd.) — Anzahl der Nullen prüfen" }) };
   const gender = input.gender === "MALE" || input.gender === "FEMALE" ? input.gender : null;
 
   if (fullName.length < 3) return { ok: false, error: tr(s.locale, { uz: "Ism-familiya kamida 3 ta harf bo'lsin", ru: "Имя и фамилия — не менее 3 букв", en: "Full name must be at least 3 characters", de: "Der Name muss mindestens 3 Zeichen lang sein" }) };

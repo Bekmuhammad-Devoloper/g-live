@@ -194,6 +194,23 @@ export function intlLocale(locale: Locale): string {
 
 // Pulni formatlash (so'm) — deterministik: server va client bir xil chiqadi
 // (Intl.NumberFormat lokali Node va brauzerda farq qilib, hydration xatosi berardi).
+// ── Pul maydonlari uchun yuqori chegara ──
+// Prisma `Int` 2 147 483 647 dan kattani SAQLAY OLMAYDI, lekin SQLite yozib
+// qo'yaveradi — keyin o'sha qatorni o'qigan har qanday sahifa butunlay yiqiladi.
+// (2026-09-11: fiksa = 5 000 000 000 tufayli /teachers hammaga ochilmay qolgan.)
+// 1 mlrd so'm — real oylik/narx uchun yetarli, xatoga esa ishonchli to'siq.
+export const MAX_MONEY = 1_000_000_000;
+
+/**
+ * Pul qiymatini xavfsiz butun songa keltiradi.
+ * Manfiy, cheksiz yoki MAX_MONEY dan katta bo'lsa — null (yozmaslik kerak).
+ */
+export function parseMoney(raw: unknown): number | null {
+  const n = Math.round(Number(raw) || 0);
+  if (!Number.isFinite(n) || n < 0 || n > MAX_MONEY) return null;
+  return n;
+}
+
 export function formatMoney(amount: number, locale: Locale = "uz"): string {
   const s = String(Math.round(amount)).replace(/\B(?=(\d{3})+(?!\d))/g, " ");
   const unit = locale === "ru" ? "сум" : locale === "en" || locale === "de" ? "UZS" : "so'm";
