@@ -8,30 +8,14 @@ import type { ReadableStream as NodeReadableStream } from "node:stream/web";
 import path from "node:path";
 import { requireSession } from "@/lib/auth";
 import { MAX_UPLOAD_BYTES, MAX_UPLOAD_MB, MAX_FORM_UPLOAD_BYTES, MAX_FORM_UPLOAD_MB } from "@/lib/upload";
+import { extFor, UPLOAD_DIR } from "@/lib/uploadFs";
 
 export const runtime = "nodejs";
 
-const EXT: Record<string, string> = {
-  "video/mp4": "mp4", "video/webm": "webm", "video/quicktime": "mov", "video/x-matroska": "mkv", "video/ogg": "ogv",
-  "image/jpeg": "jpg", "image/png": "png", "image/webp": "webp", "image/gif": "gif",
-  "application/pdf": "pdf",
-  // Hujjatlar — lug'at va topshiriq fayllari
-  "application/msword": "doc",
-  "application/vnd.openxmlformats-officedocument.wordprocessingml.document": "docx",
-  "text/plain": "txt",
-  "application/rtf": "rtf",
-};
-
-const UPLOAD_DIR = path.join(process.cwd(), "public", "uploads");
-
-// Kengaytmani MIME yoki fayl nomidan aniqlaymiz
-function extFor(mime: string, name: string): string {
-  const nameExt = (name.split(".").pop() || "").toLowerCase().replace(/[^a-z0-9]/g, "");
-  return EXT[mime] || (nameExt && nameExt.length <= 5 ? nameExt : "bin");
-}
-
 /**
- * Ikki rejim:
+ * Katta fayllar (video) uchun asosiy yo'l endi BO'LAKLI rejim —
+ * /api/upload/session (lib/chunkedUpload.ts). Bu yerdagi ikki rejim
+ * kichik fayllar va eski mijozlar uchun qoladi:
  *   • multipart/form-data — kichik fayllar (rasm, PDF). formData() butun
  *     faylni xotiraga oladi, shuning uchun MAX_FORM_UPLOAD_MB bilan cheklangan.
  *   • boshqa Content-Type — OQIM rejimi (video). So'rov tanasi to'g'ridan-to'g'ri
@@ -62,7 +46,7 @@ async function handleStream(req: NextRequest, contentType: string) {
   try { origName = decodeURIComponent(req.headers.get("x-file-name") || ""); } catch { origName = ""; }
 
   await mkdir(UPLOAD_DIR, { recursive: true });
-  const fname = `${randomUUID()}.${extFor(contentType.split(";")[0].trim(), origName)}`;
+  const fname = `${randomUUID()}.${extFor(contentType, origName)}`;
   const dest = path.join(UPLOAD_DIR, fname);
 
   // Content-Length yolg'on yoki yo'q bo'lishi mumkin — yozish davomida ham sanaymiz

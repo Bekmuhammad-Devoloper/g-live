@@ -46,3 +46,7 @@ op.html
 
 # Android ilovasi — imzo kaliti va yig'ilgan APK serverda qoladi
 /apk/
+
+# yuklangan fayllar va yarim yuklashlar — serverda qoladi, git'da emas
+/public/uploads/
+/upload-parts/

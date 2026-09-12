@@ -1,12 +1,13 @@
 "use client";
 
-import { useRef, useState, useTransition } from "react";
+import { useEffect, useRef, useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
 import { createPortal } from "react-dom";
 import { cn } from "@/lib/cn";
 import { Icon } from "../../_components/Icon";
 import { tr } from "@/lib/tr";
-import { MAX_UPLOAD_MB, formatUploadLimit } from "@/lib/upload";
+import { CHUNKED_FROM_BYTES, MAX_UPLOAD_MB, formatUploadLimit } from "@/lib/upload";
+import { formatBytes, formatSpeed, uploadChunked, UploadError, type UploadProgress } from "@/lib/chunkedUpload";
 import type { Locale } from "@/lib/constants";
 import { createCourseLesson, updateCourseLesson, deleteCourseLesson, moveCourseLesson, type LessonInput } from "./lessonActions";
 import { setLessonTaught } from "../../groups/[id]/lessonProgressActions";
@@ -194,9 +195,22 @@ function Field({ label, value }: { label: string; value: string }) {
   );
 }
 
+// Hozir nechta fayl yuklanmoqda (barcha FileUpload'lar bo'yicha) — drawer
+// yopilishidan oldin so'raymiz: tasodifiy bosish yarim yuklashni yo'qotmasin
+let activeUploads = 0;
+
 /* ── Qo'shish / tahrirlash drawer ── */
-function LessonDrawer({ programId, initial, locale, levelCodes, onClose }: { programId: string; initial: VLesson | null; locale: Locale; levelCodes: string[]; onClose: () => void }) {
+function LessonDrawer({ programId, initial, locale, levelCodes, onClose: closeRaw }: { programId: string; initial: VLesson | null; locale: Locale; levelCodes: string[]; onClose: () => void }) {
   const router = useRouter();
+  const onClose = () => {
+    if (activeUploads > 0 && !confirm(tr(locale, {
+      uz: "Fayl hali yuklanmoqda. Yopsangiz yuklash to'xtaydi (keyin shu faylni qayta tanlasangiz qolgan joyidan davom etadi). Yopilsinmi?",
+      ru: "Файл ещё загружается. Если закрыть, загрузка остановится (при повторном выборе файла продолжится с того же места). Закрыть?",
+      en: "A file is still uploading. Closing stops it (re-pick the same file later to resume). Close anyway?",
+      de: "Eine Datei wird noch hochgeladen. Beim Schließen stoppt der Upload (dieselbe Datei später erneut wählen, um fortzusetzen). Trotzdem schließen?",
+    }))) return;
+    closeRaw();
+  };
   const [title, setTitle] = useState(initial?.title ?? "");
   const [levelCode, setLevelCode] = useState(initial?.levelCode ?? "");
   const [topic, setTopic] = useState(initial?.topic ?? "");
@@ -213,6 +227,10 @@ function LessonDrawer({ programId, initial, locale, levelCodes, onClose }: { pro
 
   const save = () => {
     if (!title.trim()) { setErr("title"); return; }
+    if (activeUploads > 0) {
+      alert(tr(locale, { uz: "Fayl hali yuklanmoqda — tugashini kuting, keyin saqlang.", ru: "Файл ещё загружается — дождитесь окончания, затем сохраните.", en: "A file is still uploading — wait for it to finish, then save.", de: "Eine Datei wird noch hochgeladen — warten Sie, bis sie fertig ist, und speichern Sie dann." }));
+      return;
+    }
     // Bo'sh qolgan muhim maydonlar haqida eslatma (baribir saqlash mumkin)
     const missing: string[] = [];
     if (!topic.trim()) missing.push(tr(locale, { uz: "Mavzu", ru: "Тема", en: "Topic", de: "Thema" }));
@@ -231,7 +249,7 @@ function LessonDrawer({ programId, initial, locale, levelCodes, onClose }: { pro
     const input: LessonInput = { title, levelCode, topic, assignment, assignmentFileUrl, homework, homeworkFileUrl, videoUrl, vocabText, vocabFileUrl, materialUrl };
     start(async () => {
       const r = initial ? await updateCourseLesson(initial.id, input) : await createCourseLesson(programId, input);
-      if (r.ok) { router.refresh(); onClose(); } else setErr(r.error ?? "error");
+      if (r.ok) { router.refresh(); closeRaw(); } else setErr(r.error ?? "error");
     });
   };
 
@@ -347,15 +365,35 @@ function LessonDrawer({ programId, initial, locale, levelCodes, onClose }: { pro
 /* ── Fayl yuklash vidjeti (video/material) ── */
 function FileUpload({ label, accept, current, onChange, locale, isVideo }: { label: string; accept: string; current: string; onChange: (url: string) => void; locale: Locale; isVideo?: boolean }) {
   const ref = useRef<HTMLInputElement>(null);
+  const abortRef = useRef<AbortController | null>(null);
   const [uploading, setUploading] = useState(false);
   const [pct, setPct] = useState(0);
+  const [prog, setProg] = useState<UploadProgress | null>(null);
   const [error, setError] = useState<string | null>(null);
+  /** Oxirgi tanlangan fayl — xatodan keyin "Qayta urinish" uchun */
+  const [pending, setPending] = useState<File | null>(null);
 
-  const onPick = async (e: React.ChangeEvent<HTMLInputElement>) => {
+  // Komponent yopilsa (drawer yopildi) yuklash to'xtaydi, lekin seans va
+  // qolgan joyi saqlanadi — "unmount" sababi bilan, "cancel" emas
+  useEffect(() => () => { abortRef.current?.abort("unmount"); }, []);
+
+  // Yuklash paytida sahifani yopishdan/yangilashdan ogohlantirish
+  useEffect(() => {
+    if (!uploading) return;
+    const h = (e: BeforeUnloadEvent) => { e.preventDefault(); e.returnValue = ""; };
+    window.addEventListener("beforeunload", h);
+    return () => window.removeEventListener("beforeunload", h);
+  }, [uploading]);
+
+  const onPick = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     e.target.value = "";
     if (!file) return;
+    void startUpload(file);
+  };
 
+  const startUpload = async (file: File) => {
+    setPending(file);
     const mb = file.size / (1024 * 1024);
     const tooBig = (have: number) => tr(locale, {
       uz: `Fayl juda katta: ${have.toFixed(0)} MB. Chegara — ${formatUploadLimit(MAX_UPLOAD_MB)}.`,
@@ -363,17 +401,48 @@ function FileUpload({ label, accept, current, onChange, locale, isVideo }: { lab
       en: `File too large: ${have.toFixed(0)} MB. Limit is ${formatUploadLimit(MAX_UPLOAD_MB)}.`,
       de: `Datei zu groß: ${have.toFixed(0)} MB. Limit ${formatUploadLimit(MAX_UPLOAD_MB)}.`,
     });
+    const failed = tr(locale, { uz: "Yuklab bo'lmadi", ru: "Не удалось загрузить", en: "Upload failed", de: "Hochladen fehlgeschlagen" });
 
     // Serverga bekorga yubormaymiz — chegaradan katta fayl shu yerda to'xtaydi
     if (mb > MAX_UPLOAD_MB) { setError(tooBig(mb)); return; }
 
-    setError(null); setUploading(true); setPct(0);
-    // XHR bilan progress. Fayl multipart'siz, TO'G'RIDAN-TO'G'RI tana sifatida
-    // yuboriladi — server uni oqim bilan diskka yozadi, xotiraga olmaydi
-    // (5 GB video shu tufayli mumkin). Nomi sarlavhada, kengaytma uchun.
+    setError(null); setUploading(true); setPct(0); setProg(null);
+
+    if (file.size > CHUNKED_FROM_BYTES) {
+      // Katta fayl (video): bo'lakli, parallel, uzilsa davom etadigan yuklash.
+      // Telefonda bitta uzun so'rov "qotib" qolardi — endi har bo'lak alohida,
+      // uzilgani qayta ketadi, sahifa yangilansa ham qolganidan davom etadi.
+      const ac = new AbortController();
+      abortRef.current = ac;
+      activeUploads++;
+      try {
+        const r = await uploadChunked(file, {
+          signal: ac.signal,
+          onProgress: (p) => { setPct(p.pct); setProg(p); },
+        });
+        setPending(null);
+        onChange(r.url);
+      } catch (e) {
+        const code = e instanceof UploadError ? e.code : "server";
+        if (code === "too_large") setError(tooBig(mb));
+        else if (code === "unauthorized") setError(tr(locale, { uz: "Seans tugagan — qaytadan kiring", ru: "Сеанс истёк — войдите снова", en: "Session expired — sign in again", de: "Sitzung abgelaufen — erneut anmelden" }));
+        else if (code === "network") setError(tr(locale, { uz: "Tarmoq uzilib qoldi. Qayta urinib ko'ring — yuklangan qismi saqlanib qoladi.", ru: "Сеть прервалась. Попробуйте снова — загруженная часть сохранится.", en: "The connection dropped. Try again — the uploaded part is kept.", de: "Verbindung abgebrochen. Erneut versuchen — der hochgeladene Teil bleibt erhalten." }));
+        else if (code !== "aborted") setError(`${failed} (${e instanceof UploadError ? e.message : "server"})`);
+      } finally {
+        activeUploads--;
+        abortRef.current = null;
+        setUploading(false); setProg(null);
+      }
+      return;
+    }
+
+    // Kichik fayl — bitta so'rov. Fayl multipart'siz, TO'G'RIDAN-TO'G'RI tana
+    // sifatida yuboriladi — server uni oqim bilan diskka yozadi.
     const url = await new Promise<{ url?: string; error?: string }>((resolve) => {
       const xhr = new XMLHttpRequest();
       xhr.open("POST", "/api/upload");
+      xhr.timeout = 3 * 60_000; // kichik fayl ham cheksiz osilib qolmasin
+      xhr.ontimeout = () => resolve({ error: "upload_failed" });
       xhr.setRequestHeader("Content-Type", file.type || "application/octet-stream");
       xhr.setRequestHeader("X-File-Name", encodeURIComponent(file.name));
       xhr.upload.onprogress = (ev) => { if (ev.lengthComputable) setPct(Math.round((ev.loaded / ev.total) * 100)); };
@@ -390,9 +459,22 @@ function FileUpload({ label, accept, current, onChange, locale, isVideo }: { lab
       xhr.send(file);
     });
     setUploading(false);
-    if (url.url) onChange(url.url);
+    if (url.url) { setPending(null); onChange(url.url); }
     else if (url.error === "too_large") setError(tooBig(mb));
-    else setError(tr(locale, { uz: "Yuklab bo'lmadi", ru: "Не удалось загрузить", en: "Upload failed", de: "Hochladen fehlgeschlagen" }));
+    else setError(failed);
+  };
+
+  // Yuklash holati matni: "240 MB / 1.0 GB · 1.2 MB/s · ~8 daq"
+  const progressLine = (p: UploadProgress) => {
+    const parts = [`${formatBytes(p.loaded)} / ${formatBytes(p.total)}`];
+    if (p.bytesPerSec > 0) parts.push(formatSpeed(p.bytesPerSec));
+    if (p.etaSec !== null && p.etaSec > 0) {
+      const m = Math.ceil(p.etaSec / 60);
+      parts.push(p.etaSec < 60
+        ? tr(locale, { uz: `~${p.etaSec} s`, ru: `~${p.etaSec} с`, en: `~${p.etaSec} s`, de: `~${p.etaSec} s` })
+        : tr(locale, { uz: `~${m} daq`, ru: `~${m} мин`, en: `~${m} min`, de: `~${m} Min` }));
+    }
+    return parts.join(" · ");
   };
 
   return (
@@ -412,15 +494,39 @@ function FileUpload({ label, accept, current, onChange, locale, isVideo }: { lab
         </div>
       ) : uploading ? (
         <div className="rounded-lg border border-slate-200 p-3 dark:border-slate-700">
-          <div className="mb-1.5 flex items-center justify-between text-xs text-slate-500"><span>{tr(locale, { uz: "Yuklanmoqda...", ru: "Загрузка...", en: "Uploading...", de: "Wird hochgeladen..." })}</span><span className="font-semibold tabular-nums">{pct}%</span></div>
-          <div className="h-2 overflow-hidden rounded-full bg-slate-100 dark:bg-slate-800"><div className="h-full rounded-full bg-brand-500 transition-all" style={{ width: `${pct}%` }} /></div>
+          <div className="mb-1.5 flex items-center justify-between text-xs text-slate-500">
+            <span>
+              {prog?.retrying
+                ? tr(locale, { uz: "Tarmoq kutilmoqda, qayta urinilmoqda…", ru: "Ожидание сети, повторная попытка…", en: "Waiting for network, retrying…", de: "Warte auf Netz, erneuter Versuch…" })
+                : tr(locale, { uz: "Yuklanmoqda...", ru: "Загрузка...", en: "Uploading...", de: "Wird hochgeladen..." })}
+            </span>
+            <span className="font-semibold tabular-nums">{pct}%</span>
+          </div>
+          <div className="h-2 overflow-hidden rounded-full bg-slate-100 dark:bg-slate-800"><div className={cn("h-full rounded-full transition-all", prog?.retrying ? "bg-amber-400" : "bg-brand-500")} style={{ width: `${pct}%` }} /></div>
+          {prog && (
+            <div className="mt-1.5 flex items-center justify-between gap-2 text-[11px] text-slate-500">
+              <span className="tabular-nums">{progressLine(prog)}</span>
+              <button type="button" onClick={() => abortRef.current?.abort("cancel")} className="shrink-0 font-medium text-rose-500 hover:underline">
+                {tr(locale, { uz: "Bekor qilish", ru: "Отменить", en: "Cancel", de: "Abbrechen" })}
+              </button>
+            </div>
+          )}
         </div>
       ) : (
         <button type="button" onClick={() => ref.current?.click()} className="flex w-full items-center justify-center gap-2 rounded-lg border border-dashed border-slate-300 py-4 text-sm font-medium text-slate-500 transition hover:border-brand-400 hover:text-brand-600 dark:border-slate-600 dark:text-slate-400">
           <Icon name="download" className="h-4 w-4 rotate-180" /> {tr(locale, { uz: "Fayl tanlash", ru: "Выбрать файл", en: "Choose file", de: "Datei auswählen" })}
         </button>
       )}
-      {error && <p className="mt-1 text-xs text-rose-500">{error}</p>}
+      {error && (
+        <p className="mt-1 flex flex-wrap items-center gap-x-3 text-xs text-rose-500">
+          <span>{error}</span>
+          {pending && !uploading && (
+            <button type="button" onClick={() => void startUpload(pending)} className="font-semibold text-brand-600 hover:underline">
+              {tr(locale, { uz: "Qayta urinish", ru: "Повторить", en: "Retry", de: "Erneut versuchen" })}
+            </button>
+          )}
+        </p>
+      )}
       <input ref={ref} type="file" accept={accept} className="hidden" onChange={onPick} />
     </div>
   );
