@@ -33,6 +33,8 @@ interface Props {
   onRemoveCustomCol: (columnId: string) => void;
   /** "Daraja testi" ustunidagi QR — test sayti havolasini ko'rsatish */
   onLevelTestQr: () => void;
+  /** Kartadagi savatcha — lidni o'chirish (huquqi bo'lganlarga beriladi) */
+  onDelete?: (id: string) => void;
 }
 
 /** Standart va guruh ustunlari bitta ko'rinishga keltiriladi */
@@ -53,7 +55,7 @@ const PAGE = 40;
 
 export default function LeadsKanban({
   leads, totals, locale, selected, groupColumns, customColumns,
-  onOpen, onOpenFull, onDropToColumn, onAdd, onAddToGroup, onRemoveGroupCol, onAddToCustom, onRemoveCustomCol, onLevelTestQr,
+  onOpen, onOpenFull, onDropToColumn, onAdd, onAddToGroup, onRemoveGroupCol, onAddToCustom, onRemoveCustomCol, onLevelTestQr, onDelete,
 }: Props) {
   const [dragId, setDragId] = useState<string | null>(null);
   const [overCol, setOverCol] = useState<string | null>(null);
@@ -149,8 +151,10 @@ export default function LeadsKanban({
                   <Icon name={col.icon} className="h-4 w-4" strokeWidth={2} />
                 </span>
                 <span className="min-w-0">
-                  {/* Bir qator, qo'lda yozilgan shrift — nom tor ustunga ham sig'adi */}
-                  <span className="font-hand block truncate text-[17px] font-bold leading-none text-slate-700 dark:text-slate-100">{col.title}</span>
+                  {/* Bir qator, qo'lda yozilgan shrift — nom tor ustunga ham sig'adi.
+                      Caveat baland shrift: qator balandligi tor bo'lsa `truncate` harflarning
+                      ustki qismini (i nuqtasi, k/l tepasi) kesib qo'yadi — shuning uchun leading keng */}
+                  <span className="font-hand block truncate text-[17px] font-bold leading-[1.35] text-slate-700 dark:text-slate-100">{col.title}</span>
                   {col.sub && <span className="block truncate text-[11px] text-slate-400">{col.sub}</span>}
                 </span>
               </div>
@@ -206,6 +210,7 @@ export default function LeadsKanban({
                   onOpenFull={onOpenFull}
                   onDragStart={onDragStart}
                   onDragEnd={onDragEnd}
+                  onDelete={onDelete}
                 />
               ) : items.length === 0 ? (
                 <div className="rounded-xl border border-dashed border-slate-200 py-8 text-center dark:border-white/[0.08]">
@@ -230,6 +235,7 @@ export default function LeadsKanban({
                       onOpenFull={onOpenFull}
                       onDragStart={onDragStart}
                       onDragEnd={onDragEnd}
+                      onDelete={onDelete}
                     />
                   ))}
                   {items.length > limit && <MoreButton rest={items.length - limit} locale={locale} onClick={() => showMore(col.key)} />}
@@ -252,7 +258,7 @@ interface Bucket {
 }
 
 function WonColumn({
-  items, locale, color, selected, limit, onMore, onOpen, onOpenFull, onDragStart, onDragEnd,
+  items, locale, color, selected, limit, onMore, onOpen, onOpenFull, onDragStart, onDragEnd, onDelete,
 }: {
   items: VLead[];
   locale: Locale;
@@ -265,6 +271,7 @@ function WonColumn({
   onOpenFull: (id: string) => void;
   onDragStart: (id: string, e: React.DragEvent) => void;
   onDragEnd: () => void;
+  onDelete?: (id: string) => void;
 }) {
   // Guruh kutayotganlar kartochka bo'lib qoladi, qolganlari guruhlarga yig'iladi
   const waiting = useMemo(() => items.filter((l) => !l.groupName), [items]);
@@ -311,6 +318,7 @@ function WonColumn({
               onOpenFull={onOpenFull}
               onDragStart={onDragStart}
               onDragEnd={onDragEnd}
+              onDelete={onDelete}
             />
           ))}
           {waiting.length > limit && <MoreButton rest={waiting.length - limit} locale={locale} onClick={onMore} />}

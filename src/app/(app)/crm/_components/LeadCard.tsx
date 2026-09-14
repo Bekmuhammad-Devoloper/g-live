@@ -25,10 +25,12 @@ interface Props {
   onOpenFull: (id: string) => void;
   onDragStart: (id: string, e: React.DragEvent) => void;
   onDragEnd: () => void;
+  /** Berilsa — "Daraja testi" ustunidagi kartada savatcha chiqadi (direktor / o'rinbosari / admin) */
+  onDelete?: (id: string) => void;
 }
 
 // memo: Kanbanda yuzlab karta bor — birini sudrash/belgilash qolganlarini qayta chizmasin
-export default memo(function LeadCard({ lead, locale, selected, onOpen, onOpenFull, onDragStart, onDragEnd }: Props) {
+export default memo(function LeadCard({ lead, locale, selected, onOpen, onOpenFull, onDragStart, onDragEnd, onDelete }: Props) {
   const col = columnDef(columnOf(lead.stage));
   const color = col.color;
   const days = daysSince(lead.createdAt);
@@ -47,12 +49,31 @@ export default memo(function LeadCard({ lead, locale, selected, onOpen, onOpenFu
       onClick={(e) => onOpen(lead.id, e)}
       onDoubleClick={() => onOpenFull(lead.id)}
       className={cn(
-        "group cursor-pointer select-none rounded-xl border bg-[#ffffff] p-3.5 transition hover:-translate-y-0.5 hover:shadow-lg dark:bg-[#15243d]",
+        "group relative cursor-pointer select-none rounded-xl border bg-[#ffffff] p-3.5 transition hover:-translate-y-0.5 hover:shadow-lg dark:bg-[#15243d]",
         selected ? "border-brand-500 ring-2 ring-brand-500/40" : "border-slate-200 dark:border-white/[0.07]"
       )}
     >
-      {/* Avatar + ism */}
-      <div className="flex items-start gap-3">
+      {/* Faoliyat soni + o'chirish — burchakda, ism qatoridan joy olmasin */}
+      <div className="absolute right-2 top-2 flex items-center gap-1">
+        {lead.activityCount > 0 && (
+          <span className="rounded-full bg-slate-100 px-1.5 py-0.5 text-[10px] font-semibold text-slate-500 dark:bg-slate-700 dark:text-slate-300">{lead.activityCount}</span>
+        )}
+        {onDelete && col.key === "test" && (
+          // Faqat daraja testi lidlari; sichqoncha ustiga kelganda ko'rinadi, sensorli ekranda doim (xira)
+          <button
+            type="button"
+            onClick={(e) => { e.preventDefault(); e.stopPropagation(); onDelete(lead.id); }}
+            onDoubleClick={(e) => e.stopPropagation()}
+            title={tr(locale, { uz: "Lidni o'chirish", ru: "Удалить лид", en: "Delete lead", de: "Lead löschen" })}
+            className="flex h-6 w-6 items-center justify-center rounded-md text-slate-300 opacity-60 transition hover:bg-red-50 hover:text-red-500 sm:opacity-0 sm:group-hover:opacity-100 dark:hover:bg-red-500/10"
+          >
+            <Icon name="trash" className="h-3.5 w-3.5" />
+          </button>
+        )}
+      </div>
+
+      {/* Avatar + ism — ism kesilmaydi ("…" yo'q), kerak bo'lsa keyingi qatorga o'raladi */}
+      <div className={cn("flex items-start gap-3", onDelete && col.key === "test" ? "pr-12" : "pr-5")} title={lead.fullName}>
         <div
           className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full bg-slate-100 dark:bg-slate-700/40"
           style={{ boxShadow: `inset 0 0 0 2px ${color}` }}
@@ -60,18 +81,11 @@ export default memo(function LeadCard({ lead, locale, selected, onOpen, onOpenFu
           <Icon name="user" className="h-6 w-6 text-slate-400" strokeWidth={1.6} />
         </div>
         <div className="min-w-0 flex-1">
-          <div className="flex items-start justify-between gap-2">
-            <div className="min-w-0">
-              <div className="flex items-center gap-1.5">
-                <span className="truncate text-[15px] font-semibold text-slate-800 dark:text-slate-100">{first}</span>
-                {stuck && <span className="shrink-0 text-xs font-bold text-red-500">{days} {tr(locale, { uz: "kun", ru: "дн.", en: "days", de: "Tage" })}</span>}
-              </div>
-              {rest && <div className="truncate text-xs text-slate-400">{rest}</div>}
-            </div>
-            {lead.activityCount > 0 && (
-              <span className="shrink-0 rounded-full bg-slate-100 px-1.5 py-0.5 text-[10px] font-semibold text-slate-500 dark:bg-slate-700 dark:text-slate-300">{lead.activityCount}</span>
-            )}
+          <div className="flex flex-wrap items-center gap-x-1.5">
+            <span className="break-words text-[14px] font-semibold leading-tight text-slate-800 dark:text-slate-100">{first}</span>
+            {stuck && <span className="shrink-0 text-xs font-bold text-red-500">{days} {tr(locale, { uz: "kun", ru: "дн.", en: "days", de: "Tage" })}</span>}
           </div>
+          {rest && <div className="mt-0.5 break-words text-xs leading-tight text-slate-400">{rest}</div>}
         </div>
       </div>
 

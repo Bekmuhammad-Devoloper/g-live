@@ -414,10 +414,23 @@ export async function bulkLeadAction(
       if (!payload?.note) return { ok: false, error: "invalid" };
       await prisma.leadActivity.createMany({ data: leadIds.map((id) => ({ leadId: id, authorId: s.userId, type: "note", result: payload!.note! })) });
       break;
-    case "delete":
-      // Faqat yo'qotilgan (LOST) lidlarni o'chirish mumkin
-      await prisma.lead.deleteMany({ where: { id: { in: leadIds }, stage: "LOST" } });
+    case "delete": {
+      // Direktor / o'rinbosari / admin — "Daraja testi" (TEST) va yo'qotilgan
+      // (LOST) lidlarni; qolganlar faqat yo'qotilganlarni. Ishdagi lidlar
+      // Kanbandan ommaviy o'chirilmaydi (faqat to'liq sahifadan, ism yozib).
+      // Qo'ng'iroq yozuvlari saqlanadi — faqat bog'lanish uziladi.
+      const where = CAN_DELETE_LEAD.includes(s.role as never)
+        ? { id: { in: leadIds }, stage: { in: ["TEST", "LOST"] } }
+        : { id: { in: leadIds }, stage: "LOST" };
+      await prisma.$transaction(async (tx) => {
+        const victims = await tx.lead.findMany({ where, select: { id: true } });
+        const ids = victims.map((v) => v.id);
+        if (ids.length === 0) return;
+        await tx.call.updateMany({ where: { leadId: { in: ids } }, data: { leadId: null } });
+        await tx.lead.deleteMany({ where: { id: { in: ids } } });
+      });
       break;
+    }
     default:
       return { ok: false, error: "unknown" };
   }
@@ -515,6 +528,20 @@ export async function moveLeadToBranch(leadId: string, branchId: string): Promis
 // qo'ng'iroq tarixi moliyaviy/nazorat hujjati sifatida saqlanishi kerak.
 // O'quvchiga aylantirilgan bo'lsa — o'quvchi ham o'chmaydi (aloqa uziladi).
 const CAN_DELETE_LEAD = [ROLES.DIRECTOR, ROLES.DEPUTY_DIRECTOR, ROLES.ADMIN];
+
+/**
+ * Kanbandagi tezkor o'chirish — FAQAT "Daraja testi" (TEST) bosqichidagi lid.
+ * Test sinovlari / tasodifiy topshiriqlar shu yerdan tozalanadi; ishdagi
+ * lidlar esa faqat to'liq sahifadan, ism yozib tasdiqlab o'chiriladi.
+ */
+export async function deleteTestLead(leadId: string): Promise<{ ok?: boolean; error?: string }> {
+  const s = await requireSession();
+  if (!CAN_DELETE_LEAD.includes(s.role as never)) return { error: "forbidden" };
+  const lead = await prisma.lead.findUnique({ where: { id: leadId }, select: { stage: true } });
+  if (!lead) return { error: "not_found" };
+  if (lead.stage !== "TEST") return { error: "not_test" };
+  return deleteLeadPermanently(leadId);
+}
 
 export async function deleteLeadPermanently(leadId: string): Promise<{ ok?: boolean; error?: string }> {
   const s = await requireSession();

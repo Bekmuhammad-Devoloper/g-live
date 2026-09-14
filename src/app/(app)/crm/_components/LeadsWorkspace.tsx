@@ -7,7 +7,7 @@ import { tr } from "@/lib/tr";
 import type { Locale } from "@/lib/constants";
 import { Icon } from "../../_components/Icon";
 import { COLUMNS, columnDef, columnOf, columnOfLead, customIdOfCol, groupIdOfCol, isCustomCol, isGroupCol, type CustomColumn, type GroupColumn, type VLead } from "../_lib/leadColumns";
-import { enrollLeadToGroup, moveLeadStage, moveLeadToColumn, removeKanbanColumn, unpinKanbanGroup } from "../actions";
+import { deleteTestLead, enrollLeadToGroup, moveLeadStage, moveLeadToColumn, removeKanbanColumn, unpinKanbanGroup } from "../actions";
 import { type Analytics } from "./AnalyticsTiles";
 import FilterBar from "./FilterBar";
 import LeadsKanban from "./LeadsKanban";
@@ -17,6 +17,7 @@ import NewLeadForm from "../NewLeadForm";
 import CommandPalette, { type PaletteAction } from "./CommandPalette";
 import KeyboardHelpOverlay from "./KeyboardHelpOverlay";
 import RejectReasonModal from "./modals/RejectReasonModal";
+import DeleteLeadModal from "./modals/DeleteLeadModal";
 import LevelTestQrModal from "./modals/LevelTestQrModal";
 import WonAddDrawer from "./WonAddDrawer";
 import GroupLeadPicker from "./GroupLeadPicker";
@@ -33,13 +34,15 @@ interface Props {
   sources: string[];
   analytics: Analytics;
   canWrite: boolean;
+  /** Lidni Kanbandan o'chirish huquqi (direktor / o'rinbosari / admin) */
+  canDelete?: boolean;
   /** Kanbanga biriktirilgan guruh ustunlari */
   initialGroupColumns: GroupColumn[];
   /** Oddiy nomli ustunlar */
   initialCustomColumns: CustomColumn[];
 }
 
-export default function LeadsWorkspace({ locale, initialLeads, managers, sources, analytics, canWrite, initialGroupColumns, initialCustomColumns }: Props) {
+export default function LeadsWorkspace({ locale, initialLeads, managers, sources, analytics, canWrite, canDelete = false, initialGroupColumns, initialCustomColumns }: Props) {
   const router = useRouter();
   const pathname = usePathname();
   const params = useSearchParams();
@@ -56,6 +59,8 @@ export default function LeadsWorkspace({ locale, initialLeads, managers, sources
   const [showPalette, setShowPalette] = useState(false);
   const [showHelp, setShowHelp] = useState(false);
   const [reject, setReject] = useState<{ id: string; name: string } | null>(null);
+  // Kanbandan o'chirish — tasdiqlash oynasi
+  const [del, setDel] = useState<{ id: string; name: string } | null>(null);
   // Guruhga yo'naltirish paneli — "Qabul qilindi" uchun majburiy qadam
   const [enroll, setEnroll] = useState<{ id: string; name: string; groupId: string | null; editCount: number } | null>(null);
   // "Qabul qilindi" ustunidagi "+" — guruh biriktirish yoki yangi o'quvchi
@@ -266,6 +271,38 @@ export default function LeadsWorkspace({ locale, initialLeads, managers, sources
     startRefresh(async () => { await moveLeadStage(id, "LOST", reason); router.refresh(); });
   }, [reject, router]);
 
+  // Tezkor o'chirish faqat "Daraja testi" (TEST) lidlari uchun — ishdagi lidlar
+  // to'liq sahifadan, ism yozib tasdiqlab o'chiriladi
+  const askDelete = useCallback((id: string) => {
+    const lead = leads.find((l) => l.id === id);
+    if (!lead || columnOf(lead.stage) !== "test") return;
+    setQuickId(null);
+    setDel({ id, name: lead.fullName });
+  }, [leads]);
+
+  const confirmDelete = useCallback(() => {
+    if (!del) return;
+    const { id, name } = del;
+    startRefresh(async () => {
+      const r = await deleteTestLead(id);
+      if (r.ok) {
+        setDel(null);
+        setLeads((prev) => prev.filter((l) => l.id !== id));
+        setSelection((prev) => { const n = new Set(prev); n.delete(id); return n; });
+        setFlash(tr(locale, { uz: `O'chirildi: ${name}`, ru: `Удалено: ${name}`, en: `Deleted: ${name}`, de: `Gelöscht: ${name}` }));
+      } else {
+        setDel(null);
+        setFlash(r.error === "forbidden"
+          ? tr(locale, { uz: "Sizda o'chirish huquqi yo'q", ru: "У вас нет прав на удаление", en: "You do not have permission to delete", de: "Keine Berechtigung zum Löschen" })
+          : r.error === "not_test"
+            ? tr(locale, { uz: "Faqat \"Daraja testi\" bosqichidagi lid shu yerdan o'chiriladi", ru: "Здесь удаляются только лиды на этапе «Тест уровня»", en: "Only leads at the \"Level test\" stage can be deleted here", de: "Hier können nur Leads in der Phase „Einstufungstest“ gelöscht werden" })
+            : tr(locale, { uz: "O'chirib bo'lmadi", ru: "Не удалось удалить", en: "Could not delete", de: "Löschen fehlgeschlagen" }));
+      }
+      router.refresh();
+      setTimeout(() => setFlash(null), 4000);
+    });
+  }, [del, locale, router]);
+
   const toggleCol = (key: string) => setActiveCols((prev) => { const n = new Set(prev); n.has(key) ? n.delete(key) : n.add(key); return n; });
   const clearFilters = () => { setSearch(""); setSource(""); setManager(""); setActiveCols(new Set()); };
   const hasFilters = !!(search || source || manager || activeCols.size);
@@ -384,17 +421,19 @@ export default function LeadsWorkspace({ locale, initialLeads, managers, sources
             startRefresh(async () => { await removeKanbanColumn(columnId); router.refresh(); });
           }}
           onLevelTestQr={() => setTestQr(true)}
+          onDelete={canDelete ? askDelete : undefined}
         />
       ) : (
         <LeadsTable leads={sortedShown} locale={locale} selected={selection} onToggle={(id) => toggleSelect(id)} onOpen={openLead} onOpenFull={openLeadFull} allSelected={selection.size === shown.length && shown.length > 0} onToggleAll={toggleAll} />
       )}
 
-      {canWrite && <SelectionActionBar ids={[...selection]} managers={managers} locale={locale} onDone={() => setSelection(new Set())} />}
+      {canWrite && <SelectionActionBar ids={[...selection]} managers={managers} locale={locale} canDelete={canDelete} onDone={() => setSelection(new Set())} />}
       {canWrite && <NewLeadForm locale={locale} open={create.open} onClose={() => setCreate((c) => ({ ...c, open: false }))} defaultStage={create.stage} defaultColumn={create.column} />}
 
       <CommandPalette locale={locale} open={showPalette} onClose={() => setShowPalette(false)} leads={leads} actions={paletteActions} onOpenLead={(id) => router.push(`/crm/${id}`)} />
       <KeyboardHelpOverlay locale={locale} open={showHelp} onClose={() => setShowHelp(false)} />
       <RejectReasonModal locale={locale} open={!!reject} leadName={reject?.name ?? ""} onClose={() => setReject(null)} onConfirm={confirmReject} pending={refreshing} />
+      <DeleteLeadModal locale={locale} open={!!del} leadName={del?.name ?? ""} onClose={() => setDel(null)} onConfirm={confirmDelete} pending={refreshing} />
       <LevelTestQrModal locale={locale} open={testQr} onClose={() => setTestQr(false)} />
 
       {canWrite && (
@@ -448,6 +487,7 @@ export default function LeadsWorkspace({ locale, initialLeads, managers, sources
             setQuickId(null);
             setEnroll({ id: quickLead.id, name: quickLead.fullName, groupId: quickLead.groupId, editCount: quickLead.enrollEditCount });
           }}
+          onDelete={canDelete && columnOf(quickLead.stage) === "test" ? () => askDelete(quickLead.id) : undefined}
         />
       )}
 
