@@ -23,6 +23,7 @@ if sudo -n true 2>/dev/null; then echo "sudo (parolsiz): HA"; else echo "sudo (p
 
 section "Git"
 echo "HEAD=$(git rev-parse --short HEAD) branch=$(git rev-parse --abbrev-ref HEAD) o'zgargan fayllar=$(git status --short | wc -l | tr -d ' ')"
+git status --short | head -5
 
 section "DATABASE_URL (.env)"
 # Faqat sqlite kutiladi; boshqa provider bo'lsa parol yashiriladi
@@ -50,7 +51,7 @@ else
     const p = new PrismaClient();
     (async () => {
       for (const q of ["PRAGMA journal_mode", "PRAGMA page_size", "PRAGMA page_count", "PRAGMA quick_check"]) {
-        console.log(q, JSON.stringify(await p.$queryRawUnsafe(q)));
+        console.log(q, JSON.stringify(await p.$queryRawUnsafe(q), (_, v) => typeof v === "bigint" ? Number(v) : v));
       }
     })().catch((e) => console.error("xato:", e.message)).finally(() => p.$disconnect());
   '
@@ -77,7 +78,7 @@ else
     const { PrismaClient } = require("@prisma/client");
     const p = new PrismaClient();
     (async () => {
-      console.log(JSON.stringify(await p.$queryRawUnsafe(process.env.COUNTS_SQL)));
+      console.log(JSON.stringify(await p.$queryRawUnsafe(process.env.COUNTS_SQL), (_, v) => typeof v === "bigint" ? Number(v) : v));
       console.log(JSON.stringify(await p.$queryRawUnsafe(process.env.SUMS_SQL), (_, v) => typeof v === "bigint" ? Number(v) : v));
     })().catch((e) => console.error("xato:", e.message)).finally(() => p.$disconnect());
   '

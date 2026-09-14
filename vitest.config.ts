@@ -7,7 +7,11 @@ import { defineConfig } from "vitest/config";
 // chegaralari server mahalliy vaqtiga tasodifan bog'lanib qolmasligi uchun.
 export default defineConfig({
   resolve: {
-    alias: { "@": path.resolve(__dirname, "src") },
+    alias: {
+      "@": path.resolve(__dirname, "src"),
+      // `import "server-only"` Node testida xato tashlaydi — bo'sh stub
+      "server-only": path.resolve(__dirname, "tests/setup/serverOnlyStub.ts"),
+    },
   },
   test: {
     environment: "node",

@@ -36,6 +36,18 @@ model Branch {
   students Student[]
   groups   Group[]
   marketItems MarketItem[]
+
+  // Finance V2
+  financialAccounts FinancialAccount[]
+  ledger            FinancialTransaction[]
+  billingPolicies   BillingPolicy[]
+  salaryPolicies    SalaryPolicy[]
+  charges           StudentCharge[]
+  payments          Payment[]
+  refunds           Refund[]
+  earnings          TeacherEarning[]
+  payouts           SalaryPayout[]
+  periodLocks       FinancePeriodLock[]
 }
 
 // Xodim rollari (boshqaruv)
@@ -118,6 +130,33 @@ model User {
 
   // Moliya — kiritilgan xarajatlar
   expenses Expense[] @relation("ExpenseAuthor")
+
+  // ── Finance V2 ──
+  teacherAssignments       GroupTeacherAssignment[] @relation("TeacherAssignments")
+  teacherEarnings          TeacherEarning[]         @relation("TeacherEarnings")
+  salaryPeriods            SalaryPeriod[]           @relation("TeacherSalaryPeriods")
+  salaryPayouts            SalaryPayout[]           @relation("TeacherPayouts")
+  createdFinancialAccounts FinancialAccount[]       @relation("FinancialAccountCreatedBy")
+  createdLedgerEntries     FinancialTransaction[]   @relation("LedgerCreatedBy")
+  createdTransfers         Transfer[]               @relation("TransferCreatedBy")
+  createdBillingPolicies   BillingPolicy[]          @relation("BillingPolicyCreatedBy")
+  createdCharges           StudentCharge[]          @relation("ChargeCreatedBy")
+  cancelledCharges         StudentCharge[]          @relation("ChargeCancelledBy")
+  createdDiscounts         StudentDiscount[]        @relation("DiscountCreatedBy")
+  createdAllocations       PaymentAllocation[]      @relation("AllocationCreatedBy")
+  createdRefunds           Refund[]                 @relation("RefundCreatedBy")
+  createdAssignments       GroupTeacherAssignment[] @relation("AssignmentCreatedBy")
+  createdStatusHistory     StudentStatusHistory[]   @relation("StatusHistoryCreatedBy")
+  createdSalaryPolicies    SalaryPolicy[]           @relation("SalaryPolicyCreatedBy")
+  createdSalaryRules       SalaryRule[]             @relation("SalaryRuleCreatedBy")
+  reviewedEarnings         TeacherEarning[]         @relation("EarningReviewedBy")
+  createdEarnings          TeacherEarning[]         @relation("EarningCreatedBy")
+  approvedPeriods          SalaryPeriod[]           @relation("PeriodApprovedBy")
+  closedPeriods            SalaryPeriod[]           @relation("PeriodClosedBy")
+  reopenedPeriods          SalaryPeriod[]           @relation("PeriodReopenedBy")
+  createdPayouts           SalaryPayout[]           @relation("PayoutCreatedBy")
+  lockedPeriods            FinancePeriodLock[]      @relation("PeriodLockedBy")
+  reopenedPeriodLocks      FinancePeriodLock[]      @relation("PeriodLockReopenedBy")
 }
 
 // O'qituvchi oylik maoshi — har oy alohida yozuv (yil+oy bo'yicha).
@@ -137,6 +176,9 @@ model TeacherSalary {
   closed    Boolean  @default(false) // oy yopilgan (tarix) bo'lsa true
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
+
+  // Finance V2: cutover'dan keyin faqat o'qish (legacy). Backfill shu qatordan SalaryPeriod{source LEGACY} yaratadi.
+  migratedPeriod SalaryPeriod?
 
   @@unique([teacherId, year, month])
   @@index([teacherId])
@@ -259,6 +301,13 @@ model Student {
   skill        StudentSkill?
   levelUps     StudentLevelUp[]
 
+  // Finance V2
+  charges       StudentCharge[]
+  discounts     StudentDiscount[]
+  statusHistory StudentStatusHistory[]
+  refunds       Refund[]
+  earnings      TeacherEarning[]
+
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 }
@@ -308,6 +357,10 @@ model Program {
   courseLessons CourseLesson[]
 
   createdAt DateTime @default(now())
+
+  // Finance V2
+  charges  StudentCharge[]
+  earnings TeacherEarning[]
 }
 
 // Kurs (dastur) materiallari — havola, fayl, video, hujjat
@@ -646,6 +699,12 @@ model Group {
   seasonalAssessments SeasonalAssessment[]
   lessonProgress GroupLessonProgress[]
 
+  // Finance V2 — teacherId joriy holat; tarix teacherAssignments'da
+  teacherAssignments GroupTeacherAssignment[]
+  charges            StudentCharge[]
+  discounts          StudentDiscount[]
+  earnings           TeacherEarning[]
+
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 }
@@ -818,8 +877,30 @@ model Payment {
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt
 
+  // ── Finance V2 (additive; eski qatorlarda null — backfill Phase 2) ──
+  receivedAt         DateTime? // pul REAL kelgan vaqt (createdAt emas); maosh earning oyi shundan
+  branchId           String?
+  branch             Branch?  @relation(fields: [branchId], references: [id], onDelete: Restrict)
+  financialAccountId String? // qaysi kassaga tushgan
+  financialAccount   FinancialAccount? @relation(fields: [financialAccountId], references: [id], onDelete: Restrict)
+  idempotencyKey     String?  @unique // ikki marta bosishdan himoya
+  // Eski semantika belgisi: "DEBT" (status=PENDING — qarz edi), "REFUND" (status=REFUNDED — yechim edi), null = real pul
+  legacyRole         String?
+  postedAt           DateTime? // ledgerga yozilgan vaqt (V2)
+  reversalOfId       String?  @unique // correction: bu to'lov eskisini almashtiradi (eskisi status=REVERSED)
+  reversalOf         Payment? @relation("PaymentReversal", fields: [reversalOfId], references: [id], onDelete: Restrict)
+  reversedBy         Payment? @relation("PaymentReversal")
+
+  allocations  PaymentAllocation[]
+  refunds      Refund[]         @relation("PaymentRefunds")
+  legacyRefund Refund?          @relation("RefundLegacyPayment")
+  legacyCharge StudentCharge?   @relation("ChargeLegacyPayment")
+  earnings     TeacherEarning[] @relation("PaymentEarnings")
+
   @@index([studentId])
   @@index([status])
+  @@index([receivedAt])
+  @@index([branchId, receivedAt])
 }
 
 // ─────────────────────────────────────────────────────────────
@@ -1196,8 +1277,21 @@ model Expense {
   createdAt  DateTime @default(now())
   updatedAt  DateTime @updatedAt
 
+  // ── Finance V2 (additive) ──
+  financialAccountId String? // qaysi kassadan chiqqan
+  financialAccount   FinancialAccount? @relation(fields: [financialAccountId], references: [id], onDelete: Restrict)
+  status             String   @default("ACTIVE") // ACTIVE | REVERSED (hard delete o'rniga)
+  reversalOfId       String?  @unique
+  reversalOf         Expense? @relation("ExpenseReversal", fields: [reversalOfId], references: [id], onDelete: Restrict)
+  reversedBy         Expense? @relation("ExpenseReversal")
+  idempotencyKey     String?  @unique
+  receiptUrl         String?
+  methodRaw          String? // normalizatsiyadan oldingi asl qiymat (masalan "HUMO")
+  postedAt           DateTime? // ledgerga yozilgan vaqt (V2)
+
   @@index([date])
   @@index([categoryId])
+  @@index([financialAccountId, date])
 }
 
 // ─────────────────────────────────────────────────────────────
@@ -1208,15 +1302,36 @@ model Expense {
 // Nishon (o'qituvchi/kurs/guruh/talaba) denormalizatsiya bilan saqlanadi.
 model SalaryRule {
   id         String   @id @default(cuid())
+  // V2: GLOBAL | BRANCH | COURSE | GROUP | TEACHER | STUDENT (eski "ALL" = GLOBAL deb o'qiladi)
   scope      String   @default("ALL") // ALL | TEACHER | COURSE | GROUP | STUDENT
+  // V2 compensation turi ham shu maydon: FIXED | PERCENT | (zaxira) PER_STUDENT | PER_LESSON | PER_HOUR
   amountType String   @default("FIXED") // FIXED (O'zgarmas) | PERCENT (Foiz)
-  amount     Int // Miqdori (so'm yoki %)
+  amount     Int // Miqdori (so'm yoki %) — V2'da FIXED uchun so'm; PERCENT uchun rateBp ishlatiladi
   isDefault  Boolean  @default(false) // 1-bosqich: barcha o'qituvchilar uchun standart
   targetId   String? // nishon id (teacher/program/group/student)
   targetName String? // ko'rsatish uchun nom
   createdAt  DateTime @default(now())
 
+  // ── Finance V2 (additive). Qoida joyida O'ZGARTIRILMAYDI: yangi qator + eskisiga effectiveTo/supersededById ──
+  policyId       String?
+  policy         SalaryPolicy? @relation(fields: [policyId], references: [id], onDelete: Restrict)
+  rateBp         Int? // PERCENT uchun basis point (4000 = 40%); legacy amount=40 → 4000
+  effectiveFrom  DateTime? // oy boshi (Tashkent); eski qatorlarda null = createdAt oyi
+  effectiveTo    DateTime?
+  isActive       Boolean  @default(true)
+  supersededById String?  @unique
+  supersededBy   SalaryRule? @relation("RuleSupersede", fields: [supersededById], references: [id], onDelete: Restrict)
+  supersedes     SalaryRule? @relation("RuleSupersede")
+  note           String?
+  createdById    String?
+  createdBy      User?    @relation("SalaryRuleCreatedBy", fields: [createdById], references: [id], onDelete: SetNull)
+
+  assignments GroupTeacherAssignment[] @relation("AssignmentRule")
+  earnings    TeacherEarning[]         @relation("RuleEarnings")
+
   @@index([scope])
+  @@index([scope, targetId, effectiveFrom])
+  @@index([policyId])
 }
 
 // ── Market: o'quvchi yiqqan tangalarini sovg'aga almashtiradi ──
@@ -1312,4 +1427,484 @@ model Note {
   // Sarlavha o'quvchi doirasida noyob — [[havola]] shu bo'yicha topiladi
   @@unique([studentId, title])
   @@index([studentId, updatedAt])
+}
+
+// ════════════════════════════════════════════════════════════════════
+// FINANCE V2 (Phase 1 — schema). Reja: ~/Desktop/G-LIVE-FINANCE-V2-PLAN.md
+//
+// Konvensiya: enum yo'q (String + lib/finance/constants.ts), pul Int so'm,
+// foiz Int basis point (40% = 4000), snapshot String (JSON matn) — SQLite va
+// Postgres'da bir xil ishlaydi. Balans hech qaerda SAQLANMAYDI — ledger va
+// allocation qatorlaridan hisoblanadi.
+//
+// Tarixiy jadvallar (FinancialTransaction, PaymentAllocation, TeacherEarning,
+// Refund, SalaryPayout, Transfer) IMMUTABLE: update/delete yo'q, tuzatish =
+// teskari (reversal) qator. Shu sabab ularda updatedAt YO'Q.
+//
+// Sana semantikasi (aralashtirilmaydi):
+//   service period   — StudentCharge.serviceYear/serviceMonth (xizmat oyi)
+//   receivedAt       — Payment.receivedAt (pul real kelgan vaqt)
+//   earning month    — TeacherEarning.earningYear/earningMonth = receivedAt oyi
+//   settlement       — TeacherEarning.settlementPeriodId (qaysi maoshda to'lanadi)
+//   payout date      — SalaryPayout.paidAt
+//   createdAt        — yozuv yaratilgan vaqt
+// ════════════════════════════════════════════════════════════════════
+
+// ─── Kassa / hisob: pul qayerda turadi (to'lov usuli EMAS) ───
+model FinancialAccount {
+  id             String   @id @default(cuid())
+  branchId       String?
+  branch         Branch?  @relation(fields: [branchId], references: [id], onDelete: Restrict)
+  name           String
+  type           String // FINANCIAL_ACCOUNT_TYPES: MAIN_CASH | CLICK | PAYME | UZUM | TERMINAL | BANK | CUSTOM
+  isActive       Boolean  @default(true)
+  openingBalance Int      @default(0) // so'm; balans = opening + Σ IN − Σ OUT (ledger)
+  openingAt      DateTime @default(now())
+  note           String?
+  createdById    String?
+  createdBy      User?    @relation("FinancialAccountCreatedBy", fields: [createdById], references: [id], onDelete: SetNull)
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+
+  transactions  FinancialTransaction[]
+  payments      Payment[]
+  expenses      Expense[]
+  refunds       Refund[]
+  payouts       SalaryPayout[]
+  transfersFrom Transfer[] @relation("TransferFrom")
+  transfersTo   Transfer[] @relation("TransferTo")
+
+  @@index([branchId, type])
+}
+
+// ─── Yagona pul harakati jurnali (immutable) ───
+model FinancialTransaction {
+  id             String   @id @default(cuid())
+  branchId       String?
+  branch         Branch?  @relation(fields: [branchId], references: [id], onDelete: Restrict)
+  accountId      String
+  account        FinancialAccount @relation(fields: [accountId], references: [id], onDelete: Restrict)
+  type           String // LEDGER_TYPES: STUDENT_PAYMENT | EXPENSE | SALARY_PAYOUT | REFUND | TRANSFER_IN | TRANSFER_OUT | ADJUSTMENT | OTHER_INCOME
+  direction      String // IN | OUT
+  amount         Int // so'm, > 0
+  referenceType  String // Payment | Expense | SalaryPayout | Refund | Transfer | Adjustment
+  referenceId    String
+  sequence       Int      @default(0) // bir reference ichida bir nechta qator (split) uchun tartib
+  occurredAt     DateTime // pul real harakat qilgan vaqt
+  note           String?
+  idempotencyKey String   @unique
+  createdById    String?
+  createdBy      User?    @relation("LedgerCreatedBy", fields: [createdById], references: [id], onDelete: SetNull)
+  createdAt      DateTime @default(now())
+
+  @@unique([referenceType, referenceId, accountId, direction, sequence])
+  @@index([accountId, occurredAt])
+  @@index([branchId, occurredAt])
+  @@index([referenceType, referenceId])
+}
+
+// ─── Kassalar orasida o'tkazma (xarajat EMAS) — ledgerda OUT + IN ───
+model Transfer {
+  id             String   @id @default(cuid())
+  fromAccountId  String
+  fromAccount    FinancialAccount @relation("TransferFrom", fields: [fromAccountId], references: [id], onDelete: Restrict)
+  toAccountId    String
+  toAccount      FinancialAccount @relation("TransferTo", fields: [toAccountId], references: [id], onDelete: Restrict)
+  amount         Int
+  occurredAt     DateTime
+  note           String?
+  status         String   @default("DONE") // DONE | REVERSED
+  reversalOfId   String?  @unique
+  reversalOf     Transfer? @relation("TransferReversal", fields: [reversalOfId], references: [id], onDelete: Restrict)
+  reversedBy     Transfer? @relation("TransferReversal")
+  idempotencyKey String   @unique
+  createdById    String?
+  createdBy      User?    @relation("TransferCreatedBy", fields: [createdById], references: [id], onDelete: SetNull)
+  createdAt      DateTime @default(now())
+
+  @@index([occurredAt])
+}
+
+// ─── Hisob-kitob siyosati (versiyali; joyida o'zgartirilmaydi) ───
+model BillingPolicy {
+  id                  String   @id @default(cuid())
+  name                String
+  branchId            String?
+  branch              Branch?  @relation(fields: [branchId], references: [id], onDelete: Restrict)
+  version             Int      @default(1)
+  effectiveFrom       DateTime // oy boshi (Tashkent)
+  effectiveTo         DateTime?
+  isActive            Boolean  @default(true)
+  midMonthJoinMode    String   @default("FULL_MONTH") // FULL_MONTH | (zaxira) PRO_RATA_DAYS | PRO_RATA_LESSONS
+  dueDay              Int      @default(1) // xizmat oyining qaysi kuni muddat
+  frozenFullMonthMode String   @default("ZERO_CHARGE") // to'liq oy FROZEN bo'lsa: ZERO_CHARGE
+  noEnrollmentMode    String   @default("NO_CHARGE") // guruh a'zoligisiz oy: NO_CHARGE
+  note                String?
+  createdById         String?
+  createdBy           User?    @relation("BillingPolicyCreatedBy", fields: [createdById], references: [id], onDelete: SetNull)
+  createdAt           DateTime @default(now())
+
+  charges StudentCharge[]
+
+  @@unique([name, version])
+  @@index([branchId, effectiveFrom])
+}
+
+// ─── O'quvchi majburiyati (invoice): qaysi oy uchun qancha to'lashi kerak ───
+model StudentCharge {
+  id              String   @id @default(cuid())
+  studentId       String
+  student         Student  @relation(fields: [studentId], references: [id], onDelete: Restrict)
+  branchId        String?
+  branch          Branch?  @relation(fields: [branchId], references: [id], onDelete: Restrict)
+  groupId         String?
+  group           Group?   @relation(fields: [groupId], references: [id], onDelete: Restrict)
+  programId       String?
+  program         Program? @relation(fields: [programId], references: [id], onDelete: Restrict)
+  billingPolicyId String?
+  billingPolicy   BillingPolicy? @relation(fields: [billingPolicyId], references: [id], onDelete: Restrict)
+  kind            String // CHARGE_KINDS: MONTHLY | MANUAL_DEBT | OPENING_BALANCE | ADJUSTMENT
+  serviceYear     Int
+  serviceMonth    Int // 1-12
+  originalAmount  Int
+  discountAmount  Int      @default(0)
+  finalAmount     Int // = originalAmount − discountAmount
+  dueDate         DateTime
+  // Holat allocation qatorlaridan hisoblanadi va shu yerda saqlanadi (ro'yxatlar uchun);
+  // to'langan summa saqlanmaydi — Σ ALLOCATION − Σ REVERSAL.
+  status          String   @default("OPEN") // CHARGE_STATUSES: OPEN | PARTIALLY_PAID | PAID | WAIVED | CANCELLED
+  cancelledAt     DateTime?
+  cancelReason    String?
+  cancelledById   String?
+  cancelledBy     User?    @relation("ChargeCancelledBy", fields: [cancelledById], references: [id], onDelete: SetNull)
+  // Eski PENDING (qo'lda qarz) Payment qatoridan ko'chirilgan bo'lsa — manba
+  legacyPaymentId String?  @unique
+  legacyPayment   Payment? @relation("ChargeLegacyPayment", fields: [legacyPaymentId], references: [id], onDelete: Restrict)
+  // MONTHLY: `${studentId}:${groupId}:${YYYY}-${MM}` — bir oyga ikki marta yozilmaydi
+  chargeKey       String   @unique
+  snapshot        String? // JSON: narx manbai, chegirma, a'zolik va holat intervallari, siyosat
+  note            String?
+  createdById     String?
+  createdBy       User?    @relation("ChargeCreatedBy", fields: [createdById], references: [id], onDelete: SetNull)
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+
+  allocations PaymentAllocation[]
+  earnings    TeacherEarning[]
+
+  @@index([studentId, serviceYear, serviceMonth])
+  @@index([groupId, serviceYear, serviceMonth])
+  @@index([branchId, serviceYear, serviceMonth])
+  @@index([status, dueDate])
+}
+
+// ─── O'quvchi chegirmasi (charge yaratilganda qo'llanadi) ───
+model StudentDiscount {
+  id            String   @id @default(cuid())
+  studentId     String
+  student       Student  @relation(fields: [studentId], references: [id], onDelete: Restrict)
+  groupId       String? // null = o'quvchining barcha guruhlari
+  group         Group?   @relation(fields: [groupId], references: [id], onDelete: Restrict)
+  type          String // PERCENT (value = bp) | FIXED (value = so'm)
+  value         Int
+  effectiveFrom DateTime
+  effectiveTo   DateTime?
+  isActive      Boolean  @default(true)
+  reason        String
+  createdById   String?
+  createdBy     User?    @relation("DiscountCreatedBy", fields: [createdById], references: [id], onDelete: SetNull)
+  createdAt     DateTime @default(now())
+
+  @@index([studentId, effectiveFrom])
+}
+
+// ─── To'lovning majburiyatga taqsimoti (IMMUTABLE tarix) ───
+// paymentId — HAR DOIM manba to'lov (kredit qo'llanganda ham). Tuzatish:
+// kind=REVERSAL qatori (reversalOfId asl qatorga), keyin yangi ALLOCATION.
+// remaining(charge) = finalAmount − Σ ALLOCATION + Σ REVERSAL.
+model PaymentAllocation {
+  id             String   @id @default(cuid())
+  paymentId      String
+  payment        Payment  @relation(fields: [paymentId], references: [id], onDelete: Restrict)
+  chargeId       String
+  charge         StudentCharge @relation(fields: [chargeId], references: [id], onDelete: Restrict)
+  amount         Int // > 0 (yo'nalish kind bilan)
+  kind           String // ALLOCATION | REVERSAL
+  reversalOfId   String?
+  reversalOf     PaymentAllocation?  @relation("AllocationReversal", fields: [reversalOfId], references: [id], onDelete: Restrict)
+  reversals      PaymentAllocation[] @relation("AllocationReversal")
+  refundId       String? // REVERSAL refund natijasi bo'lsa
+  refund         Refund?  @relation(fields: [refundId], references: [id], onDelete: Restrict)
+  source         String // ALLOCATION_SOURCES: AUTO_FIFO | CREDIT_APPLY | MANUAL | BACKFILL
+  allocatedAt    DateTime @default(now()) // texnik vaqt — earning sanasi EMAS
+  idempotencyKey String   @unique
+  createdById    String?
+  createdBy      User?    @relation("AllocationCreatedBy", fields: [createdById], references: [id], onDelete: SetNull)
+  createdAt      DateTime @default(now())
+
+  earnings TeacherEarning[]
+
+  @@index([paymentId])
+  @@index([chargeId])
+  @@index([refundId])
+}
+
+// ─── Qaytarim (Payment statusini o'zgartirmaydi; alohida tarixiy fakt) ───
+model Refund {
+  id                 String   @id @default(cuid())
+  originalPaymentId  String? // faqat LEGACY (eski "yechib olish") uchun null
+  originalPayment    Payment? @relation("PaymentRefunds", fields: [originalPaymentId], references: [id], onDelete: Restrict)
+  studentId          String
+  student            Student  @relation(fields: [studentId], references: [id], onDelete: Restrict)
+  branchId           String?
+  branch             Branch?  @relation(fields: [branchId], references: [id], onDelete: Restrict)
+  amount             Int
+  reason             String
+  financialAccountId String
+  financialAccount   FinancialAccount @relation(fields: [financialAccountId], references: [id], onDelete: Restrict)
+  refundedAt         DateTime
+  status             String   @default("DONE") // DONE | REVERSED
+  source             String   @default("V2") // V2 | LEGACY
+  legacyPaymentId    String?  @unique // eski REFUNDED Payment qatori
+  legacyPayment      Payment? @relation("RefundLegacyPayment", fields: [legacyPaymentId], references: [id], onDelete: Restrict)
+  idempotencyKey     String   @unique
+  createdById        String?
+  createdBy          User?    @relation("RefundCreatedBy", fields: [createdById], references: [id], onDelete: SetNull)
+  createdAt          DateTime @default(now())
+
+  reversalAllocations PaymentAllocation[] // kind=REVERSAL qatorlar
+  earnings            TeacherEarning[] // REFUND_ADJUSTMENT qatorlar
+
+  @@index([originalPaymentId])
+  @@index([studentId, refundedAt])
+}
+
+// ─── O'qituvchi tayinlash TARIXI (Group.teacherId faqat joriy holat) ───
+model GroupTeacherAssignment {
+  id                 String   @id @default(cuid())
+  groupId            String
+  group              Group    @relation(fields: [groupId], references: [id], onDelete: Restrict)
+  teacherId          String
+  teacher            User     @relation("TeacherAssignments", fields: [teacherId], references: [id], onDelete: Restrict)
+  role               String   @default("MAIN") // MAIN | ASSISTANT
+  effectiveFrom      DateTime
+  effectiveTo        DateTime?
+  compensationRuleId String? // assignment darajasidagi qoida (ASSISTANT uchun odatda shart)
+  compensationRule   SalaryRule? @relation("AssignmentRule", fields: [compensationRuleId], references: [id], onDelete: Restrict)
+  source             String   @default("KNOWN") // KNOWN | INFERRED (cutover'gacha Group.teacherId dan — moliyaviy fakt EMAS)
+  note               String?
+  createdById        String?
+  createdBy          User?    @relation("AssignmentCreatedBy", fields: [createdById], references: [id], onDelete: SetNull)
+  createdAt          DateTime @default(now())
+
+  earnings TeacherEarning[]
+
+  @@index([groupId, effectiveFrom])
+  @@index([teacherId, effectiveFrom])
+}
+
+// ─── O'quvchi holati tarixi (FROZEN/ARCHIVED oylari uchun; cutover'dan yuritiladi) ───
+model StudentStatusHistory {
+  id            String   @id @default(cuid())
+  studentId     String
+  student       Student  @relation(fields: [studentId], references: [id], onDelete: Cascade)
+  status        String // EDU_STATUSES
+  effectiveFrom DateTime
+  effectiveTo   DateTime?
+  reason        String?
+  createdById   String?
+  createdBy     User?    @relation("StatusHistoryCreatedBy", fields: [createdById], references: [id], onDelete: SetNull)
+  createdAt     DateTime @default(now())
+
+  @@index([studentId, effectiveFrom])
+}
+
+// ─── Maosh siyosati (versiyali; eski versiya mutate qilinmaydi) ───
+model SalaryPolicy {
+  id                         String   @id @default(cuid())
+  name                       String
+  branchId                   String?
+  branch                     Branch?  @relation(fields: [branchId], references: [id], onDelete: Restrict)
+  version                    Int      @default(1)
+  effectiveFrom              DateTime // oy boshi (Tashkent)
+  effectiveTo                DateTime?
+  isActive                   Boolean  @default(true)
+  salaryBaseMode             String   @default("REAL_PAID_AMOUNT") // REAL_PAID_AMOUNT | FULL_PRICE_EQUIVALENT
+  attendanceMode             String   @default("NONE") // NONE | PRESENT_RATIO
+  attendanceCountedStatuses  String   @default("PRESENT,LATE,ONLINE,MAKEUP") // vergul bilan
+  requireConfirmedAttendance Boolean  @default(false) // faqat ustoz tasdiqlagan davomat
+  noLessonsMode              String   @default("NO_LESSONS_REVIEW") // NO_LESSONS_REVIEW | (zaxira) NO_LESSONS_AS_FULL | NO_LESSONS_AS_ZERO
+  includeArchivedStudents    Boolean  @default(true)
+  includeFrozenStudents      Boolean  @default(true)
+  includeZeroAmounts         Boolean  @default(false)
+  note                       String?
+  createdById                String?
+  createdBy                  User?    @relation("SalaryPolicyCreatedBy", fields: [createdById], references: [id], onDelete: SetNull)
+  createdAt                  DateTime @default(now())
+
+  rules    SalaryRule[]
+  earnings TeacherEarning[]
+
+  @@unique([name, version])
+  @@index([branchId, effectiveFrom])
+}
+
+// ─── O'qituvchi ulushi — maosh dvigatelining manbai (IMMUTABLE) ───
+// Bir allocation × bir assignment = bitta qator (idempotencyKey). Tuzatish —
+// teskari qator (REFUND_ADJUSTMENT / MANUAL_ADJUSTMENT). Ruxsat etilgan
+// yagona holat o'zgarishi: NEEDS_REVIEW → POSTED (admin tasdig'i, audit).
+model TeacherEarning {
+  id                 String   @id @default(cuid())
+  teacherId          String
+  teacher            User     @relation("TeacherEarnings", fields: [teacherId], references: [id], onDelete: Restrict)
+  studentId          String?
+  student            Student? @relation(fields: [studentId], references: [id], onDelete: Restrict)
+  // Pul manbai — PAYMENT_COMMISSION uchun majburiy (kredit qo'llanganda ham asl to'lov)
+  sourcePaymentId    String?
+  sourcePayment      Payment? @relation("PaymentEarnings", fields: [sourcePaymentId], references: [id], onDelete: Restrict)
+  allocationId       String?
+  allocation         PaymentAllocation? @relation(fields: [allocationId], references: [id], onDelete: Restrict)
+  chargeId           String?
+  charge             StudentCharge? @relation(fields: [chargeId], references: [id], onDelete: Restrict)
+  refundId           String?
+  refund             Refund?  @relation(fields: [refundId], references: [id], onDelete: Restrict)
+  groupId            String?
+  group              Group?   @relation(fields: [groupId], references: [id], onDelete: Restrict)
+  programId          String?
+  program            Program? @relation(fields: [programId], references: [id], onDelete: Restrict)
+  branchId           String?
+  branch             Branch?  @relation(fields: [branchId], references: [id], onDelete: Restrict)
+  policyId           String?
+  policy             SalaryPolicy? @relation(fields: [policyId], references: [id], onDelete: Restrict)
+  ruleId             String?
+  rule               SalaryRule? @relation("RuleEarnings", fields: [ruleId], references: [id], onDelete: Restrict)
+  assignmentId       String?
+  assignment         GroupTeacherAssignment? @relation(fields: [assignmentId], references: [id], onDelete: Restrict)
+  // Sanalar (7.0): xizmat oyi · pul kelgan vaqt · earning oyi (= receivedAt oyi) · settlement
+  serviceYear        Int?
+  serviceMonth       Int?
+  receivedAt         DateTime?
+  earningYear        Int
+  earningMonth       Int // 1-12
+  settlementPeriodId String?
+  settlementPeriod   SalaryPeriod? @relation(fields: [settlementPeriodId], references: [id], onDelete: Restrict)
+  baseAmount         Int      @default(0)
+  eligibleAmount     Int      @default(0)
+  rateBp             Int? // PERCENT uchun (4000 = 40%)
+  amount             Int // manfiy bo'lishi mumkin (adjustment)
+  type               String // EARNING_TYPES: PAYMENT_COMMISSION | FIXED | BONUS | KPI | PENALTY | REFUND_ADJUSTMENT | MANUAL_ADJUSTMENT
+  status             String   @default("POSTED") // POSTED | NEEDS_REVIEW
+  reviewReason       String? // NO_LESSONS_FOUND | ASSISTANT_NO_RULE | RATE_SUM_EXCEEDED | LEGACY_INFERRED
+  reviewedAt         DateTime?
+  reviewedById       String?
+  reviewedBy         User?    @relation("EarningReviewedBy", fields: [reviewedById], references: [id], onDelete: SetNull)
+  snapshot           String // JSON: policy, rule, assignment, charge, allocation, sourcePayment, attendance, base, eligible, tz
+  idempotencyKey     String   @unique
+  reversalOfId       String?
+  reversalOf         TeacherEarning?  @relation("EarningReversal", fields: [reversalOfId], references: [id], onDelete: Restrict)
+  reversals          TeacherEarning[] @relation("EarningReversal")
+  note               String?
+  createdById        String?
+  createdBy          User?    @relation("EarningCreatedBy", fields: [createdById], references: [id], onDelete: SetNull)
+  createdAt          DateTime @default(now())
+
+  @@index([teacherId, earningYear, earningMonth])
+  @@index([settlementPeriodId])
+  @@index([status])
+  @@index([sourcePaymentId])
+  @@index([allocationId])
+  @@index([studentId])
+}
+
+// ─── Maosh davri (snapshot; manba — TeacherEarning va SalaryPayout) ───
+model SalaryPeriod {
+  id                    String   @id @default(cuid())
+  teacherId             String
+  teacher               User     @relation("TeacherSalaryPeriods", fields: [teacherId], references: [id], onDelete: Restrict)
+  year                  Int
+  month                 Int // 1-12
+  status                String   @default("OPEN") // SALARY_PERIOD_STATUSES: OPEN | CALCULATED | APPROVED | PARTIALLY_PAID | PAID | CLOSED
+  fixedAmount           Int      @default(0)
+  commissionAmount      Int      @default(0)
+  bonusAmount           Int      @default(0)
+  kpiAmount             Int      @default(0)
+  penaltyAmount         Int      @default(0)
+  adjustmentAmount      Int      @default(0)
+  grossAmount           Int      @default(0)
+  paidAmount            Int      @default(0)
+  remainingAmount       Int      @default(0)
+  calculatedAt          DateTime?
+  approvedAt            DateTime?
+  approvedById          String?
+  approvedBy            User?    @relation("PeriodApprovedBy", fields: [approvedById], references: [id], onDelete: SetNull)
+  closedAt              DateTime?
+  closedById            String?
+  closedBy              User?    @relation("PeriodClosedBy", fields: [closedById], references: [id], onDelete: SetNull)
+  reopenedAt            DateTime?
+  reopenedById          String?
+  reopenedBy            User?    @relation("PeriodReopenedBy", fields: [reopenedById], references: [id], onDelete: SetNull)
+  reopenReason          String?
+  source                String   @default("V2") // V2 | LEGACY
+  legacyFiksaAmount     Int? // eski TeacherSalary.fiksa (ichida commission ham bo'lishi mumkin — ajratilmaydi)
+  legacyTeacherSalaryId String?  @unique
+  legacyTeacherSalary   TeacherSalary? @relation(fields: [legacyTeacherSalaryId], references: [id], onDelete: Restrict)
+  note                  String?
+  createdAt             DateTime @default(now())
+  updatedAt             DateTime @updatedAt
+
+  earnings TeacherEarning[]
+  payouts  SalaryPayout[]
+
+  @@unique([teacherId, year, month])
+  @@index([year, month])
+  @@index([status])
+}
+
+// ─── Maosh to'lovi (qo'lda, qisman bo'lishi mumkin) — ledger OUT ───
+model SalaryPayout {
+  id                 String   @id @default(cuid())
+  teacherId          String
+  teacher            User     @relation("TeacherPayouts", fields: [teacherId], references: [id], onDelete: Restrict)
+  salaryPeriodId     String
+  salaryPeriod       SalaryPeriod @relation(fields: [salaryPeriodId], references: [id], onDelete: Restrict)
+  financialAccountId String
+  financialAccount   FinancialAccount @relation(fields: [financialAccountId], references: [id], onDelete: Restrict)
+  branchId           String?
+  branch             Branch?  @relation(fields: [branchId], references: [id], onDelete: Restrict)
+  amount             Int
+  paidAt             DateTime
+  note               String?
+  status             String   @default("DONE") // DONE | REVERSED
+  reversalOfId       String?  @unique
+  reversalOf         SalaryPayout? @relation("PayoutReversal", fields: [reversalOfId], references: [id], onDelete: Restrict)
+  reversedBy         SalaryPayout? @relation("PayoutReversal")
+  idempotencyKey     String   @unique
+  createdById        String?
+  createdBy          User?    @relation("PayoutCreatedBy", fields: [createdById], references: [id], onDelete: SetNull)
+  createdAt          DateTime @default(now())
+
+  @@index([teacherId, paidAt])
+  @@index([salaryPeriodId])
+}
+
+// ─── Moliya davri qulfi (to'lov/xarajat/qaytarim uchun; maosh davri alohida) ───
+model FinancePeriodLock {
+  id           String   @id @default(cuid())
+  branchId     String? // null = butun tizim
+  branch       Branch?  @relation(fields: [branchId], references: [id], onDelete: Restrict)
+  year         Int
+  month        Int // 1-12
+  isLocked     Boolean  @default(true)
+  lockedAt     DateTime @default(now())
+  lockedById   String?
+  lockedBy     User?    @relation("PeriodLockedBy", fields: [lockedById], references: [id], onDelete: SetNull)
+  reason       String
+  reopenedAt   DateTime?
+  reopenedById String?
+  reopenedBy   User?    @relation("PeriodLockReopenedBy", fields: [reopenedById], references: [id], onDelete: SetNull)
+  reopenReason String?
+  // SQLite'da unique ichidagi NULL takrorlanaveradi — shu sabab kalit: `${branchId ?? "-"}:${YYYY}-${MM}`
+  lockKey      String   @unique
+
+  @@index([year, month])
 }
