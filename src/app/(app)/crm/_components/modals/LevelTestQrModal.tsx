@@ -4,6 +4,7 @@ import { useEffect, useState } from "react";
 import { tr } from "@/lib/tr";
 import type { Locale } from "@/lib/constants";
 import { Icon } from "../../../_components/Icon";
+import BrandedQr from "../../../_components/BrandedQr";
 import { getLevelTestQr, type LevelTestQr } from "../../actions";
 
 /**
@@ -14,10 +15,12 @@ import { getLevelTestQr, type LevelTestQr } from "../../actions";
 export default function LevelTestQrModal({ locale, open, onClose }: { locale: Locale; open: boolean; onClose: () => void }) {
   const [data, setData] = useState<LevelTestQr | null>(null);
   const [copied, setCopied] = useState(false);
+  // Brendli QR canvas'da chizilgach PNG shu yerga tushadi (yuklab olish uchun)
+  const [png, setPng] = useState<string | null>(null);
 
   useEffect(() => {
     if (!open) return;
-    setData(null); setCopied(false);
+    setData(null); setCopied(false); setPng(null);
     getLevelTestQr().then(setData);
   }, [open]);
 
@@ -48,9 +51,8 @@ export default function LevelTestQrModal({ locale, open, onClose }: { locale: Lo
           <div className="grid h-56 place-items-center text-sm text-slate-400">{tr(locale, { uz: "Yuklanmoqda...", ru: "Загрузка...", en: "Loading...", de: "Wird geladen..." })}</div>
         ) : (
           <div className="text-center">
-            {data.qr ? (
-              // eslint-disable-next-line @next/next/no-img-element
-              <img src={data.qr} alt="QR" className="mx-auto h-56 w-56 rounded-lg bg-white" />
+            {data.modules ? (
+              <BrandedQr modules={data.modules} size={data.size} className="mx-auto h-60 w-60 rounded-xl" onPng={setPng} />
             ) : (
               <p className="py-8 text-sm text-rose-500">
                 {data.error === "forbidden"
@@ -60,8 +62,8 @@ export default function LevelTestQrModal({ locale, open, onClose }: { locale: Lo
             )}
             <p className="mt-2 break-all font-mono text-[11px] text-slate-400">{data.url}</p>
             <div className="mt-3 flex flex-wrap justify-center gap-2">
-              {data.qr && (
-                <a href={data.qr} download="daraja-testi-qr.png" className="inline-flex items-center gap-1.5 rounded-xl bg-cyan-600 px-4 py-2 text-sm font-semibold text-white transition hover:bg-cyan-700">
+              {png && (
+                <a href={png} download="daraja-testi-qr.png" className="inline-flex items-center gap-1.5 rounded-xl bg-cyan-600 px-4 py-2 text-sm font-semibold text-white transition hover:bg-cyan-700">
                   <Icon name="download" className="h-4 w-4" /> {tr(locale, { uz: "PNG yuklab olish", ru: "Скачать PNG", en: "Download PNG", de: "PNG herunterladen" })}
                 </a>
               )}

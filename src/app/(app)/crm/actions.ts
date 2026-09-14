@@ -711,11 +711,12 @@ export async function moveLeadToColumn(leadId: string, columnId: string): Promis
 /* ─── Daraja testi (QR) ──────────────────────────────────────────────
    "Daraja testi" ustunidagi QR tugmasi — lid telefonida skan qilib, ilovaning
    ochiq /daraja-testi sahifasiga o'tadi. Natija CRM'ga avtomatik tushadi
-   (src/app/daraja-testi/actions.ts).                                       */
+   (src/app/daraja-testi/actions.ts). QR brend uslubida mijozda chiziladi
+   (BrandedQr) — shuning uchun tayyor rasm emas, modullar matritsasi qaytadi. */
 
 const LEVEL_TEST_PATH = "/daraja-testi";
 
-export type LevelTestQr = { url: string; qr: string | null; error?: string };
+export type LevelTestQr = { url: string; modules: string; size: number; error?: string };
 
 export async function getLevelTestQr(): Promise<LevelTestQr> {
   const s = await requireSession();
@@ -723,11 +724,13 @@ export async function getLevelTestQr(): Promise<LevelTestQr> {
   const host = h.get("host") ?? "localhost:3000";
   const proto = host.startsWith("localhost") || host.startsWith("127.") ? "http" : "https";
   const url = `${proto}://${host}${LEVEL_TEST_PATH}`;
-  if (!canRead(s.role, MODULES.CRM)) return { url, qr: null, error: "forbidden" };
+  if (!canRead(s.role, MODULES.CRM)) return { url, modules: "", size: 0, error: "forbidden" };
   try {
-    const qr = await QRCode.toDataURL(url, { width: 512, margin: 1 });
-    return { url, qr };
+    // H — 30% xato tuzatish: markazdagi emblema shu zaxira hisobiga qo'yiladi
+    const q = QRCode.create(url, { errorCorrectionLevel: "H" });
+    const modules = Array.from(q.modules.data, (b) => (b ? "1" : "0")).join("");
+    return { url, modules, size: q.modules.size };
   } catch {
-    return { url, qr: null, error: "qr_failed" };
+    return { url, modules: "", size: 0, error: "qr_failed" };
   }
 }
