@@ -16,7 +16,7 @@ interface Props {
   selected: Set<string>;
   /** Kanbanga biriktirilgan guruhlar — har biri alohida ustun */
   groupColumns: GroupColumn[];
-  /** Oddiy nomli ustunlar — "Test / Taklif" dan keyin turadi */
+  /** Oddiy nomli ustunlar — "Taklif" dan keyin turadi */
   customColumns: CustomColumn[];
   onOpen: (id: string, e: React.MouseEvent) => void;
   /** Ikki marta bosilganda — lidning to'liq sahifasi */
@@ -31,6 +31,8 @@ interface Props {
   onAddToCustom: (columnId: string) => void;
   /** Oddiy ustunni o'chirish (lidlar o'z bosqichiga qaytadi) */
   onRemoveCustomCol: (columnId: string) => void;
+  /** "Daraja testi" ustunidagi QR — test sayti havolasini ko'rsatish */
+  onLevelTestQr: () => void;
 }
 
 /** Standart va guruh ustunlari bitta ko'rinishga keltiriladi */
@@ -51,7 +53,7 @@ const PAGE = 40;
 
 export default function LeadsKanban({
   leads, totals, locale, selected, groupColumns, customColumns,
-  onOpen, onOpenFull, onDropToColumn, onAdd, onAddToGroup, onRemoveGroupCol, onAddToCustom, onRemoveCustomCol,
+  onOpen, onOpenFull, onDropToColumn, onAdd, onAddToGroup, onRemoveGroupCol, onAddToCustom, onRemoveCustomCol, onLevelTestQr,
 }: Props) {
   const [dragId, setDragId] = useState<string | null>(null);
   const [overCol, setOverCol] = useState<string | null>(null);
@@ -62,7 +64,7 @@ export default function LeadsKanban({
   const pinnedIds = useMemo(() => new Set(groupColumns.map((g) => g.groupId)), [groupColumns]);
   const customIds = useMemo(() => new Set(customColumns.map((c) => c.id)), [customColumns]);
 
-  // Tartib: standart 3 ta → oddiy nomli ustunlar → "Qabul qilindi" → guruh ustunlari → "Yo'qotilgan"
+  // Tartib: standart 4 ta → oddiy nomli ustunlar → "Qabul qilindi" → guruh ustunlari → "Yo'qotilgan"
   const cols = useMemo<ViewCol[]>(() => {
     const std = (key: string): ViewCol => {
       const c = COLUMNS.find((x) => x.key === key)!;
@@ -88,7 +90,7 @@ export default function LeadsKanban({
       groupId: g.groupId,
       customId: null,
     }));
-    return [std("new"), std("work"), std("offer"), ...custom, std("won"), ...groups, std("lost")];
+    return [std("new"), std("work"), std("test"), std("offer"), ...custom, std("won"), ...groups, std("lost")];
   }, [groupColumns, customColumns, locale]);
 
   const colOf = useCallback((l: VLead) => columnOfLead(l, pinnedIds, customIds), [pinnedIds, customIds]);
@@ -115,8 +117,8 @@ export default function LeadsKanban({
     <div
       className={cn(
         "grid auto-cols-[minmax(272px,1fr)] grid-flow-col gap-4 overflow-x-auto pb-4",
-        // Qo'shimcha ustunlar bo'lsa 5 ta ustunga sig'maydi — gorizontal scroll qoladi
-        groupColumns.length === 0 && customColumns.length === 0 && "lg:grid-flow-row lg:grid-cols-5",
+        // Qo'shimcha ustunlar bo'lsa 6 ta ustunga sig'maydi — gorizontal scroll qoladi
+        groupColumns.length === 0 && customColumns.length === 0 && "xl:grid-flow-row xl:grid-cols-6",
       )}
     >
       {cols.map((col) => {
@@ -153,6 +155,17 @@ export default function LeadsKanban({
               </div>
               <div className="flex shrink-0 items-center gap-1">
                 <span className="text-sm font-bold" style={{ color: col.color }}>{totals[col.key] ?? items.length}</span>
+                {col.key === "test" && (
+                  // QR — lid telefonida skan qiladi, daraja aniqlash testi saytiga o'tadi
+                  <button
+                    onClick={onLevelTestQr}
+                    title={tr(locale, { uz: "Daraja testi QR kodi", ru: "QR-код теста уровня", en: "Level test QR code", de: "QR-Code des Einstufungstests" })}
+                    className="flex h-6 w-6 items-center justify-center rounded-md transition hover:bg-slate-200/60 dark:hover:bg-white/[0.06]"
+                    style={{ color: col.color }}
+                  >
+                    <Icon name="qr" className="h-4 w-4" strokeWidth={1.8} />
+                  </button>
+                )}
                 <button
                   onClick={() => (col.customId ? onAddToCustom(col.customId) : col.groupId ? onAddToGroup(col.groupId) : onAdd(col.defaultStage))}
                   title={tr(locale, { uz: "Qo'shish", ru: "Добавить", en: "Add", de: "Hinzufügen" })}

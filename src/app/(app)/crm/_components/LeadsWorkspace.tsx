@@ -17,6 +17,7 @@ import NewLeadForm from "../NewLeadForm";
 import CommandPalette, { type PaletteAction } from "./CommandPalette";
 import KeyboardHelpOverlay from "./KeyboardHelpOverlay";
 import RejectReasonModal from "./modals/RejectReasonModal";
+import LevelTestQrModal from "./modals/LevelTestQrModal";
 import WonAddDrawer from "./WonAddDrawer";
 import GroupLeadPicker from "./GroupLeadPicker";
 import EnrollDrawer from "./EnrollDrawer";
@@ -63,6 +64,8 @@ export default function LeadsWorkspace({ locale, initialLeads, managers, sources
   // oddiy ustun / yangi lid. `stage` — qaysi ustundan bosilgani (yangi lid
   // formasi shu bosqich bilan ochiladi).
   const [mainAdd, setMainAdd] = useState<{ open: boolean; stage: string }>({ open: false, stage: "NEW" });
+  // "Daraja testi" ustunidagi QR oynasi
+  const [testQr, setTestQr] = useState(false);
   // Kanbanga biriktirilgan guruhlar (ustun bo'lib chiqadi)
   const [groupColumns, setGroupColumns] = useState<GroupColumn[]>(initialGroupColumns);
   // Oddiy nomli ustunlar
@@ -276,7 +279,7 @@ export default function LeadsWorkspace({ locale, initialLeads, managers, sources
       const el = document.activeElement?.tagName;
       if (el === "INPUT" || el === "TEXTAREA" || el === "SELECT") { if (e.key === "Escape") (document.activeElement as HTMLElement).blur(); return; }
       if (gPending) {
-        const map: Record<string, string> = { y: "new", i: "work", t: "offer", q: "won", r: "lost" };
+        const map: Record<string, string> = { y: "new", i: "work", d: "test", t: "offer", q: "won", r: "lost" };
         if (map[e.key]) setActiveCols(new Set([map[e.key]]));
         gPending = false;
         return;
@@ -299,6 +302,7 @@ export default function LeadsWorkspace({ locale, initialLeads, managers, sources
     ...(canWrite ? [{ id: "new", label: tr(locale, { uz: "Yangi lid", ru: "Новый лид", en: "New lead", de: "Neuer Lead" }), icon: "plus", run: () => setCreate({ open: true, stage: "NEW", column: null }) }] : []),
     ...COLUMNS.map((c) => ({ id: `f-${c.key}`, label: `${tr(locale, { uz: "Filter", ru: "Фильтр", en: "Filter", de: "Filter" })}: ${tr(locale, c.label)}`, icon: c.icon, run: () => setActiveCols(new Set([c.key])) })),
     { id: "clear", label: tr(locale, { uz: "Filtrlarni tozalash", ru: "Очистить фильтры", en: "Clear filters", de: "Filter zurücksetzen" }), icon: "personX", run: clearFilters },
+    { id: "testqr", label: tr(locale, { uz: "Daraja testi QR kodi", ru: "QR-код теста уровня", en: "Level test QR code", de: "QR-Code des Einstufungstests" }), icon: "qr", run: () => setTestQr(true) },
     { id: "help", label: tr(locale, { uz: "Klaviatura yorliqlari", ru: "Горячие клавиши", en: "Keyboard shortcuts", de: "Tastenkürzel" }), icon: "info", run: () => setShowHelp(true) },
   ];
 
@@ -379,6 +383,7 @@ export default function LeadsWorkspace({ locale, initialLeads, managers, sources
             setLeads((prev) => prev.map((l) => (l.kanbanColumnId === columnId ? { ...l, kanbanColumnId: null } : l)));
             startRefresh(async () => { await removeKanbanColumn(columnId); router.refresh(); });
           }}
+          onLevelTestQr={() => setTestQr(true)}
         />
       ) : (
         <LeadsTable leads={sortedShown} locale={locale} selected={selection} onToggle={(id) => toggleSelect(id)} onOpen={openLead} onOpenFull={openLeadFull} allSelected={selection.size === shown.length && shown.length > 0} onToggleAll={toggleAll} />
@@ -390,6 +395,7 @@ export default function LeadsWorkspace({ locale, initialLeads, managers, sources
       <CommandPalette locale={locale} open={showPalette} onClose={() => setShowPalette(false)} leads={leads} actions={paletteActions} onOpenLead={(id) => router.push(`/crm/${id}`)} />
       <KeyboardHelpOverlay locale={locale} open={showHelp} onClose={() => setShowHelp(false)} />
       <RejectReasonModal locale={locale} open={!!reject} leadName={reject?.name ?? ""} onClose={() => setReject(null)} onConfirm={confirmReject} pending={refreshing} />
+      <LevelTestQrModal locale={locale} open={testQr} onClose={() => setTestQr(false)} />
 
       {canWrite && (
         <WonAddDrawer

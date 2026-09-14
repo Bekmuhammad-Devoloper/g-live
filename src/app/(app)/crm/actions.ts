@@ -2,6 +2,7 @@
 
 import { revalidatePath } from "next/cache";
 import { z } from "zod";
+import QRCode from "qrcode";
 import { prisma } from "@/lib/db";
 import { requireSession } from "@/lib/auth";
 import { canRead, canWrite, MODULES } from "@/lib/rbac";
@@ -704,4 +705,47 @@ export async function moveLeadToColumn(leadId: string, columnId: string): Promis
 
   revalidatePath("/crm");
   return { ok: true };
+}
+
+/* ─── Daraja testi (QR) ──────────────────────────────────────────────
+   "Daraja testi" ustunidagi QR tugmasi — lid telefonida skan qilib, alohida
+   saytdagi daraja aniqlash testiga o'tadi. Havola Setting'da saqlanadi va
+   uni rahbariyat (direktor / o'rinbosar / administrator) o'zgartiradi.     */
+
+const LEVEL_TEST_URL_KEY = "crm.levelTestUrl";
+const LEVEL_TEST_EDITORS = [ROLES.DIRECTOR, ROLES.DEPUTY_DIRECTOR, ROLES.ADMIN];
+
+export type LevelTestQr = { url: string | null; qr: string | null; canEdit: boolean; error?: string };
+
+export async function getLevelTestQr(): Promise<LevelTestQr> {
+  const s = await requireSession();
+  const canEdit = LEVEL_TEST_EDITORS.includes(s.role as never);
+  if (!canRead(s.role, MODULES.CRM)) return { url: null, qr: null, canEdit: false, error: "forbidden" };
+
+  const url = (await getSetting(LEVEL_TEST_URL_KEY))?.trim() || null;
+  if (!url) return { url: null, qr: null, canEdit };
+  try {
+    const qr = await QRCode.toDataURL(url, { width: 512, margin: 1 });
+    return { url, qr, canEdit };
+  } catch {
+    return { url, qr: null, canEdit, error: "qr_failed" };
+  }
+}
+
+/** Havolani saqlash; bo'sh satr — havolani olib tashlaydi */
+export async function setLevelTestUrl(raw: string): Promise<LevelTestQr> {
+  const s = await requireSession();
+  if (!LEVEL_TEST_EDITORS.includes(s.role as never)) return { url: null, qr: null, canEdit: false, error: "forbidden" };
+
+  const value = raw.trim().slice(0, 500);
+  if (value) {
+    let ok = false;
+    try { ok = ["http:", "https:"].includes(new URL(value).protocol); } catch { ok = false; }
+    if (!ok) return { ...(await getLevelTestQr()), error: "invalid_url" };
+  }
+
+  const prev = await getSetting(LEVEL_TEST_URL_KEY);
+  await setSetting(LEVEL_TEST_URL_KEY, value);
+  await writeAudit({ actorId: s.userId, action: "UPDATE", entityType: "Setting", entityId: LEVEL_TEST_URL_KEY, oldValue: { url: prev }, newValue: { url: value } });
+  return getLevelTestQr();
 }

@@ -1,5 +1,5 @@
 // Lead workspace — ustunlar konfiguratsiyasi va turlari.
-// 9 bosqich (LEAD_STAGES) 5 Kanban ustuniga yig'iladi.
+// 9 bosqich (LEAD_STAGES) 6 Kanban ustuniga yig'iladi.
 
 export interface VLead {
   id: string;
@@ -40,7 +40,9 @@ export interface ColumnDef {
 export const COLUMNS: ColumnDef[] = [
   { key: "new", label: { uz: "Yangi", ru: "Новые", en: "New", de: "Neu" }, color: "#3b82f6", icon: "download", stages: ["NEW"], defaultStage: "NEW" },
   { key: "work", label: { uz: "Ishda", ru: "В работе", en: "In progress", de: "In Arbeit" }, color: "#f59e0b", icon: "clock", stages: ["IN_PROGRESS", "CONTACTED"], defaultStage: "IN_PROGRESS" },
-  { key: "offer", label: { uz: "Test / Taklif", ru: "Тест / Предложение", en: "Test / Offer", de: "Test / Angebot" }, color: "#8b5cf6", icon: "filecheck", stages: ["TEST", "OFFER", "AWAITING_PAYMENT"], defaultStage: "OFFER" },
+  // Daraja testi — sarlavhasida QR tugmasi bor (lid skan qilib test saytiga o'tadi)
+  { key: "test", label: { uz: "Daraja testi", ru: "Тест уровня", en: "Level test", de: "Einstufungstest" }, color: "#06b6d4", icon: "clipboard", stages: ["TEST"], defaultStage: "TEST" },
+  { key: "offer", label: { uz: "Taklif", ru: "Предложение", en: "Offer", de: "Angebot" }, color: "#8b5cf6", icon: "filecheck", stages: ["OFFER", "AWAITING_PAYMENT"], defaultStage: "OFFER" },
   { key: "won", label: { uz: "Qabul qilindi", ru: "Принят", en: "Won", de: "Aufgenommen" }, color: "#10b981", icon: "check", stages: ["PAID", "WON"], defaultStage: "WON" },
   { key: "lost", label: { uz: "Yo'qotilgan", ru: "Потерян", en: "Lost", de: "Verloren" }, color: "#ef4444", icon: "personX", stages: ["LOST"], defaultStage: "LOST" },
 ];

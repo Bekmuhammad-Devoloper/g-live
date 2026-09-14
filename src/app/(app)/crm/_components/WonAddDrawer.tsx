@@ -374,10 +374,10 @@ export default function WonAddDrawer({
               ) : (
                 <p className="mt-1.5 text-xs text-slate-400">
                   {L(
-                    "Ustun \"Test / Taklif\" dan keyin chiqadi. Lid unga tashlansa bosqichi o'zgarmaydi; standart ustunga qaytarilsa ustundan chiqadi.",
-                    "Столбец появится после «Тест / Предложение». Этап лида при переносе не меняется; при возврате в обычный столбец он покидает этот.",
-                    "The column appears after \"Test / Offer\". Dropping a lead keeps its stage; moving it back to a standard column removes it from here.",
-                    "Die Spalte erscheint nach \"Test / Angebot\". Der Lead behält seine Phase; beim Zurückschieben verlässt er die Spalte.",
+                    "Ustun \"Taklif\" dan keyin chiqadi. Lid unga tashlansa bosqichi o'zgarmaydi; standart ustunga qaytarilsa ustundan chiqadi.",
+                    "Столбец появится после «Предложение». Этап лида при переносе не меняется; при возврате в обычный столбец он покидает этот.",
+                    "The column appears after \"Offer\". Dropping a lead keeps its stage; moving it back to a standard column removes it from here.",
+                    "Die Spalte erscheint nach \"Angebot\". Der Lead behält seine Phase; beim Zurückschieben verlässt er die Spalte.",
                   )}
                 </p>
               )}
