@@ -3,14 +3,21 @@ import { requireSession } from "@/lib/auth";
 import { prisma } from "@/lib/db";
 import { ROLES, type Locale } from "@/lib/constants";
 import { branchWhere } from "@/lib/branchScope";
+import { canWrite, MODULES } from "@/lib/rbac";
+import { computeDebt } from "@/lib/debt";
+import { getSetting } from "@/lib/settings";
+import { RECEIPT_MODE_KEY, parseReceiptMode } from "@/lib/receiptMode";
 import { tr } from "@/lib/tr";
 import { Forbidden } from "../../_components/ui";
 import StudentProfile, { type SProfile } from "./StudentProfile";
+import type { VStudent } from "../StudentsView";
 
 // O'quvchi profili — jadvaldagi qatordan bosilganda shu sahifa ochiladi.
 // Ruxsat ro'yxatlari /students bilan bir xil; o'qituvchi faqat o'z
 // guruhidagi o'quvchini ko'radi (aks holda notFound).
 const ALLOWED = [ROLES.DIRECTOR, ROLES.DEPUTY_DIRECTOR, ROLES.MANAGER, ROLES.ADMIN, ROLES.TEACHER, ROLES.ACCOUNTANT];
+// Tahrirlash/qarz qo'shish huquqi — /students ro'yxatidagi CAN_CREATE bilan bir xil
+const CAN_MANAGE = [ROLES.DIRECTOR, ROLES.DEPUTY_DIRECTOR, ROLES.MANAGER, ROLES.ADMIN];
 
 const iso = (d: Date | null | undefined) => (d ? d.toISOString() : null);
 
@@ -38,7 +45,7 @@ export default async function StudentProfilePage({ params }: { params: Promise<{
           group: {
             select: {
               id: true, name: true, room: true, status: true, weekdays: true,
-              startTime: true, endTime: true,
+              startTime: true, endTime: true, startDate: true,
               program: { select: { name: true } },
               teacher: { select: { fullName: true } },
             },
@@ -64,8 +71,16 @@ export default async function StudentProfilePage({ params }: { params: Promise<{
     if (!mine) notFound();
   }
 
-  const paid = student.payments.filter((p) => p.status === "PAID").reduce((n, p) => n + p.amount, 0);
-  const debt = student.payments.filter((p) => p.status === "PENDING").reduce((n, p) => n + p.amount, 0);
+  // Qarz — ro'yxat va tezkor oyna bilan BIR XIL hisob (src/lib/debt.ts):
+  // ro'yxatga olingan oydan hisoblangan to'lov − to'langan + qo'lda kiritilgan qarz.
+  // Ilgari bu yerda faqat PENDING yig'indisi ko'rsatilardi — ro'yxatda qarz
+  // turgan o'quvchi profilida "0 so'm" chiqardi.
+  const [debtInfo, receiptMode] = await Promise.all([
+    computeDebt(student.id),
+    getSetting(RECEIPT_MODE_KEY).then(parseReceiptMode),
+  ]);
+  const paid = debtInfo.paid;
+  const debt = debtInfo.debt;
 
   const att = student.attendances;
   const present = att.filter((a) => ["PRESENT", "LATE", "ONLINE", "MAKEUP"].includes(a.status)).length;
@@ -118,7 +133,46 @@ export default async function StudentProfilePage({ params }: { params: Promise<{
       : null,
   };
 
-  return <StudentProfile profile={profile} locale={s.locale as Locale} />;
+  const uniq = (arr: (string | null | undefined)[]) => Array.from(new Set(arr.filter((x): x is string => !!x)));
+  const now = new Date();
+  // "Kichik oynada ochish" — ro'yxatdagi tezkor oyna (StudentDetailModal) shu shaklni kutadi
+  const quick: VStudent = {
+    id: student.id,
+    fullName: student.fullName,
+    phone: student.phone,
+    imageUrl: student.imageUrl,
+    eduStatus: student.eduStatus,
+    currentLevel: student.currentLevel,
+    groups: student.enrollments.filter((e) => e.isActive).map((e) => ({ id: e.group.id, name: e.group.name })),
+    teachers: uniq(student.enrollments.map((e) => e.group.teacher?.fullName)),
+    courses: uniq(student.enrollments.map((e) => e.group.program.name)),
+    scheduleDates: student.enrollments.map((e) => e.group.startDate?.toISOString()).filter((x): x is string => !!x),
+    balance: paid,
+    debt,
+    paidThisMonth: student.payments.some((p) => p.status === "PAID" && p.createdAt.getFullYear() === now.getFullYear() && p.createdAt.getMonth() === now.getMonth()),
+    note: student.note,
+    branchName: student.branch?.name ?? null,
+  };
+
+  return (
+    <StudentProfile
+      profile={profile}
+      locale={s.locale as Locale}
+      debtInfo={{
+        accrued: debtInfo.accrued,
+        paid: debtInfo.paid,
+        manual: debtInfo.manual,
+        debt: debtInfo.debt,
+        months: debtInfo.months,
+        since: iso(debtInfo.since),
+      }}
+      quick={quick}
+      canManage={CAN_MANAGE.includes(s.role as never)}
+      canPay={canWrite(s.role, MODULES.PAYMENTS)}
+      cashierName={s.fullName}
+      receiptMode={receiptMode}
+    />
+  );
 }
 
 export const dynamic = "force-dynamic";

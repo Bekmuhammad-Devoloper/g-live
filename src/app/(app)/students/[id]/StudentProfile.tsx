@@ -2,14 +2,27 @@
 
 import Link from "next/link";
 import { useState } from "react";
+import { useRouter } from "next/navigation";
 import { cn } from "@/lib/cn";
 import { tr } from "@/lib/tr";
 import { EDU_STATUS_LABELS, label, formatMoney, type Locale } from "@/lib/constants";
+import type { ReceiptMode } from "@/lib/receiptMode";
 import { Icon } from "../../_components/Icon";
+import PaymentPanel from "../PaymentPanel";
+import { StudentDetailModal, EditModal, type VStudent } from "../StudentsView";
 
 // O'quvchi profili — sarlavha kartasi + ko'rsatkichlar + bo'limlar.
 // Uslub /profile (xodim profili) bilan bir xil: gradient sarlavha, avatar,
 // statistika plitalari, tab'lar.
+//
+// To'lov holati (qarz qo'shish, to'lov qabul qilish, so'nggi to'lovlar) —
+// ro'yxatdagi tezkor oyna bilan BITTA komponent (PaymentPanel). "Kichik oynada
+// ochish" tugmasi esa o'sha tezkor oynaning o'zini shu sahifada ochadi.
+
+/** Qarz hisobi tafsiloti — src/lib/debt.ts natijasi */
+export interface DebtInfo {
+  accrued: number; paid: number; manual: number; debt: number; months: number; since: string | null;
+}
 
 export interface SGroup {
   id: string; name: string; course: string; teacher: string | null; room: string | null;
@@ -53,8 +66,24 @@ const schedule = (g: SGroup) => {
 
 type Tab = "groups" | "payments" | "attendance" | "exams";
 
-export default function StudentProfile({ profile: st, locale }: { profile: SProfile; locale: Locale }) {
-  const [tab, setTab] = useState<Tab>("groups");
+export default function StudentProfile({
+  profile: st, locale, debtInfo, quick, canManage, canPay, cashierName, receiptMode,
+}: {
+  profile: SProfile;
+  locale: Locale;
+  debtInfo: DebtInfo;
+  /** Tezkor oyna uchun ro'yxat qatori shakli */
+  quick: VStudent;
+  canManage: boolean;
+  canPay: boolean;
+  cashierName: string;
+  receiptMode: ReceiptMode;
+}) {
+  const router = useRouter();
+  // Qarzi bor o'quvchi ochilsa — darrov to'lovlar bo'limi (amal talab qiladi)
+  const [tab, setTab] = useState<Tab>(debtInfo.debt > 0 && (canManage || canPay) ? "payments" : "groups");
+  const [quickOpen, setQuickOpen] = useState(false);
+  const [editOpen, setEditOpen] = useState(false);
   const L = (uz: string, ru: string, en: string, de: string) => tr(locale, { uz, ru, en, de });
   const tone = STATUS_TONE[st.eduStatus] ?? "#64748b";
 
@@ -89,10 +118,29 @@ export default function StudentProfile({ profile: st, locale }: { profile: SProf
               {st.branchName && <span>· {st.branchName}</span>}
             </div>
           </div>
-          <div className="flex shrink-0 gap-2">
+          <div className="flex shrink-0 flex-wrap gap-2">
             <Link href="/students" className="flex items-center gap-1.5 rounded-lg border border-slate-200 px-3 py-2 text-sm font-medium text-slate-600 transition hover:bg-slate-50 dark:border-slate-700 dark:text-slate-300 dark:hover:bg-slate-800">
               <Icon name="arrow" className="h-4 w-4 rotate-180" /> {L("Ro'yxatga", "К списку", "Back to list", "Zur Liste")}
             </Link>
+            {/* Ro'yxatdagi tezkor oyna — shu yerda ham ochiladi */}
+            {(canManage || canPay) && (
+              <button
+                type="button"
+                onClick={() => setQuickOpen(true)}
+                className="flex items-center gap-1.5 rounded-lg border border-slate-200 px-3 py-2 text-sm font-medium text-slate-600 transition hover:border-brand-300 hover:text-brand-600 dark:border-slate-700 dark:text-slate-300 dark:hover:bg-slate-800"
+              >
+                <Icon name="minimize" className="h-4 w-4" /> {L("Kichik oynada ochish", "Открыть в окне", "Open in quick view", "Im Schnellfenster öffnen")}
+              </button>
+            )}
+            {canManage && (
+              <button
+                type="button"
+                onClick={() => setEditOpen(true)}
+                className="flex items-center gap-1.5 rounded-lg bg-brand-600 px-3 py-2 text-sm font-semibold text-white transition hover:bg-brand-700"
+              >
+                <Icon name="pencil" className="h-4 w-4" /> {L("Tahrirlash", "Редактировать", "Edit", "Bearbeiten")}
+              </button>
+            )}
             {st.lead && (
               <Link href={`/crm/${st.lead.id}`} className="flex items-center gap-1.5 rounded-lg border border-slate-200 px-3 py-2 text-sm font-medium text-slate-600 transition hover:bg-slate-50 dark:border-slate-700 dark:text-slate-300 dark:hover:bg-slate-800">
                 <Icon name="download" className="h-4 w-4" /> {L("Lid kartasi", "Карточка лида", "Lead card", "Lead-Karte")}
@@ -106,7 +154,15 @@ export default function StudentProfile({ profile: st, locale }: { profile: SProf
       <div className="grid grid-cols-2 gap-4 lg:grid-cols-4">
         <Tile icon="layers" tone="#6366f1" label={L("Guruhlar", "Группы", "Groups", "Gruppen")} value={String(st.groups.filter((g) => g.isActive).length)} />
         <Tile icon="wallet" tone="#10b981" label={L("To'langan", "Оплачено", "Paid", "Bezahlt")} value={formatMoney(st.paid, locale)} small />
-        <Tile icon="alert" tone={st.debt > 0 ? "#ef4444" : "#94a3b8"} label={L("Qarzdorlik", "Задолженность", "Debt", "Schulden")} value={formatMoney(st.debt, locale)} small />
+        <Tile
+          icon="alert"
+          tone={st.debt > 0 ? "#ef4444" : "#94a3b8"}
+          label={L("Qarzdorlik", "Задолженность", "Debt", "Schulden")}
+          value={formatMoney(st.debt, locale)}
+          hint={debtInfo.months ? `${debtInfo.months} ${L("oy", "мес.", "mo", "Mon.")}` : undefined}
+          small
+          onClick={() => setTab("payments")}
+        />
         <Tile
           icon="check"
           tone="#0ea5e9"
@@ -185,19 +241,43 @@ export default function StudentProfile({ profile: st, locale }: { profile: SProf
         )}
 
         {tab === "payments" && (
-          st.payments.length === 0 ? <Empty text={L("To'lov yo'q", "Платежей нет", "No payments", "Keine Zahlungen")} /> : (
-            <Rows>
-              {st.payments.map((p) => (
-                <Row
-                  key={p.id}
-                  left={<span className="font-semibold tabular-nums text-slate-800 dark:text-slate-100">{formatMoney(p.amount, locale)}</span>}
-                  sub={[p.method, p.purpose].filter(Boolean).join(" · ")}
-                  right={<Chip tone={PAY_TONE[p.status] ?? "#94a3b8"} text={p.status} />}
-                  date={fmtDate(p.createdAt)}
+          <div>
+            {/* Qarz hisobi — qanday chiqqani to'liq ko'rinadi */}
+            <DebtBreakdown info={debtInfo} locale={locale} />
+
+            {/* To'lov holati — tezkor oyna bilan bir xil: qarz qo'shish, to'lov qabul qilish, so'nggi to'lovlar */}
+            {(canManage || canPay) && (
+              <div className="border-t border-slate-100 px-4 py-4 dark:border-slate-800">
+                <PaymentPanel
+                  studentId={st.id}
+                  locale={locale}
+                  canManage={canManage}
+                  canPay={canPay}
+                  cashierName={cashierName}
+                  receiptMode={receiptMode}
+                  defaultPurpose={st.groups[0] ? `${st.groups[0].course} ${L("kurs to'lovi", "оплата курса", "course fee", "Kursgebühr")}` : L("Kurs to'lovi", "Оплата курса", "Course fee", "Kursgebühr")}
+                  onChanged={() => router.refresh()}
                 />
-              ))}
-            </Rows>
-          )
+              </div>
+            )}
+
+            <div className="flex items-center gap-2 border-t border-slate-100 px-4 pb-1 pt-3 text-[11px] font-semibold uppercase tracking-wide text-slate-400 dark:border-slate-800">
+              <Icon name="history" className="h-3.5 w-3.5" /> {L("To'lovlar tarixi", "История платежей", "Payment history", "Zahlungsverlauf")}
+            </div>
+            {st.payments.length === 0 ? <Empty text={L("To'lov yo'q", "Платежей нет", "No payments", "Keine Zahlungen")} /> : (
+              <Rows>
+                {st.payments.map((p) => (
+                  <Row
+                    key={p.id}
+                    left={<span className="font-semibold tabular-nums text-slate-800 dark:text-slate-100">{formatMoney(p.amount, locale)}</span>}
+                    sub={[p.method, p.purpose].filter(Boolean).join(" · ")}
+                    right={<Chip tone={PAY_TONE[p.status] ?? "#94a3b8"} text={p.status} />}
+                    date={fmtDate(p.createdAt)}
+                  />
+                ))}
+              </Rows>
+            )}
+          </div>
         )}
 
         {tab === "attendance" && (
@@ -231,15 +311,92 @@ export default function StudentProfile({ profile: st, locale }: { profile: SProf
           )
         )}
       </div>
+
+      {quickOpen && (
+        <StudentDetailModal
+          student={quick}
+          locale={locale}
+          canManage={canManage}
+          canPay={canPay}
+          cashierName={cashierName}
+          receiptMode={receiptMode}
+          onClose={() => { setQuickOpen(false); router.refresh(); }}
+          onEdit={() => { setQuickOpen(false); setEditOpen(true); }}
+        />
+      )}
+      {editOpen && (
+        <EditModal
+          student={quick}
+          locale={locale}
+          onClose={() => setEditOpen(false)}
+          onDone={() => router.refresh()}
+        />
+      )}
     </div>
   );
 }
 
 // ─────────── Yordamchi komponentlar ───────────
 
-function Tile({ icon, tone, label, value, hint, small }: { icon: string; tone: string; label: string; value: string; hint?: string; small?: boolean }) {
+// Qarz qanday hisoblangani: hisoblangan − to'langan + qo'lda kiritilgan
+function DebtBreakdown({ info, locale }: { info: DebtInfo; locale: Locale }) {
+  const L = (uz: string, ru: string, en: string, de: string) => tr(locale, { uz, ru, en, de });
+  const has = info.debt > 0;
+  const tone = has ? "#ef4444" : "#10b981";
+  const rows: { label: string; value: string; sign?: string; muted?: boolean }[] = [
+    {
+      label: L("Hisob boshlangan", "Начало расчёта", "Billing since", "Abrechnung seit"),
+      value: info.since ? `${fmtDate(info.since)} · ${info.months} ${L("oy", "мес.", "mo", "Mon.")}` : "—",
+      muted: true,
+    },
+    { label: L("Hisoblangan to'lov", "Начислено", "Accrued", "Berechnet"), value: formatMoney(info.accrued, locale) },
+    { label: L("To'langan", "Оплачено", "Paid", "Bezahlt"), value: formatMoney(info.paid, locale), sign: "−" },
+    { label: L("Qo'lda kiritilgan qarz", "Долг, внесённый вручную", "Manual debt", "Manuell erfasste Schulden"), value: formatMoney(info.manual, locale), sign: "+" },
+  ];
   return (
-    <div className="rounded-2xl border border-slate-200/70 bg-white p-4 shadow-card dark:border-slate-800 dark:bg-slate-900">
+    <div className="px-4 py-4">
+      <div className="mb-2.5 flex items-center gap-2 text-[11px] font-semibold uppercase tracking-wide text-slate-400">
+        <Icon name="chart" className="h-3.5 w-3.5" /> {L("Qarz hisobi", "Расчёт долга", "Debt calculation", "Schuldenberechnung")}
+      </div>
+      <div className="grid gap-3 md:grid-cols-[1fr_auto]">
+        <div className="divide-y divide-slate-100 rounded-xl border border-slate-100 dark:divide-slate-800 dark:border-slate-800">
+          {rows.map((r) => (
+            <div key={r.label} className="flex items-center justify-between gap-3 px-3.5 py-2 text-sm">
+              <span className={cn(r.muted ? "text-slate-400" : "text-slate-600 dark:text-slate-300")}>{r.label}</span>
+              <span className={cn("flex items-center gap-1.5 font-semibold tabular-nums", r.muted ? "text-slate-500 dark:text-slate-400" : "text-slate-800 dark:text-slate-100")}>
+                {r.sign && <span className="w-3 text-center text-slate-400">{r.sign}</span>}
+                {r.value}
+              </span>
+            </div>
+          ))}
+        </div>
+        <div className="flex min-w-[200px] flex-col justify-center rounded-xl px-4 py-3" style={{ background: `${tone}14` }}>
+          <div className="text-[11px] font-semibold uppercase tracking-wide" style={{ color: tone }}>
+            {L("Jami qarz", "Итого долг", "Total debt", "Gesamtschulden")}
+          </div>
+          <div className="mt-0.5 text-2xl font-black tabular-nums" style={{ color: tone }}>
+            {has ? formatMoney(info.debt, locale) : L("Yo'q", "Нет", "None", "Keine")}
+          </div>
+          <div className="mt-1 text-[11px] text-slate-500 dark:text-slate-400">
+            {L("hisoblangan − to'langan + qo'lda", "начислено − оплачено + вручную", "accrued − paid + manual", "berechnet − bezahlt + manuell")}
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+function Tile({ icon, tone, label, value, hint, small, onClick }: { icon: string; tone: string; label: string; value: string; hint?: string; small?: boolean; onClick?: () => void }) {
+  const Tag = onClick ? "button" : "div";
+  return (
+    <Tag
+      type={onClick ? "button" : undefined}
+      onClick={onClick}
+      className={cn(
+        "rounded-2xl border border-slate-200/70 bg-white p-4 text-left shadow-card dark:border-slate-800 dark:bg-slate-900",
+        onClick && "transition hover:border-brand-300 hover:shadow-soft",
+      )}
+    >
       <div className="flex items-center gap-2.5">
         <span className="grid h-9 w-9 shrink-0 place-items-center rounded-xl" style={{ color: tone, background: `${tone}1a` }}>
           <Icon name={icon} className="h-5 w-5" />
@@ -249,7 +406,7 @@ function Tile({ icon, tone, label, value, hint, small }: { icon: string; tone: s
           <div className="truncate text-[11px] text-slate-500 dark:text-slate-400">{label}{hint ? ` · ${hint}` : ""}</div>
         </div>
       </div>
-    </div>
+    </Tag>
   );
 }
 
