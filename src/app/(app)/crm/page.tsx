@@ -87,6 +87,8 @@ export default async function CrmPage() {
       sources={sources}
       analytics={analytics}
       canWrite={canWrite(s.role, MODULES.CRM)}
+      // Kanbandan to'g'ridan-to'g'ri o'chirish — actions.ts dagi CAN_DELETE_LEAD bilan bir xil
+      canDelete={[ROLES.DIRECTOR, ROLES.DEPUTY_DIRECTOR, ROLES.ADMIN].includes(s.role as never)}
       initialGroupColumns={groupColumns}
       initialCustomColumns={customColumns}
     />

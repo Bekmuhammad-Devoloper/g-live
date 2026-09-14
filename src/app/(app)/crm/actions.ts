@@ -414,10 +414,22 @@ export async function bulkLeadAction(
       if (!payload?.note) return { ok: false, error: "invalid" };
       await prisma.leadActivity.createMany({ data: leadIds.map((id) => ({ leadId: id, authorId: s.userId, type: "note", result: payload!.note! })) });
       break;
-    case "delete":
-      // Faqat yo'qotilgan (LOST) lidlarni o'chirish mumkin
-      await prisma.lead.deleteMany({ where: { id: { in: leadIds }, stage: "LOST" } });
+    case "delete": {
+      // Direktor / o'rinbosari / admin — istalgan bosqichdagi lidni o'chiradi;
+      // qolganlar faqat yo'qotilgan (LOST) lidlarni. Qo'ng'iroq yozuvlari
+      // saqlanadi — faqat bog'lanish uziladi (deleteLeadPermanently kabi).
+      const where = CAN_DELETE_LEAD.includes(s.role as never)
+        ? { id: { in: leadIds } }
+        : { id: { in: leadIds }, stage: "LOST" };
+      await prisma.$transaction(async (tx) => {
+        const victims = await tx.lead.findMany({ where, select: { id: true } });
+        const ids = victims.map((v) => v.id);
+        if (ids.length === 0) return;
+        await tx.call.updateMany({ where: { leadId: { in: ids } }, data: { leadId: null } });
+        await tx.lead.deleteMany({ where: { id: { in: ids } } });
+      });
       break;
+    }
     default:
       return { ok: false, error: "unknown" };
   }

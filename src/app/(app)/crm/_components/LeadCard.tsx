@@ -25,10 +25,12 @@ interface Props {
   onOpenFull: (id: string) => void;
   onDragStart: (id: string, e: React.DragEvent) => void;
   onDragEnd: () => void;
+  /** Berilsa — kartada savatcha tugmasi chiqadi (direktor / o'rinbosari / admin) */
+  onDelete?: (id: string) => void;
 }
 
 // memo: Kanbanda yuzlab karta bor — birini sudrash/belgilash qolganlarini qayta chizmasin
-export default memo(function LeadCard({ lead, locale, selected, onOpen, onOpenFull, onDragStart, onDragEnd }: Props) {
+export default memo(function LeadCard({ lead, locale, selected, onOpen, onOpenFull, onDragStart, onDragEnd, onDelete }: Props) {
   const col = columnDef(columnOf(lead.stage));
   const color = col.color;
   const days = daysSince(lead.createdAt);
@@ -68,9 +70,23 @@ export default memo(function LeadCard({ lead, locale, selected, onOpen, onOpenFu
               </div>
               {rest && <div className="truncate text-xs text-slate-400">{rest}</div>}
             </div>
-            {lead.activityCount > 0 && (
-              <span className="shrink-0 rounded-full bg-slate-100 px-1.5 py-0.5 text-[10px] font-semibold text-slate-500 dark:bg-slate-700 dark:text-slate-300">{lead.activityCount}</span>
-            )}
+            <div className="flex shrink-0 items-center gap-1">
+              {lead.activityCount > 0 && (
+                <span className="rounded-full bg-slate-100 px-1.5 py-0.5 text-[10px] font-semibold text-slate-500 dark:bg-slate-700 dark:text-slate-300">{lead.activityCount}</span>
+              )}
+              {onDelete && (
+                // Sichqoncha ustiga kelganda ko'rinadi; sensorli ekranda doim (xira)
+                <button
+                  type="button"
+                  onClick={(e) => { e.preventDefault(); e.stopPropagation(); onDelete(lead.id); }}
+                  onDoubleClick={(e) => e.stopPropagation()}
+                  title={tr(locale, { uz: "Lidni o'chirish", ru: "Удалить лид", en: "Delete lead", de: "Lead löschen" })}
+                  className="flex h-6 w-6 items-center justify-center rounded-md text-slate-300 opacity-60 transition hover:bg-red-50 hover:text-red-500 sm:opacity-0 sm:group-hover:opacity-100 dark:hover:bg-red-500/10"
+                >
+                  <Icon name="trash" className="h-3.5 w-3.5" />
+                </button>
+              )}
+            </div>
           </div>
         </div>
       </div>
