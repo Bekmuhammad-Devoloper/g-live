@@ -22,7 +22,11 @@ const ALLOWED = [ROLES.DIRECTOR, ROLES.DEPUTY_DIRECTOR, ROLES.MANAGER, ROLES.ADM
 
 // ─── O'quvchi to'lovlari (detal oynasi uchun) ───
 export interface MonthPay { paid: boolean; amount: number; date: string | null }
-export interface PayRow { id: string; amount: number; method: string; purpose: string | null; status: string; date: string }
+export interface PayRow {
+  id: string; amount: number; method: string; purpose: string | null; status: string; date: string;
+  /** PENDING (qarz) yozuvi to'lovlar bilan qoplangan bo'lsa true — ro'yxatda "Qoplandi" */
+  covered?: boolean;
+}
 export interface StudentPayments {
   thisMonth: MonthPay;
   lastMonth: MonthPay;
@@ -60,7 +64,6 @@ export async function getStudentPayments(studentId: string): Promise<{ ok: boole
   const lastM = m === 0 ? 11 : m - 1;
   const lastY = m === 0 ? y - 1 : y;
   const paid = payments.filter((p) => p.status === "PAID");
-  const pending = payments.filter((p) => p.status === "PENDING"); // qarz = PENDING to'lovlar yig'indisi
 
   const monthSummary = (yy: number, mm: number): MonthPay => {
     const ps = paid.filter((p) => p.createdAt.getFullYear() === yy && p.createdAt.getMonth() === mm);
@@ -68,6 +71,16 @@ export async function getStudentPayments(studentId: string): Promise<{ ok: boole
   };
 
   const thisMonth = monthSummary(y, m);
+
+  // Qarz hisobi va qaysi qo'lda qarz yozuvlari to'lovlar bilan qoplangani:
+  // to'lov avval hisoblangan oylik to'lovni, keyin qarzlarni eskisidan boshlab yopadi
+  const debtInfo = await computeDebt(studentId, now);
+  const coveredIds = new Set<string>();
+  let remaining = debtInfo.paid - debtInfo.accrued;
+  for (const p of [...payments].filter((x) => x.status === "PENDING").sort((a, b) => a.createdAt.getTime() - b.createdAt.getTime())) {
+    if (remaining >= p.amount) { coveredIds.add(p.id); remaining -= p.amount; }
+    else break;
+  }
   // Majburiy to'lov: shu oy chegaradan (3 dars) ko'p dars o'tilgan, lekin to'lov qilinmagan
   const paymentMandatory = !thisMonth.paid && lessonsThisMonth >= MANDATORY_LESSON_THRESHOLD;
 
@@ -84,14 +97,17 @@ export async function getStudentPayments(studentId: string): Promise<{ ok: boole
       lastMonth: monthSummary(lastY, lastM),
       totalPaid: paid.reduce((n, p) => n + p.amount, 0),
       lastPaidDate: paid.length ? paid[0].createdAt.toISOString() : null,
-      // Qarz — guruhga qo'shilgan oydan hisoblangan to'lov + qo'lda kiritilgani
-      debt: (await computeDebt(studentId, now)).debt,
+      // Qarz — guruhga qo'shilgan oydan hisoblangan to'lov + qo'lda kiritilgani − to'langan
+      debt: debtInfo.debt,
       lessonsThisMonth,
       mandatoryThreshold: MANDATORY_LESSON_THRESHOLD,
       paymentMandatory,
       joinDate: joinDate ? joinDate.toISOString() : null,
       lastMonthApplicable,
-      recent: payments.slice(0, 8).map((p) => ({ id: p.id, amount: p.amount, method: p.method, purpose: p.purpose, status: p.status, date: p.createdAt.toISOString() })),
+      recent: payments.slice(0, 8).map((p) => ({
+        id: p.id, amount: p.amount, method: p.method, purpose: p.purpose, status: p.status, date: p.createdAt.toISOString(),
+        ...(p.status === "PENDING" ? { covered: coveredIds.has(p.id) } : {}),
+      })),
     },
   };
 }

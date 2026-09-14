@@ -338,7 +338,7 @@ export default function StudentProfile({
 
 // ─────────── Yordamchi komponentlar ───────────
 
-// Qarz qanday hisoblangani: hisoblangan − to'langan + qo'lda kiritilgan
+// Qarz qanday hisoblangani: hisoblangan + qo'lda kiritilgan − to'langan
 function DebtBreakdown({ info, locale }: { info: DebtInfo; locale: Locale }) {
   const L = (uz: string, ru: string, en: string, de: string) => tr(locale, { uz, ru, en, de });
   const has = info.debt > 0;
@@ -350,8 +350,8 @@ function DebtBreakdown({ info, locale }: { info: DebtInfo; locale: Locale }) {
       muted: true,
     },
     { label: L("Hisoblangan to'lov", "Начислено", "Accrued", "Berechnet"), value: formatMoney(info.accrued, locale) },
-    { label: L("To'langan", "Оплачено", "Paid", "Bezahlt"), value: formatMoney(info.paid, locale), sign: "−" },
     { label: L("Qo'lda kiritilgan qarz", "Долг, внесённый вручную", "Manual debt", "Manuell erfasste Schulden"), value: formatMoney(info.manual, locale), sign: "+" },
+    { label: L("To'langan", "Оплачено", "Paid", "Bezahlt"), value: formatMoney(info.paid, locale), sign: "−" },
   ];
   return (
     <div className="px-4 py-4">
@@ -378,7 +378,7 @@ function DebtBreakdown({ info, locale }: { info: DebtInfo; locale: Locale }) {
             {has ? formatMoney(info.debt, locale) : L("Yo'q", "Нет", "None", "Keine")}
           </div>
           <div className="mt-1 text-[11px] text-slate-500 dark:text-slate-400">
-            {L("hisoblangan − to'langan + qo'lda", "начислено − оплачено + вручную", "accrued − paid + manual", "berechnet − bezahlt + manuell")}
+            {L("hisoblangan + qo'lda − to'langan", "начислено + вручную − оплачено", "accrued + manual − paid", "berechnet + manuell − bezahlt")}
           </div>
         </div>
       </div>

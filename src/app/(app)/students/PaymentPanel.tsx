@@ -229,7 +229,9 @@ export function PaymentRow({ p, locale, canEdit, onChanged }: {
   const [err, setErr] = useState<string | null>(null);
   const [pending, start] = useTransition();
   const L = (uz: string, ru: string, en: string) => tr(locale, { uz, ru, en });
-  const ps = payStatusStyle(p.status);
+  // Qoplangan qarz yozuvi — holati PENDING qolsa ham "Qoplandi" deb ko'rinadi
+  const covered = p.status === "PENDING" && p.covered;
+  const ps = covered ? { fg: "#16a34a", bg: "#16a34a1a" } : payStatusStyle(p.status);
 
   const save = () => start(async () => {
     const r = await updatePaymentRecord(p.id, { amount: Number(amount), method, status, purpose });
@@ -253,7 +255,9 @@ export function PaymentRow({ p, locale, canEdit, onChanged }: {
           <div className="truncate text-[11px] text-slate-400">{fmtDate(p.date)} · {p.method}{p.purpose ? ` · ${p.purpose}` : ""}</div>
         </div>
         <div className="flex shrink-0 items-center gap-1.5">
-          <span className="rounded-full px-2 py-0.5 text-[10px] font-semibold" style={{ color: ps.fg, background: ps.bg }}>{label(PAYMENT_STATUS_LABELS, p.status, locale)}</span>
+          <span className="rounded-full px-2 py-0.5 text-[10px] font-semibold" style={{ color: ps.fg, background: ps.bg }}>
+            {covered ? tr(locale, { uz: "Qoplandi", ru: "Погашен", en: "Covered", de: "Beglichen" }) : label(PAYMENT_STATUS_LABELS, p.status, locale)}
+          </span>
           {canEdit && (
             <button
               type="button"

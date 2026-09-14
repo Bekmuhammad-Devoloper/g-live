@@ -11,7 +11,12 @@ import { getSetting } from "./settings";
 //   • hech qaysi guruhda bo'lmasa — markazning umumiy narxi (sozlamalardan).
 // Qo'shilgan/ro'yxatga olingan oyning O'ZI to'liq hisoblanadi.
 //
-//   qarz = (hisoblangan − to'langan) + qo'lda kiritilgan qarz (PENDING)
+//   qarz = max(0, hisoblangan + qo'lda kiritilgan qarz (PENDING) − to'langan)
+//
+// To'lov AVVAL hisoblangan oylik to'lovni, keyin qo'lda qarzni yopadi. Ilgari
+// qo'lda qarz tashqaridan qo'shilardi (max(0, hisoblangan − to'langan) + qarz) —
+// shunda to'lov hisoblanganidan oshsa ham qarz kamaymasdi (2026-09-14 xatosi:
+// 50 000 qarz + 100 000 to'lov = baribir 50 000 qarz).
 //
 // Hech qayerda narx belgilanmagan bo'lsa hisob 0 bo'ladi — ya'ni narx
 // kiritmagan markazlarda hech narsa o'zgarmaydi.
@@ -125,7 +130,7 @@ export async function computeDebts(studentIds: string[], now = new Date()): Prom
   }
 
   for (const v of out.values()) {
-    v.debt = Math.max(0, v.accrued - v.paid) + v.manual;
+    v.debt = Math.max(0, v.accrued + v.manual - v.paid);
   }
   return out;
 }
