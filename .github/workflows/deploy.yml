@@ -21,7 +21,7 @@ concurrency:
 
 jobs:
   check:
-    name: Tekshiruv (typecheck)
+    name: Tekshiruv (lint · typecheck · test · build)
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
@@ -31,8 +31,22 @@ jobs:
           cache: npm
       - run: npm ci --no-audit --no-fund
       - run: npx prisma generate
+      # Finance V2 gate (Phase 0): lint → typecheck → test (2 timezone) → build.
+      # Bittasi yiqilsa deploy bo'lmaydi.
+      - name: Lint (moliya domeni, testlar, skriptlar)
+        run: npm run lint
       - name: Typecheck
         run: npx tsc --noEmit
+      - name: Test (TZ=UTC)
+        run: npm test
+        env:
+          TZ: UTC
+      - name: Test (TZ=Asia/Tashkent)
+        run: npm test
+        env:
+          TZ: Asia/Tashkent
+      - name: Moliya yozuvchilari nazorati
+        run: node scripts/check-finance-writers.mjs
       # Build'ni ham CI'da sinaymiz — serverга yiqiladigan kod bormasin
       - name: Build sinovi
         run: npx next build

@@ -1,0 +1,29 @@
+# B serverni FAQAT O'QISH rejimida tekshirish (Finance V2, Phase 0).
+#
+# deploy/gcp/audit-readonly.sh ni SSH orqali yuboradi va natijani logga
+# chiqaradi. Hech narsani o'zgartirmaydi. Qo'lda ishga tushiriladi:
+#   Actions → "Server audit (read-only)" → Run workflow
+#   yoki: gh workflow run server-audit.yml --ref <branch>
+name: Server audit (read-only)
+
+on:
+  workflow_dispatch: {}
+
+jobs:
+  audit:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: SSH kalitini tayyorlash
+        run: |
+          mkdir -p ~/.ssh
+          echo "${{ secrets.B_SSH_KEY }}" > ~/.ssh/deploy_key
+          chmod 600 ~/.ssh/deploy_key
+          ssh-keyscan -H 34.179.202.164 >> ~/.ssh/known_hosts 2>/dev/null
+      - name: Read-only audit
+        run: |
+          ssh -i ~/.ssh/deploy_key -o BatchMode=yes uzbekmen94@34.179.202.164 'bash -s' \
+            < deploy/gcp/audit-readonly.sh
+      - name: Kalitni o'chirish
+        if: always()
+        run: rm -f ~/.ssh/deploy_key

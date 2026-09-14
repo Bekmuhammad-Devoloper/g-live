@@ -50,3 +50,6 @@ op.html
 # yuklangan fayllar va yarim yuklashlar — serverda qoladi, git'da emas
 /public/uploads/
 /upload-parts/
+
+# Finance V2 testlarining vaqtinchalik SQLite bazalari
+/tests/.tmp/
