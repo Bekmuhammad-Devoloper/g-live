@@ -73,7 +73,7 @@ export default function SelectionActionBar({
         {/* O'chirish: huquqi borlarga — hammasi, qolganlarga — faqat yo'qotilganlar */}
         <BarBtn icon="trash" label={tr(locale, { uz: "O'chirish", ru: "Удалить", en: "Delete", de: "Löschen" })} danger disabled={pending} onClick={() => {
           const msg = canDelete
-            ? tr(locale, { uz: `Tanlangan ${ids.length} ta lid butunlay o'chiriladi (faoliyat tarixi bilan). Davom etasizmi?`, ru: `Выбранные лиды (${ids.length}) будут удалены безвозвратно вместе с историей. Продолжить?`, en: `${ids.length} selected leads will be permanently deleted with their history. Continue?`, de: `${ids.length} ausgewählte Leads werden samt Verlauf endgültig gelöscht. Fortfahren?` })
+            ? tr(locale, { uz: `Tanlanganlardan "Daraja testi" va "Yo'qotilgan" bosqichdagilari butunlay o'chiriladi (${ids.length} ta tanlangan). Davom etasizmi?`, ru: `Из выбранных (${ids.length}) будут удалены лиды на этапах «Тест уровня» и «Потерян». Продолжить?`, en: `Of the ${ids.length} selected, leads at the "Level test" and "Lost" stages will be permanently deleted. Continue?`, de: `Von den ${ids.length} ausgewählten werden Leads in den Phasen „Einstufungstest“ und „Verloren“ endgültig gelöscht. Fortfahren?` })
             : tr(locale, { uz: "Tanlangan yo'qotilgan lidlarni o'chirasizmi? (faqat 'Yo'qotilgan' bosqichdagilar o'chadi)", ru: "Удалить выбранные потерянные лиды? (удаляются только лиды на этапе 'Потерян')", en: "Delete the selected lost leads? (only leads at the 'Lost' stage are deleted)", de: "Ausgewählte verlorene Leads löschen? (nur Leads in der Phase 'Verloren' werden gelöscht)" });
           if (window.confirm(msg)) run(() => bulkLeadAction(ids, "delete"));
         }} />

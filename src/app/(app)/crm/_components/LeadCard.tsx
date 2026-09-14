@@ -25,7 +25,7 @@ interface Props {
   onOpenFull: (id: string) => void;
   onDragStart: (id: string, e: React.DragEvent) => void;
   onDragEnd: () => void;
-  /** Berilsa — kartada savatcha tugmasi chiqadi (direktor / o'rinbosari / admin) */
+  /** Berilsa — "Daraja testi" ustunidagi kartada savatcha chiqadi (direktor / o'rinbosari / admin) */
   onDelete?: (id: string) => void;
 }
 
@@ -74,8 +74,8 @@ export default memo(function LeadCard({ lead, locale, selected, onOpen, onOpenFu
               {lead.activityCount > 0 && (
                 <span className="rounded-full bg-slate-100 px-1.5 py-0.5 text-[10px] font-semibold text-slate-500 dark:bg-slate-700 dark:text-slate-300">{lead.activityCount}</span>
               )}
-              {onDelete && (
-                // Sichqoncha ustiga kelganda ko'rinadi; sensorli ekranda doim (xira)
+              {onDelete && col.key === "test" && (
+                // Faqat daraja testi lidlari; sichqoncha ustiga kelganda ko'rinadi, sensorli ekranda doim (xira)
                 <button
                   type="button"
                   onClick={(e) => { e.preventDefault(); e.stopPropagation(); onDelete(lead.id); }}

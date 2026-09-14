@@ -7,7 +7,7 @@ import { tr } from "@/lib/tr";
 import type { Locale } from "@/lib/constants";
 import { Icon } from "../../_components/Icon";
 import { COLUMNS, columnDef, columnOf, columnOfLead, customIdOfCol, groupIdOfCol, isCustomCol, isGroupCol, type CustomColumn, type GroupColumn, type VLead } from "../_lib/leadColumns";
-import { deleteLeadPermanently, enrollLeadToGroup, moveLeadStage, moveLeadToColumn, removeKanbanColumn, unpinKanbanGroup } from "../actions";
+import { deleteTestLead, enrollLeadToGroup, moveLeadStage, moveLeadToColumn, removeKanbanColumn, unpinKanbanGroup } from "../actions";
 import { type Analytics } from "./AnalyticsTiles";
 import FilterBar from "./FilterBar";
 import LeadsKanban from "./LeadsKanban";
@@ -271,9 +271,11 @@ export default function LeadsWorkspace({ locale, initialLeads, managers, sources
     startRefresh(async () => { await moveLeadStage(id, "LOST", reason); router.refresh(); });
   }, [reject, router]);
 
+  // Tezkor o'chirish faqat "Daraja testi" (TEST) lidlari uchun — ishdagi lidlar
+  // to'liq sahifadan, ism yozib tasdiqlab o'chiriladi
   const askDelete = useCallback((id: string) => {
     const lead = leads.find((l) => l.id === id);
-    if (!lead) return;
+    if (!lead || columnOf(lead.stage) !== "test") return;
     setQuickId(null);
     setDel({ id, name: lead.fullName });
   }, [leads]);
@@ -282,7 +284,7 @@ export default function LeadsWorkspace({ locale, initialLeads, managers, sources
     if (!del) return;
     const { id, name } = del;
     startRefresh(async () => {
-      const r = await deleteLeadPermanently(id);
+      const r = await deleteTestLead(id);
       if (r.ok) {
         setDel(null);
         setLeads((prev) => prev.filter((l) => l.id !== id));
@@ -292,7 +294,9 @@ export default function LeadsWorkspace({ locale, initialLeads, managers, sources
         setDel(null);
         setFlash(r.error === "forbidden"
           ? tr(locale, { uz: "Sizda o'chirish huquqi yo'q", ru: "У вас нет прав на удаление", en: "You do not have permission to delete", de: "Keine Berechtigung zum Löschen" })
-          : tr(locale, { uz: "O'chirib bo'lmadi", ru: "Не удалось удалить", en: "Could not delete", de: "Löschen fehlgeschlagen" }));
+          : r.error === "not_test"
+            ? tr(locale, { uz: "Faqat \"Daraja testi\" bosqichidagi lid shu yerdan o'chiriladi", ru: "Здесь удаляются только лиды на этапе «Тест уровня»", en: "Only leads at the \"Level test\" stage can be deleted here", de: "Hier können nur Leads in der Phase „Einstufungstest“ gelöscht werden" })
+            : tr(locale, { uz: "O'chirib bo'lmadi", ru: "Не удалось удалить", en: "Could not delete", de: "Löschen fehlgeschlagen" }));
       }
       router.refresh();
       setTimeout(() => setFlash(null), 4000);
@@ -483,7 +487,7 @@ export default function LeadsWorkspace({ locale, initialLeads, managers, sources
             setQuickId(null);
             setEnroll({ id: quickLead.id, name: quickLead.fullName, groupId: quickLead.groupId, editCount: quickLead.enrollEditCount });
           }}
-          onDelete={canDelete ? () => askDelete(quickLead.id) : undefined}
+          onDelete={canDelete && columnOf(quickLead.stage) === "test" ? () => askDelete(quickLead.id) : undefined}
         />
       )}
 

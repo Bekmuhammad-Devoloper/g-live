@@ -4,9 +4,10 @@ import { tr } from "@/lib/tr";
 import type { Locale } from "@/lib/constants";
 import { Icon } from "../../../_components/Icon";
 
-// Lidni Kanbandan to'g'ridan-to'g'ri o'chirish uchun tasdiqlash oynasi.
-// To'liq sahifadagi (ism yozib tasdiqlanadigan) o'chirishdan farqli —
-// tezkor: ikkinchi bosish yetarli. Faqat direktor / o'rinbosari / admin.
+// "Daraja testi" lidini Kanbandan to'g'ridan-to'g'ri o'chirish uchun
+// tasdiqlash oynasi. To'liq sahifadagi (ism yozib tasdiqlanadigan)
+// o'chirishdan farqli — tezkor: ikkinchi bosish yetarli.
+// Faqat direktor / o'rinbosari / admin, faqat TEST bosqichi.
 export default function DeleteLeadModal({
   locale, open, leadName, pending, onClose, onConfirm,
 }: {
@@ -23,11 +24,11 @@ export default function DeleteLeadModal({
       <div className="w-full max-w-md rounded-2xl bg-white p-6 shadow-pop dark:bg-slate-900" onClick={(e) => e.stopPropagation()}>
         <div className="mb-3 flex items-center gap-2.5">
           <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-red-500/15 text-red-500">
-            <Icon name="trash" className="h-4.5 w-4.5" />
+            <Icon name="trash" className="h-4 w-4" />
           </div>
           <div className="min-w-0">
             <h3 className="text-base font-bold text-slate-900 dark:text-slate-100">
-              {tr(locale, { uz: "Lidni o'chirish", ru: "Удалить лид", en: "Delete lead", de: "Lead löschen" })}
+              {tr(locale, { uz: "Daraja testi lidini o'chirish", ru: "Удалить лид теста уровня", en: "Delete level-test lead", de: "Einstufungstest-Lead löschen" })}
             </h3>
             <p className="truncate text-xs text-slate-400">{leadName}</p>
           </div>
