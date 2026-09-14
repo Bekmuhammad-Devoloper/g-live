@@ -149,7 +149,8 @@ export default function LeadsKanban({
                   <Icon name={col.icon} className="h-4 w-4" strokeWidth={2} />
                 </span>
                 <span className="min-w-0">
-                  <span className="block truncate text-sm font-semibold text-slate-700 dark:text-slate-100">{col.title}</span>
+                  {/* Nom kesilmasin — tor ustunda 2 qatorga o'raladi */}
+                  <span className="line-clamp-2 break-words text-sm font-semibold leading-tight text-slate-700 dark:text-slate-100">{col.title}</span>
                   {col.sub && <span className="block truncate text-[11px] text-slate-400">{col.sub}</span>}
                 </span>
               </div>
