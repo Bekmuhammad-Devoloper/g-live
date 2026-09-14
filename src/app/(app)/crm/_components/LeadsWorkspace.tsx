@@ -59,8 +59,10 @@ export default function LeadsWorkspace({ locale, initialLeads, managers, sources
   const [enroll, setEnroll] = useState<{ id: string; name: string; groupId: string | null; editCount: number } | null>(null);
   // "Qabul qilindi" ustunidagi "+" — guruh biriktirish yoki yangi o'quvchi
   const [wonAdd, setWonAdd] = useState(false);
-  // Sarlavhadagi "+" — guruh ustuni / oddiy ustun / yangi lid
-  const [mainAdd, setMainAdd] = useState(false);
+  // Sarlavhadagi "+ Qo'shish" va standart ustunlardagi "+" — guruh ustuni /
+  // oddiy ustun / yangi lid. `stage` — qaysi ustundan bosilgani (yangi lid
+  // formasi shu bosqich bilan ochiladi).
+  const [mainAdd, setMainAdd] = useState<{ open: boolean; stage: string }>({ open: false, stage: "NEW" });
   // Kanbanga biriktirilgan guruhlar (ustun bo'lib chiqadi)
   const [groupColumns, setGroupColumns] = useState<GroupColumn[]>(initialGroupColumns);
   // Oddiy nomli ustunlar
@@ -322,7 +324,7 @@ export default function LeadsWorkspace({ locale, initialLeads, managers, sources
             </div>
             {canWrite && (
               // Tanlov paneli: guruh ustuni / oddiy nomli ustun / yangi lid
-              <button onClick={() => setMainAdd(true)} className="flex items-center gap-1.5 rounded-lg bg-brand-600 px-4 py-2 text-sm font-semibold text-white hover:bg-brand-700">
+              <button onClick={() => setMainAdd({ open: true, stage: "NEW" })} className="flex items-center gap-1.5 rounded-lg bg-brand-600 px-4 py-2 text-sm font-semibold text-white hover:bg-brand-700">
                 <Icon name="plus" className="h-[18px] w-[18px]" /> <span className="hidden sm:inline">{tr(locale, { uz: "Qo'shish", ru: "Добавить", en: "Add", de: "Hinzufügen" })}</span>
               </button>
             )}
@@ -347,7 +349,7 @@ export default function LeadsWorkspace({ locale, initialLeads, managers, sources
         <LeadsKanban leads={sortedShown} totals={shownTotals} locale={locale} selected={selection} onOpen={openLead} onOpenFull={openLeadFull} onDropToColumn={onDropToColumn}
           groupColumns={groupColumns}
           customColumns={customColumns}
-          onAdd={(stage) => (stage === "WON" ? setWonAdd(true) : setCreate({ open: true, stage, column: null }))}
+          onAdd={(stage) => (stage === "WON" ? setWonAdd(true) : setMainAdd({ open: true, stage }))}
           onAddToGroup={(groupId) => setPickForGroup(groupId)}
           onRemoveGroupCol={(groupId) => {
             setGroupColumns((prev) => prev.filter((g) => g.groupId !== groupId));
@@ -390,11 +392,11 @@ export default function LeadsWorkspace({ locale, initialLeads, managers, sources
         <WonAddDrawer
           locale={locale}
           variant="main"
-          open={mainAdd}
+          open={mainAdd.open}
           pinned={groupColumns}
           customColumns={customColumns}
-          onClose={() => setMainAdd(false)}
-          onNewLead={() => setCreate({ open: true, stage: "NEW", column: null })}
+          onClose={() => setMainAdd((m) => ({ ...m, open: false }))}
+          onNewLead={() => setCreate({ open: true, stage: mainAdd.stage, column: null })}
           onPinned={(cols) => { setGroupColumns(cols); router.refresh(); }}
           onColumnCreated={(cols) => {
             setCustomColumns(cols);
