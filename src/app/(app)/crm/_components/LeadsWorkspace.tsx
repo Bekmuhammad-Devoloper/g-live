@@ -6,8 +6,8 @@ import { cn } from "@/lib/cn";
 import { tr } from "@/lib/tr";
 import type { Locale } from "@/lib/constants";
 import { Icon } from "../../_components/Icon";
-import { COLUMNS, columnDef, columnOf, columnOfLead, groupIdOfCol, isGroupCol, type GroupColumn, type VLead } from "../_lib/leadColumns";
-import { enrollLeadToGroup, moveLeadStage, unpinKanbanGroup } from "../actions";
+import { COLUMNS, columnDef, columnOf, columnOfLead, customIdOfCol, groupIdOfCol, isCustomCol, isGroupCol, type CustomColumn, type GroupColumn, type VLead } from "../_lib/leadColumns";
+import { enrollLeadToGroup, moveLeadStage, moveLeadToColumn, removeKanbanColumn, unpinKanbanGroup } from "../actions";
 import { type Analytics } from "./AnalyticsTiles";
 import FilterBar from "./FilterBar";
 import LeadsKanban from "./LeadsKanban";
@@ -34,9 +34,11 @@ interface Props {
   canWrite: boolean;
   /** Kanbanga biriktirilgan guruh ustunlari */
   initialGroupColumns: GroupColumn[];
+  /** Oddiy nomli ustunlar */
+  initialCustomColumns: CustomColumn[];
 }
 
-export default function LeadsWorkspace({ locale, initialLeads, managers, sources, analytics, canWrite, initialGroupColumns }: Props) {
+export default function LeadsWorkspace({ locale, initialLeads, managers, sources, analytics, canWrite, initialGroupColumns, initialCustomColumns }: Props) {
   const router = useRouter();
   const pathname = usePathname();
   const params = useSearchParams();
@@ -48,7 +50,7 @@ export default function LeadsWorkspace({ locale, initialLeads, managers, sources
   const [manager, setManager] = useState(params.get("manager") ?? "");
   const [activeCols, setActiveCols] = useState<Set<string>>(new Set((params.get("cols") ?? "").split(",").filter(Boolean)));
   const [selection, setSelection] = useState<Set<string>>(new Set((params.get("selected") ?? "").split(",").filter(Boolean)));
-  const [create, setCreate] = useState<{ open: boolean; stage: string }>({ open: false, stage: "NEW" });
+  const [create, setCreate] = useState<{ open: boolean; stage: string; column: CustomColumn | null }>({ open: false, stage: "NEW", column: null });
   const [sort, setSort] = useState(params.get("sort") ?? "newest");
   const [showPalette, setShowPalette] = useState(false);
   const [showHelp, setShowHelp] = useState(false);
@@ -57,8 +59,12 @@ export default function LeadsWorkspace({ locale, initialLeads, managers, sources
   const [enroll, setEnroll] = useState<{ id: string; name: string; groupId: string | null; editCount: number } | null>(null);
   // "Qabul qilindi" ustunidagi "+" — guruh biriktirish yoki yangi o'quvchi
   const [wonAdd, setWonAdd] = useState(false);
+  // Sarlavhadagi "+" — guruh ustuni / oddiy ustun / yangi lid
+  const [mainAdd, setMainAdd] = useState(false);
   // Kanbanga biriktirilgan guruhlar (ustun bo'lib chiqadi)
   const [groupColumns, setGroupColumns] = useState<GroupColumn[]>(initialGroupColumns);
+  // Oddiy nomli ustunlar
+  const [customColumns, setCustomColumns] = useState<CustomColumn[]>(initialCustomColumns);
   // Guruh ustunidagi "+" — mavjud lidni shu guruhga biriktirish
   const [pickForGroup, setPickForGroup] = useState<string | null>(null);
   // Yonboshdan ochiladigan tezkor ko'rish oynasi (1 marta bosilganda)
@@ -70,8 +76,10 @@ export default function LeadsWorkspace({ locale, initialLeads, managers, sources
   // Server yangilanganda (router.refresh) mahalliy holatni sinxronlash
   useEffect(() => { setLeads(initialLeads); }, [initialLeads]);
   useEffect(() => { setGroupColumns(initialGroupColumns); }, [initialGroupColumns]);
+  useEffect(() => { setCustomColumns(initialCustomColumns); }, [initialCustomColumns]);
 
   const pinnedIds = useMemo(() => new Set(groupColumns.map((g) => g.groupId)), [groupColumns]);
+  const customIds = useMemo(() => new Set(customColumns.map((c) => c.id)), [customColumns]);
 
   // URL sync
   useEffect(() => {
@@ -121,11 +129,11 @@ export default function LeadsWorkspace({ locale, initialLeads, managers, sources
   const shownTotals = useMemo(() => {
     const c: Record<string, number> = {};
     for (const l of shown) {
-      const k = columnOfLead(l, pinnedIds);
+      const k = columnOfLead(l, pinnedIds, customIds);
       c[k] = (c[k] ?? 0) + 1;
     }
     return c;
-  }, [shown, pinnedIds]);
+  }, [shown, pinnedIds, customIds]);
 
   const sortedShown = useMemo(() => {
     const arr = [...shown];
@@ -203,6 +211,17 @@ export default function LeadsWorkspace({ locale, initialLeads, managers, sources
       enrollToGroup(leadId, groupIdOfCol(colKey));
       return;
     }
+    // Oddiy nomli ustun — bosqich o'zgarmaydi, faqat ustun belgilanadi
+    if (isCustomCol(colKey)) {
+      const colId = customIdOfCol(colKey);
+      setLeads((prev) => prev.map((l) => (l.id === leadId ? { ...l, kanbanColumnId: colId } : l))); // optimistik
+      startRefresh(async () => {
+        const r = await moveLeadToColumn(leadId, colId);
+        if (r.error) setLeads(initialLeads);
+        router.refresh();
+      });
+      return;
+    }
     // Yo'qotilganga tashlash — sabab so'raladi
     if (colKey === "lost") {
       const lead = leads.find((l) => l.id === leadId);
@@ -216,14 +235,14 @@ export default function LeadsWorkspace({ locale, initialLeads, managers, sources
       return;
     }
     const target = columnDef(colKey).defaultStage;
-    setLeads((prev) => prev.map((l) => (l.id === leadId ? { ...l, stage: target } : l))); // optimistik
+    setLeads((prev) => prev.map((l) => (l.id === leadId ? { ...l, stage: target, kanbanColumnId: null } : l))); // optimistik
     startRefresh(async () => { await moveLeadStage(leadId, target); router.refresh(); });
-  }, [canWrite, router, leads, enrollToGroup]);
+  }, [canWrite, router, leads, enrollToGroup, initialLeads]);
 
   const confirmReject = useCallback((reason: string) => {
     if (!reject) return;
     const id = reject.id;
-    setLeads((prev) => prev.map((l) => (l.id === id ? { ...l, stage: "LOST" } : l)));
+    setLeads((prev) => prev.map((l) => (l.id === id ? { ...l, stage: "LOST", kanbanColumnId: null } : l)));
     setReject(null);
     startRefresh(async () => { await moveLeadStage(id, "LOST", reason); router.refresh(); });
   }, [reject, router]);
@@ -250,7 +269,7 @@ export default function LeadsWorkspace({ locale, initialLeads, managers, sources
       if (e.key === "?") { setShowHelp(true); return; }
       if (e.key === "/") { e.preventDefault(); document.querySelector<HTMLInputElement>('input[placeholder*="qidirish"]')?.focus(); return; }
       if (e.key === "v") { setView((v) => (v === "kanban" ? "table" : "kanban")); return; }
-      if (e.key === "n" && canWrite) { setCreate({ open: true, stage: "NEW" }); return; }
+      if (e.key === "n" && canWrite) { setCreate({ open: true, stage: "NEW", column: null }); return; }
       if (e.key === "r") { clearFilters(); return; }
       if (e.key === "Escape") { setSelection(new Set()); setShowHelp(false); setShowPalette(false); return; }
     };
@@ -261,7 +280,7 @@ export default function LeadsWorkspace({ locale, initialLeads, managers, sources
   const paletteActions: PaletteAction[] = [
     { id: "view", label: view === "kanban" ? tr(locale, { uz: "Jadval ko'rinishi", ru: "Табличный вид", en: "Table view", de: "Tabellenansicht" }) : tr(locale, { uz: "Kanban ko'rinishi", ru: "Канбан-вид", en: "Kanban view", de: "Kanban-Ansicht" }), icon: view === "kanban" ? "listView" : "grid", run: () => setView((v) => (v === "kanban" ? "table" : "kanban")) },
     { id: "refresh", label: tr(locale, { uz: "Yangilash", ru: "Обновить", en: "Refresh", de: "Aktualisieren" }), icon: "refresh", run: () => router.refresh() },
-    ...(canWrite ? [{ id: "new", label: tr(locale, { uz: "Yangi lid", ru: "Новый лид", en: "New lead", de: "Neuer Lead" }), icon: "plus", run: () => setCreate({ open: true, stage: "NEW" }) }] : []),
+    ...(canWrite ? [{ id: "new", label: tr(locale, { uz: "Yangi lid", ru: "Новый лид", en: "New lead", de: "Neuer Lead" }), icon: "plus", run: () => setCreate({ open: true, stage: "NEW", column: null }) }] : []),
     ...COLUMNS.map((c) => ({ id: `f-${c.key}`, label: `${tr(locale, { uz: "Filter", ru: "Фильтр", en: "Filter", de: "Filter" })}: ${tr(locale, c.label)}`, icon: c.icon, run: () => setActiveCols(new Set([c.key])) })),
     { id: "clear", label: tr(locale, { uz: "Filtrlarni tozalash", ru: "Очистить фильтры", en: "Clear filters", de: "Filter zurücksetzen" }), icon: "personX", run: clearFilters },
     { id: "help", label: tr(locale, { uz: "Klaviatura yorliqlari", ru: "Горячие клавиши", en: "Keyboard shortcuts", de: "Tastenkürzel" }), icon: "info", run: () => setShowHelp(true) },
@@ -302,8 +321,9 @@ export default function LeadsWorkspace({ locale, initialLeads, managers, sources
               <ToggleBtn active={view === "table"} onClick={() => setView("table")} icon="listView" label={tr(locale, { uz: "Jadval", ru: "Таблица", en: "Table", de: "Tabelle" })} />
             </div>
             {canWrite && (
-              <button onClick={() => setCreate({ open: true, stage: "NEW" })} className="flex items-center gap-1.5 rounded-lg bg-brand-600 px-4 py-2 text-sm font-semibold text-white hover:bg-brand-700">
-                <Icon name="plus" className="h-[18px] w-[18px]" /> <span className="hidden sm:inline">{tr(locale, { uz: "Yangi lid", ru: "Новый лид", en: "New lead", de: "Neuer Lead" })}</span>
+              // Tanlov paneli: guruh ustuni / oddiy nomli ustun / yangi lid
+              <button onClick={() => setMainAdd(true)} className="flex items-center gap-1.5 rounded-lg bg-brand-600 px-4 py-2 text-sm font-semibold text-white hover:bg-brand-700">
+                <Icon name="plus" className="h-[18px] w-[18px]" /> <span className="hidden sm:inline">{tr(locale, { uz: "Qo'shish", ru: "Добавить", en: "Add", de: "Hinzufügen" })}</span>
               </button>
             )}
           </div>
@@ -326,11 +346,22 @@ export default function LeadsWorkspace({ locale, initialLeads, managers, sources
       {view === "kanban" ? (
         <LeadsKanban leads={sortedShown} totals={shownTotals} locale={locale} selected={selection} onOpen={openLead} onOpenFull={openLeadFull} onDropToColumn={onDropToColumn}
           groupColumns={groupColumns}
-          onAdd={(stage) => (stage === "WON" ? setWonAdd(true) : setCreate({ open: true, stage }))}
+          customColumns={customColumns}
+          onAdd={(stage) => (stage === "WON" ? setWonAdd(true) : setCreate({ open: true, stage, column: null }))}
           onAddToGroup={(groupId) => setPickForGroup(groupId)}
           onRemoveGroupCol={(groupId) => {
             setGroupColumns((prev) => prev.filter((g) => g.groupId !== groupId));
             startRefresh(async () => { await unpinKanbanGroup(groupId); router.refresh(); });
+          }}
+          onAddToCustom={(columnId) => {
+            const col = customColumns.find((c) => c.id === columnId) ?? null;
+            setCreate({ open: true, stage: "NEW", column: col });
+          }}
+          onRemoveCustomCol={(columnId) => {
+            // Ustun yo'qoladi, undagi lidlar o'z bosqichi ustuniga qaytadi
+            setCustomColumns((prev) => prev.filter((c) => c.id !== columnId));
+            setLeads((prev) => prev.map((l) => (l.kanbanColumnId === columnId ? { ...l, kanbanColumnId: null } : l)));
+            startRefresh(async () => { await removeKanbanColumn(columnId); router.refresh(); });
           }}
         />
       ) : (
@@ -338,7 +369,7 @@ export default function LeadsWorkspace({ locale, initialLeads, managers, sources
       )}
 
       {canWrite && <SelectionActionBar ids={[...selection]} managers={managers} locale={locale} onDone={() => setSelection(new Set())} />}
-      {canWrite && <NewLeadForm locale={locale} open={create.open} onClose={() => setCreate((c) => ({ ...c, open: false }))} defaultStage={create.stage} />}
+      {canWrite && <NewLeadForm locale={locale} open={create.open} onClose={() => setCreate((c) => ({ ...c, open: false }))} defaultStage={create.stage} defaultColumn={create.column} />}
 
       <CommandPalette locale={locale} open={showPalette} onClose={() => setShowPalette(false)} leads={leads} actions={paletteActions} onOpenLead={(id) => router.push(`/crm/${id}`)} />
       <KeyboardHelpOverlay locale={locale} open={showHelp} onClose={() => setShowHelp(false)} />
@@ -350,8 +381,27 @@ export default function LeadsWorkspace({ locale, initialLeads, managers, sources
           open={wonAdd}
           pinned={groupColumns}
           onClose={() => setWonAdd(false)}
-          onNewLead={() => setCreate({ open: true, stage: "WON" })}
+          onNewLead={() => setCreate({ open: true, stage: "WON", column: null })}
           onPinned={(cols) => { setGroupColumns(cols); router.refresh(); }}
+        />
+      )}
+
+      {canWrite && (
+        <WonAddDrawer
+          locale={locale}
+          variant="main"
+          open={mainAdd}
+          pinned={groupColumns}
+          customColumns={customColumns}
+          onClose={() => setMainAdd(false)}
+          onNewLead={() => setCreate({ open: true, stage: "NEW", column: null })}
+          onPinned={(cols) => { setGroupColumns(cols); router.refresh(); }}
+          onColumnCreated={(cols) => {
+            setCustomColumns(cols);
+            setFlash(tr(locale, { uz: "Ustun yaratildi", ru: "Столбец создан", en: "Column created", de: "Spalte erstellt" }));
+            setTimeout(() => setFlash(null), 3000);
+            router.refresh();
+          }}
         />
       )}
 

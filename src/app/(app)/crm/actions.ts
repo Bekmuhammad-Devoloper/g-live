@@ -9,7 +9,7 @@ import { writeAudit } from "@/lib/audit";
 import { ROLES, LEAD_STAGES, isSalesRole } from "@/lib/constants";
 import { parseUzPhone } from "@/lib/phone";
 import { getSetting, setSetting } from "@/lib/settings";
-import { GROUP_COL_COLORS, GROUP_COL_ICONS, type GroupColumn } from "./_lib/leadColumns";
+import { GROUP_COL_COLORS, GROUP_COL_ICONS, type CustomColumn, type GroupColumn } from "./_lib/leadColumns";
 
 const schema = z.object({
   fullName: z.string().min(2),
@@ -21,6 +21,8 @@ const schema = z.object({
   note: z.string().optional(),
   // Ixtiyoriy: lid yaratilayotganda darhol mavjud guruhga yo'naltirish
   groupId: z.string().min(1).optional(),
+  // Ixtiyoriy: oddiy nomli Kanban ustunidagi "+" dan yaratilganda
+  kanbanColumnId: z.string().min(1).optional(),
 });
 
 export type LeadState = { ok?: boolean; error?: string };
@@ -42,10 +44,13 @@ export async function createLead(_prev: LeadState, formData: FormData): Promise<
     stage: formData.get("stage"),
     note: formData.get("note") || undefined,
     groupId: formData.get("groupId") || undefined,
+    kanbanColumnId: formData.get("kanbanColumnId") || undefined,
   });
   if (!parsed.success) return { error: "invalid" };
 
-  const { groupId, ...leadData } = parsed.data;
+  const { groupId, kanbanColumnId: colRaw, ...leadData } = parsed.data;
+  // Ustun o'chirilgan bo'lsa jimgina e'tiborsiz qoldiramiz — lid baribir yaratiladi
+  const kanbanColumnId = colRaw && (await readCustomColumns()).some((c) => c.id === colRaw) ? colRaw : null;
 
   // Raqamni tartibga solamiz. O'zbekiston raqami bo'lsa "+998 XX XXX XX XX"
   // ko'rinishiga keltiriladi; xorijiy raqam ham bo'lishi mumkin, shuning uchun
@@ -79,6 +84,7 @@ export async function createLead(_prev: LeadState, formData: FormData): Promise<
     data: {
       ...leadData,
       groupId: groupId ?? null,
+      kanbanColumnId,
       utmSource: leadData.source,
       branchId: s.branchId,
       managerId: isSalesRole(s.role) ? s.userId : null,
@@ -201,7 +207,8 @@ export async function moveLeadStage(leadId: string, stage: string, reason?: stri
     return { error: "group_required", needGroup: true };
   }
 
-  const data: Record<string, unknown> = { stage };
+  // Bosqich o'zgarishi = standart ustunga ko'chirish; oddiy nomli ustundan chiqadi
+  const data: Record<string, unknown> = { stage, kanbanColumnId: null };
   if (stage === "LOST" && reason) data.lossReason = reason;
 
   // Guruh lid YARATILISHIDA tanlangan bo'lishi mumkin — u holda o'quvchi hali
@@ -340,6 +347,7 @@ export async function enrollLeadToGroup(leadId: string, groupId: string): Promis
       groupId,
       studentId,
       stage: "WON",
+      kanbanColumnId: null, // guruhga yozildi — oddiy nomli ustundan chiqadi
       enrollEditCount: isChange ? { increment: 1 } : undefined,
     },
     select: { enrollEditCount: true },
@@ -608,4 +616,92 @@ export async function unpinKanbanGroup(groupId: string): Promise<PinResult> {
 
   revalidatePath("/crm");
   return { ok: true, columns: await listKanbanGroups() };
+}
+
+/* ─── Oddiy nomli Kanban ustunlari ───────────────────────────────────
+   Guruhga bog'lanmagan ustun ("Sentyabr oqimi", "VIP"...). Ro'yxat guruh
+   ustunlari kabi Setting'da JSON. Lid qaysi ustunda ekani esa
+   Lead.kanbanColumnId da — ustun o'chirilsa lidlar o'z bosqichiga qaytadi. */
+
+const KANBAN_COLUMNS_KEY = "crm.kanbanColumns";
+const MAX_CUSTOM_COLUMNS = 12;
+
+async function readCustomColumns(): Promise<CustomColumn[]> {
+  const raw = await getSetting(KANBAN_COLUMNS_KEY);
+  if (!raw) return [];
+  try {
+    const arr = JSON.parse(raw);
+    if (!Array.isArray(arr)) return [];
+    return arr
+      .filter((x): x is CustomColumn => !!x && typeof x.id === "string" && typeof x.name === "string")
+      .map((x) => ({ id: x.id, name: x.name, color: String(x.color || GROUP_COL_COLORS[0]), icon: String(x.icon || GROUP_COL_ICONS[0]) }));
+  } catch {
+    return [];
+  }
+}
+
+export async function listKanbanColumns(): Promise<CustomColumn[]> {
+  return readCustomColumns();
+}
+
+export type ColumnResult = { ok?: boolean; error?: string; columns?: CustomColumn[] };
+
+export async function createKanbanColumn(name: string, color: string, icon: string): Promise<ColumnResult> {
+  const s = await requireSession();
+  if (!canWrite(s.role, MODULES.CRM)) return { error: "forbidden" };
+
+  const clean = name.replace(/\s+/g, " ").trim();
+  if (clean.length < 2 || clean.length > 40) return { error: "invalid_name" };
+
+  const cols = await readCustomColumns();
+  if (cols.length >= MAX_CUSTOM_COLUMNS) return { error: "limit" };
+  if (cols.some((c) => c.name.toLowerCase() === clean.toLowerCase())) return { error: "duplicate" };
+
+  const col: CustomColumn = {
+    id: `c${Date.now().toString(36)}${Math.random().toString(36).slice(2, 6)}`,
+    name: clean,
+    color: GROUP_COL_COLORS.includes(color) ? color : GROUP_COL_COLORS[0],
+    icon: GROUP_COL_ICONS.includes(icon) ? icon : GROUP_COL_ICONS[0],
+  };
+  await setSetting(KANBAN_COLUMNS_KEY, JSON.stringify([...cols, col]));
+  await writeAudit({ actorId: s.userId, action: "CREATE", entityType: "KanbanColumn", entityId: col.id, newValue: { name: clean } });
+
+  revalidatePath("/crm");
+  return { ok: true, columns: [...cols, col] };
+}
+
+/** Ustunni o'chirish — undagi lidlar yo'qolmaydi, o'z bosqichi ustuniga qaytadi */
+export async function removeKanbanColumn(id: string): Promise<ColumnResult> {
+  const s = await requireSession();
+  if (!canWrite(s.role, MODULES.CRM)) return { error: "forbidden" };
+
+  const cols = await readCustomColumns();
+  const next = cols.filter((c) => c.id !== id);
+  await setSetting(KANBAN_COLUMNS_KEY, JSON.stringify(next));
+  await prisma.lead.updateMany({ where: { kanbanColumnId: id }, data: { kanbanColumnId: null } });
+  await writeAudit({ actorId: s.userId, action: "DELETE", entityType: "KanbanColumn", entityId: id });
+
+  revalidatePath("/crm");
+  return { ok: true, columns: next };
+}
+
+/** Lidni oddiy nomli ustunga ko'chirish (bosqich o'zgarmaydi) */
+export async function moveLeadToColumn(leadId: string, columnId: string): Promise<{ ok?: boolean; error?: string }> {
+  const s = await requireSession();
+  if (!canWrite(s.role, MODULES.CRM)) return { error: "forbidden" };
+
+  const col = (await readCustomColumns()).find((c) => c.id === columnId);
+  if (!col) return { error: "column_not_found" };
+
+  const lead = await prisma.lead.findUnique({ where: { id: leadId }, select: { id: true, kanbanColumnId: true } });
+  if (!lead) return { error: "not_found" };
+  if (lead.kanbanColumnId === columnId) return { ok: true };
+
+  await prisma.lead.update({ where: { id: leadId }, data: { kanbanColumnId: columnId } });
+  await prisma.leadActivity.create({
+    data: { leadId, authorId: s.userId, type: "note", result: `Ustunga ko'chirildi: ${col.name}` },
+  }).catch(() => {});
+
+  revalidatePath("/crm");
+  return { ok: true };
 }

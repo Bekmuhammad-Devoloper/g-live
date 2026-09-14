@@ -185,6 +185,11 @@ model Lead {
   // Guruhni keyin FAQAT BIR MARTA o'zgartirish mumkin (0 = hali o'zgartirilmagan)
   enrollEditCount Int @default(0)
 
+  // Kanbandagi oddiy nomli ustun (Setting "crm.kanbanColumns" dagi id).
+  // Bosqichga ta'sir qilmaydi — faqat qaysi ustunda ko'rinishini belgilaydi;
+  // standart ustunga ko'chirilsa yoki guruhga yozilsa tozalanadi.
+  kanbanColumnId String?
+
   activities LeadActivity[]
   calls      Call[]
 
@@ -192,6 +197,7 @@ model Lead {
   updatedAt DateTime @updatedAt
 
   @@index([stage])
+  @@index([kanbanColumnId])
   @@index([managerId])
 }
 

@@ -21,6 +21,8 @@ export interface VLead {
   groupName: string | null;
   /** Guruh necha marta o'zgartirilgan (1 dan keyin bloklanadi) */
   enrollEditCount: number;
+  /** Oddiy nomli Kanban ustuni (bo'lsa — lid shu ustunda ko'rinadi) */
+  kanbanColumnId: string | null;
   activityCount: number;
   lastActivity: string | null;
   createdAt: string; // ISO
@@ -96,15 +98,51 @@ export function groupIdOfCol(key: string): string {
   return key.slice(GROUP_COL_PREFIX.length);
 }
 
+/* ─── Oddiy nomli ustunlar ───────────────────────────────────────────
+   Guruhga bog'lanmagan, o'z nomi bilan yaratilgan ustun ("Sentyabr oqimi",
+   "VIP" ...). Lid tashlansa shu ustunga o'tadi, bosqichi o'zgarmaydi;
+   standart ustunga qaytarilsa yoki guruhga yozilsa ustundan chiqadi.      */
+
+export interface CustomColumn {
+  id: string;
+  name: string;
+  color: string;
+  icon: string;
+}
+
+export const CUSTOM_COL_PREFIX = "col:";
+
+export function customColKey(id: string): string {
+  return CUSTOM_COL_PREFIX + id;
+}
+
+export function isCustomCol(key: string): boolean {
+  return key.startsWith(CUSTOM_COL_PREFIX);
+}
+
+export function customIdOfCol(key: string): string {
+  return key.slice(CUSTOM_COL_PREFIX.length);
+}
+
+const EMPTY = new Set<string>();
+
 /**
- * Lid qaysi ustunda ko'rinadi. Qabul qilingan lidning guruhi Kanbanga
- * biriktirilgan bo'lsa — o'sha guruh ustunida, aks holda "Qabul qilindi"da.
+ * Lid qaysi ustunda ko'rinadi:
+ *   1) oddiy nomli ustunga qo'yilgan bo'lsa (va ustun hali bor) — o'sha ustunda;
+ *   2) qabul qilingan lidning guruhi Kanbanga biriktirilgan bo'lsa — guruh ustunida;
+ *   3) aks holda bosqichiga mos standart ustunda.
  */
-export function columnOfLead(lead: { stage: string; groupId: string | null }, pinned: Set<string>): string {
+export function columnOfLead(
+  lead: { stage: string; groupId: string | null; kanbanColumnId?: string | null },
+  pinned: Set<string>,
+  custom: Set<string> = EMPTY,
+): string {
+  if (lead.kanbanColumnId && custom.has(lead.kanbanColumnId)) return customColKey(lead.kanbanColumnId);
   const base = columnOf(lead.stage);
   if (base === "won" && lead.groupId && pinned.has(lead.groupId)) return groupColKey(lead.groupId);
   return base;
 }
+
 
 /** Ustun uchun tayyor ranglar — Kanban sarlavhasi shu rangda bo'ladi */
 export const GROUP_COL_COLORS = [

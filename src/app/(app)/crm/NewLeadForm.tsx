@@ -21,11 +21,14 @@ export default function NewLeadForm({
   open,
   onClose,
   defaultStage = "NEW",
+  defaultColumn = null,
 }: {
   locale: Locale;
   open: boolean;
   onClose: () => void;
   defaultStage?: string;
+  /** Oddiy nomli ustundagi "+" dan ochilsa — lid shu ustunga tushadi */
+  defaultColumn?: { id: string; name: string; color: string } | null;
 }) {
   const t = getT(locale);
   const router = useRouter();
@@ -88,6 +91,15 @@ export default function NewLeadForm({
 
         {/* Maydonlar */}
         <div className="flex-1 overflow-y-auto px-5 py-4">
+          {defaultColumn && (
+            <>
+              <input type="hidden" name="kanbanColumnId" value={defaultColumn.id} />
+              <div className="mb-3 flex items-center gap-2 rounded-lg px-3 py-2 text-xs font-semibold" style={{ color: defaultColumn.color, background: `${defaultColumn.color}1a` }}>
+                <Icon name="layout" className="h-3.5 w-3.5" />
+                {tr(locale, { uz: "Ustun", ru: "Столбец", en: "Column", de: "Spalte" })}: {defaultColumn.name}
+              </div>
+            </>
+          )}
           <div className="grid grid-cols-2 gap-3">
             <div className="col-span-2">
               <label className="mb-1 block text-xs font-medium text-slate-600 dark:text-slate-400">{tr(locale, { uz: "F.I.Sh.", ru: "Ф.И.О.", en: "Full name", de: "Vollständiger Name" })} <span className="text-red-500">*</span></label>
