@@ -1,5 +1,6 @@
 "use client";
 
+import { useState } from "react";
 import { cn } from "@/lib/cn";
 import { formatMoney, LEAD_STAGE_LABELS, label, type Locale } from "@/lib/constants";
 import { tr } from "@/lib/tr";
@@ -23,7 +24,13 @@ interface Props {
   onToggleAll: () => void;
 }
 
+/** Dastlab shuncha qator chiziladi — 2000 qatorli jadval sahifani qotirmasin */
+const PAGE = 100;
+
 export default function LeadsTable({ leads, locale, selected, onToggle, onOpen, onOpenFull, allSelected, onToggleAll }: Props) {
+  const [limit, setLimit] = useState(PAGE);
+  const rows = leads.length > limit ? leads.slice(0, limit) : leads;
+  const rest = leads.length - rows.length;
   return (
     <div className="overflow-hidden rounded-2xl border border-slate-200/70 bg-white shadow-card dark:border-slate-800 dark:bg-slate-900">
       <div className="overflow-x-auto">
@@ -45,7 +52,7 @@ export default function LeadsTable({ leads, locale, selected, onToggle, onOpen, 
             {leads.length === 0 ? (
               <tr><td colSpan={7} className="px-4 py-12 text-center text-sm text-slate-400">{tr(locale, { uz: "Lid topilmadi", ru: "Лиды не найдены", en: "No leads found", de: "Keine Leads gefunden" })}</td></tr>
             ) : (
-              leads.map((l) => {
+              rows.map((l) => {
                 const col = columnDef(columnOf(l.stage));
                 const sel = selected.has(l.id);
                 return (
@@ -93,6 +100,14 @@ export default function LeadsTable({ leads, locale, selected, onToggle, onOpen, 
           </tbody>
         </table>
       </div>
+      {rest > 0 && (
+        <div className="flex items-center justify-between gap-3 border-t border-slate-100 px-4 py-2.5 text-xs text-slate-400 dark:border-slate-800">
+          <span>{tr(locale, { uz: `${rows.length} / ${leads.length} ta ko'rsatilmoqda`, ru: `Показано ${rows.length} из ${leads.length}`, en: `Showing ${rows.length} of ${leads.length}`, de: `${rows.length} von ${leads.length} angezeigt` })}</span>
+          <button onClick={() => setLimit((n) => n + PAGE)} className="rounded-lg border border-slate-200 px-3 py-1.5 font-semibold text-slate-600 transition hover:border-brand-400 hover:text-brand-600 dark:border-slate-700 dark:text-slate-300">
+            {tr(locale, { uz: `Yana ${Math.min(rest, PAGE)} ta ko'rsatish`, ru: `Показать ещё ${Math.min(rest, PAGE)}`, en: `Show ${Math.min(rest, PAGE)} more`, de: `${Math.min(rest, PAGE)} weitere anzeigen` })}
+          </button>
+        </div>
+      )}
     </div>
   );
 }

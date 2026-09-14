@@ -21,7 +21,16 @@ export default async function CrmPage() {
     prisma.lead.findMany({
       where: branchWhere(s), // faol filial lidlarigina (filialsiz eski yozuvlar ham)
       orderBy: { createdAt: "desc" },
-      include: { manager: true, group: { select: { name: true } }, _count: { select: { activities: true } } },
+      // Faqat kerakli ustunlar — `include: { manager: true }` har lid uchun butun
+      // User yozuvini (parol maydonlari bilan) tortib, 2000 lidda sahifani sekinlashtirardi
+      select: {
+        id: true, fullName: true, phone: true, email: true, source: true, stage: true,
+        interestCourse: true, age: true, level: true, budget: true, note: true,
+        managerId: true, studentId: true, groupId: true, enrollEditCount: true, kanbanColumnId: true, createdAt: true,
+        manager: { select: { fullName: true } },
+        group: { select: { name: true } },
+        _count: { select: { activities: true } },
+      },
       take: 2000,
     }),
     prisma.user.findMany({ where: { role: ROLES.OPERATOR, isActive: true }, select: { id: true, fullName: true }, orderBy: { fullName: "asc" } }),

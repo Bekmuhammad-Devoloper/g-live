@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useEffect, useMemo, useState, useTransition } from "react";
+import { useCallback, useDeferredValue, useEffect, useMemo, useState, useTransition } from "react";
 import { useRouter, usePathname, useSearchParams } from "next/navigation";
 import { cn } from "@/lib/cn";
 import { tr } from "@/lib/tr";
@@ -83,7 +83,9 @@ export default function LeadsWorkspace({ locale, initialLeads, managers, sources
   const pinnedIds = useMemo(() => new Set(groupColumns.map((g) => g.groupId)), [groupColumns]);
   const customIds = useMemo(() => new Set(customColumns.map((c) => c.id)), [customColumns]);
 
-  // URL sync
+  // URL sync — `router.replace` har o'zgarishda (har bir terilgan harfda ham) serverga
+  // borib sahifani qayta render qilardi: 2000 lid qayta yuklanib, butun Kanban qayta
+  // chizilardi. `history.replaceState` Next router bilan sinxron, lekin serverga bormaydi.
   useEffect(() => {
     const p = new URLSearchParams();
     if (view !== "kanban") p.set("view", view);
@@ -94,13 +96,18 @@ export default function LeadsWorkspace({ locale, initialLeads, managers, sources
     if (selection.size) p.set("selected", [...selection].join(","));
     if (sort !== "newest") p.set("sort", sort);
     const qs = p.toString();
-    router.replace(qs ? `${pathname}?${qs}` : pathname, { scroll: false });
+    const url = qs ? `${pathname}?${qs}` : pathname;
+    if (window.location.pathname + window.location.search !== url) {
+      window.history.replaceState(null, "", url);
+    }
     try { localStorage.setItem("crm-view", view); } catch {}
-  }, [view, search, source, manager, activeCols, selection, sort, pathname, router]);
+  }, [view, search, source, manager, activeCols, selection, sort, pathname]);
 
-  // Filtrlash
+  // Filtrlash — qidiruv matni kechiktirilgan: kiritish maydoni darhol javob beradi,
+  // ro'yxat esa brauzer bo'shaganda qayta hisoblanadi
+  const deferredSearch = useDeferredValue(search);
   const baseFiltered = useMemo(() => {
-    const q = search.trim().toLowerCase();
+    const q = deferredSearch.trim().toLowerCase();
     // Raqamli qidiruv: telefon formatidagi bo'shliq/qavs/chiziqchalar solishtirishga xalaqit
     // bermasin — ikkala tomonni ham faqat raqamga tozalaymiz. Shunda raqamning
     // OXIRIDAN (masalan "0019") yoki o'rtasidan qidirsa ham topiladi.
@@ -115,7 +122,7 @@ export default function LeadsWorkspace({ locale, initialLeads, managers, sources
       if (manager && l.managerId !== manager) return false;
       return true;
     });
-  }, [leads, search, source, manager]);
+  }, [leads, deferredSearch, source, manager]);
 
   const chipCounts = useMemo(() => {
     const c: Record<string, number> = {};
@@ -137,9 +144,16 @@ export default function LeadsWorkspace({ locale, initialLeads, managers, sources
     return c;
   }, [shown, pinnedIds, customIds]);
 
+  // Sana bir marta parse qilinadi — saralash har solishtirishda `new Date` qilmaydi
+  const tsOf = useMemo(() => {
+    const m = new Map<string, number>();
+    for (const l of leads) m.set(l.id, new Date(l.createdAt).getTime());
+    return m;
+  }, [leads]);
+
   const sortedShown = useMemo(() => {
     const arr = [...shown];
-    const time = (x: VLead) => new Date(x.createdAt).getTime();
+    const time = (x: VLead) => tsOf.get(x.id) ?? 0;
     switch (sort) {
       case "oldest": arr.sort((a, b) => time(a) - time(b)); break;
       case "budget": arr.sort((a, b) => (b.budget ?? 0) - (a.budget ?? 0)); break;
@@ -148,7 +162,7 @@ export default function LeadsWorkspace({ locale, initialLeads, managers, sources
       default: arr.sort((a, b) => time(b) - time(a));
     }
     return arr;
-  }, [shown, sort]);
+  }, [shown, sort, tsOf]);
 
   // Tezkor oyna uchun lid — ro'yxat yangilansa avtomatik yopiladi
   const quickLead = useMemo(() => (quickId ? leads.find((l) => l.id === quickId) ?? null : null), [quickId, leads]);

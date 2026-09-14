@@ -1,5 +1,6 @@
 "use client";
 
+import { memo } from "react";
 import { cn } from "@/lib/cn";
 import { formatMoney, LEAD_STAGE_LABELS, label, type Locale } from "@/lib/constants";
 import { tr } from "@/lib/tr";
@@ -26,7 +27,8 @@ interface Props {
   onDragEnd: () => void;
 }
 
-export default function LeadCard({ lead, locale, selected, onOpen, onOpenFull, onDragStart, onDragEnd }: Props) {
+// memo: Kanbanda yuzlab karta bor — birini sudrash/belgilash qolganlarini qayta chizmasin
+export default memo(function LeadCard({ lead, locale, selected, onOpen, onOpenFull, onDragStart, onDragEnd }: Props) {
   const col = columnDef(columnOf(lead.stage));
   const color = col.color;
   const days = daysSince(lead.createdAt);
@@ -125,4 +127,4 @@ export default function LeadCard({ lead, locale, selected, onOpen, onOpenFull, o
       </div>
     </div>
   );
-}
+});

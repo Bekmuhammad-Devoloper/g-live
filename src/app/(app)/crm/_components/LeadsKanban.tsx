@@ -1,6 +1,6 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useCallback, useMemo, useState } from "react";
 import Link from "next/link";
 import { cn } from "@/lib/cn";
 import { tr } from "@/lib/tr";
@@ -45,12 +45,19 @@ interface ViewCol {
   customId: string | null;
 }
 
+/** Har ustunda dastlab shuncha karta chiziladi — qolgani "Yana ko'rsatish" bilan.
+ *  Aks holda 2000 lid = 2000 karta × ~10 SVG bir vaqtda DOM'ga tushib, sahifa qotib qolardi. */
+const PAGE = 40;
+
 export default function LeadsKanban({
   leads, totals, locale, selected, groupColumns, customColumns,
   onOpen, onOpenFull, onDropToColumn, onAdd, onAddToGroup, onRemoveGroupCol, onAddToCustom, onRemoveCustomCol,
 }: Props) {
   const [dragId, setDragId] = useState<string | null>(null);
   const [overCol, setOverCol] = useState<string | null>(null);
+  // Ustun kaliti → hozir ko'rsatilayotgan kartalar soni
+  const [limits, setLimits] = useState<Record<string, number>>({});
+  const showMore = useCallback((key: string) => setLimits((p) => ({ ...p, [key]: (p[key] ?? PAGE) + PAGE })), []);
 
   const pinnedIds = useMemo(() => new Set(groupColumns.map((g) => g.groupId)), [groupColumns]);
   const customIds = useMemo(() => new Set(customColumns.map((c) => c.id)), [customColumns]);
@@ -84,18 +91,25 @@ export default function LeadsKanban({
     return [std("new"), std("work"), std("offer"), ...custom, std("won"), ...groups, std("lost")];
   }, [groupColumns, customColumns, locale]);
 
-  const colOf = (l: VLead) => columnOfLead(l, pinnedIds, customIds);
+  const colOf = useCallback((l: VLead) => columnOfLead(l, pinnedIds, customIds), [pinnedIds, customIds]);
 
-  const byCol: Record<string, VLead[]> = {};
-  for (const c of cols) byCol[c.key] = [];
-  for (const l of leads) (byCol[colOf(l)] ??= []).push(l);
+  const byCol = useMemo(() => {
+    const m: Record<string, VLead[]> = {};
+    for (const c of cols) m[c.key] = [];
+    for (const l of leads) (m[colOf(l)] ??= []).push(l);
+    return m;
+  }, [cols, leads, colOf]);
 
-  const onDragStart = (id: string, e: React.DragEvent) => {
+  // Barqaror callback'lar — memo qilingan LeadCard'lar bekorga qayta chizilmasin
+  const onDragStart = useCallback((id: string, e: React.DragEvent) => {
     e.dataTransfer.setData("text/plain", id);
     e.dataTransfer.effectAllowed = "move";
     setDragId(id);
-  };
-  const onDragEnd = () => { setDragId(null); setOverCol(null); };
+  }, []);
+  const onDragEnd = useCallback(() => { setDragId(null); setOverCol(null); }, []);
+
+  const dragging = dragId ? leads.find((l) => l.id === dragId) ?? null : null;
+  const draggingCol = dragging ? colOf(dragging) : null;
 
   return (
     <div
@@ -108,8 +122,8 @@ export default function LeadsKanban({
       {cols.map((col) => {
         const items = byCol[col.key] ?? [];
         const isOver = overCol === col.key;
-        const dragging = leads.find((l) => l.id === dragId) ?? null;
-        const differentCol = dragging !== null && colOf(dragging) !== col.key;
+        const differentCol = draggingCol !== null && draggingCol !== col.key;
+        const limit = limits[col.key] ?? PAGE;
         return (
           <div
             key={col.key}
@@ -172,6 +186,8 @@ export default function LeadsKanban({
                   locale={locale}
                   color={col.color}
                   selected={selected}
+                  limit={limit}
+                  onMore={() => showMore(col.key)}
                   onOpen={onOpen}
                   onOpenFull={onOpenFull}
                   onDragStart={onDragStart}
@@ -189,18 +205,21 @@ export default function LeadsKanban({
                   </p>
                 </div>
               ) : (
-                items.map((lead) => (
-                  <LeadCard
-                    key={lead.id}
-                    lead={lead}
-                    locale={locale}
-                    selected={selected.has(lead.id)}
-                    onOpen={onOpen}
-                    onOpenFull={onOpenFull}
-                    onDragStart={onDragStart}
-                    onDragEnd={onDragEnd}
-                  />
-                ))
+                <>
+                  {items.slice(0, limit).map((lead) => (
+                    <LeadCard
+                      key={lead.id}
+                      lead={lead}
+                      locale={locale}
+                      selected={selected.has(lead.id)}
+                      onOpen={onOpen}
+                      onOpenFull={onOpenFull}
+                      onDragStart={onDragStart}
+                      onDragEnd={onDragEnd}
+                    />
+                  ))}
+                  {items.length > limit && <MoreButton rest={items.length - limit} locale={locale} onClick={() => showMore(col.key)} />}
+                </>
               )}
             </div>
           </div>
@@ -219,12 +238,15 @@ interface Bucket {
 }
 
 function WonColumn({
-  items, locale, color, selected, onOpen, onOpenFull, onDragStart, onDragEnd,
+  items, locale, color, selected, limit, onMore, onOpen, onOpenFull, onDragStart, onDragEnd,
 }: {
   items: VLead[];
   locale: Locale;
   color: string;
   selected: Set<string>;
+  /** Guruh kutayotganlardan nechtasi chizilgan */
+  limit: number;
+  onMore: () => void;
   onOpen: (id: string, e: React.MouseEvent) => void;
   onOpenFull: (id: string) => void;
   onDragStart: (id: string, e: React.DragEvent) => void;
@@ -265,7 +287,7 @@ function WonColumn({
             text={tr(locale, { uz: "Guruh kutmoqda", ru: "Ожидают группу", en: "Awaiting group", de: "Gruppe wird erwartet" })}
             count={waiting.length}
           />
-          {waiting.map((lead) => (
+          {waiting.slice(0, limit).map((lead) => (
             <LeadCard
               key={lead.id}
               lead={lead}
@@ -277,6 +299,7 @@ function WonColumn({
               onDragEnd={onDragEnd}
             />
           ))}
+          {waiting.length > limit && <MoreButton rest={waiting.length - limit} locale={locale} onClick={onMore} />}
         </>
       )}
 
@@ -295,6 +318,21 @@ function WonColumn({
         </>
       )}
     </>
+  );
+}
+
+/** "Yana N ta ko'rsatish" — ustunning chizilmagan qismini ochadi */
+function MoreButton({ rest, locale, onClick }: { rest: number; locale: Locale; onClick: () => void }) {
+  const n = Math.min(rest, PAGE);
+  return (
+    <button
+      onClick={onClick}
+      className="flex w-full items-center justify-center gap-1.5 rounded-xl border border-dashed border-slate-300 py-2.5 text-xs font-semibold text-slate-500 transition hover:border-brand-400 hover:text-brand-600 dark:border-white/[0.12] dark:text-slate-400 dark:hover:text-brand-300"
+    >
+      <Icon name="plus" className="h-3.5 w-3.5" />
+      {tr(locale, { uz: `Yana ${n} ta ko'rsatish`, ru: `Показать ещё ${n}`, en: `Show ${n} more`, de: `${n} weitere anzeigen` })}
+      <span className="text-slate-400">({rest})</span>
+    </button>
   );
 }
 
