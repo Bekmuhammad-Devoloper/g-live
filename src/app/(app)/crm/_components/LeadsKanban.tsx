@@ -151,8 +151,10 @@ export default function LeadsKanban({
                   <Icon name={col.icon} className="h-4 w-4" strokeWidth={2} />
                 </span>
                 <span className="min-w-0">
-                  {/* Bir qator, qo'lda yozilgan shrift — nom tor ustunga ham sig'adi */}
-                  <span className="font-hand block truncate text-[17px] font-bold leading-none text-slate-700 dark:text-slate-100">{col.title}</span>
+                  {/* Bir qator, qo'lda yozilgan shrift — nom tor ustunga ham sig'adi.
+                      Caveat baland shrift: qator balandligi tor bo'lsa `truncate` harflarning
+                      ustki qismini (i nuqtasi, k/l tepasi) kesib qo'yadi — shuning uchun leading keng */}
+                  <span className="font-hand block truncate text-[17px] font-bold leading-[1.35] text-slate-700 dark:text-slate-100">{col.title}</span>
                   {col.sub && <span className="block truncate text-[11px] text-slate-400">{col.sub}</span>}
                 </span>
               </div>
