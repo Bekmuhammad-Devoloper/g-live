@@ -21,7 +21,7 @@ import { StudentDetailModal, EditModal, type VStudent } from "../StudentsView";
 
 /** Qarz hisobi tafsiloti — src/lib/debt.ts natijasi */
 export interface DebtInfo {
-  accrued: number; paid: number; manual: number; debt: number; months: number; since: string | null;
+  accrued: number; paid: number; manual: number; debt: number; credit: number; months: number; since: string | null;
 }
 
 export interface SGroup {
@@ -377,6 +377,11 @@ function DebtBreakdown({ info, locale }: { info: DebtInfo; locale: Locale }) {
           <div className="mt-0.5 text-2xl font-black tabular-nums" style={{ color: tone }}>
             {has ? formatMoney(info.debt, locale) : L("Yo'q", "Нет", "None", "Keine")}
           </div>
+          {info.credit > 0 && (
+            <div className="mt-1 text-xs font-semibold text-sky-600 dark:text-sky-400">
+              {L("Balansda", "На балансе", "On balance", "Guthaben")}: {formatMoney(info.credit, locale)}
+            </div>
+          )}
           <div className="mt-1 text-[11px] text-slate-500 dark:text-slate-400">
             {L("hisoblangan + qo'lda − to'langan", "начислено + вручную − оплачено", "accrued + manual − paid", "berechnet + manuell − bezahlt")}
           </div>

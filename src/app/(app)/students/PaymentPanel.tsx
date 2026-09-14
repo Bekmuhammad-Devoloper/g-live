@@ -142,6 +142,26 @@ export default function PaymentPanel({
         </div>
       )}
 
+      {/* Balans — majburiyatlardan ortiqcha (oldindan) to'langan pul; keyingi oy hisobiga o'tadi */}
+      {pay && (
+        <div className={cn("mt-2 flex items-center justify-between gap-2 rounded-xl border px-3.5 py-2.5", pay.credit > 0
+          ? "border-sky-200 bg-sky-50 dark:border-sky-900/40 dark:bg-sky-950/20"
+          : "border-slate-200 bg-slate-50 dark:border-white/10 dark:bg-white/[0.03]")}>
+          <div className="flex items-center gap-2">
+            <span className={cn("flex h-7 w-7 items-center justify-center rounded-full", pay.credit > 0 ? "bg-sky-500/15" : "bg-slate-400/15")}>
+              <Icon name="wallet" className={cn("h-4 w-4", pay.credit > 0 ? "text-sky-600" : "text-slate-400")} />
+            </span>
+            <span className={cn("text-sm font-semibold", pay.credit > 0 ? "text-sky-700 dark:text-sky-400" : "text-slate-500 dark:text-slate-400")}>
+              {tr(locale, { uz: "Balansda", ru: "На балансе", en: "On balance", de: "Guthaben" })}
+              {pay.credit > 0 && <span className="ml-1 text-[11px] font-medium opacity-70">{tr(locale, { uz: "(oldindan to'langan)", ru: "(предоплата)", en: "(prepaid)", de: "(vorausbezahlt)" })}</span>}
+            </span>
+          </div>
+          <span className={cn("text-base font-black tabular-nums", pay.credit > 0 ? "text-sky-700 dark:text-sky-400" : "text-slate-500 dark:text-slate-400")}>
+            {formatMoney(pay.credit, locale)}
+          </span>
+        </div>
+      )}
+
       {pay && (
         pay.recent.length > 0 ? (
           <div className="mt-3 space-y-1.5">

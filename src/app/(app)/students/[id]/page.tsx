@@ -79,7 +79,7 @@ export default async function StudentProfilePage({ params }: { params: Promise<{
     computeDebt(student.id),
     getSetting(RECEIPT_MODE_KEY).then(parseReceiptMode),
   ]);
-  const paid = debtInfo.paid;
+  const paid = debtInfo.credit; // "Balans" — ortiqcha (oldindan) to'langan pul
   const debt = debtInfo.debt;
 
   const att = student.attendances;
@@ -163,6 +163,7 @@ export default async function StudentProfilePage({ params }: { params: Promise<{
         paid: debtInfo.paid,
         manual: debtInfo.manual,
         debt: debtInfo.debt,
+        credit: debtInfo.credit,
         months: debtInfo.months,
         since: iso(debtInfo.since),
       }}

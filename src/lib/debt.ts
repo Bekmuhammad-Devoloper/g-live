@@ -11,7 +11,8 @@ import { getSetting } from "./settings";
 //   • hech qaysi guruhda bo'lmasa — markazning umumiy narxi (sozlamalardan).
 // Qo'shilgan/ro'yxatga olingan oyning O'ZI to'liq hisoblanadi.
 //
-//   qarz = max(0, hisoblangan + qo'lda kiritilgan qarz (PENDING) − to'langan)
+//   qarz   = max(0, hisoblangan + qo'lda kiritilgan qarz (PENDING) − to'langan)
+//   balans = max(0, to'langan − hisoblangan − qo'lda qarz)  — oldindan to'langan pul
 //
 // To'lov AVVAL hisoblangan oylik to'lovni, keyin qo'lda qarzni yopadi. Ilgari
 // qo'lda qarz tashqaridan qo'shilardi (max(0, hisoblangan − to'langan) + qarz) —
@@ -39,13 +40,15 @@ export interface StudentDebt {
   manual: number;
   /** Umumiy qarz — ro'yxatlarda shu ko'rsatiladi */
   debt: number;
+  /** Balans — majburiyatlardan ortiqcha to'langan (oldindan to'lov) */
+  credit: number;
   /** Nechta oy hisoblangan */
   months: number;
   /** Hisob boshlangan sana (ro'yxatga olingan yoki birinchi guruhga qo'shilgan) */
   since: Date | null;
 }
 
-const EMPTY: StudentDebt = { accrued: 0, paid: 0, manual: 0, debt: 0, months: 0, since: null };
+const EMPTY: StudentDebt = { accrued: 0, paid: 0, manual: 0, debt: 0, credit: 0, months: 0, since: null };
 
 /** Sanani "oy indeksi"ga aylantiradi (yil*12 + oy) — oylarni solishtirish uchun. */
 const monthIndex = (d: Date) => d.getFullYear() * 12 + d.getMonth();
@@ -131,6 +134,7 @@ export async function computeDebts(studentIds: string[], now = new Date()): Prom
 
   for (const v of out.values()) {
     v.debt = Math.max(0, v.accrued + v.manual - v.paid);
+    v.credit = Math.max(0, v.paid - v.accrued - v.manual);
   }
   return out;
 }

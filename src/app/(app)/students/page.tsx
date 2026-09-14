@@ -82,7 +82,8 @@ export default async function StudentsPage() {
       scheduleDates: st.enrollments
         .map((e) => e.group.startDate?.toISOString())
         .filter((x): x is string => !!x),
-      balance: paid.reduce((n, p) => n + p.amount, 0),
+      // Balans — majburiyatlardan ortiqcha (oldindan) to'langan pul; ilgari jami to'langan summa ko'rsatilardi
+      balance: debts.get(st.id)?.credit ?? 0,
       // Qarz = qo'shilgan oydan hisoblangan to'lov − to'langani + qo'lda kiritilgan qarz
       debt: debts.get(st.id)?.debt ?? 0,
       // Shu oy kamida bitta PAID to'lov bo'lganmi (davomat/to'lov holati bo'limi bilan bir xil mantiq)

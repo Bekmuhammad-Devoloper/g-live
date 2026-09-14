@@ -32,7 +32,8 @@ export interface StudentPayments {
   lastMonth: MonthPay;
   totalPaid: number;
   lastPaidDate: string | null;
-  debt: number; // jami qarzdorlik — qo'shilgan oydan hisoblangan + qo'lda kiritilgan
+  debt: number; // jami qarzdorlik — qo'shilgan oydan hisoblangan + qo'lda kiritilgan − to'langan
+  credit: number; // balans — majburiyatlardan ortiqcha (oldindan) to'langan pul
   lessonsThisMonth: number; // shu oy o'tilgan darslar soni (davomat bo'yicha)
   mandatoryThreshold: number; // shundan keyin to'lov majburiy bo'ladi
   paymentMandatory: boolean; // shu oy chegaradan ko'p dars o'tilgan, lekin to'lov qilinmagan
@@ -99,6 +100,7 @@ export async function getStudentPayments(studentId: string): Promise<{ ok: boole
       lastPaidDate: paid.length ? paid[0].createdAt.toISOString() : null,
       // Qarz — guruhga qo'shilgan oydan hisoblangan to'lov + qo'lda kiritilgani − to'langan
       debt: debtInfo.debt,
+      credit: debtInfo.credit,
       lessonsThisMonth,
       mandatoryThreshold: MANDATORY_LESSON_THRESHOLD,
       paymentMandatory,
