@@ -1,5 +1,5 @@
 import type { Metadata } from "next";
-import { publicLevelTestQuestions, PER_LEVEL, LEVEL_TEST_LEVELS } from "@/lib/levelTest";
+import { sampleLevelTest, PER_LEVEL, LEVEL_TEST_LEVELS, LEVEL_COLORS } from "@/lib/levelTest";
 import LevelTestForm from "./LevelTestForm";
 
 export const metadata: Metadata = {
@@ -7,23 +7,23 @@ export const metadata: Metadata = {
   description: "Nemis tili darajangizni 10 daqiqada aniqlang",
 };
 
+// Har ochilishda yangi tasodifiy savollar to'plami (bankdan har darajadan PER_LEVEL ta)
+export const dynamic = "force-dynamic";
+
 // Ochiq sahifa (login talab qilmaydi) — nemis tili darajasini aniqlash testi.
 // CRM'dagi "Daraja testi" ustunidagi QR shu sahifaga olib keladi.
 // Javob kaliti mijozga yuborilmaydi — baholash serverda (actions.ts).
+// Telefon uchun mo'ljallangan: bitta ustun, katta tugmalar, to'liq balandlik.
 export default function LevelTestPage() {
-  const questions = publicLevelTestQuestions();
+  const questions = sampleLevelTest();
   return (
-    <div className="flex min-h-screen items-center justify-center bg-slate-100 p-4">
-      <div className="w-full max-w-md overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm">
-        <div className="border-b border-slate-200 bg-brand-600 px-5 py-4 text-white">
-          {/* To'q fon uchun mo'ljallangan logotip (oq yozuvli) */}
-          <img src="/logo-dark.png" alt="Germaniya Live" className="h-8 w-auto object-contain" />
-          <div className="mt-1.5 text-[11px] text-white/70">Nemis tili — daraja aniqlash testi</div>
-        </div>
-        <div className="p-6">
-          <LevelTestForm questions={questions} perLevel={PER_LEVEL} levels={[...LEVEL_TEST_LEVELS]} />
-        </div>
-        <div className="border-t border-slate-100 px-6 py-3 text-center text-[11px] text-slate-400">© 2026 Germaniya Live</div>
+    <div className="relative min-h-[100dvh] overflow-hidden bg-[#f3f5fb] text-slate-900 dark:bg-[#0b1220] dark:text-slate-100">
+      {/* Fon bezagi — yumshoq rangli dog'lar */}
+      <div className="pointer-events-none absolute -left-24 -top-24 h-72 w-72 rounded-full bg-brand-400/25 blur-3xl dark:bg-brand-500/20" />
+      <div className="pointer-events-none absolute -right-24 top-56 h-72 w-72 rounded-full bg-cyan-300/30 blur-3xl dark:bg-cyan-500/15" />
+
+      <div className="relative mx-auto flex min-h-[100dvh] w-full max-w-md flex-col px-4 pb-[max(1.25rem,env(safe-area-inset-bottom))] pt-[max(1rem,env(safe-area-inset-top))] sm:justify-center sm:py-10">
+        <LevelTestForm questions={questions} perLevel={PER_LEVEL} levels={[...LEVEL_TEST_LEVELS]} colors={LEVEL_COLORS} />
       </div>
     </div>
   );

@@ -4,7 +4,7 @@ import { revalidatePath } from "next/cache";
 import { prisma } from "@/lib/db";
 import { parseUzPhone } from "@/lib/phone";
 import { getStudyLevels, levelTitle } from "@/lib/studyLevels";
-import { gradeLevelTest, LEVEL_TEST_LEVELS, LEVEL_TEST_QUESTIONS, type TestLevel } from "@/lib/levelTest";
+import { gradeLevelTest, normalizeAnswers, LEVEL_TEST_LEVELS, type TestLevel } from "@/lib/levelTest";
 
 export type LevelTestOutcome =
   | { ok: true; level: TestLevel | null; label: string; color: string | null; correct: number; total: number; perLevel: Record<TestLevel, { correct: number; total: number }> }
@@ -31,13 +31,9 @@ export async function submitLevelTest(
   const tel = parseUzPhone(phone);
   if (!tel) return { ok: false, error: "Telefon raqamini to'g'ri kiriting: +998 XX XXX XX XX" };
 
-  // Javoblar — faqat mavjud savol id'lari va variant oralig'idagilari
-  const answers: Record<number, number | undefined> = {};
-  for (const q of LEVEL_TEST_QUESTIONS) {
-    const v = Number(rawAnswers?.[String(q.id)]);
-    if (Number.isInteger(v) && v >= 0 && v < q.options.length) answers[q.id] = v;
-  }
-  if (Object.keys(answers).length < LEVEL_TEST_QUESTIONS.length) return { ok: false, error: "Barcha savollarga javob bering" };
+  // Javoblar — faqat bankda bor savollar; har darajadan aynan PER_LEVEL ta bo'lishi shart
+  const answers = normalizeAnswers(rawAnswers);
+  if (!answers) return { ok: false, error: "Barcha savollarga javob bering" };
 
   const r = gradeLevelTest(answers);
 

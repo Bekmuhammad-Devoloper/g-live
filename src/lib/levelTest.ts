@@ -1,7 +1,12 @@
-// Daraja aniqlash testi — savollar banki va baholash.
-// Ochiq sahifa /daraja-testi shu bankdan foydalanadi; javob kaliti (`answer`)
-// mijozga YUBORILMAYDI — sahifa `publicLevelTestQuestions()` ni oladi,
-// baholash faqat serverda (`gradeLevelTest`).
+// Daraja aniqlash testi — tanlash va baholash.
+//
+// Savollar banki: src/lib/levelTestBank.ts (~190 savol, 4 daraja).
+// Har urinishda har darajadan PER_LEVEL ta savol TASODIFIY tanlanadi va
+// variantlar tartibi ham aralashtiriladi (`perm`) — to'g'ri javob doim
+// bir joyda turmasin. Javob kaliti (`answer`) mijozga YUBORILMAYDI:
+// sahifa `sampleLevelTest()` natijasini oladi, baholash faqat serverda.
+
+import { LEVEL_TEST_BANK } from "./levelTestBank";
 
 export const LEVEL_TEST_LEVELS = ["A1", "A2", "B1", "B2"] as const;
 export type TestLevel = (typeof LEVEL_TEST_LEVELS)[number];
@@ -9,6 +14,8 @@ export type TestLevel = (typeof LEVEL_TEST_LEVELS)[number];
 export interface LevelTestQuestion {
   id: number;
   level: TestLevel;
+  /** Grammatik mavzu — savol ustida ko'rsatiladi (Perfekt, Dativ, ...) */
+  topic?: string;
   /** Nemischa gap; bo'sh joy "___" bilan */
   q: string;
   options: string[];
@@ -16,47 +23,63 @@ export interface LevelTestQuestion {
   answer: number;
 }
 
-/** Mijozga boradigan ko'rinish — javobsiz */
-export type PublicQuestion = Omit<LevelTestQuestion, "answer">;
+/**
+ * Mijozga boradigan ko'rinish — javobsiz. `options` aralashtirilgan,
+ * `perm[j]` = ko'rsatilgan j-variantning bankdagi asl indeksi. Mijoz
+ * javobni ASL indeks bilan yuboradi (perm[j]) — baholash bank bo'yicha.
+ */
+export interface PublicQuestion {
+  id: number;
+  level: TestLevel;
+  topic?: string;
+  q: string;
+  options: string[];
+  perm: number[];
+}
 
 /** Har darajadan nechta savol */
 export const PER_LEVEL = 6;
 /** Darajani "o'tgan" hisoblash uchun kamida shuncha to'g'ri javob (6 dan 4 = 67%) */
 export const PASS_MIN = 4;
 
-export const LEVEL_TEST_QUESTIONS: LevelTestQuestion[] = [
-  // ── A1 ──
-  { id: 1, level: "A1", q: "Ich ___ Student.", options: ["bist", "bin", "ist", "sind"], answer: 1 },
-  { id: 2, level: "A1", q: "Wie ___ du?", options: ["heiße", "heißt", "heißen", "heiß"], answer: 1 },
-  { id: 3, level: "A1", q: "Das ist ___ Buch.", options: ["eine", "einen", "ein", "einer"], answer: 2 },
-  { id: 4, level: "A1", q: "Ich komme ___ Usbekistan.", options: ["von", "in", "aus", "nach"], answer: 2 },
-  { id: 5, level: "A1", q: "Wir ___ nach Berlin.", options: ["fahre", "fährst", "fährt", "fahren"], answer: 3 },
-  { id: 6, level: "A1", q: "___ du Kaffee?", options: ["Trinkt", "Trinke", "Trinken", "Trinkst"], answer: 3 },
-  // ── A2 ──
-  { id: 7, level: "A2", q: "Gestern ___ ich ins Kino gegangen.", options: ["habe", "war", "bin", "hatte"], answer: 2 },
-  { id: 8, level: "A2", q: "Ich habe ___ Auto gekauft.", options: ["eine", "ein", "einen", "einem"], answer: 1 },
-  { id: 9, level: "A2", q: "Er kommt nicht, ___ er krank ist.", options: ["denn", "aber", "weil", "oder"], answer: 2 },
-  { id: 10, level: "A2", q: "Ich freue mich ___ das Wochenende.", options: ["über", "auf", "an", "für"], answer: 1 },
-  { id: 11, level: "A2", q: "Das Buch ist ___ als der Film.", options: ["interessant", "am interessantesten", "interessanter", "interessantesten"], answer: 2 },
-  { id: 12, level: "A2", q: "Kannst du ___ helfen?", options: ["ich", "mich", "mein", "mir"], answer: 3 },
-  // ── B1 ──
-  { id: 13, level: "B1", q: "Wenn ich Zeit ___, würde ich mehr lesen.", options: ["habe", "hatte", "hätte", "haben"], answer: 2 },
-  { id: 14, level: "B1", q: "Das Haus, ___ wir gekauft haben, ist alt.", options: ["den", "das", "dem", "der"], answer: 1 },
-  { id: 15, level: "B1", q: "Der Brief ___ gestern geschrieben.", options: ["wird", "ist", "hat", "wurde"], answer: 3 },
-  { id: 16, level: "B1", q: "Ich lerne Deutsch, ___ in Deutschland zu studieren.", options: ["für", "damit", "um", "weil"], answer: 2 },
-  { id: 17, level: "B1", q: "Ich interessiere mich ___ Musik.", options: ["an", "für", "auf", "über"], answer: 1 },
-  { id: 18, level: "B1", q: "Ich habe keine Lust, ___ Hausaufgaben zu machen.", options: ["den", "der", "das", "die"], answer: 3 },
-  // ── B2 ──
-  { id: 19, level: "B2", q: "___ er viel gearbeitet hatte, war er müde.", options: ["Bevor", "Während", "Nachdem", "Obwohl"], answer: 2 },
-  { id: 20, level: "B2", q: "Die Ergebnisse ___ noch überprüft werden.", options: ["muss", "müssen", "gemusst", "müsste"], answer: 1 },
-  { id: 21, level: "B2", q: "Er tat so, ___ er nichts wüsste.", options: ["obwohl", "wenn", "als ob", "als"], answer: 2 },
-  { id: 22, level: "B2", q: "Trotz ___ schlechten Wetters fand das Konzert statt.", options: ["dem", "des", "der", "den"], answer: 1 },
-  { id: 23, level: "B2", q: "Je mehr man übt, ___ besser wird man.", options: ["so", "als", "desto", "wie"], answer: 2 },
-  { id: 24, level: "B2", q: "Die Stadt, in ___ ich wohne, ist sehr alt.", options: ["die", "dem", "der", "den"], answer: 2 },
-];
+/** Daraja ranglari — Sozlamalar > Darajalar katalogidagi standart ranglar bilan bir xil */
+export const LEVEL_COLORS: Record<TestLevel, string> = {
+  A1: "#2d5f8a",
+  A2: "#0e7490",
+  B1: "#6d28d9",
+  B2: "#a83a7a",
+};
 
-export function publicLevelTestQuestions(): PublicQuestion[] {
-  return LEVEL_TEST_QUESTIONS.map(({ id, level, q, options }) => ({ id, level, q, options }));
+/** Bank — eski nom bilan ham (CRM va boshqa joylar shu nomni ishlatgan) */
+export const LEVEL_TEST_QUESTIONS: LevelTestQuestion[] = LEVEL_TEST_BANK;
+
+const BY_ID = new Map(LEVEL_TEST_BANK.map((q) => [q.id, q]));
+
+function shuffle<T>(arr: T[]): T[] {
+  const a = [...arr];
+  for (let i = a.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1));
+    [a[i], a[j]] = [a[j], a[i]];
+  }
+  return a;
+}
+
+/** Bitta urinish uchun savollar to'plami: har darajadan PER_LEVEL ta, daraja tartibida. */
+export function sampleLevelTest(perLevel = PER_LEVEL): PublicQuestion[] {
+  const out: PublicQuestion[] = [];
+  for (const level of LEVEL_TEST_LEVELS) {
+    const pool = shuffle(LEVEL_TEST_BANK.filter((q) => q.level === level)).slice(0, perLevel);
+    for (const q of pool) {
+      const perm = shuffle(q.options.map((_, i) => i));
+      out.push({ id: q.id, level: q.level, topic: q.topic, q: q.q, options: perm.map((i) => q.options[i]), perm });
+    }
+  }
+  return out;
+}
+
+/** Eski nom — butun bankni javobsiz beradi (kerak bo'lsa) */
+export function publicLevelTestQuestions(): Omit<LevelTestQuestion, "answer">[] {
+  return LEVEL_TEST_BANK.map(({ id, level, topic, q, options }) => ({ id, level, topic, q, options }));
 }
 
 export interface LevelTestResult {
@@ -68,21 +91,43 @@ export interface LevelTestResult {
 }
 
 /**
+ * Javoblarni tozalash: faqat bankda bor savol id'lari va variant oralig'idagi
+ * qiymatlar qoladi. Har darajada aynan `perLevel` ta javob bo'lishi shart —
+ * aks holda null (to'liq emas).
+ */
+export function normalizeAnswers(raw: Record<string, unknown>, perLevel = PER_LEVEL): Record<number, number> | null {
+  const answers: Record<number, number> = {};
+  const count: Record<TestLevel, number> = { A1: 0, A2: 0, B1: 0, B2: 0 };
+  for (const [k, v] of Object.entries(raw ?? {})) {
+    const id = Number(k);
+    const q = BY_ID.get(id);
+    const idx = Number(v);
+    if (!q || !Number.isInteger(idx) || idx < 0 || idx >= q.options.length) continue;
+    if (count[q.level] >= perLevel) continue; // ortiqcha javoblar hisobga olinmaydi
+    answers[id] = idx;
+    count[q.level] += 1;
+  }
+  for (const l of LEVEL_TEST_LEVELS) if (count[l] !== perLevel) return null;
+  return answers;
+}
+
+/**
  * Baholash: daraja ketma-ket o'tiladi — A1 dan boshlab har birida kamida
  * PASS_MIN to'g'ri bo'lsa keyingisiga o'tiladi; oxirgi o'tilgan daraja natija.
- * `answers` — savol id → tanlangan variant indeksi (javob berilmagani bo'lmasligi mumkin).
+ * `answers` — savol id → tanlangan variantning ASL (bankdagi) indeksi.
  */
-export function gradeLevelTest(answers: Record<number, number | undefined>): LevelTestResult {
-  const perLevel = Object.fromEntries(LEVEL_TEST_LEVELS.map((l) => [l, { correct: 0, total: 0 }])) as LevelTestResult["perLevel"];
+export function gradeLevelTest(answers: Record<number, number | undefined>, perLevel = PER_LEVEL): LevelTestResult {
+  const perLevelRes = Object.fromEntries(LEVEL_TEST_LEVELS.map((l) => [l, { correct: 0, total: perLevel }])) as LevelTestResult["perLevel"];
   let correct = 0;
-  for (const q of LEVEL_TEST_QUESTIONS) {
-    perLevel[q.level].total += 1;
-    if (answers[q.id] === q.answer) { perLevel[q.level].correct += 1; correct += 1; }
+  for (const [k, v] of Object.entries(answers)) {
+    const q = BY_ID.get(Number(k));
+    if (!q || v === undefined) continue;
+    if (v === q.answer) { perLevelRes[q.level].correct += 1; correct += 1; }
   }
   let level: TestLevel | null = null;
   for (const l of LEVEL_TEST_LEVELS) {
-    if (perLevel[l].correct >= PASS_MIN) level = l;
+    if (perLevelRes[l].correct >= PASS_MIN) level = l;
     else break;
   }
-  return { level, correct, total: LEVEL_TEST_QUESTIONS.length, perLevel };
+  return { level, correct, total: perLevel * LEVEL_TEST_LEVELS.length, perLevel: perLevelRes };
 }
