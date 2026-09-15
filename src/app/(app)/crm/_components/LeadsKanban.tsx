@@ -508,18 +508,19 @@ function GroupBucketCard({ bucket, locale, color, info }: { bucket: Bucket; loca
           </div>
           {/* Xona · jadval · o'qituvchi — har biri o'z qatorida, ikkala rejimda o'qiladi */}
           {(info.room || info.schedule || info.teacher) && (
-            <div className="mt-2 space-y-1 text-[11px] leading-tight text-slate-500 dark:text-slate-300">
+            {/* Aniq ko'rinadigan rang: matn to'q, ikonkalar ustun rangida */}
+            <div className="mt-2 space-y-1 text-[11.5px] font-medium leading-tight text-slate-700 dark:text-slate-100">
               {(info.room || info.schedule) && (
                 <div className="flex items-center gap-1.5">
-                  {info.room && <span className="inline-flex items-center gap-1 whitespace-nowrap"><Icon name="building" className="h-3.5 w-3.5 shrink-0 text-slate-400 dark:text-slate-400" /> {info.room}</span>}
-                  {info.room && info.schedule && <span className="text-slate-300 dark:text-slate-600">·</span>}
-                  {info.schedule && <span className="inline-flex min-w-0 items-center gap-1"><Icon name="clock" className="h-3.5 w-3.5 shrink-0 text-slate-400 dark:text-slate-400" /> <span className="truncate">{info.schedule}</span></span>}
+                  {info.room && <span className="inline-flex items-center gap-1 whitespace-nowrap"><Icon name="building" className="h-3.5 w-3.5 shrink-0" style={{ color }} strokeWidth={1.8} /> {info.room}</span>}
+                  {info.room && info.schedule && <span className="text-slate-300 dark:text-slate-500">·</span>}
+                  {info.schedule && <span className="inline-flex min-w-0 items-center gap-1"><Icon name="clock" className="h-3.5 w-3.5 shrink-0" style={{ color }} strokeWidth={1.8} /> <span className="truncate">{info.schedule}</span></span>}
                 </div>
               )}
               {info.teacher && (
                 <div className="flex items-center gap-1.5">
-                  <Icon name="teacher" className="h-3.5 w-3.5 shrink-0 text-slate-400 dark:text-slate-400" />
-                  <span className="truncate font-medium text-slate-700 dark:text-slate-100">{info.teacher}</span>
+                  <Icon name="teacher" className="h-3.5 w-3.5 shrink-0" style={{ color }} strokeWidth={1.8} />
+                  <span className="truncate font-semibold text-slate-800 dark:text-white">{info.teacher}</span>
                 </div>
               )}
             </div>
