@@ -94,6 +94,8 @@ export type SalaryRuleScope = (typeof SALARY_RULE_SCOPES)[number];
 export const SALARY_RULE_PRIORITY: readonly SalaryRuleScope[] = ["STUDENT", "TEACHER", "GROUP", "COURSE", "BRANCH", "GLOBAL"];
 /** Eski scope qiymati */
 export const LEGACY_SCOPE_ALL = "ALL";
+/** Assignment darajasidagi qoida (ASSISTANT va h.k.) — scope bo'yicha resolve qilinmaydi, faqat `GroupTeacherAssignment.compensationRuleId` orqali */
+export const ASSIGNMENT_RULE_SCOPE = "ASSIGNMENT";
 
 export const COMPENSATION_TYPES = ["FIXED", "PERCENT", "PER_STUDENT", "PER_LESSON", "PER_HOUR"] as const;
 /** Birinchi bosqichda dvigatel qo'llab-quvvatlaydiganlari */
