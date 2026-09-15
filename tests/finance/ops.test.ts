@@ -6,7 +6,7 @@ import { afterAll, beforeAll, describe, expect, it } from "vitest";
 import { BackupError, createBackup, pruneBackups, readBackupMetadata } from "@/lib/finance/ops/backup";
 import { MigrateError, adoptBaseline, dryRunMigrate, isEmptyDiff, safeMigrate } from "@/lib/finance/ops/migrate";
 import { compareSnapshots, snapshotFile } from "@/lib/finance/ops/reconcile";
-import { restoreRehearsal } from "@/lib/finance/ops/restore";
+import { restoreDb, restoreRehearsal, RestoreError } from "@/lib/finance/ops/restore";
 import { migrationState, openSqlite } from "@/lib/finance/ops/sqlite";
 import { TMP_DIR } from "../setup/paths";
 
@@ -169,6 +169,23 @@ describe("finance v2 ops — backup / restore / migrate", () => {
     expect(r2.reconcile.ok).toBe(true);
     expect(r2.deployOutput).toMatch(/No pending migrations/);
   }, 120_000);
+
+  it("REAL tiklash: migratsiyalangan baza backup'dan avvalgi holatga qaytadi (ilova to'xtatilgan)", async () => {
+    // src hozir migratsiyalangan (_prisma_migrations bor); 'rehearsal' backup'i migratsiyadan OLDIN olingan
+    const before = readdirSync(backupDir).filter((f) => f.includes("-rehearsal") && f.endsWith(".bak"))[0];
+    expect(before).toBeTruthy();
+    await expect(restoreDb({ backupPath: path.join(backupDir, before), dbPath: src, appStopped: false })).rejects.toThrow(RestoreError);
+    const r = await restoreDb({ backupPath: path.join(backupDir, before), dbPath: src, appStopped: true });
+    expect(existsSync(r.brokenSavedAs)).toBe(true);
+    const db = openSqlite(src);
+    try {
+      expect(await migrationState(db)).toBeNull(); // yana db push rejimi = backup holati
+      const n = await db.$queryRawUnsafe<{ n: number | bigint }[]>("SELECT count(*) AS n FROM Payment");
+      expect(Number(n[0].n)).toBe(4);
+    } finally {
+      await db.$disconnect();
+    }
+  }, 30_000);
 
   it("MigrateError turi va isEmptyDiff", () => {
     expect(isEmptyDiff("-- This is an empty migration.\n")).toBe(true);

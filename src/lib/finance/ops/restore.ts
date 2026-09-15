@@ -4,7 +4,7 @@
 // nusxa → yangi vaqtinchalik yo'l → Prisma ulanadi → integrity → qator sonlari
 // → pul yig'indilari manba (yoki metadata) bilan solishtiriladi.
 
-import { copyFileSync, existsSync, mkdirSync, rmSync, statSync } from "node:fs";
+import { copyFileSync, existsSync, mkdirSync, renameSync, rmSync, statSync } from "node:fs";
 import path from "node:path";
 
 import { readBackupMetadata } from "./backup";
@@ -82,4 +82,64 @@ export async function restoreRehearsal(opts: RestoreRehearsalOptions): Promise<R
       for (const suffix of ["", "-journal", "-wal", "-shm"]) rmSync(restoredPath + suffix, { force: true });
     }
   }
+}
+
+export interface RestoreDbOptions {
+  backupPath: string;
+  /** Jonli baza fayli — USTIDAN YOZILADI (ilova to'xtatilgan bo'lishi shart) */
+  dbPath: string;
+  /** Chaqiruvchi ilovani to'xtatganini tasdiqlaydi — bo'lmasa xato */
+  appStopped: boolean;
+}
+
+export interface RestoreDbResult {
+  dbPath: string;
+  fromBackup: string;
+  /** almashtirishdan oldingi (buzilgan) baza shu nomda saqlanadi */
+  brokenSavedAs: string;
+  rowCounts: Record<string, number>;
+}
+
+/**
+ * REAL tiklash (rehearsal emas): backup → `<db>.restoring` → integrity → metadata
+ * sonlari → atomik `rename` jonli fayl ustiga. Eski (buzilgan) fayl `<db>.broken-<ts>`
+ * nomida saqlanadi (o'chirilmaydi). Ilova TO'XTATILGAN bo'lishi shart — SQLite
+ * ochiq faylni almashtirish xavfli.
+ */
+export async function restoreDb(opts: RestoreDbOptions): Promise<RestoreDbResult> {
+  if (!opts.appStopped) throw new RestoreError("restoreDb: ilova to'xtatilganini tasdiqlang (appStopped=true)");
+  const backupPath = path.resolve(opts.backupPath);
+  const dbPath = path.resolve(opts.dbPath);
+  if (!existsSync(backupPath)) throw new RestoreError(`backup topilmadi: ${backupPath}`);
+
+  const staging = `${dbPath}.restoring-${process.pid}`;
+  rmSync(staging, { force: true });
+  copyFileSync(backupPath, staging);
+
+  const db = openSqlite(staging);
+  let counts: Record<string, number>;
+  try {
+    const integrity = await integrityCheck(db);
+    if (!integrity.ok) throw new RestoreError(`backup nusxasi integrity_check yiqildi: ${integrity.messages.join("; ")}`);
+    const meta = readBackupMetadata(backupPath);
+    counts = await rowCounts(db, meta ? Object.keys(meta.rowCounts) : undefined);
+    if (meta) {
+      for (const [t, n] of Object.entries(meta.rowCounts)) {
+        if (counts[t] !== n) throw new RestoreError(`backup metadata bilan mos emas (${t}): ${n} ≠ ${counts[t]}`);
+      }
+    }
+  } catch (e) {
+    rmSync(staging, { force: true });
+    throw e;
+  } finally {
+    await db.$disconnect();
+  }
+
+  // Buzilgan faylni saqlab, atomik almashtirish
+  const stampNow = new Date().toISOString().replace(/[:.]/g, "-");
+  const brokenSavedAs = `${dbPath}.broken-${stampNow}`;
+  if (existsSync(dbPath)) renameSync(dbPath, brokenSavedAs);
+  for (const suffix of ["-journal", "-wal", "-shm"]) rmSync(dbPath + suffix, { force: true });
+  renameSync(staging, dbPath);
+  return { dbPath, fromBackup: backupPath, brokenSavedAs, rowCounts: counts };
 }
