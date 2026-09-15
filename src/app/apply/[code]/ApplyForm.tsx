@@ -145,7 +145,8 @@ export default function ApplyForm({ code, preview, questions = [], levels, branc
           <input value={fullName} onChange={(e) => setName(e.target.value)} required autoComplete="name" placeholder="Ism Familiya" className={INPUT} />
 
           <Label text="Telefon raqami" req className="mt-3" />
-          <div className={cn(INPUT, "flex items-center gap-2 px-0 pr-3 focus-within:border-brand-500 focus-within:ring-4 focus-within:ring-brand-500/15")}>
+          {/* INPUT'dagi px-4 bu yerda kerak emas (cn = clsx, px-0 uni yengmaydi) — shuning uchun alohida klasslar */}
+          <div className={cn(FIELD_BOX, "gap-2 pr-3")}>
             {/* Davlat kodi — MDH va Yevropa ro'yxati (SVG bayroqli panel); standart O'zbekiston */}
             <CountryPicker value={countryIso} onChange={onCountry} />
             <input
@@ -162,7 +163,7 @@ export default function ApplyForm({ code, preview, questions = [], levels, branc
           {format === "ONLINE" && (
             <div className="animate-pop-in">
               <Label text="Telegram username" className="mt-3" />
-              <div className={cn(INPUT, "flex items-center gap-1.5 px-4 focus-within:border-brand-500 focus-within:ring-4 focus-within:ring-brand-500/15")}>
+              <div className={cn(FIELD_BOX, "gap-1.5 px-4")}>
                 <Icon name="telegram" className="h-5 w-5 shrink-0 text-sky-500" strokeWidth={1.8} />
                 <span className="select-none text-[16px] font-semibold text-slate-400">@</span>
                 <input
@@ -254,6 +255,10 @@ const CARD = "rounded-3xl border border-white/60 bg-white/85 shadow-[0_20px_50px
 
 const INPUT =
   "min-h-[52px] w-full rounded-2xl border border-slate-200 bg-white px-4 text-[16px] text-slate-900 outline-none transition placeholder:text-slate-300 focus:border-brand-500 focus:ring-4 focus:ring-brand-500/15 dark:border-white/10 dark:bg-white/[0.06] dark:text-white dark:placeholder:text-slate-600";
+
+/** Ichida tugma/prefiks bo'lgan maydon qutisi — INPUT bilan bir xil ko'rinish, lekin ichki bo'shliqsiz (overflow-hidden: tugma burchakni to'ldiradi) */
+const FIELD_BOX =
+  "flex min-h-[52px] w-full items-center overflow-hidden rounded-2xl border border-slate-200 bg-white text-[16px] text-slate-900 transition focus-within:border-brand-500 focus-within:ring-4 focus-within:ring-brand-500/15 dark:border-white/10 dark:bg-white/[0.06] dark:text-white";
 
 function Label({ text, req, className }: { text: string; req?: boolean; className?: string }) {
   return (
