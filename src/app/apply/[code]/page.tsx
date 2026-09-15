@@ -3,6 +3,7 @@ import { prisma } from "@/lib/db";
 import { getLevelCodes } from "@/lib/studyLevels";
 import ApplyForm from "./ApplyForm";
 import { parseQuestions } from "../../(app)/links/questions";
+import { Icon } from "../../(app)/_components/Icon";
 
 export const metadata: Metadata = {
   title: "Kursga yozilish — Germaniya Live",
@@ -47,7 +48,10 @@ export default async function ApplyPage({ params, searchParams }: {
   ]);
 
   const v = link?.vacancy ?? null;
-  const chips = v ? [v.jobTitle && fmtLevel(v.jobTitle), v.salary && fmtPrice(v.salary)].filter((x): x is string => !!x) : [];
+  // Chiplar: daraja (graduation) va narx (wallet) — ikonkali
+  const chips: { icon: string; text: string }[] = v
+    ? [v.jobTitle && { icon: "graduation", text: fmtLevel(v.jobTitle) }, v.salary && { icon: "wallet", text: fmtPrice(v.salary) }].filter((x): x is { icon: string; text: string } => !!x)
+    : [];
 
   return (
     <div className="relative min-h-[100dvh] overflow-hidden bg-[#f3f5fb] text-slate-900 dark:bg-[#0b1220] dark:text-slate-100">
@@ -68,7 +72,7 @@ export default async function ApplyPage({ params, searchParams }: {
         </div>
 
         {!link ? (
-          <Notice icon="🔗" title="Havola topilmadi" text="Bunday havola mavjud emas yoki o'chirilgan." />
+          <Notice icon="link" title="Havola topilmadi" text="Bunday havola mavjud emas yoki o'chirilgan." />
         ) : (
           <>
             {/* Kurs haqida */}
@@ -77,7 +81,9 @@ export default async function ApplyPage({ params, searchParams }: {
               {chips.length > 0 && (
                 <div className="mt-2.5 flex flex-wrap gap-1.5">
                   {chips.map((c) => (
-                    <span key={c} className="rounded-full bg-white/80 px-2.5 py-1 text-[12px] font-semibold text-slate-700 shadow-sm ring-1 ring-slate-200/70 backdrop-blur dark:bg-white/[0.06] dark:text-slate-200 dark:ring-white/10">{c}</span>
+                    <span key={c.text} className="inline-flex items-center gap-1.5 rounded-full bg-white/80 px-2.5 py-1 text-[12px] font-semibold text-slate-700 shadow-sm ring-1 ring-slate-200/70 backdrop-blur dark:bg-white/[0.06] dark:text-slate-200 dark:ring-white/10">
+                      <Icon name={c.icon} className="h-3.5 w-3.5 text-brand-600 dark:text-brand-300" strokeWidth={1.8} /> {c.text}
+                    </span>
                   ))}
                 </div>
               )}
@@ -86,7 +92,7 @@ export default async function ApplyPage({ params, searchParams }: {
 
             {closed ? (
               <Notice
-                icon="⛔"
+                icon="alert"
                 title={expired ? "Muddati o'tgan" : capReached ? "Arizalar to'ldi" : "Vaqtincha yopiq"}
                 text="Bu kurs hozircha ariza qabul qilmayapti."
                 tone="amber"
@@ -115,7 +121,9 @@ function Notice({ icon, title, text, tone = "slate" }: { icon: string; title: st
     <div className={`mt-6 rounded-3xl border p-6 text-center backdrop-blur ${tone === "amber"
       ? "border-amber-200 bg-amber-50/80 dark:border-amber-500/30 dark:bg-amber-500/10"
       : "border-white/60 bg-white/85 dark:border-white/10 dark:bg-white/[0.06]"}`}>
-      <div className="text-4xl">{icon}</div>
+      <div className={`mx-auto flex h-14 w-14 items-center justify-center rounded-full ${tone === "amber" ? "bg-amber-500/15 text-amber-600" : "bg-slate-500/10 text-slate-500"}`}>
+        <Icon name={icon} className="h-7 w-7" strokeWidth={1.8} />
+      </div>
       <div className={`mt-2 text-lg font-bold ${tone === "amber" ? "text-amber-700 dark:text-amber-300" : "text-slate-800 dark:text-white"}`}>{title}</div>
       <p className={`mt-1 text-sm ${tone === "amber" ? "text-amber-600 dark:text-amber-300/80" : "text-slate-500 dark:text-slate-400"}`}>{text}</p>
     </div>
