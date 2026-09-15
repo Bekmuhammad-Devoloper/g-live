@@ -5,6 +5,7 @@ import { prisma } from "@/lib/db";
 import { requireSession } from "@/lib/auth";
 import { getPermission, MODULES } from "@/lib/rbac";
 import { writeAudit } from "@/lib/audit";
+import { financeAfterGroupTeacherChange } from "@/lib/finance/hooks";
 import { GROUP_FORMATS } from "@/lib/constants";
 import { findRoomConflict, conflictLabel } from "../roomConflict";
 
@@ -90,6 +91,7 @@ export async function updateGroup(_prev: FormState, formData: FormData): Promise
   };
 
   await prisma.group.update({ where: { id }, data });
+  if (teacherId !== existing.teacherId) await financeAfterGroupTeacherChange(id, s.userId); // Finance V2: tayinlash tarixi (MAIN)
   await writeAudit({
     actorId: s.userId,
     action: "UPDATE",

@@ -7,7 +7,7 @@ import { recordLevelUp } from "@/lib/levelUp";
 import { requireSession, type SessionUser } from "@/lib/auth";
 import { getPermission, MODULES } from "@/lib/rbac";
 import { writeAudit } from "@/lib/audit";
-import { financeAfterStudentChange } from "@/lib/finance/hooks";
+import { financeAfterGroupTeacherChange, financeAfterStudentChange } from "@/lib/finance/hooks";
 import { FINANCE_HISTORY_ERROR, hasFinanceHistory, isRestrictError } from "@/lib/finance/guards";
 import { GROUP_FORMATS } from "@/lib/constants";
 import { findRoomConflict, conflictLabel } from "./roomConflict";
@@ -164,6 +164,7 @@ export async function createGroup(_prev: FormState, formData: FormData): Promise
       status: "ACTIVE",
     },
   });
+  if (g.teacherId) await financeAfterGroupTeacherChange(g.id, s.userId); // Finance V2: tayinlash tarixi (MAIN)
   await writeAudit({ actorId: s.userId, action: "CREATE", entityType: "Group", entityId: g.id, newValue: { name: g.name } });
   revalidatePath("/groups");
   return { ok: true };

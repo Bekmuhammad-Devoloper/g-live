@@ -134,9 +134,10 @@ function pick(rules: (RuleView & { createdAt: Date })[]): RuleView | null {
  * Komponent (PERCENT yoki FIXED) uchun qoida — xizmat oyi boshida faol bo'lganlar
  * ichidan eng aniq scope yutadi. Topilmasa null.
  */
-export async function resolveRule(db: FinanceDb, ctx: RuleContext, component: CompensationComponent): Promise<RuleView | null> {
+export async function resolveRule(db: FinanceDb, ctx: RuleContext, component: CompensationComponent, allowedScopes?: RuleScope[]): Promise<RuleView | null> {
   const at = monthStart(ctx.serviceMonth);
-  if (ctx.assignmentRuleId) {
+  const allowed = new Set<RuleScope>(allowedScopes ?? [ASSIGNMENT_RULE_SCOPE, ...SALARY_RULE_PRIORITY]);
+  if (ctx.assignmentRuleId && allowed.has(ASSIGNMENT_RULE_SCOPE)) {
     const r = await db.salaryRule.findUnique({ where: { id: ctx.assignmentRuleId } });
     if (r && r.amountType === component) {
       const v = toRuleView(r);
@@ -150,6 +151,7 @@ export async function resolveRule(db: FinanceDb, ctx: RuleContext, component: Co
   const rows = await db.salaryRule.findMany({ where: { amountType: component } });
   const views = rows.map((r) => ({ ...toRuleView(r), createdAt: r.createdAt })).filter((v) => activeAt(v, at));
   for (const scope of SALARY_RULE_PRIORITY) {
+    if (!allowed.has(scope)) continue;
     const target = targets[scope];
     if (scope !== "GLOBAL" && !target) continue;
     const hit = pick(views.filter((v) => v.scope === scope && (scope === "GLOBAL" ? true : v.targetId === target)));
