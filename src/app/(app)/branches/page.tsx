@@ -22,5 +22,6 @@ export default async function BranchesPage() {
     staff: b._count.users, groups: b._count.groups, isActive: b.isActive,
   }));
 
-  return <BranchesView branches={rows} canManage={CAN.includes(s.role as never)} locale={s.locale} />;
+  // To'liq o'chirish (o'quvchi/guruhlari bilan) — faqat direktor
+  return <BranchesView branches={rows} canManage={CAN.includes(s.role as never)} canPurge={s.role === ROLES.DIRECTOR} locale={s.locale} />;
 }
