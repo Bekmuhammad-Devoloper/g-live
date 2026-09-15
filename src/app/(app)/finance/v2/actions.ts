@@ -17,7 +17,7 @@ import { FinanceError, toFinanceResult, type FinanceResult } from "@/lib/finance
 import { getFinanceFlags } from "@/lib/finance/flags";
 import { writeAudit } from "@/lib/audit";
 import { financeAudit } from "@/lib/finance/audit";
-import { requireFinancePermission, branchScope } from "@/lib/finance/permissions";
+import { assertBranchAccess, requireFinancePermission, branchScope } from "@/lib/finance/permissions";
 import { parseYearMonthKey, monthStart, tashkentYearMonth } from "@/lib/finance/period";
 import { acceptPayment, type AcceptPaymentInput } from "@/lib/finance/payments/accept";
 import { closePeriod, reopenPeriod } from "@/lib/finance/payments/periodLock";
@@ -44,6 +44,18 @@ async function guard(): Promise<SessionUser> {
 }
 
 const ok = <T,>(data?: T): Ok<T> => ({ ok: true, data } as Ok<T>);
+
+/** MANAGER o'z filiali — o'quvchi/charge filialiga qarab (server-side branch validation) */
+async function assertStudentBranch(s: SessionUser, studentId: string): Promise<void> {
+  const st = await prisma.student.findUnique({ where: { id: studentId }, select: { branchId: true } });
+  if (!st) throw new FinanceError("not_found", "O'quvchi topilmadi");
+  assertBranchAccess(s, st.branchId);
+}
+async function assertChargeBranch(s: SessionUser, chargeId: string): Promise<void> {
+  const c = await prisma.studentCharge.findUnique({ where: { id: chargeId }, select: { branchId: true } });
+  if (!c) throw new FinanceError("not_found", "Charge topilmadi");
+  assertBranchAccess(s, c.branchId);
+}
 const revalidateAll = () => { for (const p of ["/finance/v2", "/finance/v2/payments", "/finance/v2/debtors", "/finance/v2/balances", "/finance/v2/salary", "/finance/v2/accounts", "/finance/v2/expenses", "/finance/v2/refunds", "/finance/v2/reports", "/students", "/finance"]) revalidatePath(p); };
 
 // ─── Feature flag (faqat DIRECTOR) ───
@@ -131,6 +143,7 @@ export async function manualDebtAction(studentId: string, amount: number, servic
   try {
     const s = await guard();
     requireFinancePermission(s, "PAYMENT_CREATE");
+    await assertStudentBranch(s, studentId);
     const c = await withFinanceTx(prisma, (tx) => createManualDebtCharge(tx, { studentId, amount, serviceMonth: parseYearMonthKey(serviceMonth), note, actorId: s.userId }));
     revalidateAll();
     return ok({ chargeId: c.id });
@@ -141,6 +154,7 @@ export async function cancelChargeAction(chargeId: string, reason: string): Prom
   try {
     const s = await guard();
     requireFinancePermission(s, "PAYMENT_CORRECT");
+    await assertChargeBranch(s, chargeId);
     await withFinanceTx(prisma, (tx) => cancelCharge(tx, chargeId, reason, s.userId));
     revalidateAll();
     return ok();
@@ -151,6 +165,7 @@ export async function replaceChargeAction(chargeId: string, originalAmount: numb
   try {
     const s = await guard();
     requireFinancePermission(s, "PAYMENT_CORRECT");
+    await assertChargeBranch(s, chargeId);
     const c = await withFinanceTx(prisma, (tx) => replaceCharge(tx, { chargeId, originalAmount, discountAmount, reason, actorId: s.userId }));
     revalidateAll();
     return ok({ chargeId: c.id });
@@ -161,6 +176,7 @@ export async function adjustChargeAction(chargeId: string, amount: number, reaso
   try {
     const s = await guard();
     requireFinancePermission(s, "PAYMENT_CORRECT");
+    await assertChargeBranch(s, chargeId);
     const c = await withFinanceTx(prisma, (tx) => adjustCharge(tx, { chargeId, amount, reason, actorId: s.userId }));
     revalidateAll();
     return ok({ chargeId: c.id });
@@ -171,6 +187,7 @@ export async function createDiscountAction(studentId: string, type: "PERCENT" | 
   try {
     const s = await guard();
     requireFinancePermission(s, "PAYMENT_CORRECT");
+    await assertStudentBranch(s, studentId);
     const d = await withFinanceTx(prisma, (tx) => createDiscount(tx, { studentId, groupId: groupId ?? null, type, value: type === "PERCENT" ? Math.round(value * 100) : value, effectiveFrom: monthStart(parseYearMonthKey(effectiveFrom)), reason, actorId: s.userId }));
     revalidateAll();
     return ok({ id: d.id });
@@ -181,6 +198,9 @@ export async function endDiscountAction(id: string, reason: string): Promise<Ok>
   try {
     const s = await guard();
     requireFinancePermission(s, "PAYMENT_CORRECT");
+    const d = await prisma.studentDiscount.findUnique({ where: { id }, select: { studentId: true } });
+    if (!d) throw new FinanceError("not_found", "Chegirma topilmadi");
+    await assertStudentBranch(s, d.studentId);
     await withFinanceTx(prisma, (tx) => endDiscount(tx, id, new Date(), s.userId, reason));
     revalidateAll();
     return ok();

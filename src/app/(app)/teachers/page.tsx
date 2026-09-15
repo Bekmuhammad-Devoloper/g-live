@@ -2,6 +2,8 @@ import { requireSession } from "@/lib/auth";
 import { prisma } from "@/lib/db";
 import { ROLES } from "@/lib/constants";
 import { branchWhere } from "@/lib/branchScope";
+import { financeV2Enabled } from "@/lib/finance/legacyAdapter";
+import { hasFinancePermission } from "@/lib/finance/permissions";
 import { tr } from "@/lib/tr";
 import { Forbidden } from "../_components/ui";
 import TeachersView, { type VTeacher } from "./TeachersView";
@@ -18,6 +20,9 @@ export default async function TeachersPage() {
       />
     );
   }
+
+  // Finance V2 yoqilganda maosh raqamlari faqat SALARY_VIEW rollariga (server-side mask; flag o'chiq — legacy o'zgarmaydi)
+  const maskSalary = (await financeV2Enabled()) && !hasFinancePermission(s.role, "SALARY_VIEW");
 
   const now = new Date();
   const curYear = now.getFullYear();
@@ -43,10 +48,11 @@ export default async function TeachersPage() {
   const vteachers: VTeacher[] = teachers.map((t) => {
     const groups = t.teacherGroups.map((g) => ({ id: g.id, name: g.name, color: g.color, students: g._count.students, lessons: g._count.lessons }));
     const cur = t.salaries.find((x) => x.year === curYear && x.month === curMonth);
-    const bonus = cur?.bonus ?? 0;
-    const penalty = cur?.penalty ?? 0;
-    const kpi = t.kpiBonus; // KPI bonus = asosiy standart summa (fiksa kabi), User modelidan
-    const total = t.fiksa + bonus + kpi - penalty;
+    const bonus = maskSalary ? 0 : cur?.bonus ?? 0;
+    const penalty = maskSalary ? 0 : cur?.penalty ?? 0;
+    const kpi = maskSalary ? 0 : t.kpiBonus; // KPI bonus = asosiy standart summa (fiksa kabi), User modelidan
+    const fiksa = maskSalary ? 0 : t.fiksa;
+    const total = fiksa + bonus + kpi - penalty;
     return {
       id: t.id,
       fullName: t.fullName,
@@ -59,12 +65,12 @@ export default async function TeachersPage() {
       groups,
       totalStudents: groups.reduce((n, g) => n + g.students, 0),
       totalLessons: groups.reduce((n, g) => n + g.lessons, 0),
-      fiksa: t.fiksa,
+      fiksa,
       kpi,
       bonus,
       penalty,
       monthTotal: total,
-      history: t.salaries
+      history: (maskSalary ? [] : t.salaries)
         .filter((x) => !(x.year === curYear && x.month === curMonth))
         .map((x) => ({ year: x.year, month: x.month, fiksa: x.fiksa, bonus: x.bonus, penalty: x.penalty, kpi: x.kpi, total: x.fiksa + x.bonus + x.kpi - x.penalty, closed: x.closed })),
     };

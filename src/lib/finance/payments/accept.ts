@@ -97,8 +97,14 @@ export async function acceptPaymentTx(db: FinanceDb, raw: AcceptPaymentInput, ac
   const creditApplied = await applyStudentCredit(db, student.id, { actorId: actor.userId, excludePaymentId: payment.id });
   const allocations = await allocateFifo(db, { paymentId: payment.id, studentId: student.id, available: payment.amount, source: "AUTO_FIFO", actorId: actor.userId, allocatedAt: now });
 
-  // 7. Audit
+  // 7. Audit — to'lov + (agar bo'lsa) taqsimot alohida qator (allocation auditi)
   const allocated = allocations.reduce((a, r) => a + r.amount, 0);
+  if (allocations.length > 0 || creditApplied.length > 0) {
+    await financeAudit(db, {
+      actorId: actor.userId, action: "ALLOCATE", entityType: "PaymentAllocation", entityId: payment.id,
+      newValue: { paymentId: payment.id, allocations: allocations.map((a) => ({ id: a.id, chargeId: a.chargeId, amount: a.amount, source: a.source })), creditApplied: creditApplied.map((a) => ({ id: a.id, chargeId: a.chargeId, amount: a.amount, paymentId: a.paymentId })) },
+    });
+  }
   await financeAudit(db, {
     actorId: actor.userId, action: "CREATE", entityType: "Payment", entityId: payment.id,
     newValue: { amount: payment.amount, method: payment.method, receivedAt: input.receivedAt.toISOString(), accountId: account.id, allocated, credit: payment.amount - allocated, docNumber: payment.docNumber },
