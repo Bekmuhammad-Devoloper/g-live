@@ -8,7 +8,6 @@ import { backfillBilling, backfillPayments, verifyDebt } from "@/lib/finance/ops
 import { acceptPayment, acceptPaymentTx } from "@/lib/finance/payments/accept";
 import { applyStudentCredit } from "@/lib/finance/payments/allocate";
 import { closePeriod, reopenPeriod } from "@/lib/finance/payments/periodLock";
-import { monthStart } from "@/lib/finance/period";
 import { createTestDb, type TestDb } from "../setup/prismaTestDb";
 
 // Phase 4 — to'lov dvigateli: validate → RBAC → period lock → idempotency → TX (Payment,
