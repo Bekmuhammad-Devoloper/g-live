@@ -6,7 +6,7 @@ import { cn } from "@/lib/cn";
 import { tr } from "@/lib/tr";
 import type { Locale } from "@/lib/constants";
 import { Icon } from "../../_components/Icon";
-import { COLUMNS, columnOfLead, customColKey, groupColKey, branchColKey, NO_BRANCH_COL, type BranchColumn, type BranchMode, type BranchModeCfg, type CustomColumn, type GroupColumn, type VLead } from "../_lib/leadColumns";
+import { COLUMNS, columnOfLead, customColKey, groupColKey, branchColKey, type BranchColumn, type BranchMode, type BranchModeCfg, type CustomColumn, type GroupColumn, type VLead } from "../_lib/leadColumns";
 import LeadCard from "./LeadCard";
 import BranchSlotsEditor from "../../branches/slots/BranchSlotsEditor";
 
@@ -105,19 +105,13 @@ export default function LeadsKanban({
       groupId: g.groupId,
       customId: null,
     }));
-    // Filial rejimi: "sales" — test/taklif o'rniga filial ustunlari; "head" — daraja testi qoladi,
-    // taklif o'rnida filial ustunlari (+ filiali yo'q taklif lidlari uchun zaxira ustun)
+    // Filial rejimi: "sales" — test/taklif o'rniga filial ustunlari; "head" — hamma ustunlar
+    // (Daraja testi va Taklif qoladi) + filial ustunlari. Filial ustunida faqat qo'lda tashlanganlar.
     if (branchColumns && branchMode) {
       const brs = branchColumns.map<ViewCol>((b) => ({
         key: branchColKey(b.branchId), title: b.name, sub: null, color: b.color, icon: "building", defaultStage: "OFFER", groupId: null, customId: null, branch: b,
       }));
-      const noBranch: ViewCol = {
-        key: NO_BRANCH_COL,
-        title: tr(locale, { uz: "Filial tanlanmagan", ru: "Филиал не выбран", en: "No branch", de: "Keine Filiale" }),
-        sub: tr(locale, { uz: "Taklif", ru: "Предложение", en: "Offer", de: "Angebot" }),
-        color: "#8b5cf6", icon: "filecheck", defaultStage: "OFFER", groupId: null, customId: null,
-      };
-      return [std("new"), std("work"), ...(branchMode === "head" ? [std("test")] : []), ...brs, noBranch, ...custom, std("won"), ...groups, std("lost")];
+      return [std("new"), std("work"), ...(branchMode === "head" ? [std("test"), std("offer")] : []), ...brs, ...custom, std("won"), ...groups, std("lost")];
     }
     return [std("new"), std("work"), std("test"), std("offer"), ...custom, std("won"), ...groups, std("lost")];
   }, [groupColumns, customColumns, branchColumns, branchMode, locale]);
@@ -155,7 +149,6 @@ export default function LeadsKanban({
     >
       {cols.map((col) => {
         const items = byCol[col.key] ?? [];
-        if (col.key === NO_BRANCH_COL && items.length === 0) return null; // zaxira ustun — bo'sh bo'lsa chiqmaydi
         const isOver = overCol === col.key;
         const differentCol = draggingCol !== null && draggingCol !== col.key;
         const limit = limits[col.key] ?? PAGE;

@@ -11,7 +11,7 @@ import { writeAudit } from "@/lib/audit";
 import { ROLES, LEAD_STAGES, isSalesRole } from "@/lib/constants";
 import { parseUzPhone } from "@/lib/phone";
 import { getSetting, setSetting } from "@/lib/settings";
-import { GROUP_COL_COLORS, GROUP_COL_ICONS, type CustomColumn, type GroupColumn } from "./_lib/leadColumns";
+import { GROUP_COL_COLORS, GROUP_COL_ICONS, branchColKey, type CustomColumn, type GroupColumn } from "./_lib/leadColumns";
 
 const schema = z.object({
   fullName: z.string().min(2),
@@ -787,7 +787,8 @@ export async function dropLeadToBranch(leadId: string, branchId: string): Promis
     data: {
       branchId: branch.id,
       ...(early ? { stage: "OFFER" } : {}),
-      kanbanColumnId: null,
+      // Filial ustuni belgisi — faqat shu belgi bo'lgan lid filial ustunida ko'rinadi
+      kanbanColumnId: branchColKey(branch.id),
       activities: { create: { authorId: s.userId, type: early ? "stage_change" : "note", result: `Filialga yo'naltirildi: ${branch.name}${early ? " (Taklif)" : ""}` } },
     },
   });

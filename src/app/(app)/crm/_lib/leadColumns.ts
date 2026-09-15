@@ -136,36 +136,34 @@ export function customIdOfCol(key: string): string {
 const EMPTY = new Set<string>();
 
 /* ─── Filial ustunlari (ROP kanbani) ─────────────────────────────────
-   ROP uchun "Daraja testi" va "Taklif" o'rniga FILIALLAR ustun bo'lib turadi
-   (Qibray, Oybek ...). Ishlovdan keyingi bosqichdagi (TEST/OFFER/AWAITING)
-   lid o'z filialining ustunida ko'rinadi; ustunga tashlansa shu filialga
-   yo'naltiriladi. Ustun tepasida filial administratori kiritgan bo'sh
-   xona/vaqtlar turadi.                                                    */
+   Filiallar ustun bo'lib turadi (Qibray, Oybek ...). Filial ustunida FAQAT
+   ROP/admin qo'li bilan shu ustunga tashlagan lidlar ko'rinadi — belgi
+   Lead.kanbanColumnId = "br:<filialId>" (bosqichdan mustaqil; boshqa ustunga
+   ko'chirilsa tozalanadi). Qolgan lidlar o'z bosqichi ustunida. Ustun tepasida
+   filial administratori kiritgan bo'sh xona/vaqtlar turadi.                */
 
 export interface BranchSlotView { id: string; branchId: string; room: string; days: string; startTime: string; endTime: string; note: string | null }
 export interface BranchColumn { branchId: string; name: string; color: string; slots: BranchSlotView[] }
 
 export const BRANCH_COL_PREFIX = "br:";
-/** Filiali tanlanmagan, lekin taklif bosqichidagi lidlar uchun zaxira ustun */
-export const NO_BRANCH_COL = "nobranch";
 export const branchColKey = (branchId: string) => BRANCH_COL_PREFIX + branchId;
 export const isBranchCol = (key: string) => key.startsWith(BRANCH_COL_PREFIX);
 export const branchIdOfCol = (key: string) => key.slice(BRANCH_COL_PREFIX.length);
 
 /**
  * Filial rejimi (kim ko'rayotganiga qarab):
- *   "sales" — ROP va filial administratori: "Daraja testi" ham, "Taklif" ham yo'q;
- *             testdan kelgan (TEST) lidlar "Yangi"da turadi — ular hali ishlanmagan;
- *             filial ustunida faqat ROP o'zi yo'naltirgan (OFFER/AWAITING) lidlar.
- *   "head"  — direktor / o'rinbosar: hamma ustunlar — "Daraja testi" qoladi, faqat
- *             "Taklif" o'rnida filial ustunlari.
+ *   "sales" — ROP va filial administratori: "Daraja testi" va "Taklif" ustunlari yo'q —
+ *             o'sha bosqichdagi (filialga tashlanmagan) lidlar "Yangi"da turadi;
+ *             filial ustunida faqat qo'lda tashlanganlar.
+ *   "head"  — direktor / o'rinbosar: HAMMA ustunlar — Yangi, Ishda, Daraja testi,
+ *             Taklif, filiallar, Qabul qilindi, Yo'qotilgan.
  */
 export type BranchMode = "sales" | "head";
 export interface BranchModeCfg { ids: Set<string>; mode: BranchMode }
 
-/** Rejimda filial ustunlari o'rnini olgan standart ustunlar (filtr chiplarida yashiriladi) */
+/** Rejimda ko'rsatilmaydigan standart ustunlar (filtr chiplarida ham yashiriladi) */
 export function branchReplaces(mode: BranchMode): Set<string> {
-  return mode === "sales" ? new Set(["test", "offer"]) : new Set(["offer"]);
+  return mode === "sales" ? new Set(["test", "offer"]) : new Set();
 }
 
 /**
@@ -181,15 +179,15 @@ export function columnOfLead(
   custom: Set<string> = EMPTY,
   branch: BranchModeCfg | null = null,
 ): string {
+  // Qo'lda filial ustuniga tashlangan — belgi "br:<id>" (filial rejimi bo'lsa va filial hali bor)
+  if (branch && lead.kanbanColumnId && isBranchCol(lead.kanbanColumnId) && branch.ids.has(branchIdOfCol(lead.kanbanColumnId))) {
+    return lead.kanbanColumnId;
+  }
   if (lead.kanbanColumnId && custom.has(lead.kanbanColumnId)) return customColKey(lead.kanbanColumnId);
   const base = columnOf(lead.stage);
   if (base === "won" && lead.groupId && pinned.has(lead.groupId)) return groupColKey(lead.groupId);
-  if (branch) {
-    // Sotuv rejimida testdan kelgan lid hali ishlanmagan — "Yangi"da
-    if (base === "test") return branch.mode === "sales" ? "new" : "test";
-    // Taklif — ROP yo'naltirgan filial ustunida
-    if (base === "offer") return lead.branchId && branch.ids.has(lead.branchId) ? branchColKey(lead.branchId) : NO_BRANCH_COL;
-  }
+  // Sotuv rejimida test/taklif ustunlari yo'q — o'sha bosqichdagilar "Yangi"da (hali ishlanmagan)
+  if (branch && branch.mode === "sales" && (base === "test" || base === "offer")) return "new";
   return base;
 }
 

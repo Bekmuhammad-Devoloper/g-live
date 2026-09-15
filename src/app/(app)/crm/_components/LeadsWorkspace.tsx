@@ -250,7 +250,7 @@ export default function LeadsWorkspace({ locale, initialLeads, managers, sources
       const branchId = branchIdOfCol(colKey);
       const bname = branchColumns?.find((b) => b.branchId === branchId)?.name ?? "";
       setLeads((prev) => prev.map((l) => (l.id === leadId
-        ? { ...l, branchId, branchName: bname, kanbanColumnId: null, stage: ["NEW", "IN_PROGRESS", "CONTACTED", "TEST"].includes(l.stage) ? "OFFER" : l.stage }
+        ? { ...l, branchId, branchName: bname, kanbanColumnId: colKey, stage: ["NEW", "IN_PROGRESS", "CONTACTED", "TEST"].includes(l.stage) ? "OFFER" : l.stage }
         : l))); // optimistik
       startRefresh(async () => {
         const r = await dropLeadToBranch(leadId, branchId);
