@@ -65,11 +65,17 @@ export default async function CrmPage() {
       : Promise.resolve([]),
   ]);
 
+  // Sig'im kartada yozilmagan bo'lsa (eski yozuvlar) — Xonalar bo'limidagi xona sig'imi (nom bo'yicha)
+  const roomCaps = branchRows.length
+    ? await prisma.room.findMany({ where: { isActive: true, branchId: { in: branchRows.map((b) => b.id) }, capacity: { gt: 0 } }, select: { branchId: true, name: true, capacity: true } })
+    : [];
+  const capOf = (branchId: string, room: string) => roomCaps.find((r) => r.branchId === branchId && r.name.trim().toLowerCase() === room.trim().toLowerCase())?.capacity ?? null;
+
   const branchColumns: BranchColumn[] = branchRows.map((b, i) => ({
     branchId: b.id,
     name: b.name,
     color: GROUP_COL_COLORS[(i + 1) % GROUP_COL_COLORS.length],
-    slots: b.slots,
+    slots: b.slots.map((sl) => ({ ...sl, capacity: sl.capacity ?? capOf(b.id, sl.room) })),
   }));
 
   const vleads: VLead[] = leads.map((l) => ({

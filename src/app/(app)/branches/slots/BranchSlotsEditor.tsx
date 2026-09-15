@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState, useTransition } from "react";
+import { Fragment, useEffect, useState, useTransition } from "react";
 import { cn } from "@/lib/cn";
 import { tr } from "@/lib/tr";
 import type { Locale } from "@/lib/constants";
@@ -100,8 +100,8 @@ export default function BranchSlotsEditor({ branchId, initial, canEdit, locale, 
             const full = !!sl.capacity && count >= sl.capacity;
             const opened = openSlot === sl.id;
             return (
+            <Fragment key={sl.id}>
             <li
-              key={sl.id}
               // Drop-zona: lid shu xonaga tashlanadi (to'lgan bo'lsa — yo'q)
               onDragOver={onDropLead ? (e) => { e.preventDefault(); e.dataTransfer.dropEffect = full ? "none" : "move"; if (overSlot !== sl.id) setOverSlot(sl.id); } : undefined}
               onDragLeave={onDropLead ? () => setOverSlot((c) => (c === sl.id ? null : c)) : undefined}
@@ -154,7 +154,6 @@ export default function BranchSlotsEditor({ branchId, initial, canEdit, locale, 
                       {opened ? L("Yopish", "Свернуть", "Collapse", "Zuklappen") : L(`${count} ta lidni ko'rish`, `Показать ${count} лидов`, `Show ${count} leads`, `${count} Leads anzeigen`)}
                     </div>
                   )}
-                  {opened && <div onClick={(e) => e.stopPropagation()}>{slotContent?.(sl.id)}</div>}
                   {onDropLead && overSlot === sl.id && (
                     <div className={cn("mt-2 rounded-lg border border-dashed py-1.5 text-center text-[11px] font-semibold", full ? "border-rose-400 bg-rose-50/80 text-rose-700 dark:bg-rose-500/10 dark:text-rose-300" : "border-emerald-400 bg-emerald-50/80 text-emerald-700 dark:bg-emerald-500/10 dark:text-emerald-300")}>
                       {full ? L("Xona to'lgan — joy yo'q", "Аудитория заполнена", "Room is full", "Raum ist voll") : L("Shu xonaga qo'yish", "Поместить в эту аудиторию", "Place in this room", "In diesen Raum legen")}
@@ -168,6 +167,13 @@ export default function BranchSlotsEditor({ branchId, initial, canEdit, locale, 
                 )}
               </div>
             </li>
+            {/* Ochilgan xonaning lidlari — karta ostida, oddiy lid kartalari ko'rinishida */}
+            {opened && slotContent && (
+              <li className="relative ml-3 border-l-2 border-dashed border-emerald-300 pl-3 dark:border-emerald-500/40">
+                {slotContent(sl.id)}
+              </li>
+            )}
+            </Fragment>
             );
           })}
         </ul>

@@ -6,7 +6,7 @@ import { cn } from "@/lib/cn";
 import { tr } from "@/lib/tr";
 import type { Locale } from "@/lib/constants";
 import { Icon } from "../../_components/Icon";
-import { COLUMNS, ONLINE_COL, columnOfLead, customColKey, groupColKey, branchColKey, slotDropKey, initials, type BranchColumn, type BranchMode, type BranchModeCfg, type CustomColumn, type GroupColumn, type VLead } from "../_lib/leadColumns";
+import { COLUMNS, ONLINE_COL, columnOfLead, customColKey, groupColKey, branchColKey, slotDropKey, type BranchColumn, type BranchMode, type BranchModeCfg, type CustomColumn, type GroupColumn, type VLead } from "../_lib/leadColumns";
 import LeadCard from "./LeadCard";
 import BranchSlotsEditor from "../../branches/slots/BranchSlotsEditor";
 
@@ -260,12 +260,13 @@ export default function LeadsKanban({
                   slotContent={(slotId) => {
                     const inSlot = items.filter((l) => l.branchSlotId === slotId);
                     if (inSlot.length === 0) return null;
+                    // Oddiy lid kartalari — ustundagilar bilan bir xil o'lcham va ko'rinish
                     return (
-                      <ul className="mt-2 space-y-1.5">
+                      <div className="space-y-3">
                         {inSlot.map((l) => (
-                          <LeadMini key={l.id} lead={l} onOpen={onOpen} onOpenFull={onOpenFull} onDragStart={onDragStart} onDragEnd={onDragEnd} />
+                          <LeadCard key={l.id} lead={l} locale={locale} selected={selected.has(l.id)} onOpen={onOpen} onOpenFull={onOpenFull} onDragStart={onDragStart} onDragEnd={onDragEnd} onDelete={onDelete} />
                         ))}
-                      </ul>
+                      </div>
                     );
                   }}
                   onDropLead={(slotId, leadId) => {
@@ -451,33 +452,6 @@ function MoreButton({ rest, locale, onClick }: { rest: number; locale: Locale; o
       {tr(locale, { uz: `Yana ${n} ta ko'rsatish`, ru: `Показать ещё ${n}`, en: `Show ${n} more`, de: `${n} weitere anzeigen` })}
       <span className="text-slate-400">({rest})</span>
     </button>
-  );
-}
-
-/** Xona kartasi ichidagi ixcham lid qatori — sudrash va ochish ishlaydi */
-function LeadMini({ lead, onOpen, onOpenFull, onDragStart, onDragEnd }: {
-  lead: VLead;
-  onOpen: (id: string, e: React.MouseEvent) => void;
-  onOpenFull: (id: string) => void;
-  onDragStart: (id: string, e: React.DragEvent) => void;
-  onDragEnd: () => void;
-}) {
-  return (
-    <li
-      draggable
-      onDragStart={(e) => { e.stopPropagation(); onDragStart(lead.id, e); }}
-      onDragEnd={onDragEnd}
-      onClick={(e) => { e.stopPropagation(); onOpen(lead.id, e); }}
-      onDoubleClick={(e) => { e.stopPropagation(); onOpenFull(lead.id); }}
-      className="flex cursor-pointer items-center gap-2 rounded-lg border border-emerald-200/70 bg-white px-2 py-1.5 transition hover:border-emerald-400 hover:shadow-sm dark:border-white/10 dark:bg-white/[0.04]"
-    >
-      <span className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-emerald-500/15 text-[10px] font-bold text-emerald-700 dark:text-emerald-300">{initials(lead.fullName)}</span>
-      <span className="min-w-0 flex-1">
-        <span className="block truncate text-[12px] font-semibold text-slate-800 dark:text-slate-100">{lead.fullName}</span>
-        <span className="block truncate text-[10.5px] text-slate-400">{lead.phone}{lead.level ? ` · ${lead.level}` : ""}</span>
-      </span>
-      {lead.studyFormat === "ONLINE" && <span className="shrink-0 rounded bg-sky-50 px-1 py-0.5 text-[9px] font-semibold text-sky-600 dark:bg-sky-500/10 dark:text-sky-300">online</span>}
-    </li>
   );
 }
 
