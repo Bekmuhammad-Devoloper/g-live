@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import { prisma } from "@/lib/db";
 import { getLevelCodes } from "@/lib/studyLevels";
+import { branchHasImage } from "@/lib/branchImage";
 import ApplyForm from "./ApplyForm";
 import ApplyShell from "./ApplyShell";
 import { parseQuestions } from "../../(app)/links/questions";
@@ -112,7 +113,8 @@ export default async function ApplyPage({ params, searchParams }: {
                   questions={parseQuestions(v!.questions)}
                   levels={levelCodes}
                   // Rasm data URL'ni HTML'ga qo'ymaymiz — /api/branches/[id]/image orqali
-                  branches={branches.map((b) => ({ id: b.id, name: b.name, address: b.address, image: b.imageUrl ? `/api/branches/${b.id}/image` : null }))}
+                  // (yuklangan rasm yoki public/branches/<nom>.jpg tayyor fayl)
+                  branches={branches.map((b) => ({ id: b.id, name: b.name, address: b.address, image: branchHasImage(b) ? `/api/branches/${b.id}/image` : null }))}
                 />
               </>
             )}
