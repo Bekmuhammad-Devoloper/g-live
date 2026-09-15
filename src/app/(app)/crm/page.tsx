@@ -44,7 +44,7 @@ export default async function CrmPage() {
       select: {
         id: true, fullName: true, phone: true, email: true, telegram: true, studyFormat: true, source: true, stage: true,
         interestCourse: true, age: true, level: true, budget: true, note: true,
-        managerId: true, studentId: true, groupId: true, enrollEditCount: true, kanbanColumnId: true, createdAt: true, branchId: true,
+        managerId: true, studentId: true, groupId: true, enrollEditCount: true, kanbanColumnId: true, createdAt: true, branchId: true, branchSlotId: true,
         manager: { select: { fullName: true } },
         branch: { select: { name: true } },
         group: { select: { name: true } },
@@ -91,6 +91,7 @@ export default async function CrmPage() {
     studentId: l.studentId,
     branchId: l.branchId,
     branchName: l.branch?.name ?? null,
+    branchSlotId: l.branchSlotId,
     groupId: l.groupId,
     groupName: l.group?.name ?? null,
     enrollEditCount: l.enrollEditCount,

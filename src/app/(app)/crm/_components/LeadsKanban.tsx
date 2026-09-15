@@ -6,7 +6,7 @@ import { cn } from "@/lib/cn";
 import { tr } from "@/lib/tr";
 import type { Locale } from "@/lib/constants";
 import { Icon } from "../../_components/Icon";
-import { COLUMNS, ONLINE_COL, columnOfLead, customColKey, groupColKey, branchColKey, type BranchColumn, type BranchMode, type BranchModeCfg, type CustomColumn, type GroupColumn, type VLead } from "../_lib/leadColumns";
+import { COLUMNS, ONLINE_COL, columnOfLead, customColKey, groupColKey, branchColKey, slotDropKey, initials, type BranchColumn, type BranchMode, type BranchModeCfg, type CustomColumn, type GroupColumn, type VLead } from "../_lib/leadColumns";
 import LeadCard from "./LeadCard";
 import BranchSlotsEditor from "../../branches/slots/BranchSlotsEditor";
 
@@ -238,7 +238,8 @@ export default function LeadsKanban({
             {/* Gradient chiziq */}
             <div className="mx-1 mb-3 mt-2 h-1 rounded-full" style={{ background: `linear-gradient(90deg, ${col.color}, ${col.color}22)` }} />
 
-            {/* Filial ustuni: bo'sh xona / vaqtlar — administrator kiritgan, har biri alohida karta (guruh kartalari kabi) */}
+            {/* Filial ustuni: bo'sh xona / vaqtlar — administrator kiritgan, har biri alohida karta.
+                Lid xona kartasiga tashlanadi va uning ichida ko'rinadi; xonasiz lidlar pastda. */}
             {col.branch && (
               <div className="mb-3 space-y-3">
                 <SectionLabel
@@ -247,9 +248,34 @@ export default function LeadsKanban({
                   text={tr(locale, { uz: "Bo'sh xona / vaqt", ru: "Свободные аудитории / время", en: "Free rooms / time", de: "Freie Räume / Zeit" })}
                   count={col.branch.slots.length}
                 />
-                <BranchSlotsEditor branchId={col.branch.branchId} initial={col.branch.slots} canEdit={slotsEditable === "all" || slotsEditable === col.branch.branchId} locale={locale} compact cards color={col.color} />
-                {items.length > 0 && (
-                  <SectionLabel icon="user" color={col.color} text={tr(locale, { uz: "Lidlar", ru: "Лиды", en: "Leads", de: "Leads" })} count={items.length} />
+                <BranchSlotsEditor
+                  branchId={col.branch.branchId}
+                  initial={col.branch.slots}
+                  canEdit={slotsEditable === "all" || slotsEditable === col.branch.branchId}
+                  locale={locale}
+                  compact
+                  cards
+                  color={col.color}
+                  slotCount={(slotId) => items.filter((l) => l.branchSlotId === slotId).length}
+                  slotContent={(slotId) => {
+                    const inSlot = items.filter((l) => l.branchSlotId === slotId);
+                    if (inSlot.length === 0) return null;
+                    return (
+                      <ul className="mt-2 space-y-1.5">
+                        {inSlot.map((l) => (
+                          <LeadMini key={l.id} lead={l} onOpen={onOpen} onOpenFull={onOpenFull} onDragStart={onDragStart} onDragEnd={onDragEnd} />
+                        ))}
+                      </ul>
+                    );
+                  }}
+                  onDropLead={(slotId, leadId) => {
+                    const lead = leads.find((l) => l.id === leadId);
+                    if (lead && lead.branchSlotId !== slotId) onDropToColumn(slotDropKey(col.branch!.branchId, slotId), leadId);
+                    setDragId(null); setOverCol(null);
+                  }}
+                />
+                {items.some((l) => !l.branchSlotId) && (
+                  <SectionLabel icon="user" color={col.color} text={tr(locale, { uz: "Xonasiz lidlar", ru: "Лиды без аудитории", en: "Leads without a room", de: "Leads ohne Raum" })} count={items.filter((l) => !l.branchSlotId).length} />
                 )}
               </div>
             )}
@@ -273,6 +299,11 @@ export default function LeadsKanban({
                   onDragEnd={onDragEnd}
                   onDelete={onDelete}
                 />
+              ) : col.branch && col.branch.slots.length > 0 && !items.some((l) => !l.branchSlotId) ? (
+                // Xonalar bor, xonasiz lid yo'q — ustunning o'ziga tashlash uchun kichik zona
+                <div className="rounded-xl border border-dashed border-slate-200 py-4 text-center text-[11px] text-slate-400 dark:border-white/[0.08]">
+                  {tr(locale, { uz: "Xonasiz — shu yerga tashlang", ru: "Без аудитории — перетащите сюда", en: "No room — drop here", de: "Ohne Raum — hier ablegen" })}
+                </div>
               ) : items.length === 0 ? (
                 <div className="rounded-xl border border-dashed border-slate-200 py-8 text-center dark:border-white/[0.08]">
                   <div className="text-2xl opacity-30">{col.groupId ? "🎯" : col.branch ? "🏫" : col.customId ? "🗂️" : "📭"}</div>
@@ -290,7 +321,7 @@ export default function LeadsKanban({
                 </div>
               ) : (
                 <>
-                  {items.slice(0, limit).map((lead) => (
+                  {(col.branch ? items.filter((l) => !l.branchSlotId) : items).slice(0, limit).map((lead) => (
                     <LeadCard
                       key={lead.id}
                       lead={lead}
@@ -420,6 +451,33 @@ function MoreButton({ rest, locale, onClick }: { rest: number; locale: Locale; o
       {tr(locale, { uz: `Yana ${n} ta ko'rsatish`, ru: `Показать ещё ${n}`, en: `Show ${n} more`, de: `${n} weitere anzeigen` })}
       <span className="text-slate-400">({rest})</span>
     </button>
+  );
+}
+
+/** Xona kartasi ichidagi ixcham lid qatori — sudrash va ochish ishlaydi */
+function LeadMini({ lead, onOpen, onOpenFull, onDragStart, onDragEnd }: {
+  lead: VLead;
+  onOpen: (id: string, e: React.MouseEvent) => void;
+  onOpenFull: (id: string) => void;
+  onDragStart: (id: string, e: React.DragEvent) => void;
+  onDragEnd: () => void;
+}) {
+  return (
+    <li
+      draggable
+      onDragStart={(e) => { e.stopPropagation(); onDragStart(lead.id, e); }}
+      onDragEnd={onDragEnd}
+      onClick={(e) => { e.stopPropagation(); onOpen(lead.id, e); }}
+      onDoubleClick={(e) => { e.stopPropagation(); onOpenFull(lead.id); }}
+      className="flex cursor-pointer items-center gap-2 rounded-lg border border-emerald-200/70 bg-white px-2 py-1.5 transition hover:border-emerald-400 hover:shadow-sm dark:border-white/10 dark:bg-white/[0.04]"
+    >
+      <span className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-emerald-500/15 text-[10px] font-bold text-emerald-700 dark:text-emerald-300">{initials(lead.fullName)}</span>
+      <span className="min-w-0 flex-1">
+        <span className="block truncate text-[12px] font-semibold text-slate-800 dark:text-slate-100">{lead.fullName}</span>
+        <span className="block truncate text-[10.5px] text-slate-400">{lead.phone}{lead.level ? ` · ${lead.level}` : ""}</span>
+      </span>
+      {lead.studyFormat === "ONLINE" && <span className="shrink-0 rounded bg-sky-50 px-1 py-0.5 text-[9px] font-semibold text-sky-600 dark:bg-sky-500/10 dark:text-sky-300">online</span>}
+    </li>
   );
 }
 

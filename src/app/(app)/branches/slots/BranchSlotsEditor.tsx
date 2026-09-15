@@ -22,7 +22,7 @@ const DAYS: { key: string; label: { uz: string; ru: string; en: string; de: stri
   { key: "Yak", label: { uz: "Yak", ru: "Вс", en: "Su", de: "So" } },
 ];
 
-export default function BranchSlotsEditor({ branchId, initial, canEdit, locale, compact = false, cards = false, color = "#10b981", onChanged }: {
+export default function BranchSlotsEditor({ branchId, initial, canEdit, locale, compact = false, cards = false, color = "#10b981", onChanged, slotContent, slotCount, onDropLead }: {
   branchId: string;
   initial: VSlot[];
   canEdit: boolean;
@@ -34,6 +34,12 @@ export default function BranchSlotsEditor({ branchId, initial, canEdit, locale, 
   /** Karta belgisi rangi (ustun rangi) */
   color?: string;
   onChanged?: (slots: VSlot[]) => void;
+  /** Karta ichida ko'rsatiladigan mazmun (masalan shu xonaga tashlangan lidlar) */
+  slotContent?: (slotId: string) => React.ReactNode;
+  /** Kartadagi lidlar soni (belgida) */
+  slotCount?: (slotId: string) => number;
+  /** Karta drop-zona: lid tashlanganda (leadId dataTransfer'dan) */
+  onDropLead?: (slotId: string, leadId: string) => void;
 }) {
   const [slots, setSlots] = useState<VSlot[]>(initial);
   const [adding, setAdding] = useState(false);
@@ -44,6 +50,7 @@ export default function BranchSlotsEditor({ branchId, initial, canEdit, locale, 
   const [end, setEnd] = useState("19:30");
   const [note, setNote] = useState("");
   const [err, setErr] = useState<string | null>(null);
+  const [overSlot, setOverSlot] = useState<string | null>(null); // sudralayotgan lid ustida turgan karta
   const [pending, run] = useTransition();
   const L = (uz: string, ru: string, en: string, de: string) => tr(locale, { uz, ru, en, de });
 
@@ -89,7 +96,14 @@ export default function BranchSlotsEditor({ branchId, initial, canEdit, locale, 
           {slots.map((sl) => (
             <li
               key={sl.id}
-              className="group relative overflow-hidden rounded-xl border border-emerald-200/80 bg-gradient-to-br from-emerald-50 via-white to-white p-3 shadow-[0_6px_18px_-12px_rgba(16,185,129,0.6)] dark:border-emerald-500/25 dark:from-emerald-500/10 dark:via-[#15243d] dark:to-[#15243d]"
+              // Drop-zona: lid shu xonaga tashlanadi
+              onDragOver={onDropLead ? (e) => { e.preventDefault(); e.dataTransfer.dropEffect = "move"; if (overSlot !== sl.id) setOverSlot(sl.id); } : undefined}
+              onDragLeave={onDropLead ? () => setOverSlot((c) => (c === sl.id ? null : c)) : undefined}
+              onDrop={onDropLead ? (e) => { e.preventDefault(); e.stopPropagation(); const id = e.dataTransfer.getData("text/plain"); setOverSlot(null); if (id) onDropLead(sl.id, id); } : undefined}
+              className={cn(
+                "group relative overflow-hidden rounded-xl border bg-gradient-to-br from-emerald-50 via-white to-white p-3 shadow-[0_6px_18px_-12px_rgba(16,185,129,0.6)] transition dark:from-emerald-500/10 dark:via-[#15243d] dark:to-[#15243d]",
+                overSlot === sl.id ? "border-emerald-500 ring-2 ring-emerald-400/60 scale-[1.01]" : "border-emerald-200/80 dark:border-emerald-500/25",
+              )}
             >
               {/* chap yashil chiziq */}
               <span className="absolute inset-y-0 left-0 w-1 bg-gradient-to-b from-emerald-400 to-emerald-600" />
@@ -100,9 +114,15 @@ export default function BranchSlotsEditor({ branchId, initial, canEdit, locale, 
                 <div className="min-w-0 flex-1">
                   <div className="flex items-center gap-2">
                     <span className="truncate text-[15px] font-bold text-slate-800 dark:text-slate-100">{sl.room}</span>
-                    <span className="ml-auto inline-flex shrink-0 items-center gap-1 rounded-full bg-emerald-500/15 px-2 py-0.5 text-[10px] font-bold uppercase tracking-wide text-emerald-700 dark:text-emerald-300">
-                      <span className="h-1.5 w-1.5 animate-pulse rounded-full bg-emerald-500" /> {L("Bo'sh", "Свободно", "Free", "Frei")}
-                    </span>
+                    {(slotCount?.(sl.id) ?? 0) > 0 ? (
+                      <span className="ml-auto inline-flex shrink-0 items-center gap-1 rounded-full bg-emerald-600 px-2 py-0.5 text-[10px] font-bold text-white">
+                        <Icon name="user" className="h-3 w-3" /> {slotCount!(sl.id)}
+                      </span>
+                    ) : (
+                      <span className="ml-auto inline-flex shrink-0 items-center gap-1 rounded-full bg-emerald-500/15 px-2 py-0.5 text-[10px] font-bold uppercase tracking-wide text-emerald-700 dark:text-emerald-300">
+                        <span className="h-1.5 w-1.5 animate-pulse rounded-full bg-emerald-500" /> {L("Bo'sh", "Свободно", "Free", "Frei")}
+                      </span>
+                    )}
                   </div>
                   <div className="mt-1.5 space-y-1 text-[12px] text-slate-600 dark:text-slate-300">
                     <div className="flex items-center gap-1.5"><Icon name="calendar" className="h-3.5 w-3.5 shrink-0 text-emerald-600" /> <span className="truncate">{sl.days}</span></div>
@@ -111,6 +131,13 @@ export default function BranchSlotsEditor({ branchId, initial, canEdit, locale, 
                   {sl.note && (
                     <div className="mt-2 inline-flex items-center gap-1 rounded-md bg-amber-100 px-2 py-0.5 text-[11px] font-semibold text-amber-800 dark:bg-amber-500/15 dark:text-amber-300">
                       <Icon name="graduation" className="h-3.5 w-3.5" /> {sl.note}
+                    </div>
+                  )}
+                  {/* Shu xonaga tashlangan lidlar */}
+                  {slotContent?.(sl.id)}
+                  {onDropLead && overSlot === sl.id && (
+                    <div className="mt-2 rounded-lg border border-dashed border-emerald-400 bg-emerald-50/80 py-1.5 text-center text-[11px] font-semibold text-emerald-700 dark:bg-emerald-500/10 dark:text-emerald-300">
+                      {L("Shu xonaga qo'yish", "Поместить в эту аудиторию", "Place in this room", "In diesen Raum legen")}
                     </div>
                   )}
                 </div>

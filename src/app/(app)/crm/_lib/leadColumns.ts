@@ -23,6 +23,8 @@ export interface VLead {
   /** Filial (ROP kanbanida filial ustuni shu bo'yicha) */
   branchId: string | null;
   branchName: string | null;
+  /** Filial ustunidagi bo'sh xona/vaqt kartasi — lid shu xonaga tashlangan */
+  branchSlotId: string | null;
   /** Yo'naltirilgan guruh (WON uchun majburiy) */
   groupId: string | null;
   groupName: string | null;
@@ -148,7 +150,12 @@ export interface BranchColumn { branchId: string; name: string; color: string; s
 export const BRANCH_COL_PREFIX = "br:";
 export const branchColKey = (branchId: string) => BRANCH_COL_PREFIX + branchId;
 export const isBranchCol = (key: string) => key.startsWith(BRANCH_COL_PREFIX);
-export const branchIdOfCol = (key: string) => key.slice(BRANCH_COL_PREFIX.length);
+/** "br:<filial>" yoki "br:<filial>:<xona>" → filial id */
+export const branchIdOfCol = (key: string) => key.slice(BRANCH_COL_PREFIX.length).split(":")[0];
+/** "br:<filial>:<xona>" → xona (slot) id; ustunning o'ziga tashlansa null */
+export const slotIdOfCol = (key: string): string | null => key.slice(BRANCH_COL_PREFIX.length).split(":")[1] ?? null;
+/** Xona kartasiga tashlash uchun drop kaliti */
+export const slotDropKey = (branchId: string, slotId: string) => `${BRANCH_COL_PREFIX}${branchId}:${slotId}`;
 
 /**
  * Filial rejimi (kim ko'rayotganiga qarab):

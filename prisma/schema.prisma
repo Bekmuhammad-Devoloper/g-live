@@ -55,6 +55,8 @@ model BranchSlot {
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
+  leads Lead[]
+
   @@index([branchId])
 }
 
@@ -210,6 +212,10 @@ model Lead {
   // Bosqichga ta'sir qilmaydi — faqat qaysi ustunda ko'rinishini belgilaydi;
   // standart ustunga ko'chirilsa yoki guruhga yozilsa tozalanadi.
   kanbanColumnId String?
+  // Filial ustunidagi bo'sh xona/vaqt kartasi — lid shu xonaga tashlangan bo'lsa
+  // (ROP kanbani). Karta o'chirilsa null bo'ladi, lid filial ustunida qoladi.
+  branchSlotId String?
+  branchSlot   BranchSlot? @relation(fields: [branchSlotId], references: [id], onDelete: SetNull)
 
   activities LeadActivity[]
   calls      Call[]
