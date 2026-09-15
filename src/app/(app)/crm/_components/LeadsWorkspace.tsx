@@ -46,11 +46,13 @@ interface Props {
   branchColumns?: BranchColumn[] | null;
   /** "sales" (ROP/admin) yoki "head" (direktor) — leadColumns.ts */
   branchMode?: BranchMode | null;
+  /** "Onlayn" ustuni ko'rsatilsinmi (filial administratorida yo'q) */
+  showOnlineCol?: boolean;
   /** Bo'sh vaqtlarni tahrirlash: "all" — hamma filial, filial id — faqat o'sha, null — yo'q */
   slotsEditable?: "all" | string | null;
 }
 
-export default function LeadsWorkspace({ locale, initialLeads, managers, sources, analytics, canWrite, canDelete = false, canResetColumns = false, initialGroupColumns, initialCustomColumns, branchColumns = null, branchMode = null, slotsEditable = null }: Props) {
+export default function LeadsWorkspace({ locale, initialLeads, managers, sources, analytics, canWrite, canDelete = false, canResetColumns = false, initialGroupColumns, initialCustomColumns, branchColumns = null, branchMode = null, showOnlineCol = true, slotsEditable = null }: Props) {
   const router = useRouter();
   const pathname = usePathname();
   const params = useSearchParams();
@@ -99,8 +101,8 @@ export default function LeadsWorkspace({ locale, initialLeads, managers, sources
   const pinnedIds = useMemo(() => new Set(groupColumns.map((g) => g.groupId)), [groupColumns]);
   const customIds = useMemo(() => new Set(customColumns.map((c) => c.id)), [customColumns]);
   const branchCfg = useMemo<BranchModeCfg | null>(
-    () => (branchColumns && branchMode ? { ids: new Set(branchColumns.map((b) => b.branchId)), mode: branchMode } : null),
-    [branchColumns, branchMode],
+    () => (branchColumns && branchMode ? { ids: new Set(branchColumns.map((b) => b.branchId)), mode: branchMode, online: showOnlineCol } : null),
+    [branchColumns, branchMode, showOnlineCol],
   );
 
   // URL sync — `router.replace` har o'zgarishda (har bir terilgan harfda ham) serverga
@@ -483,6 +485,7 @@ export default function LeadsWorkspace({ locale, initialLeads, managers, sources
           onResetColumn={canResetColumns ? resetColumn : undefined}
           branchColumns={branchColumns}
           branchMode={branchMode}
+          showOnlineCol={showOnlineCol}
           slotsEditable={slotsEditable}
         />
       ) : (

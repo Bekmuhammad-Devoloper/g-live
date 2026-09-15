@@ -27,10 +27,17 @@ export default async function CrmPage() {
     : s.role === ROLES.DIRECTOR || s.role === ROLES.DEPUTY_DIRECTOR ? "head"
     : null;
   const allBranches = branchMode !== null && s.role !== ROLES.ADMIN;
+  // Filial administratori onlayn lidlarni ko'rmaydi (ular ROP'niki) — faqat o'z filialiga
+  // tashlangan ("br:<id>" belgili) onlayn lid ko'rinadi
+  const isAdmin = s.role === ROLES.ADMIN;
 
   const [leads, managers, groupColumns, customColumns, branchRows] = await Promise.all([
     prisma.lead.findMany({
-      where: allBranches ? {} : branchWhere(s), // faol filial lidlarigina (filialsiz eski yozuvlar ham)
+      where: allBranches
+        ? {}
+        : isAdmin
+          ? { AND: [branchWhere(s), { OR: [{ studyFormat: { not: "ONLINE" } }, { studyFormat: null }, { kanbanColumnId: { startsWith: "br:" } }] }] }
+          : branchWhere(s), // faol filial lidlarigina (filialsiz eski yozuvlar ham)
       orderBy: { createdAt: "desc" },
       // Faqat kerakli ustunlar — `include: { manager: true }` har lid uchun butun
       // User yozuvini (parol maydonlari bilan) tortib, 2000 lidda sahifani sekinlashtirardi
@@ -125,6 +132,7 @@ export default async function CrmPage() {
       initialCustomColumns={customColumns}
       branchColumns={branchMode ? branchColumns : null}
       branchMode={branchMode}
+      showOnlineCol={!isAdmin}
       // Bo'sh vaqtlarni kim tahrirlaydi: rahbariyat — hammasini, administrator — o'z filialini
       slotsEditable={[ROLES.DIRECTOR, ROLES.DEPUTY_DIRECTOR].includes(s.role as never) ? "all" : s.role === ROLES.ADMIN ? (s.branchId ?? null) : null}
     />

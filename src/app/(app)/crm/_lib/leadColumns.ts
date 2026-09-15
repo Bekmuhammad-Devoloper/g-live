@@ -159,7 +159,8 @@ export const branchIdOfCol = (key: string) => key.slice(BRANCH_COL_PREFIX.length
  *             Taklif, filiallar, Qabul qilindi, Yo'qotilgan.
  */
 export type BranchMode = "sales" | "head";
-export interface BranchModeCfg { ids: Set<string>; mode: BranchMode }
+/** `online: false` — "Onlayn" ustuni ko'rsatilmaydi (filial administratori — onlayn lidlar unga tegishli emas) */
+export interface BranchModeCfg { ids: Set<string>; mode: BranchMode; online: boolean }
 
 /** "Onlayn" ustuni — arizada onlayn tanlagan (studyFormat=ONLINE) yangi lidlar; filiallardan oldin turadi */
 export const ONLINE_COL = "online";
@@ -193,7 +194,7 @@ export function columnOfLead(
     // Sotuv rejimida test/taklif ustunlari yo'q — o'sha bosqichdagilar "Yangi" hisoblanadi
     const eff = branch.mode === "sales" && (base === "test" || base === "offer") ? "new" : base;
     // Onlayn tanlaganlar Yangiga emas — alohida "Onlayn" ustuniga
-    if (eff === "new" && lead.studyFormat === "ONLINE") return ONLINE_COL;
+    if (eff === "new" && lead.studyFormat === "ONLINE" && branch.online) return ONLINE_COL;
     return eff;
   }
   return base;

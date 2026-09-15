@@ -40,6 +40,8 @@ interface Props {
   branchColumns?: BranchColumn[] | null;
   /** "sales" — test/taklif o'rnida; "head" — faqat taklif o'rnida (leadColumns.ts) */
   branchMode?: BranchMode | null;
+  /** "Onlayn" ustuni (filial administratorida ko'rsatilmaydi) */
+  showOnlineCol?: boolean;
   /** Bo'sh vaqtlarni tahrirlash: "all" | filial id | null */
   slotsEditable?: "all" | string | null;
   /** Ustunni bo'shatish — ustundagi barcha lidlarni Yangiga qaytarish (huquqi bo'lsa) */
@@ -66,7 +68,7 @@ const PAGE = 40;
 
 export default function LeadsKanban({
   leads, totals, locale, selected, groupColumns, customColumns,
-  onOpen, onOpenFull, onDropToColumn, onAdd, onAddToGroup, onRemoveGroupCol, onAddToCustom, onRemoveCustomCol, onLevelTestQr, branchColumns = null, branchMode = null, slotsEditable = null, onResetColumn, onDelete,
+  onOpen, onOpenFull, onDropToColumn, onAdd, onAddToGroup, onRemoveGroupCol, onAddToCustom, onRemoveCustomCol, onLevelTestQr, branchColumns = null, branchMode = null, showOnlineCol = true, slotsEditable = null, onResetColumn, onDelete,
 }: Props) {
   const [dragId, setDragId] = useState<string | null>(null);
   const [overCol, setOverCol] = useState<string | null>(null);
@@ -77,8 +79,8 @@ export default function LeadsKanban({
   const pinnedIds = useMemo(() => new Set(groupColumns.map((g) => g.groupId)), [groupColumns]);
   const customIds = useMemo(() => new Set(customColumns.map((c) => c.id)), [customColumns]);
   const branchCfg = useMemo<BranchModeCfg | null>(
-    () => (branchColumns && branchMode ? { ids: new Set(branchColumns.map((b) => b.branchId)), mode: branchMode } : null),
-    [branchColumns, branchMode],
+    () => (branchColumns && branchMode ? { ids: new Set(branchColumns.map((b) => b.branchId)), mode: branchMode, online: showOnlineCol } : null),
+    [branchColumns, branchMode, showOnlineCol],
   );
 
   // Tartib: standart 4 ta → oddiy nomli ustunlar → "Qabul qilindi" → guruh ustunlari → "Yo'qotilgan"
@@ -120,10 +122,10 @@ export default function LeadsKanban({
         sub: tr(locale, { uz: "Onlayn o'qimoqchilar", ru: "Хотят учиться онлайн", en: "Want to study online", de: "Möchten online lernen" }),
         color: "#0ea5e9", icon: "video", defaultStage: "NEW", groupId: null, customId: null,
       };
-      return [std("new"), std("work"), online, ...(branchMode === "head" ? [std("test"), std("offer")] : []), ...brs, ...custom, std("won"), ...groups, std("lost")];
+      return [std("new"), std("work"), ...(showOnlineCol ? [online] : []), ...(branchMode === "head" ? [std("test"), std("offer")] : []), ...brs, ...custom, std("won"), ...groups, std("lost")];
     }
     return [std("new"), std("work"), std("test"), std("offer"), ...custom, std("won"), ...groups, std("lost")];
-  }, [groupColumns, customColumns, branchColumns, branchMode, locale]);
+  }, [groupColumns, customColumns, branchColumns, branchMode, showOnlineCol, locale]);
 
   const colOf = useCallback((l: VLead) => columnOfLead(l, pinnedIds, customIds, branchCfg), [pinnedIds, customIds, branchCfg]);
 
