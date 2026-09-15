@@ -243,7 +243,7 @@ export default function LeadsKanban({
               <div className="mb-3 space-y-3">
                 <SectionLabel
                   icon="clock"
-                  color={col.color}
+                  color="#10b981"
                   text={tr(locale, { uz: "Bo'sh xona / vaqt", ru: "Свободные аудитории / время", en: "Free rooms / time", de: "Freie Räume / Zeit" })}
                   count={col.branch.slots.length}
                 />

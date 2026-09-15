@@ -83,23 +83,43 @@ export default function BranchSlotsEditor({ branchId, initial, canEdit, locale, 
       )}
 
       {slots.length > 0 && cards && (
-        // Alohida kartalar — Kanbandagi guruh kartalari bilan bir xil ko'rinish
+        // Alohida kartalar — yashil ("bo'sh, ochiq") uslub, lid kartalaridan ajralib turadi;
+        // har qatorga o'z belgisi: xona, kunlar, vaqt, daraja
         <ul className="space-y-3">
           {slots.map((sl) => (
-            <li key={sl.id} className="flex items-center gap-3 rounded-xl border border-slate-200 bg-white p-3 dark:border-white/[0.07] dark:bg-[#15243d]">
-              <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg" style={{ color, background: `${color}1f` }}>
-                <Icon name="clock" className="h-4 w-4" />
-              </span>
-              <div className="min-w-0 flex-1">
-                <div className="truncate text-sm font-semibold text-slate-800 dark:text-slate-100">{sl.room}</div>
-                <div className="mt-0.5 text-[11px] text-slate-400">{sl.days} · <span className="tabular-nums">{sl.startTime}–{sl.endTime}</span></div>
-                {sl.note && <div className="mt-1 inline-block rounded px-1.5 py-0.5 text-[10px] font-semibold" style={{ color, background: `${color}14` }}>{sl.note}</div>}
+            <li
+              key={sl.id}
+              className="group relative overflow-hidden rounded-xl border border-emerald-200/80 bg-gradient-to-br from-emerald-50 via-white to-white p-3 shadow-[0_6px_18px_-12px_rgba(16,185,129,0.6)] dark:border-emerald-500/25 dark:from-emerald-500/10 dark:via-[#15243d] dark:to-[#15243d]"
+            >
+              {/* chap yashil chiziq */}
+              <span className="absolute inset-y-0 left-0 w-1 bg-gradient-to-b from-emerald-400 to-emerald-600" />
+              <div className="flex items-start gap-3 pl-1.5">
+                <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-emerald-500 text-white shadow-[0_6px_14px_-6px_rgba(16,185,129,0.8)]">
+                  <Icon name="building" className="h-5 w-5" strokeWidth={1.8} />
+                </span>
+                <div className="min-w-0 flex-1">
+                  <div className="flex items-center gap-2">
+                    <span className="truncate text-[15px] font-bold text-slate-800 dark:text-slate-100">{sl.room}</span>
+                    <span className="ml-auto inline-flex shrink-0 items-center gap-1 rounded-full bg-emerald-500/15 px-2 py-0.5 text-[10px] font-bold uppercase tracking-wide text-emerald-700 dark:text-emerald-300">
+                      <span className="h-1.5 w-1.5 animate-pulse rounded-full bg-emerald-500" /> {L("Bo'sh", "Свободно", "Free", "Frei")}
+                    </span>
+                  </div>
+                  <div className="mt-1.5 space-y-1 text-[12px] text-slate-600 dark:text-slate-300">
+                    <div className="flex items-center gap-1.5"><Icon name="calendar" className="h-3.5 w-3.5 shrink-0 text-emerald-600" /> <span className="truncate">{sl.days}</span></div>
+                    <div className="flex items-center gap-1.5"><Icon name="clock" className="h-3.5 w-3.5 shrink-0 text-emerald-600" /> <span className="tabular-nums font-semibold">{sl.startTime}–{sl.endTime}</span></div>
+                  </div>
+                  {sl.note && (
+                    <div className="mt-2 inline-flex items-center gap-1 rounded-md bg-amber-100 px-2 py-0.5 text-[11px] font-semibold text-amber-800 dark:bg-amber-500/15 dark:text-amber-300">
+                      <Icon name="graduation" className="h-3.5 w-3.5" /> {sl.note}
+                    </div>
+                  )}
+                </div>
+                {canEdit && (
+                  <button type="button" onClick={() => remove(sl.id)} disabled={pending} title={L("O'chirish", "Удалить", "Remove", "Entfernen")} className="shrink-0 rounded-md p-1 text-slate-300 opacity-70 transition hover:bg-rose-50 hover:text-rose-500 group-hover:opacity-100">
+                    <Icon name="close" className="h-3.5 w-3.5" />
+                  </button>
+                )}
               </div>
-              {canEdit && (
-                <button type="button" onClick={() => remove(sl.id)} disabled={pending} title={L("O'chirish", "Удалить", "Remove", "Entfernen")} className="shrink-0 text-slate-300 transition hover:text-rose-500">
-                  <Icon name="close" className="h-3.5 w-3.5" />
-                </button>
-              )}
             </li>
           ))}
         </ul>
