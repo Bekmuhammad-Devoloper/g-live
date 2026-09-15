@@ -6,8 +6,8 @@ import { cn } from "@/lib/cn";
 import { tr } from "@/lib/tr";
 import type { Locale } from "@/lib/constants";
 import { Icon } from "../../_components/Icon";
-import { COLUMNS, columnDef, columnOf, columnOfLead, customIdOfCol, groupIdOfCol, isCustomCol, isGroupCol, type CustomColumn, type GroupColumn, type VLead } from "../_lib/leadColumns";
-import { deleteTestLead, enrollLeadToGroup, moveLeadStage, moveLeadToColumn, removeKanbanColumn, unpinKanbanGroup } from "../actions";
+import { BRANCH_REPLACES, COLUMNS, branchIdOfCol, columnDef, columnOf, columnOfLead, customIdOfCol, groupIdOfCol, isBranchCol, isCustomCol, isGroupCol, type BranchColumn, type CustomColumn, type GroupColumn, type VLead } from "../_lib/leadColumns";
+import { deleteTestLead, dropLeadToBranch, enrollLeadToGroup, moveLeadStage, moveLeadToColumn, removeKanbanColumn, unpinKanbanGroup } from "../actions";
 import { type Analytics } from "./AnalyticsTiles";
 import FilterBar from "./FilterBar";
 import LeadsKanban from "./LeadsKanban";
@@ -40,9 +40,13 @@ interface Props {
   initialGroupColumns: GroupColumn[];
   /** Oddiy nomli ustunlar */
   initialCustomColumns: CustomColumn[];
+  /** ROP rejimi — "Daraja testi"/"Taklif" o'rniga filial ustunlari (null — odatdagi) */
+  branchColumns?: BranchColumn[] | null;
+  /** Filial ustunidagi bo'sh vaqtlarni tahrirlash (direktor/o'rinbosar) */
+  canEditSlots?: boolean;
 }
 
-export default function LeadsWorkspace({ locale, initialLeads, managers, sources, analytics, canWrite, canDelete = false, initialGroupColumns, initialCustomColumns }: Props) {
+export default function LeadsWorkspace({ locale, initialLeads, managers, sources, analytics, canWrite, canDelete = false, initialGroupColumns, initialCustomColumns, branchColumns = null, canEditSlots = false }: Props) {
   const router = useRouter();
   const pathname = usePathname();
   const params = useSearchParams();
@@ -90,6 +94,7 @@ export default function LeadsWorkspace({ locale, initialLeads, managers, sources
 
   const pinnedIds = useMemo(() => new Set(groupColumns.map((g) => g.groupId)), [groupColumns]);
   const customIds = useMemo(() => new Set(customColumns.map((c) => c.id)), [customColumns]);
+  const branchIds = useMemo(() => (branchColumns ? new Set(branchColumns.map((b) => b.branchId)) : null), [branchColumns]);
 
   // URL sync — `router.replace` har o'zgarishda (har bir terilgan harfda ham) serverga
   // borib sahifani qayta render qilardi: 2000 lid qayta yuklanib, butun Kanban qayta
@@ -146,11 +151,11 @@ export default function LeadsWorkspace({ locale, initialLeads, managers, sources
   const shownTotals = useMemo(() => {
     const c: Record<string, number> = {};
     for (const l of shown) {
-      const k = columnOfLead(l, pinnedIds, customIds);
+      const k = columnOfLead(l, pinnedIds, customIds, branchIds);
       c[k] = (c[k] ?? 0) + 1;
     }
     return c;
-  }, [shown, pinnedIds, customIds]);
+  }, [shown, pinnedIds, customIds, branchIds]);
 
   // Sana bir marta parse qilinadi — saralash har solishtirishda `new Date` qilmaydi
   const tsOf = useMemo(() => {
@@ -235,6 +240,21 @@ export default function LeadsWorkspace({ locale, initialLeads, managers, sources
       enrollToGroup(leadId, groupIdOfCol(colKey));
       return;
     }
+    // Filial ustuni (ROP) — lid shu filialga yo'naltiriladi; ishlov boshida bo'lsa "Taklif"ga o'tadi
+    if (isBranchCol(colKey)) {
+      const branchId = branchIdOfCol(colKey);
+      const bname = branchColumns?.find((b) => b.branchId === branchId)?.name ?? "";
+      setLeads((prev) => prev.map((l) => (l.id === leadId
+        ? { ...l, branchId, branchName: bname, kanbanColumnId: null, stage: ["NEW", "IN_PROGRESS", "CONTACTED"].includes(l.stage) ? "OFFER" : l.stage }
+        : l))); // optimistik
+      startRefresh(async () => {
+        const r = await dropLeadToBranch(leadId, branchId);
+        if (r.error) setLeads(initialLeads);
+        else { setFlash(tr(locale, { uz: `Filialga yo'naltirildi: ${bname}`, ru: `Направлен в филиал: ${bname}`, en: `Directed to ${bname}`, de: `An Filiale weitergeleitet: ${bname}` })); setTimeout(() => setFlash(null), 3000); }
+        router.refresh();
+      });
+      return;
+    }
     // Oddiy nomli ustun — bosqich o'zgarmaydi, faqat ustun belgilanadi
     if (isCustomCol(colKey)) {
       const colId = customIdOfCol(colKey);
@@ -261,7 +281,7 @@ export default function LeadsWorkspace({ locale, initialLeads, managers, sources
     const target = columnDef(colKey).defaultStage;
     setLeads((prev) => prev.map((l) => (l.id === leadId ? { ...l, stage: target, kanbanColumnId: null } : l))); // optimistik
     startRefresh(async () => { await moveLeadStage(leadId, target); router.refresh(); });
-  }, [canWrite, router, leads, enrollToGroup, initialLeads]);
+  }, [canWrite, router, leads, enrollToGroup, initialLeads, branchColumns, locale]);
 
   const confirmReject = useCallback((reason: string) => {
     if (!reject) return;
@@ -394,6 +414,7 @@ export default function LeadsWorkspace({ locale, initialLeads, managers, sources
             sources={sources} source={source} onSource={setSource}
             managers={managers} manager={manager} onManager={setManager}
             activeCols={activeCols} onToggleCol={toggleCol}
+            hiddenCols={branchColumns ? BRANCH_REPLACES : undefined}
             counts={chipCounts} hasFilters={hasFilters} onClear={clearFilters}
             sort={sort} onSort={setSort}
           />
@@ -422,6 +443,8 @@ export default function LeadsWorkspace({ locale, initialLeads, managers, sources
           }}
           onLevelTestQr={() => setTestQr(true)}
           onDelete={canDelete ? askDelete : undefined}
+          branchColumns={branchColumns}
+          canEditSlots={canEditSlots}
         />
       ) : (
         <LeadsTable leads={sortedShown} locale={locale} selected={selection} onToggle={(id) => toggleSelect(id)} onOpen={openLead} onOpenFull={openLeadFull} allSelected={selection.size === shown.length && shown.length > 0} onToggleAll={toggleAll} />

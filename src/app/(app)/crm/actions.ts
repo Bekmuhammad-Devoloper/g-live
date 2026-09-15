@@ -765,3 +765,33 @@ export async function getLevelTestQr(): Promise<LevelTestQr> {
     return { url, modules: "", size: 0, error: "qr_failed" };
   }
 }
+
+/* ─── Lidni filial ustuniga tashlash (ROP kanbani) ───────────────────
+   Lid shu filialga yo'naltiriladi. Hali ishlov boshida bo'lsa (NEW/IN_PROGRESS/
+   CONTACTED) bosqichi "Taklif"ga (OFFER) o'tadi — filialga borish taklif
+   qilingan; test/taklif bosqichida bo'lsa bosqich o'zgarmaydi, faqat filial.  */
+export async function dropLeadToBranch(leadId: string, branchId: string): Promise<{ ok?: boolean; error?: string }> {
+  const s = await requireSession();
+  if (!canWrite(s.role, MODULES.CRM)) return { error: "forbidden" };
+
+  const [lead, branch] = await Promise.all([
+    prisma.lead.findUnique({ where: { id: leadId }, select: { id: true, stage: true, branchId: true } }),
+    prisma.branch.findFirst({ where: { id: branchId, isActive: true }, select: { id: true, name: true } }),
+  ]);
+  if (!lead || !branch) return { error: "notfound" };
+
+  const early = ["NEW", "IN_PROGRESS", "CONTACTED"].includes(lead.stage);
+  await prisma.lead.update({
+    where: { id: leadId },
+    data: {
+      branchId: branch.id,
+      ...(early ? { stage: "OFFER" } : {}),
+      kanbanColumnId: null,
+      activities: { create: { authorId: s.userId, type: early ? "stage_change" : "note", result: `Filialga yo'naltirildi: ${branch.name}${early ? " (Taklif)" : ""}` } },
+    },
+  });
+  await writeAudit({ actorId: s.userId, action: "UPDATE", entityType: "Lead", entityId: leadId, oldValue: { branchId: lead.branchId, stage: lead.stage }, newValue: { branchId: branch.id, ...(early ? { stage: "OFFER" } : {}) }, reason: `Filialga yo'naltirildi: ${branch.name}` });
+
+  revalidatePath("/crm");
+  return { ok: true };
+}

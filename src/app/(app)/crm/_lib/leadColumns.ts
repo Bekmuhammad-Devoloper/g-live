@@ -20,6 +20,9 @@ export interface VLead {
   managerId: string | null;
   managerName: string | null;
   studentId: string | null;
+  /** Filial (ROP kanbanida filial ustuni shu bo'yicha) */
+  branchId: string | null;
+  branchName: string | null;
   /** Yo'naltirilgan guruh (WON uchun majburiy) */
   groupId: string | null;
   groupName: string | null;
@@ -132,20 +135,44 @@ export function customIdOfCol(key: string): string {
 
 const EMPTY = new Set<string>();
 
+/* ─── Filial ustunlari (ROP kanbani) ─────────────────────────────────
+   ROP uchun "Daraja testi" va "Taklif" o'rniga FILIALLAR ustun bo'lib turadi
+   (Qibray, Oybek ...). Ishlovdan keyingi bosqichdagi (TEST/OFFER/AWAITING)
+   lid o'z filialining ustunida ko'rinadi; ustunga tashlansa shu filialga
+   yo'naltiriladi. Ustun tepasida filial administratori kiritgan bo'sh
+   xona/vaqtlar turadi.                                                    */
+
+export interface BranchSlotView { id: string; branchId: string; room: string; days: string; startTime: string; endTime: string; note: string | null }
+export interface BranchColumn { branchId: string; name: string; color: string; slots: BranchSlotView[] }
+
+export const BRANCH_COL_PREFIX = "br:";
+/** Filiali tanlanmagan, lekin test/taklif bosqichidagi lidlar uchun zaxira ustun */
+export const NO_BRANCH_COL = "nobranch";
+export const branchColKey = (branchId: string) => BRANCH_COL_PREFIX + branchId;
+export const isBranchCol = (key: string) => key.startsWith(BRANCH_COL_PREFIX);
+export const branchIdOfCol = (key: string) => key.slice(BRANCH_COL_PREFIX.length);
+/** Filial rejimida filial ustunlari qaysi standart ustunlar o'rnini oladi */
+export const BRANCH_REPLACES = new Set(["test", "offer"]);
+
 /**
  * Lid qaysi ustunda ko'rinadi:
  *   1) oddiy nomli ustunga qo'yilgan bo'lsa (va ustun hali bor) — o'sha ustunda;
  *   2) qabul qilingan lidning guruhi Kanbanga biriktirilgan bo'lsa — guruh ustunida;
- *   3) aks holda bosqichiga mos standart ustunda.
+ *   3) filial rejimida (ROP) test/taklif bosqichidagi lid — o'z filialining ustunida;
+ *   4) aks holda bosqichiga mos standart ustunda.
  */
 export function columnOfLead(
-  lead: { stage: string; groupId: string | null; kanbanColumnId?: string | null },
+  lead: { stage: string; groupId: string | null; kanbanColumnId?: string | null; branchId?: string | null },
   pinned: Set<string>,
   custom: Set<string> = EMPTY,
+  branches: Set<string> | null = null,
 ): string {
   if (lead.kanbanColumnId && custom.has(lead.kanbanColumnId)) return customColKey(lead.kanbanColumnId);
   const base = columnOf(lead.stage);
   if (base === "won" && lead.groupId && pinned.has(lead.groupId)) return groupColKey(lead.groupId);
+  if (branches && BRANCH_REPLACES.has(base)) {
+    return lead.branchId && branches.has(lead.branchId) ? branchColKey(lead.branchId) : NO_BRANCH_COL;
+  }
   return base;
 }
 

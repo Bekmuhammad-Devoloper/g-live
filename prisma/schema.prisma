@@ -36,6 +36,26 @@ model Branch {
   students Student[]
   groups   Group[]
   marketItems MarketItem[]
+  slots    BranchSlot[]
+}
+
+// Filialdagi BO'SH XONA / BO'SH VAQT — filial administratori kiritadi,
+// ROP lidlar kanbanidagi filial ustunida ko'radi (lidni qayerga yo'naltirishni
+// bilish uchun). Erkin yozuv: xona nomi, kunlar, vaqt oralig'i, izoh.
+model BranchSlot {
+  id        String   @id @default(cuid())
+  branchId  String
+  branch    Branch   @relation(fields: [branchId], references: [id], onDelete: Cascade)
+  room      String // "3-xona"
+  days      String // "Du, Chor, Ju"
+  startTime String // "18:00"
+  endTime   String // "19:30"
+  note      String? // "A1 yangi guruh, 5 ta joy"
+  createdById String?
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([branchId])
 }
 
 // Xodim rollari (boshqaruv)

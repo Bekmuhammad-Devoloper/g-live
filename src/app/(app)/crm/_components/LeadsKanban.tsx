@@ -6,8 +6,9 @@ import { cn } from "@/lib/cn";
 import { tr } from "@/lib/tr";
 import type { Locale } from "@/lib/constants";
 import { Icon } from "../../_components/Icon";
-import { COLUMNS, columnOfLead, customColKey, groupColKey, type CustomColumn, type GroupColumn, type VLead } from "../_lib/leadColumns";
+import { COLUMNS, columnOfLead, customColKey, groupColKey, branchColKey, NO_BRANCH_COL, type BranchColumn, type CustomColumn, type GroupColumn, type VLead } from "../_lib/leadColumns";
 import LeadCard from "./LeadCard";
+import BranchSlotsEditor from "../../branches/slots/BranchSlotsEditor";
 
 interface Props {
   leads: VLead[];
@@ -35,6 +36,10 @@ interface Props {
   onLevelTestQr: () => void;
   /** Kartadagi savatcha — lidni o'chirish (huquqi bo'lganlarga beriladi) */
   onDelete?: (id: string) => void;
+  /** ROP rejimi: "Daraja testi"/"Taklif" o'rniga filial ustunlari (null — odatdagi kanban) */
+  branchColumns?: BranchColumn[] | null;
+  /** Filial ustunidagi bo'sh vaqtlarni tahrirlash huquqi (direktor/o'rinbosar) */
+  canEditSlots?: boolean;
 }
 
 /** Standart va guruh ustunlari bitta ko'rinishga keltiriladi */
@@ -47,6 +52,8 @@ interface ViewCol {
   defaultStage: string;
   groupId: string | null;
   customId: string | null;
+  /** Filial ustuni (ROP rejimi) */
+  branch?: BranchColumn | null;
 }
 
 /** Har ustunda dastlab shuncha karta chiziladi — qolgani "Yana ko'rsatish" bilan.
@@ -55,7 +62,7 @@ const PAGE = 40;
 
 export default function LeadsKanban({
   leads, totals, locale, selected, groupColumns, customColumns,
-  onOpen, onOpenFull, onDropToColumn, onAdd, onAddToGroup, onRemoveGroupCol, onAddToCustom, onRemoveCustomCol, onLevelTestQr, onDelete,
+  onOpen, onOpenFull, onDropToColumn, onAdd, onAddToGroup, onRemoveGroupCol, onAddToCustom, onRemoveCustomCol, onLevelTestQr, branchColumns = null, canEditSlots = false, onDelete,
 }: Props) {
   const [dragId, setDragId] = useState<string | null>(null);
   const [overCol, setOverCol] = useState<string | null>(null);
@@ -65,6 +72,7 @@ export default function LeadsKanban({
 
   const pinnedIds = useMemo(() => new Set(groupColumns.map((g) => g.groupId)), [groupColumns]);
   const customIds = useMemo(() => new Set(customColumns.map((c) => c.id)), [customColumns]);
+  const branchIds = useMemo(() => (branchColumns ? new Set(branchColumns.map((b) => b.branchId)) : null), [branchColumns]);
 
   // Tartib: standart 4 ta → oddiy nomli ustunlar → "Qabul qilindi" → guruh ustunlari → "Yo'qotilgan"
   const cols = useMemo<ViewCol[]>(() => {
@@ -92,10 +100,23 @@ export default function LeadsKanban({
       groupId: g.groupId,
       customId: null,
     }));
+    // ROP rejimi: test/taklif o'rniga filial ustunlari (+ filiali yo'q lidlar uchun zaxira ustun)
+    if (branchColumns) {
+      const brs = branchColumns.map<ViewCol>((b) => ({
+        key: branchColKey(b.branchId), title: b.name, sub: null, color: b.color, icon: "building", defaultStage: "OFFER", groupId: null, customId: null, branch: b,
+      }));
+      const noBranch: ViewCol = {
+        key: NO_BRANCH_COL,
+        title: tr(locale, { uz: "Filial tanlanmagan", ru: "Филиал не выбран", en: "No branch", de: "Keine Filiale" }),
+        sub: tr(locale, { uz: "Test / Taklif", ru: "Тест / Предложение", en: "Test / Offer", de: "Test / Angebot" }),
+        color: "#8b5cf6", icon: "filecheck", defaultStage: "OFFER", groupId: null, customId: null,
+      };
+      return [std("new"), std("work"), ...brs, noBranch, ...custom, std("won"), ...groups, std("lost")];
+    }
     return [std("new"), std("work"), std("test"), std("offer"), ...custom, std("won"), ...groups, std("lost")];
-  }, [groupColumns, customColumns, locale]);
+  }, [groupColumns, customColumns, branchColumns, locale]);
 
-  const colOf = useCallback((l: VLead) => columnOfLead(l, pinnedIds, customIds), [pinnedIds, customIds]);
+  const colOf = useCallback((l: VLead) => columnOfLead(l, pinnedIds, customIds, branchIds), [pinnedIds, customIds, branchIds]);
 
   const byCol = useMemo(() => {
     const m: Record<string, VLead[]> = {};
@@ -112,6 +133,9 @@ export default function LeadsKanban({
   }, []);
   const onDragEnd = useCallback(() => { setDragId(null); setOverCol(null); }, []);
 
+  // Filial ustunidagi "+" — yangi lid "Taklif" bosqichi bilan (filialni keyin tashlab belgilaydi)
+  const onDropToColumnHint = () => onAdd("OFFER");
+
   const dragging = dragId ? leads.find((l) => l.id === dragId) ?? null : null;
   const draggingCol = dragging ? colOf(dragging) : null;
 
@@ -120,11 +144,12 @@ export default function LeadsKanban({
       className={cn(
         "grid auto-cols-[minmax(272px,1fr)] grid-flow-col gap-4 overflow-x-auto pb-4",
         // Qo'shimcha ustunlar bo'lsa 6 ta ustunga sig'maydi — gorizontal scroll qoladi
-        groupColumns.length === 0 && customColumns.length === 0 && "xl:grid-flow-row xl:grid-cols-6",
+        groupColumns.length === 0 && customColumns.length === 0 && !branchColumns && "xl:grid-flow-row xl:grid-cols-6",
       )}
     >
       {cols.map((col) => {
         const items = byCol[col.key] ?? [];
+        if (col.key === NO_BRANCH_COL && items.length === 0) return null; // zaxira ustun — bo'sh bo'lsa chiqmaydi
         const isOver = overCol === col.key;
         const differentCol = draggingCol !== null && draggingCol !== col.key;
         const limit = limits[col.key] ?? PAGE;
@@ -172,7 +197,7 @@ export default function LeadsKanban({
                   </button>
                 )}
                 <button
-                  onClick={() => (col.customId ? onAddToCustom(col.customId) : col.groupId ? onAddToGroup(col.groupId) : onAdd(col.defaultStage))}
+                  onClick={() => (col.customId ? onAddToCustom(col.customId) : col.groupId ? onAddToGroup(col.groupId) : col.branch ? onDropToColumnHint() : onAdd(col.defaultStage))}
                   title={tr(locale, { uz: "Qo'shish", ru: "Добавить", en: "Add", de: "Hinzufügen" })}
                   className="flex h-6 w-6 items-center justify-center rounded-md text-slate-400 transition hover:bg-slate-200/60 hover:text-slate-600 dark:hover:bg-white/[0.06]"
                 >
@@ -192,6 +217,16 @@ export default function LeadsKanban({
 
             {/* Gradient chiziq */}
             <div className="mx-1 mb-3 mt-2 h-1 rounded-full" style={{ background: `linear-gradient(90deg, ${col.color}, ${col.color}22)` }} />
+
+            {/* Filial ustuni: bo'sh xona / vaqtlar — administrator kiritgan, ROP ko'radi */}
+            {col.branch && (
+              <div className="mb-3 rounded-xl border border-emerald-200/70 bg-white p-2.5 dark:border-emerald-500/20 dark:bg-[#15243d]">
+                <div className="mb-1.5 flex items-center gap-1.5 text-[11px] font-semibold uppercase tracking-wide text-emerald-700 dark:text-emerald-300">
+                  <Icon name="clock" className="h-3.5 w-3.5" /> {tr(locale, { uz: "Bo'sh xona / vaqt", ru: "Свободные аудитории / время", en: "Free rooms / time", de: "Freie Räume / Zeit" })}
+                </div>
+                <BranchSlotsEditor branchId={col.branch.branchId} initial={col.branch.slots} canEdit={canEditSlots} locale={locale} compact />
+              </div>
+            )}
 
             {/* Kartalar — scrollsiz (butun sahifa scroll bo'ladi) */}
             <div className="space-y-3">
@@ -214,10 +249,12 @@ export default function LeadsKanban({
                 />
               ) : items.length === 0 ? (
                 <div className="rounded-xl border border-dashed border-slate-200 py-8 text-center dark:border-white/[0.08]">
-                  <div className="text-2xl opacity-30">{col.groupId ? "🎯" : col.customId ? "🗂️" : "📭"}</div>
+                  <div className="text-2xl opacity-30">{col.groupId ? "🎯" : col.branch ? "🏫" : col.customId ? "🗂️" : "📭"}</div>
                   <p className="mt-1 px-3 text-xs text-slate-400">
                     {col.groupId
                       ? tr(locale, { uz: "Lidni shu yerga tashlang — guruhga yoziladi", ru: "Перетащите лид сюда — он попадёт в группу", en: "Drop a lead here to enrol it", de: "Lead hierher ziehen zum Einschreiben" })
+                      : col.branch
+                      ? tr(locale, { uz: "Lidni shu yerga tashlang — filialga yo'naltiriladi", ru: "Перетащите лид сюда — он будет направлен в филиал", en: "Drop a lead here to direct it to this branch", de: "Lead hierher ziehen — an diese Filiale weiterleiten" })
                       : col.customId
                         ? tr(locale, { uz: "Lidni shu yerga tashlang yoki \"+\" bilan qo'shing", ru: "Перетащите лид сюда или добавьте через «+»", en: "Drop a lead here or add one with \"+\"", de: "Lead hierher ziehen oder mit \"+\" anlegen" })
                         : tr(locale, { uz: "Lid yo'q", ru: "Нет лидов", en: "No leads", de: "Keine Leads" })}
