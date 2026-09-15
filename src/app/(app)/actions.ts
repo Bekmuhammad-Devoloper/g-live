@@ -6,6 +6,7 @@ import { z } from "zod";
 import { getSession, destroySession, createSession, requireSession } from "@/lib/auth";
 import { prisma } from "@/lib/db";
 import { writeAudit } from "@/lib/audit";
+import { financeAfterStudentChange } from "@/lib/finance/hooks";
 import { ROLES, type Locale } from "@/lib/constants";
 
 export async function logout() {
@@ -107,6 +108,7 @@ export async function quickCreateStudent(_prev: QuickState, formData: FormData):
   if (group) {
     await prisma.groupStudent.create({ data: { groupId: group.id, studentId: student.id } });
   }
+  await financeAfterStudentChange(student.id, s.userId); // Finance V2: a'zolik/holat tarixi
 
   // Qarzdor qilib qo'shish: PENDING to'lov = qarz (/finance/debtors bilan bir xil mantiq)
   if (d.debt && d.debt > 0) {

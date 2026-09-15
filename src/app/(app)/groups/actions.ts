@@ -7,6 +7,7 @@ import { recordLevelUp } from "@/lib/levelUp";
 import { requireSession, type SessionUser } from "@/lib/auth";
 import { getPermission, MODULES } from "@/lib/rbac";
 import { writeAudit } from "@/lib/audit";
+import { financeAfterStudentChange } from "@/lib/finance/hooks";
 import { FINANCE_HISTORY_ERROR, hasFinanceHistory, isRestrictError } from "@/lib/finance/guards";
 import { GROUP_FORMATS } from "@/lib/constants";
 import { findRoomConflict, conflictLabel } from "./roomConflict";
@@ -207,6 +208,7 @@ export async function createStudentInGroup(_prev: FormState, formData: FormData)
     },
   });
   await prisma.groupStudent.create({ data: { groupId: group.id, studentId: student.id } });
+  await financeAfterStudentChange(student.id, s.userId); // Finance V2: a'zolik/holat tarixi
   await writeAudit({ actorId: s.userId, action: "CREATE", entityType: "Student", entityId: student.id, newValue: { fullName: student.fullName, groupId: group.id } });
   revalidatePath(`/groups/${group.id}`);
   return { ok: true };
@@ -243,6 +245,7 @@ export async function bulkAddStudents(groupId: string, rows: { name: string; pho
     }
     const already = await prisma.groupStudent.findUnique({ where: { groupId_studentId: { groupId, studentId } } });
     if (!already) { await prisma.groupStudent.create({ data: { groupId, studentId } }); added++; }
+    await financeAfterStudentChange(studentId, s.userId); // Finance V2: a'zolik/holat tarixi
   }
 
   await writeAudit({ actorId: s.userId, action: "CREATE", entityType: "GroupStudent", entityId: groupId, newValue: { bulkAdded: added }, reason: "Excel/CSV orqali o'quvchilar qo'shildi" });
@@ -268,6 +271,7 @@ export async function enrollStudent(groupId: string, studentId: string): Promise
     where: { id: studentId },
     data: { eduStatus: "ACTIVE", ...(g?.levelCode ? { currentLevel: g.levelCode } : {}) },
   });
+  await financeAfterStudentChange(studentId, s.userId); // Finance V2: a'zolik/holat tarixi
   revalidatePath(`/groups/${groupId}`);
 }
 
@@ -277,6 +281,7 @@ export async function removeStudent(groupId: string, studentId: string): Promise
   if (!hasFullGroups(s.role)) return;
   // Yozuv o'chiriladi — to'lov hisobi ham shu bilan to'xtaydi (leftAt keraksiz)
   const res = await prisma.groupStudent.deleteMany({ where: { groupId, studentId } });
+  await financeAfterStudentChange(studentId, s.userId); // Finance V2: ochiq a'zolik intervali yopiladi
   if (res.count > 0) {
     await writeAudit({ actorId: s.userId, action: "DELETE", entityType: "GroupStudent", oldValue: { groupId, studentId } });
   }

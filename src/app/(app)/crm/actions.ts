@@ -8,6 +8,7 @@ import { prisma } from "@/lib/db";
 import { requireSession } from "@/lib/auth";
 import { canRead, canWrite, MODULES } from "@/lib/rbac";
 import { writeAudit } from "@/lib/audit";
+import { financeAfterStudentChange } from "@/lib/finance/hooks";
 import { ROLES, LEAD_STAGES, isSalesRole } from "@/lib/constants";
 import { parseUzPhone } from "@/lib/phone";
 import { getSetting, setSetting } from "@/lib/settings";
@@ -185,6 +186,7 @@ async function applyEnrollment(
     update: { isActive: true },
     create: { groupId, studentId, isActive: true },
   });
+  await financeAfterStudentChange(studentId); // Finance V2: a'zolik/holat tarixi
 
   return studentId;
 }

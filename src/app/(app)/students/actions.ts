@@ -9,6 +9,7 @@ import { ROLES, EDU_STATUSES, PAYMENT_METHODS } from "@/lib/constants";
 import { canWrite, canRead, MODULES } from "@/lib/rbac";
 import { getSettings } from "@/lib/settings";
 import { writeAudit } from "@/lib/audit";
+import { financeAfterStudentChange } from "@/lib/finance/hooks";
 import { FINANCE_HISTORY_ERROR, hasFinanceHistory, isRestrictError } from "@/lib/finance/guards";
 import { notify } from "@/lib/notify";
 import { lessonsAttendedThisMonth, MANDATORY_LESSON_THRESHOLD } from "@/lib/paymentPolicy";
@@ -266,6 +267,7 @@ export async function updateStudent(fd: FormData): Promise<EditState> {
     where: { id },
     data: { fullName, phone, currentLevel, note, ...(eduStatus ? { eduStatus } : {}) },
   });
+  if (eduStatus && eduStatus !== existing.eduStatus) await financeAfterStudentChange(id, s.userId); // Finance V2: holat tarixi
 
   // Daraja ko'tarilgan bo'lsa yozib qo'yamiz — o'quvchiga tanga beriladi
   await recordLevelUp(id, existing.currentLevel, currentLevel);
@@ -293,6 +295,7 @@ export async function bulkArchiveStudents(ids: string[]): Promise<BulkState> {
   if (!clean.length) return { error: "empty" };
 
   const res = await prisma.student.updateMany({ where: { id: { in: clean } }, data: { eduStatus: "ARCHIVED" } });
+  await financeAfterStudentChange(clean, s.userId); // Finance V2: holat tarixi
 
   await writeAudit({
     actorId: s.userId,
@@ -324,6 +327,7 @@ export async function bulkAssignGroup(ids: string[], groupId: string): Promise<B
       create: { groupId, studentId, isActive: true },
       update: { isActive: true },
     });
+    await financeAfterStudentChange(studentId, s.userId); // Finance V2: a'zolik tarixi
     count++;
   }
 
@@ -405,6 +409,7 @@ export async function archiveStudent(id: string): Promise<EditState> {
   if (!st) return { error: "notfound" };
 
   await prisma.student.update({ where: { id }, data: { eduStatus: "ARCHIVED" } });
+  await financeAfterStudentChange(id, s.userId); // Finance V2: holat tarixi
   await writeAudit({
     actorId: s.userId,
     action: "UPDATE",
@@ -433,6 +438,7 @@ export async function restoreStudent(id: string): Promise<EditState> {
   // Guruhi bo'lsa — faol, bo'lmasa kutish holatiga qaytadi
   const next = st.enrollments.length ? "ACTIVE" : "WAITING";
   await prisma.student.update({ where: { id }, data: { eduStatus: next } });
+  await financeAfterStudentChange(id, s.userId); // Finance V2: holat tarixi
   await writeAudit({
     actorId: s.userId,
     action: "UPDATE",
@@ -547,6 +553,7 @@ export async function moveStudentToBranch(
     }
     await tx.student.update({ where: { id: studentId }, data: { branchId } });
   });
+  await financeAfterStudentChange(studentId, s.userId); // Finance V2: eski filial a'zoliklari yopildi
 
   await writeAudit({
     actorId: s.userId,
