@@ -508,7 +508,7 @@ function GroupBucketCard({ bucket, locale, color, info }: { bucket: Bucket; loca
           </div>
           {/* Xona · jadval · o'qituvchi — har biri o'z qatorida, ikkala rejimda o'qiladi */}
           {(info.room || info.schedule || info.teacher) && (
-            {/* Aniq ko'rinadigan rang: matn to'q, ikonkalar ustun rangida */}
+            // Aniq ko'rinadigan rang: matn to'q, ikonkalar ustun rangida
             <div className="mt-2 space-y-1 text-[11.5px] font-medium leading-tight text-slate-700 dark:text-slate-100">
               {(info.room || info.schedule) && (
                 <div className="flex items-center gap-1.5">
