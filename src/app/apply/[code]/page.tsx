@@ -130,16 +130,21 @@ export default async function ApplyPage({ params, searchParams }: {
             href={app.href}
             className="mt-6 flex items-center gap-3 rounded-3xl border border-white/60 bg-white/85 p-4 shadow-[0_20px_50px_-24px_rgba(15,23,42,0.35)] backdrop-blur transition active:scale-[0.98] dark:border-white/10 dark:bg-white/[0.06]"
           >
-            <span className="flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl bg-gradient-to-br from-brand-500 to-brand-700 text-white shadow-md">
-              <Icon name="download" className="h-6 w-6" strokeWidth={1.8} />
-            </span>
+            {/* Ilovaning o'z ikonkasi — telefonda o'rnatilganda shu ko'rinadi */}
+            {/* eslint-disable-next-line @next/next/no-img-element */}
+            <img src="/icons/icon-192.png" alt="Germaniya Live" width={56} height={56} className="h-14 w-14 shrink-0 rounded-2xl shadow-md ring-1 ring-black/10" />
             <span className="min-w-0 flex-1">
-              <span className="block text-[15px] font-bold text-slate-900 dark:text-white">Ilovani yuklab oling</span>
+              <span className="block text-[15px] font-bold text-slate-900 dark:text-white">Germaniya Live ilovasi</span>
               <span className="block text-[12.5px] text-slate-500 dark:text-slate-400">
-                Android{app.version ? ` · ${app.version}` : ""}{app.sizeMb ? ` · ${app.sizeMb} MB` : ""} — darslar, davomat, to&apos;lovlar telefonda
+                Darslar, davomat, to&apos;lovlar — telefonda
+              </span>
+              <span className="mt-0.5 block text-[11.5px] text-slate-400">
+                Android{app.version ? ` · ${app.version}` : ""}{app.sizeMb ? ` · ${app.sizeMb} MB` : ""}
               </span>
             </span>
-            <Icon name="arrow" className="h-5 w-5 shrink-0 text-brand-600 dark:text-brand-300" strokeWidth={2.2} />
+            <span className="flex shrink-0 items-center gap-1.5 rounded-full bg-brand-600 px-3.5 py-2 text-[13px] font-bold text-white shadow-[0_8px_20px_-8px_rgba(65,72,239,0.8)]">
+              <Icon name="download" className="h-4 w-4" strokeWidth={2.2} /> Yuklab olish
+            </span>
           </a>
         )}
 
