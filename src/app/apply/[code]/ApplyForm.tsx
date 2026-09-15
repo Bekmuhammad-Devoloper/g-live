@@ -133,7 +133,7 @@ export default function ApplyForm({ code, preview, questions = [], levels, branc
       {/* 1) Ta'lim shakli */}
       <Label text="Ta'lim shakli" req />
       <div className="grid grid-cols-2 gap-2">
-        <Choice on={format === "ONLINE"} onClick={() => setFormat("ONLINE")} icon="video" title="Onlayn" sub="Telegram orqali" />
+        <Choice on={format === "ONLINE"} onClick={() => setFormat("ONLINE")} icon="video" title="Onlayn" sub="Ilova orqali" />
         <Choice on={format === "OFFLINE"} onClick={() => setFormat("OFFLINE")} icon="building" title="Oflayn" sub="Filialda" />
       </div>
 
@@ -206,8 +206,8 @@ export default function ApplyForm({ code, preview, questions = [], levels, branc
                         <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-sky-500 text-white"><Icon name="telegram" className="h-5 w-5" strokeWidth={1.8} /></span>
                       )}
                       <span className="min-w-0 flex-1">
-                        <span className="block truncate text-[14px] font-bold text-slate-900 dark:text-white">{tgProfile.name}</span>
-                        <span className="block truncate text-[12px] text-slate-500 dark:text-slate-400">@{tgProfile.username}{tgProfile.bio ? ` · ${tgProfile.bio}` : ""}</span>
+                        <span className="block break-words text-[14px] font-bold leading-tight text-slate-900 dark:text-white">{tgProfile.name}</span>
+                        <span className="mt-0.5 block break-words text-[12px] leading-tight text-slate-500 dark:text-slate-400">@{tgProfile.username}{tgProfile.bio ? ` · ${tgProfile.bio}` : ""}</span>
                       </span>
                       <Icon name="check" className="h-5 w-5 shrink-0 text-emerald-600" strokeWidth={2.2} />
                     </div>
@@ -218,7 +218,7 @@ export default function ApplyForm({ code, preview, questions = [], levels, branc
                   )}
                 </div>
               )}
-              <p className="mt-1.5 text-[12px] text-slate-400">Darslar va materiallar Telegram orqali yuboriladi</p>
+              <p className="mt-1.5 text-[12px] text-slate-400">Guruh jadvali, sinov darsiga taklif va eslatmalar shu Telegram orqali keladi</p>
             </div>
           )}
 
@@ -293,7 +293,8 @@ export default function ApplyForm({ code, preview, questions = [], levels, branc
 
 // ── Uslub va kichik komponentlar (daraja testi sahifasi bilan bir xil) ──
 
-const CARD = "rounded-3xl border border-white/60 bg-white/85 shadow-[0_20px_50px_-24px_rgba(15,23,42,0.35)] backdrop-blur dark:border-white/10 dark:bg-white/[0.06]";
+// Shaffof shisha — filial surati fonida orqasi ko'rinib turadi (oq emas)
+const CARD = "rounded-3xl border border-white/70 bg-white/55 shadow-[0_20px_50px_-24px_rgba(15,23,42,0.35)] backdrop-blur-xl dark:border-white/10 dark:bg-white/[0.06]";
 
 const INPUT =
   "min-h-[52px] w-full rounded-2xl border border-slate-200 bg-white px-4 text-[16px] text-slate-900 outline-none transition placeholder:text-slate-300 focus:border-brand-500 focus:ring-4 focus:ring-brand-500/15 dark:border-white/10 dark:bg-white/[0.06] dark:text-white dark:placeholder:text-slate-600";
@@ -328,8 +329,8 @@ function Choice({ on, onClick, icon, title, sub }: { on: boolean; onClick: () =>
         <Icon name={icon} className="h-5 w-5" strokeWidth={1.8} />
       </span>
       <span className="min-w-0">
-        <span className="block truncate text-[15px] font-bold leading-tight">{title}</span>
-        {sub && <span className={cn("block truncate text-[11.5px] leading-tight", on ? "text-white/80" : "text-slate-400")}>{sub}</span>}
+        <span className="block break-words text-[15px] font-bold leading-tight">{title}</span>
+        {sub && <span className={cn("mt-0.5 block break-words text-[11.5px] leading-tight", on ? "text-white/80" : "text-slate-400")}>{sub}</span>}
       </span>
     </button>
   );

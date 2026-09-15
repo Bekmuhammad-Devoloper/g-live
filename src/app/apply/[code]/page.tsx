@@ -128,20 +128,20 @@ export default async function ApplyPage({ params, searchParams }: {
         {app.available && (
           <a
             href={app.href}
-            className="mt-6 flex items-center gap-3 rounded-3xl border border-white/60 bg-white/85 p-4 shadow-[0_20px_50px_-24px_rgba(15,23,42,0.35)] backdrop-blur transition active:scale-[0.98] dark:border-white/10 dark:bg-white/[0.06]"
+            className="mt-6 flex items-center gap-3 rounded-3xl border border-white/70 bg-white/55 p-3.5 shadow-[0_20px_50px_-24px_rgba(15,23,42,0.35)] backdrop-blur-xl transition active:scale-[0.98] dark:border-white/10 dark:bg-white/[0.06]"
           >
             {/* Ilovaning o'z ikonkasi — telefonda o'rnatilganda shu ko'rinadi */}
             {/* eslint-disable-next-line @next/next/no-img-element */}
-            <img src="/icons/icon-192.png" alt="Germaniya Live" width={56} height={56} className="h-14 w-14 shrink-0 rounded-2xl shadow-md ring-1 ring-black/10" />
-            {/* Matn ikonka balandligida — ikki qator, o'ralmaydi */}
+            <img src="/icons/icon-192.png" alt="Germaniya Live" width={52} height={52} className="shrink-0 rounded-2xl shadow-md ring-1 ring-black/10" style={{ width: 52, height: 52 }} />
+            {/* Matn kesilmaydi — tor ekranda o'raladi; tugma kichik, dumaloq */}
             <span className="min-w-0 flex-1">
-              <span className="block truncate text-[15px] font-bold leading-tight text-slate-900 dark:text-white">Germaniya Live</span>
-              <span className="mt-1 block truncate text-[12px] text-slate-500 dark:text-slate-400">
-                Ilova · Android{app.version ? ` · ${app.version.replace(/\s*\(\d+\)$/, "")}` : ""}{app.sizeMb ? ` · ${app.sizeMb} MB` : ""}
+              <span className="block break-words text-[15px] font-bold leading-tight text-slate-900 dark:text-white">Germaniya Live</span>
+              <span className="mt-1 block break-words text-[12px] leading-tight text-slate-500 dark:text-slate-400">
+                Ilovani yuklab oling · Android{app.version ? ` · ${app.version.replace(/\s*\(\d+\)$/, "")}` : ""}{app.sizeMb ? ` · ${app.sizeMb} MB` : ""}
               </span>
             </span>
-            <span className="flex shrink-0 items-center gap-1 rounded-full bg-brand-600 px-3 py-1.5 text-[12px] font-bold text-white shadow-[0_8px_20px_-8px_rgba(65,72,239,0.8)]">
-              <Icon name="download" className="h-3.5 w-3.5" strokeWidth={2.2} /> Yuklab olish
+            <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-brand-600 text-white shadow-[0_8px_20px_-8px_rgba(65,72,239,0.8)]" aria-label="Yuklab olish">
+              <Icon name="download" className="h-5 w-5" strokeWidth={2} />
             </span>
           </a>
         )}
@@ -156,7 +156,7 @@ function Notice({ icon, title, text, tone = "slate" }: { icon: string; title: st
   return (
     <div className={`mt-6 rounded-3xl border p-6 text-center backdrop-blur ${tone === "amber"
       ? "border-amber-200 bg-amber-50/80 dark:border-amber-500/30 dark:bg-amber-500/10"
-      : "border-white/60 bg-white/85 dark:border-white/10 dark:bg-white/[0.06]"}`}>
+      : "border-white/70 bg-white/55 backdrop-blur-xl dark:border-white/10 dark:bg-white/[0.06]"}`}>
       <div className={`mx-auto flex h-14 w-14 items-center justify-center rounded-full ${tone === "amber" ? "bg-amber-500/15 text-amber-600" : "bg-slate-500/10 text-slate-500"}`}>
         <Icon name={icon} className="h-7 w-7" strokeWidth={1.8} />
       </div>
