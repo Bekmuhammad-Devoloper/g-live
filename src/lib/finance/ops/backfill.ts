@@ -13,8 +13,12 @@
 import type { Prisma, PrismaClient } from "@prisma/client";
 
 import { withFinanceTx } from "../db";
+import { accountForMethod } from "../accounts/accounts";
+import { studentBalance } from "../billing/balance";
 import { createManualDebtCharge, ensureMonthlyCharges } from "../billing/charges";
 import { syncStudentHistory } from "../billing/history";
+import { postLedger } from "../ledger/post";
+import { applyStudentCredit } from "../payments/allocate";
 import { tashkentYearMonth, type YearMonth } from "../period";
 
 export interface BackfillOptions {
@@ -99,4 +103,137 @@ export class DryRunRollback extends Error {
     super("dry-run rollback");
     this.name = "DryRunRollback";
   }
+}
+
+// ─── PAYMENTS bosqichi (Phase 4) ───
+
+export interface PaymentsBackfillReport {
+  students: number;
+  paidPosted: number;
+  paidExisting: number;
+  paidAmount: number;
+  refundsCreated: number;
+  refundsExisting: number;
+  refundAmount: number;
+  allocationsCreated: number;
+  allocatedAmount: number;
+  dryRun: boolean;
+}
+
+/**
+ * Eski PAID → V2 ga kiritiladi (receivedAt=createdAt, kassa=usul bo'yicha, postedAt,
+ * ledger IN) va FIFO taqsimlanadi (source BACKFILL, earning YO'Q); eski REFUNDED →
+ * Refund{LEGACY} + ledger OUT + legacyRole=REFUND. Idempotent.
+ */
+export async function backfillPayments(client: PrismaClient, o: BackfillOptions = {}): Promise<PaymentsBackfillReport> {
+  const now = o.now ?? new Date();
+  const upTo = o.upTo ?? tashkentYearMonth(now);
+  const batchSize = o.batchSize ?? 25;
+  const log = o.log ?? (() => {});
+  const report: PaymentsBackfillReport = { students: 0, paidPosted: 0, paidExisting: 0, paidAmount: 0, refundsCreated: 0, refundsExisting: 0, refundAmount: 0, allocationsCreated: 0, allocatedAmount: 0, dryRun: !!o.dryRun };
+  const students = await client.student.findMany({ select: { id: true, branchId: true }, orderBy: { createdAt: "asc" } });
+  report.students = students.length;
+
+  for (let i = 0; i < students.length; i += batchSize) {
+    const batch = students.slice(i, i + batchSize);
+    const runBatch = async (tx: Prisma.TransactionClient): Promise<void> => {
+      for (const st of batch) {
+        const payments = await tx.payment.findMany({ where: { studentId: st.id, status: { in: ["PAID", "REFUNDED"] } }, orderBy: [{ createdAt: "asc" }] });
+        for (const p of payments) {
+          if (p.status === "PAID") {
+            if (p.postedAt) { report.paidExisting++; continue; }
+            const account = await accountForMethod(tx, st.branchId, p.method, o.actorId);
+            const receivedAt = p.receivedAt ?? p.createdAt;
+            await tx.payment.update({ where: { id: p.id }, data: { receivedAt, branchId: p.branchId ?? st.branchId, financialAccountId: p.financialAccountId ?? account.id, postedAt: now } });
+            await postLedger(tx, { accountId: p.financialAccountId ?? account.id, branchId: p.branchId ?? st.branchId, type: "STUDENT_PAYMENT", direction: "IN", amount: p.amount, referenceType: "Payment", referenceId: p.id, occurredAt: receivedAt, actorId: o.actorId, note: "backfill" });
+            report.paidPosted++;
+            report.paidAmount += p.amount;
+          } else {
+            // REFUNDED — eski "yechib olish": asl to'lovga bog'lanmagan (taxmin qilinmaydi)
+            const exists = await tx.refund.findUnique({ where: { legacyPaymentId: p.id }, select: { id: true } });
+            if (exists) { report.refundsExisting++; continue; }
+            const cash = await accountForMethod(tx, st.branchId, "CASH", o.actorId);
+            const refund = await tx.refund.create({
+              data: {
+                originalPaymentId: null, studentId: st.id, branchId: st.branchId, amount: p.amount, reason: p.purpose ?? "Yechib olish (legacy)", kind: "CASH_REFUND",
+                financialAccountId: cash.id, refundedAt: p.createdAt, source: "LEGACY", legacyPaymentId: p.id, idempotencyKey: `legacy-refund:${p.id}`, createdById: o.actorId ?? null,
+              },
+            });
+            await postLedger(tx, { accountId: cash.id, branchId: st.branchId, type: "REFUND", direction: "OUT", amount: p.amount, referenceType: "Refund", referenceId: refund.id, occurredAt: p.createdAt, actorId: o.actorId, note: "backfill legacy refund" });
+            if (p.legacyRole !== "REFUND") await tx.payment.update({ where: { id: p.id }, data: { legacyRole: "REFUND" } });
+            report.refundsCreated++;
+            report.refundAmount += p.amount;
+          }
+        }
+        await ensureMonthlyCharges(tx, { studentId: st.id, upTo, actorId: o.actorId, cutoverAt: o.cutoverAt, now });
+        const allocs = await applyStudentCredit(tx, st.id, { actorId: o.actorId, source: "BACKFILL", skipAfterHooks: true });
+        report.allocationsCreated += allocs.length;
+        report.allocatedAmount += allocs.reduce((a, r) => a + r.amount, 0);
+      }
+      if (o.dryRun) throw new DryRunRollback();
+    };
+    try {
+      await withFinanceTx(client, runBatch, { attempts: 1, timeout: 120_000 });
+    } catch (e) {
+      if (!(e instanceof DryRunRollback)) throw e;
+    }
+    log(`payments: ${Math.min(i + batchSize, students.length)}/${students.length} — posted +${report.paidPosted}, refund +${report.refundsCreated}, alloc +${report.allocationsCreated}`);
+  }
+  return report;
+}
+
+// ─── Tekshiruv: legacy computeDebts ↔ V2 balans ───
+
+export interface DebtVerifyRow {
+  studentId: string;
+  legacyDebt: number;
+  legacyCredit: number;
+  v2Debt: number;
+  v2Credit: number;
+  classification: "EQUAL" | "EXPECTED" | "UNEXPECTED";
+}
+
+export interface DebtVerifyReport {
+  students: number;
+  equal: number;
+  expected: number;
+  unexpected: number;
+  legacyPaidTotal: number;
+  v2PostedPaidTotal: number;
+  paidTotalsMatch: boolean;
+  rows: DebtVerifyRow[];
+}
+
+/**
+ * Legacy `computeDebts` (o'sha bazadan) bilan V2 balansini solishtiradi.
+ * EXPECTED: V2 qarzi ≤ legacy va V2 krediti ≥ legacy (S2 — a'zoliksiz oy hisoblanmaydi,
+ * REFUNDED legacy'da e'tiborsiz). UNEXPECTED: V2 ko'proq qarz yoki kamroq kredit ko'rsatsa,
+ * yoki PAID yig'indilari farq qilsa — STOP.
+ */
+export async function verifyDebt(client: PrismaClient, legacyDebts: Map<string, { debt: number; credit: number }>, now = new Date()): Promise<DebtVerifyReport> {
+  const students = await client.student.findMany({ select: { id: true } });
+  const rows: DebtVerifyRow[] = [];
+  for (const s of students) {
+    const legacy = legacyDebts.get(s.id) ?? { debt: 0, credit: 0 };
+    const v2 = await studentBalance(client, s.id);
+    let classification: DebtVerifyRow["classification"] = "UNEXPECTED";
+    if (legacy.debt === v2.debt && legacy.credit === v2.credit) classification = "EQUAL";
+    else if (v2.debt <= legacy.debt && v2.credit >= legacy.credit) classification = "EXPECTED";
+    rows.push({ studentId: s.id, legacyDebt: legacy.debt, legacyCredit: legacy.credit, v2Debt: v2.debt, v2Credit: v2.credit, classification });
+  }
+  const [legacyPaid, v2Paid] = await Promise.all([
+    client.payment.aggregate({ _sum: { amount: true }, where: { status: "PAID" } }),
+    client.payment.aggregate({ _sum: { amount: true }, where: { status: "PAID", postedAt: { not: null }, legacyRole: null } }),
+  ]);
+  void now;
+  return {
+    students: students.length,
+    equal: rows.filter((r) => r.classification === "EQUAL").length,
+    expected: rows.filter((r) => r.classification === "EXPECTED").length,
+    unexpected: rows.filter((r) => r.classification === "UNEXPECTED").length,
+    legacyPaidTotal: legacyPaid._sum.amount ?? 0,
+    v2PostedPaidTotal: v2Paid._sum.amount ?? 0,
+    paidTotalsMatch: (legacyPaid._sum.amount ?? 0) === (v2Paid._sum.amount ?? 0),
+    rows,
+  };
 }

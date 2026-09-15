@@ -1,6 +1,6 @@
 // Legacy → V2 backfill. Idempotent, bosqichma-bosqich.
-//   npx tsx scripts/finance-v2/backfill.ts --stage billing [--dry-run] [--db /abs/dev.db] [--upTo 2026-10]
-import { backfillBilling } from "@/lib/finance/ops/backfill";
+//   npx tsx scripts/finance-v2/backfill.ts --stage billing|payments|verify [--dry-run] [--db /abs/dev.db] [--upTo 2026-10]
+import { backfillBilling, backfillPayments, verifyDebt } from "@/lib/finance/ops/backfill";
 import { openSqlite } from "@/lib/finance/ops/sqlite";
 import { parseYearMonthKey } from "@/lib/finance/period";
 import { fail, parseArgs, printJson, resolveDbPath } from "./_cli";
@@ -16,6 +16,24 @@ async function main() {
       const r = await backfillBilling(client, { dryRun, upTo, log: (l) => console.log(l) });
       printJson("backfill:billing", r);
       console.log(dryRun ? "✓ dry-run (yozilmadi)" : "✓ billing backfill tugadi");
+      return;
+    }
+    if (stage === "payments") {
+      const r = await backfillPayments(client, { dryRun, upTo, log: (l) => console.log(l) });
+      printJson("backfill:payments", r);
+      console.log(dryRun ? "✓ dry-run (yozilmadi)" : "✓ payments backfill tugadi");
+      return;
+    }
+    if (stage === "verify") {
+      // Legacy formula — o'sha bazadan (DATABASE_URL shu bazaga yo'naltirilgan bo'lishi kerak)
+      process.env.DATABASE_URL = `file:${resolveDbPath(args)}`;
+      const { computeDebts } = await import("@/lib/debt");
+      const ids = (await client.student.findMany({ select: { id: true } })).map((s) => s.id);
+      const legacy = await computeDebts(ids);
+      const r = await verifyDebt(client, new Map([...legacy.entries()].map(([k, v]) => [k, { debt: v.debt, credit: v.credit }])));
+      printJson("verify", { ...r, rows: r.rows.filter((x) => x.classification !== "EQUAL") });
+      if (!r.paidTotalsMatch || r.unexpected > 0) fail(`UNEXPECTED: paidTotalsMatch=${r.paidTotalsMatch}, unexpected=${r.unexpected}`);
+      console.log("✓ verify: farqlar faqat kutilgan (S2/refund) yoki yo'q");
       return;
     }
     fail(`noma'lum bosqich: ${stage}`);
