@@ -270,7 +270,10 @@ export default function LeadsWorkspace({ locale, initialLeads, managers, sources
         : l))); // optimistik
       startRefresh(async () => {
         const r = await dropLeadToBranch(leadId, branchId, slotId);
-        if (r.error) setLeads(initialLeads);
+        if (r.error) {
+          setLeads(initialLeads);
+          if (r.error === "slot_full") { setFlash(tr(locale, { uz: "Xona to'lgan — joy qolmadi", ru: "Аудитория заполнена — мест нет", en: "Room is full — no seats left", de: "Raum voll — keine Plätze" })); setTimeout(() => setFlash(null), 3000); }
+        }
         else { setFlash(tr(locale, { uz: `Filialga yo'naltirildi: ${bname}`, ru: `Направлен в филиал: ${bname}`, en: `Directed to ${bname}`, de: `An Filiale weitergeleitet: ${bname}` })); setTimeout(() => setFlash(null), 3000); }
         router.refresh();
       });

@@ -58,7 +58,7 @@ export default async function AdminDashboard({ locale }: { locale: Locale }) {
 
   // O'z filialidagi bo'sh xona/vaqtlar — ROP lidlar kanbanida filial ustunida ko'radi
   const myBranch = s.branchId
-    ? await prisma.branch.findUnique({ where: { id: s.branchId }, select: { id: true, name: true, slots: { select: { id: true, branchId: true, room: true, days: true, startTime: true, endTime: true, note: true }, orderBy: [{ room: "asc" }, { startTime: "asc" }] } } })
+    ? await prisma.branch.findUnique({ where: { id: s.branchId }, select: { id: true, name: true, slots: { select: { id: true, branchId: true, room: true, days: true, startTime: true, endTime: true, note: true, capacity: true }, orderBy: [{ room: "asc" }, { startTime: "asc" }] } } })
     : null;
 
   const [users, activeUsers, branches, auditCount, weekLessons, teacherRows, groupRows, programRows] = await Promise.all([

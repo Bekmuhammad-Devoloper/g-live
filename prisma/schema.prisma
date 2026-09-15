@@ -51,6 +51,7 @@ model BranchSlot {
   startTime String // "18:00"
   endTime   String // "19:30"
   note      String? // "A1 yangi guruh, 5 ta joy"
+  capacity  Int? // xona sig'imi — shundan ortiq lid tashlab bo'lmaydi (Xonalar bo'limidan to'ldiriladi)
   createdById String?
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt

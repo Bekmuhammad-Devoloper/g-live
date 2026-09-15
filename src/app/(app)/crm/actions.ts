@@ -789,10 +789,15 @@ export async function dropLeadToBranch(leadId: string, branchId: string, slotId:
   const [lead, branch, slot] = await Promise.all([
     prisma.lead.findUnique({ where: { id: leadId }, select: { id: true, stage: true, branchId: true } }),
     prisma.branch.findFirst({ where: { id: branchId, isActive: true }, select: { id: true, name: true } }),
-    slotId ? prisma.branchSlot.findFirst({ where: { id: slotId, branchId }, select: { id: true, room: true, days: true, startTime: true, endTime: true } }) : Promise.resolve(null),
+    slotId ? prisma.branchSlot.findFirst({ where: { id: slotId, branchId }, select: { id: true, room: true, days: true, startTime: true, endTime: true, capacity: true, _count: { select: { leads: true } } } }) : Promise.resolve(null),
   ]);
   if (!lead || !branch) return { error: "notfound" };
   if (slotId && !slot) return { error: "slot_not_found" };
+  // Sig'im: xonada joy qolmagan bo'lsa tashlab bo'lmaydi (lidning o'zi allaqachon shu xonada bo'lsa — hisobga olinmaydi)
+  if (slot?.capacity) {
+    const already = await prisma.lead.count({ where: { branchSlotId: slot.id, NOT: { id: leadId } } });
+    if (already >= slot.capacity) return { error: "slot_full" };
+  }
 
   // Testdan kelgan (TEST) lid ham — filialga tashlangach "Taklif"ga o'tadi (sotuv rejimida u "Yangi"da turardi)
   const early = ["NEW", "IN_PROGRESS", "CONTACTED", "TEST"].includes(lead.stage);

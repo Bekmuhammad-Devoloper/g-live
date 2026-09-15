@@ -144,7 +144,7 @@ const EMPTY = new Set<string>();
    ko'chirilsa tozalanadi). Qolgan lidlar o'z bosqichi ustunida. Ustun tepasida
    filial administratori kiritgan bo'sh xona/vaqtlar turadi.                */
 
-export interface BranchSlotView { id: string; branchId: string; room: string; days: string; startTime: string; endTime: string; note: string | null }
+export interface BranchSlotView { id: string; branchId: string; room: string; days: string; startTime: string; endTime: string; note: string | null; capacity: number | null }
 export interface BranchColumn { branchId: string; name: string; color: string; slots: BranchSlotView[] }
 
 export const BRANCH_COL_PREFIX = "br:";
