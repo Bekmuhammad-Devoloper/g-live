@@ -146,6 +146,80 @@ describe("finance v2 schema", () => {
     await expectPrismaError(p.payment.delete({ where: { id: ids.payment } }), P2003);
   });
 
+  it("Payment V2: idempotencyKey dublikat rad; reversalOf one-to-one", async () => {
+    const p = db.prisma;
+    const a = await p.payment.create({ data: { studentId: ids.student, amount: 10_000, method: "CASH", status: "PAID", idempotencyKey: "pay:idem:1", receivedAt: new Date() } });
+    await expectPrismaError(p.payment.create({ data: { studentId: ids.student, amount: 10_000, method: "CASH", status: "PAID", idempotencyKey: "pay:idem:1" } }), P2002);
+    await p.payment.create({ data: { studentId: ids.student, amount: 12_000, method: "CASH", status: "PAID", reversalOfId: a.id } });
+    await expectPrismaError(p.payment.create({ data: { studentId: ids.student, amount: 12_000, method: "CASH", status: "PAID", reversalOfId: a.id } }), P2002);
+  });
+
+  it("Expense V2: eski create default (ACTIVE), reversal one-to-one, idempotencyKey unique, kassa Restrict", async () => {
+    const p = db.prisma;
+    const e = await p.expense.create({ data: { name: "Ijara", date: new Date(), amount: 3_000_000, financialAccountId: ids.account, idempotencyKey: "exp:1" } });
+    expect(e.status).toBe("ACTIVE");
+    await expectPrismaError(p.expense.create({ data: { name: "Ijara", date: new Date(), amount: 1, idempotencyKey: "exp:1" } }), P2002);
+    await p.expense.create({ data: { name: "Ijara (bekor)", date: new Date(), amount: 3_000_000, reversalOfId: e.id, idempotencyKey: "exp:1:rev" } });
+    await expectPrismaError(p.expense.create({ data: { name: "x", date: new Date(), amount: 1, reversalOfId: e.id, idempotencyKey: "exp:1:rev2" }, }), P2002);
+    await expectPrismaError(p.financialAccount.delete({ where: { id: ids.account } }), P2003);
+  });
+
+  it("Refund: kind default CASH_REFUND, reversal lineage one-to-one", async () => {
+    const p = db.prisma;
+    const r = await p.refund.findFirstOrThrow({ where: { idempotencyKey: "refund:1" } });
+    expect(r.kind).toBe("CASH_REFUND");
+    await p.refund.create({ data: { originalPaymentId: ids.payment, studentId: ids.student, amount: 300_000, reason: "xato qaytarim bekor", kind: "CORRECTION", financialAccountId: ids.account, refundedAt: new Date(), idempotencyKey: "refund:1:rev", reversalOfId: r.id } });
+    await expectPrismaError(
+      p.refund.create({ data: { originalPaymentId: ids.payment, studentId: ids.student, amount: 1, reason: "x", financialAccountId: ids.account, refundedAt: new Date(), idempotencyKey: "refund:1:rev2", reversalOfId: r.id } }),
+      P2002,
+    );
+  });
+
+  it("TeacherEarning: (allocationId, assignmentId, type) DB darajasida unique — idempotencyKey boshqa bo'lsa ham", async () => {
+    const p = db.prisma;
+    const e = await p.teacherEarning.findFirstOrThrow({ where: { type: "PAYMENT_COMMISSION" } });
+    await expectPrismaError(
+      p.teacherEarning.create({ data: { teacherId: ids.teacher, allocationId: e.allocationId, assignmentId: e.assignmentId, earningYear: 2026, earningMonth: 9, amount: 1, type: "PAYMENT_COMMISSION", snapshot: "{}", idempotencyKey: "boshqa-kalit" } }),
+      P2002,
+    );
+    // allocationId null bo'lgan turlar (FIXED) — bir nechta bo'lishi mumkin (NULL unique'da farqli)
+    await p.teacherEarning.create({ data: { teacherId: ids.teacher, earningYear: 2026, earningMonth: 9, amount: 1_000_000, type: "FIXED", snapshot: "{}", idempotencyKey: "fixed:t:2026-09" } });
+    await p.teacherEarning.create({ data: { teacherId: ids.teacher, earningYear: 2026, earningMonth: 10, amount: 1_000_000, type: "FIXED", snapshot: "{}", idempotencyKey: "fixed:t:2026-10" } });
+  });
+
+  it("Restrict: kurs, filial, o'qituvchi va aktor (createdBy) — moliyaviy tarix bo'lsa o'chirilmaydi", async () => {
+    const p = db.prisma;
+    await expectPrismaError(p.program.delete({ where: { id: ids.program } }), P2003);
+    await expectPrismaError(p.branch.delete({ where: { id: ids.branch } }), P2003);
+    await expectPrismaError(p.user.delete({ where: { id: ids.teacher } }), P2003);
+    const cashier = await p.user.create({ data: { fullName: "Kassir", email: "kassir@test.local", passwordHash: "x", role: "ACCOUNTANT" } });
+    await p.financialTransaction.create({ data: { accountId: ids.account, type: "OTHER_INCOME", direction: "IN", amount: 1, referenceType: "Adjustment", referenceId: "adj-1", occurredAt: new Date(), idempotencyKey: "adj:1", createdById: cashier.id } });
+    await expectPrismaError(p.user.delete({ where: { id: cashier.id } }), P2003);
+  });
+
+  it("StudentStatusHistory: moliyaviy tarixi YO'Q o'quvchi o'chirilsa tarix Cascade bilan ketadi", async () => {
+    const p = db.prisma;
+    const s = await p.student.create({ data: { fullName: "Vaqtinchalik" } });
+    await p.studentStatusHistory.create({ data: { studentId: s.id, status: "FROZEN", effectiveFrom: new Date() } });
+    await p.student.delete({ where: { id: s.id } });
+    expect(await p.studentStatusHistory.count({ where: { studentId: s.id } })).toBe(0);
+  });
+
+  it("backfill kalitlari: legacyPaymentId (charge/refund) va legacyTeacherSalaryId unique; NULL ko'p marta ruxsat", async () => {
+    const p = db.prisma;
+    const legacyDebt = await p.payment.create({ data: { studentId: ids.student, amount: 50_000, method: "CASH", status: "PENDING", isManual: true } });
+    await p.studentCharge.create({ data: { studentId: ids.student, kind: "MANUAL_DEBT", serviceYear: 2026, serviceMonth: 8, originalAmount: 50_000, finalAmount: 50_000, dueDate: new Date(), chargeKey: `legacy:${legacyDebt.id}`, legacyPaymentId: legacyDebt.id } });
+    await expectPrismaError(
+      p.studentCharge.create({ data: { studentId: ids.student, kind: "MANUAL_DEBT", serviceYear: 2026, serviceMonth: 8, originalAmount: 50_000, finalAmount: 50_000, dueDate: new Date(), chargeKey: `legacy2:${legacyDebt.id}`, legacyPaymentId: legacyDebt.id } }),
+      P2002,
+    );
+    const ts = await p.teacherSalary.create({ data: { teacherId: ids.teacher, year: 2026, month: 8, fiksa: 2_000_000, closed: true } });
+    await p.salaryPeriod.create({ data: { teacherId: ids.teacher, year: 2026, month: 8, source: "LEGACY", legacyFiksaAmount: 2_000_000, status: "CLOSED", legacyTeacherSalaryId: ts.id } });
+    await expectPrismaError(p.salaryPeriod.create({ data: { teacherId: ids.teacher, year: 2025, month: 8, source: "LEGACY", legacyTeacherSalaryId: ts.id } }), P2002);
+    // legacy TeacherSalary ko'chirilgan bo'lsa o'chirilmaydi
+    await expectPrismaError(p.teacherSalary.delete({ where: { id: ts.id } }), P2003);
+  });
+
   it("transfer: ikki kassa, self-reversal one-to-one", async () => {
     const p = db.prisma;
     const bank = await p.financialAccount.create({ data: { name: "Bank", type: "BANK", branchId: ids.branch } });

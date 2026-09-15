@@ -861,7 +861,7 @@ model Payment {
   amount      Int // so'm (butun)
   method      String // CLICK | PAYME | UZUM | CASH | CARD | TRANSFER ...
   purpose     String? // kurs to'lovi | qarz | ...
-  status      String   @default("PENDING") // PENDING | PAID | REFUNDED | CANCELLED
+  status      String   @default("PENDING") // PENDING | PAID | REFUNDED | CANCELLED | (V2) REVERSED — correction bilan almashtirilgan
   isManual    Boolean  @default(false) // qo'lda kiritilgan
   transactionId String? @unique // provayder tranzaksiya ID (dublikat oldini olish)
   docNumber   String? // chek/hujjat raqami
@@ -1439,7 +1439,9 @@ model Note {
 //
 // Tarixiy jadvallar (FinancialTransaction, PaymentAllocation, TeacherEarning,
 // Refund, SalaryPayout, Transfer) IMMUTABLE: update/delete yo'q, tuzatish =
-// teskari (reversal) qator. Shu sabab ularda updatedAt YO'Q.
+// teskari (reversal) qator. Shu sabab ularda updatedAt YO'Q, aktor (createdBy)
+// esa Restrict — foydalanuvchini o'chirish tarixiy qatorni o'zgartira olmaydi
+// (xodim arxivlanadi, o'chirilmaydi).
 //
 // Sana semantikasi (aralashtirilmaydi):
 //   service period   — StudentCharge.serviceYear/serviceMonth (xizmat oyi)
@@ -1490,11 +1492,12 @@ model FinancialTransaction {
   referenceType  String // Payment | Expense | SalaryPayout | Refund | Transfer | Adjustment
   referenceId    String
   sequence       Int      @default(0) // bir reference ichida bir nechta qator (split) uchun tartib
+  // Manba hujjatning biznes sanasi: Payment.receivedAt · Expense.date · SalaryPayout.paidAt · Refund.refundedAt · Transfer.occurredAt
   occurredAt     DateTime // pul real harakat qilgan vaqt
   note           String?
   idempotencyKey String   @unique
   createdById    String?
-  createdBy      User?    @relation("LedgerCreatedBy", fields: [createdById], references: [id], onDelete: SetNull)
+  createdBy      User?    @relation("LedgerCreatedBy", fields: [createdById], references: [id], onDelete: Restrict)
   createdAt      DateTime @default(now())
 
   @@unique([referenceType, referenceId, accountId, direction, sequence])
@@ -1519,7 +1522,7 @@ model Transfer {
   reversedBy     Transfer? @relation("TransferReversal")
   idempotencyKey String   @unique
   createdById    String?
-  createdBy      User?    @relation("TransferCreatedBy", fields: [createdById], references: [id], onDelete: SetNull)
+  createdBy      User?    @relation("TransferCreatedBy", fields: [createdById], references: [id], onDelete: Restrict)
   createdAt      DateTime @default(now())
 
   @@index([occurredAt])
@@ -1639,7 +1642,7 @@ model PaymentAllocation {
   allocatedAt    DateTime @default(now()) // texnik vaqt — earning sanasi EMAS
   idempotencyKey String   @unique
   createdById    String?
-  createdBy      User?    @relation("AllocationCreatedBy", fields: [createdById], references: [id], onDelete: SetNull)
+  createdBy      User?    @relation("AllocationCreatedBy", fields: [createdById], references: [id], onDelete: Restrict)
   createdAt      DateTime @default(now())
 
   earnings TeacherEarning[]
@@ -1663,13 +1666,18 @@ model Refund {
   financialAccountId String
   financialAccount   FinancialAccount @relation(fields: [financialAccountId], references: [id], onDelete: Restrict)
   refundedAt         DateTime
+  // CASH_REFUND — o'quvchiga real pul qaytdi; CORRECTION — xato kiritilgan to'lovni bekor qilish (reversePayment)
+  kind               String   @default("CASH_REFUND") // CASH_REFUND | CORRECTION
   status             String   @default("DONE") // DONE | REVERSED
+  reversalOfId       String?  @unique // xato kiritilgan qaytarimni bekor qiluvchi qator (tarix o'chirilmaydi)
+  reversalOf         Refund?  @relation("RefundReversal", fields: [reversalOfId], references: [id], onDelete: Restrict)
+  reversedBy         Refund?  @relation("RefundReversal")
   source             String   @default("V2") // V2 | LEGACY
   legacyPaymentId    String?  @unique // eski REFUNDED Payment qatori
   legacyPayment      Payment? @relation("RefundLegacyPayment", fields: [legacyPaymentId], references: [id], onDelete: Restrict)
   idempotencyKey     String   @unique
   createdById        String?
-  createdBy          User?    @relation("RefundCreatedBy", fields: [createdById], references: [id], onDelete: SetNull)
+  createdBy          User?    @relation("RefundCreatedBy", fields: [createdById], references: [id], onDelete: Restrict)
   createdAt          DateTime @default(now())
 
   reversalAllocations PaymentAllocation[] // kind=REVERSAL qatorlar
@@ -1750,9 +1758,11 @@ model SalaryPolicy {
 }
 
 // ─── O'qituvchi ulushi — maosh dvigatelining manbai (IMMUTABLE) ───
-// Bir allocation × bir assignment = bitta qator (idempotencyKey). Tuzatish —
-// teskari qator (REFUND_ADJUSTMENT / MANUAL_ADJUSTMENT). Ruxsat etilgan
-// yagona holat o'zgarishi: NEEDS_REVIEW → POSTED (admin tasdig'i, audit).
+// Bir allocation × bir assignment × tur = bitta qator (idempotencyKey +
+// @@unique). Tuzatish — teskari qator (REFUND_ADJUSTMENT / MANUAL_ADJUSTMENT).
+// Summalar/sanalar hech qachon o'zgarmaydi. Ruxsat etilgan yagona o'zgarishlar:
+//   • status NEEDS_REVIEW → POSTED (+ reviewedAt/reviewedById, audit bilan)
+//   • settlementPeriodId — POSTED bo'lganda yoki keyingi ochiq davrga o'tkazilganda
 model TeacherEarning {
   id                 String   @id @default(cuid())
   teacherId          String
@@ -1797,7 +1807,7 @@ model TeacherEarning {
   reviewReason       String? // NO_LESSONS_FOUND | ASSISTANT_NO_RULE | RATE_SUM_EXCEEDED | LEGACY_INFERRED
   reviewedAt         DateTime?
   reviewedById       String?
-  reviewedBy         User?    @relation("EarningReviewedBy", fields: [reviewedById], references: [id], onDelete: SetNull)
+  reviewedBy         User?    @relation("EarningReviewedBy", fields: [reviewedById], references: [id], onDelete: Restrict)
   snapshot           String // JSON: policy, rule, assignment, charge, allocation, sourcePayment, attendance, base, eligible, tz
   idempotencyKey     String   @unique
   reversalOfId       String?
@@ -1805,9 +1815,12 @@ model TeacherEarning {
   reversals          TeacherEarning[] @relation("EarningReversal")
   note               String?
   createdById        String?
-  createdBy          User?    @relation("EarningCreatedBy", fields: [createdById], references: [id], onDelete: SetNull)
+  createdBy          User?    @relation("EarningCreatedBy", fields: [createdById], references: [id], onDelete: Restrict)
   createdAt          DateTime @default(now())
 
+  // DB darajasida dublikat commission taqiqlanadi (idempotencyKey formatidan mustaqil).
+  // allocationId null bo'lgan turlar (FIXED, BONUS…) uchun SQLite/Postgres NULL'larni farqli hisoblaydi — cheklov faqat commission'ga ta'sir qiladi.
+  @@unique([allocationId, assignmentId, type])
   @@index([teacherId, earningYear, earningMonth])
   @@index([settlementPeriodId])
   @@index([status])
@@ -1880,7 +1893,7 @@ model SalaryPayout {
   reversedBy         SalaryPayout? @relation("PayoutReversal")
   idempotencyKey     String   @unique
   createdById        String?
-  createdBy          User?    @relation("PayoutCreatedBy", fields: [createdById], references: [id], onDelete: SetNull)
+  createdBy          User?    @relation("PayoutCreatedBy", fields: [createdById], references: [id], onDelete: Restrict)
   createdAt          DateTime @default(now())
 
   @@index([teacherId, paidAt])

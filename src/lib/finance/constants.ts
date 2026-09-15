@@ -81,6 +81,9 @@ export const PAYMENT_LEGACY_ROLES = ["DEBT", "REFUND"] as const;
 export const PAYMENT_STATUS_REVERSED = "REVERSED";
 
 export const REFUND_STATUSES = ["DONE", "REVERSED"] as const;
+/** CASH_REFUND — o'quvchiga real pul qaytdi; CORRECTION — xato kiritilgan to'lovni bekor qilish (pul aslida kelmagan) */
+export const REFUND_KINDS = ["CASH_REFUND", "CORRECTION"] as const;
+export type RefundKind = (typeof REFUND_KINDS)[number];
 export const RECORD_SOURCES = ["V2", "LEGACY"] as const;
 
 // ─── Teacher compensation ───

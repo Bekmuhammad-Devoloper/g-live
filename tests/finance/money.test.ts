@@ -13,6 +13,7 @@ import {
   discountAmount,
   percentToBp,
   proportionalShare,
+  scaleByRatio,
   sumMoney,
 } from "@/lib/finance/money";
 
@@ -69,8 +70,23 @@ describe("proportionalShare / discount", () => {
     expect(discountAmount(100_000, "FIXED", 150_000)).toBe(100_000);
   });
 
-  it("sumMoney manfiy adjustmentlarni ham qo'shadi", () => {
+  it("sumMoney manfiy adjustmentlarni ham qo'shadi; jami chegaradan oshsa xato", () => {
     expect(sumMoney([400_000, -120_000])).toBe(280_000);
+    expect(() => sumMoney([MAX_MONEY, 1])).toThrow(MoneyError);
+  });
+
+  it("FULL_PRICE_EQUIVALENT: 800k to'lov, narx 1M, chegirma 200k → baza 1M (scaleByRatio nisbat > 1)", () => {
+    expect(scaleByRatio(800_000, 1_000_000, 800_000)).toBe(1_000_000);
+    expect(scaleByRatio(400_000, 1_000_000, 800_000)).toBe(500_000); // qisman to'lov ham proporsional
+    expect(() => proportionalShare(800_000, 1_000_000, 800_000)).toThrow(MoneyError); // nisbat ≤ 1 talab qiladi
+    expect(() => scaleByRatio(MAX_MONEY, 2, 1)).toThrow(MoneyError); // natija chegaradan oshdi
+  });
+
+  it("percentToBp: -0 chiqmaydi, 33.335 → 3334 (yarim yuqoriga, float artefaktisiz)", () => {
+    expect(Object.is(percentToBp(-0.001), 0)).toBe(true);
+    expect(percentToBp(33.335)).toBe(3334);
+    expect(percentToBp(0)).toBe(0);
+    expect(percentToBp(100)).toBe(10_000);
   });
 });
 
@@ -85,6 +101,15 @@ describe("feature flags", () => {
     expect(parseFinanceFlags({ "finance.v2.enabled": "true" }).enabled).toBe(true);
     expect(parseFinanceFlags({ "finance.v2.enabled": "1" }).enabled).toBe(false);
     expect(parseFinanceFlags({ "finance.v2.cutoverAt": "bugun" }).cutoverAt.toISOString()).toBe("2026-09-30T19:00:00.000Z");
+  });
+
+  it("cutover faqat Tashkent oy boshi: to'g'ri qiymat qabul, oy o'rtasi/UTC-yarim-tun/offset'siz — standart", () => {
+    // 1-noyabr 00:00 Tashkent — qabul qilinadi
+    expect(parseFinanceFlags({ "finance.v2.cutoverAt": "2026-11-01T00:00:00+05:00" }).cutoverAt.toISOString()).toBe("2026-10-31T19:00:00.000Z");
+    // "2026-11-01" = UTC yarim tun = 05:00 Tashkent — oy boshi EMAS → standart
+    expect(parseFinanceFlags({ "finance.v2.cutoverAt": "2026-11-01" }).cutoverAt.toISOString()).toBe("2026-09-30T19:00:00.000Z");
+    // oy o'rtasi → standart
+    expect(parseFinanceFlags({ "finance.v2.cutoverAt": "2026-11-15T00:00:00+05:00" }).cutoverAt.toISOString()).toBe("2026-09-30T19:00:00.000Z");
   });
 
   it("isAfterCutover — cutover lahzasi kiradi", () => {

@@ -38,7 +38,8 @@ export function assertRateBp(bp: number, label = "foiz"): number {
 /** 40 (%) → 4000 (bp); 12.5 → 1250. Legacy SalaryRule.amount shu orqali ko'chiriladi. */
 export function percentToBp(percent: number): number {
   if (!Number.isFinite(percent)) throw new MoneyError(`foiz noto'g'ri: ${percent}`);
-  return assertRateBp(Math.round(percent * 100));
+  // `+ 0` — Math.round(-0.001) = -0 ni 0 ga keltiradi (snapshot'da "-0" chiqmasin)
+  return assertRateBp(Math.round(percent * 100) + 0);
 }
 
 /** 4000 → "40%", 1250 → "12.5%" */
@@ -60,7 +61,7 @@ export function applyRateBp(amount: number, rateBp: number): number {
   return Math.round((amount * rateBp) / RATE_BP_SCALE);
 }
 
-/** amount × numerator / denominator (davomat nisbati, FULL_PRICE_EQUIVALENT va h.k.) */
+/** amount × numerator / denominator, nisbat ≤ 1 (davomat nisbati: present/lessons) */
 export function proportionalShare(amount: number, numerator: number, denominator: number): number {
   assertMoney(amount, "baza");
   if (!Number.isSafeInteger(numerator) || numerator < 0) throw new MoneyError(`hissa noto'g'ri: ${numerator}`);
@@ -77,6 +78,19 @@ export function discountAmount(amount: number, type: "PERCENT" | "FIXED", value:
   return Math.min(amount, value);
 }
 
+/**
+ * amount × numerator / denominator, nisbat 1 dan KATTA bo'lishi mumkin —
+ * FULL_PRICE_EQUIVALENT: allocation × originalAmount / finalAmount (chegirmani
+ * markaz ko'targanda baza real to'lovdan katta). Natija MAX_MONEY bilan cheklanadi.
+ */
+export function scaleByRatio(amount: number, numerator: number, denominator: number): number {
+  assertMoney(amount, "baza");
+  if (!Number.isSafeInteger(numerator) || numerator < 0) throw new MoneyError(`hissa noto'g'ri: ${numerator}`);
+  if (!Number.isSafeInteger(denominator) || denominator <= 0) throw new MoneyError(`maxraj noto'g'ri: ${denominator}`);
+  return assertMoney(Math.round((amount * numerator) / denominator), "natija");
+}
+
+/** Yig'indi — har element va JAMI ham chegarada (|Σ| ≤ MAX_MONEY) */
 export function sumMoney(values: readonly number[]): number {
-  return values.reduce((acc, v) => acc + assertSignedMoney(v), 0);
+  return assertSignedMoney(values.reduce((acc, v) => acc + assertSignedMoney(v), 0), "jami");
 }
