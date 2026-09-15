@@ -25,8 +25,8 @@ export default function ApplyForm({ code, preview, questions = [], levels, branc
   questions?: ApplyQuestion[];
   /** Sozlamalar > Darajalar katalogidagi kodlar */
   levels: string[];
-  /** Faol filiallar — oflayn ta'lim uchun */
-  branches: { id: string; name: string; address: string | null }[];
+  /** Faol filiallar — oflayn ta'lim uchun; `image` — filial surati (tanlanganda orqa fon) */
+  branches: { id: string; name: string; address: string | null; image: string | null }[];
 }) {
   const [pending, start] = useTransition();
   const [error, setError] = useState<string | null>(null);
@@ -41,6 +41,8 @@ export default function ApplyForm({ code, preview, questions = [], levels, branc
   const [answers, setAnswers] = useState<string[]>(() => questions.map(() => ""));
 
   const country = useMemo(() => phoneCountry(countryIso), [countryIso]);
+  // Oflayn filial tanlanganda uning surati sahifa foniga tushadi
+  const bgImage = format === "OFFLINE" ? branches.find((b) => b.id === branchId)?.image ?? null : null;
   const setAnswer = (i: number, v: string) => setAnswers((a) => a.map((x, k) => (k === i ? v : x)));
 
   // O'zbekiston uchun "XX XXX XX XX" maskasi, boshqa davlatlar uchun faqat raqamlar
@@ -105,6 +107,13 @@ export default function ApplyForm({ code, preview, questions = [], levels, branc
   }
 
   return (
+    <>
+      {/* Filial surati — butun sahifa foni; ustida oq parda (matn o'qilishi uchun) */}
+      {bgImage && (
+        <div className="animate-pop-in fixed inset-0 -z-10 bg-cover bg-center" style={{ backgroundImage: `url("${bgImage}")` }} aria-hidden>
+          <div className="absolute inset-0 bg-gradient-to-b from-white/55 via-white/70 to-[#f3f5fb]/95 dark:from-[#0b1220]/70 dark:via-[#0b1220]/80 dark:to-[#0b1220]/95" />
+        </div>
+      )}
     <form onSubmit={submit} className={cn(CARD, "mt-5 p-4")}>
       {/* 1) Ta'lim shakli */}
       <Label text="Ta'lim shakli" req />
@@ -235,6 +244,7 @@ export default function ApplyForm({ code, preview, questions = [], levels, branc
       </button>
       {!format && <p className="mt-2 text-center text-[12px] text-slate-400">Boshlash uchun ta&apos;lim shaklini tanlang</p>}
     </form>
+    </>
   );
 }
 

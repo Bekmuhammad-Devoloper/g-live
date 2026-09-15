@@ -33,9 +33,9 @@ export default function CountryPicker({ value, onChange }: { value: string; onCh
         type="button"
         onClick={() => setOpen(true)}
         aria-label="Davlat kodi"
-        className="flex h-[50px] shrink-0 items-center gap-1.5 rounded-l-2xl border-r border-slate-200 bg-slate-50 pl-3 pr-2 transition active:bg-slate-100 dark:border-white/10 dark:bg-white/[0.04]"
+        className="flex h-[50px] shrink-0 items-center gap-2 rounded-l-2xl border-r border-slate-200 bg-slate-50 pl-3 pr-2.5 transition active:bg-slate-100 dark:border-white/10 dark:bg-white/[0.04]"
       >
-        <Flag c={country} className="h-[18px] w-6" />
+        <Flag c={country} className="h-6 w-8" />
         <span className="text-[15px] font-semibold text-slate-700 dark:text-slate-200">{country.code}</span>
         <Icon name="chevronDown" className="h-3.5 w-3.5 text-slate-400" strokeWidth={2.2} />
       </button>

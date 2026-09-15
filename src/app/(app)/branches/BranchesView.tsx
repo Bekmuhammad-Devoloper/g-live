@@ -134,7 +134,8 @@ function BranchForm({ editing, onClose, onSaved, locale }: { editing: VBranch | 
   const formRef = useRef<HTMLFormElement>(null);
   const fileRef = useRef<HTMLInputElement>(null);
 
-  // Galereyadan rasm tanlash — brauzerda kichraytirib (max 256px) data URL'ga aylantiramiz
+  // Galereyadan rasm tanlash — brauzerda kichraytirib (max 1600px) data URL'ga aylantiramiz.
+  // Ilgari 256px edi; ochiq ariza sahifasi filial rasmini orqa fon qilgani uchun kattaroq kerak
   const onPickImage = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file) return;
@@ -142,13 +143,13 @@ function BranchForm({ editing, onClose, onSaved, locale }: { editing: VBranch | 
     reader.onload = () => {
       const img = new window.Image();
       img.onload = () => {
-        const max = 256;
+        const max = 1600;
         const scale = Math.min(1, max / Math.max(img.width, img.height));
         const w = Math.round(img.width * scale), h = Math.round(img.height * scale);
         const canvas = document.createElement("canvas");
         canvas.width = w; canvas.height = h;
         const ctx = canvas.getContext("2d");
-        if (ctx) { ctx.drawImage(img, 0, 0, w, h); setImage(canvas.toDataURL("image/jpeg", 0.82)); }
+        if (ctx) { ctx.drawImage(img, 0, 0, w, h); setImage(canvas.toDataURL("image/jpeg", 0.8)); }
       };
       img.src = reader.result as string;
     };

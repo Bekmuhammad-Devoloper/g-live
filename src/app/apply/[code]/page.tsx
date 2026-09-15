@@ -45,7 +45,7 @@ export default async function ApplyPage({ params, searchParams }: {
   // va oflayn uchun faol filiallar
   const [allLevels, branches] = await Promise.all([
     getLevelCodes(),
-    prisma.branch.findMany({ where: { isActive: true }, select: { id: true, name: true, address: true }, orderBy: { name: "asc" } }),
+    prisma.branch.findMany({ where: { isActive: true }, select: { id: true, name: true, address: true, imageUrl: true }, orderBy: { name: "asc" } }),
   ]);
 
   const APPLY_LEVELS = ["A1", "A2", "B1", "B2"];
@@ -58,7 +58,8 @@ export default async function ApplyPage({ params, searchParams }: {
     : [];
 
   return (
-    <div className="relative min-h-[100dvh] overflow-hidden bg-[#f3f5fb] text-slate-900 dark:bg-[#0b1220] dark:text-slate-100">
+    // `isolate` — forma qo'yadigan filial rasmi (-z-10) shu fon ustida, kontent ostida turadi
+    <div className="relative isolate min-h-[100dvh] overflow-hidden bg-[#f3f5fb] text-slate-900 dark:bg-[#0b1220] dark:text-slate-100">
       {/* Fon bezagi — yumshoq rangli dog'lar */}
       <div className="pointer-events-none absolute -left-24 -top-24 h-72 w-72 rounded-full bg-brand-400/25 blur-3xl dark:bg-brand-500/20" />
       <div className="pointer-events-none absolute -right-24 top-56 h-72 w-72 rounded-full bg-orange-300/30 blur-3xl dark:bg-orange-500/15" />
@@ -108,7 +109,14 @@ export default async function ApplyPage({ params, searchParams }: {
                     Ko&apos;rib chiqish rejimi — ariza yuborilmaydi
                   </div>
                 )}
-                <ApplyForm code={link.code} preview={preview} questions={parseQuestions(v!.questions)} levels={levelCodes} branches={branches} />
+                <ApplyForm
+                  code={link.code}
+                  preview={preview}
+                  questions={parseQuestions(v!.questions)}
+                  levels={levelCodes}
+                  // Rasm data URL'ni HTML'ga qo'ymaymiz — /api/branches/[id]/image orqali
+                  branches={branches.map((b) => ({ id: b.id, name: b.name, address: b.address, image: b.imageUrl ? `/api/branches/${b.id}/image` : null }))}
+                />
               </>
             )}
           </>
