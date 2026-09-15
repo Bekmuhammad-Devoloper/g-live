@@ -137,7 +137,7 @@ export default async function ApplyPage({ params, searchParams }: {
             <span className="min-w-0 flex-1">
               <span className="block break-words text-[15px] font-bold leading-tight text-slate-900 dark:text-white">Germaniya Live</span>
               <span className="mt-1 block break-words text-[12px] leading-tight text-slate-500 dark:text-slate-400">
-                Ilovani yuklab oling · Android{app.version ? ` · ${app.version.replace(/\s*\(\d+\)$/, "")}` : ""}{app.sizeMb ? ` · ${app.sizeMb} MB` : ""}
+                Ilovani yuklab oling{app.version ? ` · ${app.version.replace(/\s*\(\d+\)$/, "")}` : ""}{app.sizeMb ? ` · ${app.sizeMb} MB` : ""}
               </span>
             </span>
             <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-brand-600 text-white shadow-[0_8px_20px_-8px_rgba(65,72,239,0.8)]" aria-label="Yuklab olish">
