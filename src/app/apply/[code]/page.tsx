@@ -41,11 +41,15 @@ export default async function ApplyPage({ params, searchParams }: {
     await prisma.vacancyLink.update({ where: { id: link.id }, data: { views: { increment: 1 }, lastViewedAt: new Date() } });
   }
 
-  // Daraja tugmalari (Sozlamalar > Darajalar) va oflayn uchun faol filiallar
-  const [levelCodes, branches] = await Promise.all([
+  // Daraja tugmalari (Sozlamalar > Darajalar, faqat A1–B2 — arizada C1 shart emas)
+  // va oflayn uchun faol filiallar
+  const [allLevels, branches] = await Promise.all([
     getLevelCodes(),
     prisma.branch.findMany({ where: { isActive: true }, select: { id: true, name: true, address: true }, orderBy: { name: "asc" } }),
   ]);
+
+  const APPLY_LEVELS = ["A1", "A2", "B1", "B2"];
+  const levelCodes = allLevels.filter((c) => APPLY_LEVELS.includes(c.toUpperCase()));
 
   const v = link?.vacancy ?? null;
   // Chiplar: daraja (graduation) va narx (wallet) — ikonkali

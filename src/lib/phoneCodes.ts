@@ -46,6 +46,11 @@ export function phoneCountry(iso: string): PhoneCountry {
   return PHONE_COUNTRIES.find((c) => c.iso === iso) ?? PHONE_COUNTRIES[0];
 }
 
+/** SVG bayroq (public/flags/*.svg, flag-icons 4x3, MIT) — emoji hamma qurilmada bir xil chiqmaydi */
+export function flagSrc(iso: string): string {
+  return `/flags/${iso.toLowerCase()}.svg`;
+}
+
 /** Mahalliy qism uzunligi (raqamlar) — O'zbekiston aynan 9, boshqalar 6–12 */
 export function localDigitsOk(iso: string, digits: string): boolean {
   if (iso === "UZ") return digits.length === 9 && /^[2-9]/.test(digits);

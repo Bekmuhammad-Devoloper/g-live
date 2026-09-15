@@ -6,7 +6,8 @@ import { Icon } from "../../(app)/_components/Icon";
 import { submitApplication, type StudyFormat } from "./actions";
 import type { ApplyQuestion } from "../../(app)/links/questions";
 import { fmtUzPhoneInput } from "@/lib/phone";
-import { DEFAULT_COUNTRY_ISO, PHONE_COUNTRIES, localDigitsOk, phoneCountry } from "@/lib/phoneCodes";
+import { DEFAULT_COUNTRY_ISO, localDigitsOk, phoneCountry } from "@/lib/phoneCodes";
+import CountryPicker from "./CountryPicker";
 
 /**
  * Ochiq ariza formasi — telefon uchun (2026-09-15 talab):
@@ -136,29 +137,8 @@ export default function ApplyForm({ code, preview, questions = [], levels, branc
 
           <Label text="Telefon raqami" req className="mt-3" />
           <div className={cn(INPUT, "flex items-center gap-2 px-0 pr-3 focus-within:border-brand-500 focus-within:ring-4 focus-within:ring-brand-500/15")}>
-            {/* Davlat kodi — MDH va Yevropa ro'yxati; standart O'zbekiston */}
-            <div className="relative flex h-[50px] shrink-0 items-center rounded-l-2xl border-r border-slate-200 bg-slate-50 pl-3 pr-2 dark:border-white/10 dark:bg-white/[0.04]">
-              <span className="text-xl leading-none">{country.flag}</span>
-              <span className="ml-1.5 text-[15px] font-semibold text-slate-700 dark:text-slate-200">{country.code}</span>
-              <Icon name="chevronDown" className="ml-1 h-3.5 w-3.5 text-slate-400" strokeWidth={2.2} />
-              <select
-                value={countryIso}
-                onChange={(e) => onCountry(e.target.value)}
-                aria-label="Davlat kodi"
-                className="absolute inset-0 cursor-pointer opacity-0"
-              >
-                <optgroup label="MDH">
-                  {PHONE_COUNTRIES.filter((c) => c.group === "cis").map((c) => (
-                    <option key={c.iso} value={c.iso}>{c.flag} {c.name} ({c.code})</option>
-                  ))}
-                </optgroup>
-                <optgroup label="Yevropa">
-                  {PHONE_COUNTRIES.filter((c) => c.group === "eu").map((c) => (
-                    <option key={c.iso} value={c.iso}>{c.flag} {c.name} ({c.code})</option>
-                  ))}
-                </optgroup>
-              </select>
-            </div>
+            {/* Davlat kodi — MDH va Yevropa ro'yxati (SVG bayroqli panel); standart O'zbekiston */}
+            <CountryPicker value={countryIso} onChange={onCountry} />
             <input
               value={phone}
               onChange={(e) => onPhone(e.target.value)}
