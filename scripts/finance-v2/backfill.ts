@@ -1,6 +1,6 @@
 // Legacy → V2 backfill. Idempotent, bosqichma-bosqich.
-//   npx tsx scripts/finance-v2/backfill.ts --stage billing|payments|salary|verify [--dry-run] [--db /abs/dev.db] [--upTo 2026-10]
-import { backfillBilling, backfillPayments, backfillSalary, verifyDebt } from "@/lib/finance/ops/backfill";
+//   npx tsx scripts/finance-v2/backfill.ts --stage billing|payments|expenses|salary|verify [--dry-run] [--db /abs/dev.db] [--upTo 2026-10]
+import { backfillBilling, backfillExpenses, backfillPayments, backfillSalary, verifyDebt } from "@/lib/finance/ops/backfill";
 import { openSqlite } from "@/lib/finance/ops/sqlite";
 import { parseYearMonthKey } from "@/lib/finance/period";
 import { fail, parseArgs, printJson, resolveDbPath } from "./_cli";
@@ -22,6 +22,12 @@ async function main() {
       const r = await backfillPayments(client, { dryRun, upTo, log: (l) => console.log(l) });
       printJson("backfill:payments", r);
       console.log(dryRun ? "✓ dry-run (yozilmadi)" : "✓ payments backfill tugadi");
+      return;
+    }
+    if (stage === "expenses") {
+      const r = await backfillExpenses(client, { dryRun });
+      printJson("backfill:expenses", r);
+      console.log(dryRun ? "✓ dry-run (yozilmadi)" : "✓ expenses backfill tugadi");
       return;
     }
     if (stage === "salary") {

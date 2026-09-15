@@ -85,6 +85,8 @@ export async function deleteExpense(id: string): Promise<void> {
 
   const before = await prisma.expense.findUnique({ where: { id } });
   if (!before) return;
+  // Finance V2: ledgerga kiritilgan (postedAt) xarajat jismoniy O'CHIRILMAYDI — tuzatish faqat teskari qator (reverseExpense)
+  if (before.postedAt) return;
 
   await prisma.expense.delete({ where: { id } });
 

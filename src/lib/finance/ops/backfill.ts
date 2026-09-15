@@ -18,6 +18,7 @@ import { studentBalance } from "../billing/balance";
 import { createManualDebtCharge, ensureMonthlyCharges } from "../billing/charges";
 import { syncStudentHistory } from "../billing/history";
 import { postLedger } from "../ledger/post";
+import { normalizeExpenseMethod } from "../expenses/expenses";
 import { applyStudentCredit } from "../payments/allocate";
 import { tashkentYearMonth, type YearMonth } from "../period";
 
@@ -282,6 +283,42 @@ export async function backfillSalary(client: PrismaClient, o: BackfillOptions = 
     await withFinanceTx(client, run, { attempts: 1, timeout: 120_000 });
   } catch (e) {
     if (!(e instanceof DryRunRollback)) throw e;
+  }
+  return report;
+}
+
+
+// ─── EXPENSES bosqichi (Phase 10): legacy Expense → kassa + postedAt + ledger OUT ───
+
+export interface ExpensesBackfillReport {
+  rows: number;
+  posted: number;
+  existing: number;
+  amount: number;
+  dryRun: boolean;
+}
+
+export async function backfillExpenses(client: PrismaClient, o: BackfillOptions = {}): Promise<ExpensesBackfillReport> {
+  const now = o.now ?? new Date();
+  const report: ExpensesBackfillReport = { rows: 0, posted: 0, existing: 0, amount: 0, dryRun: !!o.dryRun };
+  const rows = await client.expense.findMany({ orderBy: { date: "asc" } });
+  report.rows = rows.length;
+  const run = async (tx: Prisma.TransactionClient): Promise<void> => {
+    for (const e of rows) {
+      if (e.postedAt) { report.existing++; continue; }
+      const { method, methodRaw } = normalizeExpenseMethod(e.method);
+      const account = await accountForMethod(tx, e.branchId ?? null, method, o.actorId);
+      await tx.expense.update({ where: { id: e.id }, data: { method, methodRaw: e.methodRaw ?? methodRaw, financialAccountId: e.financialAccountId ?? account.id, postedAt: now, status: e.status || "ACTIVE" } });
+      await postLedger(tx, { accountId: e.financialAccountId ?? account.id, branchId: e.branchId ?? null, type: "EXPENSE", direction: "OUT", amount: e.amount, referenceType: "Expense", referenceId: e.id, occurredAt: e.date, actorId: o.actorId, note: `backfill: ${e.name}` });
+      report.posted++;
+      report.amount += e.amount;
+    }
+    if (o.dryRun) throw new DryRunRollback();
+  };
+  try {
+    await withFinanceTx(client, run, { attempts: 1, timeout: 120_000 });
+  } catch (err) {
+    if (!(err instanceof DryRunRollback)) throw err;
   }
   return report;
 }
