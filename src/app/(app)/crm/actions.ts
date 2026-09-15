@@ -386,7 +386,7 @@ export type BulkResult = { ok: boolean; error?: string; count?: number };
 
 export async function bulkLeadAction(
   leadIds: string[],
-  action: "assign_manager" | "set_stage" | "add_note" | "delete",
+  action: "assign_manager" | "set_stage" | "add_note" | "delete" | "reset_new",
   payload?: { managerId?: string; stage?: string; note?: string }
 ): Promise<BulkResult> {
   const s = await requireSession();
@@ -414,6 +414,17 @@ export async function bulkLeadAction(
       if (!payload?.note) return { ok: false, error: "invalid" };
       await prisma.leadActivity.createMany({ data: leadIds.map((id) => ({ leadId: id, authorId: s.userId, type: "note", result: payload!.note! })) });
       break;
+    case "reset_new": {
+      // Ustunni bo'shatish — lidlar "Yangi"ga qaytadi (direktor / o'rinbosar / ROP).
+      // Guruh biriktiruvi va ustun belgisi tozalanadi; yaratilgan o'quvchi yozuvi (studentId) qoladi.
+      if (![ROLES.DIRECTOR, ROLES.DEPUTY_DIRECTOR, ROLES.ROP].includes(s.role as never)) return { ok: false, error: "forbidden" };
+      await prisma.$transaction([
+        prisma.lead.updateMany({ where: { id: { in: leadIds } }, data: { stage: "NEW", kanbanColumnId: null, groupId: null, enrollEditCount: 0 } }),
+        prisma.leadActivity.createMany({ data: leadIds.map((id) => ({ leadId: id, authorId: s.userId, type: "stage_change", result: "Yangiga qaytarildi (ustun bo'shatildi)" })) }),
+      ]);
+      await writeAudit({ actorId: s.userId, action: "UPDATE", entityType: "Lead", newValue: { count: leadIds.length, stage: "NEW" }, reason: "Ustun bo'shatildi — lidlar Yangiga qaytarildi" });
+      break;
+    }
     case "delete": {
       // Direktor / o'rinbosari / admin — "Daraja testi" (TEST) va yo'qotilgan
       // (LOST) lidlarni; qolganlar faqat yo'qotilganlarni. Ishdagi lidlar

@@ -42,6 +42,8 @@ interface Props {
   branchMode?: BranchMode | null;
   /** Bo'sh vaqtlarni tahrirlash: "all" | filial id | null */
   slotsEditable?: "all" | string | null;
+  /** Ustunni bo'shatish — ustundagi barcha lidlarni Yangiga qaytarish (huquqi bo'lsa) */
+  onResetColumn?: (leadIds: string[], title: string) => void;
 }
 
 /** Standart va guruh ustunlari bitta ko'rinishga keltiriladi */
@@ -64,7 +66,7 @@ const PAGE = 40;
 
 export default function LeadsKanban({
   leads, totals, locale, selected, groupColumns, customColumns,
-  onOpen, onOpenFull, onDropToColumn, onAdd, onAddToGroup, onRemoveGroupCol, onAddToCustom, onRemoveCustomCol, onLevelTestQr, branchColumns = null, branchMode = null, slotsEditable = null, onDelete,
+  onOpen, onOpenFull, onDropToColumn, onAdd, onAddToGroup, onRemoveGroupCol, onAddToCustom, onRemoveCustomCol, onLevelTestQr, branchColumns = null, branchMode = null, slotsEditable = null, onResetColumn, onDelete,
 }: Props) {
   const [dragId, setDragId] = useState<string | null>(null);
   const [overCol, setOverCol] = useState<string | null>(null);
@@ -184,6 +186,16 @@ export default function LeadsKanban({
               </div>
               <div className="flex shrink-0 items-center gap-1">
                 <span className="text-sm font-bold" style={{ color: col.color }}>{totals[col.key] ?? items.length}</span>
+                {onResetColumn && col.key !== "new" && items.length > 0 && (
+                  // Ustunni bo'shatish — hamma lid "Yangi"ga (tasdiq so'raladi)
+                  <button
+                    onClick={() => onResetColumn(items.map((l) => l.id), col.title)}
+                    title={tr(locale, { uz: "Barchasini Yangiga qaytarish", ru: "Вернуть все в «Новые»", en: "Return all to New", de: "Alle zurück zu Neu" })}
+                    className="flex h-6 w-6 items-center justify-center rounded-md text-slate-400 transition hover:bg-amber-50 hover:text-amber-600 dark:hover:bg-white/[0.06]"
+                  >
+                    <Icon name="backspace" className="h-4 w-4" />
+                  </button>
+                )}
                 {col.key === "test" && (
                   // QR — lid telefonida skan qiladi, daraja aniqlash testi saytiga o'tadi
                   <button

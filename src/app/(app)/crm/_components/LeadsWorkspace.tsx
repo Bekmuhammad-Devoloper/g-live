@@ -7,7 +7,7 @@ import { tr } from "@/lib/tr";
 import type { Locale } from "@/lib/constants";
 import { Icon } from "../../_components/Icon";
 import { COLUMNS, branchIdOfCol, branchReplaces, columnDef, columnOf, columnOfLead, customIdOfCol, groupIdOfCol, isBranchCol, isCustomCol, isGroupCol, type BranchColumn, type BranchMode, type BranchModeCfg, type CustomColumn, type GroupColumn, type VLead } from "../_lib/leadColumns";
-import { deleteTestLead, dropLeadToBranch, enrollLeadToGroup, moveLeadStage, moveLeadToColumn, removeKanbanColumn, unpinKanbanGroup } from "../actions";
+import { bulkLeadAction, deleteTestLead, dropLeadToBranch, enrollLeadToGroup, moveLeadStage, moveLeadToColumn, removeKanbanColumn, unpinKanbanGroup } from "../actions";
 import { type Analytics } from "./AnalyticsTiles";
 import FilterBar from "./FilterBar";
 import LeadsKanban from "./LeadsKanban";
@@ -36,6 +36,8 @@ interface Props {
   canWrite: boolean;
   /** Lidni Kanbandan o'chirish huquqi (direktor / o'rinbosari / admin) */
   canDelete?: boolean;
+  /** Ustunni bo'shatish — barcha lidlarni Yangiga qaytarish (direktor / o'rinbosar / ROP) */
+  canResetColumns?: boolean;
   /** Kanbanga biriktirilgan guruh ustunlari */
   initialGroupColumns: GroupColumn[];
   /** Oddiy nomli ustunlar */
@@ -48,7 +50,7 @@ interface Props {
   slotsEditable?: "all" | string | null;
 }
 
-export default function LeadsWorkspace({ locale, initialLeads, managers, sources, analytics, canWrite, canDelete = false, initialGroupColumns, initialCustomColumns, branchColumns = null, branchMode = null, slotsEditable = null }: Props) {
+export default function LeadsWorkspace({ locale, initialLeads, managers, sources, analytics, canWrite, canDelete = false, canResetColumns = false, initialGroupColumns, initialCustomColumns, branchColumns = null, branchMode = null, slotsEditable = null }: Props) {
   const router = useRouter();
   const pathname = usePathname();
   const params = useSearchParams();
@@ -298,6 +300,25 @@ export default function LeadsWorkspace({ locale, initialLeads, managers, sources
 
   // Tezkor o'chirish faqat "Daraja testi" (TEST) lidlari uchun — ishdagi lidlar
   // to'liq sahifadan, ism yozib tasdiqlab o'chiriladi
+  // Ustundagi barcha lidlarni "Yangi"ga qaytarish (tasdiq bilan)
+  const resetColumn = useCallback((ids: string[], title: string) => {
+    if (!ids.length) return;
+    if (!confirm(tr(locale, {
+      uz: `"${title}" ustunidagi ${ids.length} ta lid "Yangi"ga qaytariladi. Guruh biriktiruvi bekor bo'ladi. Davom etasizmi?`,
+      ru: `${ids.length} лидов из столбца «${title}» вернутся в «Новые». Привязка к группе будет снята. Продолжить?`,
+      en: `${ids.length} leads in "${title}" will return to "New". Group assignment is cleared. Continue?`,
+      de: `${ids.length} Leads aus „${title}“ gehen zurück zu „Neu“. Gruppenzuordnung wird entfernt. Fortfahren?`,
+    }))) return;
+    const set = new Set(ids);
+    setLeads((prev) => prev.map((l) => (set.has(l.id) ? { ...l, stage: "NEW", kanbanColumnId: null, groupId: null, groupName: null, enrollEditCount: 0 } : l))); // optimistik
+    startRefresh(async () => {
+      const r = await bulkLeadAction(ids, "reset_new");
+      if (!r.ok) setLeads(initialLeads);
+      else { setFlash(tr(locale, { uz: `${ids.length} ta lid Yangiga qaytarildi`, ru: `${ids.length} лидов возвращены в «Новые»`, en: `${ids.length} leads returned to New`, de: `${ids.length} Leads zurück zu Neu` })); setTimeout(() => setFlash(null), 3000); }
+      router.refresh();
+    });
+  }, [locale, initialLeads, router]);
+
   const askDelete = useCallback((id: string) => {
     const lead = leads.find((l) => l.id === id);
     if (!lead || columnOf(lead.stage) !== "test") return;
@@ -448,6 +469,7 @@ export default function LeadsWorkspace({ locale, initialLeads, managers, sources
           }}
           onLevelTestQr={() => setTestQr(true)}
           onDelete={canDelete ? askDelete : undefined}
+          onResetColumn={canResetColumns ? resetColumn : undefined}
           branchColumns={branchColumns}
           branchMode={branchMode}
           slotsEditable={slotsEditable}
