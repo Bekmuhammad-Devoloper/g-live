@@ -146,13 +146,27 @@ export interface BranchSlotView { id: string; branchId: string; room: string; da
 export interface BranchColumn { branchId: string; name: string; color: string; slots: BranchSlotView[] }
 
 export const BRANCH_COL_PREFIX = "br:";
-/** Filiali tanlanmagan, lekin test/taklif bosqichidagi lidlar uchun zaxira ustun */
+/** Filiali tanlanmagan, lekin taklif bosqichidagi lidlar uchun zaxira ustun */
 export const NO_BRANCH_COL = "nobranch";
 export const branchColKey = (branchId: string) => BRANCH_COL_PREFIX + branchId;
 export const isBranchCol = (key: string) => key.startsWith(BRANCH_COL_PREFIX);
 export const branchIdOfCol = (key: string) => key.slice(BRANCH_COL_PREFIX.length);
-/** Filial rejimida filial ustunlari qaysi standart ustunlar o'rnini oladi */
-export const BRANCH_REPLACES = new Set(["test", "offer"]);
+
+/**
+ * Filial rejimi (kim ko'rayotganiga qarab):
+ *   "sales" — ROP va filial administratori: "Daraja testi" ham, "Taklif" ham yo'q;
+ *             testdan kelgan (TEST) lidlar "Yangi"da turadi — ular hali ishlanmagan;
+ *             filial ustunida faqat ROP o'zi yo'naltirgan (OFFER/AWAITING) lidlar.
+ *   "head"  — direktor / o'rinbosar: hamma ustunlar — "Daraja testi" qoladi, faqat
+ *             "Taklif" o'rnida filial ustunlari.
+ */
+export type BranchMode = "sales" | "head";
+export interface BranchModeCfg { ids: Set<string>; mode: BranchMode }
+
+/** Rejimda filial ustunlari o'rnini olgan standart ustunlar (filtr chiplarida yashiriladi) */
+export function branchReplaces(mode: BranchMode): Set<string> {
+  return mode === "sales" ? new Set(["test", "offer"]) : new Set(["offer"]);
+}
 
 /**
  * Lid qaysi ustunda ko'rinadi:
@@ -165,13 +179,16 @@ export function columnOfLead(
   lead: { stage: string; groupId: string | null; kanbanColumnId?: string | null; branchId?: string | null },
   pinned: Set<string>,
   custom: Set<string> = EMPTY,
-  branches: Set<string> | null = null,
+  branch: BranchModeCfg | null = null,
 ): string {
   if (lead.kanbanColumnId && custom.has(lead.kanbanColumnId)) return customColKey(lead.kanbanColumnId);
   const base = columnOf(lead.stage);
   if (base === "won" && lead.groupId && pinned.has(lead.groupId)) return groupColKey(lead.groupId);
-  if (branches && BRANCH_REPLACES.has(base)) {
-    return lead.branchId && branches.has(lead.branchId) ? branchColKey(lead.branchId) : NO_BRANCH_COL;
+  if (branch) {
+    // Sotuv rejimida testdan kelgan lid hali ishlanmagan — "Yangi"da
+    if (base === "test") return branch.mode === "sales" ? "new" : "test";
+    // Taklif — ROP yo'naltirgan filial ustunida
+    if (base === "offer") return lead.branchId && branch.ids.has(lead.branchId) ? branchColKey(lead.branchId) : NO_BRANCH_COL;
   }
   return base;
 }

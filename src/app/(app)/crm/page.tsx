@@ -7,7 +7,7 @@ import { branchWhere } from "@/lib/branchScope";
 import { Forbidden } from "../_components/ui";
 import LeadsWorkspace from "./_components/LeadsWorkspace";
 import { listKanbanGroups, listKanbanColumns } from "./actions";
-import { columnOf, GROUP_COL_COLORS, type BranchColumn, type VLead } from "./_lib/leadColumns";
+import { columnOf, GROUP_COL_COLORS, type BranchColumn, type BranchMode, type VLead } from "./_lib/leadColumns";
 import type { Analytics } from "./_components/AnalyticsTiles";
 
 export default async function CrmPage() {
@@ -17,13 +17,20 @@ export default async function CrmPage() {
     return <Forbidden title={t("err.forbidden")} body={t("err.forbiddenBody")} />;
   }
 
-  // ROP — filial rejimi: "Daraja testi"/"Taklif" o'rniga filial ustunlari; barcha
-  // filiallar lidlari ko'rinadi (ustunlar o'zi filial bo'yicha ajratadi)
-  const branchMode = s.role === ROLES.ROP;
+  // Filial rejimi (leadColumns.ts BranchMode):
+  //   ROP va filial administratori — "sales": test/taklif o'rniga filial ustunlari;
+  //   direktor / o'rinbosar — "head": hamma ustunlar + filial ustunlari ("Taklif" o'rnida).
+  // ROP va rahbariyat barcha filiallar lidlarini ko'radi (ustunlar filial bo'yicha ajratadi),
+  // administrator — faqat o'z filialini (o'z filiali ustuni).
+  const branchMode: BranchMode | null =
+    s.role === ROLES.ROP || s.role === ROLES.ADMIN ? "sales"
+    : s.role === ROLES.DIRECTOR || s.role === ROLES.DEPUTY_DIRECTOR ? "head"
+    : null;
+  const allBranches = branchMode !== null && s.role !== ROLES.ADMIN;
 
   const [leads, managers, groupColumns, customColumns, branchRows] = await Promise.all([
     prisma.lead.findMany({
-      where: branchMode ? {} : branchWhere(s), // faol filial lidlarigina (filialsiz eski yozuvlar ham)
+      where: allBranches ? {} : branchWhere(s), // faol filial lidlarigina (filialsiz eski yozuvlar ham)
       orderBy: { createdAt: "desc" },
       // Faqat kerakli ustunlar — `include: { manager: true }` har lid uchun butun
       // User yozuvini (parol maydonlari bilan) tortib, 2000 lidda sahifani sekinlashtirardi
@@ -43,7 +50,8 @@ export default async function CrmPage() {
     listKanbanColumns(),  // Oddiy nomli ustunlar
     branchMode
       ? prisma.branch.findMany({
-          where: { isActive: true },
+          // Administrator — faqat o'z filiali ustuni
+          where: { isActive: true, ...(s.role === ROLES.ADMIN && s.branchId ? { id: s.branchId } : {}) },
           select: { id: true, name: true, slots: { select: { id: true, branchId: true, room: true, days: true, startTime: true, endTime: true, note: true }, orderBy: [{ room: "asc" }, { startTime: "asc" }] } },
           orderBy: { name: "asc" },
         })
@@ -115,7 +123,9 @@ export default async function CrmPage() {
       initialGroupColumns={groupColumns}
       initialCustomColumns={customColumns}
       branchColumns={branchMode ? branchColumns : null}
-      canEditSlots={[ROLES.DIRECTOR, ROLES.DEPUTY_DIRECTOR].includes(s.role as never)}
+      branchMode={branchMode}
+      // Bo'sh vaqtlarni kim tahrirlaydi: rahbariyat — hammasini, administrator — o'z filialini
+      slotsEditable={[ROLES.DIRECTOR, ROLES.DEPUTY_DIRECTOR].includes(s.role as never) ? "all" : s.role === ROLES.ADMIN ? (s.branchId ?? null) : null}
     />
   );
 }

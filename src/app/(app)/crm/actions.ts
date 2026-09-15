@@ -780,7 +780,8 @@ export async function dropLeadToBranch(leadId: string, branchId: string): Promis
   ]);
   if (!lead || !branch) return { error: "notfound" };
 
-  const early = ["NEW", "IN_PROGRESS", "CONTACTED"].includes(lead.stage);
+  // Testdan kelgan (TEST) lid ham — filialga tashlangach "Taklif"ga o'tadi (sotuv rejimida u "Yangi"da turardi)
+  const early = ["NEW", "IN_PROGRESS", "CONTACTED", "TEST"].includes(lead.stage);
   await prisma.lead.update({
     where: { id: leadId },
     data: {

@@ -6,7 +6,7 @@ import { cn } from "@/lib/cn";
 import { tr } from "@/lib/tr";
 import type { Locale } from "@/lib/constants";
 import { Icon } from "../../_components/Icon";
-import { BRANCH_REPLACES, COLUMNS, branchIdOfCol, columnDef, columnOf, columnOfLead, customIdOfCol, groupIdOfCol, isBranchCol, isCustomCol, isGroupCol, type BranchColumn, type CustomColumn, type GroupColumn, type VLead } from "../_lib/leadColumns";
+import { COLUMNS, branchIdOfCol, branchReplaces, columnDef, columnOf, columnOfLead, customIdOfCol, groupIdOfCol, isBranchCol, isCustomCol, isGroupCol, type BranchColumn, type BranchMode, type BranchModeCfg, type CustomColumn, type GroupColumn, type VLead } from "../_lib/leadColumns";
 import { deleteTestLead, dropLeadToBranch, enrollLeadToGroup, moveLeadStage, moveLeadToColumn, removeKanbanColumn, unpinKanbanGroup } from "../actions";
 import { type Analytics } from "./AnalyticsTiles";
 import FilterBar from "./FilterBar";
@@ -40,13 +40,15 @@ interface Props {
   initialGroupColumns: GroupColumn[];
   /** Oddiy nomli ustunlar */
   initialCustomColumns: CustomColumn[];
-  /** ROP rejimi — "Daraja testi"/"Taklif" o'rniga filial ustunlari (null — odatdagi) */
+  /** Filial rejimi — filial ustunlari (null — odatdagi kanban) */
   branchColumns?: BranchColumn[] | null;
-  /** Filial ustunidagi bo'sh vaqtlarni tahrirlash (direktor/o'rinbosar) */
-  canEditSlots?: boolean;
+  /** "sales" (ROP/admin) yoki "head" (direktor) — leadColumns.ts */
+  branchMode?: BranchMode | null;
+  /** Bo'sh vaqtlarni tahrirlash: "all" — hamma filial, filial id — faqat o'sha, null — yo'q */
+  slotsEditable?: "all" | string | null;
 }
 
-export default function LeadsWorkspace({ locale, initialLeads, managers, sources, analytics, canWrite, canDelete = false, initialGroupColumns, initialCustomColumns, branchColumns = null, canEditSlots = false }: Props) {
+export default function LeadsWorkspace({ locale, initialLeads, managers, sources, analytics, canWrite, canDelete = false, initialGroupColumns, initialCustomColumns, branchColumns = null, branchMode = null, slotsEditable = null }: Props) {
   const router = useRouter();
   const pathname = usePathname();
   const params = useSearchParams();
@@ -94,7 +96,10 @@ export default function LeadsWorkspace({ locale, initialLeads, managers, sources
 
   const pinnedIds = useMemo(() => new Set(groupColumns.map((g) => g.groupId)), [groupColumns]);
   const customIds = useMemo(() => new Set(customColumns.map((c) => c.id)), [customColumns]);
-  const branchIds = useMemo(() => (branchColumns ? new Set(branchColumns.map((b) => b.branchId)) : null), [branchColumns]);
+  const branchCfg = useMemo<BranchModeCfg | null>(
+    () => (branchColumns && branchMode ? { ids: new Set(branchColumns.map((b) => b.branchId)), mode: branchMode } : null),
+    [branchColumns, branchMode],
+  );
 
   // URL sync — `router.replace` har o'zgarishda (har bir terilgan harfda ham) serverga
   // borib sahifani qayta render qilardi: 2000 lid qayta yuklanib, butun Kanban qayta
@@ -151,11 +156,11 @@ export default function LeadsWorkspace({ locale, initialLeads, managers, sources
   const shownTotals = useMemo(() => {
     const c: Record<string, number> = {};
     for (const l of shown) {
-      const k = columnOfLead(l, pinnedIds, customIds, branchIds);
+      const k = columnOfLead(l, pinnedIds, customIds, branchCfg);
       c[k] = (c[k] ?? 0) + 1;
     }
     return c;
-  }, [shown, pinnedIds, customIds, branchIds]);
+  }, [shown, pinnedIds, customIds, branchCfg]);
 
   // Sana bir marta parse qilinadi — saralash har solishtirishda `new Date` qilmaydi
   const tsOf = useMemo(() => {
@@ -245,7 +250,7 @@ export default function LeadsWorkspace({ locale, initialLeads, managers, sources
       const branchId = branchIdOfCol(colKey);
       const bname = branchColumns?.find((b) => b.branchId === branchId)?.name ?? "";
       setLeads((prev) => prev.map((l) => (l.id === leadId
-        ? { ...l, branchId, branchName: bname, kanbanColumnId: null, stage: ["NEW", "IN_PROGRESS", "CONTACTED"].includes(l.stage) ? "OFFER" : l.stage }
+        ? { ...l, branchId, branchName: bname, kanbanColumnId: null, stage: ["NEW", "IN_PROGRESS", "CONTACTED", "TEST"].includes(l.stage) ? "OFFER" : l.stage }
         : l))); // optimistik
       startRefresh(async () => {
         const r = await dropLeadToBranch(leadId, branchId);
@@ -414,7 +419,7 @@ export default function LeadsWorkspace({ locale, initialLeads, managers, sources
             sources={sources} source={source} onSource={setSource}
             managers={managers} manager={manager} onManager={setManager}
             activeCols={activeCols} onToggleCol={toggleCol}
-            hiddenCols={branchColumns ? BRANCH_REPLACES : undefined}
+            hiddenCols={branchMode ? branchReplaces(branchMode) : undefined}
             counts={chipCounts} hasFilters={hasFilters} onClear={clearFilters}
             sort={sort} onSort={setSort}
           />
@@ -444,7 +449,8 @@ export default function LeadsWorkspace({ locale, initialLeads, managers, sources
           onLevelTestQr={() => setTestQr(true)}
           onDelete={canDelete ? askDelete : undefined}
           branchColumns={branchColumns}
-          canEditSlots={canEditSlots}
+          branchMode={branchMode}
+          slotsEditable={slotsEditable}
         />
       ) : (
         <LeadsTable leads={sortedShown} locale={locale} selected={selection} onToggle={(id) => toggleSelect(id)} onOpen={openLead} onOpenFull={openLeadFull} allSelected={selection.size === shown.length && shown.length > 0} onToggleAll={toggleAll} />

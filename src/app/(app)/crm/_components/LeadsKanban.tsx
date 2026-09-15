@@ -6,7 +6,7 @@ import { cn } from "@/lib/cn";
 import { tr } from "@/lib/tr";
 import type { Locale } from "@/lib/constants";
 import { Icon } from "../../_components/Icon";
-import { COLUMNS, columnOfLead, customColKey, groupColKey, branchColKey, NO_BRANCH_COL, type BranchColumn, type CustomColumn, type GroupColumn, type VLead } from "../_lib/leadColumns";
+import { COLUMNS, columnOfLead, customColKey, groupColKey, branchColKey, NO_BRANCH_COL, type BranchColumn, type BranchMode, type BranchModeCfg, type CustomColumn, type GroupColumn, type VLead } from "../_lib/leadColumns";
 import LeadCard from "./LeadCard";
 import BranchSlotsEditor from "../../branches/slots/BranchSlotsEditor";
 
@@ -36,10 +36,12 @@ interface Props {
   onLevelTestQr: () => void;
   /** Kartadagi savatcha — lidni o'chirish (huquqi bo'lganlarga beriladi) */
   onDelete?: (id: string) => void;
-  /** ROP rejimi: "Daraja testi"/"Taklif" o'rniga filial ustunlari (null — odatdagi kanban) */
+  /** Filial rejimi: filial ustunlari (null — odatdagi kanban) */
   branchColumns?: BranchColumn[] | null;
-  /** Filial ustunidagi bo'sh vaqtlarni tahrirlash huquqi (direktor/o'rinbosar) */
-  canEditSlots?: boolean;
+  /** "sales" — test/taklif o'rnida; "head" — faqat taklif o'rnida (leadColumns.ts) */
+  branchMode?: BranchMode | null;
+  /** Bo'sh vaqtlarni tahrirlash: "all" | filial id | null */
+  slotsEditable?: "all" | string | null;
 }
 
 /** Standart va guruh ustunlari bitta ko'rinishga keltiriladi */
@@ -62,7 +64,7 @@ const PAGE = 40;
 
 export default function LeadsKanban({
   leads, totals, locale, selected, groupColumns, customColumns,
-  onOpen, onOpenFull, onDropToColumn, onAdd, onAddToGroup, onRemoveGroupCol, onAddToCustom, onRemoveCustomCol, onLevelTestQr, branchColumns = null, canEditSlots = false, onDelete,
+  onOpen, onOpenFull, onDropToColumn, onAdd, onAddToGroup, onRemoveGroupCol, onAddToCustom, onRemoveCustomCol, onLevelTestQr, branchColumns = null, branchMode = null, slotsEditable = null, onDelete,
 }: Props) {
   const [dragId, setDragId] = useState<string | null>(null);
   const [overCol, setOverCol] = useState<string | null>(null);
@@ -72,7 +74,10 @@ export default function LeadsKanban({
 
   const pinnedIds = useMemo(() => new Set(groupColumns.map((g) => g.groupId)), [groupColumns]);
   const customIds = useMemo(() => new Set(customColumns.map((c) => c.id)), [customColumns]);
-  const branchIds = useMemo(() => (branchColumns ? new Set(branchColumns.map((b) => b.branchId)) : null), [branchColumns]);
+  const branchCfg = useMemo<BranchModeCfg | null>(
+    () => (branchColumns && branchMode ? { ids: new Set(branchColumns.map((b) => b.branchId)), mode: branchMode } : null),
+    [branchColumns, branchMode],
+  );
 
   // Tartib: standart 4 ta → oddiy nomli ustunlar → "Qabul qilindi" → guruh ustunlari → "Yo'qotilgan"
   const cols = useMemo<ViewCol[]>(() => {
@@ -100,23 +105,24 @@ export default function LeadsKanban({
       groupId: g.groupId,
       customId: null,
     }));
-    // ROP rejimi: test/taklif o'rniga filial ustunlari (+ filiali yo'q lidlar uchun zaxira ustun)
-    if (branchColumns) {
+    // Filial rejimi: "sales" — test/taklif o'rniga filial ustunlari; "head" — daraja testi qoladi,
+    // taklif o'rnida filial ustunlari (+ filiali yo'q taklif lidlari uchun zaxira ustun)
+    if (branchColumns && branchMode) {
       const brs = branchColumns.map<ViewCol>((b) => ({
         key: branchColKey(b.branchId), title: b.name, sub: null, color: b.color, icon: "building", defaultStage: "OFFER", groupId: null, customId: null, branch: b,
       }));
       const noBranch: ViewCol = {
         key: NO_BRANCH_COL,
         title: tr(locale, { uz: "Filial tanlanmagan", ru: "Филиал не выбран", en: "No branch", de: "Keine Filiale" }),
-        sub: tr(locale, { uz: "Test / Taklif", ru: "Тест / Предложение", en: "Test / Offer", de: "Test / Angebot" }),
+        sub: tr(locale, { uz: "Taklif", ru: "Предложение", en: "Offer", de: "Angebot" }),
         color: "#8b5cf6", icon: "filecheck", defaultStage: "OFFER", groupId: null, customId: null,
       };
-      return [std("new"), std("work"), ...brs, noBranch, ...custom, std("won"), ...groups, std("lost")];
+      return [std("new"), std("work"), ...(branchMode === "head" ? [std("test")] : []), ...brs, noBranch, ...custom, std("won"), ...groups, std("lost")];
     }
     return [std("new"), std("work"), std("test"), std("offer"), ...custom, std("won"), ...groups, std("lost")];
-  }, [groupColumns, customColumns, branchColumns, locale]);
+  }, [groupColumns, customColumns, branchColumns, branchMode, locale]);
 
-  const colOf = useCallback((l: VLead) => columnOfLead(l, pinnedIds, customIds, branchIds), [pinnedIds, customIds, branchIds]);
+  const colOf = useCallback((l: VLead) => columnOfLead(l, pinnedIds, customIds, branchCfg), [pinnedIds, customIds, branchCfg]);
 
   const byCol = useMemo(() => {
     const m: Record<string, VLead[]> = {};
@@ -224,7 +230,7 @@ export default function LeadsKanban({
                 <div className="mb-1.5 flex items-center gap-1.5 text-[11px] font-semibold uppercase tracking-wide text-emerald-700 dark:text-emerald-300">
                   <Icon name="clock" className="h-3.5 w-3.5" /> {tr(locale, { uz: "Bo'sh xona / vaqt", ru: "Свободные аудитории / время", en: "Free rooms / time", de: "Freie Räume / Zeit" })}
                 </div>
-                <BranchSlotsEditor branchId={col.branch.branchId} initial={col.branch.slots} canEdit={canEditSlots} locale={locale} compact />
+                <BranchSlotsEditor branchId={col.branch.branchId} initial={col.branch.slots} canEdit={slotsEditable === "all" || slotsEditable === col.branch.branchId} locale={locale} compact />
               </div>
             )}
 
