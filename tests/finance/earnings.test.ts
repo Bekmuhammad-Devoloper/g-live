@@ -17,7 +17,6 @@ import { createTestDb, type TestDb } from "../setup/prismaTestDb";
 const T = (iso: string) => new Date(iso);
 const CUTOVER = T("2026-07-31T19:00:00Z"); // 1-avgust — testda tarix KNOWN bo'lishi uchun
 const AUG = { year: 2026, month: 8 };
-const SEP = { year: 2026, month: 9 };
 const OCT = { year: 2026, month: 10 };
 const NOV = { year: 2026, month: 11 };
 
