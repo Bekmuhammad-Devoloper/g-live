@@ -480,43 +480,53 @@ function GroupBucketCard({ bucket, locale, color, info }: { bucket: Bucket; loca
 
   const inner = (
     <>
-      <div className="flex items-center gap-3">
+      {/* Sarlavha: belgi + nom + kanbandan kelgan lidlar soni */}
+      <div className="flex items-center gap-2.5">
         <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg" style={{ color, background: `${color}1f` }}>
           <Icon name="layers" className="h-4 w-4" />
         </span>
-        <div className="min-w-0 flex-1">
-          <div className="truncate text-sm font-semibold text-slate-800 dark:text-slate-100">{bucket.groupName}</div>
-          {info ? (
-            <div className="mt-0.5 flex items-center gap-1.5 text-[11px] text-slate-500 dark:text-slate-400">
-              <Icon name="user" className="h-3 w-3 shrink-0" />
-              <span className="tabular-nums"><b className="text-slate-700 dark:text-slate-200">{students}</b> / {capacity} {tr(locale, { uz: "o'quvchi", ru: "учеников", en: "students", de: "Schüler" })}</span>
-              <span className="text-slate-300">·</span>
-              <span className="font-semibold" style={{ color: tone }}>
-                {full ? tr(locale, { uz: "To'ldi", ru: "Полно", en: "Full", de: "Voll" }) : tr(locale, { uz: `${free} joy bo'sh`, ru: `${free} мест`, en: `${free} seats left`, de: `${free} Plätze frei` })}
-              </span>
-            </div>
-          ) : (
-            <div className="mt-0.5 text-[11px] text-slate-400">{tr(locale, { uz: `${bucket.count} ta qabul qilingan lid`, ru: `${bucket.count} принятых лидов`, en: `${bucket.count} accepted leads`, de: `${bucket.count} akzeptierte Leads` })}</div>
-          )}
-        </div>
-        <span className="shrink-0 rounded-md px-1.5 py-0.5 text-[10px] font-bold tabular-nums" style={{ color, background: `${color}1a` }} title={tr(locale, { uz: "Kanbandan qabul qilingan lidlar", ru: "Лиды, принятые из канбана", en: "Leads accepted from the board", de: "Aus dem Board aufgenommene Leads" })}>
+        <div className="min-w-0 flex-1 truncate text-sm font-semibold text-slate-800 dark:text-slate-100">{bucket.groupName}</div>
+        <span className="shrink-0 whitespace-nowrap rounded-md px-1.5 py-0.5 text-[10px] font-bold tabular-nums" style={{ color, background: `${color}1a` }} title={tr(locale, { uz: "Kanbandan qabul qilingan lidlar", ru: "Лиды, принятые из канбана", en: "Leads accepted from the board", de: "Aus dem Board aufgenommene Leads" })}>
           {bucket.count} {tr(locale, { uz: "lid", ru: "лид", en: "lead", de: "Lead" })}
         </span>
       </div>
-      {info && (
+
+      {info ? (
         <>
+          {/* O'quvchilar / sig'im va bo'sh joy — bir qatorda, chiplar */}
+          <div className="mt-2.5 flex items-center gap-1.5">
+            <span className="inline-flex items-center gap-1 whitespace-nowrap rounded-md bg-slate-100 px-1.5 py-0.5 text-[11px] font-semibold text-slate-700 dark:bg-white/10 dark:text-slate-200">
+              <Icon name="user" className="h-3 w-3" /> <span className="tabular-nums">{students} / {capacity}</span>
+            </span>
+            <span className="inline-flex items-center gap-1 whitespace-nowrap rounded-md px-1.5 py-0.5 text-[11px] font-bold" style={{ color: tone, background: `${tone}1a` }}>
+              {full ? tr(locale, { uz: "To'ldi", ru: "Полно", en: "Full", de: "Voll" }) : tr(locale, { uz: `${free} joy bo'sh`, ru: `${free} мест`, en: `${free} seats left`, de: `${free} Plätze frei` })}
+            </span>
+          </div>
           {/* To'lganlik chizig'i */}
           <div className="mt-2 h-1.5 overflow-hidden rounded-full bg-slate-100 dark:bg-white/10">
             <div className="h-full rounded-full transition-all" style={{ width: `${pct}%`, background: tone }} />
           </div>
+          {/* Xona · jadval · o'qituvchi — har biri o'z qatorida, ikkala rejimda o'qiladi */}
           {(info.room || info.schedule || info.teacher) && (
-            <div className="mt-1.5 flex flex-wrap items-center gap-x-2 gap-y-0.5 text-[10.5px] text-slate-400">
-              {info.room && <span className="inline-flex items-center gap-1"><Icon name="building" className="h-3 w-3" /> {info.room}</span>}
-              {info.schedule && <span className="inline-flex items-center gap-1"><Icon name="clock" className="h-3 w-3" /> {info.schedule}</span>}
-              {info.teacher && <span className="inline-flex items-center gap-1 truncate"><Icon name="teacher" className="h-3 w-3" /> {info.teacher}</span>}
+            <div className="mt-2 space-y-1 text-[11px] leading-tight text-slate-500 dark:text-slate-300">
+              {(info.room || info.schedule) && (
+                <div className="flex items-center gap-1.5">
+                  {info.room && <span className="inline-flex items-center gap-1 whitespace-nowrap"><Icon name="building" className="h-3.5 w-3.5 shrink-0 text-slate-400 dark:text-slate-400" /> {info.room}</span>}
+                  {info.room && info.schedule && <span className="text-slate-300 dark:text-slate-600">·</span>}
+                  {info.schedule && <span className="inline-flex min-w-0 items-center gap-1"><Icon name="clock" className="h-3.5 w-3.5 shrink-0 text-slate-400 dark:text-slate-400" /> <span className="truncate">{info.schedule}</span></span>}
+                </div>
+              )}
+              {info.teacher && (
+                <div className="flex items-center gap-1.5">
+                  <Icon name="teacher" className="h-3.5 w-3.5 shrink-0 text-slate-400 dark:text-slate-400" />
+                  <span className="truncate font-medium text-slate-700 dark:text-slate-100">{info.teacher}</span>
+                </div>
+              )}
             </div>
           )}
         </>
+      ) : (
+        <div className="mt-1.5 text-[11px] text-slate-400">{tr(locale, { uz: `${bucket.count} ta qabul qilingan lid`, ru: `${bucket.count} принятых лидов`, en: `${bucket.count} accepted leads`, de: `${bucket.count} akzeptierte Leads` })}</div>
       )}
     </>
   );
