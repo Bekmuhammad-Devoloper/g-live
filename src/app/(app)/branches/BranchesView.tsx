@@ -25,7 +25,12 @@ export default function BranchesView({ branches, canManage, locale }: { branches
     return q ? branches.filter((b) => `${b.name} ${b.address}`.toLowerCase().includes(q)) : branches;
   }, [branches, search]);
 
-  const del = (id: string) => { if (confirm(tr(locale, { uz: "Filialni o'chirasizmi?", ru: "Удалить филиал?", en: "Delete this branch?", de: "Filiale löschen?" }))) start(async () => { await deleteBranch(id); router.refresh(); }); };
+  const del = (id: string) => { if (confirm(tr(locale, { uz: "Filialni o'chirasizmi?", ru: "Удалить филиал?", en: "Delete this branch?", de: "Filiale löschen?" }))) start(async () => {
+    const r = await deleteBranch(id);
+    if (r.error === "has-finance-history") alert(tr(locale, { uz: "Bu obyektga moliyaviy tarix bog'langan. Uni o'chirish mumkin emas. Arxivlang.", ru: "С этим объектом связана финансовая история. Удалить его нельзя. Заархивируйте.", en: "This record has financial history linked to it. It cannot be deleted. Archive it instead.", de: "Mit diesem Datensatz ist Finanzhistorie verknüpft. Er kann nicht gelöscht werden. Bitte archivieren." }));
+    else if (r.error === "has-links") alert(tr(locale, { uz: "Filialga xodim yoki guruh bog'langan — avval ularni ko'chiring.", ru: "К филиалу привязаны сотрудники или группы — сначала перенесите их.", en: "Staff or groups are linked to this branch — move them first.", de: "Mitarbeiter oder Gruppen sind mit dieser Filiale verknüpft — bitte zuerst verschieben." }));
+    router.refresh();
+  }); };
 
   const exportCsvNow = () => exportRows(
     tr(locale, { uz: "filiallar", ru: "филиалы", en: "branches", de: "Filialen" }),

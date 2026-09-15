@@ -147,6 +147,7 @@ model User {
   createdRefunds           Refund[]                 @relation("RefundCreatedBy")
   createdAssignments       GroupTeacherAssignment[] @relation("AssignmentCreatedBy")
   createdStatusHistory     StudentStatusHistory[]   @relation("StatusHistoryCreatedBy")
+  createdGroupHistory      GroupStudentHistory[]    @relation("GroupStudentHistoryCreatedBy")
   createdSalaryPolicies    SalaryPolicy[]           @relation("SalaryPolicyCreatedBy")
   createdSalaryRules       SalaryRule[]             @relation("SalaryRuleCreatedBy")
   reviewedEarnings         TeacherEarning[]         @relation("EarningReviewedBy")
@@ -302,11 +303,12 @@ model Student {
   levelUps     StudentLevelUp[]
 
   // Finance V2
-  charges       StudentCharge[]
-  discounts     StudentDiscount[]
-  statusHistory StudentStatusHistory[]
-  refunds       Refund[]
-  earnings      TeacherEarning[]
+  charges        StudentCharge[]
+  discounts      StudentDiscount[]
+  statusHistory  StudentStatusHistory[]
+  groupHistory   GroupStudentHistory[]
+  refunds        Refund[]
+  earnings       TeacherEarning[]
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
@@ -704,6 +706,7 @@ model Group {
   charges            StudentCharge[]
   discounts          StudentDiscount[]
   earnings           TeacherEarning[]
+  studentHistory     GroupStudentHistory[]
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
@@ -1460,7 +1463,12 @@ model FinancialAccount {
   name           String
   type           String // FINANCIAL_ACCOUNT_TYPES: MAIN_CASH | CLICK | PAYME | UZUM | TERMINAL | BANK | CUSTOM
   isActive       Boolean  @default(true)
-  openingBalance Int      @default(0) // so'm; balans = opening + Σ IN − Σ OUT (ledger)
+  // Ochilish balansi TARIXIY FAKT: manba — ledgerdagi type=OPENING_BALANCE qatori
+  // (referenceType "FinancialAccount", referenceId = shu id, occurredAt = openingAt).
+  // Bu ikki ustun yaratilish paytidagi snapshot — service qatlami ularni HECH QACHON
+  // update qilmaydi (3 oydan keyin "opening"ni tahrirlab tarixiy balans o'zgarmasin).
+  // Balans = Σ IN − Σ OUT (ledger, opening qatori ham ichida).
+  openingBalance Int      @default(0)
   openingAt      DateTime @default(now())
   note           String?
   createdById    String?
@@ -1486,10 +1494,10 @@ model FinancialTransaction {
   branch         Branch?  @relation(fields: [branchId], references: [id], onDelete: Restrict)
   accountId      String
   account        FinancialAccount @relation(fields: [accountId], references: [id], onDelete: Restrict)
-  type           String // LEDGER_TYPES: STUDENT_PAYMENT | EXPENSE | SALARY_PAYOUT | REFUND | TRANSFER_IN | TRANSFER_OUT | ADJUSTMENT | OTHER_INCOME
+  type           String // LEDGER_TYPES: OPENING_BALANCE | STUDENT_PAYMENT | EXPENSE | SALARY_PAYOUT | REFUND | TRANSFER_IN | TRANSFER_OUT | ADJUSTMENT | OTHER_INCOME
   direction      String // IN | OUT
   amount         Int // so'm, > 0
-  referenceType  String // Payment | Expense | SalaryPayout | Refund | Transfer | Adjustment
+  referenceType  String // FinancialAccount (opening) | Payment | Expense | SalaryPayout | Refund | Transfer | Adjustment
   referenceId    String
   sequence       Int      @default(0) // bir reference ichida bir nechta qator (split) uchun tartib
   // Manba hujjatning biznes sanasi: Payment.receivedAt · Expense.date · SalaryPayout.paidAt · Refund.refundedAt · Transfer.occurredAt
@@ -1583,9 +1591,20 @@ model StudentCharge {
   // Eski PENDING (qo'lda qarz) Payment qatoridan ko'chirilgan bo'lsa — manba
   legacyPaymentId String?  @unique
   legacyPayment   Payment? @relation("ChargeLegacyPayment", fields: [legacyPaymentId], references: [id], onDelete: Restrict)
-  // MONTHLY: `${studentId}:${groupId}:${YYYY}-${MM}` — bir oyga ikki marta yozilmaydi
+  // MONTHLY: `${studentId}:${groupId}:${YYYY}-${MM}` — bir oyga ikki marta yozilmaydi.
+  // ADJUSTMENT/almashtiruvchi: `${asl chargeKey}:adj:${o'z id}` — MAX(N)+1 emas, poyga xavfsiz.
   chargeKey       String   @unique
-  snapshot        String? // JSON: narx manbai, chegirma, a'zolik va holat intervallari, siyosat
+  // Lineage (D3): bekor qilingan charge qayta tiriltirilmaydi — yangi charge uni ALMASHTIRADI
+  // (replacesChargeId, one-to-one) yoki TUZATADI (adjustsChargeId, one-to-many).
+  replacesChargeId String? @unique
+  replacesCharge   StudentCharge?  @relation("ChargeReplaces", fields: [replacesChargeId], references: [id], onDelete: Restrict)
+  replacedBy       StudentCharge?  @relation("ChargeReplaces")
+  adjustsChargeId  String?
+  adjustsCharge    StudentCharge?  @relation("ChargeAdjusts", fields: [adjustsChargeId], references: [id], onDelete: Restrict)
+  adjustments      StudentCharge[] @relation("ChargeAdjusts")
+  // Snapshot IMMUTABLE: chegirma hisobi (StudentDiscount o'sha paytdagi holati), narx manbai,
+  // a'zolik/holat intervallari, siyosat. Keyin discount o'zgarsa bu invoice o'zgarmaydi — correction = adjustment.
+  snapshot        String? // JSON
   note            String?
   createdById     String?
   createdBy       User?    @relation("ChargeCreatedBy", fields: [createdById], references: [id], onDelete: SetNull)
@@ -1599,6 +1618,7 @@ model StudentCharge {
   @@index([groupId, serviceYear, serviceMonth])
   @@index([branchId, serviceYear, serviceMonth])
   @@index([status, dueDate])
+  @@index([adjustsChargeId])
 }
 
 // ─── O'quvchi chegirmasi (charge yaratilganda qo'llanadi) ───
@@ -1695,6 +1715,8 @@ model GroupTeacherAssignment {
   teacherId          String
   teacher            User     @relation("TeacherAssignments", fields: [teacherId], references: [id], onDelete: Restrict)
   role               String   @default("MAIN") // MAIN | ASSISTANT
+  // REAL sana intervali (D1): oy boshiga majburan tenglashtirilmaydi — 1–15 A, 16–30 B saqlanadi.
+  // Bir oyda ikki MAIN bo'lsa bo'linish SalaryPolicy.assignmentSplitMode bilan (default REVIEW).
   effectiveFrom      DateTime
   effectiveTo        DateTime?
   compensationRuleId String? // assignment darajasidagi qoida (ASSISTANT uchun odatda shart)
@@ -1727,6 +1749,29 @@ model StudentStatusHistory {
   @@index([studentId, effectiveFrom])
 }
 
+// ─── O'quvchining guruh a'zoligi TARIXI (D4) — billing uchun source-of-truth ───
+// `GroupStudent` operatsion holat (unique(group, student) — chiqib qayta kirsa eski
+// interval yo'qoladi). Bu jadval har intervalni alohida saqlaydi; cutover'dan keyingi
+// a'zolik o'zgarishlari shu yerga deterministik yoziladi. Legacy intervallar
+// backfill'da source=INFERRED (GroupStudent.joinedAt/leftAt dan), noaniq bo'lsa NEEDS_REVIEW.
+model GroupStudentHistory {
+  id            String   @id @default(cuid())
+  studentId     String
+  student       Student  @relation(fields: [studentId], references: [id], onDelete: Restrict)
+  groupId       String
+  group         Group    @relation(fields: [groupId], references: [id], onDelete: Restrict)
+  effectiveFrom DateTime
+  effectiveTo   DateTime?
+  source        String   @default("KNOWN") // KNOWN | INFERRED | NEEDS_REVIEW
+  note          String?
+  createdById   String?
+  createdBy     User?    @relation("GroupStudentHistoryCreatedBy", fields: [createdById], references: [id], onDelete: SetNull)
+  createdAt     DateTime @default(now())
+
+  @@index([studentId, effectiveFrom])
+  @@index([groupId, effectiveFrom])
+}
+
 // ─── Maosh siyosati (versiyali; eski versiya mutate qilinmaydi) ───
 model SalaryPolicy {
   id                         String   @id @default(cuid())
@@ -1742,6 +1787,9 @@ model SalaryPolicy {
   attendanceCountedStatuses  String   @default("PRESENT,LATE,ONLINE,MAKEUP") // vergul bilan
   requireConfirmedAttendance Boolean  @default(false) // faqat ustoz tasdiqlagan davomat
   noLessonsMode              String   @default("NO_LESSONS_REVIEW") // NO_LESSONS_REVIEW | (zaxira) NO_LESSONS_AS_FULL | NO_LESSONS_AS_ZERO
+  // D1: bir xizmat oyida MAIN o'qituvchi almashsa (1–15 A, 16–30 B) commission qanday bo'linadi.
+  // REVIEW (default) — avtomatik ikki to'liq commission TAQIQ, earning NEEDS_REVIEW; zaxira: SERVICE_DAYS_RATIO | LESSONS_RATIO | MANUAL_SPLIT
+  assignmentSplitMode        String   @default("REVIEW")
   includeArchivedStudents    Boolean  @default(true)
   includeFrozenStudents      Boolean  @default(true)
   includeZeroAmounts         Boolean  @default(false)

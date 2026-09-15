@@ -25,6 +25,7 @@ export const FINANCIAL_ACCOUNT_TYPES = ["MAIN_CASH", "CLICK", "PAYME", "UZUM", "
 export type FinancialAccountType = (typeof FINANCIAL_ACCOUNT_TYPES)[number];
 
 export const LEDGER_TYPES = [
+  "OPENING_BALANCE", // kassa ochilish balansi — tarixiy fakt, referenceType FinancialAccount
   "STUDENT_PAYMENT",
   "EXPENSE",
   "SALARY_PAYOUT",
@@ -39,7 +40,7 @@ export type LedgerType = (typeof LEDGER_TYPES)[number];
 export const LEDGER_DIRECTIONS = ["IN", "OUT"] as const;
 export type LedgerDirection = (typeof LEDGER_DIRECTIONS)[number];
 
-export const LEDGER_REFERENCE_TYPES = ["Payment", "Expense", "SalaryPayout", "Refund", "Transfer", "Adjustment"] as const;
+export const LEDGER_REFERENCE_TYPES = ["FinancialAccount", "Payment", "Expense", "SalaryPayout", "Refund", "Transfer", "Adjustment"] as const;
 export type LedgerReferenceType = (typeof LEDGER_REFERENCE_TYPES)[number];
 
 /** To'lov usuli → standart kassa turi (S17). HUMO — TERMINAL. */
@@ -101,6 +102,12 @@ export const SUPPORTED_COMPENSATION_TYPES = ["FIXED", "PERCENT"] as const;
 export const ASSIGNMENT_ROLES = ["MAIN", "ASSISTANT"] as const;
 export type AssignmentRole = (typeof ASSIGNMENT_ROLES)[number];
 export const ASSIGNMENT_SOURCES = ["KNOWN", "INFERRED"] as const;
+/** GroupStudentHistory.source — legacy intervallar INFERRED, noaniq bo'lsa NEEDS_REVIEW */
+export const MEMBERSHIP_HISTORY_SOURCES = ["KNOWN", "INFERRED", "NEEDS_REVIEW"] as const;
+
+/** D1: bir xizmat oyida MAIN almashsa commission bo'linishi; faqat REVIEW qo'llab-quvvatlanadi */
+export const ASSIGNMENT_SPLIT_MODES = ["REVIEW", "SERVICE_DAYS_RATIO", "LESSONS_RATIO", "MANUAL_SPLIT"] as const;
+export const SUPPORTED_ASSIGNMENT_SPLIT_MODES = ["REVIEW"] as const;
 
 export const SALARY_BASE_MODES = ["REAL_PAID_AMOUNT", "FULL_PRICE_EQUIVALENT"] as const;
 export type SalaryBaseMode = (typeof SALARY_BASE_MODES)[number];
@@ -129,7 +136,7 @@ export type EarningType = (typeof EARNING_TYPES)[number];
 export const EARNING_STATUSES = ["POSTED", "NEEDS_REVIEW"] as const;
 export type EarningStatus = (typeof EARNING_STATUSES)[number];
 
-export const EARNING_REVIEW_REASONS = ["NO_LESSONS_FOUND", "ASSISTANT_NO_RULE", "RATE_SUM_EXCEEDED", "LEGACY_INFERRED"] as const;
+export const EARNING_REVIEW_REASONS = ["NO_LESSONS_FOUND", "ASSISTANT_NO_RULE", "RATE_SUM_EXCEEDED", "LEGACY_INFERRED", "AMBIGUOUS_ASSIGNMENT"] as const;
 export type EarningReviewReason = (typeof EARNING_REVIEW_REASONS)[number];
 
 export const SALARY_PERIOD_STATUSES = ["OPEN", "CALCULATED", "APPROVED", "PARTIALLY_PAID", "PAID", "CLOSED"] as const;

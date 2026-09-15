@@ -60,6 +60,7 @@ export default function CourseDetail({ course }: { course: CourseData }) {
     startTransition(async () => {
       const res = await deleteCourse(course.id);
       if (res.error === "has-groups") { alert(T("Kursda guruhlar bor. Avval guruhlarni ko'chiring yoki o'chiring.", "В курсе есть группы. Сначала перенесите или удалите группы.", "The course has groups. Move or delete the groups first.", "Der Kurs hat Gruppen. Verschieben oder löschen Sie zuerst die Gruppen.")); return; }
+      if (res.error === "has-finance-history") { alert(T("Bu obyektga moliyaviy tarix bog'langan. Uni o'chirish mumkin emas. Arxivlang.", "С этим объектом связана финансовая история. Удалить его нельзя. Заархивируйте.", "This record has financial history linked to it. It cannot be deleted. Archive it instead.", "Mit diesem Datensatz ist Finanzhistorie verknüpft. Er kann nicht gelöscht werden. Bitte archivieren.")); return; }
       if (res.error) { alert(T("O'chirishda xatolik.", "Ошибка при удалении.", "Error while deleting.", "Fehler beim Löschen.")); return; }
       router.push("/courses");
     });

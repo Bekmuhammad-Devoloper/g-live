@@ -6,6 +6,8 @@ import { TEMPLATE_DB, TMP_DIR } from "./paths";
 
 export interface TestDb {
   prisma: PrismaClient;
+  /** `file:/abs/path` — loyiha singleton'ini (`@/lib/db`) shu bazaga yo'naltirish uchun */
+  url: string;
   /** Bazani yopadi va faylni o'chiradi — `afterAll` da chaqiriladi */
   dispose: () => Promise<void>;
 }
@@ -23,6 +25,7 @@ export function createTestDb(name: string): TestDb {
 
   return {
     prisma,
+    url: `file:${file}`,
     dispose: async () => {
       await prisma.$disconnect();
       for (const suffix of ["", "-journal", "-wal", "-shm"]) {

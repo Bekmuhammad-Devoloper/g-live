@@ -28,7 +28,7 @@ const MODELS = [
   // Finance V2 (Phase 1) — faqat src/lib/finance/** yozadi
   "financialAccount", "financialTransaction", "transfer", "billingPolicy", "studentCharge", "studentDiscount",
   "paymentAllocation", "refund", "groupTeacherAssignment", "studentStatusHistory", "salaryPolicy",
-  "teacherEarning", "salaryPeriod", "salaryPayout", "financePeriodLock",
+  "teacherEarning", "salaryPeriod", "salaryPayout", "financePeriodLock", "groupStudentHistory",
 ];
 const WRITE_OPS = ["create", "createMany", "update", "updateMany", "upsert", "delete", "deleteMany"];
 

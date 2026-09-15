@@ -8,6 +8,7 @@ import { ROLES } from "@/lib/constants";
 import { setSetting } from "@/lib/settings";
 import { writeAudit } from "@/lib/audit";
 import { notifyMany } from "@/lib/notify";
+import { hasFinanceHistory } from "@/lib/finance/guards";
 
 const ALLOWED = [ROLES.DIRECTOR, ROLES.ADMIN, ROLES.DEPUTY_DIRECTOR];
 const can = (r: string) => ALLOWED.includes(r as never);
@@ -37,6 +38,8 @@ export async function deleteUsersPermanent(ids: string[]): Promise<Res> {
   let count = 0, failed = 0;
   for (const id of ids) {
     if (id === s.userId) { failed++; continue; }
+    // Finance V2: maosh/kassa tarixi bor xodim o'chirilmaydi (baza Restrict) — arxivda qoladi
+    if (await hasFinanceHistory("user", id)) { failed++; continue; }
     try { await prisma.user.delete({ where: { id } }); count++; }
     catch { failed++; }
   }

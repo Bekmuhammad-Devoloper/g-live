@@ -15,7 +15,7 @@
     "sync-cdr": "node --env-file=.env scripts/sync-cdr.mjs",
     "app:sync": "cap sync android",
     "app:icons": "node scripts/make-icons.mjs && npx -y @capacitor/assets@latest generate --android --assetPath capacitor/assets && node scripts/fix-adaptive-icon.mjs",
-    "lint": "eslint --no-error-on-unmatched-pattern src/lib/finance tests scripts/check-finance-writers.mjs eslint.config.mjs vitest.config.ts",
+    "lint": "eslint --no-error-on-unmatched-pattern src/lib/finance tests scripts/finance-v2 scripts/check-finance-writers.mjs eslint.config.mjs vitest.config.ts",
     "typecheck": "tsc --noEmit",
     "test": "vitest run",
     "test:tz": "TZ=UTC vitest run && TZ=Asia/Tashkent vitest run"

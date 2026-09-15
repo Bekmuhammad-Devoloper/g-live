@@ -24,6 +24,13 @@ jobs:
         run: |
           ssh -i ~/.ssh/deploy_key -o BatchMode=yes uzbekmen94@34.179.202.164 'bash -s' \
             < deploy/gcp/audit-readonly.sh
+      # Finance V2 Phase 2: prod ma'lumotida DRY-RUN (prod bazaga yozmaydi; backup + nusxada migratsiya).
+      # Faqat shu skript branch'da bo'lsa ishlaydi (finance-v2 ref bilan ishga tushirilganda).
+      - name: Finance V2 dry-run (nusxada, prod DB o'zgarmaydi)
+        if: hashFiles('deploy/gcp/finance-dryrun.sh') != ''
+        run: |
+          ssh -i ~/.ssh/deploy_key -o BatchMode=yes uzbekmen94@34.179.202.164 'bash -s' \
+            < deploy/gcp/finance-dryrun.sh
       - name: Kalitni o'chirish
         if: always()
         run: rm -f ~/.ssh/deploy_key

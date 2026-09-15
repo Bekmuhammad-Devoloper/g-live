@@ -2,6 +2,7 @@
 
 import { revalidatePath } from "next/cache";
 import { prisma } from "@/lib/db";
+import { FINANCE_HISTORY_ERROR, hasFinanceHistory, isRestrictError } from "@/lib/finance/guards";
 import { requireSession } from "@/lib/auth";
 import { ROLES } from "@/lib/constants";
 import { tr } from "@/lib/tr";
@@ -31,15 +32,23 @@ export async function saveBranch(fd: FormData): Promise<{ ok?: boolean; error?: 
   return { ok: true };
 }
 
-export async function deleteBranch(id: string): Promise<void> {
+export async function deleteBranch(id: string): Promise<{ ok: boolean; error?: string }> {
   const s = await requireSession();
-  if (!can(s.role)) return;
+  if (!can(s.role)) return { ok: false, error: "forbidden" };
   // Filialga bog'liq foydalanuvchi/guruh bo'lsa o'chirmaymiz
   const [users, groups] = await Promise.all([
     prisma.user.count({ where: { branchId: id } }),
     prisma.group.count({ where: { branchId: id } }),
   ]);
-  if (users > 0 || groups > 0) return;
-  await prisma.branch.deleteMany({ where: { id } });
+  if (users > 0 || groups > 0) return { ok: false, error: "has-links" };
+  // Finance V2: kassa/ledger/charge bog'langan filial o'chirilmaydi (baza Restrict; bu — tushunarli javob)
+  if (await hasFinanceHistory("branch", id)) return { ok: false, error: FINANCE_HISTORY_ERROR };
+  try {
+    await prisma.branch.deleteMany({ where: { id } });
+  } catch (e) {
+    if (isRestrictError(e)) return { ok: false, error: FINANCE_HISTORY_ERROR };
+    throw e;
+  }
   revalidatePath("/branches");
+  return { ok: true };
 }

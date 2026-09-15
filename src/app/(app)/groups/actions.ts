@@ -7,6 +7,7 @@ import { recordLevelUp } from "@/lib/levelUp";
 import { requireSession, type SessionUser } from "@/lib/auth";
 import { getPermission, MODULES } from "@/lib/rbac";
 import { writeAudit } from "@/lib/audit";
+import { FINANCE_HISTORY_ERROR, hasFinanceHistory, isRestrictError } from "@/lib/finance/guards";
 import { GROUP_FORMATS } from "@/lib/constants";
 import { findRoomConflict, conflictLabel } from "./roomConflict";
 
@@ -83,11 +84,14 @@ export async function deleteGroup(id: string): Promise<{ ok: boolean; error?: st
 
   const g = await prisma.group.findUnique({ where: { id }, select: { name: true } });
   if (!g) return { ok: false, error: "notfound" };
+  // Finance V2: charge/assignment/earning bog'langan guruh o'chirilmaydi (baza Restrict; bu — tushunarli javob)
+  if (await hasFinanceHistory("group", id)) return { ok: false, error: FINANCE_HISTORY_ERROR };
 
   try {
     // GroupStudent/Lesson/Assignment — Cascade; Task/SeasonalAssessment — SetNull
     await prisma.group.delete({ where: { id } });
-  } catch {
+  } catch (e) {
+    if (isRestrictError(e)) return { ok: false, error: FINANCE_HISTORY_ERROR };
     return { ok: false, error: "delete_failed" };
   }
 

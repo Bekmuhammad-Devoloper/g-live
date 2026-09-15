@@ -220,6 +220,25 @@ describe("finance v2 schema", () => {
     await expectPrismaError(p.teacherSalary.delete({ where: { id: ts.id } }), P2003);
   });
 
+  it("GroupStudentHistory (D4): intervallar alohida, Restrict; charge lineage (D3): replaces one-to-one, adjusts one-to-many", async () => {
+    const p = db.prisma;
+    await p.groupStudentHistory.create({ data: { studentId: ids.student, groupId: ids.group, effectiveFrom: new Date("2026-08-31T19:00:00Z"), effectiveTo: new Date("2026-09-30T19:00:00Z"), source: "INFERRED" } });
+    await p.groupStudentHistory.create({ data: { studentId: ids.student, groupId: ids.group, effectiveFrom: new Date("2026-10-31T19:00:00Z") } });
+    expect(await p.groupStudentHistory.count({ where: { studentId: ids.student } })).toBe(2);
+
+    const cancelled = await p.studentCharge.create({ data: { studentId: ids.student, kind: "MONTHLY", serviceYear: 2026, serviceMonth: 11, originalAmount: 1_000_000, finalAmount: 1_000_000, dueDate: new Date(), chargeKey: `${ids.student}:${ids.group}:2026-11`, status: "CANCELLED", cancelReason: "xato" } });
+    const replacement = await p.studentCharge.create({ data: { studentId: ids.student, kind: "MONTHLY", serviceYear: 2026, serviceMonth: 11, originalAmount: 800_000, finalAmount: 800_000, dueDate: new Date(), chargeKey: `${ids.student}:${ids.group}:2026-11:adj:${cancelled.id}`, replacesChargeId: cancelled.id } });
+    await expectPrismaError(
+      p.studentCharge.create({ data: { studentId: ids.student, kind: "MONTHLY", serviceYear: 2026, serviceMonth: 11, originalAmount: 1, finalAmount: 1, dueDate: new Date(), chargeKey: "boshqa", replacesChargeId: cancelled.id } }),
+      P2002,
+    );
+    await p.studentCharge.create({ data: { studentId: ids.student, kind: "ADJUSTMENT", serviceYear: 2026, serviceMonth: 11, originalAmount: 50_000, finalAmount: 50_000, dueDate: new Date(), chargeKey: `adj:${replacement.id}:a`, adjustsChargeId: replacement.id } });
+    await p.studentCharge.create({ data: { studentId: ids.student, kind: "ADJUSTMENT", serviceYear: 2026, serviceMonth: 11, originalAmount: 20_000, finalAmount: 20_000, dueDate: new Date(), chargeKey: `adj:${replacement.id}:b`, adjustsChargeId: replacement.id } });
+    const withLineage = await p.studentCharge.findUniqueOrThrow({ where: { id: cancelled.id }, include: { replacedBy: { include: { adjustments: true } } } });
+    expect(withLineage.replacedBy?.id).toBe(replacement.id);
+    expect(withLineage.replacedBy?.adjustments.length).toBe(2);
+  });
+
   it("transfer: ikki kassa, self-reversal one-to-one", async () => {
     const p = db.prisma;
     const bank = await p.financialAccount.create({ data: { name: "Bank", type: "BANK", branchId: ids.branch } });

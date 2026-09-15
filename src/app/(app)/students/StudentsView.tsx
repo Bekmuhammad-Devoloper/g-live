@@ -805,7 +805,9 @@ function StudentDangerActions({ student: st, locale, onDone }: { student: VStude
   const errText = (code?: string) =>
     code === "forbidden"
       ? L("Bu amal faqat direktor va o'rinbosariga ruxsat etilgan.", "Действие доступно только директору и заместителю.", "Only the director and deputy may do this.")
-      : L("Amal bajarilmadi.", "Не удалось выполнить.", "Action failed.");
+      : code === "has-finance-history"
+        ? L("Bu obyektga moliyaviy tarix bog'langan. Uni o'chirish mumkin emas. Arxivlang.", "С этим объектом связана финансовая история. Удалить его нельзя. Заархивируйте.", "This record has financial history linked to it. It cannot be deleted. Archive it instead.")
+        : L("Amal bajarilmadi.", "Не удалось выполнить.", "Action failed.");
 
   const runArchive = () => start(async () => {
     const r = archived ? await restoreStudent(st.id) : await archiveStudent(st.id);

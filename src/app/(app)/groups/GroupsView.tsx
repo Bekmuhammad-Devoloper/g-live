@@ -406,6 +406,8 @@ function DeleteGroupBtn({ id, name, locale }: { id: string; name: string; locale
     start(async () => {
       const r = await deleteGroup(id);
       if (r.ok) router.refresh();
+      else if (r.error === "has-finance-history") window.alert(tr(locale, { uz: "Bu obyektga moliyaviy tarix bog'langan. Uni o'chirish mumkin emas. Arxivlang.", ru: "С этим объектом связана финансовая история. Удалить его нельзя. Заархивируйте.", en: "This record has financial history linked to it. It cannot be deleted. Archive it instead.", de: "Mit diesem Datensatz ist Finanzhistorie verknüpft. Er kann nicht gelöscht werden. Bitte archivieren." }));
+      else window.alert(tr(locale, { uz: "Guruhni o'chirib bo'lmadi.", ru: "Не удалось удалить группу.", en: "Could not delete the group.", de: "Gruppe konnte nicht gelöscht werden." }));
     });
   };
   return (

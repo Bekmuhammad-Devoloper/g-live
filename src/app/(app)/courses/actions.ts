@@ -5,6 +5,7 @@ import { z } from "zod";
 import { prisma } from "@/lib/db";
 import { requireSession } from "@/lib/auth";
 import { writeAudit } from "@/lib/audit";
+import { FINANCE_HISTORY_ERROR, hasFinanceHistory, isRestrictError } from "@/lib/finance/guards";
 import { ROLES } from "@/lib/constants";
 
 const ALLOWED = [ROLES.DIRECTOR, ROLES.DEPUTY_DIRECTOR, ROLES.ADMIN, ROLES.MANAGER];
@@ -92,8 +93,15 @@ export async function deleteCourse(id: string): Promise<{ ok?: boolean; error?: 
 
   const groups = await prisma.group.count({ where: { programId: id } });
   if (groups > 0) return { error: "has-groups" };
+  // Finance V2: charge/earning bog'langan kurs o'chirilmaydi (baza Restrict; bu — tushunarli javob)
+  if (await hasFinanceHistory("program", id)) return { error: FINANCE_HISTORY_ERROR };
 
-  await prisma.program.delete({ where: { id } });
+  try {
+    await prisma.program.delete({ where: { id } });
+  } catch (e) {
+    if (isRestrictError(e)) return { error: FINANCE_HISTORY_ERROR };
+    throw e;
+  }
   await writeAudit({ actorId: s.userId, action: "DELETE", entityType: "Program", entityId: id });
   revalidatePath("/courses");
   return { ok: true };

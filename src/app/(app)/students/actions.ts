@@ -9,6 +9,7 @@ import { ROLES, EDU_STATUSES, PAYMENT_METHODS } from "@/lib/constants";
 import { canWrite, canRead, MODULES } from "@/lib/rbac";
 import { getSettings } from "@/lib/settings";
 import { writeAudit } from "@/lib/audit";
+import { FINANCE_HISTORY_ERROR, hasFinanceHistory, isRestrictError } from "@/lib/finance/guards";
 import { notify } from "@/lib/notify";
 import { lessonsAttendedThisMonth, MANDATORY_LESSON_THRESHOLD } from "@/lib/paymentPolicy";
 import { computeDebt } from "@/lib/debt";
@@ -451,6 +452,11 @@ export async function restoreStudent(id: string): Promise<EditState> {
  * natijalari va TO'LOV TARIXI ham o'chadi (Payment.studentId majburiy bo'lgani
  * uchun to'lovlarni saqlab qolib bo'lmaydi). Shu sabab faqat direktor va
  * o'rinbosariga ruxsat; audit jurnalida qancha yozuv o'chgani qoladi.
+ *
+ * Finance V2: moliyaviy tarixi (charge, allocation, refund, earning) bor
+ * o'quvchi O'CHIRILMAYDI — baza Restrict bilan to'xtatadi, bu yerdagi
+ * tekshiruv esa foydalanuvchiga tushunarli javob beradi (`has-finance-history`).
+ * Bunday o'quvchi arxivlanadi.
  */
 export async function deleteStudentPermanently(id: string): Promise<EditState> {
   const s = await requireSession();
@@ -463,18 +469,25 @@ export async function deleteStudentPermanently(id: string): Promise<EditState> {
     select: { fullName: true, phone: true, userId: true, _count: { select: { payments: true, attendances: true, enrollments: true } } },
   });
   if (!st) return { error: "notfound" };
+  if (await hasFinanceHistory("student", id)) return { error: FINANCE_HISTORY_ERROR };
 
-  await prisma.$transaction(async (tx) => {
-    // Bog'lanishlarni uzamiz (bular kaskad bilan o'chmaydi)
-    await tx.lead.updateMany({ where: { studentId: id }, data: { studentId: null } });
-    await tx.task.updateMany({ where: { studentId: id }, data: { studentId: null } });
-    // To'lovlar — studentId majburiy, shuning uchun o'chiriladi
-    await tx.payment.deleteMany({ where: { studentId: id } });
-    // Qolgani (davomat, javoblar, sertifikat, guruh a'zoligi...) kaskad bilan ketadi
-    await tx.student.delete({ where: { id } });
-    // O'quvchining tizimga kirish hisobi bo'lsa — u ham o'chiriladi
-    if (st.userId) await tx.user.delete({ where: { id: st.userId } }).catch(() => {});
-  });
+  try {
+    await prisma.$transaction(async (tx) => {
+      // Bog'lanishlarni uzamiz (bular kaskad bilan o'chmaydi)
+      await tx.lead.updateMany({ where: { studentId: id }, data: { studentId: null } });
+      await tx.task.updateMany({ where: { studentId: id }, data: { studentId: null } });
+      // To'lovlar — studentId majburiy, shuning uchun o'chiriladi
+      await tx.payment.deleteMany({ where: { studentId: id } });
+      // Qolgani (davomat, javoblar, sertifikat, guruh a'zoligi...) kaskad bilan ketadi
+      await tx.student.delete({ where: { id } });
+      // O'quvchining tizimga kirish hisobi bo'lsa — u ham o'chiriladi
+      if (st.userId) await tx.user.delete({ where: { id: st.userId } }).catch(() => {});
+    });
+  } catch (e) {
+    // Tekshiruv va o'chirish orasida moliyaviy yozuv paydo bo'lgan bo'lsa — baza to'xtatdi
+    if (isRestrictError(e)) return { error: FINANCE_HISTORY_ERROR };
+    throw e;
+  }
 
   await writeAudit({
     actorId: s.userId,
