@@ -125,6 +125,16 @@ const P: Record<string, JSX.Element> = {
       <circle cx="12" cy="12" r="3.1" />
     </>
   ),
+  // Yashirilgan / nofaol — ko'z chizilgan
+  eyeOff: (
+    <>
+      <path d="M2.2 12S6 5.4 12 5.4c1.6 0 3 .4 4.3 1" />
+      <path d="M21.8 12s-1.6 2.8-4.4 4.7" />
+      <path d="M9.9 9.9a3.1 3.1 0 0 0 4.2 4.2" />
+      <path d="M14.2 14.2A3.1 3.1 0 0 0 12 8.9" />
+      <path d="M3 3l18 18" />
+    </>
+  ),
 
   // Nazorat — qalqon + belgi
   shieldCheck: (

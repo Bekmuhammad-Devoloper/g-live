@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import { prisma } from "@/lib/db";
 import { getLevelCodes } from "@/lib/studyLevels";
 import ApplyForm from "./ApplyForm";
+import ApplyShell from "./ApplyShell";
 import { parseQuestions } from "../../(app)/links/questions";
 import { Icon } from "../../(app)/_components/Icon";
 
@@ -58,12 +59,8 @@ export default async function ApplyPage({ params, searchParams }: {
     : [];
 
   return (
-    // `isolate` — forma qo'yadigan filial rasmi (-z-10) shu fon ustida, kontent ostida turadi
-    <div className="relative isolate min-h-[100dvh] overflow-hidden bg-[#f3f5fb] text-slate-900 dark:bg-[#0b1220] dark:text-slate-100">
-      {/* Fon bezagi — yumshoq rangli dog'lar */}
-      <div className="pointer-events-none absolute -left-24 -top-24 h-72 w-72 rounded-full bg-brand-400/25 blur-3xl dark:bg-brand-500/20" />
-      <div className="pointer-events-none absolute -right-24 top-56 h-72 w-72 rounded-full bg-orange-300/30 blur-3xl dark:bg-orange-500/15" />
-
+    // ApplyShell — sahifa foni (filial tanlanganda uning surati) va bezak dog'lari
+    <ApplyShell>
       <div className="relative mx-auto flex min-h-[100dvh] w-full max-w-md flex-col px-4 pb-[max(1.25rem,env(safe-area-inset-bottom))] pt-[max(1rem,env(safe-area-inset-top))] sm:justify-center sm:py-10">
         {/* Sarlavha: logotip + yorliq */}
         <div className="flex items-center justify-between">
@@ -124,7 +121,7 @@ export default async function ApplyPage({ params, searchParams }: {
 
         <div className="mt-6 text-center text-[11px] text-slate-400 dark:text-slate-500">© 2026 Germaniya Live</div>
       </div>
-    </div>
+    </ApplyShell>
   );
 }
 

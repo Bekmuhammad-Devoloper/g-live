@@ -9,9 +9,9 @@ import { tr } from "@/lib/tr";
 import type { Locale } from "@/lib/constants";
 import { Icon } from "../_components/Icon";
 import MapPicker from "./MapPicker";
-import { saveBranch, deleteBranch } from "./actions";
+import { saveBranch, deleteBranch, setBranchActive } from "./actions";
 
-export interface VBranch { id: string; name: string; address: string; phone: string; lat: number | null; lng: number | null; radius: number; imageUrl: string | null; staff: number; groups: number }
+export interface VBranch { id: string; name: string; address: string; phone: string; lat: number | null; lng: number | null; radius: number; imageUrl: string | null; staff: number; groups: number; isActive: boolean }
 
 export default function BranchesView({ branches, canManage, locale }: { branches: VBranch[]; canManage: boolean; locale: Locale }) {
   const router = useRouter();
@@ -25,7 +25,16 @@ export default function BranchesView({ branches, canManage, locale }: { branches
     return q ? branches.filter((b) => `${b.name} ${b.address}`.toLowerCase().includes(q)) : branches;
   }, [branches, search]);
 
-  const del = (id: string) => { if (confirm(tr(locale, { uz: "Filialni o'chirasizmi?", ru: "Удалить филиал?", en: "Delete this branch?", de: "Filiale löschen?" }))) start(async () => { await deleteBranch(id); router.refresh(); }); };
+  const del = (id: string) => {
+    if (!confirm(tr(locale, { uz: "Filialni o'chirasizmi?", ru: "Удалить филиал?", en: "Delete this branch?", de: "Filiale löschen?" }))) return;
+    start(async () => {
+      const r = await deleteBranch(id);
+      if (r.error) alert(r.error); // bog'liq xodim/guruh bo'lsa — sabab ko'rsatiladi
+      router.refresh();
+    });
+  };
+  // Nofaol filial: ariza formasi va tanlovlarda chiqmaydi, ma'lumotlari saqlanadi
+  const toggleActive = (b: VBranch) => start(async () => { await setBranchActive(b.id, !b.isActive); router.refresh(); });
 
   const exportCsvNow = () => exportRows(
     tr(locale, { uz: "filiallar", ru: "филиалы", en: "branches", de: "Filialen" }),
@@ -86,7 +95,7 @@ export default function BranchesView({ branches, canManage, locale }: { branches
               {filtered.length === 0 ? (
                 <tr><td colSpan={8} className="px-4 py-14 text-center text-slate-400">{tr(locale, { uz: "Ma'lumotlar topilmadi", ru: "Данные не найдены", en: "No data found", de: "Keine Daten gefunden" })}</td></tr>
               ) : filtered.map((b, i) => (
-                <tr key={b.id} className="hover:bg-slate-50 dark:hover:bg-slate-800/50">
+                <tr key={b.id} className={cn("hover:bg-slate-50 dark:hover:bg-slate-800/50", !b.isActive && "opacity-60")}>
                   <td className="px-4 py-3 text-slate-400">{i + 1}</td>
                   <td className="px-4 py-3">
                     <div className="flex items-center gap-2.5">
@@ -96,6 +105,7 @@ export default function BranchesView({ branches, canManage, locale }: { branches
                         <span className="grid h-8 w-8 shrink-0 place-items-center rounded-full bg-slate-100 text-slate-400 dark:bg-slate-800"><Icon name="building" className="h-4 w-4" /></span>
                       )}
                       <span className="font-medium text-slate-800 dark:text-slate-100">{b.name}</span>
+                      {!b.isActive && <span className="rounded-md bg-slate-100 px-1.5 py-0.5 text-[10px] font-semibold text-slate-500 dark:bg-white/10 dark:text-slate-300">{tr(locale, { uz: "Nofaol", ru: "Неактивен", en: "Inactive", de: "Inaktiv" })}</span>}
                     </div>
                   </td>
                   <td className="px-4 py-3 text-slate-500">{b.address || "—"}</td>
@@ -107,6 +117,7 @@ export default function BranchesView({ branches, canManage, locale }: { branches
                     <td className="px-4 py-3">
                       <div className="flex items-center justify-end gap-2 text-slate-400">
                         <button onClick={() => { setEditing(b); setOpen(true); }} className="transition hover:text-brand-600" title={tr(locale, { uz: "Tahrirlash", ru: "Редактировать", en: "Edit", de: "Bearbeiten" })}><Icon name="pencil" className="h-4 w-4" /></button>
+                        <button onClick={() => toggleActive(b)} disabled={pending} className="transition hover:text-amber-600" title={b.isActive ? tr(locale, { uz: "Nofaol qilish (arizada chiqmaydi)", ru: "Сделать неактивным", en: "Deactivate", de: "Deaktivieren" }) : tr(locale, { uz: "Faollashtirish", ru: "Активировать", en: "Activate", de: "Aktivieren" })}><Icon name={b.isActive ? "eyeOff" : "eye"} className="h-4 w-4" /></button>
                         <button onClick={() => del(b.id)} className="transition hover:text-rose-600" title={tr(locale, { uz: "O'chirish", ru: "Удалить", en: "Delete", de: "Löschen" })}><Icon name="trash" className="h-4 w-4" /></button>
                       </div>
                     </td>

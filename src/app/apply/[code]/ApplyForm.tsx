@@ -1,6 +1,6 @@
 "use client";
 
-import { useMemo, useState, useTransition } from "react";
+import { useEffect, useMemo, useState, useTransition } from "react";
 import { cn } from "@/lib/cn";
 import { Icon } from "../../(app)/_components/Icon";
 import { submitApplication, type StudyFormat } from "./actions";
@@ -8,6 +8,7 @@ import type { ApplyQuestion } from "../../(app)/links/questions";
 import { fmtUzPhoneInput } from "@/lib/phone";
 import { DEFAULT_COUNTRY_ISO, localDigitsOk, phoneCountry } from "@/lib/phoneCodes";
 import CountryPicker from "./CountryPicker";
+import { useApplyBg } from "./ApplyShell";
 
 /**
  * Ochiq ariza formasi — telefon uchun (2026-09-15 talab):
@@ -41,8 +42,10 @@ export default function ApplyForm({ code, preview, questions = [], levels, branc
   const [answers, setAnswers] = useState<string[]>(() => questions.map(() => ""));
 
   const country = useMemo(() => phoneCountry(countryIso), [countryIso]);
-  // Oflayn filial tanlanganda uning surati sahifa foniga tushadi
+  // Oflayn filial tanlanganda uning surati sahifa foniga tushadi (ApplyShell chizadi)
   const bgImage = format === "OFFLINE" ? branches.find((b) => b.id === branchId)?.image ?? null : null;
+  const setBg = useApplyBg();
+  useEffect(() => { setBg(bgImage); }, [bgImage, setBg]);
   const setAnswer = (i: number, v: string) => setAnswers((a) => a.map((x, k) => (k === i ? v : x)));
 
   // O'zbekiston uchun "XX XXX XX XX" maskasi, boshqa davlatlar uchun faqat raqamlar
@@ -107,13 +110,6 @@ export default function ApplyForm({ code, preview, questions = [], levels, branc
   }
 
   return (
-    <>
-      {/* Filial surati — butun sahifa foni; ustida oq parda (matn o'qilishi uchun) */}
-      {bgImage && (
-        <div className="animate-pop-in fixed inset-0 -z-10 bg-cover bg-center" style={{ backgroundImage: `url("${bgImage}")` }} aria-hidden>
-          <div className="absolute inset-0 bg-gradient-to-b from-white/55 via-white/70 to-[#f3f5fb]/95 dark:from-[#0b1220]/70 dark:via-[#0b1220]/80 dark:to-[#0b1220]/95" />
-        </div>
-      )}
     <form onSubmit={submit} className={cn(CARD, "mt-5 p-4")}>
       {/* 1) Ta'lim shakli */}
       <Label text="Ta'lim shakli" req />
@@ -245,7 +241,6 @@ export default function ApplyForm({ code, preview, questions = [], levels, branc
       </button>
       {!format && <p className="mt-2 text-center text-[12px] text-slate-400">Boshlash uchun ta&apos;lim shaklini tanlang</p>}
     </form>
-    </>
   );
 }
 
