@@ -17,6 +17,8 @@ export interface ApplyExtra {
   branchId?: string;
   /** Onlayn bo'lsa — Telegram username */
   telegram?: string;
+  /** Telegram profilidan topilgan ism (faqat izoh uchun) */
+  telegramName?: string;
   /** Telefon davlat kodi (ISO: UZ, DE, ...) */
   countryIso?: string;
   level?: string;
@@ -99,6 +101,7 @@ export async function submitApplication(
       note: [
         `Kurs/vakansiya: ${link.vacancy.title}${link.vacancy.country ? " (" + link.vacancy.country + ")" : ""}`,
         `Ta'lim shakli: ${format === "ONLINE" ? "onlayn" : "oflayn"}`,
+        ...(format === "ONLINE" && tg ? [`Telegram: @${tg}${extra.telegramName ? " — " + String(extra.telegramName).trim().slice(0, 80) : ""}`] : []),
         ...qa, // savollarga javoblar — CRM'da lid izohida ko'rinadi
       ].join("\n"),
       stage: "NEW",
@@ -110,4 +113,53 @@ export async function submitApplication(
   });
   revalidatePath("/links");
   return { ok: true };
+}
+
+/* ─── Telegram username tekshiruvi ────────────────────────────────────
+   Ochiq profil sahifasi t.me/<username> og:title / og:image / og:description
+   beradi. Mavjud bo'lmasa og:title "Telegram: Contact @..." bo'ladi.
+   Formada yozilayotganda chaqiriladi — natija 10 daqiqa xotirada keshlanadi
+   (har harfda t.me ga bormaslik uchun). Faqat ma'lumot: ism/rasm ko'rsatiladi,
+   ariza baribir foydalanuvchi yozgan ism bilan yuboriladi.                 */
+
+export type TelegramProfile = { ok: true; username: string; name: string; photo: string | null; bio: string | null } | { ok: false; username: string };
+
+const TG_RE = /^[a-zA-Z][a-zA-Z0-9_]{3,31}$/;
+const tgCache = new Map<string, { at: number; v: TelegramProfile }>();
+const TG_TTL = 10 * 60 * 1000;
+
+const decodeHtml = (t: string) => t.replace(/&amp;/g, "&").replace(/&quot;/g, '"').replace(/&#39;/g, "'").replace(/&lt;/g, "<").replace(/&gt;/g, ">");
+const meta = (html: string, prop: string) => decodeHtml(new RegExp(`<meta property="og:${prop}" content="([^"]*)"`).exec(html)?.[1] ?? "");
+
+export async function lookupTelegram(raw: string): Promise<TelegramProfile> {
+  const username = String(raw ?? "").trim().replace(/^@+/, "");
+  if (!TG_RE.test(username)) return { ok: false, username };
+
+  const key = username.toLowerCase();
+  const hit = tgCache.get(key);
+  if (hit && Date.now() - hit.at < TG_TTL) return hit.v;
+
+  let v: TelegramProfile = { ok: false, username };
+  try {
+    const res = await fetch(`https://t.me/${username}`, {
+      headers: { "User-Agent": "Mozilla/5.0 (compatible; GermaniyaLive/1.0)" },
+      cache: "no-store",
+      signal: AbortSignal.timeout(6000),
+    });
+    if (res.ok) {
+      const html = await res.text();
+      const title = meta(html, "title");
+      // Mavjud profil: sahifada tgme_page_title bor va sarlavha "Telegram: Contact" emas
+      if (html.includes('class="tgme_page_title"') && !/^Telegram: Contact/i.test(title) && title) {
+        const photo = html.includes("tgme_page_photo_image") ? meta(html, "image") || null : null;
+        const bio = meta(html, "description").trim().slice(0, 160) || null;
+        v = { ok: true, username, name: title.slice(0, 80), photo: photo && /^https:\/\//.test(photo) ? photo : null, bio };
+      }
+    }
+  } catch {
+    /* tarmoq xatosi — "topilmadi" emas, shunchaki ko'rsatmaymiz */
+    return { ok: false, username };
+  }
+  tgCache.set(key, { at: Date.now(), v });
+  return v;
 }

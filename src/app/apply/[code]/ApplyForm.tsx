@@ -3,7 +3,7 @@
 import { useEffect, useMemo, useState, useTransition } from "react";
 import { cn } from "@/lib/cn";
 import { Icon } from "../../(app)/_components/Icon";
-import { submitApplication, type StudyFormat } from "./actions";
+import { lookupTelegram, submitApplication, type StudyFormat, type TelegramProfile } from "./actions";
 import type { ApplyQuestion } from "../../(app)/links/questions";
 import { fmtUzPhoneInput } from "@/lib/phone";
 import { DEFAULT_COUNTRY_ISO, localDigitsOk, phoneCountry } from "@/lib/phoneCodes";
@@ -38,6 +38,9 @@ export default function ApplyForm({ code, preview, questions = [], levels, branc
   const [countryIso, setCountryIso] = useState(DEFAULT_COUNTRY_ISO);
   const [phone, setPhone] = useState("");
   const [telegram, setTelegram] = useState("");
+  // Telegram profili — username yozilgach t.me dan ism/rasm olib ko'rsatiladi
+  const [tgProfile, setTgProfile] = useState<TelegramProfile | null>(null);
+  const [tgLoading, setTgLoading] = useState(false);
   const [level, setLevel] = useState("");
   const [answers, setAnswers] = useState<string[]>(() => questions.map(() => ""));
 
@@ -46,6 +49,21 @@ export default function ApplyForm({ code, preview, questions = [], levels, branc
   const bgImage = format === "OFFLINE" ? branches.find((b) => b.id === branchId)?.image ?? null : null;
   const setBg = useApplyBg();
   useEffect(() => { setBg(bgImage); }, [bgImage, setBg]);
+
+  // Username o'zgarganda 600 ms kutib, profilni tekshiramiz (har harfda emas)
+  useEffect(() => {
+    const u = telegram.trim();
+    if (u.length < 4) { setTgProfile(null); setTgLoading(false); return; }
+    setTgLoading(true);
+    let alive = true;
+    const t = setTimeout(async () => {
+      const r = await lookupTelegram(u).catch(() => null);
+      if (!alive) return;
+      setTgProfile(r);
+      setTgLoading(false);
+    }, 600);
+    return () => { alive = false; clearTimeout(t); };
+  }, [telegram]);
   const setAnswer = (i: number, v: string) => setAnswers((a) => a.map((x, k) => (k === i ? v : x)));
 
   // O'zbekiston uchun "XX XXX XX XX" maskasi, boshqa davlatlar uchun faqat raqamlar
@@ -73,6 +91,7 @@ export default function ApplyForm({ code, preview, questions = [], levels, branc
     start(async () => {
       const r = await submitApplication(code, fullName, `${country.code} ${phone}`, answers, {
         format, branchId: format === "OFFLINE" ? branchId : undefined, telegram: format === "ONLINE" ? telegram : undefined, countryIso, level,
+        telegramName: tgProfile?.ok && tgProfile.username.toLowerCase() === telegram.trim().toLowerCase() ? tgProfile.name : undefined,
       });
       if (r.ok) { setDone(true); window.scrollTo({ top: 0 }); }
       else setError(r.error ?? "Xatolik");
@@ -171,6 +190,34 @@ export default function ApplyForm({ code, preview, questions = [], levels, branc
                   className="h-[50px] w-full flex-1 bg-transparent text-[16px] outline-none placeholder:text-slate-300 dark:placeholder:text-slate-600"
                 />
               </div>
+              {/* Topilgan profil — ism, rasm, bio; topilmasa ogohlantirish */}
+              {telegram.trim().length >= 4 && (tgLoading || tgProfile) && (
+                <div className="animate-pop-in mt-2">
+                  {tgLoading || !tgProfile ? (
+                    <div className="flex items-center gap-2 rounded-2xl bg-slate-50 px-3.5 py-2.5 text-[12.5px] text-slate-500 dark:bg-white/[0.04] dark:text-slate-400">
+                      <span className="h-3.5 w-3.5 animate-spin rounded-full border-2 border-slate-300 border-t-brand-500" /> Telegram tekshirilmoqda…
+                    </div>
+                  ) : tgProfile.ok ? (
+                    <div className="flex items-center gap-3 rounded-2xl border border-emerald-200 bg-emerald-50 px-3 py-2.5 dark:border-emerald-500/30 dark:bg-emerald-500/10">
+                      {tgProfile.photo ? (
+                        // eslint-disable-next-line @next/next/no-img-element
+                        <img src={tgProfile.photo} alt="" className="h-10 w-10 shrink-0 rounded-full object-cover ring-2 ring-white dark:ring-white/10" />
+                      ) : (
+                        <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-sky-500 text-white"><Icon name="telegram" className="h-5 w-5" strokeWidth={1.8} /></span>
+                      )}
+                      <span className="min-w-0 flex-1">
+                        <span className="block truncate text-[14px] font-bold text-slate-900 dark:text-white">{tgProfile.name}</span>
+                        <span className="block truncate text-[12px] text-slate-500 dark:text-slate-400">@{tgProfile.username}{tgProfile.bio ? ` · ${tgProfile.bio}` : ""}</span>
+                      </span>
+                      <Icon name="check" className="h-5 w-5 shrink-0 text-emerald-600" strokeWidth={2.2} />
+                    </div>
+                  ) : (
+                    <div className="flex items-center gap-2 rounded-2xl border border-amber-200 bg-amber-50 px-3.5 py-2.5 text-[12.5px] text-amber-700 dark:border-amber-500/30 dark:bg-amber-500/10 dark:text-amber-300">
+                      <Icon name="alert" className="h-4 w-4 shrink-0" strokeWidth={2} /> @{tgProfile.username} topilmadi — username'ni tekshiring
+                    </div>
+                  )}
+                </div>
+              )}
               <p className="mt-1.5 text-[12px] text-slate-400">Darslar va materiallar Telegram orqali yuboriladi</p>
             </div>
           )}
