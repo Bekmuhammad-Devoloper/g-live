@@ -7,7 +7,7 @@ import { branchWhere } from "@/lib/branchScope";
 import { Forbidden } from "../_components/ui";
 import LeadsWorkspace from "./_components/LeadsWorkspace";
 import { listKanbanGroups, listKanbanColumns } from "./actions";
-import { columnOf, GROUP_COL_COLORS, type BranchColumn, type BranchMode, type VLead } from "./_lib/leadColumns";
+import { columnOf, GROUP_COL_COLORS, weekdaysLabel, type BranchColumn, type BranchMode, type GroupInfo, type VLead } from "./_lib/leadColumns";
 import type { Analytics } from "./_components/AnalyticsTiles";
 
 export default async function CrmPage() {
@@ -107,6 +107,27 @@ export default async function CrmPage() {
     createdAt: l.createdAt.toISOString(),
   }));
 
+  // "Qabul qilindi" ustunidagi guruh kartalari uchun haqiqiy holat: o'quvchilar soni / sig'im, jadval.
+  // Ilgari kartada faqat kanbandan tushgan lidlar soni ("1") turardi — guruhda 7 o'quvchi bo'lsa ham.
+  const wonGroupIds = [...new Set(leads.map((l) => l.groupId).filter((x): x is string => !!x))];
+  const groupRows = wonGroupIds.length
+    ? await prisma.group.findMany({
+        where: { id: { in: wonGroupIds } },
+        select: {
+          id: true, capacity: true, room: true, weekdays: true, startTime: true, endTime: true,
+          teacher: { select: { fullName: true } },
+          _count: { select: { students: { where: { isActive: true } } } },
+        },
+      })
+    : [];
+  const groupInfo: Record<string, GroupInfo> = Object.fromEntries(groupRows.map((g) => [g.id, {
+    students: g._count.students,
+    capacity: g.capacity,
+    room: g.room,
+    schedule: [weekdaysLabel(g.weekdays), g.startTime && g.endTime ? `${g.startTime}–${g.endTime}` : g.startTime].filter(Boolean).join(" · ") || null,
+    teacher: g.teacher?.fullName ?? null,
+  }]));
+
   // Analitika
   const now = new Date();
   const t0 = new Date(now.getFullYear(), now.getMonth(), now.getDate()).getTime();
@@ -138,6 +159,7 @@ export default async function CrmPage() {
       initialGroupColumns={groupColumns}
       initialCustomColumns={customColumns}
       branchColumns={branchMode ? branchColumns : null}
+      groupInfo={groupInfo}
       branchMode={branchMode}
       showOnlineCol={!isAdmin}
       // Bo'sh vaqtlarni kim tahrirlaydi: rahbariyat — hammasini, administrator — o'z filialini

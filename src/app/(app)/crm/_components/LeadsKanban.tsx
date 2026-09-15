@@ -6,7 +6,7 @@ import { cn } from "@/lib/cn";
 import { tr } from "@/lib/tr";
 import type { Locale } from "@/lib/constants";
 import { Icon } from "../../_components/Icon";
-import { COLUMNS, ONLINE_COL, columnOfLead, customColKey, groupColKey, branchColKey, slotDropKey, type BranchColumn, type BranchMode, type BranchModeCfg, type CustomColumn, type GroupColumn, type VLead } from "../_lib/leadColumns";
+import { COLUMNS, ONLINE_COL, columnOfLead, customColKey, groupColKey, branchColKey, slotDropKey, type BranchColumn, type BranchMode, type BranchModeCfg, type CustomColumn, type GroupColumn, type GroupInfo, type VLead } from "../_lib/leadColumns";
 import LeadCard from "./LeadCard";
 import BranchSlotsEditor from "../../branches/slots/BranchSlotsEditor";
 
@@ -38,6 +38,8 @@ interface Props {
   onDelete?: (id: string) => void;
   /** Filial rejimi: filial ustunlari (null — odatdagi kanban) */
   branchColumns?: BranchColumn[] | null;
+  /** Guruh kartalari uchun holat (o'quvchilar / sig'im / jadval) */
+  groupInfo?: Record<string, GroupInfo>;
   /** "sales" — test/taklif o'rnida; "head" — faqat taklif o'rnida (leadColumns.ts) */
   branchMode?: BranchMode | null;
   /** "Onlayn" ustuni (filial administratorida ko'rsatilmaydi) */
@@ -68,7 +70,7 @@ const PAGE = 40;
 
 export default function LeadsKanban({
   leads, totals, locale, selected, groupColumns, customColumns,
-  onOpen, onOpenFull, onDropToColumn, onAdd, onAddToGroup, onRemoveGroupCol, onAddToCustom, onRemoveCustomCol, onLevelTestQr, branchColumns = null, branchMode = null, showOnlineCol = true, slotsEditable = null, onResetColumn, onDelete,
+  onOpen, onOpenFull, onDropToColumn, onAdd, onAddToGroup, onRemoveGroupCol, onAddToCustom, onRemoveCustomCol, onLevelTestQr, branchColumns = null, groupInfo = {}, branchMode = null, showOnlineCol = true, slotsEditable = null, onResetColumn, onDelete,
 }: Props) {
   const [dragId, setDragId] = useState<string | null>(null);
   const [overCol, setOverCol] = useState<string | null>(null);
@@ -299,6 +301,7 @@ export default function LeadsKanban({
                   onDragStart={onDragStart}
                   onDragEnd={onDragEnd}
                   onDelete={onDelete}
+                  groupInfo={groupInfo}
                 />
               ) : col.branch && col.branch.slots.length > 0 && !items.some((l) => !l.branchSlotId) ? (
                 // Xonalar bor, xonasiz lid yo'q — ustunning o'ziga tashlash uchun kichik zona
@@ -355,8 +358,9 @@ interface Bucket {
 }
 
 function WonColumn({
-  items, locale, color, selected, limit, onMore, onOpen, onOpenFull, onDragStart, onDragEnd, onDelete,
+  items, locale, color, selected, limit, onMore, onOpen, onOpenFull, onDragStart, onDragEnd, onDelete, groupInfo = {},
 }: {
+  groupInfo?: Record<string, GroupInfo>;
   items: VLead[];
   locale: Locale;
   color: string;
@@ -432,7 +436,7 @@ function WonColumn({
             count={buckets.reduce((n, b) => n + b.count, 0)}
           />
           {buckets.map((b) => (
-            <GroupBucketCard key={b.groupId ?? b.groupName} bucket={b} locale={locale} color={color} />
+            <GroupBucketCard key={b.groupId ?? b.groupName} bucket={b} locale={locale} color={color} info={b.groupId ? groupInfo[b.groupId] : undefined} />
           ))}
         </>
       )}
@@ -465,30 +469,59 @@ function SectionLabel({ icon, color, text, count }: { icon: string; color: strin
   );
 }
 
-function GroupBucketCard({ bucket, locale, color }: { bucket: Bucket; locale: Locale; color: string }) {
+function GroupBucketCard({ bucket, locale, color, info }: { bucket: Bucket; locale: Locale; color: string; info?: GroupInfo }) {
+  // Guruhning haqiqiy holati: o'quvchilar / sig'im, bo'sh joy; to'lganda qizil, 80%+ da sariq
+  const students = info?.students ?? 0;
+  const capacity = info?.capacity ?? 0;
+  const free = Math.max(0, capacity - students);
+  const pct = capacity > 0 ? Math.min(100, Math.round((students / capacity) * 100)) : 0;
+  const full = capacity > 0 && students >= capacity;
+  const tone = full ? "#ef4444" : pct >= 80 ? "#f59e0b" : "#10b981";
+
   const inner = (
     <>
-      <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg" style={{ color, background: `${color}1f` }}>
-        <Icon name="layers" className="h-4 w-4" />
-      </span>
-      <div className="min-w-0 flex-1">
-        <div className="truncate text-sm font-semibold text-slate-800 dark:text-slate-100">{bucket.groupName}</div>
-        <div className="mt-0.5 text-[11px] text-slate-400">
-          {tr(locale, {
-            uz: `${bucket.count} ta qabul qilingan lid`,
-            ru: `${bucket.count} принятых лидов`,
-            en: `${bucket.count} accepted leads`,
-            de: `${bucket.count} akzeptierte Leads`,
-          })}
+      <div className="flex items-center gap-3">
+        <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg" style={{ color, background: `${color}1f` }}>
+          <Icon name="layers" className="h-4 w-4" />
+        </span>
+        <div className="min-w-0 flex-1">
+          <div className="truncate text-sm font-semibold text-slate-800 dark:text-slate-100">{bucket.groupName}</div>
+          {info ? (
+            <div className="mt-0.5 flex items-center gap-1.5 text-[11px] text-slate-500 dark:text-slate-400">
+              <Icon name="user" className="h-3 w-3 shrink-0" />
+              <span className="tabular-nums"><b className="text-slate-700 dark:text-slate-200">{students}</b> / {capacity} {tr(locale, { uz: "o'quvchi", ru: "учеников", en: "students", de: "Schüler" })}</span>
+              <span className="text-slate-300">·</span>
+              <span className="font-semibold" style={{ color: tone }}>
+                {full ? tr(locale, { uz: "To'ldi", ru: "Полно", en: "Full", de: "Voll" }) : tr(locale, { uz: `${free} joy bo'sh`, ru: `${free} мест`, en: `${free} seats left`, de: `${free} Plätze frei` })}
+              </span>
+            </div>
+          ) : (
+            <div className="mt-0.5 text-[11px] text-slate-400">{tr(locale, { uz: `${bucket.count} ta qabul qilingan lid`, ru: `${bucket.count} принятых лидов`, en: `${bucket.count} accepted leads`, de: `${bucket.count} akzeptierte Leads` })}</div>
+          )}
         </div>
+        <span className="shrink-0 rounded-md px-1.5 py-0.5 text-[10px] font-bold tabular-nums" style={{ color, background: `${color}1a` }} title={tr(locale, { uz: "Kanbandan qabul qilingan lidlar", ru: "Лиды, принятые из канбана", en: "Leads accepted from the board", de: "Aus dem Board aufgenommene Leads" })}>
+          {bucket.count} {tr(locale, { uz: "lid", ru: "лид", en: "lead", de: "Lead" })}
+        </span>
       </div>
-      <span className="shrink-0 rounded-md px-1.5 py-0.5 text-xs font-bold tabular-nums" style={{ color, background: `${color}1a` }}>
-        {bucket.count}
-      </span>
+      {info && (
+        <>
+          {/* To'lganlik chizig'i */}
+          <div className="mt-2 h-1.5 overflow-hidden rounded-full bg-slate-100 dark:bg-white/10">
+            <div className="h-full rounded-full transition-all" style={{ width: `${pct}%`, background: tone }} />
+          </div>
+          {(info.room || info.schedule || info.teacher) && (
+            <div className="mt-1.5 flex flex-wrap items-center gap-x-2 gap-y-0.5 text-[10.5px] text-slate-400">
+              {info.room && <span className="inline-flex items-center gap-1"><Icon name="building" className="h-3 w-3" /> {info.room}</span>}
+              {info.schedule && <span className="inline-flex items-center gap-1"><Icon name="clock" className="h-3 w-3" /> {info.schedule}</span>}
+              {info.teacher && <span className="inline-flex items-center gap-1 truncate"><Icon name="teacher" className="h-3 w-3" /> {info.teacher}</span>}
+            </div>
+          )}
+        </>
+      )}
     </>
   );
 
-  const cls = "flex items-center gap-3 rounded-xl border border-slate-200 bg-white p-3 transition dark:border-white/[0.07] dark:bg-[#15243d]";
+  const cls = "block rounded-xl border border-slate-200 bg-white p-3 transition dark:border-white/[0.07] dark:bg-[#15243d]";
 
   // Guruh o'chirilgan bo'lsa (groupId yo'q) — havolasiz ko'rsatiladi
   return bucket.groupId ? (

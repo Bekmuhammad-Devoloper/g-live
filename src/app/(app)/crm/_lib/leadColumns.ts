@@ -95,6 +95,24 @@ export interface GroupColumn {
   icon: string;
 }
 
+/** "Qabul qilindi" ustunidagi guruh kartasi uchun haqiqiy holat (Guruhlar bo'limidan) */
+export interface GroupInfo {
+  students: number;
+  capacity: number;
+  room: string | null;
+  /** "Du, Chor, Ju · 18:00–19:30" */
+  schedule: string | null;
+  teacher: string | null;
+}
+
+/** "1,3,5" → "Du, Chor, Ju" */
+export function weekdaysLabel(raw: string | null | undefined): string | null {
+  if (!raw) return null;
+  const names = ["", "Du", "Se", "Chor", "Pay", "Ju", "Sha", "Yak"];
+  const parts = raw.split(",").map((x) => names[Number(x.trim())]).filter(Boolean);
+  return parts.length ? parts.join(", ") : null;
+}
+
 export const GROUP_COL_PREFIX = "grp:";
 
 export function groupColKey(groupId: string): string {
