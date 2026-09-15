@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import { prisma } from "@/lib/db";
 import { getLevelCodes } from "@/lib/studyLevels";
 import { branchHasImage } from "@/lib/branchImage";
+import { getAppRelease } from "@/lib/appRelease";
 import ApplyForm from "./ApplyForm";
 import ApplyShell from "./ApplyShell";
 import { parseQuestions } from "../../(app)/links/questions";
@@ -45,9 +46,11 @@ export default async function ApplyPage({ params, searchParams }: {
 
   // Daraja tugmalari (Sozlamalar > Darajalar, faqat A1–B2 — arizada C1 shart emas)
   // va oflayn uchun faol filiallar
-  const [allLevels, branches] = await Promise.all([
+  // + Android ilovasi — pastdagi "Ilovani yuklab oling" kartasi (serverdagi eng oxirgi APK)
+  const [allLevels, branches, app] = await Promise.all([
     getLevelCodes(),
     prisma.branch.findMany({ where: { isActive: true }, select: { id: true, name: true, address: true, imageUrl: true }, orderBy: { name: "asc" } }),
+    getAppRelease(),
   ]);
 
   const APPLY_LEVELS = ["A1", "A2", "B1", "B2"];
@@ -119,6 +122,25 @@ export default async function ApplyPage({ params, searchParams }: {
               </>
             )}
           </>
+        )}
+
+        {/* Ilovani yuklab olish — har doim eng oxirgi versiya (/api/app/android serverdagi faylni beradi) */}
+        {app.available && (
+          <a
+            href={app.href}
+            className="mt-6 flex items-center gap-3 rounded-3xl border border-white/60 bg-white/85 p-4 shadow-[0_20px_50px_-24px_rgba(15,23,42,0.35)] backdrop-blur transition active:scale-[0.98] dark:border-white/10 dark:bg-white/[0.06]"
+          >
+            <span className="flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl bg-gradient-to-br from-brand-500 to-brand-700 text-white shadow-md">
+              <Icon name="download" className="h-6 w-6" strokeWidth={1.8} />
+            </span>
+            <span className="min-w-0 flex-1">
+              <span className="block text-[15px] font-bold text-slate-900 dark:text-white">Ilovani yuklab oling</span>
+              <span className="block text-[12.5px] text-slate-500 dark:text-slate-400">
+                Android{app.version ? ` · ${app.version}` : ""}{app.sizeMb ? ` · ${app.sizeMb} MB` : ""} — darslar, davomat, to&apos;lovlar telefonda
+              </span>
+            </span>
+            <Icon name="arrow" className="h-5 w-5 shrink-0 text-brand-600 dark:text-brand-300" strokeWidth={2.2} />
+          </a>
         )}
 
         <div className="mt-6 text-center text-[11px] text-slate-400 dark:text-slate-500">© 2026 Germaniya Live</div>
