@@ -141,7 +141,7 @@ export default async function ApplyPage({ params, searchParams }: {
               </span>
             </span>
             <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-brand-600 text-white shadow-[0_8px_20px_-8px_rgba(65,72,239,0.8)]" aria-label="Yuklab olish">
-              <Icon name="download" className="h-5 w-5" strokeWidth={2} />
+              <Icon name="arrowDownToLine" className="h-5 w-5" strokeWidth={2.4} />
             </span>
           </a>
         )}

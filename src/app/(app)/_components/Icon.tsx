@@ -278,6 +278,8 @@ const P: Record<string, JSX.Element> = {
   // ── Havolalar / platformalar ──
   // QR kod — uch burchak belgisi + ma'lumot nuqtalari
   qr: <><rect x="3.5" y="3.5" width="6.5" height="6.5" rx="1.2" /><rect x="14" y="3.5" width="6.5" height="6.5" rx="1.2" /><rect x="3.5" y="14" width="6.5" height="6.5" rx="1.2" /><path d="M6.75 6.75h.01M17.25 6.75h.01M6.75 17.25h.01" /><path d="M14 14h3v3h-3zM20.5 14v3M14 20.5h3M20.5 20.5h.01" /></>,
+  // iOS uslubidagi yuklab olish (SF "arrow.down.to.line") — chiziq ustiga tushayotgan strelka
+  arrowDownToLine: <><path d="M12 3.5v12.5" /><path d="m6.5 10.5 5.5 5.5 5.5-5.5" /><path d="M5 20.5h14" /></>,
   link: <><path d="M9.5 14.5 14.5 9.5" /><path d="M11 6.2 12.3 4.9a4 4 0 0 1 5.7 5.7l-1.3 1.3" /><path d="M13 17.8 11.7 19.1a4 4 0 0 1-5.7-5.7l1.3-1.3" /></>,
   globe: <><circle cx="12" cy="12" r="9.2" /><path d="M2.8 12h18.4" /><path d="M12 2.8c2.6 2.5 4 5.8 4 9.2s-1.4 6.7-4 9.2c-2.6-2.5-4-5.8-4-9.2s1.4-6.7 4-9.2Z" /></>,
   telegram: <><path d="M21.5 4.3 2.8 11.5c-.9.35-.88 1.65.03 1.97l4.7 1.66 1.8 5.3c.24.7 1.14.86 1.6.28l2.28-2.83 4.6 3.38c.6.44 1.46.11 1.62-.62l3.2-15.1c.18-.86-.66-1.58-1.53-1.42Z" /><path d="m7.5 15.1 9.7-6.6-7.4 7.6" /></>,
