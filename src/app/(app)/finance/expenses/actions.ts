@@ -7,6 +7,7 @@ import { prisma } from "@/lib/db";
 import { requireSession } from "@/lib/auth";
 import { canWrite, MODULES } from "@/lib/rbac";
 import { writeAudit } from "@/lib/audit";
+import { financeV2Enabled, legacyCreateExpense } from "@/lib/finance/legacyAdapter";
 
 export type ExState = { ok?: boolean; error?: string };
 
@@ -35,6 +36,14 @@ export async function createExpense(_prev: ExState, formData: FormData): Promise
     note: formData.get("note") || undefined,
   });
   if (!parsed.success) return { error: "invalid" };
+
+  // Finance V2 yoqilgan bo'lsa — ledger OUT bilan V2 xarajat
+  if (await financeV2Enabled()) {
+    const v2 = await legacyCreateExpense(s, { name: parsed.data.name, amount: parsed.data.amount, date: new Date(parsed.data.date), method: parsed.data.method, categoryId: parsed.data.categoryId ?? null, recipient: parsed.data.recipient ?? null, note: parsed.data.note ?? null, branchId: s.branchId ?? null });
+    if (!v2.ok) return { error: v2.error === "forbidden" ? "forbidden" : "invalid" };
+    revalidatePath("/finance/expenses");
+    return { ok: true };
+  }
 
   const exp = await prisma.expense.create({
     data: {

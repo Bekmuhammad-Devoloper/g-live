@@ -11,6 +11,7 @@ import { getSettings } from "@/lib/settings";
 import { writeAudit } from "@/lib/audit";
 import { financeAfterStudentChange } from "@/lib/finance/hooks";
 import { FINANCE_HISTORY_ERROR, hasFinanceHistory, isRestrictError } from "@/lib/finance/guards";
+import { financeV2Enabled, isV2Payment, legacyAcceptPayment, legacyAddDebt } from "@/lib/finance/legacyAdapter";
 import { notify } from "@/lib/notify";
 import { lessonsAttendedThisMonth, MANDATORY_LESSON_THRESHOLD } from "@/lib/paymentPolicy";
 import { computeDebt } from "@/lib/debt";
@@ -169,15 +170,20 @@ export async function acceptPayment(
 
   const docNumber = `CHK-${paidAt.getFullYear()}${p2r(paidAt.getMonth() + 1)}${p2r(paidAt.getDate())}-${randomUUID().slice(0, 4).toUpperCase()}`;
 
-  const payment = await prisma.payment.create({
-    data: { studentId, amount, method: input.method, purpose, status: "PAID", isManual: true, authorId: s.userId, docNumber, receiptUrl, createdAt: paidAt },
-  });
-
-  await writeAudit({
-    actorId: s.userId, action: "CREATE", entityType: "Payment", entityId: payment.id,
-    newValue: { amount, method: input.method, purpose, docNumber, isManual: true },
-    reason: "To'lov qabul qilindi (chek)",
-  });
+  // Finance V2 yoqilgan bo'lsa — to'lov V2 dvigateli orqali (ledger, taqsimot, o'qituvchi ulushi, audit ichida)
+  if (await financeV2Enabled()) {
+    const v2 = await legacyAcceptPayment(s, { studentId, amount, method: input.method, purpose, paidAt, receiptUrl, docNumber });
+    if (!v2.ok) return { ok: false, error: v2.error === "period_locked" ? "period_locked" : v2.error === "forbidden" ? "forbidden" : "invalid" };
+  } else {
+    const payment = await prisma.payment.create({
+      data: { studentId, amount, method: input.method, purpose, status: "PAID", isManual: true, authorId: s.userId, docNumber, receiptUrl, createdAt: paidAt },
+    });
+    await writeAudit({
+      actorId: s.userId, action: "CREATE", entityType: "Payment", entityId: payment.id,
+      newValue: { amount, method: input.method, purpose, docNumber, isManual: true },
+      reason: "To'lov qabul qilindi (chek)",
+    });
+  }
 
   // O'quvchi (va ota-onasi)ga bildirishnoma
   const full = await prisma.student.findUnique({ where: { id: studentId }, include: { parents: { include: { parent: true } } } });
@@ -589,6 +595,13 @@ export async function addStudentDebt(
 
   const st = await prisma.student.findUnique({ where: { id: studentId }, select: { id: true, fullName: true } });
   if (!st) return { error: "notfound" };
+  // Finance V2: qo'lda qarz = MANUAL_DEBT charge (PENDING to'lov emas)
+  if (await financeV2Enabled()) {
+    const v2 = await legacyAddDebt(s, studentId, amount, input.purpose ?? null);
+    if (!v2.ok) return { error: "invalid" };
+    revalidatePath("/students");
+    return { ok: true };
+  }
 
   let createdAt = new Date();
   if (input.dateIso) { const d = new Date(input.dateIso); if (!isNaN(d.getTime())) createdAt = d; }
@@ -627,6 +640,8 @@ export async function updatePaymentRecord(
 ): Promise<{ ok?: boolean; error?: string }> {
   const s = await requireSession();
   if (!CAN_EDIT_PAY.includes(s.role as never)) return { error: "forbidden" };
+  // Finance V2 ga kiritilgan to'lov tahrirlanmaydi — tuzatish faqat reversal (Moliya V2 → To'lovlar)
+  if (await isV2Payment(paymentId)) return { error: "v2-immutable" };
 
   const existing = await prisma.payment.findUnique({
     where: { id: paymentId },
@@ -673,6 +688,8 @@ export async function updatePaymentRecord(
 export async function deletePaymentRecord(paymentId: string): Promise<{ ok?: boolean; error?: string }> {
   const s = await requireSession();
   if (!CAN_EDIT_PAY.includes(s.role as never)) return { error: "forbidden" };
+  // Finance V2 ga kiritilgan to'lov jismoniy O'CHIRILMAYDI — tuzatish faqat reversal
+  if (await isV2Payment(paymentId)) return { error: "v2-immutable" };
 
   const existing = await prisma.payment.findUnique({
     where: { id: paymentId },

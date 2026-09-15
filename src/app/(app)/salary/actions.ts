@@ -7,6 +7,7 @@ import { requireSession } from "@/lib/auth";
 import { getPermission, MODULES } from "@/lib/rbac";
 import { ROLES } from "@/lib/constants";
 import { writeAudit } from "@/lib/audit";
+import { financeV2Enabled } from "@/lib/finance/legacyAdapter";
 
 export type FormState = { ok?: boolean; error?: string };
 
@@ -30,6 +31,8 @@ const schema = z.object({
 export async function saveTeacherSalary(_prev: FormState, formData: FormData): Promise<FormState> {
   const s = await requireSession();
   if (!canManageSalary(s.role)) return { error: "forbidden" };
+  // Finance V2: maosh manbai TeacherEarning/SalaryPeriod — eski jadvalga yozilmaydi (Moliya V2 → Maoshlar)
+  if (await financeV2Enabled()) return { error: "v2" };
 
   const parsed = schema.safeParse({
     teacherId: formData.get("teacherId"),

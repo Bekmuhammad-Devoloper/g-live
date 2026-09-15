@@ -7,6 +7,7 @@ import { prisma } from "@/lib/db";
 import { requireSession } from "@/lib/auth";
 import { canWrite, MODULES } from "@/lib/rbac";
 import { writeAudit } from "@/lib/audit";
+import { financeV2Enabled, legacyAcceptPayment, legacyCancelPayment } from "@/lib/finance/legacyAdapter";
 import { notify } from "@/lib/notify";
 import { formatMoney, PAYMENT_METHODS, MAX_MONEY } from "@/lib/constants";
 
@@ -38,6 +39,15 @@ export async function createManualPayment(_prev: PayState, formData: FormData): 
     note: formData.get("note") || undefined,
   });
   if (!parsed.success) return { error: "invalid" };
+
+  // Finance V2 yoqilgan bo'lsa — V2 dvigateli (ledger, taqsimot, ulush)
+  if (await financeV2Enabled()) {
+    const v2 = await legacyAcceptPayment(s, { studentId: parsed.data.studentId, amount: parsed.data.amount, method: parsed.data.method, purpose: parsed.data.purpose ?? "Kurs to'lovi", docNumber: parsed.data.docNumber, note: parsed.data.note ?? null });
+    if (!v2.ok) return { error: v2.error === "forbidden" ? "forbidden" : "invalid" };
+    revalidatePath("/payments");
+    revalidatePath("/finance");
+    return { ok: true };
+  }
 
   const payment = await prisma.payment.create({
     data: {
@@ -149,6 +159,8 @@ export async function cancelPayment(paymentId: string, reason: string): Promise<
 
   const before = await prisma.payment.findUnique({ where: { id: paymentId } });
   if (!before || before.status === "CANCELLED") return;
+  // Finance V2 ga kiritilgan to'lov — bekor qilish = correction (reversal), status o'zgartirish emas
+  if (before.postedAt) { await legacyCancelPayment(s, paymentId, reason); revalidatePath("/payments"); return; }
 
   await prisma.payment.update({
     where: { id: paymentId },

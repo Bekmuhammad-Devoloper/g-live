@@ -7,6 +7,7 @@ import { prisma } from "@/lib/db";
 import { requireSession } from "@/lib/auth";
 import { getPermission, MODULES } from "@/lib/rbac";
 import { writeAudit } from "@/lib/audit";
+import { financeV2Enabled } from "@/lib/finance/legacyAdapter";
 
 export type RuleState = { ok?: boolean; error?: string };
 
@@ -25,6 +26,8 @@ const schema = z.object({
 export async function addSalaryRule(_prev: RuleState, formData: FormData): Promise<RuleState> {
   const s = await requireSession();
   if (!canManage(s.role)) return { error: "forbidden" };
+  // Finance V2: qoidalar versiyali — Moliya V2 → Ish haqi sozlamalari
+  if (await financeV2Enabled()) return { error: "v2" };
 
   const parsed = schema.safeParse({
     scope: formData.get("scope"),
@@ -63,6 +66,8 @@ export async function addSalaryRule(_prev: RuleState, formData: FormData): Promi
 export async function deleteSalaryRule(id: string): Promise<void> {
   const s = await requireSession();
   if (!canManage(s.role)) return;
+  // Finance V2: qoida o'chirilmaydi (tarix) — effectiveTo bilan yopiladi
+  if (await financeV2Enabled()) return;
   await prisma.salaryRule.delete({ where: { id } }).catch(() => {});
   revalidatePath("/finance/salary");
 }
@@ -73,6 +78,8 @@ export type CalcState = { ok?: boolean; error?: string; count?: number; total?: 
 export async function calculateSalaries(_prev: CalcState, formData: FormData): Promise<CalcState> {
   const s = await requireSession();
   if (!canManage(s.role)) return { error: "forbidden" };
+  // Finance V2: ulush to'lov paytida yoziladi; "Hisoblash" — Moliya V2 → Maoshlar (snapshot)
+  if (await financeV2Enabled()) return { error: "v2" };
 
   const period = String(formData.get("period") || ""); // "YYYY-MM"
   const m = /^(\d{4})-(\d{2})$/.exec(period);

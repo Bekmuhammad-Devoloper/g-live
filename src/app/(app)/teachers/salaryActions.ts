@@ -6,6 +6,7 @@ import { requireSession } from "@/lib/auth";
 import { ROLES, parseMoney } from "@/lib/constants";
 import { tr } from "@/lib/tr";
 import { writeAudit } from "@/lib/audit";
+import { financeV2Enabled } from "@/lib/finance/legacyAdapter";
 
 // Maoshni faqat rahbariyat boshqaradi
 function canManage(role: string) {
@@ -17,6 +18,8 @@ export type SalaryResult = { ok: true } | { ok: false; error: string };
 export async function setTeacherFiksa(teacherId: string, fiksa: number): Promise<SalaryResult> {
   const s = await requireSession();
   if (!canManage(s.role)) return { ok: false, error: "forbidden" };
+  // Finance V2: fiks maosh = SalaryRule (FIXED, TEACHER) — Ish haqi sozlamalari orqali
+  if (await financeV2Enabled()) return { ok: false, error: "v2" };
   // Yuqori chegara SHART: Int'ga sig'maydigan qiymat SQLite'ga yozilib, keyin
   // /teachers butunlay ochilmay qolgan (2026-09-11)
   const amount = parseMoney(fiksa);
@@ -36,6 +39,8 @@ export async function setTeacherFiksa(teacherId: string, fiksa: number): Promise
 export async function updateCurrentSalary(teacherId: string, bonus: number, penalty: number, kpi: number): Promise<SalaryResult> {
   const s = await requireSession();
   if (!canManage(s.role)) return { ok: false, error: "forbidden" };
+  // Finance V2: bonus/jarima/KPI = TeacherEarning (Moliya V2 → Maoshlar)
+  if (await financeV2Enabled()) return { ok: false, error: "v2" };
   const b = parseMoney(bonus);
   const p = parseMoney(penalty);
   const k = parseMoney(kpi); // KPI bonus summasi (so'm)

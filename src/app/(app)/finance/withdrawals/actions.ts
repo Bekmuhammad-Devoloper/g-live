@@ -7,6 +7,7 @@ import { prisma } from "@/lib/db";
 import { requireSession } from "@/lib/auth";
 import { canWrite, MODULES } from "@/lib/rbac";
 import { writeAudit } from "@/lib/audit";
+import { financeV2Enabled } from "@/lib/finance/legacyAdapter";
 import { notify } from "@/lib/notify";
 import { formatMoney, MAX_MONEY } from "@/lib/constants";
 
@@ -24,6 +25,8 @@ export type WdState = { ok?: boolean; error?: string };
 export async function createWithdrawal(_prev: WdState, formData: FormData): Promise<WdState> {
   const s = await requireSession();
   if (!canWrite(s.role, MODULES.PAYMENTS)) return { error: "forbidden" };
+  // Finance V2: yechib olish → Moliya V2 → To'lovlar → Qaytarim (asl to'lovga bog'lanadi, ledger OUT)
+  if (await financeV2Enabled()) return { error: "v2" };
 
   const parsed = schema.safeParse({
     studentId: formData.get("studentId"),

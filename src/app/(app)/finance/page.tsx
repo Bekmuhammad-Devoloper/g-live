@@ -7,6 +7,8 @@ import { tr } from "@/lib/tr";
 import { branchViaStudent } from "@/lib/branchScope";
 import { PageHeader, Card, HubCard, StatCard, Table, EmptyRow, Badge, Forbidden } from "../_components/ui";
 import ExportButton from "../payments/ExportButton";
+import { getFinanceFlags } from "@/lib/finance/flags";
+import { hasFinancePermission } from "@/lib/finance/permissions";
 
 export default async function FinancePage() {
   const s = await requireSession();
@@ -28,6 +30,9 @@ export default async function FinancePage() {
   ]);
 
   const df = new Intl.DateTimeFormat(s.locale === "ru" ? "ru-RU" : "uz-UZ");
+  // Finance V2 — yoqilgan bo'lsa yoki foydalanuvchi ko'ra olsa (flag o'chiq bo'lsa ham sozlash uchun)
+  const v2 = await getFinanceFlags();
+  const showV2 = v2.enabled || hasFinancePermission(s.role, "FINANCE_PERIOD_CLOSE");
   const exportColumns = [
     { key: "student", label: tr(s.locale, { uz: "O'quvchi", ru: "Ученик", en: "Student", de: "Schüler" }) },
     { key: "amount", label: tr(s.locale, { uz: "Summa", ru: "Сумма", en: "Amount", de: "Betrag" }) },
@@ -66,6 +71,7 @@ export default async function FinancePage() {
       </div>
 
       <div className="mb-6 grid gap-3 md:grid-cols-2 xl:grid-cols-3">
+        {showV2 && <HubCard href="/finance/v2" icon="shieldCheck" title={tr(s.locale, { uz: "Moliya V2", ru: "Финансы V2", en: "Finance V2", de: "Finanzen V2" })} desc={tr(s.locale, { uz: v2.enabled ? "Ledger, taqsimot, o'qituvchi ulushi, kassalar, hisobotlar" : "Hali yoqilmagan — Sozlamalar", ru: v2.enabled ? "Леджер, распределение, доля преподавателя, кассы, отчёты" : "Ещё не включено — Настройки", en: v2.enabled ? "Ledger, allocation, teacher earnings, cashboxes, reports" : "Not enabled yet — Settings", de: v2.enabled ? "Ledger, Zuordnung, Lehrerverdienst, Kassen, Berichte" : "Noch nicht aktiviert — Einstellungen" })} stat={v2.enabled ? "ON" : "OFF"} />}
         <HubCard href="/payments" icon="card" title={tr(s.locale, { uz: "To'lovlar", ru: "Платежи", en: "Payments", de: "Zahlungen" })} desc={tr(s.locale, { uz: "Onlayn va qo'lda to'lov, bekor qilish, audit", ru: "Онлайн и ручные платежи, отмена, аудит", en: "Online and manual payments, cancellation, audit", de: "Online- und manuelle Zahlungen, Stornierung, Audit" })} />
         <HubCard href="/salary" icon="wallet" title={tr(s.locale, { uz: "Ish haqi", ru: "Зарплата", en: "Salary", de: "Gehalt" })} desc={tr(s.locale, { uz: "O'qituvchilar yuklamasi va hisob-kitob", ru: "Нагрузка преподавателей и расчёт", en: "Teacher workload and calculation", de: "Lehrerauslastung und Berechnung" })} />
         <HubCard href="/reports" icon="chart" title={tr(s.locale, { uz: "Hisobotlar", ru: "Отчёты", en: "Reports", de: "Berichte" })} desc={tr(s.locale, { uz: "Tushum, konversiya va operatsion ko'rsatkichlar", ru: "Доход, конверсия и операционные показатели", en: "Revenue, conversion and operational metrics", de: "Einnahmen, Konversion und operative Kennzahlen" })} />
