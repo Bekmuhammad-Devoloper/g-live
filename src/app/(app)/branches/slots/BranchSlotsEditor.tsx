@@ -22,13 +22,17 @@ const DAYS: { key: string; label: { uz: string; ru: string; en: string; de: stri
   { key: "Yak", label: { uz: "Yak", ru: "Вс", en: "Su", de: "So" } },
 ];
 
-export default function BranchSlotsEditor({ branchId, initial, canEdit, locale, compact = false, onChanged }: {
+export default function BranchSlotsEditor({ branchId, initial, canEdit, locale, compact = false, cards = false, color = "#10b981", onChanged }: {
   branchId: string;
   initial: VSlot[];
   canEdit: boolean;
   locale: Locale;
   /** Kanban ustuni ichida — kichik shrift, ixcham qatorlar */
   compact?: boolean;
+  /** Har slot alohida karta (Kanbandagi guruh kartalari kabi) */
+  cards?: boolean;
+  /** Karta belgisi rangi (ustun rangi) */
+  color?: string;
   onChanged?: (slots: VSlot[]) => void;
 }) {
   const [slots, setSlots] = useState<VSlot[]>(initial);
@@ -78,7 +82,30 @@ export default function BranchSlotsEditor({ branchId, initial, canEdit, locale, 
         </p>
       )}
 
-      {slots.length > 0 && (
+      {slots.length > 0 && cards && (
+        // Alohida kartalar — Kanbandagi guruh kartalari bilan bir xil ko'rinish
+        <ul className="space-y-3">
+          {slots.map((sl) => (
+            <li key={sl.id} className="flex items-center gap-3 rounded-xl border border-slate-200 bg-white p-3 dark:border-white/[0.07] dark:bg-[#15243d]">
+              <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg" style={{ color, background: `${color}1f` }}>
+                <Icon name="clock" className="h-4 w-4" />
+              </span>
+              <div className="min-w-0 flex-1">
+                <div className="truncate text-sm font-semibold text-slate-800 dark:text-slate-100">{sl.room}</div>
+                <div className="mt-0.5 text-[11px] text-slate-400">{sl.days} · <span className="tabular-nums">{sl.startTime}–{sl.endTime}</span></div>
+                {sl.note && <div className="mt-1 inline-block rounded px-1.5 py-0.5 text-[10px] font-semibold" style={{ color, background: `${color}14` }}>{sl.note}</div>}
+              </div>
+              {canEdit && (
+                <button type="button" onClick={() => remove(sl.id)} disabled={pending} title={L("O'chirish", "Удалить", "Remove", "Entfernen")} className="shrink-0 text-slate-300 transition hover:text-rose-500">
+                  <Icon name="close" className="h-3.5 w-3.5" />
+                </button>
+              )}
+            </li>
+          ))}
+        </ul>
+      )}
+
+      {slots.length > 0 && !cards && (
         <ul className={cn("space-y-1", compact ? "" : "space-y-1.5")}>
           {slots.map((sl) => (
             <li key={sl.id} className={cn("flex items-start gap-2 rounded-lg bg-emerald-50 text-emerald-800 dark:bg-emerald-500/10 dark:text-emerald-200", compact ? "px-2 py-1.5 text-[11px]" : "px-3 py-2 text-sm")}>

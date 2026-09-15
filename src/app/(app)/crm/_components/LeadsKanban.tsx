@@ -238,13 +238,19 @@ export default function LeadsKanban({
             {/* Gradient chiziq */}
             <div className="mx-1 mb-3 mt-2 h-1 rounded-full" style={{ background: `linear-gradient(90deg, ${col.color}, ${col.color}22)` }} />
 
-            {/* Filial ustuni: bo'sh xona / vaqtlar — administrator kiritgan, ROP ko'radi */}
+            {/* Filial ustuni: bo'sh xona / vaqtlar — administrator kiritgan, har biri alohida karta (guruh kartalari kabi) */}
             {col.branch && (
-              <div className="mb-3 rounded-xl border border-emerald-200/70 bg-white p-2.5 dark:border-emerald-500/20 dark:bg-[#15243d]">
-                <div className="mb-1.5 flex items-center gap-1.5 text-[11px] font-semibold uppercase tracking-wide text-emerald-700 dark:text-emerald-300">
-                  <Icon name="clock" className="h-3.5 w-3.5" /> {tr(locale, { uz: "Bo'sh xona / vaqt", ru: "Свободные аудитории / время", en: "Free rooms / time", de: "Freie Räume / Zeit" })}
-                </div>
-                <BranchSlotsEditor branchId={col.branch.branchId} initial={col.branch.slots} canEdit={slotsEditable === "all" || slotsEditable === col.branch.branchId} locale={locale} compact />
+              <div className="mb-3 space-y-3">
+                <SectionLabel
+                  icon="clock"
+                  color={col.color}
+                  text={tr(locale, { uz: "Bo'sh xona / vaqt", ru: "Свободные аудитории / время", en: "Free rooms / time", de: "Freie Räume / Zeit" })}
+                  count={col.branch.slots.length}
+                />
+                <BranchSlotsEditor branchId={col.branch.branchId} initial={col.branch.slots} canEdit={slotsEditable === "all" || slotsEditable === col.branch.branchId} locale={locale} compact cards color={col.color} />
+                {items.length > 0 && (
+                  <SectionLabel icon="user" color={col.color} text={tr(locale, { uz: "Lidlar", ru: "Лиды", en: "Leads", de: "Leads" })} count={items.length} />
+                )}
               </div>
             )}
 
