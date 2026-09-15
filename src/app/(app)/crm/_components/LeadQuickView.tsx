@@ -106,10 +106,19 @@ export default function LeadQuickView({
               </span>
             </button>
             {lead.email && <Row label={tr(locale, { uz: "Email", ru: "Email", en: "Email", de: "E-Mail" })} value={lead.email} />}
+            {lead.telegram && <Row label="Telegram" value={lead.telegram} />}
           </Section>
 
           {/* Lid ma'lumotlari */}
           <Section icon="info" title={tr(locale, { uz: "Ma'lumotlar", ru: "Данные", en: "Details", de: "Details" })}>
+            {lead.studyFormat && (
+              <Row
+                label={tr(locale, { uz: "Ta'lim shakli", ru: "Формат обучения", en: "Study format", de: "Unterrichtsform" })}
+                value={lead.studyFormat === "ONLINE"
+                  ? tr(locale, { uz: "Onlayn", ru: "Онлайн", en: "Online", de: "Online" })
+                  : tr(locale, { uz: "Oflayn", ru: "Офлайн", en: "Offline", de: "Präsenz" })}
+              />
+            )}
             <Row label={tr(locale, { uz: "Qiziqqan kurs", ru: "Интересующий курс", en: "Course of interest", de: "Interessierter Kurs" })} value={lead.interestCourse ?? "—"} />
             <Row label={tr(locale, { uz: "Byudjet", ru: "Бюджет", en: "Budget", de: "Budget" })} value={lead.budget ? formatMoney(lead.budget, locale) : "—"} />
             <Row label={tr(locale, { uz: "Menejer", ru: "Менеджер", en: "Manager", de: "Manager" })} value={lead.managerName ?? "—"} />

@@ -24,7 +24,7 @@ export default async function CrmPage() {
       // Faqat kerakli ustunlar — `include: { manager: true }` har lid uchun butun
       // User yozuvini (parol maydonlari bilan) tortib, 2000 lidda sahifani sekinlashtirardi
       select: {
-        id: true, fullName: true, phone: true, email: true, source: true, stage: true,
+        id: true, fullName: true, phone: true, email: true, telegram: true, studyFormat: true, source: true, stage: true,
         interestCourse: true, age: true, level: true, budget: true, note: true,
         managerId: true, studentId: true, groupId: true, enrollEditCount: true, kanbanColumnId: true, createdAt: true,
         manager: { select: { fullName: true } },
@@ -43,6 +43,8 @@ export default async function CrmPage() {
     fullName: l.fullName,
     phone: l.phone,
     email: l.email,
+    telegram: l.telegram,
+    studyFormat: l.studyFormat,
     source: l.source,
     stage: l.stage,
     interestCourse: l.interestCourse,

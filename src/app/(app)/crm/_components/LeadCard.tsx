@@ -103,6 +103,16 @@ export default memo(function LeadCard({ lead, locale, selected, onOpen, onOpenFu
         {lead.source && (
           <div className="flex items-center gap-2 text-xs text-slate-400">
             <Icon name="download" className="h-3.5 w-3.5" /> {lead.source}
+            {lead.studyFormat && (
+              <span className={cn("rounded px-1.5 py-0.5 text-[10px] font-semibold", lead.studyFormat === "ONLINE" ? "bg-sky-50 text-sky-600 dark:bg-sky-500/10 dark:text-sky-300" : "bg-amber-50 text-amber-700 dark:bg-amber-500/10 dark:text-amber-300")}>
+                {lead.studyFormat === "ONLINE" ? tr(locale, { uz: "onlayn", ru: "онлайн", en: "online", de: "online" }) : tr(locale, { uz: "oflayn", ru: "офлайн", en: "offline", de: "präsenz" })}
+              </span>
+            )}
+          </div>
+        )}
+        {lead.telegram && (
+          <div className="flex items-center gap-2 text-xs text-slate-400">
+            <Icon name="telegram" className="h-3.5 w-3.5" /> {lead.telegram}
           </div>
         )}
         {lead.interestCourse && (

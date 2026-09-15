@@ -6,6 +6,10 @@ export interface VLead {
   fullName: string;
   phone: string;
   email: string | null;
+  /** Telegram username (@user) — onlayn arizadan */
+  telegram: string | null;
+  /** Ta'lim shakli: ONLINE | OFFLINE — arizadan */
+  studyFormat: string | null;
   source: string | null;
   stage: string;
   interestCourse: string | null;

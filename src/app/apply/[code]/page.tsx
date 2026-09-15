@@ -25,7 +25,11 @@ export default async function ApplyPage({ params, searchParams }: {
 
   const p = link ? platform(link.platform) : null;
 
-  const levelCodes = await getLevelCodes();
+  // Daraja tugmalari (Sozlamalar > Darajalar) va oflayn uchun faol filiallar
+  const [levelCodes, branches] = await Promise.all([
+    getLevelCodes(),
+    prisma.branch.findMany({ where: { isActive: true }, select: { id: true, name: true, address: true }, orderBy: { name: "asc" } }),
+  ]);
 
   return (
     <div className="flex min-h-screen items-center justify-center bg-slate-100 p-4">
@@ -67,7 +71,7 @@ export default async function ApplyPage({ params, searchParams }: {
               ) : (
                 <>
                   {preview && <div className="mb-3 rounded-lg bg-slate-100 px-3 py-2 text-center text-xs font-medium text-slate-500">Ko&apos;rib chiqish rejimi — ariza yuborilmaydi</div>}
-                  <ApplyForm code={link.code} preview={preview} questions={parseQuestions(link.vacancy.questions)} levels={levelCodes} />
+                  <ApplyForm code={link.code} preview={preview} questions={parseQuestions(link.vacancy.questions)} levels={levelCodes} branches={branches} />
                 </>
               )}
             </>

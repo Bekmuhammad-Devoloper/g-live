@@ -14,6 +14,7 @@ import EnrollDrawer from "../_components/EnrollDrawer";
 
 export interface DLead {
   id: string; fullName: string; phone: string; email: string | null; source: string | null;
+  telegram: string | null; studyFormat: string | null; // ochiq arizadan (onlayn/oflayn)
   stage: string; interestCourse: string | null; budget: number | null; note: string | null;
   age: number | null; level: string | null; // ariza formasidan keladi
   managerId: string | null; managerName: string | null; studentId: string | null; createdAt: string;
@@ -112,6 +113,8 @@ export default function LeadDetail({ lead, activities, managers, prevId, nextId,
                 <Field label={tr(locale, { uz: "F.I.Sh.", ru: "Ф.И.О.", en: "Full name", de: "Vollständiger Name" })} value={lead.fullName} onSave={(v) => save("fullName", v)} readonly={!canWrite} />
                 <Field label={tr(locale, { uz: "Telefon", ru: "Телефон", en: "Phone", de: "Telefon" })} value={lead.phone} onSave={(v) => save("phone", v)} readonly={!canWrite} />
                 <Field label={tr(locale, { uz: "E-mail", ru: "E-mail", en: "E-mail", de: "E-Mail" })} value={lead.email ?? ""} onSave={(v) => save("email", v)} readonly={!canWrite} />
+                <Field label="Telegram" value={lead.telegram ?? ""} onSave={(v) => save("telegram", v)} readonly={!canWrite} />
+                <Field label={tr(locale, { uz: "Ta'lim shakli (ONLINE / OFFLINE)", ru: "Формат (ONLINE / OFFLINE)", en: "Study format (ONLINE / OFFLINE)", de: "Unterrichtsform (ONLINE / OFFLINE)" })} value={lead.studyFormat ?? ""} onSave={(v) => save("studyFormat", v)} readonly={!canWrite} />
                 <Field label={tr(locale, { uz: "Manba", ru: "Источник", en: "Source", de: "Quelle" })} value={lead.source ?? ""} onSave={(v) => save("source", v)} readonly={!canWrite} />
                 <Field label={tr(locale, { uz: "Kurs", ru: "Курс", en: "Course", de: "Kurs" })} value={lead.interestCourse ?? ""} onSave={(v) => save("interestCourse", v)} readonly={!canWrite} />
                 <Field label={tr(locale, { uz: "Yosh", ru: "Возраст", en: "Age", de: "Alter" })} value={lead.age?.toString() ?? ""} onSave={(v) => save("age", v)} readonly={!canWrite} />

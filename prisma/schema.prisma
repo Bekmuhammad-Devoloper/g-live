@@ -160,6 +160,7 @@ model Lead {
   vacancyLinkId String? // qaysi maxsus havoladan (Havolalar moduli) kelgan
 
   stage     String  @default("NEW") // LEAD_STAGES (lib/constants.ts)
+  studyFormat String? // ta'lim shakli: ONLINE | OFFLINE — ochiq ariza formasida tanlanadi
   age       Int? // yoshi — ariza formasida so'raladi
   level     String? // hozirgi daraja (A1, B2 ...) — ariza formasida so'raladi
   interestCourse String?
