@@ -6,8 +6,8 @@ import { cn } from "@/lib/cn";
 import { tr } from "@/lib/tr";
 import type { Locale } from "@/lib/constants";
 import { Icon } from "../../_components/Icon";
-import { COLUMNS, branchIdOfCol, branchReplaces, columnDef, columnOf, columnOfLead, customIdOfCol, groupIdOfCol, isBranchCol, isCustomCol, isGroupCol, type BranchColumn, type BranchMode, type BranchModeCfg, type CustomColumn, type GroupColumn, type VLead } from "../_lib/leadColumns";
-import { bulkLeadAction, deleteTestLead, dropLeadToBranch, enrollLeadToGroup, moveLeadStage, moveLeadToColumn, removeKanbanColumn, unpinKanbanGroup } from "../actions";
+import { COLUMNS, ONLINE_COL, branchIdOfCol, branchReplaces, columnDef, columnOf, columnOfLead, customIdOfCol, groupIdOfCol, isBranchCol, isCustomCol, isGroupCol, type BranchColumn, type BranchMode, type BranchModeCfg, type CustomColumn, type GroupColumn, type VLead } from "../_lib/leadColumns";
+import { bulkLeadAction, deleteTestLead, dropLeadToBranch, enrollLeadToGroup, moveLeadStage, moveLeadToColumn, removeKanbanColumn, setLeadOnline, unpinKanbanGroup } from "../actions";
 import { type Analytics } from "./AnalyticsTiles";
 import FilterBar from "./FilterBar";
 import LeadsKanban from "./LeadsKanban";
@@ -247,6 +247,17 @@ export default function LeadsWorkspace({ locale, initialLeads, managers, sources
       enrollToGroup(leadId, groupIdOfCol(colKey));
       return;
     }
+    // "Onlayn" ustuni — onlayn belgisi + Yangi bosqich; "Yangi"ga qaytarilgan onlayn lid — belgi olib tashlanadi
+    if (branchMode && (colKey === ONLINE_COL || (colKey === "new" && leads.find((l) => l.id === leadId)?.studyFormat === "ONLINE"))) {
+      const online = colKey === ONLINE_COL;
+      setLeads((prev) => prev.map((l) => (l.id === leadId ? { ...l, studyFormat: online ? "ONLINE" : null, stage: "NEW", kanbanColumnId: null } : l))); // optimistik
+      startRefresh(async () => {
+        const r = await setLeadOnline(leadId, online);
+        if (r.error) setLeads(initialLeads);
+        router.refresh();
+      });
+      return;
+    }
     // Filial ustuni (ROP) — lid shu filialga yo'naltiriladi; ishlov boshida bo'lsa "Taklif"ga o'tadi
     if (isBranchCol(colKey)) {
       const branchId = branchIdOfCol(colKey);
@@ -288,7 +299,7 @@ export default function LeadsWorkspace({ locale, initialLeads, managers, sources
     const target = columnDef(colKey).defaultStage;
     setLeads((prev) => prev.map((l) => (l.id === leadId ? { ...l, stage: target, kanbanColumnId: null } : l))); // optimistik
     startRefresh(async () => { await moveLeadStage(leadId, target); router.refresh(); });
-  }, [canWrite, router, leads, enrollToGroup, initialLeads, branchColumns, locale]);
+  }, [canWrite, router, leads, enrollToGroup, initialLeads, branchColumns, locale, branchMode]);
 
   const confirmReject = useCallback((reason: string) => {
     if (!reject) return;

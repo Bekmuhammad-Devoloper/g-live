@@ -6,7 +6,7 @@ import { cn } from "@/lib/cn";
 import { tr } from "@/lib/tr";
 import type { Locale } from "@/lib/constants";
 import { Icon } from "../../_components/Icon";
-import { COLUMNS, columnOfLead, customColKey, groupColKey, branchColKey, type BranchColumn, type BranchMode, type BranchModeCfg, type CustomColumn, type GroupColumn, type VLead } from "../_lib/leadColumns";
+import { COLUMNS, ONLINE_COL, columnOfLead, customColKey, groupColKey, branchColKey, type BranchColumn, type BranchMode, type BranchModeCfg, type CustomColumn, type GroupColumn, type VLead } from "../_lib/leadColumns";
 import LeadCard from "./LeadCard";
 import BranchSlotsEditor from "../../branches/slots/BranchSlotsEditor";
 
@@ -113,7 +113,14 @@ export default function LeadsKanban({
       const brs = branchColumns.map<ViewCol>((b) => ({
         key: branchColKey(b.branchId), title: b.name, sub: null, color: b.color, icon: "building", defaultStage: "OFFER", groupId: null, customId: null, branch: b,
       }));
-      return [std("new"), std("work"), ...(branchMode === "head" ? [std("test"), std("offer")] : []), ...brs, ...custom, std("won"), ...groups, std("lost")];
+      // "Onlayn" — arizada onlayn tanlagan yangi lidlar; filiallardan oldin
+      const online: ViewCol = {
+        key: ONLINE_COL,
+        title: tr(locale, { uz: "Onlayn", ru: "Онлайн", en: "Online", de: "Online" }),
+        sub: tr(locale, { uz: "Onlayn o'qimoqchilar", ru: "Хотят учиться онлайн", en: "Want to study online", de: "Möchten online lernen" }),
+        color: "#0ea5e9", icon: "video", defaultStage: "NEW", groupId: null, customId: null,
+      };
+      return [std("new"), std("work"), online, ...(branchMode === "head" ? [std("test"), std("offer")] : []), ...brs, ...custom, std("won"), ...groups, std("lost")];
     }
     return [std("new"), std("work"), std("test"), std("offer"), ...custom, std("won"), ...groups, std("lost")];
   }, [groupColumns, customColumns, branchColumns, branchMode, locale]);
@@ -264,6 +271,8 @@ export default function LeadsKanban({
                   <p className="mt-1 px-3 text-xs text-slate-400">
                     {col.groupId
                       ? tr(locale, { uz: "Lidni shu yerga tashlang — guruhga yoziladi", ru: "Перетащите лид сюда — он попадёт в группу", en: "Drop a lead here to enrol it", de: "Lead hierher ziehen zum Einschreiben" })
+                      : col.key === ONLINE_COL
+                      ? tr(locale, { uz: "Arizada «Onlayn» tanlagan lidlar shu yerga tushadi", ru: "Сюда попадают лиды, выбравшие «Онлайн» в анкете", en: "Leads who chose “Online” in the form land here", de: "Leads, die im Formular „Online“ gewählt haben, landen hier" })
                       : col.branch
                       ? tr(locale, { uz: "Lidni shu yerga tashlang — filialga yo'naltiriladi", ru: "Перетащите лид сюда — он будет направлен в филиал", en: "Drop a lead here to direct it to this branch", de: "Lead hierher ziehen — an diese Filiale weiterleiten" })
                       : col.customId

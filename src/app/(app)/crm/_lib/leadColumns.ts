@@ -161,6 +161,9 @@ export const branchIdOfCol = (key: string) => key.slice(BRANCH_COL_PREFIX.length
 export type BranchMode = "sales" | "head";
 export interface BranchModeCfg { ids: Set<string>; mode: BranchMode }
 
+/** "Onlayn" ustuni — arizada onlayn tanlagan (studyFormat=ONLINE) yangi lidlar; filiallardan oldin turadi */
+export const ONLINE_COL = "online";
+
 /** Rejimda ko'rsatilmaydigan standart ustunlar (filtr chiplarida ham yashiriladi) */
 export function branchReplaces(mode: BranchMode): Set<string> {
   return mode === "sales" ? new Set(["test", "offer"]) : new Set();
@@ -174,7 +177,7 @@ export function branchReplaces(mode: BranchMode): Set<string> {
  *   4) aks holda bosqichiga mos standart ustunda.
  */
 export function columnOfLead(
-  lead: { stage: string; groupId: string | null; kanbanColumnId?: string | null; branchId?: string | null },
+  lead: { stage: string; groupId: string | null; kanbanColumnId?: string | null; branchId?: string | null; studyFormat?: string | null },
   pinned: Set<string>,
   custom: Set<string> = EMPTY,
   branch: BranchModeCfg | null = null,
@@ -186,8 +189,13 @@ export function columnOfLead(
   if (lead.kanbanColumnId && custom.has(lead.kanbanColumnId)) return customColKey(lead.kanbanColumnId);
   const base = columnOf(lead.stage);
   if (base === "won" && lead.groupId && pinned.has(lead.groupId)) return groupColKey(lead.groupId);
-  // Sotuv rejimida test/taklif ustunlari yo'q — o'sha bosqichdagilar "Yangi"da (hali ishlanmagan)
-  if (branch && branch.mode === "sales" && (base === "test" || base === "offer")) return "new";
+  if (branch) {
+    // Sotuv rejimida test/taklif ustunlari yo'q — o'sha bosqichdagilar "Yangi" hisoblanadi
+    const eff = branch.mode === "sales" && (base === "test" || base === "offer") ? "new" : base;
+    // Onlayn tanlaganlar Yangiga emas — alohida "Onlayn" ustuniga
+    if (eff === "new" && lead.studyFormat === "ONLINE") return ONLINE_COL;
+    return eff;
+  }
   return base;
 }
 

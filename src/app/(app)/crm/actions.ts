@@ -808,3 +808,27 @@ export async function dropLeadToBranch(leadId: string, branchId: string): Promis
   revalidatePath("/crm");
   return { ok: true };
 }
+
+/* ─── "Onlayn" ustuni (filial rejimi) ───────────────────────────────
+   Ustunga tashlansa — lid onlayn o'qimoqchi deb belgilanadi (studyFormat=ONLINE),
+   bosqichi Yangi, filial/ustun belgisi tozalanadi. "Yangi"ga qaytarilsa —
+   onlayn belgisi olib tashlanadi (aks holda u yana Onlayn ustunida chiqadi).  */
+export async function setLeadOnline(leadId: string, online: boolean): Promise<{ ok?: boolean; error?: string }> {
+  const s = await requireSession();
+  if (!canWrite(s.role, MODULES.CRM)) return { error: "forbidden" };
+  const lead = await prisma.lead.findUnique({ where: { id: leadId }, select: { id: true, stage: true, studyFormat: true } });
+  if (!lead) return { error: "notfound" };
+
+  await prisma.lead.update({
+    where: { id: leadId },
+    data: {
+      studyFormat: online ? "ONLINE" : null,
+      stage: "NEW",
+      kanbanColumnId: null,
+      activities: { create: { authorId: s.userId, type: "note", result: online ? "Onlayn ustuniga o'tkazildi" : "Onlayn belgisi olib tashlandi — Yangi" } },
+    },
+  });
+  await writeAudit({ actorId: s.userId, action: "UPDATE", entityType: "Lead", entityId: leadId, oldValue: { studyFormat: lead.studyFormat, stage: lead.stage }, newValue: { studyFormat: online ? "ONLINE" : null, stage: "NEW" } });
+  revalidatePath("/crm");
+  return { ok: true };
+}
