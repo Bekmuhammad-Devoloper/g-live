@@ -237,3 +237,51 @@ export async function verifyDebt(client: PrismaClient, legacyDebts: Map<string, 
     rows,
   };
 }
+
+// ─── SALARY bosqichi (Phase 8): TeacherSalary → SalaryPeriod{LEGACY} ───
+
+export interface SalaryBackfillReport {
+  rows: number;
+  created: number;
+  existing: number;
+  /** qator bor, lekin V2 davri boshqa manbadan yaratilgan (teacher+oy band) — legacy bog'lanmadi */
+  conflicts: { teacherSalaryId: string; period: string }[];
+  dryRun: boolean;
+}
+
+/**
+ * Har TeacherSalary qatori → SalaryPeriod{source LEGACY}: legacyFiksaAmount=fiksa (ichida commission
+ * bo'lishi mumkin — ajratilmaydi), bonus/kpi/penalty, gross = fiksa+bonus+kpi−penalty.
+ * closed=true → CLOSED (immutable; payout tarixi yo'q → paid/remaining 0, izohda);
+ * closed=false → CALCULATED, remaining = gross. Earning yaratilmaydi (S1). Idempotent.
+ */
+export async function backfillSalary(client: PrismaClient, o: BackfillOptions = {}): Promise<SalaryBackfillReport> {
+  const report: SalaryBackfillReport = { rows: 0, created: 0, existing: 0, conflicts: [], dryRun: !!o.dryRun };
+  const rows = await client.teacherSalary.findMany({ orderBy: [{ teacherId: "asc" }, { year: "asc" }, { month: "asc" }] });
+  report.rows = rows.length;
+  const run = async (tx: Prisma.TransactionClient): Promise<void> => {
+    for (const r of rows) {
+      const linked = await tx.salaryPeriod.findUnique({ where: { legacyTeacherSalaryId: r.id }, select: { id: true } });
+      if (linked) { report.existing++; continue; }
+      const taken = await tx.salaryPeriod.findUnique({ where: { teacherId_year_month: { teacherId: r.teacherId, year: r.year, month: r.month } } });
+      if (taken) { report.conflicts.push({ teacherSalaryId: r.id, period: `${r.year}-${String(r.month).padStart(2, "0")}` }); continue; }
+      const gross = r.fiksa + r.bonus + r.kpi - r.penalty;
+      await tx.salaryPeriod.create({
+        data: {
+          teacherId: r.teacherId, year: r.year, month: r.month, status: r.closed ? "CLOSED" : "CALCULATED", source: "LEGACY", legacyTeacherSalaryId: r.id,
+          legacyFiksaAmount: r.fiksa, fixedAmount: 0, commissionAmount: 0, bonusAmount: r.bonus, kpiAmount: r.kpi, penaltyAmount: r.penalty,
+          grossAmount: gross, paidAmount: 0, remainingAmount: r.closed ? 0 : gross, calculatedAt: r.updatedAt, closedAt: r.closed ? r.updatedAt : null,
+          note: r.closed ? "LEGACY: TeacherSalary'dan ko'chirildi; to'lov (payout) tarixi yo'q — yopiq davr majburiyat emas" : "LEGACY: TeacherSalary'dan ko'chirildi (ochiq)",
+        },
+      });
+      report.created++;
+    }
+    if (o.dryRun) throw new DryRunRollback();
+  };
+  try {
+    await withFinanceTx(client, run, { attempts: 1, timeout: 120_000 });
+  } catch (e) {
+    if (!(e instanceof DryRunRollback)) throw e;
+  }
+  return report;
+}
