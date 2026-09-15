@@ -73,8 +73,8 @@ export async function createVacancyLink(fd: FormData): Promise<FormState> {
   const s = await requireSession();
   if (!can(s.role)) return { error: tr(s.locale, { uz: "Ruxsat yo'q", ru: "Нет доступа", en: "No permission", de: "Keine Berechtigung" }) };
 
-  const title = String(fd.get("title") || "").trim();
-  if (title.length < 2) return { error: tr(s.locale, { uz: "Vakansiya nomi kamida 2 ta belgi bo'lsin", ru: "Название вакансии — минимум 2 символа", en: "Vacancy title must be at least 2 characters", de: "Der Titel der Stelle muss mindestens 2 Zeichen haben" }) };
+  // Kurs nomi ixtiyoriy (2026-09-15 talab) — bo'sh qoldirilsa standart nom
+  const title = String(fd.get("title") || "").trim().slice(0, 120) || tr(s.locale, { uz: "Nemis tili kursi", ru: "Курс немецкого языка", en: "German course", de: "Deutschkurs" });
   const platforms = parsePlatforms(fd);
 
   const vacancy = await prisma.vacancy.create({

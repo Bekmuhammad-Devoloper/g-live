@@ -1,18 +1,20 @@
 "use client";
 
 import { useMemo, useState, useTransition } from "react";
+import { cn } from "@/lib/cn";
 import { submitApplication, type StudyFormat } from "./actions";
 import type { ApplyQuestion } from "../../(app)/links/questions";
 import { fmtUzPhoneInput } from "@/lib/phone";
 import { DEFAULT_COUNTRY_ISO, PHONE_COUNTRIES, localDigitsOk, phoneCountry } from "@/lib/phoneCodes";
 
 /**
- * Ochiq ariza formasi (2026-09-15 talab):
+ * Ochiq ariza formasi — telefon uchun (2026-09-15 talab):
  *   1) Ta'lim shakli — onlayn / oflayn
  *   2) Oflayn → filial tanlash
  *   3) Ism-familiya, telefon (davlat kodi bilan), onlayn → Telegram username
  *   4) Daraja — A1 / A2 / B1 / B2 (Sozlamalar > Darajalar ro'yxatidan)
  *   + havolaga biriktirilgan qo'shimcha savollar (bo'lsa)
+ * Ko'rinish /daraja-testi bilan bir xil brend uslubda.
  */
 export default function ApplyForm({ code, preview, questions = [], levels, branches }: {
   code: string;
@@ -65,55 +67,60 @@ export default function ApplyForm({ code, preview, questions = [], levels, branc
       const r = await submitApplication(code, fullName, `${country.code} ${phone}`, answers, {
         format, branchId: format === "OFFLINE" ? branchId : undefined, telegram: format === "ONLINE" ? telegram : undefined, countryIso, level,
       });
-      if (r.ok) setDone(true);
+      if (r.ok) { setDone(true); window.scrollTo({ top: 0 }); }
       else setError(r.error ?? "Xatolik");
     });
   };
 
+  // ── Yakun ──
   if (done) {
     return (
-      <div className="rounded-xl border border-emerald-200 bg-emerald-50 p-6 text-center">
-        <div className="mb-1 text-4xl">✅</div>
-        <div className="text-lg font-bold text-emerald-700">Arizangiz qabul qilindi!</div>
-        <p className="mt-1 text-sm text-emerald-600">Tez orada siz bilan bog&apos;lanamiz.</p>
+      <div className="animate-pop-in mt-6">
+        <div className={CARD + " p-6 text-center"}>
+          <div className="mx-auto flex h-16 w-16 items-center justify-center rounded-full bg-emerald-500/15">
+            <svg className="h-8 w-8 text-emerald-600" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.6" strokeLinecap="round" strokeLinejoin="round"><path d="m5 12.5 4.5 4.5L19 7.5" /></svg>
+          </div>
+          <div className="mt-4 text-[22px] font-black text-slate-900 dark:text-white">Arizangiz qabul qilindi!</div>
+          <p className="mt-1.5 text-[15px] leading-relaxed text-slate-500 dark:text-slate-400">
+            {fullName.trim().split(" ")[0]}, tez orada siz bilan bog&apos;lanamiz.
+          </p>
+        </div>
+
+        {/* Kutish vaqtida — darajani aniqlash testi */}
+        <a
+          href="/daraja-testi"
+          className="mt-3 flex items-center gap-3 rounded-3xl border border-white/60 bg-gradient-to-r from-brand-600 to-cyan-500 p-4 text-white shadow-[0_16px_36px_-14px_rgba(65,72,239,0.6)] transition active:scale-[0.98]"
+        >
+          <span className="flex h-11 w-11 shrink-0 items-center justify-center rounded-2xl bg-white/20 text-xl">📝</span>
+          <span className="min-w-0 flex-1">
+            <span className="block text-[15px] font-bold">Darajangizni hozir tekshiring</span>
+            <span className="block text-[12.5px] text-white/85">25 ta savol, ~10 daqiqa — natija darhol</span>
+          </span>
+          <svg className="h-5 w-5 shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.4" strokeLinecap="round" strokeLinejoin="round"><path d="M5 12h14" /><path d="m12 5 7 7-7 7" /></svg>
+        </a>
       </div>
     );
   }
 
-  const inp = "h-11 w-full rounded-lg border border-slate-300 bg-white px-3.5 text-sm text-slate-800 outline-none focus:border-brand-500";
-  const chip = (on: boolean) =>
-    `flex cursor-pointer items-center justify-center rounded-xl border-2 px-3 py-3 text-sm font-semibold transition active:scale-[0.98] ${
-      on ? "border-brand-600 bg-brand-600 text-white shadow-md" : "border-slate-200 bg-white text-slate-700 hover:border-brand-300 hover:bg-slate-50"
-    }`;
-
   return (
-    <form onSubmit={submit} className="space-y-4">
+    <form onSubmit={submit} className={cn(CARD, "mt-5 p-4")}>
       {/* 1) Ta'lim shakli */}
-      <div>
-        <span className="mb-1.5 block text-xs font-semibold text-slate-500">Ta&apos;lim shakli <span className="text-rose-500">*</span></span>
-        <div className="grid grid-cols-2 gap-2">
-          <button type="button" onClick={() => setFormat("ONLINE")} className={chip(format === "ONLINE")}>
-            <span className="mr-1.5">💻</span> Onlayn
-          </button>
-          <button type="button" onClick={() => setFormat("OFFLINE")} className={chip(format === "OFFLINE")}>
-            <span className="mr-1.5">🏫</span> Oflayn
-          </button>
-        </div>
+      <Label text="Ta'lim shakli" req />
+      <div className="grid grid-cols-2 gap-2">
+        <Choice on={format === "ONLINE"} onClick={() => setFormat("ONLINE")} icon="💻" title="Onlayn" sub="Telegram orqali" />
+        <Choice on={format === "OFFLINE"} onClick={() => setFormat("OFFLINE")} icon="🏫" title="Oflayn" sub="Filialda" />
       </div>
 
       {/* 2) Oflayn — filial */}
       {format === "OFFLINE" && (
-        <div>
-          <span className="mb-1.5 block text-xs font-semibold text-slate-500">Filial <span className="text-rose-500">*</span></span>
+        <div className="animate-pop-in mt-4">
+          <Label text="Filial" req />
           {branches.length === 0 ? (
-            <p className="rounded-lg bg-slate-50 px-3 py-2 text-sm text-slate-500">Hozircha faol filial yo&apos;q — onlayn shaklni tanlang.</p>
+            <p className="rounded-2xl bg-slate-50 px-3.5 py-3 text-sm text-slate-500 dark:bg-white/[0.04] dark:text-slate-400">Hozircha faol filial yo&apos;q — onlayn shaklni tanlang.</p>
           ) : (
-            <div className="grid grid-cols-2 gap-2">
+            <div className={cn("grid gap-2", branches.length === 1 ? "grid-cols-1" : "grid-cols-2")}>
               {branches.map((b) => (
-                <button key={b.id} type="button" onClick={() => setBranchId(b.id)} className={`${chip(branchId === b.id)} flex-col gap-0.5 py-2.5`}>
-                  <span>{b.name}</span>
-                  {b.address && <span className={`text-[11px] font-normal ${branchId === b.id ? "text-white/80" : "text-slate-400"}`}>{b.address}</span>}
-                </button>
+                <Choice key={b.id} on={branchId === b.id} onClick={() => setBranchId(b.id)} icon="📍" title={b.name} sub={b.address ?? undefined} />
               ))}
             </div>
           )}
@@ -122,123 +129,168 @@ export default function ApplyForm({ code, preview, questions = [], levels, branc
 
       {/* 3) Shaxsiy ma'lumotlar — shakl tanlangach */}
       {format && (
-        <>
-          <label className="block">
-            <span className="mb-1 block text-xs font-semibold text-slate-500">Ism va familiya <span className="text-rose-500">*</span></span>
-            <input value={fullName} onChange={(e) => setName(e.target.value)} required autoComplete="name" placeholder="Ism Familiya" className={inp} />
-          </label>
+        <div className="animate-pop-in mt-4">
+          <Label text="Ism va familiya" req />
+          <input value={fullName} onChange={(e) => setName(e.target.value)} required autoComplete="name" placeholder="Ism Familiya" className={INPUT} />
 
-          <div className="block">
-            <span className="mb-1 block text-xs font-semibold text-slate-500">Telefon raqami <span className="text-rose-500">*</span></span>
-            <div className="flex items-center rounded-lg border border-slate-300 pr-3 text-sm focus-within:border-brand-500 focus-within:ring-2 focus-within:ring-brand-100">
-              {/* Davlat kodi — MDH va Yevropa ro'yxati; standart O'zbekiston */}
+          <Label text="Telefon raqami" req className="mt-3" />
+          <div className={cn(INPUT, "flex items-center gap-2 px-0 pr-3 focus-within:border-brand-500 focus-within:ring-4 focus-within:ring-brand-500/15")}>
+            {/* Davlat kodi — MDH va Yevropa ro'yxati; standart O'zbekiston */}
+            <div className="relative flex h-[50px] shrink-0 items-center rounded-l-2xl border-r border-slate-200 bg-slate-50 pl-3 pr-2 dark:border-white/10 dark:bg-white/[0.04]">
+              <span className="text-xl leading-none">{country.flag}</span>
+              <span className="ml-1.5 text-[15px] font-semibold text-slate-700 dark:text-slate-200">{country.code}</span>
+              <svg className="ml-1 h-3.5 w-3.5 text-slate-400" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.4" strokeLinecap="round" strokeLinejoin="round"><path d="m6 9 6 6 6-6" /></svg>
               <select
                 value={countryIso}
                 onChange={(e) => onCountry(e.target.value)}
                 aria-label="Davlat kodi"
-                className="h-11 max-w-[128px] shrink-0 cursor-pointer rounded-l-lg border-r border-slate-200 bg-slate-50 pl-2 pr-1 text-sm font-medium text-slate-700 outline-none"
+                className="absolute inset-0 cursor-pointer opacity-0"
               >
                 <optgroup label="MDH">
                   {PHONE_COUNTRIES.filter((c) => c.group === "cis").map((c) => (
-                    <option key={c.iso} value={c.iso}>{c.flag} {c.code} {c.name}</option>
+                    <option key={c.iso} value={c.iso}>{c.flag} {c.name} ({c.code})</option>
                   ))}
                 </optgroup>
                 <optgroup label="Yevropa">
                   {PHONE_COUNTRIES.filter((c) => c.group === "eu").map((c) => (
-                    <option key={c.iso} value={c.iso}>{c.flag} {c.code} {c.name}</option>
+                    <option key={c.iso} value={c.iso}>{c.flag} {c.name} ({c.code})</option>
                   ))}
                 </optgroup>
               </select>
-              <span className="ml-2 select-none font-medium text-slate-500">{country.code}</span>
-              <input
-                value={phone}
-                onChange={(e) => onPhone(e.target.value)}
-                required
-                placeholder={countryIso === "UZ" ? "90 123 45 67" : "raqam"}
-                inputMode="numeric"
-                autoComplete="tel-national"
-                className="ml-2 h-11 w-full flex-1 bg-transparent outline-none"
-              />
             </div>
+            <input
+              value={phone}
+              onChange={(e) => onPhone(e.target.value)}
+              required
+              placeholder={countryIso === "UZ" ? "90 123 45 67" : "raqam"}
+              inputMode="numeric"
+              autoComplete="tel-national"
+              className="h-[50px] w-full flex-1 bg-transparent text-[16px] outline-none placeholder:text-slate-300 dark:placeholder:text-slate-600"
+            />
           </div>
 
           {format === "ONLINE" && (
-            <label className="block">
-              <span className="mb-1 block text-xs font-semibold text-slate-500">Telegram username</span>
-              <div className="flex items-center rounded-lg border border-slate-300 px-3 text-sm focus-within:border-brand-500 focus-within:ring-2 focus-within:ring-brand-100">
-                <span className="select-none font-medium text-slate-500">@</span>
+            <div className="animate-pop-in">
+              <Label text="Telegram username" className="mt-3" />
+              <div className={cn(INPUT, "flex items-center gap-1.5 px-4 focus-within:border-brand-500 focus-within:ring-4 focus-within:ring-brand-500/15")}>
+                <span className="select-none text-[16px] font-semibold text-slate-400">@</span>
                 <input
                   value={telegram}
                   onChange={(e) => setTelegram(e.target.value.replace(/^@+/, "").replace(/\s/g, ""))}
                   placeholder="username"
                   autoCapitalize="none"
                   autoCorrect="off"
-                  className="ml-1.5 h-11 w-full flex-1 bg-transparent outline-none"
+                  className="h-[50px] w-full flex-1 bg-transparent text-[16px] outline-none placeholder:text-slate-300 dark:placeholder:text-slate-600"
                 />
               </div>
-              <span className="mt-1 block text-[11px] text-slate-400">Onlayn darslar va materiallar Telegram orqali yuboriladi</span>
-            </label>
+              <p className="mt-1.5 text-[12px] text-slate-400">Darslar va materiallar Telegram orqali yuboriladi</p>
+            </div>
           )}
 
           {/* 4) Daraja */}
-          <div>
-            <span className="mb-1.5 block text-xs font-semibold text-slate-500">Darajangiz <span className="text-rose-500">*</span></span>
-            <div className="grid grid-cols-4 gap-2">
-              {levels.map((l) => (
-                <button key={l} type="button" onClick={() => setLevel(l)} className={`${chip(level === l)} py-2.5`}>{l}</button>
-              ))}
-            </div>
-            <span className="mt-1 block text-[11px] text-slate-400">Bilmasangiz — A1 ni tanlang, darajani birga aniqlaymiz</span>
+          <Label text="Darajangiz" req className="mt-4" />
+          <div className="grid grid-cols-4 gap-2">
+            {levels.map((l) => (
+              <button
+                key={l}
+                type="button"
+                onClick={() => setLevel(l)}
+                className={cn(
+                  "min-h-[52px] rounded-2xl border-2 text-[16px] font-black transition active:scale-[0.97]",
+                  level === l
+                    ? "border-brand-600 bg-brand-600 text-white shadow-[0_10px_24px_-10px_rgba(65,72,239,0.7)]"
+                    : "border-slate-200 bg-white text-slate-700 hover:border-brand-300 dark:border-white/10 dark:bg-white/[0.04] dark:text-slate-200",
+                )}
+              >
+                {l}
+              </button>
+            ))}
           </div>
+          <p className="mt-1.5 text-[12px] text-slate-400">Bilmasangiz — A1 ni tanlang, darajani birga aniqlaymiz</p>
 
           {/* Qo'shimcha savollar — yoziladigan yoki variantli */}
           {questions.map((q, i) => (
-            <div key={i} className="block">
-              <span className="mb-1 block text-xs font-semibold text-slate-500">
-                {q.q}
-                {q.required && <span className="text-rose-500"> *</span>}
-              </span>
-
+            <div key={i} className="mt-4">
+              <Label text={q.q} req={!!q.required} />
               {q.type === "choice" ? (
-                <div className="space-y-1.5">
+                <div className="space-y-2">
                   {(q.options ?? []).map((opt) => (
-                    <label
+                    <button
                       key={opt}
-                      className={`flex cursor-pointer items-center gap-2.5 rounded-lg border px-3 py-2.5 text-sm transition ${
+                      type="button"
+                      onClick={() => setAnswer(i, opt)}
+                      className={cn(
+                        "flex w-full items-center gap-3 rounded-2xl border-2 px-4 py-3 text-left text-[15px] font-medium transition active:scale-[0.99]",
                         answers[i] === opt
-                          ? "border-brand-500 bg-brand-50 text-brand-700"
-                          : "border-slate-300 bg-white text-slate-700 hover:bg-slate-50"
-                      }`}
+                          ? "border-brand-600 bg-brand-50 text-brand-700 dark:bg-brand-500/15 dark:text-brand-200"
+                          : "border-slate-200 bg-white text-slate-700 dark:border-white/10 dark:bg-white/[0.04] dark:text-slate-200",
+                      )}
                     >
-                      <input
-                        type="radio"
-                        name={`q${i}`}
-                        checked={answers[i] === opt}
-                        onChange={() => setAnswer(i, opt)}
-                        className="h-4 w-4 accent-brand-600"
-                      />
+                      <span className={cn("flex h-5 w-5 shrink-0 items-center justify-center rounded-full border-2", answers[i] === opt ? "border-brand-600 bg-brand-600" : "border-slate-300 dark:border-white/20")}>
+                        {answers[i] === opt && <span className="h-2 w-2 rounded-full bg-white" />}
+                      </span>
                       {opt}
-                    </label>
+                    </button>
                   ))}
                 </div>
               ) : (
-                <input
-                  value={answers[i] ?? ""}
-                  onChange={(e) => setAnswer(i, e.target.value)}
-                  required={q.required}
-                  placeholder="Javobingiz"
-                  className={inp}
-                />
+                <input value={answers[i] ?? ""} onChange={(e) => setAnswer(i, e.target.value)} required={q.required} placeholder="Javobingiz" className={INPUT} />
               )}
             </div>
           ))}
-        </>
+        </div>
       )}
 
-      {error && <div className="rounded-lg bg-rose-50 px-3 py-2 text-sm text-rose-600">{error}</div>}
-      <button type="submit" disabled={pending || preview || !format} className="h-11 w-full rounded-lg bg-brand-600 text-sm font-bold text-white transition hover:bg-brand-700 disabled:opacity-60">
+      {error && <p className="mt-3 rounded-2xl bg-rose-50 px-3.5 py-2.5 text-sm font-medium text-rose-600 dark:bg-rose-500/10 dark:text-rose-400">{error}</p>}
+
+      <button
+        type="submit"
+        disabled={pending || preview || !format}
+        className="mt-4 flex h-14 w-full items-center justify-center gap-2 rounded-2xl bg-gradient-to-r from-brand-600 to-brand-500 text-[16px] font-bold text-white shadow-[0_12px_30px_-10px_rgba(65,72,239,0.7)] transition active:scale-[0.98] disabled:opacity-50 disabled:shadow-none"
+      >
         {preview ? "Ko'rib chiqish rejimi" : pending ? "Yuborilmoqda..." : "Ariza yuborish"}
+        {!preview && !pending && (
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.4" strokeLinecap="round" strokeLinejoin="round"><path d="M5 12h14" /><path d="m12 5 7 7-7 7" /></svg>
+        )}
       </button>
+      {!format && <p className="mt-2 text-center text-[12px] text-slate-400">Boshlash uchun ta&apos;lim shaklini tanlang</p>}
     </form>
+  );
+}
+
+// ── Uslub va kichik komponentlar (daraja testi sahifasi bilan bir xil) ──
+
+const CARD = "rounded-3xl border border-white/60 bg-white/85 shadow-[0_20px_50px_-24px_rgba(15,23,42,0.35)] backdrop-blur dark:border-white/10 dark:bg-white/[0.06]";
+
+const INPUT =
+  "min-h-[52px] w-full rounded-2xl border border-slate-200 bg-white px-4 text-[16px] text-slate-900 outline-none transition placeholder:text-slate-300 focus:border-brand-500 focus:ring-4 focus:ring-brand-500/15 dark:border-white/10 dark:bg-white/[0.06] dark:text-white dark:placeholder:text-slate-600";
+
+function Label({ text, req, className }: { text: string; req?: boolean; className?: string }) {
+  return (
+    <div className={cn("mb-1.5 text-[12px] font-bold text-slate-600 dark:text-slate-300", className)}>
+      {text} {req && <span className="text-rose-500">*</span>}
+    </div>
+  );
+}
+
+/** Katta tanlov kartasi — ta'lim shakli va filial uchun */
+function Choice({ on, onClick, icon, title, sub }: { on: boolean; onClick: () => void; icon: string; title: string; sub?: string }) {
+  return (
+    <button
+      type="button"
+      onClick={onClick}
+      className={cn(
+        "flex min-h-[64px] items-center gap-3 rounded-2xl border-2 px-3.5 py-2.5 text-left transition active:scale-[0.97]",
+        on
+          ? "border-brand-600 bg-brand-600 text-white shadow-[0_10px_24px_-10px_rgba(65,72,239,0.7)]"
+          : "border-slate-200 bg-white text-slate-700 hover:border-brand-300 dark:border-white/10 dark:bg-white/[0.04] dark:text-slate-200",
+      )}
+    >
+      <span className={cn("flex h-9 w-9 shrink-0 items-center justify-center rounded-xl text-lg", on ? "bg-white/20" : "bg-slate-100 dark:bg-white/[0.06]")}>{icon}</span>
+      <span className="min-w-0">
+        <span className="block truncate text-[15px] font-bold leading-tight">{title}</span>
+        {sub && <span className={cn("block truncate text-[11.5px] leading-tight", on ? "text-white/80" : "text-slate-400")}>{sub}</span>}
+      </span>
+    </button>
   );
 }

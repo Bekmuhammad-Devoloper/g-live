@@ -109,7 +109,7 @@ export default function CreateLinkModal({ locale, mode, vacancies, courses, pres
               <input type="hidden" name="country" value="O'zbekiston" />
               <input type="hidden" name="countryCode" value="uz" />
 
-              <Field label={tr(locale, { uz: "Kurs", ru: "Курс", en: "Course", de: "Kurs" })} req>
+              <Field label={tr(locale, { uz: "Kurs (ixtiyoriy)", ru: "Курс (необяз.)", en: "Course (optional)", de: "Kurs (optional)" })}>
                 {courses.length > 0 && (
                   <select
                     value={pickedCourse}
@@ -122,7 +122,6 @@ export default function CreateLinkModal({ locale, mode, vacancies, courses, pres
                 )}
                 <input
                   name="title"
-                  required
                   value={title}
                   onChange={(e) => { setTitle(e.target.value); setPickedCourse(""); }}
                   placeholder={tr(locale, { uz: "masalan: Nemis tili A1–B2", ru: "например: Немецкий язык A1–B2", en: "e.g. German A1–B2", de: "z. B. Deutsch A1–B2" })}
@@ -131,7 +130,7 @@ export default function CreateLinkModal({ locale, mode, vacancies, courses, pres
                 />
                 {courses.length > 0 && (
                   <p className="mt-1 text-[11px] text-slate-400">
-                    {tr(locale, { uz: "Ro'yxatda yo'q kursni qo'lda yozishingiz mumkin", ru: "Курс, которого нет в списке, можно вписать вручную", en: "You can type a course that is not in the list", de: "Sie können einen nicht gelisteten Kurs manuell eingeben" })}
+                    {tr(locale, { uz: "Ro'yxatda yo'q kursni qo'lda yozishingiz mumkin; bo'sh qolsa — \"Nemis tili kursi\"", ru: "Курс, которого нет в списке, можно вписать вручную; пусто — «Курс немецкого языка»", en: "You can type a course that is not in the list; empty — \"German course\"", de: "Sie können einen nicht gelisteten Kurs manuell eingeben; leer — \"Deutschkurs\"" })}
                   </p>
                 )}
               </Field>
