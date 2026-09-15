@@ -106,3 +106,21 @@ export async function createAccount(db: FinanceDb, i: CreateAccountInput): Promi
   await financeAudit(db, { actorId: i.actorId, action: "CREATE", entityType: "FinancialAccount", entityId: acc.id, newValue: { name: acc.name, type: acc.type, branchId: acc.branchId, openingBalance: opening }, reason: i.note ?? null });
   return acc;
 }
+
+export interface UpdateAccountInput {
+  id: string;
+  name?: string;
+  isActive?: boolean;
+  note?: string | null;
+  actorId?: string | null;
+}
+
+/** Faqat nom/faollik/izoh — `openingBalance/openingAt` va `type` HECH QACHON o'zgartirilmaydi (tarixiy fakt) */
+export async function updateAccount(db: FinanceDb, i: UpdateAccountInput): Promise<FinancialAccount> {
+  const acc = await db.financialAccount.findUnique({ where: { id: i.id } });
+  if (!acc) throw new FinanceError("not_found", "Kassa topilmadi");
+  if (i.name !== undefined && i.name.trim().length < 2) throw new FinanceError("validation", "Kassa nomi kamida 2 belgi");
+  const updated = await db.financialAccount.update({ where: { id: i.id }, data: { ...(i.name !== undefined ? { name: i.name.trim() } : {}), ...(i.isActive !== undefined ? { isActive: i.isActive } : {}), ...(i.note !== undefined ? { note: i.note } : {}) } });
+  await financeAudit(db, { actorId: i.actorId, action: "UPDATE", entityType: "FinancialAccount", entityId: i.id, oldValue: { name: acc.name, isActive: acc.isActive, note: acc.note }, newValue: { name: updated.name, isActive: updated.isActive, note: updated.note } });
+  return updated;
+}
