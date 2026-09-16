@@ -57,8 +57,9 @@ export default async function AdminDashboard({ locale }: { locale: Locale }) {
   const weekEnd = new Date(weekStart.getTime() + 7 * 86400000);
 
   // O'z filialidagi bo'sh xona/vaqtlar — ROP lidlar kanbanida filial ustunida ko'radi
+  const myRooms = s.branchId ? await prisma.room.findMany({ where: { branchId: s.branchId, isActive: true }, select: { name: true, capacity: true } }) : [];
   const myBranch = s.branchId
-    ? await prisma.branch.findUnique({ where: { id: s.branchId }, select: { id: true, name: true, slots: { select: { id: true, branchId: true, room: true, days: true, startTime: true, endTime: true, note: true }, orderBy: [{ room: "asc" }, { startTime: "asc" }] } } })
+    ? await prisma.branch.findUnique({ where: { id: s.branchId }, select: { id: true, name: true, slots: { select: { id: true, branchId: true, room: true, days: true, startTime: true, endTime: true, note: true, capacity: true }, orderBy: [{ room: "asc" }, { startTime: "asc" }] } } })
     : null;
 
   const [users, activeUsers, branches, auditCount, weekLessons, teacherRows, groupRows, programRows] = await Promise.all([
@@ -131,7 +132,13 @@ export default async function AdminDashboard({ locale }: { locale: Locale }) {
             </div>
           </div>
           <div className="mt-3 max-w-xl">
-            <BranchSlotsEditor branchId={myBranch.id} initial={myBranch.slots} canEdit locale={locale} />
+            <BranchSlotsEditor
+              branchId={myBranch.id}
+              // Sig'im kartada yo'q bo'lsa — Xonalar bo'limidagi xona sig'imi (nom bo'yicha)
+              initial={myBranch.slots.map((sl) => ({ ...sl, capacity: sl.capacity ?? (myRooms.find((r) => r.name.trim().toLowerCase() === sl.room.trim().toLowerCase())?.capacity || null) }))}
+              canEdit
+              locale={locale}
+            />
           </div>
         </div>
       )}

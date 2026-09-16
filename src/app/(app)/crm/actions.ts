@@ -212,7 +212,7 @@ export async function moveLeadStage(leadId: string, stage: string, reason?: stri
   }
 
   // Bosqich o'zgarishi = standart ustunga ko'chirish; oddiy nomli ustundan chiqadi
-  const data: Record<string, unknown> = { stage, kanbanColumnId: null };
+  const data: Record<string, unknown> = { stage, kanbanColumnId: null, branchSlotId: null };
   if (stage === "LOST" && reason) data.lossReason = reason;
 
   // Guruh lid YARATILISHIDA tanlangan bo'lishi mumkin — u holda o'quvchi hali
@@ -352,6 +352,7 @@ export async function enrollLeadToGroup(leadId: string, groupId: string): Promis
       studentId,
       stage: "WON",
       kanbanColumnId: null, // guruhga yozildi — oddiy nomli ustundan chiqadi
+      branchSlotId: null,
       enrollEditCount: isChange ? { increment: 1 } : undefined,
     },
     select: { enrollEditCount: true },
@@ -421,7 +422,7 @@ export async function bulkLeadAction(
       // Guruh biriktiruvi va ustun belgisi tozalanadi; yaratilgan o'quvchi yozuvi (studentId) qoladi.
       if (![ROLES.DIRECTOR, ROLES.DEPUTY_DIRECTOR, ROLES.ROP].includes(s.role as never)) return { ok: false, error: "forbidden" };
       await prisma.$transaction([
-        prisma.lead.updateMany({ where: { id: { in: leadIds } }, data: { stage: "NEW", kanbanColumnId: null, groupId: null, enrollEditCount: 0 } }),
+        prisma.lead.updateMany({ where: { id: { in: leadIds } }, data: { stage: "NEW", kanbanColumnId: null, branchSlotId: null, groupId: null, enrollEditCount: 0 } }),
         prisma.leadActivity.createMany({ data: leadIds.map((id) => ({ leadId: id, authorId: s.userId, type: "stage_change", result: "Yangiga qaytarildi (ustun bo'shatildi)" })) }),
       ]);
       await writeAudit({ actorId: s.userId, action: "UPDATE", entityType: "Lead", newValue: { count: leadIds.length, stage: "NEW" }, reason: "Ustun bo'shatildi — lidlar Yangiga qaytarildi" });
@@ -743,7 +744,7 @@ export async function moveLeadToColumn(leadId: string, columnId: string): Promis
   if (!lead) return { error: "not_found" };
   if (lead.kanbanColumnId === columnId) return { ok: true };
 
-  await prisma.lead.update({ where: { id: leadId }, data: { kanbanColumnId: columnId } });
+  await prisma.lead.update({ where: { id: leadId }, data: { kanbanColumnId: columnId, branchSlotId: null } });
   await prisma.leadActivity.create({
     data: { leadId, authorId: s.userId, type: "note", result: `Ustunga ko'chirildi: ${col.name}` },
   }).catch(() => {});
@@ -783,15 +784,22 @@ export async function getLevelTestQr(): Promise<LevelTestQr> {
    Lid shu filialga yo'naltiriladi. Hali ishlov boshida bo'lsa (NEW/IN_PROGRESS/
    CONTACTED) bosqichi "Taklif"ga (OFFER) o'tadi — filialga borish taklif
    qilingan; test/taklif bosqichida bo'lsa bosqich o'zgarmaydi, faqat filial.  */
-export async function dropLeadToBranch(leadId: string, branchId: string): Promise<{ ok?: boolean; error?: string }> {
+export async function dropLeadToBranch(leadId: string, branchId: string, slotId: string | null = null): Promise<{ ok?: boolean; error?: string }> {
   const s = await requireSession();
   if (!canWrite(s.role, MODULES.CRM)) return { error: "forbidden" };
 
-  const [lead, branch] = await Promise.all([
+  const [lead, branch, slot] = await Promise.all([
     prisma.lead.findUnique({ where: { id: leadId }, select: { id: true, stage: true, branchId: true } }),
     prisma.branch.findFirst({ where: { id: branchId, isActive: true }, select: { id: true, name: true } }),
+    slotId ? prisma.branchSlot.findFirst({ where: { id: slotId, branchId }, select: { id: true, room: true, days: true, startTime: true, endTime: true, capacity: true, _count: { select: { leads: true } } } }) : Promise.resolve(null),
   ]);
   if (!lead || !branch) return { error: "notfound" };
+  if (slotId && !slot) return { error: "slot_not_found" };
+  // Sig'im: xonada joy qolmagan bo'lsa tashlab bo'lmaydi (lidning o'zi allaqachon shu xonada bo'lsa — hisobga olinmaydi)
+  if (slot?.capacity) {
+    const already = await prisma.lead.count({ where: { branchSlotId: slot.id, NOT: { id: leadId } } });
+    if (already >= slot.capacity) return { error: "slot_full" };
+  }
 
   // Testdan kelgan (TEST) lid ham — filialga tashlangach "Taklif"ga o'tadi (sotuv rejimida u "Yangi"da turardi)
   const early = ["NEW", "IN_PROGRESS", "CONTACTED", "TEST"].includes(lead.stage);
@@ -802,7 +810,9 @@ export async function dropLeadToBranch(leadId: string, branchId: string): Promis
       ...(early ? { stage: "OFFER" } : {}),
       // Filial ustuni belgisi — faqat shu belgi bo'lgan lid filial ustunida ko'rinadi
       kanbanColumnId: branchColKey(branch.id),
-      activities: { create: { authorId: s.userId, type: early ? "stage_change" : "note", result: `Filialga yo'naltirildi: ${branch.name}${early ? " (Taklif)" : ""}` } },
+      // Xona kartasiga tashlangan bo'lsa — shu xona; ustunning o'ziga tashlansa xonasiz
+      branchSlotId: slot?.id ?? null,
+      activities: { create: { authorId: s.userId, type: early ? "stage_change" : "note", result: `Filialga yo'naltirildi: ${branch.name}${slot ? ` — ${slot.room}, ${slot.days} ${slot.startTime}–${slot.endTime}` : ""}${early ? " (Taklif)" : ""}` } },
     },
   });
   await writeAudit({ actorId: s.userId, action: "UPDATE", entityType: "Lead", entityId: leadId, oldValue: { branchId: lead.branchId, stage: lead.stage }, newValue: { branchId: branch.id, ...(early ? { stage: "OFFER" } : {}) }, reason: `Filialga yo'naltirildi: ${branch.name}` });
@@ -827,6 +837,7 @@ export async function setLeadOnline(leadId: string, online: boolean): Promise<{ 
       studyFormat: online ? "ONLINE" : null,
       stage: "NEW",
       kanbanColumnId: null,
+      branchSlotId: null,
       activities: { create: { authorId: s.userId, type: "note", result: online ? "Onlayn ustuniga o'tkazildi" : "Onlayn belgisi olib tashlandi — Yangi" } },
     },
   });

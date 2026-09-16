@@ -7,7 +7,7 @@ import { branchWhere } from "@/lib/branchScope";
 import { Forbidden } from "../_components/ui";
 import LeadsWorkspace from "./_components/LeadsWorkspace";
 import { listKanbanGroups, listKanbanColumns } from "./actions";
-import { columnOf, GROUP_COL_COLORS, type BranchColumn, type BranchMode, type VLead } from "./_lib/leadColumns";
+import { columnOf, GROUP_COL_COLORS, weekdaysLabel, type BranchColumn, type BranchMode, type GroupInfo, type VLead } from "./_lib/leadColumns";
 import type { Analytics } from "./_components/AnalyticsTiles";
 
 export default async function CrmPage() {
@@ -27,17 +27,24 @@ export default async function CrmPage() {
     : s.role === ROLES.DIRECTOR || s.role === ROLES.DEPUTY_DIRECTOR ? "head"
     : null;
   const allBranches = branchMode !== null && s.role !== ROLES.ADMIN;
+  // Filial administratori onlayn lidlarni ko'rmaydi (ular ROP'niki) — faqat o'z filialiga
+  // tashlangan ("br:<id>" belgili) onlayn lid ko'rinadi
+  const isAdmin = s.role === ROLES.ADMIN;
 
   const [leads, managers, groupColumns, customColumns, branchRows] = await Promise.all([
     prisma.lead.findMany({
-      where: allBranches ? {} : branchWhere(s), // faol filial lidlarigina (filialsiz eski yozuvlar ham)
+      where: allBranches
+        ? {}
+        : isAdmin
+          ? { AND: [branchWhere(s), { OR: [{ studyFormat: { not: "ONLINE" } }, { studyFormat: null }, { kanbanColumnId: { startsWith: "br:" } }] }] }
+          : branchWhere(s), // faol filial lidlarigina (filialsiz eski yozuvlar ham)
       orderBy: { createdAt: "desc" },
       // Faqat kerakli ustunlar — `include: { manager: true }` har lid uchun butun
       // User yozuvini (parol maydonlari bilan) tortib, 2000 lidda sahifani sekinlashtirardi
       select: {
         id: true, fullName: true, phone: true, email: true, telegram: true, studyFormat: true, source: true, stage: true,
         interestCourse: true, age: true, level: true, budget: true, note: true,
-        managerId: true, studentId: true, groupId: true, enrollEditCount: true, kanbanColumnId: true, createdAt: true, branchId: true,
+        managerId: true, studentId: true, groupId: true, enrollEditCount: true, kanbanColumnId: true, createdAt: true, branchId: true, branchSlotId: true,
         manager: { select: { fullName: true } },
         branch: { select: { name: true } },
         group: { select: { name: true } },
@@ -52,17 +59,23 @@ export default async function CrmPage() {
       ? prisma.branch.findMany({
           // Administrator — faqat o'z filiali ustuni
           where: { isActive: true, ...(s.role === ROLES.ADMIN && s.branchId ? { id: s.branchId } : {}) },
-          select: { id: true, name: true, slots: { select: { id: true, branchId: true, room: true, days: true, startTime: true, endTime: true, note: true }, orderBy: [{ room: "asc" }, { startTime: "asc" }] } },
+          select: { id: true, name: true, slots: { select: { id: true, branchId: true, room: true, days: true, startTime: true, endTime: true, note: true, capacity: true }, orderBy: [{ room: "asc" }, { startTime: "asc" }] } },
           orderBy: { name: "asc" },
         })
       : Promise.resolve([]),
   ]);
 
+  // Sig'im kartada yozilmagan bo'lsa (eski yozuvlar) — Xonalar bo'limidagi xona sig'imi (nom bo'yicha)
+  const roomCaps = branchRows.length
+    ? await prisma.room.findMany({ where: { isActive: true, branchId: { in: branchRows.map((b) => b.id) }, capacity: { gt: 0 } }, select: { branchId: true, name: true, capacity: true } })
+    : [];
+  const capOf = (branchId: string, room: string) => roomCaps.find((r) => r.branchId === branchId && r.name.trim().toLowerCase() === room.trim().toLowerCase())?.capacity ?? null;
+
   const branchColumns: BranchColumn[] = branchRows.map((b, i) => ({
     branchId: b.id,
     name: b.name,
     color: GROUP_COL_COLORS[(i + 1) % GROUP_COL_COLORS.length],
-    slots: b.slots,
+    slots: b.slots.map((sl) => ({ ...sl, capacity: sl.capacity ?? capOf(b.id, sl.room) })),
   }));
 
   const vleads: VLead[] = leads.map((l) => ({
@@ -84,6 +97,7 @@ export default async function CrmPage() {
     studentId: l.studentId,
     branchId: l.branchId,
     branchName: l.branch?.name ?? null,
+    branchSlotId: l.branchSlotId,
     groupId: l.groupId,
     groupName: l.group?.name ?? null,
     enrollEditCount: l.enrollEditCount,
@@ -92,6 +106,27 @@ export default async function CrmPage() {
     lastActivity: null,
     createdAt: l.createdAt.toISOString(),
   }));
+
+  // "Qabul qilindi" ustunidagi guruh kartalari uchun haqiqiy holat: o'quvchilar soni / sig'im, jadval.
+  // Ilgari kartada faqat kanbandan tushgan lidlar soni ("1") turardi — guruhda 7 o'quvchi bo'lsa ham.
+  const wonGroupIds = [...new Set(leads.map((l) => l.groupId).filter((x): x is string => !!x))];
+  const groupRows = wonGroupIds.length
+    ? await prisma.group.findMany({
+        where: { id: { in: wonGroupIds } },
+        select: {
+          id: true, capacity: true, room: true, weekdays: true, startTime: true, endTime: true,
+          teacher: { select: { fullName: true } },
+          _count: { select: { students: { where: { isActive: true } } } },
+        },
+      })
+    : [];
+  const groupInfo: Record<string, GroupInfo> = Object.fromEntries(groupRows.map((g) => [g.id, {
+    students: g._count.students,
+    capacity: g.capacity,
+    room: g.room,
+    schedule: [weekdaysLabel(g.weekdays), g.startTime && g.endTime ? `${g.startTime}–${g.endTime}` : g.startTime].filter(Boolean).join(" · ") || null,
+    teacher: g.teacher?.fullName ?? null,
+  }]));
 
   // Analitika
   const now = new Date();
@@ -124,7 +159,9 @@ export default async function CrmPage() {
       initialGroupColumns={groupColumns}
       initialCustomColumns={customColumns}
       branchColumns={branchMode ? branchColumns : null}
+      groupInfo={groupInfo}
       branchMode={branchMode}
+      showOnlineCol={!isAdmin}
       // Bo'sh vaqtlarni kim tahrirlaydi: rahbariyat — hammasini, administrator — o'z filialini
       slotsEditable={[ROLES.DIRECTOR, ROLES.DEPUTY_DIRECTOR].includes(s.role as never) ? "all" : s.role === ROLES.ADMIN ? (s.branchId ?? null) : null}
     />

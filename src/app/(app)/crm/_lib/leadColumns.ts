@@ -23,6 +23,8 @@ export interface VLead {
   /** Filial (ROP kanbanida filial ustuni shu bo'yicha) */
   branchId: string | null;
   branchName: string | null;
+  /** Filial ustunidagi bo'sh xona/vaqt kartasi — lid shu xonaga tashlangan */
+  branchSlotId: string | null;
   /** Yo'naltirilgan guruh (WON uchun majburiy) */
   groupId: string | null;
   groupName: string | null;
@@ -93,6 +95,24 @@ export interface GroupColumn {
   icon: string;
 }
 
+/** "Qabul qilindi" ustunidagi guruh kartasi uchun haqiqiy holat (Guruhlar bo'limidan) */
+export interface GroupInfo {
+  students: number;
+  capacity: number;
+  room: string | null;
+  /** "Du, Chor, Ju · 18:00–19:30" */
+  schedule: string | null;
+  teacher: string | null;
+}
+
+/** "1,3,5" → "Du, Chor, Ju" */
+export function weekdaysLabel(raw: string | null | undefined): string | null {
+  if (!raw) return null;
+  const names = ["", "Du", "Se", "Chor", "Pay", "Ju", "Sha", "Yak"];
+  const parts = raw.split(",").map((x) => names[Number(x.trim())]).filter(Boolean);
+  return parts.length ? parts.join(", ") : null;
+}
+
 export const GROUP_COL_PREFIX = "grp:";
 
 export function groupColKey(groupId: string): string {
@@ -142,13 +162,18 @@ const EMPTY = new Set<string>();
    ko'chirilsa tozalanadi). Qolgan lidlar o'z bosqichi ustunida. Ustun tepasida
    filial administratori kiritgan bo'sh xona/vaqtlar turadi.                */
 
-export interface BranchSlotView { id: string; branchId: string; room: string; days: string; startTime: string; endTime: string; note: string | null }
+export interface BranchSlotView { id: string; branchId: string; room: string; days: string; startTime: string; endTime: string; note: string | null; capacity: number | null }
 export interface BranchColumn { branchId: string; name: string; color: string; slots: BranchSlotView[] }
 
 export const BRANCH_COL_PREFIX = "br:";
 export const branchColKey = (branchId: string) => BRANCH_COL_PREFIX + branchId;
 export const isBranchCol = (key: string) => key.startsWith(BRANCH_COL_PREFIX);
-export const branchIdOfCol = (key: string) => key.slice(BRANCH_COL_PREFIX.length);
+/** "br:<filial>" yoki "br:<filial>:<xona>" → filial id */
+export const branchIdOfCol = (key: string) => key.slice(BRANCH_COL_PREFIX.length).split(":")[0];
+/** "br:<filial>:<xona>" → xona (slot) id; ustunning o'ziga tashlansa null */
+export const slotIdOfCol = (key: string): string | null => key.slice(BRANCH_COL_PREFIX.length).split(":")[1] ?? null;
+/** Xona kartasiga tashlash uchun drop kaliti */
+export const slotDropKey = (branchId: string, slotId: string) => `${BRANCH_COL_PREFIX}${branchId}:${slotId}`;
 
 /**
  * Filial rejimi (kim ko'rayotganiga qarab):
@@ -159,7 +184,8 @@ export const branchIdOfCol = (key: string) => key.slice(BRANCH_COL_PREFIX.length
  *             Taklif, filiallar, Qabul qilindi, Yo'qotilgan.
  */
 export type BranchMode = "sales" | "head";
-export interface BranchModeCfg { ids: Set<string>; mode: BranchMode }
+/** `online: false` — "Onlayn" ustuni ko'rsatilmaydi (filial administratori — onlayn lidlar unga tegishli emas) */
+export interface BranchModeCfg { ids: Set<string>; mode: BranchMode; online: boolean }
 
 /** "Onlayn" ustuni — arizada onlayn tanlagan (studyFormat=ONLINE) yangi lidlar; filiallardan oldin turadi */
 export const ONLINE_COL = "online";
@@ -193,7 +219,7 @@ export function columnOfLead(
     // Sotuv rejimida test/taklif ustunlari yo'q — o'sha bosqichdagilar "Yangi" hisoblanadi
     const eff = branch.mode === "sales" && (base === "test" || base === "offer") ? "new" : base;
     // Onlayn tanlaganlar Yangiga emas — alohida "Onlayn" ustuniga
-    if (eff === "new" && lead.studyFormat === "ONLINE") return ONLINE_COL;
+    if (eff === "new" && lead.studyFormat === "ONLINE" && branch.online) return ONLINE_COL;
     return eff;
   }
   return base;

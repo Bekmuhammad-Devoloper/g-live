@@ -6,7 +6,7 @@ import { cn } from "@/lib/cn";
 import { tr } from "@/lib/tr";
 import type { Locale } from "@/lib/constants";
 import { Icon } from "../../_components/Icon";
-import { COLUMNS, ONLINE_COL, branchIdOfCol, branchReplaces, columnDef, columnOf, columnOfLead, customIdOfCol, groupIdOfCol, isBranchCol, isCustomCol, isGroupCol, type BranchColumn, type BranchMode, type BranchModeCfg, type CustomColumn, type GroupColumn, type VLead } from "../_lib/leadColumns";
+import { COLUMNS, ONLINE_COL, branchIdOfCol, slotIdOfCol, branchColKey, branchReplaces, columnDef, columnOf, columnOfLead, customIdOfCol, groupIdOfCol, isBranchCol, isCustomCol, isGroupCol, type BranchColumn, type BranchMode, type BranchModeCfg, type CustomColumn, type GroupColumn, type GroupInfo, type VLead } from "../_lib/leadColumns";
 import { bulkLeadAction, deleteTestLead, dropLeadToBranch, enrollLeadToGroup, moveLeadStage, moveLeadToColumn, removeKanbanColumn, setLeadOnline, unpinKanbanGroup } from "../actions";
 import { type Analytics } from "./AnalyticsTiles";
 import FilterBar from "./FilterBar";
@@ -44,13 +44,17 @@ interface Props {
   initialCustomColumns: CustomColumn[];
   /** Filial rejimi — filial ustunlari (null — odatdagi kanban) */
   branchColumns?: BranchColumn[] | null;
+  /** "Qabul qilindi" guruh kartalari uchun holat (o'quvchilar / sig'im / jadval) */
+  groupInfo?: Record<string, GroupInfo>;
   /** "sales" (ROP/admin) yoki "head" (direktor) — leadColumns.ts */
   branchMode?: BranchMode | null;
+  /** "Onlayn" ustuni ko'rsatilsinmi (filial administratorida yo'q) */
+  showOnlineCol?: boolean;
   /** Bo'sh vaqtlarni tahrirlash: "all" — hamma filial, filial id — faqat o'sha, null — yo'q */
   slotsEditable?: "all" | string | null;
 }
 
-export default function LeadsWorkspace({ locale, initialLeads, managers, sources, analytics, canWrite, canDelete = false, canResetColumns = false, initialGroupColumns, initialCustomColumns, branchColumns = null, branchMode = null, slotsEditable = null }: Props) {
+export default function LeadsWorkspace({ locale, initialLeads, managers, sources, analytics, canWrite, canDelete = false, canResetColumns = false, initialGroupColumns, initialCustomColumns, branchColumns = null, groupInfo = {}, branchMode = null, showOnlineCol = true, slotsEditable = null }: Props) {
   const router = useRouter();
   const pathname = usePathname();
   const params = useSearchParams();
@@ -99,8 +103,8 @@ export default function LeadsWorkspace({ locale, initialLeads, managers, sources
   const pinnedIds = useMemo(() => new Set(groupColumns.map((g) => g.groupId)), [groupColumns]);
   const customIds = useMemo(() => new Set(customColumns.map((c) => c.id)), [customColumns]);
   const branchCfg = useMemo<BranchModeCfg | null>(
-    () => (branchColumns && branchMode ? { ids: new Set(branchColumns.map((b) => b.branchId)), mode: branchMode } : null),
-    [branchColumns, branchMode],
+    () => (branchColumns && branchMode ? { ids: new Set(branchColumns.map((b) => b.branchId)), mode: branchMode, online: showOnlineCol } : null),
+    [branchColumns, branchMode, showOnlineCol],
   );
 
   // URL sync — `router.replace` har o'zgarishda (har bir terilgan harfda ham) serverga
@@ -250,7 +254,7 @@ export default function LeadsWorkspace({ locale, initialLeads, managers, sources
     // "Onlayn" ustuni — onlayn belgisi + Yangi bosqich; "Yangi"ga qaytarilgan onlayn lid — belgi olib tashlanadi
     if (branchMode && (colKey === ONLINE_COL || (colKey === "new" && leads.find((l) => l.id === leadId)?.studyFormat === "ONLINE"))) {
       const online = colKey === ONLINE_COL;
-      setLeads((prev) => prev.map((l) => (l.id === leadId ? { ...l, studyFormat: online ? "ONLINE" : null, stage: "NEW", kanbanColumnId: null } : l))); // optimistik
+      setLeads((prev) => prev.map((l) => (l.id === leadId ? { ...l, studyFormat: online ? "ONLINE" : null, stage: "NEW", kanbanColumnId: null, branchSlotId: null } : l))); // optimistik
       startRefresh(async () => {
         const r = await setLeadOnline(leadId, online);
         if (r.error) setLeads(initialLeads);
@@ -261,13 +265,17 @@ export default function LeadsWorkspace({ locale, initialLeads, managers, sources
     // Filial ustuni (ROP) — lid shu filialga yo'naltiriladi; ishlov boshida bo'lsa "Taklif"ga o'tadi
     if (isBranchCol(colKey)) {
       const branchId = branchIdOfCol(colKey);
+      const slotId = slotIdOfCol(colKey); // xona kartasiga tashlangan bo'lsa
       const bname = branchColumns?.find((b) => b.branchId === branchId)?.name ?? "";
       setLeads((prev) => prev.map((l) => (l.id === leadId
-        ? { ...l, branchId, branchName: bname, kanbanColumnId: colKey, stage: ["NEW", "IN_PROGRESS", "CONTACTED", "TEST"].includes(l.stage) ? "OFFER" : l.stage }
+        ? { ...l, branchId, branchName: bname, kanbanColumnId: branchColKey(branchId), branchSlotId: slotId, stage: ["NEW", "IN_PROGRESS", "CONTACTED", "TEST"].includes(l.stage) ? "OFFER" : l.stage }
         : l))); // optimistik
       startRefresh(async () => {
-        const r = await dropLeadToBranch(leadId, branchId);
-        if (r.error) setLeads(initialLeads);
+        const r = await dropLeadToBranch(leadId, branchId, slotId);
+        if (r.error) {
+          setLeads(initialLeads);
+          if (r.error === "slot_full") { setFlash(tr(locale, { uz: "Xona to'lgan — joy qolmadi", ru: "Аудитория заполнена — мест нет", en: "Room is full — no seats left", de: "Raum voll — keine Plätze" })); setTimeout(() => setFlash(null), 3000); }
+        }
         else { setFlash(tr(locale, { uz: `Filialga yo'naltirildi: ${bname}`, ru: `Направлен в филиал: ${bname}`, en: `Directed to ${bname}`, de: `An Filiale weitergeleitet: ${bname}` })); setTimeout(() => setFlash(null), 3000); }
         router.refresh();
       });
@@ -276,7 +284,7 @@ export default function LeadsWorkspace({ locale, initialLeads, managers, sources
     // Oddiy nomli ustun — bosqich o'zgarmaydi, faqat ustun belgilanadi
     if (isCustomCol(colKey)) {
       const colId = customIdOfCol(colKey);
-      setLeads((prev) => prev.map((l) => (l.id === leadId ? { ...l, kanbanColumnId: colId } : l))); // optimistik
+      setLeads((prev) => prev.map((l) => (l.id === leadId ? { ...l, kanbanColumnId: colId, branchSlotId: null } : l))); // optimistik
       startRefresh(async () => {
         const r = await moveLeadToColumn(leadId, colId);
         if (r.error) setLeads(initialLeads);
@@ -297,14 +305,14 @@ export default function LeadsWorkspace({ locale, initialLeads, managers, sources
       return;
     }
     const target = columnDef(colKey).defaultStage;
-    setLeads((prev) => prev.map((l) => (l.id === leadId ? { ...l, stage: target, kanbanColumnId: null } : l))); // optimistik
+    setLeads((prev) => prev.map((l) => (l.id === leadId ? { ...l, stage: target, kanbanColumnId: null, branchSlotId: null } : l))); // optimistik
     startRefresh(async () => { await moveLeadStage(leadId, target); router.refresh(); });
   }, [canWrite, router, leads, enrollToGroup, initialLeads, branchColumns, locale, branchMode]);
 
   const confirmReject = useCallback((reason: string) => {
     if (!reject) return;
     const id = reject.id;
-    setLeads((prev) => prev.map((l) => (l.id === id ? { ...l, stage: "LOST", kanbanColumnId: null } : l)));
+    setLeads((prev) => prev.map((l) => (l.id === id ? { ...l, stage: "LOST", kanbanColumnId: null, branchSlotId: null } : l)));
     setReject(null);
     startRefresh(async () => { await moveLeadStage(id, "LOST", reason); router.refresh(); });
   }, [reject, router]);
@@ -321,7 +329,7 @@ export default function LeadsWorkspace({ locale, initialLeads, managers, sources
       de: `${ids.length} Leads aus „${title}“ gehen zurück zu „Neu“. Gruppenzuordnung wird entfernt. Fortfahren?`,
     }))) return;
     const set = new Set(ids);
-    setLeads((prev) => prev.map((l) => (set.has(l.id) ? { ...l, stage: "NEW", kanbanColumnId: null, groupId: null, groupName: null, enrollEditCount: 0 } : l))); // optimistik
+    setLeads((prev) => prev.map((l) => (set.has(l.id) ? { ...l, stage: "NEW", kanbanColumnId: null, branchSlotId: null, groupId: null, groupName: null, enrollEditCount: 0 } : l))); // optimistik
     startRefresh(async () => {
       const r = await bulkLeadAction(ids, "reset_new");
       if (!r.ok) setLeads(initialLeads);
@@ -482,7 +490,9 @@ export default function LeadsWorkspace({ locale, initialLeads, managers, sources
           onDelete={canDelete ? askDelete : undefined}
           onResetColumn={canResetColumns ? resetColumn : undefined}
           branchColumns={branchColumns}
+          groupInfo={groupInfo}
           branchMode={branchMode}
+          showOnlineCol={showOnlineCol}
           slotsEditable={slotsEditable}
         />
       ) : (

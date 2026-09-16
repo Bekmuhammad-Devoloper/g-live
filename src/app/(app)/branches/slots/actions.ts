@@ -19,6 +19,8 @@ export interface VSlot {
   startTime: string;
   endTime: string;
   note: string | null;
+  /** Xona sig'imi — shundan ortiq lid tashlab bo'lmaydi */
+  capacity: number | null;
 }
 
 export type SlotResult = { ok?: boolean; error?: string; slots?: VSlot[] };
@@ -33,8 +35,8 @@ function canEdit(s: { role: string; branchId: string | null }, branchId: string)
 
 const TIME_RE = /^([01]\d|2[0-3]):[0-5]\d$/;
 
-const toV = (x: { id: string; branchId: string; room: string; days: string; startTime: string; endTime: string; note: string | null }): VSlot =>
-  ({ id: x.id, branchId: x.branchId, room: x.room, days: x.days, startTime: x.startTime, endTime: x.endTime, note: x.note });
+const toV = (x: { id: string; branchId: string; room: string; days: string; startTime: string; endTime: string; note: string | null; capacity: number | null }): VSlot =>
+  ({ id: x.id, branchId: x.branchId, room: x.room, days: x.days, startTime: x.startTime, endTime: x.endTime, note: x.note, capacity: x.capacity });
 
 export async function listBranchSlots(branchId: string): Promise<VSlot[]> {
   await requireSession();
@@ -42,14 +44,14 @@ export async function listBranchSlots(branchId: string): Promise<VSlot[]> {
   return rows.map(toV);
 }
 
-/** Filial xonalari — tanlov ro'yxati uchun (Xonalar bo'limidan) */
-export async function listBranchRooms(branchId: string): Promise<string[]> {
+/** Filial xonalari — tanlov ro'yxati uchun (Xonalar bo'limidan), sig'imi bilan */
+export async function listBranchRooms(branchId: string): Promise<{ name: string; capacity: number }[]> {
   await requireSession();
-  const rooms = await prisma.room.findMany({ where: { branchId, isActive: true }, select: { name: true }, orderBy: { name: "asc" } });
-  return rooms.map((r) => r.name);
+  const rooms = await prisma.room.findMany({ where: { branchId, isActive: true }, select: { name: true, capacity: true }, orderBy: { name: "asc" } });
+  return rooms.map((r) => ({ name: r.name, capacity: r.capacity }));
 }
 
-export async function addBranchSlot(input: { branchId: string; room: string; days: string; startTime: string; endTime: string; note?: string }): Promise<SlotResult> {
+export async function addBranchSlot(input: { branchId: string; room: string; days: string; startTime: string; endTime: string; note?: string; capacity?: number | null }): Promise<SlotResult> {
   const s = await requireSession();
   if (!canEdit(s, input.branchId)) return { error: "forbidden" };
 
@@ -61,12 +63,19 @@ export async function addBranchSlot(input: { branchId: string; room: string; day
   if (room.length < 1) return { error: "room" };
   if (days.length < 2) return { error: "days" };
   if (!TIME_RE.test(startTime) || !TIME_RE.test(endTime) || startTime >= endTime) return { error: "time" };
+  // Sig'im: 1..200; bo'sh bo'lsa Xonalar bo'limidagi xona sig'imi (nom mos kelsa), u ham bo'lmasa cheksiz
+  const capRaw = Math.trunc(Number(input.capacity));
+  let capacity: number | null = Number.isFinite(capRaw) && capRaw > 0 ? Math.min(capRaw, 200) : null;
 
   const branch = await prisma.branch.findUnique({ where: { id: input.branchId }, select: { id: true, name: true } });
   if (!branch) return { error: "branch" };
+  if (capacity === null) {
+    const r = await prisma.room.findFirst({ where: { branchId: branch.id, isActive: true, name: room }, select: { capacity: true } });
+    if (r && r.capacity > 0) capacity = r.capacity;
+  }
 
-  const row = await prisma.branchSlot.create({ data: { branchId: branch.id, room, days, startTime, endTime, note, createdById: s.userId } });
-  await writeAudit({ actorId: s.userId, action: "CREATE", entityType: "BranchSlot", entityId: row.id, newValue: { branch: branch.name, room, days, startTime, endTime, note } });
+  const row = await prisma.branchSlot.create({ data: { branchId: branch.id, room, days, startTime, endTime, note, capacity, createdById: s.userId } });
+  await writeAudit({ actorId: s.userId, action: "CREATE", entityType: "BranchSlot", entityId: row.id, newValue: { branch: branch.name, room, days, startTime, endTime, note, capacity } });
 
   revalidatePath("/crm");
   revalidatePath("/dashboard");
