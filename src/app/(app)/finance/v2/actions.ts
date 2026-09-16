@@ -384,11 +384,15 @@ export async function createSalaryPolicyAction(input: { name: string; branchId?:
   } catch (e) { return toFinanceResult(e); }
 }
 
-export async function assignTeacherAction(groupId: string, teacherId: string, role: "MAIN" | "ASSISTANT", effectiveFrom: string, compensationRuleId?: string | null): Promise<Ok<{ id: string }>> {
+export async function assignTeacherAction(groupId: string, teacherId: string, role: "MAIN" | "ASSISTANT", effectiveFrom: string, compensationRuleId?: string | null, replaceMain = true): Promise<Ok<{ id: string }>> {
   try {
     const s = await guard();
     requireFinancePermission(s, "SALARY_RULE_MANAGE");
-    const a = await withFinanceTx(prisma, (tx) => assignTeacher(tx, { groupId, teacherId, role, effectiveFrom: new Date(effectiveFrom), compensationRuleId: compensationRuleId ?? null, actorId: s.userId }));
+    if (role !== "MAIN" && role !== "ASSISTANT") throw new FinanceError("validation", "Rol MAIN yoki ASSISTANT");
+    await assertTeacher(teacherId);
+    const from = /^\d{4}-\d{2}$/.test(effectiveFrom) ? monthStart(parseYearMonthKey(effectiveFrom)) : new Date(effectiveFrom);
+    if (Number.isNaN(from.getTime())) throw new FinanceError("validation", "Sana noto'g'ri");
+    const a = await withFinanceTx(prisma, (tx) => assignTeacher(tx, { groupId, teacherId, role, effectiveFrom: from, compensationRuleId: compensationRuleId ?? null, replaceMain, actorId: s.userId }));
     revalidateAll();
     return ok({ id: a.id });
   } catch (e) { return toFinanceResult(e); }
@@ -398,7 +402,9 @@ export async function endAssignmentAction(id: string, effectiveTo: string, reaso
   try {
     const s = await guard();
     requireFinancePermission(s, "SALARY_RULE_MANAGE");
-    await withFinanceTx(prisma, (tx) => endAssignment(tx, id, new Date(effectiveTo), s.userId, reason));
+    const to = /^\d{4}-\d{2}$/.test(effectiveTo) ? monthStart(parseYearMonthKey(effectiveTo)) : new Date(effectiveTo); // "YYYY-MM" → oy boshi (Tashkent)
+    if (Number.isNaN(to.getTime())) throw new FinanceError("validation", "Sana noto'g'ri");
+    await withFinanceTx(prisma, (tx) => endAssignment(tx, id, to, s.userId, reason));
     revalidateAll();
     return ok();
   } catch (e) { return toFinanceResult(e); }

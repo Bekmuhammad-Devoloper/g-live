@@ -6,7 +6,7 @@ import { formatMoney, type Locale } from "@/lib/constants";
 import { bpToPercentString } from "@/lib/finance/money";
 import { Badge, Card, EmptyRow, Table } from "../../../../_components/ui";
 import { fin } from "../../_i18n";
-import { createSalaryPolicyAction, createSalaryRuleAction, endSalaryRuleAction } from "../../actions";
+import { assignTeacherAction, createSalaryPolicyAction, createSalaryRuleAction, endAssignmentAction, endSalaryRuleAction } from "../../actions";
 
 export interface RuleRow { id: string; scope: string; target: string; component: string; rateBp: number | null; fixedAmount: number | null; effectiveFrom: string; effectiveTo: string | null; legacy: boolean }
 export interface PolicyRow { id: string; name: string; version: number; branchId: string | null; salaryBaseMode: string; attendanceMode: string; requireConfirmedAttendance: boolean; includeArchivedStudents: boolean; includeFrozenStudents: boolean; includeZeroAmounts: boolean; effectiveFrom: string; effectiveTo: string | null; noLessonsMode: string; assignmentSplitMode: string; attendanceCountedStatuses: string[] }
@@ -14,7 +14,10 @@ export interface Opt { id: string; name: string }
 
 const SCOPES = ["GLOBAL", "BRANCH", "COURSE", "GROUP", "TEACHER", "STUDENT", "ASSIGNMENT"] as const;
 
-export default function SalarySettingsView({ locale: L, enabled, rules, policies, opts, branches, nextMonth }: { locale: Locale; enabled: boolean; rules: RuleRow[]; policies: PolicyRow[]; opts: Record<string, Opt[]>; branches: Opt[]; nextMonth: string }) {
+export interface AssignmentRow { id: string; group: string; teacher: string; role: string; source: string; from: string; rule: string | null }
+
+export default function SalarySettingsView({ locale: L, enabled, rules, policies, opts, branches, assignments, nextMonth }: { locale: Locale; enabled: boolean; rules: RuleRow[]; policies: PolicyRow[]; opts: Record<string, Opt[]>; branches: Opt[]; assignments: AssignmentRow[]; nextMonth: string }) {
+  const [asg, setAsg] = useState({ groupId: "", teacherId: "", role: "MAIN", from: nextMonth, ruleId: "", replaceMain: true });
   const router = useRouter();
   const [pending, start] = useTransition();
   const [msg, setMsg] = useState<string | null>(null);
@@ -63,6 +66,29 @@ export default function SalarySettingsView({ locale: L, enabled, rules, policies
           ))}
         </Table>
       </Card>
+      {/* Tayinlashlar: guruh → o'qituvchi (MAIN/ASSISTANT), sana, yordamchi qoidasi */}
+      <Card>
+        <h3 className="mb-2 text-sm font-semibold">{fin(L, "assignments")}</h3>
+        <div className="grid gap-2 md:grid-cols-6">
+          <select className="input" value={asg.groupId} onChange={(e) => setAsg({ ...asg, groupId: e.target.value })}><option value="">{fin(L, "group")}</option>{(opts.GROUP ?? []).map((g) => <option key={g.id} value={g.id}>{g.name}</option>)}</select>
+          <select className="input" value={asg.teacherId} onChange={(e) => setAsg({ ...asg, teacherId: e.target.value })}><option value="">{fin(L, "teacher")}</option>{(opts.TEACHER ?? []).map((t) => <option key={t.id} value={t.id}>{t.name}</option>)}</select>
+          <select className="input" value={asg.role} onChange={(e) => setAsg({ ...asg, role: e.target.value })}><option value="MAIN">MAIN</option><option value="ASSISTANT">ASSISTANT</option></select>
+          <input className="input" type="month" value={asg.from} onChange={(e) => setAsg({ ...asg, from: e.target.value })} />
+          <select className="input" value={asg.ruleId} onChange={(e) => setAsg({ ...asg, ruleId: e.target.value })}><option value="">{fin(L, "rule")}: —</option>{rules.filter((r) => r.scope === "ASSIGNMENT" && !r.effectiveTo).map((r) => <option key={r.id} value={r.id}>{r.target} · {r.rateBp !== null ? `${r.rateBp / 100}%` : r.fixedAmount}</option>)}</select>
+          <button type="button" className="btn-primary" disabled={pending || !enabled || !asg.groupId || !asg.teacherId} onClick={() => run(() => assignTeacherAction(asg.groupId, asg.teacherId, asg.role as "MAIN" | "ASSISTANT", asg.from, asg.ruleId || null, asg.replaceMain))}>{fin(L, "save")}</button>
+        </div>
+        <label className="mt-2 flex items-center gap-2 text-xs text-slate-500"><input type="checkbox" checked={asg.replaceMain} onChange={(e) => setAsg({ ...asg, replaceMain: e.target.checked })} /> MAIN: oldingi asosiy o'qituvchini almashtirish (belgilanmasa — ikki MAIN → NEEDS_REVIEW)</label>
+        <ul className="mt-3 space-y-1 text-sm">
+          {assignments.length === 0 && <li className="text-slate-400">{fin(L, "empty")}</li>}
+          {assignments.map((a) => (
+            <li key={a.id} className="flex flex-wrap items-center justify-between gap-2">
+              <span>{a.group} · {a.teacher} · <Badge tone={a.role === "MAIN" ? "brand" : "slate"}>{a.role}</Badge> · {a.from} → … · <span className="text-xs text-slate-500">{a.source}{a.rule ? ` · ${a.rule}` : ""}</span></span>
+              {enabled && <button type="button" className="btn-ghost px-2 py-1 text-xs" disabled={pending} onClick={() => { const to = window.prompt(`${fin(L, "end")} (YYYY-MM)`, nextMonth) ?? ""; const reason = to ? window.prompt(fin(L, "reason")) ?? "" : ""; if (to && reason.trim().length >= 3) run(() => endAssignmentAction(a.id, to, reason)); }}>{fin(L, "end")}</button>}
+            </li>
+          ))}
+        </ul>
+      </Card>
+
       {/* 1/4/5. Umumiy sozlamalar — policy versiyasi */}
       <Card>
         <h3 className="mb-3 text-sm font-semibold">{fin(L, "policy")} — {fin(L, "version")}</h3>

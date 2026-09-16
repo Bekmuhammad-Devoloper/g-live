@@ -19,6 +19,7 @@ const D = {
   settings: { uz: "Sozlamalar", ru: "Настройки", en: "Settings", de: "Einstellungen" },
   search: { uz: "Qidirish", ru: "Найти", en: "Search", de: "Suchen" },
   membershipStart: { uz: "A'zolik boshlanishi (ertaroqqa)", ru: "Начало членства (раньше)", en: "Membership start (earlier)", de: "Mitgliedschaftsbeginn (früher)" },
+  assignments: { uz: "Tayinlashlar (guruh → o'qituvchi)", ru: "Назначения (группа → преподаватель)", en: "Assignments (group → teacher)", de: "Zuweisungen (Gruppe → Lehrer)" },
   end: { uz: "Tugatish", ru: "Завершить", en: "End", de: "Beenden" },
   readiness: { uz: "Tayyorlik", ru: "Готовность", en: "Readiness", de: "Bereitschaft" },
   readinessReady: { uz: "TAYYOR — bloker yo'q", ru: "ГОТОВО — блокеров нет", en: "READY — no blockers", de: "BEREIT — keine Blocker" },
