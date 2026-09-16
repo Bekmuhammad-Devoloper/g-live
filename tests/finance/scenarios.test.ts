@@ -232,18 +232,38 @@ describe("business scenarios A–L (pre-cutover)", () => {
     expect(es.every((e) => e.settlementPeriodId === null)).toBe(true); // review'gacha davrga tushmaydi
   });
 
-  it("K: butun oy FROZEN o'quvchi → charge 0 / WAIVED; to'lov kredit bo'lib qoladi, earning yo'q", async () => {
+  it("K: butun oy FROZEN o'quvchi → charge 0 / WAIVED — faqat oy tugagach (ochiq FROZEN oy o'rtasida taxmin qilinmaydi); to'lov kredit, earning yo'q", async () => {
     const p = db.prisma;
     const { group } = await mkGroup("K-01", "TeacherK");
-    const s = await mkStudent(group.id, monthStart(SEP), "K-student", { eduStatus: "FROZEN" }); // holat tarixi: sentabrdan FROZEN (INFERRED)
-    const sync = await syncStudentBilling(p, { studentId: s.id, upTo: OCT, actorId: ids.director, now: T("2026-10-02T05:00:00Z") });
-    const oct = sync.created.find((c) => c.serviceMonth === 10)!;
-    expect(oct).toMatchObject({ status: "WAIVED", finalAmount: 0, originalAmount: FEE });
-    expect(JSON.parse(oct.snapshot ?? "{}").frozenFullMonth).toBe(true);
+    const s = await mkStudent(group.id, monthStart(SEP), "K-student", { eduStatus: "FROZEN" }); // holat tarixi: sentabrdan FROZEN (KNOWN — cutover'dan keyin)
+    // Oktabr o'rtasida: oy tugamagan, FROZEN intervali ochiq → charge keyinga qoldiriladi (OPEN ham, WAIVED ham emas)
+    const mid = await syncStudentBilling(p, { studentId: s.id, upTo: OCT, actorId: ids.director, now: T("2026-10-02T05:00:00Z") });
+    expect(mid.created.find((c) => c.serviceMonth === 10)).toBeUndefined();
+    expect(await p.studentCharge.count({ where: { studentId: s.id, serviceMonth: 10 } })).toBe(0);
     const r = await pay(s.id, 500_000, "2026-10-05T05:00:00Z", "k");
     expect(r.allocations).toHaveLength(0);
     expect(r.balance).toMatchObject({ debt: 0, credit: 500_000 });
     expect(await earningsOf(r.payment.id)).toHaveLength(0);
+    // Oy tugadi, hali ham FROZEN → oktabr WAIVED (0); kredit saqlanadi
+    const done = await syncStudentBilling(p, { studentId: s.id, upTo: OCT, actorId: ids.director, now: T("2026-11-02T05:00:00Z") });
+    const oct = done.created.find((c) => c.serviceMonth === 10)!;
+    expect(oct).toMatchObject({ status: "WAIVED", finalAmount: 0, originalAmount: FEE });
+    expect(JSON.parse(oct.snapshot ?? "{}").frozenFullMonth).toBe(true);
+    expect(done.creditApplied).toHaveLength(0);
+    expect((await studentBalance(p, s.id))).toMatchObject({ debt: 0, credit: 500_000 });
+    // INFERRED (legacy) FROZEN — moliyaviy fakt taxmin qilinmaydi: to'liq charge, snapshot'da frozenInferred belgisi
+    const CUTOVER_NOV = "2026-11-01T00:00:00+05:00";
+    await p.setting.update({ where: { key: "finance.v2.cutoverAt" }, data: { value: CUTOVER_NOV } });
+    try {
+      const { group: g2 } = await mkGroup("K-02", "TeacherK2");
+      const s2 = await mkStudent(g2.id, monthStart(SEP), "K-legacy-frozen", { eduStatus: "FROZEN" }); // createdAt < cutover → INFERRED
+      const legacy = await syncStudentBilling(p, { studentId: s2.id, upTo: OCT, actorId: ids.director, now: T("2026-11-02T05:00:00Z") });
+      const octLegacy = legacy.created.find((c) => c.serviceMonth === 10)!;
+      expect(octLegacy).toMatchObject({ status: "OPEN", finalAmount: FEE });
+      expect(JSON.parse(octLegacy.snapshot ?? "{}")).toMatchObject({ frozenFullMonth: false, frozenInferred: true });
+    } finally {
+      await p.setting.update({ where: { key: "finance.v2.cutoverAt" }, data: { value: "2026-08-01T00:00:00+05:00" } });
+    }
   });
 
   it("L: PRESENT_RATIO siyosati, dars yo'q → 100% maosh yaratilmaydi; NEEDS_REVIEW / NO_LESSONS_FOUND", async () => {

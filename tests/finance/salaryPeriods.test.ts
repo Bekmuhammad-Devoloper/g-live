@@ -120,7 +120,7 @@ describe("salary period & payout (Phase 8)", () => {
     const p = db.prisma;
     const t2 = await p.user.create({ data: { fullName: "Legacy T", email: "lt@t.local", passwordHash: "x", role: "TEACHER" } });
     await p.teacherSalary.create({ data: { teacherId: t2.id, year: 2026, month: 8, fiksa: 3_000_000, bonus: 100_000, penalty: 20_000, kpi: 0, closed: true } });
-    await p.teacherSalary.create({ data: { teacherId: t2.id, year: 2026, month: 9, fiksa: 3_000_000, bonus: 0, penalty: 0, kpi: 50_000, closed: false } });
+    const open = await p.teacherSalary.create({ data: { teacherId: t2.id, year: 2026, month: 9, fiksa: 3_000_000, bonus: 0, penalty: 0, kpi: 50_000, closed: false } });
     await p.teacherSalary.create({ data: { teacherId: ids.teacher, year: 2026, month: 10, fiksa: 1, closed: true } }); // V2 davri band
     const dry = await backfillSalary(p, { dryRun: true });
     expect(dry).toMatchObject({ rows: 3, created: 2, conflicts: [{ period: "2026-10" }] });
@@ -133,6 +133,12 @@ describe("salary period & payout (Phase 8)", () => {
     expect(sep).toMatchObject({ status: "CALCULATED", grossAmount: 3_050_000, remainingAmount: 3_050_000 });
     const again = await backfillSalary(p);
     expect(again).toMatchObject({ created: 0, existing: 2 });
-    expect(await p.teacherEarning.count({ where: { teacherId: t2.id } })).toBe(0); // earning yaratilmadi
+    // Yopiq legacy davr — earning yo'q (majburiyat emas); OCHIQ legacy davr — summa LEGACY earning bilan tasdiqlangan:
+    // recalc/approve uni 0 ga tushirmaydi va to'lab bo'ladi (idempotent: ikkinchi backfill qo'shmaydi)
+    const es = await p.teacherEarning.findMany({ where: { teacherId: t2.id } });
+    expect(es).toHaveLength(1);
+    expect(es[0]).toMatchObject({ type: "MANUAL_ADJUSTMENT", status: "POSTED", amount: 3_050_000, settlementPeriodId: sep.id, idempotencyKey: `legacy-salary:${open.id}` });
+    const recalced = await recalculateSalaryPeriod(p, t2.id, { year: 2026, month: 9 }, { userId: ids.director });
+    expect(recalced).toMatchObject({ grossAmount: 3_050_000, remainingAmount: 3_050_000, status: "CALCULATED" });
   });
 });

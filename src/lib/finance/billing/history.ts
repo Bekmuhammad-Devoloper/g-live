@@ -10,7 +10,7 @@
 // ishlatilmaydi, faqat billing/ko'rish).
 
 import type { FinanceDb } from "../db";
-import { FINANCE_V2_DEFAULT_CUTOVER_ISO } from "../constants";
+import { cutoverAtFrom } from "../cutover";
 import { isWithin, monthEnd, monthStart, tashkentYearMonth, type YearMonth } from "../period";
 
 export interface Interval<T = string> {
@@ -27,12 +27,13 @@ export interface SyncOptions {
   cutoverAt?: Date;
 }
 
-const cutoverOf = (o: SyncOptions) => o.cutoverAt ?? new Date(FINANCE_V2_DEFAULT_CUTOVER_ISO);
+/** Cutover: berilmasa `Setting finance.v2.cutoverAt` (tranzaksiya orqali) — konstanta emas, sozlama manba */
+const cutoverOf = (db: FinanceDb, o: SyncOptions) => (o.cutoverAt ? Promise.resolve(o.cutoverAt) : cutoverAtFrom(db));
 
 /** Guruh a'zoligi tarixini `GroupStudent` bilan sinxronlaydi; o'zgarish bo'lsa true */
 export async function syncMembershipHistory(db: FinanceDb, studentId: string, o: SyncOptions = {}): Promise<boolean> {
   const at = o.at ?? new Date();
-  const cutover = cutoverOf(o);
+  const cutover = await cutoverOf(db, o);
   const [current, history] = await Promise.all([
     db.groupStudent.findMany({ where: { studentId }, select: { groupId: true, joinedAt: true, leftAt: true, isActive: true } }),
     db.groupStudentHistory.findMany({ where: { studentId }, orderBy: { effectiveFrom: "asc" }, select: { id: true, groupId: true, effectiveFrom: true, effectiveTo: true } }),
@@ -80,7 +81,7 @@ export async function syncMembershipHistory(db: FinanceDb, studentId: string, o:
 /** Holat tarixini `Student.eduStatus` bilan sinxronlaydi; o'zgarish bo'lsa true */
 export async function syncStatusHistory(db: FinanceDb, studentId: string, o: SyncOptions = {}): Promise<boolean> {
   const at = o.at ?? new Date();
-  const cutover = cutoverOf(o);
+  const cutover = await cutoverOf(db, o);
   const student = await db.student.findUnique({ where: { id: studentId }, select: { eduStatus: true, createdAt: true } });
   if (!student) return false;
   const last = await db.studentStatusHistory.findFirst({ where: { studentId }, orderBy: { effectiveFrom: "desc" } });

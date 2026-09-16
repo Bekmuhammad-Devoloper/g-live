@@ -6,7 +6,7 @@
 import type { GroupTeacherAssignment } from "@prisma/client";
 
 import type { FinanceDb } from "../db";
-import { FINANCE_V2_DEFAULT_CUTOVER_ISO } from "../constants";
+import { cutoverAtFrom } from "../cutover";
 import { FinanceError } from "../errors";
 import { financeAudit } from "../audit";
 import { monthEnd, monthStart, type YearMonth } from "../period";
@@ -35,7 +35,7 @@ export interface SyncAssignmentOptions {
  */
 export async function syncGroupTeacherAssignment(db: FinanceDb, groupId: string, o: SyncAssignmentOptions = {}): Promise<boolean> {
   const at = o.at ?? new Date();
-  const cutover = o.cutoverAt ?? new Date(FINANCE_V2_DEFAULT_CUTOVER_ISO);
+  const cutover = o.cutoverAt ?? (await cutoverAtFrom(db)); // sozlama manba (konstanta emas)
   const group = await db.group.findUnique({ where: { id: groupId }, select: { teacherId: true, createdAt: true } });
   if (!group) return false;
   const open = await db.groupTeacherAssignment.findMany({ where: { groupId, role: "MAIN", effectiveTo: null } });

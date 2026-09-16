@@ -83,9 +83,9 @@ export async function allocateFifo(db: FinanceDb, o: AllocateOptions): Promise<P
  * O'quvchining mavjud kreditini (taqsimlanmagan to'lovlar, eng eski receivedAt
  * birinchi) ochiq charge'larga qo'llaydi — har manba to'lov alohida qator.
  */
-export async function applyStudentCredit(db: FinanceDb, studentId: string, o: { actorId?: string | null; source?: "CREDIT_APPLY" | "BACKFILL"; skipAfterHooks?: boolean; excludePaymentId?: string } = {}): Promise<PaymentAllocation[]> {
+export async function applyStudentCredit(db: FinanceDb, studentId: string, o: { actorId?: string | null; source?: "CREDIT_APPLY" | "BACKFILL"; skipAfterHooks?: boolean; excludePaymentId?: string; /** faqat shu lahzadan OLDIN qabul qilingan to'lovlar (backfill: legacy) */ receivedBefore?: Date } = {}): Promise<PaymentAllocation[]> {
   const payments = await db.payment.findMany({
-    where: { studentId, status: "PAID", legacyRole: null, postedAt: { not: null }, ...(o.excludePaymentId ? { id: { not: o.excludePaymentId } } : {}) },
+    where: { studentId, status: "PAID", legacyRole: null, postedAt: { not: null }, ...(o.excludePaymentId ? { id: { not: o.excludePaymentId } } : {}), ...(o.receivedBefore ? { receivedAt: { lt: o.receivedBefore } } : {}) },
     orderBy: [{ receivedAt: "asc" }, { createdAt: "asc" }],
     select: { id: true },
   });

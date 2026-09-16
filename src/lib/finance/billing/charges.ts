@@ -15,7 +15,7 @@ import { isUniqueViolation } from "../db";
 import { FinanceError } from "../errors";
 import { financeAudit } from "../audit";
 import { assertMoney, assertPositiveMoney } from "../money";
-import { compareYearMonth, monthsBetween, tashkentDate, tashkentYearMonth, yearMonthKey, type YearMonth } from "../period";
+import { compareYearMonth, monthEnd, monthsBetween, tashkentDate, tashkentYearMonth, yearMonthKey, type YearMonth } from "../period";
 import { resolveBillingPolicy, type BillingPolicyView } from "./policy";
 import { resolveDiscount } from "./discounts";
 import { intervalCoversMonth, intervalTouchesMonth, membershipIntervals, statusIntervals, syncStudentHistory, type Interval } from "./history";
@@ -98,7 +98,17 @@ export async function ensureMonthlyCharges(db: FinanceDb, o: EnsureChargesOption
         groupMeta.set(iv.key, meta);
       }
       const policy = await resolveBillingPolicy(db, meta.branchId ?? student.branchId, ym);
-      const frozenFullMonth = statuses.some((s) => s.key === "FROZEN" && intervalCoversMonth(s, ym));
+      // S4 to'liq oy FROZEN → 0. Faqat KNOWN (cutover'dan keyingi, hook yozgan) holat intervali va faqat OY TUGAGACH
+      // hal qilinadi: ochiq FROZEN interval oy o'rtasida "butun oy" deb taxmin qilinmaydi — charge keyinga qoldiriladi.
+      // INFERRED (legacy) FROZEN — moliyaviy fakt taxmin qilinmaydi: legacy kabi to'liq charge (snapshot'da belgilanadi).
+      const frozenKnown = statuses.filter((s) => s.key === "FROZEN" && s.source === "KNOWN" && intervalCoversMonth(s, ym));
+      const monthElapsed = now >= monthEnd(ym);
+      if (frozenKnown.some((s) => s.to === null) && !monthElapsed) {
+        result.skipped.push({ groupId: iv.key, month: yearMonthKey(ym), reason: "muzlatilgan (FROZEN) — oy tugagach hal qilinadi" });
+        continue;
+      }
+      const frozenFullMonth = frozenKnown.length > 0;
+      const frozenInferred = !frozenFullMonth && statuses.some((s) => s.key === "FROZEN" && s.source === "INFERRED" && intervalCoversMonth(s, ym));
       const discount = frozenFullMonth ? { applied: null, candidates: [] } : await resolveDiscount(db, o.studentId, iv.key, ym, fee.amount);
       const discountAmount = discount.applied?.amount ?? 0;
       const finalAmount = frozenFullMonth && policy.frozenFullMonthMode === "ZERO_CHARGE" ? 0 : fee.amount - discountAmount;
@@ -108,6 +118,7 @@ export async function ensureMonthlyCharges(db: FinanceDb, o: EnsureChargesOption
         membership: { groupId: iv.key, from: iv.from.toISOString(), to: iv.to?.toISOString() ?? null, source: iv.source },
         statuses: statuses.filter((s) => intervalTouchesMonth(s, ym)).map((s) => ({ status: s.key, from: s.from.toISOString(), to: s.to?.toISOString() ?? null, source: s.source })),
         frozenFullMonth,
+        frozenInferred, // legacy holat: to'liq charge, lekin ko'rib chiqish uchun belgi
         discount,
         generatedAt: now.toISOString(),
       };

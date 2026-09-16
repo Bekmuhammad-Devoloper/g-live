@@ -12,6 +12,7 @@
 
 import type { Prisma, PrismaClient } from "@prisma/client";
 
+import { cutoverAtFrom } from "../cutover";
 import { withFinanceTx } from "../db";
 import { FinanceError } from "../errors";
 import { accountForMethod } from "../accounts/accounts";
@@ -77,7 +78,7 @@ export async function backfillBilling(client: PrismaClient, o: BackfillOptions =
         report.chargesCreated += r.created.length;
         report.chargesExisting += r.existing;
         report.chargesSkipped += r.skipped.length;
-        for (const sk of r.skipped) report.unpricedGroups[sk.groupId] = (report.unpricedGroups[sk.groupId] ?? 0) + 1;
+        for (const sk of r.skipped) if (sk.reason.startsWith("narx")) report.unpricedGroups[sk.groupId] = (report.unpricedGroups[sk.groupId] ?? 0) + 1;
         report.createdAmount += r.created.reduce((a, c) => a + c.finalAmount, 0);
 
         // Eski PENDING (qo'lda qarz) → MANUAL_DEBT charge; Payment qatoriga legacyRole="DEBT"
@@ -103,8 +104,9 @@ export async function backfillBilling(client: PrismaClient, o: BackfillOptions =
   }
   // Narxsiz oy = legacy qarz hisoblanmaydi → to'lovlar soxta "kredit" bo'lib qoladi. Bu moliyaviy faktni taxmin
   // qilish emas, TO'XTASH: avval guruh/kurs narxi (yoki finance.defaultMonthlyFee) kiritiladi, keyin backfill.
-  if (report.chargesSkipped > 0 && !o.allowUnpriced) {
-    throw new FinanceError("validation", `Narx belgilanmagan: ${Object.keys(report.unpricedGroups).length} guruh, ${report.chargesSkipped} o'quvchi-oy — Group.monthlyFee / Program.monthlyFee / Setting finance.defaultMonthlyFee kiriting (yoki --allow-unpriced)`, { unpricedGroups: report.unpricedGroups, dryRun: report.dryRun });
+  const unpricedMonths = Object.values(report.unpricedGroups).reduce((a, b) => a + b, 0);
+  if (unpricedMonths > 0 && !o.allowUnpriced) {
+    throw new FinanceError("validation", `Narx belgilanmagan: ${Object.keys(report.unpricedGroups).length} guruh, ${unpricedMonths} o'quvchi-oy — Group.monthlyFee / Program.monthlyFee / Setting finance.defaultMonthlyFee kiriting (yoki --allow-unpriced)`, { unpricedGroups: report.unpricedGroups, dryRun: report.dryRun });
   }
   return report;
 }
@@ -139,6 +141,7 @@ export interface PaymentsBackfillReport {
  */
 export async function backfillPayments(client: PrismaClient, o: BackfillOptions = {}): Promise<PaymentsBackfillReport> {
   const now = o.now ?? new Date();
+  const cutoverAt = o.cutoverAt ?? (await cutoverAtFrom(client));
   const upTo = o.upTo ?? tashkentYearMonth(now);
   const batchSize = o.batchSize ?? 25;
   const log = o.log ?? (() => {});
@@ -178,7 +181,8 @@ export async function backfillPayments(client: PrismaClient, o: BackfillOptions 
           }
         }
         await ensureMonthlyCharges(tx, { studentId: st.id, upTo, actorId: o.actorId, cutoverAt: o.cutoverAt, now });
-        const allocs = await applyStudentCredit(tx, st.id, { actorId: o.actorId, source: "BACKFILL", skipAfterHooks: true });
+        // Faqat LEGACY (cutover'dan oldingi) to'lovlar — V2 ga kiritilgan haqiqiy to'lov krediti backfill'da earning'siz taqsimlanmasin
+        const allocs = await applyStudentCredit(tx, st.id, { actorId: o.actorId, source: "BACKFILL", skipAfterHooks: true, receivedBefore: cutoverAt });
         report.allocationsCreated += allocs.length;
         report.allocatedAmount += allocs.reduce((a, r) => a + r.amount, 0);
       }
@@ -278,7 +282,7 @@ export async function backfillSalary(client: PrismaClient, o: BackfillOptions = 
       const taken = await tx.salaryPeriod.findUnique({ where: { teacherId_year_month: { teacherId: r.teacherId, year: r.year, month: r.month } } });
       if (taken) { report.conflicts.push({ teacherSalaryId: r.id, period: `${r.year}-${String(r.month).padStart(2, "0")}` }); continue; }
       const gross = r.fiksa + r.bonus + r.kpi - r.penalty;
-      await tx.salaryPeriod.create({
+      const period = await tx.salaryPeriod.create({
         data: {
           teacherId: r.teacherId, year: r.year, month: r.month, status: r.closed ? "CLOSED" : "CALCULATED", source: "LEGACY", legacyTeacherSalaryId: r.id,
           legacyFiksaAmount: r.fiksa, fixedAmount: 0, commissionAmount: 0, bonusAmount: r.bonus, kpiAmount: r.kpi, penaltyAmount: r.penalty,
@@ -286,6 +290,18 @@ export async function backfillSalary(client: PrismaClient, o: BackfillOptions = 
           note: r.closed ? "LEGACY: TeacherSalary'dan ko'chirildi; to'lov (payout) tarixi yo'q — yopiq davr majburiyat emas" : "LEGACY: TeacherSalary'dan ko'chirildi (ochiq)",
         },
       });
+      // OCHIQ legacy davr: summa TeacherEarning bilan tasdiqlanadi (MANUAL_ADJUSTMENT, legacy manba) — recalc/approve/payout
+      // uni 0 ga tushirmaydi va to'lab bo'ladi. Yopiq legacy davr — majburiyat emas (earning yo'q).
+      if (!r.closed && gross !== 0) {
+        await tx.teacherEarning.create({
+          data: {
+            teacherId: r.teacherId, earningYear: r.year, earningMonth: r.month, serviceYear: r.year, serviceMonth: r.month, settlementPeriodId: period.id,
+            baseAmount: gross, eligibleAmount: gross, amount: gross, type: "MANUAL_ADJUSTMENT", status: "POSTED",
+            snapshot: JSON.stringify({ source: "LEGACY", legacyTeacherSalaryId: r.id, fiksa: r.fiksa, bonus: r.bonus, kpi: r.kpi, penalty: r.penalty, note: "legacy TeacherSalary (ochiq) — fiksa+bonus+kpi−penalty" }),
+            idempotencyKey: `legacy-salary:${r.id}`, createdById: o.actorId ?? null,
+          },
+        });
+      }
       report.created++;
     }
     if (o.dryRun) throw new DryRunRollback();
