@@ -14,6 +14,8 @@ import {
   canGrantAttendanceUnlock,
   computeAttendanceWindow,
   isLessonDay,
+  isPlannedLessonDay,
+  plannedLessonDays,
   isValidDateISO,
   todayISOLocal,
   MATERIALIZE_MAX_AGE_DAYS,
@@ -64,6 +66,14 @@ export interface AttendanceWindowInfo {
   unlockedUntilLabel: string | null;
   /** Joriy foydalanuvchi ruxsat bera oladimi (menejer/direktor/o'rinbosar/ROP) */
   canUnlock: boolean;
+  /** Sana rejadagi dars kunimi (oyiga darslar soni chegarasi ichida) */
+  lessonDay?: boolean;
+  /** Kurs/guruh bo'yicha oyiga darslar soni */
+  lessonsPerMonth?: number | null;
+  /** Shu oydagi nechanchi dars (1..N) */
+  lessonIndex?: number | null;
+  /** Shu oyda rejadagi darslar soni */
+  plannedInMonth?: number;
 }
 
 /**
@@ -82,7 +92,8 @@ async function materializeAutoAbsent(groupId: string, dateISO: string, closesAt:
   const group = await prisma.group.findUnique({
     where: { id: groupId },
     select: {
-      weekdays: true, startTime: true, startDate: true, endDate: true,
+      weekdays: true, startTime: true, startDate: true, endDate: true, lessonsPerMonth: true,
+      program: { select: { lessonsPerMonth: true } },
       students: { where: { isActive: true }, select: { studentId: true, joinedAt: true } },
     },
   });
@@ -90,8 +101,10 @@ async function materializeAutoAbsent(groupId: string, dateISO: string, closesAt:
 
   const existingLesson = await prisma.lesson.findFirst({ where: { groupId, startsAt: { gte: start, lt: end } }, select: { id: true } });
   if (!existingLesson) {
-    // Dars yozuvi yo'q — faqat haqiqiy dars kunida yaratamiz (dam olish kuniga yozmaymiz)
+    // Dars yozuvi yo'q — faqat haqiqiy dars kunida yaratamiz (dam olish kuniga yozmaymiz);
+    // oylik chegaradan (kurs/guruh "oyiga darslar soni") tashqaridagi kun ham dars emas
     if (!isLessonDay(dateISO, group.weekdays)) return;
+    if (!isPlannedLessonDay(dateISO, group.weekdays, group.lessonsPerMonth ?? group.program.lessonsPerMonth, group.startDate, group.endDate)) return;
     if (group.startDate && new Date(dateISO + "T23:59:59") < group.startDate) return;
     if (group.endDate && new Date(dateISO + "T00:00:00") > group.endDate) return;
   }
@@ -125,10 +138,20 @@ export async function getGroupAttendance(
   if (!s) return { ok: false };
   if (!isValidDateISO(dateISO)) return { ok: false };
 
-  const group = await prisma.group.findUnique({ where: { id: groupId }, select: { startTime: true, endTime: true } });
+  const group = await prisma.group.findUnique({
+    where: { id: groupId },
+    select: { startTime: true, endTime: true, weekdays: true, startDate: true, endDate: true, lessonsPerMonth: true, program: { select: { lessonsPerMonth: true } } },
+  });
   const win = computeAttendanceWindow(dateISO, group?.startTime, group?.endTime);
   const future = dateISO > todayISOLocal(); // ISO format leksikografik solishtirishga mos
   const unlockUntil = win.closed ? await activeUnlockUntil(groupId, dateISO) : null;
+
+  // Rejadagi dars kunimi: guruh kunlari + oyiga darslar soni chegarasi (kurs/guruh sozlamasi)
+  const limit = group ? (group.lessonsPerMonth ?? group.program.lessonsPerMonth) : null;
+  const [yy, mm] = dateISO.split("-").map(Number);
+  const planned = group ? plannedLessonDays(yy, mm - 1, group.weekdays, limit, group.startDate, group.endDate) : [];
+  const lessonDay = !group?.weekdays || planned.includes(dateISO);
+  const plannedIndex = planned.indexOf(dateISO);
 
   // Oyna yopilgan va ruxsat ham yo'q — belgilanmaganlar avtomatik "yo'q" bo'ladi
   if (win.closed && !unlockUntil) {
@@ -141,7 +164,9 @@ export async function getGroupAttendance(
   if (lesson) for (const a of lesson.attendances) map[a.studentId] = a.status;
 
   const bypass = canBypassAttendanceLock(s.role);
-  const editable = future ? bypass : (!win.closed || !!unlockUntil || bypass);
+  // Reja tashqarisidagi kun (oylik chegara) — mavjud dars yozuvi bo'lmasa belgilab bo'lmaydi
+  const offPlan = !lessonDay && !lesson;
+  const editable = offPlan ? false : future ? bypass : (!win.closed || !!unlockUntil || bypass);
   return {
     ok: true,
     map,
@@ -152,8 +177,23 @@ export async function getGroupAttendance(
       closesAtLabel: dmOf(win.closesAt),
       unlockedUntilLabel: unlockUntil ? dmOf(unlockUntil) : null,
       canUnlock: canGrantAttendanceUnlock(s.role),
+      lessonDay: !offPlan,
+      lessonsPerMonth: limit ?? null,
+      lessonIndex: plannedIndex >= 0 ? plannedIndex + 1 : null,
+      plannedInMonth: planned.length,
     },
   };
+}
+
+/** Reja tashqarisidagi kunga (oylik chegaradan oshgan) davomat yozilmaydi — dars yozuvi yo'q bo'lsa */
+async function planCheck(groupId: string, dateISO: string): Promise<{ notLessonDay: true } | null> {
+  const { start, end } = dayRange(dateISO);
+  const [group, lesson] = await Promise.all([
+    prisma.group.findUnique({ where: { id: groupId }, select: { weekdays: true, startDate: true, endDate: true, lessonsPerMonth: true, program: { select: { lessonsPerMonth: true } } } }),
+    prisma.lesson.findFirst({ where: { groupId, startsAt: { gte: start, lt: end } }, select: { id: true } }),
+  ]);
+  if (!group || lesson) return null;
+  return isPlannedLessonDay(dateISO, group.weekdays, group.lessonsPerMonth ?? group.program.lessonsPerMonth, group.startDate, group.endDate) ? null : { notLessonDay: true };
 }
 
 /** Yopiq oyna / kelajak sana tekshiruvi: null = tahrirlash mumkin, aks holda sabab. */
@@ -183,7 +223,7 @@ export async function markStudentAttendance(
   dateISO: string,
   studentId: string,
   status: string,
-): Promise<{ ok: boolean; cleared?: boolean; blocked?: boolean; lessonsThisMonth?: number; closed?: boolean; future?: boolean; closesAtLabel?: string }> {
+): Promise<{ ok: boolean; cleared?: boolean; blocked?: boolean; lessonsThisMonth?: number; closed?: boolean; future?: boolean; closesAtLabel?: string; notLessonDay?: boolean }> {
   const s = await canMark(groupId);
   if (!s) return { ok: false };
   if (!ALLOWED.includes(status)) return { ok: false };
@@ -192,6 +232,8 @@ export async function markStudentAttendance(
   // Yopiq oyna tekshiruvi — belgilash HAM, o'chirish HAM taqiqlanadi (avto-"yo'q"ni o'chirib bo'lmasin)
   const lock = await lockCheck(s, groupId, dateISO);
   if (lock) return { ok: false, ...lock };
+  // Oylik chegara: rejadagi darslar soni to'lgan kun — dars emas
+  if (await planCheck(groupId, dateISO)) return { ok: false, notLessonDay: true };
 
   const lesson = await findOrCreateLesson(groupId, dateISO);
   const existing = await prisma.attendance.findUnique({ where: { lessonId_studentId: { lessonId: lesson.id, studentId } } });
@@ -226,13 +268,14 @@ export async function markStudentAttendance(
 export async function markAllPresent(
   groupId: string,
   dateISO: string,
-): Promise<{ ok: boolean; added?: number; skippedBlocked?: number; closed?: boolean; future?: boolean; closesAtLabel?: string }> {
+): Promise<{ ok: boolean; added?: number; skippedBlocked?: number; closed?: boolean; future?: boolean; closesAtLabel?: string; notLessonDay?: boolean }> {
   const s = await canMark(groupId);
   if (!s) return { ok: false };
   if (!isValidDateISO(dateISO)) return { ok: false };
 
   const lock = await lockCheck(s, groupId, dateISO);
   if (lock) return { ok: false, ...lock };
+  if (await planCheck(groupId, dateISO)) return { ok: false, notLessonDay: true };
 
   const group = await prisma.group.findUnique({ where: { id: groupId }, include: { students: { select: { studentId: true } } } });
   if (!group) return { ok: false };

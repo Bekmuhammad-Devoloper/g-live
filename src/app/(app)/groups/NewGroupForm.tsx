@@ -30,7 +30,7 @@ export default function NewGroupForm({
   onClose,
 }: {
   locale: Locale;
-  programs: { id: string; name: string }[];
+  programs: { id: string; name: string; lessonsPerMonth?: number }[];
   teachers: { id: string; fullName: string }[];
   rooms: { id: string; name: string; capacity: number }[];
   open: boolean;
@@ -42,6 +42,8 @@ export default function NewGroupForm({
   const [format, setFormat] = useState<string>("OFFLINE");
   const [room, setRoom] = useState("");
   const [capacity, setCapacity] = useState(12);
+  // Oyiga darslar soni — kurs tanlanganda kursnikidan to'ladi, shu formada o'zgartirsa bo'ladi
+  const [lessonsPerMonth, setLessonsPerMonth] = useState("12");
   const [color, setColor] = useState(GROUP_COLORS[0]);
   const [hideErr, setHideErr] = useState(false); // maydon o'zgarganda eski xatoni yashirish
   const formRef = useRef<HTMLFormElement>(null);
@@ -113,7 +115,7 @@ export default function NewGroupForm({
           </div>
           <div>
             <label className={label}>{tr(locale, { uz: "Kurs tanlash", ru: "Выбрать курс", en: "Select course", de: "Kurs auswählen" })} <span className="text-rose-500">*</span></label>
-            <select name="programId" required className={input} defaultValue="">
+            <select name="programId" required className={input} defaultValue="" onChange={(e) => { const p = programs.find((x) => x.id === e.target.value); if (p?.lessonsPerMonth) setLessonsPerMonth(String(p.lessonsPerMonth)); }}>
               <option value="" disabled>{tr(locale, { uz: "Variantlarni tanlang", ru: "Выберите вариант", en: "Select an option", de: "Option auswählen" })}</option>
               {programs.map((p) => <option key={p.id} value={p.id}>{p.name}</option>)}
             </select>
@@ -225,6 +227,20 @@ export default function NewGroupForm({
               <label className={label}>{tr(locale, { uz: "Tugash sanasi", ru: "Дата окончания", en: "End date", de: "Enddatum" })}</label>
               <input name="endDate" type="date" className={input} />
             </div>
+          </div>
+
+          {/* Oyiga darslar soni — kursdan keladi; faqat yaratishda o'zgartirish mumkin */}
+          <div>
+            <label className={label}>{tr(locale, { uz: "Oyiga darslar soni", ru: "Уроков в месяц", en: "Lessons per month", de: "Unterrichtsstunden pro Monat" })}</label>
+            <input name="lessonsPerMonth" value={lessonsPerMonth} onChange={(e) => setLessonsPerMonth(e.target.value.replace(/\D/g, "").slice(0, 2))} type="text" inputMode="numeric" className={input} />
+            <p className="mt-1 text-[11px] text-slate-400">
+              {tr(locale, {
+                uz: "Oyda shundan ortiq dars kuni belgilanmaydi (haftada 3 kun bo'lsa oyda 13 kun chiqishi mumkin — 13-chisi dars bo'lmaydi). Keyin o'zgartirib bo'lmaydi.",
+                ru: "В месяце не будет больше уроков, чем указано (при 3 днях в неделю может выйти 13 дней — 13-й не урок). Позже изменить нельзя.",
+                en: "No more lesson days per month than this (3 days a week can yield 13 — the 13th is not a lesson). Cannot be changed later.",
+                de: "Nicht mehr Unterrichtstage pro Monat als angegeben (3 Tage/Woche können 13 ergeben — der 13. ist kein Unterricht). Später nicht änderbar.",
+              })}
+            </p>
           </div>
 
           {/* Oylik to'lov — bo'sh qoldirilsa kurs narxi ishlatiladi */}

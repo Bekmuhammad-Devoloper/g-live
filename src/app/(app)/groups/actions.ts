@@ -44,6 +44,7 @@ const groupSchema = z.object({
   endTime: z.string().optional(),
   note: z.string().max(1000).optional(), // izoh/kament
   monthlyFee: z.coerce.number().int().min(0).max(1_000_000_000).optional(), // guruh oylik to'lovi
+  lessonsPerMonth: z.coerce.number().int().min(1).max(31).optional(), // oyiga darslar soni (faqat yaratishda)
 });
 
 // "1,3,5" ni tozalab 1..7 oralig'idagi noyob kunlarni tartiblab qaytaradi
@@ -122,6 +123,7 @@ export async function createGroup(_prev: FormState, formData: FormData): Promise
     endTime: formData.get("endTime") || undefined,
     note: formData.get("note") || undefined,
     monthlyFee: formData.get("monthlyFee") || undefined,
+    lessonsPerMonth: formData.get("lessonsPerMonth") || undefined,
   });
   if (!parsed.success) return { error: "invalid" };
 
@@ -160,6 +162,8 @@ export async function createGroup(_prev: FormState, formData: FormData): Promise
       endTime,
       note: parsed.data.note?.trim() || null,
       monthlyFee: parsed.data.monthlyFee ?? null,
+      // Oyiga darslar soni — faqat yaratishda; bo'sh bo'lsa kursniki ishlatiladi
+      lessonsPerMonth: parsed.data.lessonsPerMonth ?? null,
       branchId: s.branchId,
       status: "ACTIVE",
     },

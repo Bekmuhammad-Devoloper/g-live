@@ -122,7 +122,7 @@ export default async function GroupDetailPage({ params }: { params: Promise<{ id
             {group.name}
           </span>
         }
-        subtitle={`${group.program.name} · ${group.levelCode ?? "—"} · ${group.room ?? "—"} · ${tr(s.locale, { uz: "O'qituvchi", ru: "Преподаватель", en: "Teacher", de: "Lehrer" })}: ${group.teacher?.fullName ?? "—"}`}
+        subtitle={`${group.program.name} · ${group.levelCode ?? "—"} · ${group.room ?? "—"} · ${tr(s.locale, { uz: "O'qituvchi", ru: "Преподаватель", en: "Teacher", de: "Lehrer" })}: ${group.teacher?.fullName ?? "—"} · ${tr(s.locale, { uz: `oyiga ${group.lessonsPerMonth ?? group.program.lessonsPerMonth} dars`, ru: `${group.lessonsPerMonth ?? group.program.lessonsPerMonth} уроков/мес`, en: `${group.lessonsPerMonth ?? group.program.lessonsPerMonth} lessons/month`, de: `${group.lessonsPerMonth ?? group.program.lessonsPerMonth} Std./Monat` })}`}
         action={full ? <EditGroupButton group={editData} programs={programs} teachers={teachers} locale={s.locale} /> : undefined}
       />
 

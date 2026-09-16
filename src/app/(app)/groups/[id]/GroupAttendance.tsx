@@ -146,6 +146,21 @@ export function GroupAttendance({ groupId, students, locale }: { groupId: string
         </div>
       )}
 
+      {/* Reja tashqarisidagi kun — oyiga darslar soni to'lgan (kurs/guruh sozlamasi) */}
+      {win && win.lessonDay === false && (
+        <div className="mb-3 flex items-center gap-2 rounded-lg border border-slate-200 bg-slate-50 px-3 py-2 text-sm text-slate-600 dark:border-white/10 dark:bg-white/[0.04] dark:text-slate-300">
+          <Icon name="calendar" className="h-4 w-4 shrink-0 text-slate-400" />
+          <span>
+            {tr(locale, {
+              uz: `Bu kun dars kuni emas: shu oyda rejadagi ${win.lessonsPerMonth ?? win.plannedInMonth ?? ""} ta dars kuni to'lgan. Kalendar bo'yicha ortiqcha kun dars hisoblanmaydi.`,
+              ru: `Этот день не учебный: в этом месяце запланированные ${win.lessonsPerMonth ?? win.plannedInMonth ?? ""} уроков уже распределены. Лишний календарный день уроком не считается.`,
+              en: `Not a lesson day: this month's planned ${win.lessonsPerMonth ?? win.plannedInMonth ?? ""} lesson days are already used. The extra calendar day does not count as a lesson.`,
+              de: `Kein Unterrichtstag: die geplanten ${win.lessonsPerMonth ?? win.plannedInMonth ?? ""} Unterrichtstage dieses Monats sind vergeben. Der zusätzliche Kalendertag zählt nicht als Unterricht.`,
+            })}
+          </span>
+        </div>
+      )}
+
       {/* Kelajak sana — oldindan belgilash taqiqlangan */}
       {(futureNotice || (win?.future && !editable)) && (
         <div className="mb-3 flex items-center justify-between gap-2 rounded-lg border border-amber-200 bg-amber-50 px-3 py-2 text-sm text-amber-700 dark:border-amber-900/40 dark:bg-amber-950/20 dark:text-amber-400">

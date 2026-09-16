@@ -380,6 +380,10 @@ model Program {
   // Kurs oylik to'lovi (so'm). Guruhda o'z narxi bo'lmasa shu ishlatiladi.
   // O'quvchi guruhga qo'shilgan oydan boshlab har oy shu summa hisoblanadi.
   monthlyFee  Int?
+  // Bir oyda nechta dars — guruh jadvalida oyda shundan ortiq dars kuni belgilanmaydi
+  // (haftada 3 kun bo'lsa oyda 13 kun chiqishi mumkin — 13-chisi dars bo'lmaydi).
+  // Guruh yaratishda o'zgartirsa bo'ladi (Group.lessonsPerMonth), keyin — yo'q.
+  lessonsPerMonth Int @default(12)
 
   levels    Level[]
   groups    Group[]
@@ -720,6 +724,7 @@ model Group {
   endTime   String? // dars tugash vaqti "HH:mm"
   note      String? // guruh haqida izoh/kament — guruh ma'lumoti ko'rinadigan hamma joyda chiqadi
   monthlyFee Int? // guruhning oylik to'lovi (so'm); bo'lmasa kurs narxi olinadi
+  lessonsPerMonth Int? // oyiga darslar soni — faqat guruh yaratishda beriladi; bo'lmasa kursniki
 
   students    GroupStudent[]
   leads       Lead[] // shu guruhga yo'naltirilgan lidlar

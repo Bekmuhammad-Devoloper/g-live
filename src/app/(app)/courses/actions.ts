@@ -18,6 +18,8 @@ const schema = z.object({
   // Kurs oylik to'lovi (so'm) — o'quvchi guruhga qo'shilgan oydan boshlab
   // shu summa har oy qarzga hisoblanadi (src/lib/debt.ts)
   monthlyFee: z.coerce.number().int().min(0).max(1_000_000_000).optional(),
+  // Oyiga darslar soni (1..31) — guruh jadvalida oyda shundan ortiq dars kuni bo'lmaydi
+  lessonsPerMonth: z.coerce.number().int().min(1).max(31).optional(),
 });
 
 // Bannerlarni JSON'dan tozalab, faqat data:image URL'larni qaytaradi (maks 6 ta)
@@ -38,6 +40,7 @@ export async function createCourse(_prev: CourseState, formData: FormData): Prom
     name: formData.get("name"),
     description: formData.get("description") || undefined,
     monthlyFee: formData.get("monthlyFee") || undefined,
+    lessonsPerMonth: formData.get("lessonsPerMonth") || undefined,
   });
   if (!parsed.success) return { error: "invalid" };
 
@@ -48,6 +51,7 @@ export async function createCourse(_prev: CourseState, formData: FormData): Prom
       description: parsed.data.description || null,
       banners: banners.length ? JSON.stringify(banners) : null,
       monthlyFee: parsed.data.monthlyFee ?? null,
+      lessonsPerMonth: parsed.data.lessonsPerMonth ?? 12,
     },
   });
   await writeAudit({ actorId: s.userId, action: "CREATE", entityType: "Program", entityId: p.id, newValue: { name: p.name, banners: banners.length } });
@@ -64,6 +68,7 @@ export async function updateCourse(id: string, _prev: CourseState, formData: For
     name: formData.get("name"),
     description: formData.get("description") || undefined,
     monthlyFee: formData.get("monthlyFee") || undefined,
+    lessonsPerMonth: formData.get("lessonsPerMonth") || undefined,
   });
   if (!parsed.success) return { error: "invalid" };
 
@@ -78,6 +83,7 @@ export async function updateCourse(id: string, _prev: CourseState, formData: For
       description: parsed.data.description || null,
       banners: banners.length ? JSON.stringify(banners) : null,
       monthlyFee: parsed.data.monthlyFee ?? null,
+      ...(parsed.data.lessonsPerMonth ? { lessonsPerMonth: parsed.data.lessonsPerMonth } : {}),
     },
   });
   await writeAudit({ actorId: s.userId, action: "UPDATE", entityType: "Program", entityId: id, newValue: { name: parsed.data.name, banners: banners.length } });

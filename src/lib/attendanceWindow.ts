@@ -100,6 +100,52 @@ export function isLessonDay(dateISO: string, weekdays: string | null | undefined
   return weekdays.split(",").map(Number).includes(wd);
 }
 
+const pad2 = (n: number) => String(n).padStart(2, "0");
+
+/**
+ * Shu oydagi REJADAGI dars kunlari ("YYYY-MM-DD" ro'yxati): guruh haftalik kunlari
+ * bo'yicha, guruh davri (startDate/endDate) ichida, va oyiga `limit` tadan ortiq emas —
+ * kalendarda 13 kun chiqsa ham 13-chisi dars bo'lmaydi (kurs/guruh sozlamasi).
+ * limit null/0 — cheklovsiz.
+ */
+export function plannedLessonDays(
+  year: number,
+  month0: number,
+  weekdays: string | null | undefined,
+  limit: number | null | undefined,
+  startDate?: Date | null,
+  endDate?: Date | null,
+): string[] {
+  if (!weekdays) return [];
+  const wds = new Set(weekdays.split(",").map(Number));
+  const out: string[] = [];
+  const last = new Date(year, month0 + 1, 0).getDate();
+  for (let day = 1; day <= last; day++) {
+    const d = new Date(year, month0, day, 12);
+    const wd = d.getDay() === 0 ? 7 : d.getDay();
+    if (!wds.has(wd)) continue;
+    if (startDate && d < new Date(startDate.getFullYear(), startDate.getMonth(), startDate.getDate())) continue;
+    if (endDate && d > new Date(endDate.getFullYear(), endDate.getMonth(), endDate.getDate(), 23, 59)) continue;
+    out.push(`${year}-${pad2(month0 + 1)}-${pad2(day)}`);
+    if (limit && out.length >= limit) break;
+  }
+  return out;
+}
+
+/** Sana rejadagi dars kunimi (oylik chegara bilan). Guruhda kunlar berilmagan bo'lsa — chegara qo'yilmaydi. */
+export function isPlannedLessonDay(
+  dateISO: string,
+  weekdays: string | null | undefined,
+  limit: number | null | undefined,
+  startDate?: Date | null,
+  endDate?: Date | null,
+): boolean {
+  if (!weekdays) return true;
+  const [y, m] = dateISO.split("-").map(Number);
+  if (!y || !m) return false;
+  return plannedLessonDays(y, m - 1, weekdays, limit, startDate, endDate).includes(dateISO);
+}
+
 /**
  * Dars (Lesson) bo'yicha oyna holati — davomat yozadigan BARCHA yo'llar
  * (guruh sahifasi, /attendance, dars sahifasi, QR) bir xil qoidani ishlatsin.
