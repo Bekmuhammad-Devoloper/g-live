@@ -6,7 +6,7 @@ import { cn } from "@/lib/cn";
 import { tr } from "@/lib/tr";
 import type { Locale } from "@/lib/constants";
 import { Icon } from "../../_components/Icon";
-import { ARCHIVE_COL, COLUMNS, ONLINE_COL, columnOfLead, customColKey, groupColKey, branchColKey, slotDropKey, type BranchColumn, type BranchMode, type BranchModeCfg, type CustomColumn, type GroupColumn, type GroupInfo, type VLead } from "../_lib/leadColumns";
+import { ARCHIVE_COL, ONLINE_COL, columnOfLead, visibleColumns, branchColKey, slotDropKey, type BranchColumn, type BranchMode, type BranchModeCfg, type CustomColumn, type GroupColumn, type GroupInfo, type VLead } from "../_lib/leadColumns";
 import LeadCard from "./LeadCard";
 import BranchSlotsEditor from "../../branches/slots/BranchSlotsEditor";
 
@@ -52,20 +52,6 @@ interface Props {
   onResetColumn?: (leadIds: string[], title: string) => void;
 }
 
-/** Standart va guruh ustunlari bitta ko'rinishga keltiriladi */
-interface ViewCol {
-  key: string;
-  title: string;
-  sub: string | null;
-  color: string;
-  icon: string;
-  defaultStage: string;
-  groupId: string | null;
-  customId: string | null;
-  /** Filial ustuni (ROP rejimi) */
-  branch?: BranchColumn | null;
-}
-
 /** Har ustunda dastlab shuncha karta chiziladi — qolgani "Yana ko'rsatish" bilan.
  *  Aks holda 2000 lid = 2000 karta × ~10 SVG bir vaqtda DOM'ga tushib, sahifa qotib qolardi. */
 const PAGE = 40;
@@ -88,58 +74,10 @@ export default function LeadsKanban({
   );
 
   // Tartib: standart 4 ta → oddiy nomli ustunlar → "Qabul qilindi" → guruh ustunlari → "Yo'qotilgan"
-  const cols = useMemo<ViewCol[]>(() => {
-    const hidden = new Set(hiddenCols);
-    const std = (key: string): ViewCol => {
-      const c = COLUMNS.find((x) => x.key === key)!;
-      return { key: c.key, title: tr(locale, c.label), sub: null, color: c.color, icon: c.icon, defaultStage: c.defaultStage, groupId: null, customId: null };
-    };
-    const custom = customColumns.map<ViewCol>((c) => ({
-      key: customColKey(c.id),
-      title: c.name,
-      sub: null,
-      color: c.color,
-      icon: c.icon,
-      defaultStage: "NEW",
-      groupId: null,
-      customId: c.id,
-    }));
-    // "Arxiv" — hamma rolda, eng oxirida: tashlangan lid bosqichini saqlaydi, ko'rinishdan chiqadi
-    const archive: ViewCol = {
-      key: ARCHIVE_COL,
-      title: tr(locale, { uz: "Arxiv", ru: "Архив", en: "Archive", de: "Archiv" }),
-      sub: tr(locale, { uz: "Ko'rinishdan olib qo'yilgan", ru: "Убраны из вида", en: "Hidden from the board", de: "Aus der Ansicht entfernt" }),
-      color: "#64748b", icon: "archive", defaultStage: "NEW", groupId: null, customId: null,
-    };
-    const groups = groupColumns.map<ViewCol>((g) => ({
-      key: groupColKey(g.groupId),
-      title: g.name,
-      sub: g.program,
-      color: g.color,
-      icon: g.icon,
-      defaultStage: "WON",
-      groupId: g.groupId,
-      customId: null,
-    }));
-    // Filial rejimi: "sales" — test/taklif o'rniga filial ustunlari; "head" — hamma ustunlar
-    // (Daraja testi va Taklif qoladi) + filial ustunlari. Filial ustunida faqat qo'lda tashlanganlar.
-    if (branchColumns && branchMode) {
-      const brs = branchColumns.map<ViewCol>((b) => ({
-        key: branchColKey(b.branchId), title: b.name, sub: null, color: b.color, icon: "building", defaultStage: "OFFER", groupId: null, customId: null, branch: b,
-      }));
-      // "Onlayn" — arizada onlayn tanlagan yangi lidlar; filiallardan oldin
-      const online: ViewCol = {
-        key: ONLINE_COL,
-        title: tr(locale, { uz: "Onlayn", ru: "Онлайн", en: "Online", de: "Online" }),
-        sub: tr(locale, { uz: "Onlayn o'qimoqchilar", ru: "Хотят учиться онлайн", en: "Want to study online", de: "Möchten online lernen" }),
-        color: "#0ea5e9", icon: "video", defaultStage: "NEW", groupId: null, customId: null,
-      };
-      return [std("new"), std("work"), ...(showOnlineCol ? [online] : []), ...(branchMode === "head" ? [std("test"), std("offer")] : []), ...brs, ...custom, std("won"), ...groups, std("lost"), archive]
-        .filter((c) => !hidden.has(c.key));
-    }
-    return [std("new"), std("work"), std("test"), std("offer"), ...custom, std("won"), ...groups, std("lost"), archive]
-      .filter((c) => !hidden.has(c.key));
-  }, [groupColumns, customColumns, branchColumns, branchMode, showOnlineCol, hiddenCols, locale]);
+  const cols = useMemo(
+    () => visibleColumns({ locale, groupColumns, customColumns, branchColumns, branchMode, showOnlineCol, hiddenCols }),
+    [locale, groupColumns, customColumns, branchColumns, branchMode, showOnlineCol, hiddenCols],
+  );
 
   const colOf = useCallback((l: VLead) => columnOfLead(l, pinnedIds, customIds, branchCfg), [pinnedIds, customIds, branchCfg]);
 
