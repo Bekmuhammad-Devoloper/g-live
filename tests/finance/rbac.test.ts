@@ -137,6 +137,21 @@ describe("engine entry points reject unauthorized roles server-side (Phase 13)",
     expect(r.refund.amount).toBe(10_000);
   });
 
+  it("IDOR: MANAGER boshqa filial to'lovini qaytara olmaydi / boshqa filial kassasidan xarajat qila olmaydi; ID qo'lda berilsa ham server rad etadi", async () => {
+    const p = db.prisma;
+    // Boshqa filial (branch2) o'quvchisiga DIRECTOR to'lov qiladi; MANAGER (branch) uni ID bilan qaytarishga urinadi
+    const other = await acceptPayment(p, { studentId: ids.student2, amount: 50_000, method: "CASH", receivedAt: T("2026-10-08T05:00:00Z"), purpose: "Kurs", idempotencyKey: "rbac-idor-pay-0001" }, S("DIRECTOR", null, ids.director), T("2026-10-08T05:00:00Z"));
+    // MANAGER'da PAYMENT_CANCEL yo'q (forbidden) — ACCOUNTANT'ga filial cheklovi yo'q, lekin MANAGER uchun filial ham tekshiriladi:
+    await forbidden(() => createRefund(p, { paymentId: other.payment.id, amount: 10_000, reason: "IDOR urinish", refundedAt: T("2026-10-09T05:00:00Z"), idempotencyKey: "rbac-idor-ref-0001" }, S("MANAGER", ids.branch), T("2026-10-09T05:00:00Z")));
+    const otherAcc = await p.financialAccount.findFirstOrThrow({ where: { branchId: ids.branch2, type: "MAIN_CASH" } });
+    await forbidden(() => createExpense(p, { name: "IDOR", amount: 1_000, date: T("2026-10-09T05:00:00Z"), method: "CASH", financialAccountId: otherAcc.id, idempotencyKey: "rbac-idor-exp-0001" }, S("MANAGER", ids.branch), T("2026-10-09T06:00:00Z")));
+    await forbidden(() => createTransfer(p, { fromAccountId: otherAcc.id, toAccountId: ids.cash, amount: 1_000, occurredAt: T("2026-10-09T05:00:00Z"), idempotencyKey: "rbac-idor-tr-0001" }, S("MANAGER", ids.branch), T("2026-10-09T05:00:00Z")));
+    // Boshqa filial o'quvchisiga to'lov (ID qo'lda) — MANAGER rad
+    await forbidden(() => acceptPayment(p, { studentId: ids.student2, amount: 1_000, method: "CASH", receivedAt: T("2026-10-09T05:00:00Z"), purpose: "IDOR", idempotencyKey: "rbac-idor-pay-0002" }, S("MANAGER", ids.branch), T("2026-10-09T05:00:00Z")));
+    expect(await p.payment.count({ where: { idempotencyKey: { in: ["rbac-idor-pay-0002"] } } })).toBe(0);
+    expect(await p.refund.count({ where: { idempotencyKey: "rbac-idor-ref-0001" } })).toBe(0);
+  });
+
   it("xarajat: ADMIN/OPERATOR/TEACHER yaratolmaydi; MANAGER yaratadi, lekin tuzata olmaydi; ACCOUNTANT tuzatadi", async () => {
     const p = db.prisma;
     for (const role of ["ADMIN", "OPERATOR", "TEACHER", "ROP"]) {
