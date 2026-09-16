@@ -18,7 +18,8 @@
     "lint": "eslint --no-error-on-unmatched-pattern src/lib/finance tests scripts/finance-v2 scripts/check-finance-writers.mjs eslint.config.mjs vitest.config.ts",
     "typecheck": "tsc --noEmit",
     "test": "vitest run",
-    "test:tz": "TZ=UTC vitest run && TZ=Asia/Tashkent vitest run"
+    "test:tz": "TZ=UTC vitest run && TZ=Asia/Tashkent vitest run",
+    "check:migrations": "bash scripts/finance-v2/check-migrations.sh"
   },
   "prisma": {
     "seed": "tsx prisma/seed.ts"

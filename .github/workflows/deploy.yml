@@ -47,6 +47,8 @@ jobs:
           TZ: Asia/Tashkent
       - name: Moliya yozuvchilari nazorati
         run: node scripts/check-finance-writers.mjs
+      - name: Sxema ↔ migratsiyalar mosligi (db push yo'q)
+        run: bash scripts/finance-v2/check-migrations.sh
       # Build'ni ham CI'da sinaymiz — serverга yiqiladigan kod bormasin
       - name: Build sinovi
         run: npx next build
