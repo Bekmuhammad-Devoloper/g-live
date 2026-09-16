@@ -68,6 +68,7 @@ async function planAssignments(db: FinanceDb, charge: { groupId: string; program
     let reviewReason: EarningReviewReason | null = null;
     if (a.source === "INFERRED") reviewReason = "LEGACY_INFERRED";
     else if (a.role === "ASSISTANT" && !rule) reviewReason = "ASSISTANT_NO_RULE";
+    else if (a.role === "MAIN" && !rule) reviewReason = "NO_RULE"; // jim nol emas — ko'rib chiqish
     else if (a.role === "MAIN" && mains.length > 1) reviewReason = "AMBIGUOUS_ASSIGNMENT";
     plans.push({ assignment: a, rule, reviewReason });
   }

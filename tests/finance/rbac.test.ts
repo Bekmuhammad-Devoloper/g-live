@@ -7,7 +7,7 @@ import { createExpense, reverseExpense } from "@/lib/finance/expenses/expenses";
 import { acceptPayment } from "@/lib/finance/payments/accept";
 import { FINANCE_PERMISSIONS, assertBranchAccess, assertSalaryView, branchScope, financePermissionsOf, hasFinancePermission, requireFinancePermission, type FinancePermission } from "@/lib/finance/permissions";
 import { createRefund, reversePayment } from "@/lib/finance/refunds/refund";
-import { createManualEarning } from "@/lib/finance/salary/earnings";
+import { createManualEarning, rejectReviewedEarning } from "@/lib/finance/salary/earnings";
 import { approveSalaryPeriod, closeSalaryPeriod, createPayout, recalculateSalaryPeriod, reopenSalaryPeriod } from "@/lib/finance/salary/periods";
 import { createTestDb, type TestDb } from "../setup/prismaTestDb";
 
@@ -159,6 +159,8 @@ describe("engine entry points reject unauthorized roles server-side (Phase 13)",
   it("maosh davri: approve faqat DIRECTOR/DEPUTY; payout ACCOUNTANT ok, MANAGER rad; reopen faqat DIRECTOR", async () => {
     const p = db.prisma;
     await createManualEarning(p, { teacherId: ids.teacher, type: "BONUS", amount: 40_000, earningMonth: { year: 2026, month: 10 }, note: "Bonus", actorId: ids.director, idempotencyKey: "rbac-bonus-oct" });
+    // Qoidasiz guruh to'lovlari → NEEDS_REVIEW (NO_RULE); tasdiqdan oldin rad etiladi (bu test RBAC uchun)
+    for (const e of await p.teacherEarning.findMany({ where: { teacherId: ids.teacher, status: "NEEDS_REVIEW" } })) await rejectReviewedEarning(p, e.id, { userId: ids.director }, "Qoida yo'q — test");
     const period = await recalculateSalaryPeriod(p, ids.teacher, { year: 2026, month: 10 }, { userId: ids.director });
     expect(period).toMatchObject({ status: "CALCULATED", grossAmount: 40_000, remainingAmount: 40_000 });
     for (const role of ["ACCOUNTANT", "MANAGER", "TEACHER", "ADMIN"]) await forbidden(() => approveSalaryPeriod(p, period.id, S(role, ids.branch)));
