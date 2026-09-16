@@ -120,6 +120,25 @@ export default memo(function LeadCard({ lead, locale, selected, onOpen, onOpenFu
             <Icon name="building" className="h-3.5 w-3.5" /> {lead.interestCourse}
           </div>
         )}
+        {/* Daraja testi natijasi — /daraja-testi dan (kartada darhol ko'rinadi) */}
+        {lead.testPct != null && (
+          <div
+            className={cn(
+              "flex items-center gap-1.5 rounded-md px-1.5 py-1 text-[11px] font-semibold",
+              lead.testPassed
+                ? "bg-emerald-50 text-emerald-700 dark:bg-emerald-500/10 dark:text-emerald-300"
+                : "bg-amber-50 text-amber-700 dark:bg-amber-500/10 dark:text-amber-300",
+            )}
+            title={tr(locale, { uz: "Daraja testi natijasi", ru: "Результат теста уровня", en: "Level test result", de: "Ergebnis des Einstufungstests" })}
+          >
+            <Icon name="clipboard" className="h-3.5 w-3.5 shrink-0" />
+            <span className="truncate">
+              {lead.testSet ? `${lead.testSet} · ` : ""}{lead.testPct}%
+              {lead.testLevel ? ` · ${lead.testLevel}` : ` · ${tr(locale, { uz: "o'tmadi", ru: "не сдал", en: "failed", de: "nicht bestanden" })}`}
+            </span>
+          </div>
+        )}
+
         {/* Yosh va daraja — ariza formasidan keladi */}
         {(lead.age || lead.level) && (
           <div className="flex flex-wrap items-center gap-1.5 text-[11px]">
