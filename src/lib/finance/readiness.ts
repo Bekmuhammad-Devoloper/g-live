@@ -139,8 +139,9 @@ export async function financeReadiness(db: FinanceDb, opts: { now?: Date; month?
   const migrationItems: ReadinessItem[] = [];
   const hasCharge = await tableExists(db, "StudentCharge");
   const hasMig = await tableExists(db, "_prisma_migrations");
+  let migrationSeverity: ReadinessSeverity = "BLOCKER";
   if (!hasCharge) migrationItems.push({ id: "tables", label: "Finance V2 jadvallari yo'q — migratsiya qo'llanmagan" });
-  else if (!hasMig) migrationItems.push({ id: "_prisma_migrations", label: "_prisma_migrations jadvali yo'q (db push rejimi) — baseline qabul qilinmagan" });
+  else if (!hasMig) { migrationSeverity = "WARNING"; migrationItems.push({ id: "_prisma_migrations", label: "_prisma_migrations jadvali yo'q (db push rejimi — dev/test) — prod'da baseline qabul qilinishi shart" }); }
   else {
     const rows = await db.$queryRawUnsafe<{ migration_name: string; finished_at: string | null; rolled_back_at: string | null }[]>(`SELECT migration_name, finished_at, rolled_back_at FROM _prisma_migrations`);
     for (const need of ["0_baseline", "20260915000000_finance_v2_core"]) {
@@ -148,7 +149,7 @@ export async function financeReadiness(db: FinanceDb, opts: { now?: Date; month?
       if (!r || !r.finished_at || r.rolled_back_at) migrationItems.push({ id: need, label: `${need}: ${!r ? "yo'q" : r.rolled_back_at ? "rolled back" : "tugallanmagan"}` });
     }
   }
-  push("MIGRATION_NOT_APPLIED", "BLOCKER", migrationItems, "Deploy (update-b.sh) migratsiyani qo'llaydi; testda vaqtinchalik baza db push bilan — bu ogohlantirish faqat prod uchun ma'noli");
+  push("MIGRATION_NOT_APPLIED", migrationSeverity, migrationItems, "Deploy (update-b.sh) migratsiyani qo'llaydi");
 
   // 8. Backfill: V2'ga kiritilmagan legacy PAID to'lovlar / xarajatlar
   const unpostedPayments = hasCharge ? await db.payment.count({ where: { status: "PAID", postedAt: null, legacyRole: null } }) : 0;
