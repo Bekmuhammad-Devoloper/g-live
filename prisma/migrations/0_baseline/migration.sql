@@ -14,6 +14,21 @@ CREATE TABLE "Branch" (
 );
 
 -- CreateTable
+CREATE TABLE "BranchSlot" (
+    "id" TEXT NOT NULL PRIMARY KEY,
+    "branchId" TEXT NOT NULL,
+    "room" TEXT NOT NULL,
+    "days" TEXT NOT NULL,
+    "startTime" TEXT NOT NULL,
+    "endTime" TEXT NOT NULL,
+    "note" TEXT,
+    "createdById" TEXT,
+    "createdAt" DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    "updatedAt" DATETIME NOT NULL,
+    CONSTRAINT "BranchSlot_branchId_fkey" FOREIGN KEY ("branchId") REFERENCES "Branch" ("id") ON DELETE CASCADE ON UPDATE CASCADE
+);
+
+-- CreateTable
 CREATE TABLE "StaffRole" (
     "id" TEXT NOT NULL PRIMARY KEY,
     "name" TEXT NOT NULL,
@@ -95,6 +110,7 @@ CREATE TABLE "Lead" (
     "utmMedium" TEXT,
     "vacancyLinkId" TEXT,
     "stage" TEXT NOT NULL DEFAULT 'NEW',
+    "studyFormat" TEXT,
     "age" INTEGER,
     "level" TEXT,
     "interestCourse" TEXT,
@@ -920,6 +936,9 @@ CREATE TABLE "Note" (
     "updatedAt" DATETIME NOT NULL,
     CONSTRAINT "Note_studentId_fkey" FOREIGN KEY ("studentId") REFERENCES "Student" ("id") ON DELETE CASCADE ON UPDATE CASCADE
 );
+
+-- CreateIndex
+CREATE INDEX "BranchSlot_branchId_idx" ON "BranchSlot"("branchId");
 
 -- CreateIndex
 CREATE UNIQUE INDEX "User_email_key" ON "User"("email");
