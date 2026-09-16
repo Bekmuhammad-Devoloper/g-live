@@ -84,6 +84,9 @@ export async function cancelWithdrawal(id: string, reason: string): Promise<void
 
   const before = await prisma.payment.findUnique({ where: { id } });
   if (!before || before.status === "CANCELLED") return;
+  // Finance V2 ga kiritilgan (backfill: legacyRole=REFUND → Refund + ledger OUT) yechib olish legacy'da bekor qilinmaydi —
+  // tuzatish V2 (Refund correction) orqali; aks holda ledger va Refund yozuvi bilan nomuvofiqlik bo'ladi
+  if (before.legacyRole || before.postedAt || (await financeV2Enabled())) return;
 
   await prisma.payment.update({
     where: { id },

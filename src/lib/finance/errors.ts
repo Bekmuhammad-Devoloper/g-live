@@ -1,3 +1,5 @@
+import { ZodError } from "zod";
+
 // Finance V2 — domen xatolari. Action qatlami `code`ni klientga qaytaradi,
 // klient tilga mos xabar ko'rsatadi. Xom Prisma xatolari klientga chiqmaydi.
 
@@ -37,6 +39,12 @@ export type FinanceResult<T = undefined> =
 
 export function toFinanceResult(e: unknown): FinanceResult<never> {
   if (isFinanceError(e)) return { ok: false, error: e.code, message: e.message, details: e.details };
+  if (e instanceof ZodError) {
+    // Kiritish xatosi — maydon nomi bilan tushunarli xabar (texnik matn emas)
+    const first = e.issues[0];
+    const field = first?.path?.length ? `${first.path.join(".")}: ` : "";
+    return { ok: false, error: "validation", message: `Kiritilgan ma'lumot noto'g'ri — ${field}${first?.message ?? "tekshiring"}` };
+  }
   // Kutilmagan xato — serverda log, klientga umumiy xabar
   console.error("finance: kutilmagan xato", e);
   return { ok: false, error: "conflict", message: "Amal bajarilmadi. Qaytadan urinib ko'ring." };

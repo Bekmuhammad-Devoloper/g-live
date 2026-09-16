@@ -15,9 +15,10 @@ JWT=$(node -e 'console.log(JSON.parse(require("fs").readFileSync(process.argv[1]
 TJWT=$(node -e 'console.log(JSON.parse(require("fs").readFileSync(process.argv[1],"utf8")).teacherJwt)' "$DIR/out.json")
 PID=$(node -e 'console.log(JSON.parse(require("fs").readFileSync(process.argv[1],"utf8")).periodId)' "$DIR/out.json")
 AID=$(node -e 'console.log(JSON.parse(require("fs").readFileSync(process.argv[1],"utf8")).accountId)' "$DIR/out.json")
+SID=$(node -e 'console.log(JSON.parse(require("fs").readFileSync(process.argv[1],"utf8")).studentId)' "$DIR/out.json")
 fail=0
 # DIQQAT: zsh'da `path` o'zgaruvchisi PATH'ni buzadi — `route` ishlatiladi
-for route in /finance /finance/v2 /finance/v2/payments /finance/v2/debtors /finance/v2/balances /finance/v2/salary "/finance/v2/salary/$PID" /finance/v2/salary/settings /finance/v2/accounts "/finance/v2/accounts/$AID" /finance/v2/expenses /finance/v2/refunds "/finance/v2/reports?tab=collections" "/finance/v2/reports?tab=revenue" "/finance/v2/reports?tab=expenses" "/finance/v2/reports?tab=debt" "/finance/v2/reports?tab=balances" "/finance/v2/reports?tab=salary" "/finance/v2/reports?tab=cashflow" "/finance/v2/reports?tab=pnl" /finance/v2/settings; do
+for route in /finance /finance/v2 /finance/v2/payments /finance/v2/debtors /finance/v2/balances /finance/v2/salary "/finance/v2/salary/$PID" /finance/v2/salary/settings /finance/v2/accounts "/finance/v2/accounts/$AID" /finance/v2/expenses /finance/v2/refunds "/finance/v2/reports?tab=collections" "/finance/v2/reports?tab=revenue" "/finance/v2/reports?tab=expenses" "/finance/v2/reports?tab=debt" "/finance/v2/reports?tab=balances" "/finance/v2/reports?tab=salary" "/finance/v2/reports?tab=cashflow" "/finance/v2/reports?tab=pnl" /finance/v2/settings /finance/v2/readiness "/finance/v2/students/$SID" "/finance/v2/payments?q=Ali&page=1" "/finance/v2/balances?q=x"; do
   code=$(curl -s -o "$DIR/page.html" -w "%{http_code}" -H "Cookie: gl_session=$JWT" "http://127.0.0.1:$PORT$route")
   err=$(grep -c "Application error\|Internal Server Error" "$DIR/page.html" || true)
   printf "%-45s %s err=%s\n" "$route" "$code" "$err"

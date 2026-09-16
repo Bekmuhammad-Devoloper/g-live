@@ -33,6 +33,6 @@ async function main() {
   const secret = new TextEncoder().encode("smoke-secret");
   const jwt = await new SignJWT({ userId: d.id, role: "DIRECTOR", fullName: "Direktor", locale: "uz", branchId: null }).setProtectedHeader({ alg: "HS256" }).setIssuedAt().setExpirationTime("1d").sign(secret);
   const teacherJwt = await new SignJWT({ userId: t.id, role: "TEACHER", fullName: "Akmal", locale: "uz", branchId: branch.id }).setProtectedHeader({ alg: "HS256" }).setIssuedAt().setExpirationTime("1d").sign(secret);
-  console.log(JSON.stringify({ jwt, teacherJwt, periodId: period.id, accountId: (await p.financialAccount.findFirstOrThrow()).id }));
+  console.log(JSON.stringify({ jwt, teacherJwt, periodId: period.id, accountId: (await p.financialAccount.findFirstOrThrow()).id, studentId: (await p.student.findFirstOrThrow()).id }));
 }
 main().finally(() => p.$disconnect());
