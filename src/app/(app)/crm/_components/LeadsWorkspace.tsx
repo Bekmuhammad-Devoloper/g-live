@@ -6,7 +6,7 @@ import { cn } from "@/lib/cn";
 import { tr } from "@/lib/tr";
 import type { Locale } from "@/lib/constants";
 import { Icon } from "../../_components/Icon";
-import { ARCHIVE_COL, COLUMNS, ONLINE_COL, branchIdOfCol, slotIdOfCol, branchColKey, branchReplaces, columnDef, columnOf, columnOfLead, customIdOfCol, groupIdOfCol, isBranchCol, isCustomCol, isGroupCol, type BranchColumn, type BranchMode, type BranchModeCfg, type CustomColumn, type GroupColumn, type GroupInfo, type VLead } from "../_lib/leadColumns";
+import { ARCHIVE_COL, COLUMNS, ONLINE_COL, branchIdOfCol, slotIdOfCol, branchColKey, visibleColumns, columnDef, columnOf, columnOfLead, customIdOfCol, groupIdOfCol, isBranchCol, isCustomCol, isGroupCol, type BranchColumn, type BranchMode, type BranchModeCfg, type CustomColumn, type GroupColumn, type GroupInfo, type VLead } from "../_lib/leadColumns";
 import { bulkLeadAction, deleteTestLead, dropLeadToBranch, enrollLeadToGroup, moveLeadStage, moveLeadToColumn, removeKanbanColumn, setLeadArchived, setLeadOnline, unpinKanbanGroup } from "../actions";
 import { type Analytics } from "./AnalyticsTiles";
 import FilterBar from "./FilterBar";
@@ -150,17 +150,26 @@ export default function LeadsWorkspace({ locale, initialLeads, managers, sources
     });
   }, [leads, deferredSearch, source, manager]);
 
+  // Filtr chiplari — Kanbandagi ustunlarning AYNAN o'zi (Onlayn, filiallar,
+  // guruhlar, Arxiv ham), shu sabab bitta ro'yxatdan quriladi
+  const cols = useMemo(
+    () => visibleColumns({ locale, groupColumns, customColumns, branchColumns, branchMode, showOnlineCol, hiddenCols }),
+    [locale, groupColumns, customColumns, branchColumns, branchMode, showOnlineCol, hiddenCols],
+  );
+
   const chipCounts = useMemo(() => {
     const c: Record<string, number> = {};
-    for (const col of COLUMNS) c[col.key] = 0;
-    // Arxivlanganlar bosqich chiplarida hisoblanmaydi
-    for (const l of baseFiltered) if (!l.archivedAt) c[columnOf(l.stage)] = (c[columnOf(l.stage)] ?? 0) + 1;
+    for (const col of cols) c[col.key] = 0;
+    for (const l of baseFiltered) {
+      const k = columnOfLead(l, pinnedIds, customIds, branchCfg);
+      c[k] = (c[k] ?? 0) + 1;
+    }
     return c;
-  }, [baseFiltered]);
+  }, [baseFiltered, cols, pinnedIds, customIds, branchCfg]);
 
   const shown = useMemo(
-    () => (activeCols.size ? baseFiltered.filter((l) => activeCols.has(columnOf(l.stage))) : baseFiltered),
-    [baseFiltered, activeCols]
+    () => (activeCols.size ? baseFiltered.filter((l) => activeCols.has(columnOfLead(l, pinnedIds, customIds, branchCfg))) : baseFiltered),
+    [baseFiltered, activeCols, pinnedIds, customIds, branchCfg]
   );
   const shownTotals = useMemo(() => {
     const c: Record<string, number> = {};
@@ -420,7 +429,7 @@ export default function LeadsWorkspace({ locale, initialLeads, managers, sources
     { id: "view", label: view === "kanban" ? tr(locale, { uz: "Jadval ko'rinishi", ru: "Табличный вид", en: "Table view", de: "Tabellenansicht" }) : tr(locale, { uz: "Kanban ko'rinishi", ru: "Канбан-вид", en: "Kanban view", de: "Kanban-Ansicht" }), icon: view === "kanban" ? "listView" : "grid", run: () => setView((v) => (v === "kanban" ? "table" : "kanban")) },
     { id: "refresh", label: tr(locale, { uz: "Yangilash", ru: "Обновить", en: "Refresh", de: "Aktualisieren" }), icon: "refresh", run: () => router.refresh() },
     ...(canWrite ? [{ id: "new", label: tr(locale, { uz: "Yangi lid", ru: "Новый лид", en: "New lead", de: "Neuer Lead" }), icon: "plus", run: () => setCreate({ open: true, stage: "NEW", column: null }) }] : []),
-    ...COLUMNS.map((c) => ({ id: `f-${c.key}`, label: `${tr(locale, { uz: "Filter", ru: "Фильтр", en: "Filter", de: "Filter" })}: ${tr(locale, c.label)}`, icon: c.icon, run: () => setActiveCols(new Set([c.key])) })),
+    ...cols.map((c) => ({ id: `f-${c.key}`, label: `${tr(locale, { uz: "Filter", ru: "Фильтр", en: "Filter", de: "Filter" })}: ${c.title}`, icon: c.icon, run: () => setActiveCols(new Set([c.key])) })),
     { id: "clear", label: tr(locale, { uz: "Filtrlarni tozalash", ru: "Очистить фильтры", en: "Clear filters", de: "Filter zurücksetzen" }), icon: "personX", run: clearFilters },
     { id: "testqr", label: tr(locale, { uz: "Daraja testi QR kodi", ru: "QR-код теста уровня", en: "Level test QR code", de: "QR-Code des Einstufungstests" }), icon: "qr", run: () => setTestQr(true) },
     { id: "help", label: tr(locale, { uz: "Klaviatura yorliqlari", ru: "Горячие клавиши", en: "Keyboard shortcuts", de: "Tastenkürzel" }), icon: "info", run: () => setShowHelp(true) },
@@ -445,9 +454,9 @@ export default function LeadsWorkspace({ locale, initialLeads, managers, sources
           </div>
 
           <div className="flex flex-wrap items-center gap-2">
-            {/* Count pill-lar */}
+            {/* Count pill-lar — faqat shu rolda ko'rinadigan ustunlar */}
             <div className="hidden items-center gap-1.5 xl:flex">
-              {COLUMNS.map((c) => (
+              {cols.filter((c) => analytics.byColumn[c.key] !== undefined).map((c) => (
                 <span key={c.key} className="flex items-center gap-1.5 rounded-lg px-2 py-1 text-xs font-bold" style={{ color: c.color, background: `${c.color}14` }}>
                   <Icon name={c.icon} className="h-3.5 w-3.5" /> {analytics.byColumn[c.key] ?? 0}
                 </span>
@@ -477,7 +486,7 @@ export default function LeadsWorkspace({ locale, initialLeads, managers, sources
             sources={sources} source={source} onSource={setSource}
             managers={managers} manager={manager} onManager={setManager}
             activeCols={activeCols} onToggleCol={toggleCol}
-            hiddenCols={new Set([...(branchMode ? branchReplaces(branchMode) : []), ...hiddenCols])}
+            cols={cols}
             counts={chipCounts} hasFilters={hasFilters} onClear={clearFilters}
             sort={sort} onSort={setSort}
           />

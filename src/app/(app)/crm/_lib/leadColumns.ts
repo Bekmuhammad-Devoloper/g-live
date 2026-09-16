@@ -1,3 +1,6 @@
+import { tr } from "@/lib/tr";
+import type { Locale } from "@/lib/constants";
+
 // Lead workspace — ustunlar konfiguratsiyasi va turlari.
 // 9 bosqich (LEAD_STAGES) 6 Kanban ustuniga yig'iladi.
 
@@ -244,3 +247,71 @@ export const GROUP_COL_ICONS = [
   "layers", "graduation", "users", "book",
   "trophy", "award", "calendar", "globe",
 ];
+
+/* ─── Ko'rinadigan ustunlar ro'yxati ─────────────────────────────────
+   Kanban ustunlari ham, filtr chiplari ham SHU ro'yxatdan quriladi — shunda
+   chiplar doskadagi hamma ustunni (Onlayn, filiallar, guruhlar, Arxiv ...)
+   ko'rsatadi va ular bir-biriga mos bo'ladi.                                */
+
+/** Standart, filial, guruh va oddiy ustunlar bitta ko'rinishga keltiriladi */
+export interface ViewCol {
+  key: string;
+  title: string;
+  sub: string | null;
+  color: string;
+  icon: string;
+  defaultStage: string;
+  groupId: string | null;
+  customId: string | null;
+  /** Filial ustuni (filial rejimi) */
+  branch?: BranchColumn | null;
+}
+
+export function visibleColumns(opts: {
+  locale: Locale;
+  groupColumns: GroupColumn[];
+  customColumns: CustomColumn[];
+  branchColumns?: BranchColumn[] | null;
+  branchMode?: BranchMode | null;
+  showOnlineCol?: boolean;
+  hiddenCols?: string[];
+}): ViewCol[] {
+  const { locale, groupColumns, customColumns, branchColumns = null, branchMode = null, showOnlineCol = true, hiddenCols = [] } = opts;
+  const hidden = new Set(hiddenCols);
+
+  const std = (key: string): ViewCol => {
+    const c = COLUMNS.find((x) => x.key === key)!;
+    return { key: c.key, title: tr(locale, c.label), sub: null, color: c.color, icon: c.icon, defaultStage: c.defaultStage, groupId: null, customId: null };
+  };
+  const custom = customColumns.map<ViewCol>((c) => ({
+    key: customColKey(c.id), title: c.name, sub: null, color: c.color, icon: c.icon, defaultStage: "NEW", groupId: null, customId: c.id,
+  }));
+  const groups = groupColumns.map<ViewCol>((g) => ({
+    key: groupColKey(g.groupId), title: g.name, sub: g.program, color: g.color, icon: g.icon, defaultStage: "WON", groupId: g.groupId, customId: null,
+  }));
+  // "Arxiv" — hamma rolda, eng oxirida: tashlangan lid bosqichini saqlaydi, ko'rinishdan chiqadi
+  const archive: ViewCol = {
+    key: ARCHIVE_COL,
+    title: tr(locale, { uz: "Arxiv", ru: "Архив", en: "Archive", de: "Archiv" }),
+    sub: tr(locale, { uz: "Ko'rinishdan olib qo'yilgan", ru: "Убраны из вида", en: "Hidden from the board", de: "Aus der Ansicht entfernt" }),
+    color: "#64748b", icon: "archive", defaultStage: "NEW", groupId: null, customId: null,
+  };
+
+  // Filial rejimi: "sales" — test/taklif o'rniga filial ustunlari; "head" — hamma ustunlar
+  // (Daraja testi va Taklif qoladi) + filial ustunlari. Filial ustunida faqat qo'lda tashlanganlar.
+  if (branchColumns && branchMode) {
+    const brs = branchColumns.map<ViewCol>((b) => ({
+      key: branchColKey(b.branchId), title: b.name, sub: null, color: b.color, icon: "building", defaultStage: "OFFER", groupId: null, customId: null, branch: b,
+    }));
+    const online: ViewCol = {
+      key: ONLINE_COL,
+      title: tr(locale, { uz: "Onlayn", ru: "Онлайн", en: "Online", de: "Online" }),
+      sub: tr(locale, { uz: "Onlayn o'qimoqchilar", ru: "Хотят учиться онлайн", en: "Want to study online", de: "Möchten online lernen" }),
+      color: "#0ea5e9", icon: "video", defaultStage: "NEW", groupId: null, customId: null,
+    };
+    return [std("new"), std("work"), ...(showOnlineCol ? [online] : []), ...(branchMode === "head" ? [std("test"), std("offer")] : []), ...brs, ...custom, std("won"), ...groups, std("lost"), archive]
+      .filter((c) => !hidden.has(c.key));
+  }
+  return [std("new"), std("work"), std("test"), std("offer"), ...custom, std("won"), ...groups, std("lost"), archive]
+    .filter((c) => !hidden.has(c.key));
+}

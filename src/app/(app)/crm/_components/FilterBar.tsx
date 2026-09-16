@@ -4,7 +4,7 @@ import { cn } from "@/lib/cn";
 import { tr } from "@/lib/tr";
 import type { Locale } from "@/lib/constants";
 import { Icon } from "../../_components/Icon";
-import { COLUMNS } from "../_lib/leadColumns";
+import type { ViewCol } from "../_lib/leadColumns";
 
 interface Opt { id: string; name: string }
 
@@ -20,8 +20,8 @@ interface Props {
   onManager: (v: string) => void;
   activeCols: Set<string>;
   onToggleCol: (key: string) => void;
-  /** Ko'rsatilmaydigan bosqich chiplari (ROP filial rejimida test/taklif) */
-  hiddenCols?: Set<string>;
+  /** Kanbandagi ustunlar — chiplar aynan shulardan quriladi */
+  cols: ViewCol[];
   counts: Record<string, number>;
   hasFilters: boolean;
   onClear: () => void;
@@ -72,7 +72,7 @@ export default function FilterBar(p: Props) {
 
       {/* Bosqich chiplari */}
       <div className="flex flex-wrap gap-2">
-        {COLUMNS.filter((c) => !p.hiddenCols?.has(c.key)).map((c) => {
+        {p.cols.map((c) => {
           const active = p.activeCols.has(c.key);
           return (
             <button
@@ -85,7 +85,7 @@ export default function FilterBar(p: Props) {
               style={active ? { background: c.color, borderColor: c.color } : undefined}
             >
               <span className="h-2 w-2 rounded-full" style={{ background: active ? "#fff" : c.color }} />
-              {tr(locale, c.label)}
+              {c.title}
               <span className={cn("rounded px-1 text-[10px] font-bold", active ? "bg-white/25" : "bg-slate-100 dark:bg-slate-700")}>{p.counts[c.key] ?? 0}</span>
             </button>
           );
