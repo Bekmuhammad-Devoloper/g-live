@@ -1,17 +1,25 @@
-# B serverni FAQAT O'QISH rejimida tekshirish (Finance V2, Phase 0).
+# B serverni FAQAT O'QISH rejimida tekshirish + Finance V2 pre-cutover simulyatsiyasi (NUSXADA).
 #
-# deploy/gcp/audit-readonly.sh ni SSH orqali yuboradi va natijani logga
-# chiqaradi. Hech narsani o'zgartirmaydi. Qo'lda ishga tushiriladi:
-#   Actions → "Server audit (read-only)" → Run workflow
-#   yoki: gh workflow run server-audit.yml --ref <branch>
+# 1) deploy/gcp/audit-readonly.sh — hech narsani o'zgartirmaydi (holat, sxema farqi, metadata).
+# 2) deploy/gcp/finance-precutover.sh — prod bazaga YOZMAYDI: backup → nusxa → migratsiya →
+#    backfill → smoke (alohida portlar) → rollback simulyatsiyasi. Prod servisga tegmaydi.
+#    Skript /tmp ga scp qilinib bajariladi (stdin band bo'lmasin).
+# Qo'lda: Actions → "Server audit (read-only)" → Run workflow   yoki
+#   gh workflow run server-audit.yml --ref finance-v2 [-f precutover=true]
 name: Server audit (read-only)
 
 on:
-  workflow_dispatch: {}
+  workflow_dispatch:
+    inputs:
+      precutover:
+        description: "Finance V2 pre-cutover simulyatsiyasi (nusxada; prod DB o'zgarmaydi)"
+        type: boolean
+        default: true
 
 jobs:
   audit:
     runs-on: ubuntu-latest
+    timeout-minutes: 90
     steps:
       - uses: actions/checkout@v4
       - name: SSH kalitini tayyorlash
@@ -24,13 +32,12 @@ jobs:
         run: |
           ssh -i ~/.ssh/deploy_key -o BatchMode=yes uzbekmen94@34.179.202.164 'bash -s' \
             < deploy/gcp/audit-readonly.sh
-      # Finance V2 Phase 2: prod ma'lumotida DRY-RUN (prod bazaga yozmaydi; backup + nusxada migratsiya).
-      # Faqat shu skript branch'da bo'lsa ishlaydi (finance-v2 ref bilan ishga tushirilganda).
-      - name: Finance V2 dry-run (nusxada, prod DB o'zgarmaydi)
-        if: hashFiles('deploy/gcp/finance-dryrun.sh') != ''
+      - name: Finance V2 pre-cutover simulyatsiyasi (nusxada, prod DB o'zgarmaydi)
+        if: ${{ inputs.precutover && hashFiles('deploy/gcp/finance-precutover.sh') != '' }}
         run: |
-          ssh -i ~/.ssh/deploy_key -o BatchMode=yes uzbekmen94@34.179.202.164 'bash -s' \
-            < deploy/gcp/finance-dryrun.sh
+          scp -i ~/.ssh/deploy_key -o BatchMode=yes deploy/gcp/finance-precutover.sh uzbekmen94@34.179.202.164:/tmp/gl-precutover-${{ github.sha }}.sh
+          ssh -i ~/.ssh/deploy_key -o BatchMode=yes uzbekmen94@34.179.202.164 \
+            "FINANCE_REF=${{ github.ref_name }} bash /tmp/gl-precutover-${{ github.sha }}.sh < /dev/null; rc=\$?; rm -f /tmp/gl-precutover-${{ github.sha }}.sh; exit \$rc"
       - name: Kalitni o'chirish
         if: always()
         run: rm -f ~/.ssh/deploy_key
