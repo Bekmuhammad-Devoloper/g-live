@@ -7,6 +7,8 @@ import { acceptPayment } from "@/lib/finance/payments/accept";
 import { closePeriod } from "@/lib/finance/payments/periodLock";
 import { monthStart, type YearMonth } from "@/lib/finance/period";
 import { createRefund } from "@/lib/finance/refunds/refund";
+import { setMembershipStart } from "@/lib/finance/billing/history";
+import { syncStudentBilling } from "@/lib/finance/billing/sync";
 import { assignTeacher, assignmentsForService } from "@/lib/finance/salary/assignments";
 import { createManualEarning, postReviewedEarning, rejectReviewedEarning } from "@/lib/finance/salary/earnings";
 import { approveSalaryPeriod, closeSalaryPeriod, createPayout, periodSummary, recalculateSalaryPeriod } from "@/lib/finance/salary/periods";
@@ -200,5 +202,24 @@ describe("audit fixes (pre-cutover)", () => {
     const t = await mkTeacher("TypeT");
     await expect(createManualEarning(p, { teacherId: t.id, type: "FIXED" as never, amount: 1, earningMonth: OCT, note: "x", actorId: ids.director, idempotencyKey: key("me-fixed") })).rejects.toThrow(FinanceError);
     await expect(createManualEarning(p, { teacherId: t.id, type: "PAYMENT_COMMISSION" as never, amount: 1, earningMonth: OCT, note: "x", actorId: ids.director, idempotencyKey: key("me-pc") })).rejects.toThrow(FinanceError);
+  });
+
+  it("a'zolik boshlanishini ertaroqqa tuzatish → o'tgan oylar charge'lari; kechroqqa/charge bor bo'lsa rad; audit", async () => {
+    const p = db.prisma;
+    const t = await mkTeacher("StartT");
+    const g = await mkGroup("ST-01", t.id);
+    const s = await mkStudent(g.id, monthStart(OCT), "ST-student");
+    await syncStudentBilling(p, { studentId: s.id, upTo: OCT, actorId: ids.director, now: T("2026-10-05T05:00:00Z") });
+    expect(await p.studentCharge.count({ where: { studentId: s.id } })).toBe(1);
+    await expect(setMembershipStart(p, { studentId: s.id, groupId: g.id, from: monthStart(NOV), actorId: ids.director, reason: "Kechroq" })).rejects.toThrow(/ERTAROQ/);
+    const r = await setMembershipStart(p, { studentId: s.id, groupId: g.id, from: monthStart(SEP), actorId: ids.director, reason: "Aslida sentabrdan o'qiydi" });
+    expect(r.previousFrom.getTime()).toBe(monthStart(OCT).getTime());
+    const sync = await syncStudentBilling(p, { studentId: s.id, upTo: OCT, actorId: ids.director, now: T("2026-10-05T05:00:00Z") });
+    expect(sync.created.map((c) => c.serviceMonth)).toEqual([9]);
+    expect((await p.groupStudent.findFirstOrThrow({ where: { studentId: s.id } })).joinedAt.getTime()).toBe(monthStart(SEP).getTime());
+    expect(await p.auditLog.count({ where: { entityType: "GroupStudentHistory", action: "UPDATE" } })).toBeGreaterThanOrEqual(1);
+    // Yana ertaroqqa (avgust) — mumkin, avgust charge'i qo'shiladi (keraksiz bo'lsa bekor qilinadi)
+    await setMembershipStart(p, { studentId: s.id, groupId: g.id, from: monthStart(AUG), actorId: ids.director, reason: "Avgustdan" });
+    expect((await syncStudentBilling(p, { studentId: s.id, upTo: OCT, actorId: ids.director, now: T("2026-10-05T05:00:00Z") })).created.map((c) => c.serviceMonth)).toEqual([8]);
   });
 });

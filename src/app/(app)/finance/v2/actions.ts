@@ -23,6 +23,7 @@ import { acceptPayment, type AcceptPaymentInput } from "@/lib/finance/payments/a
 import { closePeriod, reopenPeriod } from "@/lib/finance/payments/periodLock";
 import { createRefund, reversePayment, type RefundInput } from "@/lib/finance/refunds/refund";
 import { settleStudentCredit, syncStudentBilling } from "@/lib/finance/billing/sync";
+import { setMembershipStart } from "@/lib/finance/billing/history";
 import { DEFAULT_FEE_SETTING_KEY, branchDefaultFeeKey } from "@/lib/finance/billing/fees";
 import { financeReadiness } from "@/lib/finance/readiness";
 import { createManualDebtCharge, cancelCharge, replaceCharge, adjustCharge } from "@/lib/finance/billing/charges";
@@ -100,6 +101,21 @@ export async function setCutoverAction(ym: string): Promise<Ok> {
     await writeAudit({ actorId: s.userId, action: "UPDATE", entityType: "Setting", entityId: FINANCE_SETTING_KEYS.cutoverAt, newValue: { cutoverAt: value }, reason: "Finance V2 cutover" });
     revalidateAll();
     return ok();
+  } catch (e) { return toFinanceResult(e); }
+}
+
+/** A'zolik boshlanish oyini ertaroqqa tuzatish (o'tgan oylar charge'lari yaratiladi) — PAYMENT_CORRECT */
+export async function setMembershipStartAction(studentId: string, groupId: string, ym: string, reason: string): Promise<Ok<{ created: number }>> {
+  try {
+    const s = await guard();
+    requireFinancePermission(s, "PAYMENT_CORRECT");
+    await assertStudentBranch(s, studentId);
+    const created = await withFinanceTx(prisma, async (tx) => {
+      await setMembershipStart(tx, { studentId, groupId, from: monthStart(parseYearMonthKey(ym)), actorId: s.userId, reason });
+      return (await syncStudentBilling(tx, { studentId, actorId: s.userId })).created.length;
+    });
+    revalidateAll();
+    return ok({ created });
   } catch (e) { return toFinanceResult(e); }
 }
 

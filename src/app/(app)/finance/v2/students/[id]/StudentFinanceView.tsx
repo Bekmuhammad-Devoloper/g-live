@@ -5,7 +5,7 @@ import { useRouter } from "next/navigation";
 import { formatMoney, type Locale } from "@/lib/constants";
 import { Badge, Card, EmptyRow, Table } from "../../../../_components/ui";
 import { fin, fmtDate } from "../../_i18n";
-import { acceptPaymentAction, adjustChargeAction, cancelChargeAction, createDiscountAction, endDiscountAction, manualDebtAction, refundAction, replaceChargeAction, setAgreedPriceAction } from "../../actions";
+import { acceptPaymentAction, adjustChargeAction, cancelChargeAction, createDiscountAction, endDiscountAction, manualDebtAction, refundAction, replaceChargeAction, setAgreedPriceAction, setMembershipStartAction } from "../../actions";
 
 export interface ChargeRow { id: string; month: string; group: string | null; kind: string; status: string; original: number; discount: number; final: number; allocated: number; remaining: number; feeSource: string | null; replacesChargeId: string | null; adjustsChargeId: string | null; cancelledAt: string | null }
 export interface PaymentRow { id: string; receivedAt: string; amount: number; method: string; account: string | null; status: string; docNumber: string | null; allocated: number; refunded: number; unallocated: number }
@@ -27,6 +27,7 @@ export default function StudentFinanceView({ locale: L, enabled, studentId, grou
   const [pay, setPay] = useState({ amount: "", method: methods[0] ?? "CASH", accountId: "", receivedAt: nowLocal(), purpose: "Kurs to'lovi" });
   const [price, setPrice] = useState({ amount: "", from: ymNow(), groupId: "", reason: "Kelishilgan narx" });
   const [debt, setDebt] = useState({ amount: "", month: ymNow(), note: "" });
+  const [mstart, setMstart] = useState({ groupId: groups[0]?.id ?? "", ym: ymNow() });
   const run = (fn: () => Promise<{ ok: boolean; message?: string }>, okText?: string) => start(async () => {
     const r = await fn();
     setMsg(r.ok ? { ok: true, text: okText ?? fin(L, "done") } : { ok: false, text: r.message ?? fin(L, "error") });
@@ -58,6 +59,14 @@ export default function StudentFinanceView({ locale: L, enabled, studentId, grou
       <Card padded={false}>
         <div className="flex flex-wrap items-center justify-between gap-2 px-4 pt-3">
           <h3 className="text-sm font-semibold">{fin(L, "charges")}</h3>
+          {perms.correct && groups.length > 0 && (
+            <div className="flex flex-wrap items-center gap-2 text-xs">
+              <span className="text-slate-500">{fin(L, "membershipStart")}:</span>
+              <select className="input py-1" value={mstart.groupId} onChange={(e) => setMstart({ ...mstart, groupId: e.target.value })}>{groups.map((g) => <option key={g.id} value={g.id}>{g.name}</option>)}</select>
+              <input className="input py-1" type="month" value={mstart.ym} onChange={(e) => setMstart({ ...mstart, ym: e.target.value })} />
+              <button type="button" className="btn-ghost px-2 py-1" disabled={disabled || !mstart.groupId} onClick={() => { const r = ask(fin(L, "reason")); if (r && r.length >= 3) run(() => setMembershipStartAction(studentId, mstart.groupId, mstart.ym, r)); }}>{fin(L, "save")}</button>
+            </div>
+          )}
           {perms.correct && (
             <div className="flex flex-wrap items-center gap-2 text-xs">
               <input className="input py-1" inputMode="numeric" placeholder={`${fin(L, "manualDebt")}: ${fin(L, "amount")}`} value={debt.amount} onChange={(e) => setDebt({ ...debt, amount: e.target.value })} />

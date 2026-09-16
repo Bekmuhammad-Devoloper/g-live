@@ -10,6 +10,8 @@
 // ishlatilmaydi, faqat billing/ko'rish).
 
 import type { FinanceDb } from "../db";
+import { financeAudit } from "../audit";
+import { FinanceError } from "../errors";
 import { cutoverAtFrom } from "../cutover";
 import { isWithin, monthEnd, monthStart, tashkentYearMonth, type YearMonth } from "../period";
 
@@ -140,4 +142,24 @@ export function intervalCoversMonth(iv: Pick<Interval, "from" | "to">, ym: YearM
 /** Berilgan lahzada faol interval (holat uchun) */
 export function intervalAt<T>(ivs: Interval<T>[], at: Date): Interval<T> | null {
   return ivs.find((iv) => isWithin(at, iv.from, iv.to)) ?? null;
+}
+
+/**
+ * A'zolik boshlanish oyini tuzatish (buxgalter): o'quvchi aslida ertaroq o'qiy boshlagan — `GroupStudent.joinedAt`
+ * va ochiq tarix intervali boshi oy boshiga ko'chiriladi (KNOWN, sabab audit'da). Faqat ORQAGA (ertaroqqa);
+ * keyin `syncStudentBilling` o'tgan oylar charge'larini yaratadi (keraksizlari bekor qilinadi — auditli).
+ */
+export async function setMembershipStart(db: FinanceDb, i: { studentId: string; groupId: string; from: Date; actorId?: string | null; reason: string }): Promise<{ previousFrom: Date; from: Date }> {
+  if (i.reason.trim().length < 3) throw new FinanceError("validation", "Sabab kamida 3 belgi");
+  const gs = await db.groupStudent.findFirst({ where: { studentId: i.studentId, groupId: i.groupId }, orderBy: { joinedAt: "asc" } });
+  if (!gs) throw new FinanceError("not_found", "A'zolik topilmadi");
+  if (!gs.isActive || gs.leftAt) throw new FinanceError("state", "Faqat faol a'zolik boshlanishi tuzatiladi");
+  const open = await db.groupStudentHistory.findFirst({ where: { studentId: i.studentId, groupId: i.groupId, effectiveTo: null }, orderBy: { effectiveFrom: "desc" } });
+  const previousFrom = open?.effectiveFrom ?? gs.joinedAt;
+  if (i.from >= previousFrom) throw new FinanceError("validation", "Yangi boshlanish hozirgisidan ERTAROQ bo'lishi kerak (kechroqqa ko'chirish — a'zolikni tugatib qayta qo'shing)", { previousFrom: previousFrom.toISOString() });
+  await db.groupStudent.update({ where: { id: gs.id }, data: { joinedAt: i.from } });
+  if (open) await db.groupStudentHistory.update({ where: { id: open.id }, data: { effectiveFrom: i.from, source: "KNOWN", note: `Boshlanish tuzatildi: ${i.reason.trim()}` } });
+  else await db.groupStudentHistory.create({ data: { studentId: i.studentId, groupId: i.groupId, effectiveFrom: i.from, source: "KNOWN", createdById: i.actorId ?? null, note: i.reason.trim() } });
+  await financeAudit(db, { actorId: i.actorId, action: "UPDATE", entityType: "GroupStudentHistory", entityId: open?.id ?? null, oldValue: { effectiveFrom: previousFrom.toISOString() }, newValue: { effectiveFrom: i.from.toISOString(), groupId: i.groupId, studentId: i.studentId }, reason: i.reason });
+  return { previousFrom, from: i.from };
 }
