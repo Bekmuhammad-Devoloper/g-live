@@ -198,6 +198,7 @@ CREATE TABLE "Program" (
     "gradingType" TEXT NOT NULL DEFAULT 'PERCENT',
     "isActive" BOOLEAN NOT NULL DEFAULT true,
     "monthlyFee" INTEGER,
+    "lessonsPerMonth" INTEGER NOT NULL DEFAULT 12,
     "createdAt" DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP
 );
 
@@ -436,6 +437,7 @@ CREATE TABLE "Group" (
     "endTime" TEXT,
     "note" TEXT,
     "monthlyFee" INTEGER,
+    "lessonsPerMonth" INTEGER,
     "createdAt" DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
     "updatedAt" DATETIME NOT NULL,
     CONSTRAINT "Group_programId_fkey" FOREIGN KEY ("programId") REFERENCES "Program" ("id") ON DELETE RESTRICT ON UPDATE CASCADE,
