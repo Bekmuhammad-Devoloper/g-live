@@ -475,7 +475,7 @@ export default function LessonCalendar(p: Props) {
       {showSettings && (
         <div className="fixed inset-0 z-[60]">
           <div className="absolute inset-0 bg-slate-900/40 backdrop-blur-[2px]" onClick={() => setShowSettings(false)} />
-          <div className="animate-slide-in-right absolute right-0 top-0 flex h-full w-[360px] max-w-[88%] flex-col bg-white shadow-pop dark:bg-slate-900">
+          <div className="animate-slide-in-right absolute right-0 top-0 flex h-full drawer-panel flex-col bg-white shadow-pop dark:bg-slate-900">
             <div className="flex items-start justify-between border-b border-slate-100 px-5 py-4">
               <div>
                 <h4 className="text-base font-bold text-slate-900">{t.cfgTitle}</h4>

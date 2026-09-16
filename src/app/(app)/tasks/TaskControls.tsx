@@ -59,7 +59,7 @@ export function NewTaskForm({
             ref={ref}
             action={action}
             onMouseDown={(e) => e.stopPropagation()}
-            className="animate-slide-in-right absolute right-0 top-0 flex h-full w-[460px] max-w-[92%] flex-col bg-white shadow-pop dark:bg-[#15243d]"
+            className="animate-slide-in-right absolute right-0 top-0 flex h-full drawer-panel flex-col bg-white shadow-pop dark:bg-[#15243d]"
           >
             <input type="hidden" name="kind" value={kind} />
 

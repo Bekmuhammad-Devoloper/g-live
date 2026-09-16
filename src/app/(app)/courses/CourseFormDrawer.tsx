@@ -108,7 +108,7 @@ export default function CourseFormDrawer({
         ref={formRef}
         action={action}
         onMouseDown={(e) => e.stopPropagation()}
-        className="animate-slide-in-right absolute right-0 top-0 flex h-full w-[460px] max-w-[92%] flex-col bg-white shadow-pop dark:bg-[#15243d]"
+        className="animate-slide-in-right absolute right-0 top-0 flex h-full drawer-panel flex-col bg-white shadow-pop dark:bg-[#15243d]"
       >
         <div className="flex shrink-0 items-center justify-between border-b border-slate-100 px-6 py-4 dark:border-white/10">
           <h3 className="text-lg font-bold text-slate-800 dark:text-slate-100">

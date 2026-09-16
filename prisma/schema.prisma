@@ -256,6 +256,9 @@ model Lead {
   // Bosqichga ta'sir qilmaydi — faqat qaysi ustunda ko'rinishini belgilaydi;
   // standart ustunga ko'chirilsa yoki guruhga yozilsa tozalanadi.
   kanbanColumnId String?
+  // Arxiv — lid Kanbandagi "Arxiv" ustuniga tashlangan (bosqichi saqlanadi,
+  // faqat ko'rinishdan chiqadi; qaytarilsa o'z ustuniga qaytadi).
+  archivedAt DateTime?
   // Filial ustunidagi bo'sh xona/vaqt kartasi — lid shu xonaga tashlangan bo'lsa
   // (ROP kanbani). Karta o'chirilsa null bo'ladi, lid filial ustunida qoladi.
   branchSlotId String?

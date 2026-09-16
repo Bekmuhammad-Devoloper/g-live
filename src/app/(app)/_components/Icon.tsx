@@ -278,6 +278,8 @@ const P: Record<string, JSX.Element> = {
   // ── Havolalar / platformalar ──
   // QR kod — uch burchak belgisi + ma'lumot nuqtalari
   qr: <><rect x="3.5" y="3.5" width="6.5" height="6.5" rx="1.2" /><rect x="14" y="3.5" width="6.5" height="6.5" rx="1.2" /><rect x="3.5" y="14" width="6.5" height="6.5" rx="1.2" /><path d="M6.75 6.75h.01M17.25 6.75h.01M6.75 17.25h.01" /><path d="M14 14h3v3h-3zM20.5 14v3M14 20.5h3M20.5 20.5h.01" /></>,
+  // Arxiv — qopqoqli quti
+  archive: <><rect x="3" y="3.8" width="18" height="4.4" rx="1.2" /><path d="M4.6 8.2v10a2 2 0 0 0 2 2h10.8a2 2 0 0 0 2-2v-10" /><path d="M9.8 12.2h4.4" /></>,
   // iOS uslubidagi yuklab olish (SF "arrow.down.to.line") — chiziq ustiga tushayotgan strelka
   arrowDownToLine: <><path d="M12 3.5v12.5" /><path d="m6.5 10.5 5.5 5.5 5.5-5.5" /><path d="M5 20.5h14" /></>,
   link: <><path d="M9.5 14.5 14.5 9.5" /><path d="M11 6.2 12.3 4.9a4 4 0 0 1 5.7 5.7l-1.3 1.3" /><path d="M13 17.8 11.7 19.1a4 4 0 0 1-5.7-5.7l1.3-1.3" /></>,

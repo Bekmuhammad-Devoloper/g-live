@@ -57,7 +57,7 @@ export default function SalaryModal({ teacher: t, canManage, locale, onClose }: 
     <div className="fixed inset-0 z-[80]" onMouseDown={onClose}>
       <div className="absolute inset-0 bg-slate-900/50 backdrop-blur-sm" />
       <div
-        className="animate-slide-in-right absolute right-0 top-0 flex h-full w-[400px] max-w-[90%] flex-col overflow-y-auto border-l border-slate-200 bg-white shadow-pop dark:border-white/10 dark:bg-[#15243d]"
+        className="animate-slide-in-right absolute right-0 top-0 flex h-full drawer-panel flex-col overflow-y-auto border-l border-slate-200 bg-white shadow-pop dark:border-white/10 dark:bg-[#15243d]"
         onMouseDown={(e) => e.stopPropagation()}
       >
         {/* Header */}

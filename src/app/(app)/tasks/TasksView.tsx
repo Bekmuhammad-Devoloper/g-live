@@ -234,7 +234,7 @@ export default function TasksView({ kind, title, locale, tasks, staff, students,
       {selected && (
         <div className="fixed inset-0 z-[60]" onClick={() => setSelected(null)}>
           <div className="absolute inset-0 bg-slate-900/40 backdrop-blur-sm" />
-          <div className="animate-slide-in-right absolute right-0 top-0 flex h-full w-[360px] max-w-[86%] flex-col border-l border-slate-200 bg-white shadow-pop dark:border-slate-800 dark:bg-slate-900" onClick={(e) => e.stopPropagation()}>
+          <div className="animate-slide-in-right absolute right-0 top-0 flex h-full drawer-panel flex-col border-l border-slate-200 bg-white shadow-pop dark:border-slate-800 dark:bg-slate-900" onClick={(e) => e.stopPropagation()}>
             <div className="flex shrink-0 items-start justify-between gap-3 border-b border-slate-100 p-5 dark:border-slate-800">
               <div className="min-w-0">
                 <div className="mb-1.5 flex flex-wrap items-center gap-2">

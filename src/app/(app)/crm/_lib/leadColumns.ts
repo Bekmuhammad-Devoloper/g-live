@@ -25,6 +25,8 @@ export interface VLead {
   branchName: string | null;
   /** Filial ustunidagi bo'sh xona/vaqt kartasi — lid shu xonaga tashlangan */
   branchSlotId: string | null;
+  /** Arxivlangan (Kanbandagi "Arxiv" ustuni) */
+  archivedAt: string | null;
   /** Yo'naltirilgan guruh (WON uchun majburiy) */
   groupId: string | null;
   groupName: string | null;
@@ -190,6 +192,9 @@ export interface BranchModeCfg { ids: Set<string>; mode: BranchMode; online: boo
 /** "Onlayn" ustuni — arizada onlayn tanlagan (studyFormat=ONLINE) yangi lidlar; filiallardan oldin turadi */
 export const ONLINE_COL = "online";
 
+/** "Arxiv" ustuni — hamma rolda, oxirida; tashlangan lid bosqichini saqlaydi, faqat ko'rinishdan chiqadi */
+export const ARCHIVE_COL = "archive";
+
 /** Rejimda ko'rsatilmaydigan standart ustunlar (filtr chiplarida ham yashiriladi) */
 export function branchReplaces(mode: BranchMode): Set<string> {
   return mode === "sales" ? new Set(["test", "offer"]) : new Set();
@@ -203,7 +208,7 @@ export function branchReplaces(mode: BranchMode): Set<string> {
  *   4) aks holda bosqichiga mos standart ustunda.
  */
 export function columnOfLead(
-  lead: { stage: string; groupId: string | null; kanbanColumnId?: string | null; branchId?: string | null; studyFormat?: string | null },
+  lead: { stage: string; groupId: string | null; kanbanColumnId?: string | null; branchId?: string | null; studyFormat?: string | null; archivedAt?: string | null },
   pinned: Set<string>,
   custom: Set<string> = EMPTY,
   branch: BranchModeCfg | null = null,
@@ -212,6 +217,8 @@ export function columnOfLead(
   if (branch && lead.kanbanColumnId && isBranchCol(lead.kanbanColumnId) && branch.ids.has(branchIdOfCol(lead.kanbanColumnId))) {
     return lead.kanbanColumnId;
   }
+  // Arxiv hammasidan ustun — arxivlangan lid boshqa ustunda ko'rinmaydi
+  if (lead.archivedAt) return ARCHIVE_COL;
   if (lead.kanbanColumnId && custom.has(lead.kanbanColumnId)) return customColKey(lead.kanbanColumnId);
   const base = columnOf(lead.stage);
   if (base === "won" && lead.groupId && pinned.has(lead.groupId)) return groupColKey(lead.groupId);

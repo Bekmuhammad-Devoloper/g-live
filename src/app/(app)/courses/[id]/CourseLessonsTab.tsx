@@ -259,7 +259,7 @@ function LessonDrawer({ programId, initial, locale, levelCodes, onClose: closeRa
   return createPortal(
     <div className="fixed inset-0 z-[80]" onMouseDown={onClose}>
       <div className="absolute inset-0 bg-slate-900/50 backdrop-blur-sm" />
-      <div onMouseDown={(e) => e.stopPropagation()} className="animate-slide-in-right absolute right-0 top-0 flex h-full w-[480px] max-w-[94%] flex-col border-l border-slate-200 bg-white shadow-pop dark:border-white/10 dark:bg-[#15243d]">
+      <div onMouseDown={(e) => e.stopPropagation()} className="animate-slide-in-right absolute right-0 top-0 flex h-full drawer-panel flex-col border-l border-slate-200 bg-white shadow-pop dark:border-white/10 dark:bg-[#15243d]">
         <div className="flex shrink-0 items-center justify-between border-b border-slate-100 px-5 py-4 dark:border-white/10">
           <h3 className="text-base font-bold text-slate-800 dark:text-slate-100">{initial ? tr(locale, { uz: "Darsni tahrirlash", ru: "Редактировать урок", en: "Edit lesson", de: "Lektion bearbeiten" }) : tr(locale, { uz: "Yangi dars", ru: "Новый урок", en: "New lesson", de: "Neue Lektion" })}</h3>
           <button type="button" onClick={onClose} className="flex h-8 w-8 items-center justify-center rounded-lg text-lg text-slate-400 hover:bg-slate-100 dark:hover:bg-white/10">✕</button>

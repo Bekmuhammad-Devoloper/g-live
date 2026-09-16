@@ -6,8 +6,8 @@ import { cn } from "@/lib/cn";
 import { tr } from "@/lib/tr";
 import type { Locale } from "@/lib/constants";
 import { Icon } from "../../_components/Icon";
-import { COLUMNS, ONLINE_COL, branchIdOfCol, slotIdOfCol, branchColKey, branchReplaces, columnDef, columnOf, columnOfLead, customIdOfCol, groupIdOfCol, isBranchCol, isCustomCol, isGroupCol, type BranchColumn, type BranchMode, type BranchModeCfg, type CustomColumn, type GroupColumn, type GroupInfo, type VLead } from "../_lib/leadColumns";
-import { bulkLeadAction, deleteTestLead, dropLeadToBranch, enrollLeadToGroup, moveLeadStage, moveLeadToColumn, removeKanbanColumn, setLeadOnline, unpinKanbanGroup } from "../actions";
+import { ARCHIVE_COL, COLUMNS, ONLINE_COL, branchIdOfCol, slotIdOfCol, branchColKey, branchReplaces, columnDef, columnOf, columnOfLead, customIdOfCol, groupIdOfCol, isBranchCol, isCustomCol, isGroupCol, type BranchColumn, type BranchMode, type BranchModeCfg, type CustomColumn, type GroupColumn, type GroupInfo, type VLead } from "../_lib/leadColumns";
+import { bulkLeadAction, deleteTestLead, dropLeadToBranch, enrollLeadToGroup, moveLeadStage, moveLeadToColumn, removeKanbanColumn, setLeadArchived, setLeadOnline, unpinKanbanGroup } from "../actions";
 import { type Analytics } from "./AnalyticsTiles";
 import FilterBar from "./FilterBar";
 import LeadsKanban from "./LeadsKanban";
@@ -50,11 +50,13 @@ interface Props {
   branchMode?: BranchMode | null;
   /** "Onlayn" ustuni ko'rsatilsinmi (filial administratorida yo'q) */
   showOnlineCol?: boolean;
+  /** Ko'rsatilmaydigan standart ustunlar (ROP: "work", "won") */
+  hiddenCols?: string[];
   /** Bo'sh vaqtlarni tahrirlash: "all" — hamma filial, filial id — faqat o'sha, null — yo'q */
   slotsEditable?: "all" | string | null;
 }
 
-export default function LeadsWorkspace({ locale, initialLeads, managers, sources, analytics, canWrite, canDelete = false, canResetColumns = false, initialGroupColumns, initialCustomColumns, branchColumns = null, groupInfo = {}, branchMode = null, showOnlineCol = true, slotsEditable = null }: Props) {
+export default function LeadsWorkspace({ locale, initialLeads, managers, sources, analytics, canWrite, canDelete = false, canResetColumns = false, initialGroupColumns, initialCustomColumns, branchColumns = null, groupInfo = {}, branchMode = null, showOnlineCol = true, hiddenCols = [], slotsEditable = null }: Props) {
   const router = useRouter();
   const pathname = usePathname();
   const params = useSearchParams();
@@ -151,7 +153,8 @@ export default function LeadsWorkspace({ locale, initialLeads, managers, sources
   const chipCounts = useMemo(() => {
     const c: Record<string, number> = {};
     for (const col of COLUMNS) c[col.key] = 0;
-    for (const l of baseFiltered) c[columnOf(l.stage)] = (c[columnOf(l.stage)] ?? 0) + 1;
+    // Arxivlanganlar bosqich chiplarida hisoblanmaydi
+    for (const l of baseFiltered) if (!l.archivedAt) c[columnOf(l.stage)] = (c[columnOf(l.stage)] ?? 0) + 1;
     return c;
   }, [baseFiltered]);
 
@@ -250,6 +253,21 @@ export default function LeadsWorkspace({ locale, initialLeads, managers, sources
     if (isGroupCol(colKey)) {
       enrollToGroup(leadId, groupIdOfCol(colKey));
       return;
+    }
+    // "Arxiv" ustuni — bosqich saqlanadi, lid ko'rinishdan chiqadi
+    if (colKey === ARCHIVE_COL) {
+      setLeads((prev) => prev.map((l) => (l.id === leadId ? { ...l, archivedAt: new Date().toISOString() } : l))); // optimistik
+      startRefresh(async () => {
+        const r = await setLeadArchived(leadId, true);
+        if (r.error) setLeads(initialLeads);
+        router.refresh();
+      });
+      return;
+    }
+    // Arxivdan boshqa ustunga tashlansa — avval arxivdan chiqariladi, keyin odatdagidek
+    if (leads.find((l) => l.id === leadId)?.archivedAt) {
+      setLeads((prev) => prev.map((l) => (l.id === leadId ? { ...l, archivedAt: null } : l))); // optimistik
+      startRefresh(async () => { await setLeadArchived(leadId, false); router.refresh(); });
     }
     // "Onlayn" ustuni — onlayn belgisi + Yangi bosqich; "Yangi"ga qaytarilgan onlayn lid — belgi olib tashlanadi
     if (branchMode && (colKey === ONLINE_COL || (colKey === "new" && leads.find((l) => l.id === leadId)?.studyFormat === "ONLINE"))) {
@@ -459,7 +477,7 @@ export default function LeadsWorkspace({ locale, initialLeads, managers, sources
             sources={sources} source={source} onSource={setSource}
             managers={managers} manager={manager} onManager={setManager}
             activeCols={activeCols} onToggleCol={toggleCol}
-            hiddenCols={branchMode ? branchReplaces(branchMode) : undefined}
+            hiddenCols={new Set([...(branchMode ? branchReplaces(branchMode) : []), ...hiddenCols])}
             counts={chipCounts} hasFilters={hasFilters} onClear={clearFilters}
             sort={sort} onSort={setSort}
           />
@@ -493,6 +511,7 @@ export default function LeadsWorkspace({ locale, initialLeads, managers, sources
           groupInfo={groupInfo}
           branchMode={branchMode}
           showOnlineCol={showOnlineCol}
+          hiddenCols={hiddenCols}
           slotsEditable={slotsEditable}
         />
       ) : (

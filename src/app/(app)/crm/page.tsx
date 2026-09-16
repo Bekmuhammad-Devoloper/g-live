@@ -44,7 +44,7 @@ export default async function CrmPage() {
       select: {
         id: true, fullName: true, phone: true, email: true, telegram: true, studyFormat: true, source: true, stage: true,
         interestCourse: true, age: true, level: true, budget: true, note: true,
-        managerId: true, studentId: true, groupId: true, enrollEditCount: true, kanbanColumnId: true, createdAt: true, branchId: true, branchSlotId: true,
+        managerId: true, studentId: true, groupId: true, enrollEditCount: true, kanbanColumnId: true, createdAt: true, branchId: true, branchSlotId: true, archivedAt: true,
         manager: { select: { fullName: true } },
         branch: { select: { name: true } },
         group: { select: { name: true } },
@@ -98,6 +98,7 @@ export default async function CrmPage() {
     branchId: l.branchId,
     branchName: l.branch?.name ?? null,
     branchSlotId: l.branchSlotId,
+    archivedAt: l.archivedAt ? l.archivedAt.toISOString() : null,
     groupId: l.groupId,
     groupName: l.group?.name ?? null,
     enrollEditCount: l.enrollEditCount,
@@ -133,7 +134,8 @@ export default async function CrmPage() {
   const t0 = new Date(now.getFullYear(), now.getMonth(), now.getDate()).getTime();
   const y0 = t0 - 86400000;
   const byColumn: Record<string, number> = {};
-  for (const l of vleads) byColumn[columnOf(l.stage)] = (byColumn[columnOf(l.stage)] ?? 0) + 1;
+  // Arxivlanganlar analitikaga kirmaydi
+  for (const l of vleads.filter((x) => !x.archivedAt)) byColumn[columnOf(l.stage)] = (byColumn[columnOf(l.stage)] ?? 0) + 1;
   const won = vleads.filter((l) => ["PAID", "WON"].includes(l.stage)).length;
   const analytics: Analytics = {
     total: vleads.length,
@@ -162,6 +164,8 @@ export default async function CrmPage() {
       groupInfo={groupInfo}
       branchMode={branchMode}
       showOnlineCol={!isAdmin}
+      // ROP kanbanida "Ishda" va "Qabul qilindi" ustunlari ko'rsatilmaydi (2026-09-17 talab)
+      hiddenCols={s.role === ROLES.ROP ? ["work", "won"] : []}
       // Bo'sh vaqtlarni kim tahrirlaydi: rahbariyat — hammasini, administrator — o'z filialini
       slotsEditable={[ROLES.DIRECTOR, ROLES.DEPUTY_DIRECTOR].includes(s.role as never) ? "all" : s.role === ROLES.ADMIN ? (s.branchId ?? null) : null}
     />

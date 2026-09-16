@@ -91,6 +91,12 @@ html {
      px da beradi, shu sabab bu avtomatik kattalashtirish o'chiriladi. */
   -webkit-text-size-adjust: 100%;
   text-size-adjust: 100%;
+
+  /* Oyna (modal) ochilganda sahifa scrollbari yashirinadi — shunda kontent
+     scrollbar kengligiga (~15px) kengayib "sakrab" ketardi: CRM kanbani,
+     jadvallar o'lchami o'zgarib ko'rinardi. `stable` bu joyni doim band
+     qilib turadi, shu sabab tahrirlash oynasi ochilganda maket qimirlamaydi. */
+  scrollbar-gutter: stable;
 }
 
 body {
@@ -144,6 +150,15 @@ body {
 }
 .animate-pop-in {
   animation: popIn 0.16s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+/* Yonboshdan ochiladigan oynalar (drawer) — HAMMASI bir xil kenglikda.
+   Ilgari har sahifada o'zicha edi (420, 440, 460, 560, 620, 760px): xodim
+   kartasidan "Tahrirlash" ga o'tganda panel kengayib ketardi. */
+.drawer-panel {
+  /* Kichik variant — xodim kartasidagi kabi (ilgari 440px edi) */
+  width: 440px;
+  max-width: 92%;
 }
 
 /* Nozik scrollbar */
