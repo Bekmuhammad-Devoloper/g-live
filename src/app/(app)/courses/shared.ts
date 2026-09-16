@@ -18,6 +18,8 @@ export interface CourseMeta {
   lessonDuration?: string;
   months?: number;
   price?: number;
+  /** Oyiga darslar soni — BAZADAN (Program.lessonsPerMonth) */
+  lessonsPerMonth?: number;
 }
 
 export function loadMeta(): Record<string, CourseMeta> {

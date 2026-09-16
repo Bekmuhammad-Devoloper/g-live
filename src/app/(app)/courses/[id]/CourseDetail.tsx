@@ -19,6 +19,7 @@ export interface CourseData {
   description: string | null;
   banners: string[];
   monthlyFee: number | null; // oylik narx (bazadan) — qarz hisobida ishlatiladi
+  lessonsPerMonth: number; // oyiga darslar soni (bazadan)
   studentsTotal: number;
   levels: { id: string; code: string; name: string; weeks: number | null; academicHours: number | null; passScore: number | null }[];
   /** Sozlamalar > Darajalar katalogi (A1, A2 ...) */
@@ -218,7 +219,7 @@ export default function CourseDetail({ course }: { course: CourseData }) {
         mode="edit"
         locale={course.locale}
         // Narx bazadan keladi, qolgan meta (kod, davomiylik) hozircha brauzerda
-        initial={{ id: course.id, name: course.name, description: course.description, meta: { ...meta, price: course.monthlyFee ?? undefined }, banners: course.banners }}
+        initial={{ id: course.id, name: course.name, description: course.description, meta: { ...meta, price: course.monthlyFee ?? undefined, lessonsPerMonth: course.lessonsPerMonth }, banners: course.banners }}
         open={editOpen}
         onClose={() => setEditOpen(false)}
         onSaved={(id, m) => setMeta(saveMetaFor(id, m)[id] ?? m)}

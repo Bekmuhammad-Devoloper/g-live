@@ -79,7 +79,7 @@ export default async function GroupsPage() {
   const canCreate = getPermission(s.role, MODULES.GROUPS) === "FULL";
   const [programs, teachers, roomOptions] = canCreate
     ? await Promise.all([
-        prisma.program.findMany({ where: { isActive: true }, select: { id: true, name: true }, orderBy: { name: "asc" } }),
+        prisma.program.findMany({ where: { isActive: true }, select: { id: true, name: true, lessonsPerMonth: true }, orderBy: { name: "asc" } }),
         prisma.user.findMany({ where: { role: ROLES.TEACHER }, select: { id: true, fullName: true }, orderBy: { fullName: "asc" } }),
         prisma.room.findMany({ where: { isActive: true }, select: { id: true, name: true, capacity: true }, orderBy: { name: "asc" } }),
       ])

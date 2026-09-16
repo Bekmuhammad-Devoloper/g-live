@@ -35,6 +35,7 @@ export default function CourseFormDrawer({
   const [lessonDuration, setLessonDuration] = useState(initial?.meta.lessonDuration ?? "90 daqiqa");
   const [months, setMonths] = useState(initial?.meta.months ? String(initial.meta.months) : "");
   const [price, setPrice] = useState(initial?.meta.price ? String(initial.meta.price) : "");
+  const [lessonsPerMonth, setLessonsPerMonth] = useState(initial?.meta.lessonsPerMonth ? String(initial.meta.lessonsPerMonth) : "12");
   const [banners, setBanners] = useState<string[]>(initial?.banners ?? []);
   const formRef = useRef<HTMLFormElement>(null);
   const bannerRef = useRef<HTMLInputElement>(null);
@@ -137,6 +138,14 @@ export default function CourseFormDrawer({
           <div>
             <label className={label}>{T("Kurs davomiyligi (oylarda)", "Длительность курса (в месяцах)", "Course duration (months)", "Kursdauer (in Monaten)")}</label>
             <input value={months} onChange={(e) => setMonths(e.target.value)} type="number" min="0" className={input} />
+          </div>
+          <div>
+            <label className={label}>{T("Oyiga darslar soni", "Уроков в месяц", "Lessons per month", "Unterrichtsstunden pro Monat")} <span className="text-rose-500">*</span></label>
+            {/* Bazaga yoziladi: guruh jadvalida oyda shundan ortiq dars kuni belgilanmaydi */}
+            <input name="lessonsPerMonth" value={lessonsPerMonth} onChange={(e) => setLessonsPerMonth(e.target.value.replace(/\D/g, "").slice(0, 2))} type="text" inputMode="numeric" required className={input} />
+            <p className="mt-1 text-xs text-slate-400">
+              {T("Masalan 12: haftada 3 kun bo'lsa ham oyda faqat 12 ta dars bo'ladi — 13-kun dars belgilanmaydi. Guruh yaratishda o'zgartirish mumkin.", "Например 12: даже при 3 днях в неделю в месяце будет только 12 уроков — 13-й день не считается уроком. Можно изменить при создании группы.", "E.g. 12: even with 3 days a week, only 12 lessons per month — the 13th day is not a lesson. Can be changed when creating a group.", "Z. B. 12: auch bei 3 Tagen pro Woche nur 12 Stunden im Monat — der 13. Tag ist kein Unterricht. Beim Anlegen der Gruppe änderbar.")}
+            </p>
           </div>
           <div>
             <label className={label}>{T("Oylik narx", "Ежемесячная цена", "Monthly fee", "Monatlicher Preis")}</label>

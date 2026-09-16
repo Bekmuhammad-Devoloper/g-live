@@ -47,6 +47,7 @@ export default async function CourseDetailPage({ params }: { params: Promise<{ i
     description: program.description,
     banners,
     monthlyFee: program.monthlyFee,
+    lessonsPerMonth: program.lessonsPerMonth,
     studentsTotal,
     levels: program.levels.map((l) => ({
       id: l.id, code: l.code, name: l.name, weeks: l.weeks, academicHours: l.academicHours, passScore: l.passScore,
