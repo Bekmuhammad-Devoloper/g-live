@@ -108,9 +108,9 @@ echo "WorkingDirectory: $(systemctl show gl-edu -p WorkingDirectory 2>/dev/null 
 echo "uptime gl-edu: $(systemctl show gl-edu -p ActiveEnterTimestamp 2>/dev/null | cut -d= -f2)"
 
 section "Migration holati (prod baza, read-only)"
-node -e '
+APP="$APP" node -e '
   const { PrismaClient } = require("@prisma/client");
-  const p = new PrismaClient();
+  const p = new PrismaClient({ datasourceUrl: "file:" + process.env.APP + "/prisma/dev.db" });
   (async () => {
     const t = await p.$queryRawUnsafe("SELECT count(*) AS n FROM sqlite_master WHERE type=\"table\" AND name=\"_prisma_migrations\"");
     const has = Number(t[0].n) > 0;
