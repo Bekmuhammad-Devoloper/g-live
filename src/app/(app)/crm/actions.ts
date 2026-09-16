@@ -183,7 +183,7 @@ async function applyEnrollment(
 
   await prisma.groupStudent.upsert({
     where: { groupId_studentId: { groupId, studentId } },
-    update: { isActive: true },
+    update: { isActive: true, leftAt: null, joinedAt: new Date() }, // qayta faollashtirish = yangi a'zolik davri
     create: { groupId, studentId, isActive: true },
   });
   await financeAfterStudentChange(studentId); // Finance V2: a'zolik/holat tarixi

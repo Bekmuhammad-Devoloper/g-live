@@ -331,7 +331,8 @@ export async function bulkAssignGroup(ids: string[], groupId: string): Promise<B
     await prisma.groupStudent.upsert({
       where: { groupId_studentId: { groupId, studentId } },
       create: { groupId, studentId, isActive: true },
-      update: { isActive: true },
+      // Qayta faollashtirish = yangi a'zolik davri: chiqish sanasi tozalanadi, qo'shilish sanasi hozir (Finance V2 tarixi to'g'ri yuriladi)
+      update: { isActive: true, leftAt: null, joinedAt: new Date() },
     });
     await financeAfterStudentChange(studentId, s.userId); // Finance V2: a'zolik tarixi
     count++;

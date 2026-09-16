@@ -60,7 +60,7 @@ export async function resolveListFee(db: FinanceDb, groupId: string, branchId: s
 export async function resolveFee(db: FinanceDb, ctx: FeeContext): Promise<FeeResolution | null> {
   const at = monthStart(ctx.serviceMonth);
   const agreedRows = await db.studentDiscount.findMany({
-    where: { studentId: ctx.studentId, type: AGREED_PRICE_TYPE, isActive: true, OR: [{ groupId: null }, { groupId: ctx.groupId }] },
+    where: { studentId: ctx.studentId, type: AGREED_PRICE_TYPE, OR: [{ groupId: null }, { groupId: ctx.groupId }] }, // tarixan: interval bo'yicha (isActive emas)
   });
   // Guruhga xos kelishuv umumiy kelishuvdan ustun; teng bo'lsa — eng so'nggi boshlangan
   const agreed = agreedRows

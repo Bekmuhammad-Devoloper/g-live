@@ -31,7 +31,9 @@ export interface DiscountResolution {
 export async function resolveDiscount(db: FinanceDb, studentId: string, groupId: string | null, serviceMonth: YearMonth, originalAmount: number): Promise<DiscountResolution> {
   const at = monthStart(serviceMonth);
   // AGREED_PRICE — chegirma emas, narx manbai (fees.ts); bu yerda faqat PERCENT/FIXED
-  const rows = await db.studentDiscount.findMany({ where: { studentId, isActive: true, type: { in: ["PERCENT", "FIXED"] }, OR: [{ groupId: null }, ...(groupId ? [{ groupId }] : [])] } });
+  // isActive filtri YO'Q: tugatilgan chegirma ham o'z davri (effectiveFrom..effectiveTo) uchun tarixan amal qiladi
+  // (o'tgan oy charge'i keyin yaratilsa ham to'g'ri chegirma). Bekor qilish = effectiveTo = effectiveFrom.
+  const rows = await db.studentDiscount.findMany({ where: { studentId, type: { in: ["PERCENT", "FIXED"] }, OR: [{ groupId: null }, ...(groupId ? [{ groupId }] : [])] } });
   const candidates = rows
     .filter((d) => isWithin(at, d.effectiveFrom, d.effectiveTo))
     .map((d) => ({ id: d.id, type: d.type, value: d.value, amount: calcDiscount(originalAmount, d.type as "PERCENT" | "FIXED", d.value) }))
