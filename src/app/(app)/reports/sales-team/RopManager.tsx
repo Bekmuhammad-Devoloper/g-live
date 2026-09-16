@@ -61,7 +61,7 @@ function RopModal({ locale, operators, onClose, onChange }: { locale: Locale; op
   return createPortal(
     <div className="fixed inset-0 z-[85]" onMouseDown={onClose}>
       <div className="absolute inset-0 bg-slate-900/50 backdrop-blur-sm" />
-      <div className="animate-slide-in-right absolute right-0 top-0 flex h-full w-[360px] max-w-[86%] flex-col border-l border-slate-200 bg-white shadow-pop dark:border-white/10 dark:bg-slate-900" onMouseDown={(e) => e.stopPropagation()}>
+      <div className="animate-slide-in-right absolute right-0 top-0 flex h-full drawer-panel flex-col border-l border-slate-200 bg-white shadow-pop dark:border-white/10 dark:bg-slate-900" onMouseDown={(e) => e.stopPropagation()}>
         <div className="flex items-center justify-between border-b border-slate-100 px-5 py-4 dark:border-slate-800">
           <div>
             <h3 className="text-base font-bold text-slate-800 dark:text-slate-100">{tr(locale, { uz: "ROP qo'shish", ru: "Добавить РОП", en: "Add ROP", de: "ROP hinzufügen" })}</h3>

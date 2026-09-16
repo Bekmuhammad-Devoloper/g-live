@@ -55,7 +55,7 @@ export default function LeadQuickView({
       <div className="absolute inset-0 bg-slate-900/50 backdrop-blur-sm" />
       <div
         onMouseDown={(e) => e.stopPropagation()}
-        className="animate-slide-in-right absolute right-0 top-0 flex h-full w-[420px] max-w-[92%] flex-col border-l border-slate-200 bg-white shadow-pop dark:border-white/10 dark:bg-[#15243d]"
+        className="animate-slide-in-right absolute right-0 top-0 flex h-full drawer-panel flex-col border-l border-slate-200 bg-white shadow-pop dark:border-white/10 dark:bg-[#15243d]"
       >
         {/* Sarlavha */}
         <div className="relative shrink-0 overflow-hidden border-b border-slate-100 dark:border-white/10">

@@ -337,7 +337,7 @@ function EditGroupForm({
       <form
         action={action}
         onMouseDown={(e) => e.stopPropagation()}
-        className="animate-slide-in-right absolute right-0 top-0 flex h-full w-[440px] max-w-[92%] flex-col border-l border-slate-200 bg-white shadow-pop"
+        className="animate-slide-in-right absolute right-0 top-0 flex h-full drawer-panel flex-col border-l border-slate-200 bg-white shadow-pop"
       >
         <input type="hidden" name="groupId" value={group.id} />
 

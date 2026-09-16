@@ -152,6 +152,14 @@ body {
   animation: popIn 0.16s cubic-bezier(0.16, 1, 0.3, 1);
 }
 
+/* Yonboshdan ochiladigan oynalar (drawer) — HAMMASI bir xil kenglikda.
+   Ilgari har sahifada o'zicha edi (420, 440, 460, 560, 620, 760px): xodim
+   kartasidan "Tahrirlash" ga o'tganda panel kengayib ketardi. */
+.drawer-panel {
+  width: 480px;
+  max-width: 92%;
+}
+
 /* Nozik scrollbar */
 * {
   scrollbar-width: thin;
