@@ -35,3 +35,13 @@ export function monthFromSearch(sp: Record<string, string | string[] | undefined
   }
   return { ym, key: yearMonthKey(ym) };
 }
+
+export const PAGE_SIZE = 50;
+
+/** `?q=&page=` — qidiruv matni va sahifa (1 dan) */
+export function listParams(sp: Record<string, string | string[] | undefined> | undefined): { q: string; page: number; skip: number; take: number } {
+  const q = (typeof sp?.q === "string" ? sp.q : "").trim().slice(0, 80);
+  const pageRaw = parseInt(typeof sp?.page === "string" ? sp.page : "1", 10);
+  const page = Number.isFinite(pageRaw) && pageRaw > 0 ? pageRaw : 1;
+  return { q, page, skip: (page - 1) * PAGE_SIZE, take: PAGE_SIZE };
+}

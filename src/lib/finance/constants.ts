@@ -63,7 +63,7 @@ export type ChargeKind = (typeof CHARGE_KINDS)[number];
 export const CHARGE_STATUSES = ["OPEN", "PARTIALLY_PAID", "PAID", "WAIVED", "CANCELLED"] as const;
 export type ChargeStatus = (typeof CHARGE_STATUSES)[number];
 
-export const DISCOUNT_TYPES = ["PERCENT", "FIXED"] as const;
+export const DISCOUNT_TYPES = ["PERCENT", "FIXED", "AGREED_PRICE"] as const; // AGREED_PRICE: o'quvchi bilan kelishilgan oylik narx (so'm) — chegirma emas, narx manbai
 
 export const MID_MONTH_JOIN_MODES = ["FULL_MONTH", "PRO_RATA_DAYS", "PRO_RATA_LESSONS"] as const;
 /** UI'da hozircha faqat shu ishlaydi (S3) */

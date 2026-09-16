@@ -18,10 +18,11 @@ import { assertMoney, assertPositiveMoney } from "../money";
 import { compareYearMonth, monthEnd, monthsBetween, tashkentDate, tashkentYearMonth, yearMonthKey, type YearMonth } from "../period";
 import { resolveBillingPolicy, type BillingPolicyView } from "./policy";
 import { resolveDiscount } from "./discounts";
+import { resolveFee, type FeeResolution, type UnpricedItem } from "./fees";
 import { intervalCoversMonth, intervalTouchesMonth, membershipIntervals, statusIntervals, syncStudentHistory, type Interval } from "./history";
 import { chargeNetAllocated } from "./balance";
 
-export const DEFAULT_FEE_SETTING_KEY = "finance.defaultMonthlyFee";
+export { DEFAULT_FEE_SETTING_KEY } from "./fees";
 
 export const monthlyChargeKey = (studentId: string, groupId: string, ym: YearMonth) => `${studentId}:${groupId}:${yearMonthKey(ym)}`;
 
@@ -38,23 +39,10 @@ export interface EnsureChargesResult {
   created: StudentCharge[];
   /** allaqachon bor edi */
   existing: number;
-  /** narx yo'q / a'zolik yo'q sabab yaratilmagan */
+  /** yaratilmagan oylar (sabab bilan) */
   skipped: { groupId: string; month: string; reason: string }[];
-}
-
-interface FeeSource {
-  amount: number;
-  source: "group" | "program" | "default" | "none";
-}
-
-async function resolveFee(db: FinanceDb, groupId: string): Promise<FeeSource> {
-  const g = await db.group.findUnique({ where: { id: groupId }, select: { monthlyFee: true, program: { select: { monthlyFee: true } } } });
-  if (!g) return { amount: 0, source: "none" };
-  if (g.monthlyFee && g.monthlyFee > 0) return { amount: g.monthlyFee, source: "group" };
-  if (g.program.monthlyFee && g.program.monthlyFee > 0) return { amount: g.program.monthlyFee, source: "program" };
-  const raw = await db.setting.findUnique({ where: { key: DEFAULT_FEE_SETTING_KEY } });
-  const n = parseInt(String(raw?.value ?? ""), 10);
-  return Number.isFinite(n) && n > 0 ? { amount: n, source: "default" } : { amount: 0, source: "none" };
+  /** narx sozlanmagan oylar — MONTHLY_FEE_NOT_CONFIGURED (charge yo'q, 0 deb taxmin qilinmaydi) */
+  unpriced: UnpricedItem[];
 }
 
 /** Interval qaysi oylarga tegadi (from oyi … to oyi, `upTo` bilan cheklangan) */
@@ -78,8 +66,8 @@ export async function ensureMonthlyCharges(db: FinanceDb, o: EnsureChargesOption
   if (!student) throw new FinanceError("not_found", "O'quvchi topilmadi");
   const [memberships, statuses] = await Promise.all([membershipIntervals(db, o.studentId), statusIntervals(db, o.studentId)]);
 
-  const result: EnsureChargesResult = { created: [], existing: 0, skipped: [] };
-  const feeCache = new Map<string, FeeSource>();
+  const result: EnsureChargesResult = { created: [], existing: 0, skipped: [], unpriced: [] };
+  const feeCache = new Map<string, FeeResolution | null>();
   const groupMeta = new Map<string, { programId: string; branchId: string | null }>();
 
   for (const iv of memberships) {
@@ -88,14 +76,20 @@ export async function ensureMonthlyCharges(db: FinanceDb, o: EnsureChargesOption
       const exists = await db.studentCharge.findUnique({ where: { chargeKey: key }, select: { id: true } });
       if (exists) { result.existing++; continue; }
 
-      let fee = feeCache.get(iv.key);
-      if (!fee) { fee = await resolveFee(db, iv.key); feeCache.set(iv.key, fee); }
-      if (fee.amount <= 0) { result.skipped.push({ groupId: iv.key, month: yearMonthKey(ym), reason: "narx belgilanmagan" }); continue; }
       let meta = groupMeta.get(iv.key);
       if (!meta) {
         const g = await db.group.findUnique({ where: { id: iv.key }, select: { programId: true, branchId: true } });
         meta = { programId: g?.programId ?? "", branchId: g?.branchId ?? student.branchId };
         groupMeta.set(iv.key, meta);
+      }
+      // Narx: kelishilgan → guruh → kurs → filial standarti → global (fees.ts). Kelishilgan narx oyga bog'liq — kesh kaliti oy bilan.
+      const feeKey = `${iv.key}:${yearMonthKey(ym)}`;
+      let fee = feeCache.get(feeKey);
+      if (fee === undefined) { fee = await resolveFee(db, { studentId: o.studentId, groupId: iv.key, branchId: meta.branchId ?? student.branchId, serviceMonth: ym }); feeCache.set(feeKey, fee); }
+      if (!fee) {
+        result.skipped.push({ groupId: iv.key, month: yearMonthKey(ym), reason: "narx belgilanmagan (MONTHLY_FEE_NOT_CONFIGURED)" });
+        result.unpriced.push({ studentId: o.studentId, groupId: iv.key, month: yearMonthKey(ym) });
+        continue;
       }
       const policy = await resolveBillingPolicy(db, meta.branchId ?? student.branchId, ym);
       // S4 to'liq oy FROZEN → 0. Faqat KNOWN (cutover'dan keyingi, hook yozgan) holat intervali va faqat OY TUGAGACH
@@ -109,12 +103,14 @@ export async function ensureMonthlyCharges(db: FinanceDb, o: EnsureChargesOption
       }
       const frozenFullMonth = frozenKnown.length > 0;
       const frozenInferred = !frozenFullMonth && statuses.some((s) => s.key === "FROZEN" && s.source === "INFERRED" && intervalCoversMonth(s, ym));
-      const discount = frozenFullMonth ? { applied: null, candidates: [] } : await resolveDiscount(db, o.studentId, iv.key, ym, fee.amount);
-      const discountAmount = discount.applied?.amount ?? 0;
-      const finalAmount = frozenFullMonth && policy.frozenFullMonthMode === "ZERO_CHARGE" ? 0 : fee.amount - discountAmount;
+      // Kelishilgan narx = yakuniy summa (ustiga PERCENT/FIXED chegirma qo'llanmaydi); asl = ro'yxat narxi (bo'lsa), farq = chegirma sifatida yoziladi
+      const originalAmount = fee.source === "agreed" ? Math.max(fee.listAmount ?? fee.amount, fee.amount) : fee.amount;
+      const discount = frozenFullMonth || fee.source === "agreed" ? { applied: null, candidates: [] } : await resolveDiscount(db, o.studentId, iv.key, ym, fee.amount);
+      const discountAmount = fee.source === "agreed" ? originalAmount - fee.amount : (discount.applied?.amount ?? 0);
+      const finalAmount = frozenFullMonth && policy.frozenFullMonthMode === "ZERO_CHARGE" ? 0 : originalAmount - discountAmount;
       const snapshot = {
         policy: { id: policy.id, version: policy.version, midMonthJoinMode: policy.midMonthJoinMode, dueDay: policy.dueDay, frozenFullMonthMode: policy.frozenFullMonthMode },
-        fee: { amount: fee.amount, source: fee.source },
+        fee: { amount: fee.amount, source: fee.source, listAmount: fee.listAmount, listSource: fee.listSource, agreedPriceId: fee.agreedPriceId },
         membership: { groupId: iv.key, from: iv.from.toISOString(), to: iv.to?.toISOString() ?? null, source: iv.source },
         statuses: statuses.filter((s) => intervalTouchesMonth(s, ym)).map((s) => ({ status: s.key, from: s.from.toISOString(), to: s.to?.toISOString() ?? null, source: s.source })),
         frozenFullMonth,
@@ -127,7 +123,7 @@ export async function ensureMonthlyCharges(db: FinanceDb, o: EnsureChargesOption
           data: {
             studentId: o.studentId, branchId: meta.branchId ?? student.branchId, groupId: iv.key, programId: meta.programId || null,
             billingPolicyId: policy.id, kind: "MONTHLY", serviceYear: ym.year, serviceMonth: ym.month,
-            originalAmount: assertMoney(fee.amount, "narx"), discountAmount: assertMoney(discountAmount, "chegirma"), finalAmount: assertMoney(finalAmount, "yakuniy"),
+            originalAmount: assertMoney(originalAmount, "narx"), discountAmount: assertMoney(discountAmount, "chegirma"), finalAmount: assertMoney(finalAmount, "yakuniy"),
             dueDate: tashkentDate(ym, policy.dueDay), status: finalAmount === 0 ? "WAIVED" : "OPEN",
             chargeKey: key, snapshot: JSON.stringify(snapshot), createdById: o.actorId ?? null,
           },

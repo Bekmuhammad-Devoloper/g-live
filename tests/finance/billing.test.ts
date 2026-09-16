@@ -70,7 +70,7 @@ describe("billing engine (Phase 3)", () => {
     expect(r1.created[1].dueDate.getTime()).toBe(T("2026-09-04T19:00:00Z").getTime()); // dueDay 5 (v1), Tashkent 00:00
     expect(r1.created[2].dueDate.getTime()).toBe(monthStart(OCT).getTime()); // dueDay 1 (v2)
     const snap = JSON.parse(r1.created[0].snapshot ?? "{}");
-    expect(snap.fee).toEqual({ amount: 1_000_000, source: "program" });
+    expect(snap.fee).toMatchObject({ amount: 1_000_000, source: "program", listAmount: 1_000_000, listSource: "program", agreedPriceId: null });
     expect(snap.membership.source).toBe("INFERRED");
 
     const r2 = await ensureMonthlyCharges(db.prisma, { studentId: ids.student, upTo: OCT, cutoverAt: CUTOVER, now: T("2026-10-05T05:00:00Z") });

@@ -2,7 +2,8 @@ import { prisma } from "@/lib/db";
 import { PAYMENT_METHODS } from "@/lib/constants";
 import { Forbidden, PageHeader } from "../../../_components/ui";
 import { fin } from "../_i18n";
-import { financePage, monthFromSearch } from "../_shared";
+import { financePage, listParams, monthFromSearch, PAGE_SIZE } from "../_shared";
+import ListControls from "../ListControls";
 import MonthPicker from "../MonthPicker";
 import PaymentsView, { type PaymentRow, type StudentOpt, type AccountOpt } from "./PaymentsView";
 import { monthEnd, monthStart } from "@/lib/finance/period";
@@ -12,10 +13,14 @@ export default async function PaymentsV2Page({ searchParams }: { searchParams: P
   const { session, branchId, can, flags } = await financePage();
   const L = session.locale;
   if (!can("FINANCE_VIEW") && !can("PAYMENT_CREATE")) return <Forbidden title={fin(L, "forbiddenTitle")} body={fin(L, "forbidden")} />;
-  const { ym, key } = monthFromSearch(await searchParams);
+  const sp = await searchParams;
+  const { ym, key } = monthFromSearch(sp);
+  const { q, page, skip, take } = listParams(sp);
+  const where = { legacyRole: null, postedAt: { not: null }, receivedAt: { gte: monthStart(ym), lt: monthEnd(ym) }, ...(branchId ? { branchId } : {}), ...(q ? { student: { fullName: { contains: q } } } : {}) };
+  const total = await prisma.payment.count({ where });
   const [payments, students, accounts] = await Promise.all([
     prisma.payment.findMany({
-      where: { legacyRole: null, postedAt: { not: null }, receivedAt: { gte: monthStart(ym), lt: monthEnd(ym) }, ...(branchId ? { branchId } : {}) },
+      where, skip, take,
       orderBy: { receivedAt: "desc" },
       include: { student: { select: { fullName: true } }, financialAccount: { select: { name: true } }, allocations: { select: { kind: true, amount: true } }, refunds: { select: { amount: true, status: true } } },
     }),
@@ -33,6 +38,7 @@ export default async function PaymentsV2Page({ searchParams }: { searchParams: P
   return (
     <>
       <PageHeader title={fin(L, "payments")} action={<MonthPicker value={key} />} />
+      <ListControls locale={L} total={total} page={page} pageSize={PAGE_SIZE} q={q} />
       <PaymentsView locale={L} rows={rows} students={studentOpts} accounts={accountOpts} methods={[...PAYMENT_METHODS]} canCreate={can("PAYMENT_CREATE") && flags.enabled} canCancel={can("PAYMENT_CANCEL") && flags.enabled} canCorrect={can("PAYMENT_CORRECT") && flags.enabled} />
     </>
   );

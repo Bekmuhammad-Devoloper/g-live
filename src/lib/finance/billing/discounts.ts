@@ -10,7 +10,7 @@ import type { StudentDiscount } from "@prisma/client";
 import type { FinanceDb } from "../db";
 import { FinanceError } from "../errors";
 import { financeAudit } from "../audit";
-import { assertMoney, assertRateBp, discountAmount as calcDiscount } from "../money";
+import { assertMoney, assertPositiveMoney, assertRateBp, discountAmount as calcDiscount } from "../money";
 import { isWithin, monthStart, type YearMonth } from "../period";
 
 export interface AppliedDiscount {
@@ -30,7 +30,8 @@ export interface DiscountResolution {
 /** Xizmat oyi boshida faol chegirmalar: o'quvchi + (shu guruh yoki guruhsiz) */
 export async function resolveDiscount(db: FinanceDb, studentId: string, groupId: string | null, serviceMonth: YearMonth, originalAmount: number): Promise<DiscountResolution> {
   const at = monthStart(serviceMonth);
-  const rows = await db.studentDiscount.findMany({ where: { studentId, isActive: true, OR: [{ groupId: null }, ...(groupId ? [{ groupId }] : [])] } });
+  // AGREED_PRICE — chegirma emas, narx manbai (fees.ts); bu yerda faqat PERCENT/FIXED
+  const rows = await db.studentDiscount.findMany({ where: { studentId, isActive: true, type: { in: ["PERCENT", "FIXED"] }, OR: [{ groupId: null }, ...(groupId ? [{ groupId }] : [])] } });
   const candidates = rows
     .filter((d) => isWithin(at, d.effectiveFrom, d.effectiveTo))
     .map((d) => ({ id: d.id, type: d.type, value: d.value, amount: calcDiscount(originalAmount, d.type as "PERCENT" | "FIXED", d.value) }))
@@ -41,8 +42,8 @@ export async function resolveDiscount(db: FinanceDb, studentId: string, groupId:
 export interface CreateDiscountInput {
   studentId: string;
   groupId?: string | null;
-  type: "PERCENT" | "FIXED";
-  /** PERCENT: basis point (2000 = 20%); FIXED: so'm */
+  type: "PERCENT" | "FIXED" | "AGREED_PRICE";
+  /** PERCENT: basis point (2000 = 20%); FIXED: so'm; AGREED_PRICE: kelishilgan oylik narx (so'm) */
   value: number;
   effectiveFrom: Date;
   effectiveTo?: Date | null;
@@ -52,7 +53,16 @@ export interface CreateDiscountInput {
 
 export async function createDiscount(db: FinanceDb, input: CreateDiscountInput): Promise<StudentDiscount> {
   if (input.type === "PERCENT") assertRateBp(input.value, "chegirma foizi");
+  else if (input.type === "AGREED_PRICE") assertPositiveMoney(input.value, "kelishilgan narx");
   else assertMoney(input.value, "chegirma summasi");
+  if (input.type === "AGREED_PRICE") {
+    // Bir davr uchun bitta kelishilgan narx (shu doira: guruh yoki umumiy) — ochiq eskisi yangisining boshida yopiladi
+    const open = await db.studentDiscount.findMany({ where: { studentId: input.studentId, type: "AGREED_PRICE", isActive: true, groupId: input.groupId ?? null, effectiveTo: null } });
+    for (const prev of open) {
+      if (prev.effectiveFrom >= input.effectiveFrom) throw new FinanceError("validation", "Yangi kelishilgan narx oldingisidan keyin boshlanishi kerak", { previousId: prev.id });
+      await db.studentDiscount.update({ where: { id: prev.id }, data: { effectiveTo: input.effectiveFrom } });
+    }
+  }
   if (input.reason.trim().length < 3) throw new FinanceError("validation", "Sabab kamida 3 belgi");
   if (input.effectiveTo && input.effectiveTo <= input.effectiveFrom) throw new FinanceError("validation", "effectiveTo effectiveFrom'dan keyin bo'lishi kerak");
   const created = await db.studentDiscount.create({

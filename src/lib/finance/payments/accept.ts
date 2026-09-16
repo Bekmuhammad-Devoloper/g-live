@@ -19,6 +19,7 @@ import { assertBranchAccess, requireFinancePermission } from "../permissions";
 import { accountForMethod } from "../accounts/accounts";
 import { postLedger } from "../ledger/post";
 import { ensureMonthlyCharges } from "../billing/charges";
+import { feeNotConfiguredError } from "../billing/fees";
 import { studentBalance, type StudentBalance } from "../billing/balance";
 import { tashkentDateKey, tashkentYearMonth } from "../period";
 import { assertPeriodOpen } from "./periodLock";
@@ -96,7 +97,12 @@ export async function acceptPaymentTx(db: FinanceDb, raw: AcceptPaymentInput, ac
   await postLedger(db, { accountId: account.id, branchId: account.branchId ?? student.branchId, type: "STUDENT_PAYMENT", direction: "IN", amount: payment.amount, referenceType: "Payment", referenceId: payment.id, occurredAt: input.receivedAt, actorId: actor.userId, note: input.purpose });
 
   // 4. Charge'lar (lazy) → 5. oldingi kredit → 6. shu to'lov FIFO → qoldiq = kredit
-  await ensureMonthlyCharges(db, { studentId: student.id, upTo: tashkentYearMonth(now), actorId: actor.userId, now });
+  const charges = await ensureMonthlyCharges(db, { studentId: student.id, upTo: tashkentYearMonth(now), actorId: actor.userId, now });
+  if (charges.unpriced.length > 0) {
+    // Narx sozlanmagan oy bor — to'lov "kredit"ga tushib qolmasin: aniq domen xatosi (0 deb taxmin qilinmaydi)
+    const g = await db.group.findUnique({ where: { id: charges.unpriced[0].groupId }, select: { name: true, program: { select: { name: true } } } });
+    throw feeNotConfiguredError(charges.unpriced, { group: g?.name, program: g?.program?.name });
+  }
   // Avval OLDINGI kredit (eng eski manba to'lov birinchi), keyin shu to'lov
   const creditApplied = await applyStudentCredit(db, student.id, { actorId: actor.userId, excludePaymentId: payment.id });
   const allocations = await allocateFifo(db, { paymentId: payment.id, studentId: student.id, available: payment.amount, source: "AUTO_FIFO", actorId: actor.userId, allocatedAt: now });

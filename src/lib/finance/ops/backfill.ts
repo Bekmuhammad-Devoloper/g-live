@@ -78,7 +78,7 @@ export async function backfillBilling(client: PrismaClient, o: BackfillOptions =
         report.chargesCreated += r.created.length;
         report.chargesExisting += r.existing;
         report.chargesSkipped += r.skipped.length;
-        for (const sk of r.skipped) if (sk.reason.startsWith("narx")) report.unpricedGroups[sk.groupId] = (report.unpricedGroups[sk.groupId] ?? 0) + 1;
+        for (const u of r.unpriced) report.unpricedGroups[u.groupId] = (report.unpricedGroups[u.groupId] ?? 0) + 1;
         report.createdAmount += r.created.reduce((a, c) => a + c.finalAmount, 0);
 
         // Eski PENDING (qo'lda qarz) → MANUAL_DEBT charge; Payment qatoriga legacyRole="DEBT"

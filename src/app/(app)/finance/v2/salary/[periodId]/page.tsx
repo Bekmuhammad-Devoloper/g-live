@@ -40,9 +40,9 @@ export default async function SalaryPeriodDetail({ params }: { params: Promise<{
               <td className="px-4 py-2.5">{d.studentName ?? "—"}</td>
               <td className="px-3 py-2.5 text-slate-500">{fmtDate(L, d.paymentReceivedAt)}</td>
               <td className="px-3 py-2.5 text-slate-500">{d.servicePeriod ?? "—"} <span className="text-[11px] text-slate-400">→ {d.earningMonth}</span></td>
-              <td className="px-3 py-2.5 text-right tabular-nums">{d.allocatedAmount != null ? formatMoney(d.allocatedAmount, L) : "—"}</td>
+              <td className="px-3 py-2.5 text-right tabular-nums">{d.allocatedAmount !== null ? formatMoney(d.allocatedAmount, L) : "—"}</td>
               <td className="px-3 py-2.5 text-right tabular-nums">{formatMoney(d.eligibleAmount, L)}</td>
-              <td className="px-3 py-2.5 text-right">{d.rateBp != null ? bpToPercentString(d.rateBp) : "—"}</td>
+              <td className="px-3 py-2.5 text-right">{d.rateBp !== null ? bpToPercentString(d.rateBp) : "—"}</td>
               <td className={`px-3 py-2.5 text-right tabular-nums font-semibold ${d.amount < 0 ? "text-red-600" : ""}`}>{formatMoney(d.amount, L)}</td>
               <td className="px-3 py-2.5 text-slate-500">{d.groupName ?? "—"}{d.programName ? ` · ${d.programName}` : ""}</td>
               <td className="px-3 py-2.5"><Badge tone={d.type === "PAYMENT_COMMISSION" ? "brand" : d.type === "REFUND_ADJUSTMENT" || d.type === "PENALTY" ? "red" : "slate"}>{d.type}</Badge></td>

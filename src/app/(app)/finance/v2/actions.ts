@@ -8,7 +8,7 @@ import { revalidatePath } from "next/cache";
 
 import { prisma } from "@/lib/db";
 import { requireSession, type SessionUser } from "@/lib/auth";
-import { ROLES } from "@/lib/constants";
+import { MAX_MONEY, ROLES } from "@/lib/constants";
 import { notify } from "@/lib/notify";
 import { setSetting } from "@/lib/settings";
 import { FINANCE_SETTING_KEYS } from "@/lib/finance/constants";
@@ -23,6 +23,8 @@ import { acceptPayment, type AcceptPaymentInput } from "@/lib/finance/payments/a
 import { closePeriod, reopenPeriod } from "@/lib/finance/payments/periodLock";
 import { createRefund, reversePayment, type RefundInput } from "@/lib/finance/refunds/refund";
 import { settleStudentCredit, syncStudentBilling } from "@/lib/finance/billing/sync";
+import { DEFAULT_FEE_SETTING_KEY, branchDefaultFeeKey } from "@/lib/finance/billing/fees";
+import { financeReadiness } from "@/lib/finance/readiness";
 import { createManualDebtCharge, cancelCharge, replaceCharge, adjustCharge } from "@/lib/finance/billing/charges";
 import { createDiscount, endDiscount } from "@/lib/finance/billing/discounts";
 import { createExpense, reverseExpense, type ExpenseInput } from "@/lib/finance/expenses/expenses";
@@ -69,10 +71,45 @@ export async function setFinanceV2Enabled(enabled: boolean): Promise<Ok> {
   try {
     const s = await requireSession();
     if (s.role !== ROLES.DIRECTOR) throw new FinanceError("forbidden", "Faqat direktor");
+    if (enabled) {
+      // Go-live readiness: BLOCKER bo'lsa flag yoqilmaydi (narxsiz o'quvchi, MAIN'siz guruh, backfill, migratsiya, DIRECTOR...)
+      const r = await financeReadiness(prisma);
+      if (!r.ready) {
+        const codes = r.issues.filter((i) => i.severity === "BLOCKER").map((i) => `${i.code} (${i.count})`).join(", ");
+        throw new FinanceError("state", `Finance V2 yoqilmadi — tayyorlik tekshiruvi: ${codes}. /finance/v2/readiness sahifasini ko'ring`, { blockers: r.blockers });
+      }
+    }
     await setSetting(FINANCE_SETTING_KEYS.enabled, enabled ? "true" : "false");
     await writeAudit({ actorId: s.userId, action: "UPDATE", entityType: "Setting", entityId: FINANCE_SETTING_KEYS.enabled, newValue: { enabled }, reason: "Finance V2 feature flag" });
     revalidateAll();
     return ok();
+  } catch (e) { return toFinanceResult(e); }
+}
+
+/** Standart oylik narx (global yoki filial) — Setting finance.defaultMonthlyFee[.<branchId>]; bo'sh = o'chirish */
+export async function setDefaultFeeAction(branchId: string | null, amount: number | null): Promise<Ok> {
+  try {
+    const s = await guard();
+    requireFinancePermission(s, "FINANCE_PERIOD_CLOSE");
+    if (amount !== null && (!Number.isSafeInteger(amount) || amount <= 0 || amount > MAX_MONEY)) throw new FinanceError("validation", "Narx musbat butun so'm bo'lishi kerak");
+    const key = branchId ? branchDefaultFeeKey(branchId) : DEFAULT_FEE_SETTING_KEY;
+    if (amount === null) await prisma.setting.deleteMany({ where: { key } });
+    else await setSetting(key, String(amount));
+    await writeAudit({ actorId: s.userId, action: "UPDATE", entityType: "Setting", entityId: key, newValue: { amount }, reason: "Standart oylik narx" });
+    revalidateAll();
+    return ok();
+  } catch (e) { return toFinanceResult(e); }
+}
+
+/** O'quvchi bilan kelishilgan oylik narx (narx manbai #1) — StudentDiscount.type = AGREED_PRICE */
+export async function setAgreedPriceAction(studentId: string, amount: number, effectiveFrom: string, reason: string, groupId?: string | null): Promise<Ok<{ id: string }>> {
+  try {
+    const s = await guard();
+    requireFinancePermission(s, "PAYMENT_CORRECT");
+    await assertStudentBranch(s, studentId);
+    const d = await withFinanceTx(prisma, (tx) => createDiscount(tx, { studentId, groupId: groupId ?? null, type: "AGREED_PRICE", value: amount, effectiveFrom: monthStart(parseYearMonthKey(effectiveFrom)), reason, actorId: s.userId }));
+    revalidateAll();
+    return ok({ id: d.id });
   } catch (e) { return toFinanceResult(e); }
 }
 
@@ -201,7 +238,7 @@ export async function adjustChargeAction(chargeId: string, amount: number, reaso
   } catch (e) { return toFinanceResult(e); }
 }
 
-export async function createDiscountAction(studentId: string, type: "PERCENT" | "FIXED", value: number, effectiveFrom: string, reason: string, groupId?: string | null): Promise<Ok<{ id: string }>> {
+export async function createDiscountAction(studentId: string, type: "PERCENT" | "FIXED" | "AGREED_PRICE", value: number, effectiveFrom: string, reason: string, groupId?: string | null): Promise<Ok<{ id: string }>> {
   try {
     const s = await guard();
     requireFinancePermission(s, "PAYMENT_CORRECT");

@@ -11,6 +11,7 @@ export type FinanceErrorCode =
   | "insufficient"
   | "duplicate"
   | "feature_disabled"
+  | "fee_not_configured"
   | "state";
 
 export class FinanceError extends Error {
