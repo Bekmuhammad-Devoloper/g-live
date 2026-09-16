@@ -28,12 +28,12 @@ COOKIE=gl_session
 PROD_DB=$APP/prisma/dev.db
 FAILS=()
 STOP=0
-declare -A T_START T_DUR
-declare -a ORDER
+TIMES=$WORK/timings.txt   # "nom sekund" (bash 3 mos — assotsiativ massivsiz)
 
 section() { echo; echo "## $1"; }
-tstart() { ORDER+=("$1"); T_START["$1"]=$(date +%s); echo "▶ $1"; }
-tend()   { local n="$1"; T_DUR["$n"]=$(( $(date +%s) - T_START["$n"] )); echo "◀ $n — ${T_DUR[$n]}s"; }
+tstart() { mkdir -p "$WORK"; date +%s > "$WORK/.t_$(echo "$1" | tr ':/' '__')"; echo "▶ $1"; }
+tend()   { local f="$WORK/.t_$(echo "$1" | tr ':/' '__')"; local d=$(( $(date +%s) - $(cat "$f") )); echo "$1 $d" >> "$TIMES"; echo "◀ $1 — ${d}s"; }
+dur()    { awk -v n="$1" '$1==n{print $2}' "$TIMES" 2>/dev/null | tail -1; }
 fail()   { FAILS+=("$1"); echo "✗ FAIL: $1"; }
 stopnow(){ STOP=1; FAILS+=("STOP: $1"); echo "■ STOP: $1"; }
 TSX() { node_modules/.bin/tsx "$@" < /dev/null; }
@@ -62,12 +62,12 @@ for p in $PORT_V2 $PORT_LEGACY; do (ss -ltn 2>/dev/null || netstat -ltn) | grep 
 [ "$STOP" = 1 ] && exit 2
 
 section "1. Klon ($REF → $DRY) + npm ci + prisma generate"
-tstart clone
+T_CLONE0=$(date +%s)
 rm -rf "$DRY"; git clone -q "$APP" "$DRY"
 git -C "$DRY" fetch -q "$(git -C "$APP" remote get-url origin)" "$REF"
 git -C "$DRY" checkout -q FETCH_HEAD
 echo "dry-run HEAD=$(git -C "$DRY" rev-parse --short HEAD)"
-cd "$DRY"; mkdir -p "$WORK"
+cd "$DRY"; mkdir -p "$WORK"; : > "$TIMES"; echo "$T_CLONE0" > "$WORK/.t_clone"
 npm ci --no-audit --no-fund < /dev/null 2>&1 | tail -1
 npx prisma generate < /dev/null 2>&1 | grep -E "Generated" || true
 tend clone
@@ -107,7 +107,7 @@ tstart migrate
 TSX scripts/finance-v2/migrate-safe.ts --db "$COPY" --no-backup --workdir "$WORK" --label precutover 2>&1 | grep -v "prisma-config\|deprecated" | tail -40 || stopnow "migrate-safe nusxada yiqildi"
 tend migrate
 [ "$STOP" = 1 ] && exit 2
-echo "migration state (nusxa):"; npx prisma migrate status --schema prisma/schema.prisma < /dev/null 2>&1 | grep -v "prisma-config\|deprecated" | tail -6 || true
+echo "migration state (nusxa):"; DATABASE_URL="file:$COPY" npx prisma migrate status --schema prisma/schema.prisma < /dev/null 2>&1 | grep -v "prisma-config\|deprecated" | grep -v "^$" | tail -4 || true
 
 section "7. Reconciliation (PRE ↔ POST migratsiya)"
 TSX scripts/finance-v2/reconcile.ts snapshot --db "$COPY" --out "$WORK/post.json" > /dev/null 2>&1
@@ -134,8 +134,17 @@ TSX scripts/finance-v2/v2-counts.ts --db "$COPY" --out "$WORK/counts-A.json" > /
 node -e "const j=require('$WORK/counts-A.json');const v=j.v2;console.log(JSON.stringify({PaymentPosted:v.PaymentPosted,PaymentPostedTotal:v.PaymentPostedTotal,StudentCharge:v.StudentCharge,StudentChargeFinalTotal:v.StudentChargeFinalTotal,PaymentAllocation:v.PaymentAllocation,AllocationTotal:v.AllocationTotal,StudentCreditTotal:v.StudentCreditTotal,TeacherEarning:v.TeacherEarning,NeedsReview:v.TeacherEarningNeedsReview,ReviewReasons:v.TeacherEarningReviewReasons,SalaryPeriod:v.SalaryPeriod,ExpensePosted:v.ExpensePosted,FinancialAccount:v.FinancialAccount,FinancialTransaction:v.FinancialTransaction,LedgerIn:v.LedgerIn,LedgerOut:v.LedgerOut,GSH:v.GroupStudentHistoryBySource,GTA:v.GroupTeacherAssignmentBySource,Dup:{c:v.DupChargeKeys,a:v.DupAllocationKeys,e:v.DupEarningKeys,l:v.DupLedgerKeys,p:v.DupPaymentKeys,x:v.DupExpenseKeys},Inv:{overAlloc:v.OverAllocatedPayments,overRefund:v.OverRefundedPayments,overPaidCharge:v.OverPaidCharges,overPaidPeriod:v.OverPaidPeriods,transferImb:v.LedgerTransferImbalance}},null,1))"
 tend backfill-real
 TSX scripts/finance-v2/reconcile.ts snapshot --db "$COPY" --out "$WORK/post-backfill.json" > /dev/null 2>&1
-echo "--- legacy jadvallar backfill'dan keyin (pre ↔ post-backfill):"
-TSX scripts/finance-v2/reconcile.ts compare --before "$WORK/pre.json" --after "$WORK/post-backfill.json" 2>&1 | grep -v "prisma-config\|deprecated" | tail -25 || fail "reconciliation pre↔backfill UNEXPECTED"
+echo "--- legacy jadvallar va pul backfill'dan keyin o'zgarmagan (post-migratsiya ↔ post-backfill; V2 jadvallar o'sishi va AuditLog kutilgan):"
+node -e "
+const a=require('$WORK/post.json'), b=require('$WORK/post-backfill.json');
+const LEGACY=['Student','Group','GroupStudent','Payment','Expense','TeacherSalary','SalaryRule','User'];
+let bad=0;
+for(const t of LEGACY){ if(a.counts[t]!==b.counts[t]){bad++;console.log('  ✗ counts.'+t, a.counts[t],'→',b.counts[t]);} }
+for(const k of Object.keys(a.money)){ if(a.money[k]!==b.money[k]){bad++;console.log('  ✗ money.'+k, a.money[k],'→',b.money[k]);} }
+console.log('  AuditLog', a.counts.AuditLog,'→',b.counts.AuditLog,'(kutilgan o\\'sish)');
+console.log('  money:', JSON.stringify(b.money));
+if(bad){console.log('  ✗ UNEXPECTED: '+bad+' farq');process.exit(1)} console.log('  ✓ legacy sonlar va pul yig\\'indilari aynan');
+" || fail "reconciliation post-migratsiya↔post-backfill UNEXPECTED"
 
 section "10. Backfill IKKINCHI marta (idempotency) → sonlar (B); A = B shart"
 tstart backfill-second
@@ -229,9 +238,8 @@ rm -f "$COPY" "$COPY-journal" "$RB" "$RB-journal" "$WORK"/*.db "$WORK"/*.db-jour
 echo "backups:"; ls -la "$APP/backups" | tail -n +2 | tail -5
 
 section "VAQT JADVALI"
-TOTAL=0
-for n in "${ORDER[@]}"; do printf "  %-24s %5ss\n" "$n" "${T_DUR[$n]:-?}"; done
-MW=$(( ${T_DUR[backup]:-0} + ${T_DUR[migrate]:-0} + ${T_DUR[backfill-real]:-0} + ${T_DUR[app-start]:-0} + 30 ))
-echo "  maintenance window (backup+migrate+backfill+start+30s zaxira): ~${MW}s; rollback (restore+start): ~$(( ${T_DUR[rollback-restore]:-0} + ${T_DUR[app-start]:-0} ))s"
+awk '{printf "  %-24s %5ss\n", $1, $2}' "$TIMES"
+MW=$(( $(dur backup) + $(dur migrate) + $(dur backfill-real) + $(dur app-start) + 30 ))
+echo "  maintenance window (backup+migrate+backfill+start+30s zaxira): ~${MW}s; rollback (restore+start): ~$(( $(dur rollback-restore) + $(dur app-start) ))s"
 echo
 if [ ${#FAILS[@]} -eq 0 ]; then echo "✓ PRE-CUTOVER SIMULYATSIYA: barcha bosqichlar o'tdi (prod bazaga yozilmadi)"; else echo "✗ MUAMMOLAR (${#FAILS[@]}):"; printf "  - %s\n" "${FAILS[@]}"; exit 1; fi

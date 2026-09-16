@@ -35,3 +35,14 @@ export function printJson(label: string, value: unknown): void {
   console.log(`## ${label}`);
   console.log(JSON.stringify(value, null, 2));
 }
+
+/** `server-only` paketi Node CLI da yo'q — bo'sh modul sifatida hal qilinadi (faqat skriptlar) */
+export function stubServerOnly(): void {
+  // eslint-disable-next-line @typescript-eslint/no-require-imports
+  const Module = require("node:module") as { _resolveFilename: (req: string, ...rest: unknown[]) => string };
+  const stub = path.resolve(__dirname, "_server-only-stub.cjs");
+  const orig = Module._resolveFilename;
+  Module._resolveFilename = function (req: string, ...rest: unknown[]) {
+    return req === "server-only" ? stub : orig.call(this, req, ...rest);
+  };
+}

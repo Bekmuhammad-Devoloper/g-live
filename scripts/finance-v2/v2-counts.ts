@@ -22,7 +22,12 @@ async function main() {
       TeacherSalary: await one(`select count(*) from TeacherSalary`), TeacherSalaryFiksaTotal: await one(`select coalesce(sum(fiksa+bonus+kpi-penalty),0) from TeacherSalary`),
       SalaryRule: await one(`select count(*) from SalaryRule`), AuditLog: await one(`select count(*) from AuditLog`),
     };
-    if (!(await has("StudentCharge"))) { out.v2 = null; console.log(JSON.stringify(out)); return; }
+    if (!(await has("StudentCharge"))) {
+      out.v2 = null;
+      if (typeof args.out === "string") writeFileSync(args.out, JSON.stringify(out, null, 2));
+      console.log(JSON.stringify(out));
+      return;
+    }
     out.v2 = {
       PaymentPosted: await one(`select count(*) from Payment where postedAt is not null`),
       PaymentPostedTotal: await one(`select coalesce(sum(amount),0) from Payment where postedAt is not null`),
@@ -60,7 +65,7 @@ async function main() {
       DupExpenseKeys: await one(`select count(*) from (select idempotencyKey from Expense where idempotencyKey is not null group by idempotencyKey having count(*)>1)`),
       // Invariantlar
       OverAllocatedPayments: await one(`select count(*) from (select p.id, p.amount, coalesce(sum(case when a.kind='ALLOCATION' then a.amount else -a.amount end),0) alloc from Payment p join PaymentAllocation a on a.paymentId=p.id group by p.id having alloc > p.amount)`),
-      OverRefundedPayments: await one(`select count(*) from (select p.id, p.amount, coalesce(sum(r.amount),0) ref from Payment p join Refund r on r.paymentId=p.id and r.status='DONE' group by p.id having ref > p.amount)`),
+      OverRefundedPayments: await one(`select count(*) from (select p.id, p.amount, coalesce(sum(r.amount),0) ref from Payment p join Refund r on r.originalPaymentId=p.id and r.status='DONE' group by p.id having ref > p.amount)`),
       OverPaidCharges: await one(`select count(*) from (select c.id, c.finalAmount, coalesce(sum(case when a.kind='ALLOCATION' then a.amount else -a.amount end),0) alloc from StudentCharge c join PaymentAllocation a on a.chargeId=c.id group by c.id having alloc > c.finalAmount)`),
       OverPaidPeriods: await one(`select count(*) from SalaryPeriod where paidAmount > grossAmount and grossAmount >= 0`),
       LedgerTransferImbalance: await one(`select coalesce(sum(case when type='TRANSFER_IN' then amount else 0 end),0) - coalesce(sum(case when type='TRANSFER_OUT' then amount else 0 end),0) from FinancialTransaction`),

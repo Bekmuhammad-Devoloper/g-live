@@ -3,7 +3,7 @@
 import { backfillBilling, backfillExpenses, backfillPayments, backfillSalary, verifyDebt } from "@/lib/finance/ops/backfill";
 import { openSqlite } from "@/lib/finance/ops/sqlite";
 import { parseYearMonthKey } from "@/lib/finance/period";
-import { fail, parseArgs, printJson, resolveDbPath } from "./_cli";
+import { fail, parseArgs, printJson, resolveDbPath, stubServerOnly } from "./_cli";
 
 async function main() {
   const args = parseArgs(process.argv.slice(2));
@@ -39,6 +39,7 @@ async function main() {
     if (stage === "verify") {
       // Legacy formula — o'sha bazadan (DATABASE_URL shu bazaga yo'naltirilgan bo'lishi kerak)
       process.env.DATABASE_URL = `file:${resolveDbPath(args)}`;
+      stubServerOnly(); // `import "server-only"` — CLI (tsx) da alias yo'q, bo'sh modulga yo'naltiriladi
       const { computeDebts } = await import("@/lib/debt");
       const ids = (await client.student.findMany({ select: { id: true } })).map((s) => s.id);
       const legacy = await computeDebts(ids);

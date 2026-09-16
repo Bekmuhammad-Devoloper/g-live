@@ -22,7 +22,8 @@ import { parseYearMonthKey, monthStart, tashkentYearMonth } from "@/lib/finance/
 import { acceptPayment, type AcceptPaymentInput } from "@/lib/finance/payments/accept";
 import { closePeriod, reopenPeriod } from "@/lib/finance/payments/periodLock";
 import { createRefund, reversePayment, type RefundInput } from "@/lib/finance/refunds/refund";
-import { ensureMonthlyCharges, createManualDebtCharge, cancelCharge, replaceCharge, adjustCharge } from "@/lib/finance/billing/charges";
+import { settleStudentCredit, syncStudentBilling } from "@/lib/finance/billing/sync";
+import { createManualDebtCharge, cancelCharge, replaceCharge, adjustCharge } from "@/lib/finance/billing/charges";
 import { createDiscount, endDiscount } from "@/lib/finance/billing/discounts";
 import { createExpense, reverseExpense, type ExpenseInput } from "@/lib/finance/expenses/expenses";
 import { createAccount, updateAccount, ACCOUNT_MAP_SETTING_KEY } from "@/lib/finance/accounts/accounts";
@@ -131,7 +132,7 @@ export async function syncBillingAction(): Promise<Ok<{ students: number; create
     const students = await prisma.student.findMany({ where: scope ? { branchId: scope.branchId } : {}, select: { id: true } });
     let created = 0;
     for (const st of students) {
-      const r = await withFinanceTx(prisma, (tx) => ensureMonthlyCharges(tx, { studentId: st.id, actorId: s.userId }));
+      const r = await withFinanceTx(prisma, (tx) => syncStudentBilling(tx, { studentId: st.id, actorId: s.userId }));
       created += r.created.length;
     }
     revalidateAll();
@@ -144,7 +145,11 @@ export async function manualDebtAction(studentId: string, amount: number, servic
     const s = await guard();
     requireFinancePermission(s, "PAYMENT_CREATE");
     await assertStudentBranch(s, studentId);
-    const c = await withFinanceTx(prisma, (tx) => createManualDebtCharge(tx, { studentId, amount, serviceMonth: parseYearMonthKey(serviceMonth), note, actorId: s.userId }));
+    const c = await withFinanceTx(prisma, async (tx) => {
+      const charge = await createManualDebtCharge(tx, { studentId, amount, serviceMonth: parseYearMonthKey(serviceMonth), note, actorId: s.userId });
+      await settleStudentCredit(tx, studentId, s.userId); // mavjud kredit yangi qarzga darhol qo'llanadi
+      return charge;
+    });
     revalidateAll();
     return ok({ chargeId: c.id });
   } catch (e) { return toFinanceResult(e); }
@@ -166,7 +171,11 @@ export async function replaceChargeAction(chargeId: string, originalAmount: numb
     const s = await guard();
     requireFinancePermission(s, "PAYMENT_CORRECT");
     await assertChargeBranch(s, chargeId);
-    const c = await withFinanceTx(prisma, (tx) => replaceCharge(tx, { chargeId, originalAmount, discountAmount, reason, actorId: s.userId }));
+    const c = await withFinanceTx(prisma, async (tx) => {
+      const charge = await replaceCharge(tx, { chargeId, originalAmount, discountAmount, reason, actorId: s.userId });
+      await settleStudentCredit(tx, charge.studentId, s.userId);
+      return charge;
+    });
     revalidateAll();
     return ok({ chargeId: c.id });
   } catch (e) { return toFinanceResult(e); }
@@ -177,7 +186,11 @@ export async function adjustChargeAction(chargeId: string, amount: number, reaso
     const s = await guard();
     requireFinancePermission(s, "PAYMENT_CORRECT");
     await assertChargeBranch(s, chargeId);
-    const c = await withFinanceTx(prisma, (tx) => adjustCharge(tx, { chargeId, amount, reason, actorId: s.userId }));
+    const c = await withFinanceTx(prisma, async (tx) => {
+      const charge = await adjustCharge(tx, { chargeId, amount, reason, actorId: s.userId });
+      await settleStudentCredit(tx, charge.studentId, s.userId);
+      return charge;
+    });
     revalidateAll();
     return ok({ chargeId: c.id });
   } catch (e) { return toFinanceResult(e); }
