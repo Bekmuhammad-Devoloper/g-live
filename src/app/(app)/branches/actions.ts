@@ -162,3 +162,55 @@ export async function forceDeleteBranch(id: string, confirmName: string): Promis
   revalidatePath("/crm");
   return { ok: true, deleted: summary };
 }
+
+/* ─── Filialsiz (eski) yozuvlarni filialga biriktirish ───────────────────
+   2026-09-17 dan filial doirasi QAT'IY: faol filialda faqat o'sha filial
+   yozuvlari ko'rinadi. Ilgari filialsiz yaratilgan xodim/o'quvchi/guruh...
+   hech qaysi filialda chiqmaydi — shu yerdan bir bosishda biriktiriladi.
+   (Market sovg'alari ataylab umumiy — ular ro'yxatga kirmaydi.)            */
+
+export interface UnassignedCounts { users: number; students: number; groups: number; rooms: number; leads: number; vacancies: number; expenses: number; total: number }
+
+export async function unassignedCounts(): Promise<UnassignedCounts> {
+  const s = await requireSession();
+  const empty: UnassignedCounts = { users: 0, students: 0, groups: 0, rooms: 0, leads: 0, vacancies: 0, expenses: 0, total: 0 };
+  if (!can(s.role)) return empty;
+
+  const w = { branchId: null } as const;
+  const [users, students, groups, rooms, leads, vacancies, expenses] = await Promise.all([
+    // O'quvchi/ota-ona hisoblari filialsiz bo'lishi normal — ular ro'yxatga kirmaydi
+    prisma.user.count({ where: { branchId: null, role: { notIn: [ROLES.STUDENT, ROLES.PARENT] } } }),
+    prisma.student.count({ where: w }),
+    prisma.group.count({ where: w }),
+    prisma.room.count({ where: w }),
+    prisma.lead.count({ where: w }),
+    prisma.vacancy.count({ where: w }),
+    prisma.expense.count({ where: w }),
+  ]);
+  const total = users + students + groups + rooms + leads + vacancies + expenses;
+  return { users, students, groups, rooms, leads, vacancies, expenses, total };
+}
+
+export async function assignUnassignedToBranch(branchId: string): Promise<{ ok?: boolean; error?: string; moved?: number }> {
+  const s = await requireSession();
+  if (!can(s.role)) return { error: tr(s.locale, { uz: "Ruxsat yo'q", ru: "Нет доступа", en: "No permission", de: "Keine Berechtigung" }) };
+
+  const branch = await prisma.branch.findFirst({ where: { id: branchId, isActive: true }, select: { id: true, name: true } });
+  if (!branch) return { error: tr(s.locale, { uz: "Filial topilmadi", ru: "Филиал не найден", en: "Branch not found", de: "Filiale nicht gefunden" }) };
+
+  const before = await unassignedCounts();
+  const data = { branchId: branch.id };
+  await prisma.$transaction([
+    prisma.user.updateMany({ where: { branchId: null, role: { notIn: [ROLES.STUDENT, ROLES.PARENT] } }, data }),
+    prisma.student.updateMany({ where: { branchId: null }, data }),
+    prisma.group.updateMany({ where: { branchId: null }, data }),
+    prisma.room.updateMany({ where: { branchId: null }, data }),
+    prisma.lead.updateMany({ where: { branchId: null }, data }),
+    prisma.vacancy.updateMany({ where: { branchId: null }, data }),
+    prisma.expense.updateMany({ where: { branchId: null }, data }),
+  ]);
+
+  await writeAudit({ actorId: s.userId, action: "UPDATE", entityType: "Branch", entityId: branch.id, newValue: { assigned: before }, reason: `Filialsiz yozuvlar biriktirildi: ${branch.name}` });
+  revalidatePath("/", "layout");
+  return { ok: true, moved: before.total };
+}

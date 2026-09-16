@@ -9,7 +9,7 @@ import { exportRows } from "@/lib/export";
 import { tr } from "@/lib/tr";
 import type { Locale } from "@/lib/constants";
 import { Icon } from "../_components/Icon";
-import { createStaff, toggleStaffActive } from "./actions";
+import { createStaff, toggleStaffActive, updateStaff, type StaffDetail } from "./actions";
 import StaffDetailModal from "./StaffDetailModal";
 
 export interface VStaff {
@@ -30,6 +30,8 @@ export default function UsersView({ staff, positions, branches, canManage, local
   const [status, setStatus] = useState("");
   const [addOpen, setAddOpen] = useState(false);
   const [detailId, setDetailId] = useState<string | null>(null);
+  // Yon paneldagi "Tahrirlash" — o'sha forma, ma'lumotlar bilan to'ldirilgan
+  const [editing, setEditing] = useState<StaffDetail | null>(null);
 
   // Filtr — jadvalda ko'rsatilgan lavozim (roleLabel) bo'yicha, RBAC roli bo'yicha emas.
   // Sabab: bir nechta lavozim (ROP, Operator, Menejer) bitta RBAC roliga (MANAGER) tushishi mumkin,
@@ -167,27 +169,51 @@ export default function UsersView({ staff, positions, branches, canManage, local
       </div>
 
       {addOpen && canManage && <StaffForm positions={positions} branches={branches} onClose={() => setAddOpen(false)} locale={locale} />}
-      {detailId && canManage && <StaffDetailModal userId={detailId} locale={locale} onClose={() => setDetailId(null)} />}
+      {editing && canManage && <StaffForm positions={positions} branches={branches} edit={editing} onClose={() => setEditing(null)} locale={locale} />}
+      {detailId && canManage && (
+        <StaffDetailModal
+          userId={detailId}
+          locale={locale}
+          onClose={() => setDetailId(null)}
+          onEdit={(d) => { setDetailId(null); setEditing(d); }}
+        />
+      )}
     </div>
   );
 }
 
-function StaffForm({ positions, branches, onClose, locale }: { positions: PosOpt[]; branches: Opt[]; onClose: () => void; locale: Locale }) {
-  // Lavozimlarni bo'lim bo'yicha guruhlash (optgroup uchun)
+// Telefon +998 prefiksi bilan saqlangan bo'lsa — maydonda faqat qolgan qismi ko'rinadi
+const localPhone = (p: string | null) => (p ?? "").replace(/^\+?998\s?/, "");
+const groupThousands = (s: string) => s.replace(/\D/g, "").replace(/\B(?=(\d{3})+(?!\d))/g, " ");
+
+function StaffForm({ positions, branches, onClose, locale, edit = null }: {
+  positions: PosOpt[]; branches: Opt[]; onClose: () => void; locale: Locale;
+  /** Berilsa — tahrirlash rejimi (maydonlar to'ldirilgan, parol maydoni yo'q) */
+  edit?: StaffDetail | null;
+}) {
+  // Lavozimlarni bo'lim bo'yicha guruhlash (optgroup uchun). Tahrirlashda xodimning
+  // hozirgi lavozimi katalogda bo'lmasa (erkin matn) — ro'yxatga qo'shib qo'yamiz.
   const posGroups = useMemo(() => {
     const map = new Map<string, PosOpt[]>();
-    for (const p of positions) {
+    const all = [...positions];
+    if (edit?.position && !all.some((p) => p.value === edit.position)) {
+      all.push({ value: edit.position, label: edit.position, department: "" });
+    }
+    for (const p of all) {
       const key = p.department || tr(locale, { uz: "Boshqa", ru: "Другое", en: "Other", de: "Sonstiges" });
       const arr = map.get(key); if (arr) arr.push(p); else map.set(key, [p]);
     }
     return Array.from(map.entries());
-  }, [positions, locale]);
+  }, [positions, locale, edit]);
   const router = useRouter();
   const [mounted, setMounted] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const [gender, setGender] = useState<"" | "MALE" | "FEMALE">("");
-  const [salaryOn, setSalaryOn] = useState(false);
-  const [salaryStr, setSalaryStr] = useState("");
+  const [gender, setGender] = useState<"" | "MALE" | "FEMALE">(edit?.gender ?? "");
+  const [salaryOn, setSalaryOn] = useState((edit?.fiksa ?? 0) > 0);
+  const [salaryStr, setSalaryStr] = useState(edit && edit.fiksa > 0 ? groupThousands(String(edit.fiksa)) : "");
+  const nameParts = (edit?.fullName ?? "").trim().split(/\s+/).filter(Boolean);
+  const editIsm = nameParts[0] ?? "";
+  const editFamiliya = nameParts.slice(1).join(" ");
   const [pending, start] = useTransition();
   const formRef = useRef<HTMLFormElement>(null);
   useEffect(() => setMounted(true), []);
@@ -208,7 +234,12 @@ function StaffForm({ positions, branches, onClose, locale }: { positions: PosOpt
     const fd = new FormData(formRef.current!);
     fd.set("gender", gender);
     fd.set("fiksa", salaryOn ? (salaryStr.replace(/\s/g, "") || "0") : "0");
-    start(async () => { const r = await createStaff(fd); if (r.ok) { onClose(); router.refresh(); } else setError(r.error ?? tr(locale, { uz: "Xatolik", ru: "Ошибка", en: "Error", de: "Fehler" })); });
+    if (edit) fd.set("id", edit.id);
+    start(async () => {
+      const r = edit ? await updateStaff(fd) : await createStaff(fd);
+      if (r.ok) { onClose(); router.refresh(); }
+      else setError(r.error ?? tr(locale, { uz: "Xatolik", ru: "Ошибка", en: "Error", de: "Fehler" }));
+    });
   };
 
   return createPortal(
@@ -216,15 +247,19 @@ function StaffForm({ positions, branches, onClose, locale }: { positions: PosOpt
       <div className="absolute inset-0 bg-slate-900/50 backdrop-blur-sm" />
       <form ref={formRef} onMouseDown={(e) => e.stopPropagation()} className="animate-slide-in-right absolute right-0 top-0 flex h-full w-[560px] max-w-[95%] flex-col border-l border-slate-200 bg-white shadow-pop dark:border-white/10 dark:bg-[#15243d]">
         <div className="flex shrink-0 items-center justify-between border-b border-slate-100 px-5 py-4 dark:border-white/10">
-          <h3 className="text-base font-bold text-slate-800 dark:text-slate-100">{tr(locale, { uz: "Xodim qo'shish", ru: "Добавить сотрудника", en: "Add staff", de: "Mitarbeiter hinzufügen" })}</h3>
+          <h3 className="text-base font-bold text-slate-800 dark:text-slate-100">
+            {edit
+              ? tr(locale, { uz: "Xodimni tahrirlash", ru: "Редактировать сотрудника", en: "Edit staff member", de: "Mitarbeiter bearbeiten" })
+              : tr(locale, { uz: "Xodim qo'shish", ru: "Добавить сотрудника", en: "Add staff", de: "Mitarbeiter hinzufügen" })}
+          </h3>
           <button type="button" onClick={onClose} className="flex h-8 w-8 items-center justify-center rounded-lg text-lg text-slate-400 hover:bg-slate-100 dark:hover:bg-white/10">✕</button>
         </div>
 
         <div className="flex-1 space-y-3.5 overflow-y-auto px-5 py-4">
           {/* Ism / Familiya */}
           <div className="grid grid-cols-2 gap-3">
-            <div><label className={lbl}>{tr(locale, { uz: "Ism", ru: "Имя", en: "First name", de: "Vorname" })} {req}</label><input name="ism" required placeholder={tr(locale, { uz: "Ism", ru: "Имя", en: "First name", de: "Vorname" })} className={inp} /></div>
-            <div><label className={lbl}>{tr(locale, { uz: "Familiya", ru: "Фамилия", en: "Last name", de: "Nachname" })}</label><input name="familiya" placeholder={tr(locale, { uz: "Familiya", ru: "Фамилия", en: "Last name", de: "Nachname" })} className={inp} /></div>
+            <div><label className={lbl}>{tr(locale, { uz: "Ism", ru: "Имя", en: "First name", de: "Vorname" })} {req}</label><input name="ism" required defaultValue={editIsm} placeholder={tr(locale, { uz: "Ism", ru: "Имя", en: "First name", de: "Vorname" })} className={inp} /></div>
+            <div><label className={lbl}>{tr(locale, { uz: "Familiya", ru: "Фамилия", en: "Last name", de: "Nachname" })}</label><input name="familiya" defaultValue={editFamiliya} placeholder={tr(locale, { uz: "Familiya", ru: "Фамилия", en: "Last name", de: "Nachname" })} className={inp} /></div>
           </div>
           {/* Telefon */}
           <div>
@@ -248,14 +283,14 @@ function StaffForm({ positions, branches, onClose, locale }: { positions: PosOpt
                 </svg>
                 +998
               </span>
-              <input name="phone" placeholder="90 000 00 00" className={cn(inp, "rounded-l-none")} />
+              <input name="phone" defaultValue={localPhone(edit?.phone ?? null)} placeholder="90 000 00 00" className={cn(inp, "rounded-l-none")} />
             </div>
           </div>
           {/* Vazifasi / Jinsi */}
           <div className="grid grid-cols-2 gap-3">
             <div>
               <label className={lbl}>{tr(locale, { uz: "O'quv markazidagi vazifasi", ru: "Должность в учебном центре", en: "Role at the learning center", de: "Rolle im Lernzentrum" })} {req}</label>
-              <select name="position" required defaultValue="" className={inp}>
+              <select name="position" required defaultValue={edit?.position ?? ""} className={inp}>
                 <option value="" disabled>{tr(locale, { uz: "Tanlang", ru: "Выберите", en: "Select", de: "Auswählen" })}</option>
                 {posGroups.map(([dept, items]) => (
                   <optgroup key={dept} label={dept}>
@@ -273,8 +308,8 @@ function StaffForm({ positions, branches, onClose, locale }: { positions: PosOpt
           </div>
           {/* Tug'ilgan sana / Filial */}
           <div className="grid grid-cols-2 gap-3">
-            <div><label className={lbl}>{tr(locale, { uz: "Tug'ilgan sanasi", ru: "Дата рождения", en: "Date of birth", de: "Geburtsdatum" })}</label><input name="birthDate" type="date" className={inp} /></div>
-            <div><label className={lbl}>{tr(locale, { uz: "Filial", ru: "Филиал", en: "Branch", de: "Filiale" })}</label><select name="branchId" defaultValue="" className={inp}><option value="">{tr(locale, { uz: "Tanlang", ru: "Выберите", en: "Select", de: "Auswählen" })}</option>{branches.map((b) => <option key={b.id} value={b.id}>{b.name}</option>)}</select></div>
+            <div><label className={lbl}>{tr(locale, { uz: "Tug'ilgan sanasi", ru: "Дата рождения", en: "Date of birth", de: "Geburtsdatum" })}</label><input name="birthDate" type="date" defaultValue={edit?.birthDateIso ?? ""} className={inp} /></div>
+            <div><label className={lbl}>{tr(locale, { uz: "Filial", ru: "Филиал", en: "Branch", de: "Filiale" })}</label><select name="branchId" defaultValue={edit?.branchId ?? ""} className={inp}><option value="">{tr(locale, { uz: "Tanlang", ru: "Выберите", en: "Select", de: "Auswählen" })}</option>{branches.map((b) => <option key={b.id} value={b.id}>{b.name}</option>)}</select></div>
           </div>
 
           {/* Ish haqi chiqarish */}
@@ -288,10 +323,12 @@ function StaffForm({ positions, branches, onClose, locale }: { positions: PosOpt
             )}
           </div>
 
-          {/* Email / Parol */}
+          {/* Email / Parol — tahrirlashda parol yon panelning o'zida o'rnatiladi */}
           <div className="grid grid-cols-2 gap-3">
-            <div><label className={lbl}>{tr(locale, { uz: "Elektron pochta", ru: "Электронная почта", en: "Email", de: "E-Mail" })} {req}</label><input name="email" type="email" required placeholder="example@gmail.com" className={inp} /></div>
-            <div><label className={lbl}>{tr(locale, { uz: "Parol (login uchun)", ru: "Пароль (для входа)", en: "Password (for login)", de: "Passwort (für Anmeldung)" })} {req}</label><input name="password" type="text" required placeholder={tr(locale, { uz: "Kamida 4 ta belgi", ru: "Минимум 4 символа", en: "At least 4 characters", de: "Mindestens 4 Zeichen" })} className={inp} /></div>
+            <div><label className={lbl}>{tr(locale, { uz: "Elektron pochta", ru: "Электронная почта", en: "Email", de: "E-Mail" })} {req}</label><input name="email" type="email" required defaultValue={edit?.email ?? ""} placeholder="example@gmail.com" className={inp} /></div>
+            {!edit && (
+              <div><label className={lbl}>{tr(locale, { uz: "Parol (login uchun)", ru: "Пароль (для входа)", en: "Password (for login)", de: "Passwort (für Anmeldung)" })} {req}</label><input name="password" type="text" required placeholder={tr(locale, { uz: "Kamida 4 ta belgi", ru: "Минимум 4 символа", en: "At least 4 characters", de: "Mindestens 4 Zeichen" })} className={inp} /></div>
+            )}
           </div>
 
           {error && <p className="rounded-lg bg-rose-50 px-3 py-2 text-sm text-rose-700 dark:bg-rose-500/10 dark:text-rose-400">{error}</p>}

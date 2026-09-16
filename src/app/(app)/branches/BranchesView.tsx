@@ -9,7 +9,7 @@ import { tr } from "@/lib/tr";
 import type { Locale } from "@/lib/constants";
 import { Icon } from "../_components/Icon";
 import MapPicker from "./MapPicker";
-import { saveBranch, deleteBranch, setBranchActive, forceDeleteBranch, branchPurgeSummary, type PurgeSummary } from "./actions";
+import { saveBranch, deleteBranch, setBranchActive, forceDeleteBranch, branchPurgeSummary, unassignedCounts, assignUnassignedToBranch, type PurgeSummary, type UnassignedCounts } from "./actions";
 
 export interface VBranch { id: string; name: string; address: string; phone: string; lat: number | null; lng: number | null; radius: number; imageUrl: string | null; staff: number; groups: number; isActive: boolean }
 
@@ -86,6 +86,9 @@ export default function BranchesView({ branches, canManage, canPurge = false, lo
         </button>
       </div>
 
+      {/* Filialsiz eski yozuvlar — qat'iy filial doirasida ular hech qaysi filialda ko'rinmaydi */}
+      {canManage && <UnassignedCard branches={branches} locale={locale} />}
+
       <div className={cn("overflow-hidden rounded-2xl border border-slate-200/70 bg-white shadow-card dark:border-slate-800 dark:bg-slate-900", pending && "opacity-70")}>
         <div className="flex items-center justify-end border-b border-slate-100 px-4 py-2 dark:border-slate-800">
           <span className="rounded-lg bg-slate-100 px-2.5 py-1 text-xs font-semibold text-slate-500 dark:bg-slate-800 dark:text-slate-300">{tr(locale, { uz: "Umumiy soni", ru: "Всего", en: "Total", de: "Gesamtzahl" })}: {filtered.length}</span>
@@ -140,6 +143,84 @@ export default function BranchesView({ branches, canManage, canPurge = false, lo
 
       {open && canManage && <BranchForm editing={editing} locale={locale} onClose={() => setOpen(false)} onSaved={() => { setOpen(false); router.refresh(); }} />}
       {purge && <PurgeModal branch={purge} locale={locale} onClose={() => setPurge(null)} onDone={() => { setPurge(null); router.refresh(); }} />}
+    </div>
+  );
+}
+
+/**
+ * Filialsiz (eski) yozuvlar kartasi: nechta xodim/o'quvchi/guruh... filialga
+ * biriktirilmagan va ularni bir bosishda tanlangan filialga biriktirish.
+ * Qat'iy filial doirasida bunday yozuvlar hech qaysi filialda ko'rinmaydi.
+ */
+function UnassignedCard({ branches, locale }: { branches: VBranch[]; locale: Locale }) {
+  const router = useRouter();
+  const [counts, setCounts] = useState<UnassignedCounts | null>(null);
+  const [target, setTarget] = useState("");
+  const [pending, start] = useTransition();
+  const L = (uz: string, ru: string, en: string, de: string) => tr(locale, { uz, ru, en, de });
+
+  useEffect(() => { unassignedCounts().then(setCounts); }, []);
+  if (!counts || counts.total === 0) return null;
+
+  const rows: [string, number][] = [
+    [L("xodim", "сотрудников", "staff", "Mitarbeiter"), counts.users],
+    [L("o'quvchi", "учеников", "students", "Schüler"), counts.students],
+    [L("guruh", "групп", "groups", "Gruppen"), counts.groups],
+    [L("xona", "аудиторий", "rooms", "Räume"), counts.rooms],
+    [L("lid", "лидов", "leads", "Leads"), counts.leads],
+    [L("vakansiya", "вакансий", "vacancies", "Stellen"), counts.vacancies],
+    [L("xarajat", "расходов", "expenses", "Ausgaben"), counts.expenses],
+  ];
+
+  const run = () => {
+    const b = branches.find((x) => x.id === target);
+    if (!b) return;
+    if (!confirm(L(
+      `${counts.total} ta filialsiz yozuv "${b.name}" filialiga biriktiriladi. Davom etasizmi?`,
+      `${counts.total} записей без филиала будут привязаны к «${b.name}». Продолжить?`,
+      `${counts.total} records without a branch will be assigned to "${b.name}". Continue?`,
+      `${counts.total} Datensätze ohne Filiale werden "${b.name}" zugeordnet. Fortfahren?`,
+    ))) return;
+    start(async () => {
+      const r = await assignUnassignedToBranch(target);
+      if (r.error) alert(r.error);
+      setCounts(await unassignedCounts());
+      router.refresh();
+    });
+  };
+
+  return (
+    <div className="rounded-2xl border border-amber-200 bg-amber-50 p-4 dark:border-amber-500/30 dark:bg-amber-500/10">
+      <div className="flex items-start gap-3">
+        <span className="grid h-9 w-9 shrink-0 place-items-center rounded-xl bg-amber-500/20 text-amber-700 dark:text-amber-300"><Icon name="alert" className="h-5 w-5" /></span>
+        <div className="min-w-0 flex-1">
+          <h3 className="text-sm font-bold text-amber-800 dark:text-amber-200">
+            {L("Filialga biriktirilmagan yozuvlar", "Записи без филиала", "Records without a branch", "Datensätze ohne Filiale")} — {counts.total}
+          </h3>
+          <p className="mt-0.5 text-xs text-amber-700/90 dark:text-amber-300/80">
+            {L(
+              "Filial tanlanganda faqat o'sha filial yozuvlari ko'rinadi, shuning uchun bular hech qaysi filialda chiqmaydi. Ularni ko'rish uchun yuqoridan \"Barcha filiallar\" ni tanlang yoki quyida biriktiring.",
+              "При выбранном филиале показываются только его записи, поэтому эти нигде не видны. Выберите сверху «Все филиалы» или привяжите их ниже.",
+              "With a branch selected only that branch's records are shown, so these appear nowhere. Pick \"All branches\" above or assign them below.",
+              "Bei ausgewählter Filiale werden nur deren Datensätze gezeigt, diese erscheinen also nirgends. Oben \"Alle Filialen\" wählen oder unten zuordnen.",
+            )}
+          </p>
+          <div className="mt-2 flex flex-wrap gap-1.5">
+            {rows.filter(([, n]) => n > 0).map(([label, n]) => (
+              <span key={label} className="rounded-md bg-white/70 px-2 py-0.5 text-[11px] font-semibold text-amber-800 dark:bg-white/10 dark:text-amber-200">{n} {label}</span>
+            ))}
+          </div>
+          <div className="mt-3 flex flex-wrap items-center gap-2">
+            <select value={target} onChange={(e) => setTarget(e.target.value)} className="h-9 rounded-lg border border-amber-300 bg-white px-2.5 text-sm text-slate-700 outline-none dark:border-amber-500/40 dark:bg-slate-800 dark:text-slate-200">
+              <option value="">{L("— filialni tanlang —", "— выберите филиал —", "— select a branch —", "— Filiale wählen —")}</option>
+              {branches.filter((b) => b.isActive).map((b) => <option key={b.id} value={b.id}>{b.name}</option>)}
+            </select>
+            <button onClick={run} disabled={!target || pending} className="h-9 rounded-lg bg-amber-600 px-3.5 text-sm font-semibold text-white transition hover:bg-amber-700 disabled:opacity-50">
+              {pending ? "..." : L("Biriktirish", "Привязать", "Assign", "Zuordnen")}
+            </button>
+          </div>
+        </div>
+      </div>
     </div>
   );
 }

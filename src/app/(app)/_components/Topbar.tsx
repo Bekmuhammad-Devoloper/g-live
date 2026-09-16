@@ -125,6 +125,20 @@ export default function Topbar(p: TopbarProps) {
               <div className="px-3 py-1.5 text-[10px] font-semibold uppercase tracking-wider text-slate-400">
                 {t("top.branches")}
               </div>
+              {/* Barcha filiallar — faqat rahbariyatda; filialsiz eski yozuvlar shu rejimda ko'rinadi */}
+              {p.canSwitchBranch && (
+                <button
+                  disabled={pending}
+                  onClick={() => start(async () => { await setBranch(""); close(); router.refresh(); })}
+                  className={cn(
+                    "flex w-full items-center justify-between border-b border-slate-100 px-3 py-2 text-left text-sm transition dark:border-slate-800",
+                    p.currentBranchId === null ? "bg-brand-50 font-medium text-brand-700" : "text-slate-600 hover:bg-slate-50",
+                  )}
+                >
+                  <span className="truncate">{tr(p.locale, { uz: "Barcha filiallar", ru: "Все филиалы", en: "All branches", de: "Alle Filialen" })}</span>
+                  {p.currentBranchId === null && <span className="text-brand-600">✓</span>}
+                </button>
+              )}
               {p.branches.map((b) => (
                 <button
                   key={b.id}

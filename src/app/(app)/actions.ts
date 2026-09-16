@@ -30,18 +30,24 @@ export async function setBranch(branchId: string): Promise<void> {
   const canSwitch = [ROLES.DIRECTOR, ROLES.DEPUTY_DIRECTOR, ROLES.ADMIN].includes(s.role as never);
   if (!canSwitch) return;
 
-  const branch = await prisma.branch.findUnique({ where: { id: branchId } });
-  if (!branch || !branch.isActive) return;
+  // Bo'sh qiymat — "Barcha filiallar" (faqat direktor/o'rinbosar): filial doirasi
+  // olib tashlanadi, filialsiz eski yozuvlar ham ko'rinadi va tuzatish mumkin
+  const all = !branchId;
+  if (all && !([ROLES.DIRECTOR, ROLES.DEPUTY_DIRECTOR] as string[]).includes(s.role)) return;
 
-  await prisma.user.update({ where: { id: s.userId }, data: { branchId } });
-  await createSession({ ...s, branchId });
+  const branch = all ? null : await prisma.branch.findUnique({ where: { id: branchId } });
+  if (!all && (!branch || !branch.isActive)) return;
+
+  const next = all ? null : branchId;
+  await prisma.user.update({ where: { id: s.userId }, data: { branchId: next } });
+  await createSession({ ...s, branchId: next });
   await writeAudit({
     actorId: s.userId,
     action: "UPDATE",
     entityType: "User",
     entityId: s.userId,
-    newValue: { branchId },
-    reason: "Faol filial almashtirildi",
+    newValue: { branchId: next },
+    reason: all ? "Barcha filiallar rejimi" : "Faol filial almashtirildi",
   });
   revalidatePath("/", "layout");
 }
