@@ -5,6 +5,9 @@ import LessonCalendar, { type CalLesson } from "./LessonCalendar";
 import { groupColor } from "../groups/groupColor";
 import { type Locale } from "@/lib/constants";
 import { StatCard, HubCard } from "../_components/ui";
+import { tr } from "@/lib/tr";
+import { Icon } from "../_components/Icon";
+import BranchSlotsEditor from "../branches/slots/BranchSlotsEditor";
 
 const T: Record<Locale, Record<string, string>> = {
   uz: {
@@ -52,6 +55,11 @@ export default async function AdminDashboard({ locale }: { locale: Locale }) {
   const now = new Date();
   const weekStart = new Date(now.getFullYear(), now.getMonth(), now.getDate() - now.getDay(), 0, 0, 0);
   const weekEnd = new Date(weekStart.getTime() + 7 * 86400000);
+
+  // O'z filialidagi bo'sh xona/vaqtlar — ROP lidlar kanbanida filial ustunida ko'radi
+  const myBranch = s.branchId
+    ? await prisma.branch.findUnique({ where: { id: s.branchId }, select: { id: true, name: true, slots: { select: { id: true, branchId: true, room: true, days: true, startTime: true, endTime: true, note: true }, orderBy: [{ room: "asc" }, { startTime: "asc" }] } } })
+    : null;
 
   const [users, activeUsers, branches, auditCount, weekLessons, teacherRows, groupRows, programRows] = await Promise.all([
     prisma.user.findMany({ where: branchWhere(s), select: { role: true } }),
@@ -107,6 +115,26 @@ export default async function AdminDashboard({ locale }: { locale: Locale }) {
           <HubCard href="/control" icon="eye" title={t.control} desc={t.controlD} />
         </div>
       </div>
+
+      {/* Bo'sh xona / vaqt — filial administratori kiritadi, ROP lidlarni shu yerga yo'naltiradi */}
+      {myBranch && (
+        <div className="rounded-2xl border border-emerald-200 bg-white p-4 shadow-card dark:border-emerald-500/20 dark:bg-[#15243d]">
+          <div className="mb-1 flex items-center gap-2">
+            <span className="flex h-8 w-8 items-center justify-center rounded-lg bg-emerald-500/15 text-emerald-600"><Icon name="clock" className="h-4 w-4" /></span>
+            <div>
+              <h3 className="text-sm font-semibold text-slate-800 dark:text-slate-100">
+                {tr(locale, { uz: "Bo'sh xona / bo'sh vaqt", ru: "Свободные аудитории / время", en: "Free rooms / free time", de: "Freie Räume / freie Zeit" })} — {myBranch.name}
+              </h3>
+              <p className="text-xs text-slate-400">
+                {tr(locale, { uz: "Yangi guruh ochish mumkin bo'lgan xona va vaqtlarni kiriting — ROP lidlarni shu yerga yo'naltiradi", ru: "Укажите аудитории и время для новых групп — РОП направит сюда лидов", en: "Enter rooms and times available for new groups — the sales head directs leads here", de: "Räume und Zeiten für neue Gruppen eintragen — der Vertriebsleiter leitet Leads hierher" })}
+              </p>
+            </div>
+          </div>
+          <div className="mt-3 max-w-xl">
+            <BranchSlotsEditor branchId={myBranch.id} initial={myBranch.slots} canEdit locale={locale} />
+          </div>
+        </div>
+      )}
 
       {/* Dars jadvali — qatorlar GURUHLAR bo'yicha (xona/o'qituvchiga ham almashtirsa bo'ladi) */}
       <LessonCalendar

@@ -12,7 +12,7 @@ import { financeAfterStudentChange } from "@/lib/finance/hooks";
 import { ROLES, LEAD_STAGES, isSalesRole } from "@/lib/constants";
 import { parseUzPhone } from "@/lib/phone";
 import { getSetting, setSetting } from "@/lib/settings";
-import { GROUP_COL_COLORS, GROUP_COL_ICONS, type CustomColumn, type GroupColumn } from "./_lib/leadColumns";
+import { GROUP_COL_COLORS, GROUP_COL_ICONS, branchColKey, type CustomColumn, type GroupColumn } from "./_lib/leadColumns";
 
 const schema = z.object({
   fullName: z.string().min(2),
@@ -388,7 +388,7 @@ export type BulkResult = { ok: boolean; error?: string; count?: number };
 
 export async function bulkLeadAction(
   leadIds: string[],
-  action: "assign_manager" | "set_stage" | "add_note" | "delete",
+  action: "assign_manager" | "set_stage" | "add_note" | "delete" | "reset_new",
   payload?: { managerId?: string; stage?: string; note?: string }
 ): Promise<BulkResult> {
   const s = await requireSession();
@@ -416,6 +416,17 @@ export async function bulkLeadAction(
       if (!payload?.note) return { ok: false, error: "invalid" };
       await prisma.leadActivity.createMany({ data: leadIds.map((id) => ({ leadId: id, authorId: s.userId, type: "note", result: payload!.note! })) });
       break;
+    case "reset_new": {
+      // Ustunni bo'shatish — lidlar "Yangi"ga qaytadi (direktor / o'rinbosar / ROP).
+      // Guruh biriktiruvi va ustun belgisi tozalanadi; yaratilgan o'quvchi yozuvi (studentId) qoladi.
+      if (![ROLES.DIRECTOR, ROLES.DEPUTY_DIRECTOR, ROLES.ROP].includes(s.role as never)) return { ok: false, error: "forbidden" };
+      await prisma.$transaction([
+        prisma.lead.updateMany({ where: { id: { in: leadIds } }, data: { stage: "NEW", kanbanColumnId: null, groupId: null, enrollEditCount: 0 } }),
+        prisma.leadActivity.createMany({ data: leadIds.map((id) => ({ leadId: id, authorId: s.userId, type: "stage_change", result: "Yangiga qaytarildi (ustun bo'shatildi)" })) }),
+      ]);
+      await writeAudit({ actorId: s.userId, action: "UPDATE", entityType: "Lead", newValue: { count: leadIds.length, stage: "NEW" }, reason: "Ustun bo'shatildi — lidlar Yangiga qaytarildi" });
+      break;
+    }
     case "delete": {
       // Direktor / o'rinbosari / admin — "Daraja testi" (TEST) va yo'qotilgan
       // (LOST) lidlarni; qolganlar faqat yo'qotilganlarni. Ishdagi lidlar
@@ -469,12 +480,16 @@ export async function setLeadManager(leadId: string, managerId: string | null): 
 export async function updateLeadField(leadId: string, field: string, value: string): Promise<void> {
   const s = await requireSession();
   if (!canWrite(s.role, MODULES.CRM)) return;
-  const allowed = ["fullName", "phone", "email", "interestCourse", "note", "source", "budget", "age", "level"];
+  const allowed = ["fullName", "phone", "email", "interestCourse", "note", "source", "budget", "age", "level", "telegram", "studyFormat"];
   if (!allowed.includes(field)) return;
   if (field === "fullName" && (!value || value.trim().length < 2)) return;
+  // Ta'lim shakli — faqat ONLINE/OFFLINE (yoki bo'sh); telegram — "@" bilan saqlanadi
+  if (field === "studyFormat" && value && !["ONLINE", "OFFLINE"].includes(value.trim().toUpperCase())) return;
   const data: Record<string, unknown> =
     field === "budget" ? { budget: value ? Number(value) : null }
     : field === "age" ? { age: value ? Math.max(3, Math.min(99, Number(value) || 0)) || null : null }
+    : field === "studyFormat" ? { studyFormat: value ? value.trim().toUpperCase() : null }
+    : field === "telegram" ? { telegram: value.trim() ? "@" + value.trim().replace(/^@+/, "") : null }
     : { [field]: value || null };
   await prisma.lead.update({ where: { id: leadId }, data });
   await writeAudit({ actorId: s.userId, action: "UPDATE", entityType: "Lead", entityId: leadId, newValue: { [field]: value }, reason: "Maydon tahrirlandi" });
@@ -762,4 +777,60 @@ export async function getLevelTestQr(): Promise<LevelTestQr> {
   } catch {
     return { url, modules: "", size: 0, error: "qr_failed" };
   }
+}
+
+/* ─── Lidni filial ustuniga tashlash (ROP kanbani) ───────────────────
+   Lid shu filialga yo'naltiriladi. Hali ishlov boshida bo'lsa (NEW/IN_PROGRESS/
+   CONTACTED) bosqichi "Taklif"ga (OFFER) o'tadi — filialga borish taklif
+   qilingan; test/taklif bosqichida bo'lsa bosqich o'zgarmaydi, faqat filial.  */
+export async function dropLeadToBranch(leadId: string, branchId: string): Promise<{ ok?: boolean; error?: string }> {
+  const s = await requireSession();
+  if (!canWrite(s.role, MODULES.CRM)) return { error: "forbidden" };
+
+  const [lead, branch] = await Promise.all([
+    prisma.lead.findUnique({ where: { id: leadId }, select: { id: true, stage: true, branchId: true } }),
+    prisma.branch.findFirst({ where: { id: branchId, isActive: true }, select: { id: true, name: true } }),
+  ]);
+  if (!lead || !branch) return { error: "notfound" };
+
+  // Testdan kelgan (TEST) lid ham — filialga tashlangach "Taklif"ga o'tadi (sotuv rejimida u "Yangi"da turardi)
+  const early = ["NEW", "IN_PROGRESS", "CONTACTED", "TEST"].includes(lead.stage);
+  await prisma.lead.update({
+    where: { id: leadId },
+    data: {
+      branchId: branch.id,
+      ...(early ? { stage: "OFFER" } : {}),
+      // Filial ustuni belgisi — faqat shu belgi bo'lgan lid filial ustunida ko'rinadi
+      kanbanColumnId: branchColKey(branch.id),
+      activities: { create: { authorId: s.userId, type: early ? "stage_change" : "note", result: `Filialga yo'naltirildi: ${branch.name}${early ? " (Taklif)" : ""}` } },
+    },
+  });
+  await writeAudit({ actorId: s.userId, action: "UPDATE", entityType: "Lead", entityId: leadId, oldValue: { branchId: lead.branchId, stage: lead.stage }, newValue: { branchId: branch.id, ...(early ? { stage: "OFFER" } : {}) }, reason: `Filialga yo'naltirildi: ${branch.name}` });
+
+  revalidatePath("/crm");
+  return { ok: true };
+}
+
+/* ─── "Onlayn" ustuni (filial rejimi) ───────────────────────────────
+   Ustunga tashlansa — lid onlayn o'qimoqchi deb belgilanadi (studyFormat=ONLINE),
+   bosqichi Yangi, filial/ustun belgisi tozalanadi. "Yangi"ga qaytarilsa —
+   onlayn belgisi olib tashlanadi (aks holda u yana Onlayn ustunida chiqadi).  */
+export async function setLeadOnline(leadId: string, online: boolean): Promise<{ ok?: boolean; error?: string }> {
+  const s = await requireSession();
+  if (!canWrite(s.role, MODULES.CRM)) return { error: "forbidden" };
+  const lead = await prisma.lead.findUnique({ where: { id: leadId }, select: { id: true, stage: true, studyFormat: true } });
+  if (!lead) return { error: "notfound" };
+
+  await prisma.lead.update({
+    where: { id: leadId },
+    data: {
+      studyFormat: online ? "ONLINE" : null,
+      stage: "NEW",
+      kanbanColumnId: null,
+      activities: { create: { authorId: s.userId, type: "note", result: online ? "Onlayn ustuniga o'tkazildi" : "Onlayn belgisi olib tashlandi — Yangi" } },
+    },
+  });
+  await writeAudit({ actorId: s.userId, action: "UPDATE", entityType: "Lead", entityId: leadId, oldValue: { studyFormat: lead.studyFormat, stage: lead.stage }, newValue: { studyFormat: online ? "ONLINE" : null, stage: "NEW" } });
+  revalidatePath("/crm");
+  return { ok: true };
 }

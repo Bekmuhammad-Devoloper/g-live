@@ -6,6 +6,10 @@ export interface VLead {
   fullName: string;
   phone: string;
   email: string | null;
+  /** Telegram username (@user) — onlayn arizadan */
+  telegram: string | null;
+  /** Ta'lim shakli: ONLINE | OFFLINE — arizadan */
+  studyFormat: string | null;
   source: string | null;
   stage: string;
   interestCourse: string | null;
@@ -16,6 +20,9 @@ export interface VLead {
   managerId: string | null;
   managerName: string | null;
   studentId: string | null;
+  /** Filial (ROP kanbanida filial ustuni shu bo'yicha) */
+  branchId: string | null;
+  branchName: string | null;
   /** Yo'naltirilgan guruh (WON uchun majburiy) */
   groupId: string | null;
   groupName: string | null;
@@ -128,20 +135,67 @@ export function customIdOfCol(key: string): string {
 
 const EMPTY = new Set<string>();
 
+/* ─── Filial ustunlari (ROP kanbani) ─────────────────────────────────
+   Filiallar ustun bo'lib turadi (Qibray, Oybek ...). Filial ustunida FAQAT
+   ROP/admin qo'li bilan shu ustunga tashlagan lidlar ko'rinadi — belgi
+   Lead.kanbanColumnId = "br:<filialId>" (bosqichdan mustaqil; boshqa ustunga
+   ko'chirilsa tozalanadi). Qolgan lidlar o'z bosqichi ustunida. Ustun tepasida
+   filial administratori kiritgan bo'sh xona/vaqtlar turadi.                */
+
+export interface BranchSlotView { id: string; branchId: string; room: string; days: string; startTime: string; endTime: string; note: string | null }
+export interface BranchColumn { branchId: string; name: string; color: string; slots: BranchSlotView[] }
+
+export const BRANCH_COL_PREFIX = "br:";
+export const branchColKey = (branchId: string) => BRANCH_COL_PREFIX + branchId;
+export const isBranchCol = (key: string) => key.startsWith(BRANCH_COL_PREFIX);
+export const branchIdOfCol = (key: string) => key.slice(BRANCH_COL_PREFIX.length);
+
+/**
+ * Filial rejimi (kim ko'rayotganiga qarab):
+ *   "sales" — ROP va filial administratori: "Daraja testi" va "Taklif" ustunlari yo'q —
+ *             o'sha bosqichdagi (filialga tashlanmagan) lidlar "Yangi"da turadi;
+ *             filial ustunida faqat qo'lda tashlanganlar.
+ *   "head"  — direktor / o'rinbosar: HAMMA ustunlar — Yangi, Ishda, Daraja testi,
+ *             Taklif, filiallar, Qabul qilindi, Yo'qotilgan.
+ */
+export type BranchMode = "sales" | "head";
+export interface BranchModeCfg { ids: Set<string>; mode: BranchMode }
+
+/** "Onlayn" ustuni — arizada onlayn tanlagan (studyFormat=ONLINE) yangi lidlar; filiallardan oldin turadi */
+export const ONLINE_COL = "online";
+
+/** Rejimda ko'rsatilmaydigan standart ustunlar (filtr chiplarida ham yashiriladi) */
+export function branchReplaces(mode: BranchMode): Set<string> {
+  return mode === "sales" ? new Set(["test", "offer"]) : new Set();
+}
+
 /**
  * Lid qaysi ustunda ko'rinadi:
  *   1) oddiy nomli ustunga qo'yilgan bo'lsa (va ustun hali bor) — o'sha ustunda;
  *   2) qabul qilingan lidning guruhi Kanbanga biriktirilgan bo'lsa — guruh ustunida;
- *   3) aks holda bosqichiga mos standart ustunda.
+ *   3) filial rejimida (ROP) test/taklif bosqichidagi lid — o'z filialining ustunida;
+ *   4) aks holda bosqichiga mos standart ustunda.
  */
 export function columnOfLead(
-  lead: { stage: string; groupId: string | null; kanbanColumnId?: string | null },
+  lead: { stage: string; groupId: string | null; kanbanColumnId?: string | null; branchId?: string | null; studyFormat?: string | null },
   pinned: Set<string>,
   custom: Set<string> = EMPTY,
+  branch: BranchModeCfg | null = null,
 ): string {
+  // Qo'lda filial ustuniga tashlangan — belgi "br:<id>" (filial rejimi bo'lsa va filial hali bor)
+  if (branch && lead.kanbanColumnId && isBranchCol(lead.kanbanColumnId) && branch.ids.has(branchIdOfCol(lead.kanbanColumnId))) {
+    return lead.kanbanColumnId;
+  }
   if (lead.kanbanColumnId && custom.has(lead.kanbanColumnId)) return customColKey(lead.kanbanColumnId);
   const base = columnOf(lead.stage);
   if (base === "won" && lead.groupId && pinned.has(lead.groupId)) return groupColKey(lead.groupId);
+  if (branch) {
+    // Sotuv rejimida test/taklif ustunlari yo'q — o'sha bosqichdagilar "Yangi" hisoblanadi
+    const eff = branch.mode === "sales" && (base === "test" || base === "offer") ? "new" : base;
+    // Onlayn tanlaganlar Yangiga emas — alohida "Onlayn" ustuniga
+    if (eff === "new" && lead.studyFormat === "ONLINE") return ONLINE_COL;
+    return eff;
+  }
   return base;
 }
 

@@ -41,6 +41,8 @@ export default async function LeadDetailPage({ params }: { params: Promise<{ id:
     fullName: lead.fullName,
     phone: lead.phone,
     email: lead.email,
+    telegram: lead.telegram,
+    studyFormat: lead.studyFormat,
     source: lead.source,
     stage: lead.stage,
     interestCourse: lead.interestCourse,

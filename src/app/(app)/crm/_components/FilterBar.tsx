@@ -20,6 +20,8 @@ interface Props {
   onManager: (v: string) => void;
   activeCols: Set<string>;
   onToggleCol: (key: string) => void;
+  /** Ko'rsatilmaydigan bosqich chiplari (ROP filial rejimida test/taklif) */
+  hiddenCols?: Set<string>;
   counts: Record<string, number>;
   hasFilters: boolean;
   onClear: () => void;
@@ -70,7 +72,7 @@ export default function FilterBar(p: Props) {
 
       {/* Bosqich chiplari */}
       <div className="flex flex-wrap gap-2">
-        {COLUMNS.map((c) => {
+        {COLUMNS.filter((c) => !p.hiddenCols?.has(c.key)).map((c) => {
           const active = p.activeCols.has(c.key);
           return (
             <button

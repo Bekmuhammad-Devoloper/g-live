@@ -9,28 +9,41 @@ import { tr } from "@/lib/tr";
 import type { Locale } from "@/lib/constants";
 import { Icon } from "../_components/Icon";
 import MapPicker from "./MapPicker";
-import { saveBranch, deleteBranch } from "./actions";
+import { saveBranch, deleteBranch, setBranchActive, forceDeleteBranch, branchPurgeSummary, type PurgeSummary } from "./actions";
 
-export interface VBranch { id: string; name: string; address: string; phone: string; lat: number | null; lng: number | null; radius: number; imageUrl: string | null; staff: number; groups: number }
+export interface VBranch { id: string; name: string; address: string; phone: string; lat: number | null; lng: number | null; radius: number; imageUrl: string | null; staff: number; groups: number; isActive: boolean }
 
-export default function BranchesView({ branches, canManage, locale }: { branches: VBranch[]; canManage: boolean; locale: Locale }) {
+export default function BranchesView({ branches, canManage, canPurge = false, locale }: { branches: VBranch[]; canManage: boolean; canPurge?: boolean; locale: Locale }) {
   const router = useRouter();
   const [pending, start] = useTransition();
   const [editing, setEditing] = useState<VBranch | null>(null);
   const [open, setOpen] = useState(false);
   const [search, setSearch] = useState("");
+  // Bog'liq ma'lumotli filialni to'liq o'chirish oynasi (faqat direktor)
+  const [purge, setPurge] = useState<VBranch | null>(null);
 
   const filtered = useMemo(() => {
     const q = search.trim().toLowerCase();
     return q ? branches.filter((b) => `${b.name} ${b.address}`.toLowerCase().includes(q)) : branches;
   }, [branches, search]);
 
-  const del = (id: string) => { if (confirm(tr(locale, { uz: "Filialni o'chirasizmi?", ru: "Удалить филиал?", en: "Delete this branch?", de: "Filiale löschen?" }))) start(async () => {
-    const r = await deleteBranch(id);
-    if (r.error === "has-finance-history") alert(tr(locale, { uz: "Bu obyektga moliyaviy tarix bog'langan. Uni o'chirish mumkin emas. Arxivlang.", ru: "С этим объектом связана финансовая история. Удалить его нельзя. Заархивируйте.", en: "This record has financial history linked to it. It cannot be deleted. Archive it instead.", de: "Mit diesem Datensatz ist Finanzhistorie verknüpft. Er kann nicht gelöscht werden. Bitte archivieren." }));
-    else if (r.error === "has-links") alert(tr(locale, { uz: "Filialga xodim yoki guruh bog'langan — avval ularni ko'chiring.", ru: "К филиалу привязаны сотрудники или группы — сначала перенесите их.", en: "Staff or groups are linked to this branch — move them first.", de: "Mitarbeiter oder Gruppen sind mit dieser Filiale verknüpft — bitte zuerst verschieben." }));
-    router.refresh();
-  }); };
+  const del = (id: string) => {
+    if (!confirm(tr(locale, { uz: "Filialni o'chirasizmi?", ru: "Удалить филиал?", en: "Delete this branch?", de: "Filiale löschen?" }))) return;
+    start(async () => {
+      const r = await deleteBranch(id);
+      if (r.error === "has-finance-history") {
+        // Finance V2: moliyaviy tarix bog'langan — to'liq o'chirish ham taklif qilinmaydi
+        alert(tr(locale, { uz: "Bu obyektga moliyaviy tarix bog'langan. Uni o'chirish mumkin emas. Arxivlang.", ru: "С этим объектом связана финансовая история. Удалить его нельзя. Заархивируйте.", en: "This record has financial history linked to it. It cannot be deleted. Archive it instead.", de: "Mit diesem Datensatz ist Finanzhistorie verknüpft. Er kann nicht gelöscht werden. Bitte archivieren." }));
+      } else if (r.error) {
+        // Bog'liq xodim/guruh/o'quvchi bo'lsa: direktorga to'liq o'chirish taklif qilinadi, qolganlarga — sabab
+        const b = branches.find((x) => x.id === id) ?? null;
+        if (canPurge && b) setPurge(b); else alert(r.error);
+      }
+      router.refresh();
+    });
+  };
+  // Nofaol filial: ariza formasi va tanlovlarda chiqmaydi, ma'lumotlari saqlanadi
+  const toggleActive = (b: VBranch) => start(async () => { await setBranchActive(b.id, !b.isActive); router.refresh(); });
 
   const exportCsvNow = () => exportRows(
     tr(locale, { uz: "filiallar", ru: "филиалы", en: "branches", de: "Filialen" }),
@@ -91,7 +104,7 @@ export default function BranchesView({ branches, canManage, locale }: { branches
               {filtered.length === 0 ? (
                 <tr><td colSpan={8} className="px-4 py-14 text-center text-slate-400">{tr(locale, { uz: "Ma'lumotlar topilmadi", ru: "Данные не найдены", en: "No data found", de: "Keine Daten gefunden" })}</td></tr>
               ) : filtered.map((b, i) => (
-                <tr key={b.id} className="hover:bg-slate-50 dark:hover:bg-slate-800/50">
+                <tr key={b.id} className={cn("hover:bg-slate-50 dark:hover:bg-slate-800/50", !b.isActive && "opacity-60")}>
                   <td className="px-4 py-3 text-slate-400">{i + 1}</td>
                   <td className="px-4 py-3">
                     <div className="flex items-center gap-2.5">
@@ -101,6 +114,7 @@ export default function BranchesView({ branches, canManage, locale }: { branches
                         <span className="grid h-8 w-8 shrink-0 place-items-center rounded-full bg-slate-100 text-slate-400 dark:bg-slate-800"><Icon name="building" className="h-4 w-4" /></span>
                       )}
                       <span className="font-medium text-slate-800 dark:text-slate-100">{b.name}</span>
+                      {!b.isActive && <span className="rounded-md bg-slate-100 px-1.5 py-0.5 text-[10px] font-semibold text-slate-500 dark:bg-white/10 dark:text-slate-300">{tr(locale, { uz: "Nofaol", ru: "Неактивен", en: "Inactive", de: "Inaktiv" })}</span>}
                     </div>
                   </td>
                   <td className="px-4 py-3 text-slate-500">{b.address || "—"}</td>
@@ -112,6 +126,7 @@ export default function BranchesView({ branches, canManage, locale }: { branches
                     <td className="px-4 py-3">
                       <div className="flex items-center justify-end gap-2 text-slate-400">
                         <button onClick={() => { setEditing(b); setOpen(true); }} className="transition hover:text-brand-600" title={tr(locale, { uz: "Tahrirlash", ru: "Редактировать", en: "Edit", de: "Bearbeiten" })}><Icon name="pencil" className="h-4 w-4" /></button>
+                        <button onClick={() => toggleActive(b)} disabled={pending} className="transition hover:text-amber-600" title={b.isActive ? tr(locale, { uz: "Nofaol qilish (arizada chiqmaydi)", ru: "Сделать неактивным", en: "Deactivate", de: "Deaktivieren" }) : tr(locale, { uz: "Faollashtirish", ru: "Активировать", en: "Activate", de: "Aktivieren" })}><Icon name={b.isActive ? "eyeOff" : "eye"} className="h-4 w-4" /></button>
                         <button onClick={() => del(b.id)} className="transition hover:text-rose-600" title={tr(locale, { uz: "O'chirish", ru: "Удалить", en: "Delete", de: "Löschen" })}><Icon name="trash" className="h-4 w-4" /></button>
                       </div>
                     </td>
@@ -124,6 +139,75 @@ export default function BranchesView({ branches, canManage, locale }: { branches
       </div>
 
       {open && canManage && <BranchForm editing={editing} locale={locale} onClose={() => setOpen(false)} onSaved={() => { setOpen(false); router.refresh(); }} />}
+      {purge && <PurgeModal branch={purge} locale={locale} onClose={() => setPurge(null)} onDone={() => { setPurge(null); router.refresh(); }} />}
+    </div>
+  );
+}
+
+/**
+ * Filialni BARCHA ma'lumotlari bilan o'chirish — nima o'chishi ro'yxati,
+ * filial nomini yozib tasdiqlash, qizil tugma. Orqaga qaytmaydi.
+ */
+function PurgeModal({ branch, locale, onClose, onDone }: { branch: VBranch; locale: Locale; onClose: () => void; onDone: () => void }) {
+  const [sum, setSum] = useState<PurgeSummary | null>(null);
+  const [name, setName] = useState("");
+  const [err, setErr] = useState<string | null>(null);
+  const [pending, start] = useTransition();
+  const L = (uz: string, ru: string, en: string, de: string) => tr(locale, { uz, ru, en, de });
+
+  useEffect(() => { branchPurgeSummary(branch.id).then(setSum); }, [branch.id]);
+
+  const ok = name.trim().toLowerCase() === branch.name.trim().toLowerCase();
+  const run = () => start(async () => {
+    setErr(null);
+    const r = await forceDeleteBranch(branch.id, name);
+    if (r.error) { setErr(r.error); return; }
+    onDone();
+  });
+
+  const rows: [string, number | undefined][] = [
+    [L("O'quvchilar (to'lov tarixi, davomat, sertifikatlar bilan)", "Ученики (с оплатами, посещаемостью, сертификатами)", "Students (with payments, attendance, certificates)", "Schüler (mit Zahlungen, Anwesenheit, Zertifikaten)"), sum?.students],
+    [L("To'lov yozuvlari", "Записи об оплате", "Payment records", "Zahlungsdatensätze"), sum?.payments],
+    [L("Guruhlar (darslar, davomat, topshiriqlar bilan)", "Группы (с уроками, посещаемостью, заданиями)", "Groups (with lessons, attendance, assignments)", "Gruppen (mit Unterricht, Anwesenheit, Aufgaben)"), sum?.groups],
+  ];
+
+  return (
+    <div className="fixed inset-0 z-[80] flex items-start justify-center overflow-y-auto bg-slate-900/50 p-4 pt-16 backdrop-blur-sm" onClick={onClose}>
+      <div className="w-full max-w-md rounded-2xl border border-rose-200 bg-white p-6 shadow-pop dark:border-rose-900/50 dark:bg-slate-900" onClick={(e) => e.stopPropagation()}>
+        <div className="mb-3 flex items-center gap-2.5">
+          <span className="grid h-10 w-10 place-items-center rounded-xl bg-rose-500/15 text-rose-600"><Icon name="trash" className="h-5 w-5" /></span>
+          <div>
+            <h3 className="text-base font-bold text-slate-900 dark:text-slate-100">{L("Filialni butunlay o'chirish", "Удалить филиал полностью", "Delete branch completely", "Filiale vollständig löschen")}</h3>
+            <p className="text-xs text-slate-500">{branch.name}</p>
+          </div>
+        </div>
+
+        <div className="rounded-xl border border-rose-200 bg-rose-50 p-3 text-sm dark:border-rose-900/40 dark:bg-rose-950/20">
+          <div className="mb-1.5 font-semibold text-rose-700 dark:text-rose-300">{L("Bu amal orqaga qaytmaydi. O'chadi:", "Это действие необратимо. Будет удалено:", "This cannot be undone. Will be deleted:", "Nicht rückgängig zu machen. Gelöscht werden:")}</div>
+          <ul className="space-y-1 text-rose-700/90 dark:text-rose-300/90">
+            {rows.map(([label, n]) => (
+              <li key={label} className="flex items-start justify-between gap-3"><span>{label}</span><span className="shrink-0 font-bold tabular-nums">{n ?? "…"}</span></li>
+            ))}
+          </ul>
+          <div className="mt-2 text-xs text-slate-500 dark:text-slate-400">
+            {L("Xodimlar, lidlar va market tovarlari o'chmaydi — filialdan uziladi", "Сотрудники, лиды и товары не удаляются — отвязываются от филиала", "Staff, leads and market items are kept — detached from the branch", "Mitarbeiter, Leads und Artikel bleiben — nur von der Filiale getrennt")}
+            {sum ? ` (${sum.users} / ${sum.leads})` : ""}
+          </div>
+        </div>
+
+        <label className="mt-4 block text-xs font-semibold text-slate-600 dark:text-slate-400">
+          {L("Tasdiqlash uchun filial nomini yozing:", "Введите название филиала для подтверждения:", "Type the branch name to confirm:", "Filialnamen zur Bestätigung eingeben:")} <span className="font-bold text-slate-900 dark:text-slate-100">{branch.name}</span>
+        </label>
+        <input value={name} onChange={(e) => setName(e.target.value)} autoFocus placeholder={branch.name} className="mt-1 h-10 w-full rounded-lg border border-slate-300 px-3 text-sm outline-none focus:border-rose-400 focus:ring-2 focus:ring-rose-100 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-100" />
+        {err && <p className="mt-2 text-sm text-rose-600">{err}</p>}
+
+        <div className="mt-4 flex justify-end gap-2">
+          <button onClick={onClose} className="btn-ghost">{L("Bekor qilish", "Отмена", "Cancel", "Abbrechen")}</button>
+          <button onClick={run} disabled={!ok || pending || !sum} className="rounded-lg bg-rose-600 px-4 py-2 text-sm font-semibold text-white transition hover:bg-rose-700 disabled:opacity-50">
+            {pending ? L("O'chirilmoqda…", "Удаление…", "Deleting…", "Wird gelöscht…") : L("Hammasi bilan o'chirish", "Удалить со всем", "Delete everything", "Alles löschen")}
+          </button>
+        </div>
+      </div>
     </div>
   );
 }
@@ -139,7 +223,8 @@ function BranchForm({ editing, onClose, onSaved, locale }: { editing: VBranch | 
   const formRef = useRef<HTMLFormElement>(null);
   const fileRef = useRef<HTMLInputElement>(null);
 
-  // Galereyadan rasm tanlash — brauzerda kichraytirib (max 256px) data URL'ga aylantiramiz
+  // Galereyadan rasm tanlash — brauzerda kichraytirib (max 1600px) data URL'ga aylantiramiz.
+  // Ilgari 256px edi; ochiq ariza sahifasi filial rasmini orqa fon qilgani uchun kattaroq kerak
   const onPickImage = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file) return;
@@ -147,13 +232,13 @@ function BranchForm({ editing, onClose, onSaved, locale }: { editing: VBranch | 
     reader.onload = () => {
       const img = new window.Image();
       img.onload = () => {
-        const max = 256;
+        const max = 1600;
         const scale = Math.min(1, max / Math.max(img.width, img.height));
         const w = Math.round(img.width * scale), h = Math.round(img.height * scale);
         const canvas = document.createElement("canvas");
         canvas.width = w; canvas.height = h;
         const ctx = canvas.getContext("2d");
-        if (ctx) { ctx.drawImage(img, 0, 0, w, h); setImage(canvas.toDataURL("image/jpeg", 0.82)); }
+        if (ctx) { ctx.drawImage(img, 0, 0, w, h); setImage(canvas.toDataURL("image/jpeg", 0.8)); }
       };
       img.src = reader.result as string;
     };

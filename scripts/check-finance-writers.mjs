@@ -42,6 +42,7 @@ const USER_SALARY_FIELDS = /\b(fiksa|kpiBonus)\b/;
 // User.fiksa/kpiBonus yozuvchilari alohida (USER_SALARY_LEGACY).
 const LEGACY = new Map([
   ["src/app/(app)/actions.ts", 1],
+  ["src/app/(app)/branches/actions.ts", 1], // forceDeleteBranch: payment.deleteMany — V2 tarixi/posted to'lov bo'lsa bloklanadi (2026-09-16 main merge)
   ["src/app/(app)/finance/expenses/actions.ts", 2],
   ["src/app/(app)/finance/salary/actions.ts", 4],
   ["src/app/(app)/finance/withdrawals/actions.ts", 2],

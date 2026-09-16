@@ -6,8 +6,8 @@ import { cn } from "@/lib/cn";
 import { tr } from "@/lib/tr";
 import type { Locale } from "@/lib/constants";
 import { Icon } from "../../_components/Icon";
-import { COLUMNS, columnDef, columnOf, columnOfLead, customIdOfCol, groupIdOfCol, isCustomCol, isGroupCol, type CustomColumn, type GroupColumn, type VLead } from "../_lib/leadColumns";
-import { deleteTestLead, enrollLeadToGroup, moveLeadStage, moveLeadToColumn, removeKanbanColumn, unpinKanbanGroup } from "../actions";
+import { COLUMNS, ONLINE_COL, branchIdOfCol, branchReplaces, columnDef, columnOf, columnOfLead, customIdOfCol, groupIdOfCol, isBranchCol, isCustomCol, isGroupCol, type BranchColumn, type BranchMode, type BranchModeCfg, type CustomColumn, type GroupColumn, type VLead } from "../_lib/leadColumns";
+import { bulkLeadAction, deleteTestLead, dropLeadToBranch, enrollLeadToGroup, moveLeadStage, moveLeadToColumn, removeKanbanColumn, setLeadOnline, unpinKanbanGroup } from "../actions";
 import { type Analytics } from "./AnalyticsTiles";
 import FilterBar from "./FilterBar";
 import LeadsKanban from "./LeadsKanban";
@@ -36,13 +36,21 @@ interface Props {
   canWrite: boolean;
   /** Lidni Kanbandan o'chirish huquqi (direktor / o'rinbosari / admin) */
   canDelete?: boolean;
+  /** Ustunni bo'shatish — barcha lidlarni Yangiga qaytarish (direktor / o'rinbosar / ROP) */
+  canResetColumns?: boolean;
   /** Kanbanga biriktirilgan guruh ustunlari */
   initialGroupColumns: GroupColumn[];
   /** Oddiy nomli ustunlar */
   initialCustomColumns: CustomColumn[];
+  /** Filial rejimi — filial ustunlari (null — odatdagi kanban) */
+  branchColumns?: BranchColumn[] | null;
+  /** "sales" (ROP/admin) yoki "head" (direktor) — leadColumns.ts */
+  branchMode?: BranchMode | null;
+  /** Bo'sh vaqtlarni tahrirlash: "all" — hamma filial, filial id — faqat o'sha, null — yo'q */
+  slotsEditable?: "all" | string | null;
 }
 
-export default function LeadsWorkspace({ locale, initialLeads, managers, sources, analytics, canWrite, canDelete = false, initialGroupColumns, initialCustomColumns }: Props) {
+export default function LeadsWorkspace({ locale, initialLeads, managers, sources, analytics, canWrite, canDelete = false, canResetColumns = false, initialGroupColumns, initialCustomColumns, branchColumns = null, branchMode = null, slotsEditable = null }: Props) {
   const router = useRouter();
   const pathname = usePathname();
   const params = useSearchParams();
@@ -90,6 +98,10 @@ export default function LeadsWorkspace({ locale, initialLeads, managers, sources
 
   const pinnedIds = useMemo(() => new Set(groupColumns.map((g) => g.groupId)), [groupColumns]);
   const customIds = useMemo(() => new Set(customColumns.map((c) => c.id)), [customColumns]);
+  const branchCfg = useMemo<BranchModeCfg | null>(
+    () => (branchColumns && branchMode ? { ids: new Set(branchColumns.map((b) => b.branchId)), mode: branchMode } : null),
+    [branchColumns, branchMode],
+  );
 
   // URL sync — `router.replace` har o'zgarishda (har bir terilgan harfda ham) serverga
   // borib sahifani qayta render qilardi: 2000 lid qayta yuklanib, butun Kanban qayta
@@ -146,11 +158,11 @@ export default function LeadsWorkspace({ locale, initialLeads, managers, sources
   const shownTotals = useMemo(() => {
     const c: Record<string, number> = {};
     for (const l of shown) {
-      const k = columnOfLead(l, pinnedIds, customIds);
+      const k = columnOfLead(l, pinnedIds, customIds, branchCfg);
       c[k] = (c[k] ?? 0) + 1;
     }
     return c;
-  }, [shown, pinnedIds, customIds]);
+  }, [shown, pinnedIds, customIds, branchCfg]);
 
   // Sana bir marta parse qilinadi — saralash har solishtirishda `new Date` qilmaydi
   const tsOf = useMemo(() => {
@@ -235,6 +247,32 @@ export default function LeadsWorkspace({ locale, initialLeads, managers, sources
       enrollToGroup(leadId, groupIdOfCol(colKey));
       return;
     }
+    // "Onlayn" ustuni — onlayn belgisi + Yangi bosqich; "Yangi"ga qaytarilgan onlayn lid — belgi olib tashlanadi
+    if (branchMode && (colKey === ONLINE_COL || (colKey === "new" && leads.find((l) => l.id === leadId)?.studyFormat === "ONLINE"))) {
+      const online = colKey === ONLINE_COL;
+      setLeads((prev) => prev.map((l) => (l.id === leadId ? { ...l, studyFormat: online ? "ONLINE" : null, stage: "NEW", kanbanColumnId: null } : l))); // optimistik
+      startRefresh(async () => {
+        const r = await setLeadOnline(leadId, online);
+        if (r.error) setLeads(initialLeads);
+        router.refresh();
+      });
+      return;
+    }
+    // Filial ustuni (ROP) — lid shu filialga yo'naltiriladi; ishlov boshida bo'lsa "Taklif"ga o'tadi
+    if (isBranchCol(colKey)) {
+      const branchId = branchIdOfCol(colKey);
+      const bname = branchColumns?.find((b) => b.branchId === branchId)?.name ?? "";
+      setLeads((prev) => prev.map((l) => (l.id === leadId
+        ? { ...l, branchId, branchName: bname, kanbanColumnId: colKey, stage: ["NEW", "IN_PROGRESS", "CONTACTED", "TEST"].includes(l.stage) ? "OFFER" : l.stage }
+        : l))); // optimistik
+      startRefresh(async () => {
+        const r = await dropLeadToBranch(leadId, branchId);
+        if (r.error) setLeads(initialLeads);
+        else { setFlash(tr(locale, { uz: `Filialga yo'naltirildi: ${bname}`, ru: `Направлен в филиал: ${bname}`, en: `Directed to ${bname}`, de: `An Filiale weitergeleitet: ${bname}` })); setTimeout(() => setFlash(null), 3000); }
+        router.refresh();
+      });
+      return;
+    }
     // Oddiy nomli ustun — bosqich o'zgarmaydi, faqat ustun belgilanadi
     if (isCustomCol(colKey)) {
       const colId = customIdOfCol(colKey);
@@ -261,7 +299,7 @@ export default function LeadsWorkspace({ locale, initialLeads, managers, sources
     const target = columnDef(colKey).defaultStage;
     setLeads((prev) => prev.map((l) => (l.id === leadId ? { ...l, stage: target, kanbanColumnId: null } : l))); // optimistik
     startRefresh(async () => { await moveLeadStage(leadId, target); router.refresh(); });
-  }, [canWrite, router, leads, enrollToGroup, initialLeads]);
+  }, [canWrite, router, leads, enrollToGroup, initialLeads, branchColumns, locale, branchMode]);
 
   const confirmReject = useCallback((reason: string) => {
     if (!reject) return;
@@ -273,6 +311,25 @@ export default function LeadsWorkspace({ locale, initialLeads, managers, sources
 
   // Tezkor o'chirish faqat "Daraja testi" (TEST) lidlari uchun — ishdagi lidlar
   // to'liq sahifadan, ism yozib tasdiqlab o'chiriladi
+  // Ustundagi barcha lidlarni "Yangi"ga qaytarish (tasdiq bilan)
+  const resetColumn = useCallback((ids: string[], title: string) => {
+    if (!ids.length) return;
+    if (!confirm(tr(locale, {
+      uz: `"${title}" ustunidagi ${ids.length} ta lid "Yangi"ga qaytariladi. Guruh biriktiruvi bekor bo'ladi. Davom etasizmi?`,
+      ru: `${ids.length} лидов из столбца «${title}» вернутся в «Новые». Привязка к группе будет снята. Продолжить?`,
+      en: `${ids.length} leads in "${title}" will return to "New". Group assignment is cleared. Continue?`,
+      de: `${ids.length} Leads aus „${title}“ gehen zurück zu „Neu“. Gruppenzuordnung wird entfernt. Fortfahren?`,
+    }))) return;
+    const set = new Set(ids);
+    setLeads((prev) => prev.map((l) => (set.has(l.id) ? { ...l, stage: "NEW", kanbanColumnId: null, groupId: null, groupName: null, enrollEditCount: 0 } : l))); // optimistik
+    startRefresh(async () => {
+      const r = await bulkLeadAction(ids, "reset_new");
+      if (!r.ok) setLeads(initialLeads);
+      else { setFlash(tr(locale, { uz: `${ids.length} ta lid Yangiga qaytarildi`, ru: `${ids.length} лидов возвращены в «Новые»`, en: `${ids.length} leads returned to New`, de: `${ids.length} Leads zurück zu Neu` })); setTimeout(() => setFlash(null), 3000); }
+      router.refresh();
+    });
+  }, [locale, initialLeads, router]);
+
   const askDelete = useCallback((id: string) => {
     const lead = leads.find((l) => l.id === id);
     if (!lead || columnOf(lead.stage) !== "test") return;
@@ -394,6 +451,7 @@ export default function LeadsWorkspace({ locale, initialLeads, managers, sources
             sources={sources} source={source} onSource={setSource}
             managers={managers} manager={manager} onManager={setManager}
             activeCols={activeCols} onToggleCol={toggleCol}
+            hiddenCols={branchMode ? branchReplaces(branchMode) : undefined}
             counts={chipCounts} hasFilters={hasFilters} onClear={clearFilters}
             sort={sort} onSort={setSort}
           />
@@ -422,6 +480,10 @@ export default function LeadsWorkspace({ locale, initialLeads, managers, sources
           }}
           onLevelTestQr={() => setTestQr(true)}
           onDelete={canDelete ? askDelete : undefined}
+          onResetColumn={canResetColumns ? resetColumn : undefined}
+          branchColumns={branchColumns}
+          branchMode={branchMode}
+          slotsEditable={slotsEditable}
         />
       ) : (
         <LeadsTable leads={sortedShown} locale={locale} selected={selection} onToggle={(id) => toggleSelect(id)} onOpen={openLead} onOpenFull={openLeadFull} allSelected={selection.size === shown.length && shown.length > 0} onToggleAll={toggleAll} />

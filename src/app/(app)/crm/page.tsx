@@ -7,7 +7,7 @@ import { branchWhere } from "@/lib/branchScope";
 import { Forbidden } from "../_components/ui";
 import LeadsWorkspace from "./_components/LeadsWorkspace";
 import { listKanbanGroups, listKanbanColumns } from "./actions";
-import { columnOf, type VLead } from "./_lib/leadColumns";
+import { columnOf, GROUP_COL_COLORS, type BranchColumn, type BranchMode, type VLead } from "./_lib/leadColumns";
 import type { Analytics } from "./_components/AnalyticsTiles";
 
 export default async function CrmPage() {
@@ -17,17 +17,29 @@ export default async function CrmPage() {
     return <Forbidden title={t("err.forbidden")} body={t("err.forbiddenBody")} />;
   }
 
-  const [leads, managers, groupColumns, customColumns] = await Promise.all([
+  // Filial rejimi (leadColumns.ts BranchMode):
+  //   ROP va filial administratori — "sales": test/taklif o'rniga filial ustunlari;
+  //   direktor / o'rinbosar — "head": hamma ustunlar + filial ustunlari ("Taklif" o'rnida).
+  // ROP va rahbariyat barcha filiallar lidlarini ko'radi (ustunlar filial bo'yicha ajratadi),
+  // administrator — faqat o'z filialini (o'z filiali ustuni).
+  const branchMode: BranchMode | null =
+    s.role === ROLES.ROP || s.role === ROLES.ADMIN ? "sales"
+    : s.role === ROLES.DIRECTOR || s.role === ROLES.DEPUTY_DIRECTOR ? "head"
+    : null;
+  const allBranches = branchMode !== null && s.role !== ROLES.ADMIN;
+
+  const [leads, managers, groupColumns, customColumns, branchRows] = await Promise.all([
     prisma.lead.findMany({
-      where: branchWhere(s), // faol filial lidlarigina (filialsiz eski yozuvlar ham)
+      where: allBranches ? {} : branchWhere(s), // faol filial lidlarigina (filialsiz eski yozuvlar ham)
       orderBy: { createdAt: "desc" },
       // Faqat kerakli ustunlar — `include: { manager: true }` har lid uchun butun
       // User yozuvini (parol maydonlari bilan) tortib, 2000 lidda sahifani sekinlashtirardi
       select: {
-        id: true, fullName: true, phone: true, email: true, source: true, stage: true,
+        id: true, fullName: true, phone: true, email: true, telegram: true, studyFormat: true, source: true, stage: true,
         interestCourse: true, age: true, level: true, budget: true, note: true,
-        managerId: true, studentId: true, groupId: true, enrollEditCount: true, kanbanColumnId: true, createdAt: true,
+        managerId: true, studentId: true, groupId: true, enrollEditCount: true, kanbanColumnId: true, createdAt: true, branchId: true,
         manager: { select: { fullName: true } },
+        branch: { select: { name: true } },
         group: { select: { name: true } },
         _count: { select: { activities: true } },
       },
@@ -36,13 +48,30 @@ export default async function CrmPage() {
     prisma.user.findMany({ where: { role: ROLES.OPERATOR, isActive: true }, select: { id: true, fullName: true }, orderBy: { fullName: "asc" } }),
     listKanbanGroups(),   // Kanbanga biriktirilgan guruh ustunlari
     listKanbanColumns(),  // Oddiy nomli ustunlar
+    branchMode
+      ? prisma.branch.findMany({
+          // Administrator — faqat o'z filiali ustuni
+          where: { isActive: true, ...(s.role === ROLES.ADMIN && s.branchId ? { id: s.branchId } : {}) },
+          select: { id: true, name: true, slots: { select: { id: true, branchId: true, room: true, days: true, startTime: true, endTime: true, note: true }, orderBy: [{ room: "asc" }, { startTime: "asc" }] } },
+          orderBy: { name: "asc" },
+        })
+      : Promise.resolve([]),
   ]);
+
+  const branchColumns: BranchColumn[] = branchRows.map((b, i) => ({
+    branchId: b.id,
+    name: b.name,
+    color: GROUP_COL_COLORS[(i + 1) % GROUP_COL_COLORS.length],
+    slots: b.slots,
+  }));
 
   const vleads: VLead[] = leads.map((l) => ({
     id: l.id,
     fullName: l.fullName,
     phone: l.phone,
     email: l.email,
+    telegram: l.telegram,
+    studyFormat: l.studyFormat,
     source: l.source,
     stage: l.stage,
     interestCourse: l.interestCourse,
@@ -53,6 +82,8 @@ export default async function CrmPage() {
     managerId: l.managerId,
     managerName: l.manager?.fullName ?? null,
     studentId: l.studentId,
+    branchId: l.branchId,
+    branchName: l.branch?.name ?? null,
     groupId: l.groupId,
     groupName: l.group?.name ?? null,
     enrollEditCount: l.enrollEditCount,
@@ -89,8 +120,13 @@ export default async function CrmPage() {
       canWrite={canWrite(s.role, MODULES.CRM)}
       // Kanbandan to'g'ridan-to'g'ri o'chirish — actions.ts dagi CAN_DELETE_LEAD bilan bir xil
       canDelete={[ROLES.DIRECTOR, ROLES.DEPUTY_DIRECTOR, ROLES.ADMIN].includes(s.role as never)}
+      canResetColumns={[ROLES.DIRECTOR, ROLES.DEPUTY_DIRECTOR, ROLES.ROP].includes(s.role as never)}
       initialGroupColumns={groupColumns}
       initialCustomColumns={customColumns}
+      branchColumns={branchMode ? branchColumns : null}
+      branchMode={branchMode}
+      // Bo'sh vaqtlarni kim tahrirlaydi: rahbariyat — hammasini, administrator — o'z filialini
+      slotsEditable={[ROLES.DIRECTOR, ROLES.DEPUTY_DIRECTOR].includes(s.role as never) ? "all" : s.role === ROLES.ADMIN ? (s.branchId ?? null) : null}
     />
   );
 }
