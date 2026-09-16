@@ -37,8 +37,14 @@ dur()    { awk -v n="$1" '$1==n{print $2}' "$TIMES" 2>/dev/null | tail -1; }
 fail()   { FAILS+=("$1"); echo "✗ FAIL: $1"; }
 stopnow(){ STOP=1; FAILS+=("STOP: $1"); echo "■ STOP: $1"; }
 TSX() { node_modules/.bin/tsx "$@" < /dev/null; }
-# Sinov serverini o'ldirish: pid fayli + shu portdagi `next start` jarayonlari (bola jarayon qolib ketmasin). Prod (3000) ga tegmaydi.
-kill_test_port() { pkill -f "next start -p $1" 2>/dev/null || true; command -v fuser >/dev/null 2>&1 && fuser -k -n tcp "$1" >/dev/null 2>&1 || true; }
+# Sinov serverini o'ldirish — PORT bo'yicha pid (Next jarayon nomini `next-server` qiladi, pkill -f "next start" topmaydi). Prod (3000) ga tegmaydi.
+pids_on_port() {
+  if command -v lsof >/dev/null 2>&1; then lsof -t -nP -iTCP:"$1" -sTCP:LISTEN 2>/dev/null
+  elif command -v ss >/dev/null 2>&1; then ss -ltnp 2>/dev/null | grep ":$1 " | grep -oE 'pid=[0-9]+' | cut -d= -f2
+  elif command -v fuser >/dev/null 2>&1; then fuser -n tcp "$1" 2>/dev/null | tr -s ' ' '\n'
+  fi | sort -u
+}
+kill_test_port() { [ "$1" = 3000 ] && return 0; for pid in $(pids_on_port "$1"); do kill "$pid" 2>/dev/null || true; done; sleep 1; for pid in $(pids_on_port "$1"); do kill -9 "$pid" 2>/dev/null || true; done; }
 kill_port_pid() { # kill_port_pid <pidfile> <port>
   [ -f "$1" ] && { kill "$(cat "$1")" 2>/dev/null || true; sleep 1; kill -9 "$(cat "$1")" 2>/dev/null || true; rm -f "$1"; }
   kill_test_port "$2"; sleep 1
@@ -63,7 +69,7 @@ trap cleanup EXIT
 section "0. Preflight (read-only)"
 echo "prod HEAD=$(git -C $APP rev-parse --short HEAD) db=$(du -h $PROD_DB | cut -f1) date=$(date '+%F %T %Z')"
 df -h /tmp "$APP" | sed -n '2,3p'
-port_busy() { if command -v lsof >/dev/null 2>&1; then lsof -nP -iTCP:"$1" -sTCP:LISTEN >/dev/null 2>&1; elif command -v ss >/dev/null 2>&1; then ss -ltn 2>/dev/null | grep -q ":$1 "; else netstat -ltn 2>/dev/null | grep -q ":$1 "; fi; }
+port_busy() { [ -n "$(pids_on_port "$1")" ]; }
 for p in $PORT_V2 $PORT_LEGACY; do
   if port_busy "$p"; then echo "port $p band — oldingi sinov serveri o'ldiriladi (faqat 'next start -p $p')"; kill_test_port "$p"; sleep 2; port_busy "$p" && stopnow "port $p hali band"; fi
 done
@@ -189,7 +195,7 @@ git checkout -q tsconfig.json 2>/dev/null || true
 tend build
 tstart app-start
 port_busy $PORT_V2 && { kill_test_port $PORT_V2; sleep 2; }
-(DATABASE_URL="file:$COPY" AUTH_SECRET="$SECRET" NODE_ENV=production TZ=Asia/Tashkent node_modules/.bin/next start -p $PORT_V2 > "$WORK/app.log" 2>&1 & echo $! > "$WORK/app.pid")
+(exec env DATABASE_URL="file:$COPY" AUTH_SECRET="$SECRET" NODE_ENV=production TZ=Asia/Tashkent node_modules/.bin/next start -p $PORT_V2 > "$WORK/app.log" 2>&1) & echo $! > "$WORK/app.pid"
 wait_http $PORT_V2 && echo "✓ app javob beradi" || { tail -20 "$WORK/app.log"; fail "app start"; }
 tend app-start
 JWT_D=$(TSX scripts/finance-v2/mint-session.ts --db "$COPY" --secret "$SECRET" --role DIRECTOR 2>/dev/null | tail -1)
@@ -245,7 +251,7 @@ LEG=$DRY/legacy; rm -rf "$LEG"; git clone -q "$APP" "$LEG"   # prod'da deploy qi
 echo "legacy HEAD=$(git -C "$LEG" rev-parse --short HEAD) (= prod HEAD)"
 ( cd "$LEG" && npm ci --no-audit --no-fund < /dev/null 2>&1 | tail -1 && npx prisma generate < /dev/null 2>&1 | grep -E "Generated" && FORCE_BUILD=1 DATABASE_URL="file:$RB" AUTH_SECRET="$SECRET" npm run build < /dev/null > "$WORK/legacy-build.log" 2>&1 && echo "✓ legacy build" ) || { tail -15 "$WORK/legacy-build.log"; fail "legacy build"; }
 port_busy $PORT_LEGACY && { kill_test_port $PORT_LEGACY; sleep 2; }
-(cd "$LEG" && DATABASE_URL="file:$RB" AUTH_SECRET="$SECRET" NODE_ENV=production TZ=Asia/Tashkent node_modules/.bin/next start -p $PORT_LEGACY > "$WORK/legacy.log" 2>&1 & echo $! > "$WORK/legacy.pid")
+(cd "$LEG" && exec env DATABASE_URL="file:$RB" AUTH_SECRET="$SECRET" NODE_ENV=production TZ=Asia/Tashkent node_modules/.bin/next start -p $PORT_LEGACY > "$WORK/legacy.log" 2>&1) & echo $! > "$WORK/legacy.pid"
 wait_http $PORT_LEGACY && echo "✓ legacy app javob beradi" || { tail -20 "$WORK/legacy.log"; fail "legacy app start"; }
 smoke $PORT_LEGACY "$JWT_D" "ROLLBACK legacy app (DIRECTOR)" /dashboard /students /groups /teachers /payments /finance /finance/expenses /finance/salary /salary /branches /crm /reports
 kill_port_pid "$WORK/legacy.pid" $PORT_LEGACY
