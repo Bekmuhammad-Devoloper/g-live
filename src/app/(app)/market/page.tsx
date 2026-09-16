@@ -1,5 +1,5 @@
 import { requireSession } from "@/lib/auth";
-import { branchWhere, branchViaStudent } from "@/lib/branchScope";
+import { branchWhereShared, branchViaStudent } from "@/lib/branchScope";
 import { prisma } from "@/lib/db";
 import { canRead, canWrite, MODULES } from "@/lib/rbac";
 import { tr } from "@/lib/tr";
@@ -27,7 +27,8 @@ export default async function MarketPage() {
 
   const [itemRows, orderRows] = await Promise.all([
     prisma.marketItem.findMany({
-      where: branchWhere(s),
+      // Sovg'alar odatda umumiy (filialsiz) — shu sabab filialsizlari ham ko'rinadi
+      where: branchWhereShared(s),
       orderBy: [{ isActive: "desc" }, { price: "asc" }],
       select: {
         id: true,
