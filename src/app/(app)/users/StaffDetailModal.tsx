@@ -13,7 +13,13 @@ const WD: Record<Locale, string[]> = {
   en: ["", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"], de: ["", "Mo", "Di", "Mi", "Do", "Fr", "Sa", "So"],
 };
 
-export default function StaffDetailModal({ userId, locale, onClose }: { userId: string; locale: Locale; onClose: () => void }) {
+export default function StaffDetailModal({ userId, locale, onClose, onEdit }: {
+  userId: string;
+  locale: Locale;
+  onClose: () => void;
+  /** Berilsa — sarlavhada "Tahrirlash" tugmasi (yuklangan ma'lumot bilan forma ochiladi) */
+  onEdit?: (d: StaffDetail) => void;
+}) {
   const [d, setD] = useState<StaffDetail | null>(null);
   const [, startLoad] = useTransition();
   const [showPw, setShowPw] = useState(false);
@@ -57,7 +63,17 @@ export default function StaffDetailModal({ userId, locale, onClose }: { userId: 
               {d && <span className="text-xs font-medium text-brand-600 dark:text-brand-300">{d.roleLabel}</span>}
             </div>
           </div>
-          <button onClick={onClose} className="flex h-8 w-8 items-center justify-center rounded-lg text-lg text-slate-400 hover:bg-slate-100 dark:hover:bg-white/10">✕</button>
+          <div className="flex shrink-0 items-center gap-1.5">
+            {onEdit && d && (
+              <button
+                onClick={() => onEdit(d)}
+                className="flex h-8 items-center gap-1.5 rounded-lg bg-brand-600 px-3 text-xs font-semibold text-white transition hover:bg-brand-700"
+              >
+                <Icon name="pencil" className="h-3.5 w-3.5" /> {tr(locale, { uz: "Tahrirlash", ru: "Редактировать", en: "Edit", de: "Bearbeiten" })}
+              </button>
+            )}
+            <button onClick={onClose} className="flex h-8 w-8 items-center justify-center rounded-lg text-lg text-slate-400 hover:bg-slate-100 dark:hover:bg-white/10">✕</button>
+          </div>
         </div>
 
         <div className="flex-1 space-y-5 overflow-y-auto px-5 py-4">

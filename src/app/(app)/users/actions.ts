@@ -13,6 +13,8 @@ const fmtDate = (d: Date | null) => (d ? `${p2(d.getDate())}.${p2(d.getMonth() +
 export interface StaffDetail {
   id: string; fullName: string; email: string; phone: string | null;
   roleKey: string; roleLabel: string; branch: string | null;
+  /** Tahrirlash formasi uchun xom qiymatlar */
+  position: string | null; branchId: string | null; birthDateIso: string | null;
   gender: "MALE" | "FEMALE" | null; birthDate: string | null; isActive: boolean;
   password: string | null; // ochiq parol (rahbariyat ko'rishi uchun)
   fiksa: number; kpiBonus: number; monthTotal: number;
@@ -86,7 +88,7 @@ export async function getStaffDetail(userId: string): Promise<{ ok: boolean; dat
       where: { id: userId },
       select: {
         id: true, fullName: true, email: true, phone: true, role: true, position: true, isActive: true,
-        gender: true, birthDate: true, fiksa: true, kpiBonus: true, plainPassword: true,
+        gender: true, birthDate: true, fiksa: true, kpiBonus: true, plainPassword: true, branchId: true,
         branch: { select: { name: true } },
         teacherGroups: { where: { status: { not: "CANCELLED" } }, select: { name: true, weekdays: true } },
         salaries: { where: { year: now.getFullYear(), month: now.getMonth() + 1 }, take: 1 },
@@ -112,6 +114,8 @@ export async function getStaffDetail(userId: string): Promise<{ ok: boolean; dat
     data: {
       id: u.id, fullName: u.fullName, email: u.email, phone: u.phone,
       roleKey: u.role, roleLabel: u.position?.trim() || label(ROLE_LABELS, u.role, s.locale), branch: u.branch?.name ?? null,
+      position: u.position, branchId: u.branchId,
+      birthDateIso: u.birthDate ? u.birthDate.toISOString().slice(0, 10) : null,
       gender: (u.gender === "MALE" || u.gender === "FEMALE" ? u.gender : null) as "MALE" | "FEMALE" | null,
       birthDate: fmtDate(u.birthDate), isActive: u.isActive,
       password: u.plainPassword,
@@ -120,6 +124,60 @@ export async function getStaffDetail(userId: string): Promise<{ ok: boolean; dat
       groups: u.teacherGroups.map((g) => g.name),
     },
   };
+}
+
+/**
+ * Xodimni tahrirlash — "Boshqaruv → Xodimlar" yon panelidagi "Tahrirlash".
+ * Ism, telefon, lavozim (rol lavozimdan aniqlanadi — faqat lavozim o'zgarsa),
+ * filial, jins, tug'ilgan sana, oylik, email. Parol alohida (setUserPassword).
+ * Ruxsat: direktor / o'rinbosari / administrator — o'z-o'zini ham tahrirlaydi.
+ */
+export async function updateStaff(fd: FormData): Promise<{ ok?: boolean; error?: string }> {
+  const s = await requireSession();
+  if (!can(s.role)) return { error: tr(s.locale, { uz: "Ruxsat yo'q", ru: "Нет доступа", en: "No access", de: "Kein Zugriff" }) };
+
+  const id = String(fd.get("id") || "");
+  const cur = await prisma.user.findUnique({ where: { id }, select: { id: true, role: true, position: true, email: true } });
+  if (!cur) return { error: tr(s.locale, { uz: "Xodim topilmadi", ru: "Сотрудник не найден", en: "Staff member not found", de: "Mitarbeiter nicht gefunden" }) };
+
+  const ism = String(fd.get("ism") || "").trim();
+  const familiya = String(fd.get("familiya") || "").trim();
+  const fullName = `${ism} ${familiya}`.trim();
+  const email = String(fd.get("email") || "").trim().toLowerCase();
+  const phone = String(fd.get("phone") || "").trim() || null;
+  const position = String(fd.get("position") || "").trim();
+  const branchId = String(fd.get("branchId") || "") || null;
+  const gender = ["MALE", "FEMALE"].includes(String(fd.get("gender"))) ? String(fd.get("gender")) : null;
+  const birthRaw = String(fd.get("birthDate") || "");
+  const birthDate = birthRaw ? new Date(birthRaw) : null;
+  const fiksa = parseMoney(fd.get("fiksa"));
+  if (fiksa === null) return { error: tr(s.locale, { uz: "Summa juda katta (eng ko'pi 1 mlrd so'm) — nollar sonini tekshiring", ru: "Сумма слишком велика (макс. 1 млрд сум) — проверьте количество нулей", en: "Amount too large (max 1 billion) — check the number of zeros", de: "Betrag zu groß (max. 1 Mrd.) — Anzahl der Nullen prüfen" }) };
+
+  if (ism.length < 2) return { error: tr(s.locale, { uz: "Ism kamida 2 ta harf bo'lsin", ru: "Имя должно содержать не менее 2 букв", en: "First name must be at least 2 letters", de: "Der Vorname muss mindestens 2 Buchstaben enthalten" }) };
+  if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) return { error: tr(s.locale, { uz: "Email noto'g'ri", ru: "Неверный email", en: "Invalid email", de: "Ungültige E-Mail" }) };
+  if (!position) return { error: tr(s.locale, { uz: "Vazifa tanlanmadi", ru: "Должность не выбрана", en: "Position not selected", de: "Position nicht ausgewählt" }) };
+
+  if (email !== cur.email) {
+    const busy = await prisma.user.findUnique({ where: { email }, select: { id: true } });
+    if (busy && busy.id !== id) return { error: tr(s.locale, { uz: "Bu email allaqachon mavjud", ru: "Этот email уже существует", en: "This email already exists", de: "Diese E-Mail existiert bereits" }) };
+  }
+
+  // Rol lavozimdan aniqlanadi — lekin faqat lavozim o'zgarganda (Sozlamalar → Xodimlar
+  // orqali qo'lda berilgan rol lavozim o'zgarmasa buzilmasin)
+  const role = position !== (cur.position ?? "") ? roleForPosition(position) : cur.role;
+  // O'zini direktorlikdan tushirib qo'yish — tizimga kira olmay qolmasin
+  if (id === s.userId && role !== cur.role) {
+    return { error: tr(s.locale, { uz: "O'z rolingizni o'zgartira olmaysiz", ru: "Вы не можете изменить свою роль", en: "You cannot change your own role", de: "Sie können Ihre eigene Rolle nicht ändern" }) };
+  }
+
+  await prisma.user.update({
+    where: { id },
+    data: { fullName, email, phone, position, role, branchId, gender, birthDate, fiksa },
+  });
+  await writeAudit({ actorId: s.userId, action: "UPDATE", entityType: "User", entityId: id, oldValue: { role: cur.role, position: cur.position }, newValue: { fullName, role, position, branchId } });
+  revalidatePath("/users");
+  revalidatePath("/settings/staff");
+  return { ok: true };
 }
 
 // Xodim parolini yangilash (hash + ochiq nusxa). Rahbariyat.
