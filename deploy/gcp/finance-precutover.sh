@@ -58,7 +58,8 @@ trap cleanup EXIT
 section "0. Preflight (read-only)"
 echo "prod HEAD=$(git -C $APP rev-parse --short HEAD) db=$(du -h $PROD_DB | cut -f1) date=$(date '+%F %T %Z')"
 df -h /tmp "$APP" | sed -n '2,3p'
-for p in $PORT_V2 $PORT_LEGACY; do (ss -ltn 2>/dev/null || netstat -ltn) | grep -q ":$p " && { stopnow "port $p band"; }; done
+port_busy() { if command -v lsof >/dev/null 2>&1; then lsof -nP -iTCP:"$1" -sTCP:LISTEN >/dev/null 2>&1; elif command -v ss >/dev/null 2>&1; then ss -ltn 2>/dev/null | grep -q ":$1 "; else netstat -ltn 2>/dev/null | grep -q ":$1 "; fi; }
+for p in $PORT_V2 $PORT_LEGACY; do port_busy "$p" && stopnow "port $p band (oldingi sinov jarayoni?)"; done
 [ "$STOP" = 1 ] && exit 2
 
 section "1. Klon ($REF → $DRY) + npm ci + prisma generate"
