@@ -6,6 +6,7 @@ import { createTransfer } from "@/lib/finance/accounts/transfers";
 import { studentBalance } from "@/lib/finance/billing/balance";
 import { syncStudentBilling } from "@/lib/finance/billing/sync";
 import { createExpense } from "@/lib/finance/expenses/expenses";
+import { backfillBilling } from "@/lib/finance/ops/backfill";
 import { acceptPayment } from "@/lib/finance/payments/accept";
 import { monthStart, type YearMonth } from "@/lib/finance/period";
 import { createRefund } from "@/lib/finance/refunds/refund";
@@ -255,6 +256,50 @@ describe("business scenarios A–L (pre-cutover)", () => {
     expect(es).toHaveLength(1);
     expect(es[0]).toMatchObject({ status: "NEEDS_REVIEW", reviewReason: "NO_LESSONS_FOUND", settlementPeriodId: null });
     expect(await p.teacherEarning.count({ where: { sourcePaymentId: r.payment.id, status: "POSTED" } })).toBe(0);
+  });
+
+  it("M: cutover qo'riqchisi (S1) — legacy xizmat oyi yoki cutover'dan oldingi to'lov krediti avtomatik POSTED bo'lmaydi (NEEDS_REVIEW)", async () => {
+    const p = db.prisma;
+    const CUTOVER_OCT = "2026-10-01T00:00:00+05:00";
+    await p.setting.update({ where: { key: "finance.v2.cutoverAt" }, data: { value: CUTOVER_OCT } });
+    try {
+      const { group, teacher } = await mkGroup("M-01", "TeacherM");
+      const s = await mkStudent(group.id, monthStart(SEP), "M-student");
+      // Sentabr (legacy xizmat oyi) charge'iga oktabrdagi to'lov → LEGACY_SERVICE_MONTH (fiksa bilan ikki marta to'lash xavfi — inson qaror qiladi)
+      const r1 = await pay(s.id, FEE, "2026-10-10T05:00:00Z", "m1");
+      const e1 = await earningsOf(r1.payment.id);
+      expect(e1).toHaveLength(1);
+      expect(e1[0]).toMatchObject({ teacherId: teacher.id, serviceMonth: 9, earningMonth: 10, amount: 400_000, status: "NEEDS_REVIEW", reviewReason: "LEGACY_SERVICE_MONTH", settlementPeriodId: null });
+      expect(JSON.parse(e1[0].snapshot ?? "{}").cutoverAt).toBe(new Date(CUTOVER_OCT).toISOString());
+      // Cutover'dan OLDINGI to'lov (sentabr 25, oktabrdan qo'shiladigan o'quvchi — sentabrda charge yo'q) → kredit;
+      // oktabr charge'iga qo'llanganda → PRE_CUTOVER_PAYMENT
+      const sAdv = await mkStudent(group.id, monthStart(OCT), "M-advance");
+      const r2 = await pay(sAdv.id, FEE, "2026-09-25T05:00:00Z", "m2");
+      expect(r2.allocations).toHaveLength(0);
+      expect(r2.balance.credit).toBe(FEE);
+      const sync = await syncStudentBilling(p, { studentId: sAdv.id, upTo: OCT, actorId: ids.director, now: T("2026-10-12T05:00:00Z") });
+      expect(sync.creditApplied.map((a) => [a.paymentId, a.amount])).toEqual([[r2.payment.id, FEE]]);
+      const e2 = await earningsOf(r2.payment.id);
+      expect(e2).toHaveLength(1);
+      expect(e2[0]).toMatchObject({ serviceMonth: 10, earningMonth: 9, amount: 400_000, status: "NEEDS_REVIEW", reviewReason: "PRE_CUTOVER_PAYMENT" });
+      // Cutover'dan keyingi oddiy to'lov — avvalgidek POSTED
+      const s2 = await mkStudent(group.id, monthStart(OCT), "M-student-2");
+      const r3 = await pay(s2.id, FEE, "2026-10-15T05:00:00Z", "m3");
+      expect((await earningsOf(r3.payment.id))[0]).toMatchObject({ status: "POSTED", reviewReason: null, amount: 400_000 });
+    } finally {
+      await p.setting.update({ where: { key: "finance.v2.cutoverAt" }, data: { value: "2026-08-01T00:00:00+05:00" } });
+    }
+  });
+
+  it("backfill billing: narx belgilanmagan guruh → XATO (soxta kredit yo'q); --allow-unpriced bilan o'tkazib yuboriladi", async () => {
+    const p = db.prisma;
+    const prog = await p.program.create({ data: { name: "Narxsiz kurs" } });
+    const g = await p.group.create({ data: { name: "N-01", programId: prog.id, branchId: ids.branch, createdAt: monthStart(AUG) } });
+    const s = await mkStudent(g.id, monthStart(SEP), "N-student");
+    await expect(backfillBilling(p, { dryRun: true, upTo: OCT, now: T("2026-10-05T05:00:00Z") })).rejects.toThrow(/Narx belgilanmagan/);
+    const r = await backfillBilling(p, { dryRun: true, upTo: OCT, now: T("2026-10-05T05:00:00Z"), allowUnpriced: true });
+    expect(r.unpricedGroups[g.id]).toBe(2); // sen, okt
+    expect(await p.studentCharge.count({ where: { studentId: s.id } })).toBe(0);
   });
 
   it("pul invariantlari: taqsimot ≤ to'lov, qaytarim ≤ to'lov, payout ≤ gross, balans = ΣIN−ΣOUT, transfer OUT=IN va P&L/cash flow'ga kirmaydi", async () => {

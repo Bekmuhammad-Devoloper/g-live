@@ -115,9 +115,19 @@ TSX scripts/finance-v2/reconcile.ts snapshot --db "$COPY" --out "$WORK/post.json
 TSX scripts/finance-v2/reconcile.ts compare --before "$WORK/pre.json" --after "$WORK/post.json" 2>&1 | grep -v "prisma-config\|deprecated" | tail -30 || stopnow "reconciliation UNEXPECTED (migratsiya)"
 [ "$STOP" = 1 ] && exit 2
 
+section "7b. Narx konfiguratsiyasi (nusxa, read-only): guruh/kurs narxlari"
+node -e "const {PrismaClient}=require('@prisma/client');const p=new PrismaClient({datasourceUrl:'file:$COPY'});(async()=>{const gs=await p.group.findMany({select:{id:true,name:true,monthlyFee:true,program:{select:{name:true,monthlyFee:true}},_count:{select:{students:true}}}});const st=await p.setting.findUnique({where:{key:'finance.defaultMonthlyFee'}});console.log('finance.defaultMonthlyFee:',st?st.value:'(yo\\'q)');for(const g of gs){const fee=(g.monthlyFee&&g.monthlyFee>0)?g.monthlyFee+' (guruh)':(g.program.monthlyFee&&g.program.monthlyFee>0)?g.program.monthlyFee+' (kurs)':'NARX YO\\'Q';console.log('  '+g.name+' ['+g.program.name+'] o\\'quvchi='+g._count.students+' narx='+fee)}})().finally(()=>p.\$disconnect())" < /dev/null
+
 section "8. Backfill DRY-RUN (nusxada, yozmaydi)"
 tstart backfill-dry
-for st in billing payments expenses salary; do
+BILLING_FLAGS=""
+echo "--- stage billing (dry-run, qat'iy: narxsiz oy = XATO)"
+if TSX scripts/finance-v2/backfill.ts --db "$COPY" --stage billing --dry-run 2>&1 | grep -v "prisma-config\|deprecated" | tail -25; then :; else
+  fail "BLOCKER: billing backfill — narx belgilanmagan guruhlar (Group/Program.monthlyFee yoki finance.defaultMonthlyFee kiritilmagan) → legacy qarz hisoblanmaydi, to'lovlar soxta kredit bo'ladi"
+  BILLING_FLAGS="--allow-unpriced"; echo "   ↳ simulyatsiya davom etishi uchun keyingi bosqichlar --allow-unpriced bilan (PROD CUTOVER'DA RUXSAT ETILMAYDI)"
+  TSX scripts/finance-v2/backfill.ts --db "$COPY" --stage billing --dry-run --allow-unpriced 2>&1 | grep -E "unpriced|Skipped|created|✓" | tail -6
+fi
+for st in payments expenses salary; do
   echo "--- stage $st (dry-run)"; TSX scripts/finance-v2/backfill.ts --db "$COPY" --stage "$st" --dry-run 2>&1 | grep -v "prisma-config\|deprecated" | tail -25 || fail "backfill dry-run $st"
 done
 TSX scripts/finance-v2/reconcile.ts snapshot --db "$COPY" --out "$WORK/post-dry.json" > /dev/null 2>&1
@@ -128,7 +138,8 @@ section "9. Backfill REAL (nusxada) → verify → V2 sonlar (A)"
 tstart backfill-real
 for st in billing payments verify salary expenses; do
   tstart "backfill:$st"
-  TSX scripts/finance-v2/backfill.ts --db "$COPY" --stage "$st" 2>&1 | grep -v "prisma-config\|deprecated" | tail -25 || fail "backfill $st"
+  EXTRA=""; [ "$st" = billing ] && EXTRA="$BILLING_FLAGS"
+  TSX scripts/finance-v2/backfill.ts --db "$COPY" --stage "$st" $EXTRA 2>&1 | grep -v "prisma-config\|deprecated" | tail -25 || fail "backfill $st"
   tend "backfill:$st"
 done
 TSX scripts/finance-v2/v2-counts.ts --db "$COPY" --out "$WORK/counts-A.json" > /dev/null 2>&1 || fail "v2-counts A"
@@ -150,7 +161,8 @@ if(bad){console.log('  ✗ UNEXPECTED: '+bad+' farq');process.exit(1)} console.l
 section "10. Backfill IKKINCHI marta (idempotency) → sonlar (B); A = B shart"
 tstart backfill-second
 for st in billing payments salary expenses; do
-  TSX scripts/finance-v2/backfill.ts --db "$COPY" --stage "$st" 2>&1 | grep -E "^\{|posted|created|existing|skipped|✓|✗|UNEXPECTED" | tail -4 || fail "backfill (2) $st"
+  EXTRA=""; [ "$st" = billing ] && EXTRA="$BILLING_FLAGS"
+  TSX scripts/finance-v2/backfill.ts --db "$COPY" --stage "$st" $EXTRA 2>&1 | grep -E "^\{|posted|created|existing|skipped|✓|✗|UNEXPECTED" | tail -4 || fail "backfill (2) $st"
 done
 TSX scripts/finance-v2/v2-counts.ts --db "$COPY" --out "$WORK/counts-B.json" > /dev/null 2>&1 || fail "v2-counts B"
 node -e "

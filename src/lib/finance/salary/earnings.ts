@@ -20,7 +20,8 @@ import { isUniqueViolation } from "../db";
 import { FinanceError } from "../errors";
 import { financeAudit } from "../audit";
 import { applyRateBp } from "../money";
-import { tashkentYearMonth, yearMonthKey, type YearMonth } from "../period";
+import { cutoverAtFrom } from "../cutover";
+import { monthStart, tashkentYearMonth, yearMonthKey, type YearMonth } from "../period";
 import { assignmentsForService } from "./assignments";
 import { computeEligibility } from "./eligibility";
 import { settlementPeriodFor } from "./periods";
@@ -29,6 +30,8 @@ import { resolveRule, type RuleView } from "./rules";
 
 export interface EarningContext {
   actorId?: string | null;
+  /** Berilmasa `Setting finance.v2.cutoverAt` (tranzaksiya orqali) */
+  cutoverAt?: Date;
 }
 
 export interface EarningOutcome {
@@ -67,6 +70,8 @@ async function planAssignments(db: FinanceDb, charge: { groupId: string; program
 /** Allocation'lar uchun earning yaratadi (tranzaksiya ichida chaqiriladi) */
 export async function createEarningsForAllocations(db: FinanceDb, allocations: PaymentAllocation[], ctx: EarningContext = {}): Promise<EarningOutcome> {
   const out: EarningOutcome = { created: [], existing: 0, skipped: [] };
+  if (allocations.length === 0) return out;
+  const cutoverAt = ctx.cutoverAt ?? (await cutoverAtFrom(db));
   for (const alloc of allocations) {
     if (alloc.kind !== "ALLOCATION") continue;
     const charge = await db.studentCharge.findUnique({ where: { id: alloc.chargeId } });
@@ -77,6 +82,8 @@ export async function createEarningsForAllocations(db: FinanceDb, allocations: P
 
     const serviceMonth: YearMonth = { year: charge.serviceYear, month: charge.serviceMonth };
     const earningMonth = tashkentYearMonth(payment.receivedAt);
+    // S1 cutover qo'riqchisi: legacy xizmat oyi yoki cutover'dan oldingi to'lov (legacy kredit) — avtomatik POSTED emas
+    const cutoverReason: EarningReviewReason | null = monthStart(serviceMonth) < cutoverAt ? "LEGACY_SERVICE_MONTH" : payment.receivedAt < cutoverAt ? "PRE_CUTOVER_PAYMENT" : null;
     const policy = await resolveSalaryPolicy(db, charge.branchId, serviceMonth);
     const plans = await planAssignments(db, { groupId: charge.groupId, programId: charge.programId, branchId: charge.branchId, studentId: charge.studentId }, serviceMonth);
     if (plans.length === 0) { out.skipped.push({ allocationId: alloc.id, reason: "xizmat oyida tayinlash yo'q" }); continue; }
@@ -92,7 +99,7 @@ export async function createEarningsForAllocations(db: FinanceDb, allocations: P
       if (already) { out.existing++; continue; }
       const rateBp = plan.rule?.rateBp ?? 0;
       const amount = applyRateBp(eligibility.eligible, rateBp);
-      const reviewReason = plan.reviewReason ?? eligibility.reviewReason;
+      const reviewReason = cutoverReason ?? plan.reviewReason ?? eligibility.reviewReason;
       if (amount === 0 && !reviewReason && !policy.includeZeroAmounts) continue;
       const status = reviewReason ? "NEEDS_REVIEW" : "POSTED";
       const settlement = status === "POSTED" ? await settlementPeriodFor(db, plan.assignment.teacherId, earningMonth) : null;
@@ -106,7 +113,7 @@ export async function createEarningsForAllocations(db: FinanceDb, allocations: P
         attendance: eligibility.attendance ? { ...eligibility.attendance, reason: eligibility.reviewReason } : null,
         studentStatusAtAllocation: eligibility.studentStatus,
         base: eligibility.base, eligible: eligibility.eligible, amount, notes: eligibility.notes, reviewReason,
-        earningMonth: yearMonthKey(earningMonth), tz: "Asia/Tashkent",
+        earningMonth: yearMonthKey(earningMonth), cutoverAt: cutoverAt.toISOString(), tz: "Asia/Tashkent",
       };
       try {
         const row = await db.teacherEarning.create({

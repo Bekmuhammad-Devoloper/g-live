@@ -13,6 +13,7 @@
 import type { Prisma, PrismaClient } from "@prisma/client";
 
 import { withFinanceTx } from "../db";
+import { FinanceError } from "../errors";
 import { accountForMethod } from "../accounts/accounts";
 import { studentBalance } from "../billing/balance";
 import { createManualDebtCharge, ensureMonthlyCharges } from "../billing/charges";
@@ -23,6 +24,8 @@ import { applyStudentCredit } from "../payments/allocate";
 import { tashkentYearMonth, type YearMonth } from "../period";
 
 export interface BackfillOptions {
+  /** narx belgilanmagan oylarni o'tkazib yuborishga ruxsat (standart: XATO) */
+  allowUnpriced?: boolean;
   /** Yozmaydi — faqat nima qilinishini hisoblaydi */
   dryRun?: boolean;
   cutoverAt?: Date;
@@ -41,6 +44,8 @@ export interface BillingBackfillReport {
   chargesCreated: number;
   chargesExisting: number;
   chargesSkipped: number;
+  /** narx belgilanmagan guruhlar (guruh id → o'tkazib yuborilgan oylar soni) */
+  unpricedGroups: Record<string, number>;
   manualDebtsCreated: number;
   manualDebtsExisting: number;
   createdAmount: number;
@@ -57,7 +62,7 @@ export async function backfillBilling(client: PrismaClient, o: BackfillOptions =
   const upTo = o.upTo ?? tashkentYearMonth(now);
   const batchSize = o.batchSize ?? 25;
   const log = o.log ?? (() => {});
-  const report: BillingBackfillReport = { students: 0, historyChanged: 0, chargesCreated: 0, chargesExisting: 0, chargesSkipped: 0, manualDebtsCreated: 0, manualDebtsExisting: 0, createdAmount: 0, manualDebtAmount: 0, dryRun: !!o.dryRun };
+  const report: BillingBackfillReport = { students: 0, historyChanged: 0, chargesCreated: 0, chargesExisting: 0, chargesSkipped: 0, unpricedGroups: {}, manualDebtsCreated: 0, manualDebtsExisting: 0, createdAmount: 0, manualDebtAmount: 0, dryRun: !!o.dryRun };
 
   const students = await client.student.findMany({ select: { id: true }, orderBy: { createdAt: "asc" } });
   report.students = students.length;
@@ -72,6 +77,7 @@ export async function backfillBilling(client: PrismaClient, o: BackfillOptions =
         report.chargesCreated += r.created.length;
         report.chargesExisting += r.existing;
         report.chargesSkipped += r.skipped.length;
+        for (const sk of r.skipped) report.unpricedGroups[sk.groupId] = (report.unpricedGroups[sk.groupId] ?? 0) + 1;
         report.createdAmount += r.created.reduce((a, c) => a + c.finalAmount, 0);
 
         // Eski PENDING (qo'lda qarz) → MANUAL_DEBT charge; Payment qatoriga legacyRole="DEBT"
@@ -94,6 +100,11 @@ export async function backfillBilling(client: PrismaClient, o: BackfillOptions =
       if (!(e instanceof DryRunRollback)) throw e;
     }
     log(`billing: ${Math.min(i + batchSize, students.length)}/${students.length} o'quvchi — charge +${report.chargesCreated} (bor ${report.chargesExisting}), qarz +${report.manualDebtsCreated}`);
+  }
+  // Narxsiz oy = legacy qarz hisoblanmaydi → to'lovlar soxta "kredit" bo'lib qoladi. Bu moliyaviy faktni taxmin
+  // qilish emas, TO'XTASH: avval guruh/kurs narxi (yoki finance.defaultMonthlyFee) kiritiladi, keyin backfill.
+  if (report.chargesSkipped > 0 && !o.allowUnpriced) {
+    throw new FinanceError("validation", `Narx belgilanmagan: ${Object.keys(report.unpricedGroups).length} guruh, ${report.chargesSkipped} o'quvchi-oy — Group.monthlyFee / Program.monthlyFee / Setting finance.defaultMonthlyFee kiriting (yoki --allow-unpriced)`, { unpricedGroups: report.unpricedGroups, dryRun: report.dryRun });
   }
   return report;
 }

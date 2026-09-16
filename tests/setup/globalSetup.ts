@@ -19,4 +19,11 @@ export default function setup(): void {
     env: { ...process.env, DATABASE_URL: `file:${TEMPLATE_DB}` },
     stdio: "pipe",
   });
+  // Testlar uchun cutover = 2026-08-01 00:00 Tashkent (prod standarti 2026-10-01): avgust+ xizmat oylari V2.
+  // Cutover qo'riqchisi (PRE_CUTOVER_PAYMENT / LEGACY_SERVICE_MONTH) alohida testda sozlama o'zgartirib tekshiriladi.
+  execFileSync("node", ["-e", `
+    const { PrismaClient } = require("@prisma/client");
+    const p = new PrismaClient({ datasourceUrl: process.env.DATABASE_URL });
+    p.setting.upsert({ where: { key: "finance.v2.cutoverAt" }, update: { value: "2026-08-01T00:00:00+05:00" }, create: { key: "finance.v2.cutoverAt", value: "2026-08-01T00:00:00+05:00" } }).finally(() => p.$disconnect());
+  `], { cwd: path.resolve(__dirname, "../.."), env: { ...process.env, DATABASE_URL: `file:${TEMPLATE_DB}` }, stdio: "pipe" });
 }
