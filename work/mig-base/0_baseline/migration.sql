@@ -22,7 +22,6 @@ CREATE TABLE "BranchSlot" (
     "startTime" TEXT NOT NULL,
     "endTime" TEXT NOT NULL,
     "note" TEXT,
-    "capacity" INTEGER,
     "createdById" TEXT,
     "createdAt" DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
     "updatedAt" DATETIME NOT NULL,
@@ -125,14 +124,12 @@ CREATE TABLE "Lead" (
     "groupId" TEXT,
     "enrollEditCount" INTEGER NOT NULL DEFAULT 0,
     "kanbanColumnId" TEXT,
-    "branchSlotId" TEXT,
     "createdAt" DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
     "updatedAt" DATETIME NOT NULL,
     CONSTRAINT "Lead_branchId_fkey" FOREIGN KEY ("branchId") REFERENCES "Branch" ("id") ON DELETE SET NULL ON UPDATE CASCADE,
     CONSTRAINT "Lead_managerId_fkey" FOREIGN KEY ("managerId") REFERENCES "User" ("id") ON DELETE SET NULL ON UPDATE CASCADE,
     CONSTRAINT "Lead_studentId_fkey" FOREIGN KEY ("studentId") REFERENCES "Student" ("id") ON DELETE SET NULL ON UPDATE CASCADE,
-    CONSTRAINT "Lead_groupId_fkey" FOREIGN KEY ("groupId") REFERENCES "Group" ("id") ON DELETE SET NULL ON UPDATE CASCADE,
-    CONSTRAINT "Lead_branchSlotId_fkey" FOREIGN KEY ("branchSlotId") REFERENCES "BranchSlot" ("id") ON DELETE SET NULL ON UPDATE CASCADE
+    CONSTRAINT "Lead_groupId_fkey" FOREIGN KEY ("groupId") REFERENCES "Group" ("id") ON DELETE SET NULL ON UPDATE CASCADE
 );
 
 -- CreateTable
