@@ -10,7 +10,7 @@ import type { SessionUser } from "@/lib/auth";
 import { withFinanceTx, type FinanceDb } from "../db";
 import { FinanceError } from "../errors";
 import { financeAudit } from "../audit";
-import { assertBranchAccess, requireFinancePermission } from "../permissions";
+import { assertBranchAccess, hasFinancePermission, requireFinancePermission } from "../permissions";
 import { postLedger } from "../ledger/post";
 import { tashkentYearMonth } from "../period";
 import { assertPeriodOpen } from "../payments/periodLock";
@@ -40,8 +40,14 @@ export async function createTransferTx(db: FinanceDb, raw: TransferInput, actor:
   assertBranchAccess(actor, from.branchId);
   assertBranchAccess(actor, to.branchId);
   await assertPeriodOpen(db, from.branchId, tashkentYearMonth(input.occurredAt));
+  if (to.branchId !== from.branchId) await assertPeriodOpen(db, to.branchId, tashkentYearMonth(input.occurredAt)); // qabul qiluvchi filial oyi ham ochiq bo'lsin
   const balance = await accountBalance(db, from.id);
-  if (balance < input.amount && !input.allowNegative) throw new FinanceError("insufficient", "Manba kassada mablag' yetarli emas", { balance, requested: input.amount });
+  if (balance < input.amount) {
+    // Manfiy balansga ruxsat — faqat davr yopish huquqi bor rollar (DIRECTOR/DEPUTY/ACCOUNTANT) va sabab (izoh) bilan
+    if (!input.allowNegative) throw new FinanceError("insufficient", "Manba kassada mablag' yetarli emas", { balance, requested: input.amount });
+    if (!hasFinancePermission(actor.role, "FINANCE_PERIOD_CLOSE")) throw new FinanceError("forbidden", "Manfiy balansga o'tkazma uchun ruxsat yo'q");
+    if (!input.note || input.note.trim().length < 3) throw new FinanceError("validation", "Manfiy balansga o'tkazma uchun izoh (sabab) kerak");
+  }
   const transfer = await db.transfer.create({ data: { fromAccountId: from.id, toAccountId: to.id, amount: input.amount, occurredAt: input.occurredAt, note: input.note ?? null, idempotencyKey: input.idempotencyKey, createdById: actor.userId } });
   await postLedger(db, { accountId: from.id, branchId: from.branchId, type: "TRANSFER_OUT", direction: "OUT", amount: input.amount, referenceType: "Transfer", referenceId: transfer.id, occurredAt: input.occurredAt, actorId: actor.userId, note: input.note ?? `→ ${to.name}` });
   await postLedger(db, { accountId: to.id, branchId: to.branchId, type: "TRANSFER_IN", direction: "IN", amount: input.amount, referenceType: "Transfer", referenceId: transfer.id, occurredAt: input.occurredAt, actorId: actor.userId, note: input.note ?? `← ${from.name}` });
@@ -62,7 +68,12 @@ export async function reverseTransfer(client: PrismaClient, i: { transferId: str
     const orig = await tx.transfer.findUnique({ where: { id: i.transferId } });
     if (!orig) throw new FinanceError("not_found", "O'tkazma topilmadi");
     if (orig.status === "REVERSED" || orig.reversalOfId) throw new FinanceError("state", "O'tkazma allaqachon teskari qilingan yoki o'zi teskari");
-    const { transfer } = await createTransferTx(tx, { fromAccountId: orig.toAccountId, toAccountId: orig.fromAccountId, amount: orig.amount, occurredAt: now, note: `Teskari: ${i.reason}`, idempotencyKey: i.idempotencyKey, allowNegative: true }, actor, now);
+    const { transfer, replayed } = await createTransferTx(tx, { fromAccountId: orig.toAccountId, toAccountId: orig.fromAccountId, amount: orig.amount, occurredAt: now, note: `Teskari: ${i.reason}`, idempotencyKey: i.idempotencyKey, allowNegative: true }, actor, now);
+    if (replayed) {
+      // Kalit boshqa (aloqasiz) o'tkazmaga tegishli bo'lsa — hech narsa o'zgartirmaymiz
+      if (transfer.reversalOfId !== orig.id) throw new FinanceError("conflict", "idempotencyKey boshqa o'tkazmaga tegishli", { transferId: transfer.id });
+      return transfer;
+    }
     await tx.transfer.update({ where: { id: transfer.id }, data: { reversalOfId: orig.id } });
     await tx.transfer.update({ where: { id: orig.id }, data: { status: "REVERSED" } });
     await financeAudit(tx, { actorId: actor.userId, action: "REVERSE", entityType: "Transfer", entityId: orig.id, newValue: { reversalId: transfer.id }, reason: i.reason });

@@ -83,13 +83,13 @@ export async function createBillingPolicyVersion(db: FinanceDb, input: CreateBil
     throw new FinanceError("validation", "Hozircha faqat FULL_MONTH qo'llab-quvvatlanadi (S3)");
   }
   const branchId = input.branchId ?? null;
-  const prev = await db.billingPolicy.findFirst({ where: { name: input.name, branchId }, orderBy: { version: "desc" } });
-  if (prev && prev.effectiveFrom >= input.effectiveFrom) {
-    throw new FinanceError("validation", "Yangi versiya oldingisidan keyingi oydan boshlanishi kerak");
-  }
-  if (prev && prev.effectiveTo === null) {
+  // Bitta doira uchun bir vaqtda BITTA siyosat (nomidan qat'i nazar); versiya raqami nom bo'yicha (unique [name, version])
+  const openSameScope = await db.billingPolicy.findMany({ where: { branchId, effectiveTo: null } });
+  for (const prev of openSameScope) {
+    if (prev.effectiveFrom >= input.effectiveFrom) throw new FinanceError("validation", "Yangi versiya oldingisidan keyingi oydan boshlanishi kerak", { previousId: prev.id });
     await db.billingPolicy.update({ where: { id: prev.id }, data: { effectiveTo: input.effectiveFrom } });
   }
+  const prev = await db.billingPolicy.findFirst({ where: { name: input.name }, orderBy: { version: "desc" } });
   const created = await db.billingPolicy.create({
     data: {
       name: input.name, branchId, version: (prev?.version ?? 0) + 1, effectiveFrom: input.effectiveFrom,

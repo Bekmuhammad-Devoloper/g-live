@@ -20,7 +20,8 @@ import { FinanceError } from "../errors";
 import { financeAudit } from "../audit";
 import { assertBranchAccess, requireFinancePermission } from "../permissions";
 import { postLedger } from "../ledger/post";
-import { nextMonth, yearMonthKey, type YearMonth } from "../period";
+import { assertPeriodOpen } from "../payments/periodLock";
+import { nextMonth, tashkentYearMonth, yearMonthKey, type YearMonth } from "../period";
 import { resolveRule } from "./rules";
 
 export function isSettledStatus(status: string): boolean {
@@ -80,7 +81,11 @@ export async function periodSummary(db: FinanceDb, periodId: string): Promise<Pe
   const paid = await db.salaryPayout.aggregate({ _sum: { amount: true }, where: { salaryPeriodId: periodId, status: "DONE" } });
   const paidAmount = paid._sum.amount ?? 0;
   const period = await db.salaryPeriod.findUniqueOrThrow({ where: { id: periodId }, select: { teacherId: true } });
-  const needsReviewCount = await db.teacherEarning.count({ where: { teacherId: period.teacherId, status: "NEEDS_REVIEW" } });
+  // Faqat shu davrga (yoki undan oldingi oylarga) tushadigan ko'rib chiqilmagan earning'lar tasdiqni to'xtatadi — keyingi oylarniki emas
+  const pr = await db.salaryPeriod.findUniqueOrThrow({ where: { id: periodId }, select: { year: true, month: true } });
+  const needsReviewCount = await db.teacherEarning.count({
+    where: { teacherId: period.teacherId, status: "NEEDS_REVIEW", OR: [{ earningYear: { lt: pr.year } }, { earningYear: pr.year, earningMonth: { lte: pr.month } }] },
+  });
   return {
     fixedAmount, commissionAmount, bonusAmount, kpiAmount, penaltyAmount, adjustmentAmount, grossAmount, paidAmount,
     remainingAmount: grossAmount - paidAmount, earningsCount: rows.reduce((a, r) => a + r._count._all, 0), needsReviewCount,
@@ -168,6 +173,7 @@ export async function createPayoutTx(db: FinanceDb, raw: PayoutInput, actor: Pic
   const account = await db.financialAccount.findUnique({ where: { id: input.financialAccountId } });
   if (!account || !account.isActive) throw new FinanceError("validation", "Kassa topilmadi yoki faol emas");
   assertBranchAccess(actor, account.branchId);
+  await assertPeriodOpen(db, account.branchId, tashkentYearMonth(input.paidAt)); // yopiq moliya oyiga payout yozilmaydi
   const summary = await periodSummary(db, period.id);
   if (input.amount > summary.remainingAmount) throw new FinanceError("insufficient", "Summa qoldiqdan katta", { remaining: summary.remainingAmount, requested: input.amount });
   const payout = await db.salaryPayout.create({
@@ -192,7 +198,28 @@ export async function closeSalaryPeriod(db: FinanceDb, periodId: string, actor: 
   const period = await db.salaryPeriod.findUnique({ where: { id: periodId } });
   if (!period) throw new FinanceError("not_found", "Davr topilmadi");
   if (period.status === "CLOSED") throw new FinanceError("state", "Davr allaqachon yopiq");
-  const summary = await periodSummary(db, period.id);
+  let summary = await periodSummary(db, period.id);
+  // Tasdiqlanmagan davr yopilmaydi (FIXED va boshqa earning'lar hisoblanmagan bo'lishi mumkin); gross 0 bo'lsa (hech narsa yo'q) — mumkin
+  if (!["APPROVED", "PARTIALLY_PAID", "PAID"].includes(period.status) && summary.grossAmount !== 0) {
+    throw new FinanceError("state", `Avval tasdiqlang (hozir ${period.status})`, { status: period.status });
+  }
+  if (summary.remainingAmount < 0) {
+    // Manfiy qoldiq (masalan, to'langan davrdan keyingi qaytarim tuzatishi) — keyingi OCHIQ davrga o'tkaziladi:
+    // bu davrda +X (carry-out), keyingi davrda −X (carry-in). Ikkalasi POSTED, idempotent, asl qatorlar o'zgarmaydi.
+    const carry = -summary.remainingAmount;
+    const next = await settlementPeriodFor(db, period.teacherId, nextMonth({ year: period.year, month: period.month }));
+    const base = { teacherId: period.teacherId, type: "MANUAL_ADJUSTMENT", status: "POSTED", createdById: actor.userId } as const;
+    for (const row of [
+      { settlementPeriodId: period.id, amount: carry, earningYear: period.year, earningMonth: period.month, idempotencyKey: `carry-out:${period.id}`, note: "Manfiy qoldiq keyingi davrga o'tkazildi (carry-out)" },
+      { settlementPeriodId: next.id, amount: -carry, earningYear: next.year, earningMonth: next.month, idempotencyKey: `carry-in:${period.id}`, note: `Oldingi davr (${yearMonthKey({ year: period.year, month: period.month })}) manfiy qoldig'i (carry-in)` },
+    ]) {
+      const exists = await db.teacherEarning.findUnique({ where: { idempotencyKey: row.idempotencyKey }, select: { id: true } });
+      if (exists) continue;
+      await db.teacherEarning.create({ data: { ...base, serviceYear: row.earningYear, serviceMonth: row.earningMonth, earningYear: row.earningYear, earningMonth: row.earningMonth, settlementPeriodId: row.settlementPeriodId, baseAmount: row.amount, eligibleAmount: row.amount, amount: row.amount, idempotencyKey: row.idempotencyKey, snapshot: JSON.stringify({ carryForward: true, fromPeriodId: period.id, toPeriodId: next.id, amount: carry, note: row.note }) } });
+    }
+    await financeAudit(db, { actorId: actor.userId, action: "CARRY_FORWARD", entityType: "SalaryPeriod", entityId: period.id, newValue: { amount: -carry, toPeriodId: next.id, toPeriod: yearMonthKey({ year: next.year, month: next.month }) }, reason });
+    summary = await periodSummary(db, period.id);
+  }
   if (summary.remainingAmount !== 0) throw new FinanceError("state", "Qoldiq 0 bo'lmagan davr yopilmaydi", { remaining: summary.remainingAmount });
   await writeSnapshot(db, period.id);
   const updated = await db.salaryPeriod.update({ where: { id: period.id }, data: { status: "CLOSED", closedAt: new Date(), closedById: actor.userId } });

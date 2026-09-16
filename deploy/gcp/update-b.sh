@@ -73,31 +73,41 @@ fi
 mkdir -p "$BACKUP_DIR" "$WORK_DIR"
 TSX="$APP/node_modules/.bin/tsx"
 
-# 4a. Backup (ilova ishlab turganda — VACUUM INTO tranzaksion izchil). Verify o'tmasa migratsiya BOSHLANMAYDI.
-if ! BK_OUT=$("$TSX" scripts/finance-v2/backup-db.ts --dir "$BACKUP_DIR" --label "deploy-${NEW:0:7}" 2>&1); then
-  echo "$BK_OUT" | grep -vE "deprecated|pris.ly/prisma-config" | tail -20
-  echo "❌ Backup yiqildi — migratsiya boshlanmadi"; rollback_code; exit 1
-fi
-BK=$(echo "$BK_OUT" | sed -n 's/^✓ backup tayyor: //p' | tail -1)
-if [ -z "$BK" ] || [ ! -f "$BK" ]; then echo "$BK_OUT" | tail -20; echo "❌ Backup fayli aniqlanmadi"; rollback_code; exit 1; fi
-echo "backup: $BK"
-
-# 4b. Migratsiya paytida ilova TO'XTATILADI: Prisma SQLite'da yiqilgan migratsiya rollback
+# 4a. Migratsiya paytida ilova TO'XTATILADI: Prisma SQLite'da yiqilgan migratsiya rollback
 #     bo'lmaydi (qisman qo'llanadi), jadval qayta qurish paytida jonli yozuvlar bo'lmasin.
+#     Backup ham ILOVA TO'XTAGANDAN KEYIN olinadi — backup va migratsiya orasida birorta yozuv yo'qolmasin.
 #     Migratsiya bir necha soniya (baza ~2 MB).
 # gl-ami (qo'ng'iroq tarixini bazaga yozadi) ham to'xtatiladi — migratsiya paytida bazaga yozuvchi qolmasin
 sudo systemctl stop gl-edu gl-ami
+# Yiqilish yo'li: kod eski commit'ga qaytariladi va Prisma client ESKI sxema uchun qayta yaratiladi
+# (yangi client eski bazadan yo'q ustunlarni so'raydi), keyin servislar ishga tushiriladi.
+start_old_app() {
+  rollback_code
+  npx prisma generate 2>&1 | grep -E "Generated" || true
+  sudo systemctl start gl-edu gl-ami
+  sleep 3
+  echo "Ilova eski nusxada: $(curl -s -o /dev/null -w 'HTTP %{http_code}' --max-time 20 http://127.0.0.1:3000/login || echo 000)"
+}
+if ! BK_OUT=$("$TSX" scripts/finance-v2/backup-db.ts --dir "$BACKUP_DIR" --label "deploy-${NEW:0:7}" 2>&1); then
+  echo "$BK_OUT" | grep -vE "deprecated|pris.ly/prisma-config" | tail -20
+  echo "❌ Backup yiqildi — migratsiya boshlanmadi (baza o'zgarmagan)"; start_old_app; exit 1
+fi
+BK=$(echo "$BK_OUT" | sed -n 's/^✓ backup tayyor: //p' | tail -1)
+if [ -z "$BK" ] || [ ! -f "$BK" ]; then echo "$BK_OUT" | tail -20; echo "❌ Backup fayli aniqlanmadi"; start_old_app; exit 1; fi
+echo "backup: $BK"
+
+# 4b. Migratsiya
 if ! "$TSX" scripts/finance-v2/migrate-safe.ts --no-backup --workdir "$WORK_DIR" 2>&1 | grep -vE "deprecated|pris.ly/prisma-config" | tail -60; then
   echo "❌ MIGRATSIYA YIQILDI — baza tekshirilgan backup'dan avtomatik tiklanmoqda: $BK"
   if "$TSX" scripts/finance-v2/restore-db.ts --backup "$BK" --db "$APP/prisma/dev.db" --i-stopped-the-app 2>&1 | tail -5; then
     echo "↩  Baza tiklandi (migratsiyadan oldingi holat)"
+    start_old_app
   else
-    echo "!!! AVTOMATIK TIKLASH YIQILDI — QO'LDA: sudo systemctl stop gl-edu; tsx scripts/finance-v2/restore-db.ts --backup $BK --db $APP/prisma/dev.db --i-stopped-the-app"
+    # Qisman migratsiyalangan bazada ilova ISHGA TUSHIRILMAYDI — keyingi yozuvlar qo'lda tiklashda yo'qolardi
+    echo "!!! AVTOMATIK TIKLASH YIQILDI — ILOVA TO'XTATILGAN HOLDA QOLDIRILDI (qisman migratsiyalangan bazada ishga tushirilmaydi)"
+    echo "!!! QO'LDA: tsx scripts/finance-v2/restore-db.ts --backup $BK --db $APP/prisma/dev.db --i-stopped-the-app; keyin: git reset --hard $OLD; npx prisma generate; sudo systemctl start gl-edu gl-ami"
+    rollback_code
   fi
-  rollback_code
-  sudo systemctl start gl-edu gl-ami
-  sleep 3
-  echo "Ilova eski nusxada: $(curl -s -o /dev/null -w 'HTTP %{http_code}' --max-time 20 http://127.0.0.1:3000/login || echo 000)"
   exit 1
 fi
 # Migratsiya muvaffaqiyatli — eski build additive sxema bilan ishlaydi; build tugaguncha ilova ishlab tursin

@@ -42,7 +42,8 @@ export interface AccountOverviewRow extends AccountBalance {
 /** Kassalar ro'yxati balanslari bilan (filial bo'yicha; null = hammasi) */
 export async function accountsOverview(db: FinanceDb, opts: { branchId?: string | null; includeInactive?: boolean; at?: Date } = {}): Promise<AccountOverviewRow[]> {
   const accounts = await db.financialAccount.findMany({
-    where: { ...(opts.branchId !== undefined ? { branchId: opts.branchId } : {}), ...(opts.includeInactive ? {} : { isActive: true }) },
+    // branchId null/undefined = barcha kassalar (hisobotlar bilan bir xil semantika); markaziy kassalar alohida filtrlanmaydi
+    where: { ...(opts.branchId ? { branchId: opts.branchId } : {}), ...(opts.includeInactive ? {} : { isActive: true }) },
     orderBy: [{ branchId: "asc" }, { type: "asc" }, { name: "asc" }],
   });
   const balances = await accountBalances(db, accounts.map((a) => a.id), opts.at);

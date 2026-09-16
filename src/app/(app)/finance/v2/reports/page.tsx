@@ -60,6 +60,8 @@ export default async function ReportsV2Page({ searchParams }: { searchParams: Pr
   } else if (tab === "balances") {
     const rows = await studentBalancesReport(prisma, { branchId, onlyNonZero: true });
     body = <Card padded={false}><Table head={<tr><th className="px-4 py-2 text-left">{fin(L, "student")}</th><th className="px-3 py-2 text-right">{fin(L, "debt")}</th><th className="px-3 py-2 text-right">{fin(L, "credit")}</th><th className="px-3 py-2 text-right">{fin(L, "net")}</th></tr>}>{rows.length === 0 ? <EmptyRow colSpan={4} text={fin(L, "empty")} /> : rows.map((x) => <tr key={x.studentId} className="text-sm"><td className="px-4 py-2">{x.fullName}</td><td className="px-3 py-2 text-right tabular-nums">{formatMoney(x.debt, L)}</td><td className="px-3 py-2 text-right tabular-nums">{formatMoney(x.credit, L)}</td><td className="px-3 py-2 text-right tabular-nums font-semibold">{formatMoney(x.net, L)}</td></tr>)}</Table></Card>;
+  } else if (tab === "salary" && !can("SALARY_VIEW")) {
+    body = <Forbidden title={fin(L, "forbiddenTitle")} body={fin(L, "forbidden")} />;
   } else if (tab === "salary") {
     const [earn, periods, unpaid, payouts] = await Promise.all([teacherEarningsReport(prisma, ym, branchId), salaryPeriodsReport(prisma, { ym }), unpaidSalaryReport(prisma), payoutsReport(prisma, r)]);
     body = <div className="grid gap-4 md:grid-cols-2">

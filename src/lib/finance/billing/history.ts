@@ -124,11 +124,17 @@ export function intervalTouchesMonth(iv: Pick<Interval, "from" | "to">, ym: Year
   return iv.from < e && (iv.to === null || iv.to > s);
 }
 
-/** Interval xizmat oyini TO'LIQ qoplaydimi (S4: to'liq oy FROZEN → charge 0) */
+const DAY_MS = 24 * 60 * 60 * 1000;
+
+/**
+ * Interval xizmat oyini TO'LIQ qoplaydimi (S4: to'liq oy FROZEN → charge 0).
+ * KUN aniqligida: holat o'zgarishi hook orqali kunning istalgan vaqtida yoziladi — oyning 1-kuni ichida
+ * boshlangan va oxirgi kuni ichida tugagan interval ham "butun oy" hisoblanadi (biznes kuni granulyarligi).
+ */
 export function intervalCoversMonth(iv: Pick<Interval, "from" | "to">, ym: YearMonth): boolean {
   const s = monthStart(ym);
   const e = monthEnd(ym);
-  return iv.from <= s && (iv.to === null || iv.to >= e);
+  return iv.from.getTime() < s.getTime() + DAY_MS && (iv.to === null || iv.to.getTime() > e.getTime() - DAY_MS);
 }
 
 /** Berilgan lahzada faol interval (holat uchun) */

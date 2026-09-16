@@ -49,7 +49,16 @@ interface AssignmentPlan {
 }
 
 async function planAssignments(db: FinanceDb, charge: { groupId: string; programId: string | null; branchId: string | null; studentId: string }, serviceMonth: YearMonth): Promise<AssignmentPlan[]> {
-  const assignments = await assignmentsForService(db, charge.groupId, serviceMonth);
+  const raw = await assignmentsForService(db, charge.groupId, serviceMonth);
+  // Bir o'qituvchi bir oyda bir nechta interval (INFERRED → KNOWN ajratish, qayta tayinlash) = BITTA tayinlash;
+  // KNOWN interval bo'lsa u olinadi (INFERRED shubhasi qolmaydi)
+  const byTeacherRole = new Map<string, GroupTeacherAssignment>();
+  for (const a of raw) {
+    const k = `${a.teacherId}:${a.role}`;
+    const prev = byTeacherRole.get(k);
+    if (!prev || (prev.source === "INFERRED" && a.source === "KNOWN")) byTeacherRole.set(k, a);
+  }
+  const assignments = [...byTeacherRole.values()];
   const mains = assignments.filter((a) => a.role === "MAIN");
   const plans: AssignmentPlan[] = [];
   for (const a of assignments) {
@@ -141,15 +150,45 @@ export async function postReviewedEarning(db: FinanceDb, earningId: string, acto
   const e = await db.teacherEarning.findUnique({ where: { id: earningId } });
   if (!e) throw new FinanceError("not_found", "Earning topilmadi");
   if (e.status !== "NEEDS_REVIEW") throw new FinanceError("state", "Faqat NEEDS_REVIEW earning tasdiqlanadi");
+  if (e.type === "REFUND_ADJUSTMENT" && e.reversalOfId) {
+    // Manfiy tuzatish asl komissiyasidan alohida POSTED bo'lmaydi (faqat manfiy yozuv qolmasin)
+    const orig = await db.teacherEarning.findUnique({ where: { id: e.reversalOfId }, select: { status: true } });
+    if (orig && orig.status !== "POSTED") throw new FinanceError("state", "Avval asl komissiyani ko'rib chiqing (tasdiqlang yoki rad eting)", { originalId: e.reversalOfId, originalStatus: orig.status });
+  }
   const settlement = await settlementPeriodFor(db, e.teacherId, { year: e.earningYear, month: e.earningMonth });
   const updated = await db.teacherEarning.update({ where: { id: earningId }, data: { status: "POSTED", reviewedAt: new Date(), reviewedById: actor.userId, settlementPeriodId: settlement.id } });
+  // Asl komissiya tasdiqlansa, unga bog'liq ko'rib chiqilmagan qaytarim tuzatishlari ham tasdiqlanadi (juftlik buzilmasin)
+  if (e.type === "PAYMENT_COMMISSION") {
+    const children = await db.teacherEarning.findMany({ where: { reversalOfId: e.id, status: "NEEDS_REVIEW", type: "REFUND_ADJUSTMENT" } });
+    for (const c of children) {
+      const cs = await settlementPeriodFor(db, c.teacherId, { year: c.earningYear, month: c.earningMonth });
+      await db.teacherEarning.update({ where: { id: c.id }, data: { status: "POSTED", reviewedAt: new Date(), reviewedById: actor.userId, settlementPeriodId: cs.id } });
+      await financeAudit(db, { actorId: actor.userId, action: "POST", entityType: "TeacherEarning", entityId: c.id, oldValue: { status: "NEEDS_REVIEW" }, newValue: { status: "POSTED", settlementPeriodId: cs.id, amount: c.amount, cascadeOf: e.id }, reason });
+    }
+  }
   await financeAudit(db, { actorId: actor.userId, action: "POST", entityType: "TeacherEarning", entityId: earningId, oldValue: { status: "NEEDS_REVIEW", reviewReason: e.reviewReason }, newValue: { status: "POSTED", settlementPeriodId: settlement.id, amount: e.amount }, reason });
+  return updated;
+}
+
+/** NEEDS_REVIEW → REJECTED (maosh hisobiga kirmaydi; qator o'chirilmaydi, sabab audit'da). Bog'liq qaytarim tuzatishlari ham rad etiladi. */
+export async function rejectReviewedEarning(db: FinanceDb, earningId: string, actor: { userId: string }, reason: string): Promise<TeacherEarning> {
+  if (reason.trim().length < 3) throw new FinanceError("validation", "Sabab kamida 3 belgi");
+  const e = await db.teacherEarning.findUnique({ where: { id: earningId } });
+  if (!e) throw new FinanceError("not_found", "Earning topilmadi");
+  if (e.status !== "NEEDS_REVIEW") throw new FinanceError("state", "Faqat NEEDS_REVIEW earning rad etiladi");
+  const updated = await db.teacherEarning.update({ where: { id: earningId }, data: { status: "REJECTED", reviewedAt: new Date(), reviewedById: actor.userId } });
+  await financeAudit(db, { actorId: actor.userId, action: "REJECT", entityType: "TeacherEarning", entityId: earningId, oldValue: { status: "NEEDS_REVIEW", reviewReason: e.reviewReason, amount: e.amount }, newValue: { status: "REJECTED" }, reason });
+  const children = await db.teacherEarning.findMany({ where: { reversalOfId: e.id, status: "NEEDS_REVIEW" } });
+  for (const c of children) {
+    await db.teacherEarning.update({ where: { id: c.id }, data: { status: "REJECTED", reviewedAt: new Date(), reviewedById: actor.userId } });
+    await financeAudit(db, { actorId: actor.userId, action: "REJECT", entityType: "TeacherEarning", entityId: c.id, oldValue: { status: "NEEDS_REVIEW" }, newValue: { status: "REJECTED", cascadeOf: e.id }, reason });
+  }
   return updated;
 }
 
 export interface ManualEarningInput {
   teacherId: string;
-  type: "BONUS" | "KPI" | "PENALTY" | "MANUAL_ADJUSTMENT" | "FIXED";
+  type: "BONUS" | "KPI" | "PENALTY" | "MANUAL_ADJUSTMENT";
   /** PENALTY va manfiy tuzatish uchun manfiy */
   amount: number;
   earningMonth: YearMonth;
@@ -161,10 +200,14 @@ export interface ManualEarningInput {
 }
 
 /** Qo'lda earning (BONUS/KPI/PENALTY/tuzatish/FIXED) — tarixiy oy, settlement ochiq davrga */
+const MANUAL_EARNING_TYPES = new Set(["BONUS", "KPI", "PENALTY", "MANUAL_ADJUSTMENT"]);
+
 export async function createManualEarning(db: FinanceDb, i: ManualEarningInput): Promise<TeacherEarning> {
+  // FIXED faqat ensureFixedEarning orqali (idempotent `fixed:` kalit); PAYMENT_COMMISSION faqat allocation'dan — runtime tekshiruv
+  if (!MANUAL_EARNING_TYPES.has(String(i.type))) throw new FinanceError("validation", `Qo'lda earning turi noto'g'ri: ${String(i.type)}`);
   if (!Number.isSafeInteger(i.amount) || i.amount === 0) throw new FinanceError("validation", "Summa butun va 0 dan farqli bo'lishi kerak");
   if (i.type === "PENALTY" && i.amount > 0) throw new FinanceError("validation", "PENALTY manfiy bo'lishi kerak");
-  if ((i.type === "BONUS" || i.type === "KPI" || i.type === "FIXED") && i.amount < 0) throw new FinanceError("validation", `${i.type} musbat bo'lishi kerak`);
+  if ((i.type === "BONUS" || i.type === "KPI") && i.amount < 0) throw new FinanceError("validation", `${i.type} musbat bo'lishi kerak`);
   if (i.note.trim().length < 3) throw new FinanceError("validation", "Izoh kamida 3 belgi");
   const existing = await db.teacherEarning.findUnique({ where: { idempotencyKey: i.idempotencyKey } });
   if (existing) return existing;

@@ -1879,7 +1879,7 @@ model TeacherEarning {
   rateBp             Int? // PERCENT uchun (4000 = 40%)
   amount             Int // manfiy bo'lishi mumkin (adjustment)
   type               String // EARNING_TYPES: PAYMENT_COMMISSION | FIXED | BONUS | KPI | PENALTY | REFUND_ADJUSTMENT | MANUAL_ADJUSTMENT
-  status             String   @default("POSTED") // POSTED | NEEDS_REVIEW
+  status             String   @default("POSTED") // POSTED | NEEDS_REVIEW | REJECTED (rad etilgan — hisobga kirmaydi, o'chirilmaydi)
   reviewReason       String? // NO_LESSONS_FOUND | ASSISTANT_NO_RULE | RATE_SUM_EXCEEDED | LEGACY_INFERRED
   reviewedAt         DateTime?
   reviewedById       String?

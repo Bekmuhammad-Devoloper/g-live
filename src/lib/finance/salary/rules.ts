@@ -32,6 +32,13 @@ export interface RuleView {
   legacy: boolean;
 }
 
+/** Legacy PERCENT qoidasi 0..100 oralig'ida bo'lmasa — yaroqsiz (dvigatel tashlamaydi, qoida e'tiborsiz → NEEDS_REVIEW) */
+export function isRuleUsable(r: Pick<SalaryRule, "amountType" | "rateBp" | "amount">): boolean {
+  if (r.amountType !== "PERCENT") return true;
+  const bp = r.rateBp ?? r.amount * 100;
+  return Number.isInteger(bp) && bp >= 0 && bp <= 10_000;
+}
+
 export function toRuleView(r: SalaryRule): RuleView {
   const scope = (r.scope === LEGACY_SCOPE_ALL ? "GLOBAL" : r.scope) as RuleScope;
   const component = (r.amountType === "PERCENT" ? "PERCENT" : "FIXED") as CompensationComponent;
@@ -66,6 +73,7 @@ export async function createSalaryRule(db: FinanceDb, i: CreateRuleInput): Promi
   if (!(SALARY_RULE_SCOPES as readonly string[]).includes(i.scope) && i.scope !== ASSIGNMENT_RULE_SCOPE) throw new FinanceError("validation", `scope noto'g'ri: ${i.scope}`);
   if (!(SUPPORTED_COMPENSATION_TYPES as readonly string[]).includes(i.component)) throw new FinanceError("validation", "Faqat FIXED yoki PERCENT");
   if (i.scope !== "GLOBAL" && !i.targetId) throw new FinanceError("validation", `${i.scope} uchun targetId kerak`);
+  if (i.scope === ASSIGNMENT_RULE_SCOPE && i.component !== "PERCENT") throw new FinanceError("validation", "ASSIGNMENT qoidasi faqat PERCENT (FIXED oylik TEACHER qoidasi orqali)");
   if (!isTashkentMonthStart(i.effectiveFrom)) throw new FinanceError("validation", "effectiveFrom Tashkent oy boshi bo'lishi kerak");
   let rateBp: number | null = null;
   let amount = 0;
@@ -105,6 +113,8 @@ export async function endSalaryRule(db: FinanceDb, id: string, effectiveTo: Date
   const r = await db.salaryRule.findUnique({ where: { id } });
   if (!r) throw new FinanceError("not_found", "Qoida topilmadi");
   if (r.effectiveTo) throw new FinanceError("state", "Qoida allaqachon yopilgan");
+  const from = toRuleView(r).effectiveFrom;
+  if (effectiveTo <= from) throw new FinanceError("validation", "effectiveTo qoida boshlanishidan keyin bo'lishi kerak", { effectiveFrom: from.toISOString() });
   const updated = await db.salaryRule.update({ where: { id }, data: { effectiveTo, isActive: false } });
   await financeAudit(db, { actorId, action: "END", entityType: "SalaryRule", entityId: id, newValue: { effectiveTo }, reason: reason ?? null });
   return updated;
@@ -139,7 +149,7 @@ export async function resolveRule(db: FinanceDb, ctx: RuleContext, component: Co
   const allowed = new Set<RuleScope>(allowedScopes ?? [ASSIGNMENT_RULE_SCOPE, ...SALARY_RULE_PRIORITY]);
   if (ctx.assignmentRuleId && allowed.has(ASSIGNMENT_RULE_SCOPE)) {
     const r = await db.salaryRule.findUnique({ where: { id: ctx.assignmentRuleId } });
-    if (r && r.amountType === component) {
+    if (r && r.amountType === component && isRuleUsable(r)) {
       const v = toRuleView(r);
       if (activeAt(v, at)) return v;
     }
@@ -148,7 +158,7 @@ export async function resolveRule(db: FinanceDb, ctx: RuleContext, component: Co
     STUDENT: ctx.studentId, TEACHER: ctx.teacherId, GROUP: ctx.groupId, COURSE: ctx.programId, BRANCH: ctx.branchId, GLOBAL: null,
   };
   // isActive filtri YO'Q: yopilgan qoida ham o'z davri (effectiveFrom..effectiveTo) uchun tarixan amal qiladi
-  const rows = await db.salaryRule.findMany({ where: { amountType: component } });
+  const rows = (await db.salaryRule.findMany({ where: { amountType: component } })).filter(isRuleUsable);
   const views = rows.map((r) => ({ ...toRuleView(r), createdAt: r.createdAt })).filter((v) => activeAt(v, at));
   for (const scope of SALARY_RULE_PRIORITY) {
     if (!allowed.has(scope)) continue;

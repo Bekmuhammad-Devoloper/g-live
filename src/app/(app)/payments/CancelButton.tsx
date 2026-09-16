@@ -14,7 +14,11 @@ export default function CancelButton({ id, locale }: { id: string; locale: Local
     const reason = window.prompt(tr(locale, { uz: "Bekor qilish sababi (majburiy, audit uchun):", ru: "Причина отмены (обязательно, для аудита):", en: "Cancellation reason (required, for audit):", de: "Stornierungsgrund (erforderlich, für die Prüfung):" }));
     if (!reason || reason.trim().length < 3) return;
     start(async () => {
-      await cancelPayment(id, reason.trim());
+      const r = await cancelPayment(id, reason.trim());
+      if (r?.error) {
+        // Jim o'tkazilmaydi: ruxsat yo'q / davr yopiq / allaqachon bekor qilingan
+        window.alert(r.message ?? tr(locale, { uz: "Bekor qilib bo'lmadi", ru: "Не удалось отменить", en: "Could not cancel", de: "Stornierung nicht möglich" }));
+      }
       router.refresh();
     });
   }

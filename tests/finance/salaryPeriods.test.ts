@@ -104,7 +104,7 @@ describe("salary period & payout (Phase 8)", () => {
     expect(nov.month).toBe(11);
     expect((await periodSummary(p, oct.id)).grossAmount).toBe(2_550_000); // PAID davr o'zgarmadi
 
-    await expect(closeSalaryPeriod(p, nov.id, director, "Yopamiz")).rejects.toThrow(/Qoldiq/);
+    await expect(closeSalaryPeriod(p, nov.id, director, "Yopamiz")).rejects.toThrow(/tasdiqlang|Qoldiq/); // tasdiqlanmagan va qoldiqli davr yopilmaydi
     const closed = await closeSalaryPeriod(p, oct.id, director, "Oy yakunlandi");
     expect(closed.status).toBe("CLOSED");
     await expect(closeSalaryPeriod(p, oct.id, director, "yana")).rejects.toThrow(/yopiq/);

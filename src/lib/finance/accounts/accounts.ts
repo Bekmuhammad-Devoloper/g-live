@@ -9,6 +9,7 @@ import { FINANCIAL_ACCOUNT_TYPES, PAYMENT_METHOD_TO_ACCOUNT_TYPE, type Financial
 import type { FinanceDb } from "../db";
 import { isUniqueViolation } from "../db";
 import { FinanceError } from "../errors";
+import { accountBalance } from "./balances";
 import { financeAudit } from "../audit";
 import { assertMoney } from "../money";
 
@@ -120,6 +121,11 @@ export async function updateAccount(db: FinanceDb, i: UpdateAccountInput): Promi
   const acc = await db.financialAccount.findUnique({ where: { id: i.id } });
   if (!acc) throw new FinanceError("not_found", "Kassa topilmadi");
   if (i.name !== undefined && i.name.trim().length < 2) throw new FinanceError("validation", "Kassa nomi kamida 2 belgi");
+  if (i.isActive === false && acc.isActive) {
+    // Balansi 0 bo'lmagan kassa nofaol qilinmaydi — pul "ko'rinmas" bo'lib qolmasin (avval transfer bilan bo'shating)
+    const bal = await accountBalance(db, acc.id);
+    if (bal !== 0) throw new FinanceError("state", "Balansi 0 bo'lmagan kassa nofaol qilinmaydi — avval mablag'ni boshqa kassaga o'tkazing", { balance: bal });
+  }
   const updated = await db.financialAccount.update({ where: { id: i.id }, data: { ...(i.name !== undefined ? { name: i.name.trim() } : {}), ...(i.isActive !== undefined ? { isActive: i.isActive } : {}), ...(i.note !== undefined ? { note: i.note } : {}) } });
   await financeAudit(db, { actorId: i.actorId, action: "UPDATE", entityType: "FinancialAccount", entityId: i.id, oldValue: { name: acc.name, isActive: acc.isActive, note: acc.note }, newValue: { name: updated.name, isActive: updated.isActive, note: updated.note } });
   return updated;

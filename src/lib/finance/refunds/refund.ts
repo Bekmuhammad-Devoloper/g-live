@@ -60,7 +60,10 @@ async function adjustEarningsForReversal(db: FinanceDb, reversal: PaymentAllocat
     if (!e.rateBp || e.amount === 0) continue;
     // Tuzatish asl earning'ga proporsional: reversal / asl allocation × asl amount (yaxlitlash asl bilan bir xil bp orqali)
     const eligibleShare = Math.round((e.eligibleAmount * reversal.amount) / original.amount);
-    const amount = -applyRateBp(eligibleShare, e.rateBp);
+    // Yaxlitlash: qisman qaytarimlar yig'indisi asl earning'dan oshmasin (oldingi tuzatishlar hisobga olinadi)
+    const priorAdj = await db.teacherEarning.aggregate({ _sum: { amount: true }, where: { reversalOfId: e.id, type: "REFUND_ADJUSTMENT" } });
+    const remainingAdj = e.amount + (priorAdj._sum.amount ?? 0); // asl − |oldingi tuzatishlar|
+    const amount = -Math.min(applyRateBp(eligibleShare, e.rateBp), Math.max(0, remainingAdj));
     if (amount === 0) continue;
     const idempotencyKey = `alloc:${reversal.id}:asg:${e.assignmentId ?? "-"}`;
     const already = await db.teacherEarning.findUnique({ where: { idempotencyKey } });
@@ -125,7 +128,7 @@ export async function createRefundTx(db: FinanceDb, raw: RefundInput, actor: Pic
   const reversals: PaymentAllocation[] = [];
   const adjustments: TeacherEarning[] = [];
   if (toReverse > 0) {
-    const originals = await db.paymentAllocation.findMany({ where: { paymentId: payment.id, kind: "ALLOCATION" }, orderBy: [{ allocatedAt: "desc" }, { createdAt: "desc" }] });
+    const originals = await db.paymentAllocation.findMany({ where: { paymentId: payment.id, kind: "ALLOCATION" }, orderBy: [{ allocatedAt: "desc" }, { createdAt: "desc" }, { id: "desc" }] }); // LIFO, deterministik
     for (const orig of originals) {
       if (toReverse <= 0) break;
       const reversible = await reversibleOf(db, orig);

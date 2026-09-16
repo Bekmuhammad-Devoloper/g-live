@@ -20,7 +20,7 @@ import { accountForMethod } from "../accounts/accounts";
 import { postLedger } from "../ledger/post";
 import { ensureMonthlyCharges } from "../billing/charges";
 import { studentBalance, type StudentBalance } from "../billing/balance";
-import { tashkentYearMonth } from "../period";
+import { tashkentDateKey, tashkentYearMonth } from "../period";
 import { assertPeriodOpen } from "./periodLock";
 import { allocateFifo, applyStudentCredit } from "./allocate";
 
@@ -52,8 +52,8 @@ export interface AcceptPaymentResult {
   replayed: boolean;
 }
 
-const p2 = (n: number) => String(n).padStart(2, "0");
-const docNumberFor = (at: Date) => `CHK-${at.getFullYear()}${p2(at.getMonth() + 1)}${p2(at.getDate())}-${randomUUID().slice(0, 4).toUpperCase()}`;
+/** Chek raqami — Tashkent sanasi (server TZ ga bog'liq emas) + 6 belgili tasodifiy qism */
+const docNumberFor = (at: Date) => `CHK-${tashkentDateKey(at).replace(/-/g, "")}-${randomUUID().replace(/-/g, "").slice(0, 6).toUpperCase()}`;
 
 /** Sof dvigatel (tranzaksiya ichida). Action qatlami `acceptPayment` ni ishlatadi. */
 export async function acceptPaymentTx(db: FinanceDb, raw: AcceptPaymentInput, actor: Pick<SessionUser, "userId" | "role" | "branchId">, now = new Date()): Promise<AcceptPaymentResult> {
@@ -63,7 +63,11 @@ export async function acceptPaymentTx(db: FinanceDb, raw: AcceptPaymentInput, ac
   // 1. Idempotency — mavjud bo'lsa qaytaramiz
   const replay = await db.payment.findUnique({ where: { idempotencyKey: input.idempotencyKey } });
   if (replay) {
-    const allocations = await db.paymentAllocation.findMany({ where: { paymentId: replay.id }, orderBy: { createdAt: "asc" } });
+    // Replay: so'rov saqlangan to'lov bilan mos bo'lishi shart (bir kalit, boshqa summa = xato); faqat ALLOCATION qatorlari qaytadi
+    if (replay.amount !== input.amount || replay.studentId !== input.studentId) {
+      throw new FinanceError("conflict", "idempotencyKey boshqa to'lovga tegishli (summa/o'quvchi mos emas)", { paymentId: replay.id });
+    }
+    const allocations = await db.paymentAllocation.findMany({ where: { paymentId: replay.id, kind: "ALLOCATION" }, orderBy: { createdAt: "asc" } });
     return { payment: replay, allocations, creditApplied: [], balance: await studentBalance(db, replay.studentId), replayed: true };
   }
 

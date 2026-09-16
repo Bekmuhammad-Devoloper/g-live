@@ -38,6 +38,12 @@ function tashkentParts(at: Date): { year: number; month: number; day: number; ho
 }
 
 /** Berilgan lahza Tashkent taqvimida qaysi (yil, oy)ga tushadi */
+/** Tashkent sanasi `YYYY-MM-DD` (chek raqami, kunlik guruhlash) */
+export function tashkentDateKey(at: Date): string {
+  const { year, month, day } = tashkentParts(at);
+  return `${year}-${String(month).padStart(2, "0")}-${String(day).padStart(2, "0")}`;
+}
+
 export function tashkentYearMonth(at: Date): YearMonth {
   const { year, month } = tashkentParts(at);
   return { year, month };

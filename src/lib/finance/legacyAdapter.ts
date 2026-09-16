@@ -38,6 +38,8 @@ export interface LegacyPaymentInput {
   receiptUrl?: string | null;
   docNumber?: string | null;
   note?: string | null;
+  /** onlayn to'lov: provayder tranzaksiya ID (unique) — isManual=false */
+  transactionId?: string | null;
 }
 
 export type LegacyResult<T = undefined> = { ok: true; data?: T } | { ok: false; error: string; message: string };
@@ -51,6 +53,7 @@ export async function legacyAcceptPayment(s: SessionUser, i: LegacyPaymentInput)
       receiptUrl: i.receiptUrl ?? null, docNumber: i.docNumber || undefined, note: i.note ?? null,
       idempotencyKey: legacyKey([s.userId, i.studentId, i.amount, i.method, receivedAt.toISOString(), i.docNumber]),
     }, s);
+    if (i.transactionId) await prisma.payment.update({ where: { id: r.payment.id }, data: { transactionId: i.transactionId, isManual: false } });
     return { ok: true, data: { paymentId: r.payment.id, docNumber: r.payment.docNumber, receivedAt } };
   } catch (e) {
     return { ok: false, error: isFinanceError(e) ? e.code : "conflict", message: e instanceof Error ? e.message : String(e) };
@@ -82,8 +85,9 @@ export async function legacyCancelPayment(s: SessionUser, paymentId: string, rea
 
 /** V2 ga kiritilgan to'lov legacy tahrir/o'chirish bilan o'zgartirilmaydi */
 export async function isV2Payment(paymentId: string): Promise<boolean> {
-  const p = await prisma.payment.findUnique({ where: { id: paymentId }, select: { postedAt: true } });
-  return !!p?.postedAt;
+  // V2 ga kiritilgan (postedAt) YOKI backfill'da V2 obyektiga bog'langan (legacyRole DEBT/REFUND) — legacy tahrir/o'chirish yo'q
+  const p = await prisma.payment.findUnique({ where: { id: paymentId }, select: { postedAt: true, legacyRole: true } });
+  return !!p?.postedAt || !!p?.legacyRole;
 }
 
 export interface LegacyExpenseInput {
@@ -100,7 +104,9 @@ export interface LegacyExpenseInput {
 /** Legacy `createExpense` → V2 createExpense (ledger OUT) */
 export async function legacyCreateExpense(s: SessionUser, i: LegacyExpenseInput): Promise<LegacyResult<{ expenseId: string }>> {
   try {
-    const r = await createExpense(prisma, { ...i, amount: Math.trunc(i.amount), idempotencyKey: legacyKey([s.userId, i.name, i.amount, i.date.toISOString(), i.method]) }, s);
+    const r = await createExpense(prisma, { ...i, amount: Math.trunc(i.amount), idempotencyKey: legacyKey([s.userId, i.name, i.amount, i.date.toISOString(), i.method, i.categoryId, i.recipient, i.note, i.branchId]) }, s);
+    // Bir daqiqa ichida aynan bir xil xarajat — takror yuborish deb qaraladi; jim o'tkazilmaydi, foydalanuvchiga aytiladi
+    if (r.replayed) return { ok: false, error: "duplicate", message: "Aynan shu xarajat hozirgina kiritilgan (takror). Boshqa xarajat bo'lsa izoh/summani farqlang." };
     return { ok: true, data: { expenseId: r.expense.id } };
   } catch (e) {
     return { ok: false, error: isFinanceError(e) ? e.code : "conflict", message: e instanceof Error ? e.message : String(e) };

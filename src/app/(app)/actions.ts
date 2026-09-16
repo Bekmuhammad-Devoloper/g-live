@@ -6,6 +6,7 @@ import { z } from "zod";
 import { getSession, destroySession, createSession, requireSession } from "@/lib/auth";
 import { prisma } from "@/lib/db";
 import { writeAudit } from "@/lib/audit";
+import { financeV2Enabled, legacyAddDebt } from "@/lib/finance/legacyAdapter";
 import { financeAfterStudentChange } from "@/lib/finance/hooks";
 import { ROLES, type Locale } from "@/lib/constants";
 
@@ -111,7 +112,10 @@ export async function quickCreateStudent(_prev: QuickState, formData: FormData):
   await financeAfterStudentChange(student.id, s.userId); // Finance V2: a'zolik/holat tarixi
 
   // Qarzdor qilib qo'shish: PENDING to'lov = qarz (/finance/debtors bilan bir xil mantiq)
-  if (d.debt && d.debt > 0) {
+  // Finance V2 yoqilgan bo'lsa — MANUAL_DEBT charge (PENDING to'lov emas)
+  if (d.debt && d.debt > 0 && (await financeV2Enabled())) {
+    await legacyAddDebt(s, student.id, d.debt, "Boshlang'ich qarz");
+  } else if (d.debt && d.debt > 0) {
     await prisma.payment.create({
       data: {
         studentId: student.id,

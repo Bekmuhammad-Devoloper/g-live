@@ -31,7 +31,7 @@ import { createTransfer, reverseTransfer, type TransferInput } from "@/lib/finan
 import { createSalaryPolicyVersion } from "@/lib/finance/salary/policy";
 import { createSalaryRule, endSalaryRule, type CreateRuleInput } from "@/lib/finance/salary/rules";
 import { assignTeacher, endAssignment } from "@/lib/finance/salary/assignments";
-import { createManualEarning, postReviewedEarning } from "@/lib/finance/salary/earnings";
+import { createManualEarning, postReviewedEarning, rejectReviewedEarning } from "@/lib/finance/salary/earnings";
 import { approveSalaryPeriod, closeSalaryPeriod, createPayout, recalculateSalaryPeriod, reopenSalaryPeriod, type PayoutInput } from "@/lib/finance/salary/periods";
 import type { FinancialAccountType } from "@/lib/finance/constants";
 
@@ -51,6 +51,11 @@ async function assertStudentBranch(s: SessionUser, studentId: string): Promise<v
   const st = await prisma.student.findUnique({ where: { id: studentId }, select: { branchId: true } });
   if (!st) throw new FinanceError("not_found", "O'quvchi topilmadi");
   assertBranchAccess(s, st.branchId);
+}
+/** Faqat haqiqiy o'qituvchi (TEACHER roli) uchun maosh davri/earning */
+async function assertTeacher(teacherId: string): Promise<void> {
+  const u = await prisma.user.findUnique({ where: { id: teacherId }, select: { role: true } });
+  if (!u || u.role !== ROLES.TEACHER) throw new FinanceError("validation", "O'qituvchi topilmadi");
 }
 async function assertChargeBranch(s: SessionUser, chargeId: string): Promise<void> {
   const c = await prisma.studentCharge.findUnique({ where: { id: chargeId }, select: { branchId: true } });
@@ -143,7 +148,7 @@ export async function syncBillingAction(): Promise<Ok<{ students: number; create
 export async function manualDebtAction(studentId: string, amount: number, serviceMonth: string, note: string): Promise<Ok<{ chargeId: string }>> {
   try {
     const s = await guard();
-    requireFinancePermission(s, "PAYMENT_CREATE");
+    requireFinancePermission(s, "PAYMENT_CORRECT"); // qo'lda qarz = billing tuzatish (ADMIN/MANAGER emas)
     await assertStudentBranch(s, studentId);
     const c = await withFinanceTx(prisma, async (tx) => {
       const charge = await createManualDebtCharge(tx, { studentId, amount, serviceMonth: parseYearMonthKey(serviceMonth), note, actorId: s.userId });
@@ -335,6 +340,7 @@ export async function recalculatePeriodAction(teacherId: string, ym: string): Pr
     const s = await guard();
     requireFinancePermission(s, "SALARY_VIEW");
     if (s.role === ROLES.TEACHER) throw new FinanceError("forbidden", "O'qituvchi hisoblay olmaydi");
+    await assertTeacher(teacherId);
     await withFinanceTx(prisma, (tx) => recalculateSalaryPeriod(tx, teacherId, parseYearMonthKey(ym), { userId: s.userId }));
     revalidateAll();
     return ok();
@@ -387,10 +393,22 @@ export async function postEarningAction(earningId: string, reason: string): Prom
   } catch (e) { return toFinanceResult(e); }
 }
 
+export async function rejectEarningAction(earningId: string, reason: string): Promise<Ok> {
+  try {
+    const s = await guard();
+    requireFinancePermission(s, "SALARY_APPROVE");
+    await withFinanceTx(prisma, (tx) => rejectReviewedEarning(tx, earningId, { userId: s.userId }, reason));
+    revalidateAll();
+    return ok();
+  } catch (e) { return toFinanceResult(e); }
+}
+
 export async function manualEarningAction(teacherId: string, type: "BONUS" | "KPI" | "PENALTY" | "MANUAL_ADJUSTMENT", amount: number, ym: string, note: string, idempotencyKey: string): Promise<Ok> {
   try {
     const s = await guard();
     requireFinancePermission(s, "SALARY_APPROVE");
+    if (!(["BONUS", "KPI", "PENALTY", "MANUAL_ADJUSTMENT"] as const).includes(type)) throw new FinanceError("validation", "Earning turi noto'g'ri");
+    await assertTeacher(teacherId);
     await withFinanceTx(prisma, (tx) => createManualEarning(tx, { teacherId, type, amount, earningMonth: parseYearMonthKey(ym), note, actorId: s.userId, idempotencyKey }));
     revalidateAll();
     return ok();

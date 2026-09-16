@@ -97,12 +97,17 @@ export async function createSalaryPolicyVersion(db: FinanceDb, i: CreateSalaryPo
   if (i.noLessonsMode && !(SUPPORTED_NO_LESSONS_MODES as readonly string[]).includes(i.noLessonsMode)) throw new FinanceError("validation", "Hozircha faqat NO_LESSONS_REVIEW (S9)");
   if (i.assignmentSplitMode && !(SUPPORTED_ASSIGNMENT_SPLIT_MODES as readonly string[]).includes(i.assignmentSplitMode)) throw new FinanceError("validation", "Hozircha faqat REVIEW (D1)");
   const branchId = i.branchId ?? null;
-  const prev = await db.salaryPolicy.findFirst({ where: { name: i.name, branchId }, orderBy: { version: "desc" } });
-  if (prev && prev.effectiveFrom >= i.effectiveFrom) throw new FinanceError("validation", "Yangi versiya oldingisidan keyingi oydan boshlanishi kerak");
-  if (prev && prev.effectiveTo === null) await db.salaryPolicy.update({ where: { id: prev.id }, data: { effectiveTo: i.effectiveFrom } });
+  // Bitta doira (filial yoki global) uchun bir vaqtda BITTA siyosat: shu doiradagi barcha ochiq siyosatlar (nomidan qat'i nazar) yopiladi
+  const openSameScope = await db.salaryPolicy.findMany({ where: { branchId, effectiveTo: null } });
+  for (const prev of openSameScope) {
+    if (prev.effectiveFrom >= i.effectiveFrom) throw new FinanceError("validation", "Yangi versiya oldingisidan keyingi oydan boshlanishi kerak", { previousId: prev.id, previousFrom: prev.effectiveFrom.toISOString() });
+    await db.salaryPolicy.update({ where: { id: prev.id }, data: { effectiveTo: i.effectiveFrom } });
+  }
+  // Versiya raqami nom bo'yicha (unique [name, version]) — filialdan qat'i nazar
+  const last = await db.salaryPolicy.findFirst({ where: { name: i.name }, orderBy: { version: "desc" } });
   const created = await db.salaryPolicy.create({
     data: {
-      name: i.name, branchId, version: (prev?.version ?? 0) + 1, effectiveFrom: i.effectiveFrom,
+      name: i.name, branchId, version: (last?.version ?? 0) + 1, effectiveFrom: i.effectiveFrom,
       salaryBaseMode: i.salaryBaseMode ?? "REAL_PAID_AMOUNT", attendanceMode: i.attendanceMode ?? "NONE",
       attendanceCountedStatuses: (i.attendanceCountedStatuses ?? [...DEFAULT_ATTENDANCE_COUNTED_STATUSES]).join(","),
       requireConfirmedAttendance: i.requireConfirmedAttendance ?? false, noLessonsMode: i.noLessonsMode ?? "NO_LESSONS_REVIEW",
@@ -111,7 +116,7 @@ export async function createSalaryPolicyVersion(db: FinanceDb, i: CreateSalaryPo
       note: i.note ?? null, createdById: i.actorId ?? null,
     },
   });
-  await financeAudit(db, { actorId: i.actorId, action: "CREATE", entityType: "SalaryPolicy", entityId: created.id, oldValue: prev ? { id: prev.id, version: prev.version } : null, newValue: toSalaryPolicyView(created), reason: i.note ?? null });
+  await financeAudit(db, { actorId: i.actorId, action: "CREATE", entityType: "SalaryPolicy", entityId: created.id, oldValue: openSameScope.length ? openSameScope.map((x) => ({ id: x.id, name: x.name, version: x.version })) : null, newValue: toSalaryPolicyView(created), reason: i.note ?? null });
   return created;
 }
 

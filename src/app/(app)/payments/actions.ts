@@ -108,6 +108,14 @@ export async function payOnline(_prev: PayState, formData: FormData): Promise<Pa
   const existing = await prisma.payment.findUnique({ where: { transactionId: txId } });
   if (existing) return { error: "duplicate" };
 
+  // Finance V2 yoqilgan bo'lsa — onlayn to'lov ham V2 dvigateli orqali (ledger, taqsimot, ulush)
+  if (await financeV2Enabled()) {
+    const v2 = await legacyAcceptPayment(s, { studentId: parsed.data.studentId, amount: parsed.data.amount, method: parsed.data.method, purpose: parsed.data.purpose, docNumber: `CHK-${txId}`, note: `Onlayn to'lov: ${txId}`, transactionId: txId });
+    if (!v2.ok) return { error: v2.error === "forbidden" ? "forbidden" : "invalid" };
+    revalidatePath("/payments");
+    return { ok: true };
+  }
+
   const payment = await prisma.payment.create({
     data: {
       studentId: parsed.data.studentId,
@@ -152,15 +160,20 @@ async function notifyStudentPaid(studentId: string, amount: number) {
 }
 
 // O'chirish TAQIQLANADI — faqat "bekor qilish" (TZ FR-PAY-04)
-export async function cancelPayment(paymentId: string, reason: string): Promise<void> {
+export async function cancelPayment(paymentId: string, reason: string): Promise<{ error: string; message?: string } | undefined> {
   const s = await requireSession();
-  if (!canWrite(s.role, MODULES.PAYMENTS)) return;
-  if (!reason || reason.trim().length < 3) return;
+  if (!canWrite(s.role, MODULES.PAYMENTS)) return { error: "forbidden" };
+  if (!reason || reason.trim().length < 3) return { error: "invalid" };
 
   const before = await prisma.payment.findUnique({ where: { id: paymentId } });
-  if (!before || before.status === "CANCELLED") return;
+  if (!before || before.status === "CANCELLED") return { error: "state" };
   // Finance V2 ga kiritilgan to'lov — bekor qilish = correction (reversal), status o'zgartirish emas
-  if (before.postedAt) { await legacyCancelPayment(s, paymentId, reason); revalidatePath("/payments"); return; }
+  if (before.postedAt || before.legacyRole) {
+    // V2 ga kiritilgan / backfill qilingan to'lov — natija foydalanuvchiga qaytariladi (jim o'tkazilmaydi)
+    const r = await legacyCancelPayment(s, paymentId, reason);
+    revalidatePath("/payments");
+    return r.ok ? undefined : { error: r.error, message: r.message };
+  }
 
   await prisma.payment.update({
     where: { id: paymentId },

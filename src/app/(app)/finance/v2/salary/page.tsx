@@ -1,6 +1,6 @@
 import { prisma } from "@/lib/db";
 import { ROLES, formatMoney } from "@/lib/constants";
-import { ensureSalaryPeriod, periodSummary } from "@/lib/finance/salary/periods";
+import { periodSummary } from "@/lib/finance/salary/periods";
 import { yearMonthKey } from "@/lib/finance/period";
 import { Forbidden, PageHeader } from "../../../_components/ui";
 import { fin } from "../_i18n";
@@ -21,8 +21,8 @@ export default async function SalaryV2Page({ searchParams }: { searchParams: Pro
   });
   const rows: PeriodRow[] = [];
   for (const t of teachers) {
-    // Davr o'qish uchun ham yaratiladi (OPEN) — bu snapshot emas, faqat konteyner
-    const period = flags.enabled ? await ensureSalaryPeriod(prisma, t.id, ym) : await prisma.salaryPeriod.findUnique({ where: { teacherId_year_month: { teacherId: t.id, year: ym.year, month: ym.month } } });
+    // GET hech narsa yozmaydi: davr faqat hisoblash (recalc) yoki earning tushganda yaratiladi
+    const period = await prisma.salaryPeriod.findUnique({ where: { teacherId_year_month: { teacherId: t.id, year: ym.year, month: ym.month } } });
     const s = period ? await periodSummary(prisma, period.id) : null;
     rows.push({ periodId: period?.id ?? null, teacherId: t.id, teacherName: t.fullName, status: period?.status ?? "—", gross: s?.grossAmount ?? 0, commission: s?.commissionAmount ?? 0, fixed: s?.fixedAmount ?? 0, paid: s?.paidAmount ?? 0, remaining: s?.remainingAmount ?? 0, needsReview: s?.needsReviewCount ?? 0, source: period?.source ?? "V2" });
   }

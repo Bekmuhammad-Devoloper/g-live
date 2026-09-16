@@ -69,6 +69,8 @@ const D = {
   reopen: { uz: "Qayta ochish", ru: "Переоткрыть", en: "Reopen", de: "Wieder öffnen" },
   needsReview: { uz: "Ko'rib chiqish kerak", ru: "Требует проверки", en: "Needs review", de: "Prüfung nötig" },
   post: { uz: "Tasdiqlab kiritish", ru: "Подтвердить", en: "Post", de: "Buchen" },
+  reject: { uz: "Rad etish", ru: "Отклонить", en: "Reject", de: "Ablehnen" },
+  rejectReason: { uz: "Rad etish sababi (maoshga kirmaydi)", ru: "Причина отклонения (не входит в зарплату)", en: "Reject reason (excluded from salary)", de: "Ablehnungsgrund (nicht im Gehalt)" },
   details: { uz: "Tafsilot", ru: "Подробно", en: "Details", de: "Details" },
   opening: { uz: "Ochilish", ru: "Начало", en: "Opening", de: "Anfang" },
   inflow: { uz: "Kirim", ru: "Приход", en: "Inflow", de: "Zufluss" },

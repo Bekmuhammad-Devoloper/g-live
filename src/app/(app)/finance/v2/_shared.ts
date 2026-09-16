@@ -3,6 +3,7 @@ import "server-only";
 // Finance V2 sahifalari uchun umumiy server yordamchilari.
 import { requireSession, type SessionUser } from "@/lib/auth";
 import { getFinanceFlags, type FinanceFlags } from "@/lib/finance/flags";
+import { FinanceError } from "@/lib/finance/errors";
 import { branchScope, hasFinancePermission, type FinancePermission } from "@/lib/finance/permissions";
 import { parseYearMonthKey, tashkentYearMonth, yearMonthKey, type YearMonth } from "@/lib/finance/period";
 
@@ -18,7 +19,9 @@ export async function financePage(): Promise<FinancePageContext> {
   const session = await requireSession();
   const flags = await getFinanceFlags();
   const scope = branchScope(session);
-  return { session, flags, branchId: scope ? scope.branchId || null : null, can: (p) => hasFinancePermission(session.role, p) };
+  // Filial cheklovi bor, lekin filial biriktirilmagan (MANAGER, branchId yo'q) — "hammasi" emas, HECH NARSA
+  if (scope && !scope.branchId) throw new FinanceError("forbidden", "Filial biriktirilmagan — moliya bo'limiga kirish yo'q");
+  return { session, flags, branchId: scope ? scope.branchId : null, can: (p) => hasFinancePermission(session.role, p) };
 }
 
 /** `?ym=2026-10` — bo'lmasa joriy Tashkent oyi */

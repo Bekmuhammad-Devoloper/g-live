@@ -52,14 +52,15 @@ export function financeHistoryMessage(locale: Locale): string {
 async function countsFor(entity: FinanceHistoryEntity, id: string): Promise<Record<string, number>> {
   switch (entity) {
     case "student": {
-      const [charges, allocations, refunds, earnings, discounts] = await Promise.all([
+      const [charges, allocations, refunds, earnings, discounts, posted] = await Promise.all([
         prisma.studentCharge.count({ where: { studentId: id } }),
         prisma.paymentAllocation.count({ where: { payment: { studentId: id } } }),
         prisma.refund.count({ where: { studentId: id } }),
         prisma.teacherEarning.count({ where: { studentId: id } }),
         prisma.studentDiscount.count({ where: { studentId: id } }),
+        prisma.payment.count({ where: { studentId: id, OR: [{ postedAt: { not: null } }, { legacyRole: { not: null } }] } }), // ledger'ga yozilgan to'lov (taqsimotsiz kredit ham)
       ]);
-      return { StudentCharge: charges, PaymentAllocation: allocations, Refund: refunds, TeacherEarning: earnings, StudentDiscount: discounts };
+      return { StudentCharge: charges, PaymentAllocation: allocations, Refund: refunds, TeacherEarning: earnings, StudentDiscount: discounts, Payment: posted };
     }
     case "group": {
       const [charges, assignments, earnings, discounts] = await Promise.all([

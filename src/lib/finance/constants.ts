@@ -135,7 +135,7 @@ export const EARNING_TYPES = [
 ] as const;
 export type EarningType = (typeof EARNING_TYPES)[number];
 
-export const EARNING_STATUSES = ["POSTED", "NEEDS_REVIEW"] as const;
+export const EARNING_STATUSES = ["POSTED", "NEEDS_REVIEW", "REJECTED"] as const;
 export type EarningStatus = (typeof EARNING_STATUSES)[number];
 
 export const EARNING_REVIEW_REASONS = ["NO_LESSONS_FOUND", "ASSISTANT_NO_RULE", "RATE_SUM_EXCEEDED", "LEGACY_INFERRED", "AMBIGUOUS_ASSIGNMENT", "PRE_CUTOVER_PAYMENT", "LEGACY_SERVICE_MONTH"] as const;

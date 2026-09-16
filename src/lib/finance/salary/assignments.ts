@@ -16,10 +16,17 @@ import { resolveRule } from "./rules";
 export async function assignmentsForService(db: FinanceDb, groupId: string, serviceMonth: YearMonth): Promise<GroupTeacherAssignment[]> {
   const s = monthStart(serviceMonth);
   const e = monthEnd(serviceMonth);
-  return db.groupTeacherAssignment.findMany({
+  const query = () => db.groupTeacherAssignment.findMany({
     where: { groupId, effectiveFrom: { lt: e }, OR: [{ effectiveTo: null }, { effectiveTo: { gt: s } }] },
     orderBy: [{ effectiveFrom: "asc" }],
   });
+  let rows = await query();
+  if (rows.length === 0 && (await db.groupTeacherAssignment.count({ where: { groupId } })) === 0) {
+    // Legacy guruh — tarix hali yozilmagan: Group.teacherId dan INFERRED/KNOWN interval (self-heal; earning NEEDS_REVIEW bo'ladi)
+    if (await syncGroupTeacherAssignment(db, groupId)) rows = await query();
+  }
+  // Nol uzunlikdagi (bir lahzada ochilib yopilgan) intervallar tayinlash emas
+  return rows.filter((a) => !(a.effectiveTo && a.effectiveTo.getTime() <= a.effectiveFrom.getTime()));
 }
 
 export interface SyncAssignmentOptions {
@@ -49,9 +56,15 @@ export async function syncGroupTeacherAssignment(db: FinanceDb, groupId: string,
   if (group.teacherId && !current) {
     const any = await db.groupTeacherAssignment.count({ where: { groupId } });
     const from = any === 0 ? group.createdAt : at;
-    await db.groupTeacherAssignment.create({
-      data: { groupId, teacherId: group.teacherId, role: "MAIN", effectiveFrom: from, source: from < cutover ? "INFERRED" : "KNOWN", createdById: o.actorId ?? null },
-    });
+    if (any === 0 && from < cutover && at > from) {
+      // Legacy guruh: o'tmish INFERRED (qachondan ekani noma'lum), kuzatilgan lahzadan boshlab KNOWN (Group.teacherId hozir shu o'qituvchi)
+      await db.groupTeacherAssignment.create({ data: { groupId, teacherId: group.teacherId, role: "MAIN", effectiveFrom: from, effectiveTo: at, source: "INFERRED", createdById: o.actorId ?? null } });
+      await db.groupTeacherAssignment.create({ data: { groupId, teacherId: group.teacherId, role: "MAIN", effectiveFrom: at, source: "KNOWN", createdById: o.actorId ?? null, note: "Kuzatilgan lahzadan (sync)" } });
+    } else {
+      await db.groupTeacherAssignment.create({
+        data: { groupId, teacherId: group.teacherId, role: "MAIN", effectiveFrom: from, source: from < cutover ? "INFERRED" : "KNOWN", createdById: o.actorId ?? null },
+      });
+    }
     changed = true;
   }
   return changed;
@@ -66,6 +79,8 @@ export interface AssignTeacherInput {
   compensationRuleId?: string | null;
   note?: string | null;
   actorId?: string | null;
+  /** MAIN: oldingi MAIN o'qituvchi intervali shu sanada yopiladi (standart: true). false = qo'shimcha MAIN (NEEDS_REVIEW) */
+  replaceMain?: boolean;
 }
 
 /** Aniq (KNOWN) tayinlash — UI orqali; bir o'qituvchining shu guruhdagi ochiq intervali yopiladi */
@@ -79,6 +94,14 @@ export async function assignTeacher(db: FinanceDb, i: AssignTeacherInput): Promi
   for (const a of open) {
     if (a.effectiveFrom >= i.effectiveFrom) throw new FinanceError("validation", "Yangi tayinlash oldingisidan keyin boshlanishi kerak", { assignmentId: a.id });
     await db.groupTeacherAssignment.update({ where: { id: a.id }, data: { effectiveTo: i.effectiveFrom } });
+  }
+  if (i.role === "MAIN" && i.replaceMain !== false) {
+    // Almashtirish: boshqa o'qituvchining ochiq MAIN intervali shu sanada yopiladi (ikki MAIN = faqat replaceMain:false bilan, NEEDS_REVIEW)
+    const others = await db.groupTeacherAssignment.findMany({ where: { groupId: i.groupId, role: "MAIN", effectiveTo: null, teacherId: { not: i.teacherId } } });
+    for (const a of others) {
+      if (a.effectiveFrom >= i.effectiveFrom) throw new FinanceError("validation", "Almashtirish sanasi oldingi MAIN tayinlashdan keyin bo'lishi kerak", { assignmentId: a.id });
+      await db.groupTeacherAssignment.update({ where: { id: a.id }, data: { effectiveTo: i.effectiveFrom } });
+    }
   }
   const created = await db.groupTeacherAssignment.create({
     data: { groupId: i.groupId, teacherId: i.teacherId, role: i.role, effectiveFrom: i.effectiveFrom, effectiveTo: i.effectiveTo ?? null, compensationRuleId: i.compensationRuleId ?? null, source: "KNOWN", note: i.note ?? null, createdById: i.actorId ?? null },
