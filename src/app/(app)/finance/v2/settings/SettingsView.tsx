@@ -5,16 +5,17 @@ import { useRouter } from "next/navigation";
 import type { Locale } from "@/lib/constants";
 import { Badge, Card } from "../../../_components/ui";
 import { fin } from "../_i18n";
-import { lockFinancePeriodAction, setAccountMap, setDefaultFeeAction, setFinanceV2Enabled, unlockFinancePeriodAction } from "../actions";
+import { lockFinancePeriodAction, setAccountMap, setCutoverAction, setDefaultFeeAction, setFinanceV2Enabled, unlockFinancePeriodAction } from "../actions";
 
 interface Lock { id: string; period: string; branchId: string | null; isLocked: boolean; reason: string; by: string; reopenReason: string | null }
 
-export default function SettingsView({ locale: L, enabled, isDirector, canReopen, canRules, defaultFees, month, branches, accountMap, locks }: { locale: Locale; enabled: boolean; isDirector: boolean; canReopen: boolean; canRules: boolean; defaultFees: { global: number | null; byBranch: Record<string, number | null> }; month: string; branches: { id: string; name: string }[]; accountMap: string; locks: Lock[] }) {
+export default function SettingsView({ locale: L, enabled, isDirector, canReopen, canRules, cutoverMonth, defaultFees, month, branches, accountMap, locks }: { locale: Locale; enabled: boolean; isDirector: boolean; canReopen: boolean; canRules: boolean; cutoverMonth: string; defaultFees: { global: number | null; byBranch: Record<string, number | null> }; month: string; branches: { id: string; name: string }[]; accountMap: string; locks: Lock[] }) {
   const router = useRouter();
   const [pending, start] = useTransition();
   const [msg, setMsg] = useState<string | null>(null);
   const [lock, setLock] = useState({ ym: month, branchId: "", reason: "" });
   const [map, setMap] = useState(accountMap);
+  const [cutover, setCutover] = useState(cutoverMonth);
   const [fees, setFees] = useState<Record<string, string>>({ global: defaultFees.global ? String(defaultFees.global) : "", ...Object.fromEntries(Object.entries(defaultFees.byBranch).map(([k, v]) => [k, v ? String(v) : ""])) });
   const saveFee = (branchId: string | null) => { const raw = fees[branchId ?? "global"]?.replace(/\s/g, "") ?? ""; const n = raw ? Number(raw) : null; if (n !== null && (!Number.isInteger(n) || n <= 0)) { setMsg(fin(L, "error")); return; } run(() => setDefaultFeeAction(branchId, n)); };
   const run = (fn: () => Promise<{ ok: boolean; message?: string }>) => start(async () => { const r = await fn(); setMsg(r.ok ? fin(L, "done") : r.message ?? fin(L, "error")); router.refresh(); });
@@ -26,6 +27,14 @@ export default function SettingsView({ locale: L, enabled, isDirector, canReopen
         <Card>
           <h3 className="mb-2 text-sm font-semibold">Finance V2 — feature flag</h3>
           <p className="mb-3 text-xs text-slate-500">O'chiq bo'lsa mavjud (legacy) moliya oqimi ishlaydi; yoqilsa to'lov/xarajat/maosh V2 dvigatelidan o'tadi. Cutover: 2026-10-01.</p>
+          {!enabled && (
+            <div className="mb-3 flex flex-wrap items-center gap-2 text-sm">
+              <span>Cutover (oy boshi):</span>
+              <input className="input w-auto py-1" type="month" value={cutover} onChange={(e) => setCutover(e.target.value)} />
+              <button type="button" className="btn-ghost px-2 py-1 text-xs" disabled={pending || !cutover} onClick={() => run(() => setCutoverAction(cutover))}>{fin(L, "save")}</button>
+              <span className="text-xs text-slate-500">Shu oydan boshlab V2 moliyaviy faktlar (ulush, tayinlash) yoziladi; oldingi davr — legacy.</span>
+            </div>
+          )}
           <button type="button" className={enabled ? "btn-ghost" : "btn-primary"} disabled={pending} onClick={() => { if (window.confirm(fin(L, "confirm"))) run(() => setFinanceV2Enabled(!enabled)); }}>{enabled ? fin(L, "disabledShort") : fin(L, "enabled")}</button>
         </Card>
       )}

@@ -25,7 +25,8 @@ describe("finance v2 server actions — RBAC static scan", () => {
       .filter((a) => !NON_FINANCIAL.has(a.name))
       .filter((a) => {
         // Flag'ni yoqish/o'chirish guard() dan o'tmaydi (aks holda yoqib bo'lmasdi) — sessiya + DIRECTOR shart
-        const hasGuard = a.body.includes("await guard()") || (a.name === "setFinanceV2Enabled" && a.body.includes("await requireSession()"));
+        // Flag/cutover sozlamalari guard() dan o'tmaydi (flag o'chiq bo'lganda ham kerak) — sessiya + DIRECTOR shart
+        const hasGuard = a.body.includes("await guard()") || (["setFinanceV2Enabled", "setCutoverAction"].includes(a.name) && a.body.includes("await requireSession()"));
         const hasPerm = /requireFinancePermission\(\s*s\s*,\s*"[A-Z_]+"\s*\)/.test(a.body);
         const hasEngine = ENGINE_RBAC.some((f) => a.body.includes(f));
         const hasDirector = a.body.includes("ROLES.DIRECTOR");

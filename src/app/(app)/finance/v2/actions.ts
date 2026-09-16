@@ -18,7 +18,7 @@ import { getFinanceFlags } from "@/lib/finance/flags";
 import { writeAudit } from "@/lib/audit";
 import { financeAudit } from "@/lib/finance/audit";
 import { assertBranchAccess, requireFinancePermission, branchScope } from "@/lib/finance/permissions";
-import { parseYearMonthKey, monthStart, tashkentYearMonth } from "@/lib/finance/period";
+import { isTashkentMonthStart, parseYearMonthKey, monthStart, tashkentYearMonth } from "@/lib/finance/period";
 import { acceptPayment, type AcceptPaymentInput } from "@/lib/finance/payments/accept";
 import { closePeriod, reopenPeriod } from "@/lib/finance/payments/periodLock";
 import { createRefund, reversePayment, type RefundInput } from "@/lib/finance/refunds/refund";
@@ -81,6 +81,23 @@ export async function setFinanceV2Enabled(enabled: boolean): Promise<Ok> {
     }
     await setSetting(FINANCE_SETTING_KEYS.enabled, enabled ? "true" : "false");
     await writeAudit({ actorId: s.userId, action: "UPDATE", entityType: "Setting", entityId: FINANCE_SETTING_KEYS.enabled, newValue: { enabled }, reason: "Finance V2 feature flag" });
+    revalidateAll();
+    return ok();
+  } catch (e) { return toFinanceResult(e); }
+}
+
+/** Cutover oyi (faqat DIRECTOR, flag O'CHIQ bo'lganda) — shu oydan V2 moliyaviy faktlar yoziladi; oldingi davr legacy */
+export async function setCutoverAction(ym: string): Promise<Ok> {
+  try {
+    const s = await requireSession();
+    if (s.role !== ROLES.DIRECTOR) throw new FinanceError("forbidden", "Faqat direktor");
+    const flags = await getFinanceFlags();
+    if (flags.enabled) throw new FinanceError("state", "Cutover faqat Finance V2 o'chiq bo'lganda o'zgartiriladi");
+    const start = monthStart(parseYearMonthKey(ym));
+    const value = `${ym}-01T00:00:00+05:00`;
+    if (!isTashkentMonthStart(new Date(value)) || start.getTime() !== new Date(value).getTime()) throw new FinanceError("validation", "Cutover Tashkent oy boshi bo'lishi kerak");
+    await setSetting(FINANCE_SETTING_KEYS.cutoverAt, value);
+    await writeAudit({ actorId: s.userId, action: "UPDATE", entityType: "Setting", entityId: FINANCE_SETTING_KEYS.cutoverAt, newValue: { cutoverAt: value }, reason: "Finance V2 cutover" });
     revalidateAll();
     return ok();
   } catch (e) { return toFinanceResult(e); }
