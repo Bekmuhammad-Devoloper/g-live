@@ -134,7 +134,7 @@ for f in _k.html _u.mjs; do
     echo "-- $APP/$f"; stat -c 'owner=%U:%G mode=%A size=%s bytes mtime=%y ctime=%z' "$APP/$f" 2>/dev/null
     echo "   git kuzatuvida: $(git ls-files --error-unmatch "$f" >/dev/null 2>&1 && echo HA || echo "YO‘Q")"
     echo "   systemd/cron havolalar: $(grep -rl "$f" /etc/systemd/system /etc/cron* /var/spool/cron 2>/dev/null | tr '\n' ' ' || true)$(crontab -l 2>/dev/null | grep -c "$f" | sed 's/^/ crontab=/')"
-    echo "   ishlayotgan jarayonlar: $(pgrep -af "$f" 2>/dev/null | grep -v pgrep | wc -l | tr -d ' ')"
+    echo "   ishlayotgan jarayonlar: $(pgrep -af "$f" 2>/dev/null | grep -vE "pgrep|bash|audit" | wc -l | tr -d ' ')"
     echo "   public/ dan servis qilinadimi: $(ls "$APP/public/$f" 2>/dev/null || echo "yo‘q")"
   else
     echo "-- $APP/$f: MAVJUD EMAS"
