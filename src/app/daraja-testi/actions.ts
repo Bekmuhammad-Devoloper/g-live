@@ -73,6 +73,15 @@ export async function submitLevelTest(
     select: { id: true, stage: true },
   });
 
+  // Natija lidning o'zida ham saqlanadi — CRM kartasida darhol ko'rinsin
+  const testFields = {
+    testSet: r.set,
+    testLevel: r.resultLevel ?? null,
+    testPct: r.pct,
+    testPassed: r.passed,
+    testedAt: new Date(),
+  };
+
   if (existing) {
     await prisma.lead.update({
       where: { id: existing.id },
@@ -80,6 +89,7 @@ export async function submitLevelTest(
         ...(row ? { level: row.code } : {}),
         ...(ageNum ? { age: ageNum } : {}),
         ...(MOVABLE_STAGES.includes(existing.stage) ? { stage: "TEST" } : {}),
+        ...testFields,
         activities: { create: { type: "test", result: summary } },
       },
     });
@@ -93,6 +103,7 @@ export async function submitLevelTest(
         source: "Daraja testi",
         stage: "TEST",
         note: summary,
+        ...testFields,
         activities: { create: { type: "test", result: summary } },
       },
     });

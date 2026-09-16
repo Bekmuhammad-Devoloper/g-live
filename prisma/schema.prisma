@@ -256,6 +256,13 @@ model Lead {
   // Bosqichga ta'sir qilmaydi — faqat qaysi ustunda ko'rinishini belgilaydi;
   // standart ustunga ko'chirilsa yoki guruhga yozilsa tozalanadi.
   kanbanColumnId String?
+  // Daraja testi natijasi — /daraja-testi dan keladi. Ilgari faqat faoliyat
+  // tarixida qolardi, shu sabab kartada ko'rinmasdi.
+  testSet     String? // qaysi to'plam: "A1.1", "B2.2" ...
+  testLevel   String? // natijaviy daraja ("A2"); o'tmasa null
+  testPct     Int? // to'g'ri javoblar foizi
+  testPassed  Boolean?
+  testedAt    DateTime?
   // Arxiv — lid Kanbandagi "Arxiv" ustuniga tashlangan (bosqichi saqlanadi,
   // faqat ko'rinishdan chiqadi; qaytarilsa o'z ustuniga qaytadi).
   archivedAt DateTime?

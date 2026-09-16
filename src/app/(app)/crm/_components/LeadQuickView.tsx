@@ -119,6 +119,12 @@ export default function LeadQuickView({
                   : tr(locale, { uz: "Oflayn", ru: "Офлайн", en: "Offline", de: "Präsenz" })}
               />
             )}
+            {lead.testPct != null && (
+              <Row
+                label={tr(locale, { uz: "Daraja testi", ru: "Тест уровня", en: "Level test", de: "Einstufungstest" })}
+                value={`${lead.testSet ?? ""} ${lead.testPct}% · ${lead.testLevel ?? tr(locale, { uz: "o'tmadi", ru: "не сдал", en: "failed", de: "nicht bestanden" })}`.trim()}
+              />
+            )}
             <Row label={tr(locale, { uz: "Qiziqqan kurs", ru: "Интересующий курс", en: "Course of interest", de: "Interessierter Kurs" })} value={lead.interestCourse ?? "—"} />
             <Row label={tr(locale, { uz: "Byudjet", ru: "Бюджет", en: "Budget", de: "Budget" })} value={lead.budget ? formatMoney(lead.budget, locale) : "—"} />
             <Row label={tr(locale, { uz: "Menejer", ru: "Менеджер", en: "Manager", de: "Manager" })} value={lead.managerName ?? "—"} />

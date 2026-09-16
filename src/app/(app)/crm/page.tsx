@@ -45,6 +45,7 @@ export default async function CrmPage() {
         id: true, fullName: true, phone: true, email: true, telegram: true, studyFormat: true, source: true, stage: true,
         interestCourse: true, age: true, level: true, budget: true, note: true,
         managerId: true, studentId: true, groupId: true, enrollEditCount: true, kanbanColumnId: true, createdAt: true, branchId: true, branchSlotId: true, archivedAt: true,
+        testSet: true, testLevel: true, testPct: true, testPassed: true,
         manager: { select: { fullName: true } },
         branch: { select: { name: true } },
         group: { select: { name: true } },
@@ -78,6 +79,22 @@ export default async function CrmPage() {
     slots: b.slots.map((sl) => ({ ...sl, capacity: sl.capacity ?? capOf(b.id, sl.room) })),
   }));
 
+  // Eski testlar: natija faqat faoliyat tarixida qolgan (yangi maydonlar kiritilgunga
+  // qadar). Kartada ko'rinsin uchun matnidan o'qib olamiz — yozuvlar kam (faqat
+  // test topshirganlar), shu sabab bitta so'rov yetarli.
+  const testActs = await prisma.leadActivity.findMany({
+    where: { type: "test" },
+    orderBy: { createdAt: "asc" }, // keyingisi oldingisini almashtiradi → oxirgisi qoladi
+    select: { leadId: true, result: true },
+  });
+  const parsedTests = new Map<string, { set: string | null; pct: number; passed: boolean; level: string | null }>();
+  for (const a of testActs) {
+    // "Daraja testi A1.1: 18/25 to'g'ri (72%) — o'tdi → daraja: A1 (Boshlang'ich)"
+    const m = /Daraja testi\s*([A-C][12](?:\.\d)?)?[^:]*:.*?\((\d+)%\)\s*—\s*(o'tdi|o'tmadi)(?:.*?daraja:\s*([A-C][12])(?!\s*dan past))?/i.exec(a.result ?? "");
+    if (!m) continue;
+    parsedTests.set(a.leadId, { set: m[1] ?? null, pct: Number(m[2]), passed: m[3].toLowerCase() === "o'tdi", level: m[4] ?? null });
+  }
+
   const vleads: VLead[] = leads.map((l) => ({
     id: l.id,
     fullName: l.fullName,
@@ -99,6 +116,10 @@ export default async function CrmPage() {
     branchName: l.branch?.name ?? null,
     branchSlotId: l.branchSlotId,
     archivedAt: l.archivedAt ? l.archivedAt.toISOString() : null,
+    testSet: l.testSet ?? parsedTests.get(l.id)?.set ?? null,
+    testLevel: l.testLevel ?? parsedTests.get(l.id)?.level ?? null,
+    testPct: l.testPct ?? parsedTests.get(l.id)?.pct ?? null,
+    testPassed: l.testPassed ?? parsedTests.get(l.id)?.passed ?? null,
     groupId: l.groupId,
     groupName: l.group?.name ?? null,
     enrollEditCount: l.enrollEditCount,

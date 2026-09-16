@@ -30,6 +30,11 @@ export interface VLead {
   branchSlotId: string | null;
   /** Arxivlangan (Kanbandagi "Arxiv" ustuni) */
   archivedAt: string | null;
+  /** Daraja testi natijasi (/daraja-testi) */
+  testSet: string | null;
+  testLevel: string | null;
+  testPct: number | null;
+  testPassed: boolean | null;
   /** Yo'naltirilgan guruh (WON uchun majburiy) */
   groupId: string | null;
   groupName: string | null;
