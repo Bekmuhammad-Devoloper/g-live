@@ -7,7 +7,7 @@ import { acceptPayment } from "@/lib/finance/payments/accept";
 import { closePeriod } from "@/lib/finance/payments/periodLock";
 import { monthStart, type YearMonth } from "@/lib/finance/period";
 import { createRefund } from "@/lib/finance/refunds/refund";
-import { assignTeacher, assignmentsForService, syncGroupTeacherAssignment } from "@/lib/finance/salary/assignments";
+import { assignTeacher, assignmentsForService } from "@/lib/finance/salary/assignments";
 import { createManualEarning, postReviewedEarning, rejectReviewedEarning } from "@/lib/finance/salary/earnings";
 import { approveSalaryPeriod, closeSalaryPeriod, createPayout, periodSummary, recalculateSalaryPeriod } from "@/lib/finance/salary/periods";
 import { createSalaryRule, resolveRule } from "@/lib/finance/salary/rules";
