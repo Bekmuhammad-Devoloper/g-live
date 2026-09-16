@@ -37,7 +37,12 @@ dur()    { awk -v n="$1" '$1==n{print $2}' "$TIMES" 2>/dev/null | tail -1; }
 fail()   { FAILS+=("$1"); echo "✗ FAIL: $1"; }
 stopnow(){ STOP=1; FAILS+=("STOP: $1"); echo "■ STOP: $1"; }
 TSX() { node_modules/.bin/tsx "$@" < /dev/null; }
-kill_port_pid() { [ -f "$1" ] && { kill "$(cat "$1")" 2>/dev/null || true; sleep 1; kill -9 "$(cat "$1")" 2>/dev/null || true; rm -f "$1"; }; }
+# Sinov serverini o'ldirish: pid fayli + shu portdagi `next start` jarayonlari (bola jarayon qolib ketmasin). Prod (3000) ga tegmaydi.
+kill_test_port() { pkill -f "next start -p $1" 2>/dev/null || true; command -v fuser >/dev/null 2>&1 && fuser -k -n tcp "$1" >/dev/null 2>&1 || true; }
+kill_port_pid() { # kill_port_pid <pidfile> <port>
+  [ -f "$1" ] && { kill "$(cat "$1")" 2>/dev/null || true; sleep 1; kill -9 "$(cat "$1")" 2>/dev/null || true; rm -f "$1"; }
+  kill_test_port "$2"; sleep 1
+}
 wait_http() { for _ in $(seq 1 60); do curl -s -o /dev/null -w "%{http_code}" "http://127.0.0.1:$1/login" | grep -q 200 && return 0; sleep 1; done; return 1; }
 smoke() { # smoke <port> <jwt> <label> routes...
   local port=$1 jwt=$2 label=$3; shift 3; local bad=0
@@ -51,7 +56,7 @@ smoke() { # smoke <port> <jwt> <label> routes...
   [ "$bad" = 0 ] && echo "  ✓ $label" || fail "$label smoke"
 }
 cleanup() {
-  kill_port_pid "$WORK/app.pid"; kill_port_pid "$WORK/legacy.pid"
+  kill_port_pid "$WORK/app.pid" $PORT_V2; kill_port_pid "$WORK/legacy.pid" $PORT_LEGACY
 }
 trap cleanup EXIT
 
@@ -59,7 +64,9 @@ section "0. Preflight (read-only)"
 echo "prod HEAD=$(git -C $APP rev-parse --short HEAD) db=$(du -h $PROD_DB | cut -f1) date=$(date '+%F %T %Z')"
 df -h /tmp "$APP" | sed -n '2,3p'
 port_busy() { if command -v lsof >/dev/null 2>&1; then lsof -nP -iTCP:"$1" -sTCP:LISTEN >/dev/null 2>&1; elif command -v ss >/dev/null 2>&1; then ss -ltn 2>/dev/null | grep -q ":$1 "; else netstat -ltn 2>/dev/null | grep -q ":$1 "; fi; }
-for p in $PORT_V2 $PORT_LEGACY; do port_busy "$p" && stopnow "port $p band (oldingi sinov jarayoni?)"; done
+for p in $PORT_V2 $PORT_LEGACY; do
+  if port_busy "$p"; then echo "port $p band — oldingi sinov serveri o'ldiriladi (faqat 'next start -p $p')"; kill_test_port "$p"; sleep 2; port_busy "$p" && stopnow "port $p hali band"; fi
+done
 [ "$STOP" = 1 ] && exit 2
 
 section "1. Klon ($REF → $DRY) + npm ci + prisma generate"
@@ -181,6 +188,7 @@ FORCE_BUILD=1 DATABASE_URL="file:$COPY" AUTH_SECRET="$SECRET" npm run build < /d
 git checkout -q tsconfig.json 2>/dev/null || true
 tend build
 tstart app-start
+port_busy $PORT_V2 && { kill_test_port $PORT_V2; sleep 2; }
 (DATABASE_URL="file:$COPY" AUTH_SECRET="$SECRET" NODE_ENV=production TZ=Asia/Tashkent node_modules/.bin/next start -p $PORT_V2 > "$WORK/app.log" 2>&1 & echo $! > "$WORK/app.pid")
 wait_http $PORT_V2 && echo "✓ app javob beradi" || { tail -20 "$WORK/app.log"; fail "app start"; }
 tend app-start
@@ -222,7 +230,7 @@ TSX scripts/finance-v2/perf-probe.ts --db "$COPY" --ym "$YM" 2>&1 | grep -v "pri
 tend perf
 node -e "const {PrismaClient}=require('@prisma/client');const p=new PrismaClient({datasourceUrl:'file:$COPY'});p.setting.update({where:{key:'finance.v2.enabled'},data:{value:'false'}}).then(()=>console.log('flag → OFF')).finally(()=>p.\$disconnect())" < /dev/null
 smoke $PORT_V2 "$JWT_D" "FLAG OFF (qayta) legacy (DIRECTOR)" "${LEGACY_ROUTES[@]}"
-kill_port_pid "$WORK/app.pid"
+kill_port_pid "$WORK/app.pid" $PORT_V2
 
 section "13. ROLLBACK simulyatsiyasi: 'buzilgan' yangi baza → backup restore → integrity → snapshot = PRE → legacy app"
 tstart rollback-restore
@@ -236,10 +244,11 @@ tstart rollback-legacy-app
 LEG=$DRY/legacy; rm -rf "$LEG"; git clone -q "$APP" "$LEG"   # prod'da deploy qilingan commit (main)
 echo "legacy HEAD=$(git -C "$LEG" rev-parse --short HEAD) (= prod HEAD)"
 ( cd "$LEG" && npm ci --no-audit --no-fund < /dev/null 2>&1 | tail -1 && npx prisma generate < /dev/null 2>&1 | grep -E "Generated" && FORCE_BUILD=1 DATABASE_URL="file:$RB" AUTH_SECRET="$SECRET" npm run build < /dev/null > "$WORK/legacy-build.log" 2>&1 && echo "✓ legacy build" ) || { tail -15 "$WORK/legacy-build.log"; fail "legacy build"; }
+port_busy $PORT_LEGACY && { kill_test_port $PORT_LEGACY; sleep 2; }
 (cd "$LEG" && DATABASE_URL="file:$RB" AUTH_SECRET="$SECRET" NODE_ENV=production TZ=Asia/Tashkent node_modules/.bin/next start -p $PORT_LEGACY > "$WORK/legacy.log" 2>&1 & echo $! > "$WORK/legacy.pid")
 wait_http $PORT_LEGACY && echo "✓ legacy app javob beradi" || { tail -20 "$WORK/legacy.log"; fail "legacy app start"; }
 smoke $PORT_LEGACY "$JWT_D" "ROLLBACK legacy app (DIRECTOR)" /dashboard /students /groups /teachers /payments /finance /finance/expenses /finance/salary /salary /branches /crm /reports
-kill_port_pid "$WORK/legacy.pid"
+kill_port_pid "$WORK/legacy.pid" $PORT_LEGACY
 tend rollback-legacy-app
 
 section "14. Prod tegilmaganini tasdiqlash + tozalash"
