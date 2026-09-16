@@ -6,7 +6,7 @@ import { cn } from "@/lib/cn";
 import { tr } from "@/lib/tr";
 import type { Locale } from "@/lib/constants";
 import { Icon } from "../../_components/Icon";
-import { COLUMNS, ONLINE_COL, columnOfLead, customColKey, groupColKey, branchColKey, slotDropKey, type BranchColumn, type BranchMode, type BranchModeCfg, type CustomColumn, type GroupColumn, type GroupInfo, type VLead } from "../_lib/leadColumns";
+import { ARCHIVE_COL, COLUMNS, ONLINE_COL, columnOfLead, customColKey, groupColKey, branchColKey, slotDropKey, type BranchColumn, type BranchMode, type BranchModeCfg, type CustomColumn, type GroupColumn, type GroupInfo, type VLead } from "../_lib/leadColumns";
 import LeadCard from "./LeadCard";
 import BranchSlotsEditor from "../../branches/slots/BranchSlotsEditor";
 
@@ -44,6 +44,8 @@ interface Props {
   branchMode?: BranchMode | null;
   /** "Onlayn" ustuni (filial administratorida ko'rsatilmaydi) */
   showOnlineCol?: boolean;
+  /** Ko'rsatilmaydigan standart ustunlar (ROP: "work", "won") */
+  hiddenCols?: string[];
   /** Bo'sh vaqtlarni tahrirlash: "all" | filial id | null */
   slotsEditable?: "all" | string | null;
   /** Ustunni bo'shatish — ustundagi barcha lidlarni Yangiga qaytarish (huquqi bo'lsa) */
@@ -70,7 +72,7 @@ const PAGE = 40;
 
 export default function LeadsKanban({
   leads, totals, locale, selected, groupColumns, customColumns,
-  onOpen, onOpenFull, onDropToColumn, onAdd, onAddToGroup, onRemoveGroupCol, onAddToCustom, onRemoveCustomCol, onLevelTestQr, branchColumns = null, groupInfo = {}, branchMode = null, showOnlineCol = true, slotsEditable = null, onResetColumn, onDelete,
+  onOpen, onOpenFull, onDropToColumn, onAdd, onAddToGroup, onRemoveGroupCol, onAddToCustom, onRemoveCustomCol, onLevelTestQr, branchColumns = null, groupInfo = {}, branchMode = null, showOnlineCol = true, hiddenCols = [], slotsEditable = null, onResetColumn, onDelete,
 }: Props) {
   const [dragId, setDragId] = useState<string | null>(null);
   const [overCol, setOverCol] = useState<string | null>(null);
@@ -87,6 +89,7 @@ export default function LeadsKanban({
 
   // Tartib: standart 4 ta → oddiy nomli ustunlar → "Qabul qilindi" → guruh ustunlari → "Yo'qotilgan"
   const cols = useMemo<ViewCol[]>(() => {
+    const hidden = new Set(hiddenCols);
     const std = (key: string): ViewCol => {
       const c = COLUMNS.find((x) => x.key === key)!;
       return { key: c.key, title: tr(locale, c.label), sub: null, color: c.color, icon: c.icon, defaultStage: c.defaultStage, groupId: null, customId: null };
@@ -101,6 +104,13 @@ export default function LeadsKanban({
       groupId: null,
       customId: c.id,
     }));
+    // "Arxiv" — hamma rolda, eng oxirida: tashlangan lid bosqichini saqlaydi, ko'rinishdan chiqadi
+    const archive: ViewCol = {
+      key: ARCHIVE_COL,
+      title: tr(locale, { uz: "Arxiv", ru: "Архив", en: "Archive", de: "Archiv" }),
+      sub: tr(locale, { uz: "Ko'rinishdan olib qo'yilgan", ru: "Убраны из вида", en: "Hidden from the board", de: "Aus der Ansicht entfernt" }),
+      color: "#64748b", icon: "archive", defaultStage: "NEW", groupId: null, customId: null,
+    };
     const groups = groupColumns.map<ViewCol>((g) => ({
       key: groupColKey(g.groupId),
       title: g.name,
@@ -124,10 +134,12 @@ export default function LeadsKanban({
         sub: tr(locale, { uz: "Onlayn o'qimoqchilar", ru: "Хотят учиться онлайн", en: "Want to study online", de: "Möchten online lernen" }),
         color: "#0ea5e9", icon: "video", defaultStage: "NEW", groupId: null, customId: null,
       };
-      return [std("new"), std("work"), ...(showOnlineCol ? [online] : []), ...(branchMode === "head" ? [std("test"), std("offer")] : []), ...brs, ...custom, std("won"), ...groups, std("lost")];
+      return [std("new"), std("work"), ...(showOnlineCol ? [online] : []), ...(branchMode === "head" ? [std("test"), std("offer")] : []), ...brs, ...custom, std("won"), ...groups, std("lost"), archive]
+        .filter((c) => !hidden.has(c.key));
     }
-    return [std("new"), std("work"), std("test"), std("offer"), ...custom, std("won"), ...groups, std("lost")];
-  }, [groupColumns, customColumns, branchColumns, branchMode, showOnlineCol, locale]);
+    return [std("new"), std("work"), std("test"), std("offer"), ...custom, std("won"), ...groups, std("lost"), archive]
+      .filter((c) => !hidden.has(c.key));
+  }, [groupColumns, customColumns, branchColumns, branchMode, showOnlineCol, hiddenCols, locale]);
 
   const colOf = useCallback((l: VLead) => columnOfLead(l, pinnedIds, customIds, branchCfg), [pinnedIds, customIds, branchCfg]);
 
@@ -318,6 +330,8 @@ export default function LeadsKanban({
                       ? tr(locale, { uz: "Arizada «Onlayn» tanlagan lidlar shu yerga tushadi", ru: "Сюда попадают лиды, выбравшие «Онлайн» в анкете", en: "Leads who chose “Online” in the form land here", de: "Leads, die im Formular „Online“ gewählt haben, landen hier" })
                       : col.branch
                       ? tr(locale, { uz: "Lidni shu yerga tashlang — filialga yo'naltiriladi", ru: "Перетащите лид сюда — он будет направлен в филиал", en: "Drop a lead here to direct it to this branch", de: "Lead hierher ziehen — an diese Filiale weiterleiten" })
+                      : col.key === ARCHIVE_COL
+                      ? tr(locale, { uz: "Lidni shu yerga tashlang — ro'yxatdan olib qo'yiladi (bosqichi saqlanadi)", ru: "Перетащите лид сюда — он уйдёт из списка (этап сохранится)", en: "Drop a lead here to hide it from the board (its stage is kept)", de: "Lead hierher ziehen — er verlässt die Ansicht (Phase bleibt)" })
                       : col.customId
                         ? tr(locale, { uz: "Lidni shu yerga tashlang yoki \"+\" bilan qo'shing", ru: "Перетащите лид сюда или добавьте через «+»", en: "Drop a lead here or add one with \"+\"", de: "Lead hierher ziehen oder mit \"+\" anlegen" })
                         : tr(locale, { uz: "Lid yo'q", ru: "Нет лидов", en: "No leads", de: "Keine Leads" })}

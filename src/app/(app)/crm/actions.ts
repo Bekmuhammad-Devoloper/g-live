@@ -843,3 +843,28 @@ export async function setLeadOnline(leadId: string, online: boolean): Promise<{ 
   revalidatePath("/crm");
   return { ok: true };
 }
+
+/* ─── Lidni arxivlash ────────────────────────────────────────────────
+   Kanbandagi "Arxiv" ustuni — lid bosqichini YO'QOTMAYDI, faqat ko'rinishdan
+   chiqadi (ro'yxatni tozalash uchun). Boshqa ustunga qaytarilsa arxivdan
+   chiqadi va o'z bosqichi ustuniga qaytadi.                                */
+export async function setLeadArchived(leadId: string, archived: boolean): Promise<{ ok?: boolean; error?: string }> {
+  const s = await requireSession();
+  if (!canWrite(s.role, MODULES.CRM)) return { error: "forbidden" };
+
+  const lead = await prisma.lead.findUnique({ where: { id: leadId }, select: { id: true, fullName: true, archivedAt: true } });
+  if (!lead) return { error: "notfound" };
+  if (!!lead.archivedAt === archived) return { ok: true };
+
+  await prisma.lead.update({
+    where: { id: leadId },
+    data: {
+      archivedAt: archived ? new Date() : null,
+      activities: { create: { authorId: s.userId, type: "note", result: archived ? "Arxivga tashlandi" : "Arxivdan qaytarildi" } },
+    },
+  });
+  await writeAudit({ actorId: s.userId, action: "UPDATE", entityType: "Lead", entityId: leadId, newValue: { archived }, reason: archived ? `Lid arxivlandi: ${lead.fullName}` : `Lid arxivdan qaytarildi: ${lead.fullName}` });
+
+  revalidatePath("/crm");
+  return { ok: true };
+}
