@@ -125,6 +125,7 @@ CREATE TABLE "Lead" (
     "groupId" TEXT,
     "enrollEditCount" INTEGER NOT NULL DEFAULT 0,
     "kanbanColumnId" TEXT,
+    "archivedAt" DATETIME,
     "branchSlotId" TEXT,
     "createdAt" DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
     "updatedAt" DATETIME NOT NULL,
