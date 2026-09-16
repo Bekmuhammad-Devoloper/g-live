@@ -1,6 +1,6 @@
 // Legacy → V2 backfill. Idempotent, bosqichma-bosqich.
-//   npx tsx scripts/finance-v2/backfill.ts --stage billing|payments|expenses|salary|verify [--dry-run] [--db /abs/dev.db] [--upTo 2026-10] [--allow-unpriced]
-import { backfillBilling, backfillExpenses, backfillPayments, backfillSalary, verifyDebt } from "@/lib/finance/ops/backfill";
+//   npx tsx scripts/finance-v2/backfill.ts --stage billing|payments|expenses|salary|verify|settle-legacy-credit [--dry-run] [--db /abs/dev.db] [--upTo 2026-10] [--allow-unpriced]
+import { backfillBilling, backfillExpenses, backfillPayments, backfillSalary, settleLegacyCredit, verifyDebt } from "@/lib/finance/ops/backfill";
 import { openSqlite } from "@/lib/finance/ops/sqlite";
 import { parseYearMonthKey } from "@/lib/finance/period";
 import { fail, parseArgs, printJson, resolveDbPath, stubServerOnly } from "./_cli";
@@ -34,6 +34,13 @@ async function main() {
       const r = await backfillSalary(client, { dryRun });
       printJson("backfill:salary", r);
       console.log(dryRun ? "✓ dry-run (yozilmadi)" : "✓ salary backfill tugadi");
+      return;
+    }
+    if (stage === "settle-legacy-credit") {
+      // QAROR bosqichi: cutover'dan oldingi to'liq taqsimlanmagan to'lovlar V2 krediti EMAS deb belgilanadi (legacyRole=SETTLED)
+      const r = await settleLegacyCredit(client, { dryRun });
+      printJson("backfill:settle-legacy-credit", r);
+      console.log(dryRun ? `✓ dry-run: ${r.candidates} ta to'lov, ${r.amount} so'm belgilanardi` : `✓ ${r.settled} ta legacy to'lov SETTLED deb belgilandi`);
       return;
     }
     if (stage === "verify") {

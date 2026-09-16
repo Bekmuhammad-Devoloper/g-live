@@ -12,11 +12,12 @@
 
 import type { Prisma, PrismaClient } from "@prisma/client";
 
+import { financeAudit } from "../audit";
 import { cutoverAtFrom } from "../cutover";
 import { withFinanceTx } from "../db";
 import { FinanceError } from "../errors";
 import { accountForMethod } from "../accounts/accounts";
-import { studentBalance } from "../billing/balance";
+import { paymentAvailability, studentBalance } from "../billing/balance";
 import { createManualDebtCharge, ensureMonthlyCharges } from "../billing/charges";
 import { syncStudentHistory } from "../billing/history";
 import { postLedger } from "../ledger/post";
@@ -347,5 +348,44 @@ export async function backfillExpenses(client: PrismaClient, o: BackfillOptions 
   } catch (err) {
     if (!(err instanceof DryRunRollback)) throw err;
   }
+  return report;
+}
+
+
+// ─── LEGACY KREDIT bosqichi: cutover'dan OLDINGI, hech qaysi charge'ga taqsimlanmagan to'lovlar ───
+// Bunday to'lovlar "kredit" emas — o'tgan davr xizmati uchun olingan pul (legacy hisob). Ular V2 kreditiga
+// aylanib keyingi oy charge'lariga qo'llanmasligi uchun legacyRole = "SETTLED" belgilanadi (ledger IN qoladi,
+// qator o'zgarmaydi, audit). Bu QAROR — buxgalter/direktor tasdig'i bilan (--stage settle-legacy-credit).
+export interface LegacyCreditReport {
+  candidates: number;
+  amount: number;
+  settled: number;
+  dryRun: boolean;
+  /** to'lov id → summa (birinchi 200) */
+  sample: { paymentId: string; studentId: string; amount: number; unallocated: number; receivedAt: string }[];
+}
+
+export async function listLegacyCredit(client: PrismaClient, cutoverAt: Date): Promise<LegacyCreditReport["sample"]> {
+  const payments = await client.payment.findMany({ where: { status: "PAID", legacyRole: null, postedAt: { not: null }, receivedAt: { lt: cutoverAt } }, select: { id: true, studentId: true, amount: true, receivedAt: true } });
+  const avail = await paymentAvailability(client, payments.map((p) => p.id));
+  return payments
+    .map((p) => ({ paymentId: p.id, studentId: p.studentId, amount: p.amount, unallocated: avail.get(p.id)?.unallocated ?? 0, receivedAt: p.receivedAt!.toISOString() }))
+    .filter((x) => x.unallocated > 0);
+}
+
+export async function settleLegacyCredit(client: PrismaClient, o: BackfillOptions = {}): Promise<LegacyCreditReport> {
+  const cutoverAt = o.cutoverAt ?? (await cutoverAtFrom(client));
+  const rows = await listLegacyCredit(client, cutoverAt);
+  const report: LegacyCreditReport = { candidates: rows.length, amount: rows.reduce((a, r) => a + r.unallocated, 0), settled: 0, dryRun: !!o.dryRun, sample: rows.slice(0, 200) };
+  if (o.dryRun || rows.length === 0) return report;
+  await withFinanceTx(client, async (tx) => {
+    for (const r of rows) {
+      // Faqat TO'LIQ taqsimlanmagan to'lov belgilanadi; qisman taqsimlanganida qolgan kredit V2 ga tegishli deb qoladi
+      if (r.unallocated !== r.amount) continue;
+      await tx.payment.update({ where: { id: r.paymentId }, data: { legacyRole: "SETTLED" } });
+      await financeAudit(tx, { actorId: o.actorId ?? null, action: "UPDATE", entityType: "Payment", entityId: r.paymentId, oldValue: { legacyRole: null }, newValue: { legacyRole: "SETTLED", amount: r.amount }, reason: "Legacy (cutover'dan oldingi) to'lov — V2 krediti emas, o'tgan davr xizmati uchun" });
+      report.settled++;
+    }
+  }, { attempts: 1, timeout: 120_000 });
   return report;
 }

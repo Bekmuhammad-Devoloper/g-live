@@ -171,6 +171,9 @@ console.log('  money:', JSON.stringify(b.money));
 if(bad){console.log('  ✗ UNEXPECTED: '+bad+' farq');process.exit(1)} console.log('  ✓ legacy sonlar va pul yig\\'indilari aynan');
 " || fail "reconciliation post-migratsiya↔post-backfill UNEXPECTED"
 
+section "9a. Legacy kredit (cutover'dan oldingi taqsimlanmagan to'lovlar) — DRY-RUN ro'yxat (qaror uchun, yozilmaydi)"
+TSX scripts/finance-v2/backfill.ts --db "$COPY" --stage settle-legacy-credit --dry-run 2>&1 | grep -v "prisma-config\|deprecated" | grep -E "candidates|\"amount\"|dry-run" | head -5
+
 section "9b. GO-LIVE READINESS (nusxada, backfill'dan keyin)"
 TSX scripts/finance-v2/readiness.ts --db "$COPY" 2>&1 | grep -v "prisma-config\|deprecated" | tail -60 || fail "READINESS: NOT READY (nusxada) — sabablar yuqorida"
 

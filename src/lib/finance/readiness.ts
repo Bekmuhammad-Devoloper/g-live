@@ -7,7 +7,9 @@ import { ROLES } from "@/lib/constants";
 import { FINANCE_SETTING_KEYS, FINANCE_V2_DEFAULT_CUTOVER_ISO } from "./constants";
 import { accountTypeForMethod } from "./accounts/accounts";
 import { PAYMENT_METHOD_TO_ACCOUNT_TYPE } from "./constants";
+import { paymentAvailability } from "./billing/balance";
 import { resolveFee, resolveListFee } from "./billing/fees";
+import { cutoverAtFrom } from "./cutover";
 import type { FinanceDb } from "./db";
 import { isTashkentMonthStart, tashkentYearMonth, yearMonthKey, type YearMonth } from "./period";
 import { isRuleUsable, resolveRule } from "./salary/rules";
@@ -26,7 +28,7 @@ export interface ReadinessIssue {
   code:
     | "UNPRICED_STUDENTS" | "UNPRICED_GROUPS" | "GROUP_NO_MAIN_TEACHER" | "TEACHER_NO_RULE" | "INVALID_RULES"
     | "UNMAPPED_METHODS" | "INVALID_SETTINGS" | "MIGRATION_NOT_APPLIED" | "LEGACY_UNPOSTED" | "NO_ACTIVE_DIRECTOR"
-    | "NEEDS_REVIEW" | "NO_GLOBAL_RULE";
+    | "NEEDS_REVIEW" | "NO_GLOBAL_RULE" | "LEGACY_CREDIT";
   severity: ReadinessSeverity;
   /** qisqa sabab (UI lug'ati shu kod bo'yicha) */
   count: number;
@@ -158,6 +160,15 @@ export async function financeReadiness(db: FinanceDb, opts: { now?: Date; month?
   if (unpostedPayments > 0) legacyItems.push({ id: "payments", label: `${unpostedPayments} ta PAID to'lov V2'ga kiritilmagan (backfill payments)` });
   if (unpostedExpenses > 0) legacyItems.push({ id: "expenses", label: `${unpostedExpenses} ta xarajat V2'ga kiritilmagan (backfill expenses)` });
   push("LEGACY_UNPOSTED", "BLOCKER", legacyItems, "Backfill bajarilmaguncha V2 balanslari legacy pulni ko'rmaydi");
+
+  // 8b. Cutover'dan oldingi taqsimlanmagan to'lovlar (legacy "kredit") — qaror kerak: charge (narx + a'zolik boshlanishi) yoki SETTLED
+  if (hasCharge) {
+    const cutoverAt = await cutoverAtFrom(db);
+    const legacyPays = await db.payment.findMany({ where: { status: "PAID", legacyRole: null, postedAt: { not: null }, receivedAt: { lt: cutoverAt } }, select: { id: true, amount: true, studentId: true, student: { select: { fullName: true } } } });
+    const avail = await paymentAvailability(db, legacyPays.map((p) => p.id));
+    const items = legacyPays.filter((p) => (avail.get(p.id)?.unallocated ?? 0) > 0).map((p) => ({ id: p.id, label: p.student.fullName, href: `/finance/v2/students/${p.studentId}`, extra: `${(avail.get(p.id)?.unallocated ?? 0).toLocaleString("ru-RU")} so'm taqsimlanmagan` }));
+    push("LEGACY_CREDIT", "BLOCKER", items, `Cutover'dan oldingi ${items.length} ta to'lov hech qaysi hisobga taqsimlanmagan — bu V2 krediti EMAS. Qaror: (a) o'tgan oy hisoblari (narx + a'zolik boshlanishi) yoki (b) backfill --stage settle-legacy-credit (SETTLED)`);
+  }
 
   // 9. Faol DIRECTOR
   const directors = await db.user.count({ where: { role: ROLES.DIRECTOR, isActive: true } });

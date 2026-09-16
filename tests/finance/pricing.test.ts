@@ -6,6 +6,7 @@ import { createDiscount } from "@/lib/finance/billing/discounts";
 import { DEFAULT_FEE_SETTING_KEY, branchDefaultFeeKey, resolveFee } from "@/lib/finance/billing/fees";
 import { acceptPayment } from "@/lib/finance/payments/accept";
 import { monthStart, type YearMonth } from "@/lib/finance/period";
+import { settleLegacyCredit } from "@/lib/finance/ops/backfill";
 import { financeReadiness } from "@/lib/finance/readiness";
 import { assignTeacher } from "@/lib/finance/salary/assignments";
 import { createSalaryRule } from "@/lib/finance/salary/rules";
@@ -110,5 +111,29 @@ describe("monthly fee source of truth + readiness", () => {
     await p.salaryRule.create({ data: { scope: "ALL", amountType: "PERCENT", amount: 250 } });
     const r3 = await financeReadiness(p, { now: T("2026-10-05T05:00:00Z") });
     expect(r3.issues.find((i) => i.code === "INVALID_RULES")).toMatchObject({ severity: "BLOCKER", count: 1 });
+  });
+
+  it("legacy kredit: cutover'dan oldingi taqsimlanmagan to'lov → readiness BLOCKER; settle-legacy-credit (qaror) → SETTLED, kredit emas, ledger qoladi", async () => {
+    const p = db.prisma;
+    await p.setting.update({ where: { key: "finance.v2.cutoverAt" }, data: { value: "2026-11-01T00:00:00+05:00" } }); // cutover noyabr → oktabr to'lovi legacy
+    try {
+      const s2 = await p.student.create({ data: { fullName: "Legacy", branchId: ids.branch, eduStatus: "ACTIVE", createdAt: monthStart(OCT) } }); // guruhsiz → charge yo'q
+      const r = await acceptPayment(p, { studentId: s2.id, amount: 250_000, method: "CASH", receivedAt: T("2026-10-20T05:00:00Z"), purpose: "Kurs", idempotencyKey: "legacy-credit-0001" }, director, T("2026-10-20T05:00:00Z"));
+      expect(r.balance.credit).toBe(250_000);
+      const before = await financeReadiness(p, { now: T("2026-11-05T05:00:00Z") });
+      expect(before.issues.find((i) => i.code === "LEGACY_CREDIT")).toMatchObject({ severity: "BLOCKER", count: 1 });
+      const dry = await settleLegacyCredit(p, { dryRun: true });
+      expect(dry).toMatchObject({ candidates: 1, amount: 250_000, settled: 0 });
+      expect((await p.payment.findUniqueOrThrow({ where: { id: r.payment.id } })).legacyRole).toBeNull();
+      const real = await settleLegacyCredit(p, { actorId: ids.director });
+      expect(real.settled).toBe(1);
+      expect((await p.payment.findUniqueOrThrow({ where: { id: r.payment.id } })).legacyRole).toBe("SETTLED");
+      expect(await p.financialTransaction.count({ where: { referenceType: "Payment", referenceId: r.payment.id } })).toBe(1); // ledger IN qoladi
+      const after = await financeReadiness(p, { now: T("2026-11-05T05:00:00Z") });
+      expect(after.issues.find((i) => i.code === "LEGACY_CREDIT")).toBeUndefined();
+      expect(await p.auditLog.count({ where: { entityType: "Payment", entityId: r.payment.id, action: "UPDATE" } })).toBe(1);
+    } finally {
+      await p.setting.update({ where: { key: "finance.v2.cutoverAt" }, data: { value: "2026-08-01T00:00:00+05:00" } });
+    }
   });
 });

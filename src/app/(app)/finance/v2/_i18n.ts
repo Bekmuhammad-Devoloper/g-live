@@ -172,6 +172,7 @@ export const READINESS_LABELS: Record<string, Txt> = {
   MIGRATION_NOT_APPLIED: { uz: "Migratsiya qo'llanmagan", ru: "Миграция не применена", en: "Migration not applied", de: "Migration nicht angewendet" },
   LEGACY_UNPOSTED: { uz: "Backfill bajarilmagan (legacy yozuvlar V2'da yo'q)", ru: "Backfill не выполнен", en: "Backfill not run", de: "Backfill nicht ausgeführt" },
   NO_ACTIVE_DIRECTOR: { uz: "Faol DIRECTOR yo'q", ru: "Нет активного директора", en: "No active DIRECTOR", de: "Kein aktiver DIRECTOR" },
+  LEGACY_CREDIT: { uz: "Cutover'dan oldingi taqsimlanmagan to'lovlar (legacy 'kredit') — qaror kerak", ru: "Нераспределённые платежи до cutover — нужно решение", en: "Pre-cutover unallocated payments — decision needed", de: "Nicht zugeordnete Zahlungen vor Cutover — Entscheidung nötig" },
   NEEDS_REVIEW: { uz: "Ko'rib chiqilmagan ulushlar (NEEDS_REVIEW)", ru: "Начисления на проверке", en: "Earnings pending review", de: "Anteile zur Prüfung" },
 };
 

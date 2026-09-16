@@ -920,7 +920,8 @@ model Payment {
   financialAccountId String? // qaysi kassaga tushgan
   financialAccount   FinancialAccount? @relation(fields: [financialAccountId], references: [id], onDelete: Restrict)
   idempotencyKey     String?  @unique // ikki marta bosishdan himoya
-  // Eski semantika belgisi: "DEBT" (status=PENDING — qarz edi), "REFUND" (status=REFUNDED — yechim edi), null = real pul
+  // Eski semantika belgisi: "DEBT" (status=PENDING — qarz edi), "REFUND" (status=REFUNDED — yechim edi),
+  // "SETTLED" (cutover'dan oldingi, hisobga taqsimlanmagan to'lov — V2 krediti emas, ledger IN qoladi), null = real pul
   legacyRole         String?
   postedAt           DateTime? // ledgerga yozilgan vaqt (V2)
   reversalOfId       String?  @unique // correction: bu to'lov eskisini almashtiradi (eskisi status=REVERSED)
