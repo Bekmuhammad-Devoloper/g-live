@@ -127,6 +127,22 @@ APP="$APP" node -e '
   })().catch((e) => console.error("xato:", e.message)).finally(() => p.$disconnect());
 '
 
+section "AuditLog — oxirgi 48 soat (faqat agregat: entityType/action/soni, PII yo'q)"
+APP="$APP" node -e '
+  const { PrismaClient } = require("@prisma/client");
+  const p = new PrismaClient({ datasourceUrl: "file:" + process.env.APP + "/prisma/dev.db" });
+  (async () => {
+    const since = new Date(Date.now() - 48 * 3600 * 1000);
+    const rows = await p.auditLog.groupBy({ by: ["entityType", "action"], where: { createdAt: { gte: since } }, _count: { _all: true }, orderBy: { _count: { id: "desc" } } });
+    for (const r of rows) console.log(`  ${r.entityType}.${r.action}: ${r._count._all}`);
+    const del = await p.auditLog.findMany({ where: { createdAt: { gte: since }, action: { in: ["DELETE", "PURGE", "FORCE_DELETE"] } }, select: { entityType: true, action: true, createdAt: true, reason: true, actorId: true }, orderBy: { createdAt: "asc" }, take: 40 });
+    console.log("  o‘chirishlar (vaqt · tur · sabab, aktor id qisqartirilgan):");
+    for (const d of del) console.log(`   ${d.createdAt.toISOString()} ${d.entityType}.${d.action} actor=${(d.actorId ?? "-").slice(0, 6)} ${d.reason ? "— " + d.reason.slice(0, 80) : ""}`);
+    const users = await p.user.groupBy({ by: ["role", "isActive"], _count: { _all: true } });
+    console.log("  foydalanuvchilar (rol/faol/soni):", users.map((u) => `${u.role}:${u.isActive ? "faol" : "nofaol"}=${u._count._all}`).join(" "));
+  })().catch((e) => console.error("xato:", e.message)).finally(() => p.$disconnect());
+'
+
 section "Kuzatilmayotgan fayllar — FAQAT METADATA (o‘qilmaydi, bajarilmaydi, o‘zgartirilmaydi)"
 git status --short --untracked-files=all 2>/dev/null | grep -v "^ M tsconfig.json" | head -20 || true
 for f in _k.html _u.mjs; do
