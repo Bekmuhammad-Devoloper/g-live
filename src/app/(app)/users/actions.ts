@@ -2,6 +2,7 @@
 
 import { revalidatePath } from "next/cache";
 import { prisma } from "@/lib/db";
+import { financeV2Enabled } from "@/lib/finance/legacyAdapter";
 import { requireSession, hashPassword } from "@/lib/auth";
 import { ROLES, ROLE_LABELS, label, isRopPosition, parseMoney } from "@/lib/constants";
 import { tr } from "@/lib/tr";
@@ -42,6 +43,11 @@ function roleForPosition(position: string): string {
   return ROLES.OPERATOR; // Operator, Marketolog va shunga o'xshash sotuv xodimlari
 }
 
+/** O'qituvchi fiks maoshi: Finance V2 yoqilgan bo'lsa faqat SalaryRule (FIXED) manba — User.fiksa TEACHER uchun yozilmaydi */
+async function legacyFiksaWritable(role: string): Promise<boolean> {
+  return role !== ROLES.TEACHER || !(await financeV2Enabled());
+}
+
 export async function createStaff(fd: FormData): Promise<{ ok?: boolean; error?: string }> {
   const s = await requireSession();
   if (!can(s.role)) return { error: tr(s.locale, { uz: "Ruxsat yo'q", ru: "Нет доступа", en: "No access", de: "Kein Zugriff" }) };
@@ -71,7 +77,8 @@ export async function createStaff(fd: FormData): Promise<{ ok?: boolean; error?:
   if (exists) return { error: tr(s.locale, { uz: "Bu email allaqachon mavjud", ru: "Этот email уже существует", en: "This email already exists", de: "Diese E-Mail existiert bereits" }) };
 
   const u = await prisma.user.create({
-    data: { fullName, email, phone, passwordHash: await hashPassword(password), plainPassword: password, role, position, branchId, gender, birthDate, fiksa, isActive: true },
+    // Finance V2 yoqilganda o'qituvchi fiks maoshi SalaryRule (FIXED) orqali — User.fiksa o'qituvchi uchun yozilmaydi
+    data: { fullName, email, phone, passwordHash: await hashPassword(password), plainPassword: password, role, position, branchId, gender, birthDate, ...(await legacyFiksaWritable(role) ? { fiksa } : {}), isActive: true },
   });
   await writeAudit({ actorId: s.userId, action: "CREATE", entityType: "User", entityId: u.id, newValue: { fullName, role, position } });
   revalidatePath("/users");
@@ -172,7 +179,7 @@ export async function updateStaff(fd: FormData): Promise<{ ok?: boolean; error?:
 
   await prisma.user.update({
     where: { id },
-    data: { fullName, email, phone, position, role, branchId, gender, birthDate, fiksa },
+    data: { fullName, email, phone, position, role, branchId, gender, birthDate, ...(await legacyFiksaWritable(role) ? { fiksa } : {}) },
   });
   await writeAudit({ actorId: s.userId, action: "UPDATE", entityType: "User", entityId: id, oldValue: { role: cur.role, position: cur.position }, newValue: { fullName, role, position, branchId } });
   revalidatePath("/users");

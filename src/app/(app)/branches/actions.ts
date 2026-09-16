@@ -207,7 +207,8 @@ export async function assignUnassignedToBranch(branchId: string): Promise<{ ok?:
     prisma.room.updateMany({ where: { branchId: null }, data }),
     prisma.lead.updateMany({ where: { branchId: null }, data }),
     prisma.vacancy.updateMany({ where: { branchId: null }, data }),
-    prisma.expense.updateMany({ where: { branchId: null }, data }),
+    // Finance V2 ga kiritilgan (postedAt) xarajat filiali ledger bilan bog'liq — faqat legacy (kiritilmagan) qatorlar ko'chiriladi
+    prisma.expense.updateMany({ where: { branchId: null, postedAt: null }, data }),
   ]);
 
   await writeAudit({ actorId: s.userId, action: "UPDATE", entityType: "Branch", entityId: branch.id, newValue: { assigned: before }, reason: `Filialsiz yozuvlar biriktirildi: ${branch.name}` });

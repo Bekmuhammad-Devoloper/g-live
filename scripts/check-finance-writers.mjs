@@ -42,7 +42,7 @@ const USER_SALARY_FIELDS = /\b(fiksa|kpiBonus)\b/;
 // User.fiksa/kpiBonus yozuvchilari alohida (USER_SALARY_LEGACY).
 const LEGACY = new Map([
   ["src/app/(app)/actions.ts", 1],
-  ["src/app/(app)/branches/actions.ts", 1], // forceDeleteBranch: payment.deleteMany — V2 tarixi/posted to'lov bo'lsa bloklanadi (2026-09-16 main merge)
+  ["src/app/(app)/branches/actions.ts", 2], // forceDeleteBranch: payment.deleteMany (V2 tarixi bo'lsa bloklanadi); assignUnassignedToBranch: expense.updateMany faqat postedAt=null
   ["src/app/(app)/finance/expenses/actions.ts", 2],
   ["src/app/(app)/finance/salary/actions.ts", 4],
   ["src/app/(app)/finance/withdrawals/actions.ts", 2],
@@ -54,6 +54,7 @@ const LEGACY = new Map([
 
 // User.fiksa / kpiBonus ga yozadigan eski joylar: fayl → soni (2026-09-15 holati)
 const USER_SALARY_LEGACY = new Map([
+  ["src/app/(app)/users/actions.ts", 1], // xodim fiksa (user.update; create detektorga kirmaydi) — TEACHER uchun V2 yoqilganda yozilmaydi (legacyFiksaWritable)
   ["src/app/(app)/teachers/salaryActions.ts", 2],
   ["src/app/(app)/reports/operators/actions.ts", 1],
   ["src/app/(app)/reports/kpi/actions.ts", 1],
