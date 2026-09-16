@@ -171,6 +171,9 @@ console.log('  money:', JSON.stringify(b.money));
 if(bad){console.log('  ✗ UNEXPECTED: '+bad+' farq');process.exit(1)} console.log('  ✓ legacy sonlar va pul yig\\'indilari aynan');
 " || fail "reconciliation post-migratsiya↔post-backfill UNEXPECTED"
 
+section "9b. GO-LIVE READINESS (nusxada, backfill'dan keyin)"
+TSX scripts/finance-v2/readiness.ts --db "$COPY" 2>&1 | grep -v "prisma-config\|deprecated" | tail -60 || fail "READINESS: NOT READY (nusxada) — sabablar yuqorida"
+
 section "10. Backfill IKKINCHI marta (idempotency) → sonlar (B); A = B shart"
 tstart backfill-second
 for st in billing payments salary expenses; do
