@@ -156,7 +156,8 @@ body {
    Ilgari har sahifada o'zicha edi (420, 440, 460, 560, 620, 760px): xodim
    kartasidan "Tahrirlash" ga o'tganda panel kengayib ketardi. */
 .drawer-panel {
-  width: 480px;
+  /* Kichik variant — xodim kartasidagi kabi (ilgari 440px edi) */
+  width: 440px;
   max-width: 92%;
 }
 
