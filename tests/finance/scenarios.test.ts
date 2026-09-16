@@ -117,7 +117,7 @@ describe("business scenarios A–L (pre-cutover)", () => {
     const p = db.prisma;
     const { group, teacher } = await mkGroup("D-01", "TeacherD");
     const s = await mkStudent(group.id, monthStart(SEP), "D-student");
-    const r1 = await pay(s.id, FEE, "2026-09-05T05:00:00Z", "d1"); // sentabr uchun
+    await pay(s.id, FEE, "2026-09-05T05:00:00Z", "d1"); // sentabr uchun
     const r2 = await pay(s.id, FEE, "2026-09-20T05:00:00Z", "d2"); // oldindan (oktabr charge hali yo'q)
     expect(r2.allocations).toHaveLength(0);
     expect((await studentBalance(p, s.id))).toMatchObject({ debt: 0, credit: FEE });
