@@ -860,6 +860,8 @@ export async function setLeadArchived(leadId: string, archived: boolean): Promis
     where: { id: leadId },
     data: {
       archivedAt: archived ? new Date() : null,
+      // Arxivlanganda xonadagi joyi bo'shatiladi (sig'im hisobida turmasin); filial belgisi qoladi
+      ...(archived ? { branchSlotId: null } : {}),
       activities: { create: { authorId: s.userId, type: "note", result: archived ? "Arxivga tashlandi" : "Arxivdan qaytarildi" } },
     },
   });

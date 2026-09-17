@@ -231,12 +231,14 @@ export function columnOfLead(
   custom: Set<string> = EMPTY,
   branch: BranchModeCfg | null = null,
 ): string {
+  // Arxiv HAMMASIDAN ustun (filial belgisidan ham) — arxivlangan lid faqat
+  // "Yo'qotilgan" ichidagi arxiv bo'limida turadi. Ilgari filial belgisi birinchi
+  // tekshirilardi — Qibray/Oybek ustunidagi lid arxivlansa ham joyida qolib ketardi.
+  if (lead.archivedAt) return "lost";
   // Qo'lda filial ustuniga tashlangan — belgi "br:<id>" (filial rejimi bo'lsa va filial hali bor)
   if (branch && lead.kanbanColumnId && isBranchCol(lead.kanbanColumnId) && branch.ids.has(branchIdOfCol(lead.kanbanColumnId))) {
     return lead.kanbanColumnId;
   }
-  // Arxivlangan lid boshqa ustunda ko'rinmaydi — "Yo'qotilgan" ichidagi arxiv bo'limida turadi
-  if (lead.archivedAt) return "lost";
   if (lead.kanbanColumnId && custom.has(lead.kanbanColumnId)) return customColKey(lead.kanbanColumnId);
   const base = columnOf(lead.stage);
   if (base === "won" && lead.groupId && pinned.has(lead.groupId)) return groupColKey(lead.groupId);

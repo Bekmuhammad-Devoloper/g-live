@@ -266,7 +266,7 @@ export default function LeadsWorkspace({ locale, initialLeads, managers, sources
     // Arxiv ustunlari (Lid / O'quvchi) — bosqich saqlanadi, lid ko'rinishdan chiqadi;
     // qaysi arxivda ko'rinishi lidning o'zidan (qabul qilinganmi) aniqlanadi
     if (isArchiveCol(colKey)) {
-      setLeads((prev) => prev.map((l) => (l.id === leadId ? { ...l, archivedAt: new Date().toISOString() } : l))); // optimistik
+      setLeads((prev) => prev.map((l) => (l.id === leadId ? { ...l, archivedAt: new Date().toISOString(), branchSlotId: null } : l))); // optimistik
       startRefresh(async () => {
         const r = await setLeadArchived(leadId, true);
         if (r.error) setLeads(initialLeads);
