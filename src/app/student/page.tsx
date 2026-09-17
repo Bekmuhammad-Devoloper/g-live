@@ -458,7 +458,14 @@ export default async function StudentStartPage() {
             {/* Qator balandligi qat'iy: `text-[..]` faqat shrift o'lchamini beradi,
                 leading esa body'dan meros bo'lardi — karta balandligi tilga qarab
                 o'zgarib ketardi (uz/ru/de yorliqlari har xil). */}
-            <div className="px-0.5 text-center text-[12px] font-semibold leading-[15px] text-slate-800">{sk.label}</div>
+            <div
+              className={
+                "w-full px-0.5 text-center font-semibold leading-[15px] text-slate-800 " +
+                (sk.label.length > 9 ? "text-[9.5px] tracking-[-0.02em]" : sk.label.length > 7 ? "text-[11px]" : "text-[12px]")
+              }
+            >
+              {sk.label}
+            </div>
             <div className="relative grid place-items-center">
               <Ring pct={sk.pct} size={52} stroke={4.5} />
               {/* Ma'lumot bo'lmasa ham foiz ko'rsatiladi (0%) — chiziqcha
@@ -480,8 +487,8 @@ export default async function StudentStartPage() {
         href={kurseHref}
         className={
           levelBanner
-            ? "relative block h-full min-h-[168px] overflow-hidden rounded-[26px] p-6 pb-9 text-white shadow-[0_14px_30px_rgba(19,78,94,0.22)] transition active:scale-[0.985]"
-            : "gl-glass-hero block h-full min-h-[168px] p-6 pb-9 transition active:scale-[0.985]"
+            ? "relative block h-full min-h-[168px] overflow-hidden rounded-[26px] p-6 pb-8 text-white shadow-[0_14px_30px_rgba(19,78,94,0.22)] transition active:scale-[0.985]"
+            : "gl-glass-hero block h-full min-h-[168px] p-6 pb-8 transition active:scale-[0.985]"
         }
       >
         {levelBanner ? (
@@ -755,12 +762,12 @@ function NextLessonBanner({ t, locale, todayISO, next, hasSchedule, cardCls, ima
   const weekday = WEEKDAYS_FULL[L][mondayIndex(next.iso)];
   const NIGHT = "#0b1a33";
   // Shisha chip: vaqt / xona — chapda ko'k doira ichida belgi, o'ngda strelka
-  const chip = "flex w-full max-w-[236px] items-center gap-2.5 rounded-full bg-white/[0.07] py-1.5 pl-1.5 pr-3 text-[14px] font-semibold ring-1 ring-white/[0.14] backdrop-blur-sm";
-  const chipIco = "grid h-8 w-8 shrink-0 place-items-center rounded-full shadow-[0_4px_10px_rgba(37,99,235,0.45)]";
+  const chip = "inline-flex items-center gap-2 rounded-full bg-white/[0.07] py-1 pl-1 pr-2.5 text-[13px] font-semibold ring-1 ring-white/[0.14] backdrop-blur-sm";
+  const chipIco = "grid h-7 w-7 shrink-0 place-items-center rounded-full shadow-[0_4px_10px_rgba(37,99,235,0.45)]";
 
   return (
     <div
-      className="relative flex h-full min-h-[168px] flex-col overflow-hidden rounded-[26px] p-5 pb-8 text-white ring-1 ring-sky-400/40 shadow-[0_18px_44px_rgba(2,16,40,0.55),0_0_0_1px_rgba(56,189,248,0.12),inset_0_1px_0_rgba(255,255,255,0.12)]"
+      className="relative flex h-full min-h-[168px] flex-col overflow-hidden rounded-[26px] p-4 pb-7 text-white ring-1 ring-sky-400/40 shadow-[0_18px_44px_rgba(2,16,40,0.55),0_0_0_1px_rgba(56,189,248,0.12),inset_0_1px_0_rgba(255,255,255,0.12)]"
       style={{ background: `linear-gradient(135deg, ${NIGHT} 0%, #0d2149 55%, #0b3a7a 100%)` }}
     >
       {/* O'ng tomonda kurs rasmi — tun rangiga singib ketadi */}
@@ -813,45 +820,45 @@ function NextLessonBanner({ t, locale, todayISO, next, hasSchedule, cardCls, ima
         </span>
       </div>
 
-      <div className="relative mt-4 flex flex-1 items-start gap-4">
+      <div className="relative mt-3 flex flex-1 items-center gap-3.5">
         {/* Sana plitkasi — ko'k sarlavhali kalendar varag'i */}
-        <div className="relative w-[86px] shrink-0 overflow-hidden rounded-[18px] bg-[#eef3ff] text-center shadow-[0_12px_28px_rgba(2,16,40,0.55),0_0_0_1px_rgba(56,189,248,0.35)]">
+        <div className="relative w-[72px] shrink-0 overflow-hidden rounded-[16px] bg-[#eef3ff] text-center shadow-[0_12px_28px_rgba(2,16,40,0.55),0_0_0_1px_rgba(56,189,248,0.35)]">
           <span
-            className="block w-full py-[7px] text-[11px] font-extrabold uppercase tracking-[0.16em] text-white"
+            className="block w-full py-[5px] text-[10.5px] font-extrabold uppercase tracking-[0.16em] text-white"
             style={{ background: "linear-gradient(180deg, #3b82f6 0%, #1d4ed8 100%)" }}
           >
             {WEEKDAYS_SHORT[L][mondayIndex(next.iso)]}
           </span>
-          <span className="block pt-2 text-[40px] font-black leading-none tracking-tight" style={{ color: "#0b1a33" }}>{d.getDate()}</span>
-          <span className="block pb-2.5 pt-1 text-[11px] font-bold uppercase tracking-[0.14em] text-slate-500">
+          <span className="block pt-1.5 text-[32px] font-black leading-none tracking-tight" style={{ color: "#0b1a33" }}>{d.getDate()}</span>
+          <span className="block pb-2 pt-0.5 text-[10px] font-bold uppercase tracking-[0.14em] text-slate-500">
             {MONTHS[L][d.getMonth()].slice(0, 3)}
           </span>
         </div>
 
         <div className="min-w-0 flex-1">
           <div className="flex flex-wrap items-baseline gap-x-2">
-            <span className="font-hand text-[36px] font-bold leading-[0.95]">{dayLabel}</span>
+            <span className="font-hand text-[32px] font-bold leading-[0.95]">{dayLabel}</span>
             {diff > 1 && (
               <span className="rounded-full bg-white/[0.08] px-2 py-0.5 text-[11.5px] font-semibold text-sky-100/90 ring-1 ring-white/[0.14]">
                 {fill(t.inDays, { n: diff })}
               </span>
             )}
           </div>
-          <div className="mt-1 text-[14px] font-medium text-sky-100/70">
+          <div className="mt-0.5 text-[13px] font-medium text-sky-100/70">
             {diff > 1 ? dateLabel : `${weekday}, ${dateLabel}`}
           </div>
-          <div className="mt-3 flex flex-col gap-2">
+          <div className="mt-2.5 flex flex-wrap gap-1.5">
             {time && (
               <span className={chip}>
                 <span className={chipIco} style={{ background: "linear-gradient(180deg,#3b82f6,#1d4ed8)" }}><IcoClock c="#ffffff" s={15} /></span>
-                <span className="flex-1 truncate">{time}</span>
+                <span className="truncate">{time}</span>
                 <IcoChevron c="rgba(255,255,255,0.6)" s={14} />
               </span>
             )}
             {next.room && (
               <span className={chip}>
                 <span className={chipIco} style={{ background: "linear-gradient(180deg,#3b82f6,#1d4ed8)" }}><IcoPin c="#ffffff" s={15} /></span>
-                <span className="flex-1 truncate">{next.room}</span>
+                <span className="max-w-[110px] truncate">{next.room}</span>
                 <IcoChevron c="rgba(255,255,255,0.6)" s={14} />
               </span>
             )}
