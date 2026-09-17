@@ -54,7 +54,8 @@ interface Props {
 
 /** Har ustunda dastlab shuncha karta chiziladi — qolgani "Yana ko'rsatish" bilan.
  *  Aks holda 2000 lid = 2000 karta × ~10 SVG bir vaqtda DOM'ga tushib, sahifa qotib qolardi. */
-const PAGE = 40;
+/** Har sahifada nechta karta — ustun cheksiz pastga ketmasin, 1 2 3 4 sahifalar bo'lsin */
+const PAGE = 10;
 
 export default function LeadsKanban({
   leads, totals, locale, selected, groupColumns, customColumns,
@@ -62,9 +63,9 @@ export default function LeadsKanban({
 }: Props) {
   const [dragId, setDragId] = useState<string | null>(null);
   const [overCol, setOverCol] = useState<string | null>(null);
-  // Ustun kaliti → hozir ko'rsatilayotgan kartalar soni
-  const [limits, setLimits] = useState<Record<string, number>>({});
-  const showMore = useCallback((key: string) => setLimits((p) => ({ ...p, [key]: (p[key] ?? PAGE) + PAGE })), []);
+  // Ustun kaliti → joriy sahifa (0 dan). Filtr o'zgarib sahifa chegaradan chiqsa Pager o'zi qisqartiradi
+  const [pages, setPages] = useState<Record<string, number>>({});
+  const setPage = useCallback((key: string, n: number) => setPages((p) => ({ ...p, [key]: n })), []);
 
   const pinnedIds = useMemo(() => new Set(groupColumns.map((g) => g.groupId)), [groupColumns]);
   const customIds = useMemo(() => new Set(customColumns.map((c) => c.id)), [customColumns]);
@@ -114,7 +115,7 @@ export default function LeadsKanban({
         const items = byCol[col.key] ?? [];
         const isOver = overCol === col.key;
         const differentCol = draggingCol !== null && draggingCol !== col.key;
-        const limit = limits[col.key] ?? PAGE;
+        const page = pages[col.key] ?? 0;
         return (
           <div
             key={col.key}
@@ -244,8 +245,8 @@ export default function LeadsKanban({
                   locale={locale}
                   color={col.color}
                   selected={selected}
-                  limit={limit}
-                  onMore={() => showMore(col.key)}
+                  page={page}
+                  onPage={(n) => setPage(col.key, n)}
                   onOpen={onOpen}
                   onOpenFull={onOpenFull}
                   onDragStart={onDragStart}
@@ -265,8 +266,8 @@ export default function LeadsKanban({
                   items={items}
                   locale={locale}
                   selected={selected}
-                  limit={limit}
-                  onMore={() => showMore(col.key)}
+                  page={page}
+                  onPage={(n) => setPage(col.key, n)}
                   onOpen={onOpen}
                   onOpenFull={onOpenFull}
                   onDragStart={onDragStart}
@@ -292,7 +293,7 @@ export default function LeadsKanban({
                 </div>
               ) : (
                 <>
-                  {(col.branch ? items.filter((l) => !l.branchSlotId) : items).slice(0, limit).map((lead) => (
+                  {pageSlice(col.branch ? items.filter((l) => !l.branchSlotId) : items, page).map((lead) => (
                     <LeadCard
                       key={lead.id}
                       lead={lead}
@@ -305,7 +306,7 @@ export default function LeadsKanban({
                       onDelete={onDelete}
                     />
                   ))}
-                  {items.length > limit && <MoreButton rest={items.length - limit} locale={locale} onClick={() => showMore(col.key)} />}
+                  <Pager total={(col.branch ? items.filter((l) => !l.branchSlotId) : items).length} page={page} onPage={(n) => setPage(col.key, n)} locale={locale} />
                 </>
               )}
             </div>
@@ -325,13 +326,13 @@ export default function LeadsKanban({
  * Qaysi bo'limda ko'rinishi lidning o'zidan aniqlanadi.
  */
 function LostColumn({
-  items, locale, selected, limit, onMore, onOpen, onOpenFull, onDragStart, onDragEnd, onDelete, dragging, onArchive,
+  items, locale, selected, page, onPage, onOpen, onOpenFull, onDragStart, onDragEnd, onDelete, dragging, onArchive,
 }: {
   items: VLead[];
   locale: Locale;
   selected: Set<string>;
-  limit: number;
-  onMore: () => void;
+  page: number;
+  onPage: (n: number) => void;
   onOpen: (id: string, e: React.MouseEvent) => void;
   onOpenFull: (id: string) => void;
   onDragStart: (id: string, e: React.DragEvent) => void;
@@ -371,8 +372,8 @@ function LostColumn({
     </div>
   ) : (
     <>
-      {lost.slice(0, limit).map(card)}
-      {lost.length > limit && <MoreButton rest={lost.length - limit} locale={locale} onClick={onMore} />}
+      {pageSlice(lost, page).map(card)}
+      <Pager total={lost.length} page={page} onPage={onPage} locale={locale} />
     </>
   );
 
@@ -497,16 +498,16 @@ interface Bucket {
 }
 
 function WonColumn({
-  items, locale, color, selected, limit, onMore, onOpen, onOpenFull, onDragStart, onDragEnd, onDelete, groupInfo = {},
+  items, locale, color, selected, page, onPage, onOpen, onOpenFull, onDragStart, onDragEnd, onDelete, groupInfo = {},
 }: {
   groupInfo?: Record<string, GroupInfo>;
   items: VLead[];
   locale: Locale;
   color: string;
   selected: Set<string>;
-  /** Guruh kutayotganlardan nechtasi chizilgan */
-  limit: number;
-  onMore: () => void;
+  /** Guruh kutayotganlarning joriy sahifasi */
+  page: number;
+  onPage: (n: number) => void;
   onOpen: (id: string, e: React.MouseEvent) => void;
   onOpenFull: (id: string) => void;
   onDragStart: (id: string, e: React.DragEvent) => void;
@@ -548,7 +549,7 @@ function WonColumn({
             text={tr(locale, { uz: "Guruh kutmoqda", ru: "Ожидают группу", en: "Awaiting group", de: "Gruppe wird erwartet" })}
             count={waiting.length}
           />
-          {waiting.slice(0, limit).map((lead) => (
+          {pageSlice(waiting, page).map((lead) => (
             <LeadCard
               key={lead.id}
               lead={lead}
@@ -561,7 +562,7 @@ function WonColumn({
               onDelete={onDelete}
             />
           ))}
-          {waiting.length > limit && <MoreButton rest={waiting.length - limit} locale={locale} onClick={onMore} />}
+          <Pager total={waiting.length} page={page} onPage={onPage} locale={locale} />
         </>
       )}
 
@@ -583,18 +584,71 @@ function WonColumn({
   );
 }
 
-/** "Yana N ta ko'rsatish" — ustunning chizilmagan qismini ochadi */
-function MoreButton({ rest, locale, onClick }: { rest: number; locale: Locale; onClick: () => void }) {
-  const n = Math.min(rest, PAGE);
+/** Joriy sahifadagi kartalar (sahifa chegaradan chiqsa — oxirgi sahifa) */
+function pageSlice<T>(items: T[], page: number): T[] {
+  const last = Math.max(0, Math.ceil(items.length / PAGE) - 1);
+  const p = Math.min(page, last);
+  return items.slice(p * PAGE, (p + 1) * PAGE);
+}
+
+/** Ko'rsatiladigan sahifa raqamlari: 1 … 5 6 7 … 47 (null — "…") */
+function pageNumbers(count: number, current: number): (number | null)[] {
+  if (count <= 7) return Array.from({ length: count }, (_, i) => i);
+  const set = new Set<number>([0, count - 1, current - 1, current, current + 1]);
+  if (current <= 2) { set.add(1); set.add(2); set.add(3); }
+  if (current >= count - 3) { set.add(count - 2); set.add(count - 3); set.add(count - 4); }
+  const nums = [...set].filter((n) => n >= 0 && n < count).sort((a, b) => a - b);
+  const out: (number | null)[] = [];
+  for (let i = 0; i < nums.length; i++) {
+    if (i > 0 && nums[i] - nums[i - 1] > 1) out.push(null);
+    out.push(nums[i]);
+  }
+  return out;
+}
+
+/**
+ * Ustun sahifalari: ‹ 1 2 3 … 47 › — har sahifada PAGE ta karta. Bitta sahifa
+ * bo'lsa chizilmaydi. Filtr o'zgarib sahifa chegaradan chiqsa oxirgisiga qisqaradi.
+ */
+function Pager({ total, page, onPage, locale }: { total: number; page: number; onPage: (n: number) => void; locale: Locale }) {
+  const count = Math.ceil(total / PAGE);
+  if (count <= 1) return null;
+  const cur = Math.min(page, count - 1);
+  const from = cur * PAGE + 1, to = Math.min(total, (cur + 1) * PAGE);
+  const nav = "grid h-7 w-7 place-items-center rounded-lg text-slate-500 transition hover:bg-slate-100 disabled:opacity-30 disabled:hover:bg-transparent dark:text-slate-400 dark:hover:bg-white/[0.06]";
   return (
-    <button
-      onClick={onClick}
-      className="flex w-full items-center justify-center gap-1.5 rounded-xl border border-dashed border-slate-300 py-2.5 text-xs font-semibold text-slate-500 transition hover:border-brand-400 hover:text-brand-600 dark:border-white/[0.12] dark:text-slate-400 dark:hover:text-brand-300"
-    >
-      <Icon name="plus" className="h-3.5 w-3.5" />
-      {tr(locale, { uz: `Yana ${n} ta ko'rsatish`, ru: `Показать ещё ${n}`, en: `Show ${n} more`, de: `${n} weitere anzeigen` })}
-      <span className="text-slate-400">({rest})</span>
-    </button>
+    <div className="rounded-xl border border-slate-200/80 bg-white/80 px-2 py-2 dark:border-white/[0.08] dark:bg-white/[0.03]">
+      <div className="flex items-center justify-center gap-0.5">
+        <button type="button" onClick={() => onPage(cur - 1)} disabled={cur === 0} className={nav} aria-label={tr(locale, { uz: "Oldingi", ru: "Назад", en: "Previous", de: "Zurück" })}>
+          <Icon name="chevronDown" className="h-3.5 w-3.5 rotate-90" />
+        </button>
+        {pageNumbers(count, cur).map((n, i) =>
+          n === null ? (
+            <span key={`e${i}`} className="w-5 text-center text-[11px] text-slate-400">…</span>
+          ) : (
+            <button
+              key={n}
+              type="button"
+              onClick={() => onPage(n)}
+              className={cn(
+                "h-7 min-w-[28px] rounded-lg px-1.5 text-[12px] font-semibold tabular-nums transition",
+                n === cur
+                  ? "bg-brand-600 text-white shadow-[0_4px_10px_-4px_rgba(79,70,229,0.8)]"
+                  : "text-slate-600 hover:bg-slate-100 dark:text-slate-300 dark:hover:bg-white/[0.06]",
+              )}
+            >
+              {n + 1}
+            </button>
+          ),
+        )}
+        <button type="button" onClick={() => onPage(cur + 1)} disabled={cur >= count - 1} className={nav} aria-label={tr(locale, { uz: "Keyingi", ru: "Вперёд", en: "Next", de: "Weiter" })}>
+          <Icon name="chevronDown" className="h-3.5 w-3.5 -rotate-90" />
+        </button>
+      </div>
+      <div className="mt-1 text-center text-[10.5px] tabular-nums text-slate-400">
+        {from}–{to} / {total}
+      </div>
+    </div>
   );
 }
 
