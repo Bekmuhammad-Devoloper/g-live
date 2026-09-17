@@ -480,8 +480,8 @@ export default async function StudentStartPage() {
         href={kurseHref}
         className={
           levelBanner
-            ? "relative block h-full min-h-[168px] overflow-hidden rounded-[26px] p-6 text-white shadow-[0_14px_30px_rgba(19,78,94,0.22)] transition active:scale-[0.985]"
-            : "gl-glass-hero block h-full min-h-[168px] p-6 transition active:scale-[0.985]"
+            ? "relative block h-full min-h-[168px] overflow-hidden rounded-[26px] p-6 pb-9 text-white shadow-[0_14px_30px_rgba(19,78,94,0.22)] transition active:scale-[0.985]"
+            : "gl-glass-hero block h-full min-h-[168px] p-6 pb-9 transition active:scale-[0.985]"
         }
       >
         {levelBanner ? (
@@ -750,41 +750,80 @@ function NextLessonBanner({ t, locale, todayISO, next, hasSchedule, cardCls }: {
   const dateLabel = `${d.getDate()} ${MONTHS[L][d.getMonth()].toLowerCase()}`;
   const time = next.startTime ? `${next.startTime}${next.endTime ? `–${next.endTime}` : ""}` : null;
 
+  const weekday = WEEKDAYS_FULL[L][mondayIndex(next.iso)];
+  const chip = "inline-flex items-center gap-1.5 rounded-full bg-white/[0.16] px-3 py-1.5 text-[13px] font-semibold ring-1 ring-white/25 backdrop-blur-sm";
+
   return (
     <div
-      className="relative flex h-full min-h-[168px] flex-col justify-center overflow-hidden rounded-[26px] p-5 pb-7 text-white shadow-[0_14px_30px_rgba(19,78,94,0.25)]"
-      style={{ background: `linear-gradient(135deg, #17a2bf 0%, ${TEAL} 55%, ${NAVY} 100%)` }}
+      className="relative flex h-full min-h-[168px] flex-col overflow-hidden rounded-[26px] p-5 pb-8 text-white shadow-[0_18px_40px_rgba(19,78,94,0.28)]"
+      style={{ background: `linear-gradient(135deg, #0ea5c4 0%, ${TEAL} 48%, ${NAVY} 100%)` }}
     >
-      {/* bezak doiralar */}
-      <span className="pointer-events-none absolute -right-8 -top-10 h-36 w-36 rounded-full bg-white/10" />
-      <span className="pointer-events-none absolute -bottom-12 right-16 h-28 w-28 rounded-full bg-white/[0.07]" />
+      {/* yorug'lik dog'lari va nozik nuqtali to'r — tekis fon "yassi" ko'rinmasin */}
+      <span
+        className="pointer-events-none absolute -right-14 -top-20 h-60 w-60 rounded-full"
+        style={{ background: "radial-gradient(circle, rgba(255,255,255,0.32) 0%, rgba(255,255,255,0) 68%)" }}
+      />
+      <span
+        className="pointer-events-none absolute -bottom-24 -left-12 h-60 w-60 rounded-full"
+        style={{ background: "radial-gradient(circle, rgba(6,40,62,0.6) 0%, rgba(6,40,62,0) 68%)" }}
+      />
+      <span
+        className="pointer-events-none absolute inset-0 opacity-[0.10]"
+        style={{ backgroundImage: "radial-gradient(rgba(255,255,255,0.95) 1px, transparent 1.2px)", backgroundSize: "18px 18px" }}
+      />
+      {/* yaltiroq chiziq */}
+      <span
+        className="pointer-events-none absolute inset-y-0 left-[38%] w-[34%] -skew-x-[18deg]"
+        style={{ background: "linear-gradient(90deg, rgba(255,255,255,0) 0%, rgba(255,255,255,0.08) 50%, rgba(255,255,255,0) 100%)" }}
+      />
 
-      <div className="relative flex items-center gap-4">
-        {/* Sana kartochkasi — yirtiladigan kalendar varag'i kabi */}
-        <div className="flex w-[72px] shrink-0 flex-col items-center overflow-hidden rounded-2xl bg-white text-center shadow-[0_8px_18px_rgba(0,0,0,0.18)]">
-          <span className="w-full py-1 text-[11px] font-extrabold uppercase tracking-wider text-white" style={{ background: "#e11d48" }}>
+      {/* Yuqori qator: sarlavha belgisi va guruh nomi */}
+      <div className="relative flex items-center justify-between gap-2">
+        <span className="inline-flex items-center gap-1.5 rounded-full bg-white/[0.16] px-3 py-1 text-[10.5px] font-extrabold uppercase tracking-[0.18em] ring-1 ring-white/25 backdrop-blur-sm">
+          <IcoCalendar c="#ffffff" s={13} /> {t.nextLessonTitle}
+        </span>
+        <span className="max-w-[46%] truncate rounded-full bg-black/20 px-3 py-1 text-[11.5px] font-semibold text-white/90">
+          {next.group}
+        </span>
+      </div>
+
+      <div className="relative mt-4 flex flex-1 items-center gap-4">
+        {/* Sana plitkasi — kalendar varag'i: tepada ilgak teshiklari, qizil sarlavha */}
+        <div className="relative w-[74px] shrink-0 overflow-hidden rounded-[18px] bg-white text-center shadow-[0_10px_24px_rgba(0,0,0,0.22)]">
+          <span
+            className="block w-full py-[5px] text-[10.5px] font-extrabold uppercase tracking-[0.14em] text-white"
+            style={{ background: "linear-gradient(90deg, #fb7185 0%, #e11d48 100%)" }}
+          >
             {WEEKDAYS_SHORT[L][mondayIndex(next.iso)]}
           </span>
-          <span className="py-1.5 text-[30px] font-black leading-none" style={{ color: NAVY }}>{d.getDate()}</span>
-          <span className="pb-1.5 text-[10.5px] font-semibold uppercase text-slate-500">{MONTHS[L][d.getMonth()].slice(0, 3)}</span>
+          <span className="absolute left-[18px] top-[3px] h-[5px] w-[5px] rounded-full bg-white/70" />
+          <span className="absolute right-[18px] top-[3px] h-[5px] w-[5px] rounded-full bg-white/70" />
+          <span className="block pt-1.5 text-[32px] font-black leading-none tracking-tight" style={{ color: NAVY }}>{d.getDate()}</span>
+          <span className="block pb-2 pt-0.5 text-[10.5px] font-bold uppercase tracking-wider text-slate-500">
+            {MONTHS[L][d.getMonth()].slice(0, 3)}
+          </span>
         </div>
 
         <div className="min-w-0 flex-1">
-          <div className="text-[11.5px] font-bold uppercase tracking-[0.18em] text-white/80">{t.nextLessonTitle}</div>
-          <div className="font-hand mt-0.5 text-[30px] font-bold leading-[1.05]">
-            {dayLabel}
-            {diff > 1 && <span className="ml-2 align-middle font-sans text-[13px] font-semibold text-white/80">{fill(t.inDays, { n: diff })}</span>}
+          <div className="flex flex-wrap items-baseline gap-x-2">
+            <span className="text-[30px] font-extrabold leading-none tracking-tight">{dayLabel}</span>
+            {diff > 1 && (
+              <span className="rounded-full bg-white/[0.16] px-2 py-0.5 text-[11.5px] font-semibold text-white/90 ring-1 ring-white/20">
+                {fill(t.inDays, { n: diff })}
+              </span>
+            )}
           </div>
-          <div className="mt-1 text-[13px] font-semibold text-white/85">{dateLabel}</div>
-          <div className="mt-2 flex flex-wrap items-center gap-x-3 gap-y-1 text-[13px] font-semibold">
+          <div className="mt-1.5 text-[13.5px] font-medium text-white/80">
+            {diff > 1 ? dateLabel : `${weekday}, ${dateLabel}`}
+          </div>
+          <div className="mt-3 flex flex-wrap gap-2">
             {time && (
-              <span className="inline-flex items-center gap-1.5"><IcoClock c="#ffffff" s={16} /> {time}</span>
+              <span className={chip}><IcoClock c="#ffffff" s={15} /> {time}</span>
             )}
             {next.room && (
-              <span className="inline-flex items-center gap-1.5"><IcoPin c="#ffffff" s={16} /> {next.room}</span>
+              <span className={chip}><IcoPin c="#ffffff" s={15} /> {next.room}</span>
             )}
           </div>
-          <div className="mt-1 truncate text-[12.5px] text-white/75">{next.group}</div>
         </div>
       </div>
     </div>
