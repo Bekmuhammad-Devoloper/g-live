@@ -1,6 +1,6 @@
 "use client";
 
-import { Fragment, useCallback, useMemo, useState } from "react";
+import { useCallback, useMemo, useState } from "react";
 import Link from "next/link";
 import { cn } from "@/lib/cn";
 import { tr } from "@/lib/tr";
@@ -378,82 +378,105 @@ function LostColumn({
 
   return (
     <>
-      {/* Arxiv kartalari — filialdagi xona kartalari kabi, ustun TEPASIDA (464 lid
-          ostida ko'rinmay qolmasin). Karta — tashlash joyi; bosilsa ichidagilar ochiladi. */}
-      <ul className="space-y-3">
+      {/* Arxiv — ikki ixcham plitka yonma-yon (xona kartalari uslubida), ustun
+          TEPASIDA. Plitka — tashlash joyi; bosilsa ichidagilar pastda ochiladi. */}
+      <div className="grid grid-cols-2 gap-2">
         {sections.map((sec) => {
           const count = sec.items.length;
           const opened = openSec[sec.key] ?? false;
           const isOver = overSec === sec.key && canArchive;
           const student = sec.key === "students";
           return (
-            <Fragment key={sec.key}>
-              <li
-                onDragOver={(e) => { if (!canArchive) return; e.preventDefault(); e.stopPropagation(); e.dataTransfer.dropEffect = "move"; if (overSec !== sec.key) setOverSec(sec.key); }}
-                onDragLeave={() => setOverSec((c) => (c === sec.key ? null : c))}
-                onDrop={(e) => {
-                  if (!canArchive) return;
-                  e.preventDefault(); e.stopPropagation();
-                  const id = e.dataTransfer.getData("text/plain") || dragging?.id;
-                  setOverSec(null);
-                  if (id) onArchive(id);
-                }}
-                onClick={count > 0 ? () => setOpenSec((p) => ({ ...p, [sec.key]: !opened })) : undefined}
-                className={cn(
-                  "group relative overflow-hidden rounded-xl border p-3 transition",
-                  student
-                    ? "bg-gradient-to-br from-violet-50 via-white to-white shadow-[0_6px_18px_-12px_rgba(139,92,246,0.6)] dark:from-violet-500/10 dark:via-[#15243d] dark:to-[#15243d]"
-                    : "bg-gradient-to-br from-slate-100 via-white to-white shadow-[0_6px_18px_-12px_rgba(100,116,139,0.6)] dark:from-slate-500/10 dark:via-[#15243d] dark:to-[#15243d]",
-                  isOver
-                    ? (student ? "scale-[1.01] border-violet-500 ring-2 ring-violet-400/60" : "scale-[1.01] border-slate-500 ring-2 ring-slate-400/60")
+            <button
+              key={sec.key}
+              type="button"
+              onDragOver={(e) => { if (!canArchive) return; e.preventDefault(); e.stopPropagation(); e.dataTransfer.dropEffect = "move"; if (overSec !== sec.key) setOverSec(sec.key); }}
+              onDragLeave={() => setOverSec((c) => (c === sec.key ? null : c))}
+              onDrop={(e) => {
+                if (!canArchive) return;
+                e.preventDefault(); e.stopPropagation();
+                const id = e.dataTransfer.getData("text/plain") || dragging?.id;
+                setOverSec(null);
+                if (id) onArchive(id);
+              }}
+              onClick={() => count > 0 && setOpenSec({ [sec.key]: !opened })}
+              disabled={count === 0 && !canArchive}
+              className={cn(
+                "group relative flex min-w-0 flex-col items-start gap-2 overflow-hidden rounded-xl border p-2.5 text-left transition",
+                student
+                  ? "bg-gradient-to-br from-violet-50 to-white shadow-[0_6px_18px_-12px_rgba(139,92,246,0.55)] dark:from-violet-500/10 dark:to-[#15243d]"
+                  : "bg-gradient-to-br from-slate-100 to-white shadow-[0_6px_18px_-12px_rgba(100,116,139,0.55)] dark:from-slate-500/10 dark:to-[#15243d]",
+                isOver
+                  ? (student ? "scale-[1.02] border-violet-500 ring-2 ring-violet-400/60" : "scale-[1.02] border-slate-500 ring-2 ring-slate-400/60")
+                  : opened
+                    ? (student ? "border-violet-400 dark:border-violet-500/50" : "border-slate-400 dark:border-slate-500/50")
                     : (student ? "border-violet-200/80 dark:border-violet-500/25" : "border-slate-300/80 dark:border-slate-500/25"),
-                  count > 0 && "cursor-pointer",
-                )}
-              >
-                {/* chap chiziq */}
-                <span className={cn("absolute inset-y-0 left-0 w-1 bg-gradient-to-b", student ? "from-violet-400 to-violet-600" : "from-slate-400 to-slate-600")} />
-                <div className="flex items-start gap-3 pl-1.5">
-                  <span className={cn("flex h-10 w-10 shrink-0 items-center justify-center rounded-xl text-white", student ? "bg-violet-500 shadow-[0_6px_14px_-6px_rgba(139,92,246,0.8)]" : "bg-slate-500 shadow-[0_6px_14px_-6px_rgba(100,116,139,0.8)]")}>
-                    <Icon name={sec.icon} className="h-5 w-5" strokeWidth={1.8} />
-                  </span>
-                  <div className="min-w-0 flex-1">
-                    <div className="flex items-center gap-2">
-                      <span className="font-hand truncate text-[17px] font-bold leading-[1.35] text-slate-800 dark:text-slate-100">{sec.title}</span>
-                      <span className={cn("ml-auto inline-flex shrink-0 items-center gap-1 rounded-full px-2 py-0.5 text-[10px] font-bold tabular-nums", count > 0 ? (student ? "bg-violet-600 text-white" : "bg-slate-600 text-white") : (student ? "bg-violet-500/15 text-violet-700 dark:text-violet-300" : "bg-slate-500/15 text-slate-600 dark:text-slate-300"))}>
-                        <Icon name="user" className="h-3 w-3" /> {count}
-                      </span>
-                    </div>
-                    <div className="mt-1 text-[12px] text-slate-500 dark:text-slate-400">
-                      {student
-                        ? tr(locale, { uz: "Qabul qilingan o'quvchilar", ru: "Зачисленные ученики", en: "Enrolled students", de: "Eingeschriebene Schüler" })
-                        : tr(locale, { uz: "Ko'rinishdan olib qo'yilgan lidlar", ru: "Лиды, убранные из вида", en: "Leads hidden from the board", de: "Aus der Ansicht entfernte Leads" })}
-                    </div>
-                    {count > 0 && (
-                      <div className="mt-2 flex items-center gap-1 text-[11px] font-semibold text-slate-500 dark:text-slate-400">
-                        <Icon name="chevronDown" className={cn("h-3.5 w-3.5 transition", opened && "rotate-180")} />
-                        {opened
-                          ? tr(locale, { uz: "Yopish", ru: "Свернуть", en: "Collapse", de: "Zuklappen" })
-                          : tr(locale, { uz: `${count} tasini ko'rish`, ru: `Показать ${count}`, en: `Show ${count}`, de: `${count} anzeigen` })}
-                      </div>
-                    )}
-                    {isOver && (
-                      <div className={cn("mt-2 rounded-lg border border-dashed py-1.5 text-center text-[11px] font-semibold", student ? "border-violet-400 bg-violet-50/80 text-violet-700 dark:bg-violet-500/10 dark:text-violet-300" : "border-slate-400 bg-slate-50/80 text-slate-700 dark:bg-slate-500/10 dark:text-slate-300")}>
-                        {tr(locale, { uz: "Arxivga qo'yish", ru: "В архив", en: "Archive here", de: "Hier archivieren" })}
-                      </div>
-                    )}
-                  </div>
-                </div>
-              </li>
-              {/* Ochilgan arxivning lidlari — karta ostida, oddiy lid kartalari ko'rinishida */}
-              {opened && count > 0 && (
-                <li className={cn("relative ml-3 space-y-3 border-l-2 border-dashed pl-3", student ? "border-violet-300 dark:border-violet-500/40" : "border-slate-300 dark:border-slate-500/40")}>
-                  {sec.items.map(card)}
-                </li>
+                count > 0 && "cursor-pointer hover:-translate-y-px",
+                count === 0 && !canArchive && "opacity-80",
               )}
-            </Fragment>
+            >
+              {/* tepa chiziq */}
+              <span className={cn("absolute inset-x-0 top-0 h-[3px] bg-gradient-to-r", student ? "from-violet-400 to-violet-600" : "from-slate-400 to-slate-600")} />
+
+              <div className="flex w-full items-center justify-between gap-2">
+                <span className={cn("flex h-8 w-8 shrink-0 items-center justify-center rounded-lg text-white", student ? "bg-violet-500 shadow-[0_5px_12px_-5px_rgba(139,92,246,0.9)]" : "bg-slate-500 shadow-[0_5px_12px_-5px_rgba(100,116,139,0.9)]")}>
+                  <Icon name={sec.icon} className="h-4 w-4" strokeWidth={1.9} />
+                </span>
+                <span className={cn(
+                  "inline-flex shrink-0 items-center rounded-full px-2 py-0.5 text-[11px] font-bold tabular-nums",
+                  count > 0
+                    ? (student ? "bg-violet-600 text-white" : "bg-slate-600 text-white")
+                    : (student ? "bg-violet-500/15 text-violet-700 dark:text-violet-300" : "bg-slate-500/15 text-slate-600 dark:text-slate-300"),
+                )}>
+                  {count}
+                </span>
+              </div>
+
+              <div className="min-w-0 w-full">
+                <div className="font-hand truncate text-[16px] font-bold leading-[1.35] text-slate-800 dark:text-slate-100">{sec.title}</div>
+                <div className="flex items-center gap-1 text-[11px] text-slate-500 dark:text-slate-400">
+                  {count > 0 ? (
+                    <>
+                      <Icon name="chevronDown" className={cn("h-3 w-3 shrink-0 transition", opened && "rotate-180")} />
+                      <span className="truncate">{opened ? tr(locale, { uz: "Yopish", ru: "Свернуть", en: "Collapse", de: "Zuklappen" }) : tr(locale, { uz: "Ko'rish", ru: "Показать", en: "Show", de: "Anzeigen" })}</span>
+                    </>
+                  ) : (
+                    <span className="truncate">{tr(locale, { uz: "Bo'sh", ru: "Пусто", en: "Empty", de: "Leer" })}</span>
+                  )}
+                </div>
+              </div>
+
+              {/* Tashlash ko'rsatkichi — plitka ustini qoplaydi */}
+              {isOver && (
+                <span className={cn(
+                  "absolute inset-0 grid place-items-center rounded-xl text-[12px] font-bold backdrop-blur-[1px]",
+                  student ? "bg-violet-500/85 text-white" : "bg-slate-600/85 text-white",
+                )}>
+                  <span className="inline-flex items-center gap-1.5"><Icon name="arrowDownToLine" className="h-4 w-4" /> {tr(locale, { uz: "Arxivga", ru: "В архив", en: "Archive", de: "Archiv" })}</span>
+                </span>
+              )}
+            </button>
           );
         })}
-      </ul>
+      </div>
+
+      {/* Ochilgan arxivning lidlari — plitkalar ostida, sarlavha bilan */}
+      {sections.map((sec) => {
+        if (!(openSec[sec.key] ?? false) || sec.items.length === 0) return null;
+        const student = sec.key === "students";
+        return (
+          <div key={`${sec.key}-list`} className={cn("relative ml-2 space-y-3 border-l-2 border-dashed pl-3", student ? "border-violet-300 dark:border-violet-500/40" : "border-slate-300 dark:border-slate-500/40")}>
+            <div className="flex items-center justify-between text-[11px] font-semibold text-slate-500 dark:text-slate-400">
+              <span className="inline-flex items-center gap-1.5">
+                <Icon name={sec.icon} className={cn("h-3.5 w-3.5", student ? "text-violet-500" : "text-slate-500")} />
+                {sec.title} · {sec.items.length}
+              </span>
+              <span className="text-slate-400">{tr(locale, { uz: "Boshqa ustunga tashlang — qaytadi", ru: "Перетащите в колонку — вернётся", en: "Drag to a column to restore", de: "In Spalte ziehen — zurückholen" })}</span>
+            </div>
+            {sec.items.map(card)}
+          </div>
+        );
+      })}
 
       {lostCards}
     </>
