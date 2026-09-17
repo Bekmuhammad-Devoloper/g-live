@@ -124,6 +124,9 @@ export default function LeadsKanban({
             onDragLeave={() => setOverCol((c) => (c === col.key ? null : c))}
             onDrop={(e) => {
               e.preventDefault();
+              // Arxiv kartasiga tashlangan bo'lsa — u o'zi hal qilgan (stopPropagation), bu yerga kelmaydi;
+              // qo'shimcha himoya: nishon arxiv kartasi ichida bo'lsa "Yo'qotilgan"ga o'tkazmaymiz
+              if ((e.target as HTMLElement).closest?.("[data-archive-drop]")) { setDragId(null); setOverCol(null); return; }
               const id = e.dataTransfer.getData("text/plain") || dragId;
               const lead = id ? leads.find((l) => l.id === id) : null;
               if (id && lead && colOf(lead) !== col.key) onDropToColumn(col.key, id);
@@ -349,8 +352,11 @@ function LostColumn({
     { key: "leads", icon: "archive", title: tr(locale, { uz: "Lid arxivi", ru: "Архив лидов", en: "Lead archive", de: "Lead-Archiv" }), items: archived.filter((l) => !isStudentArchive(l)) },
     { key: "students", icon: "graduation", title: tr(locale, { uz: "O'quvchi arxivi", ru: "Архив учеников", en: "Student archive", de: "Schüler-Archiv" }), items: archived.filter(isStudentArchive) },
   ];
-  // Sudralayotgan lid arxivlanmagan bo'lsa — bo'limga tashlash mumkin
-  const canArchive = !!dragging && !dragging.archivedAt;
+  // Sudralayotgan lid arxivlanmagan bo'lsa — kartaga tashlash mumkin.
+  // dragging (state) kechikishi mumkin — shuning uchun tekshiruv yumshoq:
+  // state bo'lmasa ham sudrash hodisasi bo'lsa ruxsat beramiz.
+  const canArchive = !dragging?.archivedAt;
+  const isLeadDrag = (e: React.DragEvent) => Array.from(e.dataTransfer.types ?? []).includes("text/plain");
 
   const card = (lead: VLead) => (
     <LeadCard
@@ -389,19 +395,28 @@ function LostColumn({
           const isOver = overSec === sec.key && canArchive;
           const student = sec.key === "students";
           return (
-            <button
+            <div
               key={sec.key}
-              type="button"
-              onDragOver={(e) => { if (!canArchive) return; e.preventDefault(); e.stopPropagation(); e.dataTransfer.dropEffect = "move"; if (overSec !== sec.key) setOverSec(sec.key); }}
-              onDragLeave={() => setOverSec((c) => (c === sec.key ? null : c))}
+              role="button"
+              tabIndex={0}
+              data-archive-drop
+              // Drop-zona: <button> emas — brauzerlarda tugma ustiga drop har doim ishlamaydi
+              onDragEnter={(e) => { if (!canArchive || !isLeadDrag(e)) return; e.preventDefault(); e.stopPropagation(); setOverSec(sec.key); }}
+              onDragOver={(e) => { if (!canArchive || !isLeadDrag(e)) return; e.preventDefault(); e.stopPropagation(); e.dataTransfer.dropEffect = "move"; if (overSec !== sec.key) setOverSec(sec.key); }}
+              onDragLeave={(e) => {
+                // Ichki elementga o'tganda "chiqdi" deb hisoblamaymiz (aks holda yaltiraydi)
+                const to = e.relatedTarget as Node | null;
+                if (to && e.currentTarget.contains(to)) return;
+                setOverSec((c) => (c === sec.key ? null : c));
+              }}
               onDrop={(e) => {
-                if (!canArchive) return;
                 e.preventDefault(); e.stopPropagation();
                 const id = e.dataTransfer.getData("text/plain") || dragging?.id;
                 setOverSec(null);
-                if (id) onArchive(id);
+                if (id && canArchive) onArchive(id);
               }}
               onClick={() => count > 0 && setOpenSec({ [sec.key]: !opened })}
+              onKeyDown={(e) => { if ((e.key === "Enter" || e.key === " ") && count > 0) { e.preventDefault(); setOpenSec({ [sec.key]: !opened }); } }}
               className={cn(
                 "group relative flex w-full items-center gap-3 overflow-hidden rounded-2xl border bg-white/90 p-3 text-left shadow-[0_8px_24px_-14px_rgba(15,23,42,0.35)] backdrop-blur transition outline-none",
                 "focus-visible:ring-2 focus-visible:ring-offset-1 dark:bg-white/[0.04]",
@@ -461,7 +476,7 @@ function LostColumn({
                   <span className="inline-flex items-center gap-2"><Icon name="arrowDownToLine" className="h-4 w-4" /> {tr(locale, { uz: "Arxivga qo'yish", ru: "В архив", en: "Archive", de: "Archivieren" })}</span>
                 </span>
               )}
-            </button>
+            </div>
           );
         })}
       </div>
