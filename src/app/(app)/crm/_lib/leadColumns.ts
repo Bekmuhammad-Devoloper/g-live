@@ -201,17 +201,15 @@ export interface BranchModeCfg { ids: Set<string>; mode: BranchMode; online: boo
 export const ONLINE_COL = "online";
 
 /**
- * Arxiv — ikki ustun, hamma rolda, eng oxirida. Tashlangan lid bosqichini
- * saqlaydi, faqat ko'rinishdan chiqadi. Qaysi arxivga tushishi lidning
- * o'zidan aniqlanadi: o'quvchiga aylangan (qabul qilingan / Student yozuvi bor)
- * — "O'quvchi arxivi", qolganlari — "Lid arxivi".
+ * "Arxiv" ustuni — bitta, hamma rolda, eng oxirida. Tashlangan lid bosqichini
+ * saqlaydi, faqat ko'rinishdan chiqadi. Ustun ichida ikki bo'lim: "Lid arxivi"
+ * va "O'quvchi arxivi" (qabul qilingan / Student yozuvi bor lidlar).
  */
 export const ARCHIVE_COL = "archive";
-export const STUDENT_ARCHIVE_COL = "archive_student";
-export const isArchiveCol = (key: string) => key === ARCHIVE_COL || key === STUDENT_ARCHIVE_COL;
-/** Arxivlangan lid qaysi arxiv ustunida ko'rinadi */
-export function archiveColOf(lead: { stage: string; studentId?: string | null }): string {
-  return lead.stage === "WON" || lead.studentId ? STUDENT_ARCHIVE_COL : ARCHIVE_COL;
+export const isArchiveCol = (key: string) => key === ARCHIVE_COL;
+/** Arxivlangan lid "O'quvchi arxivi" bo'limiga tegishlimi */
+export function isStudentArchive(lead: { stage: string; studentId?: string | null }): boolean {
+  return lead.stage === "WON" || !!lead.studentId;
 }
 
 /** Rejimda ko'rsatilmaydigan standart ustunlar (filtr chiplarida ham yashiriladi) */
@@ -237,7 +235,7 @@ export function columnOfLead(
     return lead.kanbanColumnId;
   }
   // Arxiv hammasidan ustun — arxivlangan lid boshqa ustunda ko'rinmaydi
-  if (lead.archivedAt) return archiveColOf(lead);
+  if (lead.archivedAt) return ARCHIVE_COL;
   if (lead.kanbanColumnId && custom.has(lead.kanbanColumnId)) return customColKey(lead.kanbanColumnId);
   const base = columnOf(lead.stage);
   if (base === "won" && lead.groupId && pinned.has(lead.groupId)) return groupColKey(lead.groupId);
@@ -305,18 +303,12 @@ export function visibleColumns(opts: {
   const groups = groupColumns.map<ViewCol>((g) => ({
     key: groupColKey(g.groupId), title: g.name, sub: g.program, color: g.color, icon: g.icon, defaultStage: "WON", groupId: g.groupId, customId: null,
   }));
-  // Arxiv — ikki ustun, hamma rolda, eng oxirida: lidlar va o'quvchilar alohida
+  // "Arxiv" — hamma rolda, eng oxirida; ichida "Lid arxivi" va "O'quvchi arxivi" bo'limlari
   const archive: ViewCol = {
     key: ARCHIVE_COL,
-    title: tr(locale, { uz: "Lid arxivi", ru: "Архив лидов", en: "Lead archive", de: "Lead-Archiv" }),
-    sub: tr(locale, { uz: "Ko'rinishdan olib qo'yilgan lidlar", ru: "Лиды, убранные из вида", en: "Leads hidden from the board", de: "Aus der Ansicht entfernte Leads" }),
+    title: tr(locale, { uz: "Arxiv", ru: "Архив", en: "Archive", de: "Archiv" }),
+    sub: tr(locale, { uz: "Lidlar va o'quvchilar", ru: "Лиды и ученики", en: "Leads and students", de: "Leads und Schüler" }),
     color: "#64748b", icon: "archive", defaultStage: "NEW", groupId: null, customId: null,
-  };
-  const studentArchive: ViewCol = {
-    key: STUDENT_ARCHIVE_COL,
-    title: tr(locale, { uz: "O'quvchi arxivi", ru: "Архив учеников", en: "Student archive", de: "Schüler-Archiv" }),
-    sub: tr(locale, { uz: "Qabul qilingan, ko'rinishdan olib qo'yilganlar", ru: "Зачисленные, убранные из вида", en: "Enrolled, hidden from the board", de: "Eingeschriebene, aus der Ansicht entfernt" }),
-    color: "#475569", icon: "graduation", defaultStage: "WON", groupId: null, customId: null,
   };
 
   // Filial rejimi: "sales" — test/taklif o'rniga filial ustunlari; "head" — hamma ustunlar
@@ -331,9 +323,9 @@ export function visibleColumns(opts: {
       sub: tr(locale, { uz: "Onlayn o'qimoqchilar", ru: "Хотят учиться онлайн", en: "Want to study online", de: "Möchten online lernen" }),
       color: "#0ea5e9", icon: "video", defaultStage: "NEW", groupId: null, customId: null,
     };
-    return [std("new"), std("work"), ...(showOnlineCol ? [online] : []), ...(branchMode === "head" ? [std("test"), std("offer")] : []), ...brs, ...custom, std("won"), ...groups, std("lost"), archive, studentArchive]
+    return [std("new"), std("work"), ...(showOnlineCol ? [online] : []), ...(branchMode === "head" ? [std("test"), std("offer")] : []), ...brs, ...custom, std("won"), ...groups, std("lost"), archive]
       .filter((c) => !hidden.has(c.key));
   }
-  return [std("new"), std("work"), std("test"), std("offer"), ...custom, std("won"), ...groups, std("lost"), archive, studentArchive]
+  return [std("new"), std("work"), std("test"), std("offer"), ...custom, std("won"), ...groups, std("lost"), archive]
     .filter((c) => !hidden.has(c.key));
 }
