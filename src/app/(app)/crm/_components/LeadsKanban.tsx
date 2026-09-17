@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useMemo, useState } from "react";
+import { Fragment, useCallback, useMemo, useState } from "react";
 import Link from "next/link";
 import { cn } from "@/lib/cn";
 import { tr } from "@/lib/tr";
@@ -365,71 +365,97 @@ function LostColumn({
     />
   );
 
+  const lostCards = lost.length === 0 ? (
+    <div className="rounded-xl border border-dashed border-slate-200 py-6 text-center text-xs text-slate-400 dark:border-white/[0.08]">
+      {tr(locale, { uz: "Yo'qotilgan lid yo'q", ru: "Нет потерянных лидов", en: "No lost leads", de: "Keine verlorenen Leads" })}
+    </div>
+  ) : (
+    <>
+      {lost.slice(0, limit).map(card)}
+      {lost.length > limit && <MoreButton rest={lost.length - limit} locale={locale} onClick={onMore} />}
+    </>
+  );
+
   return (
     <>
-      {lost.length === 0 ? (
-        <div className="rounded-xl border border-dashed border-slate-200 py-6 text-center text-xs text-slate-400 dark:border-white/[0.08]">
-          {tr(locale, { uz: "Yo'qotilgan lid yo'q", ru: "Нет потерянных лидов", en: "No lost leads", de: "Keine verlorenen Leads" })}
-        </div>
-      ) : (
-        <>
-          {lost.slice(0, limit).map(card)}
-          {lost.length > limit && <MoreButton rest={lost.length - limit} locale={locale} onClick={onMore} />}
-        </>
-      )}
-
-      {/* Arxiv bo'limlari — yig'iladigan, tashlash joyi */}
-      {sections.map((sec) => {
-        const open = openSec[sec.key] ?? false;
-        const isOver = overSec === sec.key && canArchive;
-        return (
-          <div
-            key={sec.key}
-            onDragOver={(e) => { if (!canArchive) return; e.preventDefault(); e.stopPropagation(); e.dataTransfer.dropEffect = "move"; if (overSec !== sec.key) setOverSec(sec.key); }}
-            onDragLeave={() => setOverSec((c) => (c === sec.key ? null : c))}
-            onDrop={(e) => {
-              if (!canArchive) return;
-              e.preventDefault(); e.stopPropagation();
-              const id = e.dataTransfer.getData("text/plain") || dragging?.id;
-              setOverSec(null);
-              if (id) onArchive(id);
-            }}
-            className={cn(
-              "rounded-xl border transition",
-              isOver
-                ? "border-slate-400 bg-slate-100 ring-2 ring-slate-300/60 dark:border-slate-500 dark:bg-white/[0.06]"
-                : "border-slate-200/80 bg-slate-50/60 dark:border-white/[0.08] dark:bg-white/[0.02]",
-            )}
-          >
-            <button
-              type="button"
-              onClick={() => setOpenSec((p) => ({ ...p, [sec.key]: !open }))}
-              className="flex w-full items-center gap-2 px-2.5 py-2 text-left text-[12px] font-semibold text-slate-600 dark:text-slate-300"
-            >
-              <Icon name={sec.icon} className="h-3.5 w-3.5 shrink-0 text-slate-500" />
-              <span className="font-hand text-[15px] leading-[1.35]">{sec.title}</span>
-              <span className="ml-auto rounded-md bg-white px-1.5 text-[11px] font-bold tabular-nums text-slate-600 dark:bg-white/10 dark:text-slate-200">{sec.items.length}</span>
-              <Icon name="chevronDown" className={cn("h-3.5 w-3.5 text-slate-400 transition", open && "rotate-180")} />
-            </button>
-            {isOver && (
-              <div className="px-2.5 pb-2 text-center text-[11px] font-medium text-slate-500">
-                {tr(locale, { uz: "Qo'yib yuboring — arxivlanadi", ru: "Отпустите — уйдёт в архив", en: "Release to archive", de: "Loslassen zum Archivieren" })}
-              </div>
-            )}
-            {open && (
-              <div className="space-y-3 px-2 pb-2">
-                {sec.items.length === 0 ? (
-                  <div className="py-2 text-center text-[11px] text-slate-400">
-                    {tr(locale, { uz: "Bo'sh — lidni shu yerga tashlang", ru: "Пусто — перетащите лид сюда", en: "Empty — drop a lead here", de: "Leer — Lead hierher ziehen" })}
-                  </div>
-                ) : (
-                  sec.items.map(card)
+      {/* Arxiv kartalari — filialdagi xona kartalari kabi, ustun TEPASIDA (464 lid
+          ostida ko'rinmay qolmasin). Karta — tashlash joyi; bosilsa ichidagilar ochiladi. */}
+      <ul className="space-y-3">
+        {sections.map((sec) => {
+          const count = sec.items.length;
+          const opened = openSec[sec.key] ?? false;
+          const isOver = overSec === sec.key && canArchive;
+          const student = sec.key === "students";
+          return (
+            <Fragment key={sec.key}>
+              <li
+                onDragOver={(e) => { if (!canArchive) return; e.preventDefault(); e.stopPropagation(); e.dataTransfer.dropEffect = "move"; if (overSec !== sec.key) setOverSec(sec.key); }}
+                onDragLeave={() => setOverSec((c) => (c === sec.key ? null : c))}
+                onDrop={(e) => {
+                  if (!canArchive) return;
+                  e.preventDefault(); e.stopPropagation();
+                  const id = e.dataTransfer.getData("text/plain") || dragging?.id;
+                  setOverSec(null);
+                  if (id) onArchive(id);
+                }}
+                onClick={count > 0 ? () => setOpenSec((p) => ({ ...p, [sec.key]: !opened })) : undefined}
+                className={cn(
+                  "group relative overflow-hidden rounded-xl border p-3 transition",
+                  student
+                    ? "bg-gradient-to-br from-violet-50 via-white to-white shadow-[0_6px_18px_-12px_rgba(139,92,246,0.6)] dark:from-violet-500/10 dark:via-[#15243d] dark:to-[#15243d]"
+                    : "bg-gradient-to-br from-slate-100 via-white to-white shadow-[0_6px_18px_-12px_rgba(100,116,139,0.6)] dark:from-slate-500/10 dark:via-[#15243d] dark:to-[#15243d]",
+                  isOver
+                    ? (student ? "scale-[1.01] border-violet-500 ring-2 ring-violet-400/60" : "scale-[1.01] border-slate-500 ring-2 ring-slate-400/60")
+                    : (student ? "border-violet-200/80 dark:border-violet-500/25" : "border-slate-300/80 dark:border-slate-500/25"),
+                  count > 0 && "cursor-pointer",
                 )}
-              </div>
-            )}
-          </div>
-        );
-      })}
+              >
+                {/* chap chiziq */}
+                <span className={cn("absolute inset-y-0 left-0 w-1 bg-gradient-to-b", student ? "from-violet-400 to-violet-600" : "from-slate-400 to-slate-600")} />
+                <div className="flex items-start gap-3 pl-1.5">
+                  <span className={cn("flex h-10 w-10 shrink-0 items-center justify-center rounded-xl text-white", student ? "bg-violet-500 shadow-[0_6px_14px_-6px_rgba(139,92,246,0.8)]" : "bg-slate-500 shadow-[0_6px_14px_-6px_rgba(100,116,139,0.8)]")}>
+                    <Icon name={sec.icon} className="h-5 w-5" strokeWidth={1.8} />
+                  </span>
+                  <div className="min-w-0 flex-1">
+                    <div className="flex items-center gap-2">
+                      <span className="font-hand truncate text-[17px] font-bold leading-[1.35] text-slate-800 dark:text-slate-100">{sec.title}</span>
+                      <span className={cn("ml-auto inline-flex shrink-0 items-center gap-1 rounded-full px-2 py-0.5 text-[10px] font-bold tabular-nums", count > 0 ? (student ? "bg-violet-600 text-white" : "bg-slate-600 text-white") : (student ? "bg-violet-500/15 text-violet-700 dark:text-violet-300" : "bg-slate-500/15 text-slate-600 dark:text-slate-300"))}>
+                        <Icon name="user" className="h-3 w-3" /> {count}
+                      </span>
+                    </div>
+                    <div className="mt-1 text-[12px] text-slate-500 dark:text-slate-400">
+                      {student
+                        ? tr(locale, { uz: "Qabul qilingan o'quvchilar", ru: "Зачисленные ученики", en: "Enrolled students", de: "Eingeschriebene Schüler" })
+                        : tr(locale, { uz: "Ko'rinishdan olib qo'yilgan lidlar", ru: "Лиды, убранные из вида", en: "Leads hidden from the board", de: "Aus der Ansicht entfernte Leads" })}
+                    </div>
+                    {count > 0 && (
+                      <div className="mt-2 flex items-center gap-1 text-[11px] font-semibold text-slate-500 dark:text-slate-400">
+                        <Icon name="chevronDown" className={cn("h-3.5 w-3.5 transition", opened && "rotate-180")} />
+                        {opened
+                          ? tr(locale, { uz: "Yopish", ru: "Свернуть", en: "Collapse", de: "Zuklappen" })
+                          : tr(locale, { uz: `${count} tasini ko'rish`, ru: `Показать ${count}`, en: `Show ${count}`, de: `${count} anzeigen` })}
+                      </div>
+                    )}
+                    {isOver && (
+                      <div className={cn("mt-2 rounded-lg border border-dashed py-1.5 text-center text-[11px] font-semibold", student ? "border-violet-400 bg-violet-50/80 text-violet-700 dark:bg-violet-500/10 dark:text-violet-300" : "border-slate-400 bg-slate-50/80 text-slate-700 dark:bg-slate-500/10 dark:text-slate-300")}>
+                        {tr(locale, { uz: "Arxivga qo'yish", ru: "В архив", en: "Archive here", de: "Hier archivieren" })}
+                      </div>
+                    )}
+                  </div>
+                </div>
+              </li>
+              {/* Ochilgan arxivning lidlari — karta ostida, oddiy lid kartalari ko'rinishida */}
+              {opened && count > 0 && (
+                <li className={cn("relative ml-3 space-y-3 border-l-2 border-dashed pl-3", student ? "border-violet-300 dark:border-violet-500/40" : "border-slate-300 dark:border-slate-500/40")}>
+                  {sec.items.map(card)}
+                </li>
+              )}
+            </Fragment>
+          );
+        })}
+      </ul>
+
+      {lostCards}
     </>
   );
 }
