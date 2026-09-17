@@ -26,6 +26,18 @@ const DICT = {
   coins: p("tanga", "монет", "coins", "Münzen"),
   stars: p("yulduz", "звёзд", "stars", "Sterne"),
 
+  // ── Start ekrani: keyingi dars va dars kunlari kalendari ──
+  nextLessonTitle: p("Keyingi dars", "Следующий урок", "Next lesson", "Nächste Stunde"),
+  tomorrow: p("Ertaga", "Завтра", "Tomorrow", "Morgen"),
+  noSchedule: p("Dars jadvali hali belgilanmagan", "Расписание ещё не задано", "Schedule not set yet", "Stundenplan noch nicht festgelegt"),
+  noScheduleHint: p("Guruhga biriktirilgach kunlar shu yerda chiqadi", "Дни появятся здесь после зачисления в группу", "Days will appear here once you join a group", "Die Tage erscheinen hier nach der Gruppenzuteilung"),
+  lessonDays: p("Dars kunlari", "Дни занятий", "Lesson days", "Unterrichtstage"),
+  lessonsInMonth: p("Bu oyda {n} ta dars", "В этом месяце {n} уроков", "{n} lessons this month", "{n} Stunden in diesem Monat"),
+  legendLesson: p("Dars kuni", "День урока", "Lesson day", "Unterrichtstag"),
+  legendPast: p("O'tgan", "Прошёл", "Past", "Vergangen"),
+  roomShort: p("xona", "ауд.", "room", "Raum"),
+  inDays: p("{n} kundan keyin", "через {n} дн.", "in {n} days", "in {n} Tagen"),
+
   // ── Start ekrani ──
   words: p("So'zlar", "Слова", "Words", "Wörter"),
   reading: p("O'qish", "Чтение", "Reading", "Lesen"),

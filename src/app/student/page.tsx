@@ -1,7 +1,7 @@
 import fs from "node:fs";
 import path from "node:path";
 import Link from "next/link";
-import { S } from "./_i18n";
+import { fill, S } from "./_i18n";
 import { redirect } from "next/navigation";
 import { getSession } from "@/lib/auth";
 import { prisma } from "@/lib/db";
@@ -14,7 +14,8 @@ import { studentRank } from "@/lib/rank";
 import { getActiveStarRanks, progressOf, rankName } from "@/lib/starRanks";
 import { getActiveBanners, getActiveVideos, videoThumb } from "@/lib/portalContent";
 import BannerCarousel from "./BannerCarousel";
-import { CARD, CoinGold, FlagAvatar, IcoBell, IcoBook, IcoFlame, INK, NAVY, Ring, TEAL } from "./_ui";
+import { CARD, CoinGold, FlagAvatar, IcoBell, IcoBook, IcoCalendar, IcoClock, IcoFlame, IcoPin, INK, NAVY, Ring, TEAL } from "./_ui";
+import { plannedLessonDays, todayISOLocal } from "@/lib/attendanceWindow";
 import MissingStudent from "./MissingStudent";
 
 // O'quvchi "Start" ekrani — berilgan maket bilan birma-bir.
@@ -244,7 +245,17 @@ export default async function StudentStartPage() {
       enrollments: {
         where: { isActive: true },
         orderBy: { joinedAt: "desc" },
-        select: { groupId: true, group: { select: { id: true, name: true, levelCode: true, programId: true, program: { select: { name: true } } } } },
+        select: {
+          groupId: true,
+          group: {
+            select: {
+              id: true, name: true, levelCode: true, programId: true,
+              // Dars kunlari kalendari va "Keyingi dars" banneri uchun jadval
+              weekdays: true, startTime: true, endTime: true, room: true, startDate: true, endDate: true, lessonsPerMonth: true,
+              program: { select: { name: true, lessonsPerMonth: true } },
+            },
+          },
+        },
       },
     },
   });
@@ -253,6 +264,36 @@ export default async function StudentStartPage() {
   if (!student) return <MissingStudent />;
 
   const group = student.enrollments[0]?.group ?? null;
+
+  // ── Dars jadvali: keyingi dars va joriy oy kalendari ──
+  // Barcha faol guruhlar bo'yicha (o'quvchi ikkita guruhda bo'lishi mumkin).
+  // Kunlar guruhning haftalik kunlaridan, "oyiga N dars" chegarasi bilan
+  // (src/lib/attendanceWindow.ts plannedLessonDays) — kalendarda 13 kun chiqsa
+  // ham 13-chisi dars emas.
+  const todayISO = todayISOLocal();
+  const now = new Date();
+  const calY = now.getFullYear(), calM = now.getMonth();
+  const nextY = calM === 11 ? calY + 1 : calY, nextM = (calM + 1) % 12;
+  type LessonDay = { iso: string; group: string; startTime: string | null; endTime: string | null; room: string | null };
+  const lessonDayMap = new Map<string, LessonDay>();
+  for (const e of student.enrollments) {
+    const g = e.group;
+    if (!g.weekdays) continue;
+    const limit = g.lessonsPerMonth ?? g.program.lessonsPerMonth;
+    const days = [
+      ...plannedLessonDays(calY, calM, g.weekdays, limit, g.startDate, g.endDate),
+      ...plannedLessonDays(nextY, nextM, g.weekdays, limit, g.startDate, g.endDate),
+    ];
+    for (const iso of days) {
+      if (!lessonDayMap.has(iso)) lessonDayMap.set(iso, { iso, group: g.name, startTime: g.startTime, endTime: g.endTime, room: g.room });
+    }
+  }
+  const hasSchedule = student.enrollments.some((e) => !!e.group.weekdays);
+  // Keyingi dars: bugungi dars hali tugamagan bo'lsa — bugun, aks holda keyingi kun
+  const hhmmNow = `${String(now.getHours()).padStart(2, "0")}:${String(now.getMinutes()).padStart(2, "0")}`;
+  const nextLesson = [...lessonDayMap.values()]
+    .sort((a, b) => a.iso.localeCompare(b.iso))
+    .find((d) => d.iso > todayISO || (d.iso === todayISO && (!d.endTime || d.endTime > hhmmNow))) ?? null;
 
   const [prog, levels, mates, unread, skillScores] = await Promise.all([
     // Jarayon YAGONA joyda (src/lib/studentProgress.ts) — o'quvchi ko'rgan
@@ -491,6 +532,16 @@ export default async function StudentStartPage() {
         </div>
       </Link>
 
+      {/* ── Keyingi dars — kurs banneri yonidagi ikkinchi banner ── */}
+      <NextLessonBanner
+        t={t}
+        locale={session.locale}
+        todayISO={todayISO}
+        next={nextLesson}
+        hasSchedule={hasSchedule}
+        cardCls={card}
+      />
+
       {/* ── Tanga · Yulduz · Seriya · Reyting ── */}
       <div className="grid grid-cols-4 gap-2">
         {[
@@ -558,6 +609,19 @@ export default async function StudentStartPage() {
         })}
       </div>
 
+      {/* ── Dars kunlari kalendari (joriy oy) ── */}
+      {hasSchedule && (
+        <LessonCalendar
+          t={t}
+          locale={session.locale}
+          year={calY}
+          month0={calM}
+          todayISO={todayISO}
+          lessonDays={new Set([...lessonDayMap.keys()].filter((iso) => iso.startsWith(`${calY}-${String(calM + 1).padStart(2, "0")}`)))}
+          cardCls={card}
+        />
+      )}
+
       {/* ── Reklama banneri (Sozlamalar > Bosh sahifa) ── */}
       <BannerCarousel
         items={banners.map((b) => ({
@@ -609,6 +673,194 @@ export default async function StudentStartPage() {
           </div>
         </div>
       )}
+    </div>
+  );
+}
+
+// ───────────────── Dars jadvali komponentlari ─────────────────
+
+const MONTHS: Record<string, string[]> = {
+  uz: ["Yanvar", "Fevral", "Mart", "Aprel", "May", "Iyun", "Iyul", "Avgust", "Sentabr", "Oktabr", "Noyabr", "Dekabr"],
+  ru: ["Январь", "Февраль", "Март", "Апрель", "Май", "Июнь", "Июль", "Август", "Сентябрь", "Октябрь", "Ноябрь", "Декабрь"],
+  en: ["January", "February", "March", "April", "May", "June", "July", "August", "September", "October", "November", "December"],
+  de: ["Januar", "Februar", "März", "April", "Mai", "Juni", "Juli", "August", "September", "Oktober", "November", "Dezember"],
+};
+// Dushanbadan boshlab (kalendar ustunlari ham shu tartibda)
+const WEEKDAYS_SHORT: Record<string, string[]> = {
+  uz: ["Du", "Se", "Ch", "Pa", "Ju", "Sh", "Ya"],
+  ru: ["Пн", "Вт", "Ср", "Чт", "Пт", "Сб", "Вс"],
+  en: ["Mo", "Tu", "We", "Th", "Fr", "Sa", "Su"],
+  de: ["Mo", "Di", "Mi", "Do", "Fr", "Sa", "So"],
+};
+const WEEKDAYS_FULL: Record<string, string[]> = {
+  uz: ["Dushanba", "Seshanba", "Chorshanba", "Payshanba", "Juma", "Shanba", "Yakshanba"],
+  ru: ["Понедельник", "Вторник", "Среда", "Четверг", "Пятница", "Суббота", "Воскресенье"],
+  en: ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday", "Sunday"],
+  de: ["Montag", "Dienstag", "Mittwoch", "Donnerstag", "Freitag", "Samstag", "Sonntag"],
+};
+/** "YYYY-MM-DD" → dushanba=0 … yakshanba=6 */
+function mondayIndex(iso: string): number {
+  const d = new Date(iso + "T12:00:00");
+  return (d.getDay() + 6) % 7;
+}
+function daysBetween(fromISO: string, toISO: string): number {
+  return Math.round((new Date(toISO + "T12:00:00").getTime() - new Date(fromISO + "T12:00:00").getTime()) / 86_400_000);
+}
+
+/**
+ * "Keyingi dars" banneri — kurs banneri ostidagi ikkinchi banner: qaysi kun
+ * (Bugun / Ertaga / hafta kuni va sana), soat, xona, guruh. Jadval yo'q bo'lsa —
+ * buni aytadigan yumshoq karta (bo'sh joy qolmaydi).
+ */
+function NextLessonBanner({ t, locale, todayISO, next, hasSchedule, cardCls }: {
+  t: ReturnType<typeof S>;
+  locale: string;
+  todayISO: string;
+  next: { iso: string; group: string; startTime: string | null; endTime: string | null; room: string | null } | null;
+  hasSchedule: boolean;
+  cardCls: string;
+}) {
+  const L = MONTHS[locale] ? locale : "uz";
+  if (!next) {
+    return (
+      <div className={`${cardCls} flex items-center gap-4 rounded-[26px] p-5`}>
+        <span className="grid h-12 w-12 shrink-0 place-items-center rounded-2xl" style={{ background: "rgba(14,116,144,0.12)" }}>
+          <IcoCalendar c={TEAL} s={26} />
+        </span>
+        <div className="min-w-0">
+          <div className="text-[12px] font-bold uppercase tracking-[0.18em]" style={{ color: TEAL }}>{t.nextLessonTitle}</div>
+          <div className="mt-0.5 text-[15px] font-bold text-slate-800">{t.noSchedule}</div>
+          <div className="text-[12.5px] text-slate-500">{hasSchedule ? "" : t.noScheduleHint}</div>
+        </div>
+      </div>
+    );
+  }
+
+  const diff = daysBetween(todayISO, next.iso);
+  const d = new Date(next.iso + "T12:00:00");
+  const dayLabel = diff === 0 ? t.today : diff === 1 ? t.tomorrow : WEEKDAYS_FULL[L][mondayIndex(next.iso)];
+  const dateLabel = `${d.getDate()} ${MONTHS[L][d.getMonth()].toLowerCase()}`;
+  const time = next.startTime ? `${next.startTime}${next.endTime ? `–${next.endTime}` : ""}` : null;
+
+  return (
+    <div
+      className="relative overflow-hidden rounded-[26px] p-5 text-white shadow-[0_14px_30px_rgba(19,78,94,0.25)]"
+      style={{ background: `linear-gradient(135deg, #17a2bf 0%, ${TEAL} 55%, ${NAVY} 100%)` }}
+    >
+      {/* bezak doiralar */}
+      <span className="pointer-events-none absolute -right-8 -top-10 h-36 w-36 rounded-full bg-white/10" />
+      <span className="pointer-events-none absolute -bottom-12 right-16 h-28 w-28 rounded-full bg-white/[0.07]" />
+
+      <div className="relative flex items-center gap-4">
+        {/* Sana kartochkasi — yirtiladigan kalendar varag'i kabi */}
+        <div className="flex w-[72px] shrink-0 flex-col items-center overflow-hidden rounded-2xl bg-white text-center shadow-[0_8px_18px_rgba(0,0,0,0.18)]">
+          <span className="w-full py-1 text-[11px] font-extrabold uppercase tracking-wider text-white" style={{ background: "#e11d48" }}>
+            {WEEKDAYS_SHORT[L][mondayIndex(next.iso)]}
+          </span>
+          <span className="py-1.5 text-[30px] font-black leading-none" style={{ color: NAVY }}>{d.getDate()}</span>
+          <span className="pb-1.5 text-[10.5px] font-semibold uppercase text-slate-500">{MONTHS[L][d.getMonth()].slice(0, 3)}</span>
+        </div>
+
+        <div className="min-w-0 flex-1">
+          <div className="text-[11.5px] font-bold uppercase tracking-[0.18em] text-white/80">{t.nextLessonTitle}</div>
+          <div className="font-hand mt-0.5 text-[30px] font-bold leading-[1.05]">
+            {dayLabel}
+            {diff > 1 && <span className="ml-2 align-middle font-sans text-[13px] font-semibold text-white/80">{fill(t.inDays, { n: diff })}</span>}
+          </div>
+          <div className="mt-1 text-[13px] font-semibold text-white/85">{dateLabel}</div>
+          <div className="mt-2 flex flex-wrap items-center gap-x-3 gap-y-1 text-[13px] font-semibold">
+            {time && (
+              <span className="inline-flex items-center gap-1.5"><IcoClock c="#ffffff" s={16} /> {time}</span>
+            )}
+            {next.room && (
+              <span className="inline-flex items-center gap-1.5"><IcoPin c="#ffffff" s={16} /> {next.room}</span>
+            )}
+          </div>
+          <div className="mt-1 truncate text-[12.5px] text-white/75">{next.group}</div>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+/**
+ * Joriy oy kalendari — dars kunlari rangda: o'tganlari och, kelayotganlari
+ * to'q feruza; bugun halqa bilan. Pastda izoh va oydagi darslar soni.
+ */
+function LessonCalendar({ t, locale, year, month0, todayISO, lessonDays, cardCls }: {
+  t: ReturnType<typeof S>;
+  locale: string;
+  year: number;
+  month0: number;
+  todayISO: string;
+  lessonDays: Set<string>;
+  cardCls: string;
+}) {
+  const L = MONTHS[locale] ? locale : "uz";
+  const first = new Date(year, month0, 1);
+  const lead = (first.getDay() + 6) % 7; // dushanba = 0
+  const total = new Date(year, month0 + 1, 0).getDate();
+  const cells: (number | null)[] = [...Array(lead).fill(null), ...Array.from({ length: total }, (_, i) => i + 1)];
+  while (cells.length % 7) cells.push(null);
+  const iso = (day: number) => `${year}-${String(month0 + 1).padStart(2, "0")}-${String(day).padStart(2, "0")}`;
+
+  return (
+    <div className={`${cardCls} rounded-[26px] p-5`}>
+      <div className="flex items-center justify-between gap-3">
+        <div className="flex items-center gap-2.5">
+          <span className="grid h-10 w-10 place-items-center rounded-xl" style={{ background: "rgba(14,116,144,0.12)" }}>
+            <IcoCalendar c={TEAL} s={22} />
+          </span>
+          <div>
+            <div className="text-[12px] font-bold uppercase tracking-[0.18em]" style={{ color: TEAL }}>{t.lessonDays}</div>
+            <div className="text-[17px] font-extrabold leading-tight text-slate-900">{MONTHS[L][month0]} {year}</div>
+          </div>
+        </div>
+        <span className="rounded-full px-3 py-1 text-[12px] font-bold text-white" style={{ background: TEAL }}>
+          {fill(t.lessonsInMonth, { n: lessonDays.size })}
+        </span>
+      </div>
+
+      <div className="mt-4 grid grid-cols-7 gap-y-1.5 text-center">
+        {WEEKDAYS_SHORT[L].map((w, i) => (
+          <span key={w} className={`text-[11px] font-bold uppercase ${i >= 5 ? "text-rose-400" : "text-slate-400"}`}>{w}</span>
+        ))}
+        {cells.map((day, i) => {
+          if (!day) return <span key={`e${i}`} />;
+          const dISO = iso(day);
+          const isLesson = lessonDays.has(dISO);
+          const isToday = dISO === todayISO;
+          const past = dISO < todayISO;
+          return (
+            <span key={dISO} className="flex justify-center">
+              <span
+                className={
+                  "grid h-9 w-9 place-items-center rounded-full text-[14px] font-bold transition " +
+                  (isLesson
+                    ? past
+                      ? "text-white/90"
+                      : "text-white shadow-[0_6px_14px_rgba(14,116,144,0.35)]"
+                    : past
+                      ? "text-slate-300"
+                      : "text-slate-700")
+                }
+                style={{
+                  background: isLesson ? (past ? "rgba(14,116,144,0.45)" : TEAL) : "transparent",
+                  boxShadow: isToday ? `0 0 0 2.5px #ffffff, 0 0 0 4.5px ${NAVY}` : undefined,
+                }}
+              >
+                {day}
+              </span>
+            </span>
+          );
+        })}
+      </div>
+
+      <div className="mt-4 flex flex-wrap items-center gap-x-4 gap-y-1.5 text-[12px] font-semibold text-slate-500">
+        <span className="inline-flex items-center gap-1.5"><span className="h-3 w-3 rounded-full" style={{ background: TEAL }} /> {t.legendLesson}</span>
+        <span className="inline-flex items-center gap-1.5"><span className="h-3 w-3 rounded-full" style={{ background: "rgba(14,116,144,0.45)" }} /> {t.legendPast}</span>
+        <span className="inline-flex items-center gap-1.5"><span className="h-3 w-3 rounded-full" style={{ boxShadow: `0 0 0 2px ${NAVY}` }} /> {t.today}</span>
+      </div>
     </div>
   );
 }

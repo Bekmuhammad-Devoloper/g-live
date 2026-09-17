@@ -2,25 +2,14 @@
 
 import { useActionState, useState } from "react";
 import { tr } from "@/lib/tr";
-import type { Locale, LocaleText } from "@/lib/constants";
+import type { Locale } from "@/lib/constants";
 import { login, type LoginState } from "./actions";
-
-const demoAccounts: [string, LocaleText][] = [
-  ["director@gl.uz", { uz: "Direktor", ru: "Директор", en: "Director", de: "Direktor" }],
-  ["deputy@gl.uz", { uz: "Dir. o'rinbosari", ru: "Зам. директора", en: "Deputy director", de: "Stellv. Direktor" }],
-  ["manager@gl.uz", { uz: "Menejer", ru: "Менеджер", en: "Manager", de: "Manager" }],
-  ["teacher@gl.uz", { uz: "O'qituvchi", ru: "Преподаватель", en: "Teacher", de: "Lehrer" }],
-  ["student@gl.uz", { uz: "O'quvchi", ru: "Ученик", en: "Student", de: "Schüler" }],
-  ["parent@gl.uz", { uz: "Ota-ona", ru: "Родитель", en: "Parent", de: "Eltern" }],
-  ["admin@gl.uz", { uz: "Administrator", ru: "Администратор", en: "Administrator", de: "Administrator" }],
-];
 
 // Kirish sahifasida sessiya yo'q — `locale` brauzer tilidan (page.tsx) keladi.
 export default function LoginForm({ locale }: { locale: Locale }) {
   const T = (uz: string, ru: string, en: string, de: string) => tr(locale, { uz, ru, en, de });
   const [state, formAction, pending] = useActionState<LoginState, FormData>(login, {});
-  const [email, setEmail] = useState("director@gl.uz");
-  const [showDemo, setShowDemo] = useState(false);
+  const [email, setEmail] = useState("");
 
   return (
     <div>
@@ -46,7 +35,6 @@ export default function LoginForm({ locale }: { locale: Locale }) {
             name="password"
             type="password"
             required
-            defaultValue="12345678"
             autoComplete="current-password"
             className="input"
           />
@@ -62,40 +50,6 @@ export default function LoginForm({ locale }: { locale: Locale }) {
           {pending ? T("Kirilmoqda...", "Вход...", "Signing in...", "Anmeldung...") : T("Kirish", "Войти", "Sign in", "Anmelden")}
         </button>
       </form>
-
-      <div className="mt-5 border-t border-slate-100 pt-4">
-        <button
-          type="button"
-          onClick={() => setShowDemo((v) => !v)}
-          className="flex w-full items-center justify-between text-xs font-semibold text-slate-500 hover:text-slate-700"
-        >
-          <span>
-            {T("Demo hisoblar", "Демо-аккаунты", "Demo accounts", "Demo-Konten")}{" "}
-            <span className="font-normal text-slate-400">{T("(parol: 12345678)", "(пароль: 12345678)", "(password: 12345678)", "(Passwort: 12345678)")}</span>
-          </span>
-          <span className="text-slate-400">{showDemo ? "▲" : "▼"}</span>
-        </button>
-
-        {showDemo && (
-          <div className="mt-3 grid gap-1">
-            {demoAccounts.map(([mail, role]) => (
-              <button
-                key={mail}
-                type="button"
-                onClick={() => setEmail(mail)}
-                className={`flex items-center justify-between rounded-lg border px-3 py-2 text-left text-xs transition ${
-                  email === mail
-                    ? "border-brand-300 bg-brand-50 text-brand-700"
-                    : "border-slate-200 text-slate-600 hover:bg-slate-50"
-                }`}
-              >
-                <span className="font-mono">{mail}</span>
-                <span className="text-slate-400">{tr(locale, role)}</span>
-              </button>
-            ))}
-          </div>
-        )}
-      </div>
     </div>
   );
 }
