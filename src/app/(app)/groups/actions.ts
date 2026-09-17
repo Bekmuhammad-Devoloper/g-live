@@ -7,7 +7,7 @@ import { recordLevelUp } from "@/lib/levelUp";
 import { requireSession, type SessionUser } from "@/lib/auth";
 import { getPermission, MODULES } from "@/lib/rbac";
 import { writeAudit } from "@/lib/audit";
-import { GROUP_FORMATS } from "@/lib/constants";
+import { GROUP_FORMATS, ROLES } from "@/lib/constants";
 import { findRoomConflict, conflictLabel } from "./roomConflict";
 
 // FULL huquqli rollar (menejer, dir. o'rinbosari) — guruh/o'quvchi boshqaradi
@@ -75,6 +75,37 @@ export async function setGroupActive(id: string, active: boolean): Promise<{ ok:
   });
   revalidatePath("/groups");
   return { ok: true };
+}
+
+// ─── Guruhni filialga biriktirish ───
+// Filialsiz (branchId=null) yaratilgan guruhlar qat'iy filial filtrida hech qaysi
+// filialda ko'rinmaydi. Direktor "Barcha filiallar" rejimida guruhlar ro'yxatidan
+// har birini o'z filialiga biriktiradi. Guruhning filialsiz o'quvchilari ham
+// o'sha filialga o'tadi (boshqa filialdagilarga tegilmaydi).
+export async function setGroupBranch(groupId: string, branchId: string | null): Promise<{ ok: boolean; error?: string; students?: number }> {
+  const s = await requireSession();
+  if (!([ROLES.DIRECTOR, ROLES.DEPUTY_DIRECTOR] as string[]).includes(s.role)) return { ok: false, error: "forbidden" };
+
+  const g = await prisma.group.findUnique({ where: { id: groupId }, select: { id: true, name: true, branchId: true } });
+  if (!g) return { ok: false, error: "notfound" };
+  if (branchId) {
+    const b = await prisma.branch.findFirst({ where: { id: branchId, isActive: true }, select: { id: true } });
+    if (!b) return { ok: false, error: "notfound" };
+  }
+
+  const [, moved] = await prisma.$transaction([
+    prisma.group.update({ where: { id: groupId }, data: { branchId } }),
+    branchId
+      ? prisma.student.updateMany({ where: { branchId: null, enrollments: { some: { groupId } } }, data: { branchId } })
+      : prisma.student.updateMany({ where: { id: "__none__" }, data: {} }),
+  ]);
+  await writeAudit({
+    actorId: s.userId, action: "UPDATE", entityType: "Group", entityId: groupId,
+    oldValue: { branchId: g.branchId }, newValue: { branchId, studentsMoved: moved.count },
+    reason: `Guruh filialga biriktirildi: ${g.name}`,
+  });
+  revalidatePath("/groups");
+  return { ok: true, students: moved.count };
 }
 
 // ─── Guruhni o'chirish ───

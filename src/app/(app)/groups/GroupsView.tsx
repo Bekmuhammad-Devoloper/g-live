@@ -9,7 +9,7 @@ import type { Locale } from "@/lib/constants";
 import { Icon } from "../_components/Icon";
 import NewGroupForm from "./NewGroupForm";
 import { EditGroupButton, type EditGroupData } from "./[id]/GroupForms";
-import { deleteGroup, setGroupActive } from "./actions";
+import { deleteGroup, setGroupActive, setGroupBranch } from "./actions";
 import { groupColor } from "./groupColor";
 
 export interface VGroup {
@@ -37,6 +37,8 @@ export interface VGroup {
   endDate: string | null; // "yyyy-mm-dd"
   note: string | null; // izoh/kament
   monthlyFee: number | null; // guruh oylik to'lovi
+  branchId: string | null;
+  branchName: string | null;
 }
 
 const wdLabel = (locale: Locale, d: number) =>
@@ -81,6 +83,9 @@ export default function GroupsView({
   programNames,
   rooms,
   roomOptions,
+  branches = [],
+  canAssignBranch = false,
+  unassignedGroups = 0,
 }: {
   locale: Locale;
   groups: VGroup[];
@@ -93,6 +98,12 @@ export default function GroupsView({
   programNames: string[];
   rooms: string[];
   roomOptions: { id: string; name: string; capacity: number }[];
+  /** Faol filiallar — "Filial" ustunidagi tanlov uchun (rahbariyat) */
+  branches?: { id: string; name: string }[];
+  /** Rahbariyat "Barcha filiallar" rejimida — guruhni filialga biriktira oladi */
+  canAssignBranch?: boolean;
+  /** Filial tanlangan rejimda ko'rinmay qolgan filialsiz guruhlar soni */
+  unassignedGroups?: number;
 }) {
   const [addOpen, setAddOpen] = useState(false);
   const [teacher, setTeacher] = useState("");
@@ -193,6 +204,31 @@ export default function GroupsView({
       </div>
 
       {/* Jadval */}
+      {/* Filialsiz guruhlar — qat'iy filial filtri ularni yashiradi; sababi va yo'li */}
+      {unassignedGroups > 0 && (
+        <div className="flex items-start gap-3 rounded-2xl border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-800 dark:border-amber-500/30 dark:bg-amber-500/10 dark:text-amber-200">
+          <Icon name="alert" className="mt-0.5 h-4 w-4 shrink-0" />
+          <div>
+            <div className="font-semibold">
+              {tr(locale, {
+                uz: `${unassignedGroups} ta guruh hech qaysi filialga biriktirilmagan — shu sabab bu filialda ko'rinmaydi`,
+                ru: `${unassignedGroups} групп не привязаны ни к одному филиалу — поэтому здесь не видны`,
+                en: `${unassignedGroups} groups are not assigned to any branch — so they are hidden here`,
+                de: `${unassignedGroups} Gruppen sind keiner Filiale zugeordnet — deshalb hier nicht sichtbar`,
+              })}
+            </div>
+            <div className="mt-0.5 text-[13px] text-amber-700/90 dark:text-amber-200/80">
+              {tr(locale, {
+                uz: "Direktor yuqoridagi filial tanlovidan «Barcha filiallar»ni tanlab, shu ro'yxatdagi «Filial» ustunidan har guruhni o'z filialiga biriktiradi.",
+                ru: "Директор выбирает «Все филиалы» в переключателе филиала сверху и в колонке «Филиал» этого списка привязывает каждую группу к её филиалу.",
+                en: "The director selects “All branches” in the branch switcher above and assigns each group via the “Branch” column of this list.",
+                de: "Der Direktor wählt oben „Alle Filialen“ und ordnet jede Gruppe über die Spalte „Filiale“ dieser Liste zu.",
+              })}
+            </div>
+          </div>
+        </div>
+      )}
+
       <div className="overflow-hidden rounded-2xl border border-slate-200/70 bg-white shadow-card dark:border-slate-800 dark:bg-slate-900">
         <div className="flex items-center justify-end border-b border-slate-100 px-4 py-2 dark:border-slate-800">
           <span className="rounded-lg bg-slate-100 px-2.5 py-1 text-xs font-semibold text-slate-500 dark:bg-slate-800 dark:text-slate-300">{tr(locale, { uz: "Umumiy soni:", ru: "Всего:", en: "Total:", de: "Gesamt:" })} {filtered.length}</span>
@@ -211,13 +247,14 @@ export default function GroupsView({
                 <th className="px-4 py-3">{tr(locale, { uz: "Tugash sanasi", ru: "Дата окончания", en: "End date", de: "Enddatum" })}</th>
                 <SortableTh label={tr(locale, { uz: "O'quvchilar", ru: "Ученики", en: "Students", de: "Schüler" })} active={sort.key === "students"} dir={sort.dir} onClick={() => toggleSort("students")} />
                 <SortableTh label={tr(locale, { uz: "O'qituvchi", ru: "Преподаватель", en: "Teacher", de: "Lehrer" })} active={sort.key === "teacher"} dir={sort.dir} onClick={() => toggleSort("teacher")} />
+                {canAssignBranch && <th className="px-4 py-3">{tr(locale, { uz: "Filial", ru: "Филиал", en: "Branch", de: "Filiale" })}</th>}
                 <th className="px-4 py-3 text-right">{tr(locale, { uz: "Amallar", ru: "Действия", en: "Actions", de: "Aktionen" })}</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-slate-100 dark:divide-slate-800">
               {shown.length === 0 ? (
                 <tr>
-                  <td colSpan={10} className="px-4 py-16 text-center">
+                  <td colSpan={canAssignBranch ? 11 : 10} className="px-4 py-16 text-center">
                     <div className="text-3xl opacity-30">📭</div>
                     <p className="mt-2 font-medium text-slate-500 dark:text-slate-400">{tr(locale, { uz: "Ma'lumotlar topilmadi", ru: "Данные не найдены", en: "No data found", de: "Keine Daten gefunden" })}</p>
                     <p className="mt-0.5 text-xs text-slate-400">{tr(locale, { uz: "Ma'lumotlar topilmadi. Filterni o'zgartirib ko'ring.", ru: "Данные не найдены. Попробуйте изменить фильтр.", en: "No data found. Try changing the filter.", de: "Keine Daten gefunden. Versuchen Sie, den Filter zu ändern." })}</p>
@@ -251,6 +288,11 @@ export default function GroupsView({
                       <span className="rounded-md bg-brand-500/15 px-2 py-0.5 text-xs font-bold text-brand-600 dark:text-brand-300">{g.students} / {g.capacity}</span>
                     </td>
                     <td className="px-4 py-3 text-slate-600 dark:text-slate-300">{g.teacherName ?? "—"}</td>
+                    {canAssignBranch && (
+                      <td className="px-4 py-3">
+                        <GroupBranchSelect id={g.id} branchId={g.branchId} branches={branches} locale={locale} />
+                      </td>
+                    )}
                     <td className="px-4 py-3">
                       <div className="flex items-center justify-end gap-1">
                         {canCreate && <GroupActiveToggle id={g.id} active={g.status === "ACTIVE"} locale={locale} />}
@@ -360,6 +402,41 @@ function editDataOf(g: VGroup): EditGroupData {
 }
 
 // iPhone uslubidagi on/off toggle — guruhni faol/nofaol qiladi
+/** Guruhning filiali — tanlov o'zgarsa darhol biriktiriladi (rahbariyat, barcha filiallar rejimi) */
+function GroupBranchSelect({ id, branchId, branches, locale }: { id: string; branchId: string | null; branches: { id: string; name: string }[]; locale: Locale }) {
+  const router = useRouter();
+  const [pending, start] = useTransition();
+  const [val, setVal] = useState(branchId ?? "");
+  useEffect(() => setVal(branchId ?? ""), [branchId]);
+  const unassigned = !val;
+  return (
+    <select
+      value={val}
+      disabled={pending}
+      onChange={(e) => {
+        const next = e.target.value;
+        const prev = val;
+        setVal(next); // optimistik
+        start(async () => {
+          const r = await setGroupBranch(id, next || null);
+          if (r.ok) router.refresh();
+          else setVal(prev);
+        });
+      }}
+      title={tr(locale, { uz: "Guruh filiali", ru: "Филиал группы", en: "Group branch", de: "Filiale der Gruppe" })}
+      className={cn(
+        "h-8 max-w-[160px] rounded-lg border px-2 text-xs font-semibold outline-none transition focus:ring-2 focus:ring-brand-500/30 disabled:opacity-60",
+        unassigned
+          ? "border-amber-300 bg-amber-50 text-amber-800 dark:border-amber-500/40 dark:bg-amber-500/10 dark:text-amber-200"
+          : "border-slate-200 bg-white text-slate-700 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-200",
+      )}
+    >
+      <option value="">{tr(locale, { uz: "— Biriktirilmagan", ru: "— Не привязана", en: "— Unassigned", de: "— Nicht zugeordnet" })}</option>
+      {branches.map((b) => <option key={b.id} value={b.id}>{b.name}</option>)}
+    </select>
+  );
+}
+
 function GroupActiveToggle({ id, active, locale }: { id: string; active: boolean; locale: Locale }) {
   const router = useRouter();
   const [pending, start] = useTransition();

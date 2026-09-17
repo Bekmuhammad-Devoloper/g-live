@@ -43,11 +43,21 @@ export default async function GroupsPage() {
       include: {
         teacher: { select: { fullName: true } },
         program: { select: { name: true } },
+        branch: { select: { name: true } },
         _count: { select: { students: true } },
       },
     }),
     prisma.groupStudent.count({ where: { group: where } }),
     prisma.groupStudent.count({ where: { isActive: false, group: where } }),
+  ]);
+
+  // Filialga biriktirish — faqat rahbariyat, "Barcha filiallar" rejimida (filial ustuni chiqadi).
+  // Filial tanlangan bo'lsa-yu filialsiz guruhlar bo'lsa — ro'yxat "bo'sh" ko'rinadi; sababini aytamiz.
+  const isHead = ([ROLES.DIRECTOR, ROLES.DEPUTY_DIRECTOR] as string[]).includes(s.role);
+  const staffScoped = ![ROLES.STUDENT, ROLES.PARENT, ROLES.TEACHER].includes(s.role as never);
+  const [branches, unassignedGroups] = await Promise.all([
+    isHead ? prisma.branch.findMany({ where: { isActive: true }, select: { id: true, name: true }, orderBy: { name: "asc" } }) : Promise.resolve([]),
+    staffScoped && s.branchId ? prisma.group.count({ where: { branchId: null } }) : Promise.resolve(0),
   ]);
 
   const vgroups: VGroup[] = groups.map((g) => ({
@@ -74,6 +84,8 @@ export default async function GroupsPage() {
     endDate: g.endDate ? g.endDate.toISOString().slice(0, 10) : null,
     note: g.note,
     monthlyFee: g.monthlyFee,
+    branchId: g.branchId,
+    branchName: g.branch?.name ?? null,
   }));
 
   const canCreate = getPermission(s.role, MODULES.GROUPS) === "FULL";
@@ -107,6 +119,9 @@ export default async function GroupsPage() {
         programNames={programNames.sort()}
         rooms={rooms.sort()}
         roomOptions={roomOptions}
+        branches={branches}
+        canAssignBranch={isHead && !s.branchId}
+        unassignedGroups={unassignedGroups}
       />
     </div>
   );
