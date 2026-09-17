@@ -53,14 +53,14 @@ export default function HeroCarousel({ slides, interval = 5000 }: { slides: Reac
           </div>
         ))}
       </div>
-      <div className="absolute bottom-2.5 left-1/2 z-20 flex -translate-x-1/2 items-center gap-1.5 rounded-full bg-black/20 px-2.5 py-1 backdrop-blur-sm">
+      <div className="absolute bottom-3.5 left-5 z-20 flex items-center gap-1.5">
         {slides.map((_, k) => (
           <button
             key={k}
             type="button"
             aria-label={`${k + 1}/${n}`}
             onClick={() => go(k)}
-            className={"h-1.5 rounded-full transition-all " + (k === i ? "w-5 bg-white" : "w-3 bg-white/50")}
+            className={"h-[6px] rounded-full transition-all " + (k === i ? "w-6 bg-sky-400 shadow-[0_0_8px_rgba(56,189,248,0.8)]" : "w-[6px] bg-white/45")}
           />
         ))}
       </div>

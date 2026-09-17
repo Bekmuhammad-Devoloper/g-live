@@ -240,6 +240,15 @@ export function IcoTeacher({ c = TEAL, s = 24 }: IcoProps) {
     </svg>
   );
 }
+/** O'ngga strelka — chip va yorliqlarda "bosish mumkin" ishorasi */
+export function IcoChevron({ c = TEAL, s = 24 }: IcoProps) {
+  return (
+    <svg width={s} height={s} viewBox="0 0 24 24" fill="none" stroke={c} strokeWidth={sw} strokeLinecap="round" strokeLinejoin="round">
+      <path d="m9 6 6 6-6 6" />
+    </svg>
+  );
+}
+
 export function IcoPin({ c = TEAL, s = 24 }: IcoProps) {
   return (
     <svg width={s} height={s} viewBox="0 0 24 24" fill="none" stroke={c} strokeWidth={sw} strokeLinecap="round" strokeLinejoin="round">

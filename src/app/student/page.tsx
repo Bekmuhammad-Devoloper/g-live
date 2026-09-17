@@ -15,7 +15,7 @@ import { getActiveStarRanks, progressOf, rankName } from "@/lib/starRanks";
 import { getActiveBanners, getActiveVideos, videoThumb } from "@/lib/portalContent";
 import BannerCarousel from "./BannerCarousel";
 import HeroCarousel from "./HeroCarousel";
-import { CARD, CoinGold, FlagAvatar, IcoBell, IcoBook, IcoCalendar, IcoClock, IcoFlame, IcoPin, INK, NAVY, Ring, TEAL } from "./_ui";
+import { CARD, CoinGold, FlagAvatar, IcoBell, IcoBook, IcoCalendar, IcoChevron, IcoClock, IcoFlame, IcoPin, INK, NAVY, Ring, TEAL } from "./_ui";
 import { plannedLessonDays, todayISOLocal } from "@/lib/attendanceWindow";
 import MissingStudent from "./MissingStudent";
 
@@ -547,6 +547,7 @@ export default async function StudentStartPage() {
         next={nextLesson}
         hasSchedule={hasSchedule}
         cardCls={card}
+        imageUrl={levelBanner}
       />,
       ]} />
 
@@ -720,10 +721,11 @@ function daysBetween(fromISO: string, toISO: string): number {
  * (Bugun / Ertaga / hafta kuni va sana), soat, xona, guruh. Jadval yo'q bo'lsa —
  * buni aytadigan yumshoq karta (bo'sh joy qolmaydi).
  */
-function NextLessonBanner({ t, locale, todayISO, next, hasSchedule, cardCls }: {
+function NextLessonBanner({ t, locale, todayISO, next, hasSchedule, cardCls, imageUrl }: {
   t: ReturnType<typeof S>;
   locale: string;
   todayISO: string;
+  imageUrl?: string | null;
   next: { iso: string; group: string; startTime: string | null; endTime: string | null; room: string | null } | null;
   hasSchedule: boolean;
   cardCls: string;
@@ -751,77 +753,107 @@ function NextLessonBanner({ t, locale, todayISO, next, hasSchedule, cardCls }: {
   const time = next.startTime ? `${next.startTime}${next.endTime ? `–${next.endTime}` : ""}` : null;
 
   const weekday = WEEKDAYS_FULL[L][mondayIndex(next.iso)];
-  const chip = "inline-flex items-center gap-1.5 rounded-full bg-white/[0.16] px-3 py-1.5 text-[13px] font-semibold ring-1 ring-white/25 backdrop-blur-sm";
+  const NIGHT = "#0b1a33";
+  // Shisha chip: vaqt / xona — chapda ko'k doira ichida belgi, o'ngda strelka
+  const chip = "flex w-full max-w-[236px] items-center gap-2.5 rounded-full bg-white/[0.07] py-1.5 pl-1.5 pr-3 text-[14px] font-semibold ring-1 ring-white/[0.14] backdrop-blur-sm";
+  const chipIco = "grid h-8 w-8 shrink-0 place-items-center rounded-full shadow-[0_4px_10px_rgba(37,99,235,0.45)]";
 
   return (
     <div
-      className="relative flex h-full min-h-[168px] flex-col overflow-hidden rounded-[26px] p-5 pb-8 text-white shadow-[0_18px_40px_rgba(19,78,94,0.28)]"
-      style={{ background: `linear-gradient(135deg, #0ea5c4 0%, ${TEAL} 48%, ${NAVY} 100%)` }}
+      className="relative flex h-full min-h-[168px] flex-col overflow-hidden rounded-[26px] p-5 pb-8 text-white ring-1 ring-sky-400/40 shadow-[0_18px_44px_rgba(2,16,40,0.55),0_0_0_1px_rgba(56,189,248,0.12),inset_0_1px_0_rgba(255,255,255,0.12)]"
+      style={{ background: `linear-gradient(135deg, ${NIGHT} 0%, #0d2149 55%, #0b3a7a 100%)` }}
     >
-      {/* yorug'lik dog'lari va nozik nuqtali to'r — tekis fon "yassi" ko'rinmasin */}
+      {/* O'ng tomonda kurs rasmi — tun rangiga singib ketadi */}
+      {imageUrl ? (
+        <span
+          className="pointer-events-none absolute inset-y-0 right-0 w-[58%]"
+          style={{
+            backgroundImage: `url(${imageUrl})`,
+            backgroundSize: "cover",
+            backgroundPosition: "center",
+            WebkitMaskImage: "linear-gradient(90deg, rgba(0,0,0,0) 0%, rgba(0,0,0,0.55) 45%, rgba(0,0,0,0.9) 100%)",
+            maskImage: "linear-gradient(90deg, rgba(0,0,0,0) 0%, rgba(0,0,0,0.55) 45%, rgba(0,0,0,0.9) 100%)",
+            filter: "saturate(0.6) brightness(0.55)",
+            mixBlendMode: "luminosity",
+          }}
+        />
+      ) : null}
+      {/* Ko'k yorug'lik dog'lari */}
       <span
-        className="pointer-events-none absolute -right-14 -top-20 h-60 w-60 rounded-full"
-        style={{ background: "radial-gradient(circle, rgba(255,255,255,0.32) 0%, rgba(255,255,255,0) 68%)" }}
+        className="pointer-events-none absolute -right-16 -top-24 h-64 w-64 rounded-full"
+        style={{ background: "radial-gradient(circle, rgba(56,189,248,0.35) 0%, rgba(56,189,248,0) 65%)" }}
       />
       <span
-        className="pointer-events-none absolute -bottom-24 -left-12 h-60 w-60 rounded-full"
-        style={{ background: "radial-gradient(circle, rgba(6,40,62,0.6) 0%, rgba(6,40,62,0) 68%)" }}
+        className="pointer-events-none absolute -bottom-28 right-10 h-64 w-64 rounded-full"
+        style={{ background: "radial-gradient(circle, rgba(37,99,235,0.45) 0%, rgba(37,99,235,0) 65%)" }}
       />
-      <span
-        className="pointer-events-none absolute inset-0 opacity-[0.10]"
-        style={{ backgroundImage: "radial-gradient(rgba(255,255,255,0.95) 1px, transparent 1.2px)", backgroundSize: "18px 18px" }}
-      />
-      {/* yaltiroq chiziq */}
-      <span
-        className="pointer-events-none absolute inset-y-0 left-[38%] w-[34%] -skew-x-[18deg]"
-        style={{ background: "linear-gradient(90deg, rgba(255,255,255,0) 0%, rgba(255,255,255,0.08) 50%, rgba(255,255,255,0) 100%)" }}
-      />
+      {/* Pastdan o'tuvchi yorug' egri chiziq */}
+      <svg className="pointer-events-none absolute bottom-0 right-0 h-[62%] w-[70%]" viewBox="0 0 300 120" fill="none" preserveAspectRatio="none" aria-hidden>
+        <path d="M0 118 C 90 118, 150 40, 300 20" stroke="url(#glLine)" strokeWidth="2" />
+        <circle cx="210" cy="61" r="4" fill="#38bdf8" />
+        <defs>
+          <linearGradient id="glLine" x1="0" y1="0" x2="1" y2="0">
+            <stop offset="0" stopColor="#38bdf8" stopOpacity="0" />
+            <stop offset="0.6" stopColor="#38bdf8" stopOpacity="0.9" />
+            <stop offset="1" stopColor="#38bdf8" stopOpacity="0.2" />
+          </linearGradient>
+        </defs>
+      </svg>
 
-      {/* Yuqori qator: sarlavha belgisi va guruh nomi */}
-      <div className="relative flex items-center justify-between gap-2">
-        <span className="inline-flex items-center gap-1.5 rounded-full bg-white/[0.16] px-3 py-1 text-[10.5px] font-extrabold uppercase tracking-[0.18em] ring-1 ring-white/25 backdrop-blur-sm">
-          <IcoCalendar c="#ffffff" s={13} /> {t.nextLessonTitle}
+      {/* Yuqori qator: belgi + sarlavha + chiziq · guruh nomi */}
+      <div className="relative flex items-center gap-3">
+        <span className="grid h-7 w-7 shrink-0 place-items-center rounded-lg bg-white/[0.08] ring-1 ring-white/[0.14]">
+          <IcoCalendar c="#7dd3fc" s={15} />
         </span>
-        <span className="max-w-[46%] truncate rounded-full bg-black/20 px-3 py-1 text-[11.5px] font-semibold text-white/90">
-          {next.group}
+        <span className="shrink-0 text-[10.5px] font-bold uppercase tracking-[0.2em] text-sky-100/80">{t.nextLessonTitle}</span>
+        <span className="h-px min-w-3 flex-1 bg-gradient-to-r from-white/25 to-transparent" />
+        <span className="inline-flex max-w-[46%] items-center gap-1 rounded-full bg-white/[0.08] py-1 pl-3 pr-2 text-[12px] font-semibold ring-1 ring-white/[0.16] backdrop-blur-sm">
+          <span className="truncate">{next.group}</span>
+          <IcoChevron c="rgba(255,255,255,0.7)" s={13} />
         </span>
       </div>
 
-      <div className="relative mt-4 flex flex-1 items-center gap-4">
-        {/* Sana plitkasi — kalendar varag'i: tepada ilgak teshiklari, qizil sarlavha */}
-        <div className="relative w-[74px] shrink-0 overflow-hidden rounded-[18px] bg-white text-center shadow-[0_10px_24px_rgba(0,0,0,0.22)]">
+      <div className="relative mt-4 flex flex-1 items-start gap-4">
+        {/* Sana plitkasi — ko'k sarlavhali kalendar varag'i */}
+        <div className="relative w-[86px] shrink-0 overflow-hidden rounded-[18px] bg-[#eef3ff] text-center shadow-[0_12px_28px_rgba(2,16,40,0.55),0_0_0_1px_rgba(56,189,248,0.35)]">
           <span
-            className="block w-full py-[5px] text-[10.5px] font-extrabold uppercase tracking-[0.14em] text-white"
-            style={{ background: "linear-gradient(90deg, #fb7185 0%, #e11d48 100%)" }}
+            className="block w-full py-[7px] text-[11px] font-extrabold uppercase tracking-[0.16em] text-white"
+            style={{ background: "linear-gradient(180deg, #3b82f6 0%, #1d4ed8 100%)" }}
           >
             {WEEKDAYS_SHORT[L][mondayIndex(next.iso)]}
           </span>
-          <span className="absolute left-[18px] top-[3px] h-[5px] w-[5px] rounded-full bg-white/70" />
-          <span className="absolute right-[18px] top-[3px] h-[5px] w-[5px] rounded-full bg-white/70" />
-          <span className="block pt-1.5 text-[32px] font-black leading-none tracking-tight" style={{ color: NAVY }}>{d.getDate()}</span>
-          <span className="block pb-2 pt-0.5 text-[10.5px] font-bold uppercase tracking-wider text-slate-500">
+          <span className="block pt-2 text-[40px] font-black leading-none tracking-tight" style={{ color: "#0b1a33" }}>{d.getDate()}</span>
+          <span className="block pb-2.5 pt-1 text-[11px] font-bold uppercase tracking-[0.14em] text-slate-500">
             {MONTHS[L][d.getMonth()].slice(0, 3)}
           </span>
         </div>
 
         <div className="min-w-0 flex-1">
           <div className="flex flex-wrap items-baseline gap-x-2">
-            <span className="text-[30px] font-extrabold leading-none tracking-tight">{dayLabel}</span>
+            <span className="font-hand text-[36px] font-bold leading-[0.95]">{dayLabel}</span>
             {diff > 1 && (
-              <span className="rounded-full bg-white/[0.16] px-2 py-0.5 text-[11.5px] font-semibold text-white/90 ring-1 ring-white/20">
+              <span className="rounded-full bg-white/[0.08] px-2 py-0.5 text-[11.5px] font-semibold text-sky-100/90 ring-1 ring-white/[0.14]">
                 {fill(t.inDays, { n: diff })}
               </span>
             )}
           </div>
-          <div className="mt-1.5 text-[13.5px] font-medium text-white/80">
+          <div className="mt-1 text-[14px] font-medium text-sky-100/70">
             {diff > 1 ? dateLabel : `${weekday}, ${dateLabel}`}
           </div>
-          <div className="mt-3 flex flex-wrap gap-2">
+          <div className="mt-3 flex flex-col gap-2">
             {time && (
-              <span className={chip}><IcoClock c="#ffffff" s={15} /> {time}</span>
+              <span className={chip}>
+                <span className={chipIco} style={{ background: "linear-gradient(180deg,#3b82f6,#1d4ed8)" }}><IcoClock c="#ffffff" s={15} /></span>
+                <span className="flex-1 truncate">{time}</span>
+                <IcoChevron c="rgba(255,255,255,0.6)" s={14} />
+              </span>
             )}
             {next.room && (
-              <span className={chip}><IcoPin c="#ffffff" s={15} /> {next.room}</span>
+              <span className={chip}>
+                <span className={chipIco} style={{ background: "linear-gradient(180deg,#3b82f6,#1d4ed8)" }}><IcoPin c="#ffffff" s={15} /></span>
+                <span className="flex-1 truncate">{next.room}</span>
+                <IcoChevron c="rgba(255,255,255,0.6)" s={14} />
+              </span>
             )}
           </div>
         </div>
