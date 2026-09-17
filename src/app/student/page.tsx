@@ -16,7 +16,8 @@ import { getActiveBanners, getActiveVideos, videoThumb } from "@/lib/portalConte
 import BannerCarousel from "./BannerCarousel";
 import HeroCarousel from "./HeroCarousel";
 import { CARD, CoinGold, FlagAvatar, IcoBell, IcoBook, IcoCalendar, IcoChevron, IcoClock, IcoFlame, IcoPin, INK, NAVY, Ring, TEAL } from "./_ui";
-import { plannedLessonDays, todayISOLocal } from "@/lib/attendanceWindow";
+import { todayISOLocal } from "@/lib/attendanceWindow";
+import { buildLessonDays, nextLessonDay } from "./_schedule";
 import MissingStudent from "./MissingStudent";
 
 // O'quvchi "Start" ekrani — berilgan maket bilan birma-bir.
@@ -266,38 +267,13 @@ export default async function StudentStartPage() {
 
   const group = student.enrollments[0]?.group ?? null;
 
-  // ── Dars jadvali: keyingi dars va joriy oy kalendari ──
-  // Barcha faol guruhlar bo'yicha (o'quvchi ikkita guruhda bo'lishi mumkin).
-  // Kunlar guruhning haftalik kunlaridan, "oyiga N dars" chegarasi bilan
-  // (src/lib/attendanceWindow.ts plannedLessonDays) — kalendarda 13 kun chiqsa
-  // ham 13-chisi dars emas.
+  // ── Dars jadvali: keyingi dars (kalendar profilda) ──
   const todayISO = todayISOLocal();
   const now = new Date();
-  const calY = now.getFullYear(), calM = now.getMonth();
-  const nextY = calM === 11 ? calY + 1 : calY, nextM = (calM + 1) % 12;
-  type LessonDay = { iso: string; group: string; startTime: string | null; endTime: string | null; room: string | null };
-  const lessonDayMap = new Map<string, LessonDay>();
-  for (const e of student.enrollments) {
-    const g = e.group;
-    if (!g.weekdays) continue;
-    const limit = g.lessonsPerMonth ?? g.program.lessonsPerMonth;
-    // Tugash sanasi o'tib ketgan, lekin o'quvchi hali ham faol — demak guruh
-    // davom etyapti (sana yangilanmagan). Bunday sana jadvalni yashirmasin.
-    const endDate = g.endDate && g.endDate.getTime() >= now.getTime() - 86_400_000 ? g.endDate : null;
-    const days = [
-      ...plannedLessonDays(calY, calM, g.weekdays, limit, g.startDate, endDate),
-      ...plannedLessonDays(nextY, nextM, g.weekdays, limit, g.startDate, endDate),
-    ];
-    for (const iso of days) {
-      if (!lessonDayMap.has(iso)) lessonDayMap.set(iso, { iso, group: g.name, startTime: g.startTime, endTime: g.endTime, room: g.room });
-    }
-  }
+  // Dars kunlari (src/app/student/_schedule.ts) — profildagi kalendar bilan bir xil manba
+  const lessonDays = buildLessonDays(student.enrollments.map((e) => e.group), now, 0, 1);
   const hasSchedule = student.enrollments.some((e) => !!e.group.weekdays);
-  // Keyingi dars: bugungi dars hali tugamagan bo'lsa — bugun, aks holda keyingi kun
-  const hhmmNow = `${String(now.getHours()).padStart(2, "0")}:${String(now.getMinutes()).padStart(2, "0")}`;
-  const nextLesson = [...lessonDayMap.values()]
-    .sort((a, b) => a.iso.localeCompare(b.iso))
-    .find((d) => d.iso > todayISO || (d.iso === todayISO && (!d.endTime || d.endTime > hhmmNow))) ?? null;
+  const nextLesson = nextLessonDay(lessonDays, todayISO, now);
 
   const [prog, levels, mates, unread, skillScores] = await Promise.all([
     // Jarayon YAGONA joyda (src/lib/studentProgress.ts) — o'quvchi ko'rgan
@@ -625,19 +601,6 @@ export default async function StudentStartPage() {
         })}
       </div>
 
-      {/* ── Dars kunlari kalendari (joriy oy) ── */}
-      {hasSchedule && (
-        <LessonCalendar
-          t={t}
-          locale={session.locale}
-          year={calY}
-          month0={calM}
-          todayISO={todayISO}
-          lessonDays={new Set([...lessonDayMap.keys()].filter((iso) => iso.startsWith(`${calY}-${String(calM + 1).padStart(2, "0")}`)))}
-          cardCls={card}
-        />
-      )}
-
       {/* ── Reklama banneri (Sozlamalar > Bosh sahifa) ── */}
       <BannerCarousel
         items={banners.map((b) => ({
@@ -869,84 +832,3 @@ function NextLessonBanner({ t, locale, todayISO, next, hasSchedule, cardCls, ima
   );
 }
 
-/**
- * Joriy oy kalendari — dars kunlari rangda: o'tganlari och, kelayotganlari
- * to'q feruza; bugun halqa bilan. Pastda izoh va oydagi darslar soni.
- */
-function LessonCalendar({ t, locale, year, month0, todayISO, lessonDays, cardCls }: {
-  t: ReturnType<typeof S>;
-  locale: string;
-  year: number;
-  month0: number;
-  todayISO: string;
-  lessonDays: Set<string>;
-  cardCls: string;
-}) {
-  const L = MONTHS[locale] ? locale : "uz";
-  const first = new Date(year, month0, 1);
-  const lead = (first.getDay() + 6) % 7; // dushanba = 0
-  const total = new Date(year, month0 + 1, 0).getDate();
-  const cells: (number | null)[] = [...Array(lead).fill(null), ...Array.from({ length: total }, (_, i) => i + 1)];
-  while (cells.length % 7) cells.push(null);
-  const iso = (day: number) => `${year}-${String(month0 + 1).padStart(2, "0")}-${String(day).padStart(2, "0")}`;
-
-  return (
-    <div className={`${cardCls} rounded-[26px] p-5`}>
-      <div className="flex items-center justify-between gap-3">
-        <div className="flex items-center gap-2.5">
-          <span className="grid h-10 w-10 place-items-center rounded-xl" style={{ background: "rgba(14,116,144,0.12)" }}>
-            <IcoCalendar c={TEAL} s={22} />
-          </span>
-          <div>
-            <div className="text-[12px] font-bold uppercase tracking-[0.18em]" style={{ color: TEAL }}>{t.lessonDays}</div>
-            <div className="text-[17px] font-extrabold leading-tight text-slate-900">{MONTHS[L][month0]} {year}</div>
-          </div>
-        </div>
-        <span className="rounded-full px-3 py-1 text-[12px] font-bold text-white" style={{ background: TEAL }}>
-          {fill(t.lessonsInMonth, { n: lessonDays.size })}
-        </span>
-      </div>
-
-      <div className="mt-4 grid grid-cols-7 gap-y-1.5 text-center">
-        {WEEKDAYS_SHORT[L].map((w, i) => (
-          <span key={w} className={`text-[11px] font-bold uppercase ${i >= 5 ? "text-rose-400" : "text-slate-400"}`}>{w}</span>
-        ))}
-        {cells.map((day, i) => {
-          if (!day) return <span key={`e${i}`} />;
-          const dISO = iso(day);
-          const isLesson = lessonDays.has(dISO);
-          const isToday = dISO === todayISO;
-          const past = dISO < todayISO;
-          return (
-            <span key={dISO} className="flex justify-center">
-              <span
-                className={
-                  "grid h-9 w-9 place-items-center rounded-full text-[14px] font-bold transition " +
-                  (isLesson
-                    ? past
-                      ? "text-white/90"
-                      : "text-white shadow-[0_6px_14px_rgba(14,116,144,0.35)]"
-                    : past
-                      ? "text-slate-300"
-                      : "text-slate-700")
-                }
-                style={{
-                  background: isLesson ? (past ? "rgba(14,116,144,0.45)" : TEAL) : "transparent",
-                  boxShadow: isToday ? `0 0 0 2.5px #ffffff, 0 0 0 4.5px ${NAVY}` : undefined,
-                }}
-              >
-                {day}
-              </span>
-            </span>
-          );
-        })}
-      </div>
-
-      <div className="mt-4 flex flex-wrap items-center gap-x-4 gap-y-1.5 text-[12px] font-semibold text-slate-500">
-        <span className="inline-flex items-center gap-1.5"><span className="h-3 w-3 rounded-full" style={{ background: TEAL }} /> {t.legendLesson}</span>
-        <span className="inline-flex items-center gap-1.5"><span className="h-3 w-3 rounded-full" style={{ background: "rgba(14,116,144,0.45)" }} /> {t.legendPast}</span>
-        <span className="inline-flex items-center gap-1.5"><span className="h-3 w-3 rounded-full" style={{ boxShadow: `0 0 0 2px ${NAVY}` }} /> {t.today}</span>
-      </div>
-    </div>
-  );
-}

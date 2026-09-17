@@ -14,6 +14,9 @@ import {
   IcoWallet, IcoTrophy, IcoDoc, IcoLogout, IcoCalendar,
 } from "../_ui";
 import { S } from "../_i18n";
+import { todayISOLocal } from "@/lib/attendanceWindow";
+import { buildLessonDays } from "../_schedule";
+import LessonCalendar, { type AttMark } from "../LessonCalendar";
 import IdCard from "../IdCard";
 import MissingStudent from "../MissingStudent";
 import PasswordForm from "./PasswordForm";
@@ -31,6 +34,25 @@ const ATT_PILL: Record<string, { tone: "ok" | "warn" | "bad" | "muted"; text: Lo
   ABSENT: { tone: "bad", text: { uz: "Kelmadi", ru: "Не был", en: "Absent", de: "Fehlt" } },
 };
 
+const CAL_MONTHS: Record<string, string[]> = {
+  uz: ["Yanvar", "Fevral", "Mart", "Aprel", "May", "Iyun", "Iyul", "Avgust", "Sentabr", "Oktabr", "Noyabr", "Dekabr"],
+  ru: ["Январь", "Февраль", "Март", "Апрель", "Май", "Июнь", "Июль", "Август", "Сентябрь", "Октябрь", "Ноябрь", "Декабрь"],
+  en: ["January", "February", "March", "April", "May", "June", "July", "August", "September", "October", "November", "December"],
+  de: ["Januar", "Februar", "März", "April", "Mai", "Juni", "Juli", "August", "September", "Oktober", "November", "Dezember"],
+};
+const CAL_WD_SHORT: Record<string, string[]> = {
+  uz: ["Du", "Se", "Ch", "Pa", "Ju", "Sh", "Ya"],
+  ru: ["Пн", "Вт", "Ср", "Чт", "Пт", "Сб", "Вс"],
+  en: ["Mo", "Tu", "We", "Th", "Fr", "Sa", "Su"],
+  de: ["Mo", "Di", "Mi", "Do", "Fr", "Sa", "So"],
+};
+const CAL_WD_FULL: Record<string, string[]> = {
+  uz: ["Dushanba", "Seshanba", "Chorshanba", "Payshanba", "Juma", "Shanba", "Yakshanba"],
+  ru: ["Понедельник", "Вторник", "Среда", "Четверг", "Пятница", "Суббота", "Воскресенье"],
+  en: ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday", "Sunday"],
+  de: ["Montag", "Dienstag", "Mittwoch", "Donnerstag", "Freitag", "Samstag", "Sonntag"],
+};
+
 export default async function StudentProfilPage() {
   const session = await getSession();
   if (!session) redirect("/login");
@@ -45,8 +67,17 @@ export default async function StudentProfilPage() {
       enrollments: {
         where: { isActive: true },
         orderBy: { joinedAt: "desc" },
-        take: 1,
-        select: { joinedAt: true, group: { select: { name: true, levelCode: true } } },
+        select: {
+          joinedAt: true,
+          group: {
+            select: {
+              name: true, levelCode: true,
+              // Dars kunlari kalendari uchun jadval
+              weekdays: true, startTime: true, endTime: true, room: true, startDate: true, endDate: true, lessonsPerMonth: true,
+              program: { select: { lessonsPerMonth: true } },
+            },
+          },
+        },
       },
     },
   });
@@ -71,7 +102,7 @@ export default async function StudentProfilPage() {
       where: { studentId: student.id },
       orderBy: { markedAt: "desc" },
       take: 200,
-      select: { status: true },
+      select: { status: true, lesson: { select: { startsAt: true } } },
     }),
     prisma.examResult.findMany({
       where: { studentId: student.id },
@@ -100,6 +131,29 @@ export default async function StudentProfilPage() {
   const present = attAll.filter((a) => isAttended(a.status)).length; // kanonik formula (Start bilan bir xil)
   const attPct = attAll.length ? Math.round((present / attAll.length) * 100) : 0;
   const totalPaid = paidAgg._sum.amount ?? 0;
+
+  // ── Dars kunlari kalendari: 1 oy orqaga, 2 oy oldinga ──
+  const now = new Date();
+  const todayISO = todayISOLocal();
+  const CAL_BEFORE = 1, CAL_AFTER = 2;
+  const lessonDays = buildLessonDays(student.enrollments.map((e) => e.group), now, CAL_BEFORE, CAL_AFTER);
+  // O'tgan dars kunlariga davomat belgisi (yashil/sariq/qizil nuqta)
+  const attByDay: Record<string, AttMark> = {};
+  for (const a of attAll) {
+    const iso = todayISOLocal(a.lesson.startsAt);
+    if (attByDay[iso]) continue;
+    attByDay[iso] = a.status === "LATE" ? "late" : a.status === "EXCUSED" ? "excused" : isAttended(a.status) ? "ok" : "absent";
+  }
+  const L = session.locale;
+  const calLabels = {
+    months: CAL_MONTHS[L] ?? CAL_MONTHS.uz,
+    weekdaysShort: CAL_WD_SHORT[L] ?? CAL_WD_SHORT.uz,
+    weekdaysFull: CAL_WD_FULL[L] ?? CAL_WD_FULL.uz,
+    total: t.calTotal, passed: t.calPassed, left: t.calLeft,
+    today: t.today, legendLesson: t.legendLesson, legendPast: t.legendPast,
+    noLesson: t.calNoLesson, tapHint: t.calTapHint,
+    attended: t.calAttended, late: t.calLate, absent: t.calAbsent, excused: t.calExcused,
+  };
 
   return (
     <div className="space-y-[18px]">
@@ -172,6 +226,23 @@ export default async function StudentProfilPage() {
       </Link>
       )}
       */}
+
+      {/* ── Dars kunlari kalendari ── */}
+      {lessonDays.length > 0 && (
+        <>
+          <SectionTitle>{t.lessonDays}</SectionTitle>
+          <LessonCalendar
+            days={lessonDays}
+            attendance={attByDay}
+            todayISO={todayISO}
+            initialYear={now.getFullYear()}
+            initialMonth0={now.getMonth()}
+            monthsBefore={CAL_BEFORE}
+            monthsAfter={CAL_AFTER}
+            labels={calLabels}
+          />
+        </>
+      )}
 
       {/* ── To'lovlar ── */}
       <SectionTitle>{t.payments}</SectionTitle>
