@@ -187,8 +187,8 @@ export const slotDropKey = (branchId: string, slotId: string) => `${BRANCH_COL_P
 
 /**
  * Filial rejimi (kim ko'rayotganiga qarab):
- *   "sales" — ROP va filial administratori: "Daraja testi" va "Taklif" ustunlari yo'q —
- *             o'sha bosqichdagi (filialga tashlanmagan) lidlar "Yangi"da turadi;
+ *   "sales" — ROP va filial administratori: "Taklif" ustuni yo'q — o'sha bosqichdagi
+ *             (filialga tashlanmagan) lidlar "Yangi"da turadi; "Daraja testi" bor;
  *             filial ustunida faqat qo'lda tashlanganlar.
  *   "head"  — direktor / o'rinbosar: HAMMA ustunlar — Yangi, Ishda, Daraja testi,
  *             Taklif, filiallar, Qabul qilindi, Yo'qotilgan.
@@ -215,7 +215,8 @@ export function isStudentArchive(lead: { stage: string; studentId?: string | nul
 
 /** Rejimda ko'rsatilmaydigan standart ustunlar (filtr chiplarida ham yashiriladi) */
 export function branchReplaces(mode: BranchMode): Set<string> {
-  return mode === "sales" ? new Set(["test", "offer"]) : new Set();
+  // Sotuv rejimida ham "Daraja testi" ko'rinadi (administrator so'rovi) — faqat "Taklif" yo'q
+  return mode === "sales" ? new Set(["offer"]) : new Set();
 }
 
 /**
@@ -243,8 +244,9 @@ export function columnOfLead(
   const base = columnOf(lead.stage);
   if (base === "won" && lead.groupId && pinned.has(lead.groupId)) return groupColKey(lead.groupId);
   if (branch) {
-    // Sotuv rejimida test/taklif ustunlari yo'q — o'sha bosqichdagilar "Yangi" hisoblanadi
-    const eff = branch.mode === "sales" && (base === "test" || base === "offer") ? "new" : base;
+    // Sotuv rejimida "Taklif" ustuni yo'q — o'sha bosqichdagilar "Yangi" hisoblanadi
+    // ("Daraja testi" ustuni sotuv rejimida ham bor)
+    const eff = branch.mode === "sales" && base === "offer" ? "new" : base;
     // Onlayn tanlaganlar Yangiga emas — alohida "Onlayn" ustuniga
     if (eff === "new" && lead.studyFormat === "ONLINE" && branch.online) return ONLINE_COL;
     return eff;
@@ -319,7 +321,7 @@ export function visibleColumns(opts: {
       sub: tr(locale, { uz: "Onlayn o'qimoqchilar", ru: "Хотят учиться онлайн", en: "Want to study online", de: "Möchten online lernen" }),
       color: "#0ea5e9", icon: "video", defaultStage: "NEW", groupId: null, customId: null,
     };
-    return [std("new"), std("work"), ...(showOnlineCol ? [online] : []), ...(branchMode === "head" ? [std("test"), std("offer")] : []), ...brs, ...custom, std("won"), ...groups, std("lost")]
+    return [std("new"), std("work"), std("test"), ...(showOnlineCol ? [online] : []), ...(branchMode === "head" ? [std("offer")] : []), ...brs, ...custom, std("won"), ...groups, std("lost")]
       .filter((c) => !hidden.has(c.key));
   }
   return [std("new"), std("work"), std("test"), std("offer"), ...custom, std("won"), ...groups, std("lost")]
