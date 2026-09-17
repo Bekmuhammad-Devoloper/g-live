@@ -133,7 +133,8 @@ export default function LeadsKanban({
               setDragId(null);
               setOverCol(null);
             }}
-            className={cn("min-w-0 rounded-2xl p-2.5 transition", isOver ? "bg-slate-100/70 dark:bg-white/[0.03]" : "")}
+            // flex-col: pager pastga yopishadi — hamma ustun grid qatori bo'yicha TENG uzunlikda
+            className={cn("flex min-w-0 flex-col rounded-2xl border p-2.5 transition", isOver ? "border-slate-300 bg-slate-100/70 dark:border-white/[0.12] dark:bg-white/[0.04]" : "border-slate-200/50 bg-slate-50/50 dark:border-white/[0.05] dark:bg-white/[0.02]")}
           >
             {/* Sarlavha */}
             <div className="flex items-center justify-between gap-2 px-1">
@@ -237,8 +238,8 @@ export default function LeadsKanban({
               </div>
             )}
 
-            {/* Kartalar — scrollsiz (butun sahifa scroll bo'ladi) */}
-            <div className="space-y-3">
+            {/* Kartalar — scrollsiz (butun sahifa scroll bo'ladi); flex-1 — ustun oxirigacha cho'ziladi */}
+            <div className="flex flex-1 flex-col space-y-3">
               {col.key === "won" ? (
                 // "Qabul qilindi" — guruhga yo'naltirilgan lidlar bu yerda to'planib
                 // ketmasin: ular guruhlar ro'yxatiga yig'iladi. Kartochka bo'lib
@@ -632,6 +633,7 @@ function Pager({ total, page, onPage, locale }: { total: number; page: number; o
   const from = cur * PAGE + 1, to = Math.min(total, (cur + 1) * PAGE);
   const nav = "grid h-7 w-7 place-items-center rounded-lg text-slate-500 transition hover:bg-slate-100 disabled:opacity-30 disabled:hover:bg-transparent dark:text-slate-400 dark:hover:bg-white/[0.06]";
   return (
+    <div className="!mt-auto pt-3">
     <div className="rounded-xl border border-slate-200/80 bg-white/80 px-2 py-2 dark:border-white/[0.08] dark:bg-white/[0.03]">
       <div className="flex items-center justify-center gap-0.5">
         <button type="button" onClick={() => onPage(cur - 1)} disabled={cur === 0} className={nav} aria-label={tr(locale, { uz: "Oldingi", ru: "Назад", en: "Previous", de: "Zurück" })}>
@@ -663,6 +665,7 @@ function Pager({ total, page, onPage, locale }: { total: number; page: number; o
       <div className="mt-1 text-center text-[10.5px] tabular-nums text-slate-400">
         {from}–{to} / {total}
       </div>
+    </div>
     </div>
   );
 }
