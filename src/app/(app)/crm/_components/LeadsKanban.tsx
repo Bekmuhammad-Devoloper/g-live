@@ -378,9 +378,10 @@ function LostColumn({
 
   return (
     <>
-      {/* Arxiv — ikki ixcham plitka yonma-yon (xona kartalari uslubida), ustun
-          TEPASIDA. Plitka — tashlash joyi; bosilsa ichidagilar pastda ochiladi. */}
-      <div className="grid grid-cols-2 gap-2">
+      {/* Arxiv — ikki gorizontal karta, ustma-ust (ustun TEPASIDA). Zamonaviy,
+          toza uslub: gradient ikonka, sarlavha + izoh, o'ngda soni va chevron.
+          Karta — tashlash joyi; bosilsa ichidagilar pastda ochiladi. */}
+      <div className="space-y-2">
         {sections.map((sec) => {
           const count = sec.items.length;
           const opened = openSec[sec.key] ?? false;
@@ -400,59 +401,63 @@ function LostColumn({
                 if (id) onArchive(id);
               }}
               onClick={() => count > 0 && setOpenSec({ [sec.key]: !opened })}
-              disabled={count === 0 && !canArchive}
               className={cn(
-                "group relative flex min-w-0 flex-col items-start gap-2 overflow-hidden rounded-xl border p-2.5 text-left transition",
-                student
-                  ? "bg-gradient-to-br from-violet-50 to-white shadow-[0_6px_18px_-12px_rgba(139,92,246,0.55)] dark:from-violet-500/10 dark:to-[#15243d]"
-                  : "bg-gradient-to-br from-slate-100 to-white shadow-[0_6px_18px_-12px_rgba(100,116,139,0.55)] dark:from-slate-500/10 dark:to-[#15243d]",
+                "group relative flex w-full items-center gap-3 overflow-hidden rounded-2xl border bg-white/90 p-3 text-left shadow-[0_8px_24px_-14px_rgba(15,23,42,0.35)] backdrop-blur transition outline-none",
+                "focus-visible:ring-2 focus-visible:ring-offset-1 dark:bg-white/[0.04]",
+                student ? "focus-visible:ring-violet-400" : "focus-visible:ring-slate-400",
                 isOver
-                  ? (student ? "scale-[1.02] border-violet-500 ring-2 ring-violet-400/60" : "scale-[1.02] border-slate-500 ring-2 ring-slate-400/60")
+                  ? (student ? "scale-[1.02] border-violet-400 shadow-[0_12px_30px_-12px_rgba(139,92,246,0.6)]" : "scale-[1.02] border-slate-400 shadow-[0_12px_30px_-12px_rgba(71,85,105,0.6)]")
                   : opened
-                    ? (student ? "border-violet-400 dark:border-violet-500/50" : "border-slate-400 dark:border-slate-500/50")
-                    : (student ? "border-violet-200/80 dark:border-violet-500/25" : "border-slate-300/80 dark:border-slate-500/25"),
-                count > 0 && "cursor-pointer hover:-translate-y-px",
-                count === 0 && !canArchive && "opacity-80",
+                    ? (student ? "border-violet-300 dark:border-violet-500/40" : "border-slate-300 dark:border-slate-500/40")
+                    : "border-slate-200/70 dark:border-white/[0.08]",
+                count > 0 ? "cursor-pointer hover:-translate-y-0.5 hover:shadow-[0_14px_30px_-14px_rgba(15,23,42,0.45)]" : "cursor-default",
               )}
             >
-              {/* tepa chiziq */}
-              <span className={cn("absolute inset-x-0 top-0 h-[3px] bg-gradient-to-r", student ? "from-violet-400 to-violet-600" : "from-slate-400 to-slate-600")} />
+              {/* yumshoq rangli fon nuri — o'ng tepada */}
+              <span className={cn("pointer-events-none absolute -right-8 -top-10 h-28 w-28 rounded-full blur-2xl", student ? "bg-violet-400/25" : "bg-slate-400/25")} />
 
-              <div className="flex w-full items-center justify-between gap-2">
-                <span className={cn("flex h-8 w-8 shrink-0 items-center justify-center rounded-lg text-white", student ? "bg-violet-500 shadow-[0_5px_12px_-5px_rgba(139,92,246,0.9)]" : "bg-slate-500 shadow-[0_5px_12px_-5px_rgba(100,116,139,0.9)]")}>
-                  <Icon name={sec.icon} className="h-4 w-4" strokeWidth={1.9} />
+              {/* ikonka */}
+              <span className={cn(
+                "relative flex h-11 w-11 shrink-0 items-center justify-center rounded-xl text-white",
+                student
+                  ? "bg-gradient-to-br from-violet-500 to-fuchsia-500 shadow-[0_8px_16px_-6px_rgba(139,92,246,0.8)]"
+                  : "bg-gradient-to-br from-slate-500 to-slate-700 shadow-[0_8px_16px_-6px_rgba(71,85,105,0.8)]",
+              )}>
+                <Icon name={sec.icon} className="h-5 w-5" strokeWidth={1.9} />
+              </span>
+
+              {/* matn */}
+              <span className="relative min-w-0 flex-1">
+                <span className="font-hand block truncate text-[17px] font-bold leading-[1.3] text-slate-800 dark:text-slate-100">{sec.title}</span>
+                <span className="block truncate text-[11.5px] text-slate-500 dark:text-slate-400">
+                  {count === 0
+                    ? tr(locale, { uz: "Bo'sh — lidni shu yerga tashlang", ru: "Пусто — перетащите лид сюда", en: "Empty — drop a lead here", de: "Leer — Lead hierher ziehen" })
+                    : student
+                      ? tr(locale, { uz: "Qabul qilingan o'quvchilar", ru: "Зачисленные ученики", en: "Enrolled students", de: "Eingeschriebene Schüler" })
+                      : tr(locale, { uz: "Ko'rinishdan olingan lidlar", ru: "Скрытые лиды", en: "Hidden leads", de: "Ausgeblendete Leads" })}
                 </span>
+              </span>
+
+              {/* soni + chevron */}
+              <span className="relative flex shrink-0 items-center gap-1.5">
                 <span className={cn(
-                  "inline-flex shrink-0 items-center rounded-full px-2 py-0.5 text-[11px] font-bold tabular-nums",
+                  "inline-flex min-w-[28px] items-center justify-center rounded-full px-2 py-0.5 text-[12px] font-bold tabular-nums",
                   count > 0
-                    ? (student ? "bg-violet-600 text-white" : "bg-slate-600 text-white")
-                    : (student ? "bg-violet-500/15 text-violet-700 dark:text-violet-300" : "bg-slate-500/15 text-slate-600 dark:text-slate-300"),
+                    ? (student ? "bg-violet-600 text-white" : "bg-slate-700 text-white dark:bg-slate-600")
+                    : "bg-slate-100 text-slate-400 dark:bg-white/10 dark:text-slate-400",
                 )}>
                   {count}
                 </span>
-              </div>
+                {count > 0 && <Icon name="chevronDown" className={cn("h-4 w-4 text-slate-400 transition group-hover:text-slate-600", opened && "rotate-180")} />}
+              </span>
 
-              <div className="min-w-0 w-full">
-                <div className="font-hand truncate text-[16px] font-bold leading-[1.35] text-slate-800 dark:text-slate-100">{sec.title}</div>
-                <div className="flex items-center gap-1 text-[11px] text-slate-500 dark:text-slate-400">
-                  {count > 0 ? (
-                    <>
-                      <Icon name="chevronDown" className={cn("h-3 w-3 shrink-0 transition", opened && "rotate-180")} />
-                      <span className="truncate">{opened ? tr(locale, { uz: "Yopish", ru: "Свернуть", en: "Collapse", de: "Zuklappen" }) : tr(locale, { uz: "Ko'rish", ru: "Показать", en: "Show", de: "Anzeigen" })}</span>
-                    </>
-                  ) : (
-                    <span className="truncate">{tr(locale, { uz: "Bo'sh", ru: "Пусто", en: "Empty", de: "Leer" })}</span>
-                  )}
-                </div>
-              </div>
-
-              {/* Tashlash ko'rsatkichi — plitka ustini qoplaydi */}
+              {/* Tashlash ko'rsatkichi — karta ustini qoplaydi */}
               {isOver && (
                 <span className={cn(
-                  "absolute inset-0 grid place-items-center rounded-xl text-[12px] font-bold backdrop-blur-[1px]",
-                  student ? "bg-violet-500/85 text-white" : "bg-slate-600/85 text-white",
+                  "absolute inset-0 grid place-items-center rounded-2xl text-[13px] font-bold text-white backdrop-blur-[2px]",
+                  student ? "bg-gradient-to-r from-violet-500/90 to-fuchsia-500/90" : "bg-gradient-to-r from-slate-600/90 to-slate-800/90",
                 )}>
-                  <span className="inline-flex items-center gap-1.5"><Icon name="arrowDownToLine" className="h-4 w-4" /> {tr(locale, { uz: "Arxivga", ru: "В архив", en: "Archive", de: "Archiv" })}</span>
+                  <span className="inline-flex items-center gap-2"><Icon name="arrowDownToLine" className="h-4 w-4" /> {tr(locale, { uz: "Arxivga qo'yish", ru: "В архив", en: "Archive", de: "Archivieren" })}</span>
                 </span>
               )}
             </button>
