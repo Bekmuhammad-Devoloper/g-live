@@ -14,6 +14,7 @@ import { studentRank } from "@/lib/rank";
 import { getActiveStarRanks, progressOf, rankName } from "@/lib/starRanks";
 import { getActiveBanners, getActiveVideos, videoThumb } from "@/lib/portalContent";
 import BannerCarousel from "./BannerCarousel";
+import HeroCarousel from "./HeroCarousel";
 import { CARD, CoinGold, FlagAvatar, IcoBell, IcoBook, IcoCalendar, IcoClock, IcoFlame, IcoPin, INK, NAVY, Ring, TEAL } from "./_ui";
 import { plannedLessonDays, todayISOLocal } from "@/lib/attendanceWindow";
 import MissingStudent from "./MissingStudent";
@@ -280,9 +281,12 @@ export default async function StudentStartPage() {
     const g = e.group;
     if (!g.weekdays) continue;
     const limit = g.lessonsPerMonth ?? g.program.lessonsPerMonth;
+    // Tugash sanasi o'tib ketgan, lekin o'quvchi hali ham faol — demak guruh
+    // davom etyapti (sana yangilanmagan). Bunday sana jadvalni yashirmasin.
+    const endDate = g.endDate && g.endDate.getTime() >= now.getTime() - 86_400_000 ? g.endDate : null;
     const days = [
-      ...plannedLessonDays(calY, calM, g.weekdays, limit, g.startDate, g.endDate),
-      ...plannedLessonDays(nextY, nextM, g.weekdays, limit, g.startDate, g.endDate),
+      ...plannedLessonDays(calY, calM, g.weekdays, limit, g.startDate, endDate),
+      ...plannedLessonDays(nextY, nextM, g.weekdays, limit, g.startDate, endDate),
     ];
     for (const iso of days) {
       if (!lessonDayMap.has(iso)) lessonDayMap.set(iso, { iso, group: g.name, startTime: g.startTime, endTime: g.endTime, room: g.room });
@@ -470,12 +474,14 @@ export default async function StudentStartPage() {
           yuklagan bo'lsa), yozuvlar esa o'sha kursga tegishli: daraja nomi,
           bo'lim raqami va joriy dars mavzusi. Banner bo'lmasa — avvalgi
           shisha ko'rinish. */}
+      <HeroCarousel slides={[
       <Link
+        key="course"
         href={kurseHref}
         className={
           levelBanner
-            ? "relative block min-h-[168px] overflow-hidden rounded-[26px] p-6 text-white shadow-[0_14px_30px_rgba(19,78,94,0.22)] transition active:scale-[0.985]"
-            : "gl-glass-hero block min-h-[168px] p-6 transition active:scale-[0.985]"
+            ? "relative block h-full min-h-[168px] overflow-hidden rounded-[26px] p-6 text-white shadow-[0_14px_30px_rgba(19,78,94,0.22)] transition active:scale-[0.985]"
+            : "gl-glass-hero block h-full min-h-[168px] p-6 transition active:scale-[0.985]"
         }
       >
         {levelBanner ? (
@@ -530,17 +536,19 @@ export default async function StudentStartPage() {
           </div>
           <span className="text-[20px] font-extrabold" style={{ color: levelBanner ? "#ffffff" : NAVY }}>{kursPct}%</span>
         </div>
-      </Link>
+      </Link>,
 
-      {/* ── Keyingi dars — kurs banneri yonidagi ikkinchi banner ── */}
+      /* ── Keyingi dars — kurs banneri bilan navbatma-navbat ko'rinadi ── */
       <NextLessonBanner
+        key="next"
         t={t}
         locale={session.locale}
         todayISO={todayISO}
         next={nextLesson}
         hasSchedule={hasSchedule}
         cardCls={card}
-      />
+      />,
+      ]} />
 
       {/* ── Tanga · Yulduz · Seriya · Reyting ── */}
       <div className="grid grid-cols-4 gap-2">
@@ -723,7 +731,7 @@ function NextLessonBanner({ t, locale, todayISO, next, hasSchedule, cardCls }: {
   const L = MONTHS[locale] ? locale : "uz";
   if (!next) {
     return (
-      <div className={`${cardCls} flex items-center gap-4 rounded-[26px] p-5`}>
+      <div className={`${cardCls} flex h-full min-h-[168px] items-center gap-4 rounded-[26px] p-5`}>
         <span className="grid h-12 w-12 shrink-0 place-items-center rounded-2xl" style={{ background: "rgba(14,116,144,0.12)" }}>
           <IcoCalendar c={TEAL} s={26} />
         </span>
@@ -744,7 +752,7 @@ function NextLessonBanner({ t, locale, todayISO, next, hasSchedule, cardCls }: {
 
   return (
     <div
-      className="relative overflow-hidden rounded-[26px] p-5 text-white shadow-[0_14px_30px_rgba(19,78,94,0.25)]"
+      className="relative flex h-full min-h-[168px] flex-col justify-center overflow-hidden rounded-[26px] p-5 pb-7 text-white shadow-[0_14px_30px_rgba(19,78,94,0.25)]"
       style={{ background: `linear-gradient(135deg, #17a2bf 0%, ${TEAL} 55%, ${NAVY} 100%)` }}
     >
       {/* bezak doiralar */}
