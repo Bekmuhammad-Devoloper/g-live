@@ -75,6 +75,7 @@ export async function legacyCancelPayment(s: SessionUser, paymentId: string, rea
   try {
     const p = await prisma.payment.findUnique({ where: { id: paymentId }, select: { postedAt: true, legacyRole: true, status: true } });
     if (!p) return { ok: false, error: "not_found", message: "To'lov topilmadi" };
+    if (p.legacyRole === "HISTORICAL") return { ok: false, error: "state", message: "Tarixiy real to'lov — bekor qilinmaydi; Finance V2 → Tarixiy to'lovlar bo'limida ko'rib chiqiladi" };
     if (!p.postedAt || p.legacyRole) return { ok: false, error: "state", message: "Eski to'lov — V2 ga kiritilmagan; backfill'dan keyin V2 orqali tuzatiladi" };
     await reversePayment(prisma, { paymentId, reason, idempotencyKey: legacyKey(["cancel", paymentId, s.userId]) }, s);
     return { ok: true };

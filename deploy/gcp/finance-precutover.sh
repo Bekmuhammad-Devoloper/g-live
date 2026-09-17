@@ -131,6 +131,9 @@ TSX scripts/finance-v2/reconcile.ts compare --before "$WORK/pre.json" --after "$
 section "7b. Narx konfiguratsiyasi (nusxa, read-only): guruh/kurs narxlari"
 node -e "const {PrismaClient}=require('@prisma/client');const p=new PrismaClient({datasourceUrl:'file:$COPY'});(async()=>{const gs=await p.group.findMany({select:{id:true,name:true,monthlyFee:true,program:{select:{name:true,monthlyFee:true}},_count:{select:{students:true}}}});const st=await p.setting.findUnique({where:{key:'finance.defaultMonthlyFee'}});console.log('finance.defaultMonthlyFee:',st?st.value:'(yo\\'q)');for(const g of gs){const fee=(g.monthlyFee&&g.monthlyFee>0)?g.monthlyFee+' (guruh)':(g.program.monthlyFee&&g.program.monthlyFee>0)?g.program.monthlyFee+' (kurs)':'NARX YO\\'Q';console.log('  '+g.name+' ['+g.program.name+'] o\\'quvchi='+g._count.students+' narx='+fee)}})().finally(()=>p.\$disconnect())" < /dev/null
 
+section "7c. LEGACY REAL TO'LOVLAR AUDITI (nusxa, FAQAT O'QISH) — har to'lov uchun dalil dossyesi va klassifikatsiya"
+TSX scripts/finance-v2/legacy-payments-audit.ts --db "$COPY" --out "$WORK/legacy-dossier-pre.json" 2>&1 | grep -v "prisma-config\|deprecated" | cut -c1-400 || fail "legacy-payments-audit"
+
 section "8. Backfill DRY-RUN (nusxada, yozmaydi)"
 tstart backfill-dry
 BILLING_FLAGS=""
@@ -140,7 +143,7 @@ if TSX scripts/finance-v2/backfill.ts --db "$COPY" --stage billing --dry-run 2>&
   BILLING_FLAGS="--allow-unpriced"; echo "   ↳ simulyatsiya davom etishi uchun keyingi bosqichlar --allow-unpriced bilan (PROD CUTOVER'DA RUXSAT ETILMAYDI)"
   TSX scripts/finance-v2/backfill.ts --db "$COPY" --stage billing --dry-run --allow-unpriced 2>&1 | grep -E "unpriced|Skipped|created|✓" | tail -6
 fi
-for st in payments expenses salary; do
+for st in payments preserve-legacy expenses salary; do
   echo "--- stage $st (dry-run)"; TSX scripts/finance-v2/backfill.ts --db "$COPY" --stage "$st" --dry-run 2>&1 | grep -v "prisma-config\|deprecated" | tail -25 || fail "backfill dry-run $st"
 done
 TSX scripts/finance-v2/reconcile.ts snapshot --db "$COPY" --out "$WORK/post-dry.json" > /dev/null 2>&1
@@ -149,14 +152,14 @@ tend backfill-dry
 
 section "9. Backfill REAL (nusxada) → verify → V2 sonlar (A)"
 tstart backfill-real
-for st in billing payments verify salary expenses; do
+for st in billing payments preserve-legacy verify salary expenses; do
   tstart "backfill:$st"
   EXTRA=""; [ "$st" = billing ] && EXTRA="$BILLING_FLAGS"
   TSX scripts/finance-v2/backfill.ts --db "$COPY" --stage "$st" $EXTRA 2>&1 | grep -v "prisma-config\|deprecated" | tail -25 || fail "backfill $st"
   tend "backfill:$st"
 done
 TSX scripts/finance-v2/v2-counts.ts --db "$COPY" --out "$WORK/counts-A.json" > /dev/null 2>&1 || fail "v2-counts A"
-node -e "const j=require('$WORK/counts-A.json');const v=j.v2;console.log(JSON.stringify({PaymentPosted:v.PaymentPosted,PaymentPostedTotal:v.PaymentPostedTotal,StudentCharge:v.StudentCharge,StudentChargeFinalTotal:v.StudentChargeFinalTotal,PaymentAllocation:v.PaymentAllocation,AllocationTotal:v.AllocationTotal,StudentCreditTotal:v.StudentCreditTotal,TeacherEarning:v.TeacherEarning,NeedsReview:v.TeacherEarningNeedsReview,ReviewReasons:v.TeacherEarningReviewReasons,SalaryPeriod:v.SalaryPeriod,ExpensePosted:v.ExpensePosted,FinancialAccount:v.FinancialAccount,FinancialTransaction:v.FinancialTransaction,LedgerIn:v.LedgerIn,LedgerOut:v.LedgerOut,GSH:v.GroupStudentHistoryBySource,GTA:v.GroupTeacherAssignmentBySource,Dup:{c:v.DupChargeKeys,a:v.DupAllocationKeys,e:v.DupEarningKeys,l:v.DupLedgerKeys,p:v.DupPaymentKeys,x:v.DupExpenseKeys},Inv:{overAlloc:v.OverAllocatedPayments,overRefund:v.OverRefundedPayments,overPaidCharge:v.OverPaidCharges,overPaidPeriod:v.OverPaidPeriods,transferImb:v.LedgerTransferImbalance}},null,1))"
+node -e "const j=require('$WORK/counts-A.json');const v=j.v2;console.log(JSON.stringify({PaymentPosted:v.PaymentPosted,PaymentPostedTotal:v.PaymentPostedTotal,StudentCharge:v.StudentCharge,StudentChargeFinalTotal:v.StudentChargeFinalTotal,PaymentAllocation:v.PaymentAllocation,AllocationTotal:v.AllocationTotal,StudentCreditTotal:v.StudentCreditTotal,TeacherEarning:v.TeacherEarning,NeedsReview:v.TeacherEarningNeedsReview,ReviewReasons:v.TeacherEarningReviewReasons,SalaryPeriod:v.SalaryPeriod,ExpensePosted:v.ExpensePosted,FinancialAccount:v.FinancialAccount,FinancialTransaction:v.FinancialTransaction,LedgerIn:v.LedgerIn,LedgerOut:v.LedgerOut,GSH:v.GroupStudentHistoryBySource,GTA:v.GroupTeacherAssignmentBySource,Dup:{c:v.DupChargeKeys,a:v.DupAllocationKeys,e:v.DupEarningKeys,l:v.DupLedgerKeys,p:v.DupPaymentKeys,x:v.DupExpenseKeys},Inv:{overAlloc:v.OverAllocatedPayments,overRefund:v.OverRefundedPayments,overPaidCharge:v.OverPaidCharges,overPaidPeriod:v.OverPaidPeriods,transferImb:v.LedgerTransferImbalance},Historical:{n:v.PaymentHistorical,total:v.PaymentHistoricalTotal,unallocated:v.PaymentHistoricalUnallocated,ledgerIn:v.PaymentHistoricalLedgerIn,reviews:v.LegacyPaymentReviewByStatus,amountMismatch:v.LegacyReviewAmountMismatch,dupLedgerPerPayment:v.DupLedgerPerPayment}},null,1))"
 tend backfill-real
 TSX scripts/finance-v2/reconcile.ts snapshot --db "$COPY" --out "$WORK/post-backfill.json" > /dev/null 2>&1
 echo "--- legacy jadvallar va pul backfill'dan keyin o'zgarmagan (post-migratsiya ↔ post-backfill; V2 jadvallar o'sishi va AuditLog kutilgan):"
@@ -171,18 +174,21 @@ console.log('  money:', JSON.stringify(b.money));
 if(bad){console.log('  ✗ UNEXPECTED: '+bad+' farq');process.exit(1)} console.log('  ✓ legacy sonlar va pul yig\\'indilari aynan');
 " || fail "reconciliation post-migratsiya↔post-backfill UNEXPECTED"
 
-section "9a. Legacy kredit (cutover'dan oldingi taqsimlanmagan to'lovlar) — DRY-RUN ro'yxat (qaror uchun, yozilmaydi)"
-TSX scripts/finance-v2/backfill.ts --db "$COPY" --stage settle-legacy-credit --dry-run 2>&1 | grep -v "prisma-config\|deprecated" | grep -E "candidates|\"amount\"|dry-run" | head -5
+section "9a. LEGACY REAL TO'LOVLAR — saqlash invarianti (backfill'dan keyin; yo'qolgan=0, dublikat=0, soxta kredit=0 SHART)"
+TSX scripts/finance-v2/backfill.ts --db "$COPY" --stage legacy-invariant 2>&1 | grep -v "prisma-config\|deprecated" | tail -30 || fail "LEGACY PRESERVATION INVARIANT buzilgan"
+echo "--- legacy to'lovlar dossyesi backfill'dan keyin (klassifikatsiya/holat):"
+TSX scripts/finance-v2/legacy-payments-audit.ts --db "$COPY" --out "$WORK/legacy-dossier-post.json" 2>&1 | grep -v "prisma-config\|deprecated" | grep -E "^to'lovlar|^\| [0-9]+ \|" | cut -c1-260
 
 section "9b. GO-LIVE READINESS (nusxada, backfill'dan keyin)"
 TSX scripts/finance-v2/readiness.ts --db "$COPY" 2>&1 | grep -v "prisma-config\|deprecated" | tail -60 || fail "READINESS: NOT READY (nusxada) — sabablar yuqorida"
 
 section "10. Backfill IKKINCHI marta (idempotency) → sonlar (B); A = B shart"
 tstart backfill-second
-for st in billing payments salary expenses; do
+for st in billing payments preserve-legacy salary expenses; do
   EXTRA=""; [ "$st" = billing ] && EXTRA="$BILLING_FLAGS"
-  TSX scripts/finance-v2/backfill.ts --db "$COPY" --stage "$st" $EXTRA 2>&1 | grep -E "^\{|posted|created|existing|skipped|✓|✗|UNEXPECTED" | tail -4 || fail "backfill (2) $st"
+  TSX scripts/finance-v2/backfill.ts --db "$COPY" --stage "$st" $EXTRA 2>&1 | grep -E "^\{|posted|created|existing|skipped|markedHistorical|reviewsCreated|lostAmount|✓|✗|UNEXPECTED" | tail -6 || fail "backfill (2) $st"
 done
+TSX scripts/finance-v2/backfill.ts --db "$COPY" --stage legacy-invariant 2>&1 | grep -E "ok|lost|duplicate|fakeCredit|legacyTotal|✓|✗" | tail -8 || fail "LEGACY PRESERVATION INVARIANT (2) buzilgan"
 TSX scripts/finance-v2/v2-counts.ts --db "$COPY" --out "$WORK/counts-B.json" > /dev/null 2>&1 || fail "v2-counts B"
 node -e "
 const a=require('$WORK/counts-A.json'), b=require('$WORK/counts-B.json');
@@ -223,7 +229,7 @@ PID=$(node -e "const {PrismaClient}=require('@prisma/client');const p=new Prisma
 AID=$(node -e "const {PrismaClient}=require('@prisma/client');const p=new PrismaClient({datasourceUrl:'file:$COPY'});p.financialAccount.findFirst({orderBy:{createdAt:'asc'}}).then(r=>console.log(r?r.id:'')).finally(()=>p.\$disconnect())" < /dev/null)
 SID=$(node -e "const {PrismaClient}=require('@prisma/client');const p=new PrismaClient({datasourceUrl:'file:$COPY'});p.student.findFirst({orderBy:{createdAt:'asc'}}).then(r=>console.log(r?r.id:'')).finally(()=>p.\$disconnect())" < /dev/null)
 YM=$(date +%Y-%m)
-V2_ROUTES=(/finance/v2 "/finance/v2/payments?ym=$YM" /finance/v2/debtors /finance/v2/balances "/finance/v2/salary?ym=$YM" "/finance/v2/salary/$PID" /finance/v2/salary/settings /finance/v2/accounts "/finance/v2/accounts/$AID?ym=$YM" "/finance/v2/expenses?ym=$YM" "/finance/v2/refunds?ym=$YM" "/finance/v2/reports?tab=collections&ym=$YM" "/finance/v2/reports?tab=revenue&ym=$YM" "/finance/v2/reports?tab=expenses&ym=$YM" "/finance/v2/reports?tab=debt" "/finance/v2/reports?tab=balances" "/finance/v2/reports?tab=salary&ym=$YM" "/finance/v2/reports?tab=cashflow&ym=$YM" "/finance/v2/reports?tab=pnl&ym=$YM" /finance/v2/settings /finance/v2/readiness "/finance/v2/students/$SID")
+V2_ROUTES=(/finance/v2 "/finance/v2/payments?ym=$YM" /finance/v2/debtors /finance/v2/balances "/finance/v2/salary?ym=$YM" "/finance/v2/salary/$PID" /finance/v2/salary/settings /finance/v2/accounts "/finance/v2/accounts/$AID?ym=$YM" "/finance/v2/expenses?ym=$YM" "/finance/v2/refunds?ym=$YM" "/finance/v2/reports?tab=collections&ym=$YM" "/finance/v2/reports?tab=revenue&ym=$YM" "/finance/v2/reports?tab=expenses&ym=$YM" "/finance/v2/reports?tab=debt" "/finance/v2/reports?tab=balances" "/finance/v2/reports?tab=salary&ym=$YM" "/finance/v2/reports?tab=cashflow&ym=$YM" "/finance/v2/reports?tab=pnl&ym=$YM" /finance/v2/settings /finance/v2/readiness /finance/v2/historical "/finance/v2/historical?all=1" "/finance/v2/students/$SID")
 tstart smoke-on
 smoke $PORT_V2 "$JWT_D" "FLAG ON V2 (DIRECTOR, 1-so'rov)" "${V2_ROUTES[@]}"
 echo "  --- 2-so'rov (isigan):"; smoke $PORT_V2 "$JWT_D" "FLAG ON V2 (DIRECTOR, 2-so'rov)" "${V2_ROUTES[@]}"
@@ -232,7 +238,7 @@ tend smoke-on
 echo "--- RBAC (server-side, sahifa): TEACHER / MANAGER / OPERATOR"
 for pair in "TEACHER:$JWT_T" "MANAGER:$JWT_M" "OPERATOR:$JWT_O"; do
   role=${pair%%:*}; jwt=${pair#*:}; [ -n "$jwt" ] || { echo "  $role: nusxada bunday faol foydalanuvchi yo'q — o'tkazildi"; continue; }
-  for route in /finance/v2/payments /finance/v2/accounts /finance/v2/settings /finance/v2/salary/settings /finance/v2/salary; do
+  for route in /finance/v2/payments /finance/v2/accounts /finance/v2/settings /finance/v2/salary/settings /finance/v2/salary /finance/v2/historical; do
     code=$(curl -s -o "$WORK/page.html" -w "%{http_code}" -H "Cookie: $COOKIE=$jwt" "http://127.0.0.1:$PORT_V2$route")
     forb=$(grep -c "ruxsatingiz yo'q\|Kirish taqiqlangan\|Доступ запрещён\|Access denied" "$WORK/page.html" || true)
     printf "  %-9s %-30s %s forbidden=%s\n" "$role" "$route" "$code" "$forb"

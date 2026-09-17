@@ -57,7 +57,7 @@ export const PAYMENT_METHOD_TO_ACCOUNT_TYPE: Record<string, FinancialAccountType
 };
 
 // ─── Billing ───
-export const CHARGE_KINDS = ["MONTHLY", "MANUAL_DEBT", "OPENING_BALANCE", "ADJUSTMENT"] as const;
+export const CHARGE_KINDS = ["MONTHLY", "MANUAL_DEBT", "OPENING_BALANCE", "ADJUSTMENT", "HISTORICAL"] as const; // HISTORICAL: tarixiy tiklash (legacy real to'lov uchun inson qarori bilan)
 export type ChargeKind = (typeof CHARGE_KINDS)[number];
 
 export const CHARGE_STATUSES = ["OPEN", "PARTIALLY_PAID", "PAID", "WAIVED", "CANCELLED"] as const;
@@ -77,7 +77,7 @@ export type AllocationSource = (typeof ALLOCATION_SOURCES)[number];
 
 // ─── Payment (V2 qo'shimchalari) ───
 /** Eski Payment qatorlarining V2 dagi roli (Payment.legacyRole) */
-export const PAYMENT_LEGACY_ROLES = ["DEBT", "REFUND"] as const;
+export const PAYMENT_LEGACY_ROLES = ["DEBT", "REFUND", "HISTORICAL"] as const;
 /** V2 qo'shgan status: correction bilan almashtirilgan to'lov */
 export const PAYMENT_STATUS_REVERSED = "REVERSED";
 
@@ -138,7 +138,7 @@ export type EarningType = (typeof EARNING_TYPES)[number];
 export const EARNING_STATUSES = ["POSTED", "NEEDS_REVIEW", "REJECTED"] as const;
 export type EarningStatus = (typeof EARNING_STATUSES)[number];
 
-export const EARNING_REVIEW_REASONS = ["NO_LESSONS_FOUND", "ASSISTANT_NO_RULE", "RATE_SUM_EXCEEDED", "LEGACY_INFERRED", "AMBIGUOUS_ASSIGNMENT", "PRE_CUTOVER_PAYMENT", "LEGACY_SERVICE_MONTH", "NO_RULE"] as const;
+export const EARNING_REVIEW_REASONS = ["NO_LESSONS_FOUND", "ASSISTANT_NO_RULE", "RATE_SUM_EXCEEDED", "LEGACY_INFERRED", "AMBIGUOUS_ASSIGNMENT", "PRE_CUTOVER_PAYMENT", "LEGACY_SERVICE_MONTH", "NO_RULE", "HISTORICAL_RECONSTRUCTION"] as const;
 export type EarningReviewReason = (typeof EARNING_REVIEW_REASONS)[number];
 
 export const SALARY_PERIOD_STATUSES = ["OPEN", "CALCULATED", "APPROVED", "PARTIALLY_PAID", "PAID", "CLOSED"] as const;

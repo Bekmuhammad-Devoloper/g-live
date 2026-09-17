@@ -6,7 +6,7 @@ import { createDiscount } from "@/lib/finance/billing/discounts";
 import { DEFAULT_FEE_SETTING_KEY, branchDefaultFeeKey, resolveFee } from "@/lib/finance/billing/fees";
 import { acceptPayment } from "@/lib/finance/payments/accept";
 import { monthStart, type YearMonth } from "@/lib/finance/period";
-import { settleLegacyCredit } from "@/lib/finance/ops/backfill";
+import { legacyPreservationInvariant, preserveLegacyPayments } from "@/lib/finance/legacy/preserve";
 import { financeReadiness } from "@/lib/finance/readiness";
 import { assignTeacher } from "@/lib/finance/salary/assignments";
 import { createSalaryRule } from "@/lib/finance/salary/rules";
@@ -113,7 +113,7 @@ describe("monthly fee source of truth + readiness", () => {
     expect(r3.issues.find((i) => i.code === "INVALID_RULES")).toMatchObject({ severity: "BLOCKER", count: 1 });
   });
 
-  it("legacy kredit: cutover'dan oldingi taqsimlanmagan to'lov → readiness BLOCKER; settle-legacy-credit (qaror) → SETTLED, kredit emas, ledger qoladi", async () => {
+  it("legacy real to'lov: cutover'dan oldingi taqsimlanmagan to'lov → readiness BLOCKER (soxta kredit); preserve-legacy → HISTORICAL + NEEDS_REVIEW, kredit emas, ledger 1 marta, summa o'zgarmaydi", async () => {
     const p = db.prisma;
     await p.setting.update({ where: { key: "finance.v2.cutoverAt" }, data: { value: "2026-11-01T00:00:00+05:00" } }); // cutover noyabr → oktabr to'lovi legacy
     try {
@@ -122,16 +122,26 @@ describe("monthly fee source of truth + readiness", () => {
       expect(r.balance.credit).toBe(250_000);
       const before = await financeReadiness(p, { now: T("2026-11-05T05:00:00Z") });
       expect(before.issues.find((i) => i.code === "LEGACY_CREDIT")).toMatchObject({ severity: "BLOCKER", count: 1 });
-      const dry = await settleLegacyCredit(p, { dryRun: true });
-      expect(dry).toMatchObject({ candidates: 1, amount: 250_000, settled: 0 });
-      expect((await p.payment.findUniqueOrThrow({ where: { id: r.payment.id } })).legacyRole).toBeNull();
-      const real = await settleLegacyCredit(p, { actorId: ids.director });
-      expect(real.settled).toBe(1);
-      expect((await p.payment.findUniqueOrThrow({ where: { id: r.payment.id } })).legacyRole).toBe("SETTLED");
-      expect(await p.financialTransaction.count({ where: { referenceType: "Payment", referenceId: r.payment.id } })).toBe(1); // ledger IN qoladi
-      const after = await financeReadiness(p, { now: T("2026-11-05T05:00:00Z") });
-      expect(after.issues.find((i) => i.code === "LEGACY_CREDIT")).toBeUndefined();
-      expect(await p.auditLog.count({ where: { entityType: "Payment", entityId: r.payment.id, action: "UPDATE" } })).toBe(1);
+      const dry = await preserveLegacyPayments(p, { dryRun: true });
+      expect(dry).toMatchObject({ candidates: 1, legacyTotal: 250_000, preservedTotal: 250_000, markedHistorical: 1, needsReview: 1, lostAmount: 0, duplicateLedger: 0 });
+      expect((await p.payment.findUniqueOrThrow({ where: { id: r.payment.id } })).legacyRole).toBeNull(); // dry-run yozmadi
+      const real = await preserveLegacyPayments(p, { actorId: ids.director });
+      expect(real).toMatchObject({ markedHistorical: 1, reviewsCreated: 1, needsReview: 1, needsReviewAmount: 250_000 });
+      const pay = await p.payment.findUniqueOrThrow({ where: { id: r.payment.id } });
+      expect(pay).toMatchObject({ legacyRole: "HISTORICAL", amount: 250_000, status: "PAID" }); // summa/holat o'zgarmadi
+      expect(await p.financialTransaction.count({ where: { referenceType: "Payment", referenceId: r.payment.id } })).toBe(1); // ledger IN qoladi, bitta
+      const review = await p.legacyPaymentReview.findUniqueOrThrow({ where: { paymentId: r.payment.id } });
+      expect(review).toMatchObject({ status: "NEEDS_REVIEW", classification: "UNATTRIBUTABLE", amount: 250_000 });
+      expect((await financeReadiness(p, { now: T("2026-11-05T05:00:00Z") })).issues.find((i) => i.code === "LEGACY_CREDIT")).toBeUndefined();
+      // Kredit emas: o'quvchi balansida kredit 0
+      const { studentBalance } = await import("@/lib/finance/billing/balance");
+      expect((await studentBalance(p, s2.id)).credit).toBe(0);
+      // Invariant + idempotent ikkinchi run
+      const inv = await legacyPreservationInvariant(p);
+      expect(inv).toMatchObject({ legacyCount: 1, legacyTotal: 250_000, preservedTotal: 250_000, ledgerInCount: 1, ledgerInTotal: 250_000, lostAmount: 0, duplicateLedger: 0, fakeCreditCount: 0, ok: true });
+      const again = await preserveLegacyPayments(p, { actorId: ids.director });
+      expect(again).toMatchObject({ markedHistorical: 0, reviewsCreated: 0, reviewsExisting: 1, lostAmount: 0 });
+      expect(await p.auditLog.count({ where: { entityType: "LegacyPaymentReview" } })).toBe(1);
     } finally {
       await p.setting.update({ where: { key: "finance.v2.cutoverAt" }, data: { value: "2026-08-01T00:00:00+05:00" } });
     }

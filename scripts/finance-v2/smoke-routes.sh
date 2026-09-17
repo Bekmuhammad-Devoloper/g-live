@@ -18,13 +18,17 @@ AID=$(node -e 'console.log(JSON.parse(require("fs").readFileSync(process.argv[1]
 SID=$(node -e 'console.log(JSON.parse(require("fs").readFileSync(process.argv[1],"utf8")).studentId)' "$DIR/out.json")
 fail=0
 # DIQQAT: zsh'da `path` o'zgaruvchisi PATH'ni buzadi — `route` ishlatiladi
-for route in /finance /finance/v2 /finance/v2/payments /finance/v2/debtors /finance/v2/balances /finance/v2/salary "/finance/v2/salary/$PID" /finance/v2/salary/settings /finance/v2/accounts "/finance/v2/accounts/$AID" /finance/v2/expenses /finance/v2/refunds "/finance/v2/reports?tab=collections" "/finance/v2/reports?tab=revenue" "/finance/v2/reports?tab=expenses" "/finance/v2/reports?tab=debt" "/finance/v2/reports?tab=balances" "/finance/v2/reports?tab=salary" "/finance/v2/reports?tab=cashflow" "/finance/v2/reports?tab=pnl" /finance/v2/settings /finance/v2/readiness "/finance/v2/students/$SID" "/finance/v2/payments?q=Ali&page=1" "/finance/v2/balances?q=x"; do
+for route in /finance /finance/v2 /finance/v2/payments /finance/v2/debtors /finance/v2/balances /finance/v2/salary "/finance/v2/salary/$PID" /finance/v2/salary/settings /finance/v2/accounts "/finance/v2/accounts/$AID" /finance/v2/expenses /finance/v2/refunds "/finance/v2/reports?tab=collections" "/finance/v2/reports?tab=revenue" "/finance/v2/reports?tab=expenses" "/finance/v2/reports?tab=debt" "/finance/v2/reports?tab=balances" "/finance/v2/reports?tab=salary" "/finance/v2/reports?tab=cashflow" "/finance/v2/reports?tab=pnl" /finance/v2/settings /finance/v2/readiness /finance/v2/historical "/finance/v2/historical?all=1" "/finance/v2/students/$SID" "/finance/v2/payments?q=Ali&page=1" "/finance/v2/balances?q=x"; do
   code=$(curl -s -o "$DIR/page.html" -w "%{http_code}" -H "Cookie: gl_session=$JWT" "http://127.0.0.1:$PORT$route")
   err=$(grep -c "Application error\|Internal Server Error" "$DIR/page.html" || true)
   printf "%-45s %s err=%s\n" "$route" "$code" "$err"
   [ "$code" = "200" ] && [ "$err" = "0" ] || fail=1
+  if [ "$route" = "/finance/v2/historical" ]; then
+    seen=$(grep -c "Tarixiy O&#x27;quvchi\|Tarixiy O'quvchi" "$DIR/page.html" || true)
+    printf "%-45s tarixiy to'lov qatori ko'rindi=%s\n" "  ↳ historical row" "$seen"; [ "$seen" != "0" ] || fail=1
+  fi
 done
-for route in /finance/v2/payments /finance/v2/accounts /finance/v2/settings; do
+for route in /finance/v2/payments /finance/v2/accounts /finance/v2/settings /finance/v2/historical; do
   code=$(curl -s -o "$DIR/page.html" -w "%{http_code}" -H "Cookie: gl_session=$TJWT" "http://127.0.0.1:$PORT$route")
   forb=$(grep -c "ruxsatingiz yo'q\|Kirish taqiqlangan" "$DIR/page.html" || true)
   printf "TEACHER %-37s %s forbidden=%s\n" "$route" "$code" "$forb"

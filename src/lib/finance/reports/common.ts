@@ -1,6 +1,8 @@
 // Finance V2 hisobotlari — umumiy turlar va filtr.
 // Barcha hisobotlar FAQAT V2 ga kiritilgan faktlarga tayanadi:
-//   to'lov: Payment{status PAID, legacyRole null, postedAt ≠ null}, sana = receivedAt
+//   to'lov (kassa/yig'im): Payment{status PAID, legacyRole null|HISTORICAL, postedAt ≠ null}, sana = receivedAt
+//     — HISTORICAL = cutover'dan oldingi real to'lov: kassaga BIR marta kirgan, lekin V2 krediti EMAS
+//   kredit: faqat legacyRole null (V2_PAYMENT_WHERE)
 //   ledger: FinancialTransaction (occurredAt)
 //   qarz/kredit: charge/allocation (balance.ts)
 //   maosh: TeacherEarning POSTED, SalaryPeriod, SalaryPayout
@@ -19,10 +21,13 @@ export interface ReportRange {
 
 export const monthRange = (ym: YearMonth, branchId?: string | null): ReportRange => ({ from: monthStart(ym), to: monthEnd(ym), branchId });
 
+/** Kredit/balansga ta'sir qiluvchi V2 to'lovlar (tarixiy HISTORICAL emas) */
 export const V2_PAYMENT_WHERE: Prisma.PaymentWhereInput = { status: "PAID", legacyRole: null, postedAt: { not: null } };
+/** Kassaga kirgan real pul (yig'im hisobotlari): V2 + tarixiy (HISTORICAL) — har biri bir marta */
+export const V2_RECEIPT_WHERE: Prisma.PaymentWhereInput = { status: "PAID", postedAt: { not: null }, OR: [{ legacyRole: null }, { legacyRole: "HISTORICAL" }] };
 
 export function paymentRangeWhere(r: ReportRange): Prisma.PaymentWhereInput {
-  return { ...V2_PAYMENT_WHERE, receivedAt: { gte: r.from, lt: r.to }, ...(r.branchId ? { branchId: r.branchId } : {}) };
+  return { ...V2_RECEIPT_WHERE, receivedAt: { gte: r.from, lt: r.to }, ...(r.branchId ? { branchId: r.branchId } : {}) };
 }
 
 export function ledgerRangeWhere(r: ReportRange): Prisma.FinancialTransactionWhereInput {

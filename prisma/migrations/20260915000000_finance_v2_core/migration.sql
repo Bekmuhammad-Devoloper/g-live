@@ -155,6 +155,29 @@ CREATE TABLE "PaymentAllocation" (
 );
 
 -- CreateTable
+CREATE TABLE "LegacyPaymentReview" (
+    "id" TEXT NOT NULL PRIMARY KEY,
+    "paymentId" TEXT NOT NULL,
+    "studentId" TEXT NOT NULL,
+    "amount" INTEGER NOT NULL,
+    "receivedAt" DATETIME NOT NULL,
+    "classification" TEXT NOT NULL,
+    "confidence" TEXT NOT NULL,
+    "status" TEXT NOT NULL DEFAULT 'NEEDS_REVIEW',
+    "resolution" TEXT,
+    "evidence" TEXT NOT NULL,
+    "reasons" TEXT NOT NULL,
+    "suggestedMonth" TEXT,
+    "reason" TEXT,
+    "resolvedById" TEXT,
+    "resolvedAt" DATETIME,
+    "createdAt" DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    "updatedAt" DATETIME NOT NULL,
+    CONSTRAINT "LegacyPaymentReview_paymentId_fkey" FOREIGN KEY ("paymentId") REFERENCES "Payment" ("id") ON DELETE RESTRICT ON UPDATE CASCADE,
+    CONSTRAINT "LegacyPaymentReview_resolvedById_fkey" FOREIGN KEY ("resolvedById") REFERENCES "User" ("id") ON DELETE SET NULL ON UPDATE CASCADE
+);
+
+-- CreateTable
 CREATE TABLE "Refund" (
     "id" TEXT NOT NULL PRIMARY KEY,
     "originalPaymentId" TEXT,
@@ -566,6 +589,15 @@ CREATE INDEX "PaymentAllocation_chargeId_idx" ON "PaymentAllocation"("chargeId")
 
 -- CreateIndex
 CREATE INDEX "PaymentAllocation_refundId_idx" ON "PaymentAllocation"("refundId");
+
+-- CreateIndex
+CREATE UNIQUE INDEX "LegacyPaymentReview_paymentId_key" ON "LegacyPaymentReview"("paymentId");
+
+-- CreateIndex
+CREATE INDEX "LegacyPaymentReview_status_idx" ON "LegacyPaymentReview"("status");
+
+-- CreateIndex
+CREATE INDEX "LegacyPaymentReview_studentId_idx" ON "LegacyPaymentReview"("studentId");
 
 -- CreateIndex
 CREATE UNIQUE INDEX "Refund_reversalOfId_key" ON "Refund"("reversalOfId");

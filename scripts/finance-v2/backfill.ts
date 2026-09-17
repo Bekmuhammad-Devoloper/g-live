@@ -1,6 +1,7 @@
 // Legacy → V2 backfill. Idempotent, bosqichma-bosqich.
-//   npx tsx scripts/finance-v2/backfill.ts --stage billing|payments|expenses|salary|verify|settle-legacy-credit [--dry-run] [--db /abs/dev.db] [--upTo 2026-10] [--allow-unpriced]
-import { backfillBilling, backfillExpenses, backfillPayments, backfillSalary, settleLegacyCredit, verifyDebt } from "@/lib/finance/ops/backfill";
+//   npx tsx scripts/finance-v2/backfill.ts --stage billing|payments|preserve-legacy|verify|salary|expenses|legacy-invariant [--dry-run] [--db /abs/dev.db] [--upTo 2026-10] [--allow-unpriced]
+import { backfillBilling, backfillExpenses, backfillPayments, backfillSalary, verifyDebt } from "@/lib/finance/ops/backfill";
+import { legacyPreservationInvariant, preserveLegacyPayments } from "@/lib/finance/legacy/preserve";
 import { openSqlite } from "@/lib/finance/ops/sqlite";
 import { parseYearMonthKey } from "@/lib/finance/period";
 import { fail, parseArgs, printJson, resolveDbPath, stubServerOnly } from "./_cli";
@@ -36,11 +37,22 @@ async function main() {
       console.log(dryRun ? "✓ dry-run (yozilmadi)" : "✓ salary backfill tugadi");
       return;
     }
-    if (stage === "settle-legacy-credit") {
-      // QAROR bosqichi: cutover'dan oldingi to'liq taqsimlanmagan to'lovlar V2 krediti EMAS deb belgilanadi (legacyRole=SETTLED)
-      const r = await settleLegacyCredit(client, { dryRun });
-      printJson("backfill:settle-legacy-credit", r);
-      console.log(dryRun ? `✓ dry-run: ${r.candidates} ta to'lov, ${r.amount} so'm belgilanardi` : `✓ ${r.settled} ta legacy to'lov SETTLED deb belgilandi`);
+    if (stage === "preserve-legacy") {
+      // Legacy real to'lovlarni SAQLASH: klassifikatsiya + dalil dossyesi + HISTORICAL belgisi (kredit emas) + ko'rib chiqish yozuvi.
+      // Hech qanday summa/sana o'zgarmaydi, hech narsa o'chirilmaydi, earning taxmin qilinmaydi.
+      const r = await preserveLegacyPayments(client, { dryRun, actorId: typeof args.actor === "string" ? args.actor : null });
+      printJson("backfill:preserve-legacy", r);
+      const inv = await legacyPreservationInvariant(client);
+      printJson("legacy-invariant", inv);
+      if (!dryRun && !inv.ok) fail(`LEGACY PRESERVATION INVARIANT BUZILGAN: lost=${inv.lostAmount} dup=${inv.duplicateLedger} fakeCredit=${inv.fakeCreditCount} unposted=${inv.unposted}`);
+      console.log(dryRun ? `✓ dry-run: ${r.candidates} ta legacy to'lov (${r.legacyTotal} so'm) — ${r.needsReview} ta ko'rib chiqiladi` : `✓ saqlandi: ${r.candidates} ta legacy to'lov, ${r.legacyTotal} = ${r.preservedTotal} so'm; HISTORICAL +${r.markedHistorical}; ko'rib chiqish ${r.needsReview} (${r.needsReviewAmount} so'm); lost=${inv.lostAmount} dup=${inv.duplicateLedger}`);
+      return;
+    }
+    if (stage === "legacy-invariant") {
+      const inv = await legacyPreservationInvariant(client);
+      printJson("legacy-invariant", inv);
+      if (!inv.ok) fail("LEGACY PRESERVATION INVARIANT BUZILGAN");
+      console.log(`✓ invariant: ${inv.legacyCount} to'lov, ${inv.legacyTotal} = ${inv.preservedTotal} so'm; ledger IN ${inv.ledgerInCount} (${inv.ledgerInTotal}); lost 0; dup 0; soxta kredit 0`);
       return;
     }
     if (stage === "verify") {

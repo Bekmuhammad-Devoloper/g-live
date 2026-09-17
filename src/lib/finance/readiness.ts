@@ -9,7 +9,7 @@ import { accountTypeForMethod } from "./accounts/accounts";
 import { PAYMENT_METHOD_TO_ACCOUNT_TYPE } from "./constants";
 import { paymentAvailability } from "./billing/balance";
 import { resolveFee, resolveListFee } from "./billing/fees";
-import { cutoverAtFrom } from "./cutover";
+import { legacyPreservationInvariant } from "./legacy/preserve";
 import type { FinanceDb } from "./db";
 import { isTashkentMonthStart, tashkentYearMonth, yearMonthKey, type YearMonth } from "./period";
 import { isRuleUsable, resolveRule } from "./salary/rules";
@@ -28,7 +28,7 @@ export interface ReadinessIssue {
   code:
     | "UNPRICED_STUDENTS" | "UNPRICED_GROUPS" | "GROUP_NO_MAIN_TEACHER" | "TEACHER_NO_RULE" | "INVALID_RULES"
     | "UNMAPPED_METHODS" | "INVALID_SETTINGS" | "MIGRATION_NOT_APPLIED" | "LEGACY_UNPOSTED" | "NO_ACTIVE_DIRECTOR"
-    | "NEEDS_REVIEW" | "NO_GLOBAL_RULE" | "LEGACY_CREDIT";
+    | "NEEDS_REVIEW" | "NO_GLOBAL_RULE" | "LEGACY_CREDIT" | "LEGACY_PRESERVATION" | "LEGACY_HISTORICAL_REVIEW";
   severity: ReadinessSeverity;
   /** qisqa sabab (UI lug'ati shu kod bo'yicha) */
   count: number;
@@ -161,13 +161,25 @@ export async function financeReadiness(db: FinanceDb, opts: { now?: Date; month?
   if (unpostedExpenses > 0) legacyItems.push({ id: "expenses", label: `${unpostedExpenses} ta xarajat V2'ga kiritilmagan (backfill expenses)` });
   push("LEGACY_UNPOSTED", "BLOCKER", legacyItems, "Backfill bajarilmaguncha V2 balanslari legacy pulni ko'rmaydi");
 
-  // 8b. Cutover'dan oldingi taqsimlanmagan to'lovlar (legacy "kredit") — qaror kerak: charge (narx + a'zolik boshlanishi) yoki SETTLED
+  // 8b. Legacy real to'lovlar (cutover'dan oldingi): saqlash invarianti va ko'rib chiqish holati
   if (hasCharge) {
-    const cutoverAt = await cutoverAtFrom(db);
-    const legacyPays = await db.payment.findMany({ where: { status: "PAID", legacyRole: null, postedAt: { not: null }, receivedAt: { lt: cutoverAt } }, select: { id: true, amount: true, studentId: true, student: { select: { fullName: true } } } });
-    const avail = await paymentAvailability(db, legacyPays.map((p) => p.id));
-    const items = legacyPays.filter((p) => (avail.get(p.id)?.unallocated ?? 0) > 0).map((p) => ({ id: p.id, label: p.student.fullName, href: `/finance/v2/students/${p.studentId}`, extra: `${(avail.get(p.id)?.unallocated ?? 0).toLocaleString("ru-RU")} so'm taqsimlanmagan` }));
-    push("LEGACY_CREDIT", "BLOCKER", items, `Cutover'dan oldingi ${items.length} ta to'lov hech qaysi hisobga taqsimlanmagan — bu V2 krediti EMAS. Qaror: (a) o'tgan oy hisoblari (narx + a'zolik boshlanishi) yoki (b) backfill --stage settle-legacy-credit (SETTLED)`);
+    const inv = await legacyPreservationInvariant(db);
+    const bad: ReadinessItem[] = [];
+    if (inv.lostAmount > 0) bad.push({ id: "lost", label: `Yo'qolgan summa: ${inv.lostAmount.toLocaleString("ru-RU")} so'm (to'lov ↔ ko'rib chiqish/ledger mos emas)` });
+    if (inv.duplicateLedger > 0) bad.push({ id: "dup", label: `Ikki marta hisoblangan ledger yozuvlari: ${inv.duplicateLedger}` });
+    if (inv.unposted > 0) bad.push({ id: "unposted", label: `${inv.unposted} ta legacy to'lov hali ledger'ga yozilmagan (backfill payments)` });
+    if (inv.ledgerInCount !== inv.legacyCount || inv.ledgerInTotal !== inv.legacyTotal) bad.push({ id: "ledger", label: `Ledger IN ${inv.ledgerInCount}/${inv.legacyCount} (${inv.ledgerInTotal.toLocaleString("ru-RU")} / ${inv.legacyTotal.toLocaleString("ru-RU")} so'm)` });
+    push("LEGACY_PRESERVATION", "BLOCKER", bad, `Legacy real to'lovlar: ${inv.legacyCount} ta, ${inv.legacyTotal.toLocaleString("ru-RU")} so'm — bir so'm ham yo'qolmasligi va ikki marta hisoblanmasligi shart`);
+    if (inv.fakeCreditCount > 0) {
+      const legacyPays = await db.payment.findMany({ where: { status: "PAID", legacyRole: null, postedAt: { not: null }, receivedAt: { lt: new Date(inv.cutoverAt) } }, select: { id: true, studentId: true, student: { select: { fullName: true } } } });
+      const avail = await paymentAvailability(db, legacyPays.map((p) => p.id));
+      const items = legacyPays.filter((p) => (avail.get(p.id)?.unallocated ?? 0) > 0).map((p) => ({ id: p.id, label: p.student.fullName, href: `/finance/v2/students/${p.studentId}`, extra: `${(avail.get(p.id)?.unallocated ?? 0).toLocaleString("ru-RU")} so'm V2 krediti sifatida turibdi` }));
+      push("LEGACY_CREDIT", "BLOCKER", items, "Cutover'dan oldingi real to'lov taqsimlanmagan holda V2 KREDITI bo'lib turibdi — backfill preserve-legacy bosqichi bajarilmagan (HISTORICAL + ko'rib chiqish) yoki avans qarori dalilsiz");
+    }
+    if (inv.historical > 0 && inv.reviews.needsReview > 0) {
+      const pending = await db.legacyPaymentReview.findMany({ where: { status: "NEEDS_REVIEW" }, include: { payment: { select: { studentId: true, student: { select: { fullName: true } } } } }, take: MAX_ITEMS });
+      push("LEGACY_HISTORICAL_REVIEW", "WARNING", pending.map((r) => ({ id: r.paymentId, label: r.payment.student.fullName, href: "/finance/v2/historical", extra: `${r.amount.toLocaleString("ru-RU")} so'm · ${r.classification} · ${new Date(r.receivedAt).toISOString().slice(0, 10)}` })), `Tarixiy real to'lovlar ko'rib chiqishni kutmoqda (${inv.historicalUnallocated.toLocaleString("ru-RU")} so'm taqsimlanmagan) — summalari saqlangan, kredit emas, o'qituvchi ulushi yaratilmagan`);
+    }
   }
 
   // 9. Faol DIRECTOR

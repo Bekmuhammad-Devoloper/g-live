@@ -9,6 +9,8 @@ import { syncGroupTeacherAssignment } from "@/lib/finance/salary/assignments";
 import { monthStart } from "@/lib/finance/period";
 import { createExpense } from "@/lib/finance/expenses/expenses";
 import { recalculateSalaryPeriod } from "@/lib/finance/salary/periods";
+import { backfillPayments } from "@/lib/finance/ops/backfill";
+import { preserveLegacyPayments } from "@/lib/finance/legacy/preserve";
 
 const p = new PrismaClient({ datasourceUrl: `file:${process.argv[2]}` });
 async function main() {
@@ -26,6 +28,12 @@ async function main() {
   const actor = { userId: d.id, role: "DIRECTOR", branchId: null };
   await acceptPayment(p, { studentId: s.id, amount: 1_500_000, method: "CASH", receivedAt: new Date(), purpose: "Kurs", idempotencyKey: "smoke-pay-0001" }, actor);
   await createExpense(p, { name: "Ijara", amount: 300_000, date: new Date(), method: "CASH", idempotencyKey: "smoke-exp-0001" }, actor);
+  // Legacy (cutover'dan oldingi) real to'lov — guruhsiz o'quvchi → backfill payments + preserve-legacy → HISTORICAL + NEEDS_REVIEW (UI: /finance/v2/historical)
+  const legacyStudent = await p.student.create({ data: { fullName: "Tarixiy O'quvchi", branchId: branch.id, eduStatus: "LEFT", createdAt: new Date("2026-06-01T05:00:00Z") } });
+  await p.payment.create({ data: { studentId: legacyStudent.id, amount: 450_000, method: "CASH", status: "PAID", isManual: true, purpose: "Iyun oyi", createdAt: new Date("2026-06-10T05:00:00Z") } });
+  const cutoverAt = new Date("2026-07-31T19:00:00Z");
+  await backfillPayments(p, { cutoverAt, now: new Date(), actorId: d.id });
+  await preserveLegacyPayments(p, { cutoverAt, actorId: d.id });
   const now = new Date();
   const ym = { year: now.getFullYear(), month: now.getMonth() + 1 };
   await recalculateSalaryPeriod(p, t.id, ym, { userId: d.id });

@@ -100,3 +100,31 @@ export async function applyStudentCredit(db: FinanceDb, studentId: string, o: { 
   }
   return out;
 }
+
+/**
+ * Aniq charge'ga taqsimot (tarixiy tiklash / qo'lda): summa to'lovning taqsimlanmagan qismidan va charge qoldig'idan
+ * oshmaydi; tranzaksiya ichida qayta tekshiriladi. Earning hook'i chaqirilmaydi (tarixiy o'qituvchi konteksti alohida,
+ * aniq qaror bilan).
+ */
+export async function allocateToCharge(db: FinanceDb, o: { paymentId: string; chargeId: string; amount: number; source: "MANUAL" | "BACKFILL"; actorId?: string | null; allocatedAt?: Date }): Promise<PaymentAllocation> {
+  assertMoney(o.amount, "taqsimot summasi");
+  if (o.amount <= 0) throw new FinanceError("validation", "Taqsimot summasi musbat bo'lishi kerak");
+  const avail = (await paymentAvailability(db, [o.paymentId])).get(o.paymentId);
+  if (!avail) throw new FinanceError("not_found", "To'lov topilmadi");
+  if (o.amount > avail.unallocated) throw new FinanceError("conflict", "To'lovning taqsimlanmagan qismidan ko'p", { unallocated: avail.unallocated, requested: o.amount });
+  const charge = await db.studentCharge.findUnique({ where: { id: o.chargeId } });
+  if (!charge) throw new FinanceError("not_found", "Charge topilmadi");
+  if (!OPEN_CHARGE_STATUSES.includes(charge.status as (typeof OPEN_CHARGE_STATUSES)[number])) throw new FinanceError("state", `Charge ochiq emas (${charge.status})`);
+  const payment = await db.payment.findUniqueOrThrow({ where: { id: o.paymentId }, select: { studentId: true } });
+  if (payment.studentId !== charge.studentId) throw new FinanceError("validation", "To'lov va charge boshqa o'quvchilarga tegishli");
+  const remaining = remainingOf(charge.finalAmount, (await chargeAllocationSums(db, [charge.id])).get(charge.id));
+  if (o.amount > remaining) throw new FinanceError("conflict", "Charge qoldig'idan ko'p", { remaining, requested: o.amount });
+  const seq = await db.paymentAllocation.count({ where: { paymentId: o.paymentId, chargeId: charge.id } });
+  const row = await db.paymentAllocation.create({
+    data: { paymentId: o.paymentId, chargeId: charge.id, amount: o.amount, kind: "ALLOCATION", source: o.source, allocatedAt: o.allocatedAt ?? new Date(), idempotencyKey: `alloc:${o.paymentId}:${charge.id}:${seq}`, createdById: o.actorId ?? null },
+  });
+  await refreshChargeStatus(db, charge.id);
+  const rem = remainingOf(charge.finalAmount, (await chargeAllocationSums(db, [charge.id])).get(charge.id));
+  if (rem < 0) throw new FinanceError("conflict", "Charge ortiqcha taqsimlandi — tranzaksiya bekor", { chargeId: charge.id, remaining: rem });
+  return row;
+}

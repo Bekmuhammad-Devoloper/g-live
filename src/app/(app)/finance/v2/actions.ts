@@ -37,6 +37,7 @@ import { assignTeacher, endAssignment } from "@/lib/finance/salary/assignments";
 import { createManualEarning, postReviewedEarning, rejectReviewedEarning } from "@/lib/finance/salary/earnings";
 import { approveSalaryPeriod, closeSalaryPeriod, createPayout, recalculateSalaryPeriod, reopenSalaryPeriod, type PayoutInput } from "@/lib/finance/salary/periods";
 import type { FinancialAccountType } from "@/lib/finance/constants";
+import { allocateHistoricalPayment, leaveLegacyUnresolved, markLegacyAsAdvance, reopenLegacyReview, resolveHistoricalTeacher } from "@/lib/finance/legacy/resolve";
 
 type Ok<T = undefined> = FinanceResult<T>;
 
@@ -515,4 +516,76 @@ export async function unlockFinancePeriodAction(ym: string, branchId: string | n
 export async function currentMonthKey(): Promise<string> {
   const ym = tashkentYearMonth(new Date());
   return `${ym.year}-${String(ym.month).padStart(2, "0")}`;
+}
+
+// ─── Tarixiy real to'lovlar (cutover'dan oldingi) — ko'rib chiqish qarorlari. Har qaror AuditLog'da (actor/before/after/reason).
+// Sabab (reason) majburiy; to'lov summasi/sanasi hech qachon o'zgarmaydi.
+async function assertReviewBranch(s: SessionUser, paymentId: string): Promise<void> {
+  const r = await prisma.legacyPaymentReview.findUnique({ where: { paymentId }, select: { studentId: true } });
+  if (!r) throw new FinanceError("not_found", "Ko'rib chiqish yozuvi topilmadi");
+  await assertStudentBranch(s, r.studentId);
+}
+const revalidateHistorical = () => { revalidateAll(); revalidatePath("/finance/v2/historical"); revalidatePath("/finance/v2/readiness"); };
+
+/** Tarixiy hisobga bog'lash: mavjud ochiq charge YOKI yangi HISTORICAL charge (xizmat oyi + summa + guruh ixtiyoriy) */
+export async function allocateHistoricalAction(input: { paymentId: string; amount: number; chargeId?: string | null; newCharge?: { ym: string; amount: number; groupId?: string | null; note?: string | null } | null; reason: string }): Promise<Ok<{ chargeId: string; resolved: boolean }>> {
+  try {
+    const s = await guard();
+    requireFinancePermission(s, "PAYMENT_CORRECT");
+    await assertReviewBranch(s, input.paymentId);
+    const r = await withFinanceTx(prisma, (tx) => allocateHistoricalPayment(tx, {
+      paymentId: input.paymentId, amount: Math.trunc(input.amount), chargeId: input.chargeId ?? null,
+      newCharge: input.newCharge ? { serviceMonth: parseYearMonthKey(input.newCharge.ym), amount: Math.trunc(input.newCharge.amount), groupId: input.newCharge.groupId ?? null, note: input.newCharge.note ?? null } : null,
+      reason: input.reason,
+    }, s));
+    revalidateHistorical();
+    return ok({ chargeId: r.charge.id, resolved: r.resolved });
+  } catch (e) { return toFinanceResult(e); }
+}
+
+/** Tarixiy o'qituvchi ulushi — aniq o'qituvchi + aniq foiz (o'sha davr qoidasi); NEEDS_REVIEW bo'lib yaratiladi */
+export async function resolveHistoricalTeacherAction(input: { paymentId: string; allocationId: string; teacherId: string; rateBp: number; reason: string }): Promise<Ok<{ earningId: string; amount: number }>> {
+  try {
+    const s = await guard();
+    requireFinancePermission(s, "SALARY_APPROVE");
+    await assertReviewBranch(s, input.paymentId);
+    await assertTeacher(input.teacherId);
+    const e = await withFinanceTx(prisma, (tx) => resolveHistoricalTeacher(tx, { allocationId: input.allocationId, teacherId: input.teacherId, rateBp: Math.trunc(input.rateBp), reason: input.reason }, s));
+    revalidateHistorical();
+    return ok({ earningId: e.id, amount: e.amount });
+  } catch (e) { return toFinanceResult(e); }
+}
+
+/** Avans deb tasdiqlash — FAQAT aniq dalil/qaror bilan (sabab ≥ 10 belgi); to'lov V2 kreditiga aylanadi */
+export async function markLegacyAdvanceAction(paymentId: string, reason: string): Promise<Ok> {
+  try {
+    const s = await guard();
+    requireFinancePermission(s, "PAYMENT_CORRECT");
+    await assertReviewBranch(s, paymentId);
+    await withFinanceTx(prisma, (tx) => markLegacyAsAdvance(tx, { paymentId, reason }, s));
+    revalidateHistorical();
+    return ok();
+  } catch (e) { return toFinanceResult(e); }
+}
+
+export async function leaveLegacyUnresolvedAction(paymentId: string, reason: string): Promise<Ok> {
+  try {
+    const s = await guard();
+    requireFinancePermission(s, "PAYMENT_CORRECT");
+    await assertReviewBranch(s, paymentId);
+    await withFinanceTx(prisma, (tx) => leaveLegacyUnresolved(tx, { paymentId, reason }, s));
+    revalidateHistorical();
+    return ok();
+  } catch (e) { return toFinanceResult(e); }
+}
+
+export async function reopenLegacyReviewAction(paymentId: string, reason: string): Promise<Ok> {
+  try {
+    const s = await guard();
+    requireFinancePermission(s, "PAYMENT_CORRECT");
+    await assertReviewBranch(s, paymentId);
+    await withFinanceTx(prisma, (tx) => reopenLegacyReview(tx, { paymentId, reason }, s));
+    revalidateHistorical();
+    return ok();
+  } catch (e) { return toFinanceResult(e); }
 }

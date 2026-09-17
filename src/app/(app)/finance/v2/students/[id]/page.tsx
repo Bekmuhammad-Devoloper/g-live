@@ -31,7 +31,7 @@ export default async function StudentFinancePage({ params }: { params: Promise<{
   const [balance, charges, payments, discounts, earnings, accounts] = await Promise.all([
     studentBalance(prisma, id),
     prisma.studentCharge.findMany({ where: { studentId: id }, orderBy: [{ serviceYear: "desc" }, { serviceMonth: "desc" }, { createdAt: "desc" }], include: { group: { select: { name: true } } } }),
-    prisma.payment.findMany({ where: { studentId: id, legacyRole: null, postedAt: { not: null } }, orderBy: [{ receivedAt: "desc" }], include: { financialAccount: { select: { name: true } }, refunds: { select: { amount: true, status: true } } } }),
+    prisma.payment.findMany({ where: { studentId: id, postedAt: { not: null }, OR: [{ legacyRole: null }, { legacyRole: "HISTORICAL" }] }, orderBy: [{ receivedAt: "desc" }], include: { financialAccount: { select: { name: true } }, refunds: { select: { amount: true, status: true } } } }),
     prisma.studentDiscount.findMany({ where: { studentId: id }, orderBy: { effectiveFrom: "desc" }, include: { group: { select: { name: true } } } }),
     can("SALARY_VIEW") ? prisma.teacherEarning.findMany({ where: { studentId: id }, orderBy: { createdAt: "desc" }, take: 100, include: { teacher: { select: { fullName: true } } } }) : Promise.resolve([]),
     prisma.financialAccount.findMany({ where: { isActive: true, ...(student.branchId ? { OR: [{ branchId: student.branchId }, { branchId: null }] } : {}) }, select: { id: true, name: true }, orderBy: { name: "asc" } }),
@@ -48,7 +48,7 @@ export default async function StudentFinancePage({ params }: { params: Promise<{
   }));
   const paymentRows: PaymentRow[] = payments.map((p) => {
     const a = avail.get(p.id);
-    return { id: p.id, receivedAt: p.receivedAt!.toISOString(), amount: p.amount, method: p.method, account: p.financialAccount?.name ?? null, status: p.status, docNumber: p.docNumber, allocated: (a?.allocated ?? 0) - (a?.reversed ?? 0), refunded: p.refunds.filter((r) => r.status === "DONE").reduce((s, r) => s + r.amount, 0), unallocated: a?.unallocated ?? 0 };
+    return { id: p.id, receivedAt: p.receivedAt!.toISOString(), amount: p.amount, method: p.method, account: p.financialAccount?.name ?? null, status: p.status, docNumber: p.docNumber, historical: p.legacyRole === "HISTORICAL", allocated: (a?.allocated ?? 0) - (a?.reversed ?? 0), refunded: p.refunds.filter((r) => r.status === "DONE").reduce((s, r) => s + r.amount, 0), unallocated: a?.unallocated ?? 0 };
   });
   const discountRows: DiscountRow[] = discounts.map((d) => ({ id: d.id, type: d.type, value: d.value, group: d.group?.name ?? null, from: d.effectiveFrom.toISOString(), to: d.effectiveTo?.toISOString() ?? null, isActive: d.isActive, reason: d.reason }));
   const earningRows: EarningRow[] = earnings.map((e) => ({ id: e.id, teacher: e.teacher.fullName, type: e.type, amount: e.amount, rateBp: e.rateBp, serviceMonth: e.serviceYear && e.serviceMonth ? yearMonthKey({ year: e.serviceYear, month: e.serviceMonth }) : null, earningMonth: yearMonthKey({ year: e.earningYear, month: e.earningMonth }), status: e.status, reviewReason: e.reviewReason }));

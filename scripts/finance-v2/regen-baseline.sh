@@ -13,7 +13,11 @@ mkdir -p "$W/mig/0_baseline"; cp "$W/baseline.sql" "$W/mig/0_baseline/migration.
 CORE=$(npx prisma migrate diff --from-migrations "$W/mig" --to-schema-datamodel prisma/schema.prisma --script --shadow-database-url "file:$W/shadow2.db" 2>/dev/null)
 CUR=$(grep -v '^--' prisma/migrations/20260915000000_finance_v2_core/migration.sql | sed '/^$/d')
 if [ "$(echo "$CORE" | grep -v '^--' | sed '/^$/d')" != "$CUR" ]; then
-  echo "✗ core migratsiya SQL o'zgarishi kerak bo'lardi — qo'lda ko'rib chiqing:"; diff <(echo "$CUR") <(echo "$CORE" | grep -v '^--' | sed '/^$/d') | head -40; exit 1
+  if [ "${2:-}" = "--regen-core" ]; then
+    echo "$CORE" > prisma/migrations/20260915000000_finance_v2_core/migration.sql; echo "ℹ core migratsiya qayta yaratildi (--regen-core; prod'da hali qo'llanmagan)"
+  else
+    echo "✗ core migratsiya SQL o'zgarishi kerak bo'lardi — qo'lda ko'rib chiqing (yoki --regen-core):"; diff <(echo "$CUR") <(echo "$CORE" | grep -v '^--' | sed '/^$/d') | head -40; exit 1
+  fi
 fi
 cp "$W/baseline.sql" prisma/migrations/0_baseline/migration.sql
 OUT=$(npx prisma migrate diff --from-migrations prisma/migrations --to-schema-datamodel prisma/schema.prisma --shadow-database-url "file:$W/shadow3.db" 2>/dev/null)

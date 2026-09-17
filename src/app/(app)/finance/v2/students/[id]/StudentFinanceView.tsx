@@ -3,12 +3,13 @@
 import { useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
 import { formatMoney, type Locale } from "@/lib/constants";
+import { tr } from "@/lib/tr";
 import { Badge, Card, EmptyRow, Table } from "../../../../_components/ui";
 import { fin, fmtDate } from "../../_i18n";
 import { acceptPaymentAction, adjustChargeAction, cancelChargeAction, createDiscountAction, endDiscountAction, manualDebtAction, refundAction, replaceChargeAction, setAgreedPriceAction, setMembershipStartAction } from "../../actions";
 
 export interface ChargeRow { id: string; month: string; group: string | null; kind: string; status: string; original: number; discount: number; final: number; allocated: number; remaining: number; feeSource: string | null; replacesChargeId: string | null; adjustsChargeId: string | null; cancelledAt: string | null }
-export interface PaymentRow { id: string; receivedAt: string; amount: number; method: string; account: string | null; status: string; docNumber: string | null; allocated: number; refunded: number; unallocated: number }
+export interface PaymentRow { id: string; receivedAt: string; amount: number; method: string; account: string | null; status: string; docNumber: string | null; historical: boolean; allocated: number; refunded: number; unallocated: number }
 export interface DiscountRow { id: string; type: string; value: number; group: string | null; from: string; to: string | null; isActive: boolean; reason: string }
 export interface EarningRow { id: string; teacher: string; type: string; amount: number; rateBp: number | null; serviceMonth: string | null; earningMonth: string; status: string; reviewReason: string | null }
 
@@ -111,10 +112,10 @@ export default function StudentFinanceView({ locale: L, enabled, studentId, grou
               <td className="px-3 py-2">{p.method}</td>
               <td className="px-3 py-2">{p.account ?? "—"}</td>
               <td className="px-3 py-2 text-right tabular-nums">{formatMoney(p.allocated, L)}</td>
-              <td className="px-3 py-2 text-right tabular-nums text-emerald-700">{p.unallocated ? formatMoney(p.unallocated, L) : "—"}</td>
+              <td className="px-3 py-2 text-right tabular-nums text-emerald-700">{p.historical ? <span className="text-amber-700" title={tr(L, { uz: "Tarixiy real to'lov — V2 krediti emas; taqsimlash ko'rib chiqiladi", ru: "Исторический платёж — не кредит V2; ждёт распределения", en: "Historical payment — not V2 credit; awaiting allocation", de: "Historische Zahlung — kein V2-Guthaben; Zuordnung ausstehend" })}>{p.unallocated ? `(${formatMoney(p.unallocated, L)})` : "—"}</span> : p.unallocated ? formatMoney(p.unallocated, L) : "—"}</td>
               <td className="px-3 py-2 text-right tabular-nums text-red-600">{p.refunded ? `−${formatMoney(p.refunded, L)}` : "—"}</td>
-              <td className="px-3 py-2"><Badge tone={tone(p.status)}>{p.status}</Badge></td>
-              <td className="px-3 py-2 text-right">{perms.refund && p.status === "PAID" && p.amount - p.refunded > 0 && <button type="button" className="btn-ghost px-2 py-1 text-xs" disabled={disabled} onClick={() => { const a = ask(`${fin(L, "refund")} — ${fin(L, "amount")} (max ${p.amount - p.refunded})`, String(p.amount - p.refunded)); if (!a) return; const r = ask(fin(L, "reason")); if (r && r.length >= 3) run(() => refundAction({ paymentId: p.id, amount: money(a), reason: r, refundedAt: new Date(), idempotencyKey: crypto.randomUUID() })); }}>{fin(L, "refund")}</button>}</td>
+              <td className="px-3 py-2"><Badge tone={tone(p.status)}>{p.status}</Badge> {p.historical && <a href="/finance/v2/historical" className="ml-1 rounded bg-amber-100 px-1.5 py-0.5 text-[10px] font-semibold text-amber-800">{tr(L, { uz: "TARIXIY", ru: "ИСТОРИЧ.", en: "HISTORICAL", de: "HISTORISCH" })}</a>}</td>
+              <td className="px-3 py-2 text-right">{perms.refund && !p.historical && p.status === "PAID" && p.amount - p.refunded > 0 && <button type="button" className="btn-ghost px-2 py-1 text-xs" disabled={disabled} onClick={() => { const a = ask(`${fin(L, "refund")} — ${fin(L, "amount")} (max ${p.amount - p.refunded})`, String(p.amount - p.refunded)); if (!a) return; const r = ask(fin(L, "reason")); if (r && r.length >= 3) run(() => refundAction({ paymentId: p.id, amount: money(a), reason: r, refundedAt: new Date(), idempotencyKey: crypto.randomUUID() })); }}>{fin(L, "refund")}</button>}</td>
             </tr>
           ))}
         </Table>

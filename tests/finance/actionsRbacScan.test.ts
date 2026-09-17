@@ -12,7 +12,7 @@ const ENGINE_RBAC = ["acceptPayment(", "createRefund(", "reversePayment(", "crea
 /** Moliyaviy bo'lmagan yordamchilar */
 const NON_FINANCIAL = new Set(["currentMonthKey"]);
 /** Filial cheklovi talab qilinadigan (MANAGER o'z filiali) action'lar */
-const BRANCH_SCOPED = ["acceptPaymentAction", "refundAction", "reversePaymentAction", "syncBillingAction", "manualDebtAction", "cancelChargeAction", "replaceChargeAction", "adjustChargeAction", "createDiscountAction", "endDiscountAction", "createExpenseAction", "reverseExpenseAction"];
+const BRANCH_SCOPED = ["acceptPaymentAction", "refundAction", "reversePaymentAction", "syncBillingAction", "manualDebtAction", "cancelChargeAction", "replaceChargeAction", "adjustChargeAction", "createDiscountAction", "endDiscountAction", "createExpenseAction", "reverseExpenseAction", "allocateHistoricalAction", "resolveHistoricalTeacherAction", "markLegacyAdvanceAction", "leaveLegacyUnresolvedAction", "reopenLegacyReviewAction"];
 
 describe("finance v2 server actions — RBAC static scan", () => {
   const src = readFileSync(FILE, "utf8");
@@ -40,7 +40,7 @@ describe("finance v2 server actions — RBAC static scan", () => {
     const missing = BRANCH_SCOPED.filter((name) => {
       const a = actions.find((x) => x.name === name);
       if (!a) return true;
-      const inAction = /assertBranchAccess|assertStudentBranch|assertChargeBranch|branchScope\(/.test(a.body);
+      const inAction = /assertBranchAccess|assertStudentBranch|assertChargeBranch|assertReviewBranch|branchScope\(/.test(a.body);
       const inEngine = ENGINE_RBAC.some((f) => a.body.includes(f)); // dvigatel ichida assertBranchAccess
       return !(inAction || inEngine);
     });

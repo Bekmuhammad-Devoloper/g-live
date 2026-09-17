@@ -22,6 +22,7 @@ const D = {
   assignments: { uz: "Tayinlashlar (guruh → o'qituvchi)", ru: "Назначения (группа → преподаватель)", en: "Assignments (group → teacher)", de: "Zuweisungen (Gruppe → Lehrer)" },
   end: { uz: "Tugatish", ru: "Завершить", en: "End", de: "Beenden" },
   readiness: { uz: "Tayyorlik", ru: "Готовность", en: "Readiness", de: "Bereitschaft" },
+  historical: { uz: "Tarixiy to'lovlar", ru: "Исторические платежи", en: "Historical payments", de: "Historische Zahlungen" },
   readinessReady: { uz: "TAYYOR — bloker yo'q", ru: "ГОТОВО — блокеров нет", en: "READY — no blockers", de: "BEREIT — keine Blocker" },
   readinessNotReady: { uz: "TAYYOR EMAS", ru: "НЕ ГОТОВО", en: "NOT READY", de: "NICHT BEREIT" },
   blocker: { uz: "Bloker", ru: "Блокер", en: "Blocker", de: "Blocker" },
@@ -155,6 +156,7 @@ export const V2_NAV: { href: string; key: FinKey; icon: string }[] = [
   { href: "/finance/v2/expenses", key: "expenses", icon: "trendDown" },
   { href: "/finance/v2/refunds", key: "refunds", icon: "refresh" },
   { href: "/finance/v2/reports", key: "reports", icon: "clipboard" },
+  { href: "/finance/v2/historical", key: "historical", icon: "clock" },
   { href: "/finance/v2/readiness", key: "readiness", icon: "check" },
   { href: "/finance/v2/settings", key: "settings", icon: "shieldCheck" },
 ];
@@ -172,7 +174,9 @@ export const READINESS_LABELS: Record<string, Txt> = {
   MIGRATION_NOT_APPLIED: { uz: "Migratsiya qo'llanmagan", ru: "Миграция не применена", en: "Migration not applied", de: "Migration nicht angewendet" },
   LEGACY_UNPOSTED: { uz: "Backfill bajarilmagan (legacy yozuvlar V2'da yo'q)", ru: "Backfill не выполнен", en: "Backfill not run", de: "Backfill nicht ausgeführt" },
   NO_ACTIVE_DIRECTOR: { uz: "Faol DIRECTOR yo'q", ru: "Нет активного директора", en: "No active DIRECTOR", de: "Kein aktiver DIRECTOR" },
-  LEGACY_CREDIT: { uz: "Cutover'dan oldingi taqsimlanmagan to'lovlar (legacy 'kredit') — qaror kerak", ru: "Нераспределённые платежи до cutover — нужно решение", en: "Pre-cutover unallocated payments — decision needed", de: "Nicht zugeordnete Zahlungen vor Cutover — Entscheidung nötig" },
+  LEGACY_CREDIT: { uz: "Legacy real to'lov V2 krediti bo'lib turibdi (preserve-legacy bajarilmagan)", ru: "Старый платёж числится кредитом V2 (preserve-legacy не выполнен)", en: "Legacy payment sitting as V2 credit (preserve-legacy not run)", de: "Alte Zahlung als V2-Guthaben (preserve-legacy fehlt)" },
+  LEGACY_PRESERVATION: { uz: "Legacy real to'lovlar saqlash invarianti buzilgan (yo'qolgan/ikki marta)", ru: "Нарушен инвариант сохранности старых платежей", en: "Legacy payment preservation invariant violated", de: "Invariante der Zahlungserhaltung verletzt" },
+  LEGACY_HISTORICAL_REVIEW: { uz: "Tarixiy real to'lovlar — taqsimlash/ko'rib chiqish kutilmoqda", ru: "Исторические платежи — ожидают распределения/проверки", en: "Historical payments awaiting allocation/review", de: "Historische Zahlungen — Zuordnung/Prüfung ausstehend" },
   NEEDS_REVIEW: { uz: "Ko'rib chiqilmagan ulushlar (NEEDS_REVIEW)", ru: "Начисления на проверке", en: "Earnings pending review", de: "Anteile zur Prüfung" },
 };
 

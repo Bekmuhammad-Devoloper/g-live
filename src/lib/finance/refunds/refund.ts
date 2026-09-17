@@ -97,6 +97,7 @@ export async function createRefundTx(db: FinanceDb, raw: RefundInput, actor: Pic
   }
   const payment = await db.payment.findUnique({ where: { id: input.paymentId } });
   if (!payment) throw new FinanceError("not_found", "To'lov topilmadi");
+  if (payment.legacyRole === "HISTORICAL") throw new FinanceError("state", "Tarixiy real to'lov — avval Finance V2 → Tarixiy to'lovlar bo'limida qaror qabul qilinsin (taqsimlash yoki dalil bilan avans); shundan keyingina qaytariladi");
   if (payment.status !== "PAID" || payment.legacyRole || !payment.postedAt) throw new FinanceError("state", "Faqat V2 ga kiritilgan PAID to'lov qaytariladi");
   assertBranchAccess(actor, payment.branchId);
   await assertPeriodOpen(db, payment.branchId, tashkentYearMonth(input.refundedAt));

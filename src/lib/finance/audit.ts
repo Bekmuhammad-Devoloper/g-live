@@ -23,6 +23,7 @@ export const FINANCE_AUDIT_ENTITIES = {
   periodLock: "FinancePeriodLock",
   ledger: "FinancialTransaction",
   membershipHistory: "GroupStudentHistory",
+  legacyReview: "LegacyPaymentReview",
 } as const;
 
 export interface FinanceAuditParams {

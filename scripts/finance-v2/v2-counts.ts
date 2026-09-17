@@ -38,7 +38,17 @@ async function main() {
       PaymentAllocation: await one(`select count(*) from PaymentAllocation`),
       PaymentAllocationByKind: await q(`select kind, source, count(*) n, coalesce(sum(amount),0) total from PaymentAllocation group by kind, source order by kind, source`),
       AllocationTotal: await one(`select coalesce(sum(case when kind='ALLOCATION' then amount else 0 end),0) - coalesce(sum(case when kind='REVERSAL' then amount else 0 end),0) from PaymentAllocation`),
-      StudentCreditTotal: await one(`select coalesce(sum(p.amount),0) - coalesce((select sum(case when kind='ALLOCATION' then amount else -amount end) from PaymentAllocation),0) from Payment p where p.postedAt is not null and p.status='PAID'`),
+      // Kredit: faqat legacyRole null (HISTORICAL = tarixiy real pul, kredit emas)
+      StudentCreditTotal: await one(`select coalesce(sum(p.amount),0) - coalesce((select sum(case when a.kind='ALLOCATION' then a.amount else -a.amount end) from PaymentAllocation a join Payment q on q.id=a.paymentId where q.legacyRole is null),0) from Payment p where p.postedAt is not null and p.status='PAID' and p.legacyRole is null`),
+      // Legacy real to'lovlar (HISTORICAL) — saqlanishi shart: soni/summasi, taqsimlanmagan qismi, ledger IN aynan bitta
+      PaymentHistorical: await one(`select count(*) from Payment where legacyRole='HISTORICAL'`),
+      PaymentHistoricalTotal: await one(`select coalesce(sum(amount),0) from Payment where legacyRole='HISTORICAL'`),
+      PaymentHistoricalUnallocated: await one(`select coalesce(sum(p.amount),0) - coalesce((select sum(case when a.kind='ALLOCATION' then a.amount else -a.amount end) from PaymentAllocation a join Payment q on q.id=a.paymentId where q.legacyRole='HISTORICAL'),0) from Payment p where p.legacyRole='HISTORICAL'`),
+      PaymentHistoricalLedgerIn: await one(`select count(*) from FinancialTransaction t join Payment p on p.id=t.referenceId and t.referenceType='Payment' where p.legacyRole='HISTORICAL' and t.direction='IN'`),
+      LegacyPaymentReview: (await has("LegacyPaymentReview")) ? await one(`select count(*) from LegacyPaymentReview`) : null,
+      LegacyPaymentReviewByStatus: (await has("LegacyPaymentReview")) ? await q(`select classification, status, coalesce(resolution,'-') resolution, count(*) n, coalesce(sum(amount),0) total from LegacyPaymentReview group by classification, status, resolution order by classification, status, resolution`) : null,
+      LegacyReviewAmountMismatch: (await has("LegacyPaymentReview")) ? await one(`select count(*) from LegacyPaymentReview r join Payment p on p.id=r.paymentId where r.amount <> p.amount`) : null,
+      DupLedgerPerPayment: await one(`select count(*) from (select referenceId from FinancialTransaction where referenceType='Payment' and direction='IN' and type='STUDENT_PAYMENT' group by referenceId having count(*)>1)`),
       Refund: await one(`select count(*) from Refund`), RefundTotal: await one(`select coalesce(sum(amount),0) from Refund`),
       TeacherEarning: await one(`select count(*) from TeacherEarning`),
       TeacherEarningByTypeStatus: await q(`select type, status, count(*) n, coalesce(sum(amount),0) total from TeacherEarning group by type, status order by type, status`),
@@ -55,7 +65,7 @@ async function main() {
       GroupTeacherAssignment: await one(`select count(*) from GroupTeacherAssignment`), GroupTeacherAssignmentBySource: await q(`select source, role, count(*) n from GroupTeacherAssignment group by source, role`),
       StudentStatusHistory: await one(`select count(*) from StudentStatusHistory`),
       BillingPolicy: await one(`select count(*) from BillingPolicy`), SalaryPolicy: await one(`select count(*) from SalaryPolicy`),
-      AuditLogFinance: await one(`select count(*) from AuditLog where entityType in ('Payment','PaymentAllocation','Refund','StudentCharge','StudentDiscount','BillingPolicy','SalaryPolicy','SalaryRule','GroupTeacherAssignment','TeacherEarning','SalaryPeriod','SalaryPayout','FinancialAccount','Transfer','Expense','FinancePeriodLock','FinancialTransaction')`),
+      AuditLogFinance: await one(`select count(*) from AuditLog where entityType in ('Payment','PaymentAllocation','Refund','StudentCharge','StudentDiscount','BillingPolicy','SalaryPolicy','SalaryRule','GroupTeacherAssignment','TeacherEarning','SalaryPeriod','SalaryPayout','FinancialAccount','Transfer','Expense','FinancePeriodLock','FinancialTransaction','LegacyPaymentReview')`),
       // Dublikat tekshiruvi — unique kalitlar bo'yicha (0 bo'lishi shart)
       DupChargeKeys: await one(`select count(*) from (select chargeKey from StudentCharge group by chargeKey having count(*)>1)`),
       DupAllocationKeys: await one(`select count(*) from (select idempotencyKey from PaymentAllocation group by idempotencyKey having count(*)>1)`),

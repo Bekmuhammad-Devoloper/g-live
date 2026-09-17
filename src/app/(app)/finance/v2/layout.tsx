@@ -19,6 +19,7 @@ export default async function FinanceV2Layout({ children }: { children: React.Re
     if (n.href === "/finance/v2/expenses") return !can("EXPENSE_VIEW");
     if (n.href === "/finance/v2/reports") return !can("FINANCE_REPORT_VIEW");
     if (n.href === "/finance/v2/readiness") return !can("FINANCE_PERIOD_CLOSE") && !can("SALARY_RULE_MANAGE");
+    if (n.href === "/finance/v2/historical") return !can("PAYMENT_CORRECT") && !can("SALARY_APPROVE");
     if (n.href === "/finance/v2/settings") return !can("FINANCE_PERIOD_CLOSE");
     if (n.href === "/finance/v2/refunds") return !can("PAYMENT_CANCEL");
     return !can("FINANCE_VIEW");
