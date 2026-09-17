@@ -258,9 +258,10 @@ export default function LeadsKanban({
                 <div className="rounded-xl border border-dashed border-slate-200 py-4 text-center text-[11px] text-slate-400 dark:border-white/[0.08]">
                   {tr(locale, { uz: "Xonasiz — shu yerga tashlang", ru: "Без аудитории — перетащите сюда", en: "No room — drop here", de: "Ohne Raum — hier ablegen" })}
                 </div>
-              ) : col.key === ARCHIVE_COL && items.length > 0 ? (
-                // Arxiv — bitta ustun, ichida ikki bo'lim: lidlar va o'quvchilar
-                <ArchiveColumn
+              ) : col.key === "lost" ? (
+                // "Yo'qotilgan" — yo'qotilgan lidlar + ichida ikki arxiv bo'limi
+                // (Lid arxivi / O'quvchi arxivi); bo'limlar — tashlash joyi
+                <LostColumn
                   items={items}
                   locale={locale}
                   selected={selected}
@@ -271,6 +272,8 @@ export default function LeadsKanban({
                   onDragStart={onDragStart}
                   onDragEnd={onDragEnd}
                   onDelete={onDelete}
+                  dragging={dragging}
+                  onArchive={(leadId) => { onDropToColumn(ARCHIVE_COL, leadId); setDragId(null); setOverCol(null); }}
                 />
               ) : items.length === 0 ? (
                 <div className="rounded-xl border border-dashed border-slate-200 py-8 text-center dark:border-white/[0.08]">
@@ -282,8 +285,6 @@ export default function LeadsKanban({
                       ? tr(locale, { uz: "Arizada «Onlayn» tanlagan lidlar shu yerga tushadi", ru: "Сюда попадают лиды, выбравшие «Онлайн» в анкете", en: "Leads who chose “Online” in the form land here", de: "Leads, die im Formular „Online“ gewählt haben, landen hier" })
                       : col.branch
                       ? tr(locale, { uz: "Lidni shu yerga tashlang — filialga yo'naltiriladi", ru: "Перетащите лид сюда — он будет направлен в филиал", en: "Drop a lead here to direct it to this branch", de: "Lead hierher ziehen — an diese Filiale weiterleiten" })
-                      : col.key === ARCHIVE_COL
-                      ? tr(locale, { uz: "Lidni shu yerga tashlang — ro'yxatdan olib qo'yiladi (bosqichi saqlanadi)", ru: "Перетащите лид сюда — он уйдёт из списка (этап сохранится)", en: "Drop a lead here to hide it from the board (its stage is kept)", de: "Lead hierher ziehen — er verlässt die Ansicht (Phase bleibt)" })
                       : col.customId
                         ? tr(locale, { uz: "Lidni shu yerga tashlang yoki \"+\" bilan qo'shing", ru: "Перетащите лид сюда или добавьте через «+»", en: "Drop a lead here or add one with \"+\"", de: "Lead hierher ziehen oder mit \"+\" anlegen" })
                         : tr(locale, { uz: "Lid yo'q", ru: "Нет лидов", en: "No leads", de: "Keine Leads" })}
@@ -315,11 +316,16 @@ export default function LeadsKanban({
   );
 }
 
-// ───────────────── "Arxiv" ustuni ─────────────────
+// ───────────────── "Yo'qotilgan" ustuni ─────────────────
 
-/** Arxiv ichidagi ikki bo'lim: "Lid arxivi" va "O'quvchi arxivi" (qabul qilinganlar) */
-function ArchiveColumn({
-  items, locale, selected, limit, onMore, onOpen, onOpenFull, onDragStart, onDragEnd, onDelete,
+/**
+ * Yo'qotilgan lidlar (kartalar) + pastda ikki arxiv bo'limi: "Lid arxivi" va
+ * "O'quvchi arxivi" (qabul qilingan / Student yozuvi bor). Bo'limning o'zi —
+ * tashlash joyi: istalgan ustundan lid tashlansa arxivlanadi (bosqichi saqlanadi).
+ * Qaysi bo'limda ko'rinishi lidning o'zidan aniqlanadi.
+ */
+function LostColumn({
+  items, locale, selected, limit, onMore, onOpen, onOpenFull, onDragStart, onDragEnd, onDelete, dragging, onArchive,
 }: {
   items: VLead[];
   locale: Locale;
@@ -331,52 +337,99 @@ function ArchiveColumn({
   onDragStart: (id: string, e: React.DragEvent) => void;
   onDragEnd: () => void;
   onDelete?: (id: string) => void;
+  dragging: VLead | null;
+  onArchive: (leadId: string) => void;
 }) {
-  const students = items.filter(isStudentArchive);
-  const leads = items.filter((l) => !isStudentArchive(l));
+  const [overSec, setOverSec] = useState<string | null>(null);
+  const [openSec, setOpenSec] = useState<Record<string, boolean>>({});
+  const lost = items.filter((l) => !l.archivedAt);
+  const archived = items.filter((l) => !!l.archivedAt);
   const sections: { key: string; icon: "archive" | "graduation"; title: string; items: VLead[] }[] = [
-    { key: "leads", icon: "archive", title: tr(locale, { uz: "Lid arxivi", ru: "Архив лидов", en: "Lead archive", de: "Lead-Archiv" }), items: leads },
-    { key: "students", icon: "graduation", title: tr(locale, { uz: "O'quvchi arxivi", ru: "Архив учеников", en: "Student archive", de: "Schüler-Archiv" }), items: students },
+    { key: "leads", icon: "archive", title: tr(locale, { uz: "Lid arxivi", ru: "Архив лидов", en: "Lead archive", de: "Lead-Archiv" }), items: archived.filter((l) => !isStudentArchive(l)) },
+    { key: "students", icon: "graduation", title: tr(locale, { uz: "O'quvchi arxivi", ru: "Архив учеников", en: "Student archive", de: "Schüler-Archiv" }), items: archived.filter(isStudentArchive) },
   ];
-  // Umumiy "ko'proq" chegarasi ikkala bo'limga bo'linadi (bo'limlar tartibida)
-  let budget = limit;
+  // Sudralayotgan lid arxivlanmagan bo'lsa — bo'limga tashlash mumkin
+  const canArchive = !!dragging && !dragging.archivedAt;
+
+  const card = (lead: VLead) => (
+    <LeadCard
+      key={lead.id}
+      lead={lead}
+      locale={locale}
+      selected={selected.has(lead.id)}
+      onOpen={onOpen}
+      onOpenFull={onOpenFull}
+      onDragStart={onDragStart}
+      onDragEnd={onDragEnd}
+      onDelete={onDelete}
+    />
+  );
+
   return (
     <>
+      {lost.length === 0 ? (
+        <div className="rounded-xl border border-dashed border-slate-200 py-6 text-center text-xs text-slate-400 dark:border-white/[0.08]">
+          {tr(locale, { uz: "Yo'qotilgan lid yo'q", ru: "Нет потерянных лидов", en: "No lost leads", de: "Keine verlorenen Leads" })}
+        </div>
+      ) : (
+        <>
+          {lost.slice(0, limit).map(card)}
+          {lost.length > limit && <MoreButton rest={lost.length - limit} locale={locale} onClick={onMore} />}
+        </>
+      )}
+
+      {/* Arxiv bo'limlari — yig'iladigan, tashlash joyi */}
       {sections.map((sec) => {
-        const shown = sec.items.slice(0, Math.max(0, budget));
-        budget -= shown.length;
+        const open = openSec[sec.key] ?? false;
+        const isOver = overSec === sec.key && canArchive;
         return (
-          <div key={sec.key} className="space-y-3">
-            <div className="flex items-center gap-2 rounded-lg bg-slate-100/80 px-2.5 py-1.5 text-[12px] font-semibold text-slate-600 dark:bg-white/[0.06] dark:text-slate-300">
+          <div
+            key={sec.key}
+            onDragOver={(e) => { if (!canArchive) return; e.preventDefault(); e.stopPropagation(); e.dataTransfer.dropEffect = "move"; if (overSec !== sec.key) setOverSec(sec.key); }}
+            onDragLeave={() => setOverSec((c) => (c === sec.key ? null : c))}
+            onDrop={(e) => {
+              if (!canArchive) return;
+              e.preventDefault(); e.stopPropagation();
+              const id = e.dataTransfer.getData("text/plain") || dragging?.id;
+              setOverSec(null);
+              if (id) onArchive(id);
+            }}
+            className={cn(
+              "rounded-xl border transition",
+              isOver
+                ? "border-slate-400 bg-slate-100 ring-2 ring-slate-300/60 dark:border-slate-500 dark:bg-white/[0.06]"
+                : "border-slate-200/80 bg-slate-50/60 dark:border-white/[0.08] dark:bg-white/[0.02]",
+            )}
+          >
+            <button
+              type="button"
+              onClick={() => setOpenSec((p) => ({ ...p, [sec.key]: !open }))}
+              className="flex w-full items-center gap-2 px-2.5 py-2 text-left text-[12px] font-semibold text-slate-600 dark:text-slate-300"
+            >
               <Icon name={sec.icon} className="h-3.5 w-3.5 shrink-0 text-slate-500" />
               <span className="font-hand text-[15px] leading-[1.35]">{sec.title}</span>
               <span className="ml-auto rounded-md bg-white px-1.5 text-[11px] font-bold tabular-nums text-slate-600 dark:bg-white/10 dark:text-slate-200">{sec.items.length}</span>
-            </div>
-            {sec.items.length === 0 ? (
-              <div className="rounded-xl border border-dashed border-slate-200 py-3 text-center text-[11px] text-slate-400 dark:border-white/[0.08]">
-                {sec.key === "students"
-                  ? tr(locale, { uz: "Qabul qilingan o'quvchini shu ustunga tashlang", ru: "Перетащите зачисленного ученика в эту колонку", en: "Drop an enrolled student into this column", de: "Eingeschriebenen Schüler in diese Spalte ziehen" })
-                  : tr(locale, { uz: "Lidni shu ustunga tashlang", ru: "Перетащите лид в эту колонку", en: "Drop a lead into this column", de: "Lead in diese Spalte ziehen" })}
+              <Icon name="chevronDown" className={cn("h-3.5 w-3.5 text-slate-400 transition", open && "rotate-180")} />
+            </button>
+            {isOver && (
+              <div className="px-2.5 pb-2 text-center text-[11px] font-medium text-slate-500">
+                {tr(locale, { uz: "Qo'yib yuboring — arxivlanadi", ru: "Отпустите — уйдёт в архив", en: "Release to archive", de: "Loslassen zum Archivieren" })}
               </div>
-            ) : (
-              shown.map((lead) => (
-                <LeadCard
-                  key={lead.id}
-                  lead={lead}
-                  locale={locale}
-                  selected={selected.has(lead.id)}
-                  onOpen={onOpen}
-                  onOpenFull={onOpenFull}
-                  onDragStart={onDragStart}
-                  onDragEnd={onDragEnd}
-                  onDelete={onDelete}
-                />
-              ))
+            )}
+            {open && (
+              <div className="space-y-3 px-2 pb-2">
+                {sec.items.length === 0 ? (
+                  <div className="py-2 text-center text-[11px] text-slate-400">
+                    {tr(locale, { uz: "Bo'sh — lidni shu yerga tashlang", ru: "Пусто — перетащите лид сюда", en: "Empty — drop a lead here", de: "Leer — Lead hierher ziehen" })}
+                  </div>
+                ) : (
+                  sec.items.map(card)
+                )}
+              </div>
             )}
           </div>
         );
       })}
-      {items.length > limit && <MoreButton rest={items.length - limit} locale={locale} onClick={onMore} />}
     </>
   );
 }
