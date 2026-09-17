@@ -6,7 +6,7 @@ import { cn } from "@/lib/cn";
 import { tr } from "@/lib/tr";
 import type { Locale } from "@/lib/constants";
 import { Icon } from "../../_components/Icon";
-import { ARCHIVE_COL, ONLINE_COL, columnOfLead, visibleColumns, branchColKey, slotDropKey, type BranchColumn, type BranchMode, type BranchModeCfg, type CustomColumn, type GroupColumn, type GroupInfo, type VLead } from "../_lib/leadColumns";
+import { ARCHIVE_COL, STUDENT_ARCHIVE_COL, ONLINE_COL, columnOfLead, visibleColumns, branchColKey, slotDropKey, type BranchColumn, type BranchMode, type BranchModeCfg, type CustomColumn, type GroupColumn, type GroupInfo, type VLead } from "../_lib/leadColumns";
 import LeadCard from "./LeadCard";
 import BranchSlotsEditor from "../../branches/slots/BranchSlotsEditor";
 
@@ -270,6 +270,8 @@ export default function LeadsKanban({
                       ? tr(locale, { uz: "Lidni shu yerga tashlang — filialga yo'naltiriladi", ru: "Перетащите лид сюда — он будет направлен в филиал", en: "Drop a lead here to direct it to this branch", de: "Lead hierher ziehen — an diese Filiale weiterleiten" })
                       : col.key === ARCHIVE_COL
                       ? tr(locale, { uz: "Lidni shu yerga tashlang — ro'yxatdan olib qo'yiladi (bosqichi saqlanadi)", ru: "Перетащите лид сюда — он уйдёт из списка (этап сохранится)", en: "Drop a lead here to hide it from the board (its stage is kept)", de: "Lead hierher ziehen — er verlässt die Ansicht (Phase bleibt)" })
+                      : col.key === STUDENT_ARCHIVE_COL
+                      ? tr(locale, { uz: "Qabul qilingan o'quvchini shu yerga tashlang — ro'yxatdan olib qo'yiladi", ru: "Перетащите зачисленного ученика сюда — он уйдёт из списка", en: "Drop an enrolled student here to hide it from the board", de: "Eingeschriebenen Schüler hierher ziehen — er verlässt die Ansicht" })
                       : col.customId
                         ? tr(locale, { uz: "Lidni shu yerga tashlang yoki \"+\" bilan qo'shing", ru: "Перетащите лид сюда или добавьте через «+»", en: "Drop a lead here or add one with \"+\"", de: "Lead hierher ziehen oder mit \"+\" anlegen" })
                         : tr(locale, { uz: "Lid yo'q", ru: "Нет лидов", en: "No leads", de: "Keine Leads" })}

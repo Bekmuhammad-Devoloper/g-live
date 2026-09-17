@@ -200,8 +200,19 @@ export interface BranchModeCfg { ids: Set<string>; mode: BranchMode; online: boo
 /** "Onlayn" ustuni — arizada onlayn tanlagan (studyFormat=ONLINE) yangi lidlar; filiallardan oldin turadi */
 export const ONLINE_COL = "online";
 
-/** "Arxiv" ustuni — hamma rolda, oxirida; tashlangan lid bosqichini saqlaydi, faqat ko'rinishdan chiqadi */
+/**
+ * Arxiv — ikki ustun, hamma rolda, eng oxirida. Tashlangan lid bosqichini
+ * saqlaydi, faqat ko'rinishdan chiqadi. Qaysi arxivga tushishi lidning
+ * o'zidan aniqlanadi: o'quvchiga aylangan (qabul qilingan / Student yozuvi bor)
+ * — "O'quvchi arxivi", qolganlari — "Lid arxivi".
+ */
 export const ARCHIVE_COL = "archive";
+export const STUDENT_ARCHIVE_COL = "archive_student";
+export const isArchiveCol = (key: string) => key === ARCHIVE_COL || key === STUDENT_ARCHIVE_COL;
+/** Arxivlangan lid qaysi arxiv ustunida ko'rinadi */
+export function archiveColOf(lead: { stage: string; studentId?: string | null }): string {
+  return lead.stage === "WON" || lead.studentId ? STUDENT_ARCHIVE_COL : ARCHIVE_COL;
+}
 
 /** Rejimda ko'rsatilmaydigan standart ustunlar (filtr chiplarida ham yashiriladi) */
 export function branchReplaces(mode: BranchMode): Set<string> {
@@ -216,7 +227,7 @@ export function branchReplaces(mode: BranchMode): Set<string> {
  *   4) aks holda bosqichiga mos standart ustunda.
  */
 export function columnOfLead(
-  lead: { stage: string; groupId: string | null; kanbanColumnId?: string | null; branchId?: string | null; studyFormat?: string | null; archivedAt?: string | null },
+  lead: { stage: string; groupId: string | null; kanbanColumnId?: string | null; branchId?: string | null; studyFormat?: string | null; archivedAt?: string | null; studentId?: string | null },
   pinned: Set<string>,
   custom: Set<string> = EMPTY,
   branch: BranchModeCfg | null = null,
@@ -226,7 +237,7 @@ export function columnOfLead(
     return lead.kanbanColumnId;
   }
   // Arxiv hammasidan ustun — arxivlangan lid boshqa ustunda ko'rinmaydi
-  if (lead.archivedAt) return ARCHIVE_COL;
+  if (lead.archivedAt) return archiveColOf(lead);
   if (lead.kanbanColumnId && custom.has(lead.kanbanColumnId)) return customColKey(lead.kanbanColumnId);
   const base = columnOf(lead.stage);
   if (base === "won" && lead.groupId && pinned.has(lead.groupId)) return groupColKey(lead.groupId);
@@ -294,12 +305,18 @@ export function visibleColumns(opts: {
   const groups = groupColumns.map<ViewCol>((g) => ({
     key: groupColKey(g.groupId), title: g.name, sub: g.program, color: g.color, icon: g.icon, defaultStage: "WON", groupId: g.groupId, customId: null,
   }));
-  // "Arxiv" — hamma rolda, eng oxirida: tashlangan lid bosqichini saqlaydi, ko'rinishdan chiqadi
+  // Arxiv — ikki ustun, hamma rolda, eng oxirida: lidlar va o'quvchilar alohida
   const archive: ViewCol = {
     key: ARCHIVE_COL,
-    title: tr(locale, { uz: "Arxiv", ru: "Архив", en: "Archive", de: "Archiv" }),
-    sub: tr(locale, { uz: "Ko'rinishdan olib qo'yilgan", ru: "Убраны из вида", en: "Hidden from the board", de: "Aus der Ansicht entfernt" }),
+    title: tr(locale, { uz: "Lid arxivi", ru: "Архив лидов", en: "Lead archive", de: "Lead-Archiv" }),
+    sub: tr(locale, { uz: "Ko'rinishdan olib qo'yilgan lidlar", ru: "Лиды, убранные из вида", en: "Leads hidden from the board", de: "Aus der Ansicht entfernte Leads" }),
     color: "#64748b", icon: "archive", defaultStage: "NEW", groupId: null, customId: null,
+  };
+  const studentArchive: ViewCol = {
+    key: STUDENT_ARCHIVE_COL,
+    title: tr(locale, { uz: "O'quvchi arxivi", ru: "Архив учеников", en: "Student archive", de: "Schüler-Archiv" }),
+    sub: tr(locale, { uz: "Qabul qilingan, ko'rinishdan olib qo'yilganlar", ru: "Зачисленные, убранные из вида", en: "Enrolled, hidden from the board", de: "Eingeschriebene, aus der Ansicht entfernt" }),
+    color: "#475569", icon: "graduation", defaultStage: "WON", groupId: null, customId: null,
   };
 
   // Filial rejimi: "sales" — test/taklif o'rniga filial ustunlari; "head" — hamma ustunlar
@@ -314,9 +331,9 @@ export function visibleColumns(opts: {
       sub: tr(locale, { uz: "Onlayn o'qimoqchilar", ru: "Хотят учиться онлайн", en: "Want to study online", de: "Möchten online lernen" }),
       color: "#0ea5e9", icon: "video", defaultStage: "NEW", groupId: null, customId: null,
     };
-    return [std("new"), std("work"), ...(showOnlineCol ? [online] : []), ...(branchMode === "head" ? [std("test"), std("offer")] : []), ...brs, ...custom, std("won"), ...groups, std("lost"), archive]
+    return [std("new"), std("work"), ...(showOnlineCol ? [online] : []), ...(branchMode === "head" ? [std("test"), std("offer")] : []), ...brs, ...custom, std("won"), ...groups, std("lost"), archive, studentArchive]
       .filter((c) => !hidden.has(c.key));
   }
-  return [std("new"), std("work"), std("test"), std("offer"), ...custom, std("won"), ...groups, std("lost"), archive]
+  return [std("new"), std("work"), std("test"), std("offer"), ...custom, std("won"), ...groups, std("lost"), archive, studentArchive]
     .filter((c) => !hidden.has(c.key));
 }

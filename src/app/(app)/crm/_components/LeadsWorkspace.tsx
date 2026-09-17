@@ -6,7 +6,7 @@ import { cn } from "@/lib/cn";
 import { tr } from "@/lib/tr";
 import type { Locale } from "@/lib/constants";
 import { Icon } from "../../_components/Icon";
-import { ARCHIVE_COL, COLUMNS, ONLINE_COL, branchIdOfCol, slotIdOfCol, branchColKey, visibleColumns, columnDef, columnOf, columnOfLead, customIdOfCol, groupIdOfCol, isBranchCol, isCustomCol, isGroupCol, type BranchColumn, type BranchMode, type BranchModeCfg, type CustomColumn, type GroupColumn, type GroupInfo, type VLead } from "../_lib/leadColumns";
+import { COLUMNS, ONLINE_COL, isArchiveCol, branchIdOfCol, slotIdOfCol, branchColKey, visibleColumns, columnDef, columnOf, columnOfLead, customIdOfCol, groupIdOfCol, isBranchCol, isCustomCol, isGroupCol, type BranchColumn, type BranchMode, type BranchModeCfg, type CustomColumn, type GroupColumn, type GroupInfo, type VLead } from "../_lib/leadColumns";
 import { bulkLeadAction, deleteTestLead, dropLeadToBranch, enrollLeadToGroup, moveLeadStage, moveLeadToColumn, removeKanbanColumn, setLeadArchived, setLeadOnline, unpinKanbanGroup } from "../actions";
 import { type Analytics } from "./AnalyticsTiles";
 import FilterBar from "./FilterBar";
@@ -263,8 +263,9 @@ export default function LeadsWorkspace({ locale, initialLeads, managers, sources
       enrollToGroup(leadId, groupIdOfCol(colKey));
       return;
     }
-    // "Arxiv" ustuni — bosqich saqlanadi, lid ko'rinishdan chiqadi
-    if (colKey === ARCHIVE_COL) {
+    // Arxiv ustunlari (Lid / O'quvchi) — bosqich saqlanadi, lid ko'rinishdan chiqadi;
+    // qaysi arxivda ko'rinishi lidning o'zidan (qabul qilinganmi) aniqlanadi
+    if (isArchiveCol(colKey)) {
       setLeads((prev) => prev.map((l) => (l.id === leadId ? { ...l, archivedAt: new Date().toISOString() } : l))); // optimistik
       startRefresh(async () => {
         const r = await setLeadArchived(leadId, true);
