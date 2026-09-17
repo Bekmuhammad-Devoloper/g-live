@@ -53,7 +53,7 @@ export default function HeroCarousel({ slides, interval = 5000 }: { slides: Reac
           </div>
         ))}
       </div>
-      <div className="absolute bottom-3.5 left-5 z-20 flex items-center gap-1.5">
+      <div className="absolute bottom-2.5 left-4 z-20 flex items-center gap-1.5">
         {slides.map((_, k) => (
           <button
             key={k}

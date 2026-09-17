@@ -487,8 +487,8 @@ export default async function StudentStartPage() {
         href={kurseHref}
         className={
           levelBanner
-            ? "relative block h-full min-h-[168px] overflow-hidden rounded-[26px] p-6 pb-8 text-white shadow-[0_14px_30px_rgba(19,78,94,0.22)] transition active:scale-[0.985]"
-            : "gl-glass-hero block h-full min-h-[168px] p-6 pb-8 transition active:scale-[0.985]"
+            ? "relative block h-full min-h-[136px] overflow-hidden rounded-[24px] p-4 pb-7 text-white shadow-[0_14px_30px_rgba(19,78,94,0.22)] transition active:scale-[0.985]"
+            : "gl-glass-hero block h-full min-h-[136px] p-4 pb-7 transition active:scale-[0.985]"
         }
       >
         {levelBanner ? (
@@ -504,44 +504,44 @@ export default async function StudentStartPage() {
         <div className="relative flex items-center justify-between gap-4">
           <div className="min-w-0">
             <div
-              className="text-[12px] font-bold uppercase tracking-[0.22em]"
+              className="text-[10.5px] font-bold uppercase tracking-[0.2em]"
               style={levelBanner ? { color: "rgba(255,255,255,0.85)" } : { color: TEAL }}
             >
               {t.yourProgress}
             </div>
             <div className={
               levelBanner
-                ? "font-hand mt-1.5 text-[32px] font-bold leading-[1.05] sm:text-[38px]"
-                : "font-hand mt-1.5 text-[32px] font-bold leading-[1.05] text-slate-900 sm:text-[38px]"
+                ? "font-hand mt-1 text-[27px] font-bold leading-[1.05] sm:text-[32px]"
+                : "font-hand mt-1 text-[27px] font-bold leading-[1.05] text-slate-900 sm:text-[32px]"
             }>
               {levelName ?? level}
             </div>
-            <div className={levelBanner ? "mt-0.5 text-[14px] font-semibold text-white/85" : "mt-0.5 text-[14px] font-semibold text-slate-700"}>
+            <div className={levelBanner ? "mt-0.5 text-[13px] font-semibold text-white/85" : "mt-0.5 text-[13px] font-semibold text-slate-700"}>
               {level} · {t.chapter} {chapter}
             </div>
-            <div className={levelBanner ? "mt-1 line-clamp-2 text-[14px] text-white/75" : "mt-1 line-clamp-2 text-[14px] font-medium text-slate-700"}>
+            <div className={levelBanner ? "mt-0.5 line-clamp-1 text-[12.5px] text-white/75" : "mt-0.5 line-clamp-1 text-[12.5px] font-medium text-slate-700"}>
               {currentLesson?.topic || currentLesson?.title || group?.program.name || t.everydayBasics}
             </div>
           </div>
           <div className="relative grid shrink-0 place-items-center">
-            <Ring pct={kursPct} size={96} stroke={6} color={levelBanner ? "#ffffff" : NAVY} />
+            <Ring pct={kursPct} size={72} stroke={5} color={levelBanner ? "#ffffff" : NAVY} />
             <span
-              className="absolute grid h-[66px] w-[66px] place-items-center rounded-full shadow-[0_4px_12px_rgba(19,78,94,0.15)]"
+              className="absolute grid h-[50px] w-[50px] place-items-center rounded-full shadow-[0_4px_12px_rgba(19,78,94,0.15)]"
               style={{ background: levelBanner ? "rgba(255,255,255,0.9)" : "rgba(255,255,255,0.6)" }}
             >
-              <IcoTarget c={NAVY} s={38} />
+              <IcoTarget c={NAVY} s={28} />
             </span>
           </div>
         </div>
-        <div className="relative mt-4 flex items-center gap-3">
+        <div className="relative mt-3 flex items-center gap-3">
           <div className={
             levelBanner
-              ? "h-[10px] flex-1 overflow-hidden rounded-full bg-white/30"
-              : "h-[10px] flex-1 overflow-hidden rounded-full bg-white/55 shadow-[inset_0_1px_2px_rgba(19,78,94,0.12)]"
+              ? "h-[8px] flex-1 overflow-hidden rounded-full bg-white/30"
+              : "h-[8px] flex-1 overflow-hidden rounded-full bg-white/55 shadow-[inset_0_1px_2px_rgba(19,78,94,0.12)]"
           }>
             <div className="h-full rounded-full" style={{ width: `${kursPct}%`, background: levelBanner ? "#ffffff" : NAVY }} />
           </div>
-          <span className="text-[20px] font-extrabold" style={{ color: levelBanner ? "#ffffff" : NAVY }}>{kursPct}%</span>
+          <span className="text-[17px] font-extrabold" style={{ color: levelBanner ? "#ffffff" : NAVY }}>{kursPct}%</span>
         </div>
       </Link>,
 
@@ -762,12 +762,12 @@ function NextLessonBanner({ t, locale, todayISO, next, hasSchedule, cardCls, ima
   const weekday = WEEKDAYS_FULL[L][mondayIndex(next.iso)];
   const NIGHT = "#0b1a33";
   // Shisha chip: vaqt / xona — chapda ko'k doira ichida belgi, o'ngda strelka
-  const chip = "inline-flex items-center gap-2 rounded-full bg-white/[0.07] py-1 pl-1 pr-2.5 text-[13px] font-semibold ring-1 ring-white/[0.14] backdrop-blur-sm";
-  const chipIco = "grid h-7 w-7 shrink-0 place-items-center rounded-full shadow-[0_4px_10px_rgba(37,99,235,0.45)]";
+  const chip = "inline-flex items-center gap-1.5 rounded-full bg-white/[0.07] py-[3px] pl-[3px] pr-2 text-[12px] font-semibold ring-1 ring-white/[0.14] backdrop-blur-sm";
+  const chipIco = "grid h-6 w-6 shrink-0 place-items-center rounded-full shadow-[0_4px_10px_rgba(37,99,235,0.45)]";
 
   return (
     <div
-      className="relative flex h-full min-h-[168px] flex-col overflow-hidden rounded-[26px] p-4 pb-7 text-white ring-1 ring-sky-400/40 shadow-[0_18px_44px_rgba(2,16,40,0.55),0_0_0_1px_rgba(56,189,248,0.12),inset_0_1px_0_rgba(255,255,255,0.12)]"
+      className="relative flex h-full min-h-[136px] flex-col overflow-hidden rounded-[24px] p-3.5 pb-6 text-white ring-1 ring-sky-400/40 shadow-[0_18px_44px_rgba(2,16,40,0.55),0_0_0_1px_rgba(56,189,248,0.12),inset_0_1px_0_rgba(255,255,255,0.12)]"
       style={{ background: `linear-gradient(135deg, ${NIGHT} 0%, #0d2149 55%, #0b3a7a 100%)` }}
     >
       {/* O'ng tomonda kurs rasmi — tun rangiga singib ketadi */}
@@ -809,45 +809,45 @@ function NextLessonBanner({ t, locale, todayISO, next, hasSchedule, cardCls, ima
 
       {/* Yuqori qator: belgi + sarlavha + chiziq · guruh nomi */}
       <div className="relative flex items-center gap-3">
-        <span className="grid h-7 w-7 shrink-0 place-items-center rounded-lg bg-white/[0.08] ring-1 ring-white/[0.14]">
-          <IcoCalendar c="#7dd3fc" s={15} />
+        <span className="grid h-6 w-6 shrink-0 place-items-center rounded-lg bg-white/[0.08] ring-1 ring-white/[0.14]">
+          <IcoCalendar c="#7dd3fc" s={13} />
         </span>
-        <span className="shrink-0 text-[10.5px] font-bold uppercase tracking-[0.2em] text-sky-100/80">{t.nextLessonTitle}</span>
+        <span className="shrink-0 text-[10px] font-bold uppercase tracking-[0.18em] text-sky-100/80">{t.nextLessonTitle}</span>
         <span className="h-px min-w-3 flex-1 bg-gradient-to-r from-white/25 to-transparent" />
-        <span className="inline-flex max-w-[46%] items-center gap-1 rounded-full bg-white/[0.08] py-1 pl-3 pr-2 text-[12px] font-semibold ring-1 ring-white/[0.16] backdrop-blur-sm">
+        <span className="inline-flex max-w-[46%] items-center gap-1 rounded-full bg-white/[0.08] py-[3px] pl-2.5 pr-1.5 text-[11.5px] font-semibold ring-1 ring-white/[0.16] backdrop-blur-sm">
           <span className="truncate">{next.group}</span>
           <IcoChevron c="rgba(255,255,255,0.7)" s={13} />
         </span>
       </div>
 
-      <div className="relative mt-3 flex flex-1 items-center gap-3.5">
+      <div className="relative mt-2.5 flex flex-1 items-center gap-3">
         {/* Sana plitkasi — ko'k sarlavhali kalendar varag'i */}
-        <div className="relative w-[72px] shrink-0 overflow-hidden rounded-[16px] bg-[#eef3ff] text-center shadow-[0_12px_28px_rgba(2,16,40,0.55),0_0_0_1px_rgba(56,189,248,0.35)]">
+        <div className="relative w-[62px] shrink-0 overflow-hidden rounded-[14px] bg-[#eef3ff] text-center shadow-[0_12px_28px_rgba(2,16,40,0.55),0_0_0_1px_rgba(56,189,248,0.35)]">
           <span
-            className="block w-full py-[5px] text-[10.5px] font-extrabold uppercase tracking-[0.16em] text-white"
+            className="block w-full py-[4px] text-[10px] font-extrabold uppercase tracking-[0.14em] text-white"
             style={{ background: "linear-gradient(180deg, #3b82f6 0%, #1d4ed8 100%)" }}
           >
             {WEEKDAYS_SHORT[L][mondayIndex(next.iso)]}
           </span>
-          <span className="block pt-1.5 text-[32px] font-black leading-none tracking-tight" style={{ color: "#0b1a33" }}>{d.getDate()}</span>
-          <span className="block pb-2 pt-0.5 text-[10px] font-bold uppercase tracking-[0.14em] text-slate-500">
+          <span className="block pt-1 text-[27px] font-black leading-none tracking-tight" style={{ color: "#0b1a33" }}>{d.getDate()}</span>
+          <span className="block pb-1.5 pt-0.5 text-[9.5px] font-bold uppercase tracking-[0.12em] text-slate-500">
             {MONTHS[L][d.getMonth()].slice(0, 3)}
           </span>
         </div>
 
         <div className="min-w-0 flex-1">
           <div className="flex flex-wrap items-baseline gap-x-2">
-            <span className="font-hand text-[32px] font-bold leading-[0.95]">{dayLabel}</span>
+            <span className="font-hand text-[27px] font-bold leading-[0.95]">{dayLabel}</span>
             {diff > 1 && (
               <span className="rounded-full bg-white/[0.08] px-2 py-0.5 text-[11.5px] font-semibold text-sky-100/90 ring-1 ring-white/[0.14]">
                 {fill(t.inDays, { n: diff })}
               </span>
             )}
           </div>
-          <div className="mt-0.5 text-[13px] font-medium text-sky-100/70">
+          <div className="mt-0.5 text-[12px] font-medium text-sky-100/70">
             {diff > 1 ? dateLabel : `${weekday}, ${dateLabel}`}
           </div>
-          <div className="mt-2.5 flex flex-wrap gap-1.5">
+          <div className="mt-2 flex flex-wrap gap-1.5">
             {time && (
               <span className={chip}>
                 <span className={chipIco} style={{ background: "linear-gradient(180deg,#3b82f6,#1d4ed8)" }}><IcoClock c="#ffffff" s={15} /></span>
