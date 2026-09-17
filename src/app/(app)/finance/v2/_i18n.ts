@@ -176,6 +176,7 @@ export const READINESS_LABELS: Record<string, Txt> = {
   NO_ACTIVE_DIRECTOR: { uz: "Faol DIRECTOR yo'q", ru: "Нет активного директора", en: "No active DIRECTOR", de: "Kein aktiver DIRECTOR" },
   LEGACY_CREDIT: { uz: "Legacy real to'lov V2 krediti bo'lib turibdi (preserve-legacy bajarilmagan)", ru: "Старый платёж числится кредитом V2 (preserve-legacy не выполнен)", en: "Legacy payment sitting as V2 credit (preserve-legacy not run)", de: "Alte Zahlung als V2-Guthaben (preserve-legacy fehlt)" },
   LEGACY_PRESERVATION: { uz: "Legacy real to'lovlar saqlash invarianti buzilgan (yo'qolgan/ikki marta)", ru: "Нарушен инвариант сохранности старых платежей", en: "Legacy payment preservation invariant violated", de: "Invariante der Zahlungserhaltung verletzt" },
+  NO_ACTIVE_MEMBERSHIPS: { uz: "Faol guruh a'zoligi yo'q — hisoblar yaratilmaydi", ru: "Нет активных членств в группах — начисления не создаются", en: "No active group memberships — no charges will be generated", de: "Keine aktiven Gruppenmitgliedschaften — keine Forderungen" },
   LEGACY_HISTORICAL_REVIEW: { uz: "Tarixiy real to'lovlar — taqsimlash/ko'rib chiqish kutilmoqda", ru: "Исторические платежи — ожидают распределения/проверки", en: "Historical payments awaiting allocation/review", de: "Historische Zahlungen — Zuordnung/Prüfung ausstehend" },
   NEEDS_REVIEW: { uz: "Ko'rib chiqilmagan ulushlar (NEEDS_REVIEW)", ru: "Начисления на проверке", en: "Earnings pending review", de: "Anteile zur Prüfung" },
 };

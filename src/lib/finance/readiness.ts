@@ -28,7 +28,7 @@ export interface ReadinessIssue {
   code:
     | "UNPRICED_STUDENTS" | "UNPRICED_GROUPS" | "GROUP_NO_MAIN_TEACHER" | "TEACHER_NO_RULE" | "INVALID_RULES"
     | "UNMAPPED_METHODS" | "INVALID_SETTINGS" | "MIGRATION_NOT_APPLIED" | "LEGACY_UNPOSTED" | "NO_ACTIVE_DIRECTOR"
-    | "NEEDS_REVIEW" | "NO_GLOBAL_RULE" | "LEGACY_CREDIT" | "LEGACY_PRESERVATION" | "LEGACY_HISTORICAL_REVIEW";
+    | "NEEDS_REVIEW" | "NO_GLOBAL_RULE" | "LEGACY_CREDIT" | "LEGACY_PRESERVATION" | "LEGACY_HISTORICAL_REVIEW" | "NO_ACTIVE_MEMBERSHIPS";
   severity: ReadinessSeverity;
   /** qisqa sabab (UI lug'ati shu kod bo'yicha) */
   count: number;
@@ -185,6 +185,9 @@ export async function financeReadiness(db: FinanceDb, opts: { now?: Date; month?
   // 9. Faol DIRECTOR
   const directors = await db.user.count({ where: { role: ROLES.DIRECTOR, isActive: true } });
   if (directors === 0) push("NO_ACTIVE_DIRECTOR", "BLOCKER", [{ id: "director", label: "Faol DIRECTOR yo'q (flag, tasdiq, qayta ochish uchun kerak)", href: "/users" }]);
+
+  // 9b. Faol a'zolik yo'q — hisob (charge) yaratilmaydi; guruh/a'zoliklar qayta yaratilishi kerak (bloker emas: kod emas, biznes ma'lumot)
+  if (memberships.length === 0) push("NO_ACTIVE_MEMBERSHIPS", "WARNING", [{ id: "memberships", label: "Faol guruh a'zoligi yo'q — oylik hisoblar yaratilmaydi; guruhlar va o'quvchi a'zoliklarini kiriting", href: "/groups" }], "Cutover'dan keyin o'quvchilar guruhlarga biriktirilgach billing sync hisoblarni yaratadi");
 
   // 10. NEEDS_REVIEW
   const needsReview = hasCharge ? await db.teacherEarning.count({ where: { status: "NEEDS_REVIEW" } }) : 0;
