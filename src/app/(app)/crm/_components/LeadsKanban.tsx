@@ -70,8 +70,8 @@ export default function LeadsKanban({
   const pinnedIds = useMemo(() => new Set(groupColumns.map((g) => g.groupId)), [groupColumns]);
   const customIds = useMemo(() => new Set(customColumns.map((c) => c.id)), [customColumns]);
   const branchCfg = useMemo<BranchModeCfg | null>(
-    () => (branchColumns && branchMode ? { ids: new Set(branchColumns.map((b) => b.branchId)), mode: branchMode, online: showOnlineCol } : null),
-    [branchColumns, branchMode, showOnlineCol],
+    () => (branchColumns && branchMode ? { ids: new Set(branchColumns.map((b) => b.branchId)), mode: branchMode, online: showOnlineCol, hideTest: hiddenCols.includes("test") } : null),
+    [branchColumns, branchMode, showOnlineCol, hiddenCols],
   );
 
   // Tartib: standart 4 ta → oddiy nomli ustunlar → "Qabul qilindi" → guruh ustunlari → "Yo'qotilgan"

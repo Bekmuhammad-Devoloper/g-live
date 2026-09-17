@@ -195,7 +195,13 @@ export const slotDropKey = (branchId: string, slotId: string) => `${BRANCH_COL_P
  */
 export type BranchMode = "sales" | "head";
 /** `online: false` — "Onlayn" ustuni ko'rsatilmaydi (filial administratori — onlayn lidlar unga tegishli emas) */
-export interface BranchModeCfg { ids: Set<string>; mode: BranchMode; online: boolean }
+export interface BranchModeCfg {
+  ids: Set<string>;
+  mode: BranchMode;
+  online: boolean;
+  /** "Daraja testi" ustuni yashirilgan (ROP) — test bosqichidagilar "Yangi"da turadi */
+  hideTest?: boolean;
+}
 
 /** "Onlayn" ustuni — arizada onlayn tanlagan (studyFormat=ONLINE) yangi lidlar; filiallardan oldin turadi */
 export const ONLINE_COL = "online";
@@ -246,7 +252,7 @@ export function columnOfLead(
   if (branch) {
     // Sotuv rejimida "Taklif" ustuni yo'q — o'sha bosqichdagilar "Yangi" hisoblanadi
     // ("Daraja testi" ustuni sotuv rejimida ham bor)
-    const eff = branch.mode === "sales" && base === "offer" ? "new" : base;
+    const eff = branch.mode === "sales" && (base === "offer" || (base === "test" && branch.hideTest)) ? "new" : base;
     // Onlayn tanlaganlar Yangiga emas — alohida "Onlayn" ustuniga
     if (eff === "new" && lead.studyFormat === "ONLINE" && branch.online) return ONLINE_COL;
     return eff;
