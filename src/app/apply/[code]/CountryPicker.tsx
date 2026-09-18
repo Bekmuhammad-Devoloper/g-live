@@ -12,7 +12,8 @@ import { PHONE_COUNTRIES, flagSrc, phoneCountry, type PhoneCountry } from "@/lib
  * "MDH" va "Yevropa" guruhlari, har qatorda SVG bayroq, davlat nomi, kod, belgi.
  * Bayroqlar emoji emas — /public/flags/*.svg (hamma qurilmada bir xil).
  */
-export default function CountryPicker({ value, onChange }: { value: string; onChange: (iso: string) => void }) {
+/** `locked` — davlat o'zgartirilmaydi (oflayn ro'yxat: faqat O'zbekiston raqami). */
+export default function CountryPicker({ value, onChange, locked = false }: { value: string; onChange: (iso: string) => void; locked?: boolean }) {
   const [open, setOpen] = useState(false);
   const country = phoneCountry(value);
 
@@ -31,16 +32,20 @@ export default function CountryPicker({ value, onChange }: { value: string; onCh
     <>
       <button
         type="button"
-        onClick={() => setOpen(true)}
+        onClick={() => { if (!locked) setOpen(true); }}
+        disabled={locked}
         aria-label="Davlat kodi"
-        className="flex min-h-[52px] shrink-0 items-center gap-2 self-stretch border-r border-slate-200 bg-slate-50 pl-3 pr-2.5 transition active:bg-slate-100 dark:border-white/10 dark:bg-white/[0.04]"
+        className={cn(
+          "flex min-h-[52px] shrink-0 items-center gap-2 self-stretch border-r border-slate-200 bg-slate-50 pl-3 pr-2.5 transition dark:border-white/10 dark:bg-white/[0.04]",
+          locked ? "cursor-default" : "active:bg-slate-100",
+        )}
       >
         <Flag c={country} className="h-6 w-8" />
         <span className="text-[15px] font-semibold text-slate-700 dark:text-slate-200">{country.code}</span>
-        <Icon name="chevronDown" className="h-3.5 w-3.5 text-slate-400" strokeWidth={2.2} />
+        {!locked && <Icon name="chevronDown" className="h-3.5 w-3.5 text-slate-400" strokeWidth={2.2} />}
       </button>
 
-      {open && createPortal(
+      {open && !locked && createPortal(
         <div className="fixed inset-0 z-[100] flex items-end justify-center bg-slate-900/45 backdrop-blur-sm sm:items-center sm:p-6" onClick={() => setOpen(false)}>
           <div
             role="dialog"

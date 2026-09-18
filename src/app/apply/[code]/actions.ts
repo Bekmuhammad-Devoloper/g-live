@@ -58,7 +58,9 @@ export async function submitApplication(
 
   // Telefon — tanlangan davlat kodi bilan (O'zbekiston aynan 9 xona, boshqalar 6–12).
   // Ilgari faqat "kamida 7 raqam" tekshirilardi — soxta uzun raqamlar ham o'tardi.
-  const country = phoneCountry(String(extra.countryIso ?? "UZ"));
+  // Oflayn (filialda) o'qish — faqat O'zbekiston raqami qabul qilinadi.
+  const country = phoneCountry(format === "OFFLINE" ? "UZ" : String(extra.countryIso ?? "UZ"));
+  if (format === "OFFLINE" && String(extra.countryIso ?? "UZ") !== "UZ") return { error: "Oflayn o'qish uchun faqat O'zbekiston raqami (+998) qabul qilinadi" };
   const tel = formatIntlPhone(country.iso, phone);
   if (!tel) return { error: country.iso === "UZ" ? "Telefon raqamini to'g'ri kiriting: +998 XX XXX XX XX" : `Telefon raqamini to'g'ri kiriting (${country.code} ...)` };
 

@@ -69,6 +69,12 @@ export default function ApplyForm({ code, preview, questions = [], levels, branc
   // O'zbekiston uchun "XX XXX XX XX" maskasi, boshqa davlatlar uchun faqat raqamlar
   const onPhone = (v: string) => setPhone(countryIso === "UZ" ? fmtUzPhoneInput(v) : v.replace(/\D/g, "").slice(0, 12));
   const onCountry = (iso: string) => { setCountryIso(iso); setPhone(""); };
+  // Oflayn (filialda) o'qish — faqat O'zbekiston raqami: davlat kodi +998 ga
+  // qulflanadi, chet el raqami yozilgan bo'lsa tozalanadi
+  const pickFormat = (f: StudyFormat) => {
+    setFormat(f);
+    if (f === "OFFLINE" && countryIso !== "UZ") { setCountryIso("UZ"); setPhone(""); }
+  };
 
   const submit = (e: React.FormEvent) => {
     e.preventDefault();
@@ -78,6 +84,7 @@ export default function ApplyForm({ code, preview, questions = [], levels, branc
     if (!format) { setError("Ta'lim shaklini tanlang"); return; }
     if (format === "OFFLINE" && !branchId) { setError("Filialni tanlang"); return; }
     if (fullName.trim().length < 2) { setError("Ismingizni kiriting"); return; }
+    if (format === "OFFLINE" && countryIso !== "UZ") { setError("Oflayn o'qish uchun faqat O'zbekiston raqami (+998) qabul qilinadi"); return; }
     if (!localDigitsOk(countryIso, phone.replace(/\D/g, ""))) {
       setError(countryIso === "UZ" ? "Telefon raqamini to'liq kiriting: +998 XX XXX XX XX" : `Telefon raqamini to'g'ri kiriting (${country.code} ...)`);
       return;
@@ -133,8 +140,8 @@ export default function ApplyForm({ code, preview, questions = [], levels, branc
       {/* 1) Ta'lim shakli */}
       <Label text="Ta'lim shakli" req />
       <div className="grid grid-cols-2 gap-2">
-        <Choice on={format === "ONLINE"} onClick={() => setFormat("ONLINE")} icon="video" title="Onlayn" sub="Ilova orqali" />
-        <Choice on={format === "OFFLINE"} onClick={() => setFormat("OFFLINE")} icon="building" title="Oflayn" sub="Filialda" />
+        <Choice on={format === "ONLINE"} onClick={() => pickFormat("ONLINE")} icon="video" title="Onlayn" sub="Ilova orqali" />
+        <Choice on={format === "OFFLINE"} onClick={() => pickFormat("OFFLINE")} icon="building" title="Oflayn" sub="Filialda" />
       </div>
 
       {/* 2) Oflayn — filial */}
@@ -163,7 +170,7 @@ export default function ApplyForm({ code, preview, questions = [], levels, branc
           {/* INPUT'dagi px-4 bu yerda kerak emas (cn = clsx, px-0 uni yengmaydi) — shuning uchun alohida klasslar */}
           <div className={cn(FIELD_BOX, "gap-2 pr-3")}>
             {/* Davlat kodi — MDH va Yevropa ro'yxati (SVG bayroqli panel); standart O'zbekiston */}
-            <CountryPicker value={countryIso} onChange={onCountry} />
+            <CountryPicker value={format === "OFFLINE" ? "UZ" : countryIso} onChange={onCountry} locked={format === "OFFLINE"} />
             <input
               value={phone}
               onChange={(e) => onPhone(e.target.value)}
