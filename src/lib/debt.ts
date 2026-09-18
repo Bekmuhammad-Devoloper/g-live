@@ -153,3 +153,46 @@ export async function totalDebt(where: object = {}, now = new Date()): Promise<{
   for (const v of map.values()) if (v.debt > 0) { total += v.debt; debtors++; }
   return { total, debtors };
 }
+
+/**
+ * Bir oy uchun har o'quvchining kutilayotgan to'lovi (hisobotlar uchun).
+ * Qoida computeDebts bilan bir xil: o'sha oyda guruh(lar)da bo'lsa — guruh
+ * narxi (bo'lmasa kurs narxi), yig'iladi; hech qaysi guruhda bo'lmasa —
+ * markazning umumiy narxi. Ro'yxatga olinishidan oldingi oylar uchun 0.
+ */
+export async function monthlyFees(studentIds: string[], month: Date): Promise<Map<string, number>> {
+  const out = new Map<string, number>();
+  if (studentIds.length === 0) return out;
+  const m = monthIndex(month);
+  const [students, enrollments, defaultFee] = await Promise.all([
+    prisma.student.findMany({ where: { id: { in: studentIds } }, select: { id: true, createdAt: true } }),
+    prisma.groupStudent.findMany({
+      where: { studentId: { in: studentIds } },
+      select: {
+        studentId: true, joinedAt: true, leftAt: true, isActive: true,
+        group: { select: { monthlyFee: true, program: { select: { monthlyFee: true } } } },
+      },
+    }),
+    getDefaultMonthlyFee(),
+  ]);
+  const byStudent = new Map<string, typeof enrollments>();
+  for (const e of enrollments) {
+    const arr = byStudent.get(e.studentId) ?? [];
+    arr.push(e);
+    byStudent.set(e.studentId, arr);
+  }
+  for (const st of students) {
+    const enr = byStudent.get(st.id) ?? [];
+    let since = st.createdAt;
+    for (const e of enr) if (e.joinedAt < since) since = e.joinedAt;
+    if (m < monthIndex(since)) { out.set(st.id, 0); continue; }
+    let fee = 0;
+    for (const e of enr) {
+      const from = monthIndex(e.joinedAt);
+      const until = e.leftAt ? monthIndex(e.leftAt) : (e.isActive ? Infinity : from);
+      if (m >= from && m <= until) fee += e.group.monthlyFee ?? e.group.program.monthlyFee ?? 0;
+    }
+    out.set(st.id, fee > 0 ? fee : defaultFee);
+  }
+  return out;
+}
