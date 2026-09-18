@@ -8,6 +8,7 @@ import { prisma } from "@/lib/db";
 import { requireSession } from "@/lib/auth";
 import { canRead, canWrite, MODULES } from "@/lib/rbac";
 import { writeAudit } from "@/lib/audit";
+import { branchWhere } from "@/lib/branchScope";
 import { ROLES, LEAD_STAGES, isSalesRole } from "@/lib/constants";
 import { parseUzPhone } from "@/lib/phone";
 import { getSetting, setSetting } from "@/lib/settings";
@@ -852,7 +853,7 @@ export async function setLeadArchived(leadId: string, archived: boolean): Promis
   const s = await requireSession();
   if (!canWrite(s.role, MODULES.CRM)) return { error: "forbidden" };
 
-  const lead = await prisma.lead.findUnique({ where: { id: leadId }, select: { id: true, fullName: true, archivedAt: true } });
+  const lead = await prisma.lead.findUnique({ where: { id: leadId }, select: { id: true, fullName: true, archivedAt: true, studentId: true } });
   if (!lead) return { error: "notfound" };
   if (!!lead.archivedAt === archived) return { ok: true };
 
@@ -865,8 +866,65 @@ export async function setLeadArchived(leadId: string, archived: boolean): Promis
       activities: { create: { authorId: s.userId, type: "note", result: archived ? "Arxivga tashlandi" : "Arxivdan qaytarildi" } },
     },
   });
+  // Lid o'quvchiga aylangan bo'lsa — o'quvchining o'zi ham arxivlanadi/qaytadi
+  // (Kanbandagi "O'quvchi arxivi" = Student.eduStatus ARCHIVED)
+  if (lead.studentId) await setStudentArchivedInternal(s.userId, lead.studentId, archived, false);
   await writeAudit({ actorId: s.userId, action: "UPDATE", entityType: "Lead", entityId: leadId, newValue: { archived }, reason: archived ? `Lid arxivlandi: ${lead.fullName}` : `Lid arxivdan qaytarildi: ${lead.fullName}` });
 
   revalidatePath("/crm");
+  revalidatePath("/students");
   return { ok: true };
+}
+
+/* ─── O'quvchi arxivi (Kanban) ───────────────────────────────────────
+   "O'quvchi arxivi" kartasi = Student.eduStatus ARCHIVED (o'quvchi profilidan
+   arxivlangan ham, Kanbandan tashlangan ham bir joyda). Arxivlanganda o'quvchiga
+   bog'liq lid ham arxivlanadi, qaytarilganda — qaytadi.                      */
+
+async function setStudentArchivedInternal(actorId: string, studentId: string, archived: boolean, touchLeads: boolean): Promise<boolean> {
+  const st = await prisma.student.findUnique({
+    where: { id: studentId },
+    select: { fullName: true, eduStatus: true, enrollments: { where: { isActive: true }, select: { id: true }, take: 1 } },
+  });
+  if (!st) return false;
+  const isArchived = st.eduStatus === "ARCHIVED";
+  if (isArchived === archived) return true;
+  // Guruhi bo'lsa — faol, bo'lmasa kutish holatiga qaytadi (students/actions.ts restoreStudent bilan bir xil)
+  const next = archived ? "ARCHIVED" : st.enrollments.length ? "ACTIVE" : "WAITING";
+  await prisma.student.update({ where: { id: studentId }, data: { eduStatus: next } });
+  if (touchLeads) {
+    await prisma.lead.updateMany({ where: { studentId }, data: archived ? { archivedAt: new Date(), branchSlotId: null } : { archivedAt: null } });
+  }
+  await writeAudit({
+    actorId, action: "UPDATE", entityType: "Student", entityId: studentId,
+    oldValue: { eduStatus: st.eduStatus }, newValue: { eduStatus: next },
+    reason: archived ? `O'quvchi arxivlandi (Kanban): ${st.fullName}` : `O'quvchi arxivdan qaytarildi (Kanban): ${st.fullName}`,
+  });
+  return true;
+}
+
+/** Kanbandagi "O'quvchi arxivi" kartasidan: o'quvchini arxivlash / qaytarish */
+export async function setStudentArchived(studentId: string, archived: boolean): Promise<{ ok?: boolean; error?: string }> {
+  const s = await requireSession();
+  if (!canWrite(s.role, MODULES.CRM)) return { error: "forbidden" };
+  const ok = await setStudentArchivedInternal(s.userId, studentId, archived, true);
+  if (!ok) return { error: "notfound" };
+  revalidatePath("/crm");
+  revalidatePath("/students");
+  return { ok: true };
+}
+
+/** "O'quvchi arxivi" kartasidagi "+" — arxivlash uchun o'quvchi qidirish (faol filial doirasida) */
+export async function searchStudentsToArchive(q: string): Promise<{ id: string; fullName: string; phone: string | null; groupName: string | null }[]> {
+  const s = await requireSession();
+  if (!canWrite(s.role, MODULES.CRM)) return [];
+  const query = q.trim();
+  if (query.length < 2) return [];
+  const rows = await prisma.student.findMany({
+    where: { AND: [{ eduStatus: { not: "ARCHIVED" } }, { OR: [{ fullName: { contains: query } }, { phone: { contains: query } }] }, branchWhere(s)] },
+    select: { id: true, fullName: true, phone: true, enrollments: { where: { isActive: true }, take: 1, select: { group: { select: { name: true } } } } },
+    orderBy: { fullName: "asc" },
+    take: 8,
+  });
+  return rows.map((r) => ({ id: r.id, fullName: r.fullName, phone: r.phone, groupName: r.enrollments[0]?.group.name ?? null }));
 }

@@ -214,6 +214,14 @@ export const ONLINE_COL = "online";
  */
 export const ARCHIVE_COL = "archive";
 export const isArchiveCol = (key: string) => key === ARCHIVE_COL;
+/** "O'quvchi arxivi" kartasidagi o'quvchi (Student.eduStatus = ARCHIVED) */
+export interface ArchivedStudent {
+  id: string;
+  fullName: string;
+  phone: string | null;
+  groupName: string | null;
+}
+
 /** Arxivlangan lid "O'quvchi arxivi" bo'limiga tegishlimi */
 export function isStudentArchive(lead: { stage: string; studentId?: string | null }): boolean {
   return lead.stage === "WON" || !!lead.studentId;

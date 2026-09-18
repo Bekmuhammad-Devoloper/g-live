@@ -1,14 +1,16 @@
 "use client";
 
-import { useCallback, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useState, useTransition } from "react";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import { cn } from "@/lib/cn";
 import { tr } from "@/lib/tr";
 import type { Locale } from "@/lib/constants";
 import { Icon } from "../../_components/Icon";
-import { ARCHIVE_COL, ONLINE_COL, isStudentArchive, columnOfLead, visibleColumns, branchColKey, slotDropKey, type BranchColumn, type BranchMode, type BranchModeCfg, type CustomColumn, type GroupColumn, type GroupInfo, type VLead } from "../_lib/leadColumns";
+import { ARCHIVE_COL, ONLINE_COL, isStudentArchive, columnOfLead, visibleColumns, branchColKey, slotDropKey, type ArchivedStudent, type BranchColumn, type BranchMode, type BranchModeCfg, type CustomColumn, type GroupColumn, type GroupInfo, type VLead } from "../_lib/leadColumns";
 import LeadCard from "./LeadCard";
 import BranchSlotsEditor from "../../branches/slots/BranchSlotsEditor";
+import { searchStudentsToArchive, setStudentArchived } from "../actions";
 
 interface Props {
   leads: VLead[];
@@ -40,6 +42,8 @@ interface Props {
   branchColumns?: BranchColumn[] | null;
   /** Guruh kartalari uchun holat (o'quvchilar / sig'im / jadval) */
   groupInfo?: Record<string, GroupInfo>;
+  /** "O'quvchi arxivi" kartasi — arxivlangan o'quvchilar (Student.eduStatus ARCHIVED) */
+  archivedStudents?: ArchivedStudent[];
   /** "sales" — test/taklif o'rnida; "head" — faqat taklif o'rnida (leadColumns.ts) */
   branchMode?: BranchMode | null;
   /** "Onlayn" ustuni (filial administratorida ko'rsatilmaydi) */
@@ -59,7 +63,7 @@ const PAGE = 10;
 
 export default function LeadsKanban({
   leads, totals, locale, selected, groupColumns, customColumns,
-  onOpen, onOpenFull, onDropToColumn, onAdd, onAddToGroup, onRemoveGroupCol, onAddToCustom, onRemoveCustomCol, onLevelTestQr, branchColumns = null, groupInfo = {}, branchMode = null, showOnlineCol = true, hiddenCols = [], slotsEditable = null, onResetColumn, onDelete,
+  onOpen, onOpenFull, onDropToColumn, onAdd, onAddToGroup, onRemoveGroupCol, onAddToCustom, onRemoveCustomCol, onLevelTestQr, branchColumns = null, groupInfo = {}, archivedStudents = [], branchMode = null, showOnlineCol = true, hiddenCols = [], slotsEditable = null, onResetColumn, onDelete,
 }: Props) {
   const [dragId, setDragId] = useState<string | null>(null);
   const [overCol, setOverCol] = useState<string | null>(null);
@@ -278,6 +282,7 @@ export default function LeadsKanban({
                   onDragEnd={onDragEnd}
                   onDelete={onDelete}
                   dragging={dragging}
+                  archivedStudents={archivedStudents}
                   onArchive={(leadId) => { onDropToColumn(ARCHIVE_COL, leadId); setDragId(null); setOverCol(null); }}
                 />
               ) : items.length === 0 ? (
@@ -330,9 +335,10 @@ export default function LeadsKanban({
  * Qaysi bo'limda ko'rinishi lidning o'zidan aniqlanadi.
  */
 function LostColumn({
-  items, locale, selected, page, onPage, onOpen, onOpenFull, onDragStart, onDragEnd, onDelete, dragging, onArchive,
+  items, locale, selected, page, onPage, onOpen, onOpenFull, onDragStart, onDragEnd, onDelete, dragging, onArchive, archivedStudents = [],
 }: {
   items: VLead[];
+  archivedStudents?: ArchivedStudent[];
   locale: Locale;
   selected: Set<string>;
   page: number;
@@ -347,12 +353,20 @@ function LostColumn({
 }) {
   const [overSec, setOverSec] = useState<string | null>(null);
   const [openSec, setOpenSec] = useState<Record<string, boolean>>({});
+  const router = useRouter();
+  const [pending, start] = useTransition();
   const lost = items.filter((l) => !l.archivedAt);
   const archived = items.filter((l) => !!l.archivedAt);
-  const sections: { key: string; icon: "archive" | "graduation"; title: string; items: VLead[] }[] = [
-    { key: "leads", icon: "archive", title: tr(locale, { uz: "Lid arxivi", ru: "Архив лидов", en: "Lead archive", de: "Lead-Archiv" }), items: archived.filter((l) => !isStudentArchive(l)) },
-    { key: "students", icon: "graduation", title: tr(locale, { uz: "O'quvchi arxivi", ru: "Архив учеников", en: "Student archive", de: "Schüler-Archiv" }), items: archived.filter(isStudentArchive) },
+  // O'quvchi arxivi = arxivlangan o'quvchilar (Student) + o'quvchi yozuvi ro'yxatda
+  // bo'lmagan arxivlangan "qabul qilingan" lidlar (eski holat)
+  const archivedStudentIds = new Set(archivedStudents.map((x) => x.id));
+  const studentLeads = archived.filter((l) => isStudentArchive(l) && !(l.studentId && archivedStudentIds.has(l.studentId)));
+  const sections: { key: string; icon: "archive" | "graduation"; title: string; items: VLead[]; students: ArchivedStudent[] }[] = [
+    { key: "leads", icon: "archive", title: tr(locale, { uz: "Lid arxivi", ru: "Архив лидов", en: "Lead archive", de: "Lead-Archiv" }), items: archived.filter((l) => !isStudentArchive(l)), students: [] },
+    { key: "students", icon: "graduation", title: tr(locale, { uz: "O'quvchi arxivi", ru: "Архив учеников", en: "Student archive", de: "Schüler-Archiv" }), items: studentLeads, students: archivedStudents },
   ];
+  const [pickOpen, setPickOpen] = useState(false);
+  const restoreStudent = (id: string) => start(async () => { await setStudentArchived(id, false); router.refresh(); });
   // Sudralayotgan lid arxivlanmagan bo'lsa — kartaga tashlash mumkin.
   // dragging (state) kechikishi mumkin — shuning uchun tekshiruv yumshoq:
   // state bo'lmasa ham sudrash hodisasi bo'lsa ruxsat beramiz.
@@ -391,7 +405,7 @@ function LostColumn({
           Karta — tashlash joyi; bosilsa ichidagilar pastda ochiladi. */}
       <div className="space-y-2">
         {sections.map((sec) => {
-          const count = sec.items.length;
+          const count = sec.items.length + sec.students.length;
           const opened = openSec[sec.key] ?? false;
           const isOver = overSec === sec.key && canArchive;
           const student = sec.key === "students";
@@ -455,8 +469,20 @@ function LostColumn({
                 </span>
               </span>
 
-              {/* soni + chevron */}
+              {/* soni + chevron (+ o'quvchi arxivida "qo'shish") */}
               <span className="relative flex shrink-0 items-center gap-1.5">
+                {student && (
+                  <span
+                    role="button"
+                    tabIndex={0}
+                    title={tr(locale, { uz: "O'quvchini arxivlash", ru: "Архивировать ученика", en: "Archive a student", de: "Schüler archivieren" })}
+                    onClick={(e) => { e.stopPropagation(); setPickOpen((v) => !v); }}
+                    onKeyDown={(e) => { if (e.key === "Enter" || e.key === " ") { e.preventDefault(); e.stopPropagation(); setPickOpen((v) => !v); } }}
+                    className="grid h-7 w-7 place-items-center rounded-lg text-violet-600 transition hover:bg-violet-100 dark:text-violet-300 dark:hover:bg-violet-500/15"
+                  >
+                    <Icon name="plus" className="h-4 w-4" />
+                  </span>
+                )}
                 <span className={cn(
                   "inline-flex min-w-[28px] items-center justify-center rounded-full px-2 py-0.5 text-[12px] font-bold tabular-nums",
                   count > 0
@@ -482,19 +508,58 @@ function LostColumn({
         })}
       </div>
 
-      {/* Ochilgan arxivning lidlari — plitkalar ostida, sarlavha bilan */}
+      {/* "+" — arxivlash uchun o'quvchi qidirish */}
+      {pickOpen && (
+        <StudentArchivePicker
+          locale={locale}
+          onPicked={(id) => { setPickOpen(false); start(async () => { await setStudentArchived(id, true); router.refresh(); }); }}
+          onClose={() => setPickOpen(false)}
+        />
+      )}
+
+      {/* Ochilgan arxiv — plitkalar ostida, sarlavha bilan: o'quvchi kartalari va/yoki lidlar */}
       {sections.map((sec) => {
-        if (!(openSec[sec.key] ?? false) || sec.items.length === 0) return null;
+        const total = sec.items.length + sec.students.length;
+        if (!(openSec[sec.key] ?? false) || total === 0) return null;
         const student = sec.key === "students";
         return (
           <div key={`${sec.key}-list`} className={cn("relative ml-2 space-y-3 border-l-2 border-dashed pl-3", student ? "border-violet-300 dark:border-violet-500/40" : "border-slate-300 dark:border-slate-500/40")}>
             <div className="flex items-center justify-between text-[11px] font-semibold text-slate-500 dark:text-slate-400">
               <span className="inline-flex items-center gap-1.5">
                 <Icon name={sec.icon} className={cn("h-3.5 w-3.5", student ? "text-violet-500" : "text-slate-500")} />
-                {sec.title} · {sec.items.length}
+                {sec.title} · {total}
               </span>
-              <span className="text-slate-400">{tr(locale, { uz: "Boshqa ustunga tashlang — qaytadi", ru: "Перетащите в колонку — вернётся", en: "Drag to a column to restore", de: "In Spalte ziehen — zurückholen" })}</span>
+              {!student && <span className="text-slate-400">{tr(locale, { uz: "Boshqa ustunga tashlang — qaytadi", ru: "Перетащите в колонку — вернётся", en: "Drag to a column to restore", de: "In Spalte ziehen — zurückholen" })}</span>}
             </div>
+            {sec.students.map((st) => (
+              <div key={st.id} className="rounded-xl border border-violet-200/70 bg-white p-3 dark:border-violet-500/25 dark:bg-[#15243d]">
+                <div className="flex items-start gap-3">
+                  <span className="grid h-9 w-9 shrink-0 place-items-center rounded-full bg-violet-100 text-violet-600 dark:bg-violet-500/15 dark:text-violet-300">
+                    <Icon name="graduation" className="h-[18px] w-[18px]" />
+                  </span>
+                  <div className="min-w-0 flex-1">
+                    <Link href={`/students/${st.id}`} className="block truncate text-[14px] font-bold text-slate-800 hover:text-brand-600 dark:text-slate-100">{st.fullName}</Link>
+                    <div className="mt-0.5 flex flex-wrap items-center gap-x-3 gap-y-0.5 text-[12px] text-slate-500 dark:text-slate-400">
+                      {st.phone && <span className="inline-flex items-center gap-1"><Icon name="phone" className="h-3.5 w-3.5" /> {st.phone}</span>}
+                      {st.groupName && <span className="inline-flex items-center gap-1"><Icon name="layers" className="h-3.5 w-3.5" /> {st.groupName}</span>}
+                    </div>
+                  </div>
+                </div>
+                <div className="mt-2.5 flex items-center justify-end gap-1.5">
+                  <Link href={`/students/${st.id}`} className="rounded-lg border border-slate-200 px-2.5 py-1 text-[11.5px] font-semibold text-slate-600 transition hover:bg-slate-50 dark:border-slate-700 dark:text-slate-300 dark:hover:bg-white/[0.05]">
+                    {tr(locale, { uz: "Profil", ru: "Профиль", en: "Profile", de: "Profil" })}
+                  </Link>
+                  <button
+                    type="button"
+                    disabled={pending}
+                    onClick={() => restoreStudent(st.id)}
+                    className="rounded-lg bg-violet-600 px-2.5 py-1 text-[11.5px] font-semibold text-white transition hover:bg-violet-700 disabled:opacity-60"
+                  >
+                    {tr(locale, { uz: "Qaytarish", ru: "Вернуть", en: "Restore", de: "Zurückholen" })}
+                  </button>
+                </div>
+              </div>
+            ))}
             {sec.items.map(card)}
           </div>
         );
@@ -502,6 +567,64 @@ function LostColumn({
 
       {lostCards}
     </>
+  );
+}
+
+/** "O'quvchi arxivi" → "+" : ism/telefon bo'yicha o'quvchi qidirib arxivlash */
+function StudentArchivePicker({ locale, onPicked, onClose }: { locale: Locale; onPicked: (id: string) => void; onClose: () => void }) {
+  const [q, setQ] = useState("");
+  const [rows, setRows] = useState<ArchivedStudent[]>([]);
+  const [busy, setBusy] = useState(false);
+  useEffect(() => {
+    const query = q.trim();
+    if (query.length < 2) { setRows([]); return; }
+    let alive = true;
+    setBusy(true);
+    const t = setTimeout(async () => {
+      const r = await searchStudentsToArchive(query);
+      if (alive) { setRows(r); setBusy(false); }
+    }, 250);
+    return () => { alive = false; clearTimeout(t); };
+  }, [q]);
+  return (
+    <div className="rounded-xl border border-violet-200 bg-white p-2.5 shadow-lg dark:border-violet-500/30 dark:bg-[#15243d]">
+      <div className="mb-2 flex items-center justify-between text-[11.5px] font-semibold text-violet-700 dark:text-violet-300">
+        <span className="inline-flex items-center gap-1.5"><Icon name="graduation" className="h-3.5 w-3.5" /> {tr(locale, { uz: "O'quvchini arxivlash", ru: "Архивировать ученика", en: "Archive a student", de: "Schüler archivieren" })}</span>
+        <button type="button" onClick={onClose} className="grid h-6 w-6 place-items-center rounded-md text-slate-400 hover:bg-slate-100 hover:text-slate-600 dark:hover:bg-white/[0.06]"><Icon name="close" className="h-3.5 w-3.5" /></button>
+      </div>
+      <input
+        autoFocus
+        value={q}
+        onChange={(e) => setQ(e.target.value)}
+        placeholder={tr(locale, { uz: "Ism yoki telefon...", ru: "Имя или телефон...", en: "Name or phone...", de: "Name oder Telefon..." })}
+        className="input h-9 w-full text-[13px]"
+      />
+      <div className="mt-2 max-h-56 space-y-1 overflow-y-auto">
+        {q.trim().length < 2 ? (
+          <div className="py-2 text-center text-[11px] text-slate-400">{tr(locale, { uz: "Kamida 2 belgi yozing", ru: "Введите минимум 2 символа", en: "Type at least 2 characters", de: "Mindestens 2 Zeichen eingeben" })}</div>
+        ) : busy ? (
+          <div className="py-2 text-center text-[11px] text-slate-400">…</div>
+        ) : rows.length === 0 ? (
+          <div className="py-2 text-center text-[11px] text-slate-400">{tr(locale, { uz: "Topilmadi", ru: "Не найдено", en: "Not found", de: "Nicht gefunden" })}</div>
+        ) : (
+          rows.map((r) => (
+            <button
+              key={r.id}
+              type="button"
+              onClick={() => onPicked(r.id)}
+              className="flex w-full items-center gap-2 rounded-lg px-2 py-1.5 text-left transition hover:bg-violet-50 dark:hover:bg-violet-500/10"
+            >
+              <span className="grid h-7 w-7 shrink-0 place-items-center rounded-full bg-violet-100 text-violet-600 dark:bg-violet-500/15 dark:text-violet-300"><Icon name="user" className="h-3.5 w-3.5" /></span>
+              <span className="min-w-0 flex-1">
+                <span className="block truncate text-[13px] font-semibold text-slate-800 dark:text-slate-100">{r.fullName}</span>
+                <span className="block truncate text-[11px] text-slate-500">{[r.phone, r.groupName].filter(Boolean).join(" · ") || "—"}</span>
+              </span>
+              <Icon name="archive" className="h-4 w-4 shrink-0 text-violet-500" />
+            </button>
+          ))
+        )}
+      </div>
+    </div>
   );
 }
 

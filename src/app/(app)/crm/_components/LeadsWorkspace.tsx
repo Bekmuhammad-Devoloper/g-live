@@ -6,7 +6,7 @@ import { cn } from "@/lib/cn";
 import { tr } from "@/lib/tr";
 import type { Locale } from "@/lib/constants";
 import { Icon } from "../../_components/Icon";
-import { COLUMNS, ONLINE_COL, isArchiveCol, branchIdOfCol, slotIdOfCol, branchColKey, visibleColumns, columnDef, columnOf, columnOfLead, customIdOfCol, groupIdOfCol, isBranchCol, isCustomCol, isGroupCol, type BranchColumn, type BranchMode, type BranchModeCfg, type CustomColumn, type GroupColumn, type GroupInfo, type VLead } from "../_lib/leadColumns";
+import { COLUMNS, ONLINE_COL, isArchiveCol, branchIdOfCol, slotIdOfCol, branchColKey, visibleColumns, columnDef, columnOf, columnOfLead, customIdOfCol, groupIdOfCol, isBranchCol, isCustomCol, isGroupCol, type ArchivedStudent, type BranchColumn, type BranchMode, type BranchModeCfg, type CustomColumn, type GroupColumn, type GroupInfo, type VLead } from "../_lib/leadColumns";
 import { bulkLeadAction, deleteTestLead, dropLeadToBranch, enrollLeadToGroup, moveLeadStage, moveLeadToColumn, removeKanbanColumn, setLeadArchived, setLeadOnline, unpinKanbanGroup } from "../actions";
 import { type Analytics } from "./AnalyticsTiles";
 import FilterBar from "./FilterBar";
@@ -46,6 +46,8 @@ interface Props {
   branchColumns?: BranchColumn[] | null;
   /** "Qabul qilindi" guruh kartalari uchun holat (o'quvchilar / sig'im / jadval) */
   groupInfo?: Record<string, GroupInfo>;
+  /** "O'quvchi arxivi" kartasi — arxivlangan o'quvchilar */
+  archivedStudents?: ArchivedStudent[];
   /** "sales" (ROP/admin) yoki "head" (direktor) — leadColumns.ts */
   branchMode?: BranchMode | null;
   /** "Onlayn" ustuni ko'rsatilsinmi (filial administratorida yo'q) */
@@ -56,7 +58,7 @@ interface Props {
   slotsEditable?: "all" | string | null;
 }
 
-export default function LeadsWorkspace({ locale, initialLeads, managers, sources, analytics, canWrite, canDelete = false, canResetColumns = false, initialGroupColumns, initialCustomColumns, branchColumns = null, groupInfo = {}, branchMode = null, showOnlineCol = true, hiddenCols = [], slotsEditable = null }: Props) {
+export default function LeadsWorkspace({ locale, initialLeads, managers, sources, analytics, canWrite, canDelete = false, canResetColumns = false, initialGroupColumns, initialCustomColumns, branchColumns = null, groupInfo = {}, archivedStudents = [], branchMode = null, showOnlineCol = true, hiddenCols = [], slotsEditable = null }: Props) {
   const router = useRouter();
   const pathname = usePathname();
   const params = useSearchParams();
@@ -498,6 +500,7 @@ export default function LeadsWorkspace({ locale, initialLeads, managers, sources
         <LeadsKanban leads={sortedShown} totals={shownTotals} locale={locale} selected={selection} onOpen={openLead} onOpenFull={openLeadFull} onDropToColumn={onDropToColumn}
           groupColumns={groupColumns}
           customColumns={customColumns}
+          archivedStudents={archivedStudents}
           onAdd={(stage) => (stage === "WON" ? setWonAdd(true) : setMainAdd({ open: true, stage }))}
           onAddToGroup={(groupId) => setPickForGroup(groupId)}
           onRemoveGroupCol={(groupId) => {

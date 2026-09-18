@@ -7,7 +7,7 @@ import { branchWhere } from "@/lib/branchScope";
 import { Forbidden } from "../_components/ui";
 import LeadsWorkspace from "./_components/LeadsWorkspace";
 import { listKanbanGroups, listKanbanColumns } from "./actions";
-import { columnOf, GROUP_COL_COLORS, weekdaysLabel, type BranchColumn, type BranchMode, type GroupInfo, type VLead } from "./_lib/leadColumns";
+import { columnOf, GROUP_COL_COLORS, weekdaysLabel, type ArchivedStudent, type BranchColumn, type BranchMode, type GroupInfo, type VLead } from "./_lib/leadColumns";
 import type { Analytics } from "./_components/AnalyticsTiles";
 
 export default async function CrmPage() {
@@ -168,6 +168,14 @@ export default async function CrmPage() {
 
   const sources = [...new Set(vleads.map((l) => l.source).filter((x): x is string => !!x))];
 
+  // "O'quvchi arxivi" kartasi — arxivlangan o'quvchilar (profil yoki Kanbandan), faol filial doirasida
+  const archivedStudents: ArchivedStudent[] = (await prisma.student.findMany({
+    where: { AND: [{ eduStatus: "ARCHIVED" }, branchWhere(s)] },
+    select: { id: true, fullName: true, phone: true, enrollments: { where: { isActive: true }, take: 1, select: { group: { select: { name: true } } } } },
+    orderBy: { fullName: "asc" },
+    take: 300,
+  })).map((r) => ({ id: r.id, fullName: r.fullName, phone: r.phone, groupName: r.enrollments[0]?.group.name ?? null }));
+
   return (
     <LeadsWorkspace
       locale={s.locale}
@@ -183,6 +191,7 @@ export default async function CrmPage() {
       initialCustomColumns={customColumns}
       branchColumns={branchMode ? branchColumns : null}
       groupInfo={groupInfo}
+      archivedStudents={archivedStudents}
       branchMode={branchMode}
       showOnlineCol={!isAdmin}
       // ROP kanbanida "Ishda" va "Qabul qilindi" ustunlari ko'rsatilmaydi (2026-09-17 talab)
