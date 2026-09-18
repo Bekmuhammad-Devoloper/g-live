@@ -30,6 +30,8 @@ export interface VLead {
   branchSlotId: string | null;
   /** Arxivlangan (Kanbandagi "Arxiv" ustuni) */
   archivedAt: string | null;
+  /** Qaysi arxiv kartasiga tashlangan ("STUDENT" | "LEAD"); null — avtomatik */
+  archiveKind: string | null;
   /** Daraja testi natijasi (/daraja-testi) */
   testSet: string | null;
   testLevel: string | null;
@@ -213,7 +215,9 @@ export const ONLINE_COL = "online";
  * saqlanadi, doskadan Yo'qotilgan ichidagi arxivga tushadi.
  */
 export const ARCHIVE_COL = "archive";
-export const isArchiveCol = (key: string) => key === ARCHIVE_COL;
+/** "O'quvchi arxivi" kartasiga tashlash — lid aynan o'sha kartada turadi */
+export const STUDENT_ARCHIVE_COL = "archive:student";
+export const isArchiveCol = (key: string) => key === ARCHIVE_COL || key === STUDENT_ARCHIVE_COL;
 /** "O'quvchi arxivi" kartasidagi o'quvchi (Student.eduStatus = ARCHIVED) */
 export interface ArchivedStudent {
   id: string;
@@ -223,7 +227,10 @@ export interface ArchivedStudent {
 }
 
 /** Arxivlangan lid "O'quvchi arxivi" bo'limiga tegishlimi */
-export function isStudentArchive(lead: { stage: string; studentId?: string | null }): boolean {
+export function isStudentArchive(lead: { stage: string; studentId?: string | null; archiveKind?: string | null }): boolean {
+  // Qo'lda tanlangan karta ustun; bo'lmasa — qabul qilingan / o'quvchisi bor lid
+  if (lead.archiveKind === "STUDENT") return true;
+  if (lead.archiveKind === "LEAD") return false;
   return lead.stage === "WON" || !!lead.studentId;
 }
 

@@ -7,7 +7,7 @@ import { cn } from "@/lib/cn";
 import { tr } from "@/lib/tr";
 import type { Locale } from "@/lib/constants";
 import { Icon } from "../../_components/Icon";
-import { ARCHIVE_COL, ONLINE_COL, isStudentArchive, columnOfLead, visibleColumns, branchColKey, slotDropKey, type ArchivedStudent, type BranchColumn, type BranchMode, type BranchModeCfg, type CustomColumn, type GroupColumn, type GroupInfo, type VLead } from "../_lib/leadColumns";
+import { ARCHIVE_COL, STUDENT_ARCHIVE_COL, ONLINE_COL, isStudentArchive, columnOfLead, visibleColumns, branchColKey, slotDropKey, type ArchivedStudent, type BranchColumn, type BranchMode, type BranchModeCfg, type CustomColumn, type GroupColumn, type GroupInfo, type VLead } from "../_lib/leadColumns";
 import LeadCard from "./LeadCard";
 import BranchSlotsEditor from "../../branches/slots/BranchSlotsEditor";
 import { searchStudentsToArchive, setStudentArchived } from "../actions";
@@ -283,7 +283,7 @@ export default function LeadsKanban({
                   onDelete={onDelete}
                   dragging={dragging}
                   archivedStudents={archivedStudents}
-                  onArchive={(leadId) => { onDropToColumn(ARCHIVE_COL, leadId); setDragId(null); setOverCol(null); }}
+                  onArchive={(leadId, toStudents) => { onDropToColumn(toStudents ? STUDENT_ARCHIVE_COL : ARCHIVE_COL, leadId); setDragId(null); setOverCol(null); }}
                 />
               ) : items.length === 0 ? (
                 <div className="rounded-xl border border-dashed border-slate-200 py-8 text-center dark:border-white/[0.08]">
@@ -349,7 +349,7 @@ function LostColumn({
   onDragEnd: () => void;
   onDelete?: (id: string) => void;
   dragging: VLead | null;
-  onArchive: (leadId: string) => void;
+  onArchive: (leadId: string, toStudents: boolean) => void;
 }) {
   const [overSec, setOverSec] = useState<string | null>(null);
   const [openSec, setOpenSec] = useState<Record<string, boolean>>({});
@@ -428,7 +428,7 @@ function LostColumn({
                 e.preventDefault(); e.stopPropagation();
                 const id = e.dataTransfer.getData("text/plain") || dragging?.id;
                 setOverSec(null);
-                if (id && canArchive) onArchive(id);
+                if (id && canArchive) onArchive(id, sec.key === "students");
               }}
               onClick={() => count > 0 && setOpenSec({ [sec.key]: !opened })}
               onKeyDown={(e) => { if ((e.key === "Enter" || e.key === " ") && count > 0) { e.preventDefault(); setOpenSec({ [sec.key]: !opened }); } }}
@@ -459,7 +459,7 @@ function LostColumn({
 
               {/* matn */}
               <span className="relative min-w-0 flex-1">
-                <span className="font-hand block truncate text-[17px] font-bold leading-[1.3] text-slate-800 dark:text-slate-100">{sec.title}</span>
+                <span className="font-hand block text-[17px] font-bold leading-[1.25] text-slate-800 dark:text-slate-100">{sec.title}</span>
                 <span className="block truncate text-[11.5px] text-slate-500 dark:text-slate-400">
                   {count === 0
                     ? tr(locale, { uz: "Bo'sh — lidni shu yerga tashlang", ru: "Пусто — перетащите лид сюда", en: "Empty — drop a lead here", de: "Leer — Lead hierher ziehen" })
@@ -478,9 +478,9 @@ function LostColumn({
                     title={tr(locale, { uz: "O'quvchini arxivlash", ru: "Архивировать ученика", en: "Archive a student", de: "Schüler archivieren" })}
                     onClick={(e) => { e.stopPropagation(); setPickOpen((v) => !v); }}
                     onKeyDown={(e) => { if (e.key === "Enter" || e.key === " ") { e.preventDefault(); e.stopPropagation(); setPickOpen((v) => !v); } }}
-                    className="grid h-7 w-7 place-items-center rounded-lg text-violet-600 transition hover:bg-violet-100 dark:text-violet-300 dark:hover:bg-violet-500/15"
+                    className="grid h-6 w-6 place-items-center rounded-md text-violet-600 transition hover:bg-violet-100 dark:text-violet-300 dark:hover:bg-violet-500/15"
                   >
-                    <Icon name="plus" className="h-4 w-4" />
+                    <Icon name="plus" className="h-3.5 w-3.5" />
                   </span>
                 )}
                 <span className={cn(

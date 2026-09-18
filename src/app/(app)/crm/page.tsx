@@ -44,7 +44,7 @@ export default async function CrmPage() {
       select: {
         id: true, fullName: true, phone: true, email: true, telegram: true, studyFormat: true, source: true, stage: true,
         interestCourse: true, age: true, level: true, budget: true, note: true,
-        managerId: true, studentId: true, groupId: true, enrollEditCount: true, kanbanColumnId: true, createdAt: true, branchId: true, branchSlotId: true, archivedAt: true,
+        managerId: true, studentId: true, groupId: true, enrollEditCount: true, kanbanColumnId: true, createdAt: true, branchId: true, branchSlotId: true, archivedAt: true, archiveKind: true,
         testSet: true, testLevel: true, testPct: true, testPassed: true,
         manager: { select: { fullName: true } },
         branch: { select: { name: true } },
@@ -116,6 +116,7 @@ export default async function CrmPage() {
     branchName: l.branch?.name ?? null,
     branchSlotId: l.branchSlotId,
     archivedAt: l.archivedAt ? l.archivedAt.toISOString() : null,
+    archiveKind: l.archiveKind,
     testSet: l.testSet ?? parsedTests.get(l.id)?.set ?? null,
     testLevel: l.testLevel ?? parsedTests.get(l.id)?.level ?? null,
     testPct: l.testPct ?? parsedTests.get(l.id)?.pct ?? null,

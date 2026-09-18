@@ -6,7 +6,7 @@ import { cn } from "@/lib/cn";
 import { tr } from "@/lib/tr";
 import type { Locale } from "@/lib/constants";
 import { Icon } from "../../_components/Icon";
-import { COLUMNS, ONLINE_COL, isArchiveCol, branchIdOfCol, slotIdOfCol, branchColKey, visibleColumns, columnDef, columnOf, columnOfLead, customIdOfCol, groupIdOfCol, isBranchCol, isCustomCol, isGroupCol, type ArchivedStudent, type BranchColumn, type BranchMode, type BranchModeCfg, type CustomColumn, type GroupColumn, type GroupInfo, type VLead } from "../_lib/leadColumns";
+import { COLUMNS, ONLINE_COL, STUDENT_ARCHIVE_COL, isArchiveCol, branchIdOfCol, slotIdOfCol, branchColKey, visibleColumns, columnDef, columnOf, columnOfLead, customIdOfCol, groupIdOfCol, isBranchCol, isCustomCol, isGroupCol, type ArchivedStudent, type BranchColumn, type BranchMode, type BranchModeCfg, type CustomColumn, type GroupColumn, type GroupInfo, type VLead } from "../_lib/leadColumns";
 import { bulkLeadAction, deleteTestLead, dropLeadToBranch, enrollLeadToGroup, moveLeadStage, moveLeadToColumn, removeKanbanColumn, setLeadArchived, setLeadOnline, unpinKanbanGroup } from "../actions";
 import { type Analytics } from "./AnalyticsTiles";
 import FilterBar from "./FilterBar";
@@ -268,9 +268,10 @@ export default function LeadsWorkspace({ locale, initialLeads, managers, sources
     // Arxiv ustunlari (Lid / O'quvchi) — bosqich saqlanadi, lid ko'rinishdan chiqadi;
     // qaysi arxivda ko'rinishi lidning o'zidan (qabul qilinganmi) aniqlanadi
     if (isArchiveCol(colKey)) {
-      setLeads((prev) => prev.map((l) => (l.id === leadId ? { ...l, archivedAt: new Date().toISOString(), branchSlotId: null } : l))); // optimistik
+      const kind = colKey === STUDENT_ARCHIVE_COL ? "STUDENT" : "LEAD";
+      setLeads((prev) => prev.map((l) => (l.id === leadId ? { ...l, archivedAt: new Date().toISOString(), archiveKind: kind, branchSlotId: null } : l))); // optimistik
       startRefresh(async () => {
-        const r = await setLeadArchived(leadId, true);
+        const r = await setLeadArchived(leadId, true, kind);
         if (r.error) setLeads(initialLeads);
         router.refresh();
       });

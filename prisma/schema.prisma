@@ -223,6 +223,9 @@ model Lead {
   // Arxiv — lid Kanbandagi "Arxiv" ustuniga tashlangan (bosqichi saqlanadi,
   // faqat ko'rinishdan chiqadi; qaytarilsa o'z ustuniga qaytadi).
   archivedAt DateTime?
+  // Qaysi arxiv kartasiga tashlangan: "STUDENT" — O'quvchi arxivi, "LEAD" — Lid arxivi.
+  // null (eski yozuvlar) — qabul qilingan/o'quvchisi bor bo'lsa o'quvchi arxivi, aks holda lid arxivi.
+  archiveKind String?
   // Filial ustunidagi bo'sh xona/vaqt kartasi — lid shu xonaga tashlangan bo'lsa
   // (ROP kanbani). Karta o'chirilsa null bo'ladi, lid filial ustunida qoladi.
   branchSlotId String?

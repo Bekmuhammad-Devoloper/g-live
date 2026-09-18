@@ -849,7 +849,7 @@ export async function setLeadOnline(leadId: string, online: boolean): Promise<{ 
    Kanbandagi "Arxiv" ustuni — lid bosqichini YO'QOTMAYDI, faqat ko'rinishdan
    chiqadi (ro'yxatni tozalash uchun). Boshqa ustunga qaytarilsa arxivdan
    chiqadi va o'z bosqichi ustuniga qaytadi.                                */
-export async function setLeadArchived(leadId: string, archived: boolean): Promise<{ ok?: boolean; error?: string }> {
+export async function setLeadArchived(leadId: string, archived: boolean, kind: "STUDENT" | "LEAD" | null = null): Promise<{ ok?: boolean; error?: string }> {
   const s = await requireSession();
   if (!canWrite(s.role, MODULES.CRM)) return { error: "forbidden" };
 
@@ -861,6 +861,8 @@ export async function setLeadArchived(leadId: string, archived: boolean): Promis
     where: { id: leadId },
     data: {
       archivedAt: archived ? new Date() : null,
+      // Qaysi kartaga tashlangani eslab qolinadi (O'quvchi arxivi / Lid arxivi)
+      archiveKind: archived ? kind : null,
       // Arxivlanganda xonadagi joyi bo'shatiladi (sig'im hisobida turmasin); filial belgisi qoladi
       ...(archived ? { branchSlotId: null } : {}),
       activities: { create: { authorId: s.userId, type: "note", result: archived ? "Arxivga tashlandi" : "Arxivdan qaytarildi" } },
