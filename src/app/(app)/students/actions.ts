@@ -12,6 +12,8 @@ import { writeAudit } from "@/lib/audit";
 import { notify } from "@/lib/notify";
 import { lessonsAttendedThisMonth, MANDATORY_LESSON_THRESHOLD } from "@/lib/paymentPolicy";
 import { computeDebt } from "@/lib/debt";
+import { branchWhere } from "@/lib/branchScope";
+import type { GroupOpt } from "../_components/GroupMover";
 import { getSetting } from "@/lib/settings";
 import { RECEIPT_MODE_KEY, parseReceiptMode, isReceiptRequired } from "@/lib/receiptMode";
 
@@ -502,6 +504,87 @@ export async function studentBranchOptions(): Promise<BranchOpt[]> {
   const s = await requireSession();
   if (!ALLOWED.includes(s.role as never)) return [];
   return prisma.branch.findMany({ where: { isActive: true }, orderBy: { name: "asc" }, select: { id: true, name: true } });
+}
+
+/* ─── Guruhdan guruhga o'tkazish (tahrirlash oynasi) ──────────────── */
+
+const WD = ["", "Du", "Se", "Chor", "Pay", "Ju", "Sha", "Ya"];
+
+/** Faol filialdagi faol guruhlar — tanlov uchun (o'quvchilar soni, sig'im, jadval bilan) */
+export async function studentGroupOptions(): Promise<GroupOpt[]> {
+  const s = await requireSession();
+  if (!ALLOWED.includes(s.role as never)) return [];
+  const rows = await prisma.group.findMany({
+    where: { AND: [{ status: { in: ["ACTIVE", "PLANNED"] } }, branchWhere(s)] },
+    select: {
+      id: true, name: true, levelCode: true, capacity: true, weekdays: true, startTime: true, endTime: true,
+      program: { select: { name: true } }, teacher: { select: { fullName: true } },
+      _count: { select: { students: { where: { isActive: true } } } },
+    },
+    orderBy: { name: "asc" },
+  });
+  return rows.map((g) => {
+    const days = g.weekdays ? g.weekdays.split(",").map((d) => WD[Number(d)] ?? "").filter(Boolean).join(", ") : "";
+    const time = g.startTime ? `${g.startTime}${g.endTime ? "–" + g.endTime : ""}` : "";
+    return {
+      id: g.id, name: g.name, program: g.program?.name ?? null, level: g.levelCode, students: g._count.students, capacity: g.capacity,
+      schedule: [days, time].filter(Boolean).join(" · ") || null, teacher: g.teacher?.fullName ?? null,
+    };
+  });
+}
+
+/**
+ * O'quvchini bir guruhdan boshqasiga o'tkazish. Eski guruhdagi a'zolik tugatiladi
+ * (isActive=false, leftAt — to'lov hisobi shu oygacha), yangi guruhga yoziladi
+ * (avval bo'lgan bo'lsa — qayta faollashtiriladi). fromGroupId null — eski
+ * guruhdan chiqarilmaydi (qo'shimcha guruh). Daraja yangi guruhnikiga o'tadi.
+ */
+export async function moveStudentToGroup(
+  studentId: string,
+  fromGroupId: string | null,
+  toGroupId: string,
+): Promise<{ ok?: boolean; error?: string; groupName?: string }> {
+  const s = await requireSession();
+  if (!ALLOWED.includes(s.role as never)) return { error: "forbidden" };
+
+  const [student, to] = await Promise.all([
+    prisma.student.findUnique({ where: { id: studentId }, select: { id: true, fullName: true, eduStatus: true } }),
+    prisma.group.findUnique({ where: { id: toGroupId }, select: { id: true, name: true, levelCode: true, capacity: true, _count: { select: { students: { where: { isActive: true } } } } } }),
+  ]);
+  if (!student) return { error: "notfound" };
+  if (!to) return { error: "invalid" };
+  if (fromGroupId === toGroupId) return { ok: true, groupName: to.name };
+
+  const already = await prisma.groupStudent.findUnique({ where: { groupId_studentId: { groupId: toGroupId, studentId } }, select: { isActive: true } });
+  if (!already?.isActive && to._count.students >= to.capacity) return { error: "full" };
+
+  await prisma.$transaction(async (tx) => {
+    if (fromGroupId) {
+      await tx.groupStudent.updateMany({ where: { groupId: fromGroupId, studentId, isActive: true }, data: { isActive: false, leftAt: new Date() } });
+    }
+    await tx.groupStudent.upsert({
+      where: { groupId_studentId: { groupId: toGroupId, studentId } },
+      create: { groupId: toGroupId, studentId, isActive: true },
+      update: { isActive: true, leftAt: null, joinedAt: new Date() },
+    });
+    await tx.student.update({
+      where: { id: studentId },
+      data: { ...(to.levelCode ? { currentLevel: to.levelCode } : {}), ...(student.eduStatus === "WAITING" ? { eduStatus: "ACTIVE" } : {}) },
+    });
+  });
+
+  await writeAudit({
+    actorId: s.userId, action: "UPDATE", entityType: "GroupStudent", entityId: studentId,
+    oldValue: { groupId: fromGroupId }, newValue: { groupId: toGroupId },
+    reason: `Guruhdan guruhga o'tkazildi: ${student.fullName} → ${to.name}`,
+  });
+
+  revalidatePath("/students");
+  revalidatePath(`/students/${studentId}`);
+  revalidatePath("/groups");
+  if (fromGroupId) revalidatePath(`/groups/${fromGroupId}`);
+  revalidatePath(`/groups/${toGroupId}`);
+  return { ok: true, groupName: to.name };
 }
 
 export async function moveStudentToBranch(

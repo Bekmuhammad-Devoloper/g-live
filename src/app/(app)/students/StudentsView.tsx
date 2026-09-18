@@ -11,7 +11,8 @@ import { EDU_STATUS_LABELS, EDU_STATUSES, label, formatMoney, type Locale } from
 import { tr } from "@/lib/tr";
 import type { ReceiptMode } from "@/lib/receiptMode";
 import { quickCreateStudent, type QuickState } from "../actions";
-import { updateStudent, bulkArchiveStudents, bulkAssignGroup, bulkNotifyStudents, setStudentImage, archiveStudent, restoreStudent, deleteStudentPermanently, studentBranchOptions, moveStudentToBranch } from "./actions";
+import { updateStudent, bulkArchiveStudents, bulkAssignGroup, bulkNotifyStudents, setStudentImage, archiveStudent, restoreStudent, deleteStudentPermanently, studentBranchOptions, moveStudentToBranch, studentGroupOptions, moveStudentToGroup } from "./actions";
+import GroupMover from "../_components/GroupMover";
 import { Icon } from "../_components/Icon";
 import BranchMover from "../_components/BranchMover";
 import PaymentPanel from "./PaymentPanel";
@@ -1219,6 +1220,16 @@ export function EditModal({ student, locale, onClose, onDone }: { student: VStud
           {error && (
             <p className="rounded-lg bg-rose-50 px-3 py-2 text-sm text-rose-700 dark:bg-rose-500/10 dark:text-rose-400">{error}</p>
           )}
+
+          {/* Guruhdan guruhga o'tkazish */}
+          <div className="mt-2 border-t border-slate-100 pt-3.5 dark:border-white/10">
+            <GroupMover
+              locale={locale}
+              currentGroups={student.groups}
+              loadGroups={studentGroupOptions}
+              onMove={(fromGroupId, toGroupId) => moveStudentToGroup(student.id, fromGroupId, toGroupId)}
+            />
+          </div>
 
           {/* Boshqa filialga ko'chirish */}
           <div className="mt-2 border-t border-slate-100 pt-3.5 dark:border-white/10">
