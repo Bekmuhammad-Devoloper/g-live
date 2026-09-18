@@ -45,6 +45,8 @@ export default async function StudentsPage() {
     include: {
       branch: { select: { name: true } },
       enrollments: {
+        // Faqat faol a'zoliklar — guruhdan chiqarilgan (leftAt) guruhlar ro'yxatda ko'rinmasin
+        where: { isActive: true },
         include: {
           group: {
             include: {
