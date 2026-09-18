@@ -53,11 +53,8 @@ export default memo(function LeadCard({ lead, locale, selected, onOpen, onOpenFu
         selected ? "border-brand-500 ring-2 ring-brand-500/40" : "border-slate-200 dark:border-white/[0.07]"
       )}
     >
-      {/* Faoliyat soni + o'chirish — burchakda, ism qatoridan joy olmasin */}
+      {/* O'chirish — burchakda (faoliyat soni pastda, sana yonida — ismni to'smasin) */}
       <div className="absolute right-2 top-2 flex items-center gap-1">
-        {lead.activityCount > 0 && (
-          <span className="rounded-full bg-slate-100 px-1.5 py-0.5 text-[10px] font-semibold text-slate-500 dark:bg-slate-700 dark:text-slate-300">{lead.activityCount}</span>
-        )}
         {onDelete && col.key === "test" && (
           // Faqat daraja testi lidlari; sichqoncha ustiga kelganda ko'rinadi, sensorli ekranda doim (xira)
           <button
@@ -73,7 +70,7 @@ export default memo(function LeadCard({ lead, locale, selected, onOpen, onOpenFu
       </div>
 
       {/* Avatar + ism — ism kesilmaydi ("…" yo'q), kerak bo'lsa keyingi qatorga o'raladi */}
-      <div className={cn("flex items-start gap-3", onDelete && col.key === "test" ? "pr-12" : "pr-5")} title={lead.fullName}>
+      <div className={cn("flex items-start gap-3", onDelete && col.key === "test" ? "pr-7" : "")} title={lead.fullName}>
         <div
           className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full bg-slate-100 dark:bg-slate-700/40"
           style={{ boxShadow: `inset 0 0 0 2px ${color}` }}
@@ -163,9 +160,19 @@ export default memo(function LeadCard({ lead, locale, selected, onOpen, onOpenFu
         </span>
       </div>
 
-      {/* Sana + ustun tegi */}
+      {/* Sana + faoliyat soni + ustun tegi */}
       <div className="mt-2 flex items-center justify-between">
-        <span className="text-[10px] text-slate-400">{fmtDate(lead.createdAt)}</span>
+        <span className="flex items-center gap-2 text-[10px] text-slate-400">
+          {fmtDate(lead.createdAt)}
+          {lead.activityCount > 0 && (
+            <span
+              className="inline-flex items-center gap-1 rounded-md bg-slate-100 px-1.5 py-0.5 font-semibold text-slate-500 dark:bg-slate-700 dark:text-slate-300"
+              title={tr(locale, { uz: "Harakatlar soni", ru: "Количество действий", en: "Activity count", de: "Anzahl Aktionen" })}
+            >
+              <Icon name="history" className="h-3 w-3" /> {lead.activityCount}
+            </span>
+          )}
+        </span>
         <span className="rounded px-1.5 py-0.5 text-[10px] font-medium" style={{ color, background: `${color}14` }}>{tr(locale, col.label)}</span>
       </div>
     </div>
