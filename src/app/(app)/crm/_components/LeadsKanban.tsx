@@ -680,6 +680,8 @@ function TestColumn({
   onDelete?: (id: string) => void;
 }) {
   const NONE = "__none__";
+  // Tanlangan daraja — chip bosilsa faqat o'sha darajadagilar ko'rinadi (yana bosilsa — hammasi)
+  const [active, setActive] = useState<string | null>(null);
   // Daraja (A1/A2/B1/B2) → lidlar (ustundagi tartib saqlanadi)
   const groups = new Map<string, VLead[]>();
   for (const l of items) {
@@ -687,9 +689,10 @@ function TestColumn({
     (groups.get(k) ?? groups.set(k, []).get(k)!).push(l);
   }
   const keys = [...groups.keys()].sort((a, b) => (a === NONE ? 1 : b === NONE ? -1 : levelRank(a) - levelRank(b)));
-  // Yassi ro'yxat (to'plam tartibida) — sahifalash shu bo'yicha
+  // Yassi ro'yxat (daraja tartibida; tanlangan daraja bo'lsa — faqat u) — sahifalash shu bo'yicha
+  const activeKey = active && groups.has(active) ? active : null;
   const flat: { set: string; lead: VLead }[] = [];
-  for (const k of keys) for (const l of groups.get(k)!) flat.push({ set: k, lead: l });
+  for (const k of keys) if (!activeKey || k === activeKey) for (const l of groups.get(k)!) flat.push({ set: k, lead: l });
   const slice = pageSlice(flat, page);
 
   const stats = (k: string) => {
@@ -701,23 +704,34 @@ function TestColumn({
 
   return (
     <>
-      {/* To'plamlar xulosasi — chiplar: bosilsa o'sha bo'lim sahifasiga o'tadi */}
-      <div className="flex flex-wrap gap-1">
+      {/* Daraja filtri — chiplar: bosilsa faqat o'sha darajadagilar, yana bosilsa hammasi */}
+      <div className="flex flex-wrap items-center gap-1">
+        <button
+          type="button"
+          onClick={() => { setActive(null); onPage(0); }}
+          className={cn(
+            "inline-flex items-center gap-1 rounded-md px-1.5 py-0.5 text-[11px] font-bold tabular-nums transition",
+            !activeKey ? "bg-slate-700 text-white dark:bg-slate-200 dark:text-slate-900" : "bg-slate-100 text-slate-500 hover:bg-slate-200 dark:bg-white/[0.06] dark:text-slate-400",
+          )}
+        >
+          {tr(locale, { uz: "Hammasi", ru: "Все", en: "All", de: "Alle" })} <span className="opacity-70">{items.length}</span>
+        </button>
         {keys.map((k) => {
           const st = stats(k);
-          const firstIdx = flat.findIndex((x) => x.set === k);
-          const targetPage = Math.floor(firstIdx / PAGE);
           const none = k === NONE;
+          const on = activeKey === k;
           return (
             <button
               key={k}
               type="button"
-              onClick={() => onPage(targetPage)}
+              onClick={() => { setActive(on ? null : k); onPage(0); }}
               className={cn(
-                "inline-flex items-center gap-1 rounded-md px-1.5 py-0.5 text-[11px] font-bold tabular-nums transition",
-                none ? "bg-slate-100 text-slate-500 hover:bg-slate-200 dark:bg-white/[0.06] dark:text-slate-400" : "text-white hover:opacity-90",
+                "inline-flex items-center gap-1 rounded-md border px-1.5 py-0.5 text-[11px] font-bold tabular-nums transition",
+                none
+                  ? (on ? "border-slate-500 bg-slate-500 text-white" : "border-slate-200 bg-slate-100 text-slate-500 hover:bg-slate-200 dark:border-white/10 dark:bg-white/[0.06] dark:text-slate-400")
+                  : (on ? "text-white" : "bg-white hover:opacity-80 dark:bg-transparent"),
               )}
-              style={none ? undefined : { background: color }}
+              style={none ? undefined : { borderColor: color, background: on ? color : undefined, color: on ? "#fff" : color }}
               title={none ? tr(locale, { uz: "Test topshirilmagan", ru: "Тест не сдан", en: "No test yet", de: "Kein Test" }) : `${k}: ${st.passed} ✓ · ${st.failed} ✗`}
             >
               {none ? "—" : k} <span className="opacity-80">{st.total}</span>
