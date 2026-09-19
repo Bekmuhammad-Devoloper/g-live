@@ -21,6 +21,7 @@ const weekdays = (locale: Locale): { v: number; label: string }[] => [
 export { GROUP_COLORS } from "./groupColor";
 import { GROUP_COLORS } from "./groupColor";
 import CapacityStepper from "../_components/CapacityStepper";
+import MoneyInput from "../_components/MoneyInput";
 
 export default function NewGroupForm({
   locale,
@@ -258,7 +259,7 @@ export default function NewGroupForm({
           {/* Oylik to'lov — bo'sh qoldirilsa kurs narxi ishlatiladi */}
           <div>
             <label className={label}>{tr(locale, { uz: "Oylik to'lov (so'm)", ru: "Ежемесячная оплата (сум)", en: "Monthly fee (UZS)", de: "Monatliche Zahlung (UZS)" })}</label>
-            <input name="monthlyFee" type="number" min="0" step="10000" placeholder={tr(locale, { uz: "kurs narxi", ru: "цена курса", en: "course price", de: "Kurspreis" })} className={input} />
+            <MoneyInput name="monthlyFee" placeholder={tr(locale, { uz: "kurs narxi", ru: "цена курса", en: "course price", de: "Kurspreis" })} className={input} />
             <p className="mt-1 text-[11px] text-slate-400">
               {tr(locale, {
                 uz: "O'quvchi qo'shilgan oydan boshlab har oy shu summa qarzga hisoblanadi. Bo'sh qoldirilsa kurs narxi olinadi.",

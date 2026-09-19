@@ -12,6 +12,7 @@ import { fmtUzPhoneInput } from "@/lib/phone";
 import { Icon } from "../../_components/Icon";
 import { GROUP_COLORS } from "../NewGroupForm";
 import CapacityStepper from "../../_components/CapacityStepper";
+import MoneyInput from "../../_components/MoneyInput";
 
 const input = "w-full rounded-lg border border-slate-300 px-3 py-2 text-sm outline-none focus:border-brand-500 focus:ring-2 focus:ring-brand-100";
 const btn = "rounded-lg bg-brand-600 px-3 py-2 text-sm font-semibold text-white hover:bg-brand-700 disabled:opacity-60";
@@ -464,7 +465,7 @@ function EditGroupForm({
           {/* Oylik to'lov — bo'sh qoldirilsa kurs narxi ishlatiladi */}
           <div>
             <label className={fLabel}>{tr(locale, { uz: "Oylik to'lov (so'm)", ru: "Ежемесячная оплата (сум)", en: "Monthly fee (UZS)", de: "Monatliche Gebühr (UZS)" })}</label>
-            <input name="monthlyFee" type="number" min="0" step="10000" defaultValue={group.monthlyFee ?? ""} placeholder={tr(locale, { uz: "kurs narxi", ru: "цена курса", en: "course price", de: "Kurspreis" })} className={input} />
+            <MoneyInput name="monthlyFee" defaultValue={group.monthlyFee ?? ""} placeholder={tr(locale, { uz: "kurs narxi", ru: "цена курса", en: "course price", de: "Kurspreis" })} className={input} />
             <p className="mt-1 text-[11px] text-slate-400">
               {tr(locale, {
                 uz: "O'quvchi qo'shilgan oydan boshlab har oy qarzga hisoblanadi.",

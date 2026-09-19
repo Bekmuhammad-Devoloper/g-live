@@ -7,6 +7,7 @@ import { formatMoney, type Locale } from "@/lib/constants";
 import { tr } from "@/lib/tr";
 import { Icon } from "../../_components/Icon";
 import { createWithdrawal, cancelWithdrawal, type WdState } from "./actions";
+import MoneyInput from "../../_components/MoneyInput";
 
 export interface VWithdrawal {
   id: string;
@@ -251,7 +252,7 @@ function NewWithdrawal({ students, locale }: { students: { id: string; fullName:
             </div>
             <div>
               <label className="mb-1 block text-xs font-medium text-slate-600 dark:text-slate-300">{tr(locale, { uz: "Summa (so'm)", ru: "Сумма (сум)", en: "Amount (soʻm)", de: "Betrag (UZS)" })} <span className="text-rose-500">*</span></label>
-              <input name="amount" type="number" min="1" step="10000" required className={fld} />
+              <MoneyInput name="amount" required className={fld} />
             </div>
             <div>
               <label className="mb-1 block text-xs font-medium text-slate-600 dark:text-slate-300">{tr(locale, { uz: "Izoh", ru: "Примечание", en: "Note", de: "Notiz" })}</label>

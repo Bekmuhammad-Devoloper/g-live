@@ -6,6 +6,7 @@ import { payOnline, type PayState } from "./actions";
 import type { Locale } from "@/lib/constants";
 import { getT } from "@/lib/i18n";
 import { tr } from "@/lib/tr";
+import MoneyInput from "../_components/MoneyInput";
 
 const ONLINE_METHODS = ["CLICK", "PAYME", "UZUM"];
 
@@ -57,7 +58,7 @@ export default function OnlinePaymentForm({
             <div className="grid grid-cols-2 gap-3">
               <div>
                 <label className="mb-1 block text-xs font-medium text-slate-600">{t("common.amount")} ({tr(locale, { uz: "so'm", ru: "сум", en: "soʻm", de: "UZS" })}) <span className="text-red-500">*</span></label>
-                <input name="amount" type="number" min="1" step="10000" required className={input} />
+                <MoneyInput name="amount" required className={input} />
               </div>
               <div>
                 <label className="mb-1 block text-xs font-medium text-slate-600">{t("pay.method")}</label>

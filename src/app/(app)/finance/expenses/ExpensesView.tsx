@@ -8,6 +8,7 @@ import { formatMoney, type Locale } from "@/lib/constants";
 import { tr } from "@/lib/tr";
 import { Icon } from "../../_components/Icon";
 import { createExpense, addExpenseCategory, deleteExpense, type ExState } from "./actions";
+import MoneyInput from "../../_components/MoneyInput";
 
 export interface VExpense {
   id: string;
@@ -312,7 +313,7 @@ function NewExpense({ categories, today, locale }: { categories: { id: string; n
           </div>
         </Lbl>
         <Lbl label={tr(locale, { uz: "Oluvchi", ru: "Получатель", en: "Recipient", de: "Empfänger" })}><input name="recipient" className={fld} /></Lbl>
-        <Lbl label={tr(locale, { uz: "Sum", ru: "Сумма", en: "Amount", de: "Betrag" })} req><input name="amount" type="number" min="1" step="1000" required className={fld} /></Lbl>
+        <Lbl label={tr(locale, { uz: "Sum", ru: "Сумма", en: "Amount", de: "Betrag" })} req><MoneyInput name="amount" required className={fld} /></Lbl>
 
         <div>
           <label className="mb-2 block text-sm font-medium text-slate-600 dark:text-slate-300">{tr(locale, { uz: "To'lov turi", ru: "Тип платежа", en: "Payment type", de: "Zahlungsart" })} <span className="text-rose-500">*</span></label>

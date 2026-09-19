@@ -9,6 +9,7 @@ import { formatMoney, type Locale } from "@/lib/constants";
 import { tr } from "@/lib/tr";
 import { Icon } from "../../_components/Icon";
 import { addSalaryRule, deleteSalaryRule, calculateSalaries, type RuleState, type CalcState } from "./actions";
+import MoneyInput from "../../_components/MoneyInput";
 
 export interface VRule {
   id: string;
@@ -123,7 +124,7 @@ function DefaultRuleForm({ locale }: { locale: Locale }) {
       <div className="min-w-[240px] flex-1">
         <label className="mb-1.5 block text-sm font-medium text-slate-500 dark:text-slate-400">{tr(locale, { uz: "Oylik miqdori", ru: "Сумма оклада", en: "Salary amount", de: "Gehaltsbetrag" })}</label>
         <div className="flex gap-2">
-          <input name="amount" type="number" min="1" required placeholder="0" className={inp} />
+          <MoneyInput name="amount" required placeholder="0" className={inp} />
           <select name="amountType" defaultValue="FIXED" className={typeSel}>
             <option value="FIXED">{tr(locale, { uz: "O'zgarmas", ru: "Фиксированный", en: "Fixed", de: "Fest" })}</option>
             <option value="PERCENT">{tr(locale, { uz: "Foiz", ru: "Процент", en: "Percent", de: "Prozent" })}</option>
@@ -181,7 +182,7 @@ function IndividualRuleForm({ teachers, programs, groups, students, locale }: { 
       <div className="min-w-[220px]">
         <label className="mb-1.5 block text-sm font-medium text-slate-500 dark:text-slate-400">{tr(locale, { uz: "Oylik miqdori", ru: "Сумма оклада", en: "Salary amount", de: "Gehaltsbetrag" })}</label>
         <div className="flex gap-2">
-          <input name="amount" type="number" min="1" required placeholder="0" className={inp} />
+          <MoneyInput name="amount" required placeholder="0" className={inp} />
           <select name="amountType" defaultValue="FIXED" className={typeSel}>
             <option value="FIXED">{tr(locale, { uz: "O'zgarmas", ru: "Фиксированный", en: "Fixed", de: "Fest" })}</option>
             <option value="PERCENT">{tr(locale, { uz: "Foiz", ru: "Процент", en: "Percent", de: "Prozent" })}</option>

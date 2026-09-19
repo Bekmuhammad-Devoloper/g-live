@@ -8,6 +8,7 @@ import { tr } from "@/lib/tr";
 import { isReceiptRequired, type ReceiptMode } from "@/lib/receiptMode";
 import { getStudentPayments, acceptPayment, addStudentDebt, updatePaymentRecord, deletePaymentRecord, type StudentPayments, type MonthPay, type PayRow, type ReceiptData } from "./actions";
 import { Icon } from "../_components/Icon";
+import MoneyInput from "../_components/MoneyInput";
 
 // O'quvchining TO'LOV HOLATI paneli — bitta komponent, ikki joyda:
 //   • ro'yxatdagi tezkor oyna (StudentDetailModal)
@@ -216,7 +217,7 @@ export function AddDebtForm({ studentId, locale, onCancel, onDone }: {
       <div className="grid grid-cols-2 gap-2">
         <div>
           <label className="mb-0.5 block text-[10px] font-semibold text-slate-500">{L("Summa (so'm)", "Сумма (сум)", "Amount (UZS)")} *</label>
-          <input value={amount} onChange={(e) => setAmount(e.target.value.replace(/[^0-9]/g, ""))} inputMode="numeric" placeholder="0" className={inp} />
+          <MoneyInput value={amount} onChange={setAmount} placeholder="0" className={inp} />
         </div>
         <div>
           <label className="mb-0.5 block text-[10px] font-semibold text-slate-500">{L("Izoh", "Комментарий", "Note")}</label>
@@ -298,7 +299,7 @@ export function PaymentRow({ p, locale, canEdit, onChanged }: {
       <div className="grid grid-cols-2 gap-2">
         <div>
           <label className="mb-0.5 block text-[10px] font-semibold text-slate-500">{L("Summa", "Сумма", "Amount")}</label>
-          <input value={amount} onChange={(e) => setAmount(e.target.value.replace(/\D/g, ""))} inputMode="numeric" className={inp} />
+          <MoneyInput value={amount} onChange={setAmount} className={inp} />
         </div>
         <div>
           <label className="mb-0.5 block text-[10px] font-semibold text-slate-500">{L("Usul", "Способ", "Method")}</label>

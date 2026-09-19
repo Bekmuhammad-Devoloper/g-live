@@ -14,6 +14,7 @@ import { Icon } from "./Icon";
 import UserAvatar from "./UserAvatar";
 import ThemeToggle from "./ThemeToggle";
 import CurrencyRates from "./CurrencyRates";
+import MoneyInput from "./MoneyInput";
 
 export interface TopbarProps {
   locale: Locale;
@@ -564,7 +565,7 @@ function QuickPaymentModal({
         <div className="grid grid-cols-2 gap-3">
           <div>
             <label className="mb-1 block text-xs font-semibold text-slate-600">{t("common.amount")} <span className="text-red-500">*</span></label>
-            <input name="amount" type="number" min="1" step="10000" required className="input" />
+            <MoneyInput name="amount" required className="input" />
           </div>
           <div>
             <label className="mb-1 block text-xs font-semibold text-slate-600">{t("pay.method")} <span className="text-red-500">*</span></label>
