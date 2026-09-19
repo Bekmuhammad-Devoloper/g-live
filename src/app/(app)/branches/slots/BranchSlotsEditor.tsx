@@ -6,6 +6,7 @@ import { tr } from "@/lib/tr";
 import type { Locale } from "@/lib/constants";
 import { Icon } from "../../_components/Icon";
 import { addBranchSlot, listBranchRooms, removeBranchSlot, type VSlot } from "./actions";
+import CapacityStepper from "../../_components/CapacityStepper";
 
 /**
  * Filialdagi bo'sh xona / bo'sh vaqtlar ro'yxati va qo'shish formasi.
@@ -45,7 +46,8 @@ export default function BranchSlotsEditor({ branchId, initial, canEdit, locale, 
   const [adding, setAdding] = useState(false);
   const [rooms, setRooms] = useState<{ name: string; capacity: number }[]>([]);
   const [room, setRoom] = useState("");
-  const [capacity, setCapacity] = useState(""); // sig'im — xona tanlansa Xonalar bo'limidan to'ladi
+  const [capacity, setCapacity] = useState(""); // sig'im — xona tanlansa Xonalar bo'limidan to'ladi (o'zgartirsa bo'ladi)
+  const [capTouched, setCapTouched] = useState(false);
   const [openSlot, setOpenSlot] = useState<string | null>(null); // ichidagi lidlar ochilgan karta
   const [days, setDays] = useState<string[]>([]);
   const [start, setStart] = useState("18:00");
@@ -212,7 +214,7 @@ export default function BranchSlotsEditor({ branchId, initial, canEdit, locale, 
             {rooms.length > 0 && (
               <select
                 value={rooms.some((r) => r.name === room) ? room : ""}
-                onChange={(e) => { setRoom(e.target.value); const r = rooms.find((x) => x.name === e.target.value); if (r && r.capacity > 0) setCapacity(String(r.capacity)); }}
+                onChange={(e) => { setRoom(e.target.value); const r = rooms.find((x) => x.name === e.target.value); if (r && r.capacity > 0 && !capTouched) setCapacity(String(r.capacity)); }}
                 className={cn(inp, "mb-1")}
               >
                 <option value="">{L("— xonani tanlang —", "— выберите аудиторию —", "— select a room —", "— Raum wählen —")}</option>
@@ -243,15 +245,21 @@ export default function BranchSlotsEditor({ branchId, initial, canEdit, locale, 
               <input type="time" value={end} onChange={(e) => setEnd(e.target.value)} className={inp} />
             </div>
           </div>
-          <div className="grid grid-cols-[1fr_88px] gap-2">
-            <div>
-              <label className="mb-0.5 block text-[10px] font-semibold text-slate-500">{L("Izoh", "Заметка", "Note", "Notiz")}</label>
-              <input value={note} onChange={(e) => setNote(e.target.value)} placeholder={L("A1 yangi guruh", "A1 новая группа", "A1 new group", "A1 neue Gruppe")} className={inp} />
-            </div>
-            <div>
-              <label className="mb-0.5 block text-[10px] font-semibold text-slate-500">{L("Sig'im", "Мест", "Seats", "Plätze")}</label>
-              <input value={capacity} onChange={(e) => setCapacity(e.target.value.replace(/\D/g, "").slice(0, 3))} inputMode="numeric" placeholder="8" className={inp} />
-            </div>
+          <div>
+            <label className="mb-0.5 block text-[10px] font-semibold text-slate-500">{L("Izoh", "Заметка", "Note", "Notiz")}</label>
+            <input value={note} onChange={(e) => setNote(e.target.value)} placeholder={L("A1 yangi guruh", "A1 новая группа", "A1 new group", "A1 neue Gruppe")} className={inp} />
+          </div>
+          <div>
+            <label className="mb-0.5 block text-[10px] font-semibold text-slate-500">
+              {L("Sig'im", "Мест", "Seats", "Plätze")} <span className="font-normal text-slate-400">— {L("guruh yig'ish uchun, xonadan ko'p bo'lishi mumkin", "для набора, может быть больше кабинета", "for recruiting, may exceed the room", "zum Sammeln, darf den Raum übersteigen")}</span>
+            </label>
+            <CapacityStepper
+              value={capacity ? Number(capacity) : 0}
+              min={0}
+              onChange={(n) => { setCapacity(n > 0 ? String(n) : ""); setCapTouched(true); }}
+              roomCapacity={rooms.find((x) => x.name === room)?.capacity ?? null}
+              locale={locale}
+            />
           </div>
           {err && <p className="text-[11px] text-rose-600">{err}</p>}
           <div className="flex justify-end gap-1.5">

@@ -45,7 +45,7 @@ export async function updateGroup(_prev: FormState, formData: FormData): Promise
   const status = (GROUP_STATUSES as readonly string[]).includes(rawStatus) ? rawStatus : existing.status;
 
   const capacityRaw = parseInt(String(formData.get("capacity") ?? ""), 10);
-  const capacity = Number.isFinite(capacityRaw) && capacityRaw > 0 && capacityRaw <= 100 ? capacityRaw : existing.capacity;
+  const capacity = Number.isFinite(capacityRaw) && capacityRaw > 0 && capacityRaw <= 200 ? capacityRaw : existing.capacity;
 
   const startTimeRaw = String(formData.get("startTime") ?? "");
   const endTimeRaw = String(formData.get("endTime") ?? "");

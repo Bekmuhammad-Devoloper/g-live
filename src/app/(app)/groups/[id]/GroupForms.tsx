@@ -11,6 +11,7 @@ import { tr } from "@/lib/tr";
 import { fmtUzPhoneInput } from "@/lib/phone";
 import { Icon } from "../../_components/Icon";
 import { GROUP_COLORS } from "../NewGroupForm";
+import CapacityStepper from "../../_components/CapacityStepper";
 
 const input = "w-full rounded-lg border border-slate-300 px-3 py-2 text-sm outline-none focus:border-brand-500 focus:ring-2 focus:ring-brand-100";
 const btn = "rounded-lg bg-brand-600 px-3 py-2 text-sm font-semibold text-white hover:bg-brand-700 disabled:opacity-60";
@@ -304,6 +305,7 @@ function EditGroupForm({
   const router = useRouter();
   const [format, setFormat] = useState<string>(group.format);
   const [color, setColor] = useState<string>(group.color ?? GROUP_COLORS[0]);
+  const [capacity, setCapacity] = useState<number>(group.capacity);
   const [days, setDays] = useState<number[]>(
     (group.weekdays ?? "").split(",").map((x) => parseInt(x, 10)).filter((n) => n >= 1 && n <= 7)
   );
@@ -445,7 +447,7 @@ function EditGroupForm({
             </div>
             <div>
               <label className={fLabel}>{tr(locale, { uz: "Sig'im", ru: "Вместимость", en: "Capacity", de: "Kapazität" })}</label>
-              <input name="capacity" type="number" min="1" max="100" defaultValue={group.capacity} className={input} />
+              <CapacityStepper name="capacity" value={capacity} onChange={setCapacity} locale={locale} />
             </div>
           </div>
           <div className="grid grid-cols-2 gap-3">

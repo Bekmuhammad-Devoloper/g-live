@@ -20,6 +20,7 @@ const weekdays = (locale: Locale): { v: number; label: string }[] => [
 
 export { GROUP_COLORS } from "./groupColor";
 import { GROUP_COLORS } from "./groupColor";
+import CapacityStepper from "../_components/CapacityStepper";
 
 export default function NewGroupForm({
   locale,
@@ -42,6 +43,8 @@ export default function NewGroupForm({
   const [format, setFormat] = useState<string>("OFFLINE");
   const [room, setRoom] = useState("");
   const [capacity, setCapacity] = useState(12);
+  // Foydalanuvchi sig'imni o'zi o'zgartirgan bo'lsa — xona almashganda ustidan yozmaymiz
+  const [capTouched, setCapTouched] = useState(false);
   // Oyiga darslar soni — kurs tanlanganda kursnikidan to'ladi, shu formada o'zgartirsa bo'ladi
   const [lessonsPerMonth, setLessonsPerMonth] = useState("12");
   const [color, setColor] = useState(GROUP_COLORS[0]);
@@ -205,7 +208,7 @@ export default function NewGroupForm({
                 onChange={(e) => {
                   setRoom(e.target.value);
                   const r = rooms.find((x) => x.name === e.target.value);
-                  if (r && r.capacity > 0) setCapacity(r.capacity);
+                  if (r && r.capacity > 0 && !capTouched) setCapacity(r.capacity);
                 }}
                 className={input}
               >
@@ -214,8 +217,17 @@ export default function NewGroupForm({
               </select>
             </div>
             <div>
-              <label className={label}>{tr(locale, { uz: "Sig'im", ru: "Вместимость", en: "Capacity", de: "Kapazität" })} {room && <span className="text-[10px] font-normal text-emerald-500">({tr(locale, { uz: "avto", ru: "авто", en: "auto", de: "auto" })})</span>}</label>
-              <input name="capacity" type="number" min="1" max="100" value={capacity} onChange={(e) => setCapacity(Number(e.target.value) || 1)} className={input} />
+              <label className={label}>
+                {tr(locale, { uz: "Sig'im", ru: "Вместимость", en: "Capacity", de: "Kapazität" })}{" "}
+                <span className="text-[10px] font-normal text-slate-400">{tr(locale, { uz: "o'zingiz belgilaysiz", ru: "задаёте сами", en: "you decide", de: "frei wählbar" })}</span>
+              </label>
+              <CapacityStepper
+                name="capacity"
+                value={capacity}
+                onChange={(n) => { setCapacity(n); setCapTouched(true); }}
+                roomCapacity={rooms.find((x) => x.name === room)?.capacity ?? null}
+                locale={locale}
+              />
             </div>
           </div>
           <div className="grid grid-cols-2 gap-3">

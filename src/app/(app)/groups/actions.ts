@@ -34,7 +34,7 @@ const groupSchema = z.object({
   format: z.enum(GROUP_FORMATS).optional(),
   onlineLink: z.string().optional(),
   room: z.string().optional(),
-  capacity: z.coerce.number().int().positive().max(100),
+  capacity: z.coerce.number().int().positive().max(200),
   startDate: z.string().optional(),
   endDate: z.string().optional(),
   weekdays: z.string().optional(), // "1,3,5"
