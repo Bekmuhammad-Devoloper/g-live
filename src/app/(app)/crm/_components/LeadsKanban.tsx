@@ -285,6 +285,21 @@ export default function LeadsKanban({
                   archivedStudents={archivedStudents}
                   onArchive={(leadId, toStudents) => { onDropToColumn(toStudents ? STUDENT_ARCHIVE_COL : ARCHIVE_COL, leadId); setDragId(null); setOverCol(null); }}
                 />
+              ) : col.key === "test" && items.length > 0 ? (
+                // "Daraja testi" — yechgan test to'plamiga qarab (A1.1, A2.1 ...) alohida bo'limlarda
+                <TestColumn
+                  items={items}
+                  locale={locale}
+                  color={col.color}
+                  selected={selected}
+                  page={page}
+                  onPage={(n) => setPage(col.key, n)}
+                  onOpen={onOpen}
+                  onOpenFull={onOpenFull}
+                  onDragStart={onDragStart}
+                  onDragEnd={onDragEnd}
+                  onDelete={onDelete}
+                />
               ) : items.length === 0 ? (
                 <div className="rounded-xl border border-dashed border-slate-200 py-8 text-center dark:border-white/[0.08]">
                   <div className="text-2xl opacity-30">{col.groupId ? "🎯" : col.branch ? "🏫" : col.customId ? "🗂️" : "📭"}</div>
@@ -625,6 +640,121 @@ function StudentArchivePicker({ locale, onPicked, onClose }: { locale: Locale; o
         )}
       </div>
     </div>
+  );
+}
+
+// ───────────────── "Daraja testi" ustuni ─────────────────
+
+/** "A1.1" → [1, 1, 1] kabi — to'plamlarni tabiiy tartibda saralash uchun */
+function setRank(set: string): number {
+  const m = /^([ABC])([12])(?:\.(\d+))?/i.exec(set.trim());
+  if (!m) return 999;
+  const lvl = { A: 0, B: 10, C: 20 }[m[1].toUpperCase() as "A" | "B" | "C"] ?? 30;
+  return lvl + Number(m[2]) * 3 + (Number(m[3] ?? 0) / 10);
+}
+
+/**
+ * Daraja testi ustuni: lidlar yechgan test to'plamiga qarab bo'limlarga ajratilgan
+ * (A1.1 · A1.2 · A2.1 …), oxirida "Test topshirilmagan". Har bo'limda soni va
+ * o'tgan/o'tmaganlar hisobi. Sahifalash butun ustun bo'yicha — bo'lim sarlavhasi
+ * sahifa ichida to'plam o'zgarganda chiziladi.
+ */
+function TestColumn({
+  items, locale, color, selected, page, onPage, onOpen, onOpenFull, onDragStart, onDragEnd, onDelete,
+}: {
+  items: VLead[];
+  locale: Locale;
+  color: string;
+  selected: Set<string>;
+  page: number;
+  onPage: (n: number) => void;
+  onOpen: (id: string, e: React.MouseEvent) => void;
+  onOpenFull: (id: string) => void;
+  onDragStart: (id: string, e: React.DragEvent) => void;
+  onDragEnd: () => void;
+  onDelete?: (id: string) => void;
+}) {
+  const NONE = "__none__";
+  // To'plam → lidlar (ustundagi tartib saqlanadi)
+  const groups = new Map<string, VLead[]>();
+  for (const l of items) {
+    const k = l.testSet?.trim() || NONE;
+    (groups.get(k) ?? groups.set(k, []).get(k)!).push(l);
+  }
+  const keys = [...groups.keys()].sort((a, b) => (a === NONE ? 1 : b === NONE ? -1 : setRank(a) - setRank(b) || a.localeCompare(b)));
+  // Yassi ro'yxat (to'plam tartibida) — sahifalash shu bo'yicha
+  const flat: { set: string; lead: VLead }[] = [];
+  for (const k of keys) for (const l of groups.get(k)!) flat.push({ set: k, lead: l });
+  const slice = pageSlice(flat, page);
+
+  const stats = (k: string) => {
+    const rows = groups.get(k)!;
+    const passed = rows.filter((l) => l.testPassed === true).length;
+    const failed = rows.filter((l) => l.testPassed === false).length;
+    return { total: rows.length, passed, failed };
+  };
+
+  return (
+    <>
+      {/* To'plamlar xulosasi — chiplar: bosilsa o'sha bo'lim sahifasiga o'tadi */}
+      <div className="flex flex-wrap gap-1">
+        {keys.map((k) => {
+          const st = stats(k);
+          const firstIdx = flat.findIndex((x) => x.set === k);
+          const targetPage = Math.floor(firstIdx / PAGE);
+          const none = k === NONE;
+          return (
+            <button
+              key={k}
+              type="button"
+              onClick={() => onPage(targetPage)}
+              className={cn(
+                "inline-flex items-center gap-1 rounded-md px-1.5 py-0.5 text-[11px] font-bold tabular-nums transition",
+                none ? "bg-slate-100 text-slate-500 hover:bg-slate-200 dark:bg-white/[0.06] dark:text-slate-400" : "text-white hover:opacity-90",
+              )}
+              style={none ? undefined : { background: color }}
+              title={none ? tr(locale, { uz: "Test topshirilmagan", ru: "Тест не сдан", en: "No test yet", de: "Kein Test" }) : `${k}: ${st.passed} ✓ · ${st.failed} ✗`}
+            >
+              {none ? "—" : k} <span className="opacity-80">{st.total}</span>
+            </button>
+          );
+        })}
+      </div>
+
+      {slice.map((x, i) => {
+        const showHead = i === 0 || slice[i - 1].set !== x.set;
+        const st = stats(x.set);
+        const none = x.set === NONE;
+        return (
+          <div key={x.lead.id} className="space-y-3">
+            {showHead && (
+              <div className="flex items-center gap-2 rounded-lg px-2 py-1.5" style={{ background: none ? undefined : `${color}14` }}>
+                <Icon name={none ? "clipboard" : "filecheck"} className="h-3.5 w-3.5 shrink-0" style={{ color: none ? "#94a3b8" : color }} />
+                <span className="font-hand text-[15px] font-bold leading-[1.35]" style={{ color: none ? "#64748b" : color }}>
+                  {none ? tr(locale, { uz: "Test topshirilmagan", ru: "Тест не сдан", en: "No test yet", de: "Kein Test" }) : `${tr(locale, { uz: "Test", ru: "Тест", en: "Test", de: "Test" })} ${x.set}`}
+                </span>
+                <span className="ml-auto flex items-center gap-1.5 text-[10.5px] font-semibold tabular-nums">
+                  {!none && st.passed > 0 && <span className="rounded bg-emerald-100 px-1 text-emerald-700 dark:bg-emerald-500/15 dark:text-emerald-300">{st.passed} ✓</span>}
+                  {!none && st.failed > 0 && <span className="rounded bg-amber-100 px-1 text-amber-700 dark:bg-amber-500/15 dark:text-amber-300">{st.failed} ✗</span>}
+                  <span className="text-slate-400">{st.total}</span>
+                </span>
+              </div>
+            )}
+            <LeadCard
+              lead={x.lead}
+              locale={locale}
+              selected={selected.has(x.lead.id)}
+              onOpen={onOpen}
+              onOpenFull={onOpenFull}
+              onDragStart={onDragStart}
+              onDragEnd={onDragEnd}
+              onDelete={onDelete}
+            />
+          </div>
+        );
+      })}
+      <Pager total={flat.length} page={page} onPage={onPage} locale={locale} />
+    </>
   );
 }
 
