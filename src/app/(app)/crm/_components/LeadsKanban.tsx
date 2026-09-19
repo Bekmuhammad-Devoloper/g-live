@@ -645,19 +645,24 @@ function StudentArchivePicker({ locale, onPicked, onClose }: { locale: Locale; o
 
 // ───────────────── "Daraja testi" ustuni ─────────────────
 
-/** "A1.1" → [1, 1, 1] kabi — to'plamlarni tabiiy tartibda saralash uchun */
-function setRank(set: string): number {
-  const m = /^([ABC])([12])(?:\.(\d+))?/i.exec(set.trim());
+/** "A1.1" → "A1", "b2.3" → "B2" — to'plamning asosiy darajasi (A1 / A2 / B1 / B2) */
+function setLevel(set: string | null | undefined): string | null {
+  const m = /^([ABC])([12])/i.exec((set ?? "").trim());
+  return m ? `${m[1].toUpperCase()}${m[2]}` : null;
+}
+/** Darajalarni tabiiy tartibda saralash: A1 < A2 < B1 < B2 < C1 */
+function levelRank(level: string): number {
+  const m = /^([ABC])([12])$/.exec(level);
   if (!m) return 999;
-  const lvl = { A: 0, B: 10, C: 20 }[m[1].toUpperCase() as "A" | "B" | "C"] ?? 30;
-  return lvl + Number(m[2]) * 3 + (Number(m[3] ?? 0) / 10);
+  return ({ A: 0, B: 10, C: 20 }[m[1] as "A" | "B" | "C"] ?? 30) + Number(m[2]);
 }
 
 /**
- * Daraja testi ustuni: lidlar yechgan test to'plamiga qarab bo'limlarga ajratilgan
- * (A1.1 · A1.2 · A2.1 …), oxirida "Test topshirilmagan". Har bo'limda soni va
- * o'tgan/o'tmaganlar hisobi. Sahifalash butun ustun bo'yicha — bo'lim sarlavhasi
- * sahifa ichida to'plam o'zgarganda chiziladi.
+ * Daraja testi ustuni: lidlar yechgan testning DARAJASIGA qarab alohida bo'limlarda
+ * (A1 · A2 · B1 · B2 — A1.1 va A1.2 to'plamlari bitta "A1" bo'limida), oxirida
+ * "Test topshirilmagan". Har bo'limda soni va o'tgan/o'tmaganlar hisobi.
+ * Sahifalash butun ustun bo'yicha — bo'lim sarlavhasi sahifa ichida daraja
+ * o'zgarganda chiziladi.
  */
 function TestColumn({
   items, locale, color, selected, page, onPage, onOpen, onOpenFull, onDragStart, onDragEnd, onDelete,
@@ -675,13 +680,13 @@ function TestColumn({
   onDelete?: (id: string) => void;
 }) {
   const NONE = "__none__";
-  // To'plam → lidlar (ustundagi tartib saqlanadi)
+  // Daraja (A1/A2/B1/B2) → lidlar (ustundagi tartib saqlanadi)
   const groups = new Map<string, VLead[]>();
   for (const l of items) {
-    const k = l.testSet?.trim() || NONE;
+    const k = setLevel(l.testSet) ?? NONE;
     (groups.get(k) ?? groups.set(k, []).get(k)!).push(l);
   }
-  const keys = [...groups.keys()].sort((a, b) => (a === NONE ? 1 : b === NONE ? -1 : setRank(a) - setRank(b) || a.localeCompare(b)));
+  const keys = [...groups.keys()].sort((a, b) => (a === NONE ? 1 : b === NONE ? -1 : levelRank(a) - levelRank(b)));
   // Yassi ro'yxat (to'plam tartibida) — sahifalash shu bo'yicha
   const flat: { set: string; lead: VLead }[] = [];
   for (const k of keys) for (const l of groups.get(k)!) flat.push({ set: k, lead: l });
@@ -728,10 +733,12 @@ function TestColumn({
         return (
           <div key={x.lead.id} className="space-y-3">
             {showHead && (
-              <div className="flex items-center gap-2 rounded-lg px-2 py-1.5" style={{ background: none ? undefined : `${color}14` }}>
-                <Icon name={none ? "clipboard" : "filecheck"} className="h-3.5 w-3.5 shrink-0" style={{ color: none ? "#94a3b8" : color }} />
-                <span className="font-hand text-[15px] font-bold leading-[1.35]" style={{ color: none ? "#64748b" : color }}>
-                  {none ? tr(locale, { uz: "Test topshirilmagan", ru: "Тест не сдан", en: "No test yet", de: "Kein Test" }) : `${tr(locale, { uz: "Test", ru: "Тест", en: "Test", de: "Test" })} ${x.set}`}
+              <div className="flex items-center gap-2 rounded-lg border-l-[3px] px-2.5 py-2" style={{ background: none ? "rgba(148,163,184,0.10)" : `${color}14`, borderColor: none ? "#94a3b8" : color }}>
+                <span className="grid h-7 w-7 shrink-0 place-items-center rounded-md text-[12px] font-extrabold text-white" style={{ background: none ? "#94a3b8" : color }}>
+                  {none ? "—" : x.set}
+                </span>
+                <span className="font-hand text-[16px] font-bold leading-[1.35]" style={{ color: none ? "#64748b" : color }}>
+                  {none ? tr(locale, { uz: "Test topshirilmagan", ru: "Тест не сдан", en: "No test yet", de: "Kein Test" }) : `${x.set} ${tr(locale, { uz: "darajasi", ru: "уровень", en: "level", de: "Niveau" })}`}
                 </span>
                 <span className="ml-auto flex items-center gap-1.5 text-[10.5px] font-semibold tabular-nums">
                   {!none && st.passed > 0 && <span className="rounded bg-emerald-100 px-1 text-emerald-700 dark:bg-emerald-500/15 dark:text-emerald-300">{st.passed} ✓</span>}
