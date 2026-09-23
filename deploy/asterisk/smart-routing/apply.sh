@@ -30,6 +30,11 @@ say "Eski Asterisk: ko'prik + smart dialplan"
 mkdir -p "$OLD/gl-smart"
 install -m 0644 "$HERE/old-pjsip-bridge.conf"     "$OLD/gl-smart/pjsip-bridge.conf"
 install -m 0644 "$HERE/old-extensions-smart.conf" "$OLD/gl-smart/extensions-smart.conf"
+install -m 0644 "$HERE/old-pjsip-2022-outbound.conf" "$OLD/gl-smart/pjsip-2022-outbound.conf"
+grep -q '^#include gl-smart/pjsip-2022-outbound.conf' "$OLD/pjsip.conf"   || printf '
+; GL-EDU: 2022 faqat chiquvchi, registratsiyasiz (deploy/asterisk/smart-routing)
+#include gl-smart/pjsip-2022-outbound.conf
+' >> "$OLD/pjsip.conf"
 grep -q '^#include gl-smart/pjsip-bridge.conf' "$OLD/pjsip.conf" \
   || printf '\n; GL-EDU: glive ko\x27prigi (deploy/asterisk/smart-routing)\n#include gl-smart/pjsip-bridge.conf\n' >> "$OLD/pjsip.conf"
 grep -q '^#include gl-smart/extensions-smart.conf' "$OLD/extensions.conf" \

@@ -8,6 +8,7 @@ OLD=/etc/asterisk; GL=/etc/asterisk-glive
 
 sed -i 's/^context=from-trunk-smart .*$/context=from-trunk/' "$OLD/pjsip.conf"
 sed -i "/^; GL-EDU: glive ko'prigi (deploy\/asterisk\/smart-routing)$/d; /^#include gl-smart\/pjsip-bridge.conf$/d" "$OLD/pjsip.conf"
+sed -i "/^; GL-EDU: 2022 faqat chiquvchi, registratsiyasiz (deploy\/asterisk\/smart-routing)$/d; /^#include gl-smart\/pjsip-2022-outbound.conf$/d" "$OLD/pjsip.conf"
 sed -i '/^; GL-EDU: aqlli taqsimot (deploy\/asterisk\/smart-routing)$/d; /^#include gl-smart\/extensions-smart.conf$/d' "$OLD/extensions.conf"
 rm -rf "$OLD/gl-smart"
 
