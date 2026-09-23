@@ -18,6 +18,24 @@ const emailOk = (e: string) => /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(e);
 
 export type State = { ok?: boolean; error?: string };
 
+/* ─── SIP raqami (telefoniya) ─────────────────────────────────────────
+   Asterisk-glive'da glive1…glive10 endpointlari bor. Bir raqam — bir xodim.
+   Ishdan ketgan (isActive=false) xodimning raqamini yangi xodimga berish mumkin —
+   eskisidan avtomatik olib qo'yiladi. Faol xodimniki band — xato.            */
+const SIP_RE = /^glive(10|[1-9])$/;
+
+async function claimSip(locale: Locale, userId: string | null, raw: string): Promise<{ sip: string | null } | { error: string }> {
+  const sip = raw.trim();
+  if (!sip) return { sip: null };
+  if (!SIP_RE.test(sip)) return { error: tr(locale, { uz: "SIP raqami glive1…glive10 bo'lishi kerak", ru: "SIP-номер должен быть glive1…glive10", en: "SIP extension must be glive1…glive10", de: "SIP-Nummer muss glive1…glive10 sein" }) };
+  const holder = await prisma.user.findUnique({ where: { sipExtension: sip }, select: { id: true, fullName: true, isActive: true } });
+  if (holder && holder.id !== userId) {
+    if (holder.isActive) return { error: tr(locale, { uz: `${sip} band: ${holder.fullName}`, ru: `${sip} занят: ${holder.fullName}`, en: `${sip} is taken: ${holder.fullName}`, de: `${sip} ist belegt: ${holder.fullName}` }) };
+    await prisma.user.update({ where: { id: holder.id }, data: { sipExtension: null } }); // ishdan ketgan — bo'shatamiz
+  }
+  return { sip };
+}
+
 export async function createStaff(fd: FormData): Promise<State> {
   const s = await requireSession();
   if (!can(s.role)) return { error: tr(s.locale, { uz: "Ruxsat yo'q", ru: "Нет доступа", en: "No permission", de: "Keine Berechtigung" }) };
@@ -36,8 +54,11 @@ export async function createStaff(fd: FormData): Promise<State> {
 
   if (await prisma.user.findUnique({ where: { email }, select: { id: true } })) return { error: tr(s.locale, { uz: "Bu email allaqachon mavjud", ru: "Этот email уже существует", en: "This email already exists", de: "Diese E-Mail existiert bereits" }) };
 
+  const claimed = await claimSip(s.locale as Locale, null, String(fd.get("sipExtension") || ""));
+  if ("error" in claimed) return { error: claimed.error };
+
   const u = await prisma.user.create({
-    data: { fullName, email, phone, position, passwordHash: await hashPassword(password), role, branchId: s.branchId, isActive: true },
+    data: { fullName, email, phone, position, passwordHash: await hashPassword(password), role, branchId: s.branchId, isActive: true, sipExtension: claimed.sip },
   });
   await writeAudit({ actorId: s.userId, action: "CREATE", entityType: "User", entityId: u.id, newValue: { fullName, role } });
   revalidatePath("/settings/staff");
@@ -56,11 +77,14 @@ export async function updateStaff(fd: FormData): Promise<State> {
   if (fullName.length < 3) return { error: tr(s.locale, { uz: "F.I.Sh. kamida 3 ta harf bo'lsin", ru: "Ф.И.О. — не менее 3 букв", en: "Full name must be at least 3 characters", de: "Der Name muss mindestens 3 Zeichen lang sein" }) };
   if (!STAFF_ROLES.includes(role as never)) return { error: tr(s.locale, { uz: "Rol tanlanmagan", ru: "Роль не выбрана", en: "Role not selected", de: "Keine Rolle ausgewählt" }) };
 
+  const claimed = await claimSip(s.locale as Locale, id, String(fd.get("sipExtension") || ""));
+  if ("error" in claimed) return { error: claimed.error };
+
   await prisma.user.update({
     where: { id },
-    data: { fullName, phone, position, role, ...(password.length >= 4 ? { passwordHash: await hashPassword(password) } : {}) },
+    data: { fullName, phone, position, role, sipExtension: claimed.sip, ...(password.length >= 4 ? { passwordHash: await hashPassword(password) } : {}) },
   });
-  await writeAudit({ actorId: s.userId, action: "UPDATE", entityType: "User", entityId: id, newValue: { fullName, role } });
+  await writeAudit({ actorId: s.userId, action: "UPDATE", entityType: "User", entityId: id, newValue: { fullName, role, sipExtension: claimed.sip } });
   revalidatePath("/settings/staff");
   return { ok: true };
 }

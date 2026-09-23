@@ -9,10 +9,12 @@ import type { Locale } from "@/lib/constants";
 import { Icon } from "../../_components/Icon";
 import { createStaff, updateStaff, deleteStaff, inviteStaff, importStaff } from "./actions";
 
-export interface VStaff { id: string; shortId: string; fullName: string; role: string; roleLabel: string; position: string | null; phone: string | null }
+export interface VStaff { id: string; shortId: string; fullName: string; role: string; roleLabel: string; position: string | null; phone: string | null; sipExtension: string | null }
+/** SIP raqami (glive1…glive10) va uni kim egallagani */
+export interface SipOption { ext: string; owner: string | null; ownerActive: boolean }
 export interface RoleOption { value: string; label: string }
 
-export default function StaffView({ locale, rows, roleOptions, currentUserId, canDelete }: { locale: Locale; rows: VStaff[]; roleOptions: RoleOption[]; currentUserId: string; canDelete: boolean }) {
+export default function StaffView({ locale, rows, roleOptions, sipOptions = [], currentUserId, canDelete }: { locale: Locale; rows: VStaff[]; roleOptions: RoleOption[]; sipOptions?: SipOption[]; currentUserId: string; canDelete: boolean }) {
   const router = useRouter();
   const [, start] = useTransition();
   const [search, setSearch] = useState("");
@@ -75,7 +77,10 @@ export default function StaffView({ locale, rows, roleOptions, currentUserId, ca
                   <td className="px-6 py-4 font-mono text-xs text-brand-600 dark:text-brand-400">{r.shortId}</td>
                   <td className="px-6 py-4 font-medium text-slate-800 dark:text-slate-100">{r.fullName}</td>
                   <td className="px-6 py-4 text-slate-600 dark:text-slate-300">{r.roleLabel}</td>
-                  <td className="px-6 py-4 text-slate-500 dark:text-slate-400">{r.position ?? "—"}</td>
+                  <td className="px-6 py-4 text-slate-500 dark:text-slate-400">
+                    {r.position ?? "—"}
+                    {r.sipExtension && <span className="ml-2 inline-flex items-center gap-1 rounded-md bg-emerald-50 px-1.5 py-0.5 text-[11px] font-semibold text-emerald-700 dark:bg-emerald-500/10 dark:text-emerald-300"><Icon name="phone" className="h-3 w-3" />{r.sipExtension}</span>}
+                  </td>
                   <td className="px-6 py-4 tabular-nums text-slate-600 dark:text-slate-300">{r.phone ?? "—"}</td>
                   <td className="px-6 py-4">
                     <div className="flex items-center justify-end gap-2">
@@ -92,7 +97,7 @@ export default function StaffView({ locale, rows, roleOptions, currentUserId, ca
         </div>
       </div>
 
-      {drawer && <StaffDrawer locale={locale} edit={drawer.edit} roleOptions={roleOptions} onClose={() => setDrawer(null)} onSaved={(m) => { setDrawer(null); router.refresh(); flash(m); }} />}
+      {drawer && <StaffDrawer locale={locale} edit={drawer.edit} roleOptions={roleOptions} sipOptions={sipOptions} onClose={() => setDrawer(null)} onSaved={(m) => { setDrawer(null); router.refresh(); flash(m); }} />}
       {importOpen && <ImportModal locale={locale} onClose={() => setImportOpen(false)} onDone={(m) => { setImportOpen(false); router.refresh(); flash(m); }} />}
       {toast && <div className="fixed bottom-6 left-1/2 z-[90] -translate-x-1/2 rounded-xl bg-slate-900 px-4 py-2.5 text-sm font-medium text-white shadow-pop dark:bg-slate-700">{toast}</div>}
     </div>
@@ -101,7 +106,7 @@ export default function StaffView({ locale, rows, roleOptions, currentUserId, ca
 
 const inp = "h-10 w-full rounded-lg border border-slate-200 bg-white px-3 text-sm text-slate-800 outline-none focus:border-brand-400 dark:border-slate-700 dark:bg-slate-800/60 dark:text-slate-100";
 
-function StaffDrawer({ locale, edit, roleOptions, onClose, onSaved }: { locale: Locale; edit: VStaff | null; roleOptions: RoleOption[]; onClose: () => void; onSaved: (msg: string) => void }) {
+function StaffDrawer({ locale, edit, roleOptions, sipOptions, onClose, onSaved }: { locale: Locale; edit: VStaff | null; roleOptions: RoleOption[]; sipOptions: SipOption[]; onClose: () => void; onSaved: (msg: string) => void }) {
   const [mounted, setMounted] = useState(false);
   const [pending, start] = useTransition();
   const [error, setError] = useState<string | null>(null);
@@ -149,6 +154,22 @@ function StaffDrawer({ locale, edit, roleOptions, onClose, onSaved }: { locale: 
             <Field label={tr(locale, { uz: "Lavozimi", ru: "Должность", en: "Position", de: "Position" })}><input name="position" defaultValue={edit?.position ?? ""} placeholder={tr(locale, { uz: "Masalan: CEO", ru: "Например: CEO", en: "e.g. CEO", de: "z.B. CEO" })} className={inp} /></Field>
           </div>
           <Field label={tr(locale, { uz: "Telefon", ru: "Телефон", en: "Phone", de: "Telefon" })}><input name="phone" defaultValue={edit?.phone ?? ""} placeholder="+998 90 123 45 67" className={inp} /></Field>
+          {/* SIP raqami — brauzer telefoni (softphone) shu orqali ishlaydi; faol xodimniki band, ishdan ketganniki qayta beriladi */}
+          <Field label={tr(locale, { uz: "SIP raqami (telefon)", ru: "SIP-номер (телефон)", en: "SIP extension (phone)", de: "SIP-Nummer (Telefon)" })}>
+            <select name="sipExtension" defaultValue={edit?.sipExtension ?? ""} className={inp}>
+              <option value="">{tr(locale, { uz: "— telefonsiz —", ru: "— без телефона —", en: "— no phone —", de: "— kein Telefon —" })}</option>
+              {sipOptions.map((o) => {
+                const mine = !!edit && o.ext === edit.sipExtension;
+                const takenByActive = !!o.owner && o.ownerActive && !mine;
+                const hint = mine
+                  ? tr(locale, { uz: "hozirgi", ru: "текущий", en: "current", de: "aktuell" })
+                  : o.owner
+                    ? `${o.owner}${o.ownerActive ? "" : ` · ${tr(locale, { uz: "ishdan ketgan, bo'shatiladi", ru: "уволен, освободится", en: "left, will be freed", de: "ausgeschieden, wird frei" })}`}`
+                    : tr(locale, { uz: "bo'sh", ru: "свободен", en: "free", de: "frei" });
+                return <option key={o.ext} value={o.ext} disabled={takenByActive}>{o.ext} — {hint}</option>;
+              })}
+            </select>
+          </Field>
           <Field label={edit ? tr(locale, { uz: "Yangi parol (ixtiyoriy)", ru: "Новый пароль (необязательно)", en: "New password (optional)", de: "Neues Passwort (optional)" }) : tr(locale, { uz: "Parol", ru: "Пароль", en: "Password", de: "Passwort" })} req={!edit}><input name="password" type="text" required={!edit} placeholder={edit ? tr(locale, { uz: "O'zgartirish uchun kiriting", ru: "Введите, чтобы изменить", en: "Enter to change", de: "Zum Ändern eingeben" }) : tr(locale, { uz: "Kamida 4 ta belgi", ru: "Минимум 4 символа", en: "At least 4 characters", de: "Mindestens 4 Zeichen" })} className={inp} /></Field>
           {error && <div className="rounded-lg bg-rose-50 px-3 py-2 text-sm text-rose-600 dark:bg-rose-500/10 dark:text-rose-400">{error}</div>}
         </div>

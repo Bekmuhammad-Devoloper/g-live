@@ -3,7 +3,7 @@ import { prisma } from "@/lib/db";
 import { ROLES, ROLE_LABELS, label, type Locale } from "@/lib/constants";
 import { tr } from "@/lib/tr";
 import { Forbidden } from "../../_components/ui";
-import StaffView, { type VStaff } from "./StaffView";
+import StaffView, { type SipOption, type VStaff } from "./StaffView";
 
 const ALLOWED = [ROLES.DIRECTOR, ROLES.DEPUTY_DIRECTOR];
 // Ro'yxatda ko'rinadigan rollar (eski MANAGER yozuvlari ham ko'rinsin)
@@ -20,7 +20,14 @@ export default async function StaffSettingsPage() {
   const users = await prisma.user.findMany({
     where: { role: { in: STAFF_ROLES }, isActive: true },
     orderBy: [{ createdAt: "asc" }],
-    select: { id: true, fullName: true, role: true, position: true, phone: true },
+    select: { id: true, fullName: true, role: true, position: true, phone: true, sipExtension: true },
+  });
+
+  // SIP raqamlari (glive1…glive10) — kim band qilgani (ishdan ketganlar ham, ularniki qayta beriladi)
+  const holders = await prisma.user.findMany({ where: { sipExtension: { not: null } }, select: { sipExtension: true, fullName: true, isActive: true } });
+  const sipOptions: SipOption[] = Array.from({ length: 10 }, (_, i) => `glive${i + 1}`).map((ext) => {
+    const h = holders.find((x) => x.sipExtension === ext);
+    return { ext, owner: h?.fullName ?? null, ownerActive: h?.isActive ?? false };
   });
 
   const rows: VStaff[] = users.map((u) => ({
@@ -31,13 +38,14 @@ export default async function StaffSettingsPage() {
     roleLabel: label(ROLE_LABELS, u.role, s.locale as Locale),
     position: u.position,
     phone: u.phone,
+    sipExtension: u.sipExtension,
   }));
 
   const roleOptions = ASSIGNABLE_ROLES.map((r) => ({ value: r, label: label(ROLE_LABELS, r, s.locale as Locale) }));
 
   // Xodimni o'chirish — faqat direktor va o'rinbosarida (administratorda emas)
   const canDelete = [ROLES.DIRECTOR, ROLES.DEPUTY_DIRECTOR].includes(s.role as never);
-  return <StaffView locale={s.locale} rows={rows} roleOptions={roleOptions} currentUserId={s.userId} canDelete={canDelete} />;
+  return <StaffView locale={s.locale} rows={rows} roleOptions={roleOptions} sipOptions={sipOptions} currentUserId={s.userId} canDelete={canDelete} />;
 }
 
 export const dynamic = "force-dynamic";
