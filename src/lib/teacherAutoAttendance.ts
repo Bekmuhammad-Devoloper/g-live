@@ -1,7 +1,7 @@
 import { prisma } from "@/lib/db";
 import { ROLES } from "@/lib/constants";
 
-// Ustozlar davomati avtomatikasi (2026-08-21 talab):
+// Ustozlar davomati avtomatikasi:
 // o'qituvchi O'Z guruhida davomat o'tkazsa (o'quvchilarni belgilasa, QR yaratsa
 // yoki ro'yxatni tasdiqlasa) — /teacher-attendance jadvalida o'sha kunga
 // avtomatik "keldi" (✓) tushadi.

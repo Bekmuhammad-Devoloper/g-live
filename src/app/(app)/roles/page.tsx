@@ -8,7 +8,7 @@ import RolesView, { type VRole } from "./RolesView";
 // Sahifani ko'rish — rahbariyat va administrator
 const CAN_VIEW = [ROLES.DIRECTOR, ROLES.DEPUTY_DIRECTOR, ROLES.ADMIN];
 // Rol qo'shish/tahrirlash/o'chirish — FAQAT direktor va o'rinbosari
-// (2026-08-28 talab: administratorda bu funksiya bo'lmasin)
+// (administratorda bu funksiya yo'q)
 const CAN_MANAGE = [ROLES.DIRECTOR, ROLES.DEPUTY_DIRECTOR];
 
 export default async function RolesPage() {

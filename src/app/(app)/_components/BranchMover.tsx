@@ -9,7 +9,7 @@ import { Icon } from "./Icon";
 export interface BranchOpt { id: string; name: string }
 
 /**
- * Yozuvni (lid yoki o'quvchi) boshqa filialga ko'chirish (2026-08-25 talab).
+ * Yozuvni (lid yoki o'quvchi) boshqa filialga ko'chirish.
  * Filiallar ro'yxati faqat blok ochilganda yuklanadi.
  */
 export default function BranchMover({

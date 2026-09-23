@@ -497,7 +497,7 @@ export async function updateLeadField(leadId: string, field: string, value: stri
   revalidatePath("/crm");
 }
 
-// ─── Lidni boshqa filialga ko'chirish (2026-08-25 talab) ───
+// ─── Lidni boshqa filialga ko'chirish ───
 // Filial izolyatsiyasi joriy qilingach kerak bo'ldi: noto'g'ri filialga tushgan
 // yoki boshqa filialga o'tkazilishi kerak bo'lgan lid ko'chiriladi.
 
@@ -538,7 +538,7 @@ export async function moveLeadToBranch(leadId: string, branchId: string): Promis
   return { ok: true, branchName: branch.name };
 }
 
-// ─── Lidni butunlay o'chirish (2026-08-26 talab) ───
+// ─── Lidni butunlay o'chirish ───
 // Direktor, o'rinbosari va ADMINISTRATOR o'chira oladi.
 // Lid bilan birga faoliyat tarixi (LeadActivity) ham ketadi (kaskad).
 // Qo'ng'iroqlar (Call) o'chmaydi — faqat lid bilan aloqasi uziladi, chunki

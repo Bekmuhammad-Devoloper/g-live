@@ -12,7 +12,7 @@ import { formatMoney, PAYMENT_METHODS, MAX_MONEY } from "@/lib/constants";
 
 const schema = z.object({
   studentId: z.string().min(1),
-  amount: z.coerce.number().int().positive().max(MAX_MONEY), // Int'ga sig'masa sahifa yiqiladi (2026-09-11)
+  amount: z.coerce.number().int().positive().max(MAX_MONEY), // Int'ga sig'masa sahifa yiqiladi
   method: z.enum(PAYMENT_METHODS),
   purpose: z.string().min(1),
   docNumber: z.string().min(1), // TZ FR-PAY-03 — hujjat/chek raqami majburiy
@@ -73,7 +73,7 @@ export async function createManualPayment(_prev: PayState, formData: FormData): 
 // FR-PAY-06 (bir xil tranzaksiya ID ikkinchi marta bloklanadi = idempotentlik).
 const onlineSchema = z.object({
   studentId: z.string().min(1),
-  amount: z.coerce.number().int().positive().max(MAX_MONEY), // Int'ga sig'masa sahifa yiqiladi (2026-09-11)
+  amount: z.coerce.number().int().positive().max(MAX_MONEY), // Int'ga sig'masa sahifa yiqiladi
   purpose: z.string().min(1),
   method: z.enum(PAYMENT_METHODS),
   transactionId: z.string().optional(),

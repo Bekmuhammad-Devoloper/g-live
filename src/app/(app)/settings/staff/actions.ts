@@ -10,7 +10,7 @@ import { tr } from "@/lib/tr";
 const CAN = [ROLES.DIRECTOR, ROLES.ADMIN, ROLES.DEPUTY_DIRECTOR];
 const can = (r: string) => CAN.includes(r as never);
 // Xodimni ro'yxatdan olib tashlash — FAQAT direktor va o'rinbosari
-// (2026-08-28 talab: administrator boshqa xodimlarni o'chira olmasin)
+// (administrator boshqa xodimlarni o'chira olmaydi)
 const CAN_DELETE_STAFF = [ROLES.DIRECTOR, ROLES.DEPUTY_DIRECTOR];
 const canDelete = (r: string) => CAN_DELETE_STAFF.includes(r as never);
 const STAFF_ROLES = [ROLES.OPERATOR, ROLES.ROP, ROLES.MANAGER, ROLES.DEPUTY_DIRECTOR, ROLES.DIRECTOR, ROLES.ADMIN, ROLES.TEACHER];

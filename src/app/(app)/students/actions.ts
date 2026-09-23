@@ -456,7 +456,7 @@ export async function restoreStudent(id: string): Promise<EditState> {
  */
 export async function deleteStudentPermanently(id: string): Promise<EditState> {
   const s = await requireSession();
-  // Administrator ham o'chira oladi (2026-08-26 talab)
+  // Administrator ham o'chira oladi
   const CAN_PURGE = [ROLES.DIRECTOR, ROLES.DEPUTY_DIRECTOR, ROLES.ADMIN];
   if (!CAN_PURGE.includes(s.role as never)) return { error: "forbidden" };
 
@@ -492,7 +492,7 @@ export async function deleteStudentPermanently(id: string): Promise<EditState> {
   return { ok: true };
 }
 
-// ─── O'quvchini boshqa filialga ko'chirish (2026-08-25 talab) ───
+// ─── O'quvchini boshqa filialga ko'chirish ───
 // Guruhlar filialga tegishli bo'lgani uchun, ko'chirilganda o'quvchi eski
 // filialdagi guruhlardan chiqariladi (leftAt yoziladi) — aks holda u ko'rinmaydigan
 // guruhda "osilib" qolardi va to'lov hisobi ham davom etaverardi.
@@ -633,7 +633,7 @@ export async function moveStudentToBranch(
   return { ok: true, branchName: branch.name, removedGroups: stale.length };
 }
 
-// ─── Qarz qo'shish va to'lovni tahrirlash (2026-08-27 talab) ───
+// ─── Qarz qo'shish va to'lovni tahrirlash ───
 // "Qarzdor holatga tushurish" — qo'lda qarz yozuvi (PENDING to'lov) ochiladi.
 // To'lovni tahrirlash/o'chirish — noto'g'ri kiritilgan yozuvni tuzatish uchun.
 

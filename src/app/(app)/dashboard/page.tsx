@@ -111,7 +111,7 @@ async function roleContent({
     return <TeacherDashboard userId={userId} locale={locale} />;
   }
 
-  // ── O'quvchi — mobil ilova ko'rinishidagi portalga (2026-08-28) ──
+  // ── O'quvchi — mobil ilova ko'rinishidagi portalga ──
   if (role === ROLES.STUDENT) {
     redirect("/student");
   }

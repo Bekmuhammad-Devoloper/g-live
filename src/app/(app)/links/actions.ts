@@ -73,7 +73,7 @@ export async function createVacancyLink(fd: FormData): Promise<FormState> {
   const s = await requireSession();
   if (!can(s.role)) return { error: tr(s.locale, { uz: "Ruxsat yo'q", ru: "Нет доступа", en: "No permission", de: "Keine Berechtigung" }) };
 
-  // Kurs nomi ixtiyoriy (2026-09-15 talab) — bo'sh qoldirilsa standart nom
+  // Kurs nomi ixtiyoriy — bo'sh qoldirilsa standart nom
   const title = String(fd.get("title") || "").trim().slice(0, 120) || tr(s.locale, { uz: "Nemis tili kursi", ru: "Курс немецкого языка", en: "German course", de: "Deutschkurs" });
   const platforms = parsePlatforms(fd);
 

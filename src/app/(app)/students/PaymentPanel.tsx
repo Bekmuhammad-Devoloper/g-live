@@ -237,7 +237,7 @@ export function AddDebtForm({ studentId, locale, onCancel, onDone }: {
   );
 }
 
-// Bitta to'lov qatori — tahrirlash va o'chirish bilan (2026-08-27 talab).
+// Bitta to'lov qatori — tahrirlash va o'chirish bilan.
 // Noto'g'ri kiritilgan summa/usul/holat shu yerdan tuzatiladi.
 export function PaymentRow({ p, locale, canEdit, onChanged }: {
   p: PayRow; locale: Locale; canEdit: boolean; onChanged: () => void;

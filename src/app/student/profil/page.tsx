@@ -193,7 +193,7 @@ export default async function StudentProfilPage() {
       </div>
 
       {/* ── Ikkinchi miya (shaxsiy rivojlanish) — VAQTINCHA O'CHIRILGAN ──
-          Talab (2026-09-04): bo'lim to'liq kommentga olindi.
+          Bo'lim to'liq kommentga olingan.
           Qaytarish uchun: shu sarlavha qatorlarini va eng pastdagi yopuvchi
           qatorni olib tashlang, so'ng ichidagi << va >> belgilarini JSX
           komment belgilariga qaytaring.

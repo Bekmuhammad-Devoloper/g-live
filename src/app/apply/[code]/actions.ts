@@ -26,7 +26,7 @@ export interface ApplyExtra {
 
 // Ochiq (login talab qilmaydigan) ariza yuborish — CRM ga real Lead yaratadi.
 // `answers` — havolaga biriktirilgan qo'shimcha savollarga javoblar (tartibi savollar bilan bir xil).
-// Forma tartibi (2026-09-15 talab): ta'lim shakli → (oflayn: filial) → ism, telefon
+// Forma tartibi: ta'lim shakli → (oflayn: filial) → ism, telefon
 // (davlat kodi bilan), (onlayn: Telegram) → daraja.
 export async function submitApplication(
   code: string,

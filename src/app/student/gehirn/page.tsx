@@ -16,7 +16,7 @@ import GraphButton from "./GraphButton";
 export default async function BrainPage() {
   const session = await getSession();
   if (!session) redirect("/login");
-  // ── Ikkinchi miya VAQTINCHA O'CHIRILGAN (2026-09-04) ──
+  // ── Ikkinchi miya VAQTINCHA O'CHIRILGAN ──
   // Kartochkasi /student/profil da kommentga olingan; manzil orqali ham
   // kirilmasin deb shu yerda to'xtatiladi.
   // Qaytarish: BRAIN_ENABLED ni true qiling (yoki shu blokni o'chirib,

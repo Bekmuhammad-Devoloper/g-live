@@ -13,7 +13,7 @@ export type ExState = { ok?: boolean; error?: string };
 const schema = z.object({
   name: z.string().min(1),
   date: z.string().min(1),
-  amount: z.coerce.number().int().positive().max(MAX_MONEY), // Int'ga sig'masa sahifa yiqiladi (2026-09-11)
+  amount: z.coerce.number().int().positive().max(MAX_MONEY), // Int'ga sig'masa sahifa yiqiladi
   method: z.string().min(1),
   categoryId: z.string().optional(),
   recipient: z.string().optional(),

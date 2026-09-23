@@ -1,6 +1,6 @@
 // O'zbekiston telefon raqamlari bilan ishlash.
 //
-// MUHIM (2026-08-24 tuzatish): mamlakat kodini "998 bilan boshlansa" degan
+// MUHIM: mamlakat kodini "998 bilan boshlansa" degan
 // shart bilan olib tashlash MUMKIN EMAS — "99 888 99 99" kabi haqiqiy
 // raqamlarning o'zi 998 bilan boshlanadi. Foydalanuvchi "99" dan keyin "8"
 // bosishi bilan maydon tozalanib qolardi. Shuning uchun mamlakat kodi faqat

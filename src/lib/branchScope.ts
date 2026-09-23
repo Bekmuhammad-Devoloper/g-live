@@ -1,7 +1,7 @@
-// Faol filial bo'yicha ro'yxat filtri (2026-08-23 talab: filial almashtirilganda
-// HAMMA bo'lim faqat o'sha filial ma'lumotini ko'rsatsin).
+// Faol filial bo'yicha ro'yxat filtri: filial almashtirilganda HAMMA bo'lim
+// faqat o'sha filial ma'lumotini ko'rsatadi.
 //
-// Qoida (2026-09-17 dan QAT'IY): sessiyada faol filial bo'lsa — FAQAT o'sha
+// Qoida (QAT'IY): sessiyada faol filial bo'lsa — FAQAT o'sha
 // filial yozuvlari ko'rinadi. Ilgari filialsiz (branchId=null) yozuvlar ham
 // qo'shilardi — shu sabab Qibrayda Oybekniki ham, hech qaysi filialga
 // biriktirilmagan eski xodimlar ham chiqib turardi.

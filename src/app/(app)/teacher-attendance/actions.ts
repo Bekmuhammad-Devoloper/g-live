@@ -12,7 +12,7 @@ export type FormState = { ok?: boolean; error?: string };
 // Ish jadvali va maosh sozlamalari
 const CAN = [ROLES.DIRECTOR, ROLES.DEPUTY_DIRECTOR, ROLES.ADMIN];
 const canManage = (role: string) => CAN.includes(role as never);
-// Davomat katakchalari (2026-08-21 talab): faqat menejer/direktor/o'rinbosar
+// Davomat katakchalari: faqat menejer/direktor/o'rinbosar
 // o'zgartiradi; qolganlar (admin, ustoz) faqat ko'radi. Ustozga ✓ o'zi
 // guruhida davomat o'tkazganda avtomatik tushadi (teacherAutoAttendance).
 const CAN_ATT = [ROLES.DIRECTOR, ROLES.DEPUTY_DIRECTOR, ROLES.MANAGER];

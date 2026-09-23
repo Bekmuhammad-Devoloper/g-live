@@ -3,7 +3,7 @@ import { prisma } from "./db";
 import { ROLES } from "./constants";
 
 /**
- * Davomat belgilash oynasi qoidasi (buyurtmachi talabi):
+ * Davomat belgilash oynasi qoidasi:
  * dars vaqti (masalan 10:00–12:00) davomida va tugagach yana GRACE_HOURS (3 soat)
  * ichida davomat belgilanadi/saqlanadi. Undan keyin YOPILADI: belgilanmaganlar
  * avtomatik "yo'q" (ABSENT) bo'ladi. Rahbariyat (menejer/direktor/o'rinbosar/ROP)

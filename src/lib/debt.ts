@@ -2,7 +2,7 @@ import "server-only";
 import { prisma } from "./db";
 import { getSetting } from "./settings";
 
-// Qarz hisobi (2026-08-27 talab): o'quvchi TIZIMGA BIRIKTIRILGAN kundan
+// Qarz hisobi: o'quvchi TIZIMGA BIRIKTIRILGAN kundan
 // boshlab avtomatik hisoblanadi — guruhga qo'shilishini kutmaydi.
 //
 // Har kalendar oy uchun to'lov:

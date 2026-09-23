@@ -11,7 +11,7 @@ type Counts = Record<StepKey | "yoqotilgan", number>;
 // Konversiya hisoboti — alohida API.
 // UI (/reports/conversion) sana / manba / xodim filtrlarini shu yerga yuboradi.
 //
-// HISOB QOIDASI (2026-09-18 dan):
+// HISOB QOIDASI:
 //   • So'rovlar — davrda YARATILGAN barcha lidlar (arxivlanganlar ham — ular real so'rov).
 //   • Voronka YIG'MA: bosqichga "yetgan" = hozirgi bosqichi shu yoki undan keyingi
 //     (Qabul qilingan lid hamma bosqichdan o'tgan). Yo'qotilgan alohida.

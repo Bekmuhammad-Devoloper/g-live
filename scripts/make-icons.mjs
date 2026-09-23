@@ -3,9 +3,7 @@
 //   node scripts/make-icons.mjs
 //
 // Ikonka — TO'LIQ LOGOTIP: "G + burgut" monogrammasi va "GERMANIYA LIVE"
-// yozuvi birga, feruza gradient fonda. Foydalanuvchi shuni so'radi
-// (2026-09-05): "ilova ikonasi Germaniya Live logotipi bo'lsin, orqasi
-// hozirgidek feruza".
+// yozuvi birga, feruza gradient fonda.
 //
 // Manba — public/logo-dark.png. Bu public/logo.png ning aynan o'zi, faqat
 // yozuvi OQ: to'q feruzada qora yozuv yo'qolib ketardi, oq esa aniq

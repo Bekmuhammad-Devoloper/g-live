@@ -31,7 +31,7 @@ export const PORTAL_FEATURES: {
   { key: "market", path: "/student/market", icon: "coins",
     label: { uz: "Market", ru: "Маркет", en: "Market", de: "Markt" },
     desc: { uz: "Tangalarga sovg'a almashish", ru: "Обмен монет на призы", en: "Exchange coins for rewards", de: "Münzen gegen Preise" } },
-  // ── Ikkinchi miya — VAQTINCHA O'CHIRILGAN (2026-09-04) ──
+  // ── Ikkinchi miya — VAQTINCHA O'CHIRILGAN ──
   // Kartochkasi /student/profil da kommentga olingan, shuning uchun
   // menejer panelida ham "o'lik" tugma qolmasin deb chiqarib qo'yildi.
   // Qaytarish: pastdagi kommentni oching.

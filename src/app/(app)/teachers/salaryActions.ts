@@ -18,7 +18,7 @@ export async function setTeacherFiksa(teacherId: string, fiksa: number): Promise
   const s = await requireSession();
   if (!canManage(s.role)) return { ok: false, error: "forbidden" };
   // Yuqori chegara SHART: Int'ga sig'maydigan qiymat SQLite'ga yozilib, keyin
-  // /teachers butunlay ochilmay qolgan (2026-09-11)
+  // /teachers butunlay ochilmay qoladi
   const amount = parseMoney(fiksa);
   if (amount === null) return { ok: false, error: tr(s.locale, { uz: "Summa juda katta (eng ko'pi 1 mlrd so'm) — nollar sonini tekshiring", ru: "Сумма слишком велика (макс. 1 млрд сум) — проверьте количество нулей", en: "Amount too large (max 1 billion) — check the number of zeros", de: "Betrag zu groß (max. 1 Mrd.) — Anzahl der Nullen prüfen" }) };
   const now = new Date();

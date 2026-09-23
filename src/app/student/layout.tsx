@@ -9,7 +9,7 @@ import { touchActivity } from "@/lib/skills";
 import PwaSetup from "./PwaSetup";
 import Screen from "./Screen";
 
-// O'quvchining mobil ilova ko'rinishidagi portali (2026-08-28 talab).
+// O'quvchining mobil ilova ko'rinishidagi portali.
 // AppShell (sidebar) ishlatilmaydi — telefon ilovasi kabi bitta ustun + pastki menyu.
 // Telefonga o'rnatiladigan ilova sifatida ko'rinishi uchun o'z manifesti
 export const metadata = {

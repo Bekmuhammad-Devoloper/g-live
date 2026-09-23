@@ -14,7 +14,7 @@
 # shu skriptni qayta ishga tushirish VA appVersionCode ni oshirish kerak,
 # aks holda telefon eski nusxani yangilanish deb bilmaydi.
 # 1.1.0 / code 2 — ilova ikonkasi wordmark'dan "G + burgut" monogrammasiga
-# almashtirildi (2026-09-04).
+# almashtirildi.
 #
 # Imzo kaliti: /opt/gl-edu/apk/android.keystore (gitga TUSHMAYDI).
 # Kalit yo'qolsa ilovani yangilab bo'lmaydi — ZAXIRALAB QO'YING:

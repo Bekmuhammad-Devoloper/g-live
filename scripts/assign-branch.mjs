@@ -1,5 +1,5 @@
 // Filialga biriktirilmagan (branchId = null) eski yozuvlarni asosiy filialga
-// biriktiradi. Filial izolyatsiyasi joriy qilingach (2026-08-24) kerak bo'ldi:
+// biriktiradi. Filial izolyatsiyasi joriy qilingach kerak bo'ldi:
 // biriktirilmagan yozuv HAR filialda ko'rinib qolardi.
 //
 // Ishlatish:

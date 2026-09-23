@@ -195,7 +195,6 @@ export default async function CrmPage() {
       archivedStudents={archivedStudents}
       branchMode={branchMode}
       showOnlineCol={!isAdmin}
-      // ROP kanbanida "Ishda" va "Qabul qilindi" ustunlari ko'rsatilmaydi (2026-09-17 talab)
       // ROP: Ishda, Daraja testi va Qabul qilindi ko'rinmaydi (test bosqichidagilar Yangida)
       hiddenCols={s.role === ROLES.ROP ? ["work", "test", "won"] : []}
       // Bo'sh vaqtlarni kim tahrirlaydi: rahbariyat — hammasini, administrator — o'z filialini

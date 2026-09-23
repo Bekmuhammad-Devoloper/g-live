@@ -14,7 +14,7 @@ const STORAGE_KEY = "gl-chek-settings";
 
 type L = { uz: string; ru: string; en: string; de: string };
 
-// Chek qatorlari (tartib skrinshotdagidek). value — namunaviy ko'rinish uchun.
+// Chek qatorlari (chekdagi tartibda). value — namunaviy ko'rinish uchun.
 const ROWS: { key: string; label: L; value: (c: string) => string }[] = [
   { key: "checkNumber", label: { uz: "Tekshirish raqami", ru: "Номер чека", en: "Check number", de: "Belegnummer" }, value: () => "№12345" },
   { key: "company", label: { uz: "Kompaniya", ru: "Компания", en: "Company", de: "Unternehmen" }, value: (c) => c },

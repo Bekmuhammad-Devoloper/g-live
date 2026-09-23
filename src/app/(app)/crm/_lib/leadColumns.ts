@@ -236,7 +236,7 @@ export function isStudentArchive(lead: { stage: string; studentId?: string | nul
 
 /** Rejimda ko'rsatilmaydigan standart ustunlar (filtr chiplarida ham yashiriladi) */
 export function branchReplaces(mode: BranchMode): Set<string> {
-  // Sotuv rejimida ham "Daraja testi" ko'rinadi (administrator so'rovi) — faqat "Taklif" yo'q
+  // Sotuv rejimida ham "Daraja testi" ko'rinadi — faqat "Taklif" yo'q
   return mode === "sales" ? new Set(["offer"]) : new Set();
 }
 

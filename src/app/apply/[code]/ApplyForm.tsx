@@ -11,7 +11,7 @@ import CountryPicker from "./CountryPicker";
 import { useApplyBg } from "./ApplyShell";
 
 /**
- * Ochiq ariza formasi — telefon uchun (2026-09-15 talab):
+ * Ochiq ariza formasi — telefon uchun:
  *   1) Ta'lim shakli — onlayn / oflayn
  *   2) Oflayn → filial tanlash
  *   3) Ism-familiya, telefon (davlat kodi bilan), onlayn → Telegram username

@@ -434,7 +434,7 @@ function SearchBox({ locale, placeholder, noResults }: { locale: Locale; placeho
 }
 
 // Navbardagi tezkor oynalar (yangi talaba / yangi to'lov) — ilovadagi boshqa
-// panellar kabi O'NGDAN sirg'alib chiqadi (2026-08-26 talab).
+// panellar kabi O'NGDAN sirg'alib chiqadi.
 function ModalShell({ title, onClose, children }: { title: string; onClose: () => void; children: React.ReactNode }) {
   const [mounted, setMounted] = useState(false);
   useEffect(() => setMounted(true), []);

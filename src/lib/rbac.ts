@@ -54,7 +54,7 @@ const M: Record<ModuleKey, Partial<Record<Role, Permission>>> = {
     MANAGER: "FULL",
     DEPUTY_DIRECTOR: "FULL",
     DIRECTOR: "FULL",
-    ADMIN: "FULL", // qabul bo'limi: lid qo'shadi va bosqichdan bosqichga ko'chiradi (2026-08-21 talab)
+    ADMIN: "FULL", // qabul bo'limi: lid qo'shadi va bosqichdan bosqichga ko'chiradi
   },
   GROUPS: {
     STUDENT: "READ",

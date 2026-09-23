@@ -134,7 +134,7 @@ systemctl daemon-reload
 echo ""
 echo "════════════════════════════════════════════════════"
 echo "TAYYOR. Endi bu OCHIQ kalitni A serverga qo'shish kerak"
-echo "(laptopdagi Claude buni avtomatik qiladi):"
+echo "(A serverda ~/.ssh/authorized_keys ga qo'shing):"
 echo ""
 cat "$KEYDIR/gl-a.pub"
 echo "════════════════════════════════════════════════════"

@@ -45,7 +45,7 @@ mkdir -p "$OLD/gl-dual"
 install -m 0644 "$HERE/old-pjsip-2022.conf"      "$OLD/gl-dual/pjsip-2022.conf"
 install -m 0644 "$HERE/old-extensions-2022.conf" "$OLD/gl-dual/extensions-2022.conf"
 
-# Avvalgi urinishlardagi (2026-08-12) dublikat bloklar bo'lsa — konflikt bo'lmasin
+# Avvalgi urinishlardagi dublikat bloklar bo'lsa — konflikt bo'lmasin
 for sec in gl2022-auth gl2022-registration gl-newast gl-newast-aor; do
   if grep -q "^\[$sec\]" "$OLD/pjsip.conf"; then
     warn "pjsip.conf ichida eski [$sec] bloki bor — gl-dual bilan dublikat bo'ladi. Avval o'sha eski blokni olib tashlang (zaxira: $BK)."
@@ -80,7 +80,7 @@ open(p,'w').write(s)
 PY
   ok "gl-registration izohga olindi"
 fi
-# Mavjud gl-relay-in bloki (2026-08-12) bo'lsa — dublikat bo'lmasin, faylimizdan chiqaramiz
+# Mavjud gl-relay-in bloki bo'lsa — dublikat bo'lmasin, faylimizdan chiqaramiz
 if grep -q '^\[gl-relay-in\]' "$GL/pjsip.conf"; then
   python3 - "$GL/gl-dual/pjsip-relay.conf" <<'PY'
 import re,sys

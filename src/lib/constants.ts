@@ -197,7 +197,7 @@ export function intlLocale(locale: Locale): string {
 // ── Pul maydonlari uchun yuqori chegara ──
 // Prisma `Int` 2 147 483 647 dan kattani SAQLAY OLMAYDI, lekin SQLite yozib
 // qo'yaveradi — keyin o'sha qatorni o'qigan har qanday sahifa butunlay yiqiladi.
-// (2026-09-11: fiksa = 5 000 000 000 tufayli /teachers hammaga ochilmay qolgan.)
+// (Masalan, fiksa = 5 000 000 000 kiritilsa /teachers hammaga ochilmay qoladi.)
 // 1 mlrd so'm — real oylik/narx uchun yetarli, xatoga esa ishonchli to'siq.
 export const MAX_MONEY = 1_000_000_000;
 
