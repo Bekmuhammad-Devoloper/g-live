@@ -3,7 +3,7 @@
 # AQLLI TAQSIMOT — bitta trunk (2277), ikki tizim teng.  sudo bash apply.sh
 #   1) zaxira → /root/asterisk-backup-<vaqt>/
 #   2) eski Asterisk: gl-newast ko'prik (#include), from-trunk-smart + from-glive (#include),
-#      'uztelecom' endpoint konteksti from-trunk → from-trunk-smart
+#      [from-trunk] boshiga Gosub(gl-smart-route), route-lookup URL, navbat yozuvi → RECORD_FILE
 #   3) glive: gl-oldast (#include), TRUNK=gl-oldast, provayder registratsiyasi yo'qligini tekshiradi
 #   4) reload + holat
 # QAYTARISH: sudo bash rollback.sh
@@ -23,7 +23,7 @@ for sec in gl2022-registration gl-newast gl-newast-aor gl-newast-identify; do
   grep -q "^\[$sec\]" "$OLD/pjsip.conf" && { warn "eski pjsip.conf da [$sec] bor — avval olib tashlang"; DUP=1; }
 done
 grep -q "gl-dual" "$OLD/pjsip.conf" "$OLD/extensions.conf" && { warn "gl-dual include qoldig'i bor — avval dual-trunk/rollback.sh"; DUP=1; }
-grep -q "^\[from-trunk-smart\]" "$OLD/extensions.conf" && { warn "from-trunk-smart allaqachon extensions.conf ichida"; DUP=1; }
+grep -q "^\[gl-smart-route\]" "$OLD/extensions.conf" && { warn "gl-smart-route allaqachon extensions.conf ichida"; DUP=1; }
 [[ -z "${DUP:-}" ]] || { echo "To'xtatildi — hech narsa o'zgartirilmadi (zaxira olindi)."; exit 2; }
 
 say "Eski Asterisk: ko'prik + smart dialplan"
@@ -40,19 +40,33 @@ grep -q '^#include gl-smart/pjsip-bridge.conf' "$OLD/pjsip.conf" \
 grep -q '^#include gl-smart/extensions-smart.conf' "$OLD/extensions.conf" \
   || printf '\n; GL-EDU: aqlli taqsimot (deploy/asterisk/smart-routing)\n#include gl-smart/extensions-smart.conf\n' >> "$OLD/extensions.conf"
 
-# 'uztelecom' endpoint konteksti → from-trunk-smart (faqat shu blok ichida)
-python3 - "$OLD/pjsip.conf" <<'PY'
-import re,sys
+# Imkon CRM kiruvchini Newchannel Context == "from-trunk" bo'lsa hisobga oladi — endpoint
+# konteksti O'ZGARMAYDI. Aqlli taqsimot [from-trunk] boshida Gosub(gl-smart-route) orqali.
+# Qo'shimcha: route-lookup URL (/api/v1/...) va navbat yozuvini RECORD_FILE ga bog'lash.
+python3 - "$OLD/extensions.conf" <<'PY'
+import sys
 p=sys.argv[1]; s=open(p).read()
-def fix(m):
-    blk=m.group(0)
-    if re.search(r'(?m)^context=from-trunk-smart\s*$', blk): return blk
-    blk2,n=re.subn(r'(?m)^context=from-trunk\s*$', 'context=from-trunk-smart   ; GL-SMART (asli: from-trunk)', blk)
-    if n==0: print("DIQQAT: [uztelecom] ichida context=from-trunk topilmadi"); sys.exit(3)
-    return blk2
-s2,n=re.subn(r'(?ms)^\[uztelecom\]\n.*?(?=^\[|\Z)', fix, s, count=1)
-if n==0: print("DIQQAT: [uztelecom] endpoint bloki topilmadi"); sys.exit(3)
-open(p,'w').write(s2); print("uztelecom.context → from-trunk-smart")
+def rep(a,b,cnt):
+    global s
+    n=s.count(a)
+    if n==0 and b.split("
+")[0] in s: return  # allaqachon qo'llangan
+    assert n==cnt, (a[:60], n, cnt); s=s.replace(a,b)
+rep("exten => _X.,1,NoOp(Inbound: ${CALLERID(num)})", "exten => _X.,1,Gosub(gl-smart-route,${EXTEN},1)
+ same => n,NoOp(Inbound: ${CALLERID(num)})", 1)
+rep("exten => s,1,NoOp(Inbound s: ${CALLERID(num)})", "exten => s,1,Gosub(gl-smart-route,s,1)
+ same => n,NoOp(Inbound s: ${CALLERID(num)})", 1)
+s=s.replace("http://127.0.0.1:3000/asterisk/route-lookup?phone=", "http://127.0.0.1:3000/api/v1/asterisk/route-lookup?phone=")
+if "Set(RECORD_FILE=${MONITOR_FILENAME})" not in s:
+    s=s.replace(" same => n,Set(MONITOR_FILENAME=${RECORD_DIR}/${STRFTIME(${EPOCH},,%Y%m%d-%H%M%S)}-incoming-${CALLERID(num)})
+", " same => n,Set(MONITOR_FILENAME=${RECORD_DIR}/${STRFTIME(${EPOCH},,%Y%m%d-%H%M%S)}-incoming-${CALLERID(num)})
+ same => n,Set(RECORD_FILE=${MONITOR_FILENAME})
+")
+    s=s.replace(" same => n(queue),NoOp(Falling through to operators queue)
+", " same => n(queue),Set(RECORD_FILE=${MONITOR_FILENAME})
+ same => n,NoOp(Falling through to operators queue)
+")
+open(p,'w').write(s); print("from-trunk: Gosub + URL + RECORD_FILE")
 PY
 ok "eski Asterisk tayyor"
 
@@ -71,9 +85,9 @@ say "Reload"
 asterisk -rx "pjsip reload" >/dev/null; asterisk -rx "dialplan reload" >/dev/null
 "${GL_CLI[@]}" "pjsip reload" >/dev/null; "${GL_CLI[@]}" "dialplan reload" >/dev/null
 sleep 4
-say "Eski: uztelecom konteksti"; asterisk -rx "pjsip show endpoint uztelecom" | grep -E "^ *context"
+say "Eski: from-trunk boshi (Gosub)"; asterisk -rx "dialplan show from-trunk" | grep -E "Gosub" | head -2
 say "Eski: registratsiya (faqat 2277)"; asterisk -rx "pjsip show registrations" | grep -E "Registered|Unregistered|Rejected" || true
-say "Eski: smart dialplan"; asterisk -rx "dialplan show from-trunk-smart" | head -14
+say "Eski: smart subroutine"; asterisk -rx "dialplan show gl-smart-route" | head -14
 say "Eski: gl-newast"; asterisk -rx "pjsip show aor gl-newast-aor" | grep -E "Contact:" | tail -1
 say "GL EDU tunnel / known API"; curl -s -m 3 -w " [%{http_code}]\n" "http://127.0.0.1:3010/api/telephony/known?phone=998900000000" || true
 say "glive: TRUNK"; grep -n "^TRUNK=" "$GL/extensions.conf"; "${GL_CLI[@]}" "pjsip show aor gl-oldast-aor" | grep -E "Contact:" | tail -1
