@@ -78,13 +78,15 @@ export default async function GroupDetailPage({ params }: { params: Promise<{ id
     : [];
 
   // Tahrirlash formasi uchun kurs/o'qituvchi ro'yxatlari (faqat FULL huquqli rollarga)
-  const [programs, teachers] = full
+  const [programs, teachers, rooms] = full
     ? await Promise.all([
         prisma.program.findMany({ where: { isActive: true }, select: { id: true, name: true }, orderBy: { name: "asc" } }),
         // faol filial o'qituvchilari
         prisma.user.findMany({ where: { AND: [{ role: ROLES.TEACHER }, branchWhere(s)] }, select: { id: true, fullName: true }, orderBy: { fullName: "asc" } }),
+        // faol filial xonalari — "Xona" ro'yxatdan tanlanadi
+        prisma.room.findMany({ where: { AND: [{ isActive: true }, branchWhere(s)] }, select: { id: true, name: true, capacity: true }, orderBy: { name: "asc" } }),
       ])
-    : [[], []];
+    : [[], [], []];
 
   const editData = {
     id: group.id,
@@ -123,7 +125,7 @@ export default async function GroupDetailPage({ params }: { params: Promise<{ id
           </span>
         }
         subtitle={`${group.program.name} · ${group.levelCode ?? "—"} · ${group.room ?? "—"} · ${tr(s.locale, { uz: "O'qituvchi", ru: "Преподаватель", en: "Teacher", de: "Lehrer" })}: ${group.teacher?.fullName ?? "—"} · ${tr(s.locale, { uz: `oyiga ${group.lessonsPerMonth ?? group.program.lessonsPerMonth} dars`, ru: `${group.lessonsPerMonth ?? group.program.lessonsPerMonth} уроков/мес`, en: `${group.lessonsPerMonth ?? group.program.lessonsPerMonth} lessons/month`, de: `${group.lessonsPerMonth ?? group.program.lessonsPerMonth} Std./Monat` })}`}
-        action={full ? <EditGroupButton group={editData} programs={programs} teachers={teachers} locale={s.locale} /> : undefined}
+        action={full ? <EditGroupButton group={editData} programs={programs} teachers={teachers} rooms={rooms} locale={s.locale} /> : undefined}
       />
 
       {/* Guruh izohi (kament) */}

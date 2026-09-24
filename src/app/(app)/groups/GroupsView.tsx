@@ -299,7 +299,7 @@ export default function GroupsView({
                         <Link href={`/groups/${g.id}`} title={tr(locale, { uz: "Batafsil", ru: "Подробнее", en: "Details", de: "Details" })} className="grid h-8 w-8 place-items-center rounded-lg text-slate-400 transition hover:bg-slate-100 hover:text-brand-600 dark:hover:bg-slate-800"><Icon name="eye" className="h-4 w-4" /></Link>
                         {canCreate && (
                           <>
-                            <EditGroupButton compact group={editDataOf(g)} programs={programs} teachers={teachers} locale={locale} />
+                            <EditGroupButton compact group={editDataOf(g)} programs={programs} teachers={teachers} rooms={roomOptions} locale={locale} />
                             <DeleteGroupBtn id={g.id} name={g.name} locale={locale} />
                           </>
                         )}

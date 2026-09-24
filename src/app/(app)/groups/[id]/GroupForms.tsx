@@ -247,16 +247,21 @@ export function NewLessonForm({ groupId, locale }: { groupId: string; locale: Lo
   );
 }
 
+export type RoomOption = { id: string; name: string; capacity: number };
+
 export function EditGroupButton({
   group,
   programs,
   teachers,
+  rooms = [],
   locale,
   compact,
 }: {
   group: EditGroupData;
   programs: { id: string; name: string }[];
   teachers: { id: string; fullName: string }[];
+  /** Filial xonalari — "Xona" ro'yxatdan tanlanadi */
+  rooms?: RoomOption[];
   locale: Locale;
   compact?: boolean;
 }) {
@@ -282,7 +287,7 @@ export function EditGroupButton({
         </button>
       )}
       {open && (
-        <EditGroupForm group={group} programs={programs} teachers={teachers} locale={locale} onClose={() => setOpen(false)} />
+        <EditGroupForm group={group} programs={programs} teachers={teachers} rooms={rooms} locale={locale} onClose={() => setOpen(false)} />
       )}
     </>
   );
@@ -292,12 +297,14 @@ function EditGroupForm({
   group,
   programs,
   teachers,
+  rooms = [],
   locale,
   onClose,
 }: {
   group: EditGroupData;
   programs: { id: string; name: string }[];
   teachers: { id: string; fullName: string }[];
+  rooms?: RoomOption[];
   locale: Locale;
   onClose: () => void;
 }) {
@@ -307,6 +314,9 @@ function EditGroupForm({
   const [format, setFormat] = useState<string>(group.format);
   const [color, setColor] = useState<string>(group.color ?? GROUP_COLORS[0]);
   const [capacity, setCapacity] = useState<number>(group.capacity);
+  const [room, setRoom] = useState<string>(group.room ?? "");
+  // Guruhda yozilgan xona ro'yxatda bo'lmasa ham ko'rinsin (eski nom yoki boshqa filial)
+  const roomList = rooms.some((r) => r.name === room) || !room ? rooms : [{ id: "_current", name: room, capacity: 0 }, ...rooms];
   const [days, setDays] = useState<number[]>(
     (group.weekdays ?? "").split(",").map((x) => parseInt(x, 10)).filter((n) => n >= 1 && n <= 7)
   );
@@ -444,7 +454,14 @@ function EditGroupForm({
           <div className="grid grid-cols-2 gap-3">
             <div>
               <label className={fLabel}>{tr(locale, { uz: "Xona", ru: "Кабинет", en: "Room", de: "Raum" })}</label>
-              <input name="room" defaultValue={group.room ?? ""} placeholder={tr(locale, { uz: "204-xona", ru: "Кабинет 204", en: "Room 204", de: "Raum 204" })} className={input} />
+              {rooms.length > 0 ? (
+                <select name="room" value={room} onChange={(e) => setRoom(e.target.value)} className={input}>
+                  <option value="">{tr(locale, { uz: "— xona tanlanmagan —", ru: "— кабинет не выбран —", en: "— no room —", de: "— kein Raum —" })}</option>
+                  {roomList.map((r) => <option key={r.id} value={r.name}>{r.name}{r.capacity > 0 ? ` — ${r.capacity} ${tr(locale, { uz: "o'rin", ru: "мест", en: "seats", de: "Plätze" })}` : ""}</option>)}
+                </select>
+              ) : (
+                <input name="room" value={room} onChange={(e) => setRoom(e.target.value)} placeholder={tr(locale, { uz: "Xona yo'q (Sozlamalar → Xonalar)", ru: "Нет кабинетов (Настройки → Кабинеты)", en: "No rooms (Settings → Rooms)", de: "Keine Räume (Einstellungen → Räume)" })} className={input} />
+              )}
             </div>
             <div>
               <label className={fLabel}>{tr(locale, { uz: "Sig'im", ru: "Вместимость", en: "Capacity", de: "Kapazität" })}</label>
