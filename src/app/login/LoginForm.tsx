@@ -6,7 +6,7 @@ import type { Locale } from "@/lib/constants";
 import { login, type LoginState } from "./actions";
 
 // Kirish sahifasida sessiya yo'q — `locale` brauzer tilidan (page.tsx) keladi.
-export default function LoginForm({ locale }: { locale: Locale }) {
+export default function LoginForm({ locale, next = null }: { locale: Locale; next?: string | null }) {
   const T = (uz: string, ru: string, en: string, de: string) => tr(locale, { uz, ru, en, de });
   // Ilova (TWA/PWA) ichida eski deploy'ning sahifasi ochiq qolsa, server action
   // ID'si topilmay "Failed to find Server Action" xatosi chiqadi. `login` odatda
@@ -34,6 +34,7 @@ export default function LoginForm({ locale }: { locale: Locale }) {
   return (
     <div>
       <form action={formAction} className="space-y-4">
+        {next && <input type="hidden" name="next" value={next} />}
         <div>
           <label className="mb-1.5 block text-xs font-semibold text-slate-600">{T("E-mail yoki login", "E-mail или логин", "E-mail or login", "E-Mail oder Login")}</label>
           <input

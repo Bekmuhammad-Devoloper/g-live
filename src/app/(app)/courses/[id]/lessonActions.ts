@@ -1,10 +1,14 @@
 "use server";
 
 import { revalidatePath } from "next/cache";
+import { headers } from "next/headers";
+import QRCode from "qrcode";
 import { prisma } from "@/lib/db";
 import { requireSession } from "@/lib/auth";
 import { writeAudit } from "@/lib/audit";
 import { canEditProgramLessons } from "@/lib/lessonAccess";
+import { ROLES } from "@/lib/constants";
+import { lessonLinkPath } from "@/lib/lessonLink";
 
 export interface LessonInput {
   title: string;
@@ -110,4 +114,33 @@ export async function moveCourseLesson(id: string, dir: "up" | "down"): Promise<
   ]);
   revalidatePath(`/courses/${cur.programId}`);
   return { ok: true };
+}
+
+// ─── Dars QR kodi ───
+export interface LessonQr {
+  url: string;
+  /** Modullar satrma-satr ("0"/"1"), uzunligi size*size — BrandedQr chizadi */
+  modules: string;
+  size: number;
+  error?: string;
+}
+
+/** Dars havolasi (/l/<id>) uchun QR. Darsni ko'ra oladigan har qanday xodimga ochiq. */
+export async function getLessonQr(lessonId: string): Promise<LessonQr> {
+  const s = await requireSession();
+  const empty = { url: "", modules: "", size: 0 };
+  if (s.role === ROLES.STUDENT || s.role === ROLES.PARENT) return { ...empty, error: "forbidden" };
+  const lesson = await prisma.courseLesson.findUnique({ where: { id: lessonId }, select: { id: true } });
+  if (!lesson) return { ...empty, error: "notfound" };
+
+  const host = (await headers()).get("host") ?? "localhost:3000";
+  const proto = host.startsWith("localhost") || host.startsWith("127.") ? "http" : "https";
+  const url = `${proto}://${host}${lessonLinkPath(lesson.id)}`;
+  try {
+    // H — 30% xato tuzatish: markazdagi emblema shu zaxira hisobiga qo'yiladi
+    const q = QRCode.create(url, { errorCorrectionLevel: "H" });
+    return { url, modules: Array.from(q.modules.data, (b) => (b ? "1" : "0")).join(""), size: q.modules.size };
+  } catch {
+    return { url, modules: "", size: 0, error: "qr_failed" };
+  }
 }

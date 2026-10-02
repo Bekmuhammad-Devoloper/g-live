@@ -12,6 +12,7 @@ import type { Locale } from "@/lib/constants";
 import { createCourseLesson, updateCourseLesson, deleteCourseLesson, moveCourseLesson, type LessonInput } from "./lessonActions";
 import { setLessonTaught } from "../../groups/[id]/lessonProgressActions";
 import { createAssignment } from "../../homework/actions";
+import LessonQrModal from "./LessonQrModal";
 
 export interface VLesson {
   id: string; order: number; levelCode?: string | null; title: string; topic: string | null;
@@ -83,6 +84,7 @@ function LessonCard({ lesson: l, index, count, canManage, canMark, locale, onEdi
   const del = () => { if (confirm(tr(locale, { uz: "Bu darsni o'chirasizmi?", ru: "Удалить этот урок?", en: "Delete this lesson?", de: "Möchten Sie diese Lektion löschen?" }))) start(async () => { await deleteCourseLesson(l.id); router.refresh(); }); };
   const move = (dir: "up" | "down") => start(async () => { await moveCourseLesson(l.id, dir); router.refresh(); });
   const [taskOpen, setTaskOpen] = useState(false);
+  const [qrOpen, setQrOpen] = useState(false);
   const toggleTaught = () => { if (!groupId) return; const next = !isTaught; setIsTaught(next); start(async () => { await setLessonTaught(groupId, l.id, next); }); };
 
   const hasDetails = l.topic || l.videoUrl || l.vocabText || l.vocabFileUrl || l.assignment || l.assignmentFileUrl || l.homework || l.homeworkFileUrl || l.materialUrl;
@@ -118,24 +120,28 @@ function LessonCard({ lesson: l, index, count, canManage, canMark, locale, onEdi
         </button>
 
         {/* Amallar */}
-        {(canManage || (groupId && canMark)) && (
-          <div className="flex shrink-0 items-center gap-1">
-            {canManage && <div className="mr-1 flex flex-col overflow-hidden rounded-lg border border-slate-200 dark:border-slate-700">
-              <button onClick={() => move("up")} disabled={index === 0} className="flex h-4 w-7 items-center justify-center text-[10px] text-slate-400 transition hover:bg-slate-100 hover:text-brand-500 disabled:opacity-25 dark:hover:bg-slate-800" title={tr(locale, { uz: "Yuqoriga", ru: "Вверх", en: "Up", de: "Nach oben" })}>▲</button>
-              <button onClick={() => move("down")} disabled={index === count - 1} className="flex h-4 w-7 items-center justify-center border-t border-slate-200 text-[10px] text-slate-400 transition hover:bg-slate-100 hover:text-brand-500 disabled:opacity-25 dark:border-slate-700 dark:hover:bg-slate-800" title={tr(locale, { uz: "Pastga", ru: "Вниз", en: "Down", de: "Nach unten" })}>▼</button>
-            </div>}
-            {canManage && <button onClick={onEdit} className="flex h-8 items-center gap-1 rounded-lg border border-slate-200 px-2.5 text-xs font-semibold text-slate-600 transition hover:border-brand-300 hover:bg-brand-50 hover:text-brand-600 dark:border-slate-700 dark:text-slate-300 dark:hover:bg-brand-950/30">
-              <Icon name="edit" className="h-3.5 w-3.5" /> {tr(locale, { uz: "Tahrir", ru: "Изм.", en: "Edit", de: "Bearb." })}
-            </button>}
-            {groupId && canMark && (
-              <button onClick={() => setTaskOpen(true)} className="flex h-8 items-center gap-1 rounded-lg border border-slate-200 px-2.5 text-xs font-semibold text-slate-600 transition hover:border-emerald-300 hover:bg-emerald-50 hover:text-emerald-600 dark:border-slate-700 dark:text-slate-300" title={tr(locale, { uz: "O'quvchi topshiradigan vazifa", ru: "Задание для сдачи", en: "Task for submission", de: "Abzugebende Aufgabe" })}>
-                <Icon name="clipboard" className="h-3.5 w-3.5" /> {tr(locale, { uz: "Vazifa", ru: "Задание", en: "Task", de: "Aufgabe" })}
-              </button>
-            )}
-            {canManage && <button onClick={del} className="grid h-8 w-8 place-items-center rounded-lg text-rose-500 transition hover:bg-rose-50 dark:hover:bg-rose-500/10" title={tr(locale, { uz: "O'chirish", ru: "Удалить", en: "Delete", de: "Löschen" })}><Icon name="fileX" className="h-4 w-4" /></button>}
-          </div>
-        )}
+        <div className="flex shrink-0 items-center gap-1">
+          {/* QR — o'quvchi skan qilib shu dars videosini ilovada ochadi */}
+          <button onClick={() => setQrOpen(true)} className="flex h-8 items-center gap-1 rounded-lg border border-slate-200 px-2.5 text-xs font-semibold text-slate-600 transition hover:border-brand-300 hover:bg-brand-50 hover:text-brand-600 dark:border-slate-700 dark:text-slate-300 dark:hover:bg-brand-950/30" title={tr(locale, { uz: "Dars QR kodi", ru: "QR-код урока", en: "Lesson QR code", de: "QR-Code der Lektion" })}>
+            <Icon name="qr" className="h-3.5 w-3.5" /> QR
+          </button>
+          {canManage && <div className="mr-1 flex flex-col overflow-hidden rounded-lg border border-slate-200 dark:border-slate-700">
+            <button onClick={() => move("up")} disabled={index === 0} className="flex h-4 w-7 items-center justify-center text-[10px] text-slate-400 transition hover:bg-slate-100 hover:text-brand-500 disabled:opacity-25 dark:hover:bg-slate-800" title={tr(locale, { uz: "Yuqoriga", ru: "Вверх", en: "Up", de: "Nach oben" })}>▲</button>
+            <button onClick={() => move("down")} disabled={index === count - 1} className="flex h-4 w-7 items-center justify-center border-t border-slate-200 text-[10px] text-slate-400 transition hover:bg-slate-100 hover:text-brand-500 disabled:opacity-25 dark:border-slate-700 dark:hover:bg-slate-800" title={tr(locale, { uz: "Pastga", ru: "Вниз", en: "Down", de: "Nach unten" })}>▼</button>
+          </div>}
+          {canManage && <button onClick={onEdit} className="flex h-8 items-center gap-1 rounded-lg border border-slate-200 px-2.5 text-xs font-semibold text-slate-600 transition hover:border-brand-300 hover:bg-brand-50 hover:text-brand-600 dark:border-slate-700 dark:text-slate-300 dark:hover:bg-brand-950/30">
+            <Icon name="edit" className="h-3.5 w-3.5" /> {tr(locale, { uz: "Tahrir", ru: "Изм.", en: "Edit", de: "Bearb." })}
+          </button>}
+          {groupId && canMark && (
+            <button onClick={() => setTaskOpen(true)} className="flex h-8 items-center gap-1 rounded-lg border border-slate-200 px-2.5 text-xs font-semibold text-slate-600 transition hover:border-emerald-300 hover:bg-emerald-50 hover:text-emerald-600 dark:border-slate-700 dark:text-slate-300" title={tr(locale, { uz: "O'quvchi topshiradigan vazifa", ru: "Задание для сдачи", en: "Task for submission", de: "Abzugebende Aufgabe" })}>
+              <Icon name="clipboard" className="h-3.5 w-3.5" /> {tr(locale, { uz: "Vazifa", ru: "Задание", en: "Task", de: "Aufgabe" })}
+            </button>
+          )}
+          {canManage && <button onClick={del} className="grid h-8 w-8 place-items-center rounded-lg text-rose-500 transition hover:bg-rose-50 dark:hover:bg-rose-500/10" title={tr(locale, { uz: "O'chirish", ru: "Удалить", en: "Delete", de: "Löschen" })}><Icon name="fileX" className="h-4 w-4" /></button>}
+        </div>
       </div>
+
+      {qrOpen && <LessonQrModal lessonId={l.id} title={l.title} order={l.order} locale={locale} onClose={() => setQrOpen(false)} />}
 
       {taskOpen && groupId && (
         <TaskDialog groupId={groupId} lessonId={l.id} lessonTitle={l.title} locale={locale} onClose={() => setTaskOpen(false)} />

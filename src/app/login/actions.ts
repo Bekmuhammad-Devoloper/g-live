@@ -6,6 +6,7 @@ import { prisma } from "@/lib/db";
 import { verifyPassword, createSession } from "@/lib/auth";
 import { writeAudit } from "@/lib/audit";
 import type { Locale } from "@/lib/constants";
+import { safeNextPath } from "@/lib/lessonLink";
 
 // Login — e-mail YOKI foydalanuvchi nomi (o'quvchilarga "ism" ko'rinishida
 // beriladi, xodimlarda avvalgidek e-mail). Ikkalasi ham User.email da saqlanadi.
@@ -40,6 +41,7 @@ export async function login(_prev: LoginState, formData: FormData): Promise<Logi
     branchId: user.branchId,
   });
 
-  // O'quvchi — mobil ilova ko'rinishidagi portalga
-  redirect(user.role === "STUDENT" ? "/student" : "/dashboard");
+  // Dars QR havolasidan kelingan bo'lsa — o'sha darsga; aks holda
+  // o'quvchi mobil ilova ko'rinishidagi portalga, xodim boshqaruv paneliga
+  redirect(safeNextPath(formData.get("next")) ?? (user.role === "STUDENT" ? "/student" : "/dashboard"));
 }

@@ -4,6 +4,7 @@ import { getSession } from "@/lib/auth";
 import { LOCALES, type Locale } from "@/lib/constants";
 import { tr } from "@/lib/tr";
 import LoginForm from "./LoginForm";
+import { safeNextPath } from "@/lib/lessonLink";
 
 // Kirish sahifasida sessiya (va User.locale) yo'q — til brauzerning
 // Accept-Language sarlavhasidan olinadi: birinchi mos kelgan til, aks holda "uz".
@@ -16,9 +17,11 @@ async function browserLocale(): Promise<Locale> {
   return "uz";
 }
 
-export default async function LoginPage() {
+export default async function LoginPage({ searchParams }: { searchParams: Promise<{ next?: string }> }) {
+  // Dars QR havolasidan kelingan bo'lsa — kirgach o'sha darsga qaytiladi
+  const next = safeNextPath((await searchParams).next);
   const session = await getSession();
-  if (session) redirect("/dashboard");
+  if (session) redirect(next ?? "/dashboard");
   const locale = await browserLocale();
 
   // `gl-native` — kirish sahifasi Android ilovasining BIRINCHI ekrani: seans
@@ -38,7 +41,7 @@ export default async function LoginPage() {
         </div>
 
         <div className="rounded-2xl border border-slate-200/70 bg-white p-6 shadow-soft">
-          <LoginForm locale={locale} />
+          <LoginForm locale={locale} next={next} />
         </div>
 
         <p className="mt-6 text-center text-xs text-slate-400">© 2026 Germaniya Live</p>
