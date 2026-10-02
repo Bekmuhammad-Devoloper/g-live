@@ -10,6 +10,7 @@ import UserAvatar from "../../../_components/UserAvatar";
 import DateFilter from "../DateFilter";
 import LeadList from "./LeadList";
 import CallsTable from "./CallsTable";
+import { TEAM, type TeamKind } from "../teamKind";
 
 export interface DOperator {
   id: string; name: string; email: string; phone: string | null; sip: string | null;
@@ -46,6 +47,8 @@ const grp = (n: number) => String(Math.round(n)).replace(/\B(?=(\d{3})+(?!\d))/g
 type Tab = "all" | "talked" | "no_answer" | "calls";
 
 interface Props {
+  /** Bo'lim turi: operator yoki filial administratori */
+  kind?: TeamKind;
   locale: Locale;
   op: DOperator;
   leads: DLead[];
@@ -57,7 +60,8 @@ interface Props {
   stats: DStats;
 }
 
-export default function OperatorDetail({ locale, op, leads, calls, months, period, customDate, customDateLabel, stats }: Props) {
+export default function OperatorDetail({ kind = "operator", locale, op, leads, calls, months, period, customDate, customDateLabel, stats }: Props) {
+  const cfg = TEAM[kind];
   const [tab, setTab] = useState<Tab>("all");
 
   const talked = useMemo(() => leads.filter((l) => l.talked), [leads]);
@@ -79,14 +83,14 @@ export default function OperatorDetail({ locale, op, leads, calls, months, perio
       {/* Sarlavha + davr filtri */}
       <div className="flex flex-col gap-3 lg:flex-row lg:items-center lg:justify-between">
         <div className="flex items-center gap-3">
-          <Link href="/reports/operators" className="grid h-10 w-10 place-items-center rounded-lg border border-slate-200 bg-white text-slate-500 transition hover:bg-slate-50 dark:border-slate-700 dark:bg-slate-900 dark:hover:bg-slate-800">
+          <Link href={cfg.base} className="grid h-10 w-10 place-items-center rounded-lg border border-slate-200 bg-white text-slate-500 transition hover:bg-slate-50 dark:border-slate-700 dark:bg-slate-900 dark:hover:bg-slate-800">
             <Icon name="arrow" className="h-4 w-4 rotate-180" />
           </Link>
-          <UserAvatar name={op.name} imageUrl={op.avatar} role="MANAGER" size="lg" />
+          <UserAvatar name={op.name} imageUrl={op.avatar} role={kind === "admin" ? "ADMIN" : "MANAGER"} size="lg" />
           <div>
             <h1 className="text-[22px] font-bold tracking-tight text-slate-900 dark:text-slate-100">{op.name}</h1>
             <p className="text-sm text-slate-400">
-              {op.position || tr(locale, { uz: "Operator profili", ru: "Профиль оператора", en: "Operator profile", de: "Operatorprofil" })}
+              {op.position || tr(locale, cfg.t.profile)}
               {op.branch && <span className="ml-1.5">• {op.branch}</span>}
             </p>
           </div>
@@ -96,7 +100,7 @@ export default function OperatorDetail({ locale, op, leads, calls, months, perio
           {periods.map((p) => (
             <Link
               key={p.k}
-              href={`/reports/operators/${op.id}?period=${p.k}`}
+              href={`${cfg.base}/${op.id}?period=${p.k}`}
               className={cn(
                 "rounded-lg px-3 py-2 text-sm font-medium transition",
                 period === p.k ? "bg-brand-600 text-white shadow-sm" : "text-slate-500 hover:bg-slate-100 dark:text-slate-400 dark:hover:bg-slate-800"

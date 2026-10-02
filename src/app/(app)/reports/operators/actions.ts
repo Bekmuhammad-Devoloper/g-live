@@ -3,8 +3,8 @@
 import { revalidatePath } from "next/cache";
 import { prisma } from "@/lib/db";
 import { requireSession, hashPassword } from "@/lib/auth";
-import { canManageOperators } from "@/lib/operatorAccess";
-import { ROLES } from "@/lib/constants";
+import { canManageAdminTeam, canManageOperators } from "@/lib/operatorAccess";
+import { TEAM, teamKindOf, type TeamKind } from "./teamKind";
 import { tr } from "@/lib/tr";
 import { writeAudit } from "@/lib/audit";
 import { notify } from "@/lib/notify";
@@ -20,26 +20,39 @@ const txt = (fd: FormData, k: string) => String(fd.get(k) ?? "").trim();
 // Formatlangan ("200 000") qiymatlardan bo'sh joylarni olib tashlab raqamga aylantiramiz
 const numOf = (v: FormDataEntryValue | null) => Math.max(0, Math.round(Number(String(v ?? "").replace(/\s/g, "")) || 0));
 
-async function guard() {
+// Bo'lim turi formadagi "kind" maydonidan (operator / admin) — huquq ham, rol ham shunga qarab.
+//   operator — Direktor/Administrator (USERS moduli) yoki ROP: operatorlar uning jamoasi;
+//   admin    — faqat rahbariyat va ROP (administrator hamkasbini boshqarmaydi).
+async function guard(fd: FormData) {
   const s = await requireSession();
-  // Direktor/Administrator (USERS moduli) yoki ROP — operatorlar uning jamoasi
-  const error = (await canManageOperators(s.role, s.userId))
-    ? null
-    : tr(s.locale, { uz: "Ruxsat yo'q", ru: "Нет доступа", en: "No permission", de: "Keine Berechtigung" });
-  return { s, error };
+  const kind: TeamKind = teamKindOf(fd.get("kind"));
+  const allowed = kind === "admin" ? canManageAdminTeam(s.role) : await canManageOperators(s.role, s.userId);
+  const error = allowed ? null : tr(s.locale, { uz: "Ruxsat yo'q", ru: "Нет доступа", en: "No permission", de: "Keine Berechtigung" });
+  return { s, error, kind, cfg: TEAM[kind] };
 }
 
-function refresh() {
-  revalidatePath("/reports/operators");
+function refresh(kind: TeamKind) {
+  revalidatePath(TEAM[kind].base);
 }
+
+const notFoundMsg = (locale: string, kind: TeamKind) => tr(locale as never, TEAM[kind].t.notFound);
 
 // ─────────────────────────────────────────────────────────────
 // Yangi operator — MANAGER rolidagi foydalanuvchi yaratadi.
 // Filial (branchId) joriy sessiyadan olinadi.
 // ─────────────────────────────────────────────────────────────
 export async function createOperator(fd: FormData): Promise<OpResult> {
-  const { s, error } = await guard();
+  const { s, error, kind, cfg } = await guard(fd);
   if (error) return { error };
+
+  // Administrator filialga biriktiriladi (formadan); operator — yaratuvchining filialida
+  let branchId = s.branchId;
+  if (kind === "admin") {
+    const picked = txt(fd, "branchId");
+    const branch = picked ? await prisma.branch.findFirst({ where: { id: picked, isActive: true }, select: { id: true } }) : null;
+    if (!branch) return { error: tr(s.locale, { uz: "Filialni tanlang", ru: "Выберите филиал", en: "Select a branch", de: "Filiale wählen" }) };
+    branchId = branch.id;
+  }
 
   const fullName = txt(fd, "fullName");
   const email = txt(fd, "email").toLowerCase();
@@ -69,16 +82,16 @@ export async function createOperator(fd: FormData): Promise<OpResult> {
       sipExtension,
       passwordHash: await hashPassword(password),
       plainPassword: password, // rahbariyat ko'rishi uchun ochiq nusxa
-      role: ROLES.OPERATOR,
-      branchId: s.branchId,
+      role: cfg.role,
+      branchId,
       fiksa,
       kpiBonus,
       isActive: true,
     },
     select: { id: true },
   });
-  await writeAudit({ actorId: s.userId, action: "CREATE", entityType: "User", entityId: u.id, newValue: { fullName, role: ROLES.OPERATOR } });
-  refresh();
+  await writeAudit({ actorId: s.userId, action: "CREATE", entityType: "User", entityId: u.id, newValue: { fullName, role: cfg.role } });
+  refresh(kind);
   return { ok: true, credentials: { fullName, email, password } };
 }
 
@@ -86,7 +99,7 @@ export async function createOperator(fd: FormData): Promise<OpResult> {
 // Operatorni tahrirlash
 // ─────────────────────────────────────────────────────────────
 export async function updateOperator(fd: FormData): Promise<OpResult> {
-  const { s, error } = await guard();
+  const { s, error, kind, cfg } = await guard(fd);
   if (error) return { error };
 
   const id = txt(fd, "id");
@@ -97,12 +110,23 @@ export async function updateOperator(fd: FormData): Promise<OpResult> {
   const fiksa = numOf(fd.get("fiksa"));
   const kpiBonus = numOf(fd.get("kpiBonus"));
 
-  if (!id) return { error: tr(s.locale, { uz: "Operator topilmadi", ru: "Оператор не найден", en: "Operator not found", de: "Operator nicht gefunden" }) };
+  if (!id) return { error: notFoundMsg(s.locale, kind) };
   if (fullName.length < 3) return { error: tr(s.locale, { uz: "F.I.Sh. kamida 3 ta harf bo'lsin", ru: "Ф.И.О. — минимум 3 буквы", en: "Full name must be at least 3 letters", de: "Der vollständige Name muss mindestens 3 Buchstaben haben" }) };
   if (password && password.length < 4) return { error: tr(s.locale, { uz: "Parol kamida 4 ta belgi bo'lsin", ru: "Пароль — минимум 4 символа", en: "Password must be at least 4 characters", de: "Das Passwort muss mindestens 4 Zeichen haben" }) };
 
   const cur = await prisma.user.findUnique({ where: { id }, select: { id: true, role: true, sipExtension: true } });
-  if (!cur || cur.role !== ROLES.OPERATOR) return { error: tr(s.locale, { uz: "Operator topilmadi", ru: "Оператор не найден", en: "Operator not found", de: "Operator nicht gefunden" }) };
+  if (!cur || cur.role !== cfg.role) return { error: notFoundMsg(s.locale, kind) };
+
+  // Administratorni boshqa filialga o'tkazish (tanlangan bo'lsa)
+  let branchPatch: { branchId?: string } = {};
+  if (kind === "admin") {
+    const picked = txt(fd, "branchId");
+    if (picked) {
+      const branch = await prisma.branch.findFirst({ where: { id: picked, isActive: true }, select: { id: true } });
+      if (!branch) return { error: tr(s.locale, { uz: "Filial topilmadi", ru: "Филиал не найден", en: "Branch not found", de: "Filiale nicht gefunden" }) };
+      branchPatch = { branchId: branch.id };
+    }
+  }
 
   if (sipExtension && sipExtension !== cur.sipExtension) {
     const busy = await prisma.user.findUnique({ where: { sipExtension }, select: { id: true } });
@@ -117,12 +141,13 @@ export async function updateOperator(fd: FormData): Promise<OpResult> {
       sipExtension,
       fiksa,
       kpiBonus,
+      ...branchPatch,
       ...(password ? { passwordHash: await hashPassword(password), plainPassword: password } : {}),
     },
   });
-  await writeAudit({ actorId: s.userId, action: "UPDATE", entityType: "User", entityId: id, newValue: { fullName, phone, fiksa, kpiBonus } });
-  refresh();
-  revalidatePath(`/reports/operators/${id}`);
+  await writeAudit({ actorId: s.userId, action: "UPDATE", entityType: "User", entityId: id, newValue: { fullName, phone, fiksa, kpiBonus, ...branchPatch } });
+  refresh(kind);
+  revalidatePath(`${cfg.base}/${id}`);
   return { ok: true };
 }
 
@@ -131,18 +156,18 @@ export async function updateOperator(fd: FormData): Promise<OpResult> {
 // Lid/qo'ng'iroq tarixi saqlanib qolishi uchun to'liq o'chirilmaydi.
 // ─────────────────────────────────────────────────────────────
 export async function archiveOperator(fd: FormData): Promise<OpResult> {
-  const { s, error } = await guard();
+  const { s, error, kind, cfg } = await guard(fd);
   if (error) return { error };
 
   const id = txt(fd, "id");
   const reason = txt(fd, "reason") || null;
   const cur = await prisma.user.findUnique({ where: { id }, select: { id: true, role: true, fullName: true } });
-  if (!cur || cur.role !== ROLES.OPERATOR) return { error: tr(s.locale, { uz: "Operator topilmadi", ru: "Оператор не найден", en: "Operator not found", de: "Operator nicht gefunden" }) };
+  if (!cur || cur.role !== cfg.role) return { error: notFoundMsg(s.locale, kind) };
   if (id === s.userId) return { error: tr(s.locale, { uz: "O'zingizni o'chira olmaysiz", ru: "Нельзя удалить себя", en: "You cannot remove yourself", de: "Sie können sich nicht selbst entfernen" }) };
 
   await prisma.user.update({ where: { id }, data: { isActive: false, archivedAt: new Date(), archiveReason: reason } });
   await writeAudit({ actorId: s.userId, action: "DELETE", entityType: "User", entityId: id, oldValue: { fullName: cur.fullName } });
-  refresh();
+  refresh(kind);
   return { ok: true };
 }
 
@@ -150,7 +175,7 @@ export async function archiveOperator(fd: FormData): Promise<OpResult> {
 // Operatorga topshiriq berish (Task + bildirishnoma)
 // ─────────────────────────────────────────────────────────────
 export async function assignOperatorTask(fd: FormData): Promise<OpResult> {
-  const { s, error } = await guard();
+  const { s, error, kind, cfg } = await guard(fd);
   if (error) return { error };
 
   const id = txt(fd, "id");
@@ -159,8 +184,11 @@ export async function assignOperatorTask(fd: FormData): Promise<OpResult> {
   const priority = ["LOW", "NORMAL", "HIGH"].includes(txt(fd, "priority")) ? txt(fd, "priority") : "NORMAL";
   const due = txt(fd, "dueAt");
 
-  if (!id) return { error: tr(s.locale, { uz: "Operator topilmadi", ru: "Оператор не найден", en: "Operator not found", de: "Operator nicht gefunden" }) };
+  if (!id) return { error: notFoundMsg(s.locale, kind) };
   if (title.length < 3) return { error: tr(s.locale, { uz: "Sarlavha kamida 3 ta harf bo'lsin", ru: "Заголовок — минимум 3 буквы", en: "Title must be at least 3 letters", de: "Der Titel muss mindestens 3 Buchstaben haben" }) };
+  // Topshiriq faqat shu bo'lim a'zosiga beriladi (administrator bo'limidan — administratorga)
+  const target = await prisma.user.findUnique({ where: { id }, select: { role: true, branchId: true } });
+  if (!target || target.role !== cfg.role) return { error: notFoundMsg(s.locale, kind) };
 
   const t = await prisma.task.create({
     data: {
@@ -171,13 +199,13 @@ export async function assignOperatorTask(fd: FormData): Promise<OpResult> {
       dueAt: /^\d{4}-\d{2}-\d{2}$/.test(due) ? new Date(`${due}T00:00:00`) : null,
       assigneeId: id,
       authorId: s.userId,
-      branchId: s.branchId, // faol filialga biriktiriladi
+      branchId: kind === "admin" ? target.branchId : s.branchId, // administratorga — uning filialida
     },
     select: { id: true },
   });
   await notify({ userId: id, title, body: note ?? undefined, event: "task" });
   await writeAudit({ actorId: s.userId, action: "CREATE", entityType: "Task", entityId: t.id, newValue: { title, assigneeId: id } });
-  refresh();
+  refresh(kind);
   return { ok: true };
 }
 
@@ -185,7 +213,7 @@ export async function assignOperatorTask(fd: FormData): Promise<OpResult> {
 // Operatorga bildirishnoma yuborish
 // ─────────────────────────────────────────────────────────────
 export async function sendOperatorNotification(fd: FormData): Promise<OpResult> {
-  const { s, error } = await guard();
+  const { s, error, kind, cfg } = await guard(fd);
   if (error) return { error };
 
   const id = txt(fd, "id");
@@ -193,10 +221,12 @@ export async function sendOperatorNotification(fd: FormData): Promise<OpResult> 
   const body = txt(fd, "body") || undefined;
   const event = txt(fd, "event") || "message";
 
-  if (!id) return { error: tr(s.locale, { uz: "Operator topilmadi", ru: "Оператор не найден", en: "Operator not found", de: "Operator nicht gefunden" }) };
+  if (!id) return { error: notFoundMsg(s.locale, kind) };
   if (title.length < 3) return { error: tr(s.locale, { uz: "Sarlavha kamida 3 ta harf bo'lsin", ru: "Заголовок — минимум 3 буквы", en: "Title must be at least 3 letters", de: "Der Titel muss mindestens 3 Buchstaben haben" }) };
+  const target = await prisma.user.findUnique({ where: { id }, select: { role: true } });
+  if (!target || target.role !== cfg.role) return { error: notFoundMsg(s.locale, kind) };
 
   await notify({ userId: id, title, body, event });
-  refresh();
+  refresh(kind);
   return { ok: true };
 }

@@ -95,6 +95,7 @@ export default async function RopDashboardPage({ searchParams }: { searchParams:
   const QUICK = [
     { href: "/crm", icon: "download", title: tr(locale, { uz: "Lidlar", ru: "Лиды", en: "Leads", de: "Leads" }), desc: tr(locale, { uz: "Buyurtmalar bazasi", ru: "База заявок", en: "Orders database", de: "Bestellungsdatenbank" }) },
     { href: "/rop/operators", icon: "headphones", title: tr(locale, { uz: "Operatorlar", ru: "Операторы", en: "Operators", de: "Operatoren" }), desc: tr(locale, { uz: "Jamoa nazorati", ru: "Контроль команды", en: "Team monitoring", de: "Teamüberwachung" }) },
+    { href: "/reports/admins", icon: "shield", title: tr(locale, { uz: "Administratorlar", ru: "Администраторы", en: "Administrators", de: "Administratoren" }), desc: tr(locale, { uz: "Filiallar nazorati", ru: "Контроль филиалов", en: "Branch monitoring", de: "Filialüberwachung" }) },
     { href: "/rop/kpi-settings", icon: "trophy", title: "KPI", desc: tr(locale, { uz: "Sozlamalar & reyting", ru: "Настройки и рейтинг", en: "Settings & rating", de: "Einstellungen & Rangliste" }) },
     { href: "/reports/calls", icon: "phone", title: tr(locale, { uz: "Qo'ng'iroqlar", ru: "Звонки", en: "Calls", de: "Anrufe" }), desc: tr(locale, { uz: "Qo'ng'iroqlar markazi", ru: "Центр звонков", en: "Call center", de: "Anrufzentrale" }) },
     { href: "/links", icon: "link", title: tr(locale, { uz: "Havolalar", ru: "Ссылки", en: "Links", de: "Links" }), desc: tr(locale, { uz: "Maxsus linklar", ru: "Специальные ссылки", en: "Special links", de: "Spezielle Links" }) },

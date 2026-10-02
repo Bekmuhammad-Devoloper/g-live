@@ -22,3 +22,12 @@ export async function canManageOperators(role: string, userId: string): Promise<
   const me = await prisma.user.findUnique({ where: { id: userId }, select: { position: true } });
   return isRopPosition(me?.position);
 }
+
+/**
+ * Filial administratorlari bo'limi (/reports/admins) — ko'rish va boshqarish.
+ * Faqat rahbariyat va ROP: administratorning o'zi hamkasblarini boshqarmaydi
+ * va ularning kirish ma'lumotlarini ko'rmaydi.
+ */
+const ADMIN_TEAM_ROLES: string[] = [ROLES.DIRECTOR, ROLES.DEPUTY_DIRECTOR, ROLES.ROP];
+export const canSeeAdminTeam = (role: string): boolean => ADMIN_TEAM_ROLES.includes(role);
+export const canManageAdminTeam = (role: string): boolean => ADMIN_TEAM_ROLES.includes(role);

@@ -139,6 +139,7 @@ const SUBMENUS: Record<string, { title: Record<Locale, string>; groups: SubGroup
         { href: "/reports/funnel", icon: "megaphone", label: L("Sotuv voronkasi", "Воронка продаж", "Sales funnel", "Verkaufstrichter") },
         { href: "/reports/sales-team", icon: "chart", label: L("Savdo bo'limi", "Отдел продаж", "Sales department", "Vertriebsabteilung") },
         { href: "/reports/operators", icon: "user", label: L("Operatorlar", "Операторы", "Operators", "Operatoren") },
+        { href: "/reports/admins", icon: "shield", label: L("Administratorlar", "Администраторы", "Administrators", "Administratoren") },
         { href: "/reports/kpi", icon: "trophy", label: L("KPI") },
       ] },
     ],
@@ -185,6 +186,7 @@ const ROP_NAV: PortalItem[] = [
   { href: "/rop", icon: "grid", label: L("Bosh sahifa", "Главная", "Home", "Startseite"), exact: true },
   { href: "/crm", icon: "download", label: L("Lidlar", "Лиды", "Leads", "Leads") },
   { href: "/reports/operators", icon: "headphones", label: L("Operatorlar", "Операторы", "Operators", "Operatoren") },
+  { href: "/reports/admins", icon: "shield", label: L("Administratorlar", "Администраторы", "Administrators", "Administratoren") },
   { href: "/reports/kpi", icon: "chart", label: L("KPI") },
   { href: "/rop/kpi-settings", icon: "settings", label: L("KPI sozlamalari", "Настройки KPI", "KPI settings", "KPI-Einstellungen") },
   { href: "/reports/calls", icon: "phone", label: L("Qo'ng'iroq", "Звонки", "Calls", "Anrufe") },
@@ -245,6 +247,7 @@ const MARKETING_ROUTES = new Set<string>([
   "/reports/funnel",
   "/reports/sales-team",
   "/reports/operators",
+  "/reports/admins",
   "/reports/kpi",
 ]);
 

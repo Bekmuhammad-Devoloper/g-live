@@ -11,6 +11,8 @@ import DateFilter from "./DateFilter";
 import OperatorCard, { fmtTalk, kpiColor } from "./OperatorCard";
 import { ArchiveModal, CredentialsModal, NotifyModal, OperatorDrawer, TaskModal } from "./OperatorModals";
 import type { OpResult } from "./actions";
+import { TeamProvider, type BranchOpt } from "./TeamContext";
+import { TEAM, type TeamKind } from "./teamKind";
 
 export interface VOperator {
   id: string;
@@ -22,6 +24,8 @@ export interface VOperator {
   password: string | null; // faqat boshqaruv huquqi bo'lganda to'ldiriladi
   fiksa: number;
   kpiBonus: number;
+  branchId: string | null;
+  branch: string | null;
   dayCalls: number;
   dayTalkSec: number;
   total: number;
@@ -37,6 +41,10 @@ export interface VOperator {
 }
 
 interface Props {
+  /** Bo'lim turi: operatorlar yoki filial administratorlari */
+  kind?: TeamKind;
+  /** Filiallar — administrator yaratish/tahrirlashdagi tanlov uchun */
+  branches?: BranchOpt[];
   locale: Locale;
   operators: VOperator[];
   avgKpi: number;
@@ -49,8 +57,9 @@ interface Props {
 
 type Tab = "all" | "online" | "offline";
 
-export default function OperatorsBoard({ locale, operators, avgKpi, totalLeads, dayCallsTotal, selectedDate, selectedDateLabel, canManage }: Props) {
+export default function OperatorsBoard({ kind = "operator", branches = [], locale, operators, avgKpi, totalLeads, dayCallsTotal, selectedDate, selectedDateLabel, canManage }: Props) {
   const router = useRouter();
+  const cfg = TEAM[kind];
   const [search, setSearch] = useState("");
   const [tab, setTab] = useState<Tab>("all");
 
@@ -83,7 +92,7 @@ export default function OperatorsBoard({ locale, operators, avgKpi, totalLeads, 
     exportRows(
       `operatorlar-${selectedDate ?? "bugun"}`,
       [
-        { key: "name", label: tr(locale, { uz: "Operator", ru: "Оператор", en: "Operator", de: "Operator" }) },
+        { key: "name", label: tr(locale, cfg.t.one) },
         { key: "email", label: "Login" },
         { key: "phone", label: tr(locale, { uz: "Telefon", ru: "Телефон", en: "Phone", de: "Telefon" }) },
         { key: "sip", label: "SIP" },
@@ -114,19 +123,20 @@ export default function OperatorsBoard({ locale, operators, avgKpi, totalLeads, 
   };
 
   return (
+    <TeamProvider kind={kind} branches={branches}>
     <div className="space-y-4">
       {/* Sarlavha */}
       <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
         <div className="flex items-center gap-3">
-          <span className="grid h-11 w-11 place-items-center rounded-2xl bg-gradient-to-br from-blue-500 to-cyan-500 text-white shadow-soft">
-            <Icon name="headphones" className="h-5 w-5" />
+          <span className={cn("grid h-11 w-11 place-items-center rounded-2xl bg-gradient-to-br text-white shadow-soft", kind === "admin" ? "from-violet-500 to-indigo-500" : "from-blue-500 to-cyan-500")}>
+            <Icon name={cfg.icon} className="h-5 w-5" />
           </span>
           <div>
             <h1 className="text-[22px] font-bold tracking-tight text-slate-900 dark:text-slate-100">
-              {tr(locale, { uz: "Operatorlar", ru: "Операторы", en: "Operators", de: "Operatoren" })}
+              {tr(locale, cfg.t.many)}
             </h1>
             <p className="text-sm text-slate-400">
-              {tr(locale, { uz: "Operatorlarni boshqarish va monitoring", ru: "Управление и мониторинг операторов", en: "Operator management and monitoring", de: "Verwaltung und Überwachung der Operatoren" })}
+              {tr(locale, cfg.t.subtitle)}
             </p>
           </div>
         </div>
@@ -153,7 +163,7 @@ export default function OperatorsBoard({ locale, operators, avgKpi, totalLeads, 
               onClick={() => setDrawer(null)}
               className="flex h-10 items-center gap-1.5 rounded-lg bg-brand-600 px-4 text-sm font-semibold text-white shadow-sm transition hover:bg-brand-700"
             >
-              <Icon name="plus" className="h-4 w-4" /> {tr(locale, { uz: "Yangi operator", ru: "Новый оператор", en: "New operator", de: "Neuer Operator" })}
+              <Icon name="plus" className="h-4 w-4" /> {tr(locale, cfg.t.add)}
             </button>
           )}
         </div>
@@ -182,7 +192,7 @@ export default function OperatorsBoard({ locale, operators, avgKpi, totalLeads, 
           <input
             value={search}
             onChange={(e) => setSearch(e.target.value)}
-            placeholder={tr(locale, { uz: "Operator qidirish...", ru: "Поиск оператора...", en: "Search operator...", de: "Operator suchen..." })}
+            placeholder={tr(locale, cfg.t.search)}
             className="h-10 w-full rounded-lg border border-slate-200 bg-white pl-9 pr-3 text-sm outline-none focus:border-brand-400 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-100"
           />
         </div>
@@ -206,8 +216,8 @@ export default function OperatorsBoard({ locale, operators, avgKpi, totalLeads, 
       {/* Kartalar */}
       {shown.length === 0 ? (
         <div className="rounded-2xl border border-dashed border-slate-300 py-16 text-center dark:border-slate-700">
-          <Icon name="headphones" className="mx-auto h-10 w-10 text-slate-300 dark:text-slate-600" />
-          <p className="mt-2 text-sm text-slate-400">{tr(locale, { uz: "Operator topilmadi", ru: "Оператор не найден", en: "No operator found", de: "Kein Operator gefunden" })}</p>
+          <Icon name={cfg.icon} className="mx-auto h-10 w-10 text-slate-300 dark:text-slate-600" />
+          <p className="mt-2 text-sm text-slate-400">{tr(locale, cfg.t.notFound)}</p>
         </div>
       ) : (
         <div className="grid gap-3 md:grid-cols-2 xl:grid-cols-3">
@@ -235,6 +245,7 @@ export default function OperatorsBoard({ locale, operators, avgKpi, totalLeads, 
       {notifyOp && <NotifyModal locale={locale} op={notifyOp} onClose={() => setNotifyOp(null)} />}
       {cred && <CredentialsModal locale={locale} cred={cred} onClose={() => setCred(null)} />}
     </div>
+    </TeamProvider>
   );
 }
 

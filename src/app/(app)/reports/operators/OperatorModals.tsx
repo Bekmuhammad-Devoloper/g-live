@@ -9,6 +9,7 @@ import type { Locale } from "@/lib/constants";
 import { Icon } from "../../_components/Icon";
 import { archiveOperator, assignOperatorTask, createOperator, sendOperatorNotification, updateOperator, type OpResult } from "./actions";
 import type { VOperator } from "./OperatorsBoard";
+import { useTeam } from "./TeamContext";
 
 // Operatorlar bo'limi oynalari: yaratish/tahrirlash (drawer), o'chirish tasdig'i,
 // kirish ma'lumotlari, topshiriq berish va bildirishnoma yuborish.
@@ -79,12 +80,14 @@ function ErrorBox({ text }: { text: string | null }) {
 }
 
 function useSubmit(locale: Locale, run: (fd: FormData) => Promise<OpResult>, done: (r: OpResult) => void) {
+  const { cfg } = useTeam();
   const [pending, start] = useTransition();
   const [error, setError] = useState<string | null>(null);
   const submit = (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
     setError(null);
     const fd = new FormData(e.currentTarget);
+    fd.set("kind", cfg.kind); // server qaysi jamoa (operator / administrator) ekanini shundan biladi
     start(async () => {
       const r = await run(fd);
       if (r.ok) done(r);
@@ -99,6 +102,7 @@ export function OperatorDrawer({
   locale, op, onClose, onCreated,
 }: { locale: Locale; op: VOperator | null; onClose: () => void; onCreated: (c: NonNullable<OpResult["credentials"]>) => void }) {
   const router = useRouter();
+  const { cfg, branches } = useTeam();
   const isEdit = !!op;
   const [fiksaStr, setFiksaStr] = useState(op ? grouped(op.fiksa) : "");
   const [kpiStr, setKpiStr] = useState(op ? grouped(op.kpiBonus) : "200 000");
@@ -115,9 +119,7 @@ export function OperatorDrawer({
       <div className="animate-slide-in-right h-full w-full max-w-md overflow-y-auto bg-white shadow-2xl dark:bg-slate-900" onMouseDown={(e) => e.stopPropagation()}>
         <div className="flex items-center justify-between border-b border-slate-200 px-5 py-4 dark:border-slate-800">
           <h2 className="text-lg font-bold text-slate-900 dark:text-slate-100">
-            {isEdit
-              ? tr(locale, { uz: "Operatorni tahrirlash", ru: "Редактировать оператора", en: "Edit operator", de: "Operator bearbeiten" })
-              : tr(locale, { uz: "Yangi operator", ru: "Новый оператор", en: "New operator", de: "Neuer Operator" })}
+            {isEdit ? tr(locale, cfg.t.edit) : tr(locale, cfg.t.add)}
           </h2>
           <button type="button" onClick={onClose} className="grid h-9 w-9 place-items-center rounded-lg text-slate-400 transition hover:bg-slate-100 dark:hover:bg-slate-800">
             <Icon name="close" className="h-5 w-5" />
@@ -134,14 +136,23 @@ export function OperatorDrawer({
             </Field>
           ) : (
             <Field label="Email" required>
-              <input name="email" type="email" required placeholder="operator@example.com" className={inputCls} />
+              <input name="email" type="email" required placeholder={cfg.emailPlaceholder} className={inputCls} />
             </Field>
           )}
           <Field label={tr(locale, { uz: "Telefon", ru: "Телефон", en: "Phone", de: "Telefon" })}>
             <input name="phone" defaultValue={op?.phone ?? ""} placeholder="+998 90 123 45 67" className={inputCls} />
           </Field>
+          {/* Administrator filialga biriktiriladi (operatorlar — yaratuvchining filialida) */}
+          {cfg.kind === "admin" && branches.length > 0 && (
+            <Field label={tr(locale, { uz: "Filial", ru: "Филиал", en: "Branch", de: "Filiale" })} required>
+              <select name="branchId" required defaultValue={op?.branchId ?? ""} className={inputCls}>
+                <option value="" disabled>{tr(locale, { uz: "— filialni tanlang —", ru: "— выберите филиал —", en: "— select branch —", de: "— Filiale wählen —" })}</option>
+                {branches.map((b) => <option key={b.id} value={b.id}>{b.name}</option>)}
+              </select>
+            </Field>
+          )}
           <Field label={tr(locale, { uz: "SIP raqam (telefoniya)", ru: "SIP номер (телефония)", en: "SIP extension (telephony)", de: "SIP-Nummer (Telefonie)" })}>
-            <input name="sipExtension" defaultValue={op?.sip ?? ""} placeholder="operator3" className={inputCls} />
+            <input name="sipExtension" defaultValue={op?.sip ?? ""} placeholder="glive3" className={inputCls} />
           </Field>
           <Field label={tr(locale, { uz: "Parol", ru: "Пароль", en: "Password", de: "Passwort" })} required={!isEdit}>
             <input
@@ -178,9 +189,10 @@ export function OperatorDrawer({
 /* ─────────── O'chirish (arxivlash) tasdig'i ─────────── */
 export function ArchiveModal({ locale, op, onClose }: { locale: Locale; op: VOperator; onClose: () => void }) {
   const router = useRouter();
+  const { cfg } = useTeam();
   const { pending, error, submit } = useSubmit(locale, archiveOperator, () => { onClose(); router.refresh(); });
   return (
-    <Shell title={tr(locale, { uz: "Operatorni o'chirish", ru: "Удалить оператора", en: "Remove operator", de: "Operator entfernen" })} icon="trash" onClose={onClose}>
+    <Shell title={tr(locale, cfg.t.remove)} icon="trash" onClose={onClose}>
       <form onSubmit={submit} className="space-y-4 p-5">
         <input type="hidden" name="id" value={op.id} />
         <p className="text-sm text-slate-600 dark:text-slate-300">
@@ -267,10 +279,11 @@ export function NotifyModal({ locale, op, onClose }: { locale: Locale; op: VOper
 export function CredentialsModal({
   locale, cred, onClose,
 }: { locale: Locale; cred: NonNullable<OpResult["credentials"]>; onClose: () => void }) {
+  const { cfg } = useTeam();
   const [copied, setCopied] = useState<string | null>(null);
   const copy = (text: string, field: string) => { navigator.clipboard.writeText(text); setCopied(field); setTimeout(() => setCopied(null), 2000); };
   return (
-    <Shell title={tr(locale, { uz: "Operator yaratildi", ru: "Оператор создан", en: "Operator created", de: "Operator erstellt" })} icon="check" onClose={onClose}>
+    <Shell title={tr(locale, cfg.t.created)} icon="check" onClose={onClose}>
       <div className="space-y-4 p-5">
         <p className="text-sm text-slate-500 dark:text-slate-400">
           <b className="text-slate-700 dark:text-slate-200">{cred.fullName}</b>{" "}

@@ -8,6 +8,7 @@ import type { Locale } from "@/lib/constants";
 import { Icon } from "../../_components/Icon";
 import UserAvatar from "../../_components/UserAvatar";
 import type { VOperator } from "./OperatorsBoard";
+import { useTeam } from "./TeamContext";
 
 // Bitta operator kartasi — avatar/status, kunlik ko'rsatkichlar, konversiya,
 // oxirgi faollik, kirish ma'lumotlari (yopiladigan) va amallar.
@@ -32,6 +33,7 @@ interface Props {
 }
 
 export default function OperatorCard({ locale, op, canManage, onTask, onNotify, onEdit, onArchive }: Props) {
+  const { cfg } = useTeam();
   const [showLogin, setShowLogin] = useState(false);
   const [copied, setCopied] = useState<string | null>(null);
 
@@ -56,7 +58,7 @@ export default function OperatorCard({ locale, op, canManage, onTask, onNotify, 
         <div className="mb-3 flex items-start justify-between gap-2">
           <div className="flex min-w-0 items-center gap-3">
             <div className="relative shrink-0">
-              <UserAvatar name={op.name} imageUrl={op.avatar} role="MANAGER" size="md" />
+              <UserAvatar name={op.name} imageUrl={op.avatar} role={cfg.kind === "admin" ? "ADMIN" : "MANAGER"} size="md" />
               <span className={cn("absolute -bottom-0.5 -right-0.5 h-3.5 w-3.5 rounded-full border-2 border-white dark:border-slate-900", dotCls)} />
             </div>
             <div className="min-w-0">
@@ -64,6 +66,12 @@ export default function OperatorCard({ locale, op, canManage, onTask, onNotify, 
               <div className="mt-0.5 flex items-center gap-1.5">
                 <span className={cn("text-[10px] font-semibold", statusCls)}>{statusText}</span>
                 {op.sip && <span className="rounded bg-slate-100 px-1.5 py-0.5 text-[9px] text-slate-500 dark:bg-slate-800 dark:text-slate-400">SIP: {op.sip}</span>}
+                {/* Administrator filialga biriktirilgan — qaysi filial ekani ko'rinsin */}
+                {cfg.kind === "admin" && op.branch && (
+                  <span className="inline-flex items-center gap-1 rounded bg-violet-50 px-1.5 py-0.5 text-[9px] font-semibold text-violet-600 dark:bg-violet-500/10 dark:text-violet-300">
+                    <Icon name="building" className="h-2.5 w-2.5" /> {op.branch}
+                  </span>
+                )}
               </div>
             </div>
           </div>
@@ -163,7 +171,7 @@ export default function OperatorCard({ locale, op, canManage, onTask, onNotify, 
       {/* Pastki qator */}
       <div className="flex items-center justify-between bg-slate-50 px-4 py-2.5 text-[10px] text-slate-400 dark:bg-white/[0.03]">
         <span>{tr(locale, { uz: "Yaratilgan", ru: "Создан", en: "Created", de: "Erstellt" })}: {op.createdAt}</span>
-        <Link href={`/reports/operators/${op.id}`} className="flex items-center gap-1 font-semibold text-brand-600 transition hover:underline dark:text-brand-300">
+        <Link href={`${cfg.base}/${op.id}`} className="flex items-center gap-1 font-semibold text-brand-600 transition hover:underline dark:text-brand-300">
           <Icon name="eye" className="h-3 w-3" /> {tr(locale, { uz: "Batafsil", ru: "Подробнее", en: "Details", de: "Details" })}
         </Link>
       </div>
