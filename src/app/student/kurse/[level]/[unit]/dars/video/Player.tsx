@@ -33,10 +33,12 @@ import { protectScreen, unprotectScreen } from "@/lib/screenGuard";
 type Mode = "file" | "embed" | "link" | "none";
 
 export default function Player({
-  mode, src, lessonId, watched, playLabel, closeLabel, rotateHint,
+  mode, src, poster = null, lessonId, watched, playLabel, closeLabel, rotateHint,
 }: {
   mode: Mode;
   src: string | null;
+  /** Video yuklanguncha ko'rinadigan muqova (banner) */
+  poster?: string | null;
   lessonId: string;
   watched: boolean;
   playLabel: string;
@@ -144,6 +146,7 @@ export default function Player({
             {mode === "file" && src ? (
               <video
                 src={src}
+                poster={poster ?? undefined}
                 controls
                 autoPlay
                 playsInline

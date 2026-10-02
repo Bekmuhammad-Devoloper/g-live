@@ -15,7 +15,7 @@ import { createAssignment } from "../../homework/actions";
 
 export interface VLesson {
   id: string; order: number; levelCode?: string | null; title: string; topic: string | null;
-  videoUrl: string | null; vocabText?: string | null; vocabFileUrl?: string | null; materialUrl: string | null; assignment: string | null; assignmentFileUrl: string | null; homework: string | null; homeworkFileUrl: string | null;
+  videoUrl: string | null; videoPosterUrl?: string | null; vocabText?: string | null; vocabFileUrl?: string | null; materialUrl: string | null; assignment: string | null; assignmentFileUrl: string | null; homework: string | null; homeworkFileUrl: string | null;
 }
 
 /** Lug'at maydonidagi so'zlar soni — yozayotganda darhol ko'rinsin.
@@ -135,7 +135,7 @@ function LessonCard({ lesson: l, index, count, canManage, locale, onEdit, groupI
           {l.videoUrl && (
             <div>
               <div className="mb-1.5 flex items-center gap-1.5 text-xs font-semibold text-slate-500 dark:text-slate-400"><span>🎬</span> {tr(locale, { uz: "Dars videosi", ru: "Видео урока", en: "Lesson video", de: "Lektionsvideo" })}</div>
-              <video controls preload="metadata" className="max-h-[360px] w-full rounded-xl bg-black shadow-sm" src={l.videoUrl} />
+              <video controls preload="metadata" poster={l.videoPosterUrl ?? undefined} className="max-h-[360px] w-full rounded-xl bg-black shadow-sm" src={l.videoUrl} />
             </div>
           )}
           {l.vocabText && <Field label={tr(locale, { uz: "Lug'at", ru: "Словарь", en: "Vocabulary", de: "Wortschatz" })} value={l.vocabText} />}
@@ -219,6 +219,7 @@ function LessonDrawer({ programId, initial, locale, levelCodes, onClose: closeRa
   const [homework, setHomework] = useState(initial?.homework ?? "");
   const [homeworkFileUrl, setHomeworkFileUrl] = useState(initial?.homeworkFileUrl ?? "");
   const [videoUrl, setVideoUrl] = useState(initial?.videoUrl ?? "");
+  const [videoPosterUrl, setVideoPosterUrl] = useState(initial?.videoPosterUrl ?? "");
   const [vocabText, setVocabText] = useState(initial?.vocabText ?? "");
   const [vocabFileUrl, setVocabFileUrl] = useState(initial?.vocabFileUrl ?? "");
   const [materialUrl, setMaterialUrl] = useState(initial?.materialUrl ?? "");
@@ -246,7 +247,7 @@ function LessonDrawer({ programId, initial, locale, levelCodes, onClose: closeRa
       });
       if (!confirm(msg)) return;
     }
-    const input: LessonInput = { title, levelCode, topic, assignment, assignmentFileUrl, homework, homeworkFileUrl, videoUrl, vocabText, vocabFileUrl, materialUrl };
+    const input: LessonInput = { title, levelCode, topic, assignment, assignmentFileUrl, homework, homeworkFileUrl, videoUrl, videoPosterUrl, vocabText, vocabFileUrl, materialUrl };
     start(async () => {
       const r = initial ? await updateCourseLesson(initial.id, input) : await createCourseLesson(programId, input);
       if (r.ok) { router.refresh(); closeRaw(); } else setErr(r.error ?? "error");
@@ -326,6 +327,12 @@ function LessonDrawer({ programId, initial, locale, levelCodes, onClose: closeRa
             accept="video/*" current={videoUrl} onChange={setVideoUrl} locale={locale} isVideo
           />
 
+          {/* Video banneri — o'quvchi ilovasida dars videosi muqovasi (logotip o'rnida) */}
+          <FileUpload
+            label={tr(locale, { uz: "Video banneri (rasm, 16:9)", ru: "Баннер видео (изображение, 16:9)", en: "Video banner (image, 16:9)", de: "Video-Banner (Bild, 16:9)" })}
+            accept="image/png,image/jpeg,image/webp" current={videoPosterUrl} onChange={setVideoPosterUrl} locale={locale} isImage
+          />
+
           <div>
             <label className={lbl}>{tr(locale, { uz: "Dars topshirig'i", ru: "Задание урока", en: "Lesson assignment", de: "Lektionsaufgabe" })}</label>
             <textarea value={assignment} onChange={(e) => setAssignment(e.target.value)} rows={2} placeholder={tr(locale, { uz: "Darsda bajariladigan topshiriq", ru: "Задание на уроке", en: "In-class assignment", de: "Aufgabe im Unterricht" })} className={inp} />
@@ -363,7 +370,7 @@ function LessonDrawer({ programId, initial, locale, levelCodes, onClose: closeRa
 }
 
 /* ── Fayl yuklash vidjeti (video/material) ── */
-function FileUpload({ label, accept, current, onChange, locale, isVideo }: { label: string; accept: string; current: string; onChange: (url: string) => void; locale: Locale; isVideo?: boolean }) {
+function FileUpload({ label, accept, current, onChange, locale, isVideo, isImage }: { label: string; accept: string; current: string; onChange: (url: string) => void; locale: Locale; isVideo?: boolean; isImage?: boolean }) {
   const ref = useRef<HTMLInputElement>(null);
   const abortRef = useRef<AbortController | null>(null);
   const [uploading, setUploading] = useState(false);
@@ -484,6 +491,9 @@ function FileUpload({ label, accept, current, onChange, locale, isVideo }: { lab
         <div className="space-y-2 rounded-lg border border-slate-200 p-2 dark:border-slate-700">
           {isVideo ? (
             <video controls preload="metadata" className="max-h-[220px] w-full rounded-md bg-black" src={current} />
+          ) : isImage ? (
+            // eslint-disable-next-line @next/next/no-img-element
+            <img src={current} alt="" className="aspect-video w-full rounded-md bg-slate-100 object-cover dark:bg-slate-800" />
           ) : (
             <a href={current} target="_blank" rel="noreferrer" className="block truncate text-sm text-brand-600 hover:underline">{current.split("/").pop()}</a>
           )}

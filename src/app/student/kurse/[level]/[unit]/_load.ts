@@ -30,6 +30,8 @@ export interface UnitContext {
     title: string;
     topic: string | null;
     videoUrl: string | null;
+    /** Video banneri (muqova rasmi) — bo'lmasa ilova logotipi ko'rinadi */
+    videoPosterUrl: string | null;
     /** Lug'at, ustoz qo'lda yozgan: "der Hund - it" */
     vocabText: string | null;
     /** Lug'at fayli (pdf/word/txt) — "Lug'at" bo'limida ochiladi */
@@ -125,6 +127,7 @@ export async function loadUnit(level: string, unit: string): Promise<UnitLoad> {
       title: lesson.title,
       topic: lesson.topic,
       videoUrl: lesson.videoUrl,
+      videoPosterUrl: lesson.videoPosterUrl,
       vocabText: lesson.vocabText,
       vocabFileUrl: lesson.vocabFileUrl,
       assignment: lesson.assignment,
