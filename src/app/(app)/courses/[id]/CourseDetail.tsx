@@ -27,8 +27,9 @@ export interface CourseData {
   groups: { id: string; name: string; teacher: string | null; students: number; status: string }[];
   materials: { id: string; title: string; kind: string; url: string | null; levelCode: string | null; note: string | null }[];
   courseLessons: VLesson[];
+  /** Darslar va materiallarni yuklash / tahrirlash / o'chirish */
   canManage: boolean;
-  /** Kursning O'ZINI tahrirlash/o'chirish (o'qituvchida yo'q — u faqat dars yuklaydi) */
+  /** Kursning O'ZINI va darajalarini tahrirlash/o'chirish (o'qituvchida yo'q — u faqat dars yuklaydi) */
   canEditCourse: boolean;
   locale: Locale;
 }
@@ -161,7 +162,7 @@ export default function CourseDetail({ course }: { course: CourseData }) {
 
           {tab === "levels" && (
             <div className="space-y-3">
-              <LevelForm programId={course.id} levelCodes={course.levelCodes} locale={locale} />
+              {course.canEditCourse && <LevelForm programId={course.id} levelCodes={course.levelCodes} locale={locale} />}
               {course.levels.length === 0 ? (
                 <InfoBox>{T("Ushbu kursda darajalar yo'q", "В этом курсе нет уровней", "This course has no levels", "Dieser Kurs hat keine Niveaus")}</InfoBox>
               ) : (
@@ -176,7 +177,7 @@ export default function CourseDetail({ course }: { course: CourseData }) {
                         <div className="text-xs text-slate-400">
                           {l.weeks ?? "—"} {T("hafta", "нед.", "weeks", "Wochen")} · {l.academicHours ?? "—"} {T("soat", "ч.", "hours", "Std.")} · {T("o'tish", "проходной", "pass", "Bestehen")} {l.passScore ?? "—"}%
                         </div>
-                        <DelBtn onDelete={() => deleteLevel(l.id)} locale={locale} />
+                        {course.canEditCourse && <DelBtn onDelete={() => deleteLevel(l.id)} locale={locale} />}
                       </div>
                     </div>
                   ))}
@@ -189,7 +190,7 @@ export default function CourseDetail({ course }: { course: CourseData }) {
 
           {tab === "materials" && (
             <div className="space-y-3">
-              <MaterialForm programId={course.id} levelCodes={course.levelCodes} locale={locale} />
+              {course.canManage && <MaterialForm programId={course.id} levelCodes={course.levelCodes} locale={locale} />}
               {course.materials.length === 0 ? (
                 <InfoBox>{T("Hozircha materiallar yo'q", "Материалов пока нет", "No materials yet", "Noch keine Materialien")}</InfoBox>
               ) : (
@@ -205,7 +206,7 @@ export default function CourseDetail({ course }: { course: CourseData }) {
                           <div className="truncate text-xs text-slate-400">{kindLabel(m.kind, locale)}{m.levelCode ? ` · ${m.levelCode}` : ""}{m.note ? ` · ${m.note}` : ""}</div>
                         </div>
                       </div>
-                      <DelBtn onDelete={() => deleteMaterial(m.id)} locale={locale} />
+                      {course.canManage && <DelBtn onDelete={() => deleteMaterial(m.id)} locale={locale} />}
                     </div>
                   ))}
                 </div>
@@ -215,7 +216,7 @@ export default function CourseDetail({ course }: { course: CourseData }) {
         </div>
       </div>
 
-      <CourseFormDrawer
+      {course.canEditCourse && <CourseFormDrawer
         mode="edit"
         locale={course.locale}
         // Narx bazadan keladi, qolgan meta (kod, davomiylik) hozircha brauzerda
@@ -223,7 +224,7 @@ export default function CourseDetail({ course }: { course: CourseData }) {
         open={editOpen}
         onClose={() => setEditOpen(false)}
         onSaved={(id, m) => setMeta(saveMetaFor(id, m)[id] ?? m)}
-      />
+      />}
     </div>
   );
 }

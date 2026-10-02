@@ -4,12 +4,14 @@ import { tr } from "@/lib/tr";
 import { prisma } from "@/lib/db";
 import { getLevelCodes } from "@/lib/studyLevels";
 import { ROLES } from "@/lib/constants";
+import { canEditLessons } from "@/lib/lessonAccess";
 import { Forbidden } from "../../_components/ui";
 import CourseDetail, { type CourseData } from "./CourseDetail";
 
-// Kurs sahifasi: rahbariyat + menejer to'liq boshqaradi.
-// O'qituvchi kiradi (dars yuklash uchun), lekin kursning o'zini tahrirlay/o'chira olmaydi.
-const ALLOWED = [ROLES.DIRECTOR, ROLES.DEPUTY_DIRECTOR, ROLES.ADMIN, ROLES.MANAGER, ROLES.TEACHER];
+// Kurs sahifasi. Kursning o'zi va darajalari — rahbariyat + menejer (CAN_EDIT_COURSE).
+// Darslar va materiallar — faqat direktor, ROP va o'qituvchi (lib/lessonAccess.ts);
+// qolganlar ularni faqat ko'radi.
+const ALLOWED = [ROLES.DIRECTOR, ROLES.DEPUTY_DIRECTOR, ROLES.ADMIN, ROLES.MANAGER, ROLES.TEACHER, ROLES.ROP];
 const CAN_EDIT_COURSE = [ROLES.DIRECTOR, ROLES.DEPUTY_DIRECTOR, ROLES.ADMIN, ROLES.MANAGER];
 
 export default async function CourseDetailPage({ params }: { params: Promise<{ id: string }> }) {
@@ -62,7 +64,7 @@ export default async function CourseDetailPage({ params }: { params: Promise<{ i
       id: cl.id, order: cl.order, levelCode: cl.levelCode, title: cl.title, topic: cl.topic, videoUrl: cl.videoUrl, videoPosterUrl: cl.videoPosterUrl, vocabText: cl.vocabText, vocabFileUrl: cl.vocabFileUrl, materialUrl: cl.materialUrl, assignment: cl.assignment, assignmentFileUrl: cl.assignmentFileUrl, homework: cl.homework, homeworkFileUrl: cl.homeworkFileUrl,
     })),
     levelCodes: await getLevelCodes(),
-    canManage: true,
+    canManage: canEditLessons(s.role),
     canEditCourse: CAN_EDIT_COURSE.includes(s.role as never),
     locale: s.locale,
   };

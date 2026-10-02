@@ -3,11 +3,8 @@
 import { revalidatePath } from "next/cache";
 import { prisma } from "@/lib/db";
 import { requireSession } from "@/lib/auth";
-import { ROLES } from "@/lib/constants";
 import { writeAudit } from "@/lib/audit";
-
-const ALLOWED = [ROLES.DIRECTOR, ROLES.DEPUTY_DIRECTOR, ROLES.ADMIN, ROLES.MANAGER, ROLES.TEACHER];
-const can = (role: string) => ALLOWED.includes(role as never);
+import { canEditProgramLessons } from "@/lib/lessonAccess";
 
 export interface LessonInput {
   title: string;
@@ -28,7 +25,7 @@ const clean = (v?: string) => (v && v.trim() ? v.trim() : null);
 
 export async function createCourseLesson(programId: string, input: LessonInput): Promise<{ ok: boolean; error?: string }> {
   const s = await requireSession();
-  if (!can(s.role)) return { ok: false, error: "forbidden" };
+  if (!(await canEditProgramLessons(s, programId))) return { ok: false, error: "forbidden" };
   const title = (input.title || "").trim();
   if (title.length < 1) return { ok: false, error: "invalid" };
 
@@ -58,11 +55,11 @@ export async function createCourseLesson(programId: string, input: LessonInput):
 
 export async function updateCourseLesson(id: string, input: LessonInput): Promise<{ ok: boolean; error?: string }> {
   const s = await requireSession();
-  if (!can(s.role)) return { ok: false, error: "forbidden" };
   const title = (input.title || "").trim();
   if (title.length < 1) return { ok: false, error: "invalid" };
   const ex = await prisma.courseLesson.findUnique({ where: { id }, select: { programId: true } });
   if (!ex) return { ok: false, error: "invalid" };
+  if (!(await canEditProgramLessons(s, ex.programId))) return { ok: false, error: "forbidden" };
   await prisma.courseLesson.update({
     where: { id },
     data: {
@@ -87,9 +84,9 @@ export async function updateCourseLesson(id: string, input: LessonInput): Promis
 
 export async function deleteCourseLesson(id: string): Promise<{ ok: boolean }> {
   const s = await requireSession();
-  if (!can(s.role)) return { ok: false };
   const ex = await prisma.courseLesson.findUnique({ where: { id }, select: { programId: true } });
   if (!ex) return { ok: false };
+  if (!(await canEditProgramLessons(s, ex.programId))) return { ok: false };
   await prisma.courseLesson.delete({ where: { id } });
   await writeAudit({ actorId: s.userId, action: "DELETE", entityType: "CourseLesson", entityId: id });
   revalidatePath(`/courses/${ex.programId}`);
@@ -99,9 +96,9 @@ export async function deleteCourseLesson(id: string): Promise<{ ok: boolean }> {
 // Ketma-ketlikni o'zgartirish — qo'shni dars bilan order almashish
 export async function moveCourseLesson(id: string, dir: "up" | "down"): Promise<{ ok: boolean }> {
   const s = await requireSession();
-  if (!can(s.role)) return { ok: false };
   const cur = await prisma.courseLesson.findUnique({ where: { id } });
   if (!cur) return { ok: false };
+  if (!(await canEditProgramLessons(s, cur.programId))) return { ok: false };
   const neighbor = await prisma.courseLesson.findFirst({
     where: { programId: cur.programId, order: dir === "up" ? { lt: cur.order } : { gt: cur.order } },
     orderBy: { order: dir === "up" ? "desc" : "asc" },

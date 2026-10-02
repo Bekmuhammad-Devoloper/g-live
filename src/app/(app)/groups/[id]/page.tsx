@@ -14,6 +14,7 @@ import CourseLessonsTab from "../../courses/[id]/CourseLessonsTab";
 import { getLevelCodes } from "@/lib/studyLevels";
 import { groupColor } from "../groupColor";
 import { isPaymentMandatoryBulk } from "@/lib/paymentPolicy";
+import { canEditLessons } from "@/lib/lessonAccess";
 
 export default async function GroupDetailPage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = await params;
@@ -47,6 +48,9 @@ export default async function GroupDetailPage({ params }: { params: Promise<{ id
   if (!allowed) return <Forbidden title={tr(s.locale, { uz: "Kirish taqiqlangan", ru: "Доступ запрещён", en: "Access denied", de: "Zugriff verweigert" })} body={tr(s.locale, { uz: "Bu guruhga kirish huquqingiz yo'q.", ru: "У вас нет прав доступа к этой группе.", en: "You do not have access to this group.", de: "Sie haben keinen Zugriff auf diese Gruppe." })} />;
 
   const canManage = full || isOwnerTeacher;
+  // Dars rejasining o'zini (video, material) o'zgartirish — torroq doira:
+  // direktor va shu guruh o'qituvchisi. Qolganlar ko'radi va "o'tildi" belgilaydi.
+  const canEditPlan = canManage && canEditLessons(s.role);
 
   // Kurs dars rejasi (video/mavzu/topshiriq/uy vazifasi) + shu guruh o'tgan darslari
   const [courseLessons, progressRows] = await Promise.all([
@@ -156,7 +160,7 @@ export default async function GroupDetailPage({ params }: { params: Promise<{ id
           {tr(s.locale, { uz: "Dars rejasi", ru: "План уроков", en: "Lesson plan", de: "Unterrichtsplan" })}
           <span className="text-xs font-normal text-slate-400">({tr(s.locale, { uz: "video · mavzu · topshiriq · uy vazifasi", ru: "видео · тема · задание · домашка", en: "video · topic · assignment · homework", de: "Video · Thema · Aufgabe · Hausaufgabe" })})</span>
         </h3>
-        <CourseLessonsTab programId={group.programId} lessons={vLessons} canManage={canManage} locale={s.locale} levelCodes={levelCodes} groupId={group.id} progress={lessonProgress} />
+        <CourseLessonsTab programId={group.programId} lessons={vLessons} canManage={canEditPlan} canMark={canManage} locale={s.locale} levelCodes={levelCodes} groupId={group.id} progress={lessonProgress} />
       </Card>
 
       <div className="grid gap-6 lg:grid-cols-2">

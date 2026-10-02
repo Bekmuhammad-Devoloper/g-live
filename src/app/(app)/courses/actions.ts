@@ -6,7 +6,9 @@ import { prisma } from "@/lib/db";
 import { requireSession } from "@/lib/auth";
 import { writeAudit } from "@/lib/audit";
 import { ROLES } from "@/lib/constants";
+import { canEditProgramLessons } from "@/lib/lessonAccess";
 
+// Kursning o'zi va darajalari. Materiallar alohida qoida bilan — lib/lessonAccess.ts
 const ALLOWED = [ROLES.DIRECTOR, ROLES.DEPUTY_DIRECTOR, ROLES.ADMIN, ROLES.MANAGER];
 
 export type CourseState = { ok?: boolean; error?: string; id?: string };
@@ -169,7 +171,7 @@ const materialSchema = z.object({
 
 export async function createMaterial(programId: string, _prev: CourseState, formData: FormData): Promise<CourseState> {
   const s = await requireSession();
-  if (!ALLOWED.includes(s.role as never)) return { error: "forbidden" };
+  if (!(await canEditProgramLessons(s, programId))) return { error: "forbidden" };
 
   const parsed = materialSchema.safeParse({
     title: formData.get("title"),
@@ -197,9 +199,9 @@ export async function createMaterial(programId: string, _prev: CourseState, form
 
 export async function deleteMaterial(id: string): Promise<{ ok?: boolean; error?: string }> {
   const s = await requireSession();
-  if (!ALLOWED.includes(s.role as never)) return { error: "forbidden" };
   const m = await prisma.courseMaterial.findUnique({ where: { id }, select: { programId: true } });
   if (!m) return { error: "notfound" };
+  if (!(await canEditProgramLessons(s, m.programId))) return { error: "forbidden" };
   await prisma.courseMaterial.delete({ where: { id } });
   await writeAudit({ actorId: s.userId, action: "DELETE", entityType: "CourseMaterial", entityId: id });
   revalidatePath(`/courses/${m.programId}`);

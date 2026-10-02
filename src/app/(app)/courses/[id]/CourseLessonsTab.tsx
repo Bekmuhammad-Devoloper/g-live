@@ -24,7 +24,19 @@ export interface VLesson {
 const countWords = (text: string) =>
   text.split(/[,;\n]/).filter((s) => s.trim().length >= 2).length;
 
-export default function CourseLessonsTab({ programId, lessons, canManage, locale, levelCodes, groupId, progress }: { programId: string; lessons: VLesson[]; canManage: boolean; locale: Locale; /** Sozlamalar > Darajalar ro'yxati */ levelCodes: string[]; groupId?: string; progress?: Record<string, boolean> }) {
+export default function CourseLessonsTab({ programId, lessons, canManage, canMark = false, locale, levelCodes, groupId, progress }: {
+  programId: string;
+  lessons: VLesson[];
+  /** Darsni qo'shish / tahrirlash / o'chirish / tartibini o'zgartirish */
+  canManage: boolean;
+  /** Guruh sahifasida: "o'tildi" belgisi va darsga vazifa biriktirish */
+  canMark?: boolean;
+  locale: Locale;
+  /** Sozlamalar > Darajalar ro'yxati */
+  levelCodes: string[];
+  groupId?: string;
+  progress?: Record<string, boolean>;
+}) {
   const [edit, setEdit] = useState<VLesson | null>(null);
   const [open, setOpen] = useState(false);
   const openNew = () => { setEdit(null); setOpen(true); };
@@ -53,7 +65,7 @@ export default function CourseLessonsTab({ programId, lessons, canManage, locale
       ) : (
         <ol className="space-y-3">
           {lessons.map((l, i) => (
-            <LessonCard key={l.id} lesson={l} index={i} count={lessons.length} canManage={canManage} locale={locale} onEdit={() => openEdit(l)} groupId={groupId} taught={!!progress?.[l.id]} />
+            <LessonCard key={l.id} lesson={l} index={i} count={lessons.length} canManage={canManage} canMark={canMark} locale={locale} onEdit={() => openEdit(l)} groupId={groupId} taught={!!progress?.[l.id]} />
           ))}
         </ol>
       )}
@@ -63,7 +75,7 @@ export default function CourseLessonsTab({ programId, lessons, canManage, locale
   );
 }
 
-function LessonCard({ lesson: l, index, count, canManage, locale, onEdit, groupId, taught }: { lesson: VLesson; index: number; count: number; canManage: boolean; locale: Locale; onEdit: () => void; groupId?: string; taught?: boolean }) {
+function LessonCard({ lesson: l, index, count, canManage, canMark, locale, onEdit, groupId, taught }: { lesson: VLesson; index: number; count: number; canManage: boolean; canMark: boolean; locale: Locale; onEdit: () => void; groupId?: string; taught?: boolean }) {
   const [expanded, setExpanded] = useState(false);
   const [pending, start] = useTransition();
   const [isTaught, setIsTaught] = useState(!!taught);
@@ -80,7 +92,7 @@ function LessonCard({ lesson: l, index, count, canManage, locale, onEdit, groupI
     <li className={cn("group/ls overflow-hidden rounded-2xl border bg-white shadow-card transition hover:shadow-soft dark:bg-slate-900", pending && "opacity-60", done ? "border-emerald-300 dark:border-emerald-800/70" : "border-slate-200/70 dark:border-slate-800")}>
       <div className="flex items-center gap-3.5 p-4">
         {/* Tartib / o'tildi belgisi */}
-        {groupId && canManage ? (
+        {groupId && canMark ? (
           <button onClick={toggleTaught} title={tr(locale, { uz: "O'tildi deb belgilash", ru: "Отметить пройденным", en: "Mark as taught", de: "Als unterrichtet markieren" })}
             className={cn("grid h-11 w-11 shrink-0 place-items-center rounded-xl text-[15px] font-extrabold shadow-sm transition", done ? "bg-gradient-to-br from-emerald-500 to-emerald-600 text-white" : "bg-slate-100 text-slate-400 hover:bg-emerald-100 hover:text-emerald-600 dark:bg-slate-800 dark:hover:bg-emerald-500/20")}>
             {done ? <Icon name="check" className="h-5 w-5" /> : l.order}
@@ -106,21 +118,21 @@ function LessonCard({ lesson: l, index, count, canManage, locale, onEdit, groupI
         </button>
 
         {/* Amallar */}
-        {canManage && (
+        {(canManage || (groupId && canMark)) && (
           <div className="flex shrink-0 items-center gap-1">
-            <div className="mr-1 flex flex-col overflow-hidden rounded-lg border border-slate-200 dark:border-slate-700">
+            {canManage && <div className="mr-1 flex flex-col overflow-hidden rounded-lg border border-slate-200 dark:border-slate-700">
               <button onClick={() => move("up")} disabled={index === 0} className="flex h-4 w-7 items-center justify-center text-[10px] text-slate-400 transition hover:bg-slate-100 hover:text-brand-500 disabled:opacity-25 dark:hover:bg-slate-800" title={tr(locale, { uz: "Yuqoriga", ru: "Вверх", en: "Up", de: "Nach oben" })}>▲</button>
               <button onClick={() => move("down")} disabled={index === count - 1} className="flex h-4 w-7 items-center justify-center border-t border-slate-200 text-[10px] text-slate-400 transition hover:bg-slate-100 hover:text-brand-500 disabled:opacity-25 dark:border-slate-700 dark:hover:bg-slate-800" title={tr(locale, { uz: "Pastga", ru: "Вниз", en: "Down", de: "Nach unten" })}>▼</button>
-            </div>
-            <button onClick={onEdit} className="flex h-8 items-center gap-1 rounded-lg border border-slate-200 px-2.5 text-xs font-semibold text-slate-600 transition hover:border-brand-300 hover:bg-brand-50 hover:text-brand-600 dark:border-slate-700 dark:text-slate-300 dark:hover:bg-brand-950/30">
+            </div>}
+            {canManage && <button onClick={onEdit} className="flex h-8 items-center gap-1 rounded-lg border border-slate-200 px-2.5 text-xs font-semibold text-slate-600 transition hover:border-brand-300 hover:bg-brand-50 hover:text-brand-600 dark:border-slate-700 dark:text-slate-300 dark:hover:bg-brand-950/30">
               <Icon name="edit" className="h-3.5 w-3.5" /> {tr(locale, { uz: "Tahrir", ru: "Изм.", en: "Edit", de: "Bearb." })}
-            </button>
-            {groupId && (
+            </button>}
+            {groupId && canMark && (
               <button onClick={() => setTaskOpen(true)} className="flex h-8 items-center gap-1 rounded-lg border border-slate-200 px-2.5 text-xs font-semibold text-slate-600 transition hover:border-emerald-300 hover:bg-emerald-50 hover:text-emerald-600 dark:border-slate-700 dark:text-slate-300" title={tr(locale, { uz: "O'quvchi topshiradigan vazifa", ru: "Задание для сдачи", en: "Task for submission", de: "Abzugebende Aufgabe" })}>
                 <Icon name="clipboard" className="h-3.5 w-3.5" /> {tr(locale, { uz: "Vazifa", ru: "Задание", en: "Task", de: "Aufgabe" })}
               </button>
             )}
-            <button onClick={del} className="grid h-8 w-8 place-items-center rounded-lg text-rose-500 transition hover:bg-rose-50 dark:hover:bg-rose-500/10" title={tr(locale, { uz: "O'chirish", ru: "Удалить", en: "Delete", de: "Löschen" })}><Icon name="fileX" className="h-4 w-4" /></button>
+            {canManage && <button onClick={del} className="grid h-8 w-8 place-items-center rounded-lg text-rose-500 transition hover:bg-rose-50 dark:hover:bg-rose-500/10" title={tr(locale, { uz: "O'chirish", ru: "Удалить", en: "Delete", de: "Löschen" })}><Icon name="fileX" className="h-4 w-4" /></button>}
           </div>
         )}
       </div>

@@ -17,7 +17,7 @@ export interface VCourse {
   monthlyFee: number | null; // oylik narx — BAZADAN keladi (qarz hisobida ishlatiladi)
 }
 
-export default function CoursesView({ courses, locale }: { courses: VCourse[]; locale: Locale }) {
+export default function CoursesView({ courses, locale, canCreate }: { courses: VCourse[]; locale: Locale; canCreate: boolean }) {
   const T = (uz: string, ru: string, en: string, de: string) => tr(locale, { uz, ru, en, de });
   const [meta, setMeta] = useState<Record<string, CourseMeta>>({});
   const [addOpen, setAddOpen] = useState(false);
@@ -30,19 +30,21 @@ export default function CoursesView({ courses, locale }: { courses: VCourse[]; l
       {/* Sarlavha + qo'shish tugmasi */}
       <div className="mb-6 flex flex-wrap items-center justify-between gap-3 border-b border-slate-200/70 pb-5 dark:border-slate-800">
         <h1 className="text-3xl font-bold tracking-tight text-slate-900 dark:text-slate-100">{T("Kurslar", "Курсы", "Courses", "Kurse")}</h1>
-        <button
-          onClick={() => setAddOpen(true)}
-          className="rounded-lg bg-[#1f3a5f] px-6 py-3 text-sm font-semibold text-white shadow-sm transition hover:bg-[#152a45]"
-        >
-          {T("Yangisini qo'shish", "Добавить новый", "Add new", "Neu hinzufügen")}
-        </button>
+        {canCreate && (
+          <button
+            onClick={() => setAddOpen(true)}
+            className="rounded-lg bg-[#1f3a5f] px-6 py-3 text-sm font-semibold text-white shadow-sm transition hover:bg-[#152a45]"
+          >
+            {T("Yangisini qo'shish", "Добавить новый", "Add new", "Neu hinzufügen")}
+          </button>
+        )}
       </div>
 
       {/* Kartochkalar */}
       {courses.length === 0 ? (
         <div className="rounded-2xl border border-dashed border-slate-300 bg-white/60 py-20 text-center dark:border-slate-700 dark:bg-slate-900/40">
           <div className="text-4xl opacity-30">📚</div>
-          <p className="mt-3 text-sm text-slate-500 dark:text-slate-400">{T("Hozircha kurs yo'q. \"Yangisini qo'shish\" tugmasi orqali qo'shing.", "Курсов пока нет. Добавьте через кнопку «Добавить новый».", "No courses yet. Add one with the \"Add new\" button.", "Noch keine Kurse. Fügen Sie einen über „Neu hinzufügen“ hinzu.")}</p>
+          <p className="mt-3 text-sm text-slate-500 dark:text-slate-400">{canCreate ? T("Hozircha kurs yo'q. \"Yangisini qo'shish\" tugmasi orqali qo'shing.", "Курсов пока нет. Добавьте через кнопку «Добавить новый».", "No courses yet. Add one with the \"Add new\" button.", "Noch keine Kurse. Fügen Sie einen über „Neu hinzufügen“ hinzu.") : T("Hozircha kurs yo'q.", "Курсов пока нет.", "No courses yet.", "Noch keine Kurse.")}</p>
         </div>
       ) : (
         <div className="grid gap-5 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
@@ -52,7 +54,7 @@ export default function CoursesView({ courses, locale }: { courses: VCourse[]; l
         </div>
       )}
 
-      <CourseFormDrawer mode="create" locale={locale} open={addOpen} onClose={() => setAddOpen(false)} onSaved={(id, m) => setMeta(saveMetaFor(id, m))} />
+      {canCreate && <CourseFormDrawer mode="create" locale={locale} open={addOpen} onClose={() => setAddOpen(false)} onSaved={(id, m) => setMeta(saveMetaFor(id, m))} />}
     </div>
   );
 }

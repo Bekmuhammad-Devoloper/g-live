@@ -8,7 +8,9 @@ import CoursesView, { type VCourse } from "./CoursesView";
 
 // Kurslarni boshqarish: rahbariyat + menejer. O'qituvchi ham kiradi, lekin
 // faqat O'Z guruhlari foydalanadigan kurslarni ko'radi (dars yuklash uchun).
-const ALLOWED = [ROLES.DIRECTOR, ROLES.DEPUTY_DIRECTOR, ROLES.ADMIN, ROLES.MANAGER, ROLES.TEACHER];
+// ROP — dars va materiallarni yuklash uchun (kursning o'zini yaratmaydi).
+const ALLOWED = [ROLES.DIRECTOR, ROLES.DEPUTY_DIRECTOR, ROLES.ADMIN, ROLES.MANAGER, ROLES.TEACHER, ROLES.ROP];
+const CAN_CREATE = [ROLES.DIRECTOR, ROLES.DEPUTY_DIRECTOR, ROLES.ADMIN, ROLES.MANAGER];
 
 export default async function CoursesPage() {
   const s = await requireSession();
@@ -40,5 +42,5 @@ export default async function CoursesPage() {
     monthlyFee: p.monthlyFee,
   }));
 
-  return <CoursesView courses={courses} locale={s.locale} />;
+  return <CoursesView courses={courses} locale={s.locale} canCreate={CAN_CREATE.includes(s.role as never)} />;
 }

@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { requireSession } from "@/lib/auth";
 import { chunkSizeFor, MAX_CHUNK_BYTES, MAX_UPLOAD_BYTES, MAX_UPLOAD_MB, MIN_CHUNK_BYTES } from "@/lib/upload";
 import { openOrCreateSession, sweepStaleSessions } from "@/lib/uploadSessions";
+import { canEditLessons } from "@/lib/lessonAccess";
 
 export const runtime = "nodejs";
 
@@ -46,6 +47,8 @@ export async function POST(req: NextRequest) {
   } catch {
     return NextResponse.json({ error: "unauthorized" }, { status: 401 });
   }
+  // Bo'lakli yuklash faqat dars fayllari (video darslik) uchun ishlatiladi
+  if (!canEditLessons(s.role)) return NextResponse.json({ error: "forbidden" }, { status: 403 });
 
   const body = (await readJsonCapped(req)) as { name?: unknown; type?: unknown; size?: unknown; chunkSize?: unknown; fp?: unknown } | null;
   if (!body || typeof body !== "object") return NextResponse.json({ error: "invalid" }, { status: 400 });

@@ -187,6 +187,7 @@ const ROP_NAV: PortalItem[] = [
   { href: "/crm", icon: "download", label: L("Lidlar", "Лиды", "Leads", "Leads") },
   { href: "/reports/operators", icon: "headphones", label: L("Operatorlar", "Операторы", "Operators", "Operatoren") },
   { href: "/reports/admins", icon: "shield", label: L("Administratorlar", "Администраторы", "Administrators", "Administratoren") },
+  { href: "/courses", icon: "book", label: L("Kurslar va darslar", "Курсы и уроки", "Courses and lessons", "Kurse und Lektionen") },
   { href: "/reports/kpi", icon: "chart", label: L("KPI") },
   { href: "/rop/kpi-settings", icon: "settings", label: L("KPI sozlamalari", "Настройки KPI", "KPI settings", "KPI-Einstellungen") },
   { href: "/reports/calls", icon: "phone", label: L("Qo'ng'iroq", "Звонки", "Calls", "Anrufe") },
