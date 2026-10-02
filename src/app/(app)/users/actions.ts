@@ -27,6 +27,11 @@ export interface StaffDetail {
 const CAN = [ROLES.DIRECTOR, ROLES.DEPUTY_DIRECTOR, ROLES.ADMIN];
 const can = (r: string) => CAN.includes(r as never);
 
+// Rahbariyat (direktor, o'rinbosar) parolini faqat direktor yoki hisob egasining o'zi almashtiradi —
+// aks holda administrator direktor parolini o'zgartirib, uning nomidan kira olardi
+const canSetPasswordOf = (s: { role: string; userId: string }, target: { id: string; role: string }): boolean =>
+  !MANAGEMENT_ROLES.includes(target.role) || s.role === ROLES.DIRECTOR || s.userId === target.id;
+
 // Rollar katalogidagi lavozim nomidan tizim ruxsatlari (RBAC roli) ni aniqlaydi.
 // Katalog rollari (ROP, Operator, Moliyachi, Marketolog...) erkin qo'shilishi mumkin,
 // shu sabab aniq nomlar bo'yicha kalit so'z orqali eng yaqin RBAC roliga bog'laymiz.
@@ -123,7 +128,8 @@ export async function getStaffDetail(userId: string): Promise<{ ok: boolean; dat
       birthDateIso: u.birthDate ? u.birthDate.toISOString().slice(0, 10) : null,
       gender: (u.gender === "MALE" || u.gender === "FEMALE" ? u.gender : null) as "MALE" | "FEMALE" | null,
       birthDate: fmtDate(u.birthDate), isActive: u.isActive,
-      password: u.plainPassword,
+      // Rahbariyat paroli faqat direktorga (va hisob egasiga) ko'rinadi
+      password: canSetPasswordOf(s, u) ? u.plainPassword : null,
       fiksa: u.fiksa, kpiBonus: u.kpiBonus, monthTotal,
       workdays, startTime: schedule?.startTime ?? null, endTime: schedule?.endTime ?? null,
       groups: u.teacherGroups.map((g) => g.name),
@@ -134,7 +140,8 @@ export async function getStaffDetail(userId: string): Promise<{ ok: boolean; dat
 /**
  * Xodimni tahrirlash — "Boshqaruv → Xodimlar" yon panelidagi "Tahrirlash".
  * Ism, telefon, lavozim (rol lavozimdan aniqlanadi — faqat lavozim o'zgarsa),
- * filial, jins, tug'ilgan sana, oylik, email. Parol alohida (setUserPassword).
+ * filial, jins, tug'ilgan sana, oylik, email (login) va parol. Parol maydoni bo'sh
+ * yoki o'zgarmagan bo'lsa parolga tegilmaydi.
  * Ruxsat: direktor / o'rinbosari / administrator — o'z-o'zini ham tahrirlaydi.
  */
 export async function updateStaff(fd: FormData): Promise<{ ok?: boolean; error?: string }> {
@@ -142,7 +149,7 @@ export async function updateStaff(fd: FormData): Promise<{ ok?: boolean; error?:
   if (!can(s.role)) return { error: tr(s.locale, { uz: "Ruxsat yo'q", ru: "Нет доступа", en: "No access", de: "Kein Zugriff" }) };
 
   const id = String(fd.get("id") || "");
-  const cur = await prisma.user.findUnique({ where: { id }, select: { id: true, role: true, position: true, email: true } });
+  const cur = await prisma.user.findUnique({ where: { id }, select: { id: true, role: true, position: true, email: true, plainPassword: true } });
   if (!cur) return { error: tr(s.locale, { uz: "Xodim topilmadi", ru: "Сотрудник не найден", en: "Staff member not found", de: "Mitarbeiter nicht gefunden" }) };
 
   const ism = String(fd.get("ism") || "").trim();
@@ -161,6 +168,12 @@ export async function updateStaff(fd: FormData): Promise<{ ok?: boolean; error?:
   if (ism.length < 2) return { error: tr(s.locale, { uz: "Ism kamida 2 ta harf bo'lsin", ru: "Имя должно содержать не менее 2 букв", en: "First name must be at least 2 letters", de: "Der Vorname muss mindestens 2 Buchstaben enthalten" }) };
   if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) return { error: tr(s.locale, { uz: "Email noto'g'ri", ru: "Неверный email", en: "Invalid email", de: "Ungültige E-Mail" }) };
   if (!position) return { error: tr(s.locale, { uz: "Vazifa tanlanmadi", ru: "Должность не выбрана", en: "Position not selected", de: "Position nicht ausgewählt" }) };
+
+  // Parol: bo'sh yoki hozirgisi bilan bir xil bo'lsa — o'zgarmaydi
+  const password = String(fd.get("password") || "").trim();
+  const newPassword = password && password !== cur.plainPassword ? password : null;
+  if (newPassword && newPassword.length < 4) return { error: tr(s.locale, { uz: "Parol kamida 4 ta belgi bo'lsin", ru: "Пароль должен содержать не менее 4 символов", en: "Password must be at least 4 characters", de: "Das Passwort muss mindestens 4 Zeichen enthalten" }) };
+  if (newPassword && !canSetPasswordOf(s, cur)) return { error: tr(s.locale, { uz: "Rahbariyat parolini faqat direktor o'zgartiradi", ru: "Пароль руководства меняет только директор", en: "Only the director can change a management password", de: "Passwörter der Leitung ändert nur der Direktor" }) };
 
   if (email !== cur.email) {
     const busy = await prisma.user.findUnique({ where: { email }, select: { id: true } });
@@ -183,9 +196,12 @@ export async function updateStaff(fd: FormData): Promise<{ ok?: boolean; error?:
 
   await prisma.user.update({
     where: { id },
-    data: { fullName, email, phone, position, role, branchId, gender, birthDate, fiksa },
+    data: {
+      fullName, email, phone, position, role, branchId, gender, birthDate, fiksa,
+      ...(newPassword ? { passwordHash: await hashPassword(newPassword), plainPassword: newPassword } : {}),
+    },
   });
-  await writeAudit({ actorId: s.userId, action: "UPDATE", entityType: "User", entityId: id, oldValue: { role: cur.role, position: cur.position }, newValue: { fullName, role, position, branchId } });
+  await writeAudit({ actorId: s.userId, action: "UPDATE", entityType: "User", entityId: id, oldValue: { role: cur.role, position: cur.position, email: cur.email }, newValue: { fullName, role, position, branchId, email }, reason: newPassword ? "Parol yangilandi" : undefined });
   revalidatePath("/users");
   revalidatePath("/settings/staff");
   return { ok: true };
@@ -197,8 +213,9 @@ export async function setUserPassword(userId: string, newPassword: string): Prom
   if (!can(s.role)) return { ok: false, error: "forbidden" };
   const pw = (newPassword || "").trim();
   if (pw.length < 4) return { ok: false, error: "short" };
-  const u = await prisma.user.findUnique({ where: { id: userId }, select: { id: true } });
+  const u = await prisma.user.findUnique({ where: { id: userId }, select: { id: true, role: true } });
   if (!u) return { ok: false, error: "notfound" };
+  if (!canSetPasswordOf(s, u)) return { ok: false, error: "forbidden" };
   await prisma.user.update({ where: { id: userId }, data: { passwordHash: await hashPassword(pw), plainPassword: pw } });
   await writeAudit({ actorId: s.userId, action: "UPDATE", entityType: "User", entityId: userId, reason: "Parol yangilandi" });
   return { ok: true };

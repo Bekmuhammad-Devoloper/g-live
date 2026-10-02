@@ -58,7 +58,7 @@ export async function createStaff(fd: FormData): Promise<State> {
   if ("error" in claimed) return { error: claimed.error };
 
   const u = await prisma.user.create({
-    data: { fullName, email, phone, position, passwordHash: await hashPassword(password), role, branchId: s.branchId, isActive: true, sipExtension: claimed.sip },
+    data: { fullName, email, phone, position, passwordHash: await hashPassword(password), plainPassword: password, role, branchId: s.branchId, isActive: true, sipExtension: claimed.sip },
   });
   await writeAudit({ actorId: s.userId, action: "CREATE", entityType: "User", entityId: u.id, newValue: { fullName, role } });
   revalidatePath("/settings/staff");
@@ -82,7 +82,7 @@ export async function updateStaff(fd: FormData): Promise<State> {
 
   await prisma.user.update({
     where: { id },
-    data: { fullName, phone, position, role, sipExtension: claimed.sip, ...(password.length >= 4 ? { passwordHash: await hashPassword(password) } : {}) },
+    data: { fullName, phone, position, role, sipExtension: claimed.sip, ...(password.length >= 4 ? { passwordHash: await hashPassword(password), plainPassword: password } : {}) },
   });
   await writeAudit({ actorId: s.userId, action: "UPDATE", entityType: "User", entityId: id, newValue: { fullName, role, sipExtension: claimed.sip } });
   revalidatePath("/settings/staff");

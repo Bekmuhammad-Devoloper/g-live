@@ -188,7 +188,7 @@ const groupThousands = (s: string) => s.replace(/\D/g, "").replace(/\B(?=(\d{3})
 
 function StaffForm({ positions, branches, onClose, locale, edit = null }: {
   positions: PosOpt[]; branches: Opt[]; onClose: () => void; locale: Locale;
-  /** Berilsa — tahrirlash rejimi (maydonlar to'ldirilgan, parol maydoni yo'q) */
+  /** Berilsa — tahrirlash rejimi (maydonlar to'ldirilgan; parol o'zgartirilmasa eskisi qoladi) */
   edit?: StaffDetail | null;
 }) {
   // Lavozimlarni bo'lim bo'yicha guruhlash (optgroup uchun). Tahrirlashda xodimning
@@ -323,13 +323,30 @@ function StaffForm({ positions, branches, onClose, locale, edit = null }: {
             )}
           </div>
 
-          {/* Email / Parol — tahrirlashda parol yon panelning o'zida o'rnatiladi */}
+          {/* Login (email) / Parol. Tahrirlashda parol hozirgisi bilan to'ldiriladi:
+              o'zgartirilmasa yoki bo'sh qoldirilsa — eski parol saqlanadi */}
           <div className="grid grid-cols-2 gap-3">
             <div><label className={lbl}>{tr(locale, { uz: "Elektron pochta", ru: "Электронная почта", en: "Email", de: "E-Mail" })} {req}</label><input name="email" type="email" required defaultValue={edit?.email ?? ""} placeholder="example@gmail.com" className={inp} /></div>
-            {!edit && (
-              <div><label className={lbl}>{tr(locale, { uz: "Parol (login uchun)", ru: "Пароль (для входа)", en: "Password (for login)", de: "Passwort (für Anmeldung)" })} {req}</label><input name="password" type="text" required placeholder={tr(locale, { uz: "Kamida 4 ta belgi", ru: "Минимум 4 символа", en: "At least 4 characters", de: "Mindestens 4 Zeichen" })} className={inp} /></div>
-            )}
+            <div>
+              <label className={lbl}>{tr(locale, { uz: "Parol (login uchun)", ru: "Пароль (для входа)", en: "Password (for login)", de: "Passwort (für Anmeldung)" })} {!edit && req}</label>
+              <input
+                name="password"
+                type="text"
+                autoComplete="off"
+                required={!edit}
+                defaultValue={edit?.password ?? ""}
+                placeholder={edit
+                  ? tr(locale, { uz: "Yangi parol", ru: "Новый пароль", en: "New password", de: "Neues Passwort" })
+                  : tr(locale, { uz: "Kamida 4 ta belgi", ru: "Минимум 4 символа", en: "At least 4 characters", de: "Mindestens 4 Zeichen" })}
+                className={inp}
+              />
+            </div>
           </div>
+          {edit && (
+            <p className="-mt-1.5 text-[11px] leading-relaxed text-slate-400">
+              {tr(locale, { uz: "Xodim tizimga shu elektron pochta va parol bilan kiradi. Parolni o'zgartirmasangiz yoki bo'sh qoldirsangiz — eskisi saqlanadi.", ru: "Сотрудник входит в систему с этой почтой и паролем. Если пароль не менять или оставить пустым — сохранится прежний.", en: "The staff member signs in with this email and password. Leave the password unchanged or empty to keep the current one.", de: "Der Mitarbeiter meldet sich mit dieser E-Mail und diesem Passwort an. Unverändert oder leer lassen, um das bisherige zu behalten." })}
+            </p>
+          )}
 
           {error && <p className="rounded-lg bg-rose-50 px-3 py-2 text-sm text-rose-700 dark:bg-rose-500/10 dark:text-rose-400">{error}</p>}
         </div>
