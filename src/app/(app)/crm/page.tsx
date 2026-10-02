@@ -31,7 +31,7 @@ export default async function CrmPage() {
   // tashlangan ("br:<id>" belgili) onlayn lid ko'rinadi
   const isAdmin = s.role === ROLES.ADMIN;
 
-  const [leads, managers, groupColumns, customColumns, branchRows] = await Promise.all([
+  const [leads, managers, groupColumns, customColumns, branchRows, lastActs] = await Promise.all([
     prisma.lead.findMany({
       where: allBranches
         ? {}
@@ -64,7 +64,10 @@ export default async function CrmPage() {
           orderBy: { name: "asc" },
         })
       : Promise.resolve([]),
+    // Har lid bo'yicha oxirgi harakat vaqti (bitta agregat so'rov)
+    prisma.leadActivity.groupBy({ by: ["leadId"], _max: { createdAt: true } }),
   ]);
+  const lastActivityAt = new Map(lastActs.map((a) => [a.leadId, a._max.createdAt]));
 
   // Sig'im kartada yozilmagan bo'lsa (eski yozuvlar) — Xonalar bo'limidagi xona sig'imi (nom bo'yicha)
   const roomCaps = branchRows.length
@@ -126,7 +129,7 @@ export default async function CrmPage() {
     enrollEditCount: l.enrollEditCount,
     kanbanColumnId: l.kanbanColumnId,
     activityCount: l._count.activities,
-    lastActivity: null,
+    lastActivity: lastActivityAt.get(l.id)?.toISOString() ?? null,
     createdAt: l.createdAt.toISOString(),
   }));
 

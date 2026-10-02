@@ -588,6 +588,7 @@ export default function LeadsWorkspace({ locale, initialLeads, managers, sources
           locale={locale}
           canWrite={canWrite}
           onClose={() => setQuickId(null)}
+          onCommented={(id, at) => setLeads((prev) => prev.map((l) => (l.id === id ? { ...l, activityCount: l.activityCount + 1, lastActivity: at } : l)))}
           onEnroll={() => {
             setQuickId(null);
             setEnroll({ id: quickLead.id, name: quickLead.fullName, groupId: quickLead.groupId, editCount: quickLead.enrollEditCount });

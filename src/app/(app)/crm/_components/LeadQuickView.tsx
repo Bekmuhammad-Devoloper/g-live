@@ -1,16 +1,23 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useState, useTransition } from "react";
 import { createPortal } from "react-dom";
 import Link from "next/link";
 import { tr } from "@/lib/tr";
-import { formatMoney, LEAD_STAGE_LABELS, label, type Locale } from "@/lib/constants";
+import { formatMoney, LEAD_STAGE_LABELS, ROLE_LABELS, label, type Locale } from "@/lib/constants";
 import { Icon } from "../../_components/Icon";
 import { columnDef, columnOf, initials, type VLead } from "../_lib/leadColumns";
+import { addLeadComment, listLeadComments, type LeadComment } from "../actions";
 
 // Lidning yonboshdan ochiladigan TEZKOR ko'rish oynasi.
 // Qator/kartochka BIR marta bosilganda shu oyna ochiladi; IKKI marta
 // bosilsa bevosita /crm/[id] to'liq sahifasiga kiriladi.
+
+function fmtDateTime(iso: string) {
+  const d = new Date(iso);
+  const p = (n: number) => String(n).padStart(2, "0");
+  return `${p(d.getDate())}.${p(d.getMonth() + 1)}.${d.getFullYear()} ${p(d.getHours())}:${p(d.getMinutes())}`;
+}
 
 function fmtDate(iso: string | null) {
   if (!iso) return "—";
@@ -20,7 +27,7 @@ function fmtDate(iso: string | null) {
 }
 
 export default function LeadQuickView({
-  lead, locale, canWrite, onClose, onEnroll, onDelete,
+  lead, locale, canWrite, onClose, onEnroll, onDelete, onCommented,
 }: {
   lead: VLead;
   locale: Locale;
@@ -29,6 +36,8 @@ export default function LeadQuickView({
   onEnroll: () => void;
   /** Berilsa — pastda "O'chirish" tugmasi (direktor / o'rinbosari / admin) */
   onDelete?: () => void;
+  /** Izoh qo'shilgach — ro'yxatdagi "harakatlar soni" va oxirgi harakat yangilanadi */
+  onCommented?: (leadId: string, at: string) => void;
 }) {
   const [mounted, setMounted] = useState(false);
   const col = columnDef(columnOf(lead.stage));
@@ -165,11 +174,7 @@ export default function LeadQuickView({
             )}
           </Section>
 
-          {lead.note && (
-            <Section icon="alignLeft" title={tr(locale, { uz: "Izoh", ru: "Заметка", en: "Note", de: "Notiz" })}>
-              <p className="whitespace-pre-wrap rounded-lg bg-slate-50 px-3 py-2 text-sm text-slate-600 dark:bg-white/[0.03] dark:text-slate-300">{lead.note}</p>
-            </Section>
-          )}
+          <Comments lead={lead} locale={locale} canWrite={canWrite} onCommented={onCommented} />
         </div>
 
         {/* Pastki amallar */}
@@ -196,6 +201,112 @@ export default function LeadQuickView({
       </div>
     </div>,
     document.body,
+  );
+}
+
+/* ── Izohlar: yozish maydoni + ro'yxat (kim, qachon) ──
+   Lid yaratilgandagi dastlabki izoh (ariza matni) ro'yxat oxirida turadi. */
+function Comments({ lead, locale, canWrite, onCommented }: { lead: VLead; locale: Locale; canWrite: boolean; onCommented?: (leadId: string, at: string) => void }) {
+  const [items, setItems] = useState<LeadComment[] | null>(null);
+  const [text, setText] = useState("");
+  const [error, setError] = useState(false);
+  const [pending, start] = useTransition();
+
+  useEffect(() => {
+    let alive = true;
+    setItems(null);
+    listLeadComments(lead.id).then((r) => { if (alive) setItems(r); }).catch(() => { if (alive) setItems([]); });
+    return () => { alive = false; };
+  }, [lead.id]);
+
+  const submit = () => {
+    const body = text.trim();
+    if (!body || pending) return;
+    setError(false);
+    start(async () => {
+      const r = await addLeadComment(lead.id, body);
+      if (r.ok && r.comment) {
+        const added = r.comment;
+        setItems((prev) => [added, ...(prev ?? [])]);
+        setText("");
+        onCommented?.(lead.id, added.createdAt);
+      } else setError(true);
+    });
+  };
+
+  const count = (items?.length ?? 0) + (lead.note ? 1 : 0);
+
+  return (
+    <Section icon="alignLeft" title={`${tr(locale, { uz: "Izohlar", ru: "Комментарии", en: "Comments", de: "Kommentare" })}${items ? ` (${count})` : ""}`}>
+      {canWrite && (
+        <div className="rounded-xl border border-slate-200 bg-white p-2.5 transition focus-within:border-brand-400 dark:border-white/10 dark:bg-white/[0.03]">
+          <textarea
+            value={text}
+            onChange={(e) => { setText(e.target.value); setError(false); }}
+            onKeyDown={(e) => { if (e.key === "Enter" && (e.ctrlKey || e.metaKey)) { e.preventDefault(); submit(); } }}
+            rows={3}
+            maxLength={2000}
+            placeholder={tr(locale, { uz: "Izoh yozing...", ru: "Напишите комментарий...", en: "Write a comment...", de: "Kommentar schreiben..." })}
+            className="block w-full resize-none bg-transparent text-sm text-slate-800 outline-none placeholder:text-slate-400 dark:text-slate-100"
+          />
+          <div className="mt-1.5 flex items-center justify-between gap-2">
+            <span className="text-[11px] text-slate-400">
+              {error
+                ? <span className="font-medium text-rose-500">{tr(locale, { uz: "Saqlab bo'lmadi, qayta urinib ko'ring", ru: "Не удалось сохранить, попробуйте снова", en: "Could not save, try again", de: "Speichern fehlgeschlagen, erneut versuchen" })}</span>
+                : "Ctrl + Enter"}
+            </span>
+            <button
+              type="button"
+              onClick={submit}
+              disabled={pending || !text.trim()}
+              className="rounded-lg bg-brand-600 px-3.5 py-1.5 text-xs font-semibold text-white transition hover:bg-brand-700 disabled:opacity-50"
+            >
+              {pending
+                ? tr(locale, { uz: "Saqlanmoqda...", ru: "Сохранение...", en: "Saving...", de: "Wird gespeichert..." })
+                : tr(locale, { uz: "Izoh qo'shish", ru: "Добавить", en: "Add comment", de: "Hinzufügen" })}
+            </button>
+          </div>
+        </div>
+      )}
+
+      {items === null ? (
+        <div className="space-y-2 pt-1">
+          <div className="h-12 animate-pulse rounded-xl bg-slate-100 dark:bg-white/5" />
+          <div className="h-12 animate-pulse rounded-xl bg-slate-100 dark:bg-white/5" />
+        </div>
+      ) : count === 0 ? (
+        <p className="rounded-xl border border-dashed border-slate-200 px-3 py-4 text-center text-xs text-slate-400 dark:border-white/10">
+          {tr(locale, { uz: "Hali izoh yozilmagan", ru: "Комментариев пока нет", en: "No comments yet", de: "Noch keine Kommentare" })}
+        </p>
+      ) : (
+        <ul className="space-y-2 pt-1">
+          {items.map((c) => (
+            <li key={c.id} className="rounded-xl bg-slate-50 px-3 py-2.5 dark:bg-white/[0.04]">
+              <div className="flex items-center gap-2">
+                <span className="flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-brand-500/15 text-[10px] font-bold text-brand-600 dark:text-brand-300">
+                  {initials(c.authorName ?? "?")}
+                </span>
+                <span className="min-w-0 flex-1 truncate text-xs font-semibold text-slate-700 dark:text-slate-200">
+                  {c.authorName ?? tr(locale, { uz: "Noma'lum", ru: "Неизвестно", en: "Unknown", de: "Unbekannt" })}
+                  {c.authorRole && <span className="ml-1.5 font-normal text-slate-400">{label(ROLE_LABELS, c.authorRole, locale)}</span>}
+                </span>
+                <time dateTime={c.createdAt} className="shrink-0 text-[11px] tabular-nums text-slate-400">{fmtDateTime(c.createdAt)}</time>
+              </div>
+              <p className="mt-1.5 whitespace-pre-wrap break-words text-sm leading-relaxed text-slate-700 dark:text-slate-200">{c.text}</p>
+            </li>
+          ))}
+          {lead.note && (
+            <li className="rounded-xl border border-slate-200/70 px-3 py-2.5 dark:border-white/10">
+              <div className="flex items-center justify-between gap-2">
+                <span className="text-xs font-semibold text-slate-500 dark:text-slate-400">{tr(locale, { uz: "Dastlabki izoh (ariza)", ru: "Первичная заметка (заявка)", en: "Initial note (application)", de: "Erste Notiz (Antrag)" })}</span>
+                <time dateTime={lead.createdAt} className="shrink-0 text-[11px] tabular-nums text-slate-400">{fmtDateTime(lead.createdAt)}</time>
+              </div>
+              <p className="mt-1.5 whitespace-pre-wrap break-words text-sm leading-relaxed text-slate-600 dark:text-slate-300">{lead.note}</p>
+            </li>
+          )}
+        </ul>
+      )}
+    </Section>
   );
 }
 

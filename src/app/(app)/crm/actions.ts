@@ -466,6 +466,58 @@ export async function addLeadActivity(leadId: string, type: string, result: stri
   revalidatePath(`/crm/${leadId}`);
 }
 
+// ─── Lid izohlari (tezkor oyna) ───
+export interface LeadComment {
+  id: string;
+  text: string;
+  authorName: string | null;
+  authorRole: string | null;
+  createdAt: string; // ISO
+}
+
+const commentSelect = {
+  id: true, result: true, createdAt: true,
+  author: { select: { fullName: true, role: true } },
+} as const;
+
+const toComment = (a: { id: string; result: string | null; createdAt: Date; author: { fullName: string; role: string } | null }): LeadComment => ({
+  id: a.id,
+  text: a.result ?? "",
+  authorName: a.author?.fullName ?? null,
+  authorRole: a.author?.role ?? null,
+  createdAt: a.createdAt.toISOString(),
+});
+
+/** Lidga yozilgan izohlar — yangisi tepada, muallif va vaqti bilan */
+export async function listLeadComments(leadId: string): Promise<LeadComment[]> {
+  const s = await requireSession();
+  if (!canRead(s.role, MODULES.CRM)) return [];
+  const rows = await prisma.leadActivity.findMany({
+    where: { leadId, type: "note", result: { not: null } },
+    orderBy: { createdAt: "desc" },
+    take: 100,
+    select: commentSelect,
+  });
+  return rows.map(toComment);
+}
+
+export async function addLeadComment(leadId: string, text: string): Promise<{ ok?: boolean; error?: string; comment?: LeadComment }> {
+  const s = await requireSession();
+  if (!canWrite(s.role, MODULES.CRM)) return { error: "forbidden" };
+  const body = (text || "").trim().slice(0, 2000);
+  if (!body) return { error: "invalid" };
+  const lead = await prisma.lead.findUnique({ where: { id: leadId }, select: { id: true } });
+  if (!lead) return { error: "notfound" };
+  const row = await prisma.leadActivity.create({
+    data: { leadId, authorId: s.userId, type: "note", result: body },
+    select: commentSelect,
+  });
+  await prisma.lead.update({ where: { id: leadId }, data: { updatedAt: new Date() } });
+  revalidatePath("/crm");
+  revalidatePath(`/crm/${leadId}`);
+  return { ok: true, comment: toComment(row) };
+}
+
 // ─── Menejer tayinlash ───
 export async function setLeadManager(leadId: string, managerId: string | null): Promise<void> {
   const s = await requireSession();
