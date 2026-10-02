@@ -1,5 +1,6 @@
 "use client";
 
+import { promptDialog } from "../_components/dialogs";
 import { useTransition } from "react";
 import { useRouter } from "next/navigation";
 import { cancelPayment } from "./actions";
@@ -10,8 +11,8 @@ export default function CancelButton({ id, locale }: { id: string; locale: Local
   const [pending, start] = useTransition();
   const router = useRouter();
 
-  function onClick() {
-    const reason = window.prompt(tr(locale, { uz: "Bekor qilish sababi (majburiy, audit uchun):", ru: "Причина отмены (обязательно, для аудита):", en: "Cancellation reason (required, for audit):", de: "Stornierungsgrund (erforderlich, für die Prüfung):" }));
+  async function onClick() {
+    const reason = await promptDialog({ message: tr(locale, { uz: "Bekor qilish sababi (majburiy, audit uchun):", ru: "Причина отмены (обязательно, для аудита):", en: "Cancellation reason (required, for audit):", de: "Stornierungsgrund (erforderlich, für die Prüfung):" }), minLength: 3, tone: "danger" });
     if (!reason || reason.trim().length < 3) return;
     start(async () => {
       await cancelPayment(id, reason.trim());

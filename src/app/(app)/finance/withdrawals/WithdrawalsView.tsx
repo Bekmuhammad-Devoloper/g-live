@@ -1,5 +1,6 @@
 "use client";
 
+import { promptDialog } from "../../_components/dialogs";
 import { useEffect, useMemo, useRef, useState, useTransition } from "react";
 import { useActionState } from "react";
 import { cn } from "@/lib/cn";
@@ -203,8 +204,8 @@ function FField({ label, children }: { label: string; children: React.ReactNode 
 
 function CancelBtn({ id, locale }: { id: string; locale: Locale }) {
   const [pending, start] = useTransition();
-  const onClick = () => {
-    const reason = window.prompt(tr(locale, { uz: "Bekor qilish sababi (kamida 3 belgi):", ru: "Причина отмены (минимум 3 символа):", en: "Cancellation reason (at least 3 characters):", de: "Stornierungsgrund (mind. 3 Zeichen):" }));
+  const onClick = async () => {
+    const reason = await promptDialog({ message: tr(locale, { uz: "Bekor qilish sababi (kamida 3 belgi):", ru: "Причина отмены (минимум 3 символа):", en: "Cancellation reason (at least 3 characters):", de: "Stornierungsgrund (mind. 3 Zeichen):" }), minLength: 3, tone: "danger" });
     if (!reason || reason.trim().length < 3) return;
     start(() => cancelWithdrawal(id, reason.trim()));
   };

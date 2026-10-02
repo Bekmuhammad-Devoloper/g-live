@@ -1,5 +1,6 @@
 "use client";
 
+import { confirmDelete } from "../_components/dialogs";
 import { useEffect, useMemo, useState, useTransition } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
@@ -474,12 +475,12 @@ function GroupActiveToggle({ id, active, locale }: { id: string; active: boolean
 function DeleteGroupBtn({ id, name, locale }: { id: string; name: string; locale: Locale }) {
   const router = useRouter();
   const [pending, start] = useTransition();
-  const onDelete = () => {
-    if (!window.confirm(tr(locale, {
+  const onDelete = async () => {
+    if (!(await confirmDelete(tr(locale, {
       uz: `"${name}" guruhini o'chirasizmi? O'quvchilar biriktiruvi va darslar ham o'chadi.`,
       ru: `Удалить группу "${name}"? Записи учеников и уроки тоже будут удалены.`,
       en: `Delete group "${name}"? Student enrollments and lessons will also be deleted.`, de: `Gruppe "${name}" löschen? Schüleranmeldungen und Unterrichte werden ebenfalls gelöscht.`,
-    }))) return;
+    })))) return;
     start(async () => {
       const r = await deleteGroup(id);
       if (r.ok) router.refresh();

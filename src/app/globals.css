@@ -122,6 +122,32 @@ body {
   animation: slideInRight 0.22s ease-out;
 }
 
+/* Tasdiqlash oynasi (dialogs.tsx) — tepadan yumshoq tushadi */
+@keyframes dialogDrop {
+  from {
+    opacity: 0;
+    transform: translateY(-28px) scale(0.97);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+.animate-dialog-drop {
+  animation: dialogDrop 0.26s cubic-bezier(0.16, 1, 0.3, 1);
+}
+@keyframes dialogFade {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+.animate-dialog-fade {
+  animation: dialogFade 0.18s ease-out;
+}
+
 /* Qo'ng'iroq oynasi — pastdan yumshoq ko'tarilish */
 @keyframes slideUp {
   from {

@@ -1,5 +1,6 @@
 "use client";
 
+import { promptDialog } from "../_components/dialogs";
 import { useActionState, useEffect, useRef, useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
 import { exportRows } from "@/lib/export";
@@ -102,8 +103,8 @@ export function RevokeButton({ id, locale }: { id: string; locale: Locale }) {
   const router = useRouter();
   return (
     <button
-      onClick={() => {
-        const reason = window.prompt(tr(locale, { uz: "Bekor qilish sababi (majburiy):", ru: "Причина отмены (обязательно):", en: "Reason for revocation (required):", de: "Grund für den Widerruf (erforderlich):" }));
+      onClick={async () => {
+        const reason = await promptDialog({ message: tr(locale, { uz: "Bekor qilish sababi (majburiy):", ru: "Причина отмены (обязательно):", en: "Reason for revocation (required):", de: "Grund für den Widerruf (erforderlich):" }), minLength: 3, tone: "danger" });
         if (!reason || reason.trim().length < 3) return;
         start(async () => { await revokeCertificate(id, reason.trim()); router.refresh(); });
       }}

@@ -1,5 +1,6 @@
 "use client";
 
+import { confirmDelete } from "../../_components/dialogs";
 import { useEffect, useRef, useState } from "react";
 import { useActionState } from "react";
 import Link from "next/link";
@@ -235,7 +236,7 @@ function RulesTable({ rules, canManage, locale }: { rules: VRule[]; canManage: b
 function DelRule({ id, locale }: { id: string; locale: Locale }) {
   const [pending, start] = useTransition();
   return (
-    <button onClick={() => { if (window.confirm(tr(locale, { uz: "Qoidani o'chirasizmi?", ru: "Удалить правило?", en: "Delete the rule?", de: "Regel löschen?" }))) start(() => deleteSalaryRule(id)); }} disabled={pending}
+    <button onClick={async () => { if (await confirmDelete(tr(locale, { uz: "Qoidani o'chirasizmi?", ru: "Удалить правило?", en: "Delete the rule?", de: "Regel löschen?" }))) start(() => deleteSalaryRule(id)); }} disabled={pending}
       className="inline-flex items-center gap-1.5 rounded-lg border border-rose-200 px-3 py-1.5 text-xs font-medium text-rose-600 transition hover:bg-rose-50 disabled:opacity-50 dark:border-rose-900/50 dark:text-rose-400 dark:hover:bg-rose-950/30">
       <Icon name="trash" className="h-3.5 w-3.5" /> {pending ? "..." : tr(locale, { uz: "O'chirish", ru: "Удалить", en: "Delete", de: "Löschen" })}
     </button>

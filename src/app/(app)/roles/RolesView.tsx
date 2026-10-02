@@ -1,5 +1,6 @@
 "use client";
 
+import { confirmDelete } from "../_components/dialogs";
 import { Fragment, useEffect, useMemo, useRef, useState, useTransition } from "react";
 import { createPortal } from "react-dom";
 import { useRouter } from "next/navigation";
@@ -52,7 +53,7 @@ export default function RolesView({ roles, canManage, locale }: { roles: VRole[]
     return order.map((k) => ({ key: k, label: k === OTHER ? tr(locale, { uz: "Bo'limsiz", ru: "Без отдела", en: "No department", de: "Keine Abteilung" }) : k, roles: map.get(k)! }));
   }, [filtered, locale]);
 
-  const del = (id: string) => { if (confirm(tr(locale, { uz: "Rolni o'chirasizmi?", ru: "Удалить роль?", en: "Delete this role?", de: "Diese Rolle löschen?" }))) start(async () => { await deleteRole(id); router.refresh(); }); };
+  const del = async (id: string) => { if (await confirmDelete(tr(locale, { uz: "Rolni o'chirasizmi?", ru: "Удалить роль?", en: "Delete this role?", de: "Diese Rolle löschen?" }))) start(async () => { await deleteRole(id); router.refresh(); }); };
 
   const exportCsvNow = () => exportRows(
     tr(locale, { uz: "rollar", ru: "роли", en: "roles", de: "rollen" }),

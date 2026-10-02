@@ -1,5 +1,6 @@
 "use client";
 
+import { confirmDelete } from "../../_components/dialogs";
 import { useMemo, useState, useTransition } from "react";
 import { cn } from "@/lib/cn";
 import { tr } from "@/lib/tr";
@@ -51,8 +52,8 @@ export default function ContractTemplatesView({
   const curPage = Math.min(page, totalPages);
   const shown = filtered.slice((curPage - 1) * pageSize, curPage * pageSize);
 
-  function onDelete(id: string) {
-    if (!confirm(tr(locale, { uz: "Ushbu shartnomani o'chirmoqchimisiz?", ru: "Удалить этот договор?", en: "Delete this contract?", de: "Diesen Vertrag löschen?" }))) return;
+  async function onDelete(id: string) {
+    if (!(await confirmDelete(tr(locale, { uz: "Ushbu shartnomani o'chirmoqchimisiz?", ru: "Удалить этот договор?", en: "Delete this contract?", de: "Diesen Vertrag löschen?" })))) return;
     setBusyId(id);
     startTransition(async () => {
       await deleteContractTemplate(id);

@@ -1,5 +1,6 @@
 "use client";
 
+import { alertDialog, confirmDelete } from "../../_components/dialogs";
 import { useActionState, useEffect, useRef, useState, useTransition } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
@@ -57,12 +58,12 @@ export default function CourseDetail({ course }: { course: CourseData }) {
 
   useEffect(() => { setMeta(loadMeta()[course.id] ?? {}); }, [course.id]);
 
-  function onDelete() {
-    if (!confirm(T("Ushbu kursni o'chirmoqchimisiz?", "Удалить этот курс?", "Delete this course?", "Diesen Kurs löschen?"))) return;
+  async function onDelete() {
+    if (!(await confirmDelete(T("Ushbu kursni o'chirmoqchimisiz?", "Удалить этот курс?", "Delete this course?", "Diesen Kurs löschen?")))) return;
     startTransition(async () => {
       const res = await deleteCourse(course.id);
-      if (res.error === "has-groups") { alert(T("Kursda guruhlar bor. Avval guruhlarni ko'chiring yoki o'chiring.", "В курсе есть группы. Сначала перенесите или удалите группы.", "The course has groups. Move or delete the groups first.", "Der Kurs hat Gruppen. Verschieben oder löschen Sie zuerst die Gruppen.")); return; }
-      if (res.error) { alert(T("O'chirishda xatolik.", "Ошибка при удалении.", "Error while deleting.", "Fehler beim Löschen.")); return; }
+      if (res.error === "has-groups") { void alertDialog(T("Kursda guruhlar bor. Avval guruhlarni ko'chiring yoki o'chiring.", "В курсе есть группы. Сначала перенесите или удалите группы.", "The course has groups. Move or delete the groups first.", "Der Kurs hat Gruppen. Verschieben oder löschen Sie zuerst die Gruppen.")); return; }
+      if (res.error) { void alertDialog(T("O'chirishda xatolik.", "Ошибка при удалении.", "Error while deleting.", "Fehler beim Löschen.")); return; }
       router.push("/courses");
     });
   }
@@ -307,7 +308,7 @@ function DelBtn({ onDelete, locale }: { onDelete: () => Promise<{ ok?: boolean; 
   const router = useRouter();
   return (
     <button
-      onClick={() => { if (window.confirm(tr(locale, { uz: "O'chirasizmi?", ru: "Удалить?", en: "Delete?", de: "Löschen?" }))) start(async () => { const r = await onDelete(); if (r.ok) router.refresh(); }); }}
+      onClick={async () => { if (await confirmDelete(tr(locale, { uz: "O'chirasizmi?", ru: "Удалить?", en: "Delete?", de: "Löschen?" }))) start(async () => { const r = await onDelete(); if (r.ok) router.refresh(); }); }}
       disabled={pending}
       title={tr(locale, { uz: "O'chirish", ru: "Удалить", en: "Delete", de: "Löschen" })}
       className="grid h-8 w-8 shrink-0 place-items-center rounded-lg text-rose-500 transition hover:bg-rose-50 disabled:opacity-50 dark:hover:bg-rose-500/10"

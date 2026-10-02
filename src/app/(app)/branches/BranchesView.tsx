@@ -1,5 +1,6 @@
 "use client";
 
+import { alertDialog, confirmDelete, confirmDialog } from "../_components/dialogs";
 import { useEffect, useMemo, useRef, useState, useTransition } from "react";
 import { createPortal } from "react-dom";
 import { useRouter } from "next/navigation";
@@ -27,14 +28,14 @@ export default function BranchesView({ branches, canManage, canPurge = false, lo
     return q ? branches.filter((b) => `${b.name} ${b.address}`.toLowerCase().includes(q)) : branches;
   }, [branches, search]);
 
-  const del = (id: string) => {
-    if (!confirm(tr(locale, { uz: "Filialni o'chirasizmi?", ru: "Удалить филиал?", en: "Delete this branch?", de: "Filiale löschen?" }))) return;
+  const del = async (id: string) => {
+    if (!(await confirmDelete(tr(locale, { uz: "Filialni o'chirasizmi?", ru: "Удалить филиал?", en: "Delete this branch?", de: "Filiale löschen?" })))) return;
     start(async () => {
       const r = await deleteBranch(id);
       if (r.error) {
         // Bog'liq xodim/guruh/o'quvchi bo'lsa: direktorga to'liq o'chirish taklif qilinadi, qolganlarga — sabab
         const b = branches.find((x) => x.id === id) ?? null;
-        if (canPurge && b) setPurge(b); else alert(r.error);
+        if (canPurge && b) setPurge(b); else void alertDialog(r.error);
       }
       router.refresh();
     });
@@ -169,18 +170,18 @@ function UnassignedCard({ branches, locale }: { branches: VBranch[]; locale: Loc
     [L("xarajat", "расходов", "expenses", "Ausgaben"), counts.expenses],
   ];
 
-  const run = () => {
+  const run = async () => {
     const b = branches.find((x) => x.id === target);
     if (!b) return;
-    if (!confirm(L(
+    if (!(await confirmDialog(L(
       `${counts.total} ta filialsiz yozuv "${b.name}" filialiga biriktiriladi. Davom etasizmi?`,
       `${counts.total} записей без филиала будут привязаны к «${b.name}». Продолжить?`,
       `${counts.total} records without a branch will be assigned to "${b.name}". Continue?`,
       `${counts.total} Datensätze ohne Filiale werden "${b.name}" zugeordnet. Fortfahren?`,
-    ))) return;
+    )))) return;
     start(async () => {
       const r = await assignUnassignedToBranch(target);
-      if (r.error) alert(r.error);
+      if (r.error) void alertDialog(r.error);
       setCounts(await unassignedCounts());
       router.refresh();
     });

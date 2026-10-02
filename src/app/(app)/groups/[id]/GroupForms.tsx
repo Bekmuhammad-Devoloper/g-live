@@ -1,5 +1,6 @@
 "use client";
 
+import { confirmDelete } from "../../_components/dialogs";
 import { useActionState, useEffect, useMemo, useRef, useState, useTransition } from "react";
 import { createPortal } from "react-dom";
 import { useRouter } from "next/navigation";
@@ -213,8 +214,8 @@ export function RemoveStudentButton({ groupId, studentId, locale }: { groupId: s
       type="button"
       title={tr(locale, { uz: "Guruhdan olib tashlash", ru: "Убрать из группы", en: "Remove from group", de: "Aus der Gruppe entfernen" })}
       disabled={pending}
-      onClick={() => {
-        if (!window.confirm(tr(locale, { uz: "O'quvchini guruhdan olib tashlaysizmi?", ru: "Убрать ученика из группы?", en: "Remove the student from the group?", de: "Den Schüler aus der Gruppe entfernen?" }))) return;
+      onClick={async () => {
+        if (!(await confirmDelete(tr(locale, { uz: "O'quvchini guruhdan olib tashlaysizmi?", ru: "Убрать ученика из группы?", en: "Remove the student from the group?", de: "Den Schüler aus der Gruppe entfernen?" })))) return;
         start(async () => { await removeStudent(groupId, studentId); router.refresh(); });
       }}
       className="rounded-md px-2 py-1 text-xs font-medium text-red-600 transition hover:bg-red-50 disabled:opacity-50"

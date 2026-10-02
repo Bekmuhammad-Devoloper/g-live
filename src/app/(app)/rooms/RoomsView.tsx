@@ -1,5 +1,6 @@
 "use client";
 
+import { confirmDelete } from "../_components/dialogs";
 import { useEffect, useMemo, useState, useTransition } from "react";
 import { createPortal } from "react-dom";
 import Link from "next/link";
@@ -25,7 +26,7 @@ export default function RoomsView({ locale, rooms, canManage }: { locale: Locale
     return q ? rooms.filter((r) => `${r.name} ${r.note ?? ""}`.toLowerCase().includes(q)) : rooms;
   }, [rooms, search]);
 
-  const onDelete = (r: VRoom) => { if (confirm(tr(locale, { uz: `"${r.name}" xonasini o'chirasizmi?`, ru: `Удалить кабинет "${r.name}"?`, en: `Delete room "${r.name}"?`, de: `Raum "${r.name}" löschen?` }))) start(async () => { await deleteRoom(r.id); router.refresh(); flash(tr(locale, { uz: "O'chirildi", ru: "Удалено", en: "Deleted", de: "Gelöscht" })); }); };
+  const onDelete = async (r: VRoom) => { if (await confirmDelete(tr(locale, { uz: `"${r.name}" xonasini o'chirasizmi?`, ru: `Удалить кабинет "${r.name}"?`, en: `Delete room "${r.name}"?`, de: `Raum "${r.name}" löschen?` }))) start(async () => { await deleteRoom(r.id); router.refresh(); flash(tr(locale, { uz: "O'chirildi", ru: "Удалено", en: "Deleted", de: "Gelöscht" })); }); };
 
   return (
     <div className="space-y-5">

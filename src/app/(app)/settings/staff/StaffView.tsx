@@ -1,5 +1,6 @@
 "use client";
 
+import { confirmDelete } from "../../_components/dialogs";
 import { useEffect, useMemo, useRef, useState, useTransition } from "react";
 import { createPortal } from "react-dom";
 import { useRouter } from "next/navigation";
@@ -30,7 +31,7 @@ export default function StaffView({ locale, rows, roleOptions, sipOptions = [], 
   }, [rows, search]);
 
   const onInvite = (id: string) => start(async () => { const r = await inviteStaff(id); flash(r.ok ? tr(locale, { uz: "Taklif yuborildi", ru: "Приглашение отправлено", en: "Invitation sent", de: "Einladung gesendet" }) : r.error ?? tr(locale, { uz: "Xatolik", ru: "Ошибка", en: "Error", de: "Fehler" })); });
-  const onDelete = (r: VStaff) => { if (r.id === currentUserId) { flash(tr(locale, { uz: "O'zingizni o'chira olmaysiz", ru: "Вы не можете удалить себя", en: "You cannot delete yourself", de: "Sie können sich nicht selbst löschen" })); return; } if (confirm(tr(locale, { uz: `${r.fullName} ni ro'yxatdan olib tashlaysizmi?`, ru: `Удалить ${r.fullName} из списка?`, en: `Remove ${r.fullName} from the list?`, de: `${r.fullName} aus der Liste entfernen?` }))) start(async () => { await deleteStaff(r.id); router.refresh(); }); };
+  const onDelete = async (r: VStaff) => { if (r.id === currentUserId) { flash(tr(locale, { uz: "O'zingizni o'chira olmaysiz", ru: "Вы не можете удалить себя", en: "You cannot delete yourself", de: "Sie können sich nicht selbst löschen" })); return; } if (await confirmDelete(tr(locale, { uz: `${r.fullName} ni ro'yxatdan olib tashlaysizmi?`, ru: `Удалить ${r.fullName} из списка?`, en: `Remove ${r.fullName} from the list?`, de: `${r.fullName} aus der Liste entfernen?` }))) start(async () => { await deleteStaff(r.id); router.refresh(); }); };
 
   return (
     <div className="space-y-5">

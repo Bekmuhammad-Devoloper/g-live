@@ -1,5 +1,6 @@
 "use client";
 
+import { confirmDelete } from "../../_components/dialogs";
 import { useEffect, useMemo, useState } from "react";
 import { createPortal } from "react-dom";
 import { cn } from "@/lib/cn";
@@ -54,8 +55,8 @@ export default function HolidaysView({ locale }: { locale: Locale }) {
       return next;
     });
   }
-  function remove(id: string) {
-    if (!confirm(T("Ushbu kunni o'chirmoqchimisiz?", "Удалить этот день?", "Delete this day?", "Diesen Tag löschen?"))) return;
+  async function remove(id: string) {
+    if (!(await confirmDelete(T("Ushbu kunni o'chirmoqchimisiz?", "Удалить этот день?", "Delete this day?", "Diesen Tag löschen?")))) return;
     setItems((cur) => { const next = cur.filter((x) => x.id !== id); persist(next); return next; });
   }
 

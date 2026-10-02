@@ -1,5 +1,6 @@
 "use client";
 
+import { promptDialog } from "../_components/dialogs";
 import { useEffect, useRef } from "react";
 import { cn } from "@/lib/cn";
 import { tr } from "@/lib/tr";
@@ -20,6 +21,23 @@ export default function RichEditor({ locale, value, onChange, placeholder }: { l
   const exec = (cmd: string, arg?: string) => {
     ref.current?.focus();
     document.execCommand(cmd, false, arg);
+    emit();
+  };
+
+  // Havola so'rash oynasi ochilganda tahrirlovchidagi belgilash yo'qoladi —
+  // oldindan saqlab, buyruqdan oldin qaytarib qo'yamiz
+  const askUrl = async (message: string, cmd: string) => {
+    const sel = window.getSelection();
+    const range = sel && sel.rangeCount > 0 ? sel.getRangeAt(0).cloneRange() : null;
+    const url = (await promptDialog({ message, placeholder: "https://" }))?.trim();
+    if (!url) return;
+    ref.current?.focus();
+    if (range) {
+      const cur = window.getSelection();
+      cur?.removeAllRanges();
+      cur?.addRange(range);
+    }
+    document.execCommand(cmd, false, url);
     emit();
   };
 
@@ -49,9 +67,9 @@ export default function RichEditor({ locale, value, onChange, placeholder }: { l
         <button type="button" title={tr(locale, { uz: "Nuqtali ro'yxat", ru: "Маркированный список", en: "Bulleted list", de: "Aufzählungsliste" })} className={btn} onClick={() => exec("insertUnorderedList")}><Icon name="listView" className="h-4 w-4" /></button>
 
         <Sep />
-        <button type="button" title={tr(locale, { uz: "Havola", ru: "Ссылка", en: "Link", de: "Link" })} className={btn} onClick={() => { const u = prompt(tr(locale, { uz: "Havola (URL):", ru: "Ссылка (URL):", en: "Link (URL):", de: "Link (URL):" })); if (u) exec("createLink", u); }}><Icon name="link" className="h-4 w-4" /></button>
-        <button type="button" title={tr(locale, { uz: "Rasm", ru: "Изображение", en: "Image", de: "Bild" })} className={btn} onClick={() => { const u = prompt(tr(locale, { uz: "Rasm URL:", ru: "URL изображения:", en: "Image URL:", de: "Bild-URL:" })); if (u) exec("insertImage", u); }}><Icon name="image" className="h-4 w-4" /></button>
-        <button type="button" title={tr(locale, { uz: "Video (havola)", ru: "Видео (ссылка)", en: "Video (link)", de: "Video (Link)" })} className={btn} onClick={() => { const u = prompt(tr(locale, { uz: "Video havolasi:", ru: "Ссылка на видео:", en: "Video link:", de: "Video-Link:" })); if (u) exec("createLink", u); }}><Icon name="video" className="h-4 w-4" /></button>
+        <button type="button" title={tr(locale, { uz: "Havola", ru: "Ссылка", en: "Link", de: "Link" })} className={btn} onClick={() => void askUrl(tr(locale, { uz: "Havola (URL):", ru: "Ссылка (URL):", en: "Link (URL):", de: "Link (URL):" }), "createLink")}><Icon name="link" className="h-4 w-4" /></button>
+        <button type="button" title={tr(locale, { uz: "Rasm", ru: "Изображение", en: "Image", de: "Bild" })} className={btn} onClick={() => void askUrl(tr(locale, { uz: "Rasm URL:", ru: "URL изображения:", en: "Image URL:", de: "Bild-URL:" }), "insertImage")}><Icon name="image" className="h-4 w-4" /></button>
+        <button type="button" title={tr(locale, { uz: "Video (havola)", ru: "Видео (ссылка)", en: "Video (link)", de: "Video (Link)" })} className={btn} onClick={() => void askUrl(tr(locale, { uz: "Video havolasi:", ru: "Ссылка на видео:", en: "Video link:", de: "Video-Link:" }), "createLink")}><Icon name="video" className="h-4 w-4" /></button>
 
         <Sep />
         <label className={cn(btn, "cursor-pointer")} title={tr(locale, { uz: "Matn rangi", ru: "Цвет текста", en: "Text color", de: "Textfarbe" })}>

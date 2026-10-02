@@ -6,6 +6,7 @@ import { getT } from "@/lib/i18n";
 import { ROLES, ROLE_LABELS, label, isRopPosition } from "@/lib/constants";
 import { canWrite, MODULES } from "@/lib/rbac";
 import AppShell from "./_components/AppShell";
+import { DialogHost } from "./_components/dialogs";
 import Softphone from "./_components/Softphone";
 
 export default async function AppLayout({ children }: { children: React.ReactNode }) {
@@ -117,6 +118,7 @@ export default async function AppLayout({ children }: { children: React.ReactNod
       }}
     >
       {children}
+      <DialogHost locale={session.locale} />
       {canPhone && <Softphone locale={session.locale} canConfigure={canConfigureTelephony} />}
     </AppShell>
   );

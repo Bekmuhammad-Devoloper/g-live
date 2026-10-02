@@ -1,5 +1,6 @@
 "use client";
 
+import { confirmDialog } from "../../_components/dialogs";
 import { useCallback, useDeferredValue, useEffect, useMemo, useState, useTransition } from "react";
 import { useRouter, usePathname, useSearchParams } from "next/navigation";
 import { cn } from "@/lib/cn";
@@ -351,14 +352,14 @@ export default function LeadsWorkspace({ locale, initialLeads, managers, sources
   // Tezkor o'chirish faqat "Daraja testi" (TEST) lidlari uchun — ishdagi lidlar
   // to'liq sahifadan, ism yozib tasdiqlab o'chiriladi
   // Ustundagi barcha lidlarni "Yangi"ga qaytarish (tasdiq bilan)
-  const resetColumn = useCallback((ids: string[], title: string) => {
+  const resetColumn = useCallback(async (ids: string[], title: string) => {
     if (!ids.length) return;
-    if (!confirm(tr(locale, {
+    if (!(await confirmDialog(tr(locale, {
       uz: `"${title}" ustunidagi ${ids.length} ta lid "Yangi"ga qaytariladi. Guruh biriktiruvi bekor bo'ladi. Davom etasizmi?`,
       ru: `${ids.length} лидов из столбца «${title}» вернутся в «Новые». Привязка к группе будет снята. Продолжить?`,
       en: `${ids.length} leads in "${title}" will return to "New". Group assignment is cleared. Continue?`,
       de: `${ids.length} Leads aus „${title}“ gehen zurück zu „Neu“. Gruppenzuordnung wird entfernt. Fortfahren?`,
-    }))) return;
+    })))) return;
     const set = new Set(ids);
     setLeads((prev) => prev.map((l) => (set.has(l.id) ? { ...l, stage: "NEW", kanbanColumnId: null, branchSlotId: null, groupId: null, groupName: null, enrollEditCount: 0 } : l))); // optimistik
     startRefresh(async () => {

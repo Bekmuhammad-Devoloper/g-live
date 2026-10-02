@@ -1,5 +1,6 @@
 "use client";
 
+import { confirmDelete, promptDialog } from "../../_components/dialogs";
 import { useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
 import { LEAD_STAGE_LABELS, label, type Locale } from "@/lib/constants";
@@ -65,17 +66,17 @@ export default function SelectionActionBar({
         </div>
 
         {/* Izoh */}
-        <BarBtn icon="pencil" label={tr(locale, { uz: "Izoh", ru: "Комментарий", en: "Note", de: "Notiz" })} disabled={pending} onClick={() => {
-          const note = window.prompt(tr(locale, { uz: "Izoh (barcha tanlanganlarga):", ru: "Комментарий (для всех выбранных):", en: "Note (for all selected):", de: "Notiz (für alle Ausgewählten):" }));
+        <BarBtn icon="pencil" label={tr(locale, { uz: "Izoh", ru: "Комментарий", en: "Note", de: "Notiz" })} disabled={pending} onClick={async () => {
+          const note = await promptDialog({ message: tr(locale, { uz: "Izoh (barcha tanlanganlarga):", ru: "Комментарий (для всех выбранных):", en: "Note (for all selected):", de: "Notiz (für alle Ausgewählten):" }), multiline: true });
           if (note && note.trim()) run(() => bulkLeadAction(ids, "add_note", { note: note.trim() }));
         }} />
 
         {/* O'chirish: huquqi borlarga — hammasi, qolganlarga — faqat yo'qotilganlar */}
-        <BarBtn icon="trash" label={tr(locale, { uz: "O'chirish", ru: "Удалить", en: "Delete", de: "Löschen" })} danger disabled={pending} onClick={() => {
+        <BarBtn icon="trash" label={tr(locale, { uz: "O'chirish", ru: "Удалить", en: "Delete", de: "Löschen" })} danger disabled={pending} onClick={async () => {
           const msg = canDelete
             ? tr(locale, { uz: `Tanlanganlardan "Daraja testi" va "Yo'qotilgan" bosqichdagilari butunlay o'chiriladi (${ids.length} ta tanlangan). Davom etasizmi?`, ru: `Из выбранных (${ids.length}) будут удалены лиды на этапах «Тест уровня» и «Потерян». Продолжить?`, en: `Of the ${ids.length} selected, leads at the "Level test" and "Lost" stages will be permanently deleted. Continue?`, de: `Von den ${ids.length} ausgewählten werden Leads in den Phasen „Einstufungstest“ und „Verloren“ endgültig gelöscht. Fortfahren?` })
             : tr(locale, { uz: "Tanlangan yo'qotilgan lidlarni o'chirasizmi? (faqat 'Yo'qotilgan' bosqichdagilar o'chadi)", ru: "Удалить выбранные потерянные лиды? (удаляются только лиды на этапе 'Потерян')", en: "Delete the selected lost leads? (only leads at the 'Lost' stage are deleted)", de: "Ausgewählte verlorene Leads löschen? (nur Leads in der Phase 'Verloren' werden gelöscht)" });
-          if (window.confirm(msg)) run(() => bulkLeadAction(ids, "delete"));
+          if (await confirmDelete(msg)) run(() => bulkLeadAction(ids, "delete"));
         }} />
 
         <button onClick={onDone} className="ml-1 flex h-8 w-8 items-center justify-center rounded-lg text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-700" title={tr(locale, { uz: "Bekor qilish", ru: "Отмена", en: "Cancel", de: "Abbrechen" })}>✕</button>

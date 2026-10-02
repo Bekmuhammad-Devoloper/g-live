@@ -1,5 +1,6 @@
 "use client";
 
+import { confirmDelete } from "../_components/dialogs";
 import { useEffect, useMemo, useRef, useState, useTransition } from "react";
 import { useActionState } from "react";
 import { createPortal } from "react-dom";
@@ -183,7 +184,7 @@ function JadvalTab({ teachers, canManage, locale, onAdd, onEdit }: {
   const [pending, start] = useTransition();
   // Ish jadvali yoki guruhi bor barcha o'qituvchi (guruh kunlari avtomatik ish kuni)
   const list = teachers.filter((t) => t.schedule || t.groupWeekdays.length);
-  const del = (teacherId: string) => { if (confirm(tr(locale, { uz: "Ish jadvalini o'chirasizmi?", ru: "Удалить график работы?", en: "Delete work schedule?", de: "Arbeitsplan löschen?" }))) start(async () => { await deleteTeacherSchedule(teacherId); router.refresh(); }); };
+  const del = async (teacherId: string) => { if (await confirmDelete(tr(locale, { uz: "Ish jadvalini o'chirasizmi?", ru: "Удалить график работы?", en: "Delete work schedule?", de: "Arbeitsplan löschen?" }))) start(async () => { await deleteTeacherSchedule(teacherId); router.refresh(); }); };
 
   return (
     <div>

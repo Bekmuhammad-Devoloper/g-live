@@ -1,5 +1,6 @@
 "use client";
 
+import { confirmDelete } from "./dialogs";
 import { useEffect, useMemo, useRef, useState, useTransition } from "react";
 import { createPortal } from "react-dom";
 import { useRouter } from "next/navigation";
@@ -34,7 +35,7 @@ export default function CrudTable({ title, addLabel, rows, columns, fields, canM
 
   const openCreate = () => { setEditing(null); setOpen(true); };
   const openEdit = (row: Record<string, unknown>) => { setEditing(row); setOpen(true); };
-  const del = (id: string) => { if (confirm(tr(locale, { uz: "O'chirishni tasdiqlaysizmi?", ru: "Подтвердите удаление?", en: "Confirm deletion?", de: "Löschen bestätigen?" }))) start(async () => { await deleteAction(id); router.refresh(); }); };
+  const del = async (id: string) => { if (await confirmDelete(tr(locale, { uz: "O'chirishni tasdiqlaysizmi?", ru: "Подтвердите удаление?", en: "Confirm deletion?", de: "Löschen bestätigen?" }))) start(async () => { await deleteAction(id); router.refresh(); }); };
 
   return (
     <div className="space-y-4">

@@ -1,5 +1,6 @@
 "use client";
 
+import { alertDialog, confirmDelete, confirmDialog } from "../../_components/dialogs";
 import { useEffect, useRef, useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
 import { createPortal } from "react-dom";
@@ -81,7 +82,7 @@ function LessonCard({ lesson: l, index, count, canManage, canMark, locale, onEdi
   const [pending, start] = useTransition();
   const [isTaught, setIsTaught] = useState(!!taught);
   const router = useRouter();
-  const del = () => { if (confirm(tr(locale, { uz: "Bu darsni o'chirasizmi?", ru: "Удалить этот урок?", en: "Delete this lesson?", de: "Möchten Sie diese Lektion löschen?" }))) start(async () => { await deleteCourseLesson(l.id); router.refresh(); }); };
+  const del = async () => { if (await confirmDelete(tr(locale, { uz: "Bu darsni o'chirasizmi?", ru: "Удалить этот урок?", en: "Delete this lesson?", de: "Möchten Sie diese Lektion löschen?" }))) start(async () => { await deleteCourseLesson(l.id); router.refresh(); }); };
   const move = (dir: "up" | "down") => start(async () => { await moveCourseLesson(l.id, dir); router.refresh(); });
   const [taskOpen, setTaskOpen] = useState(false);
   const [qrOpen, setQrOpen] = useState(false);
@@ -220,13 +221,13 @@ let activeUploads = 0;
 /* ── Qo'shish / tahrirlash drawer ── */
 function LessonDrawer({ programId, initial, locale, levelCodes, onClose: closeRaw }: { programId: string; initial: VLesson | null; locale: Locale; levelCodes: string[]; onClose: () => void }) {
   const router = useRouter();
-  const onClose = () => {
-    if (activeUploads > 0 && !confirm(tr(locale, {
+  const onClose = async () => {
+    if (activeUploads > 0 && !(await confirmDialog(tr(locale, {
       uz: "Fayl hali yuklanmoqda. Yopsangiz yuklash to'xtaydi (keyin shu faylni qayta tanlasangiz qolgan joyidan davom etadi). Yopilsinmi?",
       ru: "Файл ещё загружается. Если закрыть, загрузка остановится (при повторном выборе файла продолжится с того же места). Закрыть?",
       en: "A file is still uploading. Closing stops it (re-pick the same file later to resume). Close anyway?",
       de: "Eine Datei wird noch hochgeladen. Beim Schließen stoppt der Upload (dieselbe Datei später erneut wählen, um fortzusetzen). Trotzdem schließen?",
-    }))) return;
+    })))) return;
     closeRaw();
   };
   const [title, setTitle] = useState(initial?.title ?? "");
@@ -244,10 +245,10 @@ function LessonDrawer({ programId, initial, locale, levelCodes, onClose: closeRa
   const [saving, start] = useTransition();
   const [err, setErr] = useState<string | null>(null);
 
-  const save = () => {
+  const save = async () => {
     if (!title.trim()) { setErr("title"); return; }
     if (activeUploads > 0) {
-      alert(tr(locale, { uz: "Fayl hali yuklanmoqda — tugashini kuting, keyin saqlang.", ru: "Файл ещё загружается — дождитесь окончания, затем сохраните.", en: "A file is still uploading — wait for it to finish, then save.", de: "Eine Datei wird noch hochgeladen — warten Sie, bis sie fertig ist, und speichern Sie dann." }));
+      void alertDialog(tr(locale, { uz: "Fayl hali yuklanmoqda — tugashini kuting, keyin saqlang.", ru: "Файл ещё загружается — дождитесь окончания, затем сохраните.", en: "A file is still uploading — wait for it to finish, then save.", de: "Eine Datei wird noch hochgeladen — warten Sie, bis sie fertig ist, und speichern Sie dann." }));
       return;
     }
     // Bo'sh qolgan muhim maydonlar haqida eslatma (baribir saqlash mumkin)
@@ -257,13 +258,15 @@ function LessonDrawer({ programId, initial, locale, levelCodes, onClose: closeRa
     if (!assignment.trim() && !assignmentFileUrl) missing.push(tr(locale, { uz: "Dars topshirig'i", ru: "Задание урока", en: "Assignment", de: "Aufgabe" }));
     if (!homework.trim() && !homeworkFileUrl) missing.push(tr(locale, { uz: "Uy vazifasi", ru: "Домашнее задание", en: "Homework", de: "Hausaufgabe" }));
     if (missing.length > 0) {
-      const msg = tr(locale, {
-        uz: `Quyidagilar to'ldirilmagan:\n\n• ${missing.join("\n• ")}\n\nBaribir saqlaysizmi?`,
-        ru: `Не заполнено:\n\n• ${missing.join("\n• ")}\n\nВсё равно сохранить?`,
-        en: `Not filled in:\n\n• ${missing.join("\n• ")}\n\nSave anyway?`,
-        de: `Folgendes ist nicht ausgefüllt:\n\n• ${missing.join("\n• ")}\n\nTrotzdem speichern?`,
+      const ok = await confirmDialog({
+        tone: "warning",
+        title: tr(locale, { uz: "Quyidagilar to'ldirilmagan", ru: "Не заполнено", en: "Not filled in", de: "Nicht ausgefüllt" }),
+        items: missing,
+        message: tr(locale, { uz: "Darsni shu holda saqlaysizmi? Keyin ham to'ldirish mumkin.", ru: "Сохранить урок в таком виде? Заполнить можно и позже.", en: "Save the lesson as it is? You can fill these in later.", de: "Lektion so speichern? Du kannst es später ergänzen." }),
+        confirmLabel: tr(locale, { uz: "Baribir saqlash", ru: "Всё равно сохранить", en: "Save anyway", de: "Trotzdem speichern" }),
+        cancelLabel: tr(locale, { uz: "To'ldirishga qaytish", ru: "Вернуться к заполнению", en: "Back to editing", de: "Zurück zum Bearbeiten" }),
       });
-      if (!confirm(msg)) return;
+      if (!ok) return;
     }
     const input: LessonInput = { title, levelCode, topic, assignment, assignmentFileUrl, homework, homeworkFileUrl, videoUrl, videoPosterUrl, vocabText, vocabFileUrl, materialUrl };
     start(async () => {

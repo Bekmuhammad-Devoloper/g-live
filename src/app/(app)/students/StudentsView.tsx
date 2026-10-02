@@ -1,5 +1,6 @@
 "use client";
 
+import { confirmDialog } from "../_components/dialogs";
 import { useActionState, useEffect, useMemo, useRef, useState, useTransition } from "react";
 import AccountBox from "./AccountBox";
 import { createPortal } from "react-dom";
@@ -193,9 +194,9 @@ export default function StudentsView({ students, courses, locale, canCreate, can
   const runBulk = (fn: () => Promise<{ ok?: boolean; count?: number; error?: string }>) => {
     startBulk(async () => { const r = await fn(); if (r.ok) { setSelected(new Set()); setBulkModal(null); router.refresh(); } });
   };
-  const handleArchive = () => {
+  const handleArchive = async () => {
     if (selected.size === 0) return;
-    if (!window.confirm(tr(locale, { uz: `${selected.size} ta o'quvchini arxivlaysizmi?`, ru: `Архивировать ${selected.size} ученик(ов)?`, en: `Archive ${selected.size} student(s)?`, de: `${selected.size} Schüler archivieren?` }))) return;
+    if (!(await confirmDialog(tr(locale, { uz: `${selected.size} ta o'quvchini arxivlaysizmi?`, ru: `Архивировать ${selected.size} ученик(ов)?`, en: `Archive ${selected.size} student(s)?`, de: `${selected.size} Schüler archivieren?` })))) return;
     runBulk(() => bulkArchiveStudents([...selected]));
   };
 

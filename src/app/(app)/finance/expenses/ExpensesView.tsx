@@ -1,5 +1,6 @@
 "use client";
 
+import { confirmDelete, promptDialog } from "../../_components/dialogs";
 import { useEffect, useMemo, useRef, useState, useTransition } from "react";
 import { useActionState } from "react";
 import { useRouter } from "next/navigation";
@@ -224,8 +225,8 @@ function Sel({ value, onChange, options, labels, locale }: { value: string; onCh
 
 function DeleteBtn({ id, locale }: { id: string; locale: Locale }) {
   const [pending, start] = useTransition();
-  const onClick = () => {
-    if (!window.confirm(tr(locale, { uz: "Xarajatni o'chirishni tasdiqlaysizmi?", ru: "Подтвердить удаление расхода?", en: "Confirm deleting the expense?", de: "Löschen der Ausgabe bestätigen?" }))) return;
+  const onClick = async () => {
+    if (!(await confirmDelete(tr(locale, { uz: "Xarajatni o'chirishni tasdiqlaysizmi?", ru: "Подтвердить удаление расхода?", en: "Confirm deleting the expense?", de: "Löschen der Ausgabe bestätigen?" })))) return;
     start(() => deleteExpense(id));
   };
   return (
@@ -265,8 +266,8 @@ function AddCategory({ locale }: { locale: Locale }) {
   const router = useRouter();
   const [pending, start] = useTransition();
   const [err, setErr] = useState("");
-  const onClick = () => {
-    const name = window.prompt(tr(locale, { uz: "Yangi turkum nomi:", ru: "Название новой категории:", en: "New category name:", de: "Name der neuen Kategorie:" }));
+  const onClick = async () => {
+    const name = await promptDialog({ message: tr(locale, { uz: "Yangi turkum nomi:", ru: "Название новой категории:", en: "New category name:", de: "Name der neuen Kategorie:" }), minLength: 2 });
     if (!name || name.trim().length < 2) return;
     setErr("");
     start(async () => {
