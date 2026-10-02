@@ -6,6 +6,7 @@ import { requireSession, hashPassword } from "@/lib/auth";
 import { ROLES, ROLE_LABELS, label, isRopPosition, parseMoney } from "@/lib/constants";
 import { tr } from "@/lib/tr";
 import { writeAudit } from "@/lib/audit";
+import { MANAGEMENT_ROLES, defaultPositionFor } from "./positions";
 
 const p2 = (n: number) => String(n).padStart(2, "0");
 const fmtDate = (d: Date | null) => (d ? `${p2(d.getDate())}.${p2(d.getMonth() + 1)}.${d.getFullYear()}` : null);
@@ -57,7 +58,7 @@ export async function createStaff(fd: FormData): Promise<{ ok?: boolean; error?:
   const gender = ["MALE", "FEMALE"].includes(String(fd.get("gender"))) ? String(fd.get("gender")) : null;
   const birthRaw = String(fd.get("birthDate") || "");
   const birthDate = birthRaw ? new Date(birthRaw) : null;
-  // Yuqori chegara SHART (Int'ga sig'maydigan qiymat sahifani yiqitadi — 2026-09-11)
+  // Yuqori chegara SHART (Int'ga sig'maydigan qiymat sahifani yiqitadi)
   const fiksa = parseMoney(fd.get("fiksa"));
   if (fiksa === null) return { error: tr(s.locale, { uz: "Summa juda katta (eng ko'pi 1 mlrd so'm) — nollar sonini tekshiring", ru: "Сумма слишком велика (макс. 1 млрд сум) — проверьте количество нулей", en: "Amount too large (max 1 billion) — check the number of zeros", de: "Betrag zu groß (max. 1 Mrd.) — Anzahl der Nullen prüfen" }) };
 
@@ -66,6 +67,9 @@ export async function createStaff(fd: FormData): Promise<{ ok?: boolean; error?:
   if (password.length < 4) return { error: tr(s.locale, { uz: "Parol kamida 4 ta belgi bo'lsin", ru: "Пароль должен содержать не менее 4 символов", en: "Password must be at least 4 characters", de: "Das Passwort muss mindestens 4 Zeichen enthalten" }) };
   if (!position) return { error: tr(s.locale, { uz: "Vazifa tanlanmadi", ru: "Должность не выбрана", en: "Position not selected", de: "Position nicht ausgewählt" }) };
   const role = roleForPosition(position);
+  if (MANAGEMENT_ROLES.includes(role) && s.role !== ROLES.DIRECTOR) {
+    return { error: tr(s.locale, { uz: "Rahbariyat lavozimini faqat direktor beradi", ru: "Руководящую должность назначает только директор", en: "Only the director can assign management positions", de: "Leitungspositionen vergibt nur der Direktor" }) };
+  }
 
   const exists = await prisma.user.findUnique({ where: { email } });
   if (exists) return { error: tr(s.locale, { uz: "Bu email allaqachon mavjud", ru: "Этот email уже существует", en: "This email already exists", de: "Diese E-Mail existiert bereits" }) };
@@ -114,7 +118,8 @@ export async function getStaffDetail(userId: string): Promise<{ ok: boolean; dat
     data: {
       id: u.id, fullName: u.fullName, email: u.email, phone: u.phone,
       roleKey: u.role, roleLabel: u.position?.trim() || label(ROLE_LABELS, u.role, s.locale), branch: u.branch?.name ?? null,
-      position: u.position, branchId: u.branchId,
+      // Lavozimi yozilmagan (eski) xodimda rolidan kelib chiqadigan nom tanlangan holda ochiladi
+      position: u.position ?? defaultPositionFor(u.role), branchId: u.branchId,
       birthDateIso: u.birthDate ? u.birthDate.toISOString().slice(0, 10) : null,
       gender: (u.gender === "MALE" || u.gender === "FEMALE" ? u.gender : null) as "MALE" | "FEMALE" | null,
       birthDate: fmtDate(u.birthDate), isActive: u.isActive,
@@ -164,7 +169,13 @@ export async function updateStaff(fd: FormData): Promise<{ ok?: boolean; error?:
 
   // Rol lavozimdan aniqlanadi — lekin faqat lavozim o'zgarganda (Sozlamalar → Xodimlar
   // orqali qo'lda berilgan rol lavozim o'zgarmasa buzilmasin)
-  const role = position !== (cur.position ?? "") ? roleForPosition(position) : cur.role;
+  // Lavozimi yozilmagan xodimda "hozirgi lavozim" — rolidan kelib chiqqan standart nom
+  const curPosition = cur.position ?? defaultPositionFor(cur.role) ?? "";
+  const role = position !== curPosition ? roleForPosition(position) : cur.role;
+  // Rahbariyat rolini berish yoki olib qo'yish — faqat direktor
+  if (role !== cur.role && (MANAGEMENT_ROLES.includes(role) || MANAGEMENT_ROLES.includes(cur.role)) && s.role !== ROLES.DIRECTOR) {
+    return { error: tr(s.locale, { uz: "Rahbariyat lavozimini faqat direktor o'zgartiradi", ru: "Руководящую должность меняет только директор", en: "Only the director can change management positions", de: "Leitungspositionen ändert nur der Direktor" }) };
+  }
   // O'zini direktorlikdan tushirib qo'yish — tizimga kira olmay qolmasin
   if (id === s.userId && role !== cur.role) {
     return { error: tr(s.locale, { uz: "O'z rolingizni o'zgartira olmaysiz", ru: "Вы не можете изменить свою роль", en: "You cannot change your own role", de: "Sie können Ihre eigene Rolle nicht ändern" }) };

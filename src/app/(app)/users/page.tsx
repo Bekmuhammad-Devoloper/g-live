@@ -6,6 +6,7 @@ import { ROLES, ROLE_LABELS, label } from "@/lib/constants";
 import { branchWhere } from "@/lib/branchScope";
 import { Forbidden } from "../_components/ui";
 import UsersView, { type VStaff } from "./UsersView";
+import { MANAGEMENT_DEPT, MANAGEMENT_POSITIONS } from "./positions";
 
 const STAFF_ROLES = [ROLES.OPERATOR, ROLES.ROP, ROLES.MANAGER, ROLES.DEPUTY_DIRECTOR, ROLES.DIRECTOR, ROLES.ADMIN, ROLES.TEACHER];
 const CAN_MANAGE = [ROLES.DIRECTOR, ROLES.DEPUTY_DIRECTOR, ROLES.ADMIN];
@@ -48,7 +49,17 @@ export default async function UsersPage() {
 
   // "O'quv markazidagi vazifasi" — Rollar katalogidan (bo'lim bo'yicha guruhlanadi)
   const catalog = await prisma.staffRole.findMany({ where: { isActive: true }, orderBy: { createdAt: "asc" }, select: { name: true, department: true } });
-  const positions = catalog.map((r) => ({ value: r.name, label: r.name, department: r.department ?? "" }));
+  // Rahbariyat lavozimlari (Direktor, o'rinbosar) faqat direktorga ko'rinadi va katalogdan
+  // o'chirilgan bo'lsa ham tanlovda turadi — aks holda direktorni tahrirlab bo'lmaydi.
+  const isDirector = s.role === ROLES.DIRECTOR;
+  const fromCatalog = catalog
+    .filter((r) => isDirector || r.department !== MANAGEMENT_DEPT)
+    .map((r) => ({ value: r.name, label: r.name, department: r.department ?? "" }));
+  const missingMgmt = isDirector
+    ? MANAGEMENT_POSITIONS.filter((n) => !fromCatalog.some((p) => p.value.trim().toLowerCase() === n.toLowerCase()))
+        .map((n) => ({ value: n as string, label: n as string, department: MANAGEMENT_DEPT }))
+    : [];
+  const positions = [...missingMgmt, ...fromCatalog];
 
   const branches = await prisma.branch.findMany({ where: { isActive: true }, select: { id: true, name: true }, orderBy: { name: "asc" } });
 
