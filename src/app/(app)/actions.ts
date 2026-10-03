@@ -22,11 +22,24 @@ export async function setLocale(locale: Locale) {
 }
 
 // Faol filialni almashtirish — yangi yozuvlar (lid, guruh, o'quvchi) shu filialga bog'lanadi.
-// Faqat rahbariyat/administrator filial almashtira oladi.
+// Rahbariyat istalgan filialga (yoki "Barcha filiallar"ga) o'tadi va bu uning asosiy
+// filialiga yoziladi. Qolgan xodimlar faqat O'Z filiallari (asosiy + qo'shimcha, UserBranch)
+// orasida almashtiradi — bunda faqat sessiya o'zgaradi, asosiy filial joyida qoladi.
 export async function setBranch(branchId: string): Promise<void> {
   const s = await requireSession();
-  const canSwitch = [ROLES.DIRECTOR, ROLES.DEPUTY_DIRECTOR, ROLES.ADMIN].includes(s.role as never);
-  if (!canSwitch) return;
+  const canSwitch = [ROLES.DIRECTOR, ROLES.DEPUTY_DIRECTOR].includes(s.role as never);
+  if (!canSwitch) {
+    if (!branchId) return;
+    const me = await prisma.user.findUnique({
+      where: { id: s.userId },
+      select: { branchId: true, branches: { select: { branchId: true, branch: { select: { isActive: true } } } } },
+    });
+    const mine = new Set([me?.branchId, ...(me?.branches.filter((b) => b.branch.isActive).map((b) => b.branchId) ?? [])]);
+    if (!mine.has(branchId)) return;
+    await createSession({ ...s, branchId });
+    revalidatePath("/", "layout");
+    return;
+  }
 
   // Bo'sh qiymat — "Barcha filiallar" (faqat direktor/o'rinbosar): filial doirasi
   // olib tashlanadi, filialsiz eski yozuvlar ham ko'rinadi va tuzatish mumkin

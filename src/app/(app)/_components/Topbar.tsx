@@ -23,6 +23,8 @@ export interface TopbarProps {
   branches: { id: string; name: string }[];
   currentBranchId: string | null;
   canSwitchBranch: boolean;
+  /** Bir nechta filialda ishlaydigan xodim — ro'yxatdagi (o'z) filiallari orasida almashtira oladi */
+  canSwitchOwn: boolean;
   canCreateStudent: boolean;
   canCreatePayment: boolean;
   students: { id: string; fullName: string }[];
@@ -143,19 +145,19 @@ export default function Topbar(p: TopbarProps) {
               {p.branches.map((b) => (
                 <button
                   key={b.id}
-                  disabled={!p.canSwitchBranch || pending}
+                  disabled={!(p.canSwitchBranch || p.canSwitchOwn) || pending}
                   onClick={() => start(async () => { await setBranch(b.id); close(); router.refresh(); })}
                   className={cn(
                     "flex w-full items-center justify-between px-3 py-2 text-left text-sm transition",
                     b.id === p.currentBranchId ? "bg-brand-50 font-medium text-brand-700" : "text-slate-600 hover:bg-slate-50",
-                    !p.canSwitchBranch && "cursor-not-allowed opacity-60"
+                    !(p.canSwitchBranch || p.canSwitchOwn) && "cursor-not-allowed opacity-60"
                   )}
                 >
                   <span className="truncate">{b.name}</span>
                   {b.id === p.currentBranchId && <span className="text-brand-600">✓</span>}
                 </button>
               ))}
-              {!p.canSwitchBranch && (
+              {!p.canSwitchBranch && !p.canSwitchOwn && (
                 <p className="px-3 py-2 text-[11px] text-slate-400">{tr(p.locale, { uz: "Filial almashtirish huquqi yo'q", ru: "Нет права переключать филиал", en: "No permission to switch branch", de: "Keine Berechtigung zum Filialwechsel" })}</p>
               )}
               {p.canSwitchBranch && (

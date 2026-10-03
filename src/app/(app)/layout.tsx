@@ -32,8 +32,19 @@ export default async function AppLayout({ children }: { children: React.ReactNod
   // O'z profil rasmi (topbar avatari uchun) + lavozim
   const me = await prisma.user.findUnique({
     where: { id: session.userId },
-    select: { position: true, imageUrl: true },
+    select: {
+      position: true, imageUrl: true,
+      branch: { select: { id: true, name: true, isActive: true } },
+      branches: { select: { branch: { select: { id: true, name: true, isActive: true } } } },
+    },
   });
+  // Xodim ishlaydigan filiallar (asosiy + qo'shimcha). Bir nechta bo'lsa — faqat shular
+  // orasida almashtira oladi; rahbariyat esa hamma filialni ko'radi.
+  const ownBranches = [me?.branch, ...(me?.branches.map((b) => b.branch) ?? [])]
+    .filter((b): b is { id: string; name: string; isActive: boolean } => !!b && b.isActive)
+    .filter((b, i, arr) => arr.findIndex((x) => x.id === b.id) === i)
+    .map((b) => ({ id: b.id, name: b.name }));
+  const canSwitchOwn = !canSwitchBranch && ownBranches.length > 1;
 
   // Sotuv bo'limi rollari o'z portaliga ega (eski loyihadagi kabi).
   // Eski MANAGER yozuvlari uchun lavozim bo'yicha zaxira aniqlash saqlanadi.
@@ -46,10 +57,12 @@ export default async function AppLayout({ children }: { children: React.ReactNod
   const now = new Date();
   const weekAhead = new Date(now.getTime() + 7 * 86400000);
 
-  const [branch, unreadCount, branches, students, lessons, groups] = await Promise.all([
+  const [branch, unreadCount, allBranches, students, lessons, groups] = await Promise.all([
     session.branchId ? prisma.branch.findUnique({ where: { id: session.branchId } }) : Promise.resolve(null),
     prisma.notification.count({ where: { userId: session.userId, isRead: false } }),
-    prisma.branch.findMany({ where: { isActive: true }, select: { id: true, name: true }, orderBy: { name: "asc" } }),
+    canSwitchBranch
+      ? prisma.branch.findMany({ where: { isActive: true }, select: { id: true, name: true }, orderBy: { name: "asc" } })
+      : Promise.resolve([] as { id: string; name: string }[]),
     canCreatePayment
       ? prisma.student.findMany({ select: { id: true, fullName: true }, orderBy: { fullName: "asc" }, take: 300 })
       : Promise.resolve([]),
@@ -72,6 +85,11 @@ export default async function AppLayout({ children }: { children: React.ReactNod
         })
       : Promise.resolve([]),
   ]);
+
+  // Rahbariyat — barcha filiallar; qolganlar — o'z filiallari (bo'lmasa joriy filial)
+  const branches = canSwitchBranch
+    ? allBranches
+    : ownBranches.length > 0 ? ownBranches : branch ? [{ id: branch.id, name: branch.name }] : [];
 
   const navItems = navFor(session.role).map((it) => ({
     href: it.href,
@@ -102,6 +120,7 @@ export default async function AppLayout({ children }: { children: React.ReactNod
         branches,
         currentBranchId: session.branchId,
         canSwitchBranch,
+        canSwitchOwn,
         canCreateStudent,
         canCreatePayment,
         students,
