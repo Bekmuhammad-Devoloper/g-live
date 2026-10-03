@@ -29,6 +29,7 @@ model Branch {
   imageUrl  String? // filial rasmi (data URL — galereyadan yuklangan)
   isActive  Boolean  @default(true)
   showInApply Boolean @default(true) // ochiq ariza formasida (/apply) filial tanlovida chiqadimi
+  applyCourses String? // arizadagi kurslar ro'yxati, JSON [{name, levels}] — lib/applyCourses.ts
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 

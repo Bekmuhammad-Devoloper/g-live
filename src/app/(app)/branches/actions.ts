@@ -6,6 +6,7 @@ import { requireSession } from "@/lib/auth";
 import { ROLES } from "@/lib/constants";
 import { tr } from "@/lib/tr";
 import { writeAudit } from "@/lib/audit";
+import { parseApplyCourses, serializeApplyCourses } from "@/lib/applyCourses";
 
 // Administrator faqat o'z filialiga tayinlangan — filiallarni boshqara olmaydi (faqat Direktor/o'rinbosar)
 const CAN = [ROLES.DIRECTOR, ROLES.DEPUTY_DIRECTOR];
@@ -22,8 +23,10 @@ export async function saveBranch(fd: FormData): Promise<{ ok?: boolean; error?: 
   const lngRaw = Number(fd.get("lng")); const lng = Number.isFinite(lngRaw) && lngRaw !== 0 ? lngRaw : null;
   const radius = Math.max(1, Math.round(Number(fd.get("radius")) || 100));
   const imageUrl = String(fd.get("image") || "").trim() || null;
+  // Arizadagi kurslar — formadan JSON keladi, tozalab qayta yoziladi
+  const applyCourses = serializeApplyCourses(parseApplyCourses(String(fd.get("applyCourses") || "")));
   if (name.length < 2) return { error: tr(s.locale, { uz: "Nomi kamida 2 ta belgi bo'lsin", ru: "Название должно быть не менее 2 символов", en: "Name must be at least 2 characters", de: "Der Name muss mindestens 2 Zeichen lang sein" }) };
-  const data = { name, address, phone, lat, lng, radius, imageUrl };
+  const data = { name, address, phone, lat, lng, radius, imageUrl, applyCourses };
   if (id) await prisma.branch.update({ where: { id }, data });
   else await prisma.branch.create({ data });
   await writeAudit({ actorId: s.userId, action: id ? "UPDATE" : "CREATE", entityType: "Branch", entityId: id || undefined, newValue: { name } });

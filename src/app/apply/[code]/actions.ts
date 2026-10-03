@@ -5,6 +5,7 @@ import { prisma } from "@/lib/db";
 import { parseQuestions } from "../../(app)/links/questions";
 import { formatIntlPhone, phoneCountry } from "@/lib/phoneCodes";
 import { getLevelCodes } from "@/lib/studyLevels";
+import { parseApplyCourses } from "@/lib/applyCourses";
 
 export type ApplyState = { ok?: boolean; error?: string };
 
@@ -22,6 +23,8 @@ export interface ApplyExtra {
   /** Telefon davlat kodi (ISO: UZ, DE, ...) */
   countryIso?: string;
   level?: string;
+  /** Filialdagi kurs (filial ro'yxat bergan bo'lsa) */
+  course?: string;
 }
 
 // Ochiq (login talab qilmaydigan) ariza yuborish — CRM ga real Lead yaratadi.
@@ -50,10 +53,17 @@ export async function submitApplication(
 
   // Oflayn — filial majburiy va faol bo'lishi shart
   let branchId: string | null = link.vacancy.branchId ?? null;
+  let course: { name: string; levels: boolean } | null = null;
   if (format === "OFFLINE") {
-    const b = extra.branchId ? await prisma.branch.findFirst({ where: { id: extra.branchId, isActive: true, showInApply: true }, select: { id: true } }) : null;
+    const b = extra.branchId ? await prisma.branch.findFirst({ where: { id: extra.branchId, isActive: true, showInApply: true }, select: { id: true, applyCourses: true } }) : null;
     if (!b) return { error: "Filialni tanlang" };
     branchId = b.id;
+    // Filial kurslar ro'yxatini bergan bo'lsa — kurs majburiy va faqat ro'yxatdagisi
+    const list = parseApplyCourses(b.applyCourses);
+    if (list.length) {
+      course = list.find((c) => c.name === String(extra.course ?? "").trim()) ?? null;
+      if (!course) return { error: "Kursni tanlang" };
+    }
   }
 
   // Telefon — tanlangan davlat kodi bilan (O'zbekiston aynan 9 xona, boshqalar 6–12).
@@ -68,10 +78,11 @@ export async function submitApplication(
   const tg = String(extra.telegram ?? "").trim().replace(/^https?:\/\/(t\.me|telegram\.me)\//i, "").replace(/^@+/, "").slice(0, 64);
   if (format === "ONLINE" && tg && !/^[a-zA-Z0-9_]{3,64}$/.test(tg)) return { error: "Telegram username noto'g'ri (masalan: @username)" };
 
-  // Daraja — faqat ro'yxatdagi qiymat, majburiy
+  // Daraja — faqat ro'yxatdagi qiymat. Til bo'lmagan kurs (Matematika, Pochemushka...) tanlanganda so'ralmaydi
+  const needLevel = !(course && !course.levels);
   const levels = await getLevelCodes();
   const levelStr = levels.includes(String(extra.level ?? "")) ? String(extra.level) : null;
-  if (!levelStr) return { error: "Darajangizni tanlang" };
+  if (needLevel && !levelStr) return { error: "Darajangizni tanlang" };
 
   // Qo'shimcha savollar — majburiylari serverda ham tekshiriladi (mijozga ishonmaymiz)
   const questions = parseQuestions(link.vacancy.questions);
@@ -93,7 +104,8 @@ export async function submitApplication(
       phone: tel,
       telegram: format === "ONLINE" && tg ? `@${tg}` : null,
       studyFormat: format,
-      level: levelStr,
+      level: needLevel ? levelStr : null,
+      interestCourse: course?.name ?? null,
       source: link.platform,
       utmSource: link.utmSource,
       utmMedium: link.utmMedium,
@@ -103,6 +115,7 @@ export async function submitApplication(
       note: [
         `Kurs/vakansiya: ${link.vacancy.title}${link.vacancy.country ? " (" + link.vacancy.country + ")" : ""}`,
         `Ta'lim shakli: ${format === "ONLINE" ? "onlayn" : "oflayn"}`,
+        ...(course ? [`Kurs: ${course.name}`] : []),
         ...(format === "ONLINE" && tg ? [`Telegram: @${tg}${extra.telegramName ? " — " + String(extra.telegramName).trim().slice(0, 80) : ""}`] : []),
         ...qa, // savollarga javoblar — CRM'da lid izohida ko'rinadi
       ].join("\n"),

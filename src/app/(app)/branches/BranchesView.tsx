@@ -10,9 +10,10 @@ import { tr } from "@/lib/tr";
 import type { Locale } from "@/lib/constants";
 import { Icon } from "../_components/Icon";
 import MapPicker from "./MapPicker";
+import { guessHasLevels, type ApplyCourse } from "@/lib/applyCourses";
 import { saveBranch, deleteBranch, setBranchActive, setBranchApplyVisible, forceDeleteBranch, branchPurgeSummary, unassignedCounts, assignUnassignedToBranch, type PurgeSummary, type UnassignedCounts } from "./actions";
 
-export interface VBranch { id: string; name: string; address: string; phone: string; lat: number | null; lng: number | null; radius: number; imageUrl: string | null; staff: number; groups: number; isActive: boolean; /** ochiq ariza formasida ko'rinadi */ showInApply: boolean }
+export interface VBranch { id: string; name: string; address: string; phone: string; lat: number | null; lng: number | null; radius: number; imageUrl: string | null; staff: number; groups: number; isActive: boolean; /** ochiq ariza formasida ko'rinadi */ showInApply: boolean; /** arizadagi kurslar (bo'sh — kurs so'ralmaydi) */ applyCourses: ApplyCourse[] }
 
 export default function BranchesView({ branches, canManage, canPurge = false, locale }: { branches: VBranch[]; canManage: boolean; canPurge?: boolean; locale: Locale }) {
   const router = useRouter();
@@ -318,6 +319,15 @@ function BranchForm({ editing, onClose, onSaved, locale }: { editing: VBranch | 
   const [lng, setLng] = useState<number | null>(editing?.lng ?? null);
   const [radius, setRadius] = useState<number>(editing?.radius ?? 100);
   const [image, setImage] = useState<string | null>(editing?.imageUrl ?? null);
+  // Arizadagi kurslar — ro'yxat; til kurslarida daraja so'raladi
+  const [courses, setCourses] = useState<ApplyCourse[]>(editing?.applyCourses ?? []);
+  const [newCourse, setNewCourse] = useState("");
+  const addCourse = () => {
+    const name = newCourse.replace(/\s+/g, " ").trim();
+    if (!name || courses.some((c) => c.name.toLowerCase() === name.toLowerCase())) return;
+    setCourses((c) => [...c, { name, levels: guessHasLevels(name) }]);
+    setNewCourse("");
+  };
   const formRef = useRef<HTMLFormElement>(null);
   const fileRef = useRef<HTMLInputElement>(null);
 
@@ -361,6 +371,7 @@ function BranchForm({ editing, onClose, onSaved, locale }: { editing: VBranch | 
     fd.set("lng", lng != null ? String(lng) : "");
     fd.set("radius", String(radius));
     fd.set("image", image ?? "");
+    fd.set("applyCourses", JSON.stringify(courses));
     start(async () => { const r = await saveBranch(fd); if (r.ok) onSaved(); else setError(r.error ?? tr(locale, { uz: "Xatolik", ru: "Ошибка", en: "Error", de: "Fehler" })); });
   };
 
@@ -401,6 +412,28 @@ function BranchForm({ editing, onClose, onSaved, locale }: { editing: VBranch | 
           </div>
           <div><label className={lbl}>{tr(locale, { uz: "Nomi", ru: "Название", en: "Name", de: "Name" })} <span className="text-rose-500">*</span></label><input name="name" required defaultValue={editing?.name ?? ""} placeholder={tr(locale, { uz: "Filial nomi", ru: "Название филиала", en: "Branch name", de: "Name der Filiale" })} className={inp} /></div>
           <div><label className={lbl}>{tr(locale, { uz: "Manzil", ru: "Адрес", en: "Address", de: "Adresse" })}</label><input name="address" defaultValue={editing?.address ?? ""} placeholder={tr(locale, { uz: "Manzil", ru: "Адрес", en: "Address", de: "Adresse" })} className={inp} /></div>
+          {/* Arizadagi kurslar: filial tanlangach ariza beruvchi shulardan birini tanlaydi */}
+          <div className="rounded-xl border border-slate-100 bg-slate-50/60 p-3 dark:border-white/5 dark:bg-white/[0.03]">
+            <div className="mb-1 text-xs font-medium text-slate-600 dark:text-slate-300">{tr(locale, { uz: "Arizadagi kurslar", ru: "Курсы в заявке", en: "Courses in the application form", de: "Kurse im Antragsformular" })}</div>
+            <p className="mb-2.5 text-[11px] leading-relaxed text-slate-400">{tr(locale, { uz: "Filial tanlangach ariza beruvchi shu kurslardan birini tanlaydi. \"Daraja\" yoqilgan kurslarda A1–B2 so'raladi (til kurslari). Ro'yxat bo'sh bo'lsa kurs so'ralmaydi.", ru: "После выбора филиала заявитель выбирает один из этих курсов. У курсов с включённым «Уровень» спрашивается A1–B2 (языковые). Если список пуст — курс не спрашивается.", en: "After picking the branch the applicant chooses one of these courses. Courses with \"Level\" on ask for A1–B2 (languages). An empty list means no course question.", de: "Nach der Filialwahl wählt der Bewerber einen dieser Kurse. Bei Kursen mit „Niveau“ wird A1–B2 abgefragt (Sprachen). Leere Liste: keine Kursfrage." })}</p>
+            {courses.length > 0 && (
+              <ul className="mb-2.5 space-y-1.5">
+                {courses.map((c, i) => (
+                  <li key={c.name} className="flex items-center gap-2 rounded-lg border border-slate-200 bg-white px-2.5 py-1.5 dark:border-slate-700 dark:bg-slate-800/60">
+                    <span className="min-w-0 flex-1 truncate text-sm text-slate-700 dark:text-slate-200">{c.name}</span>
+                    <button type="button" onClick={() => setCourses((arr) => arr.map((x, k) => (k === i ? { ...x, levels: !x.levels } : x)))} className={cn("rounded-md px-2 py-0.5 text-[11px] font-semibold transition", c.levels ? "bg-brand-500/15 text-brand-700 dark:text-brand-300" : "bg-slate-100 text-slate-500 dark:bg-white/10 dark:text-slate-400")} title={tr(locale, { uz: "Daraja so'ralsinmi", ru: "Спрашивать уровень", en: "Ask for level", de: "Niveau abfragen" })}>
+                      {c.levels ? tr(locale, { uz: "Daraja: ha", ru: "Уровень: да", en: "Level: yes", de: "Niveau: ja" }) : tr(locale, { uz: "Daraja: yo'q", ru: "Уровень: нет", en: "Level: no", de: "Niveau: nein" })}
+                    </button>
+                    <button type="button" onClick={() => setCourses((arr) => arr.filter((_, k) => k !== i))} className="grid h-6 w-6 place-items-center rounded-md text-slate-400 transition hover:bg-rose-50 hover:text-rose-600 dark:hover:bg-rose-500/10" title={tr(locale, { uz: "Olib tashlash", ru: "Убрать", en: "Remove", de: "Entfernen" })}>✕</button>
+                  </li>
+                ))}
+              </ul>
+            )}
+            <div className="flex gap-2">
+              <input value={newCourse} onChange={(e) => setNewCourse(e.target.value)} onKeyDown={(e) => { if (e.key === "Enter") { e.preventDefault(); addCourse(); } }} placeholder={tr(locale, { uz: "Kurs nomi (masalan, Nemis tili)", ru: "Название курса (например, Немецкий язык)", en: "Course name (e.g. German)", de: "Kursname (z. B. Deutsch)" })} className={inp} />
+              <button type="button" onClick={addCourse} disabled={!newCourse.trim()} className="h-10 shrink-0 rounded-lg border border-slate-200 px-3 text-sm font-semibold text-slate-600 transition hover:bg-slate-50 disabled:opacity-50 dark:border-slate-700 dark:text-slate-300">{tr(locale, { uz: "+ Qo'shish", ru: "+ Добавить", en: "+ Add", de: "+ Hinzufügen" })}</button>
+            </div>
+          </div>
           <div><label className={lbl}>{tr(locale, { uz: "Radius (metr)", ru: "Радиус (метр)", en: "Radius (meters)", de: "Radius (Meter)" })} <span className="text-rose-500">*</span></label><input type="number" min="1" value={radius} onChange={(e) => setRadius(Math.max(1, Number(e.target.value) || 100))} className={inp} /></div>
 
           <div>

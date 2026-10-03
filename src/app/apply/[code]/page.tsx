@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import { prisma } from "@/lib/db";
 import { getLevelCodes } from "@/lib/studyLevels";
 import { branchHasImage } from "@/lib/branchImage";
+import { parseApplyCourses } from "@/lib/applyCourses";
 import { getAppRelease } from "@/lib/appRelease";
 import ApplyForm from "./ApplyForm";
 import ApplyShell from "./ApplyShell";
@@ -50,7 +51,7 @@ export default async function ApplyPage({ params, searchParams }: {
   const [allLevels, branches, app] = await Promise.all([
     getLevelCodes(),
     // Faqat faol va arizada ko'rsatishga ruxsat berilgan filiallar (Filiallar bo'limidagi "Arizada" tugmasi)
-    prisma.branch.findMany({ where: { isActive: true, showInApply: true }, select: { id: true, name: true, address: true, imageUrl: true }, orderBy: { name: "asc" } }),
+    prisma.branch.findMany({ where: { isActive: true, showInApply: true }, select: { id: true, name: true, address: true, imageUrl: true, applyCourses: true }, orderBy: { name: "asc" } }),
     getAppRelease(),
   ]);
 
@@ -119,7 +120,7 @@ export default async function ApplyPage({ params, searchParams }: {
                   levels={levelCodes}
                   // Rasm data URL'ni HTML'ga qo'ymaymiz — /api/branches/[id]/image orqali
                   // (yuklangan rasm yoki public/branches/<nom>.jpg tayyor fayl)
-                  branches={branches.map((b) => ({ id: b.id, name: b.name, address: b.address, image: branchHasImage(b) ? `/api/branches/${b.id}/image` : null }))}
+                  branches={branches.map((b) => ({ id: b.id, name: b.name, address: b.address, image: branchHasImage(b) ? `/api/branches/${b.id}/image` : null, courses: parseApplyCourses(b.applyCourses) }))}
                 />
               </>
             )}

@@ -9,13 +9,15 @@ import { fmtUzPhoneInput } from "@/lib/phone";
 import { DEFAULT_COUNTRY_ISO, localDigitsOk, phoneCountry } from "@/lib/phoneCodes";
 import CountryPicker from "./CountryPicker";
 import { useApplyBg } from "./ApplyShell";
+import type { ApplyCourse } from "@/lib/applyCourses";
 
 /**
  * Ochiq ariza formasi — telefon uchun:
  *   1) Ta'lim shakli — onlayn / oflayn
- *   2) Oflayn → filial tanlash
+ *   2) Oflayn → filial tanlash → (filialda ro'yxat bo'lsa) kurs tanlash
  *   3) Ism-familiya, telefon (davlat kodi bilan), onlayn → Telegram username
- *   4) Daraja — A1 / A2 / B1 / B2 (Sozlamalar > Darajalar ro'yxatidan)
+ *   4) Daraja — A1 / A2 / B1 / B2 (Sozlamalar > Darajalar ro'yxatidan); kurs tanlangan
+ *      bo'lsa faqat til kurslarida (levels=true) so'raladi
  *   + havolaga biriktirilgan qo'shimcha savollar (bo'lsa)
  * Ko'rinish /daraja-testi bilan bir xil brend uslubda.
  */
@@ -27,13 +29,15 @@ export default function ApplyForm({ code, preview, questions = [], levels, branc
   /** Sozlamalar > Darajalar katalogidagi kodlar */
   levels: string[];
   /** Faol filiallar — oflayn ta'lim uchun; `image` — filial surati (tanlanganda orqa fon) */
-  branches: { id: string; name: string; address: string | null; image: string | null }[];
+  branches: { id: string; name: string; address: string | null; image: string | null; courses: ApplyCourse[] }[];
 }) {
   const [pending, start] = useTransition();
   const [error, setError] = useState<string | null>(null);
   const [done, setDone] = useState(false);
   const [format, setFormat] = useState<StudyFormat | null>(null);
   const [branchId, setBranchId] = useState("");
+  // Filialdagi kurs (filial ro'yxat bergan bo'lsa)
+  const [course, setCourse] = useState("");
   const [fullName, setName] = useState("");
   const [countryIso, setCountryIso] = useState(DEFAULT_COUNTRY_ISO);
   const [phone, setPhone] = useState("");
@@ -46,7 +50,14 @@ export default function ApplyForm({ code, preview, questions = [], levels, branc
 
   const country = useMemo(() => phoneCountry(countryIso), [countryIso]);
   // Oflayn filial tanlanganda uning surati sahifa foniga tushadi (ApplyShell chizadi)
-  const bgImage = format === "OFFLINE" ? branches.find((b) => b.id === branchId)?.image ?? null : null;
+  const branch = format === "OFFLINE" ? branches.find((b) => b.id === branchId) ?? null : null;
+  const bgImage = branch?.image ?? null;
+  const courseList = branch?.courses ?? [];
+  const picked = courseList.find((c) => c.name === course) ?? null;
+  // Daraja: onlaynda doim; oflaynda — filial kurs so'ramasa yoki tanlangan kurs til kursi bo'lsa
+  const askCourse = format === "OFFLINE" && !!branch && courseList.length > 0;
+  const askLevel = format === "ONLINE" || (format === "OFFLINE" && !!branch && (courseList.length === 0 || !!picked?.levels));
+  const pickBranch = (id: string) => { setBranchId(id); setCourse(""); };
   const setBg = useApplyBg();
   useEffect(() => { setBg(bgImage); }, [bgImage, setBg]);
 
@@ -83,13 +94,14 @@ export default function ApplyForm({ code, preview, questions = [], levels, branc
 
     if (!format) { setError("Ta'lim shaklini tanlang"); return; }
     if (format === "OFFLINE" && !branchId) { setError("Filialni tanlang"); return; }
+    if (askCourse && !picked) { setError("Kursni tanlang"); return; }
     if (fullName.trim().length < 2) { setError("Ismingizni kiriting"); return; }
     if (format === "OFFLINE" && countryIso !== "UZ") { setError("Oflayn o'qish uchun faqat O'zbekiston raqami (+998) qabul qilinadi"); return; }
     if (!localDigitsOk(countryIso, phone.replace(/\D/g, ""))) {
       setError(countryIso === "UZ" ? "Telefon raqamini to'liq kiriting: +998 XX XXX XX XX" : `Telefon raqamini to'g'ri kiriting (${country.code} ...)`);
       return;
     }
-    if (!level) { setError("Darajangizni tanlang"); return; }
+    if (askLevel && !level) { setError("Darajangizni tanlang"); return; }
 
     // Majburiy savollar tekshiruvi (serverda ham qayta tekshiriladi)
     const missing = questions.findIndex((q, i) => q.required && !answers[i]?.trim());
@@ -97,7 +109,8 @@ export default function ApplyForm({ code, preview, questions = [], levels, branc
 
     start(async () => {
       const r = await submitApplication(code, fullName, `${country.code} ${phone}`, answers, {
-        format, branchId: format === "OFFLINE" ? branchId : undefined, telegram: format === "ONLINE" ? telegram : undefined, countryIso, level,
+        format, branchId: format === "OFFLINE" ? branchId : undefined, telegram: format === "ONLINE" ? telegram : undefined, countryIso,
+        level: askLevel ? level : undefined, course: askCourse ? course : undefined,
         telegramName: tgProfile?.ok && tgProfile.username.toLowerCase() === telegram.trim().toLowerCase() ? tgProfile.name : undefined,
       });
       if (r.ok) { setDone(true); window.scrollTo({ top: 0 }); }
@@ -153,10 +166,34 @@ export default function ApplyForm({ code, preview, questions = [], levels, branc
           ) : (
             <div className={cn("grid gap-2", branches.length === 1 ? "grid-cols-1" : "grid-cols-2")}>
               {branches.map((b) => (
-                <Choice key={b.id} on={branchId === b.id} onClick={() => setBranchId(b.id)} icon="pin" title={b.name} sub={b.address ?? undefined} />
+                <Choice key={b.id} on={branchId === b.id} onClick={() => pickBranch(b.id)} icon="pin" title={b.name} sub={b.address ?? undefined} />
               ))}
             </div>
           )}
+        </div>
+      )}
+
+      {/* 2b) Filialdagi kurs — filial ro'yxat bergan bo'lsa */}
+      {askCourse && (
+        <div className="animate-pop-in mt-4">
+          <Label text="Kurs" req />
+          <div className="grid grid-cols-2 gap-2">
+            {courseList.map((c) => (
+              <button
+                key={c.name}
+                type="button"
+                onClick={() => { setCourse(c.name); if (!c.levels) setLevel(""); }}
+                className={cn(
+                  "min-h-[52px] rounded-2xl border-2 px-3 text-[14px] font-bold leading-tight transition active:scale-[0.97]",
+                  course === c.name
+                    ? "border-brand-600 bg-brand-600 text-white shadow-[0_10px_24px_-10px_rgba(65,72,239,0.7)]"
+                    : "border-slate-200 bg-white text-slate-700 hover:border-brand-300 dark:border-white/10 dark:bg-white/[0.04] dark:text-slate-200",
+                )}
+              >
+                {c.name}
+              </button>
+            ))}
+          </div>
         </div>
       )}
 
@@ -229,7 +266,8 @@ export default function ApplyForm({ code, preview, questions = [], levels, branc
             </div>
           )}
 
-          {/* 4) Daraja */}
+          {/* 4) Daraja — til kurslari uchun */}
+          {askLevel && (<>
           <Label text="Darajangiz" req className="mt-4" />
           <div className="grid grid-cols-4 gap-2">
             {levels.map((l) => (
@@ -249,6 +287,7 @@ export default function ApplyForm({ code, preview, questions = [], levels, branc
             ))}
           </div>
           <p className="mt-1.5 text-[12px] text-slate-400">Bilmasangiz — A1 ni tanlang, darajani birga aniqlaymiz</p>
+          </>)}
 
           {/* Qo'shimcha savollar — yoziladigan yoki variantli */}
           {questions.map((q, i) => (
