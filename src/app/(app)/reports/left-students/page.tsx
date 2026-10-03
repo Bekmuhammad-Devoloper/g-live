@@ -4,7 +4,7 @@ import { prisma } from "@/lib/db";
 import { canRead, MODULES } from "@/lib/rbac";
 import type { Locale } from "@/lib/constants";
 import { tr } from "@/lib/tr";
-import { branchWhere, branchViaGroup } from "@/lib/branchScope";
+import { branchViaGroup, staffBranchWhere } from "@/lib/branchScope";
 import { Forbidden } from "../../_components/ui";
 import { Icon } from "../../_components/Icon";
 import LeftExport from "./LeftExport";
@@ -45,7 +45,7 @@ export default async function LeftStudentsPage({ searchParams }: { searchParams:
   const [programs, teachers] = await Promise.all([
     prisma.program.findMany({ where: { isActive: true }, select: { id: true, name: true }, orderBy: { name: "asc" } }),
     // faol filial doirasida
-    prisma.user.findMany({ where: { AND: [{ role: "TEACHER" }, branchWhere(s)] }, select: { id: true, fullName: true }, orderBy: { fullName: "asc" } }),
+    prisma.user.findMany({ where: { AND: [{ role: "TEACHER" }, staffBranchWhere(s)] }, select: { id: true, fullName: true }, orderBy: { fullName: "asc" } }),
   ]);
 
   // Guruhni tark etgan = GroupStudent isActive=false

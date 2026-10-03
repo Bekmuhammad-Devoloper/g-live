@@ -3,7 +3,7 @@ import { prisma } from "@/lib/db";
 import { canRead, MODULES } from "@/lib/rbac";
 import { ROLES } from "@/lib/constants";
 import { tr } from "@/lib/tr";
-import { branchWhere } from "@/lib/branchScope";
+import { branchWhere, staffBranchWhere } from "@/lib/branchScope";
 import { Forbidden } from "../../_components/ui";
 import StaffRatingView, { type VRating } from "./StaffRatingView";
 
@@ -22,7 +22,7 @@ export default async function StaffRatingPage() {
     // Feedback modelida branchId ham, relation ham yo'q — filial bo'yicha
     // quyida o'qituvchi ro'yxati orqali filtrlanadi.
     prisma.feedback.findMany({ orderBy: { createdAt: "desc" }, take: 1000 }),
-    prisma.user.findMany({ where: { AND: [{ role: ROLES.TEACHER }, branchWhere(s)] }, select: { id: true, fullName: true } }), // faol filial doirasida
+    prisma.user.findMany({ where: { AND: [{ role: ROLES.TEACHER }, staffBranchWhere(s)] }, select: { id: true, fullName: true } }), // faol filial doirasida
     prisma.student.findMany({ where: branchWhere(s), select: { id: true, fullName: true } }), // faol filial doirasida
     prisma.group.findMany({ where: branchWhere(s), select: { id: true, name: true, program: { select: { name: true } } } }), // faol filial doirasida
     prisma.program.findMany({ select: { name: true }, orderBy: { name: "asc" } }),

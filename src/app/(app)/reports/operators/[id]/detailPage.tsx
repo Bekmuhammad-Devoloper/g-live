@@ -4,7 +4,7 @@ import { prisma } from "@/lib/db";
 import { canRead, canWrite, MODULES } from "@/lib/rbac";
 import { canManageAdminTeam, canSeeAdminTeam } from "@/lib/operatorAccess";
 import { ROLES, type Locale } from "@/lib/constants";
-import { branchWhere } from "@/lib/branchScope";
+import { branchWhere, staffBranchWhere } from "@/lib/branchScope";
 import { tr } from "@/lib/tr";
 import { Forbidden } from "../../../_components/ui";
 import OperatorDetail, { type DCall, type DLead, type DMonth, type DOperator } from "./OperatorDetail";
@@ -50,6 +50,7 @@ export async function TeamDetailPage({
   const canManage = isAdminKind ? canManageAdminTeam(s.role) : canWrite(s.role, MODULES.USERS);
   // ROP administratorlar bo'limida barcha filiallarni ko'radi (boardPage.tsx bilan bir xil)
   const scope = isAdminKind && s.role === ROLES.ROP ? {} : branchWhere(s);
+  const staffScope = isAdminKind && s.role === ROLES.ROP ? {} : staffBranchWhere(s); // xodim bir nechta filialda bo'lishi mumkin
 
   const now = new Date();
   const customDate = typeof sp.date === "string" && /^\d{4}-\d{2}-\d{2}$/.test(sp.date) ? sp.date : null;
@@ -77,7 +78,7 @@ export async function TeamDetailPage({
   const [op, leads, calls, wonAll] = await Promise.all([
     // faol filial doirasida (boshqa filial operatori ochilmasin) — shu sabab findFirst
     prisma.user.findFirst({
-      where: { AND: [{ id }, scope] },
+      where: { AND: [{ id }, staffScope] },
       // XAVFSIZLIK: faqat kerakli maydonlar
       select: {
         id: true, fullName: true, email: true, phone: true, role: true, isActive: true, imageUrl: true,

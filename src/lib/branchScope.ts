@@ -12,9 +12,19 @@ type BW = { branchId: string } | Record<string, never>;
 /** Filial + filialsiz (umumiy) yozuvlar — market kabi umumiy ro'yxatlar uchun */
 type BWShared = { OR: ({ branchId: string } | { branchId: null })[] } | Record<string, never>;
 
-/** branchId maydoni BOR modellar uchun: Lead, Student, Group, Room, User, Vacancy, Expense. */
+/** branchId maydoni BOR modellar uchun: Lead, Student, Group, Room, Vacancy, Expense. Xodimlar (User) uchun — staffBranchWhere. */
 export function branchWhere(s: { branchId: string | null }): BW {
   return s.branchId ? { branchId: s.branchId } : {};
+}
+
+type BWStaff = { OR: ({ branchId: string } | { branches: { some: { branchId: string } } })[] } | Record<string, never>;
+
+/**
+ * Xodimlar (User) uchun: asosiy filiali YOKI qo'shimcha filiallaridan biri faol filial
+ * bo'lsa ko'rinadi. Bir xodim bir nechta filialda ishlashi mumkin (UserBranch).
+ */
+export function staffBranchWhere(s: { branchId: string | null }): BWStaff {
+  return s.branchId ? { OR: [{ branchId: s.branchId }, { branches: { some: { branchId: s.branchId } } }] } : {};
 }
 
 /**

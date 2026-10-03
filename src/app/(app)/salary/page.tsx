@@ -4,7 +4,7 @@ import { getT } from "@/lib/i18n";
 import { tr } from "@/lib/tr";
 import { canRead, getPermission, MODULES } from "@/lib/rbac";
 import { ROLES } from "@/lib/constants";
-import { branchWhere, branchViaGroup } from "@/lib/branchScope";
+import { branchWhere, branchViaGroup, staffBranchWhere } from "@/lib/branchScope";
 import { PageHeader, Card, StatCard, Forbidden } from "../_components/ui";
 import SalaryWorkspace, { type SalaryRow } from "./SalaryWorkspace";
 
@@ -57,7 +57,7 @@ export default async function SalaryPage({ searchParams }: { searchParams: Promi
   const monthEnd = new Date(year, month, 1);
 
   const teachers = await prisma.user.findMany({
-    where: { AND: [{ role: ROLES.TEACHER, isActive: true }, branchWhere(s)] }, // faol filial doirasida
+    where: { AND: [{ role: ROLES.TEACHER, isActive: true }, staffBranchWhere(s)] }, // faol filial doirasida
     select: { id: true, fullName: true, fiksa: true, kpiBonus: true },
     orderBy: { fullName: "asc" },
   });

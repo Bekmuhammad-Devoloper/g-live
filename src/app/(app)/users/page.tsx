@@ -3,7 +3,7 @@ import { prisma } from "@/lib/db";
 import { getT } from "@/lib/i18n";
 import { canRead, MODULES } from "@/lib/rbac";
 import { ROLES, ROLE_LABELS, label } from "@/lib/constants";
-import { branchWhere } from "@/lib/branchScope";
+import { branchWhere, staffBranchWhere } from "@/lib/branchScope";
 import { Forbidden } from "../_components/ui";
 import UsersView, { type VStaff } from "./UsersView";
 import { MANAGEMENT_DEPT, MANAGEMENT_POSITIONS } from "./positions";
@@ -20,11 +20,12 @@ export default async function UsersPage() {
 
   // XAVFSIZLIK: `select` — passwordHash/plainPassword hech qachon xotiraga ham yuklanmaydi
   const users = await prisma.user.findMany({
-    where: { AND: [{ role: { in: STAFF_ROLES } }, branchWhere(s)] }, // faol filial doirasida
+    where: { AND: [{ role: { in: STAFF_ROLES } }, staffBranchWhere(s)] }, // faol filial doirasida (qo'shimcha filiallar ham)
     orderBy: { createdAt: "asc" },
     select: {
       id: true, fullName: true, gender: true, role: true, position: true, phone: true, isActive: true,
       branch: { select: { name: true } },
+      branches: { select: { branch: { select: { name: true } } } },
       teacherGroups: {
         where: branchWhere(s), // faol filial doirasida
         select: { id: true, name: true, program: { select: { name: true } }, _count: { select: { students: true } } },
@@ -41,7 +42,8 @@ export default async function UsersPage() {
     role: u.role,
     // Lavozim (katalog roli) bo'lsa shuni ko'rsatamiz, bo'lmasa RBAC rol nomi
     roleLabel: u.position?.trim() || label(ROLE_LABELS, u.role, s.locale),
-    branch: u.branch?.name ?? null,
+    // Asosiy + qo'shimcha filiallar
+    branch: [u.branch?.name, ...u.branches.map((b) => b.branch.name)].filter(Boolean).join(" · ") || null,
     phone: u.phone,
     courses: Array.from(new Set(u.teacherGroups.map((g) => g.program?.name).filter((x): x is string => !!x))),
     active: u.isActive,

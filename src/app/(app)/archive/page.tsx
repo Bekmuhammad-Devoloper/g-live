@@ -1,7 +1,7 @@
 import { requireSession } from "@/lib/auth";
 import { prisma } from "@/lib/db";
 import { ROLES, ROLE_LABELS, label, type Locale } from "@/lib/constants";
-import { branchWhere } from "@/lib/branchScope";
+import { staffBranchWhere } from "@/lib/branchScope";
 import { tr } from "@/lib/tr";
 import { Forbidden } from "../_components/ui";
 import { getSetting } from "@/lib/settings";
@@ -22,7 +22,7 @@ export default async function ArchivePage() {
   const [users, reasonsRaw] = await Promise.all([
     prisma.user.findMany({
       // faol filial doirasida
-      where: { AND: [{ role: { in: STAFF_ROLES }, isActive: false }, branchWhere(s)] },
+      where: { AND: [{ role: { in: STAFF_ROLES }, isActive: false }, staffBranchWhere(s)] },
       orderBy: [{ archivedAt: "desc" }, { updatedAt: "desc" }],
       select: { id: true, fullName: true, phone: true, role: true, archiveReason: true, archiveNote: true, archivedAt: true, updatedAt: true },
     }),

@@ -1,7 +1,7 @@
 import Link from "next/link";
 import { prisma } from "@/lib/db";
 import { requireSession } from "@/lib/auth";
-import { branchWhere, branchViaStudent, branchViaGroup } from "@/lib/branchScope";
+import { branchWhere, branchViaStudent, branchViaGroup, staffBranchWhere } from "@/lib/branchScope";
 import { formatMoney, type Locale } from "@/lib/constants";
 import { getT } from "@/lib/i18n";
 import { Card, StatCard } from "../_components/ui";
@@ -27,7 +27,7 @@ export default async function CeoDashboard({ locale }: { locale: Locale }) {
       where: { AND: [{ startsAt: { gte: weekStart, lt: weekEnd } }, branchViaGroup(s)] },
       include: { group: { include: { teacher: true, program: true } } },
     }),
-    prisma.user.findMany({ where: { AND: [{ role: "TEACHER" }, branchWhere(s)] }, select: { fullName: true }, orderBy: { fullName: "asc" } }),
+    prisma.user.findMany({ where: { AND: [{ role: "TEACHER" }, staffBranchWhere(s)] }, select: { fullName: true }, orderBy: { fullName: "asc" } }),
     prisma.group.findMany({ where: branchWhere(s), select: { name: true, room: true }, orderBy: { name: "asc" } }),
     prisma.program.findMany({ select: { name: true }, orderBy: { name: "asc" } }),
   ]);

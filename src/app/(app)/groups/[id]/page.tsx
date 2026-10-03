@@ -4,7 +4,7 @@ import { requireSession } from "@/lib/auth";
 import { prisma } from "@/lib/db";
 import { getPermission, MODULES } from "@/lib/rbac";
 import { ROLES } from "@/lib/constants";
-import { branchWhere } from "@/lib/branchScope";
+import { branchWhere, staffBranchWhere } from "@/lib/branchScope";
 import { tr } from "@/lib/tr";
 import { PageHeader, Card, Table, EmptyRow, Badge, Forbidden } from "../../_components/ui";
 import { Icon } from "../../_components/Icon";
@@ -86,7 +86,7 @@ export default async function GroupDetailPage({ params }: { params: Promise<{ id
     ? await Promise.all([
         prisma.program.findMany({ where: { isActive: true }, select: { id: true, name: true }, orderBy: { name: "asc" } }),
         // faol filial o'qituvchilari
-        prisma.user.findMany({ where: { AND: [{ role: ROLES.TEACHER }, branchWhere(s)] }, select: { id: true, fullName: true }, orderBy: { fullName: "asc" } }),
+        prisma.user.findMany({ where: { AND: [{ role: ROLES.TEACHER }, staffBranchWhere(s)] }, select: { id: true, fullName: true }, orderBy: { fullName: "asc" } }),
         // faol filial xonalari — "Xona" ro'yxatdan tanlanadi
         prisma.room.findMany({ where: { AND: [{ isActive: true }, branchWhere(s)] }, select: { id: true, name: true, capacity: true }, orderBy: { name: "asc" } }),
       ])

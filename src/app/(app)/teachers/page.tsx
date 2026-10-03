@@ -1,7 +1,7 @@
 import { requireSession } from "@/lib/auth";
 import { prisma } from "@/lib/db";
 import { ROLES } from "@/lib/constants";
-import { branchWhere } from "@/lib/branchScope";
+import { staffBranchWhere } from "@/lib/branchScope";
 import { tr } from "@/lib/tr";
 import { Forbidden } from "../_components/ui";
 import TeachersView, { type VTeacher } from "./TeachersView";
@@ -26,7 +26,7 @@ export default async function TeachersPage() {
   const [teachers, branches] = await Promise.all([
     prisma.user.findMany({
       // faol filial doirasida
-      where: { AND: [{ role: ROLES.TEACHER }, branchWhere(s)] },
+      where: { AND: [{ role: ROLES.TEACHER }, staffBranchWhere(s)] },
       orderBy: { fullName: "asc" },
       // XAVFSIZLIK: select bilan faqat kerakli maydonlar — passwordHash/plainPassword hech qachon yuklanmaydi
       select: {

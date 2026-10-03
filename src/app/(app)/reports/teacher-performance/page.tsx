@@ -4,7 +4,7 @@ import { prisma } from "@/lib/db";
 import { canRead, MODULES } from "@/lib/rbac";
 import { ROLES } from "@/lib/constants";
 import { tr } from "@/lib/tr";
-import { branchWhere } from "@/lib/branchScope";
+import { branchWhere, staffBranchWhere } from "@/lib/branchScope";
 import { Forbidden } from "../../_components/ui";
 import DateRangeNav from "./DateRangeNav";
 import { SortHeader, ExportButton, type TeacherRow } from "./TableTools";
@@ -33,7 +33,7 @@ export default async function TeacherPerformancePage({ searchParams }: { searchP
   const to = new Date(toStr + "T23:59:59");
 
   const teachers = await prisma.user.findMany({
-    where: { AND: [{ role: ROLES.TEACHER, isActive: true }, branchWhere(s)] }, // faol filial doirasida
+    where: { AND: [{ role: ROLES.TEACHER, isActive: true }, staffBranchWhere(s)] }, // faol filial doirasida
     orderBy: { fullName: "asc" },
     select: {
       id: true, fullName: true,

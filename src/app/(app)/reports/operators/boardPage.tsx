@@ -3,7 +3,7 @@ import { prisma } from "@/lib/db";
 import { canSeeTeamReports } from "@/lib/rbac";
 import { canManageAdminTeam, canManageOperators, canSeeAdminTeam } from "@/lib/operatorAccess";
 import { ROLES, type Locale } from "@/lib/constants";
-import { branchWhere } from "@/lib/branchScope";
+import { branchWhere, staffBranchWhere } from "@/lib/branchScope";
 import { tr } from "@/lib/tr";
 import { Forbidden } from "../../_components/ui";
 import OperatorsBoard, { type VOperator } from "./OperatorsBoard";
@@ -59,6 +59,7 @@ export async function TeamBoardPage({ kind, searchParams }: { kind: TeamKind; se
   // ROP filial almashtira olmaydi va lidlarni HAMMA filialga yo'naltiradi —
   // administratorlar bo'limida u barcha filial administratorlarini ko'radi.
   const scope = isAdminKind && s.role === ROLES.ROP ? {} : branchWhere(s);
+  const staffScope = isAdminKind && s.role === ROLES.ROP ? {} : staffBranchWhere(s); // xodim bir nechta filialda bo'lishi mumkin
 
   const now = new Date();
   const picked = typeof sp.date === "string" && /^\d{4}-\d{2}-\d{2}$/.test(sp.date) ? sp.date : null;
@@ -66,7 +67,7 @@ export async function TeamBoardPage({ kind, searchParams }: { kind: TeamKind; se
   const dayEnd = new Date(dayStart.getTime() + 86_400_000);
 
   const ops = await prisma.user.findMany({
-    where: { AND: [{ role: cfg.role, isActive: true }, scope] },
+    where: { AND: [{ role: cfg.role, isActive: true }, staffScope] },
     orderBy: { fullName: "asc" },
     // XAVFSIZLIK: select bilan faqat kerakli maydonlar (passwordHash hech qachon yuklanmaydi)
     select: {

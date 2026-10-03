@@ -16,6 +16,8 @@ export interface StaffDetail {
   roleKey: string; roleLabel: string; branch: string | null;
   /** Tahrirlash formasi uchun xom qiymatlar */
   position: string | null; branchId: string | null; birthDateIso: string | null;
+  /** Qo'shimcha filiallar (asosiysidan tashqari) */
+  extraBranchIds: string[];
   gender: "MALE" | "FEMALE" | null; birthDate: string | null; isActive: boolean;
   password: string | null; // ochiq parol (rahbariyat ko'rishi uchun)
   fiksa: number; kpiBonus: number; monthTotal: number;
@@ -48,7 +50,13 @@ function roleForPosition(position: string): string {
   return ROLES.OPERATOR; // Operator, Marketolog va shunga o'xshash sotuv xodimlari
 }
 
-export async function createStaff(fd: FormData): Promise<{ ok?: boolean; error?: string }> {
+export type StaffResult = { ok?: boolean; error?: string; notice?: string };
+
+/** Formadagi qo'shimcha filiallar (asosiysi chiqarib tashlanadi) */
+const extraBranchesOf = (fd: FormData, primary: string | null): string[] =>
+  [...new Set(fd.getAll("extraBranches").map(String).filter((b) => b && b !== primary))];
+
+export async function createStaff(fd: FormData): Promise<StaffResult> {
   const s = await requireSession();
   if (!can(s.role)) return { error: tr(s.locale, { uz: "Ruxsat yo'q", ru: "Нет доступа", en: "No access", de: "Kein Zugriff" }) };
 
@@ -76,11 +84,40 @@ export async function createStaff(fd: FormData): Promise<{ ok?: boolean; error?:
     return { error: tr(s.locale, { uz: "Rahbariyat lavozimini faqat direktor beradi", ru: "Руководящую должность назначает только директор", en: "Only the director can assign management positions", de: "Leitungspositionen vergibt nur der Direktor" }) };
   }
 
-  const exists = await prisma.user.findUnique({ where: { email } });
-  if (exists) return { error: tr(s.locale, { uz: "Bu email allaqachon mavjud", ru: "Этот email уже существует", en: "This email already exists", de: "Diese E-Mail existiert bereits" }) };
+  const exists = await prisma.user.findUnique({
+    where: { email },
+    select: { id: true, fullName: true, branchId: true, branch: { select: { name: true } }, branches: { select: { branchId: true } } },
+  });
+  if (exists) {
+    // Xodim boshqa filialda allaqachon bor — ikkinchi hisob ochilmaydi, shu filialga ham biriktiriladi
+    if (!branchId) return { error: tr(s.locale, { uz: "Bu email allaqachon mavjud", ru: "Этот email уже существует", en: "This email already exists", de: "Diese E-Mail existiert bereits" }) };
+    if (exists.branchId === branchId || exists.branches.some((b) => b.branchId === branchId)) {
+      return { error: tr(s.locale, { uz: "Bu xodim shu filialda allaqachon bor", ru: "Этот сотрудник уже есть в этом филиале", en: "This staff member is already in this branch", de: "Dieser Mitarbeiter ist bereits in dieser Filiale" }) };
+    }
+    await prisma.userBranch.create({ data: { userId: exists.id, branchId } });
+    await writeAudit({ actorId: s.userId, action: "UPDATE", entityType: "User", entityId: exists.id, newValue: { addBranch: branchId }, reason: "Qo'shimcha filialga biriktirildi" });
+    revalidatePath("/users");
+    revalidatePath("/settings/staff");
+    const target = await prisma.branch.findUnique({ where: { id: branchId }, select: { name: true } });
+    const from = exists.branch?.name;
+    return {
+      ok: true,
+      // Filial nomlari ko'pincha "… filiali" ko'rinishida — shuning uchun "filialida" so'zi qo'shilmaydi
+      notice: tr(s.locale, {
+        uz: `${exists.fullName} allaqachon ro'yxatda${from ? ` («${from}»)` : ""}. Endi «${target?.name ?? ""}»ga ham biriktirildi — login va paroli o'zgarmadi.`,
+        ru: `${exists.fullName} уже есть в списке${from ? ` («${from}»)` : ""}. Теперь также прикреплён к «${target?.name ?? ""}» — логин и пароль не изменились.`,
+        en: `${exists.fullName} is already in the list${from ? ` (${from})` : ""}. Now also assigned to ${target?.name ?? ""} — login and password are unchanged.`,
+        de: `${exists.fullName} ist bereits in der Liste${from ? ` (${from})` : ""}. Jetzt auch ${target?.name ?? ""} zugeordnet — Login und Passwort bleiben gleich.`,
+      }),
+    };
+  }
 
+  const extraBranches = extraBranchesOf(fd, branchId);
   const u = await prisma.user.create({
-    data: { fullName, email, phone, passwordHash: await hashPassword(password), plainPassword: password, role, position, branchId, gender, birthDate, fiksa, isActive: true },
+    data: {
+      fullName, email, phone, passwordHash: await hashPassword(password), plainPassword: password, role, position, branchId, gender, birthDate, fiksa, isActive: true,
+      branches: { create: extraBranches.map((b) => ({ branchId: b })) },
+    },
   });
   await writeAudit({ actorId: s.userId, action: "CREATE", entityType: "User", entityId: u.id, newValue: { fullName, role, position } });
   revalidatePath("/users");
@@ -99,6 +136,7 @@ export async function getStaffDetail(userId: string): Promise<{ ok: boolean; dat
         id: true, fullName: true, email: true, phone: true, role: true, position: true, isActive: true,
         gender: true, birthDate: true, fiksa: true, kpiBonus: true, plainPassword: true, branchId: true,
         branch: { select: { name: true } },
+        branches: { select: { branchId: true, branch: { select: { name: true } } } },
         teacherGroups: { where: { status: { not: "CANCELLED" } }, select: { name: true, weekdays: true } },
         salaries: { where: { year: now.getFullYear(), month: now.getMonth() + 1 }, take: 1 },
       },
@@ -122,7 +160,9 @@ export async function getStaffDetail(userId: string): Promise<{ ok: boolean; dat
     ok: true,
     data: {
       id: u.id, fullName: u.fullName, email: u.email, phone: u.phone,
-      roleKey: u.role, roleLabel: u.position?.trim() || label(ROLE_LABELS, u.role, s.locale), branch: u.branch?.name ?? null,
+      roleKey: u.role, roleLabel: u.position?.trim() || label(ROLE_LABELS, u.role, s.locale),
+      branch: [u.branch?.name, ...u.branches.map((b) => b.branch.name)].filter(Boolean).join(" · ") || null,
+      extraBranchIds: u.branches.map((b) => b.branchId),
       // Lavozimi yozilmagan (eski) xodimda rolidan kelib chiqadigan nom tanlangan holda ochiladi
       position: u.position ?? defaultPositionFor(u.role), branchId: u.branchId,
       birthDateIso: u.birthDate ? u.birthDate.toISOString().slice(0, 10) : null,
@@ -140,11 +180,11 @@ export async function getStaffDetail(userId: string): Promise<{ ok: boolean; dat
 /**
  * Xodimni tahrirlash — "Boshqaruv → Xodimlar" yon panelidagi "Tahrirlash".
  * Ism, telefon, lavozim (rol lavozimdan aniqlanadi — faqat lavozim o'zgarsa),
- * filial, jins, tug'ilgan sana, oylik, email (login) va parol. Parol maydoni bo'sh
+ * filial (asosiy + qo'shimcha), jins, tug'ilgan sana, oylik, email (login) va parol. Parol maydoni bo'sh
  * yoki o'zgarmagan bo'lsa parolga tegilmaydi.
  * Ruxsat: direktor / o'rinbosari / administrator — o'z-o'zini ham tahrirlaydi.
  */
-export async function updateStaff(fd: FormData): Promise<{ ok?: boolean; error?: string }> {
+export async function updateStaff(fd: FormData): Promise<StaffResult> {
   const s = await requireSession();
   if (!can(s.role)) return { error: tr(s.locale, { uz: "Ruxsat yo'q", ru: "Нет доступа", en: "No access", de: "Kein Zugriff" }) };
 
@@ -201,6 +241,12 @@ export async function updateStaff(fd: FormData): Promise<{ ok?: boolean; error?:
       ...(newPassword ? { passwordHash: await hashPassword(newPassword), plainPassword: newPassword } : {}),
     },
   });
+  // Qo'shimcha filiallar: formadagi ro'yxat bilan tenglashtiriladi
+  const extraBranches = extraBranchesOf(fd, branchId);
+  await prisma.$transaction([
+    prisma.userBranch.deleteMany({ where: { userId: id, branchId: { notIn: extraBranches.length ? extraBranches : ["__none__"] } } }),
+    ...extraBranches.map((b) => prisma.userBranch.upsert({ where: { userId_branchId: { userId: id, branchId: b } }, create: { userId: id, branchId: b }, update: {} })),
+  ]);
   await writeAudit({ actorId: s.userId, action: "UPDATE", entityType: "User", entityId: id, oldValue: { role: cur.role, position: cur.position, email: cur.email }, newValue: { fullName, role, position, branchId, email }, reason: newPassword ? "Parol yangilandi" : undefined });
   revalidatePath("/users");
   revalidatePath("/settings/staff");

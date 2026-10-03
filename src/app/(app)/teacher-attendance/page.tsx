@@ -1,7 +1,7 @@
 import { requireSession } from "@/lib/auth";
 import { prisma } from "@/lib/db";
 import { ROLES } from "@/lib/constants";
-import { branchWhere } from "@/lib/branchScope";
+import { branchWhere, staffBranchWhere } from "@/lib/branchScope";
 import { tr } from "@/lib/tr";
 import { Forbidden } from "../_components/ui";
 import TeacherAttendanceWorkspace, { type VTeacher, type VAtt } from "./TeacherAttendanceWorkspace";
@@ -31,7 +31,7 @@ export default async function TeacherAttendancePage() {
   const isTeacher = s.role === ROLES.TEACHER;
   // faol filial doirasida
   const teachers = await prisma.user.findMany({
-    where: { AND: [isTeacher ? { role: ROLES.TEACHER, id: s.userId } : { role: ROLES.TEACHER }, branchWhere(s)] },
+    where: { AND: [isTeacher ? { role: ROLES.TEACHER, id: s.userId } : { role: ROLES.TEACHER }, staffBranchWhere(s)] },
     orderBy: { fullName: "asc" },
     select: { id: true, fullName: true, fiksa: true },
   });

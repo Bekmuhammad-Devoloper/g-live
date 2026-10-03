@@ -1,7 +1,7 @@
 import { requireSession } from "@/lib/auth";
 import { prisma } from "@/lib/db";
 import { ROLES } from "@/lib/constants";
-import { branchWhere } from "@/lib/branchScope";
+import { branchWhere, staffBranchWhere } from "@/lib/branchScope";
 import { tr } from "@/lib/tr";
 import { Forbidden } from "../_components/ui";
 import TasksView, { type VTask } from "../tasks/TasksView";
@@ -20,7 +20,7 @@ export default async function RemindersPage() {
       take: 300,
     }),
     // faol filial doirasida
-    prisma.user.findMany({ where: { AND: [{ role: { notIn: [ROLES.STUDENT, ROLES.PARENT] }, isActive: true }, branchWhere(s)] }, select: { id: true, fullName: true }, orderBy: { fullName: "asc" } }),
+    prisma.user.findMany({ where: { AND: [{ role: { notIn: [ROLES.STUDENT, ROLES.PARENT] }, isActive: true }, staffBranchWhere(s)] }, select: { id: true, fullName: true }, orderBy: { fullName: "asc" } }),
     prisma.student.findMany({ where: branchWhere(s), select: { id: true, fullName: true }, orderBy: { fullName: "asc" }, take: 500 }), // faol filial doirasida
     prisma.group.findMany({ where: branchWhere(s), select: { id: true, name: true }, orderBy: { name: "asc" } }), // faol filial doirasida
   ]);

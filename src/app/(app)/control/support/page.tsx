@@ -1,7 +1,7 @@
 import { requireSession } from "@/lib/auth";
 import { prisma } from "@/lib/db";
 import { ROLES } from "@/lib/constants";
-import { branchWhere } from "@/lib/branchScope";
+import { staffBranchWhere } from "@/lib/branchScope";
 import { tr } from "@/lib/tr";
 import { PageHeader, Card, StatCard, Table, EmptyRow, Badge, Forbidden } from "../../_components/ui";
 
@@ -21,7 +21,7 @@ export default async function SupportAnalyticsPage() {
 
   // AuditLog'da branchId yo'q — faol filial xodimlari (muallif) orqali cheklaymiz
   const branchStaff = s.branchId
-    ? await prisma.user.findMany({ where: branchWhere(s), select: { id: true } })
+    ? await prisma.user.findMany({ where: staffBranchWhere(s), select: { id: true } })
     : null;
   const scope = branchStaff
     ? { createdAt: { gte: since }, actorId: { in: branchStaff.map((x) => x.id) } }

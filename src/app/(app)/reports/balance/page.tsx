@@ -2,7 +2,7 @@ import { requireSession } from "@/lib/auth";
 import { prisma } from "@/lib/db";
 import { ROLES } from "@/lib/constants";
 import { tr } from "@/lib/tr";
-import { branchWhere } from "@/lib/branchScope";
+import { staffBranchWhere } from "@/lib/branchScope";
 import { Forbidden } from "../../_components/ui";
 import BalanceView, { type VBalanceStaff } from "./BalanceView";
 
@@ -20,7 +20,7 @@ export default async function BalancePage() {
   }
 
   const users = await prisma.user.findMany({
-    where: { AND: [{ role: { in: STAFF_ROLES }, isActive: true }, branchWhere(s)] }, // faol filial doirasida
+    where: { AND: [{ role: { in: STAFF_ROLES }, isActive: true }, staffBranchWhere(s)] }, // faol filial doirasida
     orderBy: { fullName: "asc" },
     select: { id: true, fullName: true, phone: true, fiksa: true, salaries: { select: { year: true, month: true, bonus: true, penalty: true } } },
   });

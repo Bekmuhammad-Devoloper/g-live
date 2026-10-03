@@ -52,7 +52,15 @@ export async function createStaff(fd: FormData): Promise<State> {
   if (password.length < 4) return { error: tr(s.locale, { uz: "Parol kamida 4 ta belgi bo'lsin", ru: "Пароль должен быть не менее 4 символов", en: "Password must be at least 4 characters", de: "Das Passwort muss mindestens 4 Zeichen lang sein" }) };
   if (!STAFF_ROLES.includes(role as never)) return { error: tr(s.locale, { uz: "Rol tanlanmagan", ru: "Роль не выбрана", en: "Role not selected", de: "Keine Rolle ausgewählt" }) };
 
-  if (await prisma.user.findUnique({ where: { email }, select: { id: true } })) return { error: tr(s.locale, { uz: "Bu email allaqachon mavjud", ru: "Этот email уже существует", en: "This email already exists", de: "Diese E-Mail existiert bereits" }) };
+  const dup = await prisma.user.findUnique({ where: { email }, select: { id: true, branchId: true, branches: { select: { branchId: true } } } });
+  if (dup) {
+    // Boshqa filialda bor xodim — ikkinchi hisob emas, shu filialga ham biriktiriladi
+    if (!s.branchId || dup.branchId === s.branchId || dup.branches.some((b) => b.branchId === s.branchId)) return { error: tr(s.locale, { uz: "Bu email allaqachon mavjud", ru: "Этот email уже существует", en: "This email already exists", de: "Diese E-Mail existiert bereits" }) };
+    await prisma.userBranch.create({ data: { userId: dup.id, branchId: s.branchId } });
+    await writeAudit({ actorId: s.userId, action: "UPDATE", entityType: "User", entityId: dup.id, newValue: { addBranch: s.branchId }, reason: "Qo'shimcha filialga biriktirildi" });
+    revalidatePath("/settings/staff");
+    return { ok: true };
+  }
 
   const claimed = await claimSip(s.locale as Locale, null, String(fd.get("sipExtension") || ""));
   if ("error" in claimed) return { error: claimed.error };

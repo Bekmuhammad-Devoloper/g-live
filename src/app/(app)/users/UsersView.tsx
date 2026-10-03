@@ -11,6 +11,7 @@ import type { Locale } from "@/lib/constants";
 import { Icon } from "../_components/Icon";
 import { createStaff, toggleStaffActive, updateStaff, type StaffDetail } from "./actions";
 import StaffDetailModal from "./StaffDetailModal";
+import { alertDialog } from "../_components/dialogs";
 
 export interface VStaff {
   id: string; name: string; gender: string | null; students: number; groups: { id: string; name: string }[];
@@ -211,6 +212,9 @@ function StaffForm({ positions, branches, onClose, locale, edit = null }: {
   const [gender, setGender] = useState<"" | "MALE" | "FEMALE">(edit?.gender ?? "");
   const [salaryOn, setSalaryOn] = useState((edit?.fiksa ?? 0) > 0);
   const [salaryStr, setSalaryStr] = useState(edit && edit.fiksa > 0 ? groupThousands(String(edit.fiksa)) : "");
+  // Asosiy filial va xodim ishlaydigan qo'shimcha filiallar (ro'yxatlarda hammasida ko'rinadi)
+  const [branchId, setBranchId] = useState(edit?.branchId ?? "");
+  const [extraBranches, setExtraBranches] = useState<string[]>(edit?.extraBranchIds ?? []);
   const nameParts = (edit?.fullName ?? "").trim().split(/\s+/).filter(Boolean);
   const editIsm = nameParts[0] ?? "";
   const editFamiliya = nameParts.slice(1).join(" ");
@@ -235,9 +239,14 @@ function StaffForm({ positions, branches, onClose, locale, edit = null }: {
     fd.set("gender", gender);
     fd.set("fiksa", salaryOn ? (salaryStr.replace(/\s/g, "") || "0") : "0");
     if (edit) fd.set("id", edit.id);
+    fd.delete("extraBranches");
+    for (const b of extraBranches) if (b !== branchId) fd.append("extraBranches", b);
     start(async () => {
       const r = edit ? await updateStaff(fd) : await createStaff(fd);
-      if (r.ok) { onClose(); router.refresh(); }
+      if (r.ok) {
+        onClose(); router.refresh();
+        if (r.notice) void alertDialog({ tone: "default", title: tr(locale, { uz: "Xodim biriktirildi", ru: "Сотрудник прикреплён", en: "Staff member assigned", de: "Mitarbeiter zugeordnet" }), message: r.notice });
+      }
       else setError(r.error ?? tr(locale, { uz: "Xatolik", ru: "Ошибка", en: "Error", de: "Fehler" }));
     });
   };
@@ -309,8 +318,30 @@ function StaffForm({ positions, branches, onClose, locale, edit = null }: {
           {/* Tug'ilgan sana / Filial */}
           <div className="grid grid-cols-2 gap-3">
             <div><label className={lbl}>{tr(locale, { uz: "Tug'ilgan sanasi", ru: "Дата рождения", en: "Date of birth", de: "Geburtsdatum" })}</label><input name="birthDate" type="date" defaultValue={edit?.birthDateIso ?? ""} className={inp} /></div>
-            <div><label className={lbl}>{tr(locale, { uz: "Filial", ru: "Филиал", en: "Branch", de: "Filiale" })}</label><select name="branchId" defaultValue={edit?.branchId ?? ""} className={inp}><option value="">{tr(locale, { uz: "Tanlang", ru: "Выберите", en: "Select", de: "Auswählen" })}</option>{branches.map((b) => <option key={b.id} value={b.id}>{b.name}</option>)}</select></div>
+            <div><label className={lbl}>{tr(locale, { uz: "Filial", ru: "Филиал", en: "Branch", de: "Filiale" })}</label><select name="branchId" value={branchId} onChange={(e) => { setBranchId(e.target.value); setExtraBranches((x) => x.filter((b) => b !== e.target.value)); }} className={inp}><option value="">{tr(locale, { uz: "Tanlang", ru: "Выберите", en: "Select", de: "Auswählen" })}</option>{branches.map((b) => <option key={b.id} value={b.id}>{b.name}</option>)}</select></div>
           </div>
+
+          {/* Qo'shimcha filiallar — xodim bir nechta filialda ishlasa, har birining ro'yxatida ko'rinadi */}
+          {branches.length > 1 && (
+            <div className="rounded-xl border border-slate-100 bg-slate-50/60 p-3 dark:border-white/5 dark:bg-white/[0.03]">
+              <div className="mb-2 text-xs font-medium text-slate-500 dark:text-slate-400">{tr(locale, { uz: "Boshqa filiallarda ham ishlaydi", ru: "Работает также в филиалах", en: "Also works in branches", de: "Arbeitet auch in Filialen" })}</div>
+              <div className="flex flex-wrap gap-2">
+                {branches.filter((b) => b.id !== branchId).map((b) => {
+                  const on = extraBranches.includes(b.id);
+                  return (
+                    <button
+                      key={b.id}
+                      type="button"
+                      onClick={() => setExtraBranches((x) => (on ? x.filter((i) => i !== b.id) : [...x, b.id]))}
+                      className={cn("rounded-lg border px-3 py-1.5 text-xs font-medium transition", on ? "border-brand-300 bg-brand-50 text-brand-700 dark:border-brand-500/40 dark:bg-brand-500/10 dark:text-brand-300" : "border-slate-200 bg-white text-slate-600 hover:border-slate-300 dark:border-slate-700 dark:bg-slate-800/60 dark:text-slate-300")}
+                    >
+                      {on ? "✓ " : ""}{b.name}
+                    </button>
+                  );
+                })}
+              </div>
+            </div>
+          )}
 
           {/* Ish haqi chiqarish */}
           <div className="rounded-xl border border-slate-100 bg-slate-50/60 p-3 dark:border-white/5 dark:bg-white/[0.03]">

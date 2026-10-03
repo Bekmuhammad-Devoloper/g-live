@@ -3,7 +3,7 @@ import { requireSession } from "@/lib/auth";
 import { prisma } from "@/lib/db";
 import { canRead, canSeeTeamReports, MODULES } from "@/lib/rbac";
 import { ROLES, LEAD_STAGE_LABELS, label, type Locale } from "@/lib/constants";
-import { branchWhere } from "@/lib/branchScope";
+import { branchWhere, staffBranchWhere } from "@/lib/branchScope";
 import { tr } from "@/lib/tr";
 import { Forbidden, HubCard } from "../_components/ui";
 import { Icon } from "../_components/Icon";
@@ -60,7 +60,7 @@ export default async function RopDashboardPage({ searchParams }: { searchParams:
 
   const [operators, leads, todayCalls] = await Promise.all([
     // faol filial doirasida
-    prisma.user.findMany({ where: { AND: [{ role: ROLES.OPERATOR, isActive: true }, branchWhere(s)] }, select: { id: true, fullName: true } }),
+    prisma.user.findMany({ where: { AND: [{ role: ROLES.OPERATOR, isActive: true }, staffBranchWhere(s)] }, select: { id: true, fullName: true } }),
     prisma.lead.findMany({
       where: branchWhere(s), // faol filial doirasida
       orderBy: { createdAt: "desc" },

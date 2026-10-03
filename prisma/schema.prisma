@@ -37,6 +37,22 @@ model Branch {
   groups   Group[]
   marketItems MarketItem[]
   slots    BranchSlot[]
+  staff    UserBranch[]
+}
+
+// Xodimning qo'shimcha filiallari. Bitta xodim (bitta login) bir nechta filialda
+// ishlashi mumkin: asosiy filial User.branchId da, qolganlari shu yerda. Xodimlar
+// ro'yxatlari staffBranchWhere (lib/branchScope.ts) bilan filtrlanadi — ikkalasini ham ko'radi.
+model UserBranch {
+  id        String   @id @default(cuid())
+  userId    String
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  branchId  String
+  branch    Branch   @relation(fields: [branchId], references: [id], onDelete: Cascade)
+  createdAt DateTime @default(now())
+
+  @@unique([userId, branchId])
+  @@index([branchId])
 }
 
 // Filialdagi BO'SH XONA / BO'SH VAQT — filial administratori kiritadi,
@@ -111,6 +127,8 @@ model User {
 
   branchId String?
   branch   Branch? @relation(fields: [branchId], references: [id])
+  // Qo'shimcha filiallar — xodim bir nechta filialda ishlasa (asosiysi branchId)
+  branches UserBranch[]
 
   // Rolga bog'liq profillar
   studentProfile Student?

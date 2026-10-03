@@ -2,7 +2,7 @@ import { requireSession } from "@/lib/auth";
 import { prisma } from "@/lib/db";
 import { canRead, MODULES } from "@/lib/rbac";
 import { ROLES, formatMoney, type Locale } from "@/lib/constants";
-import { branchWhere } from "@/lib/branchScope";
+import { branchWhere, staffBranchWhere } from "@/lib/branchScope";
 import { tr } from "@/lib/tr";
 import { Forbidden, StatCard } from "../../_components/ui";
 import DateNav from "./DateNav";
@@ -35,7 +35,7 @@ export default async function SalesTeamPage({ searchParams }: { searchParams: Pr
 
   const [ops, leads, calls] = await Promise.all([
     // faol filial doirasida
-    prisma.user.findMany({ where: { AND: [{ role: ROLES.OPERATOR, isActive: true }, branchWhere(s)] }, orderBy: { fullName: "asc" }, select: { id: true, fullName: true, fiksa: true, position: true } }),
+    prisma.user.findMany({ where: { AND: [{ role: ROLES.OPERATOR, isActive: true }, staffBranchWhere(s)] }, orderBy: { fullName: "asc" }, select: { id: true, fullName: true, fiksa: true, position: true } }),
     prisma.lead.findMany({ where: rangeLead, select: { managerId: true, stage: true } }),
     prisma.call.findMany({ where: rangeCall, select: { operatorId: true, duration: true, startedAt: true, leadId: true } }),
   ]);

@@ -1,7 +1,7 @@
 import { requireSession } from "@/lib/auth";
 import { prisma } from "@/lib/db";
 import { ROLES } from "@/lib/constants";
-import { branchWhere } from "@/lib/branchScope";
+import { staffBranchWhere } from "@/lib/branchScope";
 import { tr } from "@/lib/tr";
 import { PageHeader, Card, StatCard, Table, EmptyRow, Forbidden } from "../../_components/ui";
 
@@ -17,7 +17,7 @@ export default async function FeedbackPage() {
 
   // Feedback'da branchId yo'q — faol filial o'qituvchilari orqali cheklaymiz
   const branchTeachers = s.branchId
-    ? await prisma.user.findMany({ where: { AND: [{ role: ROLES.TEACHER }, branchWhere(s)] }, select: { id: true } })
+    ? await prisma.user.findMany({ where: { AND: [{ role: ROLES.TEACHER }, staffBranchWhere(s)] }, select: { id: true } })
     : null;
   const scope = branchTeachers ? { teacherId: { in: branchTeachers.map((x) => x.id) } } : {};
 
