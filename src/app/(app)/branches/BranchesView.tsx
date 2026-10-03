@@ -10,9 +10,9 @@ import { tr } from "@/lib/tr";
 import type { Locale } from "@/lib/constants";
 import { Icon } from "../_components/Icon";
 import MapPicker from "./MapPicker";
-import { saveBranch, deleteBranch, setBranchActive, forceDeleteBranch, branchPurgeSummary, unassignedCounts, assignUnassignedToBranch, type PurgeSummary, type UnassignedCounts } from "./actions";
+import { saveBranch, deleteBranch, setBranchActive, setBranchApplyVisible, forceDeleteBranch, branchPurgeSummary, unassignedCounts, assignUnassignedToBranch, type PurgeSummary, type UnassignedCounts } from "./actions";
 
-export interface VBranch { id: string; name: string; address: string; phone: string; lat: number | null; lng: number | null; radius: number; imageUrl: string | null; staff: number; groups: number; isActive: boolean }
+export interface VBranch { id: string; name: string; address: string; phone: string; lat: number | null; lng: number | null; radius: number; imageUrl: string | null; staff: number; groups: number; isActive: boolean; /** ochiq ariza formasida ko'rinadi */ showInApply: boolean }
 
 export default function BranchesView({ branches, canManage, canPurge = false, locale }: { branches: VBranch[]; canManage: boolean; canPurge?: boolean; locale: Locale }) {
   const router = useRouter();
@@ -42,6 +42,7 @@ export default function BranchesView({ branches, canManage, canPurge = false, lo
   };
   // Nofaol filial: ariza formasi va tanlovlarda chiqmaydi, ma'lumotlari saqlanadi
   const toggleActive = (b: VBranch) => start(async () => { await setBranchActive(b.id, !b.isActive); router.refresh(); });
+  const toggleApply = (b: VBranch) => start(async () => { await setBranchApplyVisible(b.id, !b.showInApply); router.refresh(); });
 
   const exportCsvNow = () => exportRows(
     tr(locale, { uz: "filiallar", ru: "филиалы", en: "branches", de: "Filialen" }),
@@ -97,13 +98,13 @@ export default function BranchesView({ branches, canManage, canPurge = false, lo
               <tr>
                 <th className="w-12 px-4 py-3">№</th><th className="px-4 py-3">{tr(locale, { uz: "Nomi", ru: "Название", en: "Name", de: "Name" })}</th><th className="px-4 py-3">{tr(locale, { uz: "Manzil", ru: "Адрес", en: "Address", de: "Adresse" })}</th>
                 <th className="px-4 py-3 text-center">{tr(locale, { uz: "Radius (m)", ru: "Радиус (м)", en: "Radius (m)", de: "Radius (m)" })}</th><th className="px-4 py-3">{tr(locale, { uz: "Joylashuv", ru: "Локация", en: "Location", de: "Standort" })}</th>
-                <th className="px-4 py-3 text-center">{tr(locale, { uz: "Xodimlar", ru: "Сотрудники", en: "Staff", de: "Mitarbeiter" })}</th><th className="px-4 py-3 text-center">{tr(locale, { uz: "Guruhlar", ru: "Группы", en: "Groups", de: "Gruppen" })}</th>
+                <th className="px-4 py-3 text-center">{tr(locale, { uz: "Xodimlar", ru: "Сотрудники", en: "Staff", de: "Mitarbeiter" })}</th><th className="px-4 py-3 text-center">{tr(locale, { uz: "Guruhlar", ru: "Группы", en: "Groups", de: "Gruppen" })}</th><th className="px-4 py-3 text-center" title={tr(locale, { uz: "Ochiq ariza formasida filial tanlovida ko'rinadimi", ru: "Показывать филиал в публичной форме заявки", en: "Show the branch in the public application form", de: "Filiale im öffentlichen Antragsformular anzeigen" })}>{tr(locale, { uz: "Arizada", ru: "В заявке", en: "In form", de: "Im Antrag" })}</th>
                 {canManage && <th className="px-4 py-3 text-right">{tr(locale, { uz: "Amallar", ru: "Действия", en: "Actions", de: "Aktionen" })}</th>}
               </tr>
             </thead>
             <tbody className="divide-y divide-slate-100 dark:divide-slate-800">
               {filtered.length === 0 ? (
-                <tr><td colSpan={8} className="px-4 py-14 text-center text-slate-400">{tr(locale, { uz: "Ma'lumotlar topilmadi", ru: "Данные не найдены", en: "No data found", de: "Keine Daten gefunden" })}</td></tr>
+                <tr><td colSpan={9} className="px-4 py-14 text-center text-slate-400">{tr(locale, { uz: "Ma'lumotlar topilmadi", ru: "Данные не найдены", en: "No data found", de: "Keine Daten gefunden" })}</td></tr>
               ) : filtered.map((b, i) => (
                 <tr key={b.id} className={cn("hover:bg-slate-50 dark:hover:bg-slate-800/50", !b.isActive && "opacity-60")}>
                   <td className="px-4 py-3 text-slate-400">{i + 1}</td>
@@ -123,11 +124,29 @@ export default function BranchesView({ branches, canManage, canPurge = false, lo
                   <td className="px-4 py-3 text-xs text-slate-400">{b.lat != null && b.lng != null ? `${b.lat.toFixed(4)}, ${b.lng.toFixed(4)}` : "—"}</td>
                   <td className="px-4 py-3 text-center text-slate-500">{b.staff}</td>
                   <td className="px-4 py-3 text-center text-slate-500">{b.groups}</td>
+                  {/* Ariza formasida ko'rinishi — faollikdan alohida: filial ichkarida ishlayveradi, lekin arizada chiqmasligi mumkin */}
+                  <td className="px-4 py-3 text-center">
+                    <button
+                      type="button"
+                      role="switch"
+                      aria-checked={b.showInApply}
+                      onClick={() => canManage && toggleApply(b)}
+                      disabled={!canManage || pending || !b.isActive}
+                      title={!b.isActive
+                        ? tr(locale, { uz: "Nofaol filial arizada chiqmaydi", ru: "Неактивный филиал не показывается в заявке", en: "An inactive branch is not shown in the form", de: "Eine inaktive Filiale wird im Antrag nicht angezeigt" })
+                        : b.showInApply
+                          ? tr(locale, { uz: "Arizada ko'rinadi — yashirish", ru: "Показывается в заявке — скрыть", en: "Shown in the form — hide", de: "Im Antrag sichtbar — ausblenden" })
+                          : tr(locale, { uz: "Arizada yashirilgan — ko'rsatish", ru: "Скрыт в заявке — показать", en: "Hidden in the form — show", de: "Im Antrag ausgeblendet — anzeigen" })}
+                      className={cn("relative inline-flex h-5 w-9 shrink-0 rounded-full transition disabled:cursor-default", b.showInApply && b.isActive ? "bg-emerald-500" : "bg-slate-300 dark:bg-slate-600", !canManage && "opacity-70")}
+                    >
+                      <span className={cn("absolute top-0.5 h-4 w-4 rounded-full bg-white shadow transition-all", b.showInApply && b.isActive ? "left-[18px]" : "left-0.5")} />
+                    </button>
+                  </td>
                   {canManage && (
                     <td className="px-4 py-3">
                       <div className="flex items-center justify-end gap-2 text-slate-400">
                         <button onClick={() => { setEditing(b); setOpen(true); }} className="transition hover:text-brand-600" title={tr(locale, { uz: "Tahrirlash", ru: "Редактировать", en: "Edit", de: "Bearbeiten" })}><Icon name="pencil" className="h-4 w-4" /></button>
-                        <button onClick={() => toggleActive(b)} disabled={pending} className="transition hover:text-amber-600" title={b.isActive ? tr(locale, { uz: "Nofaol qilish (arizada chiqmaydi)", ru: "Сделать неактивным", en: "Deactivate", de: "Deaktivieren" }) : tr(locale, { uz: "Faollashtirish", ru: "Активировать", en: "Activate", de: "Aktivieren" })}><Icon name={b.isActive ? "eyeOff" : "eye"} className="h-4 w-4" /></button>
+                        <button onClick={() => toggleActive(b)} disabled={pending} className="transition hover:text-amber-600" title={b.isActive ? tr(locale, { uz: "Nofaol qilish (arizada va tanlovlarda chiqmaydi)", ru: "Сделать неактивным", en: "Deactivate", de: "Deaktivieren" }) : tr(locale, { uz: "Faollashtirish", ru: "Активировать", en: "Activate", de: "Aktivieren" })}><Icon name={b.isActive ? "eyeOff" : "eye"} className="h-4 w-4" /></button>
                         <button onClick={() => del(b.id)} className="transition hover:text-rose-600" title={tr(locale, { uz: "O'chirish", ru: "Удалить", en: "Delete", de: "Löschen" })}><Icon name="trash" className="h-4 w-4" /></button>
                       </div>
                     </td>

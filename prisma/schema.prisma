@@ -28,6 +28,7 @@ model Branch {
   radius    Int      @default(100) // geo-radius (metr) — davomat uchun
   imageUrl  String? // filial rasmi (data URL — galereyadan yuklangan)
   isActive  Boolean  @default(true)
+  showInApply Boolean @default(true) // ochiq ariza formasida (/apply) filial tanlovida chiqadimi
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 

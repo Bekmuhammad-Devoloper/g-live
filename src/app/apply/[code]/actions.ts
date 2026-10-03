@@ -51,7 +51,7 @@ export async function submitApplication(
   // Oflayn — filial majburiy va faol bo'lishi shart
   let branchId: string | null = link.vacancy.branchId ?? null;
   if (format === "OFFLINE") {
-    const b = extra.branchId ? await prisma.branch.findFirst({ where: { id: extra.branchId, isActive: true }, select: { id: true } }) : null;
+    const b = extra.branchId ? await prisma.branch.findFirst({ where: { id: extra.branchId, isActive: true, showInApply: true }, select: { id: true } }) : null;
     if (!b) return { error: "Filialni tanlang" };
     branchId = b.id;
   }

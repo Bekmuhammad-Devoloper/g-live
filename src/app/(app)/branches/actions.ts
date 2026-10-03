@@ -57,12 +57,22 @@ export async function deleteBranch(id: string): Promise<{ ok?: boolean; error?: 
   return { ok: true };
 }
 
-/** Filialni nofaol/faol qilish — nofaol filial ariza formasida, tanlovlarda chiqmaydi, ma'lumotlar saqlanadi */
+/** Filialni nofaol/faol qilish — nofaol filial ariza formasida ham, tanlovlarda ham chiqmaydi, ma'lumotlar saqlanadi */
 export async function setBranchActive(id: string, active: boolean): Promise<{ ok?: boolean; error?: string }> {
   const s = await requireSession();
   if (!can(s.role)) return { error: tr(s.locale, { uz: "Ruxsat yo'q", ru: "Нет доступа", en: "No permission", de: "Keine Berechtigung" }) };
   await prisma.branch.update({ where: { id }, data: { isActive: active } });
   await writeAudit({ actorId: s.userId, action: "UPDATE", entityType: "Branch", entityId: id, newValue: { isActive: active } });
+  revalidatePath("/branches");
+  return { ok: true };
+}
+
+/** Ochiq ariza formasida (/apply) filial tanlovida ko'rinsinmi — faollikdan alohida boshqariladi */
+export async function setBranchApplyVisible(id: string, visible: boolean): Promise<{ ok?: boolean; error?: string }> {
+  const s = await requireSession();
+  if (!can(s.role)) return { error: tr(s.locale, { uz: "Ruxsat yo'q", ru: "Нет доступа", en: "No permission", de: "Keine Berechtigung" }) };
+  await prisma.branch.update({ where: { id }, data: { showInApply: visible } });
+  await writeAudit({ actorId: s.userId, action: "UPDATE", entityType: "Branch", entityId: id, newValue: { showInApply: visible } });
   revalidatePath("/branches");
   return { ok: true };
 }

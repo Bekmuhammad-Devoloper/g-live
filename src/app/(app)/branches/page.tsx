@@ -14,12 +14,13 @@ export default async function BranchesPage() {
 
   const branches = await prisma.branch.findMany({
     orderBy: { createdAt: "asc" },
-    include: { _count: { select: { users: true, groups: true } } },
+    include: { _count: { select: { users: true, groups: true, staff: true } } },
   });
   const rows: VBranch[] = branches.map((b) => ({
     id: b.id, name: b.name, address: b.address ?? "", phone: b.phone ?? "",
     lat: b.lat, lng: b.lng, radius: b.radius, imageUrl: b.imageUrl ?? null,
-    staff: b._count.users, groups: b._count.groups, isActive: b.isActive,
+    // xodimlar: asosiy filiali shu + qo'shimcha filial sifatida biriktirilganlar
+    staff: b._count.users + b._count.staff, groups: b._count.groups, isActive: b.isActive, showInApply: b.showInApply,
   }));
 
   // To'liq o'chirish (o'quvchi/guruhlari bilan) — faqat direktor

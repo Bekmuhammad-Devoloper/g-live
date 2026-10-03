@@ -49,7 +49,8 @@ export default async function ApplyPage({ params, searchParams }: {
   // + Android ilovasi — pastdagi "Ilovani yuklab oling" kartasi (serverdagi eng oxirgi APK)
   const [allLevels, branches, app] = await Promise.all([
     getLevelCodes(),
-    prisma.branch.findMany({ where: { isActive: true }, select: { id: true, name: true, address: true, imageUrl: true }, orderBy: { name: "asc" } }),
+    // Faqat faol va arizada ko'rsatishga ruxsat berilgan filiallar (Filiallar bo'limidagi "Arizada" tugmasi)
+    prisma.branch.findMany({ where: { isActive: true, showInApply: true }, select: { id: true, name: true, address: true, imageUrl: true }, orderBy: { name: "asc" } }),
     getAppRelease(),
   ]);
 
