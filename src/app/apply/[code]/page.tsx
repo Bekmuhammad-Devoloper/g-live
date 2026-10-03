@@ -55,7 +55,8 @@ export default async function ApplyPage({ params, searchParams }: {
   ]);
 
   const APPLY_LEVELS = ["A1", "A2", "B1", "B2"];
-  const levelCodes = allLevels.filter((c) => APPLY_LEVELS.includes(c.toUpperCase()));
+  // Tartib doim A1 → B2 (katalogdagi sortOrder o'zgartirilgan bo'lsa ham)
+  const levelCodes = APPLY_LEVELS.filter((c) => allLevels.some((l) => l.toUpperCase() === c));
 
   const v = link?.vacancy ?? null;
   // Chiplar: daraja (graduation) va narx (wallet) — ikonkali
