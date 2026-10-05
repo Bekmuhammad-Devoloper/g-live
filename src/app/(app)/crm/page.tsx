@@ -215,7 +215,6 @@ export default async function CrmPage() {
       archivedStudents={archivedStudents}
       branchMode={branchMode}
       showOnlineCol
-      // ROP: Ishda, Daraja testi va Qabul qilindi ko'rinmaydi (test bosqichidagilar Yangida)
       // ROP: "Ishda" va "Qabul qilindi" yashirin; "Daraja testi" ustuni ko'rinadi
       hiddenCols={s.role === ROLES.ROP ? ["work", "won"] : []}
       // Bo'sh vaqtlarni kim tahrirlaydi: rahbariyat — hammasini, administrator — o'z filialini
