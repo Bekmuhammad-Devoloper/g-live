@@ -60,8 +60,10 @@ export default async function CrmPage() {
     listKanbanColumns(),  // Oddiy nomli ustunlar
     branchMode
       ? prisma.branch.findMany({
-          // Administrator — faqat o'z filiali ustuni; rahbariyat filial tanlagan bo'lsa — faqat o'sha ustun
-          where: { isActive: true, ...(s.branchId && (s.role === ROLES.ADMIN || branchMode === "head") ? { id: s.branchId } : {}) },
+          // Administrator — faqat o'z filiali ustuni. Rahbariyat filial tanlagan bo'lsa ham
+          // hamma filial ustuni turadi: lid boshqa filialga yo'naltirilishi mumkin (u yerga
+          // tashlangan lid o'sha filialniki bo'lib, shu filial ko'rinishidan chiqadi)
+          where: { isActive: true, ...(s.role === ROLES.ADMIN && s.branchId ? { id: s.branchId } : {}) },
           select: { id: true, name: true, slots: { select: { id: true, branchId: true, room: true, days: true, startTime: true, endTime: true, note: true, capacity: true }, orderBy: [{ room: "asc" }, { startTime: "asc" }] } },
           orderBy: { name: "asc" },
         })
