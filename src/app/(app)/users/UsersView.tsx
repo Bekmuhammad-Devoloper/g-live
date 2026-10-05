@@ -9,9 +9,9 @@ import { exportRows } from "@/lib/export";
 import { tr } from "@/lib/tr";
 import type { Locale } from "@/lib/constants";
 import { Icon } from "../_components/Icon";
-import { createStaff, toggleStaffActive, updateStaff, type StaffDetail } from "./actions";
+import { createStaff, deleteStaffPermanent, toggleStaffActive, updateStaff, type StaffDetail } from "./actions";
 import StaffDetailModal from "./StaffDetailModal";
-import { alertDialog } from "../_components/dialogs";
+import { alertDialog, confirmDelete } from "../_components/dialogs";
 
 export interface VStaff {
   id: string; name: string; gender: string | null; students: number; groups: { id: string; name: string }[];
@@ -21,8 +21,11 @@ interface Opt { id: string; name: string }
 
 export interface PosOpt { value: string; label: string; department: string }
 
-export default function UsersView({ staff, positions, branches, canManage, locale }: {
-  staff: VStaff[]; positions: PosOpt[]; branches: Opt[]; canManage: boolean; locale: Locale;
+export default function UsersView({ staff, positions, branches, canManage, canDelete = false, locale }: {
+  staff: VStaff[]; positions: PosOpt[]; branches: Opt[]; canManage: boolean;
+  /** Xodimni bazadan butunlay o'chirish — faqat direktor */
+  canDelete?: boolean;
+  locale: Locale;
 }) {
   const router = useRouter();
   const [pending, start] = useTransition();
@@ -170,7 +173,7 @@ export default function UsersView({ staff, positions, branches, canManage, local
       </div>
 
       {addOpen && canManage && <StaffForm positions={positions} branches={branches} onClose={() => setAddOpen(false)} locale={locale} />}
-      {editing && canManage && <StaffForm positions={positions} branches={branches} edit={editing} onClose={() => setEditing(null)} locale={locale} />}
+      {editing && canManage && <StaffForm positions={positions} branches={branches} edit={editing} canDelete={canDelete} onClose={() => setEditing(null)} locale={locale} />}
       {detailId && canManage && (
         <StaffDetailModal
           userId={detailId}
@@ -187,8 +190,10 @@ export default function UsersView({ staff, positions, branches, canManage, local
 const localPhone = (p: string | null) => (p ?? "").replace(/^\+?998\s?/, "");
 const groupThousands = (s: string) => s.replace(/\D/g, "").replace(/\B(?=(\d{3})+(?!\d))/g, " ");
 
-function StaffForm({ positions, branches, onClose, locale, edit = null }: {
+function StaffForm({ positions, branches, onClose, locale, edit = null, canDelete = false }: {
   positions: PosOpt[]; branches: Opt[]; onClose: () => void; locale: Locale;
+  /** Tahrirlashda "O'chirish" tugmasi (faqat direktor) */
+  canDelete?: boolean;
   /** Berilsa — tahrirlash rejimi (maydonlar to'ldirilgan; parol o'zgartirilmasa eskisi qoladi) */
   edit?: StaffDetail | null;
 }) {
@@ -232,6 +237,27 @@ function StaffForm({ positions, branches, onClose, locale, edit = null }: {
   const inp = "h-10 w-full rounded-lg border border-slate-200 bg-white px-3 text-sm text-slate-800 outline-none transition focus:border-brand-400 disabled:bg-slate-50 dark:border-slate-700 dark:bg-slate-800/60 dark:text-slate-100 dark:disabled:bg-slate-800/30";
   const lbl = "mb-1 block text-xs font-medium text-slate-500 dark:text-slate-400";
   const req = <span className="text-rose-500">*</span>;
+
+  // Butunlay o'chirish — tasdiq oynasi bilan; bog'liq yozuvlar uziladi, o'chmaydi
+  const remove = async () => {
+    if (!edit) return;
+    const ok = await confirmDelete({
+      title: tr(locale, { uz: "Xodimni butunlay o'chirish", ru: "Удалить сотрудника навсегда", en: "Delete staff member permanently", de: "Mitarbeiter endgültig löschen" }),
+      message: tr(locale, {
+        uz: `${edit.fullName} tizimdan o'chiriladi: logini ishlamay qoladi, guruhlari ustozsiz, lidlari menejersiz qoladi (yozuvlarning o'zi saqlanadi). Bu amalni qaytarib bo'lmaydi.`,
+        ru: `${edit.fullName} будет удалён из системы: логин перестанет работать, группы останутся без преподавателя, лиды — без менеджера (сами записи сохраняются). Это действие необратимо.`,
+        en: `${edit.fullName} will be removed from the system: the login stops working, their groups lose the teacher, leads lose the manager (records themselves are kept). This cannot be undone.`,
+        de: `${edit.fullName} wird aus dem System entfernt: Login funktioniert nicht mehr, Gruppen verlieren die Lehrkraft, Leads den Manager (Datensätze bleiben). Nicht rückgängig zu machen.`,
+      }),
+      confirmLabel: tr(locale, { uz: "Ha, butunlay o'chirish", ru: "Да, удалить навсегда", en: "Yes, delete permanently", de: "Ja, endgültig löschen" }),
+    });
+    if (!ok) return;
+    setError(null);
+    start(async () => {
+      const r = await deleteStaffPermanent(edit.id);
+      if (r.ok) { onClose(); router.refresh(); } else setError(r.error ?? tr(locale, { uz: "Xatolik", ru: "Ошибка", en: "Error", de: "Fehler" }));
+    });
+  };
 
   const submit = () => {
     setError(null);
@@ -391,6 +417,11 @@ function StaffForm({ positions, branches, onClose, locale, edit = null }: {
         </div>
 
         <div className="flex shrink-0 gap-2 border-t border-slate-100 px-5 py-4 dark:border-white/10">
+          {edit && canDelete && (
+            <button type="button" onClick={remove} disabled={pending} title={tr(locale, { uz: "Xodimni butunlay o'chirish", ru: "Удалить навсегда", en: "Delete permanently", de: "Endgültig löschen" })} className="grid h-[42px] w-[42px] shrink-0 place-items-center rounded-xl border border-rose-200 text-rose-600 transition hover:bg-rose-50 disabled:opacity-50 dark:border-rose-500/30 dark:hover:bg-rose-500/10">
+              <Icon name="trash" className="h-4 w-4" />
+            </button>
+          )}
           <button type="button" onClick={onClose} className="flex-1 rounded-xl border border-slate-200 py-2.5 text-sm font-semibold text-slate-600 hover:bg-slate-50 dark:border-white/10 dark:text-slate-300">{tr(locale, { uz: "Orqaga", ru: "Назад", en: "Back", de: "Zurück" })}</button>
           <button type="button" onClick={submit} disabled={pending} className="flex-[1.4] rounded-xl bg-brand-600 py-2.5 text-sm font-semibold text-white hover:bg-brand-700 disabled:opacity-60">{pending ? tr(locale, { uz: "Saqlanmoqda...", ru: "Сохранение...", en: "Saving...", de: "Wird gespeichert..." }) : tr(locale, { uz: "Saqlash", ru: "Сохранить", en: "Save", de: "Speichern" })}</button>
         </div>

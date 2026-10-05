@@ -65,5 +65,5 @@ export default async function UsersPage() {
 
   const branches = await prisma.branch.findMany({ where: { isActive: true }, select: { id: true, name: true }, orderBy: { name: "asc" } });
 
-  return <UsersView staff={staff} positions={positions} branches={branches} canManage={CAN_MANAGE.includes(s.role as never)} locale={s.locale} />;
+  return <UsersView staff={staff} positions={positions} branches={branches} canManage={CAN_MANAGE.includes(s.role as never)} canDelete={s.role === ROLES.DIRECTOR} locale={s.locale} />;
 }

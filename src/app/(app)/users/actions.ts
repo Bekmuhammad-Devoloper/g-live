@@ -253,6 +253,48 @@ export async function updateStaff(fd: FormData): Promise<StaffResult> {
   return { ok: true };
 }
 
+/**
+ * Xodimni bazadan butunlay o'chirish — faqat direktor. Qaytarilmaydi.
+ * Xodimning izi qolgan yozuvlar o'chmaydi, faqat undan uziladi: guruhlar ustozsiz,
+ * lidlar menejersiz qoladi, to'lov/xarajat/audit yozuvlarida muallif bo'shaydi.
+ * Shaxsiy yozuvlar (bildirishnoma, qurilma, oylik, qo'shimcha filial, ish jadvali,
+ * o'qituvchi davomati) o'chiriladi.
+ */
+export async function deleteStaffPermanent(id: string): Promise<{ ok?: boolean; error?: string }> {
+  const s = await requireSession();
+  if (s.role !== ROLES.DIRECTOR) return { error: tr(s.locale, { uz: "Xodimni faqat direktor o'chira oladi", ru: "Удалить сотрудника может только директор", en: "Only the director can delete a staff member", de: "Nur der Direktor kann Mitarbeiter löschen" }) };
+  if (id === s.userId) return { error: tr(s.locale, { uz: "O'zingizni o'chira olmaysiz", ru: "Вы не можете удалить себя", en: "You cannot delete yourself", de: "Sie können sich nicht selbst löschen" }) };
+  const u = await prisma.user.findUnique({ where: { id }, select: { id: true, fullName: true, email: true, role: true } });
+  if (!u) return { error: tr(s.locale, { uz: "Xodim topilmadi", ru: "Сотрудник не найден", en: "Staff member not found", de: "Mitarbeiter nicht gefunden" }) };
+  if (u.role === ROLES.DIRECTOR) return { error: tr(s.locale, { uz: "Direktor hisobini o'chirib bo'lmaydi", ru: "Аккаунт директора удалить нельзя", en: "A director account cannot be deleted", de: "Ein Direktorkonto kann nicht gelöscht werden" }) };
+
+  await prisma.$transaction([
+    prisma.group.updateMany({ where: { teacherId: id }, data: { teacherId: null } }),
+    prisma.chatMessage.updateMany({ where: { teacherId: id }, data: { teacherId: null } }),
+    prisma.chatMessage.updateMany({ where: { authorId: id }, data: { authorId: null } }),
+    prisma.lead.updateMany({ where: { managerId: id }, data: { managerId: null } }),
+    prisma.leadActivity.updateMany({ where: { authorId: id }, data: { authorId: null } }),
+    prisma.payment.updateMany({ where: { authorId: id }, data: { authorId: null } }),
+    prisma.task.updateMany({ where: { assigneeId: id }, data: { assigneeId: null } }),
+    prisma.task.updateMany({ where: { authorId: id }, data: { authorId: null } }),
+    prisma.call.updateMany({ where: { operatorId: id }, data: { operatorId: null } }),
+    prisma.expense.updateMany({ where: { authorId: id }, data: { authorId: null } }),
+    prisma.submission.updateMany({ where: { gradedById: id }, data: { gradedById: null } }),
+    prisma.auditLog.updateMany({ where: { actorId: id }, data: { actorId: null } }),
+    prisma.student.updateMany({ where: { userId: id }, data: { userId: null } }),
+    prisma.parent.updateMany({ where: { userId: id }, data: { userId: null } }),
+    prisma.teacherSchedule.deleteMany({ where: { teacherId: id } }),
+    prisma.teacherAttendance.deleteMany({ where: { teacherId: id } }),
+    // bildirishnoma, qurilma, oylik va qo'shimcha filial yozuvlari kaskad bilan o'chadi
+    prisma.user.delete({ where: { id } }),
+  ]);
+  await writeAudit({ actorId: s.userId, action: "DELETE", entityType: "User", entityId: id, oldValue: { fullName: u.fullName, email: u.email, role: u.role }, reason: "Xodim bazadan o'chirildi" });
+  revalidatePath("/users");
+  revalidatePath("/settings/staff");
+  revalidatePath("/archive");
+  return { ok: true };
+}
+
 // Xodim parolini yangilash (hash + ochiq nusxa). Rahbariyat.
 export async function setUserPassword(userId: string, newPassword: string): Promise<{ ok: boolean; error?: string }> {
   const s = await requireSession();
