@@ -70,7 +70,7 @@ export async function submitLevelTest(
   const existing = await prisma.lead.findFirst({
     where: { OR: [{ phone: tel }, { phone: { contains: digits } }] },
     orderBy: { createdAt: "desc" },
-    select: { id: true, stage: true },
+    select: { id: true, stage: true, vacancyLinkId: true },
   });
 
   // Natija lidning o'zida ham saqlanadi — CRM kartasida darhol ko'rinsin
@@ -88,7 +88,8 @@ export async function submitLevelTest(
       data: {
         ...(row ? { level: row.code } : {}),
         ...(ageNum ? { age: ageNum } : {}),
-        ...(MOVABLE_STAGES.includes(existing.stage) ? { stage: "TEST" } : {}),
+        // Arizadan kelgan lid o'z ustunida (Yangi / Onlayn) qoladi — natija faqat biriktiriladi
+        ...(MOVABLE_STAGES.includes(existing.stage) && !existing.vacancyLinkId ? { stage: "TEST" } : {}),
         ...testFields,
         activities: { create: { type: "test", result: summary } },
       },

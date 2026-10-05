@@ -132,18 +132,6 @@ export default function ApplyForm({ code, preview, questions = [], levels, branc
           </p>
         </div>
 
-        {/* Kutish vaqtida — darajani aniqlash testi */}
-        <a
-          href="/daraja-testi"
-          className="mt-3 flex items-center gap-3 rounded-3xl border border-white/60 bg-gradient-to-r from-brand-600 to-cyan-500 p-4 text-white shadow-[0_16px_36px_-14px_rgba(65,72,239,0.6)] transition active:scale-[0.98]"
-        >
-          <span className="flex h-11 w-11 shrink-0 items-center justify-center rounded-2xl bg-white/20"><Icon name="clipboard" className="h-6 w-6" strokeWidth={1.8} /></span>
-          <span className="min-w-0 flex-1">
-            <span className="block text-[15px] font-bold">Darajangizni hozir tekshiring</span>
-            <span className="block text-[12.5px] text-white/85">25 ta savol, ~10 daqiqa — natija darhol</span>
-          </span>
-          <Icon name="arrow" className="h-5 w-5 shrink-0" strokeWidth={2.2} />
-        </a>
       </div>
     );
   }
