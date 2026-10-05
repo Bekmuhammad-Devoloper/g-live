@@ -1,6 +1,8 @@
 import type { Metadata, Viewport } from "next";
 import "./globals.css";
 import NativeShell from "./NativeShell";
+import DeployWatcher from "./DeployWatcher";
+import { getBuildId } from "@/lib/buildId";
 
 // Eslatma: sidebar "handwriting" shrifti CSS fallback (Segoe Script / cursive)
 // orqali beriladi — globals.css `.font-hand`. Bu ilovani tashqi Google Fonts
@@ -51,6 +53,8 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
         {/* Android ilovasi ichida ishlaydigan qatlam (brauzerda jim turadi):
             ochilish ekrani, holat qatori, "orqaga" tugmasi, tashqi havolalar */}
         <NativeShell />
+        {/* Deploy'dan keyin eskirgan sahifani yangilaydi — tugmalar jim qolib ketmasin */}
+        <DeployWatcher build={getBuildId()} />
         {children}
       </body>
     </html>

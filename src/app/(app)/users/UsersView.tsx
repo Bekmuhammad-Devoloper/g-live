@@ -242,7 +242,15 @@ function StaffForm({ positions, branches, onClose, locale, edit = null }: {
     fd.delete("extraBranches");
     for (const b of extraBranches) if (b !== branchId) fd.append("extraBranches", b);
     start(async () => {
-      const r = edit ? await updateStaff(fd) : await createStaff(fd);
+      let r: Awaited<ReturnType<typeof createStaff>>;
+      try {
+        r = edit ? await updateStaff(fd) : await createStaff(fd);
+      } catch {
+        // Deploy'dan keyin eskirgan sahifa — action topilmaydi; yangilash kerak
+        setError(tr(locale, { uz: "Sahifa eskirgan — yangilanmoqda…", ru: "Страница устарела — обновляется…", en: "The page is out of date — reloading…", de: "Seite veraltet — wird neu geladen…" }));
+        setTimeout(() => window.location.reload(), 800);
+        return;
+      }
       if (r.ok) {
         onClose(); router.refresh();
         if (r.notice) void alertDialog({ tone: "default", title: tr(locale, { uz: "Xodim biriktirildi", ru: "Сотрудник прикреплён", en: "Staff member assigned", de: "Mitarbeiter zugeordnet" }), message: r.notice });
