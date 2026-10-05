@@ -27,7 +27,8 @@ export default async function CrmPage() {
     s.role === ROLES.ROP || s.role === ROLES.ADMIN ? "sales"
     : s.role === ROLES.DIRECTOR || s.role === ROLES.DEPUTY_DIRECTOR ? "head"
     : null;
-  const allBranches = branchMode !== null && s.role !== ROLES.ADMIN && !(branchMode === "head" && s.branchId);
+  // Operator (sotuv) ham hamma filialning lidlari bilan ishlaydi — filial ustunlarisiz, oddiy doska
+  const allBranches = s.role === ROLES.OPERATOR || (branchMode !== null && s.role !== ROLES.ADMIN && !(branchMode === "head" && s.branchId));
   // Filial administratori onlayn lidlarni ko'rmaydi (ular ROP'niki) — faqat o'z filialiga
   // tashlangan ("br:<id>" belgili) onlayn lid ko'rinadi
   const isAdmin = s.role === ROLES.ADMIN;
