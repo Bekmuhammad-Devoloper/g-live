@@ -45,7 +45,7 @@ export default async function CrmPage() {
         id: true, fullName: true, phone: true, email: true, telegram: true, studyFormat: true, source: true, stage: true,
         interestCourse: true, age: true, level: true, budget: true, note: true,
         managerId: true, studentId: true, groupId: true, enrollEditCount: true, kanbanColumnId: true, createdAt: true, branchId: true, branchSlotId: true, archivedAt: true, archiveKind: true,
-        testSet: true, testLevel: true, testPct: true, testPassed: true,
+        testSet: true, testLevel: true, testPct: true, testPassed: true, lossReason: true,
         manager: { select: { fullName: true } },
         branch: { select: { name: true } },
         group: { select: { name: true } },
@@ -70,6 +70,18 @@ export default async function CrmPage() {
     prisma.leadActivity.groupBy({ by: ["leadId"], _max: { createdAt: true } }),
   ]);
   const lastActivityAt = new Map(lastActs.map((a) => [a.leadId, a._max.createdAt]));
+
+  // Yo'qotilgan lidlar: kim va qachon "Yo'qotilgan"ga o'tkazgan — oxirgi bosqich yozuvi
+  const lostIds = leads.filter((l) => l.stage === "LOST").map((l) => l.id);
+  const lostActs = lostIds.length
+    ? await prisma.leadActivity.findMany({
+        where: { leadId: { in: lostIds }, type: "stage_change", result: { startsWith: "Bosqich: LOST" } },
+        orderBy: { createdAt: "desc" },
+        select: { leadId: true, createdAt: true, author: { select: { fullName: true } } },
+      })
+    : [];
+  const lostInfo = new Map<string, { by: string | null; at: string }>();
+  for (const a of lostActs) if (!lostInfo.has(a.leadId)) lostInfo.set(a.leadId, { by: a.author?.fullName ?? null, at: a.createdAt.toISOString() });
 
   // Sig'im kartada yozilmagan bo'lsa (eski yozuvlar) — Xonalar bo'limidagi xona sig'imi (nom bo'yicha)
   const roomCaps = branchRows.length
@@ -132,6 +144,9 @@ export default async function CrmPage() {
     kanbanColumnId: l.kanbanColumnId,
     activityCount: l._count.activities,
     lastActivity: lastActivityAt.get(l.id)?.toISOString() ?? null,
+    lostBy: lostInfo.get(l.id)?.by ?? null,
+    lostAt: lostInfo.get(l.id)?.at ?? null,
+    lossReason: l.lossReason ?? null,
     createdAt: l.createdAt.toISOString(),
   }));
 

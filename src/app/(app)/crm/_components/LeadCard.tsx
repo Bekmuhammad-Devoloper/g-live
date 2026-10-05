@@ -15,6 +15,11 @@ function fmtDate(iso: string) {
   const p = (n: number) => String(n).padStart(2, "0");
   return `${p(d.getDate())}.${p(d.getMonth() + 1)}.${d.getFullYear()}`;
 }
+function fmtDateTime(iso: string) {
+  const d = new Date(iso);
+  const p = (n: number) => String(n).padStart(2, "0");
+  return `${fmtDate(iso)} ${p(d.getHours())}:${p(d.getMinutes())}`;
+}
 
 interface Props {
   lead: VLead;
@@ -161,6 +166,14 @@ export default memo(function LeadCard({ lead, locale, selected, onOpen, onOpenFu
           {label(LEAD_STAGE_LABELS, lead.stage, locale)}
         </span>
       </div>
+
+      {/* Yo'qotilgan — kim, qachon va nega: ustunda aniq ko'rinib tursin */}
+      {lead.stage === "LOST" && (lead.lostBy || lead.lostAt || lead.lossReason) && (
+        <div className="mt-2 rounded-lg border border-rose-200/70 bg-rose-50 px-2.5 py-1.5 text-[11px] leading-snug text-rose-700 dark:border-rose-500/30 dark:bg-rose-500/10 dark:text-rose-300">
+          <span className="font-semibold">{tr(locale, { uz: "Yo'qotdi", ru: "Потерял", en: "Lost by", de: "Verloren von" })}:</span> {lead.lostBy ?? "—"}{lead.lostAt ? ` · ${fmtDateTime(lead.lostAt)}` : ""}
+          {lead.lossReason && <div className="mt-0.5 break-words text-rose-600/90 dark:text-rose-300/90">{lead.lossReason}</div>}
+        </div>
+      )}
 
       {/* Sana + faoliyat soni + ustun tegi */}
       <div className="mt-2 flex items-center justify-between">

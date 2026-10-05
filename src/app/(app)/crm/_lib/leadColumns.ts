@@ -46,6 +46,10 @@ export interface VLead {
   kanbanColumnId: string | null;
   activityCount: number;
   lastActivity: string | null;
+  /** "Yo'qotilgan"ga kim va qachon o'tkazgan (oxirgi bosqich yozuvi) + sabab */
+  lostBy: string | null;
+  lostAt: string | null;
+  lossReason: string | null;
   createdAt: string; // ISO
 }
 
