@@ -29,17 +29,16 @@ export default async function CrmPage() {
     : null;
   // Operator (sotuv) ham hamma filialning lidlari bilan ishlaydi — filial ustunlarisiz, oddiy doska
   const allBranches = s.role === ROLES.OPERATOR || (branchMode !== null && s.role !== ROLES.ADMIN && !(branchMode === "head" && s.branchId));
-  // Filial administratori onlayn lidlarni ko'rmaydi (ular ROP'niki) — faqat o'z filialiga
-  // tashlangan ("br:<id>" belgili) onlayn lid ko'rinadi
   const isAdmin = s.role === ROLES.ADMIN;
+  // Onlayn lidlar hech qaysi filialniki emas — "Onlayn" ustuni HAMMA ko'rinishda bir xil:
+  // filial tanlangan bo'lsa ham, administratorda ham. Filial ustuniga ("br:<id>") qo'lda
+  // yo'naltirilgani esa o'sha filialniki bo'lib qoladi va umumiy ro'yxatdan chiqadi.
+  const openOnline = { studyFormat: "ONLINE", OR: [{ kanbanColumnId: null }, { NOT: { kanbanColumnId: { startsWith: "br:" } } }] };
 
   const [leads, managers, groupColumns, customColumns, branchRows, lastActs] = await Promise.all([
     prisma.lead.findMany({
-      where: allBranches
-        ? {}
-        : isAdmin
-          ? { AND: [branchWhere(s), { OR: [{ studyFormat: { not: "ONLINE" } }, { studyFormat: null }, { kanbanColumnId: { startsWith: "br:" } }] }] }
-          : branchWhere(s), // faol filial lidlarigina (filialsiz eski yozuvlar ham)
+      // faol filial lidlari + hamma onlayn lid (filial tanlanganda ham)
+      where: allBranches ? {} : { OR: [branchWhere(s), openOnline] },
       orderBy: { createdAt: "desc" },
       // Faqat kerakli ustunlar — `include: { manager: true }` har lid uchun butun
       // User yozuvini (parol maydonlari bilan) tortib, 2000 lidda sahifani sekinlashtirardi
@@ -201,7 +200,7 @@ export default async function CrmPage() {
       groupInfo={groupInfo}
       archivedStudents={archivedStudents}
       branchMode={branchMode}
-      showOnlineCol={!isAdmin}
+      showOnlineCol
       // ROP: Ishda, Daraja testi va Qabul qilindi ko'rinmaydi (test bosqichidagilar Yangida)
       hiddenCols={s.role === ROLES.ROP ? ["work", "test", "won"] : []}
       // Bo'sh vaqtlarni kim tahrirlaydi: rahbariyat — hammasini, administrator — o'z filialini
