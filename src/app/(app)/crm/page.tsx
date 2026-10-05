@@ -20,13 +20,14 @@ export default async function CrmPage() {
   // Filial rejimi (leadColumns.ts BranchMode):
   //   ROP va filial administratori — "sales": test/taklif o'rniga filial ustunlari;
   //   direktor / o'rinbosar — "head": hamma ustunlar + filial ustunlari ("Taklif" o'rnida).
-  // ROP va rahbariyat barcha filiallar lidlarini ko'radi (ustunlar filial bo'yicha ajratadi),
-  // administrator — faqat o'z filialini (o'z filiali ustuni).
+  // ROP barcha filiallar lidlarini ko'radi (ustunlar filial bo'yicha ajratadi); rahbariyat —
+  // tepadagi filial tanloviga qarab: "Barcha filiallar" bo'lsa hammasi, filial tanlangan bo'lsa
+  // faqat o'sha filial lidlari va ustuni; administrator — faqat o'z filialini.
   const branchMode: BranchMode | null =
     s.role === ROLES.ROP || s.role === ROLES.ADMIN ? "sales"
     : s.role === ROLES.DIRECTOR || s.role === ROLES.DEPUTY_DIRECTOR ? "head"
     : null;
-  const allBranches = branchMode !== null && s.role !== ROLES.ADMIN;
+  const allBranches = branchMode !== null && s.role !== ROLES.ADMIN && !(branchMode === "head" && s.branchId);
   // Filial administratori onlayn lidlarni ko'rmaydi (ular ROP'niki) — faqat o'z filialiga
   // tashlangan ("br:<id>" belgili) onlayn lid ko'rinadi
   const isAdmin = s.role === ROLES.ADMIN;
@@ -58,8 +59,8 @@ export default async function CrmPage() {
     listKanbanColumns(),  // Oddiy nomli ustunlar
     branchMode
       ? prisma.branch.findMany({
-          // Administrator — faqat o'z filiali ustuni
-          where: { isActive: true, ...(s.role === ROLES.ADMIN && s.branchId ? { id: s.branchId } : {}) },
+          // Administrator — faqat o'z filiali ustuni; rahbariyat filial tanlagan bo'lsa — faqat o'sha ustun
+          where: { isActive: true, ...(s.branchId && (s.role === ROLES.ADMIN || branchMode === "head") ? { id: s.branchId } : {}) },
           select: { id: true, name: true, slots: { select: { id: true, branchId: true, room: true, days: true, startTime: true, endTime: true, note: true, capacity: true }, orderBy: [{ room: "asc" }, { startTime: "asc" }] } },
           orderBy: { name: "asc" },
         })
