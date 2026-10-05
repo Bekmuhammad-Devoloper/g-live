@@ -83,6 +83,24 @@ export default function UsersView({ staff, positions, branches, canManage, canDe
   };
 
   const toggleActive = (id: string) => start(async () => { await toggleStaffActive(id); router.refresh(); });
+  // Ro'yxatdan to'g'ridan o'chirish — tahrirlash oynasidagi bilan bir xil qoida (faqat direktor)
+  const removeStaff = async (u: VStaff) => {
+    const ok = await confirmDelete({
+      title: tr(locale, { uz: "Xodimni butunlay o'chirish", ru: "Удалить сотрудника навсегда", en: "Delete staff member permanently", de: "Mitarbeiter endgültig löschen" }),
+      message: tr(locale, {
+        uz: `${u.name} (${u.roleLabel}) tizimdan o'chiriladi: logini ishlamay qoladi, guruhlari ustozsiz, lidlari menejersiz qoladi (yozuvlar saqlanadi). Bu amalni qaytarib bo'lmaydi.`,
+        ru: `${u.name} (${u.roleLabel}) будет удалён из системы: логин перестанет работать, группы останутся без преподавателя, лиды — без менеджера (записи сохраняются). Это действие необратимо.`,
+        en: `${u.name} (${u.roleLabel}) will be removed: the login stops working, groups lose the teacher, leads lose the manager (records are kept). This cannot be undone.`,
+        de: `${u.name} (${u.roleLabel}) wird entfernt: Login funktioniert nicht mehr, Gruppen verlieren die Lehrkraft, Leads den Manager (Datensätze bleiben). Nicht rückgängig zu machen.`,
+      }),
+      confirmLabel: tr(locale, { uz: "Ha, butunlay o'chirish", ru: "Да, удалить навсегда", en: "Yes, delete permanently", de: "Ja, endgültig löschen" }),
+    });
+    if (!ok) return;
+    start(async () => {
+      const r = await deleteStaffPermanent(u.id);
+      if (r.ok) router.refresh(); else void alertDialog({ tone: "warning", message: r.error ?? tr(locale, { uz: "O'chirilmadi", ru: "Не удалено", en: "Not deleted", de: "Nicht gelöscht" }) });
+    });
+  };
 
   return (
     <div className="space-y-4">
@@ -162,6 +180,18 @@ export default function UsersView({ staff, positions, branches, canManage, canDe
                             <span className={cn("absolute top-0.5 h-4 w-4 rounded-full bg-white transition-all", u.active ? "left-4" : "left-0.5")} />
                           </span>
                         </button>
+                        {/* Butunlay o'chirish — faqat direktor (tasdiq bilan) */}
+                        {canDelete && (
+                          <button
+                            type="button"
+                            onClick={(e) => { e.stopPropagation(); removeStaff(u); }}
+                            disabled={pending}
+                            title={tr(locale, { uz: "Xodimni butunlay o'chirish", ru: "Удалить сотрудника навсегда", en: "Delete staff member permanently", de: "Mitarbeiter endgültig löschen" })}
+                            className="ml-2 grid h-7 w-7 place-items-center rounded-md text-slate-400 transition hover:bg-rose-50 hover:text-rose-600 disabled:opacity-50 dark:hover:bg-rose-500/10"
+                          >
+                            <Icon name="trash" className="h-4 w-4" />
+                          </button>
+                        )}
                       </div>
                     </td>
                   )}
