@@ -10,10 +10,12 @@ import { useEffect, useState } from "react";
 // "ishlamaydi". Bu komponent ikki yo'l bilan oldini oladi:
 //
 //   1. Har 2 daqiqada (va oynaga qaytilganda) /api/version so'raladi. Build o'zgargan
-//      bo'lsa: forma/oyna ochiq bo'lmasa va hech qaysi maydon fokusda bo'lmasa sahifa
-//      o'zi yangilanadi; aks holda pastda "Tizim yangilandi" eslatmasi chiqadi.
+//      bo'lsa pastda "Tizim yangilandi — Yangilash" eslatmasi chiqadi. Sahifa O'ZICHA
+//      faqat ko'rinmayotgan (boshqa oynaga o'tilgan) va hech narsa yozilmagan holatda
+//      yangilanadi — test yoki forma yarmida turgan odamning ishi yo'qolmasin.
 //   2. Eski sahifadan ketgan so'rov baribir yiqilsa (unhandledrejection / error) —
-//      sahifa bir marta yangilanadi (takror aylanmasligi uchun 30 s qulf).
+//      hech narsa yozilmagan bo'lsa sahifa bir marta yangilanadi (30 s qulf), aks holda
+//      eslatma chiqadi va foydalanuvchi o'zi yangilaydi.
 
 const STALE = /Server Action|older or newer deployment|unexpected response was received|Server Components render|Loading chunk|ChunkLoadError|Failed to fetch dynamically imported module/i;
 const KEY = "gl-stale-reload-at";
@@ -29,28 +31,34 @@ function reloadOnce(): boolean {
   return true;
 }
 
-/** Foydalanuvchi hozir nimadir yozyaptimi / oyna ochiqmi — unda o'zicha yangilamaymiz */
-function busy(): boolean {
-  const el = document.activeElement as HTMLElement | null;
-  if (el && (el.tagName === "INPUT" || el.tagName === "TEXTAREA" || el.tagName === "SELECT" || el.isContentEditable)) return true;
-  return !!document.querySelector('.drawer-panel, [role="dialog"], [role="alertdialog"], form[data-dirty="true"]');
-}
+// Sahifada biror maydon to'ldirilgan yoki tanlov qilinganmi (test javoblari ham) —
+// shunday holatda sahifa hech qachon o'zicha yangilanmaydi
+let dirty = false;
+const markDirty = () => { dirty = true; };
+
+/** Sahifa ko'rinmayapti va unda yozilgan narsa yo'q — yangilash xavfsiz */
+const safeToReload = () => !dirty && document.visibilityState === "hidden" && !document.querySelector('.drawer-panel, [role="dialog"], [role="alertdialog"]');
 
 export default function DeployWatcher({ build }: { build: string }) {
   const [outdated, setOutdated] = useState(false);
 
   // 2) Eskirgan sahifadan ketgan so'rov xatosi
   useEffect(() => {
+    const stale = () => { if (dirty) setOutdated(true); else if (!reloadOnce()) setOutdated(true); };
     const onRejection = (e: PromiseRejectionEvent) => {
       const msg = String((e.reason as Error)?.message ?? e.reason ?? "");
-      if (STALE.test(msg) && reloadOnce()) e.preventDefault();
+      if (STALE.test(msg)) { e.preventDefault(); stale(); }
     };
     const onError = (e: ErrorEvent) => {
-      if (STALE.test(String(e.message ?? "")) && reloadOnce()) e.preventDefault();
+      if (STALE.test(String(e.message ?? ""))) { e.preventDefault(); stale(); }
     };
+    document.addEventListener("input", markDirty, true);
+    document.addEventListener("change", markDirty, true);
     window.addEventListener("unhandledrejection", onRejection);
     window.addEventListener("error", onError);
     return () => {
+      document.removeEventListener("input", markDirty, true);
+      document.removeEventListener("change", markDirty, true);
       window.removeEventListener("unhandledrejection", onRejection);
       window.removeEventListener("error", onError);
     };
@@ -61,13 +69,12 @@ export default function DeployWatcher({ build }: { build: string }) {
     if (!build || build === "dev") return;
     let stopped = false;
     const check = async () => {
-      if (document.visibilityState !== "visible") return;
       try {
         const r = await fetch("/api/version", { cache: "no-store" });
         if (!r.ok) return;
         const j = (await r.json()) as { build?: string };
         if (stopped || !j.build || j.build === build) return;
-        if (!busy()) { reloadOnce(); return; }
+        if (safeToReload()) { reloadOnce(); return; }
         setOutdated(true);
       } catch { /* tarmoq yo'q — keyingi safar */ }
     };
