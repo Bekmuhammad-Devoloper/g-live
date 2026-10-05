@@ -6,6 +6,7 @@ import { parseQuestions } from "../../(app)/links/questions";
 import { formatIntlPhone, phoneCountry } from "@/lib/phoneCodes";
 import { getLevelCodes } from "@/lib/studyLevels";
 import { parseApplyCourses } from "@/lib/applyCourses";
+import { branchColKey } from "../../(app)/crm/_lib/leadColumns";
 
 export type ApplyState = { ok?: boolean; error?: string };
 
@@ -112,6 +113,9 @@ export async function submitApplication(
       utmCampaign: link.utmCampaign,
       vacancyLinkId: link.id,
       branchId,
+      // Oflaynda tanlangan filial — lid to'g'ridan o'sha filial ustuniga tushadi
+      // ("Yangi"ga emas): belgi qo'lda filialga tashlangandagi bilan bir xil
+      kanbanColumnId: format === "OFFLINE" && branchId ? branchColKey(branchId) : null,
       note: [
         `Kurs/vakansiya: ${link.vacancy.title}${link.vacancy.country ? " (" + link.vacancy.country + ")" : ""}`,
         `Ta'lim shakli: ${format === "ONLINE" ? "onlayn" : "oflayn"}`,
