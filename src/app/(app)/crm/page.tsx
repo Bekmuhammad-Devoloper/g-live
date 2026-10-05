@@ -29,7 +29,6 @@ export default async function CrmPage() {
     : null;
   // Operator (sotuv) ham hamma filialning lidlari bilan ishlaydi — filial ustunlarisiz, oddiy doska
   const allBranches = s.role === ROLES.OPERATOR || (branchMode !== null && s.role !== ROLES.ADMIN && !(branchMode === "head" && s.branchId));
-  const isAdmin = s.role === ROLES.ADMIN;
   // Onlayn lidlar hech qaysi filialniki emas — "Onlayn" ustuni HAMMA ko'rinishda bir xil:
   // filial tanlangan bo'lsa ham, administratorda ham. Filial ustuniga ("br:<id>") qo'lda
   // yo'naltirilgani esa o'sha filialniki bo'lib qoladi va umumiy ro'yxatdan chiqadi.
