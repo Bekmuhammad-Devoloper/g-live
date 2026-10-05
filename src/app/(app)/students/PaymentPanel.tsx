@@ -9,6 +9,14 @@ import { isReceiptRequired, type ReceiptMode } from "@/lib/receiptMode";
 import { getStudentPayments, acceptPayment, addStudentDebt, updatePaymentRecord, deletePaymentRecord, type StudentPayments, type MonthPay, type PayRow, type ReceiptData } from "./actions";
 import { Icon } from "../_components/Icon";
 import MoneyInput from "../_components/MoneyInput";
+import { promptDialog } from "../_components/dialogs";
+
+// ISO sana → <input type="datetime-local"> qiymati (mahalliy vaqt)
+function toLocalInput(iso: string | Date): string {
+  const d = new Date(iso);
+  const p = (n: number) => String(n).padStart(2, "0");
+  return `${d.getFullYear()}-${p(d.getMonth() + 1)}-${p(d.getDate())}T${p(d.getHours())}:${p(d.getMinutes())}`;
+}
 
 // O'quvchining TO'LOV HOLATI paneli — bitta komponent, ikki joyda:
 //   • ro'yxatdagi tezkor oyna (StudentDetailModal)
@@ -196,15 +204,18 @@ export function AddDebtForm({ studentId, locale, onCancel, onDone }: {
 }) {
   const [amount, setAmount] = useState("");
   const [purpose, setPurpose] = useState("");
+  const [dateAt, setDateAt] = useState(() => toLocalInput(new Date()));
+  const [reason, setReason] = useState("");
   const [err, setErr] = useState<string | null>(null);
   const [pending, start] = useTransition();
   const L = (uz: string, ru: string, en: string) => tr(locale, { uz, ru, en });
   const inp = "h-9 w-full rounded-lg border border-slate-200 bg-white px-2.5 text-sm text-slate-800 outline-none focus:border-amber-400 dark:border-slate-700 dark:bg-slate-800/60 dark:text-slate-100";
 
   const submit = () => start(async () => {
-    const r = await addStudentDebt(studentId, { amount: Number(amount), purpose });
+    const r = await addStudentDebt(studentId, { amount: Number(amount), purpose, dateIso: dateAt ? new Date(dateAt).toISOString() : null, reason });
     if (r.ok) onDone();
     else setErr(r.error === "amount" ? L("Summani to'g'ri kiriting.", "Введите корректную сумму.", "Enter a valid amount.")
+      : r.error === "reason" ? L("Sababini yozing (kamida 3 belgi).", "Укажите причину (не менее 3 символов).", "Enter a reason (at least 3 characters).")
       : r.error === "forbidden" ? L("Ruxsat yo'q.", "Нет доступа.", "No permission.")
       : L("Saqlanmadi.", "Не сохранено.", "Not saved."));
   });
@@ -223,13 +234,21 @@ export function AddDebtForm({ studentId, locale, onCancel, onDone }: {
           <label className="mb-0.5 block text-[10px] font-semibold text-slate-500">{L("Izoh", "Комментарий", "Note")}</label>
           <input value={purpose} onChange={(e) => setPurpose(e.target.value)} placeholder={L("Kurs to'lovi qarzi", "Долг за курс", "Course fee debt")} className={inp} />
         </div>
+        <div>
+          <label className="mb-0.5 block text-[10px] font-semibold text-slate-500">{L("Sana", "Дата", "Date")}</label>
+          <input type="datetime-local" value={dateAt} onChange={(e) => setDateAt(e.target.value)} className={inp} />
+        </div>
+        <div>
+          <label className="mb-0.5 block text-[10px] font-semibold text-slate-500">{L("Sabab", "Причина", "Reason")} *</label>
+          <input value={reason} onChange={(e) => setReason(e.target.value)} maxLength={300} placeholder={L("Nega qarz yozilmoqda", "Почему записывается долг", "Why the debt is recorded")} className={inp} />
+        </div>
       </div>
       {err && <p className="mt-1.5 text-[11px] font-medium text-rose-600 dark:text-rose-400">{err}</p>}
       <div className="mt-2 flex gap-2">
         <button type="button" onClick={onCancel} disabled={pending} className="flex-1 rounded-lg border border-slate-200 bg-white py-1.5 text-xs font-semibold text-slate-600 transition hover:bg-slate-50 disabled:opacity-60 dark:border-white/10 dark:bg-slate-900 dark:text-slate-300">
           {L("Bekor qilish", "Отмена", "Cancel")}
         </button>
-        <button type="button" onClick={submit} disabled={pending || !amount} className="flex-[1.4] rounded-lg bg-amber-600 py-1.5 text-xs font-semibold text-white transition hover:bg-amber-700 disabled:opacity-40">
+        <button type="button" onClick={submit} disabled={pending || !amount || reason.trim().length < 3} className="flex-[1.4] rounded-lg bg-amber-600 py-1.5 text-xs font-semibold text-white transition hover:bg-amber-700 disabled:opacity-40">
           {pending ? "..." : L("Qarz qo'shish", "Добавить долг", "Add debt")}
         </button>
       </div>
@@ -248,6 +267,8 @@ export function PaymentRow({ p, locale, canEdit, onChanged }: {
   const [status, setStatus] = useState(p.status);
   const [purpose, setPurpose] = useState(p.purpose ?? "");
   const [note, setNote] = useState(p.note ?? "");
+  const [dateAt, setDateAt] = useState(() => toLocalInput(p.date));
+  const [reason, setReason] = useState("");
   const [err, setErr] = useState<string | null>(null);
   const [pending, start] = useTransition();
   const L = (uz: string, ru: string, en: string) => tr(locale, { uz, ru, en });
@@ -256,16 +277,28 @@ export function PaymentRow({ p, locale, canEdit, onChanged }: {
   const ps = covered ? { fg: "#16a34a", bg: "#16a34a1a" } : payStatusStyle(p.status);
 
   const save = () => start(async () => {
-    const r = await updatePaymentRecord(p.id, { amount: Number(amount), method, status, purpose, note });
-    if (r.ok) { setEdit(false); onChanged(); }
-    else setErr(r.error === "forbidden" ? L("Ruxsat yo'q.", "Нет доступа.", "No permission.") : L("Saqlanmadi.", "Не сохранено.", "Not saved."));
+    const r = await updatePaymentRecord(p.id, { amount: Number(amount), method, status, purpose, note, dateIso: dateAt ? new Date(dateAt).toISOString() : null }, reason);
+    if (r.ok) { setEdit(false); setReason(""); onChanged(); }
+    else setErr(r.error === "forbidden" ? L("Ruxsat yo'q.", "Нет доступа.", "No permission.") : r.error === "reason" ? L("Sababini yozing (kamida 3 belgi).", "Укажите причину (не менее 3 символов).", "Enter a reason (at least 3 characters).") : L("Saqlanmadi.", "Не сохранено.", "Not saved."));
   });
 
-  const remove = () => start(async () => {
-    const r = await deletePaymentRecord(p.id);
-    if (r.ok) onChanged();
-    else setErr(L("O'chirilmadi.", "Не удалено.", "Not deleted."));
-  });
+  // O'chirish — sabab majburiy (audit jurnaliga yoziladi)
+  const remove = async () => {
+    const why = await promptDialog({
+      tone: "danger",
+      title: L("To'lov yozuvini o'chirish", "Удалить запись об оплате", "Delete payment record"),
+      message: `${formatMoney(p.amount, locale)} · ${fmtDate(p.date)}${p.purpose ? ` · ${p.purpose}` : ""}`,
+      placeholder: L("O'chirish sababi", "Причина удаления", "Reason for deletion"),
+      minLength: 3,
+      confirmLabel: L("O'chirish", "Удалить", "Delete"),
+    });
+    if (why == null) return;
+    start(async () => {
+      const r = await deletePaymentRecord(p.id, why);
+      if (r.ok) onChanged();
+      else setErr(r.error === "reason" ? L("Sababini yozing.", "Укажите причину.", "Enter a reason.") : L("O'chirilmadi.", "Не удалено.", "Not deleted."));
+    });
+  };
 
   const inp = "h-8 w-full rounded-md border border-slate-200 bg-white px-2 text-xs text-slate-800 outline-none focus:border-brand-400 dark:border-slate-700 dark:bg-slate-800/60 dark:text-slate-100";
 
@@ -323,6 +356,14 @@ export function PaymentRow({ p, locale, canEdit, onChanged }: {
           <label className="mb-0.5 block text-[10px] font-semibold text-slate-500">{L("Izoh", "Комментарий", "Comment")}</label>
           <input value={note} onChange={(e) => setNote(e.target.value)} maxLength={500} className={inp} />
         </div>
+        <div>
+          <label className="mb-0.5 block text-[10px] font-semibold text-slate-500">{L("Sana", "Дата", "Date")}</label>
+          <input type="datetime-local" value={dateAt} onChange={(e) => setDateAt(e.target.value)} className={inp} />
+        </div>
+        <div>
+          <label className="mb-0.5 block text-[10px] font-semibold text-slate-500">{L("O'zgartirish sababi", "Причина изменения", "Reason for change")} *</label>
+          <input value={reason} onChange={(e) => setReason(e.target.value)} maxLength={300} placeholder={L("Majburiy", "Обязательно", "Required")} className={inp} />
+        </div>
       </div>
       {err && <p className="mt-1.5 text-[11px] font-medium text-rose-600 dark:text-rose-400">{err}</p>}
       <div className="mt-2 flex gap-1.5">
@@ -332,7 +373,7 @@ export function PaymentRow({ p, locale, canEdit, onChanged }: {
         <button type="button" onClick={remove} disabled={pending} className="rounded-md border border-rose-200 px-2.5 py-1.5 text-[11px] font-semibold text-rose-600 transition hover:bg-rose-50 disabled:opacity-60 dark:border-rose-500/30 dark:text-rose-400">
           {L("O'chirish", "Удалить", "Delete")}
         </button>
-        <button type="button" onClick={save} disabled={pending || !amount} className="flex-1 rounded-md bg-brand-600 py-1.5 text-[11px] font-semibold text-white transition hover:bg-brand-700 disabled:opacity-40">
+        <button type="button" onClick={save} disabled={pending || !amount || reason.trim().length < 3} className="flex-1 rounded-md bg-brand-600 py-1.5 text-[11px] font-semibold text-white transition hover:bg-brand-700 disabled:opacity-40">
           {pending ? "..." : L("Saqlash", "Сохранить", "Save")}
         </button>
       </div>

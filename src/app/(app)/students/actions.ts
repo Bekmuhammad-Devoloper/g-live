@@ -647,13 +647,16 @@ const CAN_EDIT_PAY = [ROLES.DIRECTOR, ROLES.DEPUTY_DIRECTOR, ROLES.MANAGER, ROLE
 /** O'quvchini qarzdor qilish — ko'rsatilgan summada qarz yozuvi ochadi. */
 export async function addStudentDebt(
   studentId: string,
-  input: { amount: number; purpose?: string; dateIso?: string | null },
+  input: { amount: number; purpose?: string; dateIso?: string | null; reason?: string },
 ): Promise<{ ok?: boolean; error?: string }> {
   const s = await requireSession();
   if (!canWrite(s.role, MODULES.PAYMENTS) && !ALLOWED.includes(s.role as never)) return { error: "forbidden" };
 
   const amount = Math.trunc(Number(input.amount));
   if (!Number.isFinite(amount) || amount <= 0) return { error: "amount" };
+  // Sabab majburiy — audit jurnalida kim, nega qarz yozgani ko'rinadi
+  const reason = String(input.reason || "").trim().slice(0, 300);
+  if (reason.length < 3) return { error: "reason" };
 
   const st = await prisma.student.findUnique({ where: { id: studentId }, select: { id: true, fullName: true } });
   if (!st) return { error: "notfound" };
@@ -680,7 +683,7 @@ export async function addStudentDebt(
     entityType: "Payment",
     entityId: pay.id,
     newValue: { studentId, amount, status: "PENDING" },
-    reason: `Qarz qo'shildi: ${st.fullName}`,
+    reason: reason,
   });
 
   revalidatePath("/students");
@@ -692,9 +695,13 @@ export async function addStudentDebt(
 export async function updatePaymentRecord(
   paymentId: string,
   input: { amount?: number; method?: string; purpose?: string; status?: string; dateIso?: string | null; note?: string | null },
+  reason = "",
 ): Promise<{ ok?: boolean; error?: string }> {
   const s = await requireSession();
   if (!CAN_EDIT_PAY.includes(s.role as never)) return { error: "forbidden" };
+  // Har bir tahrir sababi bilan — audit jurnaliga yoziladi
+  const why = String(reason || "").trim().slice(0, 300);
+  if (why.length < 3) return { error: "reason" };
 
   const existing = await prisma.payment.findUnique({
     where: { id: paymentId },
@@ -729,7 +736,7 @@ export async function updatePaymentRecord(
     entityId: paymentId,
     oldValue: { amount: existing.amount, method: existing.method, purpose: existing.purpose, status: existing.status, createdAt: existing.createdAt.toISOString() },
     newValue: data,
-    reason: "To'lov yozuvi tahrirlandi",
+    reason: why,
   });
 
   revalidatePath("/students");
@@ -739,9 +746,11 @@ export async function updatePaymentRecord(
 }
 
 /** To'lov yozuvini o'chirish (xato kiritilgan bo'lsa). */
-export async function deletePaymentRecord(paymentId: string): Promise<{ ok?: boolean; error?: string }> {
+export async function deletePaymentRecord(paymentId: string, reason = ""): Promise<{ ok?: boolean; error?: string }> {
   const s = await requireSession();
   if (!CAN_EDIT_PAY.includes(s.role as never)) return { error: "forbidden" };
+  const why = String(reason || "").trim().slice(0, 300);
+  if (why.length < 3) return { error: "reason" };
 
   const existing = await prisma.payment.findUnique({
     where: { id: paymentId },
@@ -756,7 +765,7 @@ export async function deletePaymentRecord(paymentId: string): Promise<{ ok?: boo
     entityType: "Payment",
     entityId: paymentId,
     oldValue: { ...existing },
-    reason: "To'lov yozuvi o'chirildi",
+    reason: why,
   });
 
   revalidatePath("/students");
