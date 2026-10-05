@@ -3,7 +3,7 @@ import { prisma } from "@/lib/db";
 import { getT } from "@/lib/i18n";
 import { canRead, getPermission, MODULES } from "@/lib/rbac";
 import { ROLES } from "@/lib/constants";
-import { branchWhere } from "@/lib/branchScope";
+import { branchWhere, staffBranchWhere } from "@/lib/branchScope";
 import { Forbidden } from "../_components/ui";
 import GroupsView, { type VGroup } from "./GroupsView";
 import type { Prisma } from "@prisma/client";
@@ -89,16 +89,24 @@ export default async function GroupsPage() {
   }));
 
   const canCreate = getPermission(s.role, MODULES.GROUPS) === "FULL";
+  // Faol filialning barcha faol o'qituvchilari — filtr va guruh formasi uchun
+  // (guruhi bo'lmaganlari ham; qo'shimcha filial sifatida biriktirilganlar ham)
+  const branchTeachers = await prisma.user.findMany({
+    where: { AND: [{ role: ROLES.TEACHER, isActive: true }, staffBranchWhere(s)] },
+    select: { id: true, fullName: true },
+    orderBy: { fullName: "asc" },
+  });
   const [programs, teachers, roomOptions] = canCreate
     ? await Promise.all([
         prisma.program.findMany({ where: { isActive: true }, select: { id: true, name: true, lessonsPerMonth: true }, orderBy: { name: "asc" } }),
-        prisma.user.findMany({ where: { role: ROLES.TEACHER }, select: { id: true, fullName: true }, orderBy: { fullName: "asc" } }),
+        Promise.resolve(branchTeachers),
         prisma.room.findMany({ where: { isActive: true }, select: { id: true, name: true, capacity: true }, orderBy: { name: "asc" } }),
       ])
     : [[], [], []];
 
   // Filtr variantlari
-  const teacherNames = Array.from(new Set(vgroups.map((g) => g.teacherName).filter(Boolean))) as string[];
+  // Filial o'qituvchilari + guruhlarda turgan (boshqa filialdan bo'lishi mumkin) ustozlar
+  const teacherNames = Array.from(new Set([...branchTeachers.map((t) => t.fullName), ...vgroups.map((g) => g.teacherName).filter(Boolean)])) as string[];
   const programNames = Array.from(new Set(vgroups.map((g) => g.program)));
   const rooms = Array.from(new Set(vgroups.map((g) => g.room).filter(Boolean))) as string[];
 
