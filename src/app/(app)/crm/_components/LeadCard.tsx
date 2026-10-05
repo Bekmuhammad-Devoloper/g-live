@@ -97,12 +97,14 @@ export default memo(function LeadCard({ lead, locale, selected, onOpen, onOpenFu
           <Icon name="phone" className="h-3.5 w-3.5" style={{ color: "#10b981" }} />
           <span className="font-medium text-slate-600 dark:text-slate-200">{lead.phone}</span>
         </button>
-        {lead.source && (
-          <div className="flex items-center gap-2 text-xs text-slate-400">
-            <Icon name="download" className="h-3.5 w-3.5" /> {lead.source}
+        {(lead.source || lead.studyFormat) && (
+          <div className="flex flex-wrap items-center gap-2 text-xs text-slate-400">
+            {lead.source && <><Icon name="download" className="h-3.5 w-3.5" /> {lead.source}</>}
             {lead.studyFormat && (
               <span className={cn("rounded px-1.5 py-0.5 text-[10px] font-semibold", lead.studyFormat === "ONLINE" ? "bg-sky-50 text-sky-600 dark:bg-sky-500/10 dark:text-sky-300" : "bg-amber-50 text-amber-700 dark:bg-amber-500/10 dark:text-amber-300")}>
                 {lead.studyFormat === "ONLINE" ? tr(locale, { uz: "onlayn", ru: "онлайн", en: "online", de: "online" }) : tr(locale, { uz: "oflayn", ru: "офлайн", en: "offline", de: "präsenz" })}
+                {/* Oflayn — qaysi filial tanlangani ham ko'rinsin */}
+                {lead.studyFormat !== "ONLINE" && lead.branchName && <span className="font-normal"> · {lead.branchName}</span>}
               </span>
             )}
           </div>
