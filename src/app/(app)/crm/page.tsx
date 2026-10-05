@@ -216,7 +216,8 @@ export default async function CrmPage() {
       branchMode={branchMode}
       showOnlineCol
       // ROP: Ishda, Daraja testi va Qabul qilindi ko'rinmaydi (test bosqichidagilar Yangida)
-      hiddenCols={s.role === ROLES.ROP ? ["work", "test", "won"] : []}
+      // ROP: "Ishda" va "Qabul qilindi" yashirin; "Daraja testi" ustuni ko'rinadi
+      hiddenCols={s.role === ROLES.ROP ? ["work", "won"] : []}
       // Bo'sh vaqtlarni kim tahrirlaydi: rahbariyat — hammasini, administrator — o'z filialini
       slotsEditable={[ROLES.DIRECTOR, ROLES.DEPUTY_DIRECTOR].includes(s.role as never) ? "all" : s.role === ROLES.ADMIN ? (s.branchId ?? null) : null}
     />
