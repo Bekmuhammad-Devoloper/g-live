@@ -5,6 +5,7 @@ import { staffBranchWhere } from "@/lib/branchScope";
 import { tr } from "@/lib/tr";
 import { Forbidden } from "../_components/ui";
 import TeachersView, { type VTeacher } from "./TeachersView";
+import { MANAGEMENT_DEPT } from "../users/positions";
 
 const STAFF = [ROLES.DIRECTOR, ROLES.DEPUTY_DIRECTOR, ROLES.OPERATOR, ROLES.ROP, ROLES.MANAGER, ROLES.ADMIN];
 
@@ -71,6 +72,12 @@ export default async function TeachersPage() {
   });
 
   const canManage = s.role === ROLES.DIRECTOR || s.role === ROLES.DEPUTY_DIRECTOR;
+  // Tahrirlash — rahbariyat va administrator; butunlay o'chirish — direktor, administrator (o'z filialida)
+  const canEdit = canManage || s.role === ROLES.ADMIN;
+  const canDelete = s.role === ROLES.DIRECTOR || s.role === ROLES.ADMIN;
+  // Tahrirlash formasi uchun lavozimlar (rahbariyat lavozimlarisiz)
+  const catalog = canEdit ? await prisma.staffRole.findMany({ where: { isActive: true }, orderBy: { createdAt: "asc" }, select: { name: true, department: true } }) : [];
+  const positions = catalog.filter((r) => r.department !== MANAGEMENT_DEPT).map((r) => ({ value: r.name, label: r.name, department: r.department ?? "" }));
 
-  return <TeachersView teachers={vteachers} canManage={canManage} locale={s.locale} branches={branches} />;
+  return <TeachersView teachers={vteachers} canManage={canManage} canEdit={canEdit} canDelete={canDelete} positions={positions} locale={s.locale} branches={branches} />;
 }

@@ -262,10 +262,15 @@ export async function updateStaff(fd: FormData): Promise<StaffResult> {
  */
 export async function deleteStaffPermanent(id: string): Promise<{ ok?: boolean; error?: string }> {
   const s = await requireSession();
-  if (s.role !== ROLES.DIRECTOR) return { error: tr(s.locale, { uz: "Xodimni faqat direktor o'chira oladi", ru: "Удалить сотрудника может только директор", en: "Only the director can delete a staff member", de: "Nur der Direktor kann Mitarbeiter löschen" }) };
   if (id === s.userId) return { error: tr(s.locale, { uz: "O'zingizni o'chira olmaysiz", ru: "Вы не можете удалить себя", en: "You cannot delete yourself", de: "Sie können sich nicht selbst löschen" }) };
-  const u = await prisma.user.findUnique({ where: { id }, select: { id: true, fullName: true, email: true, role: true } });
+  const u = await prisma.user.findUnique({ where: { id }, select: { id: true, fullName: true, email: true, role: true, branchId: true, branches: { select: { branchId: true } } } });
   if (!u) return { error: tr(s.locale, { uz: "Xodim topilmadi", ru: "Сотрудник не найден", en: "Staff member not found", de: "Mitarbeiter nicht gefunden" }) };
+  // Direktor — istalgan xodimni; filial administratori — faqat o'z filialidagi o'qituvchini
+  const adminOwnTeacher = s.role === ROLES.ADMIN && u.role === ROLES.TEACHER && !!s.branchId
+    && (u.branchId === s.branchId || u.branches.some((b) => b.branchId === s.branchId));
+  if (s.role !== ROLES.DIRECTOR && !adminOwnTeacher) {
+    return { error: tr(s.locale, { uz: "Xodimni o'chirishga ruxsat yo'q", ru: "Нет права удалять сотрудника", en: "No permission to delete this staff member", de: "Keine Berechtigung zum Löschen" }) };
+  }
   if (u.role === ROLES.DIRECTOR) return { error: tr(s.locale, { uz: "Direktor hisobini o'chirib bo'lmaydi", ru: "Аккаунт директора удалить нельзя", en: "A director account cannot be deleted", de: "Ein Direktorkonto kann nicht gelöscht werden" }) };
 
   await prisma.$transaction([

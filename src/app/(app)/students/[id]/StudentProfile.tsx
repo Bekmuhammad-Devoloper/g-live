@@ -86,6 +86,8 @@ export default function StudentProfile({
   const [editOpen, setEditOpen] = useState(false);
   const L = (uz: string, ru: string, en: string, de: string) => tr(locale, { uz, ru, en, de });
   const tone = STATUS_TONE[st.eduStatus] ?? "#64748b";
+  // Qaysi sanadan faol — eng birinchi faol guruhga qo'shilgan sana
+  const activeSince = st.groups.filter((g) => g.isActive).map((g) => g.joinedAt).sort()[0] ?? null;
 
   return (
     <div className="space-y-5">
@@ -108,7 +110,9 @@ export default function StudentProfile({
             <div className="mt-1 flex flex-wrap items-center gap-x-2.5 gap-y-1 text-sm text-slate-500 dark:text-slate-400">
               <span className="rounded-full px-2.5 py-0.5 text-xs font-semibold" style={{ color: tone, background: `${tone}1a` }}>
                 {label(EDU_STATUS_LABELS, st.eduStatus, locale)}
+                {st.eduStatus === "ACTIVE" && activeSince && <span className="font-medium opacity-80"> · {fmtDate(activeSince)} {L("dan", "с", "since", "seit")}</span>}
               </span>
+              <span className="text-xs text-slate-400" title={L("Ro'yxatga olingan sana", "Дата регистрации", "Registered on", "Registriert am")}>{L("Ro'yxatda", "В базе", "Registered", "Registriert")}: {fmtDate(st.joined)}</span>
               {st.currentLevel && <span className="font-medium text-slate-600 dark:text-slate-300">{st.currentLevel}</span>}
               {st.phone && (
                 <a href={`tel:${st.phone}`} className="flex items-center gap-1 font-medium text-slate-600 transition hover:text-brand-600 dark:text-slate-300">

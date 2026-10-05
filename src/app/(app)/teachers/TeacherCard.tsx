@@ -20,7 +20,7 @@ export function colorFor(name: string): string {
 // ixcham raqam (birliksiz): 3000000 -> "3 000 000"
 const nf = (n: number) => String(Math.round(n)).replace(/\B(?=(\d{3})+(?!\d))/g, " ");
 
-export default function TeacherCard({ teacher: t, maxStudents, canManage, locale }: { teacher: VTeacher; maxStudents: number; canManage: boolean; locale: Locale }) {
+export default function TeacherCard({ teacher: t, maxStudents, canManage, locale, onOpen }: { teacher: VTeacher; maxStudents: number; canManage: boolean; locale: Locale; /** Ism bosilganda — tafsilot oynasi */ onOpen?: () => void }) {
   const color = colorFor(t.fullName);
   const load = maxStudents > 0 ? Math.round((t.totalStudents / maxStudents) * 100) : 0;
   const [salaryOpen, setSalaryOpen] = useState(false);
@@ -79,7 +79,7 @@ export default function TeacherCard({ teacher: t, maxStudents, canManage, locale
         </div>
         <div className="min-w-0 flex-1">
           <div className="flex items-center gap-2">
-            <span title={t.fullName} className="min-w-0 break-words font-semibold leading-tight text-slate-800 line-clamp-2 dark:text-slate-100">{t.fullName}</span>
+            <button type="button" onClick={onOpen} title={t.fullName} className="min-w-0 break-words text-left font-semibold leading-tight text-slate-800 line-clamp-2 transition hover:text-brand-600 hover:underline dark:text-slate-100 dark:hover:text-brand-300">{t.fullName}</button>
             {t.gender && (
               <span
                 className="flex h-4 w-4 shrink-0 items-center justify-center rounded-full text-[11px] font-bold leading-none"

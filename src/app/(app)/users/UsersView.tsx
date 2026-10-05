@@ -190,7 +190,7 @@ export default function UsersView({ staff, positions, branches, canManage, canDe
 const localPhone = (p: string | null) => (p ?? "").replace(/^\+?998\s?/, "");
 const groupThousands = (s: string) => s.replace(/\D/g, "").replace(/\B(?=(\d{3})+(?!\d))/g, " ");
 
-function StaffForm({ positions, branches, onClose, locale, edit = null, canDelete = false }: {
+export function StaffForm({ positions, branches, onClose, locale, edit = null, canDelete = false }: {
   positions: PosOpt[]; branches: Opt[]; onClose: () => void; locale: Locale;
   /** Tahrirlashda "O'chirish" tugmasi (faqat direktor) */
   canDelete?: boolean;

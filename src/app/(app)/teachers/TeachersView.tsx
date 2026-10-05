@@ -11,6 +11,8 @@ import { formatMoney, type Locale } from "@/lib/constants";
 import { tr } from "@/lib/tr";
 import TeacherCard, { colorFor } from "./TeacherCard";
 import NewTeacherForm, { type BranchOption } from "./NewTeacherForm";
+import TeacherDrawer from "./TeacherDrawer";
+import type { PosOpt } from "../users/UsersView";
 import { groupColor } from "../groups/groupColor";
 
 export interface SalaryMonth {
@@ -37,9 +39,24 @@ export interface VTeacher {
 }
 
 
-export default function TeachersView({ teachers, canManage, locale, branches }: { teachers: VTeacher[]; canManage: boolean; locale: Locale; branches: BranchOption[] }) {
+export default function TeachersView({ teachers, canManage, canEdit = false, canDelete = false, positions = [], locale, branches }: {
+  teachers: VTeacher[];
+  /** Maosh va kirish ma'lumotlari */
+  canManage: boolean;
+  /** Tahrirlash (direktor, o'rinbosar, administrator) */
+  canEdit?: boolean;
+  /** Butunlay o'chirish (direktor; administrator — o'z filialida) */
+  canDelete?: boolean;
+  /** Tahrirlash formasidagi lavozimlar ro'yxati */
+  positions?: PosOpt[];
+  locale: Locale;
+  branches: BranchOption[];
+}) {
   const searchParams = useSearchParams();
   const [search, setSearch] = useState("");
+  // Tafsilot oynasi (ism bosilganda)
+  const [openId, setOpenId] = useState<string | null>(null);
+  const opened = openId ? teachers.find((t) => t.id === openId) ?? null : null;
   const [view, setView] = useState<"grid" | "table">("grid");
   const [addOpen, setAddOpen] = useState(false);
 
@@ -50,7 +67,7 @@ export default function TeachersView({ teachers, canManage, locale, branches }: 
   useEffect(() => {
     if (!openTeacherId) return;
     const found = teachers.find((t) => t.id === openTeacherId);
-    if (found) setSearch(found.fullName);
+    if (found) { setSearch(found.fullName); setOpenId(found.id); }
   }, [openTeacherId, teachers]);
 
   const totals = useMemo(() => ({
@@ -97,6 +114,8 @@ export default function TeachersView({ teachers, canManage, locale, branches }: 
 
       {addOpen && <NewTeacherForm branches={branches} locale={locale} onClose={() => setAddOpen(false)} />}
 
+      {opened && <TeacherDrawer teacher={opened} locale={locale} canManage={canManage} canEdit={canEdit} canDelete={canDelete} positions={positions} branches={branches} onClose={() => setOpenId(null)} />}
+
       {/* KPI */}
       <div className="grid grid-cols-2 gap-4 lg:grid-cols-5">
         <StatCard label={tr(locale, { uz: "O'qituvchilar", ru: "Преподаватели", en: "Teachers", de: "Lehrer" })} value={totals.teachers} tone="brand" icon="teacher" />
@@ -114,7 +133,7 @@ export default function TeachersView({ teachers, canManage, locale, branches }: 
         </div>
       ) : view === "grid" ? (
         <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
-          {shown.map((t) => <TeacherCard key={t.id} teacher={t} maxStudents={totals.maxStudents} canManage={canManage} locale={locale} />)}
+          {shown.map((t) => <TeacherCard key={t.id} teacher={t} maxStudents={totals.maxStudents} canManage={canManage} locale={locale} onOpen={() => setOpenId(t.id)} />)}
         </div>
       ) : (
         <div className="overflow-hidden rounded-2xl border border-slate-200/70 bg-white shadow-card dark:border-slate-800 dark:bg-slate-900">
@@ -141,7 +160,7 @@ export default function TeachersView({ teachers, canManage, locale, branches }: 
                       <td className="px-4 py-2.5">
                         <div className="flex items-center gap-2.5">
                           <UserAvatar name={t.fullName} imageUrl={t.imageUrl} role="TEACHER" size="sm" className="!h-8 !w-8 !rounded-full" />
-                          <span className="font-medium text-slate-800 dark:text-slate-100">{t.fullName}</span>
+                          <button type="button" onClick={() => setOpenId(t.id)} className="text-left font-medium text-slate-800 transition hover:text-brand-600 hover:underline dark:text-slate-100 dark:hover:text-brand-300">{t.fullName}</button>
                         </div>
                       </td>
                       <td className="px-4 py-2.5 text-slate-600 dark:text-slate-300">{t.phone ?? "—"}</td>
