@@ -26,6 +26,8 @@ const ALLOWED = [ROLES.DIRECTOR, ROLES.DEPUTY_DIRECTOR, ROLES.MANAGER, ROLES.ADM
 export interface MonthPay { paid: boolean; amount: number; date: string | null }
 export interface PayRow {
   id: string; amount: number; method: string; purpose: string | null; status: string; date: string;
+  /** Kassir izohi — to'lov ko'rinadigan hamma joyda chiqadi */
+  note: string | null;
   /** PENDING (qarz) yozuvi to'lovlar bilan qoplangan bo'lsa true — ro'yxatda "Qoplandi" */
   covered?: boolean;
 }
@@ -55,7 +57,7 @@ export async function getStudentPayments(studentId: string): Promise<{ ok: boole
     prisma.payment.findMany({
       where: { studentId },
       orderBy: { createdAt: "desc" },
-      select: { id: true, amount: true, method: true, purpose: true, status: true, createdAt: true },
+      select: { id: true, amount: true, method: true, purpose: true, status: true, createdAt: true, note: true },
     }),
     lessonsAttendedThisMonth(studentId),
     prisma.groupStudent.findFirst({ where: { studentId }, orderBy: { joinedAt: "asc" }, select: { joinedAt: true } }),
@@ -109,7 +111,7 @@ export async function getStudentPayments(studentId: string): Promise<{ ok: boole
       joinDate: joinDate ? joinDate.toISOString() : null,
       lastMonthApplicable,
       recent: payments.slice(0, 8).map((p) => ({
-        id: p.id, amount: p.amount, method: p.method, purpose: p.purpose, status: p.status, date: p.createdAt.toISOString(),
+        id: p.id, amount: p.amount, method: p.method, purpose: p.purpose, status: p.status, date: p.createdAt.toISOString(), note: p.note,
         ...(p.status === "PENDING" ? { covered: coveredIds.has(p.id) } : {}),
       })),
     },
@@ -123,6 +125,7 @@ export interface ReceiptData {
   amount: number;
   method: string;
   purpose: string;
+  note: string | null;
   studentName: string;
   studentPhone: string | null;
   orgName: string;
@@ -139,7 +142,7 @@ const p2r = (n: number) => String(n).padStart(2, "0");
 /** To'lovni qabul qiladi (status PAID) va chek ma'lumotlarini qaytaradi. */
 export async function acceptPayment(
   studentId: string,
-  input: { amount: number; method: string; purpose: string; receiptUrl?: string | null; paidAt?: string | null },
+  input: { amount: number; method: string; purpose: string; receiptUrl?: string | null; paidAt?: string | null; note?: string | null },
 ): Promise<{ ok: boolean; error?: string; receipt?: ReceiptData }> {
   const s = await requireSession();
   if (!canWrite(s.role, MODULES.PAYMENTS)) return { ok: false, error: "forbidden" };
@@ -149,6 +152,7 @@ export async function acceptPayment(
   if (!PAYMENT_METHODS.includes(input.method as never)) return { ok: false, error: "method" };
   const purpose = String(input.purpose || "").trim();
   if (purpose.length < 2) return { ok: false, error: "purpose" };
+  const note = String(input.note || "").trim().slice(0, 500) || null;
   // Chek majburiyligi — CEO sozlamasidan (ixtiyoriy / naqd pulsizda / har doim).
   // Interfeys ham tekshiradi, bu — chetlab o'tib bo'lmaydigan server to'sig'i.
   const receiptUrl = String(input.receiptUrl || "").trim() || null;
@@ -170,12 +174,12 @@ export async function acceptPayment(
   const docNumber = `CHK-${paidAt.getFullYear()}${p2r(paidAt.getMonth() + 1)}${p2r(paidAt.getDate())}-${randomUUID().slice(0, 4).toUpperCase()}`;
 
   const payment = await prisma.payment.create({
-    data: { studentId, amount, method: input.method, purpose, status: "PAID", isManual: true, authorId: s.userId, docNumber, receiptUrl, createdAt: paidAt },
+    data: { studentId, amount, method: input.method, purpose, note, status: "PAID", isManual: true, authorId: s.userId, docNumber, receiptUrl, createdAt: paidAt },
   });
 
   await writeAudit({
     actorId: s.userId, action: "CREATE", entityType: "Payment", entityId: payment.id,
-    newValue: { amount, method: input.method, purpose, docNumber, isManual: true },
+    newValue: { amount, method: input.method, purpose, note, docNumber, isManual: true },
     reason: "To'lov qabul qilindi (chek)",
   });
 
@@ -210,6 +214,7 @@ export async function acceptPayment(
       amount,
       method: input.method,
       purpose,
+      note,
       studentName: student.fullName,
       studentPhone: student.phone,
       orgName: cfg["receipt.orgName"] || "Germaniya Live",
@@ -686,7 +691,7 @@ export async function addStudentDebt(
 /** To'lov yozuvini tahrirlash (summa, usul, maqsad, holat, sana). */
 export async function updatePaymentRecord(
   paymentId: string,
-  input: { amount?: number; method?: string; purpose?: string; status?: string; dateIso?: string | null },
+  input: { amount?: number; method?: string; purpose?: string; status?: string; dateIso?: string | null; note?: string | null },
 ): Promise<{ ok?: boolean; error?: string }> {
   const s = await requireSession();
   if (!CAN_EDIT_PAY.includes(s.role as never)) return { error: "forbidden" };
@@ -708,6 +713,7 @@ export async function updatePaymentRecord(
     data.method = input.method;
   }
   if (input.purpose !== undefined) data.purpose = String(input.purpose).trim().slice(0, 200) || null;
+  if (input.note !== undefined) data.note = String(input.note ?? "").trim().slice(0, 500) || null;
   if (input.status !== undefined) {
     if (!["PAID", "PENDING", "REFUNDED", "CANCELLED"].includes(input.status)) return { error: "status" };
     data.status = input.status;

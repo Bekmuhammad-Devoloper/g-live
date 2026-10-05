@@ -90,7 +90,7 @@ export default async function StudentProfilPage() {
       where: { studentId: student.id },
       orderBy: { createdAt: "desc" },
       take: 8,
-      select: { id: true, amount: true, method: true, status: true, purpose: true, createdAt: true },
+      select: { id: true, amount: true, method: true, status: true, purpose: true, note: true, createdAt: true },
     }),
     prisma.attendance.findMany({
       where: { studentId: student.id },
@@ -272,6 +272,7 @@ export default async function StudentProfilPage() {
                   <div className="text-[11.5px] text-slate-500">
                     {fmtDate(p.createdAt)} · {label(PAYMENT_METHOD_LABELS, p.method, session.locale)}
                   </div>
+                  {p.note && <div className="mt-0.5 text-[11.5px] italic text-slate-500">{p.note}</div>}
                 </div>
                 <div className="text-right">
                   <div className="whitespace-nowrap text-[14px] font-extrabold text-slate-900">{fmtSum(p.amount)}</div>

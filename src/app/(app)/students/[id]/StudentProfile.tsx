@@ -35,7 +35,7 @@ export interface SProfile {
   branchName: string | null; joined: string; note: string | null;
   paid: number; debt: number; attendancePct: number | null; lessonsCounted: number;
   groups: SGroup[];
-  payments: { id: string; amount: number; method: string; status: string; purpose: string | null; createdAt: string }[];
+  payments: { id: string; amount: number; method: string; status: string; purpose: string | null; note: string | null; createdAt: string }[];
   exams: { id: string; title: string; score: number | null; passScore: number; status: string; takenAt: string }[];
   attendance: { id: string; status: string; group: string; date: string }[];
   parents: { name: string; phone: string | null; relation: string | null }[];
@@ -270,7 +270,7 @@ export default function StudentProfile({
                   <Row
                     key={p.id}
                     left={<span className="font-semibold tabular-nums text-slate-800 dark:text-slate-100">{formatMoney(p.amount, locale)}</span>}
-                    sub={[p.method, p.purpose].filter(Boolean).join(" · ")}
+                    sub={[p.method, p.purpose, p.note].filter(Boolean).join(" · ")}
                     right={<Chip tone={PAY_TONE[p.status] ?? "#94a3b8"} text={p.status} />}
                     date={fmtDate(p.createdAt)}
                   />

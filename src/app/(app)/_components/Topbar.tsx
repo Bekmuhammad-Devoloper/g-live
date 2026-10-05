@@ -584,6 +584,10 @@ function QuickPaymentModal({
           <label className="mb-1 block text-xs font-semibold text-slate-600">{t("pay.docNumber")} <span className="text-red-500">*</span></label>
           <input name="docNumber" required className="input" placeholder="CHK-0003" />
         </div>
+        <div>
+          <label className="mb-1 block text-xs font-semibold text-slate-600">{T("Izoh", "Комментарий", "Comment", "Kommentar")}</label>
+          <textarea name="note" rows={2} maxLength={500} className="input" />
+        </div>
         {state.error && (
           <p className="rounded-lg bg-red-50 px-3 py-2 text-sm text-red-700">
             {state.error === "forbidden" ? t("pay.noPermission") : T("Barcha majburiy maydonlarni to'ldiring.", "Заполните все обязательные поля.", "Fill in all required fields.", "Füllen Sie alle Pflichtfelder aus.")}

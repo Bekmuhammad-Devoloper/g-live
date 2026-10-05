@@ -116,7 +116,7 @@ export default async function StudentProfilePage({ params }: { params: Promise<{
     })),
     payments: student.payments.map((p) => ({
       id: p.id, amount: p.amount, method: p.method, status: p.status,
-      purpose: p.purpose, createdAt: iso(p.createdAt)!,
+      purpose: p.purpose, note: p.note, createdAt: iso(p.createdAt)!,
     })),
     exams: student.examResults.map((r) => ({
       id: r.id, title: r.exam.title, score: r.score, passScore: r.exam.passScore,
