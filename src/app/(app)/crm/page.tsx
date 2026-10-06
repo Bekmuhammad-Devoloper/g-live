@@ -216,9 +216,11 @@ export default async function CrmPage() {
       groupInfo={groupInfo}
       archivedStudents={archivedStudents}
       branchMode={branchMode}
-      showOnlineCol
-      // ROP: "Ishda" va "Qabul qilindi" yashirin; "Daraja testi" ustuni ko'rinadi
-      hiddenCols={s.role === ROLES.ROP ? ["work", "won"] : []}
+      // ROP'da "Onlayn" ustuni yo'q — onlayn lidlar "Yangi"da turadi
+      showOnlineCol={s.role !== ROLES.ROP}
+      // ROP: "Ishda", "Qabul qilindi" va "Daraja testi" yashirin; operator: "Daraja testi" yashirin.
+      // Yashirilgan "Daraja testi"dagi lidlar bosqichi o'zgarmaydi, faqat "Yangi" ustunida ko'rinadi.
+      hiddenCols={s.role === ROLES.ROP ? ["work", "won", "test"] : s.role === ROLES.OPERATOR ? ["test"] : []}
       // Bo'sh vaqtlarni kim tahrirlaydi: rahbariyat — hammasini, administrator — o'z filialini
       slotsEditable={[ROLES.DIRECTOR, ROLES.DEPUTY_DIRECTOR].includes(s.role as never) ? "all" : s.role === ROLES.ADMIN ? (s.branchId ?? null) : null}
     />

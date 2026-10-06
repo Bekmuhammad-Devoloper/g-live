@@ -164,24 +164,24 @@ export default function LeadsWorkspace({ locale, initialLeads, managers, sources
     const c: Record<string, number> = {};
     for (const col of cols) c[col.key] = 0;
     for (const l of baseFiltered) {
-      const k = columnOfLead(l, pinnedIds, customIds, branchCfg);
+      const k = columnOfLead(l, pinnedIds, customIds, branchCfg, hiddenCols.includes("test"));
       c[k] = (c[k] ?? 0) + 1;
     }
     return c;
-  }, [baseFiltered, cols, pinnedIds, customIds, branchCfg]);
+  }, [baseFiltered, cols, pinnedIds, customIds, branchCfg, hiddenCols]);
 
   const shown = useMemo(
-    () => (activeCols.size ? baseFiltered.filter((l) => activeCols.has(columnOfLead(l, pinnedIds, customIds, branchCfg))) : baseFiltered),
-    [baseFiltered, activeCols, pinnedIds, customIds, branchCfg]
+    () => (activeCols.size ? baseFiltered.filter((l) => activeCols.has(columnOfLead(l, pinnedIds, customIds, branchCfg, hiddenCols.includes("test")))) : baseFiltered),
+    [baseFiltered, activeCols, pinnedIds, customIds, branchCfg, hiddenCols]
   );
   const shownTotals = useMemo(() => {
     const c: Record<string, number> = {};
     for (const l of shown) {
-      const k = columnOfLead(l, pinnedIds, customIds, branchCfg);
+      const k = columnOfLead(l, pinnedIds, customIds, branchCfg, hiddenCols.includes("test"));
       c[k] = (c[k] ?? 0) + 1;
     }
     return c;
-  }, [shown, pinnedIds, customIds, branchCfg]);
+  }, [shown, pinnedIds, customIds, branchCfg, hiddenCols]);
 
   // Sana bir marta parse qilinadi — saralash har solishtirishda `new Date` qilmaydi
   const tsOf = useMemo(() => {
@@ -284,7 +284,7 @@ export default function LeadsWorkspace({ locale, initialLeads, managers, sources
       startRefresh(async () => { await setLeadArchived(leadId, false); router.refresh(); });
     }
     // "Onlayn" ustuni — onlayn belgisi + Yangi bosqich; "Yangi"ga qaytarilgan onlayn lid — belgi olib tashlanadi
-    if (branchMode && (colKey === ONLINE_COL || (colKey === "new" && leads.find((l) => l.id === leadId)?.studyFormat === "ONLINE"))) {
+    if (branchMode && showOnlineCol && (colKey === ONLINE_COL || (colKey === "new" && leads.find((l) => l.id === leadId)?.studyFormat === "ONLINE"))) {
       const online = colKey === ONLINE_COL;
       setLeads((prev) => prev.map((l) => (l.id === leadId ? { ...l, studyFormat: online ? "ONLINE" : null, stage: "NEW", kanbanColumnId: null, branchSlotId: null } : l))); // optimistik
       startRefresh(async () => {
@@ -339,7 +339,7 @@ export default function LeadsWorkspace({ locale, initialLeads, managers, sources
     const target = columnDef(colKey).defaultStage;
     setLeads((prev) => prev.map((l) => (l.id === leadId ? { ...l, stage: target, kanbanColumnId: null, branchSlotId: null } : l))); // optimistik
     startRefresh(async () => { await moveLeadStage(leadId, target); router.refresh(); });
-  }, [canWrite, router, leads, enrollToGroup, initialLeads, branchColumns, locale, branchMode]);
+  }, [canWrite, router, leads, enrollToGroup, initialLeads, branchColumns, locale, branchMode, showOnlineCol]);
 
   const confirmReject = useCallback((reason: string) => {
     if (!reject) return;

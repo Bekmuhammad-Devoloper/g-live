@@ -256,6 +256,8 @@ export function columnOfLead(
   pinned: Set<string>,
   custom: Set<string> = EMPTY,
   branch: BranchModeCfg | null = null,
+  /** Filial rejimisiz doska (operator): "Daraja testi" yashirilgan — test bosqichidagilar "Yangi"da */
+  hideTest = false,
 ): string {
   // Arxiv HAMMASIDAN ustun (filial belgisidan ham) — arxivlangan lid faqat
   // "Yo'qotilgan" ichidagi arxiv bo'limida turadi. Ilgari filial belgisi birinchi
@@ -276,7 +278,7 @@ export function columnOfLead(
     if (eff === "new" && lead.studyFormat === "ONLINE" && branch.online) return ONLINE_COL;
     return eff;
   }
-  return base;
+  return hideTest && base === "test" ? "new" : base;
 }
 
 

@@ -84,7 +84,7 @@ export default function LeadsKanban({
     [locale, groupColumns, customColumns, branchColumns, branchMode, showOnlineCol, hiddenCols],
   );
 
-  const colOf = useCallback((l: VLead) => columnOfLead(l, pinnedIds, customIds, branchCfg), [pinnedIds, customIds, branchCfg]);
+  const colOf = useCallback((l: VLead) => columnOfLead(l, pinnedIds, customIds, branchCfg, hiddenCols.includes("test")), [pinnedIds, customIds, branchCfg, hiddenCols]);
 
   const byCol = useMemo(() => {
     const m: Record<string, VLead[]> = {};
