@@ -8,14 +8,14 @@ import { normalizeExtension } from "@/lib/asterisk";
 //   "glive5,glive6|glive3,glive4|"
 // Faqat faol (isActive) va SIP raqami biriktirilgan xodimlar. Onlayn/band ekanini dialplan
 // o'zi DEVICE_STATE bilan tekshiradi.
-// Faqat tunnel (loopback, nginx'siz) orqali: nginx X-Forwarded-For qo'yadi — bunday so'rov rad etiladi.
+// Faqat tunnel (loopback, nginx'siz) orqali: X-Real-IP ni faqat nginx qo'yadi (X-Forwarded-For ni Next o'zi ham qo'shadi).
 const text = (s: string, status = 200) =>
   new Response(s, { status, headers: { "Content-Type": "text/plain; charset=utf-8", "Cache-Control": "no-store" } });
 
 const TIERS = [[ROLES.OPERATOR, ROLES.MANAGER], [ROLES.ROP], [ROLES.ADMIN]] as const;
 
 export async function GET(req: Request) {
-  if (req.headers.get("x-forwarded-for")) return text("", 404);
+  if (req.headers.get("x-real-ip")) return text("", 404);
 
   const users = await prisma.user.findMany({
     where: { isActive: true, sipExtension: { not: null }, role: { in: TIERS.flat() as string[] } },
