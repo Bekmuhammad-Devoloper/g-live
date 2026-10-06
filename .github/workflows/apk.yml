@@ -37,8 +37,8 @@ jobs:
     timeout-minutes: 40
 
     env:
-      SSH_HOST: 34.179.202.164
-      SSH_USER: uzbekmen94
+      SSH_HOST: 34.41.154.237
+      SSH_USER: deploy
       REMOTE_APK_DIR: /opt/gl-edu/apk
 
     steps:
