@@ -147,7 +147,15 @@ export default function NewLeadForm({
           {state.error && (
             <p className="mt-3 rounded-lg bg-red-50 px-3 py-2 text-sm text-red-700 dark:bg-red-500/10 dark:text-red-300">
               {state.error === "duplicate"
-                ? tr(locale, { uz: "Bu telefon raqami bilan lid allaqachon mavjud (dublikat).", ru: "Лид с этим номером телефона уже существует (дубликат).", en: "A lead with this phone number already exists (duplicate).", de: "Ein Lead mit dieser Telefonnummer existiert bereits (Duplikat)." })
+                ? tr(locale, { uz: "Bu telefon raqami bilan lid allaqachon mavjud (dublikat).", ru: "Лид с этим номером телефона уже существует (дубликат).", en: "A lead with this phone number already exists (duplicate).", de: "Ein Lead mit dieser Telefonnummer existiert bereits (Duplikat)." }) +
+                  (state.dup
+                    ? " " + tr(locale, {
+                        uz: `Mavjud lid: ${state.dup.name}, filial: ${state.dup.branch ?? "—"}, bosqich: ${label(LEAD_STAGE_LABELS, state.dup.stage, locale)}.`,
+                        ru: `Существующий лид: ${state.dup.name}, филиал: ${state.dup.branch ?? "—"}, этап: ${label(LEAD_STAGE_LABELS, state.dup.stage, locale)}.`,
+                        en: `Existing lead: ${state.dup.name}, branch: ${state.dup.branch ?? "—"}, stage: ${label(LEAD_STAGE_LABELS, state.dup.stage, locale)}.`,
+                        de: `Vorhandener Lead: ${state.dup.name}, Filiale: ${state.dup.branch ?? "—"}, Phase: ${label(LEAD_STAGE_LABELS, state.dup.stage, locale)}.`,
+                      })
+                    : "")
                 : state.error === "invalid_phone"
                   ? tr(locale, { uz: "Telefon raqami noto'g'ri — masalan: +998 90 123 45 67", ru: "Неверный номер телефона — например: +998 90 123 45 67", en: "Invalid phone number — e.g. +998 90 123 45 67", de: "Ungültige Telefonnummer — z. B. +998 90 123 45 67" })
                   : state.error === "forbidden"

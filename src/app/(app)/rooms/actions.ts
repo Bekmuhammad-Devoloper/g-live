@@ -53,7 +53,23 @@ export async function saveRoom(fd: FormData): Promise<FormState> {
   if (name.length < 1) return { error: tr(s.locale, { uz: "Xona nomini kiriting", ru: "Введите название комнаты", en: "Enter the room name", de: "Raumnamen eingeben" }) };
 
   if (id) {
+    const prev = await prisma.room.findUnique({ where: { id }, select: { name: true, capacity: true, branchId: true } });
     await prisma.room.update({ where: { id }, data: { name, capacity, ...(noteProvided ? { note } : {}) } });
+    // CRM'dagi filial vaqt oraliqlari (BranchSlot) xonaga nom bo'yicha bog'langan va yaratilganda
+    // xona sig'imini nusxalab oladi. Xona o'zgarsa, shu xonaning oraliqlari ham yangilanadi:
+    // nomi doim, sig'imi esa faqat xonanikiga teng (yoki bo'sh) bo'lsa — qo'lda berilgani saqlanadi.
+    if (prev?.branchId && (prev.name !== name || prev.capacity !== capacity)) {
+      const key = prev.name.trim().toLowerCase();
+      const slots = await prisma.branchSlot.findMany({ where: { branchId: prev.branchId }, select: { id: true, room: true, capacity: true } });
+      for (const sl of slots.filter((x) => x.room.trim().toLowerCase() === key)) {
+        const followsRoom = sl.capacity === null || sl.capacity === prev.capacity;
+        await prisma.branchSlot.update({
+          where: { id: sl.id },
+          data: { room: name, ...(followsRoom ? { capacity: capacity > 0 ? capacity : null } : {}) },
+        });
+      }
+      revalidatePath("/crm");
+    }
     await writeAudit({ actorId: s.userId, action: "UPDATE", entityType: "Room", entityId: id, newValue: { name } });
   } else {
     const room = await prisma.room.create({ data: { name, capacity, note, branchId: s.branchId } });

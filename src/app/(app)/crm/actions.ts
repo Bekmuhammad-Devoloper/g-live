@@ -28,7 +28,9 @@ const schema = z.object({
   kanbanColumnId: z.string().min(1).optional(),
 });
 
-export type LeadState = { ok?: boolean; error?: string };
+/** dup — dublikat topilganda mavjud lid haqida qisqa ma'lumot. Qidiruv filial bo'yicha
+ *  cheklangani uchun lid boshqa filialda bo'lsa foydalanuvchi uni ro'yxatda ko'rmaydi. */
+export type LeadState = { ok?: boolean; error?: string; dup?: { name: string; branch: string | null; stage: string } };
 
 export async function createLead(_prev: LeadState, formData: FormData): Promise<LeadState> {
   const s = await requireSession();
@@ -80,8 +82,11 @@ export async function createLead(_prev: LeadState, formData: FormData): Promise<
   }
 
   // Dublikat telefon tekshiruvi (TZ FR-CRM-03 — ogohlantirish)
-  const dup = await prisma.lead.findFirst({ where: { phone: leadData.phone } }); // tartibga solingan raqam bo'yicha
-  if (dup) return { error: "duplicate" };
+  const dup = await prisma.lead.findFirst({
+    where: { phone: leadData.phone }, // tartibga solingan raqam bo'yicha
+    select: { fullName: true, stage: true, branch: { select: { name: true } } },
+  });
+  if (dup) return { error: "duplicate", dup: { name: dup.fullName, branch: dup.branch?.name ?? null, stage: dup.stage } };
 
   const lead = await prisma.lead.create({
     data: {
