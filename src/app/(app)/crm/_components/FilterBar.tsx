@@ -18,6 +18,10 @@ interface Props {
   managers: Opt[];
   manager: string;
   onManager: (v: string) => void;
+  /** Filial tanlovi — bo'sh bo'lsa ko'rsatilmaydi ("none" — filialsiz lidlar) */
+  branches?: Opt[];
+  branch?: string;
+  onBranch?: (v: string) => void;
   activeCols: Set<string>;
   onToggleCol: (key: string) => void;
   /** Kanbandagi ustunlar — chiplar aynan shulardan quriladi */
@@ -60,6 +64,13 @@ export default function FilterBar(p: Props) {
           <option value="">{tr(locale, { uz: "Menejer: Barchasi", ru: "Менеджер: Все", en: "Manager: All", de: "Manager: Alle" })}</option>
           {p.managers.map((m) => <option key={m.id} value={m.id}>{m.name}</option>)}
         </select>
+        {!!p.branches?.length && p.onBranch && (
+          <select value={p.branch ?? ""} onChange={(e) => p.onBranch?.(e.target.value)} className={sel}>
+            <option value="">{tr(locale, { uz: "Filial: Barchasi", ru: "Филиал: Все", en: "Branch: All", de: "Filiale: Alle" })}</option>
+            {p.branches.map((b) => <option key={b.id} value={b.id}>{b.name}</option>)}
+            <option value="none">{tr(locale, { uz: "Filialsiz", ru: "Без филиала", en: "No branch", de: "Ohne Filiale" })}</option>
+          </select>
+        )}
         <select value={p.sort} onChange={(e) => p.onSort(e.target.value)} className={sel}>
           {SORT_OPTIONS.map((o) => <option key={o.key} value={o.key}>{tr(locale, { uz: "Saralash", ru: "Сортировка", en: "Sort", de: "Sortieren" })}: {tr(locale, o.label)}</option>)}
         </select>

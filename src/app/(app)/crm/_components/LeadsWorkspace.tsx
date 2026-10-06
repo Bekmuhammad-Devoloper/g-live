@@ -69,6 +69,8 @@ export default function LeadsWorkspace({ locale, initialLeads, managers, sources
   const [search, setSearch] = useState(params.get("q") ?? "");
   const [source, setSource] = useState(params.get("source") ?? "");
   const [manager, setManager] = useState(params.get("manager") ?? "");
+  // Filial filtri ("none" — filialga biriktirilmagan lidlar). Faqat bir nechta filial ko'rinadiganlarda.
+  const [branch, setBranch] = useState(params.get("branch") ?? "");
   const [activeCols, setActiveCols] = useState<Set<string>>(new Set((params.get("cols") ?? "").split(",").filter(Boolean)));
   const [selection, setSelection] = useState<Set<string>>(new Set((params.get("selected") ?? "").split(",").filter(Boolean)));
   const [create, setCreate] = useState<{ open: boolean; stage: string; column: CustomColumn | null }>({ open: false, stage: "NEW", column: null });
@@ -121,6 +123,7 @@ export default function LeadsWorkspace({ locale, initialLeads, managers, sources
     if (search) p.set("q", search);
     if (source) p.set("source", source);
     if (manager) p.set("manager", manager);
+    if (branch) p.set("branch", branch);
     if (activeCols.size) p.set("cols", [...activeCols].join(","));
     if (selection.size) p.set("selected", [...selection].join(","));
     if (sort !== "newest") p.set("sort", sort);
@@ -130,7 +133,7 @@ export default function LeadsWorkspace({ locale, initialLeads, managers, sources
       window.history.replaceState(null, "", url);
     }
     try { localStorage.setItem("crm-view", view); } catch {}
-  }, [view, search, source, manager, activeCols, selection, sort, pathname]);
+  }, [view, search, source, manager, branch, activeCols, selection, sort, pathname]);
 
   // Filtrlash — qidiruv matni kechiktirilgan: kiritish maydoni darhol javob beradi,
   // ro'yxat esa brauzer bo'shaganda qayta hisoblanadi
@@ -149,9 +152,10 @@ export default function LeadsWorkspace({ locale, initialLeads, managers, sources
       }
       if (source && l.source !== source) return false;
       if (manager && l.managerId !== manager) return false;
+      if (branch && (branch === "none" ? !!l.branchId : l.branchId !== branch)) return false;
       return true;
     });
-  }, [leads, deferredSearch, source, manager]);
+  }, [leads, deferredSearch, source, manager, branch]);
 
   // Filtr chiplari — Kanbandagi ustunlarning AYNAN o'zi (Onlayn, filiallar,
   // guruhlar, Arxiv ham), shu sabab bitta ro'yxatdan quriladi
@@ -401,8 +405,13 @@ export default function LeadsWorkspace({ locale, initialLeads, managers, sources
   }, [del, locale, router]);
 
   const toggleCol = (key: string) => setActiveCols((prev) => { const n = new Set(prev); n.has(key) ? n.delete(key) : n.add(key); return n; });
-  const clearFilters = () => { setSearch(""); setSource(""); setManager(""); setActiveCols(new Set()); };
-  const hasFilters = !!(search || source || manager || activeCols.size);
+  const clearFilters = () => { setSearch(""); setSource(""); setManager(""); setBranch(""); setActiveCols(new Set()); };
+  const hasFilters = !!(search || source || manager || branch || activeCols.size);
+  // Filial tanlovi — doskadagi filial ustunlaridan; bittadan ko'p bo'lsagina ko'rsatiladi
+  const branchOpts = useMemo(
+    () => (branchColumns && branchColumns.length > 1 ? branchColumns.map((b) => ({ id: b.branchId, name: b.name })) : []),
+    [branchColumns],
+  );
 
   // Klaviatura yorliqlari
   useEffect(() => {
@@ -490,6 +499,7 @@ export default function LeadsWorkspace({ locale, initialLeads, managers, sources
             search={search} onSearch={setSearch}
             sources={sources} source={source} onSource={setSource}
             managers={managers} manager={manager} onManager={setManager}
+            branches={branchOpts} branch={branch} onBranch={setBranch}
             activeCols={activeCols} onToggleCol={toggleCol}
             cols={cols}
             counts={chipCounts} hasFilters={hasFilters} onClear={clearFilters}
