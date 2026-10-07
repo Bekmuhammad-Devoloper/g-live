@@ -882,11 +882,31 @@ model Payment {
   cancelledAt DateTime?
   cancelReason String?
 
+  // Promokod bilan to'langan bo'lsa: kod (o'sha paytdagi nusxa — kod keyin o'chirilsa ham tarix saqlanadi)
+  // va chegirma summasi (so'm). amount — haqiqatda olingan pul.
+  promoCode   String?
+  discount    Int      @default(0)
+
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt
 
   @@index([studentId])
   @@index([status])
+  @@index([promoCode])
+}
+
+/// Chegirma promokodi — direktor yaratadi. minCourses: o'quvchi kamida shuncha kursda (faol guruhda)
+/// o'qishi shart (masalan 2 ta kurs — 50 000, 3 ta kurs — 100 000).
+model PromoCode {
+  id          String   @id @default(cuid())
+  code        String   @unique
+  discount    Int // so'm
+  minCourses  Int?
+  note        String?
+  isActive    Boolean  @default(true)
+  createdById String?
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
 }
 
 // ─────────────────────────────────────────────────────────────

@@ -10,6 +10,7 @@ import NewPaymentForm from "./NewPaymentForm";
 import OnlinePaymentForm from "./OnlinePaymentForm";
 import CancelButton from "./CancelButton";
 import ExportButton from "./ExportButton";
+import PromoBadge, { promoText } from "../_components/PromoBadge";
 
 const statusTone: Record<string, "slate" | "green" | "red" | "amber"> = {
   PENDING: "amber",
@@ -45,6 +46,7 @@ export default async function PaymentsPage() {
     { key: "method", label: t("pay.method") },
     { key: "purpose", label: t("pay.purpose") },
     { key: "note", label: tr(s.locale, { uz: "Izoh", ru: "Комментарий", en: "Comment", de: "Kommentar" }) },
+    { key: "promo", label: tr(s.locale, { uz: "Promokod", ru: "Промокод", en: "Promo code", de: "Promo-Code" }) },
     { key: "status", label: t("common.status") },
     { key: "date", label: t("common.date") },
     { key: "author", label: t("pay.author") },
@@ -55,6 +57,7 @@ export default async function PaymentsPage() {
     method: p.method,
     purpose: p.purpose ?? "",
     note: p.note ?? "",
+    promo: promoText(p.promoCode, p.discount, s.locale),
     status: label(PAYMENT_STATUS_LABELS, p.status, s.locale),
     date: df.format(p.createdAt),
     author: p.author?.fullName ?? "",
@@ -108,6 +111,7 @@ export default async function PaymentsPage() {
               <td className="px-4 py-3 text-slate-500">
                 {p.purpose ?? "—"}
                 {p.note && <div className="mt-0.5 max-w-[260px] whitespace-pre-wrap text-xs italic text-slate-400">{p.note}</div>}
+                {p.promoCode && <div className="mt-1"><PromoBadge code={p.promoCode} discount={p.discount} locale={s.locale} /></div>}
               </td>
               <td className="px-4 py-3">
                 <div className="flex items-center gap-1.5">

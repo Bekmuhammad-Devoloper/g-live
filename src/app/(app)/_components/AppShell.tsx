@@ -120,6 +120,7 @@ const SUBMENUS: Record<string, { title: Record<Locale, string>; groups: SubGroup
         { href: "/finance/expenses", icon: "wallet", label: L("Xarajatlar", "Расходы", "Expenses", "Ausgaben") },
         { href: "/finance/salary", icon: "clipboard", label: L("Ish haqi new", "Зарплата new", "Salary new", "Gehalt") },
         { href: "/finance/debtors", icon: "alert", label: L("Qarzdorlar", "Должники", "Debtors", "Schuldner") },
+        { href: "/finance/promo-codes", icon: "tag", label: L("Promokodlar", "Промокоды", "Promo codes", "Promo-Codes") },
       ] },
     ],
   },

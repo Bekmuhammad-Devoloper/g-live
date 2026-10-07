@@ -5,6 +5,7 @@ import { cn } from "@/lib/cn";
 import { formatMoney, type Locale } from "@/lib/constants";
 import { tr } from "@/lib/tr";
 import { Icon } from "../../_components/Icon";
+import PromoBadge from "../../_components/PromoBadge";
 
 export interface VPayment {
   id: string;
@@ -17,6 +18,8 @@ export interface VPayment {
   method: string;
   amount: number;
   note: string | null;
+  promoCode: string | null;
+  discount: number;
   author: string | null;
   status: string;
 }
@@ -174,7 +177,10 @@ export default function AllPaymentsView({ payments, options, locale, defaultFrom
                     <td className="px-4 py-3 font-semibold text-slate-800 dark:text-slate-100">{formatMoney(p.amount, locale)}</td>
                     <td className="px-4 py-3 text-slate-600 dark:text-slate-300">{p.method}</td>
                     <td className="px-4 py-3 text-slate-600 dark:text-slate-300">{p.teacher ?? "—"}</td>
-                    <td className="px-4 py-3 text-slate-500">{p.note ?? "—"}</td>
+                    <td className="px-4 py-3 text-slate-500">
+                      {p.note ?? (p.promoCode ? "" : "—")}
+                      {p.promoCode && <div className={p.note ? "mt-1" : ""}><PromoBadge code={p.promoCode} discount={p.discount} locale={locale} /></div>}
+                    </td>
                     <td className="px-4 py-3 text-slate-500">{p.author ?? "—"}</td>
                   </tr>
                 ))

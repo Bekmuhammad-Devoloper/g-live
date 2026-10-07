@@ -16,6 +16,7 @@ import { branchWhere } from "@/lib/branchScope";
 import type { GroupOpt } from "../_components/GroupMover";
 import { getSetting } from "@/lib/settings";
 import { RECEIPT_MODE_KEY, parseReceiptMode, isReceiptRequired } from "@/lib/receiptMode";
+import { checkPromoForStudent, activePromoOptions } from "@/lib/promo";
 
 export type EditState = { ok?: boolean; error?: string };
 export type BulkState = { ok?: boolean; error?: string; count?: number };
@@ -28,6 +29,9 @@ export interface PayRow {
   id: string; amount: number; method: string; purpose: string | null; status: string; date: string;
   /** Kassir izohi — to'lov ko'rinadigan hamma joyda chiqadi */
   note: string | null;
+  /** Promokod (bo'lsa) va chegirma summasi */
+  promoCode: string | null;
+  discount: number;
   /** PENDING (qarz) yozuvi to'lovlar bilan qoplangan bo'lsa true — ro'yxatda "Qoplandi" */
   covered?: boolean;
 }
@@ -57,7 +61,7 @@ export async function getStudentPayments(studentId: string): Promise<{ ok: boole
     prisma.payment.findMany({
       where: { studentId },
       orderBy: { createdAt: "desc" },
-      select: { id: true, amount: true, method: true, purpose: true, status: true, createdAt: true, note: true },
+      select: { id: true, amount: true, method: true, purpose: true, status: true, createdAt: true, note: true, promoCode: true, discount: true },
     }),
     lessonsAttendedThisMonth(studentId),
     prisma.groupStudent.findFirst({ where: { studentId }, orderBy: { joinedAt: "asc" }, select: { joinedAt: true } }),
@@ -81,7 +85,7 @@ export async function getStudentPayments(studentId: string): Promise<{ ok: boole
   // to'lov avval hisoblangan oylik to'lovni, keyin qarzlarni eskisidan boshlab yopadi
   const debtInfo = await computeDebt(studentId, now);
   const coveredIds = new Set<string>();
-  let remaining = debtInfo.paid - debtInfo.accrued;
+  let remaining = debtInfo.paid + debtInfo.discount - debtInfo.accrued;
   for (const p of [...payments].filter((x) => x.status === "PENDING").sort((a, b) => a.createdAt.getTime() - b.createdAt.getTime())) {
     if (remaining >= p.amount) { coveredIds.add(p.id); remaining -= p.amount; }
     else break;
@@ -112,6 +116,7 @@ export async function getStudentPayments(studentId: string): Promise<{ ok: boole
       lastMonthApplicable,
       recent: payments.slice(0, 8).map((p) => ({
         id: p.id, amount: p.amount, method: p.method, purpose: p.purpose, status: p.status, date: p.createdAt.toISOString(), note: p.note,
+        promoCode: p.promoCode, discount: p.discount,
         ...(p.status === "PENDING" ? { covered: coveredIds.has(p.id) } : {}),
       })),
     },
@@ -126,6 +131,8 @@ export interface ReceiptData {
   method: string;
   purpose: string;
   note: string | null;
+  promoCode: string | null;
+  discount: number;
   studentName: string;
   studentPhone: string | null;
   orgName: string;
@@ -142,8 +149,8 @@ const p2r = (n: number) => String(n).padStart(2, "0");
 /** To'lovni qabul qiladi (status PAID) va chek ma'lumotlarini qaytaradi. */
 export async function acceptPayment(
   studentId: string,
-  input: { amount: number; method: string; purpose: string; receiptUrl?: string | null; paidAt?: string | null; note?: string | null },
-): Promise<{ ok: boolean; error?: string; receipt?: ReceiptData }> {
+  input: { amount: number; method: string; purpose: string; receiptUrl?: string | null; paidAt?: string | null; note?: string | null; promoCode?: string | null },
+): Promise<{ ok: boolean; error?: string; need?: number; have?: number; receipt?: ReceiptData }> {
   const s = await requireSession();
   if (!canWrite(s.role, MODULES.PAYMENTS)) return { ok: false, error: "forbidden" };
 
@@ -171,15 +178,21 @@ export async function acceptPayment(
   });
   if (!student) return { ok: false, error: "notfound" };
 
+  // Promokod: mavjud, faol va o'quvchi shart qilingan sondagi kursda o'qiydi
+  const promo = await checkPromoForStudent(input.promoCode, studentId);
+  if (!promo.ok) return { ok: false, error: promo.error, need: promo.need, have: promo.have };
+  const promoCode = promo.code || null;
+  const discount = promo.discount;
+
   const docNumber = `CHK-${paidAt.getFullYear()}${p2r(paidAt.getMonth() + 1)}${p2r(paidAt.getDate())}-${randomUUID().slice(0, 4).toUpperCase()}`;
 
   const payment = await prisma.payment.create({
-    data: { studentId, amount, method: input.method, purpose, note, status: "PAID", isManual: true, authorId: s.userId, docNumber, receiptUrl, createdAt: paidAt },
+    data: { studentId, amount, method: input.method, purpose, note, promoCode, discount, status: "PAID", isManual: true, authorId: s.userId, docNumber, receiptUrl, createdAt: paidAt },
   });
 
   await writeAudit({
     actorId: s.userId, action: "CREATE", entityType: "Payment", entityId: payment.id,
-    newValue: { amount, method: input.method, purpose, note, docNumber, isManual: true },
+    newValue: { amount, method: input.method, purpose, note, promoCode, discount, docNumber, isManual: true },
     reason: "To'lov qabul qilindi (chek)",
   });
 
@@ -188,12 +201,13 @@ export async function acceptPayment(
   if (full) {
     // Oluvchining tilida (notify tilni o'zi tanlaydi)
     const sum = amount.toLocaleString("ru-RU");
+    const promoTxt = promoCode ? { uz: ` Promokod ${promoCode}: −${discount.toLocaleString("ru-RU")} so'm.`, ru: ` Промокод ${promoCode}: −${discount.toLocaleString("ru-RU")} сум.`, en: ` Promo ${promoCode}: −${discount.toLocaleString("ru-RU")} UZS.`, de: ` Promo ${promoCode}: −${discount.toLocaleString("ru-RU")} UZS.` } : { uz: "", ru: "", en: "", de: "" };
     const title = { uz: "To'lov qabul qilindi", ru: "Платёж принят", en: "Payment received", de: "Zahlung erhalten" };
     const body = {
-      uz: `To'lov qabul qilindi: ${sum} so'm. Chek № ${docNumber}.`,
-      ru: `Платёж принят: ${sum} сум. Чек № ${docNumber}.`,
-      en: `Payment received: ${sum} UZS. Receipt No. ${docNumber}.`,
-      de: `Zahlung erhalten: ${sum} UZS. Beleg Nr. ${docNumber}.`,
+      uz: `To'lov qabul qilindi: ${sum} so'm.${promoTxt.uz} Chek № ${docNumber}.`,
+      ru: `Платёж принят: ${sum} сум.${promoTxt.ru} Чек № ${docNumber}.`,
+      en: `Payment received: ${sum} UZS.${promoTxt.en} Receipt No. ${docNumber}.`,
+      de: `Zahlung erhalten: ${sum} UZS.${promoTxt.de} Beleg Nr. ${docNumber}.`,
     };
     if (full.userId) await notify({ userId: full.userId, title, body, event: "payment_success" });
     for (const link of full.parents) if (link.parent.userId) await notify({ userId: link.parent.userId, title, body, event: "payment_success" });
@@ -215,6 +229,8 @@ export async function acceptPayment(
       method: input.method,
       purpose,
       note,
+      promoCode,
+      discount,
       studentName: student.fullName,
       studentPhone: student.phone,
       orgName: cfg["receipt.orgName"] || "Germaniya Live",
@@ -772,4 +788,11 @@ export async function deletePaymentRecord(paymentId: string, reason = ""): Promi
   revalidatePath("/finance");
   revalidatePath("/finance/debtors");
   return { ok: true };
+}
+
+/** To'lov formasidagi promokod tanlovi — faqat faol kodlar (to'lov qabul qila oladiganlar uchun) */
+export async function listPromoOptions(): Promise<{ code: string; discount: number; minCourses: number | null; note: string | null }[]> {
+  const s = await requireSession();
+  if (!canWrite(s.role, MODULES.PAYMENTS)) return [];
+  return activePromoOptions();
 }

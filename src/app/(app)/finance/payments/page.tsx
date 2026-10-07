@@ -57,6 +57,8 @@ export default async function AllPaymentsPage() {
       method: p.method,
       amount: p.amount,
       note: p.note ?? null,
+      promoCode: p.promoCode ?? null,
+      discount: p.discount,
       author: p.author?.fullName ?? null,
       status: p.status,
     };

@@ -11,8 +11,8 @@ import { getSetting } from "./settings";
 //   • hech qaysi guruhda bo'lmasa — markazning umumiy narxi (sozlamalardan).
 // Qo'shilgan/ro'yxatga olingan oyning O'ZI to'liq hisoblanadi.
 //
-//   qarz   = max(0, hisoblangan + qo'lda kiritilgan qarz (PENDING) − to'langan)
-//   balans = max(0, to'langan − hisoblangan − qo'lda qarz)  — oldindan to'langan pul
+//   qarz   = max(0, hisoblangan + qo'lda kiritilgan qarz (PENDING) − to'langan − promokod chegirmasi)
+//   balans = max(0, to'langan + chegirma − hisoblangan − qo'lda qarz)  — oldindan to'langan pul
 //
 // To'lov AVVAL hisoblangan oylik to'lovni, keyin qo'lda qarzni yopadi. Ilgari
 // qo'lda qarz tashqaridan qo'shilardi (max(0, hisoblangan − to'langan) + qarz) —
@@ -38,6 +38,8 @@ export interface StudentDebt {
   paid: number;
   /** Qo'lda kiritilgan qarz (PENDING to'lovlar) */
   manual: number;
+  /** Promokod chegirmalari (PAID to'lovlardagi discount) — majburiyatni kamaytiradi, pul emas */
+  discount: number;
   /** Umumiy qarz — ro'yxatlarda shu ko'rsatiladi */
   debt: number;
   /** Balans — majburiyatlardan ortiqcha to'langan (oldindan to'lov) */
@@ -48,7 +50,7 @@ export interface StudentDebt {
   since: Date | null;
 }
 
-const EMPTY: StudentDebt = { accrued: 0, paid: 0, manual: 0, debt: 0, credit: 0, months: 0, since: null };
+const EMPTY: StudentDebt = { accrued: 0, paid: 0, manual: 0, discount: 0, debt: 0, credit: 0, months: 0, since: null };
 
 /** Sanani "oy indeksi"ga aylantiradi (yil*12 + oy) — oylarni solishtirish uchun. */
 const monthIndex = (d: Date) => d.getFullYear() * 12 + d.getMonth();
@@ -81,7 +83,7 @@ export async function computeDebts(studentIds: string[], now = new Date()): Prom
     }),
     prisma.payment.findMany({
       where: { studentId: { in: studentIds }, status: { in: ["PAID", "PENDING"] } },
-      select: { studentId: true, amount: true, status: true },
+      select: { studentId: true, amount: true, status: true, discount: true },
     }),
     getDefaultMonthlyFee(),
   ]);
@@ -128,13 +130,14 @@ export async function computeDebts(studentIds: string[], now = new Date()): Prom
   for (const p of payments) {
     const cur = out.get(p.studentId);
     if (!cur) continue;
-    if (p.status === "PAID") cur.paid += p.amount;
+    if (p.status === "PAID") { cur.paid += p.amount; cur.discount += p.discount; }
     else cur.manual += p.amount;
   }
 
   for (const v of out.values()) {
-    v.debt = Math.max(0, v.accrued + v.manual - v.paid);
-    v.credit = Math.max(0, v.paid - v.accrued - v.manual);
+    // Promokod chegirmasi to'langan pul kabi majburiyatni yopadi
+    v.debt = Math.max(0, v.accrued + v.manual - v.paid - v.discount);
+    v.credit = Math.max(0, v.paid + v.discount - v.accrued - v.manual);
   }
   return out;
 }

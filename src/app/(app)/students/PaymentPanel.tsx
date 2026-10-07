@@ -6,6 +6,8 @@ import { cn } from "@/lib/cn";
 import { PAYMENT_STATUS_LABELS, PAYMENT_METHODS, PAYMENT_METHOD_LABELS, label, formatMoney, type Locale } from "@/lib/constants";
 import { tr } from "@/lib/tr";
 import { isReceiptRequired, type ReceiptMode } from "@/lib/receiptMode";
+import PromoSelect, { promoErrorText } from "../_components/PromoSelect";
+import PromoBadge from "../_components/PromoBadge";
 import { getStudentPayments, acceptPayment, addStudentDebt, updatePaymentRecord, deletePaymentRecord, type StudentPayments, type MonthPay, type PayRow, type ReceiptData } from "./actions";
 import { Icon } from "../_components/Icon";
 import MoneyInput from "../_components/MoneyInput";
@@ -309,6 +311,7 @@ export function PaymentRow({ p, locale, canEdit, onChanged }: {
           <div className="text-xs font-semibold tabular-nums text-slate-700 dark:text-slate-200">{formatMoney(p.amount, locale)}</div>
           <div className="truncate text-[11px] text-slate-400">{fmtDate(p.date)} · {p.method}{p.purpose ? ` · ${p.purpose}` : ""}</div>
           {p.note && <div className="mt-0.5 whitespace-pre-wrap break-words text-[11px] italic text-slate-500 dark:text-slate-400">{p.note}</div>}
+          {p.promoCode && <PromoBadge code={p.promoCode} discount={p.discount} locale={locale} className="mt-1" />}
         </div>
         <div className="flex shrink-0 items-center gap-1.5">
           <span className="rounded-full px-2 py-0.5 text-[10px] font-semibold" style={{ color: ps.fg, background: ps.bg }}>
@@ -407,6 +410,8 @@ export function PayAcceptForm({ studentId, defaultPurpose, cashierName, locale, 
   const fileRef = useRef<HTMLInputElement>(null);
   // Kassir izohi — chekda va to'lov ro'yxatlarida ko'rinadi
   const [note, setNote] = useState("");
+  // Promokod (chegirma) — to'lov ko'rinadigan hamma joyda ko'rsatiladi
+  const [promo, setPromo] = useState("");
 
   const setAmount = (v: string) => {
     const digits = v.replace(/\D/g, "");
@@ -436,8 +441,9 @@ export function PayAcceptForm({ studentId, defaultPurpose, cashierName, locale, 
       return;
     }
     startBusy(async () => {
-      const r = await acceptPayment(studentId, { amount, method, purpose: defaultPurpose, receiptUrl: receiptUrl || null, paidAt: new Date(paidAt).toISOString(), note: note.trim() || null });
+      const r = await acceptPayment(studentId, { amount, method, purpose: defaultPurpose, receiptUrl: receiptUrl || null, paidAt: new Date(paidAt).toISOString(), note: note.trim() || null, promoCode: promo || null });
       if (r.ok && r.receipt) onDone(r.receipt);
+      else if (promoErrorText(locale, r.error, r.need, r.have)) setErr(promoErrorText(locale, r.error, r.need, r.have));
       else if (r.error === "receipt_required") setErr(tr(locale, { uz: "Karta to'lovi uchun chek yuklang", ru: "Загрузите чек", en: "Upload receipt", de: "Beleg hochladen" }));
       else setErr(tr(locale, { uz: "Xatolik yuz berdi", ru: "Произошла ошибка", en: "An error occurred", de: "Ein Fehler ist aufgetreten" }));
     });
@@ -463,6 +469,9 @@ export function PayAcceptForm({ studentId, defaultPurpose, cashierName, locale, 
         <label className="mb-1 block text-[11px] font-semibold text-slate-500">{tr(locale, { uz: "Summa (so'm)", ru: "Сумма (сум)", en: "Amount (sum)", de: "Betrag (UZS)" })}</label>
         <input inputMode="numeric" value={amountStr} onChange={(e) => setAmount(e.target.value)} placeholder="500 000" className={cn(fld, "font-semibold tabular-nums")} autoFocus />
       </div>
+
+      {/* Promokod */}
+      <PromoSelect locale={locale} value={promo} onChange={setPromo} className={fld} />
 
       {/* Vaqt */}
       <div>
@@ -592,6 +601,7 @@ export function ReceiptModal({ receipt: r, locale, onClose }: { receipt: Receipt
               <div className={row}><span className="text-slate-400">{tr(locale, { uz: "Maqsad", ru: "Назначение", en: "Purpose", de: "Zweck" })}</span><span className="text-right text-slate-600">{r.purpose}</span></div>
               <div className={row}><span className="text-slate-400">{tr(locale, { uz: "Usul", ru: "Способ", en: "Method", de: "Methode" })}</span><span className="text-right text-slate-600">{methodLabel ? tr(locale, methodLabel.l) : r.method}</span></div>
               <div className={row}><span className="text-slate-400">{tr(locale, { uz: "Kassir", ru: "Кассир", en: "Cashier", de: "Kassierer" })}</span><span className="text-right text-slate-600">{r.cashier}</span></div>
+              {r.promoCode && <div className={row}><span className="text-slate-400">{tr(locale, { uz: "Promokod", ru: "Промокод", en: "Promo code", de: "Promo-Code" })}</span><span className="text-right font-semibold text-emerald-700">{r.promoCode} (−{r.discount.toLocaleString("ru-RU").replace(/,/g, " ")})</span></div>}
               {r.note && <div className={row}><span className="text-slate-400">{tr(locale, { uz: "Izoh", ru: "Комментарий", en: "Comment", de: "Kommentar" })}</span><span className="max-w-[65%] whitespace-pre-wrap break-words text-right text-slate-600">{r.note}</span></div>}
             </div>
 

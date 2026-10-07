@@ -9,6 +9,7 @@ import { canWrite, MODULES } from "@/lib/rbac";
 import { writeAudit } from "@/lib/audit";
 import { notify } from "@/lib/notify";
 import { formatMoney, PAYMENT_METHODS, MAX_MONEY } from "@/lib/constants";
+import { checkPromoForStudent } from "@/lib/promo";
 
 const schema = z.object({
   studentId: z.string().min(1),
@@ -19,7 +20,7 @@ const schema = z.object({
   note: z.string().optional(),
 });
 
-export type PayState = { ok?: boolean; error?: string };
+export type PayState = { ok?: boolean; error?: string; need?: number; have?: number };
 
 // Qo'lda to'lov kiritish — faqat MANAGER va DEPUTY_DIRECTOR (TZ FR-PAY-02)
 export async function createManualPayment(_prev: PayState, formData: FormData): Promise<PayState> {
@@ -39,9 +40,15 @@ export async function createManualPayment(_prev: PayState, formData: FormData): 
   });
   if (!parsed.success) return { error: "invalid" };
 
+  // Promokod (ixtiyoriy): faol va o'quvchi shart qilingan sondagi kursda o'qishi kerak
+  const promo = await checkPromoForStudent(formData.get("promoCode"), parsed.data.studentId);
+  if (!promo.ok) return { error: promo.error, need: promo.need, have: promo.have };
+
   const payment = await prisma.payment.create({
     data: {
       ...parsed.data,
+      promoCode: promo.code || null,
+      discount: promo.discount,
       status: "PAID",
       isManual: true,
       authorId: s.userId,
@@ -59,6 +66,8 @@ export async function createManualPayment(_prev: PayState, formData: FormData): 
       method: payment.method,
       isManual: true,
       docNumber: payment.docNumber,
+      promoCode: payment.promoCode,
+      discount: payment.discount,
     },
     reason: "Qo'lda to'lov kiritildi",
   });
