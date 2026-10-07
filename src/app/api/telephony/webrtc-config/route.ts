@@ -9,14 +9,15 @@ import { webrtcConfigFor } from "@/lib/asterisk";
 // XAVFSIZLIK: sessiya majburiy, tez-tez so'rovlar cheklangan (parol qaytaradi).
 const ALLOWED: string[] = [ROLES.OPERATOR, ROLES.ROP, ROLES.MANAGER, ROLES.DEPUTY_DIRECTOR, ROLES.DIRECTOR, ROLES.ADMIN];
 
-// Oddiy xotiradagi rate-limit (5/daqiqa har foydalanuvchi)
+// Oddiy xotiradagi rate-limit (30/daqiqa har foydalanuvchi). Bir xodimda bir nechta oyna ochiq
+// bo'lishi va har uzilishda konfig qayta so'ralishi mumkin — 5 ta juda kam edi (softfon 429 olib to'xtardi).
 const hits = new Map<string, number[]>();
 function limited(userId: string): boolean {
   const now = Date.now();
   const arr = (hits.get(userId) ?? []).filter((t) => now - t < 60_000);
   arr.push(now);
   hits.set(userId, arr);
-  return arr.length > 5;
+  return arr.length > 30;
 }
 
 export async function GET() {

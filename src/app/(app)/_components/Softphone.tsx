@@ -305,8 +305,18 @@ export default function Softphone({ locale, canConfigure = false }: { locale: Lo
     let cancelled = false;
     (async () => {
       try {
-        const res = await fetch("/api/telephony/webrtc-config");
-        if (!res.ok) { setStatus("disabled"); return; }
+        const res = await fetch("/api/telephony/webrtc-config", { cache: "no-store" });
+        if (!res.ok) {
+          // Vaqtinchalik xato (tezlik cheklovi, server qayta ishga tushmoqda) — "sozlanmagan" deb
+          // qotib qolmaydi: biroz kutib qayta so'raydi. Raqam/parol yo'q (400/403) — haqiqiy sozlanmaganlik.
+          if (res.status === 429 || res.status >= 500) {
+            setStatus("connecting");
+            setTimeout(() => { if (!cancelled) setUaEpoch((n) => n + 1); }, 15_000);
+            return;
+          }
+          setStatus("disabled");
+          return;
+        }
         const cfg = await res.json();
         setExt(cfg.extension || "");
         const wsUrl = location.protocol === "https:" ? cfg.wssUrl : (cfg.wsUrl || cfg.wssUrl);
