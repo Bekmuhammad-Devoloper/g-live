@@ -220,12 +220,31 @@ export async function createStudentInGroup(_prev: FormState, formData: FormData)
   const group = await prisma.group.findUnique({ where: { id: parsed.data.groupId } });
   if (!group) return { error: "invalid" };
 
-  // Telefon takrorlanmasin: raqamlar bo'yicha (format farqidan qat'i nazar) tekshiramiz
+  // Telefon takrorlanmasin: raqamlar bo'yicha (format farqidan qat'i nazar) tekshiramiz.
+  // Shu raqamli o'quvchi bor bo'lsa — yangisi yaratilmaydi, MAVJUD o'quvchi guruhga biriktiriladi
+  // (masalan avval boshqa guruhda o'qigan yoki guruhdan chiqarilgan o'quvchi qaytsa).
   const phone = parsed.data.phone?.trim() || null;
   const digits = phone ? phone.replace(/\D/g, "") : "";
   if (digits.length >= 7) {
-    const withPhone = await prisma.student.findMany({ where: { phone: { not: null } }, select: { id: true, phone: true } });
-    if (withPhone.some((o) => (o.phone ?? "").replace(/\D/g, "") === digits)) return { error: "phone_exists" };
+    const withPhone = await prisma.student.findMany({ where: { phone: { not: null } }, select: { id: true, phone: true, fullName: true } });
+    const existing = withPhone.find((o) => (o.phone ?? "").replace(/\D/g, "") === digits);
+    if (existing) {
+      const link = await prisma.groupStudent.findUnique({ where: { groupId_studentId: { groupId: group.id, studentId: existing.id } } });
+      if (link?.isActive && !link.leftAt) return { error: "already_in_group", detail: existing.fullName };
+      if (link) {
+        // Avval shu guruhda bo'lgan — qayta faollashtiriladi, to'lov hisobi qaytgan kundan boshlanadi
+        await prisma.groupStudent.update({ where: { id: link.id }, data: { isActive: true, leftAt: null, joinedAt: new Date() } });
+      } else {
+        await prisma.groupStudent.create({ data: { groupId: group.id, studentId: existing.id } });
+      }
+      const st = await prisma.student.findUnique({ where: { id: existing.id }, select: { currentLevel: true } });
+      if (group.levelCode) await recordLevelUp(existing.id, st?.currentLevel, group.levelCode);
+      await prisma.student.update({ where: { id: existing.id }, data: { eduStatus: "ACTIVE", ...(group.levelCode ? { currentLevel: group.levelCode } : {}) } });
+      await writeAudit({ actorId: s.userId, action: "CREATE", entityType: "GroupStudent", entityId: group.id, newValue: { groupId: group.id, studentId: existing.id, existingStudent: true } });
+      revalidatePath(`/groups/${group.id}`);
+      revalidatePath("/students");
+      return { ok: true, detail: `existing:${existing.fullName}` };
+    }
   }
 
   const student = await prisma.student.create({

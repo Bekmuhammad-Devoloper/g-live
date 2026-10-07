@@ -81,9 +81,16 @@ export function CreateStudentForm({ groupId, locale }: { groupId: string; locale
         <input type="hidden" name="phone" value={phone ? "+998 " + phone : ""} />
       </div>
       <button type="submit" disabled={pending} className={btn}>{pending ? "..." : tr(locale, { uz: "+ Qo'shish", ru: "+ Добавить", en: "+ Add", de: "+ Hinzufügen" })}</button>
+      {state.ok && state.detail?.startsWith("existing:") && (
+        <span className="w-full text-xs text-emerald-600">
+          {tr(locale, { uz: `Bu raqamli o'quvchi bazada bor edi — "${state.detail.slice(9)}" guruhga biriktirildi.`, ru: `Ученик с этим номером уже был в базе — «${state.detail.slice(9)}» добавлен в группу.`, en: `A student with this phone already existed — "${state.detail.slice(9)}" was added to the group.`, de: `Ein Schüler mit dieser Nummer existierte bereits — „${state.detail.slice(9)}" wurde zur Gruppe hinzugefügt.` })}
+        </span>
+      )}
       {state.error && (
         <span className="w-full text-xs text-red-600">
-          {state.error === "phone_exists"
+          {state.error === "already_in_group"
+            ? tr(locale, { uz: `"${state.detail ?? ""}" allaqachon shu guruhda.`, ru: `«${state.detail ?? ""}» уже в этой группе.`, en: `"${state.detail ?? ""}" is already in this group.`, de: `„${state.detail ?? ""}" ist bereits in dieser Gruppe.` })
+            : state.error === "phone_exists"
             ? tr(locale, { uz: "Bu telefon raqamli o'quvchi allaqachon mavjud — \"Mavjud o'quvchini biriktirish\" dan foydalaning.", ru: "Ученик с этим номером уже существует — используйте «Привязать существующего».", en: "A student with this phone already exists — use \"Enroll existing\".", de: "Ein Schüler mit dieser Telefonnummer existiert bereits — verwenden Sie \"Vorhandenen Schüler einschreiben\"." })
             : tr(locale, { uz: "Xatolik", ru: "Ошибка", en: "Error", de: "Fehler" })}
         </span>
