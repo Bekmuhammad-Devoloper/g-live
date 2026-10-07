@@ -149,7 +149,7 @@ const p2r = (n: number) => String(n).padStart(2, "0");
 /** To'lovni qabul qiladi (status PAID) va chek ma'lumotlarini qaytaradi. */
 export async function acceptPayment(
   studentId: string,
-  input: { amount: number; method: string; purpose: string; receiptUrl?: string | null; paidAt?: string | null; note?: string | null; promoCode?: string | null },
+  input: { amount: number; method: string; purpose: string; receiptUrl?: string | null; paidAt?: string | null; note?: string | null; promoCode?: string | null; promoForce?: boolean },
 ): Promise<{ ok: boolean; error?: string; need?: number; have?: number; receipt?: ReceiptData }> {
   const s = await requireSession();
   if (!canWrite(s.role, MODULES.PAYMENTS)) return { ok: false, error: "forbidden" };
@@ -179,7 +179,7 @@ export async function acceptPayment(
   if (!student) return { ok: false, error: "notfound" };
 
   // Promokod: mavjud, faol va o'quvchi shart qilingan sondagi kursda o'qiydi
-  const promo = await checkPromoForStudent(input.promoCode, studentId);
+  const promo = await checkPromoForStudent(input.promoCode, studentId, { force: !!input.promoForce });
   if (!promo.ok) return { ok: false, error: promo.error, need: promo.need, have: promo.have };
   const promoCode = promo.code || null;
   const discount = promo.discount;
@@ -192,7 +192,7 @@ export async function acceptPayment(
 
   await writeAudit({
     actorId: s.userId, action: "CREATE", entityType: "Payment", entityId: payment.id,
-    newValue: { amount, method: input.method, purpose, note, promoCode, discount, docNumber, isManual: true },
+    newValue: { amount, method: input.method, purpose, note, promoCode, discount, docNumber, isManual: true, ...(promoCode && input.promoForce ? { promoConditionOverridden: true } : {}) },
     reason: "To'lov qabul qilindi (chek)",
   });
 

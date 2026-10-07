@@ -11,7 +11,7 @@ import PromoBadge from "../_components/PromoBadge";
 import { getStudentPayments, acceptPayment, addStudentDebt, updatePaymentRecord, deletePaymentRecord, type StudentPayments, type MonthPay, type PayRow, type ReceiptData } from "./actions";
 import { Icon } from "../_components/Icon";
 import MoneyInput from "../_components/MoneyInput";
-import { promptDialog } from "../_components/dialogs";
+import { confirmDialog, promptDialog } from "../_components/dialogs";
 
 // ISO sana → <input type="datetime-local"> qiymati (mahalliy vaqt)
 function toLocalInput(iso: string | Date): string {
@@ -441,7 +441,15 @@ export function PayAcceptForm({ studentId, defaultPurpose, cashierName, locale, 
       return;
     }
     startBusy(async () => {
-      const r = await acceptPayment(studentId, { amount, method, purpose: defaultPurpose, receiptUrl: receiptUrl || null, paidAt: new Date(paidAt).toISOString(), note: note.trim() || null, promoCode: promo || null });
+      const payload = { amount, method, purpose: defaultPurpose, receiptUrl: receiptUrl || null, paidAt: new Date(paidAt).toISOString(), note: note.trim() || null, promoCode: promo || null };
+      let r = await acceptPayment(studentId, payload);
+      // Kurs soni sharti bajarilmagan — kassirdan tasdiq so'raymiz, tasdiqlasa baribir qo'llanadi
+      if (r.error === "promo_courses" && await confirmDialog({
+        title: tr(locale, { uz: "Promokod sharti bajarilmagan", ru: "Условие промокода не выполнено", en: "Promo condition not met", de: "Promo-Bedingung nicht erfüllt" }),
+        message: (promoErrorText(locale, r.error, r.need, r.have) ?? "") + " " + tr(locale, { uz: "Baribir qo'llansinmi?", ru: "Всё равно применить?", en: "Apply anyway?", de: "Trotzdem anwenden?" }),
+      })) {
+        r = await acceptPayment(studentId, { ...payload, promoForce: true });
+      }
       if (r.ok && r.receipt) onDone(r.receipt);
       else if (promoErrorText(locale, r.error, r.need, r.have)) setErr(promoErrorText(locale, r.error, r.need, r.have));
       else if (r.error === "receipt_required") setErr(tr(locale, { uz: "Karta to'lovi uchun chek yuklang", ru: "Загрузите чек", en: "Upload receipt", de: "Beleg hochladen" }));

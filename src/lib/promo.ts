@@ -19,13 +19,14 @@ export type PromoCheck =
  * To'lovga promokod qo'llash mumkinmi. Bo'sh kod — promokodsiz to'lov (ok, chegirma 0).
  * Shart: kod mavjud, faol va o'quvchi kamida `minCourses` ta kursda o'qiydi.
  */
-export async function checkPromoForStudent(rawCode: unknown, studentId: string): Promise<PromoCheck> {
+export async function checkPromoForStudent(rawCode: unknown, studentId: string, opts: { force?: boolean } = {}): Promise<PromoCheck> {
   const code = normalizePromo(rawCode);
   if (!code) return { ok: true, code: "", discount: 0 };
   const promo = await prisma.promoCode.findUnique({ where: { code } });
   if (!promo) return { ok: false, error: "promo_not_found" };
   if (!promo.isActive) return { ok: false, error: "promo_inactive" };
-  if (promo.minCourses && promo.minCourses > 1) {
+  // force — kassir ogohlantirishni ko'rib tasdiqlagan (o'quvchi boshqa kursda CRM'da hali guruhga qo'shilmagan bo'lishi mumkin)
+  if (promo.minCourses && promo.minCourses > 1 && !opts.force) {
     const have = await activeCourseCount(studentId);
     if (have < promo.minCourses) return { ok: false, error: "promo_courses", need: promo.minCourses, have };
   }

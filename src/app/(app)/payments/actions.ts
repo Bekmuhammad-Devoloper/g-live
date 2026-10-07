@@ -41,7 +41,8 @@ export async function createManualPayment(_prev: PayState, formData: FormData): 
   if (!parsed.success) return { error: "invalid" };
 
   // Promokod (ixtiyoriy): faol va o'quvchi shart qilingan sondagi kursda o'qishi kerak
-  const promo = await checkPromoForStudent(formData.get("promoCode"), parsed.data.studentId);
+  const promoForce = formData.get("promoForce") === "1";
+  const promo = await checkPromoForStudent(formData.get("promoCode"), parsed.data.studentId, { force: promoForce });
   if (!promo.ok) return { error: promo.error, need: promo.need, have: promo.have };
 
   const payment = await prisma.payment.create({
@@ -68,6 +69,7 @@ export async function createManualPayment(_prev: PayState, formData: FormData): 
       docNumber: payment.docNumber,
       promoCode: payment.promoCode,
       discount: payment.discount,
+      ...(payment.promoCode && promoForce ? { promoConditionOverridden: true } : {}),
     },
     reason: "Qo'lda to'lov kiritildi",
   });

@@ -590,6 +590,12 @@ function QuickPaymentModal({
           <textarea name="note" rows={2} maxLength={500} className="input" />
         </div>
         <PromoSelect locale={locale} name="promoCode" className="input" />
+        {state.error === "promo_courses" && (
+          <label className="flex items-start gap-2 rounded-lg bg-amber-50 px-3 py-2 text-xs text-amber-800 dark:bg-amber-500/10 dark:text-amber-300">
+            <input type="checkbox" name="promoForce" value="1" className="mt-0.5" />
+            {T("Shart bajarilmagan bo'lsa ham promokodni qo'llash", "Применить промокод, несмотря на условие", "Apply the promo code despite the condition", "Promo-Code trotz Bedingung anwenden")}
+          </label>
+        )}
         {state.error && (
           <p className="rounded-lg bg-red-50 px-3 py-2 text-sm text-red-700">
             {state.error === "forbidden" ? t("pay.noPermission") : promoErrorText(locale, state.error, state.need, state.have) ?? T("Barcha majburiy maydonlarni to'ldiring.", "Заполните все обязательные поля.", "Fill in all required fields.", "Füllen Sie alle Pflichtfelder aus.")}
