@@ -25,7 +25,7 @@ export default async function TeacherDashboard({ userId, locale }: { userId: str
 
   const [groups, user, monthLessons, curSalary] = await Promise.all([
     prisma.group.findMany({
-      where: { teacherId: userId, status: { not: "CANCELLED" } },
+      where: { teacherId: userId, status: "ACTIVE" }, // nofaol qilingan guruh o'qituvchi panelida ko'rinmaydi
       include: { program: { select: { name: true } }, _count: { select: { students: true } } },
       orderBy: { name: "asc" },
     }),

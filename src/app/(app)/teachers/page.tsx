@@ -34,7 +34,8 @@ export default async function TeachersPage() {
         id: true, fullName: true, phone: true, email: true, imageUrl: true,
         isActive: true, gender: true, fiksa: true, kpiBonus: true,
         branch: { select: { name: true } },
-        teacherGroups: { select: { id: true, name: true, color: true, _count: { select: { students: true, lessons: true } } } },
+        // Faqat faol guruhlar — nofaol qilingan (PLANNED/FINISHED/CANCELLED) profilda ko'rinmaydi
+        teacherGroups: { where: { status: "ACTIVE" }, select: { id: true, name: true, color: true, _count: { select: { students: true, lessons: true } } } },
         salaries: { select: { year: true, month: true, fiksa: true, bonus: true, penalty: true, kpi: true, closed: true }, orderBy: [{ year: "desc" }, { month: "desc" }] },
       },
     }),

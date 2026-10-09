@@ -137,7 +137,7 @@ export async function getStaffDetail(userId: string): Promise<{ ok: boolean; dat
         gender: true, birthDate: true, fiksa: true, kpiBonus: true, plainPassword: true, branchId: true,
         branch: { select: { name: true } },
         branches: { select: { branchId: true, branch: { select: { name: true } } } },
-        teacherGroups: { where: { status: { not: "CANCELLED" } }, select: { name: true, weekdays: true } },
+        teacherGroups: { where: { status: "ACTIVE" }, select: { name: true, weekdays: true } },
         salaries: { where: { year: now.getFullYear(), month: now.getMonth() + 1 }, take: 1 },
       },
     }),

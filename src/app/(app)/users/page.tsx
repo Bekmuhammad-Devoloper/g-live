@@ -27,7 +27,7 @@ export default async function UsersPage() {
       branch: { select: { name: true } },
       branches: { select: { branch: { select: { name: true } } } },
       teacherGroups: {
-        where: branchWhere(s), // faol filial doirasida
+        where: { AND: [branchWhere(s), { status: "ACTIVE" }] }, // faol filial doirasida, faqat faol guruhlar
         select: { id: true, name: true, program: { select: { name: true } }, _count: { select: { students: true } } },
       },
     },
