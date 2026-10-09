@@ -325,3 +325,86 @@ export async function unlockAttendance(
   revalidatePath(`/groups/${groupId}`);
   return { ok: true, untilLabel: dmOf(expiresAt) };
 }
+
+// ─── Oylik jurnal (Modme uslubi): o'quvchilar × oyning dars sanalari ───
+export interface JournalDay {
+  date: string; // yyyy-mm-dd
+  future: boolean;
+  today: boolean;
+  closed: boolean;
+  editable: boolean;
+  unlockedUntilLabel: string | null;
+  closesAtLabel: string;
+}
+export interface AttendanceJournal {
+  days: JournalDay[];
+  /** marks[date][studentId] = PRESENT | ABSENT | LATE | EXCUSED */
+  marks: Record<string, Record<string, string>>;
+  /** studentId → guruhga qo'shilgan sana (yyyy-mm-dd) — undan oldingi kunlar belgilanmaydi */
+  joined: Record<string, string>;
+  canUnlock: boolean;
+}
+
+const isoOf = (d: Date) => `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`;
+
+/**
+ * Bir oylik davomat jurnali. Sanalar — guruhning rejadagi dars kunlari (hafta kunlari + oyiga
+ * darslar soni chegarasi + guruh davri) va shu oyda mavjud dars yozuvlari. Har bir kun uchun
+ * tahrirlash qoidasi kunlik ko'rinish (getGroupAttendance) bilan bir xil; yopilgan kunlarda
+ * belgilanmaganlar avtomatik "yo'q" qilinadi (MATERIALIZE_MAX_AGE_DAYS chegarasi ichida).
+ */
+export async function getAttendanceJournal(groupId: string, year: number, month0: number): Promise<{ ok: boolean; data?: AttendanceJournal }> {
+  const s = await canMark(groupId);
+  if (!s) return { ok: false };
+  if (!Number.isInteger(year) || !Number.isInteger(month0) || month0 < 0 || month0 > 11 || year < 2000 || year > 2100) return { ok: false };
+
+  const group = await prisma.group.findUnique({
+    where: { id: groupId },
+    select: {
+      startTime: true, endTime: true, weekdays: true, startDate: true, endDate: true, lessonsPerMonth: true,
+      program: { select: { lessonsPerMonth: true } },
+      students: { select: { studentId: true, joinedAt: true } },
+    },
+  });
+  if (!group) return { ok: false };
+
+  const monthStart = new Date(year, month0, 1);
+  const monthEnd = new Date(year, month0 + 1, 1);
+  const limit = group.lessonsPerMonth ?? group.program.lessonsPerMonth;
+  const planned = plannedLessonDays(year, month0, group.weekdays, limit, group.startDate, group.endDate);
+  const existing = await prisma.lesson.findMany({ where: { groupId, startsAt: { gte: monthStart, lt: monthEnd } }, select: { startsAt: true } });
+  const dates = [...new Set([...planned, ...existing.map((l) => isoOf(l.startsAt))])].sort();
+
+  const today = todayISOLocal();
+  const bypass = canBypassAttendanceLock(s.role);
+  const days: JournalDay[] = [];
+  for (const date of dates) {
+    const win = computeAttendanceWindow(date, group.startTime, group.endTime);
+    const future = date > today;
+    const unlockUntil = win.closed ? await activeUnlockUntil(groupId, date) : null;
+    if (win.closed && !unlockUntil) {
+      try { await materializeAutoAbsent(groupId, date, win.closesAt); } catch { /* ko'rsatishga xalal bermasin */ }
+    }
+    days.push({
+      date, future, today: date === today, closed: win.closed,
+      editable: future ? bypass : (!win.closed || !!unlockUntil || bypass),
+      unlockedUntilLabel: unlockUntil ? dmOf(unlockUntil) : null,
+      closesAtLabel: dmOf(win.closesAt),
+    });
+  }
+
+  const lessons = await prisma.lesson.findMany({
+    where: { groupId, startsAt: { gte: monthStart, lt: monthEnd } },
+    select: { startsAt: true, attendances: { select: { studentId: true, status: true } } },
+  });
+  const marks: Record<string, Record<string, string>> = {};
+  for (const l of lessons) {
+    const d = isoOf(l.startsAt);
+    const m = (marks[d] ??= {});
+    for (const a of l.attendances) m[a.studentId] = a.status;
+  }
+  const joined: Record<string, string> = {};
+  for (const gs of group.students) joined[gs.studentId] = isoOf(gs.joinedAt);
+
+  return { ok: true, data: { days, marks, joined, canUnlock: canGrantAttendanceUnlock(s.role) } };
+}

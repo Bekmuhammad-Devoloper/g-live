@@ -6,12 +6,32 @@ import { Icon } from "../../_components/Icon";
 import { cn } from "@/lib/cn";
 import { tr } from "@/lib/tr";
 import type { Locale } from "@/lib/constants";
+import { AttendanceJournal } from "./AttendanceJournal";
 import { getGroupAttendance, markStudentAttendance, markAllPresent, unlockAttendance, type AttendanceWindowInfo } from "./attendanceActions";
 
 const p2 = (n: number) => String(n).padStart(2, "0");
 const todayISO = () => { const d = new Date(); return `${d.getFullYear()}-${p2(d.getMonth() + 1)}-${p2(d.getDate())}`; };
 
-export function GroupAttendance({ groupId, students, locale }: { groupId: string; students: { id: string; name: string; blocked?: boolean; lessonsThisMonth?: number }[]; locale: Locale }) {
+type AttStudent = { id: string; name: string; blocked?: boolean; lessonsThisMonth?: number };
+
+/** Davomat: "Jurnal" (oy bo'yicha, hamma sanalar) — asosiy ko'rinish; "Kunlik" — bitta kun bo'yicha */
+export function GroupAttendance({ groupId, students, locale }: { groupId: string; students: AttStudent[]; locale: Locale }) {
+  const [view, setView] = useState<"journal" | "day">("journal");
+  const tab = (on: boolean) => cn("rounded-md px-3 py-1 text-xs font-semibold transition", on ? "bg-white text-brand-700 shadow-sm dark:bg-slate-700 dark:text-white" : "text-slate-500 hover:text-slate-700 dark:text-slate-400");
+  return (
+    <div>
+      <div className="mb-3 inline-flex rounded-lg bg-slate-100 p-0.5 dark:bg-slate-800">
+        <button type="button" onClick={() => setView("journal")} className={tab(view === "journal")}>{tr(locale, { uz: "Jurnal", ru: "Журнал", en: "Journal", de: "Journal" })}</button>
+        <button type="button" onClick={() => setView("day")} className={tab(view === "day")}>{tr(locale, { uz: "Kunlik", ru: "По дням", en: "Daily", de: "Täglich" })}</button>
+      </div>
+      {view === "journal"
+        ? <AttendanceJournal groupId={groupId} students={students} locale={locale} />
+        : <DayAttendance groupId={groupId} students={students} locale={locale} />}
+    </div>
+  );
+}
+
+function DayAttendance({ groupId, students, locale }: { groupId: string; students: AttStudent[]; locale: Locale }) {
   const [date, setDate] = useState(todayISO());
   const [map, setMap] = useState<Record<string, string>>({});
   const [win, setWin] = useState<AttendanceWindowInfo | null>(null);

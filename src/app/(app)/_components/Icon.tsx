@@ -250,6 +250,7 @@ const P: Record<string, JSX.Element> = {
   snowflake: <><path d="M12 2v20" /><path d="M2 12h20" /><path d="m20 16-4-4 4-4" /><path d="m4 8 4 4-4 4" /><path d="m16 4-4 4-4-4" /><path d="m8 20 4-4 4 4" /></>,
   logout: <><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4" /><path d="m16 17 5-5-5-5" /><path d="M21 12H9" /></>,
   arrow: <><path d="M5 12h14" /><path d="m12 5 7 7-7 7" /></>,
+  lock: <><rect x="5" y="11" width="14" height="10" rx="2" /><path d="M8 11V7a4 4 0 0 1 8 0v4" /></>,
   tag: <><path d="M20.6 13.4 13.4 20.6a2 2 0 0 1-2.8 0L3 13V3h10l7.6 7.6a2 2 0 0 1 0 2.8Z" /><circle cx="7.5" cy="7.5" r="1.5" /></>,
   trash: <><path d="M4 7h16" /><path d="M10 11v6" /><path d="M14 11v6" /><path d="M6 7l1 13a1 1 0 0 0 1 1h8a1 1 0 0 0 1-1l1-13" /><path d="M9 7V4a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v3" /></>,
   coins: <><ellipse cx="12" cy="6" rx="7" ry="2.8" /><path d="M5 6v5c0 1.55 3.13 2.8 7 2.8s7-1.25 7-2.8V6" /><path d="M5 11v5c0 1.55 3.13 2.8 7 2.8s7-1.25 7-2.8v-5" /></>,
