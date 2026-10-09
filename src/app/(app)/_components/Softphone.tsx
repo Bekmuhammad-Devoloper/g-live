@@ -298,6 +298,7 @@ export default function Softphone({ locale, canConfigure = false }: { locale: Lo
   // qayta so'raymiz — manzil o'zgargan bo'lsa UA yangi manzil bilan qayta quriladi.
   const [uaEpoch, setUaEpoch] = useState(0);
   const wsUrlRef = useRef<string | null>(null);
+  const reviveRef = useRef<(() => void) | null>(null);
   const refetchingRef = useRef(false);
 
   // ─── JsSIP UA init ───
@@ -344,7 +345,11 @@ export default function Softphone({ locale, canConfigure = false }: { locale: Lo
         setStatus("connecting");
         ua.on("registered", () => { setStatus("registered"); primeMic(); });
         ua.on("unregistered", () => setStatus("connecting"));
-        ua.on("registrationFailed", () => setStatus("failed"));
+        ua.on("registrationFailed", () => {
+          setStatus("failed");
+          // Vaqtinchalik xato (tarmoq, server qayta yuklanishi) — 5 soniyadan keyin qayta ro'yxatdan o'tamiz
+          setTimeout(() => { try { if (!cancelled && ua.isConnected() && !ua.isRegistered()) ua.register(); } catch {} }, 5000);
+        });
         ua.on("disconnected", () => {
           setStatus("failed");
           // Manzil serverda o'zgargan bo'lishi mumkin — tekshirib ko'ramiz.
@@ -412,6 +417,25 @@ export default function Softphone({ locale, canConfigure = false }: { locale: Lo
         });
         ua.start();
         kaRef.current = setInterval(() => { try { if (ua.isConnected()) ua.register(); } catch {} }, 25000);
+        // Brauzer fon oynasini muzlatib qo'yishi yoki internet uzilishi mumkin. Oyna qayta ko'ringanda
+        // yoki internet tiklanganda ro'yxatdan o'tish holatini tekshiramiz: ulanish bor — qayta
+        // ro'yxatdan o'tamiz, ulanish yo'q — UA butunlay qayta quriladi.
+        const revive = () => {
+          if (cancelled || document.visibilityState === "hidden") return;
+          try {
+            if (ua.isRegistered()) return;
+            if (ua.isConnected()) ua.register();
+            else setUaEpoch((n) => n + 1);
+          } catch { setUaEpoch((n) => n + 1); }
+        };
+        document.addEventListener("visibilitychange", revive);
+        window.addEventListener("online", revive);
+        window.addEventListener("focus", revive);
+        reviveRef.current = () => {
+          document.removeEventListener("visibilitychange", revive);
+          window.removeEventListener("online", revive);
+          window.removeEventListener("focus", revive);
+        };
       } catch {
         setStatus("disabled");
       }
@@ -419,6 +443,7 @@ export default function Softphone({ locale, canConfigure = false }: { locale: Lo
     return () => {
       cancelled = true;
       if (kaRef.current) clearInterval(kaRef.current);
+      reviveRef.current?.(); reviveRef.current = null;
       try { uaRef.current?.stop(); } catch {}
     };
     // uaEpoch — WSS manzili o'zgarganda UA'ni qayta qurish uchun
