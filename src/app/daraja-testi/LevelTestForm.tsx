@@ -5,6 +5,7 @@ import { cn } from "@/lib/cn";
 import { fmtUzPhoneInput } from "@/lib/phone";
 import type { PublicQuestion, PublicSet, TestLevel, TestSetId } from "@/lib/levelTest";
 import { submitLevelTest, type LevelTestOutcome } from "./actions";
+import BrandLogo, { type BrandView } from "@/app/BrandLogo";
 
 /**
  * Daraja aniqlash testi — telefon uchun. 3 bosqich:
@@ -14,11 +15,13 @@ import { submitLevelTest, type LevelTestOutcome } from "./actions";
  *   3) natija: ball, foiz, o'tdi/o'tmadi, natijaviy daraja — CRM'ga
  *      serverda yozilgan bo'ladi
  */
-export default function LevelTestForm({ sets, levels, colors, names }: {
+export default function LevelTestForm({ sets, levels, colors, names, brand }: {
   sets: PublicSet[];
   levels: TestLevel[];
   colors: Record<TestLevel, string>;
   names: Record<TestLevel, string>;
+  /** Markaz brendi — server sahifadan (getBrand) keladi */
+  brand: BrandView;
 }) {
   const [step, setStep] = useState<"intro" | "quiz" | "done">("intro");
   const [fullName, setName] = useState("");
@@ -93,7 +96,7 @@ export default function LevelTestForm({ sets, levels, colors, names }: {
   if (step === "intro") {
     return (
       <div className="animate-pop-in">
-        <Header />
+        <Header brand={brand} />
 
         <div className="mt-6">
           <h1 className="text-[28px] font-black leading-[1.15] tracking-tight text-slate-900 dark:text-white">
@@ -200,7 +203,7 @@ export default function LevelTestForm({ sets, levels, colors, names }: {
           Har savolda bitta to&apos;g&apos;ri variant. Bilmasangiz — taxmin qiling, ortga qaytib bo&apos;lmaydi. Darajani o&apos;tish uchun kamida 70% to&apos;g&apos;ri javob kerak.
         </p>
 
-        <Footer />
+        <Footer brand={brand} />
       </div>
     );
   }
@@ -212,7 +215,7 @@ export default function LevelTestForm({ sets, levels, colors, names }: {
     const shownLevel = result.resultLevel ?? "A0";
     return (
       <div className="animate-pop-in">
-        <Header />
+        <Header brand={brand} />
 
         <div className="mt-6 overflow-hidden rounded-3xl border border-white/60 bg-white/85 shadow-[0_20px_50px_-24px_rgba(15,23,42,0.35)] backdrop-blur dark:border-white/10 dark:bg-white/[0.06]">
           {/* Natija — katta rangli blok */}
@@ -274,7 +277,7 @@ export default function LevelTestForm({ sets, levels, colors, names }: {
           Boshqa test topshirish
         </button>
 
-        <Footer />
+        <Footer brand={brand} />
       </div>
     );
   }
@@ -373,13 +376,10 @@ export default function LevelTestForm({ sets, levels, colors, names }: {
 const INPUT =
   "min-h-[52px] w-full rounded-2xl border border-slate-200 bg-white px-4 text-[16px] text-slate-900 outline-none transition placeholder:text-slate-300 focus:border-brand-500 focus:ring-4 focus:ring-brand-500/15 dark:border-white/10 dark:bg-white/[0.06] dark:text-white dark:placeholder:text-slate-600";
 
-function Header() {
+function Header({ brand }: { brand: BrandView }) {
   return (
     <div className="flex items-center justify-between">
-      {/* eslint-disable-next-line @next/next/no-img-element */}
-      <img src="/logo.png" alt="Germaniya Live" className="h-9 w-auto object-contain dark:hidden" />
-      {/* eslint-disable-next-line @next/next/no-img-element */}
-      <img src="/logo-dark.png" alt="Germaniya Live" className="hidden h-9 w-auto object-contain dark:block" />
+      <BrandLogo brand={brand} className="h-9 w-auto object-contain" textClassName="text-lg font-extrabold tracking-tight text-slate-900 dark:text-white" />
       <span className="rounded-full border border-slate-200/80 bg-white/70 px-3 py-1 text-[11px] font-semibold text-slate-600 backdrop-blur dark:border-white/10 dark:bg-white/[0.06] dark:text-slate-300">
         Daraja testi
       </span>
@@ -387,8 +387,8 @@ function Header() {
   );
 }
 
-function Footer() {
-  return <div className="mt-6 text-center text-[11px] text-slate-400 dark:text-slate-500">© 2026 Germaniya Live</div>;
+function Footer({ brand }: { brand: BrandView }) {
+  return <div className="mt-6 text-center text-[11px] text-slate-400 dark:text-slate-500">© {new Date().getFullYear()} {brand.name}</div>;
 }
 
 function Field({ label, hint, children }: { label: string; hint?: string; children: React.ReactNode }) {

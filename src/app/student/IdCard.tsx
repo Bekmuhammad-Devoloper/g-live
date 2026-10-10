@@ -31,7 +31,7 @@ const fmtDate = (iso: string | null) => {
   return `${d}.${m}.${y}`;
 };
 
-export default function IdCard({ p, t, editable = true }: { p: VProfile; t: StudentStrings; editable?: boolean }) {
+export default function IdCard({ p, t, brandName, editable = true }: { p: VProfile; t: StudentStrings; brandName: string; editable?: boolean }) {
   const [edit, setEdit] = useState(false);
   const [img, setImg] = useState(p.imageUrl);
   const [msg, setMsg] = useState<{ ok: boolean; text: string } | null>(null);
@@ -113,7 +113,7 @@ export default function IdCard({ p, t, editable = true }: { p: VProfile; t: Stud
     <div className="overflow-hidden rounded-[24px] bg-white shadow-[0_14px_30px_rgba(19,78,94,0.14)]">
       {/* Karta boshi — guvohnoma sarlavhasi */}
       <div className="flex items-center justify-between px-4 py-2.5 text-white" style={{ background: ICON_GRADIENT }}>
-        <span className="text-[11px] font-extrabold uppercase tracking-[0.18em]">Germaniya Live</span>
+        <span className="text-[11px] font-extrabold uppercase tracking-[0.18em]">{brandName}</span>
         <span className="font-mono text-[11px] font-bold text-white/80">ID {p.studentNo}</span>
       </div>
 

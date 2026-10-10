@@ -9,6 +9,7 @@ import {
 } from "@/lib/receiptMode";
 import { saveReceiptMode } from "./actions";
 import { Icon } from "../_components/Icon";
+import BrandLogo, { type BrandView } from "@/app/BrandLogo";
 
 const STORAGE_KEY = "gl-chek-settings";
 
@@ -43,7 +44,7 @@ const LABELS: Record<string, L> = {
   ...Object.fromEntries(FOOTER.map((f) => [f.key, f.label])),
 };
 
-export default function ChekSettings({ locale, centerName, receiptMode }: { locale: Locale; centerName: string; receiptMode: ReceiptMode }) {
+export default function ChekSettings({ locale, centerName, receiptMode, brand }: { locale: Locale; centerName: string; receiptMode: ReceiptMode; /** Markaz brendi — chek ko'rinishidagi logotip */ brand: BrandView }) {
   // Chek yuklash majburiyligi — BAZAGA yoziladi (qolgan sozlamalar localStorage'da)
   const [mode, setMode] = useState<ReceiptMode>(receiptMode);
   const [modeSaved, setModeSaved] = useState(false);
@@ -168,10 +169,7 @@ export default function ChekSettings({ locale, centerName, receiptMode }: { loca
           <div className="relative mx-auto w-full max-w-[320px] bg-white px-6 pt-6 text-slate-800 shadow-pop">
             {shown("logo") && (
               <div className="mb-3 flex justify-center">
-                <div className="flex items-center gap-2">
-                  <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-gradient-to-br from-brand-500 to-brand-700 text-xs font-bold text-white">GL</div>
-                  <span className="text-sm font-extrabold tracking-tight text-slate-800">Germaniya <span className="text-brand-600">Live</span></span>
-                </div>
+                <BrandLogo brand={brand} variant="light" className="h-9 w-auto max-w-full object-contain" textClassName="text-sm font-extrabold tracking-tight text-slate-800" />
               </div>
             )}
             {shown("image") && (

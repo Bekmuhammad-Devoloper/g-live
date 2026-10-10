@@ -9,6 +9,7 @@ import { writeAudit } from "@/lib/audit";
 import { canEditProgramLessons } from "@/lib/lessonAccess";
 import { ROLES } from "@/lib/constants";
 import { lessonLinkPath } from "@/lib/lessonLink";
+import { getBrand } from "@/lib/brand";
 
 export interface LessonInput {
   title: string;
@@ -122,6 +123,8 @@ export interface LessonQr {
   /** Modullar satrma-satr ("0"/"1"), uzunligi size*size — BrandedQr chizadi */
   modules: string;
   size: number;
+  /** QR markazidagi emblema (bo'sh — emblemasiz); faqat asosiy markazda o'z belgisi bor */
+  mark?: string;
   error?: string;
 }
 
@@ -139,7 +142,8 @@ export async function getLessonQr(lessonId: string): Promise<LessonQr> {
   try {
     // H — 30% xato tuzatish: markazdagi emblema shu zaxira hisobiga qo'yiladi
     const q = QRCode.create(url, { errorCorrectionLevel: "H" });
-    return { url, modules: Array.from(q.modules.data, (b) => (b ? "1" : "0")).join(""), size: q.modules.size };
+    const mark = (await getBrand()).isMain ? "/logo-mark.png" : "";
+    return { url, modules: Array.from(q.modules.data, (b) => (b ? "1" : "0")).join(""), size: q.modules.size, mark };
   } catch {
     return { url, modules: "", size: 0, error: "qr_failed" };
   }

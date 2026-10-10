@@ -25,7 +25,7 @@ const empty: Form = {
   telegramReportId: "", facebookPixel: "", telegramSocial: "", fbConnected: false, amoConnected: false,
 };
 
-export default function IntegrationsSettings({ locale }: { locale: Locale }) {
+export default function IntegrationsSettings({ locale, brandName, isMain }: { locale: Locale; brandName: string; isMain: boolean }) {
   const [f, setF] = useState<Form>(empty);
   const [saved, setSaved] = useState(false);
   const [showPass, setShowPass] = useState(false);
@@ -103,7 +103,12 @@ export default function IntegrationsSettings({ locale }: { locale: Locale }) {
                 <li>2. {tr(locale, { uz: "ID ni nusxalang.", ru: "Скопируйте ID.", en: "Copy the ID.", de: "Kopieren Sie die ID." })}</li>
                 <li>3. {tr(locale, { uz: "\"Telegram for Report\" nomli inputga ID ni joylashtiring.", ru: "Вставьте ID в поле \"Telegram for Report\".", en: "Paste the ID into the \"Telegram for Report\" input.", de: "Fügen Sie die ID in das Feld \"Telegram for Report\" ein." })}</li>
                 <li>4. {tr(locale, { uz: "\"Saqlash\" tugmasiga bosing.", ru: "Нажмите кнопку \"Сохранить\".", en: "Click the \"Save\" button.", de: "Klicken Sie auf die Schaltfläche \"Speichern\"." })}</li>
-                <li>5. {tr(locale, { uz: "Germaniya Live botiga (", ru: "Запустите бота Germaniya Live (", en: "Start the Germaniya Live bot (", de: "Starten Sie den Germaniya Live-Bot (" })}<TgLink u="germaniya_live_bot">@germaniya_live_bot</TgLink>{tr(locale, { uz: ") ga start bosing.", ru: ").", en: ").", de: ")." })}</li>
+                {/* @germaniya_live_bot — faqat asosiy markaz boti; boshqa markazlarda havolasiz ko'rsatiladi */}
+                <li>5. {isMain ? (
+                  <>{tr(locale, { uz: `${brandName} botiga (`, ru: `Запустите бота ${brandName} (`, en: `Start the ${brandName} bot (`, de: `Starten Sie den ${brandName}-Bot (` })}<TgLink u="germaniya_live_bot">@germaniya_live_bot</TgLink>{tr(locale, { uz: ") ga start bosing.", ru: ").", en: ").", de: ")." })}</>
+                ) : (
+                  tr(locale, { uz: `${brandName} botiga start bosing.`, ru: `Запустите бота ${brandName}.`, en: `Start the ${brandName} bot.`, de: `Starten Sie den ${brandName}-Bot.` })
+                )}</li>
               </ol>
             </div>
           </div>

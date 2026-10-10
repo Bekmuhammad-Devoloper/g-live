@@ -1,0 +1,9 @@
+[Unit]
+Description=GL EDU: markazlar zaxirasi — har kecha 03:30 (Toshkent)
+
+[Timer]
+OnCalendar=*-*-* 22:30:00 UTC
+Persistent=true
+
+[Install]
+WantedBy=timers.target

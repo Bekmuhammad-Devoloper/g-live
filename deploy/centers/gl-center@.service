@@ -1,0 +1,19 @@
+[Unit]
+Description=GL EDU o'quv markazi: %i
+After=network.target
+
+[Service]
+User=deploy
+WorkingDirectory=/opt/gl-edu
+# Asosiy .env kalitlari bo'sh qiymat bilan yopiladi (env.blank), keyin markazning o'z sozlamalari (env)
+ExecStartPre=+/usr/local/sbin/gl-center blanks %i
+EnvironmentFile=-/opt/centers/%i/env.blank
+EnvironmentFile=/opt/centers/%i/env
+Environment=NODE_ENV=production
+Environment=TZ=Asia/Tashkent
+ExecStart=/usr/bin/npx next start -p ${PORT}
+Restart=always
+RestartSec=5
+
+[Install]
+WantedBy=multi-user.target

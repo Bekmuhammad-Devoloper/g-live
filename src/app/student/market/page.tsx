@@ -6,6 +6,7 @@ import { prisma } from "@/lib/db";
 import { S, type StudentStrings } from "../_i18n";
 import { CARD, CoinGold, DEEP_GRADIENT, PageHeader, SectionTitle, fmtDate, safeUrl } from "../_ui";
 import MissingStudent from "../MissingStudent";
+import { getBrand } from "@/lib/brand";
 import ItemCard, { type VItem } from "./ItemCard";
 import CoinRules, { type RuleSlide } from "./CoinRules";
 
@@ -47,6 +48,7 @@ export default async function StudentMarketPage() {
   // Bo'lim menejer tomonidan o'chirilgan bo'lsa — bosh sahifaga
   if (!(await isPortalFeatureOn("market"))) redirect("/student");
   const t = S(session.locale);
+  const coinMark = (await getBrand()).name.trim().charAt(0).toUpperCase() || "G";
 
   const student = await prisma.student.findUnique({
     where: { userId: session.userId },
@@ -111,13 +113,13 @@ export default async function StudentMarketPage() {
       >
         {/* Orqa fondagi katta tanga — yumshoq bezak */}
         <span className="pointer-events-none absolute -right-7 -top-9 opacity-[0.10]">
-          <CoinGold s={140} />
+          <CoinGold s={140} mark={coinMark} />
         </span>
 
         {/* Yuqori qator: balans */}
         <div className="relative flex items-center gap-3.5">
           <span className="grid h-12 w-12 shrink-0 place-items-center rounded-2xl bg-white/20 backdrop-blur-sm">
-            <CoinGold s={30} />
+            <CoinGold s={30} mark={coinMark} />
           </span>
           <div className="min-w-0 flex-1">
             <div className="text-[10.5px] font-bold uppercase tracking-[0.18em] text-white/70">{t.balance}</div>

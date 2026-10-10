@@ -21,6 +21,7 @@ export default function BrandedQr({
   size: number;
   /** Chizish o'lchami (piksel) — PNG sifati shu */
   px?: number;
+  /** Markazdagi emblema; bo'sh satr — emblemasiz (faqat oq maydon) */
   logoSrc?: string;
   className?: string;
   onPng?: (dataUrl: string) => void;
@@ -96,6 +97,10 @@ export default function BrandedQr({
     rr(ctx, lx - m * 0.5, lx - m * 0.5, ls + m, ls + m, m * 1.2);
     ctx.fill();
 
+    if (!logoSrc) {
+      onPng?.(canvas.toDataURL("image/png"));
+      return;
+    }
     const img = new Image();
     img.onload = () => {
       const pad = ls * 0.1;

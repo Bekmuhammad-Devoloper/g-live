@@ -4,7 +4,8 @@ import path from "node:path";
 // Yuklangan fayllar diskda qayerda va qanday nomlanadi — /api/upload va
 // /api/upload/session ikkalasi shu qoidadan foydalanadi.
 
-export const UPLOAD_DIR = path.join(process.cwd(), "public", "uploads");
+// Har markaz nusxasining o'z papkasi (UPLOAD_DIR), asosiy markazda — public/uploads
+export const UPLOAD_DIR = process.env.UPLOAD_DIR || path.join(process.cwd(), "public", "uploads");
 
 /**
  * Tugallanmagan bo'lakli yuklashlar. ATAYLAB public/ TASHQARISIDA: Next
@@ -14,7 +15,7 @@ export const UPLOAD_DIR = path.join(process.cwd(), "public", "uploads");
  * autentifikatsiyasiz ochilib qolardi. Xuddi shu diskda (rename nusxasiz).
  * update-b.sh dagi `git reset --hard` kuzatilmaydigan papkaga tegmaydi.
  */
-export const PARTS_DIR = path.join(process.cwd(), "upload-parts");
+export const PARTS_DIR = process.env.UPLOAD_PARTS_DIR || path.join(process.cwd(), "upload-parts");
 
 const EXT: Record<string, string> = {
   "video/mp4": "mp4", "video/webm": "webm", "video/quicktime": "mov", "video/x-matroska": "mkv", "video/ogg": "ogv",

@@ -19,6 +19,7 @@ import { CARD, CoinGold, FlagAvatar, IcoBell, IcoBook, IcoCalendar, IcoChevron, 
 import { todayISOLocal } from "@/lib/attendanceWindow";
 import { buildLessonDays, nextLessonDay } from "./_schedule";
 import MissingStudent from "./MissingStudent";
+import { getBrand } from "@/lib/brand";
 
 // O'quvchi "Start" ekrani — berilgan maket bilan birma-bir.
 // Barcha ikonka va illyustratsiyalar SVG (emoji EMAS — bayroq emojisi
@@ -235,6 +236,7 @@ export default async function StudentStartPage() {
   const session = await getSession();
   if (!session) redirect("/login");
   const t = S(session.locale);
+  const coinMark = (await getBrand()).name.trim().charAt(0).toUpperCase() || "G";
 
   const student = await prisma.student.findUnique({
     where: { userId: session.userId },
@@ -539,7 +541,7 @@ export default async function StudentStartPage() {
         {[
           // Tanga — doira ichidagi belgi emas, tanganing o'zi (shu sabab `bare`)
           // Tanga -> Market (sarflanadigan joy), yulduz -> qanday yig'ish
-          { icon: <CoinGold s={46} />, bare: true, label: t.coins, value: String(coins), href: marketOn ? "/student/market" : undefined },
+          { icon: <CoinGold s={46} mark={coinMark} />, bare: true, label: t.coins, value: String(coins), href: marketOn ? "/student/market" : undefined },
           { icon: <IcoStarGold />, bare: false, label: t.stars, value: String(stars), href: "/student/yulduz" },
           // Seriya yuqori qatorga (olov belgisiga) ko'chdi — bu yerda uning
           // o'rnida yulduz pog'onasi turadi: o'quvchi qaysi bosqichdaligi

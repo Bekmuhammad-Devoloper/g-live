@@ -1,5 +1,6 @@
 import { ROLES } from "./constants";
 import { MODULES, canRead, type ModuleKey } from "./rbac";
+import { isPathEnabled } from "./instance";
 
 export interface NavItem {
   href: string;
@@ -49,6 +50,7 @@ const ALL: NavItem[] = [
 
 export function navFor(role: string): NavItem[] {
   return ALL.filter((it) => {
+    if (!isPathEnabled(it.href)) return false; // tarifda o'chirilgan modul
     if (it.module) return canRead(role, it.module);
     if (it.roles) return it.roles.includes(role);
     return true;

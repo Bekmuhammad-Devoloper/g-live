@@ -1,0 +1,6 @@
+[Unit]
+Description=GL EDU: barcha o'quv markazlari bazalarining zaxira nusxasi
+
+[Service]
+Type=oneshot
+ExecStart=/usr/local/sbin/gl-center backup-all

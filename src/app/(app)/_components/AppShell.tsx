@@ -224,6 +224,10 @@ interface Props {
   labels: { logout: string; appName: string; tagline: string };
   unreadCount: number;
   topbar: Omit<TopbarProps, "onMenu" | "locale" | "unreadCount" | "user" | "appName">;
+  /** Markaz brendi (nomi va logotiplari) — har nusxada o'zi */
+  brand: { name: string; logo: string; logoDark: string };
+  /** Tarifda o'chirilgan modullarning yo'llari — menyudan yashiriladi */
+  offPaths?: string[];
   children: React.ReactNode;
 }
 
@@ -336,13 +340,14 @@ function BottomNav({
   );
 }
 
-export default function AppShell({ navItems, role, portal, user, locale, labels, unreadCount, topbar, children }: Props) {
+export default function AppShell({ navItems, role, portal, user, locale, labels, unreadCount, topbar, brand, offPaths = [], children }: Props) {
   const pathname = usePathname();
+  const pathOn = (href: string) => !offPaths.some((p) => href === p || href.startsWith(p + "/"));
 
   // ROP va operator o'z sidebar'iga ega (umumiy xodim menyusi o'rniga).
   // portalNav null bo'lsa — oddiy rolga mos menyu ko'rsatiladi.
   const portalNav = (portal === "rop" ? ROP_NAV : portal === "operator" ? OPERATOR_NAV : null)?.filter(
-    (it) => !it.roles || it.roles.includes(role),
+    (it) => (!it.roles || it.roles.includes(role)) && pathOn(it.href),
   ) ?? null;
 
   // Submenu guruhlari — o'qituvchi rolida /reports faqat mos hisobotlarga cheklanadi
@@ -352,7 +357,7 @@ export default function AppShell({ navItems, role, portal, user, locale, labels,
     const byRole = (gs: SubGroup[]): SubGroup[] =>
       gs
         .filter((g) => !g.roles || g.roles.includes(role))
-        .map((g) => ({ ...g, items: g.items.filter((it) => !it.roles || it.roles.includes(role)) }))
+        .map((g) => ({ ...g, items: g.items.filter((it) => (!it.roles || it.roles.includes(role)) && pathOn(it.href)) }))
         .filter((g) => g.items.length > 0);
 
     const groups = byRole(SUBMENUS[href].groups);
@@ -440,9 +445,7 @@ export default function AppShell({ navItems, role, portal, user, locale, labels,
         className="flex h-16 shrink-0 items-center justify-center border-b border-slate-200 px-3 transition hover:bg-slate-50 dark:border-white/5 dark:hover:bg-white/5"
       >
         {/* eslint-disable-next-line @next/next/no-img-element */}
-        <img src="/logo.png" alt="Germaniya Live" className="max-h-10 w-auto max-w-full object-contain dark:hidden" />
-        {/* eslint-disable-next-line @next/next/no-img-element */}
-        <img src="/logo-dark.png" alt="Germaniya Live" className="hidden max-h-10 w-auto max-w-full object-contain dark:block" />
+        <BrandMark brand={brand} className="max-h-10 w-auto max-w-full object-contain" />
       </Link>
 
       {/* Bo'limlar */}
@@ -601,9 +604,7 @@ export default function AppShell({ navItems, role, portal, user, locale, labels,
             {/* Header */}
             <div className="flex h-16 shrink-0 items-center justify-between border-b border-slate-200 px-4 dark:border-white/5">
               {/* eslint-disable-next-line @next/next/no-img-element */}
-              <img src="/logo.png" alt="Germaniya Live" className="max-h-9 w-auto object-contain dark:hidden" />
-              {/* eslint-disable-next-line @next/next/no-img-element */}
-              <img src="/logo-dark.png" alt="Germaniya Live" className="hidden max-h-9 w-auto object-contain dark:block" />
+              <BrandMark brand={brand} className="max-h-9 w-auto object-contain" />
               <button onClick={() => setOpen(false)} className="flex h-9 w-9 items-center justify-center rounded-lg text-xl text-slate-400 transition hover:bg-slate-100 hover:text-slate-600 dark:hover:bg-white/10">✕</button>
             </div>
 
@@ -716,10 +717,7 @@ export default function AppShell({ navItems, role, portal, user, locale, labels,
 
           <div className="leading-none">
             <div className="flex justify-end">
-              {/* eslint-disable-next-line @next/next/no-img-element */}
-              <img src="/logo.png" alt="Germaniya Live" className="h-8 w-auto object-contain dark:hidden" />
-              {/* eslint-disable-next-line @next/next/no-img-element */}
-              <img src="/logo-dark.png" alt="Germaniya Live" className="hidden h-8 w-auto object-contain dark:block" />
+              <BrandMark brand={brand} className="h-8 w-auto object-contain" />
             </div>
             <div className="mt-1 text-right text-[9px] font-medium uppercase tracking-[0.15em] text-slate-400">
               {t("footer.tagline")}
@@ -730,5 +728,20 @@ export default function AppShell({ navItems, role, portal, user, locale, labels,
 
       <BottomNav items={bottomItems} pathname={pathname} onMenu={() => setOpen(true)} menuLabel={L("Menyu", "Меню", "Menu", "Menü")[locale] ?? "Menyu"} />
     </div>
+  );
+}
+
+/** Markaz logotipi (yorug'/qorong'i). Logotip yuklanmagan markazda — nomi matn sifatida */
+function BrandMark({ brand, className }: { brand: { name: string; logo: string; logoDark: string }; className: string }) {
+  if (!brand.logo) {
+    return <span className="max-w-full truncate px-1 text-center text-sm font-extrabold leading-tight text-slate-800 dark:text-white">{brand.name}</span>;
+  }
+  return (
+    <>
+      {/* eslint-disable-next-line @next/next/no-img-element */}
+      <img src={brand.logo} alt={brand.name} className={`${className} dark:hidden`} />
+      {/* eslint-disable-next-line @next/next/no-img-element */}
+      <img src={brand.logoDark || brand.logo} alt={brand.name} className={`${className} hidden dark:block`} />
+    </>
   );
 }

@@ -8,6 +8,7 @@ import { requireSession } from "@/lib/auth";
 import { ROLES, EDU_STATUSES, PAYMENT_METHODS } from "@/lib/constants";
 import { canWrite, canRead, MODULES } from "@/lib/rbac";
 import { getSettings } from "@/lib/settings";
+import { getBrand } from "@/lib/brand";
 import { writeAudit } from "@/lib/audit";
 import { notify } from "@/lib/notify";
 import { lessonsAttendedThisMonth, MANDATORY_LESSON_THRESHOLD } from "@/lib/paymentPolicy";
@@ -233,7 +234,7 @@ export async function acceptPayment(
       discount,
       studentName: student.fullName,
       studentPhone: student.phone,
-      orgName: cfg["receipt.orgName"] || "Germaniya Live",
+      orgName: cfg["receipt.orgName"] || (await getBrand()).name,
       branchName: student.branch?.name ?? null,
       branchAddress: student.branch?.address ?? null,
       branchPhone: student.branch?.phone ?? null,

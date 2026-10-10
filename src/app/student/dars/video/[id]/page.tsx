@@ -7,6 +7,7 @@ import { S } from "../../../_i18n";
 import MissingStudent from "../../../MissingStudent";
 import { SectionHeader } from "../../../kurse/[level]/[unit]/_parts";
 import VideoCover, { VIDEO_ACCENT } from "../../../kurse/[level]/[unit]/dars/video/Cover";
+import { getBrand } from "@/lib/brand";
 
 // QR orqali ochiladigan video dars — o'quvchining O'Z kursidan bo'lmagan dars uchun.
 //
@@ -53,7 +54,7 @@ export default async function QrLessonVideoPage({ params }: { params: Promise<{ 
       />
 
       <div className="mt-4 space-y-3">
-        <VideoCover lesson={lesson} watched={!!view} t={t} />
+        <VideoCover lesson={lesson} watched={!!view} t={t} brand={await getBrand()} />
 
         {lesson.topic && (
           <div className="gl-glass rounded-[24px] p-4">

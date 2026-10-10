@@ -2,6 +2,7 @@ import { requireSession } from "@/lib/auth";
 import { prisma } from "@/lib/db";
 import { ROLES } from "@/lib/constants";
 import { tr } from "@/lib/tr";
+import { getBrand } from "@/lib/brand";
 import { Forbidden } from "../../_components/ui";
 import LicenseBanner from "../../_components/LicenseBanner";
 import SmsSettings from "./SmsSettings";
@@ -17,7 +18,7 @@ export default async function SmsSettingsPage() {
 
   // (LC) o'zgaruvchisi uchun markaz nomi — foydalanuvchi filiali yoki ilova nomi
   const branch = s.branchId ? await prisma.branch.findUnique({ where: { id: s.branchId }, select: { name: true } }) : null;
-  const centerName = branch?.name ?? "Germaniya Live";
+  const centerName = branch?.name ?? (await getBrand()).name;
 
   return (
     <div>

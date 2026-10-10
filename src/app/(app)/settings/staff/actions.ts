@@ -6,6 +6,7 @@ import { requireSession, hashPassword } from "@/lib/auth";
 import { ROLES, type Locale } from "@/lib/constants";
 import { writeAudit } from "@/lib/audit";
 import { tr } from "@/lib/tr";
+import { getBrand } from "@/lib/brand";
 
 const CAN = [ROLES.DIRECTOR, ROLES.ADMIN, ROLES.DEPUTY_DIRECTOR];
 const can = (r: string) => CAN.includes(r as never);
@@ -115,15 +116,16 @@ export async function inviteStaff(id: string): Promise<State> {
   if (!u) return { error: tr(s.locale, { uz: "Xodim topilmadi", ru: "Сотрудник не найден", en: "Staff member not found", de: "Mitarbeiter nicht gefunden" }) };
   // Matn oluvchi xodimning tilida
   const rl = (u.locale as Locale) ?? "uz";
+  const org = (await getBrand()).name;
   await prisma.notification.create({
     data: {
       userId: u.id,
       title: tr(rl, { uz: "Tizimga taklif", ru: "Приглашение в систему", en: "System invitation", de: "Einladung ins System" }),
       body: tr(rl, {
-        uz: "Germaniya Live tizimiga kirishingiz mumkin. Login — emailingiz.",
-        ru: "Вы можете войти в систему Germaniya Live. Логин — ваш email.",
-        en: "You can now sign in to Germaniya Live. Your login is your email.",
-        de: "Sie können sich jetzt bei Germaniya Live anmelden. Ihr Login ist Ihre E-Mail.",
+        uz: `${org} tizimiga kirishingiz mumkin. Login — emailingiz.`,
+        ru: `Вы можете войти в систему ${org}. Логин — ваш email.`,
+        en: `You can now sign in to ${org}. Your login is your email.`,
+        de: `Sie können sich jetzt bei ${org} anmelden. Ihr Login ist Ihre E-Mail.`,
       }),
       channel: "APP",
       event: "invite",

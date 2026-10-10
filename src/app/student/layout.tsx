@@ -8,16 +8,20 @@ import { prisma } from "@/lib/db";
 import { touchActivity } from "@/lib/skills";
 import PwaSetup from "./PwaSetup";
 import Screen from "./Screen";
+import { getBrand } from "@/lib/brand";
 
 // O'quvchining mobil ilova ko'rinishidagi portali.
 // AppShell (sidebar) ishlatilmaydi — telefon ilovasi kabi bitta ustun + pastki menyu.
 // Telefonga o'rnatiladigan ilova sifatida ko'rinishi uchun o'z manifesti
-export const metadata = {
-  title: "Germaniya Live",
-  manifest: "/student.webmanifest",
-  appleWebApp: { capable: true, statusBarStyle: "default" as const, title: "Germaniya Live" },
-  icons: { apple: "/icons/apple-touch-icon.png" },
-};
+export async function generateMetadata() {
+  const brand = await getBrand();
+  return {
+    title: brand.name,
+    manifest: "/student.webmanifest",
+    appleWebApp: { capable: true, statusBarStyle: "default" as const, title: brand.name },
+    icons: { apple: "/icons/apple-touch-icon.png" },
+  };
+}
 
 export const viewport = {
   themeColor: "#0e7490",

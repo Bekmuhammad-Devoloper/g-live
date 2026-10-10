@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
+import { UPLOAD_DIR } from "@/lib/uploadFs";
 import { createReadStream } from "node:fs";
 import { stat } from "node:fs/promises";
 import path from "node:path";
@@ -36,7 +37,7 @@ export async function GET(req: NextRequest, ctx: { params: Promise<{ name: strin
     return new NextResponse("bad_name", { status: 400 });
   }
 
-  const file = path.join(process.cwd(), "public", "uploads", name);
+  const file = path.join(UPLOAD_DIR, name);
   let size: number;
   try {
     const st = await stat(file);

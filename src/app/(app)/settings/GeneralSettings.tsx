@@ -17,9 +17,11 @@ import type { ReceiptMode } from "@/lib/receiptMode";
 import DebtSettings from "./DebtSettings";
 import AccountSettings from "./AccountSettings";
 import LandingSettings from "./LandingSettings";
+import BrandSettings, { type BrandSettingsValue } from "./BrandSettings";
 
 const SECTIONS: { key: string; label: { uz: string; ru: string; en: string; de: string } }[] = [
   { key: "general", label: { uz: "Umumiy sozlamalari", ru: "Общие настройки", en: "General settings", de: "Allgemeine Einstellungen" } },
+  { key: "brand", label: { uz: "Markaz brendi", ru: "Бренд центра", en: "Centre brand", de: "Marke des Zentrums" } },
   { key: "login", label: { uz: "Sistemaga kirish", ru: "Вход в систему", en: "System login", de: "Systemanmeldung" } },
   { key: "leadform", label: { uz: "Lid forma", ru: "Форма лида", en: "Lead form", de: "Lead-Formular" } },
   { key: "payment", label: { uz: "To'lov usullari", ru: "Способы оплаты", en: "Payment methods", de: "Zahlungsmethoden" } },
@@ -41,7 +43,7 @@ interface Form {
   logo: string | null; color: string; offerName: string;
 }
 
-export default function GeneralSettings({ locale, defaultName, defaultPhone, branches = [], initialSection, receiptMode, defaultFee }: { locale: Locale; defaultName: string; defaultPhone: string; branches?: string[]; initialSection?: string; receiptMode: ReceiptMode; defaultFee: number }) {
+export default function GeneralSettings({ locale, defaultName, defaultPhone, branches = [], initialSection, receiptMode, defaultFee, brand }: { locale: Locale; defaultName: string; defaultPhone: string; branches?: string[]; initialSection?: string; receiptMode: ReceiptMode; defaultFee: number; brand: { initial: BrandSettingsValue; defaults: BrandSettingsValue; name: string; logo: string; logoDark: string; isMain: boolean } }) {
   const [section, setSection] = useState(initialSection ?? "general");
   const [f, setF] = useState<Form>({
     name: defaultName, phone: defaultPhone, workStart: "09:00", workEnd: "20:00",
@@ -105,7 +107,9 @@ export default function GeneralSettings({ locale, defaultName, defaultPhone, bra
 
         {/* Kontent */}
         <div className="min-w-0 flex-1 p-6">
-          {section === "login" ? (
+          {section === "brand" ? (
+            <BrandSettings locale={locale} initial={brand.initial} defaults={brand.defaults} />
+          ) : section === "login" ? (
             <LoginSettings locale={locale} />
           ) : section === "leadform" ? (
             <LeadFormSettings locale={locale} centerName={f.name} />
@@ -114,7 +118,7 @@ export default function GeneralSettings({ locale, defaultName, defaultPhone, bra
           ) : section === "contact" ? (
             <ContactSettings locale={locale} />
           ) : section === "integrations" ? (
-            <IntegrationsSettings locale={locale} />
+            <IntegrationsSettings locale={locale} brandName={brand.name} isMain={brand.isMain} />
           ) : section === "billing" ? (
             <BillingSettings locale={locale} />
           ) : section === "account" ? (
@@ -122,7 +126,7 @@ export default function GeneralSettings({ locale, defaultName, defaultPhone, bra
           ) : section === "exams" ? (
             <ExamsSettings locale={locale} />
           ) : section === "receipt" ? (
-            <ChekSettings locale={locale} centerName={f.name} receiptMode={receiptMode} />
+            <ChekSettings locale={locale} centerName={f.name} receiptMode={receiptMode} brand={{ name: brand.name, logo: brand.logo, logoDark: brand.logoDark }} />
           ) : section === "debt" ? (
             <DebtSettings locale={locale} defaultFee={defaultFee} />
           ) : section === "landing" ? (

@@ -19,6 +19,7 @@ import { todayISOLocal } from "@/lib/attendanceWindow";
 import { buildLessonDays } from "../_schedule";
 import LessonCalendar, { type AttMark } from "../LessonCalendar";
 import IdCard from "../IdCard";
+import { getBrand } from "@/lib/brand";
 import MissingStudent from "../MissingStudent";
 import PasswordForm from "./PasswordForm";
 
@@ -162,6 +163,7 @@ export default async function StudentProfilPage() {
 
       {/* ── Guvohnoma ── */}
       <IdCard
+        brandName={(await getBrand()).name}
         editable={false}
         t={t}
         p={{

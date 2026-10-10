@@ -72,6 +72,32 @@ fi
 
 rm -rf .next-old
 systemctl is-active gl-edu gl-ami gl-tunnel
+
+# ── O'quv markazlari nusxalari va Dev panel (bir xil build bilan ishlaydi) ──
+# Boshqaruv skripti va systemd shablonlari kod bilan birga yangilanadi; har markaz bazasi
+# joriy sxemaga moslanadi va markaz qayta ishga tushiriladi. Bitta markazdagi xato
+# asosiy saytga ham, boshqa markazlarga ham ta'sir qilmaydi.
+if [ -f deploy/centers/gl-center.sh ]; then
+  echo "══ Markazlar ══"
+  sudo install -m 755 deploy/centers/gl-center.sh /usr/local/sbin/gl-center
+  for u in gl-center@.service gl-dev.service gl-centers-backup.service gl-centers-backup.timer; do
+    sudo install -m 644 "deploy/centers/$u" "/etc/systemd/system/$u"
+  done
+  sudo systemctl daemon-reload
+  sudo systemctl enable --now gl-centers-backup.timer >/dev/null 2>&1 || true
+  for envf in /opt/centers/*/env; do
+    [ -f "$envf" ] || continue
+    slug=$(basename "$(dirname "$envf")")
+    systemctl is-enabled --quiet "gl-center@$slug" 2>/dev/null || continue
+    db=$(grep -E '^DATABASE_URL=' "$envf" | head -1 | cut -d= -f2- | tr -d '"')
+    if DATABASE_URL="$db" npx prisma db push --skip-generate >/dev/null 2>&1; then
+      sudo systemctl restart "gl-center@$slug" && echo "  $slug: yangilandi"
+    else
+      echo "  ⚠️  $slug: sxema yangilanmadi (markaz eski holatda ishlayapti)"
+    fi
+  done
+  if [ -f /opt/centers/.dev.env ]; then sudo systemctl restart gl-dev && echo "  dev panel: qayta ishga tushdi"; fi
+fi
 echo "Sayt: HTTP $CODE"
 
 echo ""

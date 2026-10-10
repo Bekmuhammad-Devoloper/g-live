@@ -4,6 +4,7 @@ import MissingStudent from "../../../../../MissingStudent";
 import { loadUnit } from "../../_load";
 import { SectionHeader, safeUrl } from "../../_parts";
 import VideoCover, { VIDEO_ACCENT } from "./Cover";
+import { getBrand } from "@/lib/brand";
 
 // Bitta video sahifasi — muqova, "Ko'rish" tugmasi va "Video mashq".
 
@@ -37,7 +38,7 @@ export default async function LessonVideoPage({
       />
 
       <div className="mt-4 space-y-3">
-        <VideoCover lesson={lesson} watched={!!view} t={t} />
+        <VideoCover lesson={lesson} watched={!!view} t={t} brand={await getBrand()} />
 
         {/* ── Video mashq ── */}
         <Link

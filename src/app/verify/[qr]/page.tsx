@@ -1,4 +1,10 @@
 import { prisma } from "@/lib/db";
+import { getBrand } from "@/lib/brand";
+
+/** "Germaniya Live" → "GL": nomdagi birinchi ikki so'zning bosh harflari */
+function initials(name: string): string {
+  return name.split(/\s+/).filter(Boolean).slice(0, 2).map((w) => w[0]!.toUpperCase()).join("") || "•";
+}
 
 // Ochiq sahifa (login talab qilmaydi) — sertifikat QR-kodini tekshirish.
 export default async function VerifyPage({ params }: { params: Promise<{ qr: string }> }) {
@@ -9,14 +15,15 @@ export default async function VerifyPage({ params }: { params: Promise<{ qr: str
   });
 
   const valid = cert && cert.status === "ISSUED";
+  const brand = await getBrand();
 
   return (
     <div className="flex min-h-screen items-center justify-center bg-slate-100 p-4">
       <div className="w-full max-w-md overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm">
         <div className="flex items-center gap-2.5 border-b border-slate-200 bg-brand-600 px-5 py-4 text-white">
-          <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-white/20 text-sm font-bold">GL</div>
+          <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-white/20 text-sm font-bold">{initials(brand.name)}</div>
           <div>
-            <div className="text-sm font-bold">Germaniya Live</div>
+            <div className="text-sm font-bold">{brand.name}</div>
             <div className="text-[11px] text-white/70">Sertifikat haqiqiyligini tekshirish</div>
           </div>
         </div>
@@ -53,7 +60,7 @@ export default async function VerifyPage({ params }: { params: Promise<{ qr: str
           )}
         </div>
         <div className="border-t border-slate-100 px-6 py-3 text-center text-[11px] text-slate-400">
-          © 2026 Germaniya Live
+          © {new Date().getFullYear()} {brand.name}
         </div>
       </div>
     </div>

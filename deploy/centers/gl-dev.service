@@ -1,0 +1,18 @@
+[Unit]
+Description=GL EDU Dev panel (o'quv markazlari boshqaruvi)
+After=network.target
+
+[Service]
+User=deploy
+WorkingDirectory=/opt/gl-edu
+ExecStartPre=+/bin/sh -c 'mkdir -p /opt/centers && chown deploy:deploy /opt/centers'
+# Dev panel muhiti: DEV_PANEL=1, PORT, DEV_ADMIN_EMAIL, DEV_ADMIN_PASSWORD_HASH, DEV_SECRET ...
+EnvironmentFile=/opt/centers/.dev.env
+Environment=NODE_ENV=production
+Environment=TZ=Asia/Tashkent
+ExecStart=/usr/bin/npx next start -p ${PORT}
+Restart=always
+RestartSec=5
+
+[Install]
+WantedBy=multi-user.target

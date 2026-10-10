@@ -34,7 +34,8 @@ export const fmtSum = (n: number) => `${new Intl.NumberFormat("ru-RU").format(n)
 // Belgi emas, buyum: qirrasi (gurt) tishli, yuzi botiq, yorug'lik tepa-chapdan
 // tushib past-o'ngda soya beradi. Markazda "G" (Germaniya Live) bo'rtma qilib
 // bosilgan — pastda och nusxa, ustida to'q nusxa: metall bo'rtma shundan chiqadi.
-export function CoinGold({ s = 46 }: { s?: number }) {
+// `mark` — markaz nomining bosh harfi (server sahifa getBrand() dan uzatadi).
+export function CoinGold({ s = 46, mark = "G" }: { s?: number; mark?: string }) {
   // 26px dan kichigida tishlar va "G" loyqa bo'lib ketadi — o'sha o'lchamda
   // faqat disk, qirra va porlash chiziladi (bir oiladan, lekin toza).
   const detail = s >= 26;
@@ -72,9 +73,9 @@ export function CoinGold({ s = 46 }: { s?: number }) {
       {/* bo'rtma "G" */}
       {detail && <text x="24" y="24" textAnchor="middle" dominantBaseline="central"
         fontFamily="var(--font-sans)" fontSize="19" fontWeight="800" fill="#fff5cf" fillOpacity="0.85"
-        transform="translate(0,1)">G</text>}
+        transform="translate(0,1)">{mark}</text>}
       {detail && <text x="24" y="24" textAnchor="middle" dominantBaseline="central"
-        fontFamily="var(--font-sans)" fontSize="19" fontWeight="800" fill="#96590d">G</text>}
+        fontFamily="var(--font-sans)" fontSize="19" fontWeight="800" fill="#96590d">{mark}</text>}
 
       {/* umumiy yorug'lik/soya qatlami — tangaga hajm beradi */}
       <circle cx="24" cy="24" r="23" fill="url(#glCoinShade)" />

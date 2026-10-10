@@ -10,6 +10,7 @@ import MissingStudent from "../MissingStudent";
 import PasswordForm from "../profil/PasswordForm";
 import LocalePicker from "./LocalePicker";
 import IdCard from "../IdCard";
+import { getBrand } from "@/lib/brand";
 import SecretField from "./SecretField";
 import AppVersion from "./AppVersion";
 
@@ -130,6 +131,7 @@ export default async function StudentSettingsPage() {
       {/* ── Hisob ── */}
       <SectionTitle>{t.accountSection}</SectionTitle>
       <IdCard
+        brandName={(await getBrand()).name}
         t={t}
         p={{
           fullName: student.fullName,

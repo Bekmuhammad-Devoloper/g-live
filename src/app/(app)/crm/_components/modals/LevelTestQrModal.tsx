@@ -52,7 +52,7 @@ export default function LevelTestQrModal({ locale, open, onClose }: { locale: Lo
         ) : (
           <div className="text-center">
             {data.modules ? (
-              <BrandedQr modules={data.modules} size={data.size} className="mx-auto h-60 w-60 rounded-xl" onPng={setPng} />
+              <BrandedQr modules={data.modules} size={data.size} logoSrc={data.mark ?? ""} className="mx-auto h-60 w-60 rounded-xl" onPng={setPng} />
             ) : (
               <p className="py-8 text-sm text-rose-500">
                 {data.error === "forbidden"

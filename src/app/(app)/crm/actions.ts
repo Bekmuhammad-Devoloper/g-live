@@ -12,6 +12,7 @@ import { branchWhere } from "@/lib/branchScope";
 import { ROLES, LEAD_STAGES, isSalesRole } from "@/lib/constants";
 import { parseUzPhone } from "@/lib/phone";
 import { getSetting, setSetting } from "@/lib/settings";
+import { getBrand } from "@/lib/brand";
 import { GROUP_COL_COLORS, GROUP_COL_ICONS, branchColKey, type CustomColumn, type GroupColumn } from "./_lib/leadColumns";
 
 const schema = z.object({
@@ -817,7 +818,7 @@ export async function moveLeadToColumn(leadId: string, columnId: string): Promis
 
 const LEVEL_TEST_PATH = "/daraja-testi";
 
-export type LevelTestQr = { url: string; modules: string; size: number; error?: string };
+export type LevelTestQr = { url: string; modules: string; size: number; /** QR markazidagi emblema (bo'sh — emblemasiz) */ mark?: string; error?: string };
 
 export async function getLevelTestQr(): Promise<LevelTestQr> {
   const s = await requireSession();
@@ -830,7 +831,8 @@ export async function getLevelTestQr(): Promise<LevelTestQr> {
     // H — 30% xato tuzatish: markazdagi emblema shu zaxira hisobiga qo'yiladi
     const q = QRCode.create(url, { errorCorrectionLevel: "H" });
     const modules = Array.from(q.modules.data, (b) => (b ? "1" : "0")).join("");
-    return { url, modules, size: q.modules.size };
+    const mark = (await getBrand()).isMain ? "/logo-mark.png" : "";
+    return { url, modules, size: q.modules.size, mark };
   } catch {
     return { url, modules: "", size: 0, error: "qr_failed" };
   }

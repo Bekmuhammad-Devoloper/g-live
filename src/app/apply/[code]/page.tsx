@@ -8,11 +8,16 @@ import ApplyForm from "./ApplyForm";
 import ApplyShell from "./ApplyShell";
 import { parseQuestions } from "../../(app)/links/questions";
 import { Icon } from "../../(app)/_components/Icon";
+import { getBrand } from "@/lib/brand";
+import BrandLogo from "@/app/BrandLogo";
 
-export const metadata: Metadata = {
-  title: "Kursga yozilish — Germaniya Live",
-  description: "Nemis tili kursiga ariza qoldiring — tez orada bog'lanamiz",
-};
+export async function generateMetadata(): Promise<Metadata> {
+  const brand = await getBrand();
+  return {
+    title: `Kursga yozilish — ${brand.name}`,
+    description: "Nemis tili kursiga ariza qoldiring — tez orada bog'lanamiz",
+  };
+}
 
 /** "500000" → "500 000 so'm"; matn bo'lsa (masalan "500 000 so'm/oy") o'zgarmaydi */
 function fmtPrice(raw: string): string {
@@ -48,11 +53,12 @@ export default async function ApplyPage({ params, searchParams }: {
   // Daraja tugmalari (Sozlamalar > Darajalar, faqat A1–B2 — arizada C1 shart emas)
   // va oflayn uchun faol filiallar
   // + Android ilovasi — pastdagi "Ilovani yuklab oling" kartasi (serverdagi eng oxirgi APK)
-  const [allLevels, branches, app] = await Promise.all([
+  const [allLevels, branches, app, brand] = await Promise.all([
     getLevelCodes(),
     // Faqat faol va arizada ko'rsatishga ruxsat berilgan filiallar (Filiallar bo'limidagi "Arizada" tugmasi)
     prisma.branch.findMany({ where: { isActive: true, showInApply: true }, select: { id: true, name: true, address: true, imageUrl: true, applyCourses: true }, orderBy: { name: "asc" } }),
     getAppRelease(),
+    getBrand(),
   ]);
 
   const APPLY_LEVELS = ["A1", "A2", "B1", "B2"];
@@ -71,10 +77,7 @@ export default async function ApplyPage({ params, searchParams }: {
       <div className="relative mx-auto flex min-h-[100dvh] w-full max-w-md flex-col px-4 pb-[max(1.25rem,env(safe-area-inset-bottom))] pt-[max(1rem,env(safe-area-inset-top))] sm:justify-center sm:py-10">
         {/* Sarlavha: logotip + yorliq */}
         <div className="flex items-center justify-between">
-          {/* eslint-disable-next-line @next/next/no-img-element */}
-          <img src="/logo.png" alt="Germaniya Live" className="h-9 w-auto object-contain dark:hidden" />
-          {/* eslint-disable-next-line @next/next/no-img-element */}
-          <img src="/logo-dark.png" alt="Germaniya Live" className="hidden h-9 w-auto object-contain dark:block" />
+          <BrandLogo brand={brand} className="h-9 w-auto object-contain" textClassName="text-lg font-extrabold tracking-tight text-slate-900 dark:text-white" />
           <span className="rounded-full border border-slate-200/80 bg-white/70 px-3 py-1 text-[11px] font-semibold text-slate-600 backdrop-blur dark:border-white/10 dark:bg-white/[0.06] dark:text-slate-300">
             Kursga yozilish
           </span>
@@ -128,17 +131,18 @@ export default async function ApplyPage({ params, searchParams }: {
         )}
 
         {/* Ilovani yuklab olish — har doim eng oxirgi versiya (/api/app/android serverdagi faylni beradi) */}
-        {app.available && (
+        {/* Mobil ilova faqat asosiy markazniki */}
+        {brand.isMain && app.available && (
           <a
             href={app.href}
             className="mt-6 flex items-center gap-3 rounded-3xl border border-white/70 bg-white/55 p-3.5 shadow-[0_20px_50px_-24px_rgba(15,23,42,0.35)] backdrop-blur-xl transition active:scale-[0.98] dark:border-white/10 dark:bg-white/[0.06]"
           >
             {/* Ilovaning o'z ikonkasi — telefonda o'rnatilganda shu ko'rinadi */}
             {/* eslint-disable-next-line @next/next/no-img-element */}
-            <img src="/icons/icon-192.png" alt="Germaniya Live" width={52} height={52} className="shrink-0 rounded-2xl shadow-md ring-1 ring-black/10" style={{ width: 52, height: 52 }} />
+            <img src="/icons/icon-192.png" alt={brand.name} width={52} height={52} className="shrink-0 rounded-2xl shadow-md ring-1 ring-black/10" style={{ width: 52, height: 52 }} />
             {/* Matn kesilmaydi — tor ekranda o'raladi; tugma kichik, dumaloq */}
             <span className="min-w-0 flex-1">
-              <span className="block break-words text-[15px] font-bold leading-tight text-slate-900 dark:text-white">Germaniya Live</span>
+              <span className="block break-words text-[15px] font-bold leading-tight text-slate-900 dark:text-white">{brand.name}</span>
               <span className="mt-1 block break-words text-[12px] leading-tight text-slate-500 dark:text-slate-400">
                 Ilovani yuklab oling{app.version ? ` · ${app.version.replace(/\s*\(\d+\)$/, "")}` : ""}{app.sizeMb ? ` · ${app.sizeMb} MB` : ""}
               </span>
@@ -149,7 +153,7 @@ export default async function ApplyPage({ params, searchParams }: {
           </a>
         )}
 
-        <div className="mt-6 text-center text-[11px] text-slate-400 dark:text-slate-500">© 2026 Germaniya Live</div>
+        <div className="mt-6 text-center text-[11px] text-slate-400 dark:text-slate-500">© {new Date().getFullYear()} {brand.name}</div>
       </div>
     </ApplyShell>
   );

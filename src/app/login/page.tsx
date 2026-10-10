@@ -5,6 +5,8 @@ import { LOCALES, type Locale } from "@/lib/constants";
 import { tr } from "@/lib/tr";
 import LoginForm from "./LoginForm";
 import { safeNextPath } from "@/lib/lessonLink";
+import { getBrand } from "@/lib/brand";
+import BrandLogo from "@/app/BrandLogo";
 
 // Kirish sahifasida sessiya (va User.locale) yo'q — til brauzerning
 // Accept-Language sarlavhasidan olinadi: birinchi mos kelgan til, aks holda "uz".
@@ -23,6 +25,7 @@ export default async function LoginPage({ searchParams }: { searchParams: Promis
   const session = await getSession();
   if (session) redirect(next ?? "/dashboard");
   const locale = await browserLocale();
+  const brand = await getBrand();
 
   // `gl-native` — kirish sahifasi Android ilovasining BIRINCHI ekrani: seans
   // tugaganda /student shu yerga yo'naltiradi. Shu sabab unda ham ilova hissi
@@ -35,8 +38,12 @@ export default async function LoginPage({ searchParams }: { searchParams: Promis
 
       <div className="relative w-full max-w-sm">
         <div className="mb-7 text-center">
-          {/* eslint-disable-next-line @next/next/no-img-element */}
-          <img src="/logo.png" alt="Germaniya Live" className="mx-auto mb-3 h-auto w-64 max-w-full object-contain" />
+          <BrandLogo
+            brand={brand}
+            variant="light"
+            className="mx-auto mb-3 h-auto w-64 max-w-full object-contain"
+            textClassName="mb-3 block text-3xl font-extrabold tracking-tight text-slate-900"
+          />
           <p className="mt-1 text-sm text-slate-500">{tr(locale, { uz: "O'quv markazini boshqarish tizimi", ru: "Система управления учебным центром", en: "Learning centre management system", de: "Verwaltungssystem für das Bildungszentrum" })}</p>
         </div>
 
@@ -44,7 +51,7 @@ export default async function LoginPage({ searchParams }: { searchParams: Promis
           <LoginForm locale={locale} next={next} />
         </div>
 
-        <p className="mt-6 text-center text-xs text-slate-400">© 2026 Germaniya Live</p>
+        <p className="mt-6 text-center text-xs text-slate-400">© {new Date().getFullYear()} {brand.name}</p>
       </div>
     </div>
   );

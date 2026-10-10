@@ -4,6 +4,7 @@ import { SignJWT, jwtVerify } from "jose";
 import bcrypt from "bcryptjs";
 import { ROLES, type Locale } from "./constants";
 import { prisma } from "./db";
+import { instanceBlockState, isDevPanel } from "./instance";
 
 const COOKIE = "gl_session";
 const secret = new TextEncoder().encode(
@@ -45,6 +46,9 @@ export async function createSession(user: SessionUser): Promise<void> {
 }
 
 export async function getSession(): Promise<SessionUser | null> {
+  // Dev panel jarayonida markaz sessiyasi yo'q; yopilgan markazda (to'xtatilgan/litsenziya
+  // tugagan) hech kim kira olmaydi — API va server action'lar ham shu orqali yopiladi
+  if (isDevPanel() || instanceBlockState().blocked) return null;
   const store = await cookies();
   const token = store.get(COOKIE)?.value;
   if (!token) return null;

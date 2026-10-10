@@ -9,7 +9,7 @@ const KEY = "gl:settings";
 
 interface Prefs { centerName: string; qrMinutes: number; lowScore: number }
 
-export default function SettingsForm({ defaults, locale = "uz" }: { defaults: { qrMinutes: number; lowScore: number }; locale?: Locale }) {
+export default function SettingsForm({ defaults, locale = "uz", brandName = "" }: { defaults: { qrMinutes: number; lowScore: number }; locale?: Locale; /** Markaz nomi (server ota-komponentdan, getBrand) — maydon namunasi */ brandName?: string }) {
   const T = (uz: string, ru: string, en: string, de: string) => tr(locale, { uz, ru, en, de });
   // SSR bilan mos bo'lishi uchun boshlang'ich qiymatlar serverdan, keyin localStorage'dan yuklanadi
   const [prefs, setPrefs] = useState<Prefs>({ centerName: "", qrMinutes: defaults.qrMinutes, lowScore: defaults.lowScore });
@@ -51,7 +51,7 @@ export default function SettingsForm({ defaults, locale = "uz" }: { defaults: { 
       <div className="space-y-3">
         <div>
           <label className={lbl}>{T("O'quv markazi nomi", "Название учебного центра", "Learning centre name", "Name des Bildungszentrums")}</label>
-          <input value={prefs.centerName} onChange={(e) => set("centerName", e.target.value)} placeholder="Germaniya Live" className={inp} />
+          <input value={prefs.centerName} onChange={(e) => set("centerName", e.target.value)} placeholder={brandName} className={inp} />
         </div>
         <div className="grid grid-cols-2 gap-3">
           <div>

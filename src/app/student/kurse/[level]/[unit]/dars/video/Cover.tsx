@@ -1,6 +1,7 @@
 import type { StudentStrings } from "../../../../../_i18n";
 import { embedUrl, isImage, isUpload, safeUrl, youtubePoster } from "../../_parts";
 import Player from "./Player";
+import BrandLogo, { type BrandView } from "@/app/BrandLogo";
 
 // Dars videosining muqovasi + "Ko'rish" tugmasi.
 //
@@ -14,11 +15,13 @@ import Player from "./Player";
 export const VIDEO_ACCENT = "linear-gradient(150deg, #2fb9dc 0%, #0e7490 100%)";
 
 export default function VideoCover({
-  lesson, watched, t,
+  lesson, watched, t, brand,
 }: {
   lesson: { id: string; videoUrl: string | null; videoPosterUrl: string | null };
   watched: boolean;
   t: StudentStrings;
+  /** Markaz brendi — muqova bo'lmaganda logotip (yoki nom) ko'rsatiladi */
+  brand: BrandView;
 }) {
   const video = safeUrl(lesson.videoUrl);
   const embed = video && !isUpload(video) ? embedUrl(video) : null;
@@ -48,8 +51,12 @@ export default function VideoCover({
             </g>
           </svg>
           <span className="absolute inset-0 grid place-items-center px-8">
-            {/* eslint-disable-next-line @next/next/no-img-element */}
-            <img src="/logo-dark.png" alt="Germaniya Live" className="max-h-[46%] w-auto max-w-[74%] object-contain drop-shadow-[0_6px_14px_rgba(0,0,0,0.35)]" />
+            <BrandLogo
+              brand={brand}
+              variant="dark"
+              className="max-h-[46%] w-auto max-w-[74%] object-contain drop-shadow-[0_6px_14px_rgba(0,0,0,0.35)]"
+              textClassName="text-center text-2xl font-extrabold tracking-tight text-white drop-shadow-[0_6px_14px_rgba(0,0,0,0.35)]"
+            />
           </span>
         </>
       )}

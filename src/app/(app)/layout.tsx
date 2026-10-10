@@ -8,6 +8,8 @@ import { canWrite, MODULES } from "@/lib/rbac";
 import AppShell from "./_components/AppShell";
 import { DialogHost } from "./_components/dialogs";
 import Softphone from "./_components/Softphone";
+import { getBrand } from "@/lib/brand";
+import { disabledModules, INSTANCE_MODULES, isModuleEnabled } from "@/lib/instance";
 
 export default async function AppLayout({ children }: { children: React.ReactNode }) {
   const session = await getSession();
@@ -91,6 +93,8 @@ export default async function AppLayout({ children }: { children: React.ReactNod
     ? allBranches
     : ownBranches.length > 0 ? ownBranches : branch ? [{ id: branch.id, name: branch.name }] : [];
 
+  const brand = await getBrand();
+  const offPaths = [...disabledModules()].flatMap((m) => INSTANCE_MODULES[m].paths);
   const navItems = navFor(session.role).map((it) => ({
     href: it.href,
     icon: it.icon,
@@ -100,6 +104,8 @@ export default async function AppLayout({ children }: { children: React.ReactNod
   return (
     <AppShell
       navItems={navItems}
+      brand={{ name: brand.name, logo: brand.logo, logoDark: brand.logoDark }}
+      offPaths={offPaths}
       role={session.role}
       portal={portal}
       locale={session.locale}
@@ -138,7 +144,7 @@ export default async function AppLayout({ children }: { children: React.ReactNod
     >
       {children}
       <DialogHost locale={session.locale} />
-      {canPhone && <Softphone locale={session.locale} canConfigure={canConfigureTelephony} />}
+      {canPhone && isModuleEnabled("telephony") && <Softphone locale={session.locale} canConfigure={canConfigureTelephony} />}
     </AppShell>
   );
 }
