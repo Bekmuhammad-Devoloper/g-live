@@ -28,14 +28,15 @@ export function daysLeft(until: string | null | undefined): number | null {
 }
 
 export function Card({ children, className = "" }: { children: React.ReactNode; className?: string }) {
-  return <div className={`rounded-2xl border border-slate-200 bg-white p-5 shadow-sm dark:border-slate-800 dark:bg-slate-900 ${className}`}>{children}</div>;
+  return <div className={`rounded-2xl border border-slate-200 bg-white p-5 shadow-sm dark:border-white/[0.07] dark:bg-[#0d1424] ${className}`}>{children}</div>;
 }
 
 export function Stat({ label, value, hint, tone = "slate" }: { label: string; value: React.ReactNode; hint?: React.ReactNode; tone?: "slate" | "green" | "amber" | "red" | "blue" }) {
-  const c = { slate: "text-slate-900 dark:text-white", green: "text-emerald-600", amber: "text-amber-600", red: "text-red-600", blue: "text-sky-600" }[tone];
+  const c = { slate: "text-white", green: "text-emerald-400", amber: "text-amber-400", red: "text-red-400", blue: "text-sky-400" }[tone];
   return (
-    <Card>
-      <div className="text-xs font-semibold uppercase tracking-wide text-slate-500">{label}</div>
+    <Card className="relative overflow-hidden">
+      <span aria-hidden className="absolute inset-x-0 top-0 h-px bg-gradient-to-r from-transparent via-orange-400/40 to-transparent" />
+      <div className="text-[11px] font-semibold uppercase tracking-[0.12em] text-slate-400">{label}</div>
       <div className={`mt-1.5 text-2xl font-bold tabular-nums ${c}`}>{value}</div>
       {hint && <div className="mt-1 text-xs text-slate-500">{hint}</div>}
     </Card>

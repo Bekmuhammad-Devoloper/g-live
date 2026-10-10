@@ -48,7 +48,7 @@ export default async function DevDashboard() {
         </div>
         <div className="flex gap-2">
           <UpdateAllButton />
-          <Link href="/dev/centers/new" className="rounded-lg bg-slate-900 px-4 py-2 text-sm font-semibold text-white hover:bg-slate-800 dark:bg-white dark:text-slate-900">+ Yangi markaz</Link>
+          <Link href="/dev/centers/new" className="rounded-lg bg-gradient-to-r from-[#e3262b] via-[#ee7a24] to-[#f6b51e] text-white shadow-lg shadow-orange-600/20 hover:brightness-110 px-4 py-2 text-sm font-semibold text-white ">+ Yangi markaz</Link>
         </div>
       </div>
 
@@ -62,7 +62,7 @@ export default async function DevDashboard() {
       <Card className="!p-0 overflow-hidden">
         <div className="overflow-x-auto">
           <table className="w-full min-w-[920px] text-sm">
-            <thead className="bg-slate-50 text-left text-xs font-semibold uppercase text-slate-500 dark:bg-slate-800/60">
+            <thead className="bg-slate-50 text-left text-xs font-semibold uppercase text-slate-500 dark:bg-white/[0.03]">
               <tr>
                 <th className="px-4 py-3">Markaz</th>
                 <th className="px-4 py-3">Holat</th>
@@ -75,7 +75,7 @@ export default async function DevDashboard() {
                 <th className="px-4 py-3">Oxirgi kirish</th>
               </tr>
             </thead>
-            <tbody className="divide-y divide-slate-100 dark:divide-slate-800">
+            <tbody className="divide-y divide-slate-100 dark:divide-white/[0.06]">
               <tr className="bg-slate-50/50 dark:bg-white/[0.02]">
                 <td className="px-4 py-3">
                   <div className="font-semibold">Germaniya Live <Pill tone="blue">asosiy</Pill></div>

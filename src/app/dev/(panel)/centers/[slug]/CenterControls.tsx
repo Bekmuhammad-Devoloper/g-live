@@ -11,10 +11,10 @@ import { fmtBytes, fmtDate } from "../../ui";
 type Info = { slug: string; name: string; plan: string; licenseUntil: string; suspended: boolean; contactName: string; contactPhone: string; notes: string; directorEmail: string; host: string };
 type Mod = { key: string; name: string; desc: string; on: boolean };
 
-const box = "rounded-2xl border border-slate-200 bg-white p-5 shadow-sm dark:border-slate-800 dark:bg-slate-900";
-const btn = "rounded-lg border border-slate-300 bg-white px-3 py-1.5 text-sm font-semibold text-slate-700 hover:bg-slate-50 disabled:opacity-50 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-200 dark:hover:bg-slate-800";
-const btnDark = "rounded-lg bg-slate-900 px-3 py-1.5 text-sm font-semibold text-white hover:bg-slate-800 disabled:opacity-50 dark:bg-white dark:text-slate-900";
-const fld = "h-9 w-full rounded-lg border border-slate-300 bg-white px-3 text-sm outline-none focus:border-slate-900 dark:border-slate-700 dark:bg-slate-900";
+const box = "rounded-2xl border border-slate-200 bg-white p-5 shadow-sm dark:border-white/[0.07] dark:bg-[#0d1424]";
+const btn = "rounded-lg border border-slate-300 bg-white px-3 py-1.5 text-sm font-semibold text-slate-700 hover:bg-slate-50 disabled:opacity-50 dark:border-white/10 dark:bg-[#0d1424] dark:text-slate-200 dark:hover:bg-slate-800";
+const btnDark = "rounded-lg bg-gradient-to-r from-[#e3262b] via-[#ee7a24] to-[#f6b51e] text-white shadow-lg shadow-orange-600/20 hover:brightness-110 px-3 py-1.5 text-sm font-semibold text-white disabled:opacity-50 ";
+const fld = "h-9 w-full rounded-lg border border-slate-300 bg-white px-3 text-sm outline-none focus:border-slate-900 dark:border-white/10 dark:bg-[#0d1424]";
 
 export default function CenterControls({ center: c, modules, backups }: { center: Info; modules: Mod[]; backups: { name: string; bytes: number; at: string }[] }) {
   const router = useRouter();
@@ -57,7 +57,7 @@ export default function CenterControls({ center: c, modules, backups }: { center
             <input type="date" value={date} onChange={(e) => setDate(e.target.value)} className={`${fld} max-w-[180px]`} />
             <button disabled={pending || !date} onClick={() => act(() => setLicenseDateAction(c.slug, date), "Sana o'rnatildi")} className={btn}>Sanani o'rnatish</button>
           </div>
-          <div className="mt-4 border-t border-slate-100 pt-4 dark:border-slate-800">
+          <div className="mt-4 border-t border-slate-100 pt-4 dark:border-white/[0.07]">
             {c.suspended ? (
               <button disabled={pending} onClick={() => act(() => setSuspendedAction(c.slug, false, ""), "Markaz qayta yoqildi")} className={btnDark}>Markazni qayta yoqish</button>
             ) : (
@@ -90,7 +90,7 @@ export default function CenterControls({ center: c, modules, backups }: { center
             <div><label className="mb-1 block text-xs font-semibold text-slate-500">Tarif</label><input value={info.plan} onChange={(e) => setInfo({ ...info, plan: e.target.value })} className={fld} /></div>
             <div><label className="mb-1 block text-xs font-semibold text-slate-500">Mas'ul shaxs</label><input value={info.contactName} onChange={(e) => setInfo({ ...info, contactName: e.target.value })} className={fld} /></div>
             <div><label className="mb-1 block text-xs font-semibold text-slate-500">Telefon</label><input value={info.contactPhone} onChange={(e) => setInfo({ ...info, contactPhone: e.target.value })} className={fld} /></div>
-            <div className="sm:col-span-2"><label className="mb-1 block text-xs font-semibold text-slate-500">Izoh</label><textarea value={info.notes} onChange={(e) => setInfo({ ...info, notes: e.target.value })} rows={2} className="w-full rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm dark:border-slate-700 dark:bg-slate-900" /></div>
+            <div className="sm:col-span-2"><label className="mb-1 block text-xs font-semibold text-slate-500">Izoh</label><textarea value={info.notes} onChange={(e) => setInfo({ ...info, notes: e.target.value })} rows={2} className="w-full rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm dark:border-white/10 dark:bg-[#0d1424]" /></div>
           </div>
           <button disabled={pending} onClick={() => act(() => updateInfoAction(c.slug, info), "Ma'lumotlar saqlandi")} className={`${btnDark} mt-3`}>Saqlash</button>
         </section>
@@ -124,7 +124,7 @@ export default function CenterControls({ center: c, modules, backups }: { center
             <button disabled={pending} onClick={() => act(() => backupAction(c.slug), "Zaxira olindi")} className={btnDark}>Hozir zaxira olish</button>
           </div>
           <p className="mt-1 text-xs text-slate-500">Har kecha avtomatik olinadi, oxirgi 14 tasi saqlanadi.</p>
-          <ul className="mt-3 divide-y divide-slate-100 text-sm dark:divide-slate-800">
+          <ul className="mt-3 divide-y divide-slate-100 text-sm dark:divide-white/[0.06]">
             {backups.length === 0 && <li className="py-2 text-slate-400">Hali zaxira yo'q</li>}
             {backups.map((b) => (
               <li key={b.name} className="flex items-center justify-between py-2">
