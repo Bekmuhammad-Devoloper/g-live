@@ -10,7 +10,8 @@ export default async function DevLoginPage() {
         <div className="mb-8 flex flex-col items-center text-center">
           {/* eslint-disable-next-line @next/next/no-img-element */}
           <img src="/logo-dark.png" alt="Germaniya Live" className="h-16 w-auto object-contain" />
-          <h1 className="font-hand mt-4 -rotate-2 bg-gradient-to-r from-[#e3262b] via-[#ee7a24] to-[#f6b51e] bg-clip-text pb-1 text-[52px] font-bold leading-none text-transparent drop-shadow-[0_2px_12px_rgba(238,122,36,0.25)]">
+          {/* px — qiya qo'lyozma harflar gradient qutisidan chiqib, kesilib qolmasin */}
+          <h1 className="font-hand mt-3 inline-block -rotate-2 bg-gradient-to-r from-[#e3262b] via-[#ee7a24] to-[#f6b51e] bg-clip-text px-3 pb-1 text-[34px] font-bold leading-tight text-transparent">
             Dev panel
           </h1>
           <p className="mt-2 text-sm text-slate-400">O'quv markazlari boshqaruvi</p>

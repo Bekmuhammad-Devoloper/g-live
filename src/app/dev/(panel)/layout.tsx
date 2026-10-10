@@ -11,7 +11,7 @@ export default async function DevPanelLayout({ children }: { children: React.Rea
         <Link href="/dev" className="flex flex-col gap-2 border-b border-white/[0.06] px-6 py-6">
           {/* eslint-disable-next-line @next/next/no-img-element */}
           <img src="/logo-dark.png" alt="Germaniya Live" className="h-10 w-auto self-start object-contain" />
-          <span className="font-hand -rotate-2 bg-gradient-to-r from-[#e3262b] via-[#ee7a24] to-[#f6b51e] bg-clip-text text-[30px] font-bold leading-none text-transparent">
+          <span className="font-hand -ml-1 inline-block w-fit -rotate-2 bg-gradient-to-r from-[#e3262b] via-[#ee7a24] to-[#f6b51e] bg-clip-text px-1.5 text-[24px] font-bold leading-tight text-transparent">
             Dev panel
           </span>
         </Link>
