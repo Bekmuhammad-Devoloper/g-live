@@ -16,9 +16,29 @@ export default function LoginForm() {
       <div>
         <label className="mb-1.5 block text-xs font-semibold uppercase tracking-wide text-slate-400">Parol</label>
         <div className="relative">
-          <input name="password" type={show ? "text" : "password"} required autoComplete="current-password" placeholder="••••••••" className={`${fld} pr-20`} />
-          <button type="button" onClick={() => setShow((v) => !v)} className="absolute right-3 top-1/2 -translate-y-1/2 rounded-md px-2 py-1 text-xs font-semibold text-slate-400 hover:text-white">
-            {show ? "Yashirish" : "Ko'rsatish"}
+          <input name="password" type={show ? "text" : "password"} required autoComplete="current-password" placeholder="••••••••" className={`${fld} pr-14`} />
+          <button
+            type="button"
+            onClick={() => setShow((v) => !v)}
+            aria-label={show ? "Parolni yashirish" : "Parolni ko'rsatish"}
+            title={show ? "Parolni yashirish" : "Parolni ko'rsatish"}
+            className="absolute right-2.5 top-1/2 flex h-9 w-9 -translate-y-1/2 items-center justify-center rounded-lg text-slate-400 transition hover:bg-white/[0.06] hover:text-orange-300"
+          >
+            {show ? (
+              // Ko'z (yopilgan) — parol ko'rinib turibdi, bosilsa yashiriladi
+              <svg viewBox="0 0 24 24" className="h-5 w-5" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
+                <path d="M3 3l18 18" />
+                <path d="M10.6 10.6a2 2 0 0 0 2.8 2.8" />
+                <path d="M9.9 5.1A9.8 9.8 0 0 1 12 5c5 0 8.5 4.2 9.6 6.2a1.6 1.6 0 0 1 0 1.6 15.6 15.6 0 0 1-3 3.6" />
+                <path d="M6.6 6.6C4.6 7.9 3.2 9.9 2.4 11.2a1.6 1.6 0 0 0 0 1.6C3.5 14.8 7 19 12 19a9.6 9.6 0 0 0 5.4-1.6" />
+              </svg>
+            ) : (
+              // Ko'z (ochiq) — bosilsa parol ko'rsatiladi
+              <svg viewBox="0 0 24 24" className="h-5 w-5" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
+                <path d="M2.4 12.8a1.6 1.6 0 0 1 0-1.6C3.5 9.2 7 5 12 5s8.5 4.2 9.6 6.2a1.6 1.6 0 0 1 0 1.6C20.5 14.8 17 19 12 19S3.5 14.8 2.4 12.8Z" />
+                <circle cx="12" cy="12" r="3" />
+              </svg>
+            )}
           </button>
         </div>
       </div>

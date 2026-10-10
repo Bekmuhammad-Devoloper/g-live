@@ -10,11 +10,10 @@ export default async function DevLoginPage() {
         <div className="mb-8 flex flex-col items-center text-center">
           {/* eslint-disable-next-line @next/next/no-img-element */}
           <img src="/logo-dark.png" alt="Germaniya Live" className="h-16 w-auto object-contain" />
-          <div className="mt-5 inline-flex items-center gap-2 rounded-full border border-white/10 bg-white/[0.04] px-3 py-1 text-[11px] font-semibold uppercase tracking-[0.18em] text-orange-300/90">
-            <span className="h-1.5 w-1.5 rounded-full bg-gradient-to-r from-[#e3262b] to-[#f6b51e]" />
+          <h1 className="font-hand mt-4 -rotate-2 bg-gradient-to-r from-[#e3262b] via-[#ee7a24] to-[#f6b51e] bg-clip-text pb-1 text-[52px] font-bold leading-none text-transparent drop-shadow-[0_2px_12px_rgba(238,122,36,0.25)]">
             Dev panel
-          </div>
-          <p className="mt-3 text-sm text-slate-400">O'quv markazlari boshqaruvi</p>
+          </h1>
+          <p className="mt-2 text-sm text-slate-400">O'quv markazlari boshqaruvi</p>
         </div>
         <LoginForm />
         <p className="mt-6 text-center text-xs text-slate-500">Faqat tizim egalari uchun. Barcha kirishlar jurnalga yoziladi.</p>
