@@ -54,7 +54,7 @@ export async function createCenterAction(input: {
   if (reg.centers.some((c) => c.slug === slug && c.status !== "deleted")) return { ok: false, error: "Bu subdomen band" };
   const enabled = new Set(input.modules);
   const center: Center = {
-    slug, name, host: `${slug}.${BASE_DOMAIN}`, port: nextPort(reg), createdAt: new Date().toISOString(),
+    slug, name, host: `${slug}.${BASE_DOMAIN}`, port: await nextPort(reg), createdAt: new Date().toISOString(),
     licenseUntil: isoDate(addMonths(new Date(), Math.min(Math.max(Math.trunc(input.months) || 1, 1), 36))),
     suspended: false,
     disabledModules: ALL_INSTANCE_MODULES.filter((m) => !enabled.has(m)),

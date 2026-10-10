@@ -2,6 +2,7 @@ import "server-only";
 import { promises as fs } from "node:fs";
 import path from "node:path";
 import { randomBytes } from "node:crypto";
+import net from "node:net";
 import type { InstanceModule } from "@/lib/instance";
 
 // Markazlar reyestri — /opt/centers/registry.json (faqat deploy foydalanuvchisi o'qiydi, 600).
@@ -66,11 +67,24 @@ export async function updateCenter(slug: string, patch: Partial<Center>): Promis
   return r.centers[i];
 }
 
-export function nextPort(r: Registry): number {
+/** Port bo'shmi — serverda boshqa xizmatlar ham ishlaydi (masalan Docker konteynerlar), reyestr yetarli emas */
+function portFree(port: number): Promise<boolean> {
+  return new Promise((resolve) => {
+    const srv = net.createServer();
+    srv.once("error", () => resolve(false));
+    srv.once("listening", () => srv.close(() => resolve(true)));
+    srv.listen(port, "127.0.0.1");
+  });
+}
+
+/** Keyingi bo'sh port: reyestrdagi (o'chirilganlar ham) va serverda band portlar o'tkazib yuboriladi */
+export async function nextPort(r: Registry): Promise<number> {
   const used = new Set(r.centers.map((c) => c.port));
-  let p = FIRST_PORT;
-  while (used.has(p)) p++;
-  return p;
+  for (let p = FIRST_PORT; p < 3999; p++) {
+    if (used.has(p)) continue;
+    if (await portFree(p)) return p;
+  }
+  throw new Error("Bo'sh port topilmadi");
 }
 
 export const newSecret = (bytes = 36) => randomBytes(bytes).toString("base64url");
@@ -78,7 +92,9 @@ export const newSecret = (bytes = 36) => randomBytes(bytes).toString("base64url"
 export const centerDir = (slug: string) => path.join(CENTERS_ROOT, slug);
 export const centerDb = (slug: string) => path.join(centerDir(slug), "data", "db.sqlite");
 
-const q = (v: string) => `"${String(v).replace(/[\\"$`]/g, "\\$&").replace(/\n/g, " ")}"`;
+// systemd EnvironmentFile qo'shtirnoq ichidagi teskari chiziqni o'zicha talqin qiladi — xavfli belgilar
+// ekranlanmaydi, olib tashlanadi (qiymatlar: markaz nomi, fayl yo'li, base64url kalit)
+const q = (v: string) => `"${String(v).replace(/[\\"$`\r\n]/g, "")}"`;
 
 /** Markazning ishga tushish muhiti (systemd EnvironmentFile). O'zgargach xizmat qayta ishga tushiriladi. */
 export function renderEnv(c: Center): string {
