@@ -9,12 +9,20 @@ import { tr } from "@/lib/tr";
 import { Icon } from "../../_components/Icon";
 import { createWithdrawal, cancelWithdrawal, type WdState } from "./actions";
 import MoneyInput from "../../_components/MoneyInput";
+import Link from "next/link";
+import { exportXlsx } from "@/lib/export";
+import LineChart, { monthlySeries } from "../_components/LineChart";
+import GroupBadge from "../_components/GroupBadge";
+import Pagination, { PAGE_SIZE, fmtDate, fmtDateTime, localDay } from "../_components/Pagination";
 
 export interface VWithdrawal {
   id: string;
   date: string; // ISO
+  studentId: string;
   student: string;
   phone: string;
+  groupId: string | null;
+  group: string | null;
   course: string | null;
   amount: number;
   note: string | null;
@@ -31,24 +39,19 @@ interface Props {
   defaultTo: string;
 }
 
-const p2 = (n: number) => String(n).padStart(2, "0");
-const fmtDate = (iso: string) => {
-  const d = new Date(iso);
-  return `${p2(d.getDate())}.${p2(d.getMonth() + 1)}.${d.getFullYear()}`;
-};
-
 export default function WithdrawalsView({ withdrawals, courses, students, writable, locale, defaultFrom, defaultTo }: Props) {
   const [from, setFrom] = useState(defaultFrom);
   const [to, setTo] = useState(defaultTo);
   const [q, setQ] = useState("");
   const [sum, setSum] = useState("");
   const [course, setCourse] = useState("");
+  const [page, setPage] = useState(1);
 
   const filtered = useMemo(() => {
     const needle = q.trim().toLowerCase();
     const minSum = sum ? Number(sum.replace(/\D/g, "")) : 0;
     return withdrawals.filter((w) => {
-      const d = w.date.slice(0, 10);
+      const d = localDay(w.date);
       if (from && d < from) return false;
       if (to && d > to) return false;
       if (needle && !w.student.toLowerCase().includes(needle) && !w.phone.toLowerCase().includes(needle)) return false;
@@ -58,29 +61,45 @@ export default function WithdrawalsView({ withdrawals, courses, students, writab
     });
   }, [withdrawals, from, to, q, sum, course]);
 
+  // Filtr o'zgarsa — birinchi sahifaga qaytish
+  useEffect(() => { setPage(1); }, [from, to, q, sum, course]);
+  const pageRows = filtered.slice((page - 1) * PAGE_SIZE, page * PAGE_SIZE);
+
   const total = filtered.reduce((n, w) => n + w.amount, 0);
 
-  const byCourse = useMemo(() => {
-    const m = new Map<string, number>();
-    for (const w of filtered) m.set(w.course ?? "—", (m.get(w.course ?? "—") ?? 0) + w.amount);
-    return [...m.entries()].sort((a, b) => b[1] - a[1]);
-  }, [filtered]);
-  const maxCourse = Math.max(1, ...byCourse.map(([, v]) => v));
+  // Oylik yechib olishlar grafigi — oxirgi 12 oy
+  const chart = useMemo(
+    () => monthlySeries(withdrawals.map((w) => ({ day: localDay(w.date), amount: w.amount })), locale),
+    [withdrawals, locale],
+  );
 
-  const exportCsv = () => {
-    const head = [
-      tr(locale, { uz: "Sana", ru: "Дата", en: "Date", de: "Datum" }),
-      tr(locale, { uz: "Talaba ismi", ru: "Имя ученика", en: "Student name", de: "Name des Schülers" }),
-      tr(locale, { uz: "Sum", ru: "Сумма", en: "Amount", de: "Betrag" }),
-      tr(locale, { uz: "Izoh", ru: "Примечание", en: "Note", de: "Notiz" }),
-      tr(locale, { uz: "Xodim", ru: "Сотрудник", en: "Staff", de: "Mitarbeiter" }),
-    ];
-    const lines = filtered.map((w) => [fmtDate(w.date), w.student, String(w.amount), w.note ?? "", w.author ?? ""]);
-    const csv = [head, ...lines].map((r) => r.map((c) => `"${String(c).replace(/"/g, '""')}"`).join(",")).join("\n");
-    const url = URL.createObjectURL(new Blob(["﻿" + csv], { type: "text/csv;charset=utf-8" }));
-    const a = document.createElement("a");
-    a.href = url; a.download = "yechib-olishlar.csv"; a.click();
-    URL.revokeObjectURL(url);
+  const doExport = () => {
+    void exportXlsx(
+      `yechib-olishlar_${from}_${to}`,
+      [
+        { key: "date", label: tr(locale, { uz: "Sana", ru: "Дата", en: "Date", de: "Datum" }) },
+        { key: "student", label: tr(locale, { uz: "Talaba ismi", ru: "Имя ученика", en: "Student name", de: "Name des Schülers" }) },
+        { key: "phone", label: tr(locale, { uz: "Telefon", ru: "Телефон", en: "Phone", de: "Telefon" }) },
+        { key: "amount", label: tr(locale, { uz: "Summa", ru: "Сумма", en: "Amount", de: "Betrag" }) },
+        { key: "group", label: tr(locale, { uz: "Guruh", ru: "Группа", en: "Group", de: "Gruppe" }) },
+        { key: "course", label: tr(locale, { uz: "Kurs", ru: "Курс", en: "Course", de: "Kurs" }) },
+        { key: "note", label: tr(locale, { uz: "Izoh", ru: "Примечание", en: "Note", de: "Notiz" }) },
+        { key: "author", label: tr(locale, { uz: "Xodim", ru: "Сотрудник", en: "Staff", de: "Mitarbeiter" }) },
+        { key: "created", label: tr(locale, { uz: "Yaratilgan vaqt", ru: "Время создания", en: "Created at", de: "Erstellt am" }) },
+      ],
+      filtered.map((w) => ({
+        date: fmtDate(w.date),
+        student: w.student,
+        phone: w.phone,
+        amount: w.amount,
+        group: w.group ?? "",
+        course: w.course ?? "",
+        note: w.note ?? "",
+        author: w.author ?? "",
+        created: fmtDateTime(w.date),
+      })),
+      tr(locale, { uz: "Yechib olishlar", ru: "Выводы", en: "Withdrawals", de: "Auszahlungen" }),
+    );
   };
 
   return (
@@ -102,24 +121,8 @@ export default function WithdrawalsView({ withdrawals, courses, students, writab
           </div>
         </div>
         <div className="rounded-2xl border border-slate-300 bg-white p-5 shadow-card dark:border-slate-600 dark:bg-slate-900">
-          {byCourse.length === 0 ? (
-            <div className="flex h-32 items-center justify-center text-sm text-slate-400">{tr(locale, { uz: "Ko'rsatiladigan ma'lumotlar yo'q", ru: "Нет данных для отображения", en: "No data to display", de: "Keine Daten zum Anzeigen" })}</div>
-          ) : (
-            <div className="space-y-2.5">
-              <h3 className="mb-3 text-sm font-semibold text-slate-600 dark:text-slate-300">{tr(locale, { uz: "Kurs bo'yicha", ru: "По курсу", en: "By course", de: "Nach Kurs" })}</h3>
-              {byCourse.map(([c, v]) => (
-                <div key={c}>
-                  <div className="mb-1 flex justify-between text-xs">
-                    <span className="font-medium text-slate-700 dark:text-slate-200">{c}</span>
-                    <span className="text-slate-500">{formatMoney(v, locale)}</span>
-                  </div>
-                  <div className="h-2.5 overflow-hidden rounded-full bg-slate-100 dark:bg-slate-800">
-                    <div className="h-full rounded-full bg-brand-500" style={{ width: `${(v / maxCourse) * 100}%` }} />
-                  </div>
-                </div>
-              ))}
-            </div>
-          )}
+          <h3 className="mb-3 text-sm font-semibold text-slate-600 dark:text-slate-300">{tr(locale, { uz: "Oylik yechib olishlar", ru: "Выводы по месяцам", en: "Monthly withdrawals", de: "Monatliche Auszahlungen" })}</h3>
+          <LineChart labels={chart.labels} values={chart.values} formatValue={(v) => formatMoney(v, locale)} emptyText={tr(locale, { uz: "Ma'lumot yo'q", ru: "Нет данных", en: "No data", de: "Keine Daten" })} />
         </div>
       </div>
 
@@ -146,9 +149,13 @@ export default function WithdrawalsView({ withdrawals, courses, students, writab
       </div>
 
       {/* Jadval */}
-      <div className="relative overflow-hidden rounded-2xl border border-slate-300 bg-white shadow-card dark:border-slate-600 dark:bg-slate-900">
-        <div className="flex items-center justify-between border-b border-slate-200/70 px-5 py-3 dark:border-slate-800">
+      <div className="overflow-hidden rounded-2xl border border-slate-300 bg-white shadow-card dark:border-slate-600 dark:bg-slate-900">
+        <div className="flex flex-wrap items-center justify-between gap-3 border-b border-slate-200/70 px-5 py-3 dark:border-slate-800">
           <span className="text-sm text-slate-500">{tr(locale, { uz: "Jami", ru: "Всего", en: "Total", de: "Gesamt" })}: <b className="text-slate-800 dark:text-slate-100">{filtered.length}</b> {tr(locale, { uz: "ta", ru: "шт", en: "items", de: "Stk." })}</span>
+          <button type="button" onClick={doExport} disabled={filtered.length === 0}
+            className="inline-flex items-center gap-1.5 rounded-full border-2 border-emerald-500 px-4 py-1.5 text-sm font-semibold text-emerald-600 transition hover:bg-emerald-50 disabled:opacity-40 dark:hover:bg-emerald-950/30">
+            <Icon name="download" className="h-4 w-4" /> Excel
+          </button>
         </div>
         <div className="overflow-x-auto">
           <table className="w-full min-w-[820px] text-left text-sm">
@@ -163,16 +170,25 @@ export default function WithdrawalsView({ withdrawals, courses, students, writab
               </tr>
             </thead>
             <tbody className="divide-y divide-slate-100 dark:divide-slate-800">
-              {filtered.length === 0 ? (
+              {pageRows.length === 0 ? (
                 <tr><td colSpan={6} className="px-4 py-16 text-center text-slate-400">{tr(locale, { uz: "Ko'rsatiladigan ma'lumotlar yo'q", ru: "Нет данных для отображения", en: "No data to display", de: "Keine Daten zum Anzeigen" })}</td></tr>
               ) : (
-                filtered.map((w) => (
+                pageRows.map((w) => (
                   <tr key={w.id} className="transition hover:bg-slate-50 dark:hover:bg-slate-800/40">
                     <td className="whitespace-nowrap px-4 py-3 text-slate-500">{fmtDate(w.date)}</td>
-                    <td className="px-4 py-3 font-medium text-slate-800 dark:text-slate-100">{w.student}</td>
-                    <td className="px-4 py-3 font-semibold text-rose-600 dark:text-rose-400">− {formatMoney(w.amount, locale)}</td>
-                    <td className="px-4 py-3 text-slate-500">{w.note ?? "—"}</td>
-                    <td className="px-4 py-3 text-slate-500">{w.author ?? "—"}</td>
+                    <td className="px-4 py-3 font-medium">
+                      <Link href={`/students/${w.studentId}`} className="text-slate-800 hover:text-brand-600 hover:underline dark:text-slate-100">{w.student}</Link>
+                    </td>
+                    <td className="whitespace-nowrap px-4 py-3 font-semibold text-rose-600 dark:text-rose-400">− {formatMoney(w.amount, locale)}</td>
+                    <td className="max-w-[280px] px-4 py-3 text-slate-500">
+                      {w.groupId && w.group && <GroupBadge id={w.groupId} name={w.group} />}
+                      {w.note && <div className={w.groupId ? "mt-1" : ""}>{w.note}</div>}
+                      {!w.groupId && !w.note && "—"}
+                    </td>
+                    <td className="px-4 py-3">
+                      <div className="text-slate-600 dark:text-slate-300">{w.author ?? "—"}</div>
+                      <div className="text-xs text-slate-400">{fmtDateTime(w.date)}</div>
+                    </td>
                     <td className="px-4 py-3 text-right">{writable ? <CancelBtn id={w.id} locale={locale} /> : <span className="text-slate-400">—</span>}</td>
                   </tr>
                 ))
@@ -181,11 +197,7 @@ export default function WithdrawalsView({ withdrawals, courses, students, writab
           </table>
         </div>
 
-        {/* Export FAB */}
-        <button onClick={exportCsv} title={tr(locale, { uz: "CSV yuklab olish", ru: "Скачать CSV", en: "Download CSV", de: "CSV herunterladen" })}
-          className="absolute bottom-4 right-4 grid h-12 w-12 place-items-center rounded-full border-2 border-emerald-500 bg-white text-emerald-600 shadow-card transition hover:bg-emerald-50 dark:bg-slate-900 dark:hover:bg-emerald-950/30">
-          <Icon name="download" className="h-5 w-5" />
-        </button>
+        <Pagination page={page} total={filtered.length} onChange={setPage} locale={locale} />
       </div>
     </div>
   );

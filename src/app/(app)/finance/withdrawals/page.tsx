@@ -6,9 +6,7 @@ import { branchWhere, branchViaStudent } from "@/lib/branchScope";
 import { Forbidden } from "../../_components/ui";
 import LicenseBanner from "../../_components/LicenseBanner";
 import WithdrawalsView, { type VWithdrawal } from "./WithdrawalsView";
-
-const p2 = (n: number) => String(n).padStart(2, "0");
-const iso = (d: Date) => `${d.getFullYear()}-${p2(d.getMonth() + 1)}-${p2(d.getDate())}`;
+import { groupAtDate, monthRange } from "../_components/attribution";
 
 // "Yechib olish" — pul qaytarishlar (REFUNDED) ro'yxati: statistika + filtrlar + jadval.
 export default async function WithdrawalsPage() {
@@ -27,10 +25,9 @@ export default async function WithdrawalsPage() {
           select: {
             fullName: true,
             phone: true,
+            id: true,
             enrollments: {
-              take: 1,
-              orderBy: { joinedAt: "desc" },
-              select: { group: { select: { program: { select: { name: true } } } } },
+              select: { joinedAt: true, leftAt: true, group: { select: { id: true, name: true, program: { select: { name: true } } } } },
             },
           },
         },
@@ -40,22 +37,26 @@ export default async function WithdrawalsPage() {
     prisma.student.findMany({ where: branchWhere(s), orderBy: { fullName: "asc" }, select: { id: true, fullName: true } }),
   ]);
 
-  const withdrawals: VWithdrawal[] = rows.map((p) => ({
-    id: p.id,
-    date: p.createdAt.toISOString(),
-    student: p.student.fullName,
-    phone: p.student.phone ?? "",
-    course: p.student.enrollments[0]?.group?.program?.name ?? null,
-    amount: p.amount,
-    note: p.note ?? null,
-    author: p.author?.fullName ?? null,
-  }));
+  const withdrawals: VWithdrawal[] = rows.map((p) => {
+    const g = groupAtDate(p.student.enrollments, p.createdAt);
+    return {
+      id: p.id,
+      date: p.createdAt.toISOString(),
+      studentId: p.student.id,
+      student: p.student.fullName,
+      phone: p.student.phone ?? "",
+      groupId: g?.id ?? null,
+      group: g?.name ?? null,
+      course: g?.program?.name ?? null,
+      amount: p.amount,
+      note: p.note ?? null,
+      author: p.author?.fullName ?? null,
+    };
+  });
 
   const courses = [...new Set(withdrawals.map((w) => w.course).filter((x): x is string => !!x))].sort();
 
-  const now = new Date();
-  const from = iso(new Date(now.getFullYear(), now.getMonth(), 1));
-  const to = iso(new Date(now.getFullYear(), now.getMonth() + 1, 0));
+  const { from, to } = monthRange();
 
   return (
     <div>

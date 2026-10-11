@@ -38,3 +38,25 @@ export function downloadBlob(blob: Blob, filename: string): void {
 export function printPage(): void {
   window.print();
 }
+
+/**
+ * Ustunlar {key,label} bo'yicha haqiqiy Excel (.xlsx) fayl yasab yuklab beradi.
+ * "xlsx" kutubxonasi faqat chaqirilganda yuklanadi (asosiy bundle'ga kirmaydi).
+ */
+export async function exportXlsx<T extends object>(
+  filename: string,
+  columns: { key: string; label: string; width?: number }[],
+  data: readonly T[],
+  sheetName = "Sheet1",
+): Promise<void> {
+  const XLSX = await import("xlsx");
+  const recs = data as unknown as ReadonlyArray<Record<string, unknown>>;
+  const aoa: Cell[][] = [columns.map((c) => c.label), ...recs.map((d) => columns.map((c) => d[c.key] as Cell))];
+  const ws = XLSX.utils.aoa_to_sheet(aoa);
+  ws["!cols"] = columns.map((c, i) => ({
+    wch: c.width ?? Math.min(48, Math.max(10, ...aoa.slice(0, 200).map((r) => String(r[i] ?? "").length + 2))),
+  }));
+  const wb = XLSX.utils.book_new();
+  XLSX.utils.book_append_sheet(wb, ws, sheetName.slice(0, 31));
+  XLSX.writeFile(wb, filename.endsWith(".xlsx") ? filename : `${filename}.xlsx`);
+}

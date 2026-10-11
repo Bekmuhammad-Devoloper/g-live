@@ -6,6 +6,7 @@ import { branchWhere } from "@/lib/branchScope";
 import { Forbidden } from "../../_components/ui";
 import LicenseBanner from "../../_components/LicenseBanner";
 import ExpensesView, { type VExpense } from "./ExpensesView";
+import { ensureDefaultExpenseCategories } from "../expense-categories/defaults";
 
 const p2 = (n: number) => String(n).padStart(2, "0");
 const iso = (d: Date) => `${d.getFullYear()}-${p2(d.getMonth() + 1)}-${p2(d.getDate())}`;
@@ -17,10 +18,12 @@ export default async function ExpensesPage() {
     return <Forbidden title={tr(s.locale, { uz: "Kirish taqiqlangan", ru: "Доступ запрещён", en: "Access denied", de: "Zugriff verweigert" })} body={tr(s.locale, { uz: "Bu bo'lim uchun ruxsatingiz yo'q.", ru: "У вас нет доступа к этому разделу.", en: "You do not have permission for this section.", de: "Sie haben keine Berechtigung für diesen Bereich." })} />;
   }
 
+  await ensureDefaultExpenseCategories();
+
   const [rows, categories] = await Promise.all([
     prisma.expense.findMany({
       where: branchWhere(s), // faol filial doirasida
-      orderBy: { date: "desc" },
+      orderBy: [{ date: "desc" }, { createdAt: "desc" }],
       include: {
         category: { select: { name: true } },
         author: { select: { fullName: true } },
@@ -32,12 +35,15 @@ export default async function ExpensesPage() {
   const expenses: VExpense[] = rows.map((e) => ({
     id: e.id,
     date: e.date.toISOString(),
+    categoryId: e.categoryId,
     category: e.category?.name ?? null,
     name: e.name,
     recipient: e.recipient ?? null,
     method: e.method,
     amount: e.amount,
     author: e.author?.fullName ?? null,
+    note: e.note ?? null,
+    createdAt: e.createdAt.toISOString(),
   }));
 
   const staff = [...new Set(expenses.map((e) => e.author).filter((x): x is string => !!x))].sort();

@@ -1296,11 +1296,18 @@ model Expense {
 model SalaryRule {
   id         String   @id @default(cuid())
   scope      String   @default("ALL") // ALL | TEACHER | COURSE | GROUP | STUDENT
-  amountType String   @default("FIXED") // FIXED (O'zgarmas) | PERCENT (Foiz)
+  // fixed | by_student_fixed | by_student_percentage | percentage_by_student_payment |
+  // per_lesson_fixed | per_lesson_percentage (eski yozuvlar: FIXED = fixed, PERCENT = percentage_by_student_payment)
+  amountType String   @default("FIXED")
   amount     Int // Miqdori (so'm yoki %)
   isDefault  Boolean  @default(false) // 1-bosqich: barcha o'qituvchilar uchun standart
   targetId   String? // nishon id (teacher/program/group/student)
   targetName String? // ko'rsatish uchun nom
+  groupId    String? // STUDENT qoidasi uchun: o'quvchining guruhi
+  groupName  String?
+  createdById String?
+  updatedById String?
+  updatedAt  DateTime?
   createdAt  DateTime @default(now())
 
   @@index([scope])

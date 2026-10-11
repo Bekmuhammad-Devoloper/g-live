@@ -7,6 +7,7 @@ import { prisma } from "@/lib/db";
 import { requireSession } from "@/lib/auth";
 import { canWrite, MODULES } from "@/lib/rbac";
 import { writeAudit } from "@/lib/audit";
+import { branchWhere } from "@/lib/branchScope";
 
 export type ExState = { ok?: boolean; error?: string };
 
@@ -60,21 +61,60 @@ export async function createExpense(_prev: ExState, formData: FormData): Promise
   });
 
   revalidatePath("/finance/expenses");
+  revalidatePath("/finance/expense-categories");
   return { ok: true };
 }
 
-// Yangi turkum (kategoriya) qo'shish
-export async function addExpenseCategory(name: string): Promise<{ ok?: boolean; error?: string }> {
+// Xarajatni tahrirlash (audit bilan)
+export async function updateExpense(_prev: ExState, formData: FormData): Promise<ExState> {
   const s = await requireSession();
   if (!canWrite(s.role, MODULES.EXPENSES)) return { error: "forbidden" };
-  const clean = name.trim();
-  if (clean.length < 2) return { error: "invalid" };
 
-  const exists = await prisma.expenseCategory.findUnique({ where: { name: clean } });
-  if (exists) return { error: "duplicate" };
+  const id = String(formData.get("id") ?? "");
+  const parsed = schema.safeParse({
+    name: formData.get("name"),
+    date: formData.get("date"),
+    amount: formData.get("amount"),
+    method: formData.get("method"),
+    categoryId: formData.get("categoryId") || undefined,
+    recipient: formData.get("recipient") || undefined,
+    note: formData.get("note") || undefined,
+  });
+  if (!id || !parsed.success) return { error: "invalid" };
 
-  await prisma.expenseCategory.create({ data: { name: clean } });
+  const before = await prisma.expense.findFirst({ where: { id, ...branchWhere(s) } });
+  if (!before) return { error: "notfound" };
+
+  const d = parsed.data;
+  const after = await prisma.expense.update({
+    where: { id },
+    data: {
+      name: d.name,
+      date: new Date(d.date),
+      amount: d.amount,
+      method: d.method,
+      categoryId: d.categoryId ?? null,
+      recipient: d.recipient ?? null,
+      note: d.note ?? null,
+    },
+  });
+
+  const pick = (e: typeof before) => ({
+    name: e.name, date: e.date.toISOString().slice(0, 10), amount: e.amount, method: e.method,
+    categoryId: e.categoryId, recipient: e.recipient, note: e.note,
+  });
+  await writeAudit({
+    actorId: s.userId,
+    action: "UPDATE",
+    entityType: "Expense",
+    entityId: id,
+    oldValue: pick(before),
+    newValue: pick(after),
+    reason: "Xarajat tahrirlandi",
+  });
+
   revalidatePath("/finance/expenses");
+  revalidatePath("/finance/expense-categories");
   return { ok: true };
 }
 
@@ -83,7 +123,7 @@ export async function deleteExpense(id: string): Promise<void> {
   const s = await requireSession();
   if (!canWrite(s.role, MODULES.EXPENSES)) return;
 
-  const before = await prisma.expense.findUnique({ where: { id } });
+  const before = await prisma.expense.findFirst({ where: { id, ...branchWhere(s) } });
   if (!before) return;
 
   await prisma.expense.delete({ where: { id } });
@@ -98,4 +138,5 @@ export async function deleteExpense(id: string): Promise<void> {
   });
 
   revalidatePath("/finance/expenses");
+  revalidatePath("/finance/expense-categories");
 }

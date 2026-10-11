@@ -26,7 +26,7 @@ const schema = z.object({
 });
 
 // Maosh yozuvini hisoblab saqlash (upsert) — TeacherSalary yozuvi.
-// Darslar/o'quvchilar soni serverda snapshot qilinadi; fiksa xodim kartochkasidan olinadi.
+// Darslar/o'quvchilar soni serverda snapshot qilinadi; fiksa kalkulyator natijasidan (bo'lmasa xodim kartochkasidan) olinadi.
 export async function saveTeacherSalary(_prev: FormState, formData: FormData): Promise<FormState> {
   const s = await requireSession();
   if (!canManageSalary(s.role)) return { error: "forbidden" };
@@ -67,8 +67,10 @@ export async function saveTeacherSalary(_prev: FormState, formData: FormData): P
 
   const existing = await prisma.teacherSalary.findUnique({
     where: { teacherId_year_month: { teacherId: d.teacherId, year: d.year, month: d.month } },
-    select: { id: true },
+    select: { id: true, fiksa: true },
   });
+  // Kalkulyatorda hisoblangan fiksa saqlanib qoladi; yozuv bo'lmasa yoki 0 bo'lsa — xodim kartochkasidagi fiksa
+  const fiksa = existing && existing.fiksa > 0 ? existing.fiksa : teacher.fiksa;
 
   const row = await prisma.teacherSalary.upsert({
     where: { teacherId_year_month: { teacherId: d.teacherId, year: d.year, month: d.month } },
@@ -76,7 +78,7 @@ export async function saveTeacherSalary(_prev: FormState, formData: FormData): P
       teacherId: d.teacherId,
       year: d.year,
       month: d.month,
-      fiksa: teacher.fiksa,
+      fiksa,
       bonus: d.bonus,
       penalty: d.penalty,
       kpi: d.kpi,
@@ -85,7 +87,7 @@ export async function saveTeacherSalary(_prev: FormState, formData: FormData): P
       closed: d.closed,
     },
     update: {
-      fiksa: teacher.fiksa,
+      fiksa,
       bonus: d.bonus,
       penalty: d.penalty,
       kpi: d.kpi,
@@ -100,7 +102,7 @@ export async function saveTeacherSalary(_prev: FormState, formData: FormData): P
     action: existing ? "UPDATE" : "CREATE",
     entityType: "TeacherSalary",
     entityId: row.id,
-    newValue: { year: d.year, month: d.month, fiksa: teacher.fiksa, bonus: d.bonus, penalty: d.penalty, kpi: d.kpi, net: teacher.fiksa + d.bonus + d.kpi - d.penalty, closed: d.closed },
+    newValue: { year: d.year, month: d.month, fiksa, bonus: d.bonus, penalty: d.penalty, kpi: d.kpi, net: fiksa + d.bonus + d.kpi - d.penalty, closed: d.closed },
   });
 
   revalidatePath("/salary");
