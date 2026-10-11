@@ -47,16 +47,16 @@ export default async function CenterPage({ params }: { params: Promise<{ slug: s
       </div>
 
       <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
-        <Stat label="Faol o'quvchilar" value={stats?.activeStudents ?? "—"} hint={`Jami: ${stats?.students ?? "—"} · Lidlar: ${stats?.leads ?? "—"}`} tone="blue" />
-        <Stat label="Xodimlar" value={stats?.staff ?? "—"} hint={`Faol guruhlar: ${stats?.groups ?? "—"}`} />
-        <Stat label="Shu oy tushum" value={stats ? fmtMoney(stats.paidThisMonth) : "—"} tone="green" />
-        <Stat label="Hajm" value={stats ? fmtBytes(stats.dbBytes + stats.uploadsBytes) : "—"} hint={stats ? `Baza ${fmtBytes(stats.dbBytes)} · fayllar ${fmtBytes(stats.uploadsBytes)} · oxirgi kirish ${fmtDate(stats.lastLoginAt)}` : undefined} />
+        <Stat icon="users" label="Faol o'quvchilar" value={stats?.activeStudents ?? "—"} hint={`Jami: ${stats?.students ?? "—"} · Lidlar: ${stats?.leads ?? "—"}`} tone="blue" />
+        <Stat icon="building" label="Xodimlar" value={stats?.staff ?? "—"} hint={`Faol guruhlar: ${stats?.groups ?? "—"}`} />
+        <Stat icon="money" label="Shu oy tushum" value={stats ? fmtMoney(stats.paidThisMonth) : "—"} tone="green" />
+        <Stat icon="disk" label="Hajm" value={stats ? fmtBytes(stats.dbBytes + stats.uploadsBytes) : "—"} hint={stats ? `Baza ${fmtBytes(stats.dbBytes)} · fayllar ${fmtBytes(stats.uploadsBytes)} · oxirgi kirish ${fmtDate(stats.lastLoginAt)}` : undefined} />
       </div>
 
       <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
-        <Stat label="Shu oy" value={stats ? `+${stats.newStudentsThisMonth} o'quvchi` : "—"} hint={stats ? `${stats.leadsThisMonth} ta lid · ${stats.paymentsThisMonth} ta to'lov` : undefined} />
-        <Stat label="O'tgan oy tushum" value={stats ? fmtMoney(stats.paidLastMonth) : "—"} hint={stats && stats.paidLastMonth > 0 ? `${stats.paidThisMonth >= stats.paidLastMonth ? "▲" : "▼"} ${Math.abs(Math.round(((stats.paidThisMonth - stats.paidLastMonth) / stats.paidLastMonth) * 100))}% shu oyga nisbatan` : undefined} />
-        <Stat label="Bugun kirganlar" value={stats?.loginsToday ?? "—"} hint={stats ? `${stats.teachers} o'qituvchi · ${stats.branches} filial` : undefined} />
+        <Stat icon="lead" label="Shu oy" value={stats ? `+${stats.newStudentsThisMonth} o'quvchi` : "—"} hint={stats ? `${stats.leadsThisMonth} ta lid · ${stats.paymentsThisMonth} ta to'lov` : undefined} />
+        <Stat icon="money" label="O'tgan oy tushum" value={stats ? fmtMoney(stats.paidLastMonth) : "—"} hint={stats && stats.paidLastMonth > 0 ? `${stats.paidThisMonth >= stats.paidLastMonth ? "▲" : "▼"} ${Math.abs(Math.round(((stats.paidThisMonth - stats.paidLastMonth) / stats.paidLastMonth) * 100))}% shu oyga nisbatan` : undefined} />
+        <Stat icon="activity" label="Bugun kirganlar" value={stats?.loginsToday ?? "—"} hint={stats ? `${stats.teachers} o'qituvchi · ${stats.branches} filial` : undefined} />
         <Card>
           <div className="text-[11px] font-semibold uppercase tracking-[0.12em] text-slate-400">Xizmat</div>
           <div className="mt-1.5 text-sm">

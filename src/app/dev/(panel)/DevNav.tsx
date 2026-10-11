@@ -21,7 +21,7 @@ export default function DevNav() {
           <Link
             key={it.href}
             href={it.href}
-            className={`relative flex items-center gap-3 rounded-xl px-3 py-2.5 text-sm font-medium transition ${on ? "bg-gradient-to-r from-[#e3262b]/15 via-[#ee7a24]/10 to-transparent text-white" : "text-slate-400 hover:bg-white/[0.04] hover:text-white"}`}
+            className={`relative flex items-center gap-3 rounded-xl px-3 py-2.5 text-sm font-medium outline-none transition focus-visible:ring-2 focus-visible:ring-orange-400/40 ${on ? "bg-gradient-to-r from-[#e3262b]/15 via-[#ee7a24]/10 to-transparent text-white" : "text-slate-400 hover:bg-white/[0.04] hover:text-white"}`}
           >
             {on && <span className="absolute left-0 top-1/2 h-6 w-1 -translate-y-1/2 rounded-r-full bg-gradient-to-b from-[#e3262b] to-[#f6b51e]" />}
             <svg viewBox="0 0 24 24" className={`h-[18px] w-[18px] ${on ? "text-orange-300" : ""}`} fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"><path d={it.icon} /></svg>

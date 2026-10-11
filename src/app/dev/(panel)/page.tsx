@@ -3,7 +3,7 @@ import path from "node:path";
 import { readRegistry, centerDb, centerDir, APP_DIR, BASE_DOMAIN } from "@/lib/devpanel/registry";
 import { centerStats, health, sysInfo, mainLicense, type CenterStats, type SysInfo } from "@/lib/devpanel/ops";
 import { ALL_INSTANCE_MODULES } from "@/lib/instance";
-import { Card, Stat, Pill, LicensePill, Bar, fmtBytes, fmtMoney, fmtDate, fmtDateTime, daysLeft } from "./ui";
+import { Card, Stat, Pill, LicensePill, Bar, IconChip, fmtBytes, fmtMoney, fmtDate, fmtDateTime, daysLeft } from "./ui";
 import { UpdateAllButton } from "./DashboardControls";
 
 export const dynamic = "force-dynamic";
@@ -75,7 +75,12 @@ export default async function DevDashboard() {
 
       {alerts.length > 0 ? (
         <Card className="!p-0 overflow-hidden">
-          <div className="border-b border-white/[0.06] px-5 py-3 text-sm font-semibold">E'tibor talab qiladi <span className="text-slate-500">({alerts.length})</span></div>
+          <div className="flex items-center gap-2.5 border-b border-white/[0.06] px-5 py-3 text-sm font-semibold">
+            <span className="flex h-7 w-7 items-center justify-center rounded-lg bg-amber-400/10 text-amber-300 ring-1 ring-amber-400/20">
+              <svg viewBox="0 0 24 24" className="h-4 w-4" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M12 9v4M12 17h.01M10.3 3.9 1.8 18a2 2 0 0 0 1.7 3h17a2 2 0 0 0 1.7-3L13.7 3.9a2 2 0 0 0-3.4 0Z" /></svg>
+            </span>
+            E'tibor talab qiladi <span className="rounded-full bg-white/[0.06] px-2 py-0.5 text-xs text-slate-300">{alerts.length}</span>
+          </div>
           <ul className="divide-y divide-white/[0.06]">
             {alerts.map((a, i) => (
               <li key={i}>
@@ -95,22 +100,24 @@ export default async function DevDashboard() {
       )}
 
       <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
-        <Stat label="Markazlar" value={centers.length + 1} hint={`${rows.filter((r) => r.up).length + (main.up ? 1 : 0)} tasi ishlayapti · ${centers.filter((c) => c.suspended).length} to'xtatilgan`} />
-        <Stat label="Faol o'quvchilar" value={sum("activeStudents").toLocaleString("ru-RU")} hint={`Shu oy yangi: ${sum("newStudentsThisMonth")} · jami ${sum("students")}`} tone="blue" />
-        <Stat label="Shu oy tushum" value={fmtMoney(paidNow)} hint={growth === null ? `${sum("paymentsThisMonth")} ta to'lov` : `${growth >= 0 ? "▲" : "▼"} ${Math.abs(growth)}% o'tgan oyga nisbatan · ${sum("paymentsThisMonth")} ta to'lov`} tone="green" />
-        <Stat label="Bugun faol" value={sum("loginsToday")} hint={`xodim va o'quvchi kirdi · ${sum("staff")} xodim, ${sum("teachers")} o'qituvchi`} />
+        <Stat icon="building" label="Markazlar" value={centers.length + 1} hint={`${rows.filter((r) => r.up).length + (main.up ? 1 : 0)} tasi ishlayapti · ${centers.filter((c) => c.suspended).length} to'xtatilgan`} />
+        <Stat icon="users" label="Faol o'quvchilar" value={sum("activeStudents").toLocaleString("ru-RU")} hint={`Shu oy yangi: ${sum("newStudentsThisMonth")} · jami ${sum("students")}`} tone="blue" />
+        <Stat icon="money" label="Shu oy tushum" value={fmtMoney(paidNow)} hint={growth === null ? `${sum("paymentsThisMonth")} ta to'lov` : `${growth >= 0 ? "▲" : "▼"} ${Math.abs(growth)}% o'tgan oyga nisbatan · ${sum("paymentsThisMonth")} ta to'lov`} tone="green" />
+        <Stat icon="activity" label="Bugun faol" value={sum("loginsToday")} hint={`xodim va o'quvchi kirdi · ${sum("staff")} xodim, ${sum("teachers")} o'qituvchi`} />
       </div>
 
       <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
-        <Stat label="Lidlar (shu oy)" value={sum("leadsThisMonth")} hint={`Jami: ${sum("leads")}`} />
-        <Stat label="Faol guruhlar" value={sum("groups")} hint={`${sum("branches")} ta filial`} />
-        <Link href="/dev/server" className="block"><Card className="h-full transition hover:border-orange-400/30">
+        <Stat icon="lead" label="Lidlar (shu oy)" value={sum("leadsThisMonth")} hint={`Jami: ${sum("leads")}`} />
+        <Stat icon="layers" label="Faol guruhlar" value={sum("groups")} hint={`${sum("branches")} ta filial`} />
+        <Link href="/dev/server" className="block"><Card className="relative h-full transition hover:border-orange-400/30">
+          <IconChip icon="cpu" />
           <div className="text-[11px] font-semibold uppercase tracking-[0.12em] text-slate-400">Server · CPU / xotira</div>
           <div className="mt-1.5 text-2xl font-bold">{sys.kv.cpu_pct ?? 0}% <span className="text-base font-semibold text-slate-400">/ {memTotal ? Math.round((memUsed / memTotal) * 100) : 0}%</span></div>
           <Bar pct={memTotal ? (memUsed / memTotal) * 100 : 0} />
           <div className="mt-2 text-xs text-slate-400">{fmtBytes(memUsed)} / {fmtBytes(memTotal)} · yuklama {sys.kv.load?.split(" ")[0]}</div>
         </Card></Link>
-        <Link href="/dev/server" className="block"><Card className="h-full transition hover:border-orange-400/30">
+        <Link href="/dev/server" className="block"><Card className="relative h-full transition hover:border-orange-400/30">
+          <IconChip icon="disk" />
           <div className="text-[11px] font-semibold uppercase tracking-[0.12em] text-slate-400">Disk</div>
           <div className="mt-1.5 text-2xl font-bold">{Math.round(diskPct)}%</div>
           <Bar pct={diskPct} />
@@ -120,7 +127,7 @@ export default async function DevDashboard() {
 
       <Card className="!p-0 overflow-hidden">
         <div className="overflow-x-auto">
-          <table className="w-full min-w-[1080px] text-sm">
+          <table className="w-full min-w-[1180px] text-sm [&_td]:whitespace-nowrap [&_th]:whitespace-nowrap">
             <thead className="bg-white/[0.03] text-left text-xs font-semibold uppercase text-slate-400">
               <tr>
                 <th className="px-4 py-3">Markaz</th>

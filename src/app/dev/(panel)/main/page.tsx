@@ -41,10 +41,10 @@ export default async function MainCenterPage() {
       </div>
 
       <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
-        <Stat label="Faol o'quvchilar" value={s?.activeStudents ?? "—"} hint={s ? `Jami ${s.students} · shu oy yangi ${s.newStudentsThisMonth}` : undefined} tone="blue" />
-        <Stat label="Shu oy tushum" value={s ? fmtMoney(s.paidThisMonth) : "—"} hint={s ? `${s.paymentsThisMonth} ta to'lov · o'tgan oy ${fmtMoney(s.paidLastMonth)}` : undefined} tone="green" />
-        <Stat label="Xodimlar" value={s?.staff ?? "—"} hint={s ? `${s.teachers} o'qituvchi · ${s.branches} filial · ${s.groups} faol guruh` : undefined} />
-        <Stat label="Lidlar" value={s?.leadsThisMonth ?? "—"} hint={s ? `shu oy · jami ${s.leads} · bugun ${s.loginsToday} kishi kirdi` : undefined} />
+        <Stat icon="users" label="Faol o'quvchilar" value={s?.activeStudents ?? "—"} hint={s ? `Jami ${s.students} · shu oy yangi ${s.newStudentsThisMonth}` : undefined} tone="blue" />
+        <Stat icon="money" label="Shu oy tushum" value={s ? fmtMoney(s.paidThisMonth) : "—"} hint={s ? `${s.paymentsThisMonth} ta to'lov · o'tgan oy ${fmtMoney(s.paidLastMonth)}` : undefined} tone="green" />
+        <Stat icon="building" label="Xodimlar" value={s?.staff ?? "—"} hint={s ? `${s.teachers} o'qituvchi · ${s.branches} filial · ${s.groups} faol guruh` : undefined} />
+        <Stat icon="lead" label="Lidlar" value={s?.leadsThisMonth ?? "—"} hint={s ? `shu oy · jami ${s.leads} · bugun ${s.loginsToday} kishi kirdi` : undefined} />
       </div>
 
       <div className="grid gap-4 lg:grid-cols-2">

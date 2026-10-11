@@ -31,12 +31,29 @@ export function Card({ children, className = "" }: { children: React.ReactNode; 
   return <div className={`rounded-2xl border border-slate-200 bg-white p-5 shadow-sm dark:border-white/[0.07] dark:bg-[#0d1424] ${className}`}>{children}</div>;
 }
 
-export function Stat({ label, value, hint, tone = "slate" }: { label: string; value: React.ReactNode; hint?: React.ReactNode; tone?: "slate" | "green" | "amber" | "red" | "blue" }) {
+/** Belgi: SVG path (24×24, chiziqli) */
+export const ICONS = {
+  building: "M4 21V7l8-4 8 4v14M9 21v-6h6v6",
+  users: "M16 19v-1a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v1M9 10a3.5 3.5 0 1 0 0-7 3.5 3.5 0 0 0 0 7M22 19v-1a4 4 0 0 0-3-3.9M16 3.1a3.5 3.5 0 0 1 0 6.8",
+  money: "M3 7h18v10H3zM7 12h.01M17 12h.01M12 14.5a2.5 2.5 0 1 0 0-5 2.5 2.5 0 0 0 0 5",
+  activity: "M3 12h4l3-8 4 16 3-8h4",
+  lead: "M12 3v12M7 10l5 5 5-5M5 21h14",
+  layers: "M12 3l9 5-9 5-9-5 9-5M3 13l9 5 9-5",
+  cpu: "M7 7h10v10H7zM10 3v4M14 3v4M10 17v4M14 17v4M3 10h4M3 14h4M17 10h4M17 14h4",
+  disk: "M4 6c0-1.7 3.6-3 8-3s8 1.3 8 3-3.6 3-8 3-8-1.3-8-3M4 6v12c0 1.7 3.6 3 8 3s8-1.3 8-3V6M4 12c0 1.7 3.6 3 8 3s8-1.3 8-3",
+} as const;
+
+export function Stat({ label, value, hint, tone = "slate", icon }: { label: string; value: React.ReactNode; hint?: React.ReactNode; tone?: "slate" | "green" | "amber" | "red" | "blue"; icon?: keyof typeof ICONS }) {
   const c = { slate: "text-white", green: "text-emerald-400", amber: "text-amber-400", red: "text-red-400", blue: "text-sky-400" }[tone];
   return (
-    <Card className="relative overflow-hidden">
+    <Card className="relative h-full overflow-hidden">
       <span aria-hidden className="absolute inset-x-0 top-0 h-px bg-gradient-to-r from-transparent via-orange-400/40 to-transparent" />
-      <div className="text-[11px] font-semibold uppercase tracking-[0.12em] text-slate-400">{label}</div>
+      {icon && (
+        <span className="absolute right-4 top-4 flex h-10 w-10 items-center justify-center rounded-xl bg-gradient-to-br from-[#e3262b]/20 to-[#f6b51e]/10 text-orange-300 ring-1 ring-orange-400/20">
+          <svg viewBox="0 0 24 24" className="h-5 w-5" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"><path d={ICONS[icon]} /></svg>
+        </span>
+      )}
+      <div className="pr-12 text-[11px] font-semibold uppercase tracking-[0.12em] text-slate-400">{label}</div>
       <div className={`mt-1.5 text-2xl font-bold tabular-nums ${c}`}>{value}</div>
       {hint && <div className="mt-1 text-xs text-slate-500">{hint}</div>}
     </Card>
@@ -51,7 +68,7 @@ export function Pill({ tone, children }: { tone: "green" | "amber" | "red" | "sl
     slate: "bg-slate-100 text-slate-600 ring-slate-200 dark:bg-slate-800 dark:text-slate-300 dark:ring-slate-700",
     blue: "bg-sky-50 text-sky-700 ring-sky-200 dark:bg-sky-500/10 dark:text-sky-300 dark:ring-sky-500/30",
   }[tone];
-  return <span className={`inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-[11px] font-semibold ring-1 ${c}`}>{children}</span>;
+  return <span className={`inline-flex items-center gap-1 whitespace-nowrap rounded-full px-2 py-0.5 text-[11px] font-semibold ring-1 ${c}`}>{children}</span>;
 }
 
 export function LicensePill({ until, suspended }: { until: string | null; suspended?: boolean }) {
@@ -88,5 +105,14 @@ export function Bar({ pct }: { pct: number }) {
     <div className="mt-2 h-1.5 w-full overflow-hidden rounded-full bg-white/[0.06]">
       <div className={`h-full rounded-full bg-gradient-to-r ${c}`} style={{ width: `${v}%` }} />
     </div>
+  );
+}
+
+/** Kartaning o'ng yuqori burchagidagi belgi (Stat ishlatilmagan kartalar uchun) */
+export function IconChip({ icon }: { icon: keyof typeof ICONS }) {
+  return (
+    <span className="absolute right-4 top-4 flex h-10 w-10 items-center justify-center rounded-xl bg-gradient-to-br from-[#e3262b]/20 to-[#f6b51e]/10 text-orange-300 ring-1 ring-orange-400/20">
+      <svg viewBox="0 0 24 24" className="h-5 w-5" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"><path d={ICONS[icon]} /></svg>
+    </span>
   );
 }
