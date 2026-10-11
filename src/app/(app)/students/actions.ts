@@ -115,7 +115,8 @@ export async function getStudentPayments(studentId: string): Promise<{ ok: boole
       paymentMandatory,
       joinDate: joinDate ? joinDate.toISOString() : null,
       lastMonthApplicable,
-      recent: payments.slice(0, 8).map((p) => ({
+      // Hammasi — klient avval oxirgi 8 tasini, so'ralsa qolganini ham ko'rsatadi (eski to'lovni ham tahrirlash uchun)
+      recent: payments.map((p) => ({
         id: p.id, amount: p.amount, method: p.method, purpose: p.purpose, status: p.status, date: p.createdAt.toISOString(), note: p.note,
         promoCode: p.promoCode, discount: p.discount,
         ...(p.status === "PENDING" ? { covered: coveredIds.has(p.id) } : {}),
@@ -711,7 +712,7 @@ export async function addStudentDebt(
 /** To'lov yozuvini tahrirlash (summa, usul, maqsad, holat, sana). */
 export async function updatePaymentRecord(
   paymentId: string,
-  input: { amount?: number; method?: string; purpose?: string; status?: string; dateIso?: string | null; note?: string | null },
+  input: { amount?: number; method?: string; purpose?: string; status?: string; dateIso?: string | null; note?: string | null; promoCode?: string | null },
   reason = "",
 ): Promise<{ ok?: boolean; error?: string }> {
   const s = await requireSession();
@@ -722,7 +723,7 @@ export async function updatePaymentRecord(
 
   const existing = await prisma.payment.findUnique({
     where: { id: paymentId },
-    select: { id: true, studentId: true, amount: true, method: true, purpose: true, status: true, createdAt: true },
+    select: { id: true, studentId: true, amount: true, method: true, purpose: true, status: true, createdAt: true, promoCode: true, discount: true },
   });
   if (!existing) return { error: "notfound" };
 
@@ -743,6 +744,15 @@ export async function updatePaymentRecord(
     data.status = input.status;
   }
   if (input.dateIso) { const d = new Date(input.dateIso); if (!isNaN(d.getTime())) data.createdAt = d; }
+  // Promokod: bo'sh — olib tashlanadi; boshqa kod — tahrirda kurs soni sharti talab qilinmaydi (sabab audit'da)
+  if (input.promoCode !== undefined && (input.promoCode || null) !== existing.promoCode) {
+    if (!input.promoCode) { data.promoCode = null; data.discount = 0; }
+    else {
+      const pr = await checkPromoForStudent(input.promoCode, existing.studentId, { force: true });
+      if (!pr.ok) return { error: pr.error };
+      data.promoCode = pr.code; data.discount = pr.discount;
+    }
+  }
   if (Object.keys(data).length === 0) return { ok: true };
 
   await prisma.payment.update({ where: { id: paymentId }, data });
@@ -751,7 +761,7 @@ export async function updatePaymentRecord(
     action: "UPDATE",
     entityType: "Payment",
     entityId: paymentId,
-    oldValue: { amount: existing.amount, method: existing.method, purpose: existing.purpose, status: existing.status, createdAt: existing.createdAt.toISOString() },
+    oldValue: { amount: existing.amount, method: existing.method, purpose: existing.purpose, status: existing.status, createdAt: existing.createdAt.toISOString(), promoCode: existing.promoCode, discount: existing.discount },
     newValue: data,
     reason: why,
   });
@@ -796,4 +806,21 @@ export async function listPromoOptions(): Promise<{ code: string; discount: numb
   const s = await requireSession();
   if (!canWrite(s.role, MODULES.PAYMENTS)) return [];
   return activePromoOptions();
+}
+
+/** To'lovlar ro'yxati sahifalaridagi tahrirlash oynasi uchun — bitta to'lovning to'liq yozuvi */
+export async function getPaymentForEdit(paymentId: string): Promise<PayRow | null> {
+  const s = await requireSession();
+  if (!CAN_EDIT_PAY.includes(s.role as never)) return null;
+  const p = await prisma.payment.findUnique({
+    where: { id: paymentId },
+    select: { id: true, amount: true, method: true, purpose: true, status: true, createdAt: true, note: true, promoCode: true, discount: true },
+  });
+  if (!p) return null;
+  return { id: p.id, amount: p.amount, method: p.method, purpose: p.purpose, status: p.status, date: p.createdAt.toISOString(), note: p.note, promoCode: p.promoCode, discount: p.discount };
+}
+
+/** Joriy foydalanuvchi to'lovni tahrirlay oladimi (ro'yxat sahifalari tugmani shunga qarab ko'rsatadi) */
+export async function canEditPayments(role: string): Promise<boolean> {
+  return CAN_EDIT_PAY.includes(role as never);
 }

@@ -50,6 +50,7 @@ export default function PaymentPanel({
   const [payForm, setPayForm] = useState(false);
   const [debtForm, setDebtForm] = useState(false); // qarzdor holatga tushurish formasi
   const [receipt, setReceipt] = useState<ReceiptData | null>(null);
+  const [showAll, setShowAll] = useState(false);
 
   const load = () => startPay(async () => { const r = await getStudentPayments(studentId); if (r.ok && r.data) setPay(r.data); });
   const reloadPay = () => { load(); onChanged?.(); };
@@ -180,7 +181,7 @@ export default function PaymentPanel({
               <span>{tr(locale, { uz: "So'nggi to'lovlar", ru: "Последние платежи", en: "Recent payments", de: "Letzte Zahlungen" })}</span>
               <span className="tabular-nums">{tr(locale, { uz: "Jami", ru: "Итого", en: "Total", de: "Gesamt" })}: {formatMoney(pay.totalPaid, locale)}</span>
             </div>
-            {pay.recent.map((p) => (
+            {(showAll ? pay.recent : pay.recent.slice(0, 8)).map((p) => (
               <PaymentRow
                 key={p.id}
                 p={p}
@@ -189,6 +190,11 @@ export default function PaymentPanel({
                 onChanged={() => { setPayForm(false); reloadPay(); }}
               />
             ))}
+            {pay.recent.length > 8 && (
+              <button type="button" onClick={() => setShowAll((v) => !v)} className="w-full rounded-lg border border-dashed border-slate-200 py-1.5 text-[11px] font-semibold text-slate-500 transition hover:border-brand-300 hover:text-brand-600 dark:border-white/10">
+                {showAll ? tr(locale, { uz: "Kamroq ko'rsatish", ru: "Свернуть", en: "Show less", de: "Weniger" }) : tr(locale, { uz: `Hammasini ko'rsatish (${pay.recent.length})`, ru: `Показать все (${pay.recent.length})`, en: `Show all (${pay.recent.length})`, de: `Alle anzeigen (${pay.recent.length})` })}
+              </button>
+            )}
           </div>
         ) : (
           <p className="mt-2 rounded-lg bg-slate-50 px-3 py-2 text-sm text-slate-400 dark:bg-white/[0.03]">{tr(locale, { uz: "Hali to'lov qilinmagan.", ru: "Оплат ещё не было.", en: "No payments yet.", de: "Noch keine Zahlungen." })}</p>
@@ -260,10 +266,14 @@ export function AddDebtForm({ studentId, locale, onCancel, onDone }: {
 
 // Bitta to'lov qatori — tahrirlash va o'chirish bilan.
 // Noto'g'ri kiritilgan summa/usul/holat shu yerdan tuzatiladi.
-export function PaymentRow({ p, locale, canEdit, onChanged }: {
+export function PaymentRow({ p, locale, canEdit, onChanged, startEditing = false, onCancel }: {
   p: PayRow; locale: Locale; canEdit: boolean; onChanged: () => void;
+  /** Tahrirlash oynasi to'g'ridan-to'g'ri forma bilan ochilsin (ro'yxat sahifalaridan) */
+  startEditing?: boolean;
+  onCancel?: () => void;
 }) {
-  const [edit, setEdit] = useState(false);
+  const [edit, setEdit] = useState(startEditing);
+  const [promo, setPromo] = useState(p.promoCode ?? "");
   const [amount, setAmount] = useState(String(p.amount));
   const [method, setMethod] = useState(p.method);
   const [status, setStatus] = useState(p.status);
@@ -279,9 +289,9 @@ export function PaymentRow({ p, locale, canEdit, onChanged }: {
   const ps = covered ? { fg: "#16a34a", bg: "#16a34a1a" } : payStatusStyle(p.status);
 
   const save = () => start(async () => {
-    const r = await updatePaymentRecord(p.id, { amount: Number(amount), method, status, purpose, note, dateIso: dateAt ? new Date(dateAt).toISOString() : null }, reason);
+    const r = await updatePaymentRecord(p.id, { amount: Number(amount), method, status, purpose, note, dateIso: dateAt ? new Date(dateAt).toISOString() : null, promoCode: promo || null }, reason);
     if (r.ok) { setEdit(false); setReason(""); onChanged(); }
-    else setErr(r.error === "forbidden" ? L("Ruxsat yo'q.", "Нет доступа.", "No permission.") : r.error === "reason" ? L("Sababini yozing (kamida 3 belgi).", "Укажите причину (не менее 3 символов).", "Enter a reason (at least 3 characters).") : L("Saqlanmadi.", "Не сохранено.", "Not saved."));
+    else setErr(r.error === "forbidden" ? L("Ruxsat yo'q.", "Нет доступа.", "No permission.") : r.error === "reason" ? L("Sababini yozing (kamida 3 belgi).", "Укажите причину (не менее 3 символов).", "Enter a reason (at least 3 characters).") : promoErrorText(locale, r.error) ?? L("Saqlanmadi.", "Не сохранено.", "Not saved."));
   });
 
   // O'chirish — sabab majburiy (audit jurnaliga yoziladi)
@@ -359,6 +369,9 @@ export function PaymentRow({ p, locale, canEdit, onChanged }: {
           <label className="mb-0.5 block text-[10px] font-semibold text-slate-500">{L("Izoh", "Комментарий", "Comment")}</label>
           <input value={note} onChange={(e) => setNote(e.target.value)} maxLength={500} className={inp} />
         </div>
+        <div className="col-span-2">
+          <PromoSelect locale={locale} value={promo} onChange={setPromo} className={inp} />
+        </div>
         <div>
           <label className="mb-0.5 block text-[10px] font-semibold text-slate-500">{L("Sana", "Дата", "Date")}</label>
           <input type="datetime-local" value={dateAt} onChange={(e) => setDateAt(e.target.value)} className={inp} />
@@ -370,7 +383,7 @@ export function PaymentRow({ p, locale, canEdit, onChanged }: {
       </div>
       {err && <p className="mt-1.5 text-[11px] font-medium text-rose-600 dark:text-rose-400">{err}</p>}
       <div className="mt-2 flex gap-1.5">
-        <button type="button" onClick={() => setEdit(false)} disabled={pending} className="flex-1 rounded-md border border-slate-200 bg-white py-1.5 text-[11px] font-semibold text-slate-600 transition hover:bg-slate-50 disabled:opacity-60 dark:border-white/10 dark:bg-slate-900 dark:text-slate-300">
+        <button type="button" onClick={() => { setEdit(false); onCancel?.(); }} disabled={pending} className="flex-1 rounded-md border border-slate-200 bg-white py-1.5 text-[11px] font-semibold text-slate-600 transition hover:bg-slate-50 disabled:opacity-60 dark:border-white/10 dark:bg-slate-900 dark:text-slate-300">
           {L("Bekor", "Отмена", "Cancel")}
         </button>
         <button type="button" onClick={remove} disabled={pending} className="rounded-md border border-rose-200 px-2.5 py-1.5 text-[11px] font-semibold text-rose-600 transition hover:bg-rose-50 disabled:opacity-60 dark:border-rose-500/30 dark:text-rose-400">

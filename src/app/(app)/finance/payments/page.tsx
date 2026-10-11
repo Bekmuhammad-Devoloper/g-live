@@ -6,6 +6,7 @@ import { branchViaStudent } from "@/lib/branchScope";
 import { Forbidden } from "../../_components/ui";
 import LicenseBanner from "../../_components/LicenseBanner";
 import AllPaymentsView, { type VPayment } from "./AllPaymentsView";
+import { canEditPayments } from "../../students/actions";
 
 const p2 = (n: number) => String(n).padStart(2, "0");
 const iso = (d: Date) => `${d.getFullYear()}-${p2(d.getMonth() + 1)}-${p2(d.getDate())}`;
@@ -80,7 +81,7 @@ export default async function AllPaymentsPage() {
   return (
     <div>
       <LicenseBanner />
-      <AllPaymentsView payments={payments} options={options} locale={s.locale} defaultFrom={from} defaultTo={to} />
+      <AllPaymentsView payments={payments} options={options} locale={s.locale} defaultFrom={from} defaultTo={to} canEdit={await canEditPayments(s.role)} />
     </div>
   );
 }

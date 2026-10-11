@@ -6,6 +6,7 @@ import { formatMoney, type Locale } from "@/lib/constants";
 import { tr } from "@/lib/tr";
 import { Icon } from "../../_components/Icon";
 import PromoBadge from "../../_components/PromoBadge";
+import EditPaymentButton from "../../students/EditPaymentButton";
 
 export interface VPayment {
   id: string;
@@ -30,6 +31,8 @@ interface Props {
   locale: Locale;
   defaultFrom: string;
   defaultTo: string;
+  /** To'lovni tahrirlash huquqi (rahbariyat, administrator, hisobchi) */
+  canEdit?: boolean;
 }
 
 type SortKey = "date" | "student" | "amount" | "method" | "teacher" | "note" | "author";
@@ -40,7 +43,7 @@ const fmtDate = (iso: string) => {
   return `${p2(d.getDate())}.${p2(d.getMonth() + 1)}.${d.getFullYear()}`;
 };
 
-export default function AllPaymentsView({ payments, options, locale, defaultFrom, defaultTo }: Props) {
+export default function AllPaymentsView({ payments, options, locale, defaultFrom, defaultTo, canEdit = false }: Props) {
   const [from, setFrom] = useState(defaultFrom);
   const [to, setTo] = useState(defaultTo);
   const [q, setQ] = useState("");
@@ -164,11 +167,12 @@ export default function AllPaymentsView({ payments, options, locale, defaultFrom
                     <span className="inline-flex items-center gap-1">{lb}<span className="text-brand-500">{sortKey === k ? (sortDir === "asc" ? "↑" : "↓") : "⇅"}</span></span>
                   </th>
                 ))}
+                {canEdit && <th className="w-10 px-2 py-3.5" />}
               </tr>
             </thead>
             <tbody className="divide-y divide-slate-100 dark:divide-slate-800">
               {filtered.length === 0 ? (
-                <tr><td colSpan={7} className="px-4 py-16 text-center text-slate-400">{tr(locale, { uz: "Ko'rsatiladigan ma'lumotlar yo'q", ru: "Нет данных для отображения", en: "No data to display", de: "Keine Daten zum Anzeigen" })}</td></tr>
+                <tr><td colSpan={canEdit ? 8 : 7} className="px-4 py-16 text-center text-slate-400">{tr(locale, { uz: "Ko'rsatiladigan ma'lumotlar yo'q", ru: "Нет данных для отображения", en: "No data to display", de: "Keine Daten zum Anzeigen" })}</td></tr>
               ) : (
                 filtered.map((p) => (
                   <tr key={p.id} className={cn("transition hover:bg-slate-50 dark:hover:bg-slate-800/40", p.status === "CANCELLED" && "opacity-50")}>
@@ -182,6 +186,7 @@ export default function AllPaymentsView({ payments, options, locale, defaultFrom
                       {p.promoCode && <div className={p.note ? "mt-1" : ""}><PromoBadge code={p.promoCode} discount={p.discount} locale={locale} /></div>}
                     </td>
                     <td className="px-4 py-3 text-slate-500">{p.author ?? "—"}</td>
+                    {canEdit && <td className="px-2 py-3 text-right"><EditPaymentButton paymentId={p.id} locale={locale} /></td>}
                   </tr>
                 ))
               )}

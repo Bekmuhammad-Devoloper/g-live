@@ -9,6 +9,8 @@ import { PageHeader, Table, EmptyRow, Badge, Forbidden, StatCard } from "../_com
 import NewPaymentForm from "./NewPaymentForm";
 import OnlinePaymentForm from "./OnlinePaymentForm";
 import CancelButton from "./CancelButton";
+import EditPaymentButton from "../students/EditPaymentButton";
+import { canEditPayments } from "../students/actions";
 import ExportButton from "./ExportButton";
 import PromoBadge, { promoText } from "../_components/PromoBadge";
 
@@ -38,6 +40,7 @@ export default async function PaymentsPage() {
   ]);
 
   const writable = canWrite(s.role, MODULES.PAYMENTS);
+  const canEdit = await canEditPayments(s.role);
 
   const df = new Intl.DateTimeFormat(s.locale === "ru" ? "ru-RU" : "uz-UZ");
   const exportColumns = [
@@ -125,7 +128,10 @@ export default async function PaymentsPage() {
               <td className="px-4 py-3 text-slate-500">{p.author?.fullName ?? "—"}</td>
               {writable && (
                 <td className="px-4 py-3">
-                  {p.status !== "CANCELLED" ? <CancelButton id={p.id} locale={s.locale} /> : <span className="text-xs text-slate-400">—</span>}
+                  <div className="flex items-center gap-1">
+                    {canEdit && <EditPaymentButton paymentId={p.id} locale={s.locale} />}
+                    {p.status !== "CANCELLED" ? <CancelButton id={p.id} locale={s.locale} /> : <span className="text-xs text-slate-400">—</span>}
+                  </div>
                 </td>
               )}
             </tr>
