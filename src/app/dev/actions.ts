@@ -237,3 +237,12 @@ export async function setMainLicenseAction(date: string): Promise<{ ok: boolean;
   revalidatePath("/dev");
   return r.ok ? { ok: true } : { ok: false, error: `Sana yozildi, lekin qayta ishga tushmadi: ${r.out}` };
 }
+
+/** Asosiy markazni (germaniya.live) qayta ishga tushirish */
+export async function restartMainAction(): Promise<{ ok: boolean; error?: string }> {
+  const dev = await requireDev();
+  const r = await glCenter("main-restart");
+  await devAudit("main_restart", { by: dev.email, ok: r.ok });
+  revalidatePath("/dev/main");
+  return r.ok ? { ok: true } : { ok: false, error: r.out };
+}

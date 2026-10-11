@@ -91,6 +91,8 @@ export async function waitHealthy(port: number, totalMs = 60_000): Promise<boole
 export interface CenterStats {
   students: number; activeStudents: number; staff: number; groups: number; leads: number;
   paidThisMonth: number; dbBytes: number; uploadsBytes: number; lastLoginAt: string | null;
+  teachers: number; newStudentsThisMonth: number; leadsThisMonth: number; paidLastMonth: number;
+  paymentsThisMonth: number; loginsToday: number; branches: number;
 }
 
 async function sqlite(dbFile: string, sql: string): Promise<string[]> {
@@ -109,6 +111,8 @@ export async function centerStats(dbFile: string, uploadsDir: string): Promise<C
   try {
     const now = new Date();
     const monthStart = new Date(now.getFullYear(), now.getMonth(), 1).getTime();
+    const prevStart = new Date(now.getFullYear(), now.getMonth() - 1, 1).getTime();
+    const dayStart = new Date(now.getFullYear(), now.getMonth(), now.getDate()).getTime();
     const [row] = await sqlite(dbFile, `SELECT
       (SELECT count(*) FROM Student),
       (SELECT count(*) FROM Student WHERE eduStatus='ACTIVE'),
@@ -116,7 +120,14 @@ export async function centerStats(dbFile: string, uploadsDir: string): Promise<C
       (SELECT count(*) FROM "Group" WHERE status='ACTIVE'),
       (SELECT count(*) FROM Lead),
       (SELECT coalesce(sum(amount),0) FROM Payment WHERE status='PAID' AND createdAt >= ${monthStart}),
-      (SELECT max(lastLoginAt) FROM User)`);
+      (SELECT max(lastLoginAt) FROM User),
+      (SELECT count(*) FROM User WHERE isActive=1 AND role='TEACHER'),
+      (SELECT count(*) FROM Student WHERE createdAt >= ${monthStart}),
+      (SELECT count(*) FROM Lead WHERE createdAt >= ${monthStart}),
+      (SELECT coalesce(sum(amount),0) FROM Payment WHERE status='PAID' AND createdAt >= ${prevStart} AND createdAt < ${monthStart}),
+      (SELECT count(*) FROM Payment WHERE status='PAID' AND createdAt >= ${monthStart}),
+      (SELECT count(*) FROM User WHERE lastLoginAt >= ${dayStart}),
+      (SELECT count(*) FROM Branch WHERE isActive=1)`);
     const v = row.split("|");
     const st = await fs.stat(dbFile).catch(() => null);
     const last = Number(v[6]);
@@ -124,6 +135,8 @@ export async function centerStats(dbFile: string, uploadsDir: string): Promise<C
       students: +v[0] || 0, activeStudents: +v[1] || 0, staff: +v[2] || 0, groups: +v[3] || 0, leads: +v[4] || 0,
       paidThisMonth: +v[5] || 0, dbBytes: st?.size ?? 0, uploadsBytes: await dirBytes(uploadsDir),
       lastLoginAt: Number.isFinite(last) && last > 0 ? new Date(last).toISOString() : null,
+      teachers: +v[7] || 0, newStudentsThisMonth: +v[8] || 0, leadsThisMonth: +v[9] || 0, paidLastMonth: +v[10] || 0,
+      paymentsThisMonth: +v[11] || 0, loginsToday: +v[12] || 0, branches: +v[13] || 0,
     };
   } catch {
     return null;
@@ -171,3 +184,54 @@ export async function appVersion(): Promise<string> {
 }
 
 export { CENTERS_ROOT };
+
+// ─── Server holati (gl-center sysinfo) ───
+export interface SysService { name: string; active: string; since: string | null; memBytes: number | null; restarts: number }
+export interface SysInfo {
+  kv: Record<string, string>;
+  disks: { mount: string; size: number; used: number; avail: number }[];
+  services: SysService[];
+  certs: { name: string; expires: string; domains: string[] }[];
+  procs: { pid: string; cpu: number; rss: number; elapsedS: number; cmd: string }[];
+  backupTimer: { last: string | null; next: string | null };
+  docker: { name: string; status: string; image: string }[];
+}
+
+const parseSince = (v: string) => { const d = new Date(v.replace(/ UTC$/, "Z").replace(/^\w{3} /, "")); return v && !isNaN(d.getTime()) ? d.toISOString() : null; };
+
+export async function sysInfo(): Promise<SysInfo> {
+  const r = await glCenter("sysinfo");
+  const out: SysInfo = { kv: {}, disks: [], services: [], certs: [], procs: [], backupTimer: { last: null, next: null }, docker: [] };
+  for (const line of r.out.split("\n")) {
+    const f = line.split("|");
+    switch (f[0]) {
+      case "kv": out.kv[f[1]] = f.slice(2).join("|").trim(); break;
+      case "disk": out.disks.push({ mount: f[1], size: +f[2] || 0, used: +f[3] || 0, avail: +f[4] || 0 }); break;
+      case "svc": out.services.push({ name: f[1], active: f[2] || "?", since: parseSince(f[3] ?? ""), memBytes: f[4] && /^\d+$/.test(f[4]) ? +f[4] : null, restarts: +f[5] || 0 }); break;
+      case "cert": { const d = new Date(f[2]); out.certs.push({ name: f[1], expires: isNaN(d.getTime()) ? "" : d.toISOString(), domains: (f[3] ?? "").trim().split(/\s+/).filter(Boolean) }); break; }
+      case "proc": out.procs.push({ pid: f[1], cpu: +f[2] || 0, rss: +f[3] || 0, elapsedS: +f[4] || 0, cmd: f.slice(5).join("|") }); break;
+      case "timer": out.backupTimer = { last: parseSince(f[2] ?? ""), next: parseSince(f[3] ?? "") }; break;
+      case "docker": out.docker.push({ name: f[1], status: f[2] ?? "", image: f[3] ?? "" }); break;
+    }
+  }
+  return out;
+}
+
+/** Asosiy markaz (germaniya.live) litsenziyasi — /opt/gl-edu/.env dagi SUBSCRIPTION_UNTIL */
+export async function mainLicense(): Promise<string | null> {
+  try {
+    const raw = await fs.readFile(path.join(APP_DIR, ".env"), "utf8");
+    return raw.match(/^SUBSCRIPTION_UNTIL="?([0-9-]+)"?/m)?.[1] ?? null;
+  } catch { return null; }
+}
+
+/** Asosiy markaz bazasining zaxira nusxalari (prisma/dev.db.backup-*) */
+export async function mainBackups(): Promise<{ name: string; bytes: number; at: string }[]> {
+  const d = path.join(APP_DIR, "prisma");
+  try {
+    const names = (await fs.readdir(d)).filter((n) => n.startsWith("dev.db.backup")).sort().reverse().slice(0, 15);
+    return Promise.all(names.map(async (n) => { const st = await fs.stat(path.join(d, n)); return { name: n, bytes: st.size, at: st.mtime.toISOString() }; }));
+  } catch {
+    return [];
+  }
+}

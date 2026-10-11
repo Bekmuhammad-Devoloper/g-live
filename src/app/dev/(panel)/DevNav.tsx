@@ -5,7 +5,9 @@ import { usePathname } from "next/navigation";
 
 const ITEMS = [
   { href: "/dev", label: "Bosh sahifa", icon: "M3 12l9-8 9 8M5 10v10h5v-6h4v6h5V10", exact: true },
+  { href: "/dev/main", label: "Germaniya Live", icon: "M4 21V7l8-4 8 4v14M9 21v-6h6v6" },
   { href: "/dev/centers/new", label: "Yangi markaz", icon: "M12 5v14M5 12h14" },
+  { href: "/dev/server", label: "Server", icon: "M4 5h16v6H4zM4 13h16v6H4zM8 8h.01M8 16h.01" },
   { href: "/dev/audit", label: "Amallar jurnali", icon: "M8 6h13M8 12h13M8 18h13M3 6h.01M3 12h.01M3 18h.01" },
 ];
 

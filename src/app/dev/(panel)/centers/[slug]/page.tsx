@@ -2,10 +2,10 @@ import Link from "next/link";
 import path from "node:path";
 import { notFound } from "next/navigation";
 import { getCenter, centerDb, centerDir } from "@/lib/devpanel/registry";
-import { centerStats, health, glCenter, listBackups } from "@/lib/devpanel/ops";
+import { centerStats, health, glCenter, listBackups, sysInfo } from "@/lib/devpanel/ops";
 import { readDevAudit } from "@/lib/devpanel/auth";
 import { INSTANCE_MODULES, ALL_INSTANCE_MODULES } from "@/lib/instance";
-import { Card, Stat, Pill, LicensePill, fmtBytes, fmtMoney, fmtDate } from "../../ui";
+import { Card, Stat, Pill, LicensePill, fmtBytes, fmtMoney, fmtDate, fmtDateTime, fmtDuration } from "../../ui";
 import CenterControls from "./CenterControls";
 
 export const dynamic = "force-dynamic";
@@ -15,14 +15,18 @@ export default async function CenterPage({ params }: { params: Promise<{ slug: s
   const c = await getCenter(slug);
   if (!c || c.status === "deleted") notFound();
 
-  const [up, stats, svc, logs, backups, audit] = await Promise.all([
+  const [up, stats, svc, logs, backups, audit, sys] = await Promise.all([
     health(c.port, 2500),
     centerStats(centerDb(slug), path.join(centerDir(slug), "uploads")),
     glCenter("status", slug),
     glCenter("logs", slug, "80"),
     listBackups(slug),
     readDevAudit(500),
+    sysInfo(),
   ]);
+  const unit = sys.services.find((x) => x.name === `gl-center@${slug}.service`);
+  const cert = sys.certs.find((x) => x.domains.includes(c.host));
+  const certDays = cert?.expires ? Math.floor((new Date(cert.expires).getTime() - Date.now()) / 86_400_000) : null;
   const history = audit.filter((a) => a.slug === slug).slice(0, 30);
   const modules = ALL_INSTANCE_MODULES.map((k) => ({ key: k, name: INSTANCE_MODULES[k].uz, desc: INSTANCE_MODULES[k].desc, on: !c.disabledModules.includes(k) }));
 
@@ -47,6 +51,24 @@ export default async function CenterPage({ params }: { params: Promise<{ slug: s
         <Stat label="Xodimlar" value={stats?.staff ?? "—"} hint={`Faol guruhlar: ${stats?.groups ?? "—"}`} />
         <Stat label="Shu oy tushum" value={stats ? fmtMoney(stats.paidThisMonth) : "—"} tone="green" />
         <Stat label="Hajm" value={stats ? fmtBytes(stats.dbBytes + stats.uploadsBytes) : "—"} hint={stats ? `Baza ${fmtBytes(stats.dbBytes)} · fayllar ${fmtBytes(stats.uploadsBytes)} · oxirgi kirish ${fmtDate(stats.lastLoginAt)}` : undefined} />
+      </div>
+
+      <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+        <Stat label="Shu oy" value={stats ? `+${stats.newStudentsThisMonth} o'quvchi` : "—"} hint={stats ? `${stats.leadsThisMonth} ta lid · ${stats.paymentsThisMonth} ta to'lov` : undefined} />
+        <Stat label="O'tgan oy tushum" value={stats ? fmtMoney(stats.paidLastMonth) : "—"} hint={stats && stats.paidLastMonth > 0 ? `${stats.paidThisMonth >= stats.paidLastMonth ? "▲" : "▼"} ${Math.abs(Math.round(((stats.paidThisMonth - stats.paidLastMonth) / stats.paidLastMonth) * 100))}% shu oyga nisbatan` : undefined} />
+        <Stat label="Bugun kirganlar" value={stats?.loginsToday ?? "—"} hint={stats ? `${stats.teachers} o'qituvchi · ${stats.branches} filial` : undefined} />
+        <Card>
+          <div className="text-[11px] font-semibold uppercase tracking-[0.12em] text-slate-400">Xizmat</div>
+          <div className="mt-1.5 text-sm">
+            {unit?.active === "active" ? <Pill tone="green">● Faol</Pill> : <Pill tone="red">● {unit?.active ?? "yo'q"}</Pill>}
+            <span className="ml-2 text-slate-400">{unit?.memBytes ? fmtBytes(unit.memBytes) : ""}</span>
+          </div>
+          <div className="mt-2 text-xs text-slate-400">
+            {unit?.since ? `${fmtDuration((Date.now() - new Date(unit.since).getTime()) / 1000)} ishlayapti` : "—"} · qayta ishga tushgan {unit?.restarts ?? 0}
+          </div>
+          <div className="mt-1 text-xs text-slate-400">SSL: {certDays === null ? "yo'q" : `${certDays} kun (${fmtDate(cert?.expires)})`}</div>
+          <div className="mt-1 text-xs text-slate-500">Oxirgi zaxira: {backups[0] ? fmtDateTime(backups[0].at) : "—"}</div>
+        </Card>
       </div>
 
       <CenterControls

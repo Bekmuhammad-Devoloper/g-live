@@ -49,3 +49,25 @@ export function MainLicenseForm({ current }: { current: string | null }) {
     </div>
   );
 }
+
+export function RestartMainButton() {
+  const [pending, start] = useTransition();
+  const [msg, setMsg] = useState<string | null>(null);
+  const router = useRouter();
+  return (
+    <div className="flex items-center gap-2">
+      {msg && <span className="text-xs text-slate-400">{msg}</span>}
+      <button
+        type="button"
+        disabled={pending}
+        onClick={() => {
+          if (!confirm("Germaniya Live qayta ishga tushirilsinmi? Sayt 10–20 soniya ochilmaydi.")) return;
+          start(async () => { const { restartMainAction } = await import("../actions"); const r = await restartMainAction(); setMsg(r.ok ? "Qayta ishga tushirildi" : r.error ?? "Xato"); router.refresh(); });
+        }}
+        className="rounded-lg border border-white/10 bg-[#0d1424] px-4 py-2 text-sm font-semibold text-slate-200 hover:bg-white/[0.04] disabled:opacity-60"
+      >
+        {pending ? "..." : "Qayta ishga tushirish"}
+      </button>
+    </div>
+  );
+}

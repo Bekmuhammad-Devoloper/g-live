@@ -87,6 +87,48 @@ case "$cmd" in
     # Asosiy markaz (germaniya.live) — litsenziya sanasi o'zgargach
     systemctl restart gl-edu
     ;;
+  sysinfo)
+    # Dev panel "Server" sahifasi uchun to'liq holat. Satr formati: <tur>|<maydonlar...>
+    # Faqat o'qish: bitta qism xatosi (masalan head quvurni yopishi) qolganini to'xtatmasin
+    set +e +o pipefail
+    . /etc/os-release 2>/dev/null || true
+    echo "kv|os|${PRETTY_NAME:-?}"
+    echo "kv|kernel|$(uname -r)"
+    echo "kv|hostname|$(hostname)"
+    echo "kv|ip|$(curl -s -m 3 https://api.ipify.org 2>/dev/null || hostname -I | awk '{print $1}')"
+    echo "kv|cpu_model|$(grep -m1 'model name' /proc/cpuinfo | cut -d: -f2- | sed 's/^ *//')"
+    echo "kv|cpu_cores|$(nproc)"
+    echo "kv|load|$(cut -d' ' -f1-3 /proc/loadavg)"
+    echo "kv|uptime_s|$(cut -d. -f1 /proc/uptime)"
+    echo "kv|node|$(node -v 2>/dev/null)"
+    echo "kv|nginx|$(nginx -v 2>&1 | sed 's/.*nginx\///')"
+    awk '/^MemTotal/{t=$2} /^MemAvailable/{a=$2} /^SwapTotal/{st=$2} /^SwapFree/{sf=$2} END{print "kv|mem_total|"t*1024"\nkv|mem_available|"a*1024"\nkv|swap_total|"st*1024"\nkv|swap_used|"(st-sf)*1024}' /proc/meminfo
+    # CPU band'lik: 1 soniyalik o'lchov
+    read -r _ u1 n1 s1 i1 w1 x1 y1 z1 _ < /proc/stat; sleep 1; read -r _ u2 n2 s2 i2 w2 x2 y2 z2 _ < /proc/stat
+    t1=$((u1+n1+s1+i1+w1+x1+y1+z1)); t2=$((u2+n2+s2+i2+w2+x2+y2+z2))
+    echo "kv|cpu_pct|$(( (100*((t2-t1)-(i2-i1))) / ((t2-t1)>0 ? (t2-t1) : 1) ))"
+    df -B1 --output=target,size,used,avail -x tmpfs -x devtmpfs -x overlay -x squashfs -x efivarfs 2>/dev/null | tail -n +2 | awk '{print "disk|"$1"|"$2"|"$3"|"$4}'
+    for u in gl-edu gl-ami gl-tunnel gl-cdr.timer gl-dev nginx gl-centers-backup.timer docker certbot.timer; do
+      st=$(systemctl is-active "$u" 2>/dev/null || true)
+      since=$(systemctl show "$u" -p ActiveEnterTimestamp --value 2>/dev/null)
+      mem=$(systemctl show "$u" -p MemoryCurrent --value 2>/dev/null)
+      rs=$(systemctl show "$u" -p NRestarts --value 2>/dev/null)
+      echo "svc|$u|$st|$since|$mem|$rs"
+    done
+    for u in $(systemctl list-units --all --plain --no-legend 'gl-center@*' 2>/dev/null | awk '{print $1}'); do
+      echo "svc|$u|$(systemctl is-active "$u")|$(systemctl show "$u" -p ActiveEnterTimestamp --value)|$(systemctl show "$u" -p MemoryCurrent --value)|$(systemctl show "$u" -p NRestarts --value)"
+    done
+    for d in /etc/letsencrypt/live/*/; do
+      n=$(basename "$d"); [ -f "$d/cert.pem" ] || continue
+      echo "cert|$n|$(openssl x509 -in "$d/cert.pem" -noout -enddate | cut -d= -f2)|$(openssl x509 -in "$d/cert.pem" -noout -ext subjectAltName 2>/dev/null | grep -oE 'DNS:[^,]+' | sed 's/DNS://' | tr '\n' ' ')"
+    done
+    # Nom oxirida: unda bo'sh joy bo'lishi mumkin ("next-server (v15...)")
+    ps -eo pid,%cpu,rss,etimes,args --sort=-rss | tail -n +2 | head -10 | awk '{a=$5; for(i=6;i<=NF&&i<=7;i++) a=a" "$i; print "proc|"$1"|"$2"|"$3*1024"|"$4"|"a}'
+    echo "timer|backup|$(systemctl show gl-centers-backup.timer -p LastTriggerUSec --value 2>/dev/null)|$(systemctl show gl-centers-backup.timer -p NextElapseUSecRealtime --value 2>/dev/null)"
+    if command -v docker >/dev/null; then docker ps --format 'docker|{{.Names}}|{{.Status}}|{{.Image}}' 2>/dev/null; fi
+    ss -tlnH 2>/dev/null | awk '{print $4}' | grep -oE '[0-9]+$' | sort -un | tr '\n' ' ' | sed 's/^/kv|ports|/'; echo
+    echo "kv|last_deploy|$(git -C $APP log -1 --format='%h|%cI|%s' 2>/dev/null | tr '|' '~')"
+    ;;
   stats)
     # Server holati (Dev panel bosh sahifasi uchun)
     echo "load=$(cut -d' ' -f1-3 /proc/loadavg)"
@@ -95,6 +137,6 @@ case "$cmd" in
     echo "uptime=$(uptime -p)"
     ;;
   *)
-    die "buyruqlar: blanks|start|stop|restart|enable|disable|status|logs|site|unsite|dev-site|backup|backup-all|main-restart|stats"
+    die "buyruqlar: blanks|start|stop|restart|enable|disable|status|logs|site|unsite|dev-site|backup|backup-all|main-restart|stats|sysinfo"
     ;;
 esac

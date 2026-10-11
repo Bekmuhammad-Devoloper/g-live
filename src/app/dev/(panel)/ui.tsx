@@ -62,3 +62,31 @@ export function LicensePill({ until, suspended }: { until: string | null; suspen
   if (d <= 14) return <Pill tone="amber">{d} kun qoldi</Pill>;
   return <Pill tone="green">{d} kun</Pill>;
 }
+
+/** Davomiylik: 3 kun 4 soat / 2 soat 15 daq / 40 daq */
+export function fmtDuration(seconds: number): string {
+  const s = Math.max(0, Math.floor(seconds));
+  const d = Math.floor(s / 86400), h = Math.floor((s % 86400) / 3600), m = Math.floor((s % 3600) / 60);
+  if (d > 0) return `${d} kun ${h} soat`;
+  if (h > 0) return `${h} soat ${m} daq`;
+  return `${m} daq`;
+}
+
+/** Sana va vaqt (Toshkent) */
+export function fmtDateTime(iso: string | null | undefined): string {
+  if (!iso) return "—";
+  const d = new Date(iso);
+  if (isNaN(d.getTime())) return "—";
+  return d.toLocaleString("ru-RU", { timeZone: "Asia/Tashkent", day: "2-digit", month: "2-digit", year: "numeric", hour: "2-digit", minute: "2-digit" });
+}
+
+/** Foiz chizig'i: 70% dan sariq, 85% dan qizil */
+export function Bar({ pct }: { pct: number }) {
+  const v = Math.max(0, Math.min(100, pct));
+  const c = v > 85 ? "from-red-500 to-red-400" : v > 70 ? "from-amber-500 to-amber-400" : "from-[#e3262b] via-[#ee7a24] to-[#f6b51e]";
+  return (
+    <div className="mt-2 h-1.5 w-full overflow-hidden rounded-full bg-white/[0.06]">
+      <div className={`h-full rounded-full bg-gradient-to-r ${c}`} style={{ width: `${v}%` }} />
+    </div>
+  );
+}

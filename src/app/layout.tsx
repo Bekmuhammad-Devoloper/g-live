@@ -18,7 +18,8 @@ export const dynamic = "force-dynamic";
 // yuklamasidan mustaqil qiladi (internet uzilsa ham ilova ishlaydi).
 
 export async function generateMetadata(): Promise<Metadata> {
-  if (isDevPanel()) return { title: "Dev panel — markazlar boshqaruvi", robots: { index: false, follow: false } };
+  // Dev panel: ikonka manzili versiyalangan — brauzer eski (bloklangan paytdagi) belgini eslab qolmasin
+  if (isDevPanel()) return { title: "Dev panel — markazlar boshqaruvi", robots: { index: false, follow: false }, icons: { icon: "/icon.png?v=gl2", shortcut: "/favicon.ico?v=gl2", apple: "/apple-icon.png?v=gl2" } };
   const brand = await getBrand();
   return {
     title: `${brand.name} — Boshqaruv tizimi`,
