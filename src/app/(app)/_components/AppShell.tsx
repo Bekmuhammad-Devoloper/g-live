@@ -690,7 +690,8 @@ export default function AppShell({ navItems, role, portal, user, locale, labels,
         />
 
         <main className="min-w-0 flex-1 p-4 pb-24 md:p-6 md:pb-6">
-          <div className="mx-auto max-w-[1500px]">{children}</div>
+          {/* Kanban/jadval sahifalari keng ekranda (monoblok) to'liq kenglikdan foydalanadi */}
+          <div className={cn("mx-auto", /^\/(crm|schedule)(\/|$)/.test(pathname ?? "") ? "max-w-none" : "max-w-[1500px]")}>{children}</div>
         </main>
 
         {/* Global footer — Modme uslubida */}
