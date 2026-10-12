@@ -119,6 +119,7 @@ export const PAYMENT_STATUS_LABELS: Record<string, LocaleText> = {
   PAID: { uz: "To'landi", ru: "Оплачено", en: "Paid", de: "Bezahlt" },
   REFUNDED: { uz: "Qaytarildi", ru: "Возврат", en: "Refunded", de: "Erstattet" },
   CANCELLED: { uz: "Bekor qilindi", ru: "Отменён", en: "Cancelled", de: "Storniert" },
+  ADJUST: { uz: "Qarz tuzatish", ru: "Корректировка долга", en: "Debt adjustment", de: "Schuldenkorrektur" },
 };
 
 // ─── Davomat ───

@@ -8,7 +8,7 @@ import { tr } from "@/lib/tr";
 import { isReceiptRequired, type ReceiptMode } from "@/lib/receiptMode";
 import PromoSelect, { promoErrorText } from "../_components/PromoSelect";
 import PromoBadge from "../_components/PromoBadge";
-import { getStudentPayments, acceptPayment, addStudentDebt, updatePaymentRecord, deletePaymentRecord, type StudentPayments, type MonthPay, type PayRow, type ReceiptData } from "./actions";
+import { getStudentPayments, acceptPayment, addStudentDebt, adjustStudentDebt, updatePaymentRecord, deletePaymentRecord, type StudentPayments, type MonthPay, type PayRow, type ReceiptData } from "./actions";
 import { Icon } from "../_components/Icon";
 import MoneyInput from "../_components/MoneyInput";
 import { confirmDialog, promptDialog } from "../_components/dialogs";
@@ -51,6 +51,7 @@ export default function PaymentPanel({
   const [debtForm, setDebtForm] = useState(false); // qarzdor holatga tushurish formasi
   const [receipt, setReceipt] = useState<ReceiptData | null>(null);
   const [showAll, setShowAll] = useState(false);
+  const [debtEdit, setDebtEdit] = useState(false); // jami qarzni qo'lda tuzatish
 
   const load = () => startPay(async () => { const r = await getStudentPayments(studentId); if (r.ok && r.data) setPay(r.data); });
   const reloadPay = () => { load(); onChanged?.(); };
@@ -148,10 +149,32 @@ export default function PaymentPanel({
               {tr(locale, { uz: "Jami qarzdorlik", ru: "Общая задолженность", en: "Total debt", de: "Gesamtschulden" })}
             </span>
           </div>
-          <span className={cn("text-base font-black tabular-nums", pay.debt > 0 ? "text-amber-700 dark:text-amber-400" : "text-emerald-700 dark:text-emerald-400")}>
-            {pay.debt > 0 ? formatMoney(pay.debt, locale) : tr(locale, { uz: "Yo'q", ru: "Нет", en: "None", de: "Keine" })}
-          </span>
+          <div className="flex items-center gap-1.5">
+            <span className={cn("text-base font-black tabular-nums", pay.debt > 0 ? "text-amber-700 dark:text-amber-400" : "text-emerald-700 dark:text-emerald-400")}>
+              {pay.debt > 0 ? formatMoney(pay.debt, locale) : tr(locale, { uz: "Yo'q", ru: "Нет", en: "None", de: "Keine" })}
+            </span>
+            {(canPay || canManage) && !debtEdit && (
+              <button
+                type="button"
+                onClick={() => setDebtEdit(true)}
+                title={tr(locale, { uz: "Qarzni tahrirlash", ru: "Изменить долг", en: "Edit debt", de: "Schulden bearbeiten" })}
+                className="grid h-7 w-7 place-items-center rounded-lg text-slate-400 transition hover:bg-white hover:text-brand-600 dark:hover:bg-white/10"
+              >
+                <Icon name="edit" className="h-3.5 w-3.5" />
+              </button>
+            )}
+          </div>
         </div>
+      )}
+
+      {pay && debtEdit && (
+        <DebtAdjustForm
+          studentId={studentId}
+          current={pay.debt}
+          locale={locale}
+          onCancel={() => setDebtEdit(false)}
+          onDone={() => { setDebtEdit(false); reloadPay(); }}
+        />
       )}
 
       {/* Balans — majburiyatlardan ortiqcha (oldindan) to'langan pul; keyingi oy hisobiga o'tadi */}
@@ -202,6 +225,41 @@ export default function PaymentPanel({
       )}
 
       {receipt && <ReceiptModal receipt={receipt} locale={locale} onClose={() => setReceipt(null)} />}
+    </div>
+  );
+}
+
+// Jami qarzni qo'lda belgilash — farq "Qarz tuzatish" yozuvi bo'lib saqlanadi (sabab majburiy).
+function DebtAdjustForm({ studentId, current, locale, onCancel, onDone }: {
+  studentId: string; current: number; locale: Locale; onCancel: () => void; onDone: () => void;
+}) {
+  const [amount, setAmount] = useState(String(current));
+  const [reason, setReason] = useState("");
+  const [err, setErr] = useState<string | null>(null);
+  const [pending, start] = useTransition();
+  const inp = "h-10 w-full rounded-lg border border-slate-200 bg-white px-3 text-sm outline-none focus:border-brand-400 dark:border-slate-700 dark:bg-slate-900";
+  const save = () => {
+    setErr(null);
+    start(async () => {
+      const r = await adjustStudentDebt(studentId, { newDebt: Number(amount || 0), reason });
+      if (r.ok) onDone();
+      else setErr(
+        r.error === "reason" ? tr(locale, { uz: "Sababni yozing (kamida 3 belgi).", ru: "Укажите причину (минимум 3 символа).", en: "Enter a reason (min 3 chars).", de: "Grund angeben (mind. 3 Zeichen)." })
+        : r.error === "forbidden" ? tr(locale, { uz: "Ruxsat yo'q.", ru: "Нет доступа.", en: "No access.", de: "Kein Zugriff." })
+        : tr(locale, { uz: "Saqlab bo'lmadi.", ru: "Не удалось сохранить.", en: "Could not save.", de: "Speichern fehlgeschlagen." }),
+      );
+    });
+  };
+  return (
+    <div className="mt-2 space-y-2 rounded-xl border border-brand-200 bg-brand-50/40 p-3 dark:border-brand-500/30 dark:bg-brand-500/5">
+      <div className="text-xs font-semibold text-slate-600 dark:text-slate-300">{tr(locale, { uz: "Jami qarzni tahrirlash", ru: "Изменить общий долг", en: "Edit total debt", de: "Gesamtschulden bearbeiten" })}</div>
+      <MoneyInput value={amount} onChange={setAmount} className={inp} />
+      <input value={reason} onChange={(e) => setReason(e.target.value)} placeholder={tr(locale, { uz: "Sabab (majburiy)", ru: "Причина (обязательно)", en: "Reason (required)", de: "Grund (Pflicht)" })} className={inp} />
+      {err && <p className="text-xs text-rose-500">{err}</p>}
+      <div className="flex justify-end gap-2">
+        <button type="button" onClick={onCancel} className="h-9 rounded-lg border border-slate-200 px-3 text-xs font-semibold text-slate-600 hover:bg-white dark:border-slate-700 dark:text-slate-300">{tr(locale, { uz: "Bekor qilish", ru: "Отмена", en: "Cancel", de: "Abbrechen" })}</button>
+        <button type="button" onClick={save} disabled={pending} className="h-9 rounded-lg bg-brand-600 px-4 text-xs font-semibold text-white hover:bg-brand-700 disabled:opacity-50">{pending ? "..." : tr(locale, { uz: "Saqlash", ru: "Сохранить", en: "Save", de: "Speichern" })}</button>
+      </div>
     </div>
   );
 }
@@ -327,7 +385,18 @@ export function PaymentRow({ p, locale, canEdit, onChanged, startEditing = false
           <span className="rounded-full px-2 py-0.5 text-[10px] font-semibold" style={{ color: ps.fg, background: ps.bg }}>
             {covered ? tr(locale, { uz: "Qoplandi", ru: "Погашен", en: "Covered", de: "Beglichen" }) : label(PAYMENT_STATUS_LABELS, p.status, locale)}
           </span>
-          {canEdit && (
+          {/* Qarz tuzatish yozuvi tahrirlanmaydi — kerak bo'lsa o'chiriladi (qarz avvalgi holiga qaytadi) */}
+          {canEdit && p.status === "ADJUST" && (
+            <button
+              type="button"
+              onClick={remove}
+              title={L("O'chirish", "Удалить", "Delete")}
+              className="grid h-6 w-6 place-items-center rounded-md text-slate-400 transition hover:bg-rose-50 hover:text-rose-600 dark:hover:bg-rose-500/10"
+            >
+              <Icon name="trash" className="h-3.5 w-3.5" />
+            </button>
+          )}
+          {canEdit && p.status !== "ADJUST" && (
             <button
               type="button"
               onClick={() => { setEdit(true); setErr(null); }}

@@ -663,6 +663,60 @@ export async function moveStudentToBranch(
 const CAN_EDIT_PAY = [ROLES.DIRECTOR, ROLES.DEPUTY_DIRECTOR, ROLES.MANAGER, ROLES.ADMIN, ROLES.ACCOUNTANT];
 
 /** O'quvchini qarzdor qilish — ko'rsatilgan summada qarz yozuvi ochadi. */
+/**
+ * Jami qarzni qo'lda belgilash: joriy hisoblangan qarz bilan farq ADJUST yozuvi
+ * sifatida saqlanadi (manfiy — kamaytiradi). Tushum hisobotlariga kirmaydi.
+ */
+export async function adjustStudentDebt(
+  studentId: string,
+  input: { newDebt: number; reason: string },
+): Promise<{ ok?: boolean; error?: string }> {
+  const s = await requireSession();
+  if (!CAN_EDIT_PAY.includes(s.role as never)) return { error: "forbidden" };
+
+  const target = Math.trunc(Number(input.newDebt));
+  if (!Number.isFinite(target) || target < 0) return { error: "amount" };
+  const reason = String(input.reason || "").trim().slice(0, 300);
+  if (reason.length < 3) return { error: "reason" };
+
+  const st = await prisma.student.findUnique({ where: { id: studentId }, select: { id: true } });
+  if (!st) return { error: "notfound" };
+
+  const cur = await computeDebt(studentId, new Date());
+  // Balansda (oldindan to'langan) pul bo'lsa, qarz 0 dan pastda — farqni shu hisobdan olamiz
+  const currentNet = cur.debt > 0 ? cur.debt : -cur.credit;
+  const diff = target - currentNet;
+  if (diff === 0) return { ok: true };
+
+  const pay = await prisma.payment.create({
+    data: {
+      studentId,
+      amount: diff,
+      method: "ADJUST",
+      status: "ADJUST",
+      isManual: true,
+      purpose: "Qarz tuzatish",
+      note: reason,
+      authorId: s.userId,
+    },
+  });
+
+  await writeAudit({
+    actorId: s.userId,
+    action: "UPDATE",
+    entityType: "StudentDebt",
+    entityId: studentId,
+    oldValue: { debt: cur.debt, credit: cur.credit },
+    newValue: { debt: target, adjustment: diff, paymentId: pay.id },
+    reason,
+  });
+
+  revalidatePath("/students");
+  revalidatePath("/finance/debtors");
+  revalidatePath("/crm");
+  return { ok: true };
+}
+
 export async function addStudentDebt(
   studentId: string,
   input: { amount: number; purpose?: string; dateIso?: string | null; reason?: string },
@@ -726,6 +780,8 @@ export async function updatePaymentRecord(
     select: { id: true, studentId: true, amount: true, method: true, purpose: true, status: true, createdAt: true, promoCode: true, discount: true },
   });
   if (!existing) return { error: "notfound" };
+  // Qarz tuzatish yozuvi oddiy to'lov sifatida tahrirlanmaydi (faqat o'chiriladi)
+  if (existing.status === "ADJUST") return { error: "forbidden" };
 
   const data: Record<string, unknown> = {};
   if (input.amount !== undefined) {
@@ -816,7 +872,7 @@ export async function getPaymentForEdit(paymentId: string): Promise<PayRow | nul
     where: { id: paymentId },
     select: { id: true, amount: true, method: true, purpose: true, status: true, createdAt: true, note: true, promoCode: true, discount: true },
   });
-  if (!p) return null;
+  if (!p || p.status === "ADJUST") return null;
   return { id: p.id, amount: p.amount, method: p.method, purpose: p.purpose, status: p.status, date: p.createdAt.toISOString(), note: p.note, promoCode: p.promoCode, discount: p.discount };
 }
 

@@ -82,7 +82,8 @@ export async function computeDebts(studentIds: string[], now = new Date()): Prom
       },
     }),
     prisma.payment.findMany({
-      where: { studentId: { in: studentIds }, status: { in: ["PAID", "PENDING"] } },
+      // ADJUST — qarzni qo'lda tuzatish (+/−), pul harakati emas
+      where: { studentId: { in: studentIds }, status: { in: ["PAID", "PENDING", "ADJUST"] } },
       select: { studentId: true, amount: true, status: true, discount: true },
     }),
     getDefaultMonthlyFee(),
