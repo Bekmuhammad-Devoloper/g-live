@@ -559,7 +559,7 @@ function DetailsModal({ t, result, locale, onClose }: { t: TeacherSalaryCalc; re
         </div>
       </div>
       <div className="overflow-x-auto p-5">
-        <table className="w-full min-w-[1100px] text-left text-sm">
+        <table className="w-full min-w-[1100px] border-collapse border border-slate-200 text-left text-sm dark:border-slate-700 [&_td]:border [&_td]:border-slate-200 [&_th]:border [&_th]:border-slate-200 dark:[&_td]:border-slate-700 dark:[&_th]:border-slate-700">
           <thead className="border-b border-slate-200/70 bg-slate-50/60 text-[12px] font-semibold text-slate-600 dark:border-slate-800 dark:bg-slate-800/40 dark:text-slate-300">
             <tr>
               <th className={th}>№</th>
@@ -595,8 +595,8 @@ function DetailsModal({ t, result, locale, onClose }: { t: TeacherSalaryCalc; re
                   {r.ruleAmount != null && isPercent(r.ruleType) && <span className="ml-1 text-xs text-slate-400">({r.ruleAmount}%)</span>}
                 </td>
                 <td className="whitespace-nowrap px-3 py-2.5 font-semibold text-slate-800 dark:text-slate-100">{formatMoney(r.amount, locale)}</td>
-                <td className="px-3 py-2.5 text-slate-600 dark:text-slate-300">{r.ruleScope ? scopeLabel(r.ruleScope, locale) : "—"}</td>
-                <td className="px-3 py-2.5 text-slate-600 dark:text-slate-300">{r.ruleType ? typeLabel(r.ruleType, locale) : tr(locale, { uz: "Qoida yo'q", ru: "Нет правила", en: "No rule", de: "Keine Regel" })}</td>
+                <td className="whitespace-nowrap px-3 py-2.5 text-slate-600 dark:text-slate-300">{r.ruleScope ? scopeLabel(r.ruleScope, locale) : "—"}</td>
+                <td className="whitespace-nowrap px-3 py-2.5 text-slate-600 dark:text-slate-300">{r.ruleType ? typeLabel(r.ruleType, locale) : tr(locale, { uz: "Qoida yo'q", ru: "Нет правила", en: "No rule", de: "Keine Regel" })}</td>
               </tr>
             ))}
           </tbody>
