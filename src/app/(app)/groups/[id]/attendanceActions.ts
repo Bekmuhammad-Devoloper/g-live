@@ -223,7 +223,7 @@ export async function markStudentAttendance(
   dateISO: string,
   studentId: string,
   status: string,
-): Promise<{ ok: boolean; cleared?: boolean; blocked?: boolean; lessonsThisMonth?: number; closed?: boolean; future?: boolean; closesAtLabel?: string; notLessonDay?: boolean }> {
+): Promise<{ ok: boolean; cleared?: boolean; blocked?: boolean; daysUnpaid?: number; closed?: boolean; future?: boolean; closesAtLabel?: string; notLessonDay?: boolean }> {
   const s = await canMark(groupId);
   if (!s) return { ok: false };
   if (!ALLOWED.includes(status)) return { ok: false };
@@ -249,8 +249,8 @@ export async function markStudentAttendance(
   // Yangi "keldi" belgisi (avval keldi deb belgilanmagan bo'lsa) — to'lov majburiyligini tekshiramiz
   const wasAlreadyAttending = existing ? ATTEND_STATUSES.includes(existing.status) : false;
   if (ATTEND_STATUSES.includes(status) && !wasAlreadyAttending) {
-    const { mandatory, lessonsThisMonth } = await isPaymentMandatory(studentId);
-    if (mandatory) return { ok: false, blocked: true, lessonsThisMonth };
+    const { mandatory, daysUnpaid } = await isPaymentMandatory(studentId);
+    if (mandatory) return { ok: false, blocked: true, daysUnpaid };
   }
 
   await prisma.attendance.upsert({

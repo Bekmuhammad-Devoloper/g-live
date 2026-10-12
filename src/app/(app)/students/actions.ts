@@ -11,7 +11,7 @@ import { getSettings } from "@/lib/settings";
 import { getBrand } from "@/lib/brand";
 import { writeAudit } from "@/lib/audit";
 import { notify } from "@/lib/notify";
-import { lessonsAttendedThisMonth, MANDATORY_LESSON_THRESHOLD } from "@/lib/paymentPolicy";
+import { isPaymentMandatory, UNPAID_GRACE_DAYS } from "@/lib/paymentPolicy";
 import { computeDebt } from "@/lib/debt";
 import { branchWhere } from "@/lib/branchScope";
 import type { GroupOpt } from "../_components/GroupMover";
@@ -43,9 +43,9 @@ export interface StudentPayments {
   lastPaidDate: string | null;
   debt: number; // jami qarzdorlik — qo'shilgan oydan hisoblangan + qo'lda kiritilgan − to'langan
   credit: number; // balans — majburiyatlardan ortiqcha (oldindan) to'langan pul
-  lessonsThisMonth: number; // shu oy o'tilgan darslar soni (davomat bo'yicha)
-  mandatoryThreshold: number; // shundan keyin to'lov majburiy bo'ladi
-  paymentMandatory: boolean; // shu oy chegaradan ko'p dars o'tilgan, lekin to'lov qilinmagan
+  daysUnpaid: number; // oxirgi to'lovdan (yoki guruhga qo'shilgandan) beri o'tgan kunlar
+  mandatoryThreshold: number; // shuncha kundan keyin to'lov majburiy bo'ladi
+  paymentMandatory: boolean; // to'lovsiz muddat tugagan
   joinDate: string | null; // o'quvchi kelgan (birinchi guruhga qo'shilgan) sana
   lastMonthApplicable: boolean; // false bo'lsa — hali bir oy to'lmagan, "o'tgan oy" o'rniga qo'shilgan sana ko'rsatiladi
   recent: PayRow[];
@@ -58,13 +58,13 @@ export async function getStudentPayments(studentId: string): Promise<{ ok: boole
   if (!ALLOWED.includes(s.role as never) && !canRead(s.role, MODULES.PAYMENTS)) return { ok: false, error: "forbidden" };
   if (!studentId) return { ok: false, error: "invalid" };
 
-  const [payments, lessonsThisMonth, firstEnrollment, student] = await Promise.all([
+  const [payments, mandatoryInfo, firstEnrollment, student] = await Promise.all([
     prisma.payment.findMany({
       where: { studentId },
       orderBy: { createdAt: "desc" },
       select: { id: true, amount: true, method: true, purpose: true, status: true, createdAt: true, note: true, promoCode: true, discount: true },
     }),
-    lessonsAttendedThisMonth(studentId),
+    isPaymentMandatory(studentId),
     prisma.groupStudent.findFirst({ where: { studentId }, orderBy: { joinedAt: "asc" }, select: { joinedAt: true } }),
     prisma.student.findUnique({ where: { id: studentId }, select: { createdAt: true } }),
   ]);
@@ -91,8 +91,8 @@ export async function getStudentPayments(studentId: string): Promise<{ ok: boole
     if (remaining >= p.amount) { coveredIds.add(p.id); remaining -= p.amount; }
     else break;
   }
-  // Majburiy to'lov: shu oy chegaradan (3 dars) ko'p dars o'tilgan, lekin to'lov qilinmagan
-  const paymentMandatory = !thisMonth.paid && lessonsThisMonth >= MANDATORY_LESSON_THRESHOLD;
+  // Majburiy to'lov: oxirgi to'lovdan (yoki guruhga qo'shilgandan) UNPAID_GRACE_DAYS kun o'tgan
+  const paymentMandatory = mandatoryInfo.mandatory;
 
   // O'quvchi kelgan sana — birinchi guruhga qo'shilgan sana, bo'lmasa ro'yxatga olingan sana
   const joinDate = firstEnrollment?.joinedAt ?? student?.createdAt ?? null;
@@ -110,8 +110,8 @@ export async function getStudentPayments(studentId: string): Promise<{ ok: boole
       // Qarz — guruhga qo'shilgan oydan hisoblangan to'lov + qo'lda kiritilgani − to'langan
       debt: debtInfo.debt,
       credit: debtInfo.credit,
-      lessonsThisMonth,
-      mandatoryThreshold: MANDATORY_LESSON_THRESHOLD,
+      daysUnpaid: mandatoryInfo.daysUnpaid,
+      mandatoryThreshold: UNPAID_GRACE_DAYS,
       paymentMandatory,
       joinDate: joinDate ? joinDate.toISOString() : null,
       lastMonthApplicable,

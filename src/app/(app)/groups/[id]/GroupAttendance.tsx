@@ -12,7 +12,7 @@ import { getGroupAttendance, markStudentAttendance, markAllPresent, unlockAttend
 const p2 = (n: number) => String(n).padStart(2, "0");
 const todayISO = () => { const d = new Date(); return `${d.getFullYear()}-${p2(d.getMonth() + 1)}-${p2(d.getDate())}`; };
 
-type AttStudent = { id: string; name: string; blocked?: boolean; lessonsThisMonth?: number };
+type AttStudent = { id: string; name: string; blocked?: boolean; daysUnpaid?: number };
 
 /** Davomat: "Jurnal" (oy bo'yicha, hamma sanalar) — asosiy ko'rinish; "Kunlik" — bitta kun bo'yicha */
 export function GroupAttendance({ groupId, students, locale }: { groupId: string; students: AttStudent[]; locale: Locale }) {
@@ -81,7 +81,7 @@ function DayAttendance({ groupId, students, locale }: { groupId: string; student
         setMap((m) => { const n = { ...m }; if (prev === undefined) delete n[id]; else n[id] = prev; return n; });
         if (r.blocked) {
           const st = students.find((x) => x.id === id);
-          setBlockedNotice({ name: st?.name ?? "", lessons: r.lessonsThisMonth ?? 0 });
+          setBlockedNotice({ name: st?.name ?? "", lessons: r.daysUnpaid ?? 0 });
         } else notifyDenied(r);
       }
     });
@@ -203,10 +203,10 @@ function DayAttendance({ groupId, students, locale }: { groupId: string; student
           <span className="flex items-center gap-2">
             <Icon name="alert" className="h-4 w-4 shrink-0" />
             {tr(locale, {
-              uz: `${blockedNotice.name} — shu oy ${blockedNotice.lessons} dars o'tildi, to'lov qilinmagan. Avval to'lovni qabul qiling.`,
-              ru: `${blockedNotice.name} — в этом месяце проведено ${blockedNotice.lessons} уроков, оплата не произведена. Сначала примите оплату.`,
-              en: `${blockedNotice.name} — ${blockedNotice.lessons} lessons this month, unpaid. Accept payment first.`,
-              de: `${blockedNotice.name} — ${blockedNotice.lessons} Unterrichtsstunden diesen Monat, unbezahlt. Bitte zuerst die Zahlung erfassen.`,
+              uz: `${blockedNotice.name} — ${blockedNotice.lessons} kundan beri to'lov qilinmagan. Avval to'lovni qabul qiling.`,
+              ru: `${blockedNotice.name} — нет оплаты уже ${blockedNotice.lessons} дн. Сначала примите оплату.`,
+              en: `${blockedNotice.name} — no payment for ${blockedNotice.lessons} days. Accept payment first.`,
+              de: `${blockedNotice.name} — seit ${blockedNotice.lessons} Tagen keine Zahlung. Bitte zuerst die Zahlung erfassen.`,
             })}
           </span>
           <button onClick={() => setBlockedNotice(null)} className="shrink-0 text-rose-400 hover:text-rose-600">✕</button>
@@ -280,7 +280,7 @@ function DayAttendance({ groupId, students, locale }: { groupId: string; student
                     {s.name}
                   </Link>
                   {isBlocked && (
-                    <span className="inline-flex shrink-0 items-center gap-1 rounded-full bg-rose-500/10 px-2 py-0.5 text-[10px] font-semibold text-rose-600 dark:text-rose-400" title={tr(locale, { uz: `Shu oy ${s.lessonsThisMonth} dars o'tildi — to'lov majburiy`, ru: `В этом месяце ${s.lessonsThisMonth} уроков — оплата обязательна`, en: `${s.lessonsThisMonth} lessons this month — payment required`, de: `${s.lessonsThisMonth} Unterrichtsstunden diesen Monat — Zahlung erforderlich` })}>
+                    <span className="inline-flex shrink-0 items-center gap-1 rounded-full bg-rose-500/10 px-2 py-0.5 text-[10px] font-semibold text-rose-600 dark:text-rose-400" title={tr(locale, { uz: `${s.daysUnpaid} kundan beri to'lov yo'q — to'lov majburiy`, ru: `Нет оплаты ${s.daysUnpaid} дн. — оплата обязательна`, en: `No payment for ${s.daysUnpaid} days — payment required`, de: `Seit ${s.daysUnpaid} Tagen keine Zahlung — Zahlung erforderlich` })}>
                       <Icon name="alert" className="h-3 w-3" /> {tr(locale, { uz: "To'lov kerak", ru: "Нужна оплата", en: "Payment needed", de: "Zahlung erforderlich" })}
                     </span>
                   )}

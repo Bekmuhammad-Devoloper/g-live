@@ -8,7 +8,7 @@ import type { Locale } from "@/lib/constants";
 import { Icon } from "../../_components/Icon";
 import { getAttendanceJournal, markStudentAttendance, markAllPresent, unlockAttendance, type AttendanceJournal as Journal, type JournalDay } from "./attendanceActions";
 
-type Student = { id: string; name: string; blocked?: boolean; lessonsThisMonth?: number };
+type Student = { id: string; name: string; blocked?: boolean; daysUnpaid?: number };
 
 const MONTHS: Record<Locale, string[]> = {
   uz: ["yan", "fev", "mar", "apr", "may", "iyun", "iyul", "avg", "sen", "okt", "noy", "dek"],
@@ -68,8 +68,8 @@ export function AttendanceJournal({ groupId, students, locale }: { groupId: stri
   const isCurrent = ym.y === now.getFullYear() && ym.m === now.getMonth();
   const dayLabel = (iso: string) => { const [, mm, dd] = iso.split("-").map(Number); return `${dd} ${(MONTHS[locale] ?? MONTHS.uz)[mm - 1]}`; };
 
-  const deny = (r: { closed?: boolean; future?: boolean; notLessonDay?: boolean; blocked?: boolean; lessonsThisMonth?: number }, name: string) => {
-    if (r.blocked) setNotice({ tone: "rose", text: L(`${name} — shu oy ${r.lessonsThisMonth ?? 0} dars o'tildi, to'lov qilinmagan. Avval to'lovni qabul qiling.`, `${name} — в этом месяце ${r.lessonsThisMonth ?? 0} уроков, оплата не произведена.`, `${name} — ${r.lessonsThisMonth ?? 0} lessons this month, unpaid.`, `${name} — ${r.lessonsThisMonth ?? 0} Stunden, unbezahlt.`) });
+  const deny = (r: { closed?: boolean; future?: boolean; notLessonDay?: boolean; blocked?: boolean; daysUnpaid?: number }, name: string) => {
+    if (r.blocked) setNotice({ tone: "rose", text: L(`${name} — ${r.daysUnpaid ?? 0} kundan beri to'lov qilinmagan. Avval to'lovni qabul qiling.`, `${name} — нет оплаты уже ${r.daysUnpaid ?? 0} дн. Сначала примите оплату.`, `${name} — no payment for ${r.daysUnpaid ?? 0} days. Accept payment first.`, `${name} — seit ${r.daysUnpaid ?? 0} Tagen keine Zahlung. Bitte zuerst die Zahlung erfassen.`) });
     else if (r.future) setNotice({ tone: "amber", text: L("Kelajak sanaga davomat oldindan belgilanmaydi.", "Будущую дату отметить заранее нельзя.", "A future date cannot be pre-marked.", "Zukünftiges Datum kann nicht vorab markiert werden.") });
     else if (r.notLessonDay) setNotice({ tone: "amber", text: L("Bu kun dars kuni emas.", "Это не учебный день.", "Not a lesson day.", "Kein Unterrichtstag.") });
     else setNotice({ tone: "rose", text: L("Bu kun davomati yopilgan — menejer yoki direktor ruxsat berishi kerak.", "Посещаемость этого дня закрыта — нужно разрешение.", "This day is closed — a manager or director must unlock it.", "Dieser Tag ist geschlossen — Freischaltung erforderlich.") });

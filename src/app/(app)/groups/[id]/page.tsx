@@ -67,7 +67,7 @@ export default async function GroupDetailPage({ params }: { params: Promise<{ id
   const mandatoryMap = canManage ? await isPaymentMandatoryBulk(enrolledIds) : new Map();
   const attendanceStudents = group.students.map((gs) => {
     const b = mandatoryMap.get(gs.studentId);
-    return { id: gs.studentId, name: gs.student.fullName, blocked: b?.mandatory ?? false, lessonsThisMonth: b?.lessonsThisMonth ?? 0 };
+    return { id: gs.studentId, name: gs.student.fullName, blocked: b?.mandatory ?? false, daysUnpaid: b?.daysUnpaid ?? 0 };
   });
 
   // Biriktirish uchun nomzodlar (bu guruhda bo'lmagan o'quvchilar)

@@ -93,10 +93,10 @@ export default function PaymentPanel({
               <div className="text-sm font-bold text-rose-700 dark:text-rose-400">{tr(locale, { uz: "TO'LOV MAJBURIY", ru: "ОПЛАТА ОБЯЗАТЕЛЬНА", en: "PAYMENT MANDATORY", de: "ZAHLUNG ERFORDERLICH" })}</div>
               <div className="text-xs text-rose-500 dark:text-rose-400/80">
                 {tr(locale, {
-                  uz: `Shu oy ${pay.lessonsThisMonth} dars o'tildi (chegara: ${pay.mandatoryThreshold}), lekin to'lov qilinmagan.`,
-                  ru: `В этом месяце проведено ${pay.lessonsThisMonth} уроков (лимит: ${pay.mandatoryThreshold}), оплата не произведена.`,
-                  en: `${pay.lessonsThisMonth} lessons this month (limit: ${pay.mandatoryThreshold}), unpaid.`,
-                  de: `${pay.lessonsThisMonth} Unterrichtsstunden diesen Monat (Limit: ${pay.mandatoryThreshold}), unbezahlt.`,
+                  uz: `${pay.daysUnpaid} kundan beri to'lov qilinmagan (muddat: ${pay.mandatoryThreshold} kun).`,
+                  ru: `Нет оплаты уже ${pay.daysUnpaid} дн. (срок: ${pay.mandatoryThreshold} дн.)`,
+                  en: `No payment for ${pay.daysUnpaid} days (limit: ${pay.mandatoryThreshold} days).`,
+                  de: `Seit ${pay.daysUnpaid} Tagen keine Zahlung (Frist: ${pay.mandatoryThreshold} Tage).`,
                 })}
               </div>
             </div>
