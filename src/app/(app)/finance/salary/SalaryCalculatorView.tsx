@@ -366,13 +366,14 @@ function Modal({ title, onClose, children, wide }: { title: string; onClose: () 
     return () => window.removeEventListener("keydown", h);
   }, [onClose]);
   return (
-    <div className="fixed inset-0 z-[80] flex items-start justify-center overflow-y-auto bg-slate-900/50 p-4 sm:p-8" onMouseDown={(e) => { if (e.target === e.currentTarget) onClose(); }}>
-      <div className={cn("w-full rounded-2xl bg-white shadow-xl dark:bg-slate-900", wide ? "max-w-6xl" : "max-w-xl")}>
-        <div className="flex items-center justify-between border-b border-slate-200/70 px-5 py-4 dark:border-slate-800">
+    // O'ng tomondan chiquvchi panel (Modme uslubida)
+    <div className="animate-dialog-fade fixed inset-0 z-[80] flex justify-end bg-slate-900/50" onMouseDown={(e) => { if (e.target === e.currentTarget) onClose(); }}>
+      <div className={cn("animate-slide-in-right flex h-full w-full flex-col bg-white shadow-2xl dark:bg-slate-900", wide ? "max-w-[min(1200px,92vw)]" : "max-w-lg")}>
+        <div className="flex shrink-0 items-center justify-between border-b border-slate-200/70 px-5 py-4 dark:border-slate-800">
           <h2 className="text-lg font-semibold text-slate-800 dark:text-slate-100">{title}</h2>
           <button onClick={onClose} className="grid h-8 w-8 place-items-center rounded-lg text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800"><Icon name="close" className="h-4 w-4" /></button>
         </div>
-        {children}
+        <div className="flex min-h-0 flex-1 flex-col overflow-y-auto">{children}</div>
       </div>
     </div>
   );
@@ -389,7 +390,7 @@ function SettingsDialog({ initial, canManage, locale, onClose }: { initial: Sala
   });
   return (
     <Modal title={tr(locale, { uz: "Ish haqi sozlamalari", ru: "Настройки зарплаты", en: "Salary settings", de: "Gehaltseinstellungen" })} onClose={onClose}>
-      <div className="space-y-1 p-5">
+      <div className="flex-1 space-y-1 p-5">
         {SETTINGS.map((s) => (
           <label key={s.key} className="flex cursor-pointer items-start gap-3 rounded-lg px-2 py-2 hover:bg-slate-50 dark:hover:bg-slate-800/50">
             <input type="checkbox" checked={vals[s.key]} disabled={!canManage} onChange={(e) => setVals((v) => ({ ...v, [s.key]: e.target.checked }))} className="mt-0.5 h-4 w-4 accent-brand-600" />
