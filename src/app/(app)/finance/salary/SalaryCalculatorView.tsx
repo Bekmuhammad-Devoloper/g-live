@@ -3,6 +3,7 @@
 import { confirmDelete, alertDialog } from "../../_components/dialogs";
 import { useActionState, useEffect, useMemo, useState, useTransition } from "react";
 import Link from "next/link";
+import { createPortal } from "react-dom";
 import { cn } from "@/lib/cn";
 import { formatMoney, type Locale } from "@/lib/constants";
 import { tr } from "@/lib/tr";
@@ -365,9 +366,11 @@ function Modal({ title, onClose, children, wide }: { title: string; onClose: () 
     window.addEventListener("keydown", h);
     return () => window.removeEventListener("keydown", h);
   }, [onClose]);
-  return (
+  // body'ga chiqariladi: sahifa konteyneridagi transform fixed joylashuvni kesib qo'ymasligi uchun
+  if (typeof document === "undefined") return null;
+  return createPortal(
     // O'ng tomondan chiquvchi panel (Modme uslubida)
-    <div className="animate-dialog-fade fixed inset-0 z-[80] flex justify-end bg-slate-900/50" onMouseDown={(e) => { if (e.target === e.currentTarget) onClose(); }}>
+    <div className="animate-dialog-fade fixed inset-0 z-[120] flex justify-end bg-slate-900/50" onMouseDown={(e) => { if (e.target === e.currentTarget) onClose(); }}>
       <div className={cn("animate-slide-in-right flex h-full w-full flex-col bg-white shadow-2xl dark:bg-slate-900", wide ? "max-w-[min(1200px,92vw)]" : "max-w-lg")}>
         <div className="flex shrink-0 items-center justify-between border-b border-slate-200/70 px-5 py-4 dark:border-slate-800">
           <h2 className="text-lg font-semibold text-slate-800 dark:text-slate-100">{title}</h2>
@@ -375,7 +378,8 @@ function Modal({ title, onClose, children, wide }: { title: string; onClose: () 
         </div>
         <div className="flex min-h-0 flex-1 flex-col overflow-y-auto">{children}</div>
       </div>
-    </div>
+    </div>,
+    document.body,
   );
 }
 
