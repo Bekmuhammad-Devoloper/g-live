@@ -205,8 +205,9 @@ export default async function CrmPage() {
   // O'quvchiga aylangan lidlar — tezkor oynada to'lov paneli (o'quvchi profili bilan bir xil huquqlar)
   const payManage = [ROLES.DIRECTOR, ROLES.DEPUTY_DIRECTOR, ROLES.MANAGER, ROLES.ADMIN].includes(s.role as never);
   const payWrite = canWrite(s.role, MODULES.PAYMENTS);
-  const payment: LeadPayment | null = payManage || payWrite
-    ? { canManage: payManage, canPay: payWrite, cashierName: s.fullName, receiptMode: parseReceiptMode(await getSetting(RECEIPT_MODE_KEY)), defaultPurpose: "Kurs to'lovi" }
+  const payRop = s.role === ROLES.ROP;
+  const payment: LeadPayment | null = payManage || payWrite || payRop
+    ? { canManage: payManage, canPay: payWrite, rop: payRop, cashierName: s.fullName, receiptMode: parseReceiptMode(await getSetting(RECEIPT_MODE_KEY)), defaultPurpose: "Kurs to'lovi" }
     : null;
 
   return (

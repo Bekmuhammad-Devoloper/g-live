@@ -69,9 +69,11 @@ export default async function LeadDetailPage({ params }: { params: Promise<{ id:
   // O'quvchiga aylangan lid — to'lov paneli (qabul qilish, qarz, tahrirlash)
   const payManage = PAY_MANAGE.includes(s.role as never);
   const payWrite = canWrite(s.role, MODULES.PAYMENTS);
-  const payment: LeadPayment | null = lead.studentId && (payManage || payWrite) ? {
+  const payRop = s.role === ROLES.ROP; // ROP — 24 soatlik tahrirlash oynasi
+  const payment: LeadPayment | null = lead.studentId && (payManage || payWrite || payRop) ? {
     canManage: payManage,
     canPay: payWrite,
+    rop: payRop,
     cashierName: s.fullName,
     receiptMode: parseReceiptMode(await getSetting(RECEIPT_MODE_KEY)),
     defaultPurpose: lead.group?.program?.name ? `${lead.group.program.name} kurs to'lovi` : "Kurs to'lovi",

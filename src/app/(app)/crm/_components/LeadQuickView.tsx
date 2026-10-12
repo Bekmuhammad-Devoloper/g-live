@@ -179,13 +179,14 @@ export default function LeadQuickView({
           </Section>
 
           {/* To'lovlar — o'quvchiga aylangan lid: qabul qilish, qarz, istalgan to'lovni tahrirlash */}
-          {lead.studentId && payment && (payment.canManage || payment.canPay) && (
+          {lead.studentId && payment && (payment.canManage || payment.canPay || payment.rop) && (
             <div className="rounded-xl border border-slate-200/70 p-3 dark:border-slate-800">
               <PaymentPanel
                 studentId={lead.studentId}
                 locale={locale}
                 canManage={payment.canManage}
                 canPay={payment.canPay}
+                rop={payment.rop}
                 cashierName={payment.cashierName}
                 receiptMode={payment.receiptMode}
                 defaultPurpose={payment.defaultPurpose}

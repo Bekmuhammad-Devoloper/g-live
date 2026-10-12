@@ -35,8 +35,12 @@ export interface PayRow {
   discount: number;
   /** PENDING (qarz) yozuvi to'lovlar bilan qoplangan bo'lsa true — ro'yxatda "Qoplandi" */
   covered?: boolean;
+  /** Joriy foydalanuvchi shu yozuvni tahrirlay oladimi (ROP — faqat 24 soat ichida) */
+  editable?: boolean;
 }
 export interface StudentPayments {
+  /** Jami qarzni tahrirlash mumkinmi (ROP — o'quvchi guruhga qo'shilgandan 24 soat ichida) */
+  canAdjustDebt: boolean;
   thisMonth: MonthPay;
   lastMonth: MonthPay;
   totalPaid: number;
@@ -55,7 +59,7 @@ export interface StudentPayments {
 export async function getStudentPayments(studentId: string): Promise<{ ok: boolean; data?: StudentPayments; error?: string }> {
   const s = await requireSession();
   // Talaba/xodim boshqaruvidan farqli — bu faqat KO'RISH, shuning uchun moliya o'qish huquqi (masalan Hisobchi) yetarli
-  if (!ALLOWED.includes(s.role as never) && !canRead(s.role, MODULES.PAYMENTS)) return { ok: false, error: "forbidden" };
+  if (!ALLOWED.includes(s.role as never) && !canRead(s.role, MODULES.PAYMENTS) && s.role !== ROLES.ROP) return { ok: false, error: "forbidden" };
   if (!studentId) return { ok: false, error: "invalid" };
 
   const [payments, mandatoryInfo, firstEnrollment, student] = await Promise.all([
@@ -116,9 +120,11 @@ export async function getStudentPayments(studentId: string): Promise<{ ok: boole
       joinDate: joinDate ? joinDate.toISOString() : null,
       lastMonthApplicable,
       // Hammasi — klient avval oxirgi 8 tasini, so'ralsa qolganini ham ko'rsatadi (eski to'lovni ham tahrirlash uchun)
+      canAdjustDebt: CAN_EDIT_PAY.includes(s.role as never) || (s.role === ROLES.ROP && await ropDebtWindowOpen(studentId)),
       recent: payments.map((p) => ({
         id: p.id, amount: p.amount, method: p.method, purpose: p.purpose, status: p.status, date: p.createdAt.toISOString(), note: p.note,
         promoCode: p.promoCode, discount: p.discount,
+        editable: canEditPaymentAt(s.role, p.createdAt),
         ...(p.status === "PENDING" ? { covered: coveredIds.has(p.id) } : {}),
       })),
     },
@@ -661,6 +667,17 @@ export async function moveStudentToBranch(
 // To'lovni tahrirlash/o'chirish — noto'g'ri kiritilgan yozuvni tuzatish uchun.
 
 const CAN_EDIT_PAY = [ROLES.DIRECTOR, ROLES.DEPUTY_DIRECTOR, ROLES.MANAGER, ROLES.ADMIN, ROLES.ACCOUNTANT];
+// ROP to'lov yozuvini yaratilganidan keyin shuncha soat ichida tahrirlay oladi
+const ROP_EDIT_HOURS = 24;
+const ropWindow = (from: Date) => Date.now() - from.getTime() < ROP_EDIT_HOURS * 3_600_000;
+function canEditPaymentAt(role: string, createdAt: Date): boolean {
+  return CAN_EDIT_PAY.includes(role as never) || (role === ROLES.ROP && ropWindow(createdAt));
+}
+/** ROP uchun qarzni tahrirlash oynasi — o'quvchi oxirgi marta guruhga qo'shilgandan 24 soat */
+async function ropDebtWindowOpen(studentId: string): Promise<boolean> {
+  const last = await prisma.groupStudent.findFirst({ where: { studentId }, orderBy: { joinedAt: "desc" }, select: { joinedAt: true } });
+  return !!last && ropWindow(last.joinedAt);
+}
 
 /** O'quvchini qarzdor qilish — ko'rsatilgan summada qarz yozuvi ochadi. */
 /**
@@ -672,7 +689,7 @@ export async function adjustStudentDebt(
   input: { newDebt: number; reason: string },
 ): Promise<{ ok?: boolean; error?: string }> {
   const s = await requireSession();
-  if (!CAN_EDIT_PAY.includes(s.role as never)) return { error: "forbidden" };
+  if (!CAN_EDIT_PAY.includes(s.role as never) && !(s.role === ROLES.ROP && await ropDebtWindowOpen(studentId))) return { error: "forbidden" };
 
   const target = Math.trunc(Number(input.newDebt));
   if (!Number.isFinite(target) || target < 0) return { error: "amount" };
@@ -770,7 +787,7 @@ export async function updatePaymentRecord(
   reason = "",
 ): Promise<{ ok?: boolean; error?: string }> {
   const s = await requireSession();
-  if (!CAN_EDIT_PAY.includes(s.role as never)) return { error: "forbidden" };
+  if (!CAN_EDIT_PAY.includes(s.role as never) && s.role !== ROLES.ROP) return { error: "forbidden" };
   // Har bir tahrir sababi bilan — audit jurnaliga yoziladi
   const why = String(reason || "").trim().slice(0, 300);
   if (why.length < 3) return { error: "reason" };
@@ -780,6 +797,7 @@ export async function updatePaymentRecord(
     select: { id: true, studentId: true, amount: true, method: true, purpose: true, status: true, createdAt: true, promoCode: true, discount: true },
   });
   if (!existing) return { error: "notfound" };
+  if (!canEditPaymentAt(s.role, existing.createdAt)) return { error: "forbidden" };
   // Qarz tuzatish yozuvi oddiy to'lov sifatida tahrirlanmaydi (faqat o'chiriladi)
   if (existing.status === "ADJUST") return { error: "forbidden" };
 
@@ -799,7 +817,11 @@ export async function updatePaymentRecord(
     if (!["PAID", "PENDING", "REFUNDED", "CANCELLED"].includes(input.status)) return { error: "status" };
     data.status = input.status;
   }
-  if (input.dateIso) { const d = new Date(input.dateIso); if (!isNaN(d.getTime())) data.createdAt = d; }
+  if (input.dateIso) {
+    const d = new Date(input.dateIso);
+    // ROP sanani kelajakka surib 24 soatlik oynani uzaytira olmaydi
+    if (!isNaN(d.getTime())) data.createdAt = s.role === ROLES.ROP && d.getTime() > Date.now() ? existing.createdAt : d;
+  }
   // Promokod: bo'sh — olib tashlanadi; boshqa kod — tahrirda kurs soni sharti talab qilinmaydi (sabab audit'da)
   if (input.promoCode !== undefined && (input.promoCode || null) !== existing.promoCode) {
     if (!input.promoCode) { data.promoCode = null; data.discount = 0; }
@@ -831,15 +853,16 @@ export async function updatePaymentRecord(
 /** To'lov yozuvini o'chirish (xato kiritilgan bo'lsa). */
 export async function deletePaymentRecord(paymentId: string, reason = ""): Promise<{ ok?: boolean; error?: string }> {
   const s = await requireSession();
-  if (!CAN_EDIT_PAY.includes(s.role as never)) return { error: "forbidden" };
+  if (!CAN_EDIT_PAY.includes(s.role as never) && s.role !== ROLES.ROP) return { error: "forbidden" };
   const why = String(reason || "").trim().slice(0, 300);
   if (why.length < 3) return { error: "reason" };
 
   const existing = await prisma.payment.findUnique({
     where: { id: paymentId },
-    select: { id: true, studentId: true, amount: true, method: true, status: true, purpose: true },
+    select: { id: true, studentId: true, amount: true, method: true, status: true, purpose: true, createdAt: true },
   });
   if (!existing) return { error: "notfound" };
+  if (!canEditPaymentAt(s.role, existing.createdAt)) return { error: "forbidden" };
 
   await prisma.payment.delete({ where: { id: paymentId } });
   await writeAudit({
@@ -867,12 +890,12 @@ export async function listPromoOptions(): Promise<{ code: string; discount: numb
 /** To'lovlar ro'yxati sahifalaridagi tahrirlash oynasi uchun — bitta to'lovning to'liq yozuvi */
 export async function getPaymentForEdit(paymentId: string): Promise<PayRow | null> {
   const s = await requireSession();
-  if (!CAN_EDIT_PAY.includes(s.role as never)) return null;
+  if (!CAN_EDIT_PAY.includes(s.role as never) && s.role !== ROLES.ROP) return null;
   const p = await prisma.payment.findUnique({
     where: { id: paymentId },
     select: { id: true, amount: true, method: true, purpose: true, status: true, createdAt: true, note: true, promoCode: true, discount: true },
   });
-  if (!p || p.status === "ADJUST") return null;
+  if (!p || p.status === "ADJUST" || !canEditPaymentAt(s.role, p.createdAt)) return null;
   return { id: p.id, amount: p.amount, method: p.method, purpose: p.purpose, status: p.status, date: p.createdAt.toISOString(), note: p.note, promoCode: p.promoCode, discount: p.discount };
 }
 

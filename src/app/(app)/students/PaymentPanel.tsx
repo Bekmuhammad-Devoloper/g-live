@@ -33,8 +33,10 @@ function fmtDate(iso: string) {
 }
 
 export default function PaymentPanel({
-  studentId, locale, canManage, canPay, cashierName, receiptMode, defaultPurpose, onChanged,
+  studentId, locale, canManage, canPay, rop = false, cashierName, receiptMode, defaultPurpose, onChanged,
 }: {
+  /** ROP: to'lov qabul qilmaydi, faqat 24 soat ichidagi yozuvlar va qarzni tahrirlaydi */
+  rop?: boolean;
   studentId: string;
   locale: Locale;
   canManage: boolean;
@@ -57,12 +59,12 @@ export default function PaymentPanel({
   const reloadPay = () => { load(); onChanged?.(); };
 
   useEffect(() => {
-    if (!canManage && !canPay) return;
+    if (!canManage && !canPay && !rop) return;
     load();
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [studentId, canManage, canPay]);
+  }, [studentId, canManage, canPay, rop]);
 
-  if (!canManage && !canPay) return null;
+  if (!canManage && !canPay && !rop) return null;
 
   return (
     <div>
@@ -153,7 +155,7 @@ export default function PaymentPanel({
             <span className={cn("text-base font-black tabular-nums", pay.debt > 0 ? "text-amber-700 dark:text-amber-400" : "text-emerald-700 dark:text-emerald-400")}>
               {pay.debt > 0 ? formatMoney(pay.debt, locale) : tr(locale, { uz: "Yo'q", ru: "Нет", en: "None", de: "Keine" })}
             </span>
-            {(canPay || canManage) && !debtEdit && (
+            {pay.canAdjustDebt && !debtEdit && (
               <button
                 type="button"
                 onClick={() => setDebtEdit(true)}
@@ -209,7 +211,7 @@ export default function PaymentPanel({
                 key={p.id}
                 p={p}
                 locale={locale}
-                canEdit={canPay || canManage}
+                canEdit={(canPay || canManage || rop) && p.editable !== false}
                 onChanged={() => { setPayForm(false); reloadPay(); }}
               />
             ))}
