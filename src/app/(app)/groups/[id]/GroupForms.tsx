@@ -1,5 +1,6 @@
 "use client";
 
+import DateInput from "@/app/(app)/_components/DateInput";
 import { confirmDelete } from "../../_components/dialogs";
 import { useActionState, useEffect, useMemo, useRef, useState, useTransition } from "react";
 import { createPortal } from "react-dom";
@@ -479,11 +480,11 @@ function EditGroupForm({
           <div className="grid grid-cols-2 gap-3">
             <div>
               <label className={fLabel}>{tr(locale, { uz: "Boshlanish sanasi", ru: "Дата начала", en: "Start date", de: "Startdatum" })}</label>
-              <input name="startDate" type="date" defaultValue={group.startDate ?? ""} className={input} />
+              <DateInput name="startDate" defaultValue={group.startDate ?? ""} className={input} />
             </div>
             <div>
               <label className={fLabel}>{tr(locale, { uz: "Tugash sanasi", ru: "Дата окончания", en: "End date", de: "Enddatum" })}</label>
-              <input name="endDate" type="date" defaultValue={group.endDate ?? ""} className={input} />
+              <DateInput name="endDate" defaultValue={group.endDate ?? ""} className={input} />
             </div>
           </div>
 

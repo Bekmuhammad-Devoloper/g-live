@@ -1,3 +1,4 @@
+import DateInput from "@/app/(app)/_components/DateInput";
 import Link from "next/link";
 import { requireSession } from "@/lib/auth";
 import { prisma } from "@/lib/db";
@@ -154,12 +155,12 @@ export default async function AuditPage({ searchParams }: { searchParams: Promis
           </div>
           <div className="relative">
             <Icon name="calendar" className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400" />
-            <input type="date" name="from" defaultValue={fromStr} className="h-10 rounded-lg border border-slate-200 bg-white pl-9 pr-2 text-sm text-slate-700 outline-none focus:border-brand-400 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-100" />
+            <DateInput name="from" defaultValue={fromStr} className="h-10 rounded-lg border border-slate-200 bg-white pl-9 pr-2 text-sm text-slate-700 outline-none focus:border-brand-400 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-100" />
           </div>
           <span className="text-slate-300">–</span>
           <div className="relative">
             <Icon name="calendar" className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400" />
-            <input type="date" name="to" defaultValue={toStr} className="h-10 rounded-lg border border-slate-200 bg-white pl-9 pr-2 text-sm text-slate-700 outline-none focus:border-brand-400 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-100" />
+            <DateInput name="to" defaultValue={toStr} className="h-10 rounded-lg border border-slate-200 bg-white pl-9 pr-2 text-sm text-slate-700 outline-none focus:border-brand-400 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-100" />
           </div>
           <button type="submit" className="h-10 rounded-lg bg-brand-600 px-5 text-sm font-semibold text-white transition hover:bg-brand-700">{tr(s.locale, { uz: "Filtr", ru: "Фильтр", en: "Filter", de: "Filter" })}</button>
           {hasFilter && <Link href="/audit" className="flex h-10 w-10 items-center justify-center rounded-lg border border-slate-200 text-slate-500 transition hover:bg-slate-50 dark:border-slate-700" title={tr(s.locale, { uz: "Tozalash", ru: "Очистить", en: "Clear", de: "Löschen" })}><Icon name="refresh" className="h-4 w-4" /></Link>}

@@ -1,5 +1,6 @@
 "use client";
 
+import DateInput from "@/app/(app)/_components/DateInput";
 import { useEffect, useState, useTransition } from "react";
 import { createPortal } from "react-dom";
 import { useRouter } from "next/navigation";
@@ -235,7 +236,7 @@ export function TaskModal({ locale, op, onClose }: { locale: Locale; op: VOperat
             </select>
           </Field>
           <Field label={tr(locale, { uz: "Muddat", ru: "Дедлайн", en: "Deadline", de: "Frist" })}>
-            <input name="dueAt" type="date" className={inputCls} />
+            <DateInput name="dueAt" className={inputCls} />
           </Field>
         </div>
         <ErrorBox text={error} />

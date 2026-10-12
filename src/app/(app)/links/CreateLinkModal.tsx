@@ -1,5 +1,6 @@
 "use client";
 
+import DateInput from "@/app/(app)/_components/DateInput";
 import { useEffect, useState, useTransition } from "react";
 import { createPortal } from "react-dom";
 import { cn } from "@/lib/cn";
@@ -205,7 +206,7 @@ export default function CreateLinkModal({ locale, mode, vacancies, courses, pres
                 <Field label={tr(locale, { uz: "UTM campaign", ru: "UTM-кампания", en: "UTM campaign", de: "UTM-Kampagne" })}><input name="utmCampaign" placeholder="q3-2026" className={inp} /></Field>
               </div>
               <div className="grid grid-cols-2 gap-2">
-                <Field label={tr(locale, { uz: "Amal muddati", ru: "Срок действия", en: "Expiry date", de: "Ablaufdatum" })}><input name="expiresAt" type="date" className={inp} /></Field>
+                <Field label={tr(locale, { uz: "Amal muddati", ru: "Срок действия", en: "Expiry date", de: "Ablaufdatum" })}><DateInput name="expiresAt" className={inp} /></Field>
                 <Field label={tr(locale, { uz: "Ariza chegarasi", ru: "Лимит заявок", en: "Application limit", de: "Bewerbungslimit" })}><input name="maxSubmissions" type="number" min={0} placeholder={tr(locale, { uz: "cheksiz", ru: "без лимита", en: "unlimited", de: "unbegrenzt" })} className={inp} /></Field>
               </div>
             </div>

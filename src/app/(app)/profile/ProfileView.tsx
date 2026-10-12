@@ -1,5 +1,6 @@
 "use client";
 
+import DateInput from "@/app/(app)/_components/DateInput";
 import { useRef, useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
 import { cn } from "@/lib/cn";
@@ -137,7 +138,7 @@ export default function ProfileView({ locale, me, stats }: {
               </div>
             </Field>
             <Field label={L("Tug'ilgan sana", "Дата рождения", "Date of birth", "Geburtsdatum")}>
-              <input type="date" value={birthDate} onChange={(e) => setBirthDate(e.target.value)} className={inp} />
+              <DateInput value={birthDate} onChange={(e) => setBirthDate(e.target.value)} className={inp} />
             </Field>
 
             <Field label={L("Jinsi", "Пол", "Gender", "Geschlecht")}>

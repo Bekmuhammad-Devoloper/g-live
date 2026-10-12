@@ -1,5 +1,6 @@
 "use client";
 
+import DateInput from "@/app/(app)/_components/DateInput";
 import { confirmDelete } from "../../_components/dialogs";
 import { useEffect, useMemo, useState } from "react";
 import { createPortal } from "react-dom";
@@ -201,7 +202,7 @@ function HolidayDrawer({ locale, edit, onClose, onSave }: { locale: Locale; edit
           </div>
           <div>
             <label className={label}>{T("Bayram sanasi", "Дата праздника", "Holiday date", "Feiertagsdatum")} <span className="text-rose-500">*</span></label>
-            <input type="date" value={date} onChange={(e) => { setDate(e.target.value); setErr(""); }} className={input} />
+            <DateInput value={date} onChange={(e) => { setDate(e.target.value); setErr(""); }} className={input} />
           </div>
           <div className="flex items-center justify-between rounded-lg border border-slate-200 px-3.5 py-3 dark:border-slate-700">
             <span className="text-sm text-slate-600 dark:text-slate-300">{T("To'lovga ta'sir qiladi", "Влияет на оплату", "Affects payment", "Beeinflusst die Zahlung")}</span>

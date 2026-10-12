@@ -1,5 +1,6 @@
 "use client";
 
+import DateInput from "@/app/(app)/_components/DateInput";
 import { useRouter } from "next/navigation";
 import { useTransition } from "react";
 import { cn } from "@/lib/cn";
@@ -80,7 +81,7 @@ export default function RevenueView({ data, locale }: { data: RevenueData; local
       <div className="flex flex-wrap items-center gap-2.5">
         <div className="flex h-10 items-center gap-2 rounded-lg border border-slate-200 bg-white px-3 dark:border-slate-700 dark:bg-slate-900">
           <Icon name="calendar" className="h-4 w-4 text-slate-400" />
-          <input type="date" value={data.date} onChange={(e) => e.target.value && go(e.target.value, data.status)} className="bg-transparent text-sm text-slate-700 outline-none dark:text-slate-100" />
+          <DateInput value={data.date} onChange={(e) => e.target.value && go(e.target.value, data.status)} className="bg-transparent text-sm text-slate-700 outline-none dark:text-slate-100" />
         </div>
 
         <div className="relative">

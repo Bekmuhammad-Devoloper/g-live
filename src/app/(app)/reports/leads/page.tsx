@@ -1,3 +1,4 @@
+import DateInput from "@/app/(app)/_components/DateInput";
 import Link from "next/link";
 import { requireSession } from "@/lib/auth";
 import { prisma } from "@/lib/db";
@@ -100,8 +101,8 @@ export default async function LeadsReportPage({
       {/* Sana oralig'i + grafik */}
       <div className="grid gap-5 lg:grid-cols-[minmax(0,320px)_1fr] lg:items-start">
         <form method="get" className="flex flex-wrap items-center gap-2">
-          <input type="date" name="from" defaultValue={toInput(fromDate)} className={inputCls} />
-          <input type="date" name="to" defaultValue={toInput(toDate)} className={inputCls} />
+          <DateInput name="from" defaultValue={toInput(fromDate)} className={inputCls} />
+          <DateInput name="to" defaultValue={toInput(toDate)} className={inputCls} />
           <button type="submit" className="h-10 rounded-full bg-brand-600 px-6 text-sm font-semibold text-white shadow-sm transition hover:bg-brand-700">
             {tr(s.locale, { uz: "Hisoblang", ru: "Рассчитать", en: "Calculate", de: "Berechnen" })}
           </button>

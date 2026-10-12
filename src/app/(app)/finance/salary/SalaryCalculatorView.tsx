@@ -1,5 +1,6 @@
 "use client";
 
+import DateInput from "@/app/(app)/_components/DateInput";
 import { confirmDelete, alertDialog } from "../../_components/dialogs";
 import { useActionState, useEffect, useMemo, useState, useTransition } from "react";
 import Link from "next/link";
@@ -477,7 +478,7 @@ function CalcSection({ period, canManage, locale }: { period: string; canManage:
   return (
     <div className="space-y-5">
       <div className="flex flex-wrap items-center gap-3 rounded-2xl border border-slate-300 bg-white p-5 shadow-card dark:border-slate-600 dark:bg-slate-900">
-        <input type="month" value={p} onChange={(e) => setP(e.target.value)} className="h-11 rounded-lg border border-slate-300 bg-white px-3 text-sm text-slate-700 outline-none focus:border-brand-400 dark:border-slate-600 dark:bg-slate-800/60 dark:text-slate-100" />
+        <DateInput type="month" value={p} onChange={(e) => setP(e.target.value)} className="h-11 rounded-lg border border-slate-300 bg-white px-3 text-sm text-slate-700 outline-none focus:border-brand-400 dark:border-slate-600 dark:bg-slate-800/60 dark:text-slate-100" />
         <button onClick={calc} disabled={calcPending || !p} className="h-11 rounded-lg bg-brand-800 px-7 text-sm font-semibold text-white transition hover:bg-brand-900 disabled:opacity-50">
           {calcPending ? tr(locale, { uz: "Hisoblanmoqda...", ru: "Расчёт...", en: "Calculating...", de: "Wird berechnet..." }) : tr(locale, { uz: "Hisoblang", ru: "Рассчитать", en: "Calculate", de: "Berechnen" })}
         </button>

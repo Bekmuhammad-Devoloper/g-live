@@ -1,5 +1,6 @@
 "use client";
 
+import DateInput from "@/app/(app)/_components/DateInput";
 import { useEffect, useRef, useState, useTransition } from "react";
 import Link from "next/link";
 import { Icon } from "../../_components/Icon";
@@ -232,7 +233,7 @@ function DayAttendance({ groupId, students, locale }: { groupId: string; student
       <div className="mb-3 flex flex-wrap items-center gap-2">
         <div className="relative">
           <Icon name="calendar" className="pointer-events-none absolute left-2.5 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400" />
-          <input type="date" value={date} onChange={(e) => setDate(e.target.value)} className="h-9 rounded-lg border border-slate-200 bg-white pl-8 pr-2 text-sm text-slate-700 outline-none focus:border-brand-400 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-100" />
+          <DateInput value={date} onChange={(e) => setDate(e.target.value)} className="h-9 rounded-lg border border-slate-200 bg-white pl-8 pr-2 text-sm text-slate-700 outline-none focus:border-brand-400 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-100" />
         </div>
         {isToday && <span className="rounded-full bg-brand-500/10 px-2 py-0.5 text-[11px] font-semibold text-brand-600 dark:text-brand-300">{tr(locale, { uz: "Bugun", ru: "Сегодня", en: "Today", de: "Heute" })}</span>}
         {/* Ochiq oynada yopilish vaqti eslatmasi */}

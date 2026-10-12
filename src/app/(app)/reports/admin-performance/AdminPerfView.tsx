@@ -1,5 +1,6 @@
 "use client";
 
+import DateInput from "@/app/(app)/_components/DateInput";
 import { useMemo, useState } from "react";
 import { cn } from "@/lib/cn";
 import { type Locale } from "@/lib/constants";
@@ -118,9 +119,9 @@ export default function AdminPerfView({ rows, defaultFrom, defaultTo, locale }: 
       <div className="flex flex-wrap items-center gap-2.5">
         <div className="flex h-11 items-center gap-2 rounded-lg border border-slate-200 bg-white px-3 dark:border-slate-700 dark:bg-slate-900">
           <Icon name="calendar" className="h-4 w-4 text-slate-400" />
-          <input type="date" value={from} onChange={(e) => setFrom(e.target.value)} className="w-[118px] bg-transparent text-sm text-slate-700 outline-none dark:text-slate-100" />
+          <DateInput value={from} onChange={(e) => setFrom(e.target.value)} className="w-[118px] bg-transparent text-sm text-slate-700 outline-none dark:text-slate-100" />
           <span className="text-slate-300">–</span>
-          <input type="date" value={to} onChange={(e) => setTo(e.target.value)} className="w-[118px] bg-transparent text-sm text-slate-700 outline-none dark:text-slate-100" />
+          <DateInput value={to} onChange={(e) => setTo(e.target.value)} className="w-[118px] bg-transparent text-sm text-slate-700 outline-none dark:text-slate-100" />
         </div>
         <button type="button" onClick={onExport} className="flex h-11 items-center gap-2 rounded-lg border border-slate-200 bg-white px-3.5 text-sm font-medium text-slate-600 transition hover:bg-slate-50 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-200 dark:hover:bg-slate-800">
           <Icon name="download" className="h-4 w-4" />

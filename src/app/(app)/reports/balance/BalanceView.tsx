@@ -1,5 +1,6 @@
 "use client";
 
+import DateInput from "@/app/(app)/_components/DateInput";
 import { useMemo, useState } from "react";
 import { cn } from "@/lib/cn";
 import { formatMoney, type Locale } from "@/lib/constants";
@@ -63,9 +64,9 @@ export default function BalanceView({ staff, defaultFrom, defaultTo, locale }: {
         {/* Sana oralig'i */}
         <div className="flex h-11 items-center gap-1 rounded-xl border border-slate-200 bg-white px-3 dark:border-slate-700 dark:bg-slate-800">
           <Icon name="calendar" className="h-4 w-4 shrink-0 text-slate-400" />
-          <input type="date" value={from} onChange={(e) => { setFrom(e.target.value); setPage(1); }} className="w-[120px] bg-transparent text-sm text-slate-700 outline-none dark:text-slate-100" />
+          <DateInput value={from} onChange={(e) => { setFrom(e.target.value); setPage(1); }} className="w-[120px] bg-transparent text-sm text-slate-700 outline-none dark:text-slate-100" />
           <span className="text-slate-300">–</span>
-          <input type="date" value={to} onChange={(e) => { setTo(e.target.value); setPage(1); }} className="w-[120px] bg-transparent text-sm text-slate-700 outline-none dark:text-slate-100" />
+          <DateInput value={to} onChange={(e) => { setTo(e.target.value); setPage(1); }} className="w-[120px] bg-transparent text-sm text-slate-700 outline-none dark:text-slate-100" />
           <button onClick={() => { setFrom(defaultFrom); setTo(defaultTo); }} className="ml-1 text-slate-400 hover:text-slate-600" title={tr(locale, { uz: "Tozalash", ru: "Очистить", en: "Clear", de: "Zurücksetzen" })}><Icon name="refresh" className="h-4 w-4" /></button>
         </div>
         <button onClick={doExport} disabled={rows.length === 0} className="flex h-11 items-center gap-2 rounded-xl border border-slate-200 bg-white px-4 text-sm font-medium text-slate-700 transition hover:bg-slate-50 disabled:opacity-40 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-100 dark:hover:bg-slate-700">

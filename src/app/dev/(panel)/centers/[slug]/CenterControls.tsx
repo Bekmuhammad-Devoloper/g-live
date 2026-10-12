@@ -1,5 +1,6 @@
 "use client";
 
+import DateInput from "@/app/(app)/_components/DateInput";
 import { useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
 import {
@@ -54,7 +55,7 @@ export default function CenterControls({ center: c, modules, backups }: { center
             ))}
           </div>
           <div className="mt-3 flex gap-2">
-            <input type="date" value={date} onChange={(e) => setDate(e.target.value)} className={`${fld} max-w-[180px]`} />
+            <DateInput value={date} onChange={(e) => setDate(e.target.value)} className={`${fld} max-w-[180px]`} />
             <button disabled={pending || !date} onClick={() => act(() => setLicenseDateAction(c.slug, date), "Sana o'rnatildi")} className={btn}>Sanani o'rnatish</button>
           </div>
           <div className="mt-4 border-t border-slate-100 pt-4 dark:border-white/[0.07]">

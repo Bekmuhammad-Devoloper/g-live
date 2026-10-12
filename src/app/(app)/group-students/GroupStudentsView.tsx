@@ -1,5 +1,6 @@
 "use client";
 
+import DateInput from "@/app/(app)/_components/DateInput";
 import { useMemo, useState } from "react";
 import Link from "next/link";
 import { cn } from "@/lib/cn";
@@ -90,9 +91,9 @@ export default function GroupStudentsView({ locale, students, teacherNames }: { 
 
         <div className={cn("flex h-10 items-center gap-1 rounded-lg border bg-white px-2.5 dark:bg-slate-800", from || to ? "border-brand-300 dark:border-brand-500/40" : "border-slate-200 dark:border-slate-700")}>
           <Icon name="calendar" className="h-4 w-4 text-slate-400" />
-          <input type="date" value={from} onChange={(e) => setFrom(e.target.value)} className="w-[120px] bg-transparent text-sm text-slate-700 outline-none dark:text-slate-100" />
+          <DateInput value={from} onChange={(e) => setFrom(e.target.value)} className="w-[120px] bg-transparent text-sm text-slate-700 outline-none dark:text-slate-100" />
           <span className="text-slate-300">–</span>
-          <input type="date" value={to} onChange={(e) => setTo(e.target.value)} className="w-[120px] bg-transparent text-sm text-slate-700 outline-none dark:text-slate-100" />
+          <DateInput value={to} onChange={(e) => setTo(e.target.value)} className="w-[120px] bg-transparent text-sm text-slate-700 outline-none dark:text-slate-100" />
           {(from || to) && <button onClick={() => { setFrom(""); setTo(""); }} className="text-slate-400 hover:text-slate-600">✕</button>}
         </div>
 

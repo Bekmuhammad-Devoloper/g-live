@@ -1,5 +1,6 @@
 "use client";
 
+import DateInput from "@/app/(app)/_components/DateInput";
 import { useMemo, useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
 import { cn } from "@/lib/cn";
@@ -170,9 +171,9 @@ export default function TasksView({ kind, title, locale, tasks, staff, students,
           <select value={fType} onChange={(e) => setFType(e.target.value)} className={sel}><option value="">{tr(locale, { uz: "Topshiriq turi", ru: "Тип задачи", en: "Task type", de: "Aufgabentyp" })}</option>{TASK_TYPES.map((x) => <option key={x} value={x}>{x}</option>)}</select>
           <div className="flex items-center gap-1 rounded-lg border border-slate-200 px-2 dark:border-slate-700">
             <Icon name="calendar" className="h-4 w-4 text-slate-400" />
-            <input type="date" value={dFrom} onChange={(e) => setDFrom(e.target.value)} className="h-9 bg-transparent text-sm text-slate-600 outline-none dark:text-slate-300" />
+            <DateInput value={dFrom} onChange={(e) => setDFrom(e.target.value)} className="h-9 bg-transparent text-sm text-slate-600 outline-none dark:text-slate-300" />
             <span className="text-slate-300">–</span>
-            <input type="date" value={dTo} onChange={(e) => setDTo(e.target.value)} className="h-9 bg-transparent text-sm text-slate-600 outline-none dark:text-slate-300" />
+            <DateInput value={dTo} onChange={(e) => setDTo(e.target.value)} className="h-9 bg-transparent text-sm text-slate-600 outline-none dark:text-slate-300" />
           </div>
           <select value={fGroup} onChange={(e) => setFGroup(e.target.value)} className={sel}><option value="">{tr(locale, { uz: "Guruh", ru: "Группа", en: "Group", de: "Gruppe" })}</option>{groups.map((x) => <option key={x.id} value={x.name}>{x.name}</option>)}</select>
           <select value={fStatus} onChange={(e) => setFStatus(e.target.value)} className={sel}><option value="">{tr(locale, { uz: "Holat: Barchasi", ru: "Статус: Все", en: "Status: All", de: "Status: Alle" })}</option><option value="OPEN">{tr(locale, { uz: "Jarayonda", ru: "В процессе", en: "In progress", de: "In Bearbeitung" })}</option><option value="DONE">{tr(locale, { uz: "Bajarilgan", ru: "Выполнено", en: "Done", de: "Erledigt" })}</option></select>

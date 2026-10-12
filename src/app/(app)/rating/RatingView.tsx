@@ -1,5 +1,6 @@
 "use client";
 
+import DateInput from "@/app/(app)/_components/DateInput";
 import { useMemo, useState } from "react";
 import { cn } from "@/lib/cn";
 import { type Locale } from "@/lib/constants";
@@ -72,11 +73,11 @@ export default function RatingView({ students, defaultFrom, defaultTo, locale }:
       <div className="grid gap-3 sm:grid-cols-2">
         <div className="relative">
           <Icon name="calendar" className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400" />
-          <input type="date" value={from} onChange={(e) => { setFrom(e.target.value); setPage(1); }} className={dateInput} />
+          <DateInput value={from} onChange={(e) => { setFrom(e.target.value); setPage(1); }} className={dateInput} />
         </div>
         <div className="relative">
           <Icon name="calendar" className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400" />
-          <input type="date" value={to} onChange={(e) => { setTo(e.target.value); setPage(1); }} className={dateInput} />
+          <DateInput value={to} onChange={(e) => { setTo(e.target.value); setPage(1); }} className={dateInput} />
         </div>
       </div>
 

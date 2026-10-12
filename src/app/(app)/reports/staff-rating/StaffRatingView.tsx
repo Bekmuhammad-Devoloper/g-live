@@ -1,5 +1,6 @@
 "use client";
 
+import DateInput from "@/app/(app)/_components/DateInput";
 import { useMemo, useState } from "react";
 import { cn } from "@/lib/cn";
 import { type Locale } from "@/lib/constants";
@@ -104,9 +105,9 @@ export default function StaffRatingView({ rows, opts, locale }: { rows: VRating[
       <div className="flex flex-wrap items-center gap-2">
         <div className="flex h-11 items-center gap-1 rounded-xl border border-slate-200 bg-white px-3 dark:border-slate-700 dark:bg-slate-800">
           <Icon name="calendar" className="h-4 w-4 shrink-0 text-slate-400" />
-          <input type="date" value={from} onChange={(e) => { setFrom(e.target.value); p1(); }} className="w-[110px] bg-transparent text-sm text-slate-700 outline-none dark:text-slate-100" placeholder={tr(locale, { uz: "dan", ru: "с", en: "from", de: "von" })} />
+          <DateInput value={from} onChange={(e) => { setFrom(e.target.value); p1(); }} className="w-[110px] bg-transparent text-sm text-slate-700 outline-none dark:text-slate-100" placeholder={tr(locale, { uz: "dan", ru: "с", en: "from", de: "von" })} />
           <span className="text-slate-300">–</span>
-          <input type="date" value={to} onChange={(e) => { setTo(e.target.value); p1(); }} className="w-[110px] bg-transparent text-sm text-slate-700 outline-none dark:text-slate-100" />
+          <DateInput value={to} onChange={(e) => { setTo(e.target.value); p1(); }} className="w-[110px] bg-transparent text-sm text-slate-700 outline-none dark:text-slate-100" />
         </div>
         <Sel v={izoh} set={(x) => { setIzoh(x); p1(); }} ph={tr(locale, { uz: "Izoh", ru: "Комментарий", en: "Comment", de: "Kommentar" })} opts={[{ v: "bor", label: tr(locale, { uz: "Izoh bor", ru: "Есть комментарий", en: "Has comment", de: "Mit Kommentar" }) }, { v: "yoq", label: tr(locale, { uz: "Izoh yo'q", ru: "Нет комментария", en: "No comment", de: "Ohne Kommentar" }) }]} />
         <Sel v={group} set={(x) => { setGroup(x); p1(); }} ph={tr(locale, { uz: "Guruh", ru: "Группа", en: "Group", de: "Gruppe" })} opts={opts.groups.map((x) => ({ v: x, label: x }))} />

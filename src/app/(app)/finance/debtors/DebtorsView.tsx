@@ -1,5 +1,6 @@
 "use client";
 
+import DateInput from "@/app/(app)/_components/DateInput";
 import { useMemo, useState } from "react";
 import Link from "next/link";
 import { cn } from "@/lib/cn";
@@ -100,8 +101,8 @@ export default function DebtorsView({ debtors, groups, locale }: { debtors: VDeb
         <FField label={tr(locale, { uz: "Guruh", ru: "Группа", en: "Group", de: "Gruppe" })}><Sel value={group} onChange={setGroup} options={groups.map((g) => [g, g])} locale={locale} /></FField>
         <FField label={tr(locale, { uz: "Qarz miqdori (oldin)", ru: "Сумма долга (от)", en: "Debt amount (from)", de: "Schuldenbetrag (von)" })}><input value={debtMin} onChange={(e) => setDebtMin(e.target.value)} placeholder="min" className={inp} /></FField>
         <FField label={tr(locale, { uz: "Qarz miqdori (gacha)", ru: "Сумма долга (до)", en: "Debt amount (to)", de: "Schuldenbetrag (bis)" })}><input value={debtMax} onChange={(e) => setDebtMax(e.target.value)} placeholder="max" className={inp} /></FField>
-        <FField label={tr(locale, { uz: "Sanadan boshlab", ru: "С даты", en: "From date", de: "Ab Datum" })}><input type="date" value={from} onChange={(e) => setFrom(e.target.value)} className={inp} /></FField>
-        <FField label={tr(locale, { uz: "Sana bo'yicha", ru: "По дату", en: "To date", de: "Bis Datum" })}><input type="date" value={to} onChange={(e) => setTo(e.target.value)} className={inp} /></FField>
+        <FField label={tr(locale, { uz: "Sanadan boshlab", ru: "С даты", en: "From date", de: "Ab Datum" })}><DateInput value={from} onChange={(e) => setFrom(e.target.value)} className={inp} /></FField>
+        <FField label={tr(locale, { uz: "Sana bo'yicha", ru: "По дату", en: "To date", de: "Bis Datum" })}><DateInput value={to} onChange={(e) => setTo(e.target.value)} className={inp} /></FField>
         <FField label={tr(locale, { uz: "Vazifa", ru: "Задача", en: "Task", de: "Aufgabe" })}><Sel value={vazifa} onChange={setVazifa} options={[["bor", tr(locale, { uz: "Vazifasi bor", ru: "С задачей", en: "Has task", de: "Mit Aufgabe" })], ["yoq", tr(locale, { uz: "Vazifasi yo'q", ru: "Без задачи", en: "No task", de: "Ohne Aufgabe" })]]} locale={locale} /></FField>
         <div className="flex items-end">
           <button onClick={reset} className="h-11 rounded-full bg-brand-800 px-8 text-sm font-semibold text-white transition hover:bg-brand-900">{tr(locale, { uz: "Tozalash", ru: "Очистить", en: "Clear", de: "Zurücksetzen" })}</button>

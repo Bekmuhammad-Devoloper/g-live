@@ -1,5 +1,6 @@
 "use client";
 
+import DateInput from "@/app/(app)/_components/DateInput";
 import { confirmDelete } from "../_components/dialogs";
 import { useEffect, useMemo, useRef, useState, useTransition } from "react";
 import { useActionState } from "react";
@@ -90,7 +91,7 @@ export default function TeacherAttendanceWorkspace({ teachers, attendance, defau
         {tab !== "jadval" && (
           <div className="relative mb-4">
             <Icon name="calendar" className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400" />
-            <input type="month" value={month} onChange={(e) => setMonth(e.target.value)} className="h-11 w-full rounded-xl border border-slate-200 bg-white pl-10 pr-3 text-sm text-slate-700 outline-none focus:border-brand-400 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-100" />
+            <DateInput type="month" value={month} onChange={(e) => setMonth(e.target.value)} className="h-11 w-full rounded-xl border border-slate-200 bg-white pl-10 pr-3 text-sm text-slate-700 outline-none focus:border-brand-400 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-100" />
           </div>
         )}
 
@@ -324,7 +325,7 @@ function ScheduleForm({ teachers, initial, locale, onClose }: { teachers: VTeach
             <div><label className={lbl}>{tr(locale, { uz: "Ish tugash vaqti", ru: "Время окончания работы", en: "Work end time", de: "Arbeitsende" })}</label><input name="endTime" type="time" defaultValue={initial?.schedule?.endTime ?? ""} className={inp} /></div>
           </div>
           <div><label className={lbl}>{tr(locale, { uz: "Oylik maoshi (so'm)", ru: "Месячная зарплата (сум)", en: "Monthly salary (so'm)", de: "Monatsgehalt (UZS)" })}</label><input name="monthlySalary" type="number" min="0" defaultValue={initial?.schedule?.monthlySalary ?? initial?.fiksa ?? 0} className={inp} /></div>
-          <div><label className={lbl}>{tr(locale, { uz: "Ish faoliyatining boshlanishi", ru: "Начало трудовой деятельности", en: "Employment start", de: "Beschäftigungsbeginn" })}</label><input name="startedAt" type="date" defaultValue={initial?.schedule?.startedAtIso ?? ""} className={inp} /></div>
+          <div><label className={lbl}>{tr(locale, { uz: "Ish faoliyatining boshlanishi", ru: "Начало трудовой деятельности", en: "Employment start", de: "Beschäftigungsbeginn" })}</label><DateInput name="startedAt" defaultValue={initial?.schedule?.startedAtIso ?? ""} className={inp} /></div>
           {state.error && <p className="rounded-lg bg-rose-50 px-3 py-2 text-sm text-rose-700 dark:bg-rose-500/10 dark:text-rose-400">{state.error === "forbidden" ? tr(locale, { uz: "Ruxsat yo'q.", ru: "Нет доступа.", en: "No permission.", de: "Keine Berechtigung." }) : tr(locale, { uz: "Ma'lumotlar to'liq emas.", ru: "Данные неполные.", en: "Information is incomplete.", de: "Angaben sind unvollständig." })}</p>}
         </div>
         <div className="flex shrink-0 gap-2 border-t border-slate-100 px-5 py-4 dark:border-white/10">

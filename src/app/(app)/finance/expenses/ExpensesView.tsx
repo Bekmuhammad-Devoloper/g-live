@@ -1,5 +1,6 @@
 "use client";
 
+import DateInput from "@/app/(app)/_components/DateInput";
 import { confirmDelete } from "../../_components/dialogs";
 import { useEffect, useMemo, useRef, useState, useTransition } from "react";
 import { useActionState } from "react";
@@ -265,8 +266,8 @@ export default function ExpensesView({ expenses, categories, staff, writable, lo
           )}
         </div>
         <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4 xl:grid-cols-8">
-          <FField label={tr(locale, { uz: "Sanadan", ru: "С даты", en: "From date", de: "Ab Datum" })} req><input type="date" value={from} onChange={(e) => setFrom(e.target.value)} className={inp} /></FField>
-          <FField label={tr(locale, { uz: "Sanagacha", ru: "По дату", en: "To date", de: "Bis Datum" })} req><input type="date" value={to} onChange={(e) => setTo(e.target.value)} className={inp} /></FField>
+          <FField label={tr(locale, { uz: "Sanadan", ru: "С даты", en: "From date", de: "Ab Datum" })} req><DateInput value={from} onChange={(e) => setFrom(e.target.value)} className={inp} /></FField>
+          <FField label={tr(locale, { uz: "Sanagacha", ru: "По дату", en: "To date", de: "Bis Datum" })} req><DateInput value={to} onChange={(e) => setTo(e.target.value)} className={inp} /></FField>
           {shown.includes("name") && <FField label={filterLabels.name}><input value={name} onChange={(e) => setName(e.target.value)} className={inp} /></FField>}
           {shown.includes("cat") && <FField label={filterLabels.cat}><Sel value={cat} onChange={setCat} options={categories.map((c) => c.id)} labels={Object.fromEntries(categories.map((c) => [c.id, c.name]))} locale={locale} /></FField>}
           {shown.includes("recipient") && <FField label={filterLabels.recipient}><input value={recipient} onChange={(e) => setRecipient(e.target.value)} className={inp} /></FField>}
@@ -496,7 +497,7 @@ function NewExpense({ categories, today, locale }: { categories: { id: string; n
 
       <div className="space-y-3.5">
         <Lbl label={tr(locale, { uz: "Nomi", ru: "Название", en: "Name", de: "Name" })} req><input name="name" required className={fld} /></Lbl>
-        <Lbl label={tr(locale, { uz: "Sana", ru: "Дата", en: "Date", de: "Datum" })} req><input name="date" type="date" required defaultValue={today} className={fld} /></Lbl>
+        <Lbl label={tr(locale, { uz: "Sana", ru: "Дата", en: "Date", de: "Datum" })} req><DateInput name="date" required defaultValue={today} className={fld} /></Lbl>
         <Lbl label={tr(locale, { uz: "Turkum", ru: "Категория", en: "Category", de: "Kategorie" })} req><CategorySelect categories={categories} defaultValue="" locale={locale} required /></Lbl>
         <Lbl label={tr(locale, { uz: "Oluvchi", ru: "Получатель", en: "Recipient", de: "Empfänger" })}><input name="recipient" className={fld} /></Lbl>
         <Lbl label={tr(locale, { uz: "Summa", ru: "Сумма", en: "Amount", de: "Betrag" })} req><MoneyInput name="amount" required className={fld} /></Lbl>
@@ -539,7 +540,7 @@ function EditExpense({ expense, categories, locale, onClose }: { expense: VExpen
         <div className="space-y-3.5">
           <Lbl label={tr(locale, { uz: "Nomi", ru: "Название", en: "Name", de: "Name" })} req><input name="name" required defaultValue={expense.name} className={fld} /></Lbl>
           <div className="grid gap-3.5 sm:grid-cols-2">
-            <Lbl label={tr(locale, { uz: "Sana", ru: "Дата", en: "Date", de: "Datum" })} req><input name="date" type="date" required defaultValue={expense.date.slice(0, 10)} className={fld} /></Lbl>
+            <Lbl label={tr(locale, { uz: "Sana", ru: "Дата", en: "Date", de: "Datum" })} req><DateInput name="date" required defaultValue={expense.date.slice(0, 10)} className={fld} /></Lbl>
             <Lbl label={tr(locale, { uz: "Summa", ru: "Сумма", en: "Amount", de: "Betrag" })} req><MoneyInput name="amount" required defaultValue={expense.amount} className={fld} /></Lbl>
           </div>
           <Lbl label={tr(locale, { uz: "Turkum", ru: "Категория", en: "Category", de: "Kategorie" })}><CategorySelect categories={categories} defaultValue={expense.categoryId ?? ""} locale={locale} /></Lbl>

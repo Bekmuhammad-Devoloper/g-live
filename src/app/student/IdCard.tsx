@@ -1,5 +1,6 @@
 "use client";
 
+import DateInput from "@/app/(app)/_components/DateInput";
 import { useRef, useState, useTransition } from "react";
 import type { StudentStrings } from "./_i18n";
 import { FlagAvatar, ICON_GRADIENT, TEAL } from "./_ui";
@@ -176,7 +177,7 @@ export default function IdCard({ p, t, brandName, editable = true }: { p: VProfi
                   <input name="fullName" autoComplete="name" defaultValue={p.fullName} required className={INPUT} />
                 </Field>
                 <Field label={t.birthDate}>
-                  <input name="birthDate" type="date" defaultValue={p.birthDate ?? ""} className={INPUT} />
+                  <DateInput name="birthDate" defaultValue={p.birthDate ?? ""} className={INPUT} />
                 </Field>
                 <Field label={t.phone}>
                   <input name="phone" type="tel" inputMode="tel" autoComplete="tel" defaultValue={p.phone ?? ""} placeholder="90 123 45 67" className={INPUT} />

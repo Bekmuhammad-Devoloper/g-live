@@ -1,3 +1,4 @@
+import DateInput from "@/app/(app)/_components/DateInput";
 import Link from "next/link";
 import { requireSession } from "@/lib/auth";
 import { prisma } from "@/lib/db";
@@ -173,14 +174,14 @@ export default async function AttendanceReportPage({ searchParams }: { searchPar
               <label className="mb-1 block text-sm text-slate-500 dark:text-slate-400">{tr(s.locale, { uz: "Sanadan boshlab", ru: "С даты", en: "From date", de: "Ab Datum" })}</label>
               <div className="relative">
                 <Icon name="calendar" className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400" />
-                <input type="date" name="from" defaultValue={fromStr} className={dateInp} />
+                <DateInput name="from" defaultValue={fromStr} className={dateInp} />
               </div>
             </div>
             <div>
               <label className="mb-1 block text-sm text-slate-500 dark:text-slate-400">{tr(s.locale, { uz: "Sana bo'yicha", ru: "По дату", en: "To date", de: "Bis Datum" })}</label>
               <div className="relative">
                 <Icon name="calendar" className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400" />
-                <input type="date" name="to" defaultValue={toStr} className={dateInp} />
+                <DateInput name="to" defaultValue={toStr} className={dateInp} />
               </div>
             </div>
             <div>

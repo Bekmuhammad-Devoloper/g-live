@@ -1,5 +1,6 @@
 "use client";
 
+import DateInput from "@/app/(app)/_components/DateInput";
 import { useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
 import { updateAllAction, setMainLicenseAction } from "../actions";
@@ -40,7 +41,7 @@ export function MainLicenseForm({ current }: { current: string | null }) {
   if (!open) return <button type="button" onClick={() => setOpen(true)} className="mt-1 block text-[11px] font-semibold text-slate-500 hover:text-orange-300">O'zgartirish</button>;
   return (
     <div className="mt-1.5 flex items-center gap-1.5">
-      <input type="date" value={date} onChange={(e) => setDate(e.target.value)} className="h-8 rounded-md border border-slate-300 px-2 text-xs dark:border-white/10 dark:bg-[#0d1424]" />
+      <DateInput value={date} onChange={(e) => setDate(e.target.value)} className="h-8 rounded-md border border-slate-300 px-2 text-xs dark:border-white/10 dark:bg-[#0d1424]" />
       <button type="button" disabled={pending || !date} onClick={() => start(async () => { const r = await setMainLicenseAction(date); if (r.ok) { setOpen(false); router.refresh(); } else setErr(r.error ?? "Xato"); })} className="h-8 rounded-md bg-gradient-to-r from-[#e3262b] via-[#ee7a24] to-[#f6b51e] text-white shadow-lg shadow-orange-600/20 hover:brightness-110 px-2.5 text-xs font-semibold text-white disabled:opacity-60 ">
         {pending ? "..." : "Saqlash"}
       </button>

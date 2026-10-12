@@ -1,5 +1,6 @@
 "use client";
 
+import DateInput from "@/app/(app)/_components/DateInput";
 import { useRouter, usePathname } from "next/navigation";
 import { useState, useTransition } from "react";
 import { formatMoney, type Locale } from "@/lib/constants";
@@ -42,11 +43,11 @@ export default function PeriodTotal({ total, from, to, locale }: { total: number
       <form onSubmit={apply} className="grid gap-3 sm:grid-cols-[1fr_1fr_auto]">
         <div>
           <label className="mb-1.5 block text-sm font-medium text-slate-500 dark:text-slate-400">{tr(locale, { uz: "Sanadan", ru: "С даты", en: "From date", de: "Ab Datum" })}</label>
-          <input type="date" value={f} onChange={(e) => setF(e.target.value)} className={inp} />
+          <DateInput value={f} onChange={(e) => setF(e.target.value)} className={inp} />
         </div>
         <div>
           <label className="mb-1.5 block text-sm font-medium text-slate-500 dark:text-slate-400">{tr(locale, { uz: "Sanagacha", ru: "По дату", en: "To date", de: "Bis Datum" })}</label>
-          <input type="date" value={t} onChange={(e) => setT(e.target.value)} className={inp} />
+          <DateInput value={t} onChange={(e) => setT(e.target.value)} className={inp} />
         </div>
         <div className="flex items-end">
           <button type="submit" disabled={pending} className="h-11 rounded-full bg-brand-800 px-8 text-sm font-semibold text-white transition hover:bg-brand-900 disabled:opacity-60">

@@ -1,5 +1,6 @@
 "use client";
 
+import DateInput from "@/app/(app)/_components/DateInput";
 import { useEffect, useMemo, useRef, useState } from "react";
 import { useActionState } from "react";
 import { createPortal } from "react-dom";
@@ -245,7 +246,7 @@ function NewBlockTestForm({ staff, groups, locale, onClose }: { staff: Opt[]; gr
         <Field label={tr(locale, { uz: "Holati", ru: "Статус", en: "Status", de: "Status" })}><select name="status" className={INP} defaultValue="PLANNED"><option value="PLANNED">{tr(locale, { uz: "Rejalashtirilgan", ru: "Запланирован", en: "Planned", de: "Geplant" })}</option><option value="ACTIVE">{tr(locale, { uz: "Faol", ru: "Активный", en: "Active", de: "Aktiv" })}</option><option value="FINISHED">{tr(locale, { uz: "Tugagan", ru: "Завершён", en: "Finished", de: "Abgeschlossen" })}</option></select></Field>
       </div>
       <div className="grid grid-cols-2 gap-3">
-        <Field label={tr(locale, { uz: "Sana", ru: "Дата", en: "Date", de: "Datum" })}><input name="date" type="date" className={INP} /></Field>
+        <Field label={tr(locale, { uz: "Sana", ru: "Дата", en: "Date", de: "Datum" })}><DateInput name="date" className={INP} /></Field>
         <Field label={tr(locale, { uz: "Boshlanish vaqti", ru: "Время начала", en: "Start time", de: "Startzeit" })}><input name="startTime" type="time" className={INP} /></Field>
       </div>
       <div className="grid grid-cols-2 gap-3">

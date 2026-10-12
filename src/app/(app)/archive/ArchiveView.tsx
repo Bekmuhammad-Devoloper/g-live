@@ -1,5 +1,6 @@
 "use client";
 
+import DateInput from "@/app/(app)/_components/DateInput";
 import { confirmDelete, promptDialog } from "../_components/dialogs";
 import { useEffect, useMemo, useState, useTransition } from "react";
 import { createPortal } from "react-dom";
@@ -92,8 +93,8 @@ export default function ArchiveView({ locale, rows, reasons, roleOptions, canPur
           <option value="">{T("Sabab bo'yicha filtr", "Фильтр по причине", "Filter by reason", "Nach Grund filtern")}</option>
           {allReasons.map((r) => <option key={r} value={r}>{r}</option>)}
         </select>
-        <input type="date" value={from} onChange={(e) => setFrom(e.target.value)} className={cn(fInp, "w-[160px]")} title={T("Boshlanish sanasi", "Дата начала", "Start date", "Startdatum")} />
-        <input type="date" value={to} onChange={(e) => setTo(e.target.value)} className={cn(fInp, "w-[160px]")} title={T("Tugash sanasi", "Дата окончания", "End date", "Enddatum")} />
+        <DateInput value={from} onChange={(e) => setFrom(e.target.value)} className={cn(fInp, "w-[160px]")} title={T("Boshlanish sanasi", "Дата начала", "Start date", "Startdatum")} />
+        <DateInput value={to} onChange={(e) => setTo(e.target.value)} className={cn(fInp, "w-[160px]")} title={T("Tugash sanasi", "Дата окончания", "End date", "Enddatum")} />
         {/* Butunlay o'chirish — faqat direktor va o'rinbosarida */}
         {canPurge && <button onClick={() => need() && onDelete(selIds())} className="flex h-10 items-center gap-1.5 rounded-lg border border-rose-200 bg-white px-4 text-sm font-semibold text-rose-600 transition hover:bg-rose-50 dark:border-rose-500/30 dark:bg-slate-900 dark:hover:bg-rose-500/10"><Icon name="trash" className="h-4 w-4" /> {T("O'chirish", "Удалить", "Delete", "Löschen")}</button>}
         <button onClick={() => need() && onRestore(selIds())} className="flex h-10 items-center gap-1.5 rounded-lg border border-emerald-200 bg-white px-4 text-sm font-semibold text-emerald-600 transition hover:bg-emerald-50 dark:border-emerald-500/30 dark:bg-slate-900 dark:hover:bg-emerald-500/10"><Icon name="refresh" className="h-4 w-4" /> {T("Qayta tiklash", "Восстановить", "Restore", "Wiederherstellen")}</button>

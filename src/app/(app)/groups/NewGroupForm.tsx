@@ -1,5 +1,6 @@
 "use client";
 
+import DateInput from "@/app/(app)/_components/DateInput";
 import { useEffect, useRef, useState } from "react";
 import { useActionState } from "react";
 import { createPortal } from "react-dom";
@@ -234,11 +235,11 @@ export default function NewGroupForm({
           <div className="grid grid-cols-2 gap-3">
             <div>
               <label className={label}>{tr(locale, { uz: "Boshlanish sanasi", ru: "Дата начала", en: "Start date", de: "Startdatum" })}</label>
-              <input name="startDate" type="date" className={input} />
+              <DateInput name="startDate" className={input} />
             </div>
             <div>
               <label className={label}>{tr(locale, { uz: "Tugash sanasi", ru: "Дата окончания", en: "End date", de: "Enddatum" })}</label>
-              <input name="endDate" type="date" className={input} />
+              <DateInput name="endDate" className={input} />
             </div>
           </div>
 

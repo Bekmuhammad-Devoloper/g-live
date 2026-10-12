@@ -1,6 +1,6 @@
 "use client";
 
-import { useRef, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import { cn } from "@/lib/cn";
@@ -345,6 +345,8 @@ function BottomNav({
 
 export default function AppShell({ navItems, role, portal, user, locale, labels, unreadCount, topbar, brand, offPaths = [], children }: Props) {
   const pathname = usePathname();
+  // Mijoz komponentlari (masalan DateInput) interfeys tilini shu yerdan oladi
+  useEffect(() => { document.documentElement.lang = locale; }, [locale]);
   const pathOn = (href: string) => !offPaths.some((p) => href === p || href.startsWith(p + "/"));
 
   // ROP va operator o'z sidebar'iga ega (umumiy xodim menyusi o'rniga).

@@ -1,5 +1,6 @@
 "use client";
 
+import DateInput from "@/app/(app)/_components/DateInput";
 import Link from "next/link";
 import { useEffect, useMemo, useState } from "react";
 import { cn } from "@/lib/cn";
@@ -232,8 +233,8 @@ export default function AllPaymentsView({ payments, expenses, options, locale, d
   const range = `${fmtDate(from)} — ${fmtDate(to)}`;
 
   const filters: { key: FilterKey; label: string; node: React.ReactNode }[] = [
-    { key: "from", label: tr(locale, { uz: "Sanadan", ru: "С даты", en: "From date", de: "Ab Datum" }), node: <input type="date" value={from} onChange={(e) => setFrom(e.target.value)} className={inp} /> },
-    { key: "to", label: tr(locale, { uz: "Sanagacha", ru: "По дату", en: "To date", de: "Bis Datum" }), node: <input type="date" value={to} onChange={(e) => setTo(e.target.value)} className={inp} /> },
+    { key: "from", label: tr(locale, { uz: "Sanadan", ru: "С даты", en: "From date", de: "Ab Datum" }), node: <DateInput value={from} onChange={(e) => setFrom(e.target.value)} className={inp} /> },
+    { key: "to", label: tr(locale, { uz: "Sanagacha", ru: "По дату", en: "To date", de: "Bis Datum" }), node: <DateInput value={to} onChange={(e) => setTo(e.target.value)} className={inp} /> },
     { key: "q", label: tr(locale, { uz: "Ism yoki telefon", ru: "Имя или телефон", en: "Name or phone", de: "Name oder Telefon" }), node: <input value={q} onChange={(e) => setQ(e.target.value)} placeholder={tr(locale, { uz: "Qidiruv", ru: "Поиск", en: "Search", de: "Suche" })} className={inp} /> },
     {
       key: "group", label: L.group,
@@ -249,8 +250,8 @@ export default function AllPaymentsView({ payments, expenses, options, locale, d
     },
     { key: "sum", label: L.amount, node: <input value={sum} inputMode="numeric" onChange={(e) => setSum(e.target.value)} placeholder={tr(locale, { uz: "min summa", ru: "мин. сумма", en: "min amount", de: "Mindestbetrag" })} className={inp} /> },
     { key: "staff", label: L.author, node: <Sel value={staff} onChange={setStaff} locale={locale} options={options.staff.map((c) => ({ value: c, label: c }))} /> },
-    { key: "cfrom", label: tr(locale, { uz: "Yaratilgan sanadan", ru: "Создано с", en: "Created from", de: "Erstellt ab" }), node: <input type="date" value={cFrom} onChange={(e) => setCFrom(e.target.value)} className={inp} /> },
-    { key: "cto", label: tr(locale, { uz: "Yaratilgan sanagacha", ru: "Создано по", en: "Created to", de: "Erstellt bis" }), node: <input type="date" value={cTo} onChange={(e) => setCTo(e.target.value)} className={inp} /> },
+    { key: "cfrom", label: tr(locale, { uz: "Yaratilgan sanadan", ru: "Создано с", en: "Created from", de: "Erstellt ab" }), node: <DateInput value={cFrom} onChange={(e) => setCFrom(e.target.value)} className={inp} /> },
+    { key: "cto", label: tr(locale, { uz: "Yaratilgan sanagacha", ru: "Создано по", en: "Created to", de: "Erstellt bis" }), node: <DateInput value={cTo} onChange={(e) => setCTo(e.target.value)} className={inp} /> },
   ];
 
   return (

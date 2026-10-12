@@ -1,5 +1,6 @@
 "use client";
 
+import DateInput from "@/app/(app)/_components/DateInput";
 import { useEffect, useMemo, useState } from "react";
 import Link from "next/link";
 import { cn } from "@/lib/cn";
@@ -464,7 +465,7 @@ function DateBox({ value, onChange }: { value: string; onChange: (v: string) => 
   return (
     <div className="flex h-10 items-center gap-2 rounded-lg border border-slate-200 bg-white px-3 dark:border-slate-700 dark:bg-slate-900">
       <Icon name="calendar" className="h-4 w-4 text-slate-400" />
-      <input type="date" value={value} onChange={(e) => onChange(e.target.value)} className="bg-transparent text-sm text-slate-700 outline-none dark:text-slate-100" />
+      <DateInput value={value} onChange={(e) => onChange(e.target.value)} className="bg-transparent text-sm text-slate-700 outline-none dark:text-slate-100" />
     </div>
   );
 }

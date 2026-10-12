@@ -1,5 +1,6 @@
 "use client";
 
+import DateInput from "@/app/(app)/_components/DateInput";
 import { useEffect, useRef, useState } from "react";
 import { useActionState } from "react";
 import { createPortal } from "react-dom";
@@ -118,7 +119,7 @@ export default function NewAssessmentForm({
           <div className="grid grid-cols-2 gap-3">
             <div>
               <label className={label}>{tr(locale, { uz: "Sana", ru: "Дата", en: "Date", de: "Datum" })}</label>
-              <input name="date" type="date" className={input} />
+              <DateInput name="date" className={input} />
             </div>
             <div>
               <label className={label}>{tr(locale, { uz: "Holat", ru: "Статус", en: "Status", de: "Status" })}</label>

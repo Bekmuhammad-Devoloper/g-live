@@ -1,5 +1,6 @@
 "use client";
 
+import DateInput from "@/app/(app)/_components/DateInput";
 import { useEffect, useMemo, useRef, useState, useTransition } from "react";
 import { createPortal } from "react-dom";
 import { useRouter } from "next/navigation";
@@ -381,7 +382,7 @@ export function StaffForm({ positions, branches, onClose, locale, edit = null, c
           </div>
           {/* Tug'ilgan sana / Filial */}
           <div className="grid grid-cols-2 gap-3">
-            <div><label className={lbl}>{tr(locale, { uz: "Tug'ilgan sanasi", ru: "Дата рождения", en: "Date of birth", de: "Geburtsdatum" })}</label><input name="birthDate" type="date" defaultValue={edit?.birthDateIso ?? ""} className={inp} /></div>
+            <div><label className={lbl}>{tr(locale, { uz: "Tug'ilgan sanasi", ru: "Дата рождения", en: "Date of birth", de: "Geburtsdatum" })}</label><DateInput name="birthDate" defaultValue={edit?.birthDateIso ?? ""} className={inp} /></div>
             <div><label className={lbl}>{tr(locale, { uz: "Filial", ru: "Филиал", en: "Branch", de: "Filiale" })}</label><select name="branchId" value={branchId} onChange={(e) => { setBranchId(e.target.value); setExtraBranches((x) => x.filter((b) => b !== e.target.value)); }} className={inp}><option value="">{tr(locale, { uz: "Tanlang", ru: "Выберите", en: "Select", de: "Auswählen" })}</option>{branches.map((b) => <option key={b.id} value={b.id}>{b.name}</option>)}</select></div>
           </div>
 

@@ -1,5 +1,6 @@
 "use client";
 
+import DateInput from "@/app/(app)/_components/DateInput";
 import { useMemo, useState } from "react";
 import { formatMoney, type Locale } from "@/lib/constants";
 import { tr } from "@/lib/tr";
@@ -65,9 +66,9 @@ export default function CancelledView({ rows, locale }: { rows: VCancel[]; local
           <Icon name="calendar" className="h-4 w-4 text-slate-400" />
           {from || to ? (
             <>
-              <input type="date" value={from} onChange={(e) => setFrom(e.target.value)} className="w-[118px] bg-transparent text-sm text-slate-700 outline-none dark:text-slate-100" />
+              <DateInput value={from} onChange={(e) => setFrom(e.target.value)} className="w-[118px] bg-transparent text-sm text-slate-700 outline-none dark:text-slate-100" />
               <span className="text-slate-300">–</span>
-              <input type="date" value={to} onChange={(e) => setTo(e.target.value)} className="w-[118px] bg-transparent text-sm text-slate-700 outline-none dark:text-slate-100" />
+              <DateInput value={to} onChange={(e) => setTo(e.target.value)} className="w-[118px] bg-transparent text-sm text-slate-700 outline-none dark:text-slate-100" />
               <button onClick={() => { setFrom(""); setTo(""); }} className="text-slate-400 hover:text-slate-600" title={tr(locale, { uz: "Tozalash", ru: "Очистить", en: "Clear", de: "Zurücksetzen" })}>✕</button>
             </>
           ) : (

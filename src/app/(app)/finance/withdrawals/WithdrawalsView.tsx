@@ -1,5 +1,6 @@
 "use client";
 
+import DateInput from "@/app/(app)/_components/DateInput";
 import { promptDialog } from "../../_components/dialogs";
 import { useEffect, useMemo, useRef, useState, useTransition } from "react";
 import { useActionState } from "react";
@@ -128,8 +129,8 @@ export default function WithdrawalsView({ withdrawals, courses, students, writab
 
       {/* Filtrlar */}
       <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-6">
-        <FField label={tr(locale, { uz: "Sanadan boshlab", ru: "С даты", en: "From date", de: "Von Datum" })}><input type="date" value={from} onChange={(e) => setFrom(e.target.value)} className={inp} /></FField>
-        <FField label={tr(locale, { uz: "Sana bo'yicha", ru: "По дату", en: "To date", de: "Bis Datum" })}><input type="date" value={to} onChange={(e) => setTo(e.target.value)} className={inp} /></FField>
+        <FField label={tr(locale, { uz: "Sanadan boshlab", ru: "С даты", en: "From date", de: "Von Datum" })}><DateInput value={from} onChange={(e) => setFrom(e.target.value)} className={inp} /></FField>
+        <FField label={tr(locale, { uz: "Sana bo'yicha", ru: "По дату", en: "To date", de: "Bis Datum" })}><DateInput value={to} onChange={(e) => setTo(e.target.value)} className={inp} /></FField>
         <FField label={tr(locale, { uz: "Ism yoki Telefon", ru: "Имя или телефон", en: "Name or phone", de: "Name oder Telefon" })}><input value={q} onChange={(e) => setQ(e.target.value)} placeholder={tr(locale, { uz: "Qidiruv", ru: "Поиск", en: "Search", de: "Suchen" })} className={inp} /></FField>
         <FField label={tr(locale, { uz: "Sum", ru: "Сумма", en: "Amount", de: "Betrag" })}><input value={sum} onChange={(e) => setSum(e.target.value)} placeholder={tr(locale, { uz: "min summa", ru: "мин. сумма", en: "min amount", de: "Min. Betrag" })} className={inp} /></FField>
         <FField label={tr(locale, { uz: "Kurs", ru: "Курс", en: "Course", de: "Kurs" })}>

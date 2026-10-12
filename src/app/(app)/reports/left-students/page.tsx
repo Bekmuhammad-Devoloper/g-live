@@ -1,3 +1,4 @@
+import DateInput from "@/app/(app)/_components/DateInput";
 import Link from "next/link";
 import { requireSession } from "@/lib/auth";
 import { prisma } from "@/lib/db";
@@ -104,11 +105,11 @@ export default async function LeftStudentsPage({ searchParams }: { searchParams:
         <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-6">
           <div className="relative">
             <Icon name="calendar" className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400" />
-            <input type="date" name="from" defaultValue={fromStr} className={dateInp} />
+            <DateInput name="from" defaultValue={fromStr} className={dateInp} />
           </div>
           <div className="relative">
             <Icon name="calendar" className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400" />
-            <input type="date" name="to" defaultValue={toStr} className={dateInp} />
+            <DateInput name="to" defaultValue={toStr} className={dateInp} />
           </div>
           <Select name="courseId" value={courseId} placeholder={tr(s.locale, { uz: "Kurs", ru: "Курс", en: "Course", de: "Kurs" })} options={programs.map((p) => ({ v: p.id, label: p.name }))} cls={sel} />
           <Select name="teacherId" value={teacherId} placeholder={tr(s.locale, { uz: "O'qituvchi", ru: "Преподаватель", en: "Teacher", de: "Lehrer" })} options={teachers.map((tt) => ({ v: tt.id, label: tt.fullName }))} cls={sel} />
