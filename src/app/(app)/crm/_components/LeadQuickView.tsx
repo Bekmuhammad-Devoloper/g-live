@@ -8,6 +8,8 @@ import { formatMoney, LEAD_STAGE_LABELS, ROLE_LABELS, label, type Locale } from 
 import { Icon } from "../../_components/Icon";
 import { columnDef, columnOf, initials, type VLead } from "../_lib/leadColumns";
 import { addLeadComment, listLeadComments, type LeadComment } from "../actions";
+import PaymentPanel from "../../students/PaymentPanel";
+import type { LeadPayment } from "../[id]/LeadDetail";
 
 // Lidning yonboshdan ochiladigan TEZKOR ko'rish oynasi.
 // Qator/kartochka BIR marta bosilganda shu oyna ochiladi; IKKI marta
@@ -27,8 +29,10 @@ function fmtDate(iso: string | null) {
 }
 
 export default function LeadQuickView({
-  lead, locale, canWrite, onClose, onEnroll, onDelete, onCommented,
+  lead, locale, canWrite, onClose, onEnroll, onDelete, onCommented, payment,
 }: {
+  /** O'quvchiga aylangan lid uchun to'lov paneli (berilsa) */
+  payment?: LeadPayment | null;
   lead: VLead;
   locale: Locale;
   canWrite: boolean;
@@ -173,6 +177,21 @@ export default function LeadQuickView({
               </div>
             )}
           </Section>
+
+          {/* To'lovlar — o'quvchiga aylangan lid: qabul qilish, qarz, istalgan to'lovni tahrirlash */}
+          {lead.studentId && payment && (payment.canManage || payment.canPay) && (
+            <div className="rounded-xl border border-slate-200/70 p-3 dark:border-slate-800">
+              <PaymentPanel
+                studentId={lead.studentId}
+                locale={locale}
+                canManage={payment.canManage}
+                canPay={payment.canPay}
+                cashierName={payment.cashierName}
+                receiptMode={payment.receiptMode}
+                defaultPurpose={payment.defaultPurpose}
+              />
+            </div>
+          )}
 
           <Comments lead={lead} locale={locale} canWrite={canWrite} onCommented={onCommented} />
         </div>

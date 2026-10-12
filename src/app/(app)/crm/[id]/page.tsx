@@ -6,7 +6,12 @@ import { canRead, canWrite, MODULES } from "@/lib/rbac";
 import { ROLES } from "@/lib/constants";
 import { branchWhere } from "@/lib/branchScope";
 import { Forbidden } from "../../_components/ui";
-import LeadDetail, { type DLead, type DActivity } from "./LeadDetail";
+import LeadDetail, { type DLead, type DActivity, type LeadPayment } from "./LeadDetail";
+import { getSetting } from "@/lib/settings";
+import { RECEIPT_MODE_KEY, parseReceiptMode } from "@/lib/receiptMode";
+
+// To'lov paneli huquqlari — o'quvchi profili bilan bir xil
+const PAY_MANAGE = [ROLES.DIRECTOR, ROLES.DEPUTY_DIRECTOR, ROLES.MANAGER, ROLES.ADMIN];
 
 export default async function LeadDetailPage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = await params;
@@ -61,6 +66,17 @@ export default async function LeadDetailPage({ params }: { params: Promise<{ id:
     enrollEditCount: lead.enrollEditCount,
     createdAt: lead.createdAt.toISOString(),
   };
+  // O'quvchiga aylangan lid — to'lov paneli (qabul qilish, qarz, tahrirlash)
+  const payManage = PAY_MANAGE.includes(s.role as never);
+  const payWrite = canWrite(s.role, MODULES.PAYMENTS);
+  const payment: LeadPayment | null = lead.studentId && (payManage || payWrite) ? {
+    canManage: payManage,
+    canPay: payWrite,
+    cashierName: s.fullName,
+    receiptMode: parseReceiptMode(await getSetting(RECEIPT_MODE_KEY)),
+    defaultPurpose: lead.group?.program?.name ? `${lead.group.program.name} kurs to'lovi` : "Kurs to'lovi",
+  } : null;
+
   const activities: DActivity[] = lead.activities.map((a) => ({
     id: a.id,
     type: a.type,
@@ -78,6 +94,7 @@ export default async function LeadDetailPage({ params }: { params: Promise<{ id:
       prevId={prevId}
       nextId={nextId}
       canWrite={canWrite(s.role, MODULES.CRM)}
+      payment={payment}
       // Lidni butunlay o'chirish — direktor, o'rinbosari va administrator
       canDelete={[ROLES.DIRECTOR, ROLES.DEPUTY_DIRECTOR, ROLES.ADMIN].includes(s.role as never)}
       locale={s.locale}

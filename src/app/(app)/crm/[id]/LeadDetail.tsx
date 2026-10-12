@@ -11,6 +11,13 @@ import { COLUMNS, colorOfStage, initials } from "../_lib/leadColumns";
 import { updateLeadField, setLeadManager, moveLeadStage, convertLead, addLeadActivity, branchOptions, moveLeadToBranch, deleteLeadPermanently } from "../actions";
 import BranchMover from "../../_components/BranchMover";
 import EnrollDrawer from "../_components/EnrollDrawer";
+import PaymentPanel from "../../students/PaymentPanel";
+import type { ReceiptMode } from "@/lib/receiptMode";
+
+/** O'quvchiga aylangan lid uchun to'lov paneli sozlamalari (o'quvchi profilidagi bilan bir xil) */
+export interface LeadPayment {
+  canManage: boolean; canPay: boolean; cashierName: string; receiptMode: ReceiptMode; defaultPurpose: string;
+}
 
 export interface DLead {
   id: string; fullName: string; phone: string; email: string | null; source: string | null;
@@ -31,8 +38,8 @@ function fmt(iso: string) {
   return `${p(d.getDate())}.${p(d.getMonth() + 1)}.${d.getFullYear()} ${p(d.getHours())}:${p(d.getMinutes())}`;
 }
 
-export default function LeadDetail({ lead, activities, managers, prevId, nextId, canWrite, canDelete, locale }: {
-  lead: DLead; activities: DActivity[]; managers: Opt[]; prevId: string | null; nextId: string | null; canWrite: boolean; canDelete: boolean; locale: Locale;
+export default function LeadDetail({ lead, activities, managers, prevId, nextId, canWrite, canDelete, locale, payment }: {
+  lead: DLead; activities: DActivity[]; managers: Opt[]; prevId: string | null; nextId: string | null; canWrite: boolean; canDelete: boolean; locale: Locale; payment?: LeadPayment | null;
 }) {
   const router = useRouter();
   const [tab, setTab] = useState<"info" | "activity">("info");
@@ -147,6 +154,22 @@ export default function LeadDetail({ lead, activities, managers, prevId, nextId,
               </div>
             )}
           </div>
+
+          {/* To'lovlar — lid o'quvchiga aylangan bo'lsa: qabul qilish, qarz qo'shish, istalgan to'lovni tahrirlash */}
+          {lead.studentId && payment && (payment.canManage || payment.canPay) && (
+            <div className="mt-5 rounded-2xl border border-slate-200/70 bg-white p-5 shadow-card dark:border-slate-800 dark:bg-slate-900">
+              <PaymentPanel
+                studentId={lead.studentId}
+                locale={locale}
+                canManage={payment.canManage}
+                canPay={payment.canPay}
+                cashierName={payment.cashierName}
+                receiptMode={payment.receiptMode}
+                defaultPurpose={payment.defaultPurpose}
+                onChanged={() => router.refresh()}
+              />
+            </div>
+          )}
         </div>
 
         {/* O'ng: tez amallar */}

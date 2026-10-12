@@ -6,6 +6,9 @@ import { ROLES } from "@/lib/constants";
 import { branchWhere } from "@/lib/branchScope";
 import { Forbidden } from "../_components/ui";
 import LeadsWorkspace from "./_components/LeadsWorkspace";
+import type { LeadPayment } from "./[id]/LeadDetail";
+import { getSetting } from "@/lib/settings";
+import { RECEIPT_MODE_KEY, parseReceiptMode } from "@/lib/receiptMode";
 import { listKanbanGroups, listKanbanColumns } from "./actions";
 import { columnOf, GROUP_COL_COLORS, weekdaysLabel, type ArchivedStudent, type BranchColumn, type BranchMode, type GroupInfo, type VLead } from "./_lib/leadColumns";
 import type { Analytics } from "./_components/AnalyticsTiles";
@@ -199,6 +202,13 @@ export default async function CrmPage() {
     take: 300,
   })).map((r) => ({ id: r.id, fullName: r.fullName, phone: r.phone, groupName: r.enrollments[0]?.group.name ?? null }));
 
+  // O'quvchiga aylangan lidlar — tezkor oynada to'lov paneli (o'quvchi profili bilan bir xil huquqlar)
+  const payManage = [ROLES.DIRECTOR, ROLES.DEPUTY_DIRECTOR, ROLES.MANAGER, ROLES.ADMIN].includes(s.role as never);
+  const payWrite = canWrite(s.role, MODULES.PAYMENTS);
+  const payment: LeadPayment | null = payManage || payWrite
+    ? { canManage: payManage, canPay: payWrite, cashierName: s.fullName, receiptMode: parseReceiptMode(await getSetting(RECEIPT_MODE_KEY)), defaultPurpose: "Kurs to'lovi" }
+    : null;
+
   return (
     <LeadsWorkspace
       locale={s.locale}
@@ -210,6 +220,7 @@ export default async function CrmPage() {
       // Kanbandan to'g'ridan-to'g'ri o'chirish — actions.ts dagi CAN_DELETE_LEAD bilan bir xil
       canDelete={[ROLES.DIRECTOR, ROLES.DEPUTY_DIRECTOR, ROLES.ADMIN].includes(s.role as never)}
       canResetColumns={[ROLES.DIRECTOR, ROLES.DEPUTY_DIRECTOR, ROLES.ROP].includes(s.role as never)}
+      payment={payment}
       initialGroupColumns={groupColumns}
       initialCustomColumns={customColumns}
       branchColumns={branchMode ? branchColumns : null}

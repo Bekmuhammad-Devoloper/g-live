@@ -24,6 +24,7 @@ import WonAddDrawer from "./WonAddDrawer";
 import GroupLeadPicker from "./GroupLeadPicker";
 import EnrollDrawer from "./EnrollDrawer";
 import LeadQuickView from "./LeadQuickView";
+import type { LeadPayment } from "../[id]/LeadDetail";
 import { useDoubleClickOpen } from "../../_components/useDoubleClickOpen";
 
 interface Opt { id: string; name: string }
@@ -39,6 +40,8 @@ interface Props {
   canDelete?: boolean;
   /** Ustunni bo'shatish — barcha lidlarni Yangiga qaytarish (direktor / o'rinbosar / ROP) */
   canResetColumns?: boolean;
+  /** O'quvchiga aylangan lidlar uchun to'lov paneli huquqlari */
+  payment?: LeadPayment | null;
   /** Kanbanga biriktirilgan guruh ustunlari */
   initialGroupColumns: GroupColumn[];
   /** Oddiy nomli ustunlar */
@@ -59,7 +62,7 @@ interface Props {
   slotsEditable?: "all" | string | null;
 }
 
-export default function LeadsWorkspace({ locale, initialLeads, managers, sources, analytics, canWrite, canDelete = false, canResetColumns = false, initialGroupColumns, initialCustomColumns, branchColumns = null, groupInfo = {}, archivedStudents = [], branchMode = null, showOnlineCol = true, hiddenCols = [], slotsEditable = null }: Props) {
+export default function LeadsWorkspace({ locale, initialLeads, managers, sources, analytics, canWrite, canDelete = false, canResetColumns = false, payment = null, initialGroupColumns, initialCustomColumns, branchColumns = null, groupInfo = {}, archivedStudents = [], branchMode = null, showOnlineCol = true, hiddenCols = [], slotsEditable = null }: Props) {
   const router = useRouter();
   const pathname = usePathname();
   const params = useSearchParams();
@@ -598,6 +601,7 @@ export default function LeadsWorkspace({ locale, initialLeads, managers, sources
           lead={quickLead}
           locale={locale}
           canWrite={canWrite}
+          payment={payment}
           onClose={() => setQuickId(null)}
           onCommented={(id, at) => setLeads((prev) => prev.map((l) => (l.id === id ? { ...l, activityCount: l.activityCount + 1, lastActivity: at } : l)))}
           onEnroll={() => {
