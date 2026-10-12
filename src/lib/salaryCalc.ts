@@ -75,6 +75,8 @@ export interface SalaryDetailRow {
   came: number;
   notCame: number;
   notMarked: number;
+  /** O'quvchining shu oy shu guruh ulushiga to'g'ri keladigan to'lovi (fixed qatorlarda null) */
+  paid: number | null;
   /** Belgilangan summa — qoida bo'yicha (davomatgacha) */
   assigned: number;
   /** Hisoblangan summa */
@@ -264,7 +266,7 @@ export async function computeSalaries(opts: { year: number; month: number; branc
         groupId: scoped && g ? g.id : null, groupName: scoped && g ? g.name : null,
         programId: scoped && g ? g.programId : null, programName: scoped && g ? g.program.name : null,
         studentId: null, studentName: null, studentStatus: null,
-        lessons: 0, came: 0, notCame: 0, notMarked: 0,
+        lessons: 0, came: 0, notCame: 0, notMarked: 0, paid: null,
         assigned: rule.amount, amount: rule.amount,
         ruleScope: rule.isDefault ? "ALL" : rule.scope, ruleType: "fixed", ruleAmount: rule.amount,
       });
@@ -327,6 +329,7 @@ export async function computeSalaries(opts: { year: number; month: number; branc
           groupId: g.id, groupName: g.name, programId: g.programId, programName: g.program.name,
           studentId: e.studentId, studentName: e.student.fullName, studentStatus: e.student.eduStatus,
           lessons: nLessons, came, notCame, notMarked,
+          paid: Math.round(pay.paid * share),
           assigned: Math.round(assigned), amount,
           ruleScope: rule ? (rule.isDefault ? "ALL" : rule.scope) : null, ruleType: type, ruleAmount: rule?.amount ?? null,
         });

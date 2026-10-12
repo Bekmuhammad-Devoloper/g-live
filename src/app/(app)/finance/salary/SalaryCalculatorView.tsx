@@ -553,16 +553,20 @@ function DetailsModal({ t, result, locale, onClose }: { t: TeacherSalaryCalc; re
         <p className="text-sm text-slate-600 dark:text-slate-300">
           {tr(locale, { uz: `${t.teacherName} uchun ${period} maosh hisobi`, ru: `Расчёт зарплаты ${t.teacherName} за ${period}`, en: `Salary calculation for ${t.teacherName}, ${period}`, de: `Gehaltsberechnung für ${t.teacherName}, ${period}` })}
         </p>
-        <p className="text-base font-semibold text-slate-800 dark:text-slate-100">{tr(locale, { uz: "Jami", ru: "Итого", en: "Total", de: "Gesamt" })}: {formatMoney(t.total, locale)}</p>
+        <div className="flex flex-wrap items-center gap-2 text-sm">
+          <span className="rounded-lg bg-emerald-50 px-3 py-1.5 font-medium text-emerald-700 dark:bg-emerald-500/10 dark:text-emerald-300">{tr(locale, { uz: "To'lovlar", ru: "Оплаты", en: "Payments", de: "Zahlungen" })}: {formatMoney(t.rows.reduce((a, r) => a + (r.paid ?? 0), 0), locale)}</span>
+          <span className="rounded-lg bg-brand-50 px-3 py-1.5 text-base font-bold text-brand-700 dark:bg-brand-500/15 dark:text-brand-200">{tr(locale, { uz: "Oylik", ru: "Зарплата", en: "Salary", de: "Gehalt" })}: {formatMoney(t.total, locale)}</span>
+        </div>
       </div>
-      <div className="max-h-[70vh] overflow-auto p-5">
-        <table className="w-full min-w-[1000px] text-left text-sm">
+      <div className="overflow-x-auto p-5">
+        <table className="w-full min-w-[1100px] text-left text-sm">
           <thead className="border-b border-slate-200/70 bg-slate-50/60 text-[12px] font-semibold text-slate-600 dark:border-slate-800 dark:bg-slate-800/40 dark:text-slate-300">
             <tr>
               <th className={th}>№</th>
               <th className={th}>{tr(locale, { uz: "Guruh / Kurs", ru: "Группа / Курс", en: "Group / Course", de: "Gruppe / Kurs" })}</th>
               <th className={th}>{tr(locale, { uz: "Talaba", ru: "Ученик", en: "Student", de: "Schüler" })}</th>
               <th className={th}>{tr(locale, { uz: "Darslar ~ Keldi / Kelmadi / Belgilanmagan", ru: "Уроки ~ Пришёл / Не пришёл / Не отмечено", en: "Lessons ~ Came / Absent / Not marked", de: "Stunden ~ Da / Fehlt / Nicht erfasst" })}</th>
+              <th className={th}>{tr(locale, { uz: "To'lagan summa", ru: "Оплачено", en: "Paid", de: "Bezahlt" })}</th>
               <th className={th}>{tr(locale, { uz: "Belgilangan summa", ru: "Назначенная сумма", en: "Assigned amount", de: "Festgelegter Betrag" })}</th>
               <th className={th}>{tr(locale, { uz: "Hisoblangan summa", ru: "Начисленная сумма", en: "Calculated amount", de: "Berechneter Betrag" })}</th>
               <th className={th}>{tr(locale, { uz: "Hisoblash usuli", ru: "Способ расчёта", en: "Calculation method", de: "Berechnungsmethode" })}</th>
@@ -583,6 +587,9 @@ function DetailsModal({ t, result, locale, onClose }: { t: TeacherSalaryCalc; re
                 <td className="whitespace-nowrap px-3 py-2.5 text-slate-600 dark:text-slate-300">
                   {r.studentId ? <>{r.lessons} ~ <span className="text-emerald-600">{r.came}</span> / <span className="text-rose-500">{r.notCame}</span> / <span className="text-slate-400">{r.notMarked}</span></> : "—"}
                 </td>
+                <td className={cn("whitespace-nowrap px-3 py-2.5", r.paid ? "font-medium text-emerald-600 dark:text-emerald-400" : "text-slate-400")}>
+                  {r.paid == null ? "—" : r.paid > 0 ? formatMoney(r.paid, locale) : tr(locale, { uz: "To'lamagan", ru: "Не оплатил", en: "Not paid", de: "Nicht bezahlt" })}
+                </td>
                 <td className="whitespace-nowrap px-3 py-2.5 text-slate-600 dark:text-slate-300">
                   {formatMoney(r.assigned, locale)}
                   {r.ruleAmount != null && isPercent(r.ruleType) && <span className="ml-1 text-xs text-slate-400">({r.ruleAmount}%)</span>}
@@ -593,6 +600,15 @@ function DetailsModal({ t, result, locale, onClose }: { t: TeacherSalaryCalc; re
               </tr>
             ))}
           </tbody>
+          <tfoot className="border-t-2 border-slate-200 font-semibold text-slate-800 dark:border-slate-700 dark:text-slate-100">
+            <tr>
+              <td className="px-3 py-3" colSpan={4}>{tr(locale, { uz: "Jami", ru: "Итого", en: "Total", de: "Gesamt" })}</td>
+              <td className="whitespace-nowrap px-3 py-3 text-emerald-600 dark:text-emerald-400">{formatMoney(t.rows.reduce((a, r) => a + (r.paid ?? 0), 0), locale)}</td>
+              <td className="px-3 py-3" />
+              <td className="whitespace-nowrap px-3 py-3">{formatMoney(t.total, locale)}</td>
+              <td className="px-3 py-3" colSpan={2} />
+            </tr>
+          </tfoot>
         </table>
       </div>
     </Modal>
