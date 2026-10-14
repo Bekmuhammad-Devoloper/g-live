@@ -5,6 +5,7 @@ import { requireSession } from "@/lib/auth";
 import { ROLES } from "@/lib/constants";
 import { AI_TOOLS, runAiTool } from "@/lib/ai/assistantTools";
 import { ASSISTANT_SYSTEM } from "@/lib/ai/assistantPrompt";
+import { geminiGenerate, toGeminiTools, GeminiError, type GeminiContent } from "@/lib/ai/gemini";
 
 // AI yordamchi — faqat rahbariyat uchun
 const AI_ROLES = [ROLES.DIRECTOR, ROLES.DEPUTY_DIRECTOR];
@@ -16,7 +17,7 @@ export interface AiChatMessage { role: "user" | "assistant"; text: string }
 export interface AiReply { ok: boolean; text?: string; error?: "forbidden" | "not_configured" | "failed" | "refusal"; tasksCreated?: number }
 
 export async function aiAvailable(): Promise<boolean> {
-  return !!process.env.ANTHROPIC_API_KEY;
+  return !!(process.env.GEMINI_API_KEY || process.env.ANTHROPIC_API_KEY);
 }
 
 function todayLine(): string {
@@ -29,7 +30,9 @@ function todayLine(): string {
 export async function askAssistant(history: AiChatMessage[]): Promise<AiReply> {
   const s = await requireSession();
   if (!AI_ROLES.includes(s.role as never)) return { ok: false, error: "forbidden" };
-  if (!process.env.ANTHROPIC_API_KEY) return { ok: false, error: "not_configured" };
+  // Provayder: GEMINI_API_KEY bo'lsa Gemini, aks holda Claude (ANTHROPIC_API_KEY)
+  const useGemini = !!process.env.GEMINI_API_KEY;
+  if (!useGemini && !process.env.ANTHROPIC_API_KEY) return { ok: false, error: "not_configured" };
 
   // Faqat matnli tarix (oldingi javoblarning thinking/tool bloklari qayta yuborilmaydi)
   const clean = history
@@ -38,6 +41,9 @@ export async function askAssistant(history: AiChatMessage[]): Promise<AiReply> {
     .map((m) => ({ role: m.role, text: m.text.slice(0, 4000) }));
   while (clean.length && clean[0].role !== "user") clean.shift();
   if (!clean.length || clean[clean.length - 1].role !== "user") return { ok: false, error: "failed" };
+
+  const actorG = { userId: s.userId, fullName: s.fullName, role: s.role };
+  if (useGemini) return askGemini(clean, actorG, s.branchId);
 
   const messages: Anthropic.Beta.BetaMessageParam[] = clean.map((m, i) => ({
     role: m.role,
@@ -91,6 +97,47 @@ export async function askAssistant(history: AiChatMessage[]): Promise<AiReply> {
     }
     if (e instanceof Anthropic.APIError) console.error("[ai] API xatosi", e.status, e.message);
     else console.error("[ai]", e);
+    return { ok: false, error: "failed", tasksCreated };
+  }
+}
+
+const GEMINI_TOOLS = toGeminiTools(AI_TOOLS);
+
+async function askGemini(clean: AiChatMessage[], actor: { userId: string; fullName: string; role: string }, branchId: string | null): Promise<AiReply> {
+  const contents: GeminiContent[] = clean.map((m, i) => ({
+    role: m.role === "user" ? "user" : "model",
+    parts: [{ text: i === clean.length - 1 ? `${todayLine()}\n${m.text}` : m.text }],
+  }));
+  let tasksCreated = 0;
+  try {
+    for (let step = 0; step < MAX_STEPS; step++) {
+      const r = await geminiGenerate({ system: ASSISTANT_SYSTEM, contents, tools: GEMINI_TOOLS });
+      if (r.blocked) return { ok: false, error: "refusal" };
+      const calls = r.parts.filter((p) => p.functionCall);
+      if (calls.length === 0) {
+        const text = r.parts.filter((p) => p.text && !p.thought).map((p) => p.text).join("\n").trim();
+        return { ok: true, text: text || "—", tasksCreated };
+      }
+      // Model javobi o'zgarishsiz (thoughtSignature bilan) qaytariladi
+      contents.push({ role: "model", parts: r.parts });
+      const responses = [];
+      for (const c of calls) {
+        const fc = c.functionCall!;
+        const out = await runAiTool(fc.name, fc.args ?? {}, actor, branchId);
+        if (out.wrote) tasksCreated++;
+        let payload: unknown;
+        try { payload = JSON.parse(out.text); } catch { payload = out.text; }
+        responses.push({ functionResponse: { name: fc.name, response: out.isError ? { error: payload } : { result: payload } } });
+      }
+      contents.push({ role: "user", parts: responses });
+    }
+    return { ok: true, text: "Savol juda murakkab bo'ldi — iltimos, uni qismlarga bo'lib so'rang.", tasksCreated };
+  } catch (e) {
+    if (e instanceof GeminiError) {
+      console.error("[ai:gemini]", e.status, e.message);
+      if (e.status === 400 && /api key/i.test(e.message)) return { ok: false, error: "not_configured" };
+      if (e.status === 401 || e.status === 403) return { ok: false, error: "not_configured" };
+    } else console.error("[ai:gemini]", e);
     return { ok: false, error: "failed", tasksCreated };
   }
 }
