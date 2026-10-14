@@ -6,7 +6,8 @@ import { cn } from "@/lib/cn";
 import { tr } from "@/lib/tr";
 import type { Locale } from "@/lib/constants";
 import { Icon } from "./Icon";
-import { askAssistant, type AiChatMessage } from "../ai/actions";
+import { askAndSave, listAiChats, getAiChat, deleteAiChat, type AiChatMessage, type AiChatSummary } from "../ai/actions";
+import { confirmDelete } from "./dialogs";
 
 const STORE_KEY = "gl-ai-chat";
 
@@ -35,8 +36,9 @@ function Sparkle({ className }: { className?: string }) {
 }
 
 function inline(s: string) {
-  return s.split(/(\*\*[^*]+\*\*|`[^`]+`)/g).map((part, i) => {
+  return s.split(/(\*\*[^*]+\*\*|`[^`]+`|\*[^*\s][^*]*\*)/g).map((part, i) => {
     if (part.startsWith("**") && part.endsWith("**")) return <strong key={i} className="font-semibold text-slate-900 dark:text-white">{part.slice(2, -2)}</strong>;
+    if (part.length > 2 && part.startsWith("*") && part.endsWith("*")) return <em key={i} className="text-slate-500 dark:text-slate-400">{part.slice(1, -1)}</em>;
     if (part.startsWith("`") && part.endsWith("`")) return <code key={i} className="rounded bg-slate-200/70 px-1 py-0.5 text-[12px] dark:bg-white/10">{part.slice(1, -1)}</code>;
     return <Fragment key={i}>{part}</Fragment>;
   });
@@ -114,15 +116,26 @@ export default function AiAssistant({ locale, userName }: { locale: Locale; user
   const [err, setErr] = useState<string | null>(null);
   const [pending, start] = useTransition();
   const [phase, setPhase] = useState(0);
+  const [chatId, setChatId] = useState<string | null>(null);
+  const [view, setView] = useState<"chat" | "history">("chat");
+  const [chats, setChats] = useState<AiChatSummary[] | null>(null);
+  const [loadingChat, setLoadingChat] = useState(false);
   const scrollRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLTextAreaElement>(null);
 
   useEffect(() => {
-    try { const raw = sessionStorage.getItem(STORE_KEY); if (raw) setMsgs(JSON.parse(raw)); } catch { /* bo'sh */ }
+    try {
+      const raw = sessionStorage.getItem(STORE_KEY);
+      if (raw) {
+        const v = JSON.parse(raw);
+        if (Array.isArray(v)) setMsgs(v);
+        else { setMsgs(v.msgs ?? []); setChatId(v.chatId ?? null); }
+      }
+    } catch { /* bo'sh */ }
   }, []);
   useEffect(() => {
-    try { sessionStorage.setItem(STORE_KEY, JSON.stringify(msgs.slice(-40))); } catch { /* bo'sh */ }
-  }, [msgs]);
+    try { sessionStorage.setItem(STORE_KEY, JSON.stringify({ chatId, msgs: msgs.slice(-40) })); } catch { /* bo'sh */ }
+  }, [msgs, chatId]);
   useLayoutEffect(() => {
     const el = scrollRef.current;
     if (el) el.scrollTo({ top: el.scrollHeight, behavior: "smooth" });
@@ -156,8 +169,12 @@ export default function AiAssistant({ locale, userName }: { locale: Locale; user
     setInput("");
     setErr(null);
     start(async () => {
-      const r = await askAssistant(next.map(({ role, text }) => ({ role, text })));
-      if (r.ok && r.text) setMsgs((m) => [...m, { role: "assistant", text: r.text!, at: Date.now() }]);
+      const r = await askAndSave(next, chatId);
+      if (r.ok && r.text) {
+        setMsgs((m) => [...m, { role: "assistant", text: r.text!, at: Date.now() }]);
+        if (r.chatId) setChatId(r.chatId);
+        setChats(null); // tarix keyingi ochilishda yangilanadi
+      }
       else setErr(
         r.error === "not_configured" ? tr(locale, { uz: "AI hali sozlanmagan (API kaliti kiritilmagan).", ru: "AI ещё не настроен (нет API-ключа).", en: "AI is not configured yet (no API key).", de: "KI ist noch nicht eingerichtet (kein API-Schlüssel)." })
         : r.error === "forbidden" ? tr(locale, { uz: "AI yordamchi faqat rahbariyat uchun.", ru: "AI-помощник только для руководства.", en: "The AI assistant is for management only.", de: "Der KI-Assistent ist nur für die Leitung." })
@@ -172,6 +189,36 @@ export default function AiAssistant({ locale, userName }: { locale: Locale; user
     // Oxirgi savol javobsiz qolgan — uni olib tashlab qayta yuboramiz
     setMsgs((m) => (m[m.length - 1]?.role === "user" ? m.slice(0, -1) : m));
     setTimeout(() => send(lastUser.text), 0);
+  };
+
+  const newChat = () => { setMsgs([]); setChatId(null); setErr(null); setView("chat"); setTimeout(() => inputRef.current?.focus(), 50); };
+  const openHistory = async () => {
+    setView("history");
+    setChats(await listAiChats());
+  };
+  const openChat = async (id: string) => {
+    setLoadingChat(true);
+    const m = await getAiChat(id);
+    setLoadingChat(false);
+    if (!m) return;
+    setMsgs(m); setChatId(id); setErr(null); setView("chat");
+  };
+  const removeChat = async (c: AiChatSummary) => {
+    const ok = await confirmDelete(tr(locale, { uz: `"${c.title}" suhbatini o'chirasizmi?`, ru: `Удалить чат «${c.title}»?`, en: `Delete chat "${c.title}"?`, de: `Chat "${c.title}" löschen?` }));
+    if (!ok) return;
+    await deleteAiChat(c.id);
+    setChats((l) => (l ?? []).filter((x) => x.id !== c.id));
+    if (c.id === chatId) { setMsgs([]); setChatId(null); }
+  };
+  const groupLabel = (iso: string) => {
+    const d = new Date(iso), now = new Date();
+    const day = (x: Date) => new Date(x.getFullYear(), x.getMonth(), x.getDate()).getTime();
+    const diff = Math.round((day(now) - day(d)) / 86_400_000);
+    if (diff === 0) return tr(locale, { uz: "Bugun", ru: "Сегодня", en: "Today", de: "Heute" });
+    if (diff === 1) return tr(locale, { uz: "Kecha", ru: "Вчера", en: "Yesterday", de: "Gestern" });
+    if (diff < 7) return tr(locale, { uz: "Shu hafta", ru: "На этой неделе", en: "This week", de: "Diese Woche" });
+    if (diff < 31) return tr(locale, { uz: "Shu oy", ru: "В этом месяце", en: "This month", de: "Diesen Monat" });
+    return tr(locale, { uz: "Avvalroq", ru: "Ранее", en: "Earlier", de: "Früher" });
   };
 
   const title = tr(locale, { uz: "AI yordamchi", ru: "AI-помощник", en: "AI assistant", de: "KI-Assistent" });
@@ -195,11 +242,17 @@ export default function AiAssistant({ locale, userName }: { locale: Locale; user
               </div>
             </div>
             <div className="flex items-center gap-1">
-              {msgs.length > 0 && (
-                <button type="button" onClick={() => { setMsgs([]); setErr(null); }} title={tr(locale, { uz: "Yangi suhbat", ru: "Новый чат", en: "New chat", de: "Neuer Chat" })} className="flex h-9 items-center gap-1.5 rounded-xl px-2.5 text-xs font-medium text-white/85 transition hover:bg-white/15 hover:text-white">
-                  <Icon name="plus" className="h-4 w-4" /><span className="hidden sm:inline">{tr(locale, { uz: "Yangi", ru: "Новый", en: "New", de: "Neu" })}</span>
-                </button>
-              )}
+              <button
+                type="button"
+                onClick={() => (view === "history" ? setView("chat") : openHistory())}
+                title={tr(locale, { uz: "Suhbatlar tarixi", ru: "История чатов", en: "Chat history", de: "Chatverlauf" })}
+                className={cn("flex h-9 items-center gap-1.5 rounded-xl px-2.5 text-xs font-medium transition hover:bg-white/15 hover:text-white", view === "history" ? "bg-white/20 text-white" : "text-white/85")}
+              >
+                <Icon name="history" className="h-4 w-4" /><span className="hidden sm:inline">{tr(locale, { uz: "Tarix", ru: "История", en: "History", de: "Verlauf" })}</span>
+              </button>
+              <button type="button" onClick={newChat} title={tr(locale, { uz: "Yangi suhbat", ru: "Новый чат", en: "New chat", de: "Neuer Chat" })} className="flex h-9 items-center gap-1.5 rounded-xl px-2.5 text-xs font-medium text-white/85 transition hover:bg-white/15 hover:text-white">
+                <Icon name="plus" className="h-4 w-4" /><span className="hidden sm:inline">{tr(locale, { uz: "Yangi chat", ru: "Новый чат", en: "New chat", de: "Neuer Chat" })}</span>
+              </button>
               <button type="button" onClick={() => setOpen(false)} className="grid h-9 w-9 place-items-center rounded-xl text-white/85 transition hover:bg-white/15 hover:text-white">
                 <Icon name="close" className="h-4 w-4" />
               </button>
@@ -208,6 +261,45 @@ export default function AiAssistant({ locale, userName }: { locale: Locale; user
         </div>
 
         {/* Suhbat */}
+        {view === "history" ? (
+          <div className="min-h-0 flex-1 overflow-y-auto px-3 py-4">
+            <button type="button" onClick={newChat} className="mb-3 flex w-full items-center justify-center gap-2 rounded-2xl border-2 border-dashed border-violet-200 py-2.5 text-sm font-semibold text-violet-600 transition hover:border-violet-400 hover:bg-violet-50 dark:border-violet-500/30 dark:text-violet-300 dark:hover:bg-violet-500/10">
+              <Icon name="plus" className="h-4 w-4" /> {tr(locale, { uz: "Yangi suhbat boshlash", ru: "Начать новый чат", en: "Start a new chat", de: "Neuen Chat starten" })}
+            </button>
+            {chats === null || loadingChat ? (
+              <div className="space-y-2">{[0, 1, 2, 3].map((k) => <div key={k} className="h-14 animate-pulse rounded-2xl bg-slate-200/60 dark:bg-white/5" />)}</div>
+            ) : chats.length === 0 ? (
+              <div className="py-16 text-center">
+                <div className="mx-auto mb-3 grid h-12 w-12 place-items-center rounded-2xl bg-slate-100 text-slate-400 dark:bg-white/5"><Icon name="history" className="h-6 w-6" /></div>
+                <p className="text-sm text-slate-500">{tr(locale, { uz: "Hali suhbatlar yo'q", ru: "Чатов пока нет", en: "No chats yet", de: "Noch keine Chats" })}</p>
+              </div>
+            ) : (
+              <div className="space-y-1">
+                {chats.map((c, i) => {
+                  const g = groupLabel(c.updatedAt);
+                  const showG = i === 0 || groupLabel(chats[i - 1].updatedAt) !== g;
+                  return (
+                    <Fragment key={c.id}>
+                      {showG && <div className="px-2 pb-1 pt-3 text-[11px] font-semibold uppercase tracking-wider text-slate-400">{g}</div>}
+                      <div className={cn("group flex items-center gap-2 rounded-2xl border px-3 py-2.5 transition", c.id === chatId ? "border-violet-300 bg-violet-50 dark:border-violet-500/40 dark:bg-violet-500/10" : "border-transparent hover:border-slate-200 hover:bg-white dark:hover:border-white/10 dark:hover:bg-white/[0.04]")}>
+                        <button type="button" onClick={() => openChat(c.id)} className="flex min-w-0 flex-1 items-center gap-3 text-left">
+                          <span className="grid h-9 w-9 shrink-0 place-items-center rounded-xl bg-gradient-to-br from-violet-500/15 to-brand-500/15 text-violet-600 dark:text-violet-300"><Sparkle className="h-4 w-4" /></span>
+                          <span className="min-w-0">
+                            <span className="block truncate text-sm font-medium text-slate-800 dark:text-slate-100">{c.title}</span>
+                            <span className="block text-[11px] text-slate-400">{new Date(c.updatedAt).toLocaleDateString("ru-RU")} · {hhmm(new Date(c.updatedAt).getTime())} · {tr(locale, { uz: `${c.count} ta xabar`, ru: `${c.count} сообщ.`, en: `${c.count} messages`, de: `${c.count} Nachrichten` })}</span>
+                          </span>
+                        </button>
+                        <button type="button" onClick={() => removeChat(c)} title={tr(locale, { uz: "O'chirish", ru: "Удалить", en: "Delete", de: "Löschen" })} className="grid h-8 w-8 shrink-0 place-items-center rounded-lg text-slate-300 opacity-0 transition hover:bg-rose-50 hover:text-rose-500 group-hover:opacity-100 dark:hover:bg-rose-500/10">
+                          <Icon name="trash" className="h-4 w-4" />
+                        </button>
+                      </div>
+                    </Fragment>
+                  );
+                })}
+              </div>
+            )}
+          </div>
+        ) : (
         <div ref={scrollRef} className="min-h-0 flex-1 overflow-y-auto px-4 py-5">
           {msgs.length === 0 ? (
             <div className="flex min-h-full flex-col justify-center pb-6">
@@ -282,9 +374,10 @@ export default function AiAssistant({ locale, userName }: { locale: Locale; user
             </div>
           )}
         </div>
+        )}
 
         {/* Kiritish */}
-        <form onSubmit={(e) => { e.preventDefault(); send(input); }} className="shrink-0 border-t border-slate-200/70 bg-white px-4 pb-3 pt-3 dark:border-white/10 dark:bg-[#0d1b38]">
+        <form onSubmit={(e) => { e.preventDefault(); setView("chat"); send(input); }} className="shrink-0 border-t border-slate-200/70 bg-white px-4 pb-3 pt-3 dark:border-white/10 dark:bg-[#0d1b38]">
           <div className="flex items-end gap-2 rounded-2xl border border-slate-200 bg-slate-50 p-1.5 transition focus-within:border-violet-400 focus-within:bg-white focus-within:ring-4 focus-within:ring-violet-500/10 dark:border-white/10 dark:bg-white/[0.03] dark:focus-within:bg-white/[0.05]">
             <textarea
               ref={inputRef}

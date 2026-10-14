@@ -1407,3 +1407,15 @@ model Note {
   @@unique([studentId, title])
   @@index([studentId, updatedAt])
 }
+
+// AI yordamchi suhbatlari — har rahbarning o'z tarixi
+model AiConversation {
+  id        String   @id @default(cuid())
+  userId    String
+  title     String
+  messages  String   // JSON: [{role, text, at}]
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([userId, updatedAt])
+}

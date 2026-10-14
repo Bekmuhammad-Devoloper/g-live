@@ -2,6 +2,7 @@
 
 import Anthropic from "@anthropic-ai/sdk";
 import { requireSession } from "@/lib/auth";
+import { prisma } from "@/lib/db";
 import { ROLES } from "@/lib/constants";
 import { AI_TOOLS, runAiTool } from "@/lib/ai/assistantTools";
 import { ASSISTANT_SYSTEM } from "@/lib/ai/assistantPrompt";
@@ -14,7 +15,73 @@ const MAX_STEPS = 8; // bitta savolga vositalar bilan aylanishlar chegarasi
 const MAX_HISTORY = 20;
 
 export interface AiChatMessage { role: "user" | "assistant"; text: string }
-export interface AiReply { ok: boolean; text?: string; error?: "forbidden" | "not_configured" | "failed" | "refusal"; tasksCreated?: number }
+export interface AiReply { ok: boolean; text?: string; error?: "forbidden" | "not_configured" | "failed" | "refusal"; tasksCreated?: number; chatId?: string }
+export interface AiChatSummary { id: string; title: string; updatedAt: string; count: number }
+type StoredMsg = AiChatMessage & { at?: number };
+
+const MAX_CHATS = 100; // har foydalanuvchi uchun saqlanadigan suhbatlar
+
+async function aiSession() {
+  const s = await requireSession();
+  return AI_ROLES.includes(s.role as never) ? s : null;
+}
+
+/** Suhbatlar tarixi (oxirgisi birinchi) */
+export async function listAiChats(): Promise<AiChatSummary[]> {
+  const s = await aiSession();
+  if (!s) return [];
+  const rows = await prisma.aiConversation.findMany({
+    where: { userId: s.userId }, orderBy: { updatedAt: "desc" }, take: MAX_CHATS,
+    select: { id: true, title: true, updatedAt: true, messages: true },
+  });
+  return rows.map((r) => {
+    let count = 0;
+    try { count = (JSON.parse(r.messages) as unknown[]).length; } catch { /* bo'sh */ }
+    return { id: r.id, title: r.title, updatedAt: r.updatedAt.toISOString(), count };
+  });
+}
+
+export async function getAiChat(id: string): Promise<StoredMsg[] | null> {
+  const s = await aiSession();
+  if (!s) return null;
+  const r = await prisma.aiConversation.findFirst({ where: { id, userId: s.userId }, select: { messages: true } });
+  if (!r) return null;
+  try { return JSON.parse(r.messages) as StoredMsg[]; } catch { return []; }
+}
+
+export async function deleteAiChat(id: string): Promise<boolean> {
+  const s = await aiSession();
+  if (!s) return false;
+  const r = await prisma.aiConversation.deleteMany({ where: { id, userId: s.userId } });
+  return r.count > 0;
+}
+
+/** Suhbatni saqlash: yangi bo'lsa yaratiladi (sarlavha — birinchi savol) */
+async function saveChat(userId: string, chatId: string | null, msgs: StoredMsg[]): Promise<string> {
+  const data = JSON.stringify(msgs.slice(-60));
+  if (chatId) {
+    const r = await prisma.aiConversation.updateMany({ where: { id: chatId, userId }, data: { messages: data } });
+    if (r.count) return chatId;
+  }
+  const firstQ = msgs.find((m) => m.role === "user")?.text ?? "Suhbat";
+  const title = firstQ.replace(/\s+/g, " ").trim().slice(0, 80);
+  const c = await prisma.aiConversation.create({ data: { userId, title, messages: data }, select: { id: true } });
+  // Eski suhbatlar chegaradan oshsa o'chiriladi
+  const old = await prisma.aiConversation.findMany({ where: { userId }, orderBy: { updatedAt: "desc" }, skip: MAX_CHATS, select: { id: true } });
+  if (old.length) await prisma.aiConversation.deleteMany({ where: { id: { in: old.map((o) => o.id) } } });
+  return c.id;
+}
+
+/** Savol + saqlash: javob bo'lsa suhbat tarixga yoziladi */
+export async function askAndSave(history: StoredMsg[], chatId: string | null): Promise<AiReply> {
+  const s = await aiSession();
+  if (!s) return { ok: false, error: "forbidden" };
+  const r = await askAssistant(history.map(({ role, text }) => ({ role, text })));
+  if (!r.ok || !r.text) return r;
+  const msgs: StoredMsg[] = [...history, { role: "assistant", text: r.text, at: Date.now() }];
+  const id = await saveChat(s.userId, chatId, msgs);
+  return { ...r, chatId: id };
+}
 
 export async function aiAvailable(): Promise<boolean> {
   return !!(process.env.GEMINI_API_KEY || process.env.ANTHROPIC_API_KEY);
