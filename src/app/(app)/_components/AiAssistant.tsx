@@ -14,11 +14,11 @@ const STORE_KEY = "gl-ai-chat";
 type Msg = AiChatMessage & { at?: number };
 type T4 = { uz: string; ru: string; en: string; de: string };
 
-const SUGGEST: { icon: string; text: T4 }[] = [
-  { icon: "💰", text: { uz: "Bugun qancha tushum bo'ldi?", ru: "Какая выручка сегодня?", en: "What is today's revenue?", de: "Wie hoch ist der Umsatz heute?" } },
-  { icon: "📥", text: { uz: "Shu oy nechta lid tushdi, qaysi manbadan?", ru: "Сколько лидов в этом месяце и откуда?", en: "How many leads this month and from where?", de: "Wie viele Leads diesen Monat und woher?" } },
-  { icon: "📊", text: { uz: "Qaysi filialda qancha qarzdor bor?", ru: "Сколько должников в каждом филиале?", en: "How many debtors per branch?", de: "Wie viele Schuldner pro Filiale?" } },
-  { icon: "🎓", text: { uz: "Yangi o'quvchini qanday qabul qilaman?", ru: "Как принять нового ученика?", en: "How do I enroll a new student?", de: "Wie nehme ich einen neuen Schüler auf?" } },
+const SUGGEST: { icon: string; tone: string; text: T4 }[] = [
+  { icon: "coins", tone: "from-emerald-400 to-teal-500", text: { uz: "Bugun qancha tushum bo'ldi?", ru: "Какая выручка сегодня?", en: "What is today's revenue?", de: "Wie hoch ist der Umsatz heute?" } },
+  { icon: "download", tone: "from-sky-400 to-blue-500", text: { uz: "Shu oy nechta lid tushdi, qaysi manbadan?", ru: "Сколько лидов в этом месяце и откуда?", en: "How many leads this month and from where?", de: "Wie viele Leads diesen Monat und woher?" } },
+  { icon: "alert", tone: "from-amber-400 to-orange-500", text: { uz: "Qaysi filialda qancha qarzdor bor?", ru: "Сколько должников в каждом филиале?", en: "How many debtors per branch?", de: "Wie viele Schuldner pro Filiale?" } },
+  { icon: "graduation", tone: "from-violet-400 to-fuchsia-500", text: { uz: "Yangi o'quvchini qanday qabul qilaman?", ru: "Как принять нового ученика?", en: "How do I enroll a new student?", de: "Wie nehme ich einen neuen Schüler auf?" } },
 ];
 
 const THINKING: T4[] = [
@@ -226,34 +226,40 @@ export default function AiAssistant({ locale, userName }: { locale: Locale; user
 
   const panel = open && typeof document !== "undefined" ? createPortal(
     <div className="animate-dialog-fade fixed inset-0 z-[120] flex justify-end bg-slate-900/40 backdrop-blur-[2px]" onMouseDown={(e) => { if (e.target === e.currentTarget) setOpen(false); }}>
-      <div className="animate-slide-in-right flex h-full w-full max-w-[520px] flex-col bg-slate-50 shadow-2xl dark:bg-[#0b1630]">
+      <div className="animate-slide-in-right flex h-full w-full max-w-[540px] flex-col bg-[#f7f8fc] shadow-[-24px_0_60px_-20px_rgba(15,23,42,0.35)] dark:bg-[#0b1630]">
         {/* Sarlavha */}
-        <div className="relative shrink-0 overflow-hidden bg-gradient-to-br from-violet-600 via-indigo-600 to-brand-600 px-5 pb-4 pt-4 text-white">
-          <div aria-hidden className="pointer-events-none absolute -right-10 -top-12 h-40 w-40 rounded-full bg-white/10 blur-2xl" />
+        <div className="relative shrink-0 overflow-hidden bg-[#1e1b4b] px-4 py-3.5 text-white">
+          <div aria-hidden className="pointer-events-none absolute inset-0 bg-[radial-gradient(120%_140%_at_0%_0%,rgba(139,92,246,0.55),transparent_55%),radial-gradient(90%_120%_at_100%_0%,rgba(59,130,246,0.45),transparent_60%)]" />
+          <div aria-hidden className="pointer-events-none absolute inset-x-0 bottom-0 h-px bg-gradient-to-r from-transparent via-white/25 to-transparent" />
           <div className="relative flex items-center justify-between gap-3">
-            <div className="flex items-center gap-3">
-              <span className="grid h-11 w-11 place-items-center rounded-2xl bg-white/15 ring-1 ring-white/25 backdrop-blur"><Sparkle className="h-6 w-6" /></span>
-              <div>
-                <div className="text-base font-bold leading-tight">{title}</div>
-                <div className="mt-0.5 flex items-center gap-1.5 text-[11px] text-white/75">
-                  <span className="h-1.5 w-1.5 rounded-full bg-emerald-300 shadow-[0_0_0_3px_rgba(110,231,183,0.25)]" />
-                  {tr(locale, { uz: "Onlayn · markaz ma'lumotlari bilan ishlaydi", ru: "Онлайн · работает с данными центра", en: "Online · works with your center's data", de: "Online · arbeitet mit Ihren Daten" })}
+            <div className="flex min-w-0 items-center gap-3">
+              <span className="relative grid h-10 w-10 shrink-0 place-items-center rounded-xl bg-gradient-to-br from-violet-400 to-indigo-500 shadow-lg shadow-violet-900/40 ring-1 ring-white/30">
+                <Sparkle className="h-5 w-5" />
+                <span className="absolute -bottom-0.5 -right-0.5 h-3 w-3 rounded-full border-2 border-[#1e1b4b] bg-emerald-400" />
+              </span>
+              <div className="min-w-0">
+                <div className="truncate text-[15px] font-semibold tracking-tight">{title}</div>
+                <div className="truncate text-[11px] text-white/60">
+                  {view === "history"
+                    ? tr(locale, { uz: "Suhbatlar tarixi", ru: "История чатов", en: "Chat history", de: "Chatverlauf" })
+                    : tr(locale, { uz: "Markaz ma'lumotlari bilan ishlaydi", ru: "Работает с данными центра", en: "Works with your center's data", de: "Arbeitet mit Ihren Daten" })}
                 </div>
               </div>
             </div>
-            <div className="flex items-center gap-1">
+            <div className="flex shrink-0 items-center gap-0.5 rounded-xl bg-white/[0.07] p-1 ring-1 ring-white/10">
               <button
                 type="button"
                 onClick={() => (view === "history" ? setView("chat") : openHistory())}
                 title={tr(locale, { uz: "Suhbatlar tarixi", ru: "История чатов", en: "Chat history", de: "Chatverlauf" })}
-                className={cn("flex h-9 items-center gap-1.5 rounded-xl px-2.5 text-xs font-medium transition hover:bg-white/15 hover:text-white", view === "history" ? "bg-white/20 text-white" : "text-white/85")}
+                className={cn("grid h-8 w-8 place-items-center rounded-lg transition hover:bg-white/15 hover:text-white", view === "history" ? "bg-white/20 text-white" : "text-white/70")}
               >
-                <Icon name="history" className="h-4 w-4" /><span className="hidden sm:inline">{tr(locale, { uz: "Tarix", ru: "История", en: "History", de: "Verlauf" })}</span>
+                <Icon name="history" className="h-4 w-4" />
               </button>
-              <button type="button" onClick={newChat} title={tr(locale, { uz: "Yangi suhbat", ru: "Новый чат", en: "New chat", de: "Neuer Chat" })} className="flex h-9 items-center gap-1.5 rounded-xl px-2.5 text-xs font-medium text-white/85 transition hover:bg-white/15 hover:text-white">
-                <Icon name="plus" className="h-4 w-4" /><span className="hidden sm:inline">{tr(locale, { uz: "Yangi chat", ru: "Новый чат", en: "New chat", de: "Neuer Chat" })}</span>
+              <button type="button" onClick={newChat} title={tr(locale, { uz: "Yangi chat", ru: "Новый чат", en: "New chat", de: "Neuer Chat" })} className="grid h-8 w-8 place-items-center rounded-lg text-white/70 transition hover:bg-white/15 hover:text-white">
+                <svg viewBox="0 0 24 24" className="h-4 w-4" fill="none" stroke="currentColor" strokeWidth="1.9" strokeLinecap="round" strokeLinejoin="round"><path d="M12 20h9" /><path d="M16.5 3.5a2.1 2.1 0 0 1 3 3L7 19l-4 1 1-4Z" /></svg>
               </button>
-              <button type="button" onClick={() => setOpen(false)} className="grid h-9 w-9 place-items-center rounded-xl text-white/85 transition hover:bg-white/15 hover:text-white">
+              <span className="mx-0.5 h-5 w-px bg-white/15" />
+              <button type="button" onClick={() => setOpen(false)} title={tr(locale, { uz: "Yopish", ru: "Закрыть", en: "Close", de: "Schließen" })} className="grid h-8 w-8 place-items-center rounded-lg text-white/70 transition hover:bg-white/15 hover:text-white">
                 <Icon name="close" className="h-4 w-4" />
               </button>
             </div>
@@ -300,33 +306,42 @@ export default function AiAssistant({ locale, userName }: { locale: Locale; user
             )}
           </div>
         ) : (
-        <div ref={scrollRef} className="min-h-0 flex-1 overflow-y-auto px-4 py-5">
+        <div ref={scrollRef} className="min-h-0 flex-1 overflow-y-auto px-5 py-5">
           {msgs.length === 0 ? (
-            <div className="flex min-h-full flex-col justify-center pb-6">
-              <div className="mx-auto mb-5 grid h-16 w-16 place-items-center rounded-3xl bg-gradient-to-br from-violet-500 to-brand-600 text-white shadow-lg shadow-violet-500/25">
-                <Sparkle className="h-8 w-8" />
+            <div className="flex min-h-full flex-col justify-center py-4">
+              <div className="relative mx-auto mb-6">
+                <div aria-hidden className="absolute inset-0 -m-6 rounded-full bg-gradient-to-br from-violet-400/30 to-indigo-400/20 blur-2xl" />
+                <div className="relative grid h-[72px] w-[72px] place-items-center rounded-[22px] bg-gradient-to-br from-violet-500 via-indigo-500 to-blue-500 text-white shadow-xl shadow-indigo-500/30 ring-4 ring-white dark:ring-[#0b1630]">
+                  <Sparkle className="h-9 w-9" />
+                </div>
               </div>
-              <h3 className="text-center text-lg font-bold text-slate-800 dark:text-white">
-                {first ? tr(locale, { uz: `Salom, ${first}!`, ru: `Здравствуйте, ${first}!`, en: `Hi, ${first}!`, de: `Hallo, ${first}!` }) : tr(locale, { uz: "Salom!", ru: "Здравствуйте!", en: "Hi!", de: "Hallo!" })}
+              <h3 className="text-center text-[22px] font-bold tracking-tight text-slate-900 dark:text-white">
+                {first ? tr(locale, { uz: `Salom, ${first}`, ru: `Здравствуйте, ${first}`, en: `Hi, ${first}`, de: `Hallo, ${first}` }) : tr(locale, { uz: "Salom", ru: "Здравствуйте", en: "Hi", de: "Hallo" })}
+                <span className="ml-1 inline-block">👋</span>
               </h3>
-              <p className="mx-auto mt-1.5 max-w-sm text-center text-sm leading-relaxed text-slate-500 dark:text-slate-400">
+              <p className="mx-auto mt-2 max-w-[340px] text-center text-[13.5px] leading-relaxed text-slate-500 dark:text-slate-400">
                 {tr(locale, {
-                  uz: "Markazingiz ma'lumotlari bo'yicha savollarga javob beraman, platformadan foydalanishni o'rgataman va xodimlaringizga topshiriq bera olaman.",
-                  ru: "Отвечаю на вопросы по данным центра, обучаю работе с платформой и могу ставить задачи сотрудникам.",
-                  en: "I answer questions about your center's data, teach how to use the platform and can assign tasks to your staff.",
-                  de: "Ich beantworte Fragen zu Ihren Daten, erkläre die Plattform und kann Aufgaben an Mitarbeiter vergeben.",
+                  uz: "Markaz ma'lumotlari bo'yicha savol bering, platformani o'rganing yoki xodimga topshiriq bering.",
+                  ru: "Задайте вопрос по данным центра, изучите платформу или поставьте задачу сотруднику.",
+                  en: "Ask about your center's data, learn the platform or assign a task to staff.",
+                  de: "Fragen Sie zu Ihren Daten, lernen Sie die Plattform oder vergeben Sie Aufgaben.",
                 })}
               </p>
-              <div className="mt-6 grid gap-2 sm:grid-cols-2">
+              <div className="mt-7 text-[11px] font-semibold uppercase tracking-[0.12em] text-slate-400">
+                {tr(locale, { uz: "Masalan", ru: "Например", en: "Try asking", de: "Zum Beispiel" })}
+              </div>
+              <div className="mt-2.5 grid grid-cols-1 gap-2.5 min-[420px]:grid-cols-2">
                 {SUGGEST.map((sg) => (
                   <button
                     key={sg.text.uz}
                     type="button"
                     onClick={() => send(tr(locale, sg.text))}
-                    className="group flex items-start gap-2.5 rounded-2xl border border-slate-200 bg-white p-3 text-left text-[13px] leading-snug text-slate-600 shadow-sm transition hover:-translate-y-0.5 hover:border-violet-300 hover:shadow-md dark:border-white/10 dark:bg-white/[0.04] dark:text-slate-300 dark:hover:border-violet-500/40"
+                    className="group relative flex min-h-[68px] items-center gap-3 overflow-hidden rounded-2xl border border-slate-200/80 bg-white px-3.5 py-3 text-left shadow-[0_1px_2px_rgba(15,23,42,0.04)] transition duration-200 hover:-translate-y-0.5 hover:border-indigo-200 hover:shadow-[0_8px_24px_-8px_rgba(79,70,229,0.25)] dark:border-white/10 dark:bg-white/[0.04] dark:hover:border-indigo-400/40"
                   >
-                    <span className="text-base leading-none">{sg.icon}</span>
-                    <span className="group-hover:text-slate-900 dark:group-hover:text-white">{tr(locale, sg.text)}</span>
+                    <span className={cn("grid h-9 w-9 shrink-0 place-items-center rounded-xl bg-gradient-to-br text-white shadow-sm", sg.tone)}>
+                      <Icon name={sg.icon as never} className="h-[18px] w-[18px]" />
+                    </span>
+                    <span className="text-[13px] font-medium leading-snug text-slate-700 group-hover:text-slate-900 dark:text-slate-300 dark:group-hover:text-white">{tr(locale, sg.text)}</span>
                   </button>
                 ))}
               </div>
@@ -377,8 +392,8 @@ export default function AiAssistant({ locale, userName }: { locale: Locale; user
         )}
 
         {/* Kiritish */}
-        <form onSubmit={(e) => { e.preventDefault(); setView("chat"); send(input); }} className="shrink-0 border-t border-slate-200/70 bg-white px-4 pb-3 pt-3 dark:border-white/10 dark:bg-[#0d1b38]">
-          <div className="flex items-end gap-2 rounded-2xl border border-slate-200 bg-slate-50 p-1.5 transition focus-within:border-violet-400 focus-within:bg-white focus-within:ring-4 focus-within:ring-violet-500/10 dark:border-white/10 dark:bg-white/[0.03] dark:focus-within:bg-white/[0.05]">
+        <form onSubmit={(e) => { e.preventDefault(); setView("chat"); send(input); }} className="shrink-0 bg-gradient-to-t from-[#f7f8fc] via-[#f7f8fc] to-transparent px-4 pb-3 pt-2 dark:from-[#0b1630] dark:via-[#0b1630]">
+          <div className="flex items-end gap-2 rounded-[20px] border border-slate-200/90 bg-white p-1.5 pl-2 shadow-[0_6px_24px_-10px_rgba(15,23,42,0.18)] transition focus-within:border-indigo-300 focus-within:shadow-[0_8px_30px_-10px_rgba(79,70,229,0.35)] dark:border-white/10 dark:bg-white/[0.05]">
             <textarea
               ref={inputRef}
               value={input}
@@ -391,14 +406,14 @@ export default function AiAssistant({ locale, userName }: { locale: Locale; user
             <button
               type="submit"
               disabled={pending || !input.trim()}
-              className="grid h-10 w-10 shrink-0 place-items-center rounded-xl bg-gradient-to-br from-violet-600 to-brand-600 text-white shadow-sm transition hover:brightness-110 disabled:from-slate-300 disabled:to-slate-300 disabled:shadow-none dark:disabled:from-white/10 dark:disabled:to-white/10"
+              className="grid h-10 w-10 shrink-0 place-items-center rounded-2xl bg-gradient-to-br from-violet-500 to-indigo-600 text-white shadow-md shadow-indigo-500/30 transition hover:brightness-110 active:scale-95 disabled:bg-none disabled:bg-slate-100 disabled:text-slate-300 disabled:shadow-none dark:disabled:bg-white/5 dark:disabled:text-slate-600"
             >
-              <svg viewBox="0 0 24 24" className="h-4 w-4" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round"><path d="M5 12h14" /><path d="M13 6l6 6-6 6" /></svg>
+              <svg viewBox="0 0 24 24" className="h-4 w-4" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round"><path d="M12 19V5" /><path d="M5 12l7-7 7 7" /></svg>
             </button>
           </div>
-          <div className="mt-2 flex items-center justify-between gap-2 px-1 text-[10px] text-slate-400">
+          <div className="mt-2 flex items-center justify-center gap-3 px-1 text-[10.5px] text-slate-400">
             <span className="flex items-center gap-1"><Icon name="shield" className="h-3 w-3" />{tr(locale, { uz: "Faqat o'qiydi va topshiriq beradi — sozlamalarni o'zgartirmaydi", ru: "Только читает и ставит задачи — настройки не меняет", en: "Read-only plus tasks — never changes settings", de: "Nur lesen und Aufgaben — keine Änderungen" })}</span>
-            <span className="hidden shrink-0 sm:inline"><kbd className="rounded border border-slate-200 px-1 dark:border-white/10">Enter</kbd> {tr(locale, { uz: "yuborish", ru: "отправить", en: "send", de: "senden" })}</span>
+            <span className="hidden shrink-0 sm:inline">·</span><span className="hidden shrink-0 sm:inline"><kbd className="rounded-md border border-slate-200 bg-white px-1.5 py-px font-sans text-[10px] dark:border-white/10 dark:bg-white/5">Enter</kbd> {tr(locale, { uz: "yuborish", ru: "отправить", en: "send", de: "senden" })}</span>
           </div>
         </form>
       </div>
