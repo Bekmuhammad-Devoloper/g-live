@@ -16,6 +16,7 @@ import UserAvatar from "./UserAvatar";
 import ThemeToggle from "./ThemeToggle";
 import CurrencyRates from "./CurrencyRates";
 import MoneyInput from "./MoneyInput";
+import AiAssistant from "./AiAssistant";
 
 export interface TopbarProps {
   locale: Locale;
@@ -197,6 +198,9 @@ export default function Topbar(p: TopbarProps) {
             </span>
           </div>
         )}
+
+        {/* 4.1) AI yordamchi — faqat rahbariyat */}
+        {(p.user.role === "DIRECTOR" || p.user.role === "DEPUTY_DIRECTOR") && <AiAssistant locale={p.locale} />}
 
         <div className="flex-1" />
 
