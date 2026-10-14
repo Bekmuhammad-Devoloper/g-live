@@ -228,38 +228,38 @@ export default function AiAssistant({ locale, userName }: { locale: Locale; user
     <div className="animate-dialog-fade fixed inset-0 z-[120] flex justify-end bg-slate-900/40 backdrop-blur-[2px]" onMouseDown={(e) => { if (e.target === e.currentTarget) setOpen(false); }}>
       <div className="animate-slide-in-right flex h-full w-full max-w-[540px] flex-col bg-[#f7f8fc] shadow-[-24px_0_60px_-20px_rgba(15,23,42,0.35)] dark:bg-[#0b1630]">
         {/* Sarlavha */}
-        <div className="relative shrink-0 overflow-hidden bg-[#1e1b4b] px-4 py-3.5 text-white">
-          <div aria-hidden className="pointer-events-none absolute inset-0 bg-[radial-gradient(120%_140%_at_0%_0%,rgba(139,92,246,0.55),transparent_55%),radial-gradient(90%_120%_at_100%_0%,rgba(59,130,246,0.45),transparent_60%)]" />
+        <div className="relative shrink-0 overflow-hidden bg-gradient-to-r from-[#e3262b] via-[#ee7a24] to-[#f6b51e] px-4 py-3.5 text-white">
+          <div aria-hidden className="pointer-events-none absolute inset-0 bg-[radial-gradient(80%_140%_at_100%_0%,rgba(255,255,255,0.28),transparent_60%),radial-gradient(60%_120%_at_0%_100%,rgba(120,10,10,0.25),transparent_70%)]" />
           <div aria-hidden className="pointer-events-none absolute inset-x-0 bottom-0 h-px bg-gradient-to-r from-transparent via-white/25 to-transparent" />
           <div className="relative flex items-center justify-between gap-3">
             <div className="flex min-w-0 items-center gap-3">
-              <span className="relative grid h-10 w-10 shrink-0 place-items-center rounded-xl bg-gradient-to-br from-violet-400 to-indigo-500 shadow-lg shadow-violet-900/40 ring-1 ring-white/30">
+              <span className="relative grid h-10 w-10 shrink-0 place-items-center rounded-xl bg-white/20 shadow-lg shadow-red-900/20 ring-1 ring-white/40 backdrop-blur">
                 <Sparkle className="h-5 w-5" />
-                <span className="absolute -bottom-0.5 -right-0.5 h-3 w-3 rounded-full border-2 border-[#1e1b4b] bg-emerald-400" />
+                <span className="absolute -bottom-0.5 -right-0.5 h-3 w-3 rounded-full border-2 border-[#e9522a] bg-emerald-400" />
               </span>
               <div className="min-w-0">
                 <div className="truncate text-[15px] font-semibold tracking-tight">{title}</div>
-                <div className="truncate text-[11px] text-white/60">
+                <div className="truncate text-[11px] text-white/80">
                   {view === "history"
                     ? tr(locale, { uz: "Suhbatlar tarixi", ru: "История чатов", en: "Chat history", de: "Chatverlauf" })
                     : tr(locale, { uz: "Markaz ma'lumotlari bilan ishlaydi", ru: "Работает с данными центра", en: "Works with your center's data", de: "Arbeitet mit Ihren Daten" })}
                 </div>
               </div>
             </div>
-            <div className="flex shrink-0 items-center gap-0.5 rounded-xl bg-white/[0.07] p-1 ring-1 ring-white/10">
+            <div className="flex shrink-0 items-center gap-0.5 rounded-xl bg-white/15 p-1 ring-1 ring-white/25 backdrop-blur">
               <button
                 type="button"
                 onClick={() => (view === "history" ? setView("chat") : openHistory())}
                 title={tr(locale, { uz: "Suhbatlar tarixi", ru: "История чатов", en: "Chat history", de: "Chatverlauf" })}
-                className={cn("grid h-8 w-8 place-items-center rounded-lg transition hover:bg-white/15 hover:text-white", view === "history" ? "bg-white/20 text-white" : "text-white/70")}
+                className={cn("grid h-8 w-8 place-items-center rounded-lg transition hover:bg-white/15 hover:text-white", view === "history" ? "bg-white/25 text-white" : "text-white/85")}
               >
                 <Icon name="history" className="h-4 w-4" />
               </button>
-              <button type="button" onClick={newChat} title={tr(locale, { uz: "Yangi chat", ru: "Новый чат", en: "New chat", de: "Neuer Chat" })} className="grid h-8 w-8 place-items-center rounded-lg text-white/70 transition hover:bg-white/15 hover:text-white">
+              <button type="button" onClick={newChat} title={tr(locale, { uz: "Yangi chat", ru: "Новый чат", en: "New chat", de: "Neuer Chat" })} className="grid h-8 w-8 place-items-center rounded-lg text-white/85 transition hover:bg-white/20 hover:text-white">
                 <svg viewBox="0 0 24 24" className="h-4 w-4" fill="none" stroke="currentColor" strokeWidth="1.9" strokeLinecap="round" strokeLinejoin="round"><path d="M12 20h9" /><path d="M16.5 3.5a2.1 2.1 0 0 1 3 3L7 19l-4 1 1-4Z" /></svg>
               </button>
-              <span className="mx-0.5 h-5 w-px bg-white/15" />
-              <button type="button" onClick={() => setOpen(false)} title={tr(locale, { uz: "Yopish", ru: "Закрыть", en: "Close", de: "Schließen" })} className="grid h-8 w-8 place-items-center rounded-lg text-white/70 transition hover:bg-white/15 hover:text-white">
+              <span className="mx-0.5 h-5 w-px bg-white/30" />
+              <button type="button" onClick={() => setOpen(false)} title={tr(locale, { uz: "Yopish", ru: "Закрыть", en: "Close", de: "Schließen" })} className="grid h-8 w-8 place-items-center rounded-lg text-white/85 transition hover:bg-white/20 hover:text-white">
                 <Icon name="close" className="h-4 w-4" />
               </button>
             </div>
