@@ -200,7 +200,7 @@ export default function Topbar(p: TopbarProps) {
         )}
 
         {/* 4.1) AI yordamchi — faqat rahbariyat */}
-        {(p.user.role === "DIRECTOR" || p.user.role === "DEPUTY_DIRECTOR") && <AiAssistant locale={p.locale} />}
+        {(p.user.role === "DIRECTOR" || p.user.role === "DEPUTY_DIRECTOR") && <AiAssistant locale={p.locale} userName={p.user.fullName} />}
 
         <div className="flex-1" />
 
