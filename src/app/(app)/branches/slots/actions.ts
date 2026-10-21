@@ -82,6 +82,38 @@ export async function addBranchSlot(input: { branchId: string; room: string; day
   return { ok: true, slots: await listBranchSlots(branch.id) };
 }
 
+/** Mavjud bo'sh vaqtni tahrirlash — xonaga tashlangan lidlar joyida qoladi */
+export async function updateBranchSlot(id: string, input: { room: string; days: string; startTime: string; endTime: string; note?: string; capacity?: number | null }): Promise<SlotResult> {
+  const s = await requireSession();
+  const row = await prisma.branchSlot.findUnique({ where: { id }, include: { _count: { select: { leads: true } } } });
+  if (!row) return { error: "notfound" };
+  if (!canEdit(s, row.branchId)) return { error: "forbidden" };
+
+  const room = String(input.room ?? "").replace(/\s+/g, " ").trim().slice(0, 60);
+  const days = String(input.days ?? "").replace(/\s+/g, " ").trim().slice(0, 60);
+  const startTime = String(input.startTime ?? "").trim();
+  const endTime = String(input.endTime ?? "").trim();
+  const note = String(input.note ?? "").replace(/\s+/g, " ").trim().slice(0, 120) || null;
+  if (room.length < 1) return { error: "room" };
+  if (days.length < 2) return { error: "days" };
+  if (!TIME_RE.test(startTime) || !TIME_RE.test(endTime) || startTime >= endTime) return { error: "time" };
+  // Sig'im: bo'sh/0 — cheksiz; xonadagi lidlar sonidan kam bo'lishi mumkin emas
+  const capRaw = Math.trunc(Number(input.capacity));
+  const capacity: number | null = Number.isFinite(capRaw) && capRaw > 0 ? Math.min(capRaw, 200) : null;
+  if (capacity !== null && capacity < row._count.leads) return { error: "capacity" };
+
+  await prisma.branchSlot.update({ where: { id }, data: { room, days, startTime, endTime, note, capacity } });
+  await writeAudit({
+    actorId: s.userId, action: "UPDATE", entityType: "BranchSlot", entityId: id,
+    oldValue: { room: row.room, days: row.days, startTime: row.startTime, endTime: row.endTime, note: row.note, capacity: row.capacity },
+    newValue: { room, days, startTime, endTime, note, capacity },
+  });
+
+  revalidatePath("/crm");
+  revalidatePath("/dashboard");
+  return { ok: true, slots: await listBranchSlots(row.branchId) };
+}
+
 export async function removeBranchSlot(id: string): Promise<SlotResult> {
   const s = await requireSession();
   const row = await prisma.branchSlot.findUnique({ where: { id } });

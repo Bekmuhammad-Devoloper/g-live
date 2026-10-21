@@ -5,7 +5,8 @@ import { cn } from "@/lib/cn";
 import { tr } from "@/lib/tr";
 import type { Locale } from "@/lib/constants";
 import { Icon } from "../../_components/Icon";
-import { addBranchSlot, listBranchRooms, removeBranchSlot, type VSlot } from "./actions";
+import { addBranchSlot, listBranchRooms, removeBranchSlot, updateBranchSlot, type VSlot } from "./actions";
+import { confirmDelete } from "../../_components/dialogs";
 import CapacityStepper from "../../_components/CapacityStepper";
 
 /**
@@ -44,6 +45,7 @@ export default function BranchSlotsEditor({ branchId, initial, canEdit, locale, 
 }) {
   const [slots, setSlots] = useState<VSlot[]>(initial);
   const [adding, setAdding] = useState(false);
+  const [editingId, setEditingId] = useState<string | null>(null); // tahrirlanayotgan karta
   const [rooms, setRooms] = useState<{ name: string; capacity: number }[]>([]);
   const [room, setRoom] = useState("");
   const [capacity, setCapacity] = useState(""); // sig'im — xona tanlansa Xonalar bo'limidan to'ladi (o'zgartirsa bo'ladi)
@@ -60,13 +62,14 @@ export default function BranchSlotsEditor({ branchId, initial, canEdit, locale, 
 
   useEffect(() => { setSlots(initial); }, [initial]);
   // Xonalar ro'yxati — forma ochilganda bir marta
-  useEffect(() => { if (adding && rooms.length === 0) listBranchRooms(branchId).then(setRooms); }, [adding, branchId, rooms.length]);
+  useEffect(() => { if ((adding || editingId) && rooms.length === 0) listBranchRooms(branchId).then(setRooms); }, [adding, editingId, branchId, rooms.length]);
 
   const apply = (r: { ok?: boolean; error?: string; slots?: VSlot[] }) => {
     if (r.error) {
       setErr(r.error === "room" ? L("Xonani kiriting", "Укажите аудиторию", "Enter the room", "Raum angeben")
         : r.error === "days" ? L("Kunlarni tanlang", "Выберите дни", "Select days", "Tage wählen")
         : r.error === "time" ? L("Vaqt noto'g'ri (boshlanish < tugash)", "Неверное время (начало < конец)", "Invalid time (start < end)", "Ungültige Zeit (Start < Ende)")
+        : r.error === "capacity" ? L("Sig'im xonadagi lidlar sonidan kam bo'lmasin", "Мест не может быть меньше, чем лидов в аудитории", "Capacity cannot be below the leads already in the room", "Plätze dürfen nicht unter der Lead-Anzahl liegen")
         : r.error === "forbidden" ? L("Ruxsat yo'q", "Нет доступа", "No permission", "Keine Berechtigung")
         : L("Saqlanmadi", "Не сохранено", "Not saved", "Nicht gespeichert"));
       return;
@@ -78,12 +81,105 @@ export default function BranchSlotsEditor({ branchId, initial, canEdit, locale, 
     setErr(null);
     const r = await addBranchSlot({ branchId, room, days: days.join(", "), startTime: start, endTime: end, note, capacity: capacity ? Number(capacity) : null });
     apply(r);
-    if (r.ok) { setAdding(false); setRoom(""); setDays([]); setNote(""); setCapacity(""); }
+    if (r.ok) resetForm();
   });
-  const remove = (id: string) => run(async () => apply(await removeBranchSlot(id)));
+  const resetForm = () => { setAdding(false); setEditingId(null); setRoom(""); setDays([]); setNote(""); setCapacity(""); setCapTouched(false); setStart("18:00"); setEnd("19:30"); setErr(null); };
+  const startEdit = (sl: VSlot) => {
+    setAdding(false);
+    setEditingId(sl.id);
+    setRoom(sl.room);
+    setDays(DAYS.filter((d) => sl.days.split(/\s*,\s*/).includes(d.key)).map((d) => d.key));
+    setStart(sl.startTime);
+    setEnd(sl.endTime);
+    setNote(sl.note ?? "");
+    setCapacity(sl.capacity ? String(sl.capacity) : "");
+    setCapTouched(true);
+    setErr(null);
+  };
+  const save = () => {
+    if (!editingId) return add();
+    const id = editingId;
+    run(async () => {
+      setErr(null);
+      const r = await updateBranchSlot(id, { room, days: days.join(", "), startTime: start, endTime: end, note, capacity: capacity ? Number(capacity) : null });
+      apply(r);
+      if (r.ok) resetForm();
+    });
+  };
+  const remove = async (sl: VSlot) => {
+    const label = `${sl.room} · ${sl.days} · ${sl.startTime}`;
+    const ok = await confirmDelete(L(`"${label}" o'chirilsinmi? Ichidagi lidlar xonasiz qoladi.`, `Удалить «${label}»? Лиды останутся без аудитории.`, `Delete "${label}"? Its leads will lose the room.`, `"${label}" löschen? Die Leads verlieren den Raum.`));
+    if (!ok) return;
+    run(async () => apply(await removeBranchSlot(sl.id)));
+  };
   const toggleDay = (k: string) => setDays((d) => (d.includes(k) ? d.filter((x) => x !== k) : DAYS.filter((x) => d.includes(x.key) || x.key === k).map((x) => x.key)));
 
   const inp = cn("w-full rounded-lg border border-slate-200 bg-white text-slate-800 outline-none focus:border-brand-400 dark:border-slate-700 dark:bg-slate-800/60 dark:text-slate-100", compact ? "h-8 px-2 text-xs" : "h-9 px-2.5 text-sm");
+
+  // Qo'shish va tahrirlash uchun bitta forma
+  const form = canEdit ? (
+    <div className={cn("mt-2 space-y-2 rounded-xl border border-emerald-200 bg-emerald-50/60 p-2.5 dark:border-emerald-500/30 dark:bg-emerald-500/5", compact ? "text-xs" : "text-sm")}>
+      {editingId && <div className="text-[11px] font-bold text-emerald-700 dark:text-emerald-300">{L("Bo'sh vaqtni tahrirlash", "Редактирование времени", "Edit free slot", "Freie Zeit bearbeiten")}</div>}
+      {/* Xona — ro'yxatdan yoki qo'lda */}
+      <div>
+        <label className="mb-0.5 block text-[10px] font-semibold text-slate-500">{L("Xona", "Аудитория", "Room", "Raum")} *</label>
+        {rooms.length > 0 && (
+          <select
+            value={rooms.some((r) => r.name === room) ? room : ""}
+            onChange={(e) => { setRoom(e.target.value); const r = rooms.find((x) => x.name === e.target.value); if (r && r.capacity > 0 && !capTouched) setCapacity(String(r.capacity)); }}
+            className={cn(inp, "mb-1")}
+          >
+            <option value="">{L("— xonani tanlang —", "— выберите аудиторию —", "— select a room —", "— Raum wählen —")}</option>
+            {rooms.map((r) => <option key={r.name} value={r.name}>{r.name}{r.capacity > 0 ? ` (${r.capacity} ${L("joy", "мест", "seats", "Plätze")})` : ""}</option>)}
+          </select>
+        )}
+        <input value={room} onChange={(e) => setRoom(e.target.value)} placeholder={L("masalan: 3-xona", "например: ауд. 3", "e.g. Room 3", "z. B. Raum 3")} className={inp} />
+      </div>
+      {/* Kunlar */}
+      <div>
+        <label className="mb-0.5 block text-[10px] font-semibold text-slate-500">{L("Kunlar", "Дни", "Days", "Tage")} *</label>
+        <div className="flex flex-wrap gap-1">
+          {DAYS.map((d) => (
+            <button key={d.key} type="button" onClick={() => toggleDay(d.key)} className={cn("rounded-md border px-2 py-1 text-[11px] font-semibold transition", days.includes(d.key) ? "border-emerald-600 bg-emerald-600 text-white" : "border-slate-200 bg-white text-slate-600 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-300")}>
+              {tr(locale, d.label)}
+            </button>
+          ))}
+        </div>
+      </div>
+      {/* Vaqt */}
+      <div className="grid grid-cols-2 gap-2">
+        <div>
+          <label className="mb-0.5 block text-[10px] font-semibold text-slate-500">{L("Boshlanish", "Начало", "Start", "Beginn")} *</label>
+          <input type="time" value={start} onChange={(e) => setStart(e.target.value)} className={inp} />
+        </div>
+        <div>
+          <label className="mb-0.5 block text-[10px] font-semibold text-slate-500">{L("Tugash", "Конец", "End", "Ende")} *</label>
+          <input type="time" value={end} onChange={(e) => setEnd(e.target.value)} className={inp} />
+        </div>
+      </div>
+      <div>
+        <label className="mb-0.5 block text-[10px] font-semibold text-slate-500">{L("Izoh", "Заметка", "Note", "Notiz")}</label>
+        <input value={note} onChange={(e) => setNote(e.target.value)} placeholder={L("A1 yangi guruh", "A1 новая группа", "A1 new group", "A1 neue Gruppe")} className={inp} />
+      </div>
+      <div>
+        <label className="mb-0.5 block text-[10px] font-semibold text-slate-500">
+          {L("Sig'im", "Мест", "Seats", "Plätze")} <span className="font-normal text-slate-400">— {L("guruh yig'ish uchun, xonadan ko'p bo'lishi mumkin", "для набора, может быть больше кабинета", "for recruiting, may exceed the room", "zum Sammeln, darf den Raum übersteigen")}</span>
+        </label>
+        <CapacityStepper
+          value={capacity ? Number(capacity) : 0}
+          min={0}
+          onChange={(n) => { setCapacity(n > 0 ? String(n) : ""); setCapTouched(true); }}
+          roomCapacity={rooms.find((x) => x.name === room)?.capacity ?? null}
+          locale={locale}
+        />
+      </div>
+      {err && <p className="text-[11px] text-rose-600">{err}</p>}
+      <div className="flex justify-end gap-1.5">
+        <button type="button" onClick={resetForm} className={cn("rounded-lg px-2.5 font-medium text-slate-500 hover:bg-white/60 dark:hover:bg-white/5", compact ? "h-7 text-[11px]" : "h-8 text-xs")}>{L("Bekor", "Отмена", "Cancel", "Abbrechen")}</button>
+        <button type="button" onClick={save} disabled={pending} className={cn("rounded-lg bg-emerald-600 px-3 font-semibold text-white hover:bg-emerald-700 disabled:opacity-50", compact ? "h-7 text-[11px]" : "h-8 text-xs")}>{pending ? "..." : L("Saqlash", "Сохранить", "Save", "Speichern")}</button>
+      </div>
+    </div>
+  ) : null;
 
   return (
     <div>
@@ -101,6 +197,7 @@ export default function BranchSlotsEditor({ branchId, initial, canEdit, locale, 
             const count = slotCount?.(sl.id) ?? 0;
             const full = !!sl.capacity && count >= sl.capacity;
             const opened = openSlot === sl.id;
+            if (editingId === sl.id) return <li key={sl.id}>{form}</li>;
             return (
             <Fragment key={sl.id}>
             <li
@@ -163,9 +260,14 @@ export default function BranchSlotsEditor({ branchId, initial, canEdit, locale, 
                   )}
                 </div>
                 {canEdit && (
-                  <button type="button" onClick={(e) => { e.stopPropagation(); remove(sl.id); }} disabled={pending} title={L("O'chirish", "Удалить", "Remove", "Entfernen")} className="shrink-0 rounded-md p-1 text-slate-300 opacity-70 transition hover:bg-rose-50 hover:text-rose-500 group-hover:opacity-100">
-                    <Icon name="close" className="h-3.5 w-3.5" />
-                  </button>
+                  <div className="flex shrink-0 flex-col gap-0.5 opacity-70 transition group-hover:opacity-100">
+                    <button type="button" onClick={(e) => { e.stopPropagation(); startEdit(sl); }} disabled={pending} title={L("Tahrirlash", "Редактировать", "Edit", "Bearbeiten")} className="rounded-md p-1 text-slate-400 transition hover:bg-emerald-50 hover:text-emerald-600 dark:hover:bg-emerald-500/10">
+                      <Icon name="pencil" className="h-3.5 w-3.5" />
+                    </button>
+                    <button type="button" onClick={(e) => { e.stopPropagation(); remove(sl); }} disabled={pending} title={L("O'chirish", "Удалить", "Remove", "Entfernen")} className="rounded-md p-1 text-slate-300 transition hover:bg-rose-50 hover:text-rose-500 dark:hover:bg-rose-500/10">
+                      <Icon name="close" className="h-3.5 w-3.5" />
+                    </button>
+                  </div>
                 )}
               </div>
             </li>
@@ -183,7 +285,7 @@ export default function BranchSlotsEditor({ branchId, initial, canEdit, locale, 
 
       {slots.length > 0 && !cards && (
         <ul className={cn("space-y-1", compact ? "" : "space-y-1.5")}>
-          {slots.map((sl) => (
+          {slots.map((sl) => editingId === sl.id ? <li key={sl.id}>{form}</li> : (
             <li key={sl.id} className={cn("flex items-start gap-2 rounded-lg bg-emerald-50 text-emerald-800 dark:bg-emerald-500/10 dark:text-emerald-200", compact ? "px-2 py-1.5 text-[11px]" : "px-3 py-2 text-sm")}>
               <Icon name="clock" className={cn("mt-0.5 shrink-0", compact ? "h-3 w-3" : "h-4 w-4")} />
               <span className="min-w-0 flex-1 leading-snug">
@@ -191,83 +293,27 @@ export default function BranchSlotsEditor({ branchId, initial, canEdit, locale, 
                 {sl.note && <span className="block text-emerald-700/80 dark:text-emerald-300/80">{sl.note}</span>}
               </span>
               {canEdit && (
-                <button type="button" onClick={() => remove(sl.id)} disabled={pending} title={L("O'chirish", "Удалить", "Remove", "Entfernen")} className="shrink-0 text-emerald-600/60 transition hover:text-rose-600">
-                  <Icon name="close" className={compact ? "h-3 w-3" : "h-3.5 w-3.5"} />
-                </button>
+                <span className="flex shrink-0 items-center gap-1.5">
+                  <button type="button" onClick={() => startEdit(sl)} disabled={pending} title={L("Tahrirlash", "Редактировать", "Edit", "Bearbeiten")} className="text-emerald-600/60 transition hover:text-emerald-700">
+                    <Icon name="pencil" className={compact ? "h-3 w-3" : "h-3.5 w-3.5"} />
+                  </button>
+                  <button type="button" onClick={() => remove(sl)} disabled={pending} title={L("O'chirish", "Удалить", "Remove", "Entfernen")} className="text-emerald-600/60 transition hover:text-rose-600">
+                    <Icon name="close" className={compact ? "h-3 w-3" : "h-3.5 w-3.5"} />
+                  </button>
+                </span>
               )}
             </li>
           ))}
         </ul>
       )}
 
-      {canEdit && !adding && (
+      {canEdit && !adding && !editingId && (
         <button type="button" onClick={() => setAdding(true)} className={cn("mt-2 flex w-full items-center justify-center gap-1 rounded-lg border border-dashed border-emerald-300 font-semibold text-emerald-700 transition hover:bg-emerald-50 dark:border-emerald-500/40 dark:text-emerald-300 dark:hover:bg-emerald-500/10", compact ? "py-1.5 text-[11px]" : "py-2 text-xs")}>
           <Icon name="plus" className="h-3.5 w-3.5" /> {L("Bo'sh vaqt qo'shish", "Добавить свободное время", "Add free slot", "Freie Zeit hinzufügen")}
         </button>
       )}
 
-      {canEdit && adding && (
-        <div className={cn("mt-2 space-y-2 rounded-xl border border-emerald-200 bg-emerald-50/60 p-2.5 dark:border-emerald-500/30 dark:bg-emerald-500/5", compact ? "text-xs" : "text-sm")}>
-          {/* Xona — ro'yxatdan yoki qo'lda */}
-          <div>
-            <label className="mb-0.5 block text-[10px] font-semibold text-slate-500">{L("Xona", "Аудитория", "Room", "Raum")} *</label>
-            {rooms.length > 0 && (
-              <select
-                value={rooms.some((r) => r.name === room) ? room : ""}
-                onChange={(e) => { setRoom(e.target.value); const r = rooms.find((x) => x.name === e.target.value); if (r && r.capacity > 0 && !capTouched) setCapacity(String(r.capacity)); }}
-                className={cn(inp, "mb-1")}
-              >
-                <option value="">{L("— xonani tanlang —", "— выберите аудиторию —", "— select a room —", "— Raum wählen —")}</option>
-                {rooms.map((r) => <option key={r.name} value={r.name}>{r.name}{r.capacity > 0 ? ` (${r.capacity} ${L("joy", "мест", "seats", "Plätze")})` : ""}</option>)}
-              </select>
-            )}
-            <input value={room} onChange={(e) => setRoom(e.target.value)} placeholder={L("masalan: 3-xona", "например: ауд. 3", "e.g. Room 3", "z. B. Raum 3")} className={inp} />
-          </div>
-          {/* Kunlar */}
-          <div>
-            <label className="mb-0.5 block text-[10px] font-semibold text-slate-500">{L("Kunlar", "Дни", "Days", "Tage")} *</label>
-            <div className="flex flex-wrap gap-1">
-              {DAYS.map((d) => (
-                <button key={d.key} type="button" onClick={() => toggleDay(d.key)} className={cn("rounded-md border px-2 py-1 text-[11px] font-semibold transition", days.includes(d.key) ? "border-emerald-600 bg-emerald-600 text-white" : "border-slate-200 bg-white text-slate-600 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-300")}>
-                  {tr(locale, d.label)}
-                </button>
-              ))}
-            </div>
-          </div>
-          {/* Vaqt */}
-          <div className="grid grid-cols-2 gap-2">
-            <div>
-              <label className="mb-0.5 block text-[10px] font-semibold text-slate-500">{L("Boshlanish", "Начало", "Start", "Beginn")} *</label>
-              <input type="time" value={start} onChange={(e) => setStart(e.target.value)} className={inp} />
-            </div>
-            <div>
-              <label className="mb-0.5 block text-[10px] font-semibold text-slate-500">{L("Tugash", "Конец", "End", "Ende")} *</label>
-              <input type="time" value={end} onChange={(e) => setEnd(e.target.value)} className={inp} />
-            </div>
-          </div>
-          <div>
-            <label className="mb-0.5 block text-[10px] font-semibold text-slate-500">{L("Izoh", "Заметка", "Note", "Notiz")}</label>
-            <input value={note} onChange={(e) => setNote(e.target.value)} placeholder={L("A1 yangi guruh", "A1 новая группа", "A1 new group", "A1 neue Gruppe")} className={inp} />
-          </div>
-          <div>
-            <label className="mb-0.5 block text-[10px] font-semibold text-slate-500">
-              {L("Sig'im", "Мест", "Seats", "Plätze")} <span className="font-normal text-slate-400">— {L("guruh yig'ish uchun, xonadan ko'p bo'lishi mumkin", "для набора, может быть больше кабинета", "for recruiting, may exceed the room", "zum Sammeln, darf den Raum übersteigen")}</span>
-            </label>
-            <CapacityStepper
-              value={capacity ? Number(capacity) : 0}
-              min={0}
-              onChange={(n) => { setCapacity(n > 0 ? String(n) : ""); setCapTouched(true); }}
-              roomCapacity={rooms.find((x) => x.name === room)?.capacity ?? null}
-              locale={locale}
-            />
-          </div>
-          {err && <p className="text-[11px] text-rose-600">{err}</p>}
-          <div className="flex justify-end gap-1.5">
-            <button type="button" onClick={() => { setAdding(false); setErr(null); }} className={cn("rounded-lg px-2.5 font-medium text-slate-500 hover:bg-white/60 dark:hover:bg-white/5", compact ? "h-7 text-[11px]" : "h-8 text-xs")}>{L("Bekor", "Отмена", "Cancel", "Abbrechen")}</button>
-            <button type="button" onClick={add} disabled={pending} className={cn("rounded-lg bg-emerald-600 px-3 font-semibold text-white hover:bg-emerald-700 disabled:opacity-50", compact ? "h-7 text-[11px]" : "h-8 text-xs")}>{pending ? "..." : L("Saqlash", "Сохранить", "Save", "Speichern")}</button>
-          </div>
-        </div>
-      )}
+      {canEdit && adding && form}
     </div>
   );
 }
