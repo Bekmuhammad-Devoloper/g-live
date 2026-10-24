@@ -11,6 +11,7 @@ import { CARD, ICON_GRADIENT, PageHeader } from "../_ui";
 import DictNav from "./DictNav";
 import WordList, { type VWord } from "./WordList";
 import { getLevelCodes } from "@/lib/studyLevels";
+import { groupLessonsWhere } from "@/lib/levelLessons";
 
 // Wörterbuch — ikki manba:
 //   "Kursim" — o'quvchi darslaridagi so'zlar (CourseLesson.topic)
@@ -51,7 +52,7 @@ export default async function StudentWorterbuchPage({ searchParams }: { searchPa
   const [lessons, progress] = await Promise.all([
     group
       ? prisma.courseLesson.findMany({
-          where: { programId: group.programId },
+          where: await groupLessonsWhere(group),
           orderBy: { order: "asc" },
           select: { id: true, title: true, topic: true, vocabText: true, levelCode: true },
         })

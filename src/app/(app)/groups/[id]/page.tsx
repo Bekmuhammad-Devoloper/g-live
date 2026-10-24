@@ -15,6 +15,7 @@ import { getLevelCodes } from "@/lib/studyLevels";
 import { groupColor } from "../groupColor";
 import { isPaymentMandatoryBulk } from "@/lib/paymentPolicy";
 import { canEditLessons } from "@/lib/lessonAccess";
+import { groupLessonsWhere } from "@/lib/levelLessons";
 
 export default async function GroupDetailPage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = await params;
@@ -54,7 +55,7 @@ export default async function GroupDetailPage({ params }: { params: Promise<{ id
 
   // Kurs dars rejasi (video/mavzu/topshiriq/uy vazifasi) + shu guruh o'tgan darslari
   const [courseLessons, progressRows] = await Promise.all([
-    prisma.courseLesson.findMany({ where: { programId: group.programId }, orderBy: { order: "asc" } }),
+    prisma.courseLesson.findMany({ where: await groupLessonsWhere(group), orderBy: { order: "asc" } }),
     prisma.groupLessonProgress.findMany({ where: { groupId: group.id }, select: { courseLessonId: true, taught: true } }),
   ]);
   const lessonProgress: Record<string, boolean> = {};

@@ -5,6 +5,7 @@ import { prisma } from "@/lib/db";
 import { getActiveLevels } from "@/lib/studyLevels";
 import { S, type StudentStrings } from "../../../_i18n";
 import type { Locale } from "@/lib/constants";
+import { groupLessonsWhere } from "@/lib/levelLessons";
 
 // Dars va uning uchta bo'limi (Lug'at · Dars · Vazifa) uchun UMUMIY yuklovchi.
 //
@@ -85,7 +86,7 @@ export async function loadUnit(level: string, unit: string): Promise<UnitLoad> {
   const [lesson, allLessons, progress] = await Promise.all([
     prisma.courseLesson.findUnique({ where: { id: unit } }),
     prisma.courseLesson.findMany({
-      where: { programId: group.programId },
+      where: await groupLessonsWhere(group),
       orderBy: { order: "asc" },
       select: { id: true, levelCode: true, title: true },
     }),
@@ -95,8 +96,8 @@ export async function loadUnit(level: string, unit: string): Promise<UnitLoad> {
     }),
   ]);
 
-  // Boshqa kursning darsiga URL orqali kirib bo'lmasin
-  if (!lesson || lesson.programId !== group.programId) notFound();
+  // Guruhga ko'rinmaydigan (boshqa kurs/daraja) darsga URL orqali kirib bo'lmasin
+  if (!lesson || !allLessons.some((l) => l.id === lesson.id)) notFound();
 
   const fallback = (group.levelCode ?? student.currentLevel ?? "A1").slice(0, 2).toUpperCase();
   const levelLessons = allLessons.filter((l) => (l.levelCode ?? fallback).toUpperCase() === code);

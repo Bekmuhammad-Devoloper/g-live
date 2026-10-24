@@ -7,6 +7,7 @@ import MissingStudent from "../../MissingStudent";
 import { getActiveLevels, levelTitle } from "@/lib/studyLevels";
 import HeaderBadges from "../../HeaderBadges";
 import { NAVY, TEAL } from "../../_ui";
+import { groupLessonsWhere } from "@/lib/levelLessons";
 
 // Daraja ichi — "neyron yo'li". Darslar miya tugunlari bo'lib zigzag
 // joylashadi, orasi akson bilan bog'lanadi.
@@ -342,7 +343,7 @@ export default async function StudentLevelPage({ params }: { params: Promise<{ l
   const [allLessons, progress, views, assignments] = await Promise.all([
     group
       ? prisma.courseLesson.findMany({
-          where: { programId: group.programId },
+          where: await groupLessonsWhere(group),
           orderBy: { order: "asc" },
           select: { id: true, order: true, levelCode: true, title: true, videoUrl: true },
         })

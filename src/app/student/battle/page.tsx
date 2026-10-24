@@ -7,6 +7,7 @@ import { gameWords, genderNouns, shortUz } from "@/lib/dictionary";
 import MissingStudent from "../MissingStudent";
 import Battle, { type WordPair, type Rival, type Invite } from "./Battle";
 import HeaderBadges from "../HeaderBadges";
+import { groupLessonsWhere } from "@/lib/levelLessons";
 
 // "Jang" (Battle) — o'yin sozlash ekrani.
 //
@@ -30,7 +31,7 @@ export default async function StudentBattlePage() {
       enrollments: {
         where: { isActive: true },
         orderBy: { joinedAt: "desc" },
-        select: { groupId: true, group: { select: { programId: true, name: true } } },
+        select: { groupId: true, group: { select: { programId: true, levelCode: true, name: true } } },
       },
     },
   });
@@ -41,9 +42,9 @@ export default async function StudentBattlePage() {
   const groupId = enrollment?.groupId ?? null;
 
   const [lessons, mates, invites] = await Promise.all([
-    programId
+    programId && enrollment
       ? prisma.courseLesson.findMany({
-          where: { programId },
+          where: await groupLessonsWhere(enrollment.group),
           orderBy: { order: "asc" },
           select: { title: true, topic: true },
         })

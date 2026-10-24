@@ -6,6 +6,7 @@ import { ROLES } from "@/lib/constants";
 import { prisma } from "@/lib/db";
 import { lessonVocabText, parseLessonWords, practicableWords } from "@/lib/lessonWords";
 import { awardSkill } from "@/lib/skills";
+import { lessonVisibleToGroups } from "@/lib/levelLessons";
 
 // Dars videosi ko'rib chiqilgani — har darsga BIR marta yoziladi.
 // Shu yozuv bo'yicha o'quvchiga tanga va yulduz beriladi.
@@ -20,7 +21,7 @@ export async function markLessonWatched(lessonId: string): Promise<{ ok?: boolea
       id: true,
       enrollments: {
         where: { isActive: true },
-        select: { group: { select: { programId: true } } },
+        select: { group: { select: { programId: true, levelCode: true } } },
       },
     },
   });
@@ -33,7 +34,7 @@ export async function markLessonWatched(lessonId: string): Promise<{ ok?: boolea
     select: { id: true, programId: true },
   });
   if (!lesson) return { error: "invalid" };
-  if (!student.enrollments.some((e) => e.group.programId === lesson.programId)) return { error: "forbidden" };
+  if (!(await lessonVisibleToGroups(lesson.id, student.enrollments.map((e) => e.group)))) return { error: "forbidden" };
 
   // Takroriy ko'rish qo'shimcha ball bermaydi
   await prisma.lessonView.upsert({
@@ -62,13 +63,13 @@ export async function recordVocabStage(lessonId: string, stage: number): Promise
 
   const student = await prisma.student.findUnique({
     where: { userId: s.userId },
-    select: { id: true, enrollments: { where: { isActive: true }, select: { group: { select: { programId: true } } } } },
+    select: { id: true, enrollments: { where: { isActive: true }, select: { group: { select: { programId: true, levelCode: true } } } } },
   });
   if (!student) return { error: "forbidden" };
 
   const lesson = await prisma.courseLesson.findUnique({ where: { id: lessonId }, select: { id: true, programId: true } });
   if (!lesson) return { error: "invalid" };
-  if (!student.enrollments.some((e) => e.group.programId === lesson.programId)) return { error: "forbidden" };
+  if (!(await lessonVisibleToGroups(lesson.id, student.enrollments.map((e) => e.group)))) return { error: "forbidden" };
 
   const type = (["vocabStage1", "vocabStage2", "vocabStage3", "vocabStage4"] as const)[stage - 1];
   await awardSkill(student.id, type, `vocab:${lesson.id}:s${stage}`);
@@ -93,7 +94,7 @@ export async function markVocabMastered(lessonId: string): Promise<{ ok?: boolea
       id: true,
       enrollments: {
         where: { isActive: true },
-        select: { group: { select: { programId: true } } },
+        select: { group: { select: { programId: true, levelCode: true } } },
       },
     },
   });
@@ -104,7 +105,7 @@ export async function markVocabMastered(lessonId: string): Promise<{ ok?: boolea
     select: { id: true, programId: true, topic: true, vocabText: true },
   });
   if (!lesson) return { error: "invalid" };
-  if (!student.enrollments.some((e) => e.group.programId === lesson.programId)) return { error: "forbidden" };
+  if (!(await lessonVisibleToGroups(lesson.id, student.enrollments.map((e) => e.group)))) return { error: "forbidden" };
 
   // Mashq qilinadigan so'zlar — tarjimasi borlari (savol o'zbekcha beriladi)
   const words = practicableWords(parseLessonWords(lessonVocabText(lesson)));

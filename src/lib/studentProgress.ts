@@ -1,5 +1,6 @@
 import "server-only";
 import { prisma } from "./db";
+import { groupLessonsWhere } from "./levelLessons";
 
 // O'quvchining kurs jarayoni — YAGONA hisob.
 //
@@ -65,7 +66,7 @@ export async function getStudentProgress(
 
   const [lessons, taughtRows, viewRows, assignments] = await Promise.all([
     prisma.courseLesson.findMany({
-      where: { programId: group.programId },
+      where: await groupLessonsWhere(group),
       orderBy: { order: "asc" },
       select: { id: true, order: true, levelCode: true, title: true, topic: true, videoUrl: true },
     }),
