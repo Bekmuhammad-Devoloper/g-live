@@ -21,6 +21,10 @@ interface Props {
   groupColumns: GroupColumn[];
   /** Oddiy nomli ustunlar — "Taklif" dan keyin turadi */
   customColumns: CustomColumn[];
+  /** Xodim saqlagan ustunlar tartibi (kalitlar); bo'sh — standart tartib */
+  colOrder?: string[];
+  /** Ustun sarlavhasidan sudrab joyi o'zgartirilganda — yangi to'liq tartib */
+  onReorderColumns?: (keys: string[]) => void;
   onOpen: (id: string, e: React.MouseEvent) => void;
   /** Ikki marta bosilganda — lidning to'liq sahifasi */
   onOpenFull: (id: string) => void;
@@ -62,7 +66,7 @@ interface Props {
 const PAGE = 10;
 
 export default function LeadsKanban({
-  leads, totals, locale, selected, groupColumns, customColumns,
+  leads, totals, locale, selected, groupColumns, customColumns, colOrder = [], onReorderColumns,
   onOpen, onOpenFull, onDropToColumn, onAdd, onAddToGroup, onRemoveGroupCol, onAddToCustom, onRemoveCustomCol, onLevelTestQr, branchColumns = null, groupInfo = {}, archivedStudents = [], branchMode = null, showOnlineCol = true, hiddenCols = [], slotsEditable = null, onResetColumn, onDelete,
 }: Props) {
   const [dragId, setDragId] = useState<string | null>(null);
@@ -79,10 +83,32 @@ export default function LeadsKanban({
   );
 
   // Tartib: standart 4 ta → oddiy nomli ustunlar → "Qabul qilindi" → guruh ustunlari → "Yo'qotilgan"
-  const cols = useMemo(
+  const baseCols = useMemo(
     () => visibleColumns({ locale, groupColumns, customColumns, branchColumns, branchMode, showOnlineCol, hiddenCols }),
     [locale, groupColumns, customColumns, branchColumns, branchMode, showOnlineCol, hiddenCols],
   );
+  // Xodimning o'z tartibi: saqlangan kalitlar shu tartibda, yangi qo'shilgan ustunlar oxirida
+  const cols = useMemo(() => {
+    if (colOrder.length === 0) return baseCols;
+    const pos = new Map(colOrder.map((k, i) => [k, i]));
+    return baseCols
+      .map((c, i) => ({ c, k: pos.has(c.key) ? pos.get(c.key)! : 1000 + i }))
+      .sort((a, b) => a.k - b.k)
+      .map((x) => x.c);
+  }, [baseCols, colOrder]);
+  const [colDrag, setColDrag] = useState<string | null>(null); // sudralayotgan ustun
+  const [colOver, setColOver] = useState<string | null>(null);
+  const COL_MIME = "application/x-gl-column";
+  const dropColumn = (target: string) => {
+    if (!colDrag || colDrag === target || !onReorderColumns) return;
+    const keys = cols.map((c) => c.key).filter((k) => k !== colDrag);
+    const from = cols.findIndex((c) => c.key === colDrag);
+    const to = cols.findIndex((c) => c.key === target);
+    // O'ngga sudralsa nishondan keyin, chapga sudralsa nishondan oldin qo'yiladi
+    const at = keys.indexOf(target) + (from < to ? 1 : 0);
+    keys.splice(at, 0, colDrag);
+    onReorderColumns(keys);
+  };
 
   const colOf = useCallback((l: VLead) => columnOfLead(l, pinnedIds, customIds, branchCfg, hiddenCols.includes("test")), [pinnedIds, customIds, branchCfg, hiddenCols]);
 
@@ -124,10 +150,15 @@ export default function LeadsKanban({
           <div
             key={col.key}
             // Har doim preventDefault — aks holda brauzer drop'ga ruxsat bermaydi
-            onDragOver={(e) => { e.preventDefault(); e.dataTransfer.dropEffect = "move"; if (differentCol) setOverCol(col.key); }}
-            onDragLeave={() => setOverCol((c) => (c === col.key ? null : c))}
+            onDragOver={(e) => {
+              e.preventDefault(); e.dataTransfer.dropEffect = "move";
+              if (colDrag) { if (colOver !== col.key) setColOver(col.key); return; }
+              if (differentCol) setOverCol(col.key);
+            }}
+            onDragLeave={() => { setOverCol((c) => (c === col.key ? null : c)); setColOver((c) => (c === col.key ? null : c)); }}
             onDrop={(e) => {
               e.preventDefault();
+              if (colDrag || e.dataTransfer.types.includes(COL_MIME)) { dropColumn(col.key); setColDrag(null); setColOver(null); return; }
               // Arxiv kartasiga tashlangan bo'lsa — u o'zi hal qilgan (stopPropagation), bu yerga kelmaydi;
               // qo'shimcha himoya: nishon arxiv kartasi ichida bo'lsa "Yo'qotilgan"ga o'tkazmaymiz
               if ((e.target as HTMLElement).closest?.("[data-archive-drop]")) { setDragId(null); setOverCol(null); return; }
@@ -138,11 +169,25 @@ export default function LeadsKanban({
               setOverCol(null);
             }}
             // flex-col: pager pastga yopishadi — hamma ustun grid qatori bo'yicha TENG uzunlikda
-            className={cn("flex min-w-0 flex-col rounded-2xl border p-2.5 transition", isOver ? "border-slate-300 bg-slate-100/70 dark:border-white/[0.12] dark:bg-white/[0.04]" : "border-slate-200/50 bg-slate-50/50 dark:border-white/[0.05] dark:bg-white/[0.02]")}
+            className={cn(
+              "flex min-w-0 flex-col rounded-2xl border p-2.5 transition",
+              isOver ? "border-slate-300 bg-slate-100/70 dark:border-white/[0.12] dark:bg-white/[0.04]" : "border-slate-200/50 bg-slate-50/50 dark:border-white/[0.05] dark:bg-white/[0.02]",
+              colDrag === col.key && "opacity-40",
+              colDrag && colOver === col.key && colDrag !== col.key && "border-brand-400 ring-2 ring-brand-400/40",
+            )}
           >
-            {/* Sarlavha */}
-            <div className="flex items-center justify-between gap-2 px-1">
+            {/* Sarlavha — ushlab sudrab ustun joyini o'zgartirish mumkin */}
+            <div
+              draggable={!!onReorderColumns}
+              onDragStart={onReorderColumns ? (e) => { e.stopPropagation(); e.dataTransfer.setData(COL_MIME, col.key); e.dataTransfer.effectAllowed = "move"; setColDrag(col.key); } : undefined}
+              onDragEnd={() => { setColDrag(null); setColOver(null); }}
+              title={onReorderColumns ? tr(locale, { uz: "Joyini o'zgartirish uchun ushlab suring", ru: "Перетащите, чтобы изменить порядок", en: "Drag to reorder", de: "Zum Sortieren ziehen" }) : undefined}
+              className={cn("group/head flex items-center justify-between gap-2 px-1", onReorderColumns && "cursor-grab active:cursor-grabbing")}
+            >
               <div className="flex min-w-0 items-center gap-2">
+                {onReorderColumns && (
+                  <svg viewBox="0 0 24 24" className="-mr-1 h-4 w-3 shrink-0 text-slate-300 opacity-0 transition group-hover/head:opacity-100" fill="currentColor"><circle cx="9" cy="6" r="1.6" /><circle cx="15" cy="6" r="1.6" /><circle cx="9" cy="12" r="1.6" /><circle cx="15" cy="12" r="1.6" /><circle cx="9" cy="18" r="1.6" /><circle cx="15" cy="18" r="1.6" /></svg>
+                )}
                 <span className="flex h-7 w-7 shrink-0 items-center justify-center rounded-lg" style={{ color: col.color, background: `${col.color}1f` }}>
                   <Icon name={col.icon} className="h-4 w-4" strokeWidth={2} />
                 </span>

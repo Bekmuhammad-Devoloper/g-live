@@ -9,7 +9,7 @@ import LeadsWorkspace from "./_components/LeadsWorkspace";
 import type { LeadPayment } from "./[id]/LeadDetail";
 import { getSetting } from "@/lib/settings";
 import { RECEIPT_MODE_KEY, parseReceiptMode } from "@/lib/receiptMode";
-import { listKanbanGroups, listKanbanColumns } from "./actions";
+import { listKanbanGroups, listKanbanColumns, getKanbanOrder } from "./actions";
 import { columnOf, GROUP_COL_COLORS, weekdaysLabel, type ArchivedStudent, type BranchColumn, type BranchMode, type GroupInfo, type VLead } from "./_lib/leadColumns";
 import type { Analytics } from "./_components/AnalyticsTiles";
 
@@ -224,6 +224,7 @@ export default async function CrmPage() {
       payment={payment}
       initialGroupColumns={groupColumns}
       initialCustomColumns={customColumns}
+      initialColOrder={await getKanbanOrder()}
       branchColumns={branchMode ? branchColumns : null}
       groupInfo={groupInfo}
       archivedStudents={archivedStudents}

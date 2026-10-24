@@ -744,6 +744,28 @@ async function readCustomColumns(): Promise<CustomColumn[]> {
   }
 }
 
+/* ─── Ustunlar tartibi — har bir xodimning o'zi uchun ─────────────── */
+const colOrderKey = (userId: string) => `crm.colOrder.${userId}`;
+
+export async function getKanbanOrder(): Promise<string[]> {
+  const s = await requireSession();
+  try {
+    const arr = JSON.parse((await getSetting(colOrderKey(s.userId))) || "[]");
+    return Array.isArray(arr) ? arr.filter((x): x is string => typeof x === "string").slice(0, 100) : [];
+  } catch {
+    return [];
+  }
+}
+
+/** Bo'sh ro'yxat — standart tartibga qaytarish */
+export async function saveKanbanOrder(keys: string[]): Promise<{ ok: boolean }> {
+  const s = await requireSession();
+  if (!canRead(s.role, MODULES.CRM)) return { ok: false };
+  const clean = Array.from(new Set((Array.isArray(keys) ? keys : []).filter((k) => typeof k === "string" && k.length <= 80))).slice(0, 100);
+  await setSetting(colOrderKey(s.userId), JSON.stringify(clean));
+  return { ok: true };
+}
+
 export async function listKanbanColumns(): Promise<CustomColumn[]> {
   return readCustomColumns();
 }

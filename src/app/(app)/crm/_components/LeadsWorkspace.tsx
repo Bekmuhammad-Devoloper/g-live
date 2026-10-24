@@ -8,7 +8,7 @@ import { tr } from "@/lib/tr";
 import type { Locale } from "@/lib/constants";
 import { Icon } from "../../_components/Icon";
 import { COLUMNS, ONLINE_COL, STUDENT_ARCHIVE_COL, isArchiveCol, branchIdOfCol, slotIdOfCol, branchColKey, visibleColumns, columnDef, columnOf, columnOfLead, customIdOfCol, groupIdOfCol, isBranchCol, isCustomCol, isGroupCol, type ArchivedStudent, type BranchColumn, type BranchMode, type BranchModeCfg, type CustomColumn, type GroupColumn, type GroupInfo, type VLead } from "../_lib/leadColumns";
-import { bulkLeadAction, deleteTestLead, dropLeadToBranch, enrollLeadToGroup, moveLeadStage, moveLeadToColumn, removeKanbanColumn, setLeadArchived, setLeadOnline, unpinKanbanGroup } from "../actions";
+import { saveKanbanOrder, bulkLeadAction, deleteTestLead, dropLeadToBranch, enrollLeadToGroup, moveLeadStage, moveLeadToColumn, removeKanbanColumn, setLeadArchived, setLeadOnline, unpinKanbanGroup } from "../actions";
 import { type Analytics } from "./AnalyticsTiles";
 import FilterBar from "./FilterBar";
 import LeadsKanban from "./LeadsKanban";
@@ -46,6 +46,8 @@ interface Props {
   initialGroupColumns: GroupColumn[];
   /** Oddiy nomli ustunlar */
   initialCustomColumns: CustomColumn[];
+  /** Xodimning o'zi saqlagan ustunlar tartibi (ustun kalitlari) */
+  initialColOrder?: string[];
   /** Filial rejimi — filial ustunlari (null — odatdagi kanban) */
   branchColumns?: BranchColumn[] | null;
   /** "Qabul qilindi" guruh kartalari uchun holat (o'quvchilar / sig'im / jadval) */
@@ -62,7 +64,7 @@ interface Props {
   slotsEditable?: "all" | string | null;
 }
 
-export default function LeadsWorkspace({ locale, initialLeads, managers, sources, analytics, canWrite, canDelete = false, canResetColumns = false, payment = null, initialGroupColumns, initialCustomColumns, branchColumns = null, groupInfo = {}, archivedStudents = [], branchMode = null, showOnlineCol = true, hiddenCols = [], slotsEditable = null }: Props) {
+export default function LeadsWorkspace({ locale, initialLeads, managers, sources, analytics, canWrite, canDelete = false, canResetColumns = false, payment = null, initialGroupColumns, initialCustomColumns, initialColOrder = [], branchColumns = null, groupInfo = {}, archivedStudents = [], branchMode = null, showOnlineCol = true, hiddenCols = [], slotsEditable = null }: Props) {
   const router = useRouter();
   const pathname = usePathname();
   const params = useSearchParams();
@@ -97,6 +99,9 @@ export default function LeadsWorkspace({ locale, initialLeads, managers, sources
   const [groupColumns, setGroupColumns] = useState<GroupColumn[]>(initialGroupColumns);
   // Oddiy nomli ustunlar
   const [customColumns, setCustomColumns] = useState<CustomColumn[]>(initialCustomColumns);
+  // Ustunlar tartibi — sarlavhadan sudrab o'zgartiriladi, har xodimga alohida saqlanadi
+  const [colOrder, setColOrder] = useState<string[]>(initialColOrder);
+  const reorderColumns = (keys: string[]) => { setColOrder(keys); saveKanbanOrder(keys).catch(() => {}); };
   // Guruh ustunidagi "+" — mavjud lidni shu guruhga biriktirish
   const [pickForGroup, setPickForGroup] = useState<string | null>(null);
   // Yonboshdan ochiladigan tezkor ko'rish oynasi (1 marta bosilganda)
@@ -482,6 +487,15 @@ export default function LeadsWorkspace({ locale, initialLeads, managers, sources
             <button onClick={() => startRefresh(() => { router.refresh(); })} title={tr(locale, { uz: "Yangilash", ru: "Обновить", en: "Refresh", de: "Aktualisieren" })} className="flex h-9 items-center gap-1.5 rounded-lg border border-slate-200 px-3 text-sm font-medium text-slate-500 hover:bg-slate-50 dark:border-white/[0.1] dark:text-slate-300 dark:hover:bg-white/[0.05]">
               <Icon name="refresh" className={cn("h-4 w-4", refreshing && "animate-spin")} /> <span className="hidden sm:inline">{tr(locale, { uz: "Yangilash", ru: "Обновить", en: "Refresh", de: "Aktualisieren" })}</span>
             </button>
+            {view === "kanban" && colOrder.length > 0 && (
+              <button
+                onClick={() => reorderColumns([])}
+                title={tr(locale, { uz: "Ustunlarni standart tartibga qaytarish", ru: "Вернуть стандартный порядок столбцов", en: "Reset column order", de: "Spaltenreihenfolge zurücksetzen" })}
+                className="flex h-9 items-center gap-1.5 rounded-lg border border-slate-200 px-3 text-sm font-medium text-slate-500 hover:bg-slate-50 dark:border-white/[0.1] dark:text-slate-300 dark:hover:bg-white/[0.05]"
+              >
+                <Icon name="backspace" className="h-4 w-4" /> <span className="hidden lg:inline">{tr(locale, { uz: "Standart tartib", ru: "Стандартный порядок", en: "Default order", de: "Standard" })}</span>
+              </button>
+            )}
             <div className="flex rounded-lg border border-slate-200 p-0.5 dark:border-white/[0.1]">
               <ToggleBtn active={view === "kanban"} onClick={() => setView("kanban")} icon="grid" label="Kanban" />
               <ToggleBtn active={view === "table"} onClick={() => setView("table")} icon="listView" label={tr(locale, { uz: "Jadval", ru: "Таблица", en: "Table", de: "Tabelle" })} />
@@ -515,6 +529,8 @@ export default function LeadsWorkspace({ locale, initialLeads, managers, sources
         <LeadsKanban leads={sortedShown} totals={shownTotals} locale={locale} selected={selection} onOpen={openLead} onOpenFull={openLeadFull} onDropToColumn={onDropToColumn}
           groupColumns={groupColumns}
           customColumns={customColumns}
+          colOrder={colOrder}
+          onReorderColumns={reorderColumns}
           archivedStudents={archivedStudents}
           onAdd={(stage) => (stage === "WON" ? setWonAdd(true) : setMainAdd({ open: true, stage }))}
           onAddToGroup={(groupId) => setPickForGroup(groupId)}
