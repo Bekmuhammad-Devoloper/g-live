@@ -11,11 +11,12 @@ import { tr } from "@/lib/tr";
 import { Forbidden } from "../../_components/ui";
 import StudentProfile, { type SProfile } from "./StudentProfile";
 import type { VStudent } from "../StudentsView";
+import { PROFILE_VIEW_ROLES } from "./access";
+import { currentJournalMonth, loadStudentJournal } from "./journal";
 
 // O'quvchi profili — jadvaldagi qatordan bosilganda shu sahifa ochiladi.
-// Ruxsat ro'yxatlari /students bilan bir xil; o'qituvchi faqat o'z
-// guruhidagi o'quvchini ko'radi (aks holda notFound).
-const ALLOWED = [ROLES.DIRECTOR, ROLES.DEPUTY_DIRECTOR, ROLES.MANAGER, ROLES.ADMIN, ROLES.TEACHER, ROLES.ACCOUNTANT];
+// Ruxsat ro'yxatlari /students bilan bir xil (PROFILE_VIEW_ROLES); o'qituvchi
+// faqat o'z guruhidagi o'quvchini ko'radi (aks holda notFound).
 // Tahrirlash/qarz qo'shish huquqi — /students ro'yxatidagi CAN_CREATE bilan bir xil
 const CAN_MANAGE = [ROLES.DIRECTOR, ROLES.DEPUTY_DIRECTOR, ROLES.MANAGER, ROLES.ADMIN];
 
@@ -25,7 +26,7 @@ export default async function StudentProfilePage({ params }: { params: Promise<{
   const { id } = await params;
   const s = await requireSession();
 
-  if (!ALLOWED.includes(s.role as never)) {
+  if (!PROFILE_VIEW_ROLES.includes(s.role)) {
     return (
       <Forbidden
         title={tr(s.locale, { uz: "Kirish taqiqlangan", ru: "Доступ запрещён", en: "Access denied", de: "Zugriff verweigert" })}
@@ -75,9 +76,11 @@ export default async function StudentProfilePage({ params }: { params: Promise<{
   // ro'yxatga olingan oydan hisoblangan to'lov − to'langan + qo'lda kiritilgan qarz.
   // Ilgari bu yerda faqat PENDING yig'indisi ko'rsatilardi — ro'yxatda qarz
   // turgan o'quvchi profilida "0 so'm" chiqardi.
-  const [debtInfo, receiptMode] = await Promise.all([
+  const jm = currentJournalMonth();
+  const [debtInfo, receiptMode, journal] = await Promise.all([
     computeDebt(student.id),
     getSetting(RECEIPT_MODE_KEY).then(parseReceiptMode),
+    loadStudentJournal(student.id, jm.year, jm.month0), // oylik davomat jurnali — joriy oy
   ]);
   const paid = debtInfo.credit; // "Balans" — ortiqcha (oldindan) to'langan pul
   const debt = debtInfo.debt;
@@ -169,6 +172,7 @@ export default async function StudentProfilePage({ params }: { params: Promise<{
         since: iso(debtInfo.since),
         overdueMonths: debtInfo.overdueMonths,
       }}
+      journal={journal}
       quick={quick}
       canManage={CAN_MANAGE.includes(s.role as never)}
       canPay={canWrite(s.role, MODULES.PAYMENTS)}

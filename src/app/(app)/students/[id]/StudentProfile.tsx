@@ -12,6 +12,8 @@ import { Icon } from "../../_components/Icon";
 import PaymentPanel from "../PaymentPanel";
 import { StudentDetailModal, EditModal, type VStudent } from "../StudentsView";
 import { debtTone, DEBT_HEX } from "@/lib/debtTone";
+import { StudentAttendanceJournal } from "./StudentAttendanceJournal";
+import type { StudentJournal } from "./journal";
 
 // O'quvchi profili — sarlavha kartasi + ko'rsatkichlar + bo'limlar.
 // Uslub /profile (xodim profili) bilan bir xil: gradient sarlavha, avatar,
@@ -71,11 +73,13 @@ const schedule = (g: SGroup) => {
 type Tab = "groups" | "payments" | "attendance" | "exams";
 
 export default function StudentProfile({
-  profile: st, locale, debtInfo, quick, canManage, canPay, cashierName, receiptMode,
+  profile: st, locale, debtInfo, journal, quick, canManage, canPay, cashierName, receiptMode,
 }: {
   profile: SProfile;
   locale: Locale;
   debtInfo: DebtInfo;
+  /** Joriy oy davomat jurnali (keyingi oylar profil ichida yuklanadi) */
+  journal: StudentJournal;
   /** Tezkor oyna uchun ro'yxat qatori shakli */
   quick: VStudent;
   canManage: boolean;
@@ -210,6 +214,9 @@ export default function StudentProfile({
           </div>
         </div>
       )}
+
+      {/* ── Oylik davomat jurnali (doim ko'rinadi) ── */}
+      <StudentAttendanceJournal studentId={st.id} locale={locale} initial={journal} />
 
       {/* ── Tablar ── */}
       <div className="flex flex-wrap gap-2">
