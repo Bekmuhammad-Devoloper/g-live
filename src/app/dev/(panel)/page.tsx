@@ -38,7 +38,6 @@ export default async function DevDashboard() {
   const diskPct = root ? (root.used / root.size) * 100 : 0;
   const svc = (name: string) => sys.services.find((v) => v.name === name);
 
-  // ── Ogohlantirishlar ──
   const alerts: Alert[] = [];
   if (!main.up) alerts.push({ tone: "red", text: "Germaniya Live (asosiy sayt) javob bermayapti", href: "/dev/main" });
   for (const v of sys.services) if (v.active !== "active" && !v.name.startsWith("gl-center@")) alerts.push({ tone: "red", text: `Xizmat ishlamayapti: ${v.name} (${v.active})`, href: "/dev/server" });

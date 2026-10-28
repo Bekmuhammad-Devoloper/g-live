@@ -1,5 +1,3 @@
-// Dev panel uchun kichik umumiy UI bo'laklari (server va klientda ishlaydi)
-
 export function fmtBytes(n: number): string {
   if (!n) return "0";
   const u = ["B", "KB", "MB", "GB", "TB"];
@@ -20,7 +18,6 @@ export function fmtDate(iso: string | null | undefined): string {
   return `${p(d.getDate())}.${p(d.getMonth() + 1)}.${d.getFullYear()}`;
 }
 
-/** Litsenziya tugashiga qolgan kunlar (bugun tugasa 0, o'tib ketgan bo'lsa manfiy) */
 export function daysLeft(until: string | null | undefined): number | null {
   if (!until || !/^\d{4}-\d{2}-\d{2}$/.test(until)) return null;
   const end = new Date(until + "T23:59:59").getTime();
@@ -31,7 +28,6 @@ export function Card({ children, className = "" }: { children: React.ReactNode; 
   return <div className={`rounded-2xl border border-slate-200 bg-white p-5 shadow-sm dark:border-white/[0.07] dark:bg-[#0d1424] ${className}`}>{children}</div>;
 }
 
-/** Belgi: SVG path (24×24, chiziqli) */
 export const ICONS = {
   building: "M4 21V7l8-4 8 4v14M9 21v-6h6v6",
   users: "M16 19v-1a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v1M9 10a3.5 3.5 0 1 0 0-7 3.5 3.5 0 0 0 0 7M22 19v-1a4 4 0 0 0-3-3.9M16 3.1a3.5 3.5 0 0 1 0 6.8",
@@ -80,7 +76,6 @@ export function LicensePill({ until, suspended }: { until: string | null; suspen
   return <Pill tone="green">{d} kun</Pill>;
 }
 
-/** Davomiylik: 3 kun 4 soat / 2 soat 15 daq / 40 daq */
 export function fmtDuration(seconds: number): string {
   const s = Math.max(0, Math.floor(seconds));
   const d = Math.floor(s / 86400), h = Math.floor((s % 86400) / 3600), m = Math.floor((s % 3600) / 60);
@@ -89,7 +84,6 @@ export function fmtDuration(seconds: number): string {
   return `${m} daq`;
 }
 
-/** Sana va vaqt (Toshkent) */
 export function fmtDateTime(iso: string | null | undefined): string {
   if (!iso) return "—";
   const d = new Date(iso);
@@ -97,7 +91,6 @@ export function fmtDateTime(iso: string | null | undefined): string {
   return d.toLocaleString("ru-RU", { timeZone: "Asia/Tashkent", day: "2-digit", month: "2-digit", year: "numeric", hour: "2-digit", minute: "2-digit" });
 }
 
-/** Foiz chizig'i: 70% dan sariq, 85% dan qizil */
 export function Bar({ pct }: { pct: number }) {
   const v = Math.max(0, Math.min(100, pct));
   const c = v > 85 ? "from-red-500 to-red-400" : v > 70 ? "from-amber-500 to-amber-400" : "from-[#e3262b] via-[#ee7a24] to-[#f6b51e]";
@@ -108,7 +101,6 @@ export function Bar({ pct }: { pct: number }) {
   );
 }
 
-/** Kartaning o'ng yuqori burchagidagi belgi (Stat ishlatilmagan kartalar uchun) */
 export function IconChip({ icon }: { icon: keyof typeof ICONS }) {
   return (
     <span className="absolute right-4 top-4 flex h-10 w-10 items-center justify-center rounded-xl bg-gradient-to-br from-[#e3262b]/20 to-[#f6b51e]/10 text-orange-300 ring-1 ring-orange-400/20">

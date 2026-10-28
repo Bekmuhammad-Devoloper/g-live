@@ -9,12 +9,10 @@ import { StatusGrid, computeStatusCounts } from "./StatusGrid";
 import LessonCalendar, { type CalLesson } from "./LessonCalendar";
 import { groupColor } from "../groups/groupColor";
 
-// CEO paneli — 12 status kartasi + qisqa jamlanma + haftalik dars jadvali.
 export default async function CeoDashboard({ locale }: { locale: Locale }) {
   const t = getT(locale);
-  const s = await requireSession(); // faol filial — barcha ko'rsatkichlar shu doirada
+  const s = await requireSession();
 
-  // Joriy hafta (Yakshanbadan boshlab)
   const now = new Date();
   const weekStart = new Date(now.getFullYear(), now.getMonth(), now.getDate() - now.getDay(), 0, 0, 0);
   const weekEnd = new Date(weekStart.getTime() + 7 * 86400000);
@@ -54,10 +52,8 @@ export default async function CeoDashboard({ locale }: { locale: Locale }) {
 
   return (
     <div className="space-y-6">
-      {/* 12 status kartasi */}
       <StatusGrid counts={counts} locale={locale} />
 
-      {/* Haftalik dars jadvali (filter + kalendar) */}
       <LessonCalendar
         locale={locale}
         lessons={calLessons}
@@ -68,7 +64,6 @@ export default async function CeoDashboard({ locale }: { locale: Locale }) {
         todayIndex={now.getDay()}
       />
 
-      {/* Qisqa jamlanma */}
       <div className="grid grid-cols-2 gap-4 lg:grid-cols-4">
         <StatCard label={t("reports.revenue")} value={formatMoney(paidAgg._sum.amount ?? 0, locale)} tone="green" icon="wallet" />
         <StatCard label={t("reports.activeStudents")} value={counts.activeStudents} tone="brand" icon="personStar" />

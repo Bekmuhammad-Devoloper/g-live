@@ -6,7 +6,6 @@ import { ROLES } from "@/lib/constants";
 import { amiOriginate, amiConfigured, normalizeUzPhone } from "@/lib/asterisk";
 import { writeAudit } from "@/lib/audit";
 
-// Click-to-call — AMI Originate (avval operatorni jiringlatadi, keyin mijozni teradi).
 const ALLOWED: string[] = [ROLES.OPERATOR, ROLES.ROP, ROLES.MANAGER, ROLES.DEPUTY_DIRECTOR, ROLES.DIRECTOR, ROLES.ADMIN];
 
 export async function POST(req: Request) {
@@ -22,7 +21,6 @@ export async function POST(req: Request) {
   const number = normalizeUzPhone(String(body.number ?? ""));
   if (number.length < 9) return NextResponse.json({ error: "bad_number" }, { status: 400 });
 
-  // Qo'ng'iroq yozuvi (worker keyin holat/davomiylikni yangilaydi)
   const call = await prisma.call.create({
     data: {
       direction: "OUTGOING",
@@ -41,7 +39,6 @@ export async function POST(req: Request) {
 
   if (!r.ok) {
     await prisma.call.update({ where: { id: call.id }, data: { status: "FAILED", comment: r.message || null } });
-    // Sababni foydalanuvchiga tushunarli qilib aytamiz
     const raw = r.message || "";
     const message =
       /ECONNREFUSED|ETIMEDOUT|EHOSTUNREACH|ENOTFOUND|timeout/i.test(raw)

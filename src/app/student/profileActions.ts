@@ -9,7 +9,6 @@ import { S } from "./_i18n";
 
 export type Res = { ok?: boolean; error?: string };
 
-// Tug'ilgan sanadan yoshni hisoblaymiz — ikkalasi bir-biriga zid bo'lmasin
 function ageFrom(d: Date): number {
   const now = new Date();
   let a = now.getFullYear() - d.getFullYear();
@@ -20,12 +19,9 @@ function ageFrom(d: Date): number {
 
 const safeImage = (u: string) => (/^\/uploads\/[\w.-]+$/.test(u) || /^data:image\//.test(u) ? u : null);
 
-// O'quvchi o'z shaxsiy ma'lumotlarini tahrirlaydi.
-// Guruh va daraja bu yerda o'zgarmaydi — ular o'quv jarayoni ma'lumoti,
-// ma'muriyat tomonidan biriktiriladi (hisobot va davomat shularga bog'liq).
 export async function updateProfile(fd: FormData): Promise<Res> {
   const s = await requireSession();
-  const t = S(s.locale); // xato xabarlari o'quvchi tilida
+  const t = S(s.locale);
   if (s.role !== ROLES.STUDENT) return { error: t.forbidden };
 
   const student = await prisma.student.findUnique({ where: { userId: s.userId }, select: { id: true } });
@@ -74,7 +70,6 @@ export async function updateProfile(fd: FormData): Promise<Res> {
   return { ok: true };
 }
 
-// Profil rasmini o'chirish
 export async function removePhoto(): Promise<Res> {
   const s = await requireSession();
   const t = S(s.locale);

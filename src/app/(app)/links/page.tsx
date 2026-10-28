@@ -9,7 +9,6 @@ import LinksView from "./LinksView";
 import { PLATFORMS } from "./platforms";
 import type { CountryOption, PlatformStat, VLink, VVacancy, VacancyOption } from "./types";
 
-// Sanani serverda deterministik formatlaymiz (eski loyihadagi kabi: 09.08.2026).
 const p2 = (n: number) => String(n).padStart(2, "0");
 const dmy = (d: Date) => `${p2(d.getDate())}.${p2(d.getMonth() + 1)}.${d.getFullYear()}`;
 const ymd = (d: Date) => `${d.getFullYear()}-${p2(d.getMonth() + 1)}-${p2(d.getDate())}`;
@@ -34,14 +33,13 @@ export default async function LinksPage({ searchParams }: { searchParams: Promis
 
   const [vacancies, leadCounts] = await Promise.all([
     prisma.vacancy.findMany({
-      where: branchWhere(s), // faol filial doirasida
+      where: branchWhere(s),
       orderBy: { createdAt: "desc" },
       include: { links: { orderBy: { createdAt: "asc" } } },
     }),
-    // "Arizalar" — Lead.vacancyLinkId orqali bog'langan lidlar soni (haqiqiy manba).
     prisma.lead.groupBy({
       by: ["vacancyLinkId"],
-      where: { AND: [{ vacancyLinkId: { not: null } }, branchWhere(s)] }, // faol filial doirasida
+      where: { AND: [{ vacancyLinkId: { not: null } }, branchWhere(s)] },
       _count: { _all: true },
     }),
   ]);
@@ -91,7 +89,6 @@ export default async function LinksPage({ searchParams }: { searchParams: Promis
   const totalSubmissions = allLinks.reduce((n, l) => n + l.submissions, 0);
   const activeLinks = allLinks.filter((l) => l.isActive && !l.expired).length;
 
-  // Platformalar kesimida statistika — faqat ma'lumot mavjud bo'lgan platformalar.
   const byPlat = new Map<string, { links: number; views: number; submissions: number }>();
   for (const l of allLinks) {
     const a = byPlat.get(l.platform) ?? { links: 0, views: 0, submissions: 0 };
@@ -122,7 +119,6 @@ export default async function LinksPage({ searchParams }: { searchParams: Promis
 
   const vacancyOptions: VacancyOption[] = vlist.map((v) => ({ id: v.id, title: v.title, country: v.country, countryCode: v.countryCode }));
 
-  // O'quv markaz kurslari — link yaratishda ro'yxatdan tanlash uchun
   const programs = await prisma.program.findMany({
     where: { isActive: true },
     select: { id: true, name: true },

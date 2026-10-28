@@ -1,21 +1,6 @@
-// Daraja aniqlash testi — SAVOLLAR BANKI (to'plamlar bo'yicha).
-//
-// Manba: markazning o'z test to'plamlari (2026-09): har daraja ichida ikki
-// test — A1.1 / A1.2, A2.1 / A2.2, B1.1 / B1.2, B2.1 / B2.2, har biri 25 ta
-// savol (B2.2 — 24). Savollar to'plamdagi ASL TARTIBDA, aralashtirilmaydi:
-// mijoz darajani va testni o'zi tanlaydi, aynan shu to'plamni topshiradi.
-//
-// To'plamlarda javob kaliti yo'q edi — `answer` grammatika bo'yicha
-// belgilangan. A2.1 №9 ("Ich fahre morgen ___ Berlin" — variantlarda "nach"
-// yo'q edi) tuzatilgan. Bu fayl faqat serverda o'qiladi — `answer` mijozga
-// bormaydi.
-//
-// id: to'plam × 100 + tartib raqami (A1.1 → 11xx, A1.2 → 12xx, A2.1 → 21xx ...).
-
 import type { LevelTestQuestion } from "./levelTest";
 
 export const LEVEL_TEST_BANK: LevelTestQuestion[] = [
-  // ═══════════════════════════ A1.1 ═══════════════════════════
   { id: 1101, set: "A1.1", level: "A1", topic: "Begrüßung", q: "Du kommst am Morgen in die Schule. Was sagst du?", options: ["Gute Nacht!", "Guten Morgen!", "Gute Reise!", "Guten Appetit!"], answer: 1 },
   { id: 1102, set: "A1.1", level: "A1", topic: "Personalpronomen", q: "___ heiße Anna.", options: ["Ich", "Du", "Er", "Sie"], answer: 0 },
   { id: 1103, set: "A1.1", level: "A1", topic: "Verb „sein“", q: "Ich ___ Maria.", options: ["bist", "ist", "bin", "sind"], answer: 2 },
@@ -42,7 +27,6 @@ export const LEVEL_TEST_BANK: LevelTestQuestion[] = [
   { id: 1124, set: "A1.1", level: "A1", topic: "Im Café", q: "Du möchtest einen Kaffee bestellen. Was sagst du?", options: ["Ich heiße Ali.", "Ich möchte einen Kaffee, bitte.", "Woher kommst du?", "Wie alt bist du?"], answer: 1 },
   { id: 1125, set: "A1.1", level: "A1", topic: "Sich verabschieden", q: "Du gehst nach Hause. Was kannst du sagen?", options: ["Guten Morgen!", "Guten Appetit!", "Auf Wiedersehen!", "Danke schön!"], answer: 2 },
 
-  // ═══════════════════════════ A1.2 ═══════════════════════════
   { id: 1201, set: "A1.2", level: "A1", topic: "Artikel", q: "___ Tisch ist groß.", options: ["Die", "Der", "Das", "Eine"], answer: 1 },
   { id: 1202, set: "A1.2", level: "A1", topic: "sein / haben", q: "Ich ___ Studentin.", options: ["habe", "bist", "bin", "ist"], answer: 2 },
   { id: 1203, set: "A1.2", level: "A1", topic: "sein / haben", q: "Wir ___ ein Haus.", options: ["sind", "haben", "hat", "seid"], answer: 1 },
@@ -69,7 +53,6 @@ export const LEVEL_TEST_BANK: LevelTestQuestion[] = [
   { id: 1224, set: "A1.2", level: "A1", topic: "Im Café", q: "Du möchtest etwas im Café bestellen. Was sagst du?", options: ["Ich möchte einen Kaffee, bitte.", "Wo wohnst du?", "Wie alt bist du?", "Was machst du beruflich?"], answer: 0 },
   { id: 1225, set: "A1.2", level: "A1", topic: "Dialog", q: "Jemand sagt: „Danke!“ Was antwortest du?", options: ["Guten Morgen!", "Bitte!", "Entschuldigung!", "Gute Nacht!"], answer: 1 },
 
-  // ═══════════════════════════ A2.1 ═══════════════════════════
   { id: 2101, set: "A2.1", level: "A2", topic: "Perfekt", q: "Ich ___ gestern einen Kaffee ___.", options: ["habe … getrunken", "bin … getrunken", "habe … trinken", "bin … trinken"], answer: 0 },
   { id: 2102, set: "A2.1", level: "A2", topic: "Perfekt", q: "Wir ___ am Wochenende einen Film ___.", options: ["sind … gesehen", "haben … gesehen", "haben … sehen", "sind … sehen"], answer: 1 },
   { id: 2103, set: "A2.1", level: "A2", topic: "Modalverb", q: "Ich ___ heute leider nicht kommen.", options: ["kann", "kannst", "können", "gekonnt"], answer: 0 },
@@ -96,7 +79,6 @@ export const LEVEL_TEST_BANK: LevelTestQuestion[] = [
   { id: 2124, set: "A2.1", level: "A2", topic: "Dialog", q: "Jemand fragt: „Was hast du gestern gemacht?“", options: ["Ich gehe morgen einkaufen.", "Ich möchte morgen einkaufen gehen.", "Ich habe gestern eingekauft.", "Ich kaufe gerade ein."], answer: 2 },
   { id: 2125, set: "A2.1", level: "A2", topic: "Meinung", q: "Du möchtest deine Meinung einfach ausdrücken. Was passt?", options: ["Ich finde diese Idee gut.", "Obwohl diese Idee gut ist.", "Deshalb diese Idee gut.", "Wenn diese Idee gut."], answer: 0 },
 
-  // ═══════════════════════════ A2.2 ═══════════════════════════
   { id: 2201, set: "A2.2", level: "A2", topic: "Perfekt", q: "Ich ___ gestern einen Film ___.", options: ["habe … gesehen", "bin … gesehen", "habe … sehen", "habe … sieht"], answer: 0 },
   { id: 2202, set: "A2.2", level: "A2", topic: "Perfekt mit „sein“", q: "Wir ___ gestern nach Berlin ___.", options: ["haben … gefahren", "sind … gefahren", "sind … fahren", "haben … fahren"], answer: 1 },
   { id: 2203, set: "A2.2", level: "A2", topic: "Modalverb im Präteritum", q: "Als Kind ___ ich viel spielen.", options: ["kann", "konnte", "gekonnt", "können"], answer: 1 },
@@ -123,7 +105,6 @@ export const LEVEL_TEST_BANK: LevelTestQuestion[] = [
   { id: 2224, set: "A2.2", level: "A2", topic: "Dialog", q: "Jemand fragt: „Was hast du am Wochenende gemacht?“", options: ["Ich habe meine Freunde getroffen.", "Ich treffe meine Freunde morgen.", "Ich werde meine Freunde treffen.", "Ich möchte meine Freunde treffen."], answer: 0 },
   { id: 2225, set: "A2.2", level: "A2", topic: "Meinung", q: "Du bist mit einem Vorschlag nicht einverstanden. Was passt am besten?", options: ["Das finde ich eine gute Idee.", "Ja, natürlich.", "Ich glaube, das ist keine gute Idee.", "Das möchte ich sehr gern."], answer: 2 },
 
-  // ═══════════════════════════ B1.1 ═══════════════════════════
   { id: 3101, set: "B1.1", level: "B1", topic: "Perfekt", q: "Gestern ___ ich meine Freunde getroffen.", options: ["habe", "bin", "werde", "hatte"], answer: 0 },
   { id: 3102, set: "B1.1", level: "B1", topic: "Präteritum", q: "Früher ___ ich jeden Tag mit dem Bus zur Schule.", options: ["fahre", "fuhr", "gefahren", "fahre ich"], answer: 1 },
   { id: 3103, set: "B1.1", level: "B1", topic: "Konnektor „weil“", q: "Ich lerne Deutsch, ___ ich in Deutschland arbeiten möchte.", options: ["aber", "weil", "trotzdem", "deshalb"], answer: 1 },
@@ -150,7 +131,6 @@ export const LEVEL_TEST_BANK: LevelTestQuestion[] = [
   { id: 3124, set: "B1.1", level: "B1", topic: "Höflich widersprechen", q: "Dein Freund sagt: „Deutsch ist sehr einfach.“ Du bist anderer Meinung. Was kannst du sagen?", options: ["Das stimmt genau.", "Da bin ich nicht ganz deiner Meinung.", "Natürlich hast du recht.", "Das sehe ich genauso."], answer: 1 },
   { id: 3125, set: "B1.1", level: "B1", topic: "Grund nennen", q: "„Warum lernst du Deutsch?“ — Was passt?", options: ["Deshalb lerne ich Deutsch.", "Trotzdem lerne ich Deutsch.", "Weil ich später in Deutschland studieren möchte.", "Obwohl ich Deutsch lerne."], answer: 2 },
 
-  // ═══════════════════════════ B1.2 ═══════════════════════════
   { id: 3201, set: "B1.2", level: "B1", topic: "Perfekt / Präteritum", q: "Gestern ___ ich sehr müde.", options: ["bin", "war", "habe", "werde"], answer: 1 },
   { id: 3202, set: "B1.2", level: "B1", topic: "Konnektoren", q: "Ich lerne Deutsch, ___ ich später in Deutschland studieren möchte.", options: ["obwohl", "weil", "trotzdem", "deshalb"], answer: 1 },
   { id: 3203, set: "B1.2", level: "B1", topic: "Konnektoren", q: "Es regnet, ___ gehe ich spazieren.", options: ["weil", "obwohl", "trotzdem", "deshalb"], answer: 2 },
@@ -177,7 +157,6 @@ export const LEVEL_TEST_BANK: LevelTestQuestion[] = [
   { id: 3224, set: "B1.2", level: "B1", topic: "Vorschlag", q: "Du möchtest einen Vorschlag machen. Was passt?", options: ["Wie wäre es, wenn wir am Wochenende ins Kino gehen?", "Ich war gestern im Kino.", "Das Kino ist geschlossen.", "Ich habe einen Film gesehen."], answer: 0 },
   { id: 3225, set: "B1.2", level: "B1", topic: "Grund nennen", q: "„Warum lernst du Deutsch?“ — Was passt?", options: ["Deshalb lerne ich Deutsch.", "Weil ich später in Deutschland studieren möchte.", "Trotzdem lerne ich Deutsch.", "Obwohl ich Deutsch lerne."], answer: 1 },
 
-  // ═══════════════════════════ B2.1 ═══════════════════════════
   { id: 4101, set: "B2.1", level: "B2", topic: "Konjunktiv II — Gegenwart", q: "Wenn ich mehr Geld ___, würde ich eine längere Reise machen.", options: ["habe", "hätte", "hatte", "haben"], answer: 1 },
   { id: 4102, set: "B2.1", level: "B2", topic: "Konjunktiv II", q: "An deiner Stelle ___ ich mit dem Lehrer darüber sprechen.", options: ["werde", "würde", "werde ich", "hätte"], answer: 1 },
   { id: 4103, set: "B2.1", level: "B2", topic: "Plusquamperfekt", q: "Nachdem er die Prüfung ___, ging er nach Hause.", options: ["bestanden hat", "bestanden hatte", "besteht", "bestehen wird"], answer: 1 },
@@ -204,7 +183,6 @@ export const LEVEL_TEST_BANK: LevelTestQuestion[] = [
   { id: 4124, set: "B2.1", level: "B2", topic: "Höflich seine Meinung äußern", q: "Welche Formulierung klingt am höflichsten und passend für B2?", options: ["Das ist völlig falsch!", "Du hast keine Ahnung.", "Ich sehe das etwas anders und möchte einen anderen Aspekt hervorheben.", "Nein, das stimmt überhaupt nicht."], answer: 2 },
   { id: 4125, set: "B2.1", level: "B2", topic: "Vor- und Nachteile nennen", q: "Welche Aussage eignet sich am besten, um Vor- und Nachteile zu vergleichen?", options: ["Ich finde diese Idee interessant.", "Einerseits spart man Zeit, andererseits kann diese Lösung zusätzliche Kosten verursachen.", "Diese Lösung ist sehr interessant.", "Ich habe darüber schon einmal gesprochen."], answer: 1 },
 
-  // ═══════════════════════════ B2.2 ═══════════════════════════
   { id: 4201, set: "B2.2", level: "B2", topic: "Konjunktiv II", q: "Wenn ich mehr Zeit ___, würde ich öfter reisen.", options: ["habe", "hätte", "hatte", "haben"], answer: 1 },
   { id: 4202, set: "B2.2", level: "B2", topic: "Konjunktiv II Vergangenheit", q: "Wenn ich früher losgegangen wäre, ___ ich den Zug erreicht.", options: ["habe", "hätte", "würde", "werde"], answer: 1 },
   { id: 4203, set: "B2.2", level: "B2", topic: "Passiv", q: "Die neuen Wohnungen ___ nächstes Jahr gebaut.", options: ["werden", "wurden", "haben", "sind"], answer: 0 },

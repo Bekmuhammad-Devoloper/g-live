@@ -10,7 +10,6 @@ import { writeAudit } from "@/lib/audit";
 
 export type FormState = { ok?: boolean; error?: string };
 
-// Xonalarni boshqaruvchi rollar (ofis resursi): menejer, rahbariyat, admin
 const MANAGE_ROLES = [ROLES.MANAGER, ROLES.DEPUTY_DIRECTOR, ROLES.DIRECTOR, ROLES.ADMIN];
 function canManage(role: string) {
   return MANAGE_ROLES.includes(role as never);
@@ -41,7 +40,6 @@ export async function createRoom(_prev: FormState, formData: FormData): Promise<
   return { ok: true };
 }
 
-// Yaratish yoki tahrirlash (id bo'lsa — update). Modme uslubidagi drawer shuni ishlatadi.
 export async function saveRoom(fd: FormData): Promise<FormState> {
   const s = await requireSession();
   if (!canManage(s.role)) return { error: tr(s.locale, { uz: "Ruxsat yo'q", ru: "Нет доступа", en: "No permission", de: "Keine Berechtigung" }) };
@@ -55,9 +53,6 @@ export async function saveRoom(fd: FormData): Promise<FormState> {
   if (id) {
     const prev = await prisma.room.findUnique({ where: { id }, select: { name: true, capacity: true, branchId: true } });
     await prisma.room.update({ where: { id }, data: { name, capacity, ...(noteProvided ? { note } : {}) } });
-    // CRM'dagi filial vaqt oraliqlari (BranchSlot) xonaga nom bo'yicha bog'langan va yaratilganda
-    // xona sig'imini nusxalab oladi. Xona o'zgarsa, shu xonaning oraliqlari ham yangilanadi:
-    // nomi doim, sig'imi esa faqat xonanikiga teng (yoki bo'sh) bo'lsa — qo'lda berilgani saqlanadi.
     if (prev?.branchId && (prev.name !== name || prev.capacity !== capacity)) {
       const key = prev.name.trim().toLowerCase();
       const slots = await prisma.branchSlot.findMany({ where: { branchId: prev.branchId }, select: { id: true, room: true, capacity: true } });

@@ -16,15 +16,10 @@ export async function logout() {
 export async function setLocale(locale: Locale) {
   const session = await getSession();
   if (!session) return;
-  // Sessiyani yangi til bilan qayta imzolash + foydalanuvchida saqlash
   await createSession({ ...session, locale });
   await prisma.user.update({ where: { id: session.userId }, data: { locale } });
 }
 
-// Faol filialni almashtirish — yangi yozuvlar (lid, guruh, o'quvchi) shu filialga bog'lanadi.
-// Rahbariyat istalgan filialga (yoki "Barcha filiallar"ga) o'tadi va bu uning asosiy
-// filialiga yoziladi. Qolgan xodimlar faqat O'Z filiallari (asosiy + qo'shimcha, UserBranch)
-// orasida almashtiradi — bunda faqat sessiya o'zgaradi, asosiy filial joyida qoladi.
 export async function setBranch(branchId: string): Promise<void> {
   const s = await requireSession();
   const canSwitch = [ROLES.DIRECTOR, ROLES.DEPUTY_DIRECTOR].includes(s.role as never);
@@ -41,8 +36,6 @@ export async function setBranch(branchId: string): Promise<void> {
     return;
   }
 
-  // Bo'sh qiymat — "Barcha filiallar" (faqat direktor/o'rinbosar): filial doirasi
-  // olib tashlanadi, filialsiz eski yozuvlar ham ko'rinadi va tuzatish mumkin
   const all = !branchId;
   if (all && !([ROLES.DIRECTOR, ROLES.DEPUTY_DIRECTOR] as string[]).includes(s.role)) return;
 
@@ -63,9 +56,6 @@ export async function setBranch(branchId: string): Promise<void> {
   revalidatePath("/", "layout");
 }
 
-// ─── Tez talaba qo'shish (navbardagi + tugmasi) ───
-// Ism/Familiya alohida, yosh va qo'shimcha raqam ixtiyoriy.
-// Guruh tanlansa — talaba darhol o'sha guruhga biriktiriladi.
 const studentSchema = z.object({
   firstName: z.string().min(2),
   lastName: z.string().optional(),
@@ -74,7 +64,6 @@ const studentSchema = z.object({
   age: z.coerce.number().int().min(3).max(100).optional(),
   currentLevel: z.string().optional(),
   groupId: z.string().optional(),
-  // Boshlang'ich qarz (so'm) — kiritilsa PENDING to'lov yozuvi yaratiladi
   debt: z.coerce.number().int().min(0).max(1_000_000_000).optional(),
 });
 
@@ -85,7 +74,6 @@ export async function quickCreateStudent(_prev: QuickState, formData: FormData):
   const allowed = [ROLES.DIRECTOR, ROLES.DEPUTY_DIRECTOR, ROLES.MANAGER, ROLES.ADMIN];
   if (!allowed.includes(s.role as never)) return { error: "forbidden" };
 
-  // Forma ikki xil bo'lishi mumkin: ism/familiya alohida yoki bitta "fullName"
   const rawFull = String(formData.get("fullName") ?? "").trim();
   const [fullFirst, ...fullRest] = rawFull.split(/\s+/);
 
@@ -102,7 +90,6 @@ export async function quickCreateStudent(_prev: QuickState, formData: FormData):
   if (!parsed.success) return { error: "invalid" };
   const d = parsed.data;
 
-  // Guruh tanlangan bo'lsa — mavjudligini tekshiramiz (yo'q bo'lsa biriktirmaymiz)
   const group = d.groupId
     ? await prisma.group.findUnique({ where: { id: d.groupId }, select: { id: true, branchId: true, levelCode: true } })
     : null;
@@ -118,7 +105,6 @@ export async function quickCreateStudent(_prev: QuickState, formData: FormData):
       age: d.age ?? null,
       currentLevel: d.currentLevel || group?.levelCode || null,
       branchId: group?.branchId ?? s.branchId,
-      // Guruhga biriktirilsa darhol faol, aks holda kutish holatida
       eduStatus: group ? "ACTIVE" : "WAITING",
     },
   });
@@ -127,7 +113,6 @@ export async function quickCreateStudent(_prev: QuickState, formData: FormData):
     await prisma.groupStudent.create({ data: { groupId: group.id, studentId: student.id } });
   }
 
-  // Qarzdor qilib qo'shish: PENDING to'lov = qarz (/finance/debtors bilan bir xil mantiq)
   if (d.debt && d.debt > 0) {
     await prisma.payment.create({
       data: {

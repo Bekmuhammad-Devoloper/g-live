@@ -9,7 +9,6 @@ import { PageHeader, Forbidden } from "../../_components/ui";
 import CoinRulesView, { type RuleRow } from "./CoinRulesView";
 import ProgressRulesView from "./ProgressRulesView";
 
-// Tanga qoidalari — rahbariyat ko'radi va o'zgartiradi
 const ALLOWED = [ROLES.DIRECTOR, ROLES.DEPUTY_DIRECTOR, ROLES.ADMIN];
 
 export default async function CoinRulesPage() {
@@ -26,7 +25,6 @@ export default async function CoinRulesPage() {
   const L = (uz: string, ru: string, en: string, de: string) => tr(s.locale, { uz, ru, en, de });
   const [rules, stars, prog] = await Promise.all([getCoinRules(), getStarRules(), getProgressRules()]);
 
-  // Butun markaz bo'yicha hodisalar soni — qoida qancha tanga bergani ko'rinsin
   const [lessons, views, graded, perfect, gameWins, levelUps, spentAgg, students] = await Promise.all([
     prisma.attendance.count({ where: { status: { in: ATTENDED } } }),
     prisma.lessonView.count(),
@@ -41,7 +39,6 @@ export default async function CoinRulesPage() {
     prisma.student.count(),
   ]);
 
-  // To'liq ballga bajarilgan vazifalar (maxScore vazifaga qarab har xil)
   const perfectCount = perfect.filter((x) => {
     const max = x.assignment?.maxScore || 0;
     return max > 0 && (x.score ?? 0) >= max;
@@ -135,7 +132,6 @@ export default async function CoinRulesPage() {
   const rows = toRows(rules);
   const starRows = toRows(stars);
 
-  // Seriya bonusi o'quvchi bo'yicha hisoblanadi — umumiy summani bermaymiz
   const earned = rows.reduce((n, r) => n + r.issued, 0);
   const starEarned = starRows.reduce((n, r) => n + r.issued, 0);
   const spent = spentAgg._sum.price ?? 0;

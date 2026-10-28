@@ -14,15 +14,14 @@ export default async function RemindersPage() {
 
   const [items, staff, students, groups] = await Promise.all([
     prisma.task.findMany({
-      where: { AND: [{ kind: "REMINDER" }, branchWhere(s)] }, // faol filial eslatmalari
+      where: { AND: [{ kind: "REMINDER" }, branchWhere(s)] },
       orderBy: [{ status: "asc" }, { dueAt: "asc" }],
       include: { assignee: true, student: true, group: true, author: true },
       take: 300,
     }),
-    // faol filial doirasida
     prisma.user.findMany({ where: { AND: [{ role: { notIn: [ROLES.STUDENT, ROLES.PARENT] }, isActive: true }, staffBranchWhere(s)] }, select: { id: true, fullName: true }, orderBy: { fullName: "asc" } }),
-    prisma.student.findMany({ where: branchWhere(s), select: { id: true, fullName: true }, orderBy: { fullName: "asc" }, take: 500 }), // faol filial doirasida
-    prisma.group.findMany({ where: branchWhere(s), select: { id: true, name: true }, orderBy: { name: "asc" } }), // faol filial doirasida
+    prisma.student.findMany({ where: branchWhere(s), select: { id: true, fullName: true }, orderBy: { fullName: "asc" }, take: 500 }),
+    prisma.group.findMany({ where: branchWhere(s), select: { id: true, name: true }, orderBy: { name: "asc" } }),
   ]);
 
   const vtasks: VTask[] = items.map((t) => ({

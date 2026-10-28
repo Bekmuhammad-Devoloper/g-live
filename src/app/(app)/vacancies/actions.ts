@@ -25,7 +25,6 @@ function refresh() {
   revalidatePath("/links");
 }
 
-// ─── Yaratish / tahrirlash (id bo'lsa — tahrir) ───
 export async function saveVacancy(fd: FormData): Promise<VacState> {
   const { s, error } = await guard();
   if (error) return { error };
@@ -65,7 +64,6 @@ export async function saveVacancy(fd: FormData): Promise<VacState> {
   return { ok: true, id: v.id };
 }
 
-// ─── Faol / nofaol ───
 export async function toggleVacancy(id: string): Promise<void> {
   const { error } = await guard();
   if (error) return;
@@ -75,7 +73,6 @@ export async function toggleVacancy(id: string): Promise<void> {
   refresh();
 }
 
-// ─── O'chirish (havolalari ham o'chadi — onDelete: Cascade) ───
 export async function removeVacancy(id: string): Promise<VacState> {
   const { s, error } = await guard();
   if (error) return { error };

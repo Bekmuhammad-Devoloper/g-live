@@ -15,7 +15,6 @@ export type FormState = { ok?: boolean; error?: string; links?: CreatedLink[] };
 
 const can = (role: string) => canWrite(role, MODULES.CRM);
 
-// ── Kod generatsiyasi (kolliziyaga qarshi retry bilan) ──
 const ALPHABET = "ABCDEFGHJKLMNPQRSTUVWXYZabcdefghijkmnpqrstuvwxyz23456789";
 function randCode(len: number): string {
   const bytes = crypto.getRandomValues(new Uint8Array(len));
@@ -68,12 +67,10 @@ async function createLinks(vacancyId: string, platforms: string[], fd: FormData,
   return created;
 }
 
-// Yangi vakansiya + havola(lar)
 export async function createVacancyLink(fd: FormData): Promise<FormState> {
   const s = await requireSession();
   if (!can(s.role)) return { error: tr(s.locale, { uz: "Ruxsat yo'q", ru: "Нет доступа", en: "No permission", de: "Keine Berechtigung" }) };
 
-  // Kurs nomi ixtiyoriy — bo'sh qoldirilsa standart nom
   const title = String(fd.get("title") || "").trim().slice(0, 120) || tr(s.locale, { uz: "Nemis tili kursi", ru: "Курс немецкого языка", en: "German course", de: "Deutschkurs" });
   const platforms = parsePlatforms(fd);
 
@@ -86,7 +83,6 @@ export async function createVacancyLink(fd: FormData): Promise<FormState> {
       jobTitle: String(fd.get("jobTitle") || "").trim() || null,
       salary: String(fd.get("salary") || "").trim() || null,
       description: String(fd.get("description") || "").trim() || null,
-      // Ariza formasidagi qo'shimcha savollar (JSON) — mijozdan kelgani tozalab saqlanadi
       questions: serializeQuestions(parseQuestions(String(fd.get("questions") || ""))),
       branchId: s.branchId,
       createdById: s.userId,
@@ -99,7 +95,6 @@ export async function createVacancyLink(fd: FormData): Promise<FormState> {
   return { ok: true, links };
 }
 
-// Mavjud vakansiyaga havola(lar) qo'shish
 export async function addLinkToVacancy(fd: FormData): Promise<FormState> {
   const s = await requireSession();
   if (!can(s.role)) return { error: tr(s.locale, { uz: "Ruxsat yo'q", ru: "Нет доступа", en: "No permission", de: "Keine Berechtigung" }) };
@@ -154,7 +149,6 @@ export async function updateLink(fd: FormData): Promise<FormState> {
 export async function deleteLink(id: string): Promise<void> {
   const s = await requireSession();
   if (!can(s.role)) return;
-  // Bog'liq lidlarni uzamiz (vacancyLinkId = null), keyin havolani o'chiramiz
   await prisma.lead.updateMany({ where: { vacancyLinkId: id }, data: { vacancyLinkId: null } });
   await prisma.vacancyLink.delete({ where: { id } }).catch(() => {});
   await writeAudit({ actorId: s.userId, action: "DELETE", entityType: "VacancyLink", entityId: id });
@@ -167,14 +161,13 @@ export async function deleteVacancy(id: string): Promise<void> {
   const links = await prisma.vacancyLink.findMany({ where: { vacancyId: id }, select: { id: true } });
   const ids = links.map((l) => l.id);
   if (ids.length) await prisma.lead.updateMany({ where: { vacancyLinkId: { in: ids } }, data: { vacancyLinkId: null } });
-  await prisma.vacancy.delete({ where: { id } }).catch(() => {}); // links cascade
+  await prisma.vacancy.delete({ where: { id } }).catch(() => {});
   await writeAudit({ actorId: s.userId, action: "DELETE", entityType: "Vacancy", entityId: id });
   revalidatePath("/links");
 }
 
-// QR — apply URL ni to'liq manzil bilan data-URL (PNG) qilib qaytaradi
 export async function linkQrDataUrl(code: string): Promise<{ url: string; qr: string } | { error: string }> {
-  const s = await requireSession(); // istalgan tizimga kirgan foydalanuvchi QR ko'ra oladi
+  const s = await requireSession();
   const h = await headers();
   const host = h.get("host") ?? "localhost:3000";
   const proto = host.startsWith("localhost") || host.startsWith("127.") ? "http" : "https";

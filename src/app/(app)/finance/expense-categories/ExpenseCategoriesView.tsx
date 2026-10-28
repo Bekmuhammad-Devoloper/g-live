@@ -12,9 +12,9 @@ import { createExpenseCategory, renameExpenseCategory, deleteExpenseCategory, ty
 export interface VCategory {
   id: string;
   name: string;
-  count: number; // faol filialdagi xarajatlar soni
-  sum: number; // faol filialdagi xarajatlar summasi
-  refs: number; // barcha filiallar bo'yicha bog'langan xarajatlar
+  count: number;
+  sum: number;
+  refs: number;
 }
 
 export default function ExpenseCategoriesView({ categories, writable, locale }: { categories: VCategory[]; writable: boolean; locale: Locale }) {

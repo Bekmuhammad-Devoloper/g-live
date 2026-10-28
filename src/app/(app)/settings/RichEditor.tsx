@@ -7,11 +7,9 @@ import { tr } from "@/lib/tr";
 import type { Locale } from "@/lib/constants";
 import { Icon } from "../_components/Icon";
 
-// Yengil WYSIWYG muharrir — contentEditable + execCommand asosida (tashqi kutubxonasiz).
 export default function RichEditor({ locale, value, onChange, placeholder }: { locale: Locale; value: string; onChange: (html: string) => void; placeholder?: string }) {
   const ref = useRef<HTMLDivElement>(null);
 
-  // Boshlang'ich HTML — faqat mount paytida (kursor sakramasligi uchun controlled emas)
   useEffect(() => {
     if (ref.current && value && ref.current.innerHTML !== value) ref.current.innerHTML = value;
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -24,8 +22,6 @@ export default function RichEditor({ locale, value, onChange, placeholder }: { l
     emit();
   };
 
-  // Havola so'rash oynasi ochilganda tahrirlovchidagi belgilash yo'qoladi —
-  // oldindan saqlab, buyruqdan oldin qaytarib qo'yamiz
   const askUrl = async (message: string, cmd: string) => {
     const sel = window.getSelection();
     const range = sel && sel.rangeCount > 0 ? sel.getRangeAt(0).cloneRange() : null;
@@ -45,7 +41,6 @@ export default function RichEditor({ locale, value, onChange, placeholder }: { l
 
   return (
     <div className="overflow-hidden rounded-xl border border-slate-200 dark:border-slate-700">
-      {/* Toolbar */}
       <div className="flex flex-wrap items-center gap-0.5 border-b border-slate-200 bg-slate-50/70 px-2 py-1.5 dark:border-slate-700 dark:bg-slate-800/60">
         <select onChange={(e) => exec("formatBlock", e.target.value)} defaultValue="P"
           className="h-8 rounded border border-slate-200 bg-white px-2 text-xs text-slate-600 outline-none dark:border-slate-700 dark:bg-slate-800 dark:text-slate-200">
@@ -79,7 +74,6 @@ export default function RichEditor({ locale, value, onChange, placeholder }: { l
         <button type="button" title={tr(locale, { uz: "Formatni tozalash", ru: "Очистить формат", en: "Clear formatting", de: "Formatierung löschen" })} className={btn} onClick={() => exec("removeFormat")}><Icon name="eraser" className="h-4 w-4" /></button>
       </div>
 
-      {/* Kontent */}
       <div
         ref={ref}
         contentEditable

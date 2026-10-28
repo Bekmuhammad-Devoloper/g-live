@@ -6,16 +6,6 @@ import type { StudentStrings } from "../_i18n";
 import { CoinGold, ICON_GRADIENT, TEAL } from "../_ui";
 import { buyItem } from "./actions";
 
-// Do'kon kartochkasi: rasm, narx yorlig'i, zaxira va sotib olish tugmasi.
-// Rasm qo'yilmagan sovg'a uchun nomiga qarab mos belgi va rang tanlanadi —
-// bo'sh kulrang katak o'rniga jonli vitrina bo'lsin.
-// Kartaning RAMKASI shisha (`.gl-glass`), rasm maydoni esa qattiq qoladi —
-// sovg'a surati ostidan fon ko'rinib ketmasin.
-//
-// Kartochka BOSILADI: plitkada rasm qirqilgan, tavsif esa ikki qatorga
-// kesilgan bo'ladi; tanga yetmasa tugma ham o'chiq turadi va sovg'ani
-// umuman ko'rib bo'lmasdi. Bosilganda to'liq ma'lumot oynasi ochiladi.
-
 export type VItem = {
   id: string;
   title: string;
@@ -36,7 +26,6 @@ const THEMES: Theme[] = [
   { bg: "linear-gradient(140deg,#14b8a6,#0f766e)", soft: "#ccfbf1" },
 ];
 
-// Nomi bo'yicha belgi — ustoz qanday sovg'a qo'shsa ham mos tushsin
 function glyphFor(title: string) {
   const s = title.toLowerCase();
   if (/ruchka|qalam|pen/.test(s)) return "pen";
@@ -97,7 +86,6 @@ export default function ItemCard({
 
   return (
     <div className="gl-glass overflow-hidden rounded-[20px]">
-      {/* Vitrina — bosilsa to'liq ma'lumot ochiladi */}
       <button
         type="button"
         onClick={() => setOpen(true)}
@@ -114,7 +102,6 @@ export default function ItemCard({
           </span>
         )}
 
-        {/* Narx yorlig'i */}
         <span className="absolute left-2 top-2 flex items-center gap-1 rounded-full bg-white/95 px-2 py-[3px] shadow-sm">
           <CoinGold s={15} />
           <span className="text-[12px] font-extrabold text-slate-800">{item.price}</span>
@@ -133,7 +120,6 @@ export default function ItemCard({
         ) : null}
       </button>
 
-      {/* Matn */}
       <div className="p-3">
         <button type="button" onClick={() => setOpen(true)} className="block w-full text-left">
           <div className="line-clamp-2 min-h-[36px] text-[14px] font-extrabold leading-tight text-slate-900">{item.title}</div>
@@ -142,7 +128,6 @@ export default function ItemCard({
           ) : null}
         </button>
 
-        {/* Amal */}
         <div className="mt-2.5">
           {done ? (
             <div className="grid min-h-[44px] place-items-center rounded-xl bg-emerald-50 px-2 text-center text-[12.5px] font-bold text-emerald-700">{t.ordered}</div>
@@ -168,7 +153,6 @@ export default function ItemCard({
           ) : (
             <button
               type="button"
-              // Tanga yetmasa ham bosiladi — sovg'ani ko'rish uchun oyna ochiladi
               onClick={() => (blocked ? setOpen(true) : setAsk(true))}
               className={
                 "min-h-[44px] w-full rounded-xl py-2 text-[12.5px] font-bold transition " +
@@ -201,8 +185,6 @@ export default function ItemCard({
     </div>
   );
 }
-
-// ───────────── To'liq ma'lumot oynasi (pastdan chiqadi) ─────────────
 
 function DetailSheet({
   item, t, theme, balance, soldOut, affordable, done, busy, err, onBuy, onClose,
@@ -247,7 +229,6 @@ function DetailSheet({
           <span className="h-1 w-10 rounded-full bg-slate-200" />
         </div>
 
-        {/* Rasm — plitkadagidan katta, to'liq ko'rinadi */}
         <div className="relative aspect-[4/3] w-full" style={{ background: item.imageUrl ? undefined : theme.bg }}>
           {item.imageUrl ? (
             // eslint-disable-next-line @next/next/no-img-element
@@ -279,12 +260,10 @@ function DetailSheet({
             ) : null}
           </div>
 
-          {/* To'liq tavsif — plitkada u ikki qatorga kesilgan edi */}
           {item.description ? (
             <p className="mt-3 whitespace-pre-wrap text-[13.5px] leading-relaxed text-slate-600">{item.description}</p>
           ) : null}
 
-          {/* Tanga yetmasa — qancha qolgani ko'rinadi */}
           {!affordable && !soldOut ? (
             <div className="mt-4 rounded-2xl bg-[#eef6fa] p-3.5">
               <div className="mb-1.5 flex items-baseline justify-between gap-2 text-[12.5px]">
@@ -301,7 +280,6 @@ function DetailSheet({
 
           {err ? <p className="mt-3 text-center text-[12.5px] font-semibold text-rose-600">{err}</p> : null}
 
-          {/* Amal */}
           <div className="mt-4 flex gap-2">
             {done ? (
               <div className="grid min-h-[48px] flex-1 place-items-center rounded-2xl bg-emerald-50 text-[14px] font-bold text-emerald-700">

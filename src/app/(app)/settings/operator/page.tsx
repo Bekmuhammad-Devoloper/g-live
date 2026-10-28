@@ -7,8 +7,6 @@ import { Forbidden } from "../../_components/ui";
 import { parsePrefs, prefsKey } from "./prefs";
 import OperatorSettingsView from "./OperatorSettingsView";
 
-// Operator / ROP shaxsiy sozlamalari — bildirishnoma, ko'rinish va maosh (KPI) ma'lumotlari.
-// Shaxsiy ma'lumotlar va parol /profile sahifasida (bu yerda takrorlanmaydi).
 const ALLOWED: string[] = [ROLES.OPERATOR, ROLES.ROP, ROLES.MANAGER, ROLES.DEPUTY_DIRECTOR, ROLES.DIRECTOR, ROLES.ADMIN];
 
 const MONTHS: Record<Locale, string[]> = {
@@ -20,7 +18,6 @@ const MONTHS: Record<Locale, string[]> = {
 
 const p2 = (n: number) => String(n).padStart(2, "0");
 const fmtDate = (d: Date) => `${p2(d.getDate())}.${p2(d.getMonth() + 1)}.${d.getFullYear()}`;
-// Summani "200 000" ko'rinishida formatlash (serverda tayyorlanadi — mijozga faqat matn ketadi).
 const money = (n: number) => String(Math.round(n)).replace(/\B(?=(\d{3})+(?!\d))/g, " ");
 
 export default async function OperatorSettingsPage({ searchParams }: { searchParams: Promise<{ tab?: string }> }) {
@@ -60,7 +57,6 @@ export default async function OperatorSettingsPage({ searchParams }: { searchPar
   ]);
   if (!u) return null;
 
-  // ── Oylik KPI: oxirgi oylar bo'yicha muvaffaqiyatli (WON) lidlar ──
   const now = new Date();
   const keyOf = (d: Date) => `${d.getFullYear()}-${d.getMonth()}`;
   const counts = new Map<string, number>();
@@ -84,7 +80,6 @@ export default async function OperatorSettingsPage({ searchParams }: { searchPar
     });
   }
 
-  // Joriy oyda yopilgan lidlar (ko'pi bilan 8 tasi ko'rsatiladi)
   const monthLeads = wonLeads.filter((l) => keyOf(l.createdAt) === keyOf(now));
 
   return (

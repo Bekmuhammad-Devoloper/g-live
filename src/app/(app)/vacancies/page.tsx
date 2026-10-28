@@ -24,7 +24,7 @@ export default async function VacanciesPage({ searchParams }: { searchParams: Pr
   const sp = await searchParams;
 
   const vacancies = await prisma.vacancy.findMany({
-    where: branchWhere(s), // faol filial doirasida
+    where: branchWhere(s),
     orderBy: { createdAt: "desc" },
     select: {
       id: true, title: true, company: true, country: true, countryCode: true,
@@ -34,10 +34,9 @@ export default async function VacanciesPage({ searchParams }: { searchParams: Pr
     },
   });
 
-  // Arizalar — lidlarning vacancyLinkId si bo'yicha (haqiqiy hisob)
   const grouped = await prisma.lead.groupBy({
     by: ["vacancyLinkId"],
-    where: { AND: [{ vacancyLinkId: { not: null } }, branchWhere(s)] }, // faol filial doirasida
+    where: { AND: [{ vacancyLinkId: { not: null } }, branchWhere(s)] },
     _count: { _all: true },
   });
   const appsByLink = new Map(grouped.map((g) => [g.vacancyLinkId as string, g._count._all]));

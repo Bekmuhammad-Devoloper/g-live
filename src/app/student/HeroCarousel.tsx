@@ -2,13 +2,6 @@
 
 import { useEffect, useRef, useState, type ReactNode } from "react";
 
-/**
- * Bosh sahifadagi asosiy karta karuseli — kurs banneri va "Keyingi dars"
- * kartasi bitta joyda navbat bilan ko'rinadi: har 5 sekundda almashadi,
- * barmoq bilan surish yoki nuqtaga bosish ham mumkin. Slaydlar bir-birining
- * ustida turadi (grid 1/1), shuning uchun balandlik eng balandi bo'yicha —
- * almashganda sahifa "sakramaydi".
- */
 export default function HeroCarousel({ slides, interval = 5000 }: { slides: ReactNode[]; interval?: number }) {
   const [i, setI] = useState(0);
   const [paused, setPaused] = useState(false);

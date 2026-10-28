@@ -8,19 +8,12 @@ import type { Locale } from "@/lib/constants";
 import { Icon } from "../../_components/Icon";
 import { enrollOptions, enrollLeadToGroup, type EnrollGroupOpt } from "../actions";
 
-// Lidni kurs + guruhga yo'naltirish paneli (yonboshdan ochiladi).
-// "Qabul qilindi" bosqichiga o'tish uchun MAJBURIY qadam.
-// Guruh keyin faqat BIR MARTA o'zgartirilishi mumkin — shuning uchun
-// tasdiqlashdan oldin ogohlantirish ko'rsatiladi.
-
 interface Props {
   locale: Locale;
   open: boolean;
   leadId: string;
   leadName: string;
-  /** Hozirgi guruh (o'zgartirish rejimida) */
   currentGroupId?: string | null;
-  /** Necha marta o'zgartirilgan (0 = hali o'zgartirilmagan) */
   editCount?: number;
   onClose: () => void;
   onDone: (msg: string) => void;
@@ -47,7 +40,6 @@ export default function EnrollDrawer({
 
   useEffect(() => setMounted(true), []);
 
-  // Ma'lumotni faqat panel ochilganda yuklaymiz
   useEffect(() => {
     if (!open || loadedRef.current) return;
     loadedRef.current = true;
@@ -59,7 +51,6 @@ export default function EnrollDrawer({
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [open]);
 
-  // Escape bilan yopish + fon aylanishini to'xtatish
   useEffect(() => {
     if (!open) return;
     const onKey = (e: KeyboardEvent) => { if (e.key === "Escape") onClose(); };
@@ -73,7 +64,7 @@ export default function EnrollDrawer({
     const needle = q.trim().toLowerCase();
     return groups.filter((g) => {
       if (course && g.courseId !== course) return false;
-      if (g.id === currentGroupId) return false;              // hozirgi guruh qayta taklif qilinmaydi
+      if (g.id === currentGroupId) return false;
       if (!needle) return true;
       return `${g.name} ${g.courseName} ${g.teacher ?? ""} ${g.room ?? ""}`.toLowerCase().includes(needle);
     });
@@ -115,7 +106,6 @@ export default function EnrollDrawer({
         onMouseDown={(e) => e.stopPropagation()}
         className="animate-slide-in-right absolute right-0 top-0 flex h-full drawer-panel flex-col border-l border-slate-200 bg-white shadow-pop dark:border-white/10 dark:bg-[#15243d]"
       >
-        {/* Sarlavha */}
         <div className="flex shrink-0 items-start justify-between gap-2 border-b border-slate-100 px-5 py-4 dark:border-white/10">
           <div className="min-w-0">
             <div className="flex items-center gap-2 text-base font-bold text-slate-800 dark:text-slate-100">
@@ -129,7 +119,6 @@ export default function EnrollDrawer({
           </button>
         </div>
 
-        {/* Ogohlantirish chizig'i */}
         <div className={cn(
           "shrink-0 px-5 py-2.5 text-[11px] leading-relaxed",
           blocked ? "bg-rose-500/10 text-rose-600 dark:text-rose-300" : "bg-amber-500/10 text-amber-700 dark:text-amber-300",
@@ -150,7 +139,6 @@ export default function EnrollDrawer({
                   "Für die Kennzeichnung des Leads als „Gewonnen\" ist die Wahl einer Gruppe erforderlich. Danach können Sie sie nur einmal ändern.")}
         </div>
 
-        {/* Tanlov */}
         <div className="flex-1 overflow-y-auto px-5 py-4">
           {loading ? (
             <div className="space-y-2">
@@ -226,7 +214,6 @@ export default function EnrollDrawer({
                           {g.schedule && <span className="flex items-center gap-1"><Icon name="clock" className="h-3 w-3" />{g.schedule}</span>}
                           {g.room && <span className="flex items-center gap-1"><Icon name="building" className="h-3 w-3" />{g.room}</span>}
                         </div>
-                        {/* Guruh izohi (kament) */}
                         {g.note && (
                           <div className="mt-1.5 flex items-start gap-1 text-[11px] leading-snug text-amber-600 dark:text-amber-400">
                             <Icon name="info" className="mt-px h-3 w-3 shrink-0" />
@@ -244,7 +231,6 @@ export default function EnrollDrawer({
           {err && <div className="mt-3 rounded-xl bg-rose-50 px-3.5 py-2.5 text-sm text-rose-600 dark:bg-rose-500/10 dark:text-rose-400">{err}</div>}
         </div>
 
-        {/* Tasdiqlash */}
         <div className="shrink-0 border-t border-slate-100 px-5 py-4 dark:border-white/10">
           {confirming && pickedGroup ? (
             <>

@@ -1,12 +1,3 @@
-// Namunaviy kurs darslarini yaratadi — o'quvchi ilovasidagi "darslar yo'li"ni
-// ko'rish uchun. Har dars sarlavhasi "[DEMO]" bilan boshlanadi, shuning uchun
-// keyin osongina o'chirib tashlash mumkin:
-//   node --env-file=.env scripts/seed-demo-lessons.mjs --clean
-//
-// Ishlatish:
-//   node --env-file=.env scripts/seed-demo-lessons.mjs            (ko'rish)
-//   node --env-file=.env scripts/seed-demo-lessons.mjs --apply    (yozish)
-
 import { PrismaClient } from "@prisma/client";
 
 const prisma = new PrismaClient();
@@ -16,7 +7,6 @@ const clean = args.includes("--clean");
 
 const TAG = "[DEMO]";
 
-// Daraja → darslar (uchtadan: Unit x.1, x.2, x.3)
 const PLAN = {
   A1: [
     { title: "Begrüßung und Vorstellung", topic: "hallo, guten Tag, ich heiße, wie geht es dir, tschüss, bis bald", hw: "Schreibe 5 Sätze über dich." },
@@ -87,19 +77,16 @@ if (!apply) {
 
 await prisma.courseLesson.createMany({ data: rows });
 
-// Birinchi darajadagi bir nechta darsni "o'tilgan" deb belgilaymiz — foizlar ko'rinsin
 const created = await prisma.courseLesson.findMany({
   where: { programId: group.programId, title: { startsWith: TAG } },
   orderBy: { order: "asc" },
   select: { id: true, levelCode: true },
 });
 const taught = [
-  ...created.filter((l) => l.levelCode === "A1"),          // A1 to'liq
-  ...created.filter((l) => l.levelCode === "A2").slice(0, 2), // A2 dan ikkitasi
-  ...created.filter((l) => l.levelCode === "B1").slice(0, 1), // B1 dan bittasi
+  ...created.filter((l) => l.levelCode === "A1"),
+  ...created.filter((l) => l.levelCode === "A2").slice(0, 2),
+  ...created.filter((l) => l.levelCode === "B1").slice(0, 1),
 ];
-// Kursning BARCHA faol guruhlariga belgilaymiz — qaysi guruhdagi o'quvchi
-// kirsa ham foizlar ko'rinsin
 const groups = await prisma.group.findMany({
   where: { programId: group.programId, status: { not: "CANCELLED" } },
   select: { id: true },

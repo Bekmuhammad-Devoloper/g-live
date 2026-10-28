@@ -41,13 +41,11 @@ const fmtDur = (sec: number) => {
   const p2 = (n: number) => String(n).padStart(2, "0");
   return h > 0 ? `${h}:${p2(m)}:${p2(sc)}` : `${m}:${p2(sc)}`;
 };
-// Deterministik raqam guruhlash (Intl o'rniga — server/client bir xil chiqishi uchun)
 const grp = (n: number) => String(Math.round(n)).replace(/\B(?=(\d{3})+(?!\d))/g, " ");
 
 type Tab = "all" | "talked" | "no_answer" | "calls";
 
 interface Props {
-  /** Bo'lim turi: operator yoki filial administratori */
   kind?: TeamKind;
   locale: Locale;
   op: DOperator;
@@ -80,7 +78,6 @@ export default function OperatorDetail({ kind = "operator", locale, op, leads, c
 
   return (
     <div className="space-y-4">
-      {/* Sarlavha + davr filtri */}
       <div className="flex flex-col gap-3 lg:flex-row lg:items-center lg:justify-between">
         <div className="flex items-center gap-3">
           <Link href={cfg.base} className="grid h-10 w-10 place-items-center rounded-lg border border-slate-200 bg-white text-slate-500 transition hover:bg-slate-50 dark:border-slate-700 dark:bg-slate-900 dark:hover:bg-slate-800">
@@ -113,7 +110,6 @@ export default function OperatorDetail({ kind = "operator", locale, op, leads, c
         </div>
       </div>
 
-      {/* Profil / Konversiya / Statistika */}
       <div className="grid gap-3 lg:grid-cols-3">
         <div className="rounded-2xl border border-slate-200/70 bg-white p-5 shadow-card dark:border-slate-800 dark:bg-slate-900">
           <div className="mb-4 flex items-center gap-3">
@@ -183,7 +179,6 @@ export default function OperatorDetail({ kind = "operator", locale, op, leads, c
         </div>
       </div>
 
-      {/* Oylik maosh */}
       {cur && (
         <div className="overflow-hidden rounded-2xl border border-slate-200/70 bg-white shadow-card dark:border-slate-800 dark:bg-slate-900">
           <div className="border-b border-slate-100 px-5 py-4 dark:border-slate-800">
@@ -238,7 +233,6 @@ export default function OperatorDetail({ kind = "operator", locale, op, leads, c
         </div>
       )}
 
-      {/* Tablar */}
       <div className="overflow-hidden rounded-2xl border border-slate-200/70 bg-white shadow-card dark:border-slate-800 dark:bg-slate-900">
         <div className="flex overflow-x-auto border-b border-slate-100 dark:border-slate-800">
           <TabBtn active={tab === "all"} onClick={() => setTab("all")} icon="user" label={tr(locale, { uz: "Barcha lidlar", ru: "Все лиды", en: "All leads", de: "Alle Leads" })} count={leads.length} tone="slate" />

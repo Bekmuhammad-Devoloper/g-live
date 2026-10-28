@@ -10,17 +10,12 @@ import { dayKey, GAME_MIN_ACCURACY } from "@/lib/skillMath";
 import { notify } from "@/lib/notify";
 import { LT, S } from "../_i18n";
 
-// O'yin natijasini saqlash va chaqiruvlar (duel / guruhli o'yin).
-// Ballni mijoz yuboradi, shu sabab cheklovlar shu yerda: raund soni
-// belgilangan chegaradan oshmaydi va bir kunda sanaladigan o'yin soni cheklangan.
-
 const GAMES = ["vocabulary", "wordgame", "crossword", "grammar"];
 const MODES = ["ai", "duel", "group"];
 const MAX_ROUNDS = 30;
-const MAX_PER_DAY = 20; // kuniga shuncha o'yin yoziladi, ortig'i saqlanmaydi
-const CHALLENGE_DAYS = 3; // chaqiruv shuncha kun kutadi
+const MAX_PER_DAY = 20;
+const CHALLENGE_DAYS = 3;
 
-// O'quvchi + uning tilidagi matnlar (xato xabarlari o'quvchi tilida qaytsin)
 async function me() {
   const s = await getSession();
   if (!s || s.role !== ROLES.STUDENT) return null;
@@ -64,7 +59,6 @@ export async function saveGameResult(input: {
   const { score, total } = clampRounds(input.score, input.total);
   if (total === 0) return { error: "invalid" };
 
-  // Kunlik chegara — bitta o'yinni qayta-qayta o'ynab tanga yig'ib bo'lmasin
   const dayStart = new Date();
   dayStart.setHours(0, 0, 0, 0);
   const today = await prisma.gameResult.count({ where: { studentId: student.id, createdAt: { gte: dayStart } } });
@@ -74,10 +68,6 @@ export async function saveGameResult(input: {
     data: { studentId: student.id, game, mode, score, total, won: !!input.won },
   });
 
-  // Ko'nikma plitkasi: yaxshi o'ynalgan o'yin — har o'yin turiga KUNIGA BIR
-  // marta (kalit tur+sana), aks holda bir o'yinni 20 marta o'ynab ball
-  // yig'ib bo'lardi. Duel/guruhli o'yin ham shu yerdan o'tadi
-  // (submitChallenge alohida bermaydi — bir o'yin ikki marta sanalmasin).
   if (score / total >= GAME_MIN_ACCURACY) {
     await awardSkill(student.id, game === "grammar" ? "gameGrammar" : "gameWords", `game:${game}:${dayKey(new Date())}`);
   }
@@ -86,9 +76,6 @@ export async function saveGameResult(input: {
   return { ok: true };
 }
 
-/* ══════════ Chaqiruvlar ══════════ */
-
-/** Duel: guruhdoshga chaqiruv yuborish */
 export async function createDuel(opponentId: string, lobby: string): Promise<{ id?: string; seed?: number; error?: string }> {
   const student = await me();
   if (!student) return { error: "forbidden" };
@@ -98,7 +85,6 @@ export async function createDuel(opponentId: string, lobby: string): Promise<{ i
   const groupId = student.enrollments[0]?.groupId;
   if (!groupId) return { error: student.t.notInGroup };
 
-  // Faqat o'z guruhidagi, ilovaga ulangan o'quvchi
   const ok = await prisma.groupStudent.findFirst({
     where: { groupId, studentId: opponentId, isActive: true, student: { userId: { not: null } } },
     select: { id: true },
@@ -118,7 +104,6 @@ export async function createDuel(opponentId: string, lobby: string): Promise<{ i
     select: { id: true, seed: true },
   });
 
-  // Raqibga xabar — ilovada bildirishnoma bo'limida, RAQIBNING tilida
   const opp = await prisma.student.findUnique({ where: { id: opponentId }, select: { userId: true } });
   if (opp?.userId) {
     await notify({
@@ -134,7 +119,6 @@ export async function createDuel(opponentId: string, lobby: string): Promise<{ i
   return { id: ch.id, seed: ch.seed };
 }
 
-/** Guruhli o'yin: shu haftalik chaqiruvni olish yoki yaratish */
 export async function joinGroupGame(lobby: string): Promise<{ id?: string; seed?: number; error?: string }> {
   const student = await me();
   if (!student) return { error: "forbidden" };
@@ -143,7 +127,6 @@ export async function joinGroupGame(lobby: string): Promise<{ id?: string; seed?
   const groupId = student.enrollments[0]?.groupId;
   if (!groupId) return { error: student.t.notInGroup };
 
-  // Guruhda shu o'yin turi bo'yicha ochiq chaqiruv bo'lsa — o'shanga qo'shiladi
   const open = await prisma.gameChallenge.findFirst({
     where: { kind: "GROUP", groupId, lobby, expiresAt: { gt: new Date() } },
     orderBy: { createdAt: "desc" },
@@ -158,7 +141,7 @@ export async function joinGroupGame(lobby: string): Promise<{ id?: string; seed?
       seed: Math.floor(Math.random() * 1e9),
       createdById: student.id,
       groupId,
-      expiresAt: new Date(Date.now() + 7 * 864e5), // bir hafta ochiq turadi
+      expiresAt: new Date(Date.now() + 7 * 864e5),
     },
     select: { id: true, seed: true },
   });
@@ -167,7 +150,6 @@ export async function joinGroupGame(lobby: string): Promise<{ id?: string; seed?
   return { id: ch.id, seed: ch.seed };
 }
 
-/** Chaqiruv natijasini yozish — har o'yinchi bir marta */
 export async function submitChallenge(
   challengeId: string,
   score: number,
@@ -183,7 +165,6 @@ export async function submitChallenge(
   if (!ch) return { error: student.t.challengeNotFound };
   if (ch.expiresAt < new Date()) return { error: student.t.challengeExpired };
 
-  // Qatnashish huquqi
   const allowed =
     ch.kind === "DUEL"
       ? ch.createdById === student.id || ch.opponentId === student.id
@@ -200,13 +181,12 @@ export async function submitChallenge(
     where: { challengeId_studentId: { challengeId: ch.id, studentId: student.id } },
     select: { id: true },
   });
-  if (already) return { ok: true }; // ikkinchi marta o'ynash natijani o'zgartirmaydi
+  if (already) return { ok: true };
 
   await prisma.gameChallengeEntry.create({
     data: { challengeId: ch.id, studentId: student.id, score: c.score, total: c.total },
   });
 
-  // Duelda ikkalasi ham tugatgan bo'lsa — ikkalasiga xabar
   if (ch.kind === "DUEL" && ch.opponentId) {
     const entries = await prisma.gameChallengeEntry.findMany({
       where: { challengeId: ch.id },
@@ -226,7 +206,6 @@ export async function submitChallenge(
         const other = e.studentId === a.studentId ? b : a;
         const otherName = byId.get(other.studentId)?.fullName ?? LT("rival");
         const verdict = LT(mineScore > other.score ? "youWon" : mineScore < other.score ? "youLost" : "drawResult");
-        // Har o'yinchiga O'Z tilida (notify oluvchining tilini o'zi tanlaydi)
         await notify({
           userId: u.userId,
           event: "BATTLE",

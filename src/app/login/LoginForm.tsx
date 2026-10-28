@@ -5,20 +5,13 @@ import { tr } from "@/lib/tr";
 import type { Locale } from "@/lib/constants";
 import { login, type LoginState } from "./actions";
 
-// Kirish sahifasida sessiya yo'q — `locale` brauzer tilidan (page.tsx) keladi.
 export default function LoginForm({ locale, next = null }: { locale: Locale; next?: string | null }) {
   const T = (uz: string, ru: string, en: string, de: string) => tr(locale, { uz, ru, en, de });
-  // Ilova (TWA/PWA) ichida eski deploy'ning sahifasi ochiq qolsa, server action
-  // ID'si topilmay "Failed to find Server Action" xatosi chiqadi. `login` odatda
-  // hech qachon throw qilmaydi ({error} qaytaradi) — shuning uchun har qanday
-  // istisno = eskirgan sahifa: bir marta o'zini yangilaydi (sessionStorage bilan
-  // takror aylanishning oldi olinadi).
   const [state, formAction, pending] = useActionState<LoginState, FormData>(async (prev, fd) => {
     try {
       return await login(prev, fd);
     } catch (e) {
       const msg = String((e as Error)?.message ?? e);
-      // Next'ning redirect'i ham istisno orqali ishlaydi — unga tegmaymiz
       if (/NEXT_REDIRECT/.test(msg)) throw e;
       const flag = "gl-login-reloaded";
       if (typeof window !== "undefined" && !sessionStorage.getItem(flag)) {

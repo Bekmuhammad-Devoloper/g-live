@@ -1,32 +1,22 @@
-// Tizim bo'ylab ishlatiladigan konstantalar va status-yorliqlari.
-// (Enum o'rniga — SQLite/Postgres o'rtasida ko'chirishga qulay.)
-
 export type Locale = "uz" | "ru" | "en" | "de";
 
 export const LOCALES: Locale[] = ["uz", "ru", "en", "de"];
 
-// Bitta yozuvning 4 tildagi matni. Nemischa (de) IXTIYORIY — berilmagan
-// joyda inglizchaga, u ham bo'lmasa o'zbekchaga tushadi (tr/label fallback).
-// Shu tufayli eski 3 tilli obyektlar ham kompilyatsiyadan o'tadi.
 export type LocaleText = { uz: string; ru: string; en: string; de?: string };
 
-// ─── Rollar ───
 export const ROLES = {
   STUDENT: "STUDENT",
   PARENT: "PARENT",
   TEACHER: "TEACHER",
-  // Sotuv bo'limi — eski loyihadagidek IKKI ALOHIDA rol.
-  // Ilgari ikkalasi ham MANAGER edi va ROP lavozim matni orqali ajratilardi.
   OPERATOR: "OPERATOR",
   ROP: "ROP",
-  MANAGER: "MANAGER", // eski yozuvlar uchun qoldirilgan (yangi xodimga berilmaydi)
+  MANAGER: "MANAGER",
   ACCOUNTANT: "ACCOUNTANT",
   DEPUTY_DIRECTOR: "DEPUTY_DIRECTOR",
   DIRECTOR: "DIRECTOR",
   ADMIN: "ADMIN",
 } as const;
 
-/** Sotuv bo'limi rollari — "operator yoki ROP" tekshiruvlari uchun */
 export const SALES_ROLES: string[] = [ROLES.OPERATOR, ROLES.ROP, ROLES.MANAGER];
 export const isSalesRole = (r: string | null | undefined) => SALES_ROLES.includes(String(r));
 
@@ -45,7 +35,6 @@ export const ROLE_LABELS: Record<string, LocaleText> = {
   ADMIN: { uz: "Administrator", ru: "Администратор", en: "Administrator", de: "Administrator" },
 };
 
-// ─── Lid voronka bosqichlari ───
 export const LEAD_STAGES = [
   "NEW",
   "IN_PROGRESS",
@@ -72,7 +61,6 @@ export const LEAD_STAGE_LABELS: Record<string, LocaleText> = {
   LOST: { uz: "Yo'qotildi", ru: "Потерян", en: "Lost", de: "Verloren" },
 };
 
-// ─── Ta'lim statuslari ───
 export const EDU_STATUSES = [
   "WAITING",
   "ACTIVE",
@@ -97,9 +85,6 @@ export const EDU_STATUS_LABELS: Record<string, LocaleText> = {
   ARCHIVED: { uz: "Arxivlangan", ru: "В архиве", en: "Archived", de: "Archiviert" },
 };
 
-// ─── To'lov ───
-// "BANK" — bank hisobiga o'tkazma (xarajatlar ro'yxatida allaqachon bor edi,
-// endi kirim to'lovlarida ham tanlanadi).
 export const PAYMENT_METHODS = ["CASH", "CARD", "BANK", "CLICK", "PAYME", "UZUM", "TRANSFER"] as const;
 
 export const PAYMENT_METHOD_LABELS: Record<string, LocaleText> = {
@@ -122,7 +107,6 @@ export const PAYMENT_STATUS_LABELS: Record<string, LocaleText> = {
   ADJUST: { uz: "Qarz tuzatish", ru: "Корректировка долга", en: "Debt adjustment", de: "Schuldenkorrektur" },
 };
 
-// ─── Davomat ───
 export const ATTENDANCE_STATUSES = ["PRESENT", "LATE", "ABSENT", "EXCUSED", "ONLINE", "MAKEUP"] as const;
 
 export const ATTENDANCE_STATUS_LABELS: Record<string, LocaleText> = {
@@ -134,7 +118,6 @@ export const ATTENDANCE_STATUS_LABELS: Record<string, LocaleText> = {
   MAKEUP: { uz: "Qayta ishlash", ru: "Отработка", en: "Make-up", de: "Nachholstunde" },
 };
 
-// ─── O'quv shakli (guruh/kurs formati) ───
 export const GROUP_FORMATS = ["OFFLINE", "ONLINE", "HYBRID"] as const;
 
 export const GROUP_FORMAT_LABELS: Record<string, LocaleText> = {
@@ -143,7 +126,6 @@ export const GROUP_FORMAT_LABELS: Record<string, LocaleText> = {
   HYBRID: { uz: "Aralash", ru: "Смешанный", en: "Hybrid", de: "Hybrid" },
 };
 
-// ─── Mavsumiy baholash ───
 export const SEASONS = ["WINTER", "SPRING", "SUMMER", "AUTUMN"] as const;
 
 export const SEASON_LABELS: Record<string, LocaleText> = {
@@ -161,7 +143,6 @@ export const ASSESSMENT_STATUS_LABELS: Record<string, LocaleText> = {
   COMPLETED: { uz: "Yakunlangan", ru: "Завершено", en: "Completed", de: "Abgeschlossen" },
 };
 
-// ─── Shartnoma (shablon turlari) ───
 export const CONTRACT_TEMPLATE_TYPES = ["STANDARD", "ONLINE", "OFFLINE", "OFFER", "INDIVIDUAL"] as const;
 
 export const CONTRACT_TEMPLATE_TYPE_LABELS: Record<string, LocaleText> = {
@@ -181,31 +162,17 @@ export function label(
   return map[key]?.[locale] ?? map[key]?.en ?? map[key]?.uz ?? key;
 }
 
-// Lavozim (User.position) ROP (sotuv bo'limi boshlig'i) ekanini aniqlaydi.
-// ROP RBAC'da MANAGER'ga tushadi, lekin o'z portali (sidebar/dashboard) bo'lishi kerak.
 export function isRopPosition(position: string | null | undefined): boolean {
   const p = (position ?? "").toLowerCase();
   return /\brop\b/.test(p) || (p.includes("sotuv") && (p.includes("boshli") || p.includes("rahbar") || p.includes("bo'lim") || p.includes("bo‘lim")));
 }
 
-// Intl uchun til kodi
 export function intlLocale(locale: Locale): string {
   return locale === "ru" ? "ru-RU" : locale === "en" ? "en-US" : locale === "de" ? "de-DE" : "uz-UZ";
 }
 
-// Pulni formatlash (so'm) — deterministik: server va client bir xil chiqadi
-// (Intl.NumberFormat lokali Node va brauzerda farq qilib, hydration xatosi berardi).
-// ── Pul maydonlari uchun yuqori chegara ──
-// Prisma `Int` 2 147 483 647 dan kattani SAQLAY OLMAYDI, lekin SQLite yozib
-// qo'yaveradi — keyin o'sha qatorni o'qigan har qanday sahifa butunlay yiqiladi.
-// (Masalan, fiksa = 5 000 000 000 kiritilsa /teachers hammaga ochilmay qoladi.)
-// 1 mlrd so'm — real oylik/narx uchun yetarli, xatoga esa ishonchli to'siq.
 export const MAX_MONEY = 1_000_000_000;
 
-/**
- * Pul qiymatini xavfsiz butun songa keltiradi.
- * Manfiy, cheksiz yoki MAX_MONEY dan katta bo'lsa — null (yozmaslik kerak).
- */
 export function parseMoney(raw: unknown): number | null {
   const n = Math.round(Number(raw) || 0);
   if (!Number.isFinite(n) || n < 0 || n > MAX_MONEY) return null;

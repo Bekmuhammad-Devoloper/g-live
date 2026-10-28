@@ -2,7 +2,6 @@ import Link from "next/link";
 import { cn } from "@/lib/cn";
 import { Icon } from "./Icon";
 
-// Bo'lim ichidagi kichik modullarga havola kartasi
 export function HubCard({
   href,
   icon,
@@ -38,7 +37,6 @@ export function HubCard({
   );
 }
 
-// Hali to'ldirilmagan bo'limlar uchun ogohlantirish paneli
 export function ComingSoon({ text }: { text: string }) {
   return (
     <div className="rounded-2xl border border-dashed border-slate-300 bg-white/60 p-6 text-center dark:border-slate-700 dark:bg-slate-900/60">

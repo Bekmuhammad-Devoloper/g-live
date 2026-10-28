@@ -15,26 +15,15 @@ export type LevelTestOutcome =
       total: number;
       pct: number;
       passed: boolean;
-      /** Natijaviy daraja (o'tmasa — bittasi pastroq; A1 o'tmasa null) */
       resultLevel: TestLevel | null;
       nextLevel: TestLevel | null;
-      /** Katalogdagi nom, masalan "A2 — Asosiy" */
       label: string;
       color: string | null;
     }
   | { ok: false; error: string };
 
-/** Lidga ko'chirish mumkin bo'lgan bosqichlar — ishlov boshlanmagan yoki suhbatda */
 const MOVABLE_STAGES = ["NEW", "IN_PROGRESS", "CONTACTED"];
 
-/**
- * Ochiq (login talab qilmaydigan) test natijasini qabul qilish.
- * Mijoz to'plamni (A1.1, B2.2 ...) o'zi tanlagan — baholash faqat serverda.
- * Natija CRM'ga tushadi:
- *   - telefon bo'yicha lid bor → level yangilanadi, "test" faoliyati qo'shiladi,
- *     hali ishlov boshida bo'lsa "Daraja testi" (TEST) bosqichiga o'tadi;
- *   - lid yo'q → yangi lid (manba "Daraja testi", bosqich TEST).
- */
 export async function submitLevelTest(
   fullName: string,
   phone: string,
@@ -56,16 +45,13 @@ export async function submitLevelTest(
   const ageRaw = parseInt(String(extra.age ?? ""), 10);
   const ageNum = Number.isFinite(ageRaw) && ageRaw >= 3 && ageRaw <= 99 ? ageRaw : null;
 
-  // Natija matni — CRM'dagi faoliyat va izoh uchun
   const levelText = r.resultLevel ? `${r.resultLevel} (${LEVEL_NAMES[r.resultLevel]})` : "A1 dan past";
   const summary = `Daraja testi ${r.set}: ${r.correct}/${r.total} to'g'ri (${r.pct}%) — ${r.passed ? "o'tdi" : "o'tmadi"} → daraja: ${levelText}`;
 
-  // Katalogdagi daraja — lid.level faqat katalogda bor kod bilan to'ldiriladi
   const catalog = await getStudyLevels();
   const row = r.resultLevel ? catalog.find((l) => l.code.toUpperCase() === r.resultLevel) ?? null : null;
   const label = row ? `${row.code} — ${levelTitle(row, "uz")}` : r.resultLevel ? `${r.resultLevel} — ${LEVEL_NAMES[r.resultLevel]}` : "Boshlang'ich (A1 dan past)";
 
-  // Telefon bo'yicha mavjud lid: to'liq formatda yoki faqat raqamlari bilan saqlangan
   const digits = tel.replace(/\D/g, "").slice(-9);
   const existing = await prisma.lead.findFirst({
     where: { OR: [{ phone: tel }, { phone: { contains: digits } }] },
@@ -73,7 +59,6 @@ export async function submitLevelTest(
     select: { id: true, stage: true, vacancyLinkId: true },
   });
 
-  // Natija lidning o'zida ham saqlanadi — CRM kartasida darhol ko'rinsin
   const testFields = {
     testSet: r.set,
     testLevel: r.resultLevel ?? null,
@@ -88,7 +73,6 @@ export async function submitLevelTest(
       data: {
         ...(row ? { level: row.code } : {}),
         ...(ageNum ? { age: ageNum } : {}),
-        // Arizadan kelgan lid o'z ustunida (Yangi / Onlayn) qoladi — natija faqat biriktiriladi
         ...(MOVABLE_STAGES.includes(existing.stage) && !existing.vacancyLinkId ? { stage: "TEST" } : {}),
         ...testFields,
         activities: { create: { type: "test", result: summary } },

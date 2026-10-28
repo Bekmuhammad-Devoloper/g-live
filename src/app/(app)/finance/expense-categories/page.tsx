@@ -7,7 +7,6 @@ import { Forbidden } from "../../_components/ui";
 import { ensureDefaultExpenseCategories } from "./defaults";
 import ExpenseCategoriesView, { type VCategory } from "./ExpenseCategoriesView";
 
-// "Xarajat toifalari" — toifalar ro'yxati, qo'shish / nomini o'zgartirish / o'chirish
 export default async function ExpenseCategoriesPage() {
   const s = await requireSession();
   if (!canRead(s.role, MODULES.EXPENSES)) {
@@ -21,7 +20,6 @@ export default async function ExpenseCategoriesPage() {
       orderBy: { createdAt: "asc" },
       select: { id: true, name: true, _count: { select: { expenses: true } } },
     }),
-    // soni va summasi — faol filial doirasida
     prisma.expense.groupBy({
       by: ["categoryId"],
       where: { ...branchWhere(s), categoryId: { not: null } },

@@ -32,37 +32,23 @@ interface Opt { id: string; name: string }
 interface Props {
   locale: Locale;
   initialLeads: VLead[];
-  /** Bazadagi haqiqiy jami (sahifaga yuklanmagan eski yo'qotilganlar bilan) */
   totalLeads?: number;
   managers: Opt[];
   sources: string[];
   analytics: Analytics;
   canWrite: boolean;
-  /** Lidni Kanbandan o'chirish huquqi (direktor / o'rinbosari / admin) */
   canDelete?: boolean;
-  /** Ustunni bo'shatish — barcha lidlarni Yangiga qaytarish (direktor / o'rinbosar / ROP) */
   canResetColumns?: boolean;
-  /** O'quvchiga aylangan lidlar uchun to'lov paneli huquqlari */
   payment?: LeadPayment | null;
-  /** Kanbanga biriktirilgan guruh ustunlari */
   initialGroupColumns: GroupColumn[];
-  /** Oddiy nomli ustunlar */
   initialCustomColumns: CustomColumn[];
-  /** Xodimning o'zi saqlagan ustunlar tartibi (ustun kalitlari) */
   initialColOrder?: string[];
-  /** Filial rejimi — filial ustunlari (null — odatdagi kanban) */
   branchColumns?: BranchColumn[] | null;
-  /** "Qabul qilindi" guruh kartalari uchun holat (o'quvchilar / sig'im / jadval) */
   groupInfo?: Record<string, GroupInfo>;
-  /** "O'quvchi arxivi" kartasi — arxivlangan o'quvchilar */
   archivedStudents?: ArchivedStudent[];
-  /** "sales" (ROP/admin) yoki "head" (direktor) — leadColumns.ts */
   branchMode?: BranchMode | null;
-  /** "Onlayn" ustuni ko'rsatilsinmi (filial administratorida yo'q) */
   showOnlineCol?: boolean;
-  /** Ko'rsatilmaydigan standart ustunlar (ROP: "work", "won") */
   hiddenCols?: string[];
-  /** Bo'sh vaqtlarni tahrirlash: "all" — hamma filial, filial id — faqat o'sha, null — yo'q */
   slotsEditable?: "all" | string | null;
 }
 
@@ -76,7 +62,6 @@ export default function LeadsWorkspace({ locale, initialLeads, totalLeads, manag
   const [search, setSearch] = useState(params.get("q") ?? "");
   const [source, setSource] = useState(params.get("source") ?? "");
   const [manager, setManager] = useState(params.get("manager") ?? "");
-  // Filial filtri ("none" — filialga biriktirilmagan lidlar). Faqat bir nechta filial ko'rinadiganlarda.
   const [branch, setBranch] = useState(params.get("branch") ?? "");
   const [activeCols, setActiveCols] = useState<Set<string>>(new Set((params.get("cols") ?? "").split(",").filter(Boolean)));
   const [selection, setSelection] = useState<Set<string>>(new Set((params.get("selected") ?? "").split(",").filter(Boolean)));
@@ -85,34 +70,21 @@ export default function LeadsWorkspace({ locale, initialLeads, totalLeads, manag
   const [showPalette, setShowPalette] = useState(false);
   const [showHelp, setShowHelp] = useState(false);
   const [reject, setReject] = useState<{ id: string; name: string } | null>(null);
-  // Kanbandan o'chirish — tasdiqlash oynasi
   const [del, setDel] = useState<{ id: string; name: string } | null>(null);
-  // Guruhga yo'naltirish paneli — "Qabul qilindi" uchun majburiy qadam
   const [enroll, setEnroll] = useState<{ id: string; name: string; groupId: string | null; editCount: number } | null>(null);
-  // "Qabul qilindi" ustunidagi "+" — guruh biriktirish yoki yangi o'quvchi
   const [wonAdd, setWonAdd] = useState(false);
-  // Sarlavhadagi "+ Qo'shish" va standart ustunlardagi "+" — guruh ustuni /
-  // oddiy ustun / yangi lid. `stage` — qaysi ustundan bosilgani (yangi lid
-  // formasi shu bosqich bilan ochiladi).
   const [mainAdd, setMainAdd] = useState<{ open: boolean; stage: string }>({ open: false, stage: "NEW" });
-  // "Daraja testi" ustunidagi QR oynasi
   const [testQr, setTestQr] = useState(false);
-  // Kanbanga biriktirilgan guruhlar (ustun bo'lib chiqadi)
   const [groupColumns, setGroupColumns] = useState<GroupColumn[]>(initialGroupColumns);
-  // Oddiy nomli ustunlar
   const [customColumns, setCustomColumns] = useState<CustomColumn[]>(initialCustomColumns);
-  // Ustunlar tartibi — sarlavhadan sudrab o'zgartiriladi, har xodimga alohida saqlanadi
   const [colOrder, setColOrder] = useState<string[]>(initialColOrder);
   const reorderColumns = (keys: string[]) => { setColOrder(keys); saveKanbanOrder(keys).catch(() => {}); };
-  // Guruh ustunidagi "+" — mavjud lidni shu guruhga biriktirish
   const [pickForGroup, setPickForGroup] = useState<string | null>(null);
-  // Yonboshdan ochiladigan tezkor ko'rish oynasi (1 marta bosilganda)
   const [quickId, setQuickId] = useState<string | null>(null);
   const { single, double, cancel: cancelOpen } = useDoubleClickOpen();
   const [flash, setFlash] = useState<string | null>(null);
   const [refreshing, startRefresh] = useTransition();
 
-  // Server yangilanganda (router.refresh) mahalliy holatni sinxronlash
   useEffect(() => { setLeads(initialLeads); }, [initialLeads]);
   useEffect(() => { setGroupColumns(initialGroupColumns); }, [initialGroupColumns]);
   useEffect(() => { setCustomColumns(initialCustomColumns); }, [initialCustomColumns]);
@@ -124,9 +96,6 @@ export default function LeadsWorkspace({ locale, initialLeads, totalLeads, manag
     [branchColumns, branchMode, showOnlineCol, hiddenCols],
   );
 
-  // URL sync — `router.replace` har o'zgarishda (har bir terilgan harfda ham) serverga
-  // borib sahifani qayta render qilardi: 2000 lid qayta yuklanib, butun Kanban qayta
-  // chizilardi. `history.replaceState` Next router bilan sinxron, lekin serverga bormaydi.
   useEffect(() => {
     const p = new URLSearchParams();
     if (view !== "kanban") p.set("view", view);
@@ -145,14 +114,9 @@ export default function LeadsWorkspace({ locale, initialLeads, totalLeads, manag
     try { localStorage.setItem("crm-view", view); } catch {}
   }, [view, search, source, manager, branch, activeCols, selection, sort, pathname]);
 
-  // Filtrlash — qidiruv matni kechiktirilgan: kiritish maydoni darhol javob beradi,
-  // ro'yxat esa brauzer bo'shaganda qayta hisoblanadi
   const deferredSearch = useDeferredValue(search);
   const baseFiltered = useMemo(() => {
     const q = deferredSearch.trim().toLowerCase();
-    // Raqamli qidiruv: telefon formatidagi bo'shliq/qavs/chiziqchalar solishtirishga xalaqit
-    // bermasin — ikkala tomonni ham faqat raqamga tozalaymiz. Shunda raqamning
-    // OXIRIDAN (masalan "0019") yoki o'rtasidan qidirsa ham topiladi.
     const qDigits = q.replace(/\D/g, "");
     return leads.filter((l) => {
       if (q) {
@@ -167,8 +131,6 @@ export default function LeadsWorkspace({ locale, initialLeads, totalLeads, manag
     });
   }, [leads, deferredSearch, source, manager, branch]);
 
-  // Filtr chiplari — Kanbandagi ustunlarning AYNAN o'zi (Onlayn, filiallar,
-  // guruhlar, Arxiv ham), shu sabab bitta ro'yxatdan quriladi
   const cols = useMemo(
     () => visibleColumns({ locale, groupColumns, customColumns, branchColumns, branchMode, showOnlineCol, hiddenCols }),
     [locale, groupColumns, customColumns, branchColumns, branchMode, showOnlineCol, hiddenCols],
@@ -197,7 +159,6 @@ export default function LeadsWorkspace({ locale, initialLeads, totalLeads, manag
     return c;
   }, [shown, pinnedIds, customIds, branchCfg, hiddenCols]);
 
-  // Sana bir marta parse qilinadi — saralash har solishtirishda `new Date` qilmaydi
   const tsOf = useMemo(() => {
     const m = new Map<string, number>();
     for (const l of leads) m.set(l.id, new Date(l.createdAt).getTime());
@@ -217,13 +178,8 @@ export default function LeadsWorkspace({ locale, initialLeads, totalLeads, manag
     return arr;
   }, [shown, sort, tsOf]);
 
-  // Tezkor oyna uchun lid — ro'yxat yangilansa avtomatik yopiladi
   const quickLead = useMemo(() => (quickId ? leads.find((l) => l.id === quickId) ?? null : null), [quickId, leads]);
 
-  // Amallar
-  // 1 marta bosish -> yonbosh tezkor ko'rish oynasi
-  // 2 marta bosish -> lidning to'liq sahifasi (/crm/[id])
-  // Ctrl/Cmd + bosish -> avvalgidek belgilash (kechiktirmasdan)
   const openLead = useCallback((id: string, e: React.MouseEvent) => {
     if (e.ctrlKey || e.metaKey) {
       cancelOpen();
@@ -245,18 +201,12 @@ export default function LeadsWorkspace({ locale, initialLeads, totalLeads, manag
     setSelection((prev) => (prev.size === shown.length && shown.length > 0 ? new Set() : new Set(shown.map((l) => l.id))));
   }, [shown]);
 
-  /**
-   * Lidni guruhga yozish — guruh ustuniga tashlanganda ham, ustundagi "+"
-   * orqali tanlanganda ham shu chaqiriladi. Guruh biriktirilishi bilan lid
-   * "Qabul qilindi" bosqichiga o'tadi, shuning uchun alohida qadam kerak emas.
-   */
   const enrollToGroup = useCallback((leadId: string, groupId: string) => {
     const gname = groupColumns.find((g) => g.groupId === groupId)?.name ?? "";
-    setLeads((prev) => prev.map((l) => (l.id === leadId ? { ...l, stage: "WON", groupId, groupName: gname } : l))); // optimistik
+    setLeads((prev) => prev.map((l) => (l.id === leadId ? { ...l, stage: "WON", groupId, groupName: gname } : l)));
     startRefresh(async () => {
       const r = await enrollLeadToGroup(leadId, groupId);
       if (r.error) {
-        // Server rad etdi — ko'rinishni haqiqatga qaytaramiz
         setLeads(initialLeads);
         setFlash(
           r.error === "group_full"
@@ -275,16 +225,13 @@ export default function LeadsWorkspace({ locale, initialLeads, totalLeads, manag
 
   const onDropToColumn = useCallback((colKey: string, leadId: string) => {
     if (!canWrite) return;
-    // Guruh ustuni — lid to'g'ridan-to'g'ri o'sha guruhga yoziladi
     if (isGroupCol(colKey)) {
       enrollToGroup(leadId, groupIdOfCol(colKey));
       return;
     }
-    // Arxiv ustunlari (Lid / O'quvchi) — bosqich saqlanadi, lid ko'rinishdan chiqadi;
-    // qaysi arxivda ko'rinishi lidning o'zidan (qabul qilinganmi) aniqlanadi
     if (isArchiveCol(colKey)) {
       const kind = colKey === STUDENT_ARCHIVE_COL ? "STUDENT" : "LEAD";
-      setLeads((prev) => prev.map((l) => (l.id === leadId ? { ...l, archivedAt: new Date().toISOString(), archiveKind: kind, branchSlotId: null } : l))); // optimistik
+      setLeads((prev) => prev.map((l) => (l.id === leadId ? { ...l, archivedAt: new Date().toISOString(), archiveKind: kind, branchSlotId: null } : l)));
       startRefresh(async () => {
         const r = await setLeadArchived(leadId, true, kind);
         if (r.error) setLeads(initialLeads);
@@ -292,15 +239,13 @@ export default function LeadsWorkspace({ locale, initialLeads, totalLeads, manag
       });
       return;
     }
-    // Arxivdan boshqa ustunga tashlansa — avval arxivdan chiqariladi, keyin odatdagidek
     if (leads.find((l) => l.id === leadId)?.archivedAt) {
-      setLeads((prev) => prev.map((l) => (l.id === leadId ? { ...l, archivedAt: null } : l))); // optimistik
+      setLeads((prev) => prev.map((l) => (l.id === leadId ? { ...l, archivedAt: null } : l)));
       startRefresh(async () => { await setLeadArchived(leadId, false); router.refresh(); });
     }
-    // "Onlayn" ustuni — onlayn belgisi + Yangi bosqich; "Yangi"ga qaytarilgan onlayn lid — belgi olib tashlanadi
     if (branchMode && showOnlineCol && (colKey === ONLINE_COL || (colKey === "new" && leads.find((l) => l.id === leadId)?.studyFormat === "ONLINE"))) {
       const online = colKey === ONLINE_COL;
-      setLeads((prev) => prev.map((l) => (l.id === leadId ? { ...l, studyFormat: online ? "ONLINE" : null, stage: "NEW", kanbanColumnId: null, branchSlotId: null } : l))); // optimistik
+      setLeads((prev) => prev.map((l) => (l.id === leadId ? { ...l, studyFormat: online ? "ONLINE" : null, stage: "NEW", kanbanColumnId: null, branchSlotId: null } : l)));
       startRefresh(async () => {
         const r = await setLeadOnline(leadId, online);
         if (r.error) setLeads(initialLeads);
@@ -308,14 +253,13 @@ export default function LeadsWorkspace({ locale, initialLeads, totalLeads, manag
       });
       return;
     }
-    // Filial ustuni (ROP) — lid shu filialga yo'naltiriladi; ishlov boshida bo'lsa "Taklif"ga o'tadi
     if (isBranchCol(colKey)) {
       const branchId = branchIdOfCol(colKey);
-      const slotId = slotIdOfCol(colKey); // xona kartasiga tashlangan bo'lsa
+      const slotId = slotIdOfCol(colKey);
       const bname = branchColumns?.find((b) => b.branchId === branchId)?.name ?? "";
       setLeads((prev) => prev.map((l) => (l.id === leadId
         ? { ...l, branchId, branchName: bname, kanbanColumnId: branchColKey(branchId), branchSlotId: slotId, stage: ["NEW", "IN_PROGRESS", "CONTACTED", "TEST"].includes(l.stage) ? "OFFER" : l.stage }
-        : l))); // optimistik
+        : l)));
       startRefresh(async () => {
         const r = await dropLeadToBranch(leadId, branchId, slotId);
         if (r.error) {
@@ -327,10 +271,9 @@ export default function LeadsWorkspace({ locale, initialLeads, totalLeads, manag
       });
       return;
     }
-    // Oddiy nomli ustun — bosqich o'zgarmaydi, faqat ustun belgilanadi
     if (isCustomCol(colKey)) {
       const colId = customIdOfCol(colKey);
-      setLeads((prev) => prev.map((l) => (l.id === leadId ? { ...l, kanbanColumnId: colId, branchSlotId: null } : l))); // optimistik
+      setLeads((prev) => prev.map((l) => (l.id === leadId ? { ...l, kanbanColumnId: colId, branchSlotId: null } : l)));
       startRefresh(async () => {
         const r = await moveLeadToColumn(leadId, colId);
         if (r.error) setLeads(initialLeads);
@@ -338,20 +281,18 @@ export default function LeadsWorkspace({ locale, initialLeads, totalLeads, manag
       });
       return;
     }
-    // Yo'qotilganga tashlash — sabab so'raladi
     if (colKey === "lost") {
       const lead = leads.find((l) => l.id === leadId);
       setReject({ id: leadId, name: lead?.fullName ?? "" });
       return;
     }
-    // "Qabul qilindi" — guruh tanlanmaguncha bosqich o'zgarmaydi
     if (colKey === "won") {
       const lead = leads.find((l) => l.id === leadId);
       setEnroll({ id: leadId, name: lead?.fullName ?? "", groupId: lead?.groupId ?? null, editCount: lead?.enrollEditCount ?? 0 });
       return;
     }
     const target = columnDef(colKey).defaultStage;
-    setLeads((prev) => prev.map((l) => (l.id === leadId ? { ...l, stage: target, kanbanColumnId: null, branchSlotId: null } : l))); // optimistik
+    setLeads((prev) => prev.map((l) => (l.id === leadId ? { ...l, stage: target, kanbanColumnId: null, branchSlotId: null } : l)));
     startRefresh(async () => { await moveLeadStage(leadId, target); router.refresh(); });
   }, [canWrite, router, leads, enrollToGroup, initialLeads, branchColumns, locale, branchMode, showOnlineCol]);
 
@@ -363,9 +304,6 @@ export default function LeadsWorkspace({ locale, initialLeads, totalLeads, manag
     startRefresh(async () => { await moveLeadStage(id, "LOST", reason); router.refresh(); });
   }, [reject, router]);
 
-  // Tezkor o'chirish faqat "Daraja testi" (TEST) lidlari uchun — ishdagi lidlar
-  // to'liq sahifadan, ism yozib tasdiqlab o'chiriladi
-  // Ustundagi barcha lidlarni "Yangi"ga qaytarish (tasdiq bilan)
   const resetColumn = useCallback(async (ids: string[], title: string) => {
     if (!ids.length) return;
     if (!(await confirmDialog(tr(locale, {
@@ -375,7 +313,7 @@ export default function LeadsWorkspace({ locale, initialLeads, totalLeads, manag
       de: `${ids.length} Leads aus „${title}“ gehen zurück zu „Neu“. Gruppenzuordnung wird entfernt. Fortfahren?`,
     })))) return;
     const set = new Set(ids);
-    setLeads((prev) => prev.map((l) => (set.has(l.id) ? { ...l, stage: "NEW", kanbanColumnId: null, branchSlotId: null, groupId: null, groupName: null, enrollEditCount: 0 } : l))); // optimistik
+    setLeads((prev) => prev.map((l) => (set.has(l.id) ? { ...l, stage: "NEW", kanbanColumnId: null, branchSlotId: null, groupId: null, groupName: null, enrollEditCount: 0 } : l)));
     startRefresh(async () => {
       const r = await bulkLeadAction(ids, "reset_new");
       if (!r.ok) setLeads(initialLeads);
@@ -417,13 +355,11 @@ export default function LeadsWorkspace({ locale, initialLeads, totalLeads, manag
   const toggleCol = (key: string) => setActiveCols((prev) => { const n = new Set(prev); n.has(key) ? n.delete(key) : n.add(key); return n; });
   const clearFilters = () => { setSearch(""); setSource(""); setManager(""); setBranch(""); setActiveCols(new Set()); };
   const hasFilters = !!(search || source || manager || branch || activeCols.size);
-  // Filial tanlovi — doskadagi filial ustunlaridan; bittadan ko'p bo'lsagina ko'rsatiladi
   const branchOpts = useMemo(
     () => (branchColumns && branchColumns.length > 1 ? branchColumns.map((b) => ({ id: b.branchId, name: b.name })) : []),
     [branchColumns],
   );
 
-  // Klaviatura yorliqlari
   useEffect(() => {
     let gPending = false;
     let gTimer: ReturnType<typeof setTimeout> | undefined;
@@ -461,7 +397,6 @@ export default function LeadsWorkspace({ locale, initialLeads, totalLeads, manag
 
   return (
     <div className="space-y-4">
-      {/* Katta header karta */}
       <div className="rounded-2xl border border-slate-200 bg-[#ffffff] p-4 shadow-card dark:border-white/[0.08] dark:bg-[#15243d]">
         <div className="flex flex-wrap items-center justify-between gap-3">
           <div className="flex items-center gap-3">
@@ -478,7 +413,6 @@ export default function LeadsWorkspace({ locale, initialLeads, totalLeads, manag
           </div>
 
           <div className="flex flex-wrap items-center gap-2">
-            {/* Count pill-lar — faqat shu rolda ko'rinadigan ustunlar */}
             <div className="hidden items-center gap-1.5 xl:flex">
               {cols.filter((c) => analytics.byColumn[c.key] !== undefined).map((c) => (
                 <span key={c.key} className="flex items-center gap-1.5 rounded-lg px-2 py-1 text-xs font-bold" style={{ color: c.color, background: `${c.color}14` }}>
@@ -503,7 +437,6 @@ export default function LeadsWorkspace({ locale, initialLeads, totalLeads, manag
               <ToggleBtn active={view === "table"} onClick={() => setView("table")} icon="listView" label={tr(locale, { uz: "Jadval", ru: "Таблица", en: "Table", de: "Tabelle" })} />
             </div>
             {canWrite && (
-              // Tanlov paneli: guruh ustuni / oddiy nomli ustun / yangi lid
               <button onClick={() => setMainAdd({ open: true, stage: "NEW" })} className="flex items-center gap-1.5 rounded-lg bg-brand-600 px-4 py-2 text-sm font-semibold text-white hover:bg-brand-700">
                 <Icon name="plus" className="h-[18px] w-[18px]" /> <span className="hidden sm:inline">{tr(locale, { uz: "Qo'shish", ru: "Добавить", en: "Add", de: "Hinzufügen" })}</span>
               </button>
@@ -511,7 +444,6 @@ export default function LeadsWorkspace({ locale, initialLeads, totalLeads, manag
           </div>
         </div>
 
-        {/* Filter */}
         <div className="mt-4">
           <FilterBar
             locale={locale}
@@ -545,7 +477,6 @@ export default function LeadsWorkspace({ locale, initialLeads, totalLeads, manag
             setCreate({ open: true, stage: "NEW", column: col });
           }}
           onRemoveCustomCol={(columnId) => {
-            // Ustun yo'qoladi, undagi lidlar o'z bosqichi ustuniga qaytadi
             setCustomColumns((prev) => prev.filter((c) => c.id !== columnId));
             setLeads((prev) => prev.map((l) => (l.kanbanColumnId === columnId ? { ...l, kanbanColumnId: null } : l)));
             startRefresh(async () => { await removeKanbanColumn(columnId); router.refresh(); });

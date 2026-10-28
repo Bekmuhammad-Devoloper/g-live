@@ -3,12 +3,11 @@
 import { useState } from "react";
 
 export interface BarDatum {
-  label: string; // o'q ostidagi qisqa yozuv (masalan "Okt 26")
+  label: string;
   value: number;
-  title?: string; // tooltip sarlavhasi (masalan "Oktyabr 2026")
+  title?: string;
 }
 
-// Y o'qi uchun qisqa yozuv: 1 200 000 → "1.2M"
 const compact = (n: number) => {
   const a = Math.abs(n);
   if (a >= 1e9) return `${+(n / 1e9).toFixed(1)}B`;
@@ -17,7 +16,6 @@ const compact = (n: number) => {
   return String(Math.round(n));
 };
 
-// "Chiroyli" yuqori chegara: 1, 2, 2.5, 5 × 10^k
 const niceMax = (v: number) => {
   if (v <= 0) return 1;
   const p = Math.pow(10, Math.floor(Math.log10(v)));
@@ -25,7 +23,6 @@ const niceMax = (v: number) => {
   return 10 * p;
 };
 
-/** Oddiy SVG ustunli diagramma (kutubxonasiz) */
 export default function BarChart({
   data, color = "#f87979", formatValue = (n) => String(n), emptyText, height = 240,
 }: {
@@ -49,7 +46,6 @@ export default function BarChart({
   const slot = plotW / data.length;
   const barW = Math.min(36, slot * 0.62);
   const y = (v: number) => padT + plotH - (v / max) * plotH;
-  // ko'p ustun bo'lsa yozuvlarni siyraklashtiramiz
   const labelEvery = Math.ceil(data.length / 12);
 
   const hv = hover != null ? data[hover] : null;

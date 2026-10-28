@@ -31,12 +31,12 @@ export default async function PaymentsPage() {
 
   const [payments, students, paidAgg] = await Promise.all([
     prisma.payment.findMany({
-      where: branchViaStudent(s), // faol filial doirasida (to'lov o'quvchi orqali bog'lanadi)
+      where: branchViaStudent(s),
       orderBy: { createdAt: "desc" },
       include: { student: true, author: true },
     }),
-    prisma.student.findMany({ where: branchWhere(s), orderBy: { fullName: "asc" }, select: { id: true, fullName: true } }), // faol filial doirasida
-    prisma.payment.aggregate({ _sum: { amount: true }, where: { AND: [{ status: "PAID" }, branchViaStudent(s)] } }), // faol filial doirasida
+    prisma.student.findMany({ where: branchWhere(s), orderBy: { fullName: "asc" }, select: { id: true, fullName: true } }),
+    prisma.payment.aggregate({ _sum: { amount: true }, where: { AND: [{ status: "PAID" }, branchViaStudent(s)] } }),
   ]);
 
   const writable = canWrite(s.role, MODULES.PAYMENTS);

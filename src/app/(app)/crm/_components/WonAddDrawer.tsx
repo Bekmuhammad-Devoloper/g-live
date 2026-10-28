@@ -9,25 +9,11 @@ import { Icon } from "../../_components/Icon";
 import { createKanbanColumn, enrollOptions, pinKanbanGroup, type EnrollGroupOpt } from "../actions";
 import { GROUP_COL_COLORS, GROUP_COL_ICONS, type CustomColumn, type GroupColumn } from "../_lib/leadColumns";
 
-// Yonboshdan ochiladigan "qo'shish" paneli. Ikki joydan chaqiriladi:
-//
-//   variant="main" — sarlavhadagi "+ Yangi lid" tugmasi. Uch yo'l:
-//     1) Guruhga yo'naltirilgan ustun — guruh Kanbanda alohida ustun bo'ladi,
-//        lid tashlansa o'sha guruhga yoziladi;
-//     2) Oddiy nomli ustun — istalgan nom bilan ("Sentyabr oqimi", "VIP"),
-//        lid tashlansa shu ustunga o'tadi, bosqichi o'zgarmaydi;
-//     3) Yangi lid — oddiy lid formasi.
-//
-//   variant="won" — "Qabul qilindi" ustunidagi "+". Guruh biriktirish yoki
-//     yangi o'quvchi (guruh majburiy).
-
 interface Props {
   locale: Locale;
   open: boolean;
   variant?: "won" | "main";
-  /** Allaqachon biriktirilgan guruhlar — ro'yxatda belgilanadi */
   pinned: GroupColumn[];
-  /** Mavjud oddiy ustunlar — takror nom tekshiruvi va ro'yxat uchun */
   customColumns?: CustomColumn[];
   onClose: () => void;
   onNewLead: () => void;
@@ -60,7 +46,6 @@ export default function WonAddDrawer({
 
   useEffect(() => setMounted(true), []);
 
-  // Guruhlar ro'yxati faqat "Guruh biriktirish" bosilganda kerak bo'ladi
   useEffect(() => {
     if (mode !== "group" || groups.length > 0) return;
     let alive = true;
@@ -175,7 +160,6 @@ export default function WonAddDrawer({
         onMouseDown={(e) => e.stopPropagation()}
         className="animate-slide-in-right absolute right-0 top-0 flex h-full drawer-panel flex-col border-l border-slate-200 bg-white shadow-pop dark:border-white/10 dark:bg-[#15243d]"
       >
-        {/* ── Sarlavha ── */}
         <div className="flex items-center gap-2.5 border-b border-slate-200 px-4 py-3.5 dark:border-white/10">
           {mode !== "choose" ? (
             <button
@@ -209,7 +193,6 @@ export default function WonAddDrawer({
           </button>
         </div>
 
-        {/* ── Tanlov ── */}
         {mode === "choose" && (
           <div className="space-y-2.5 p-4">
             <Choice
@@ -278,7 +261,6 @@ export default function WonAddDrawer({
           </div>
         )}
 
-        {/* ── Guruh ro'yxati ── */}
         {mode === "group" && (
           <>
             <div className="border-b border-slate-200 p-3 dark:border-white/10">
@@ -351,7 +333,6 @@ export default function WonAddDrawer({
           </>
         )}
 
-        {/* ── Oddiy nomli ustun ── */}
         {mode === "custom" && (
           <>
             <div className="flex-1 overflow-y-auto p-4">
@@ -401,8 +382,6 @@ export default function WonAddDrawer({
     document.body,
   );
 }
-
-// ─────────── Yordamchi qismlar ───────────
 
 const TONE = {
   brand: { hover: "hover:border-brand-400 hover:bg-brand-50/60 dark:hover:border-brand-500", badge: "bg-brand-500/15 text-brand-600" },
@@ -487,7 +466,6 @@ function StylePicker({
         ))}
       </div>
 
-      {/* Ko'rinishi — ustun sarlavhasi aynan shunday bo'ladi */}
       {previewName && (
         <div className="mb-3 flex items-center gap-2 rounded-xl bg-slate-50 px-2.5 py-2 dark:bg-white/[0.04]">
           <span className="flex h-7 w-7 items-center justify-center rounded-lg" style={{ color, background: `${color}1f` }}>

@@ -7,11 +7,6 @@ import { TEAL } from "../_ui";
 import { linkKey } from "./parse";
 import { createFromLink } from "./actions";
 
-// Yozuv matnini ko'rsatish. Obsidian sintaksisining kerakli qismi:
-//   # sarlavha · - ro'yxat · - [ ] belgilash · > iqtibos
-//   [[Havola]] / [[Havola|matn]] · #teg · **qalin**
-// Havola mavjud yozuvga bo'lsa — bosiladi; yo'q bo'lsa — yaratish taklif etiladi.
-
 const INLINE = /(\[\[[^\][]+?\]\])|(\*\*[^*]+\*\*)|((?:^|\s)#[\p{L}\p{N}_-]{2,32})/gu;
 
 function Inline({ text, ids, onTag }: { text: string; ids: Record<string, string>; onTag?: (t: string) => void }) {
@@ -28,7 +23,6 @@ function Inline({ text, ids, onTag }: { text: string; ids: Record<string, string
     last = m.index + m[0].length;
 
     if (m[1]) {
-      // [[Havola]] yoki [[Havola|ko'rinadigan matn]]
       const inner = m[1].slice(2, -2);
       const [rawTitle, alias] = inner.split("|");
       const title = rawTitle.trim();
@@ -95,7 +89,6 @@ export default function NoteText({
 
     if (!trimmed) { out.push(<div key={i} className="h-2.5" />); return; }
 
-    // Sarlavhalar
     const h = /^(#{1,3})\s+(.*)$/.exec(trimmed);
     if (h) {
       const size = h[1].length === 1 ? "text-[17px]" : h[1].length === 2 ? "text-[15.5px]" : "text-[14px]";
@@ -107,7 +100,6 @@ export default function NoteText({
       return;
     }
 
-    // Belgilanadigan ro'yxat: - [ ] / - [x]
     const c = /^[-*]\s+\[( |x|X)\]\s+(.*)$/.exec(trimmed);
     if (c) {
       const done = c[1].toLowerCase() === "x";
@@ -131,7 +123,6 @@ export default function NoteText({
       return;
     }
 
-    // Oddiy ro'yxat
     const b = /^[-*]\s+(.*)$/.exec(trimmed);
     if (b) {
       out.push(
@@ -143,7 +134,6 @@ export default function NoteText({
       return;
     }
 
-    // Iqtibos
     const q = /^>\s?(.*)$/.exec(trimmed);
     if (q) {
       out.push(

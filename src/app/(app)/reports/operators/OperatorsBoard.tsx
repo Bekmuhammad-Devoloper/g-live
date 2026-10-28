@@ -21,7 +21,7 @@ export interface VOperator {
   phone: string | null;
   sip: string | null;
   avatar: string | null;
-  password: string | null; // faqat boshqaruv huquqi bo'lganda to'ldiriladi
+  password: string | null;
   fiksa: number;
   kpiBonus: number;
   branchId: string | null;
@@ -34,16 +34,14 @@ export interface VOperator {
   conv: number;
   online: boolean;
   onCall: boolean;
-  lastOnline: string; // serverda formatlangan
+  lastOnline: string;
   lastLead: string | null;
   lastCall: string | null;
-  createdAt: string; // dd.mm.yyyy
+  createdAt: string;
 }
 
 interface Props {
-  /** Bo'lim turi: operatorlar yoki filial administratorlari */
   kind?: TeamKind;
-  /** Filiallar — administrator yaratish/tahrirlashdagi tanlov uchun */
   branches?: BranchOpt[];
   locale: Locale;
   operators: VOperator[];
@@ -63,14 +61,12 @@ export default function OperatorsBoard({ kind = "operator", branches = [], local
   const [search, setSearch] = useState("");
   const [tab, setTab] = useState<Tab>("all");
 
-  // Oynalar: drawer — undefined yopiq, null yaratish, obyekt tahrirlash
   const [drawer, setDrawer] = useState<VOperator | null | undefined>(undefined);
   const [archiveOp, setArchiveOp] = useState<VOperator | null>(null);
   const [taskOp, setTaskOp] = useState<VOperator | null>(null);
   const [notifyOp, setNotifyOp] = useState<VOperator | null>(null);
   const [cred, setCred] = useState<NonNullable<OpResult["credentials"]> | null>(null);
 
-  // Online / qo'ng'iroqda holati yangilanib tursin — har 30 soniyada qayta yuklash
   useEffect(() => {
     const t = setInterval(() => router.refresh(), 30_000);
     return () => clearInterval(t);
@@ -125,7 +121,6 @@ export default function OperatorsBoard({ kind = "operator", branches = [], local
   return (
     <TeamProvider kind={kind} branches={branches}>
     <div className="space-y-4">
-      {/* Sarlavha */}
       <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
         <div className="flex items-center gap-3">
           <span className={cn("grid h-11 w-11 place-items-center rounded-2xl bg-gradient-to-br text-white shadow-soft", kind === "admin" ? "from-violet-500 to-indigo-500" : "from-blue-500 to-cyan-500")}>
@@ -169,7 +164,6 @@ export default function OperatorsBoard({ kind = "operator", branches = [], local
         </div>
       </div>
 
-      {/* Ko'rsatkichlar */}
       <div className="grid grid-cols-2 gap-2.5 lg:grid-cols-5">
         <Tile icon="users" label={tr(locale, { uz: "Jami", ru: "Всего", en: "Total", de: "Gesamt" })} value={operators.length} tone="#3b82f6" />
         <Tile icon="globe" label="Online" value={onlineCount} tone="#10b981" />
@@ -185,7 +179,6 @@ export default function OperatorsBoard({ kind = "operator", branches = [], local
         />
       </div>
 
-      {/* Qidiruv + holat filtri */}
       <div className="flex flex-wrap items-center gap-3 rounded-2xl border border-slate-200/70 bg-white p-3 shadow-card dark:border-slate-800 dark:bg-slate-900">
         <div className="relative min-w-[220px] flex-1">
           <Icon name="search" className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400" />
@@ -213,7 +206,6 @@ export default function OperatorsBoard({ kind = "operator", branches = [], local
         </div>
       </div>
 
-      {/* Kartalar */}
       {shown.length === 0 ? (
         <div className="rounded-2xl border border-dashed border-slate-300 py-16 text-center dark:border-slate-700">
           <Icon name={cfg.icon} className="mx-auto h-10 w-10 text-slate-300 dark:text-slate-600" />
@@ -236,7 +228,6 @@ export default function OperatorsBoard({ kind = "operator", branches = [], local
         </div>
       )}
 
-      {/* Oynalar */}
       {drawer !== undefined && (
         <OperatorDrawer locale={locale} op={drawer} onClose={() => setDrawer(undefined)} onCreated={(c) => setCred(c)} />
       )}

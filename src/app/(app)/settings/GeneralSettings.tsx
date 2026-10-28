@@ -58,16 +58,15 @@ export default function GeneralSettings({ locale, defaultName, defaultPhone, bra
     try {
       const raw = localStorage.getItem(STORAGE_KEY);
       if (raw) setF((cur) => ({ ...cur, ...JSON.parse(raw) }));
-    } catch { /* ignore */ }
+    } catch { }
   }, []);
 
-  // URL ?tab= o'zgarganda (masalan "Billing" bosilganda) o'sha bo'limga o'tamiz
   useEffect(() => { setSection(initialSection ?? "general"); }, [initialSection]);
 
   const set = <K extends keyof Form>(k: K, v: Form[K]) => setF((s) => ({ ...s, [k]: v }));
 
   const save = () => {
-    try { localStorage.setItem(STORAGE_KEY, JSON.stringify(f)); } catch { /* ignore */ }
+    try { localStorage.setItem(STORAGE_KEY, JSON.stringify(f)); } catch { }
     setSaved(true); setTimeout(() => setSaved(false), 1800);
   };
 
@@ -92,7 +91,6 @@ export default function GeneralSettings({ locale, defaultName, defaultPhone, bra
   return (
     <div className="overflow-hidden rounded-2xl border border-slate-200/70 bg-white shadow-card dark:border-slate-800 dark:bg-slate-900">
       <div className="flex flex-col md:flex-row">
-        {/* Ichki sidebar */}
         <aside className="shrink-0 border-b border-slate-200/70 bg-slate-50/60 p-2 dark:border-slate-800 dark:bg-slate-800/30 md:w-56 md:border-b-0 md:border-r">
           <nav className="flex flex-wrap gap-1 md:flex-col">
             {SECTIONS.map((sec) => (
@@ -105,7 +103,6 @@ export default function GeneralSettings({ locale, defaultName, defaultPhone, bra
           </nav>
         </aside>
 
-        {/* Kontent */}
         <div className="min-w-0 flex-1 p-6">
           {section === "brand" ? (
             <BrandSettings locale={locale} initial={brand.initial} defaults={brand.defaults} />
@@ -161,7 +158,6 @@ export default function GeneralSettings({ locale, defaultName, defaultPhone, bra
                 <Toggle label={tr(locale, { uz: "OnlinePBX filial rejimida", ru: "OnlinePBX в режиме филиала", en: "OnlinePBX in branch mode", de: "OnlinePBX im Filialmodus" })} on={f.onlinePbx} onClick={() => set("onlinePbx", !f.onlinePbx)} />
                 <Toggle label={tr(locale, { uz: "Animatsiya", ru: "Анимация", en: "Animation", de: "Animation" })} on={f.animation} onClick={() => set("animation", !f.animation)} />
 
-                {/* Logotip */}
                 <Field label={tr(locale, { uz: "Logotip", ru: "Логотип", en: "Logo", de: "Logo" })}>
                   <button type="button" onClick={() => logoRef.current?.click()}
                     className="grid h-44 w-44 place-items-center overflow-hidden rounded-xl border border-dashed border-slate-300 bg-white transition hover:border-brand-400 dark:border-slate-700 dark:bg-slate-800/40">
@@ -177,7 +173,6 @@ export default function GeneralSettings({ locale, defaultName, defaultPhone, bra
                   <input ref={logoRef} type="file" accept="image/*" className="hidden" onChange={onLogo} />
                 </Field>
 
-                {/* Asosiy rang + oferta */}
                 <div className="space-y-5">
                   <Field label={tr(locale, { uz: "Asosiy rangni ko'rsating", ru: "Укажите основной цвет", en: "Choose the primary color", de: "Wählen Sie die Hauptfarbe" })}>
                     <div className="flex items-center gap-4">

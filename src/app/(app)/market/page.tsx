@@ -6,9 +6,6 @@ import { tr } from "@/lib/tr";
 import { Forbidden } from "../_components/ui";
 import MarketView, { type VItem, type VOrder } from "./MarketView";
 
-// "Market" — o'quvchilar tangasiga almashtiriladigan sovg'alar va ular
-// bo'yicha buyurtmalar. O'quvchi tomoni: /student/market.
-
 export default async function MarketPage() {
   const s = await requireSession();
   if (!canRead(s.role, MODULES.MARKET)) {
@@ -27,7 +24,6 @@ export default async function MarketPage() {
 
   const [itemRows, orderRows] = await Promise.all([
     prisma.marketItem.findMany({
-      // Sovg'alar odatda umumiy (filialsiz) — shu sabab filialsizlari ham ko'rinadi
       where: branchWhereShared(s),
       orderBy: [{ isActive: "desc" }, { price: "asc" }],
       select: {
@@ -75,7 +71,6 @@ export default async function MarketPage() {
     stock: i.stock,
     imageUrl: i.imageUrl,
     isActive: i.isActive,
-    // Filialsiz sovg'a — barcha filial o'quvchilariga ko'rinadi
     branchName: i.branch?.name ?? null,
     orders: i._count.orders,
   }));

@@ -24,20 +24,15 @@ const schema = z.object({
   budget: z.coerce.number().int().nonnegative().optional(),
   stage: z.enum(LEAD_STAGES),
   note: z.string().optional(),
-  // Ixtiyoriy: lid yaratilayotganda darhol mavjud guruhga yo'naltirish
   groupId: z.string().min(1).optional(),
-  // Ixtiyoriy: oddiy nomli Kanban ustunidagi "+" dan yaratilganda
   kanbanColumnId: z.string().min(1).optional(),
 });
 
-/** dup — dublikat topilganda mavjud lid haqida qisqa ma'lumot. Qidiruv filial bo'yicha
- *  cheklangani uchun lid boshqa filialda bo'lsa foydalanuvchi uni ro'yxatda ko'rmaydi. */
 export type LeadState = { ok?: boolean; error?: string; dup?: { name: string; branch: string | null; stage: string; count: number } };
 
 export async function createLead(_prev: LeadState, formData: FormData): Promise<LeadState> {
   const s = await requireSession();
 
-  // RBAC — serverda tekshiriladi (interfeys darajasidan tashqari)
   if (!canWrite(s.role, MODULES.CRM)) {
     return { error: "forbidden" };
   }
@@ -56,24 +51,17 @@ export async function createLead(_prev: LeadState, formData: FormData): Promise<
   if (!parsed.success) return { error: "invalid" };
 
   const { groupId, kanbanColumnId: colRaw, ...leadData } = parsed.data;
-  // Ustun o'chirilgan bo'lsa jimgina e'tiborsiz qoldiramiz — lid baribir yaratiladi
   const kanbanColumnId = colRaw && (await readCustomColumns()).some((c) => c.id === colRaw) ? colRaw : null;
 
-  // Raqamni tartibga solamiz. O'zbekiston raqami bo'lsa "+998 XX XXX XX XX"
-  // ko'rinishiga keltiriladi; xorijiy raqam ham bo'lishi mumkin, shuning uchun
-  // faqat mantiqiy uzunlik chegarasi qo'yiladi (soxta, uzun raqamlar kirmasin).
   const normalized = parseUzPhone(leadData.phone);
   leadData.phone = normalized ?? leadData.phone.trim();
   const digits = leadData.phone.replace(/\D/g, "");
   if (digits.length < 7 || digits.length > 15) return { error: "invalid_phone" };
 
-  // Majburiylik qoidasi yaratishda ham amal qiladi: guruhsiz "Qabul qilindi"
-  // bo'lmaydi (aks holda forma orqali qoidani chetlab o'tish mumkin bo'lardi).
   if (ENROLL_REQUIRED_STAGES.includes(leadData.stage) && !groupId) {
     return { error: "group_required" };
   }
 
-  // Guruh tanlangan bo'lsa — mavjudligini va joy borligini tekshiramiz
   if (groupId) {
     const g = await prisma.group.findUnique({
       where: { id: groupId },
@@ -83,12 +71,9 @@ export async function createLead(_prev: LeadState, formData: FormData): Promise<
     if (g._count.students >= g.capacity) return { error: "group_full" };
   }
 
-  // Dublikat telefon tekshiruvi (TZ FR-CRM-03 — ogohlantirish). Xodim tasdiqlasa
-  // (force=1) takroriy lid ham yaratiladi — masalan, boshqa filialdagi o'quvchi
-  // shu filialga ham yozilmoqchi bo'lsa.
   const force = formData.get("force") === "1";
   const dups = await prisma.lead.findMany({
-    where: { phone: leadData.phone }, // tartibga solingan raqam bo'yicha
+    where: { phone: leadData.phone },
     orderBy: { createdAt: "desc" },
     select: { fullName: true, stage: true, branch: { select: { name: true } } },
   });
@@ -124,7 +109,6 @@ export async function createLead(_prev: LeadState, formData: FormData): Promise<
     newValue: { fullName: lead.fullName, phone: lead.phone, stage: lead.stage, groupId: lead.groupId },
   });
 
-  // "Qabul qilindi" bosqichida yaratilsa — o'quvchini darhol guruhga yozamiz
   if (groupId && ENROLL_REQUIRED_STAGES.includes(lead.stage)) {
     const studentId = await applyEnrollment(lead, groupId);
     await prisma.lead.update({ where: { id: lead.id }, data: { studentId } });
@@ -135,13 +119,12 @@ export async function createLead(_prev: LeadState, formData: FormData): Promise<
   return { ok: true };
 }
 
-// Lidni o'quvchiga aylantirish (konvertatsiya) — TZ 3-bosqich "Guruhga qabul"
 export async function convertLead(leadId: string): Promise<void> {
   const s = await requireSession();
   if (!canWrite(s.role, MODULES.CRM)) return;
 
   const lead = await prisma.lead.findUnique({ where: { id: leadId } });
-  if (!lead || lead.studentId) return; // allaqachon aylantirilgan
+  if (!lead || lead.studentId) return;
 
   const student = await prisma.student.create({
     data: {
@@ -170,14 +153,6 @@ export async function convertLead(leadId: string): Promise<void> {
   revalidatePath("/groups");
 }
 
-/**
- * Lidni guruhga HAQIQATAN biriktiradi: o'quvchi yaratadi (yo'q bo'lsa),
- * eski guruhdan chiqaradi va yangisiga yozadi.
- *
- * `enrollLeadToGroup` ham, `moveLeadStage` ham shuni chaqiradi — shuning uchun
- * guruh qayerda tanlanishidan qat'i nazar (drawer, yoki lid yaratishda)
- * o'quvchi guruhda albatta paydo bo'ladi. Takror chaqirilsa zarar qilmaydi.
- */
 async function applyEnrollment(
   lead: { id: string; fullName: string; phone: string; branchId: string | null; studentId: string | null; groupId: string | null },
   groupId: string,
@@ -192,11 +167,10 @@ async function applyEnrollment(
     await prisma.student.update({ where: { id: studentId }, data: { eduStatus: "ACTIVE" } }).catch(() => {});
   }
 
-  // Guruh almashsa — eskisidan chiqaramiz
   if (lead.groupId && lead.groupId !== groupId) {
     await prisma.groupStudent.updateMany({
       where: { groupId: lead.groupId, studentId },
-      data: { isActive: false, leftAt: new Date() }, // to'lov hisobi shu oyda to'xtaydi
+      data: { isActive: false, leftAt: new Date() },
     }).catch(() => {});
   }
 
@@ -209,10 +183,8 @@ async function applyEnrollment(
   return studentId;
 }
 
-// "Qabul qilindi" hisoblanadigan bosqichlar — bularga o'tish uchun guruh SHART
 const ENROLL_REQUIRED_STAGES = ["WON", "PAID"];
 
-// Voronka bosqichini o'zgartirish (LOST uchun sabab qo'shiladi)
 export type StageResult = { ok?: boolean; error?: string; needGroup?: boolean };
 
 export async function moveLeadStage(leadId: string, stage: string, reason?: string): Promise<StageResult> {
@@ -223,26 +195,19 @@ export async function moveLeadStage(leadId: string, stage: string, reason?: stri
   const before = await prisma.lead.findUnique({ where: { id: leadId } });
   if (!before) return { error: "not_found" };
 
-  // MAJBURIY QOIDA: guruhga yo'naltirilmagan lid "Qabul qilindi" bo'la olmaydi.
-  // Interfeys buni drawer bilan hal qiladi; bu — serverdagi ishonchli to'siq.
   if (ENROLL_REQUIRED_STAGES.includes(stage) && !before.groupId) {
     return { error: "group_required", needGroup: true };
   }
 
-  // Bosqich o'zgarishi = standart ustunga ko'chirish; oddiy nomli ustundan chiqadi
   const data: Record<string, unknown> = { stage, kanbanColumnId: null, branchSlotId: null };
   if (stage === "LOST" && reason) data.lossReason = reason;
 
-  // Guruh lid YARATILISHIDA tanlangan bo'lishi mumkin — u holda o'quvchi hali
-  // guruhga yozilmagan. "Qabul qilindi" ga o'tishda buni kafolatlaymiz,
-  // aks holda lidda guruh ko'rinadi-yu, o'quvchi guruhda bo'lmaydi.
   if (ENROLL_REQUIRED_STAGES.includes(stage) && before.groupId) {
     const studentId = await applyEnrollment(before, before.groupId);
     data.studentId = studentId;
   }
 
   await prisma.lead.update({ where: { id: leadId }, data });
-  // Bosqich o'zgarishini faoliyat sifatida yozish
   await prisma.leadActivity.create({
     data: { leadId, authorId: s.userId, type: "stage_change", result: `Bosqich: ${stage}${reason ? " — " + reason : ""}` },
   }).catch(() => {});
@@ -259,8 +224,6 @@ export async function moveLeadStage(leadId: string, stage: string, reason?: stri
   return { ok: true };
 }
 
-// ─── Guruhga yo'naltirish (WON uchun majburiy qadam) ───
-
 export interface EnrollGroupOpt {
   id: string;
   name: string;
@@ -268,11 +231,11 @@ export interface EnrollGroupOpt {
   courseName: string;
   teacher: string | null;
   room: string | null;
-  schedule: string | null;   // "Du, Chor, Ju · 18:00–20:00"
+  schedule: string | null;
   capacity: number;
-  taken: number;             // faol o'quvchilar soni
+  taken: number;
   status: string;
-  note: string | null;       // guruh izohi (kament)
+  note: string | null;
 }
 export interface EnrollOptions {
   courses: { id: string; name: string }[];
@@ -281,14 +244,13 @@ export interface EnrollOptions {
 
 const WEEKDAY_SHORT = ["", "Du", "Se", "Chor", "Pa", "Ju", "Sha", "Yak"];
 
-/** Drawer ochilganda kurs va guruhlar ro'yxatini beradi. */
 export async function enrollOptions(): Promise<EnrollOptions> {
   const s = await requireSession();
   if (!canWrite(s.role, MODULES.CRM)) return { courses: [], groups: [] };
 
   const groups = await prisma.group.findMany({
     where: {
-      status: { in: ["PLANNED", "ACTIVE"] },       // tugagan/bekor qilinganlar taklif qilinmaydi
+      status: { in: ["PLANNED", "ACTIVE"] },
       ...(s.branchId ? { branchId: s.branchId } : {}),
       program: { isActive: true },
     },
@@ -327,14 +289,6 @@ export async function enrollOptions(): Promise<EnrollOptions> {
 
 export type EnrollResult = { ok?: boolean; error?: string; groupName?: string; editsLeft?: number };
 
-/**
- * Lidni guruhga yo'naltiradi va "Qabul qilindi" (WON) bosqichiga o'tkazadi.
- *
- * Qoidalar:
- *  • Birinchi biriktirish — cheklovsiz (WON bo'lish uchun shart).
- *  • Keyin guruhni FAQAT BIR MARTA o'zgartirish mumkin (enrollEditCount < 1).
- *  • O'quvchi yo'q bo'lsa avtomatik yaratiladi (konvertatsiya).
- */
 export async function enrollLeadToGroup(leadId: string, groupId: string): Promise<EnrollResult> {
   const s = await requireSession();
   if (!canWrite(s.role, MODULES.CRM)) return { error: "forbidden" };
@@ -353,7 +307,7 @@ export async function enrollLeadToGroup(leadId: string, groupId: string): Promis
 
   const isChange = Boolean(lead.groupId) && lead.groupId !== groupId;
   if (isChange && lead.enrollEditCount >= 1) {
-    return { error: "edit_limit" };   // bir martalik o'zgartirish allaqachon ishlatilgan
+    return { error: "edit_limit" };
   }
   if (lead.groupId === groupId && lead.stage === "WON") {
     return { ok: true, groupName: group.name, editsLeft: Math.max(0, 1 - lead.enrollEditCount) };
@@ -362,14 +316,13 @@ export async function enrollLeadToGroup(leadId: string, groupId: string): Promis
 
   const studentId = await applyEnrollment(lead, groupId);
 
-  // 4) Lidni yangilaymiz
   const updated = await prisma.lead.update({
     where: { id: leadId },
     data: {
       groupId,
       studentId,
       stage: "WON",
-      kanbanColumnId: null, // guruhga yozildi — oddiy nomli ustundan chiqadi
+      kanbanColumnId: null,
       branchSlotId: null,
       enrollEditCount: isChange ? { increment: 1 } : undefined,
     },
@@ -402,7 +355,6 @@ export async function enrollLeadToGroup(leadId: string, groupId: string): Promis
   return { ok: true, groupName: group.name, editsLeft: Math.max(0, 1 - updated.enrollEditCount) };
 }
 
-// ─── Bulk amallar (bir nechta lid ustida) ───
 export type BulkResult = { ok: boolean; error?: string; count?: number };
 
 export async function bulkLeadAction(
@@ -423,8 +375,6 @@ export async function bulkLeadAction(
       break;
     case "set_stage": {
       if (!payload?.stage || !stages.includes(payload.stage)) return { ok: false, error: "invalid" };
-      // "Qabul qilindi" har bir lid uchun guruh tanlashni talab qiladi —
-      // ommaviy amalda buni so'rab bo'lmaydi, shuning uchun taqiqlanadi.
       if (ENROLL_REQUIRED_STAGES.includes(payload.stage)) {
         return { ok: false, error: "group_required" };
       }
@@ -436,8 +386,6 @@ export async function bulkLeadAction(
       await prisma.leadActivity.createMany({ data: leadIds.map((id) => ({ leadId: id, authorId: s.userId, type: "note", result: payload!.note! })) });
       break;
     case "reset_new": {
-      // Ustunni bo'shatish — lidlar "Yangi"ga qaytadi (direktor / o'rinbosar / ROP).
-      // Guruh biriktiruvi va ustun belgisi tozalanadi; yaratilgan o'quvchi yozuvi (studentId) qoladi.
       if (![ROLES.DIRECTOR, ROLES.DEPUTY_DIRECTOR, ROLES.ROP].includes(s.role as never)) return { ok: false, error: "forbidden" };
       await prisma.$transaction([
         prisma.lead.updateMany({ where: { id: { in: leadIds } }, data: { stage: "NEW", kanbanColumnId: null, branchSlotId: null, groupId: null, enrollEditCount: 0 } }),
@@ -447,10 +395,6 @@ export async function bulkLeadAction(
       break;
     }
     case "delete": {
-      // Direktor / o'rinbosari / admin — "Daraja testi" (TEST) va yo'qotilgan
-      // (LOST) lidlarni; qolganlar faqat yo'qotilganlarni. Ishdagi lidlar
-      // Kanbandan ommaviy o'chirilmaydi (faqat to'liq sahifadan, ism yozib).
-      // Qo'ng'iroq yozuvlari saqlanadi — faqat bog'lanish uziladi.
       const where = CAN_DELETE_LEAD.includes(s.role as never)
         ? { id: { in: leadIds }, stage: { in: ["TEST", "LOST"] } }
         : { id: { in: leadIds }, stage: "LOST" };
@@ -472,7 +416,6 @@ export async function bulkLeadAction(
   return { ok: true, count: leadIds.length };
 }
 
-// ─── Faoliyat/izoh qo'shish ───
 export async function addLeadActivity(leadId: string, type: string, result: string, nextStepAt?: string | null): Promise<void> {
   const s = await requireSession();
   if (!canWrite(s.role, MODULES.CRM)) return;
@@ -485,13 +428,12 @@ export async function addLeadActivity(leadId: string, type: string, result: stri
   revalidatePath(`/crm/${leadId}`);
 }
 
-// ─── Lid izohlari (tezkor oyna) ───
 export interface LeadComment {
   id: string;
   text: string;
   authorName: string | null;
   authorRole: string | null;
-  createdAt: string; // ISO
+  createdAt: string;
 }
 
 const commentSelect = {
@@ -507,7 +449,6 @@ const toComment = (a: { id: string; result: string | null; createdAt: Date; auth
   createdAt: a.createdAt.toISOString(),
 });
 
-/** Lidga yozilgan izohlar — yangisi tepada, muallif va vaqti bilan */
 export async function listLeadComments(leadId: string): Promise<LeadComment[]> {
   const s = await requireSession();
   if (!canRead(s.role, MODULES.CRM)) return [];
@@ -537,7 +478,6 @@ export async function addLeadComment(leadId: string, text: string): Promise<{ ok
   return { ok: true, comment: toComment(row) };
 }
 
-// ─── Menejer tayinlash ───
 export async function setLeadManager(leadId: string, managerId: string | null): Promise<void> {
   const s = await requireSession();
   if (!canWrite(s.role, MODULES.CRM)) return;
@@ -547,14 +487,12 @@ export async function setLeadManager(leadId: string, managerId: string | null): 
   revalidatePath(`/crm/${leadId}`);
 }
 
-// ─── Maydonni inline tahrirlash (batafsil sahifa) ───
 export async function updateLeadField(leadId: string, field: string, value: string): Promise<void> {
   const s = await requireSession();
   if (!canWrite(s.role, MODULES.CRM)) return;
   const allowed = ["fullName", "phone", "email", "interestCourse", "note", "source", "budget", "age", "level", "telegram", "studyFormat"];
   if (!allowed.includes(field)) return;
   if (field === "fullName" && (!value || value.trim().length < 2)) return;
-  // Ta'lim shakli — faqat ONLINE/OFFLINE (yoki bo'sh); telegram — "@" bilan saqlanadi
   if (field === "studyFormat" && value && !["ONLINE", "OFFLINE"].includes(value.trim().toUpperCase())) return;
   const data: Record<string, unknown> =
     field === "budget" ? { budget: value ? Number(value) : null }
@@ -568,13 +506,8 @@ export async function updateLeadField(leadId: string, field: string, value: stri
   revalidatePath("/crm");
 }
 
-// ─── Lidni boshqa filialga ko'chirish ───
-// Filial izolyatsiyasi joriy qilingach kerak bo'ldi: noto'g'ri filialga tushgan
-// yoki boshqa filialga o'tkazilishi kerak bo'lgan lid ko'chiriladi.
-
 export interface BranchOpt { id: string; name: string }
 
-/** Ko'chirish uchun faol filiallar ro'yxati. */
 export async function branchOptions(): Promise<BranchOpt[]> {
   const s = await requireSession();
   if (!canRead(s.role, MODULES.CRM)) return [];
@@ -609,19 +542,8 @@ export async function moveLeadToBranch(leadId: string, branchId: string): Promis
   return { ok: true, branchName: branch.name };
 }
 
-// ─── Lidni butunlay o'chirish ───
-// Direktor, o'rinbosari va ADMINISTRATOR o'chira oladi.
-// Lid bilan birga faoliyat tarixi (LeadActivity) ham ketadi (kaskad).
-// Qo'ng'iroqlar (Call) o'chmaydi — faqat lid bilan aloqasi uziladi, chunki
-// qo'ng'iroq tarixi moliyaviy/nazorat hujjati sifatida saqlanishi kerak.
-// O'quvchiga aylantirilgan bo'lsa — o'quvchi ham o'chmaydi (aloqa uziladi).
 const CAN_DELETE_LEAD = [ROLES.DIRECTOR, ROLES.DEPUTY_DIRECTOR, ROLES.ADMIN];
 
-/**
- * Kanbandagi tezkor o'chirish — FAQAT "Daraja testi" (TEST) bosqichidagi lid.
- * Test sinovlari / tasodifiy topshiriqlar shu yerdan tozalanadi; ishdagi
- * lidlar esa faqat to'liq sahifadan, ism yozib tasdiqlab o'chiriladi.
- */
 export async function deleteTestLead(leadId: string): Promise<{ ok?: boolean; error?: string }> {
   const s = await requireSession();
   if (!CAN_DELETE_LEAD.includes(s.role as never)) return { error: "forbidden" };
@@ -642,7 +564,6 @@ export async function deleteLeadPermanently(leadId: string): Promise<{ ok?: bool
   if (!lead) return { error: "not_found" };
 
   await prisma.$transaction(async (tx) => {
-    // Qo'ng'iroqlar saqlanadi — faqat bog'lanish uziladi
     await tx.call.updateMany({ where: { leadId }, data: { leadId: null } });
     await tx.lead.delete({ where: { id: leadId } });
   });
@@ -659,11 +580,6 @@ export async function deleteLeadPermanently(leadId: string): Promise<{ ok?: bool
   revalidatePath("/crm");
   return { ok: true };
 }
-
-/* ─── Kanbanga guruh biriktirish ─────────────────────────────────────
-   Guruh Kanbanga biriktirilsa alohida ustun bo'lib chiqadi; unga
-   tashlangan lid o'sha guruhga yoziladi. Ro'yxat Setting'da JSON bo'lib
-   saqlanadi — bitta kalit, alohida jadval kerak emas.                  */
 
 const KANBAN_GROUPS_KEY = "crm.kanbanGroups";
 
@@ -683,7 +599,6 @@ async function readPinned(): Promise<PinnedRaw[]> {
   }
 }
 
-/** Biriktirilgan ustunlar — nomi bilan. O'chirilgan guruhlar tashlab yuboriladi. */
 export async function listKanbanGroups(): Promise<GroupColumn[]> {
   const pinned = await readPinned();
   if (pinned.length === 0) return [];
@@ -723,7 +638,6 @@ export async function pinKanbanGroup(groupId: string, color: string, icon: strin
   return { ok: true, columns: await listKanbanGroups() };
 }
 
-/** Ustunni olib tashlash — o'quvchilar guruhda qoladi, faqat ko'rinish o'zgaradi */
 export async function unpinKanbanGroup(groupId: string): Promise<PinResult> {
   const s = await requireSession();
   if (!canWrite(s.role, MODULES.CRM)) return { error: "forbidden" };
@@ -734,11 +648,6 @@ export async function unpinKanbanGroup(groupId: string): Promise<PinResult> {
   revalidatePath("/crm");
   return { ok: true, columns: await listKanbanGroups() };
 }
-
-/* ─── Oddiy nomli Kanban ustunlari ───────────────────────────────────
-   Guruhga bog'lanmagan ustun ("Sentyabr oqimi", "VIP"...). Ro'yxat guruh
-   ustunlari kabi Setting'da JSON. Lid qaysi ustunda ekani esa
-   Lead.kanbanColumnId da — ustun o'chirilsa lidlar o'z bosqichiga qaytadi. */
 
 const KANBAN_COLUMNS_KEY = "crm.kanbanColumns";
 const MAX_CUSTOM_COLUMNS = 12;
@@ -757,7 +666,6 @@ async function readCustomColumns(): Promise<CustomColumn[]> {
   }
 }
 
-/* ─── Ustunlar tartibi — har bir xodimning o'zi uchun ─────────────── */
 const colOrderKey = (userId: string) => `crm.colOrder.${userId}`;
 
 export async function getKanbanOrder(): Promise<string[]> {
@@ -770,7 +678,6 @@ export async function getKanbanOrder(): Promise<string[]> {
   }
 }
 
-/** Bo'sh ro'yxat — standart tartibga qaytarish */
 export async function saveKanbanOrder(keys: string[]): Promise<{ ok: boolean }> {
   const s = await requireSession();
   if (!canRead(s.role, MODULES.CRM)) return { ok: false };
@@ -809,7 +716,6 @@ export async function createKanbanColumn(name: string, color: string, icon: stri
   return { ok: true, columns: [...cols, col] };
 }
 
-/** Ustunni o'chirish — undagi lidlar yo'qolmaydi, o'z bosqichi ustuniga qaytadi */
 export async function removeKanbanColumn(id: string): Promise<ColumnResult> {
   const s = await requireSession();
   if (!canWrite(s.role, MODULES.CRM)) return { error: "forbidden" };
@@ -824,7 +730,6 @@ export async function removeKanbanColumn(id: string): Promise<ColumnResult> {
   return { ok: true, columns: next };
 }
 
-/** Lidni oddiy nomli ustunga ko'chirish (bosqich o'zgarmaydi) */
 export async function moveLeadToColumn(leadId: string, columnId: string): Promise<{ ok?: boolean; error?: string }> {
   const s = await requireSession();
   if (!canWrite(s.role, MODULES.CRM)) return { error: "forbidden" };
@@ -845,15 +750,9 @@ export async function moveLeadToColumn(leadId: string, columnId: string): Promis
   return { ok: true };
 }
 
-/* ─── Daraja testi (QR) ──────────────────────────────────────────────
-   "Daraja testi" ustunidagi QR tugmasi — lid telefonida skan qilib, ilovaning
-   ochiq /daraja-testi sahifasiga o'tadi. Natija CRM'ga avtomatik tushadi
-   (src/app/daraja-testi/actions.ts). QR brend uslubida mijozda chiziladi
-   (BrandedQr) — shuning uchun tayyor rasm emas, modullar matritsasi qaytadi. */
-
 const LEVEL_TEST_PATH = "/daraja-testi";
 
-export type LevelTestQr = { url: string; modules: string; size: number; /** QR markazidagi emblema (bo'sh — emblemasiz) */ mark?: string; error?: string };
+export type LevelTestQr = { url: string; modules: string; size: number; mark?: string; error?: string };
 
 export async function getLevelTestQr(): Promise<LevelTestQr> {
   const s = await requireSession();
@@ -863,7 +762,6 @@ export async function getLevelTestQr(): Promise<LevelTestQr> {
   const url = `${proto}://${host}${LEVEL_TEST_PATH}`;
   if (!canRead(s.role, MODULES.CRM)) return { url, modules: "", size: 0, error: "forbidden" };
   try {
-    // H — 30% xato tuzatish: markazdagi emblema shu zaxira hisobiga qo'yiladi
     const q = QRCode.create(url, { errorCorrectionLevel: "H" });
     const modules = Array.from(q.modules.data, (b) => (b ? "1" : "0")).join("");
     const mark = (await getBrand()).isMain ? "/logo-mark.png" : "";
@@ -873,10 +771,6 @@ export async function getLevelTestQr(): Promise<LevelTestQr> {
   }
 }
 
-/* ─── Lidni filial ustuniga tashlash (ROP kanbani) ───────────────────
-   Lid shu filialga yo'naltiriladi. Hali ishlov boshida bo'lsa (NEW/IN_PROGRESS/
-   CONTACTED) bosqichi "Taklif"ga (OFFER) o'tadi — filialga borish taklif
-   qilingan; test/taklif bosqichida bo'lsa bosqich o'zgarmaydi, faqat filial.  */
 export async function dropLeadToBranch(leadId: string, branchId: string, slotId: string | null = null): Promise<{ ok?: boolean; error?: string }> {
   const s = await requireSession();
   if (!canWrite(s.role, MODULES.CRM)) return { error: "forbidden" };
@@ -888,22 +782,18 @@ export async function dropLeadToBranch(leadId: string, branchId: string, slotId:
   ]);
   if (!lead || !branch) return { error: "notfound" };
   if (slotId && !slot) return { error: "slot_not_found" };
-  // Sig'im: xonada joy qolmagan bo'lsa tashlab bo'lmaydi (lidning o'zi allaqachon shu xonada bo'lsa — hisobga olinmaydi)
   if (slot?.capacity) {
     const already = await prisma.lead.count({ where: { branchSlotId: slot.id, NOT: { id: leadId } } });
     if (already >= slot.capacity) return { error: "slot_full" };
   }
 
-  // Testdan kelgan (TEST) lid ham — filialga tashlangach "Taklif"ga o'tadi (sotuv rejimida u "Yangi"da turardi)
   const early = ["NEW", "IN_PROGRESS", "CONTACTED", "TEST"].includes(lead.stage);
   await prisma.lead.update({
     where: { id: leadId },
     data: {
       branchId: branch.id,
       ...(early ? { stage: "OFFER" } : {}),
-      // Filial ustuni belgisi — faqat shu belgi bo'lgan lid filial ustunida ko'rinadi
       kanbanColumnId: branchColKey(branch.id),
-      // Xona kartasiga tashlangan bo'lsa — shu xona; ustunning o'ziga tashlansa xonasiz
       branchSlotId: slot?.id ?? null,
       activities: { create: { authorId: s.userId, type: early ? "stage_change" : "note", result: `Filialga yo'naltirildi: ${branch.name}${slot ? ` — ${slot.room}, ${slot.days} ${slot.startTime}–${slot.endTime}` : ""}${early ? " (Taklif)" : ""}` } },
     },
@@ -914,10 +804,6 @@ export async function dropLeadToBranch(leadId: string, branchId: string, slotId:
   return { ok: true };
 }
 
-/* ─── "Onlayn" ustuni (filial rejimi) ───────────────────────────────
-   Ustunga tashlansa — lid onlayn o'qimoqchi deb belgilanadi (studyFormat=ONLINE),
-   bosqichi Yangi, filial/ustun belgisi tozalanadi. "Yangi"ga qaytarilsa —
-   onlayn belgisi olib tashlanadi (aks holda u yana Onlayn ustunida chiqadi).  */
 export async function setLeadOnline(leadId: string, online: boolean): Promise<{ ok?: boolean; error?: string }> {
   const s = await requireSession();
   if (!canWrite(s.role, MODULES.CRM)) return { error: "forbidden" };
@@ -939,10 +825,6 @@ export async function setLeadOnline(leadId: string, online: boolean): Promise<{ 
   return { ok: true };
 }
 
-/* ─── Lidni arxivlash ────────────────────────────────────────────────
-   Kanbandagi "Arxiv" ustuni — lid bosqichini YO'QOTMAYDI, faqat ko'rinishdan
-   chiqadi (ro'yxatni tozalash uchun). Boshqa ustunga qaytarilsa arxivdan
-   chiqadi va o'z bosqichi ustuniga qaytadi.                                */
 export async function setLeadArchived(leadId: string, archived: boolean, kind: "STUDENT" | "LEAD" | null = null): Promise<{ ok?: boolean; error?: string }> {
   const s = await requireSession();
   if (!canWrite(s.role, MODULES.CRM)) return { error: "forbidden" };
@@ -955,15 +837,11 @@ export async function setLeadArchived(leadId: string, archived: boolean, kind: "
     where: { id: leadId },
     data: {
       archivedAt: archived ? new Date() : null,
-      // Qaysi kartaga tashlangani eslab qolinadi (O'quvchi arxivi / Lid arxivi)
       archiveKind: archived ? kind : null,
-      // Arxivlanganda xonadagi joyi bo'shatiladi (sig'im hisobida turmasin); filial belgisi qoladi
       ...(archived ? { branchSlotId: null } : {}),
       activities: { create: { authorId: s.userId, type: "note", result: archived ? "Arxivga tashlandi" : "Arxivdan qaytarildi" } },
     },
   });
-  // Lid o'quvchiga aylangan bo'lsa — o'quvchining o'zi ham arxivlanadi/qaytadi
-  // (Kanbandagi "O'quvchi arxivi" = Student.eduStatus ARCHIVED)
   if (lead.studentId) await setStudentArchivedInternal(s.userId, lead.studentId, archived, false);
   await writeAudit({ actorId: s.userId, action: "UPDATE", entityType: "Lead", entityId: leadId, newValue: { archived }, reason: archived ? `Lid arxivlandi: ${lead.fullName}` : `Lid arxivdan qaytarildi: ${lead.fullName}` });
 
@@ -971,11 +849,6 @@ export async function setLeadArchived(leadId: string, archived: boolean, kind: "
   revalidatePath("/students");
   return { ok: true };
 }
-
-/* ─── O'quvchi arxivi (Kanban) ───────────────────────────────────────
-   "O'quvchi arxivi" kartasi = Student.eduStatus ARCHIVED (o'quvchi profilidan
-   arxivlangan ham, Kanbandan tashlangan ham bir joyda). Arxivlanganda o'quvchiga
-   bog'liq lid ham arxivlanadi, qaytarilganda — qaytadi.                      */
 
 async function setStudentArchivedInternal(actorId: string, studentId: string, archived: boolean, touchLeads: boolean): Promise<boolean> {
   const st = await prisma.student.findUnique({
@@ -985,10 +858,8 @@ async function setStudentArchivedInternal(actorId: string, studentId: string, ar
   if (!st) return false;
   const isArchived = st.eduStatus === "ARCHIVED";
   if (isArchived === archived) return true;
-  // Guruhi bo'lsa — faol, bo'lmasa kutish holatiga qaytadi (students/actions.ts restoreStudent bilan bir xil)
   const next = archived ? "ARCHIVED" : st.enrollments.length ? "ACTIVE" : "WAITING";
   await prisma.student.update({ where: { id: studentId }, data: { eduStatus: next } });
-  // Arxivlanganda guruhlardan chiqariladi — yangi oylar hisoblanmaydi, guruh qarzi o'chiriladi
   if (archived) await leaveGroups({ studentId, actorId, reason: "O'quvchi arxivlandi (Kanban)" });
   if (touchLeads) {
     await prisma.lead.updateMany({ where: { studentId }, data: archived ? { archivedAt: new Date(), branchSlotId: null } : { archivedAt: null } });
@@ -1001,7 +872,6 @@ async function setStudentArchivedInternal(actorId: string, studentId: string, ar
   return true;
 }
 
-/** Kanbandagi "O'quvchi arxivi" kartasidan: o'quvchini arxivlash / qaytarish */
 export async function setStudentArchived(studentId: string, archived: boolean): Promise<{ ok?: boolean; error?: string }> {
   const s = await requireSession();
   if (!canWrite(s.role, MODULES.CRM)) return { error: "forbidden" };
@@ -1012,7 +882,6 @@ export async function setStudentArchived(studentId: string, archived: boolean): 
   return { ok: true };
 }
 
-/** "O'quvchi arxivi" kartasidagi "+" — arxivlash uchun o'quvchi qidirish (faol filial doirasida) */
 export async function searchStudentsToArchive(q: string): Promise<{ id: string; fullName: string; phone: string | null; groupName: string | null }[]> {
   const s = await requireSession();
   if (!canWrite(s.role, MODULES.CRM)) return [];

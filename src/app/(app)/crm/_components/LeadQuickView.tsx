@@ -11,10 +11,6 @@ import { addLeadComment, listLeadComments, type LeadComment } from "../actions";
 import PaymentPanel from "../../students/PaymentPanel";
 import type { LeadPayment } from "../[id]/LeadDetail";
 
-// Lidning yonboshdan ochiladigan TEZKOR ko'rish oynasi.
-// Qator/kartochka BIR marta bosilganda shu oyna ochiladi; IKKI marta
-// bosilsa bevosita /crm/[id] to'liq sahifasiga kiriladi.
-
 function fmtDateTime(iso: string) {
   const d = new Date(iso);
   const p = (n: number) => String(n).padStart(2, "0");
@@ -31,16 +27,13 @@ function fmtDate(iso: string | null) {
 export default function LeadQuickView({
   lead, locale, canWrite, onClose, onEnroll, onDelete, onCommented, payment,
 }: {
-  /** O'quvchiga aylangan lid uchun to'lov paneli (berilsa) */
   payment?: LeadPayment | null;
   lead: VLead;
   locale: Locale;
   canWrite: boolean;
   onClose: () => void;
   onEnroll: () => void;
-  /** Berilsa — pastda "O'chirish" tugmasi (direktor / o'rinbosari / admin) */
   onDelete?: () => void;
-  /** Izoh qo'shilgach — ro'yxatdagi "harakatlar soni" va oxirgi harakat yangilanadi */
   onCommented?: (leadId: string, at: string) => void;
 }) {
   const [mounted, setMounted] = useState(false);
@@ -70,7 +63,6 @@ export default function LeadQuickView({
         onMouseDown={(e) => e.stopPropagation()}
         className="animate-slide-in-right absolute right-0 top-0 flex h-full drawer-panel flex-col border-l border-slate-200 bg-white shadow-pop dark:border-white/10 dark:bg-[#15243d]"
       >
-        {/* Sarlavha */}
         <div className="relative shrink-0 overflow-hidden border-b border-slate-100 dark:border-white/10">
           <div className="pointer-events-none absolute inset-0" style={{ background: `linear-gradient(135deg, ${col.color}14, transparent 60%)` }} />
           <div className="relative flex items-start justify-between gap-3 px-5 py-5">
@@ -94,7 +86,6 @@ export default function LeadQuickView({
               </div>
             </div>
             <div className="flex shrink-0 items-center gap-1">
-              {/* Tezkor oynadan lidning to'liq sahifasiga o'tish */}
               <Link
                 href={`/crm/${lead.id}`}
                 className="flex items-center gap-1.5 rounded-lg border border-slate-200 px-2.5 py-1.5 text-[11px] font-semibold text-slate-600 transition hover:border-brand-300 hover:text-brand-600 dark:border-white/10 dark:text-slate-300 dark:hover:bg-white/10"
@@ -107,7 +98,6 @@ export default function LeadQuickView({
         </div>
 
         <div className="flex-1 space-y-5 overflow-y-auto px-5 py-4">
-          {/* Aloqa */}
           <Section icon="phone" title={tr(locale, { uz: "Aloqa", ru: "Контакты", en: "Contact", de: "Kontakt" })}>
             <button
               onClick={call}
@@ -122,7 +112,6 @@ export default function LeadQuickView({
             {lead.telegram && <Row label="Telegram" value={lead.telegram} />}
           </Section>
 
-          {/* Lid ma'lumotlari */}
           <Section icon="info" title={tr(locale, { uz: "Ma'lumotlar", ru: "Данные", en: "Details", de: "Details" })}>
             {lead.studyFormat && (
               <Row
@@ -146,7 +135,6 @@ export default function LeadQuickView({
             <Row label={tr(locale, { uz: "Harakatlar soni", ru: "Кол-во действий", en: "Activities", de: "Aktivitäten" })} value={String(lead.activityCount)} />
           </Section>
 
-          {/* Guruh — "Qabul qilindi" bosqichi uchun majburiy qadam. Yo'naltirilmagan bo'lsa holat va amal teng o'lchamli ikki tugma */}
           <Section icon="layers" title={tr(locale, { uz: "Guruh", ru: "Группа", en: "Group", de: "Gruppe" })}>
             {lead.groupName ? (
               <div className="flex items-center justify-between gap-2 rounded-xl border border-emerald-200 bg-emerald-50/60 px-3.5 py-2.5 dark:border-emerald-900/40 dark:bg-emerald-950/20">
@@ -178,7 +166,6 @@ export default function LeadQuickView({
             )}
           </Section>
 
-          {/* To'lovlar — o'quvchiga aylangan lid: qabul qilish, qarz, istalgan to'lovni tahrirlash */}
           {lead.studentId && payment && (payment.canManage || payment.canPay || payment.rop) && (
             <div className="rounded-xl border border-slate-200/70 p-3 dark:border-slate-800">
               <PaymentPanel
@@ -197,7 +184,6 @@ export default function LeadQuickView({
           <Comments lead={lead} locale={locale} canWrite={canWrite} onCommented={onCommented} />
         </div>
 
-        {/* Pastki amallar */}
         <div className="flex shrink-0 gap-2 border-t border-slate-100 bg-white px-5 py-3 dark:border-white/10 dark:bg-[#15243d]">
           <Link
             href={`/crm/${lead.id}`}
@@ -224,8 +210,6 @@ export default function LeadQuickView({
   );
 }
 
-/* ── Izohlar: yozish maydoni + ro'yxat (kim, qachon) ──
-   Lid yaratilgandagi dastlabki izoh (ariza matni) ro'yxat oxirida turadi. */
 function Comments({ lead, locale, canWrite, onCommented }: { lead: VLead; locale: Locale; canWrite: boolean; onCommented?: (leadId: string, at: string) => void }) {
   const [items, setItems] = useState<LeadComment[] | null>(null);
   const [text, setText] = useState("");

@@ -11,13 +11,6 @@ import { DICT_SIZE } from "@/lib/dictionary";
 import InstallApp from "./InstallApp";
 import AppPreview from "./AppPreview";
 
-// Ochiq sahifa — o'quv markazi va ILOVANI YUKLAB OLISH.
-// Asosiy manzil (/) boshqaruv tizimiga tegishli; bu sahifa o'quvchilar
-// uchun: germaniya.live/app (yoki /ilova).
-//
-// Shrift tashqi xizmatdan olinmaydi (globals.css dagi tizim shrifti) —
-// Google Fonts uzilganda sayt buzilmasin.
-
 export const metadata: Metadata = {
   metadataBase: new URL("https://germaniya.live"),
   title: "Germaniya Live — nemis tili o'quv markazi",
@@ -71,7 +64,6 @@ export default async function LandingPage() {
     return `${p(d.getDate())}.${p(d.getMonth() + 1)}.${d.getFullYear()}`;
   };
 
-  // Yumaloqlangan ko'rsatkichlar — aniq son ochiq saytda ko'rinmasin
   const round = (n: number) => (n >= 100 ? `${Math.floor(n / 50) * 50}+` : n >= 20 ? `${Math.floor(n / 10) * 10}+` : String(n));
 
   const stats = [
@@ -85,7 +77,6 @@ export default async function LandingPage() {
 
   return (
     <div className="min-h-screen bg-white text-slate-900 antialiased">
-      {/* ══════════ Sarlavha ══════════ */}
       <header className="sticky top-0 z-40 border-b border-slate-900/[0.06] bg-white/80 backdrop-blur-xl">
         <div className="mx-auto flex h-[70px] max-w-6xl items-center gap-3 px-5">
           {/* eslint-disable-next-line @next/next/no-img-element */}
@@ -104,7 +95,6 @@ export default async function LandingPage() {
         </div>
       </header>
 
-      {/* ══════════ Bosh ekran ══════════ */}
       <section className="relative overflow-hidden">
         <div aria-hidden className="pointer-events-none absolute inset-0 -z-10 bg-[#fbfdfe]" />
         <div aria-hidden className="pointer-events-none absolute -right-40 -top-40 -z-10 h-[560px] w-[560px] rounded-full bg-[#17a2bf] opacity-[0.13] blur-[110px]" />
@@ -167,7 +157,6 @@ export default async function LandingPage() {
         </div>
       </section>
 
-      {/* ══════════ Qanday boshlanadi ══════════ */}
       <section className="border-y border-slate-900/[0.06] bg-[#fbfdfe] px-5 py-16 md:py-20">
         <div className="mx-auto max-w-6xl">
           <h2 className="text-[26px] font-extrabold tracking-[-0.03em] md:text-[32px]">Qanday boshlanadi</h2>
@@ -183,7 +172,6 @@ export default async function LandingPage() {
         </div>
       </section>
 
-      {/* ══════════ Imkoniyatlar ══════════ */}
       <section id="imkoniyat" className="scroll-mt-24 px-5 py-16 md:py-24">
         <div className="mx-auto max-w-6xl">
           <div className="max-w-xl">
@@ -212,7 +200,6 @@ export default async function LandingPage() {
         </div>
       </section>
 
-      {/* ══════════ Ilovani yuklab olish ══════════ */}
       <section id="ilova" className="scroll-mt-24 px-5 pb-16 md:pb-24">
         <div className="relative mx-auto max-w-5xl overflow-hidden rounded-[36px] bg-[#0b1620] p-8 text-white md:p-14">
           <div aria-hidden className="pointer-events-none absolute -right-24 -top-24 h-72 w-72 rounded-full bg-[#17a2bf] opacity-25 blur-[90px]" />
@@ -241,7 +228,6 @@ export default async function LandingPage() {
                 ))}
               </ul>
 
-              {/* Kompyuterda — telefonda ochish uchun QR */}
               <div className="mt-9 hidden items-center gap-4 rounded-3xl border border-white/10 bg-white/[0.06] p-4 md:flex">
                 <div
                   className="grid h-[88px] w-[88px] shrink-0 place-items-center rounded-2xl bg-white p-2 [&>svg]:h-full [&>svg]:w-full"
@@ -265,7 +251,6 @@ export default async function LandingPage() {
         </div>
       </section>
 
-      {/* ══════════ Darajalar ══════════ */}
       {levels.length > 0 && (
         <section id="darajalar" className="scroll-mt-24 border-t border-slate-900/[0.06] bg-[#fbfdfe] px-5 py-16 md:py-24">
           <div className="mx-auto max-w-6xl">
@@ -282,10 +267,6 @@ export default async function LandingPage() {
                   key={l.id}
                   className="group relative flex flex-col overflow-hidden rounded-[26px] border border-slate-900/[0.06] bg-white transition hover:-translate-y-0.5 hover:shadow-[0_20px_44px_-28px_rgba(15,60,80,0.6)]"
                 >
-                  {/* Banner TO'LIQ ko'rinadi. Ilgari `h-[96px] object-cover`
-                      edi va rasmning usti-osti kesilardi — daraja belgisi
-                      ("A1 TIL KURSI") yarmigacha qirqilib ketardi.
-                      Balandlik rasmning o'z nisbatidan kelib chiqadi. */}
                   {l.bannerUrl ? (
                     // eslint-disable-next-line @next/next/no-img-element
                     <img src={l.bannerUrl} alt="" className="block w-full bg-slate-100" />
@@ -319,7 +300,6 @@ export default async function LandingPage() {
         </section>
       )}
 
-      {/* ══════════ Yakuniy chaqiruv ══════════ */}
       <section className="px-5 py-16 md:py-24">
         <div className="mx-auto max-w-3xl text-center">
           <h2 className="text-[30px] font-extrabold tracking-[-0.03em] md:text-[40px]">Kursga yozilasizmi?</h2>
@@ -345,7 +325,6 @@ export default async function LandingPage() {
         </div>
       </section>
 
-      {/* ══════════ Footer ══════════ */}
       <footer className="border-t border-slate-900/[0.06] px-5 py-12">
         <div className="mx-auto grid max-w-6xl gap-9 md:grid-cols-3 md:gap-6">
           <div>

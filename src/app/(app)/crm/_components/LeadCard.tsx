@@ -27,15 +27,12 @@ interface Props {
   locale: Locale;
   selected: boolean;
   onOpen: (id: string, e: React.MouseEvent) => void;
-  /** Ikki marta bosilganda — lidning to'liq sahifasi */
   onOpenFull: (id: string) => void;
   onDragStart: (id: string, e: React.DragEvent) => void;
   onDragEnd: () => void;
-  /** Berilsa — "Daraja testi" ustunidagi kartada savatcha chiqadi (direktor / o'rinbosari / admin) */
   onDelete?: (id: string) => void;
 }
 
-// memo: Kanbanda yuzlab karta bor — birini sudrash/belgilash qolganlarini qayta chizmasin
 export default memo(function LeadCard({ lead, locale, selected, onOpen, onOpenFull, onDragStart, onDragEnd, onDelete }: Props) {
   const col = columnDef(columnOf(lead.stage));
   const color = col.color;
@@ -51,7 +48,6 @@ export default memo(function LeadCard({ lead, locale, selected, onOpen, onOpenFu
       draggable
       onDragStart={(e) => onDragStart(lead.id, e)}
       onDragEnd={onDragEnd}
-      // 1 marta -> yonbosh tezkor oyna, 2 marta -> to'liq sahifa
       onClick={(e) => onOpen(lead.id, e)}
       onDoubleClick={() => onOpenFull(lead.id)}
       className={cn(
@@ -59,10 +55,8 @@ export default memo(function LeadCard({ lead, locale, selected, onOpen, onOpenFu
         selected ? "border-brand-500 ring-2 ring-brand-500/40" : "border-slate-200 dark:border-white/[0.07]"
       )}
     >
-      {/* O'chirish — burchakda (faoliyat soni pastda, sana yonida — ismni to'smasin) */}
       <div className="absolute right-2 top-2 flex items-center gap-1">
         {onDelete && col.key === "test" && (
-          // Faqat daraja testi lidlari; sichqoncha ustiga kelganda ko'rinadi, sensorli ekranda doim (xira)
           <button
             type="button"
             onClick={(e) => { e.preventDefault(); e.stopPropagation(); onDelete(lead.id); }}
@@ -75,7 +69,6 @@ export default memo(function LeadCard({ lead, locale, selected, onOpen, onOpenFu
         )}
       </div>
 
-      {/* Avatar + ism — ism kesilmaydi ("…" yo'q), kerak bo'lsa keyingi qatorga o'raladi */}
       <div className={cn("flex items-start gap-3", onDelete && col.key === "test" ? "pr-7" : "")} title={lead.fullName}>
         <div
           className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full bg-slate-100 dark:bg-slate-700/40"
@@ -92,7 +85,6 @@ export default memo(function LeadCard({ lead, locale, selected, onOpen, onOpenFu
         </div>
       </div>
 
-      {/* Telefon + manba + kurs */}
       <div className="mt-2.5 space-y-1.5">
         <button
           onClick={(e) => { e.preventDefault(); e.stopPropagation(); window.dispatchEvent(new CustomEvent("glive:call", { detail: { number: lead.phone, leadId: lead.id, contactName: lead.fullName } })); }}
@@ -109,7 +101,6 @@ export default memo(function LeadCard({ lead, locale, selected, onOpen, onOpenFu
             {lead.studyFormat && (
               <span className={cn("rounded px-1.5 py-0.5 text-[10px] font-semibold", lead.studyFormat === "ONLINE" ? "bg-sky-50 text-sky-600 dark:bg-sky-500/10 dark:text-sky-300" : "bg-amber-50 text-amber-700 dark:bg-amber-500/10 dark:text-amber-300")}>
                 {lead.studyFormat === "ONLINE" ? tr(locale, { uz: "onlayn", ru: "онлайн", en: "online", de: "online" }) : tr(locale, { uz: "oflayn", ru: "офлайн", en: "offline", de: "präsenz" })}
-                {/* Oflayn — qaysi filial tanlangani ham ko'rinsin */}
                 {lead.studyFormat !== "ONLINE" && lead.branchName && <span className="font-normal"> · {lead.branchName}</span>}
               </span>
             )}
@@ -125,7 +116,6 @@ export default memo(function LeadCard({ lead, locale, selected, onOpen, onOpenFu
             <Icon name="building" className="h-3.5 w-3.5" /> {lead.interestCourse}
           </div>
         )}
-        {/* Daraja testi natijasi — /daraja-testi dan (kartada darhol ko'rinadi) */}
         {lead.testPct != null && (
           <div
             className={cn(
@@ -144,7 +134,6 @@ export default memo(function LeadCard({ lead, locale, selected, onOpen, onOpenFu
           </div>
         )}
 
-        {/* Yosh va daraja — ariza formasidan keladi */}
         {(lead.age || lead.level) && (
           <div className="flex flex-wrap items-center gap-1.5 text-[11px]">
             {lead.age ? <span className="rounded bg-slate-100 px-1.5 py-0.5 font-medium text-slate-500 dark:bg-slate-800 dark:text-slate-300">{lead.age} {tr(locale, { uz: "yosh", ru: "лет", en: "y.o.", de: "J." })}</span> : null}
@@ -152,7 +141,6 @@ export default memo(function LeadCard({ lead, locale, selected, onOpen, onOpenFu
           </div>
         )}
         {lead.budget ? <div className="text-xs font-semibold text-emerald-500">{formatMoney(lead.budget, locale)}</div> : null}
-        {/* O'quvchi qarzi: bir oygacha — sariq, bir oydan ko'p — qizil */}
         {lead.debt && lead.debt > 0 ? (
           <div
             title={tr(locale, { uz: `${lead.debtMonths ?? 1} oylik qarz`, ru: `Долг за ${lead.debtMonths ?? 1} мес.`, en: `${lead.debtMonths ?? 1} month(s) of debt`, de: `${lead.debtMonths ?? 1} Monat(e) Schulden` })}
@@ -164,10 +152,8 @@ export default memo(function LeadCard({ lead, locale, selected, onOpen, onOpenFu
         ) : null}
       </div>
 
-      {/* Ajratuvchi */}
       <div className="my-2.5 h-px bg-slate-100 dark:bg-white/[0.06]" />
 
-      {/* Menejer + bosqich */}
       <div className="flex items-center justify-between gap-2">
         <span className="flex min-w-0 items-center gap-1.5 text-xs text-slate-400">
           <Icon name="user" className="h-3 w-3 shrink-0" />
@@ -178,7 +164,6 @@ export default memo(function LeadCard({ lead, locale, selected, onOpen, onOpenFu
         </span>
       </div>
 
-      {/* Yo'qotilgan — kim, qachon va nega: ustunda aniq ko'rinib tursin */}
       {lead.stage === "LOST" && (lead.lostBy || lead.lostAt || lead.lossReason) && (
         <div className="mt-2 rounded-lg border border-rose-200/70 bg-rose-50 px-2.5 py-1.5 text-[11px] leading-snug text-rose-700 dark:border-rose-500/30 dark:bg-rose-500/10 dark:text-rose-300">
           <span className="font-semibold">{tr(locale, { uz: "Yo'qotdi", ru: "Потерял", en: "Lost by", de: "Verloren von" })}:</span> {lead.lostBy ?? "—"}{lead.lostAt ? ` · ${fmtDateTime(lead.lostAt)}` : ""}
@@ -186,7 +171,6 @@ export default memo(function LeadCard({ lead, locale, selected, onOpen, onOpenFu
         </div>
       )}
 
-      {/* Sana + faoliyat soni + ustun tegi */}
       <div className="mt-2 flex items-center justify-between">
         <span className="flex items-center gap-2 text-[10px] text-slate-400">
           {fmtDate(lead.createdAt)}

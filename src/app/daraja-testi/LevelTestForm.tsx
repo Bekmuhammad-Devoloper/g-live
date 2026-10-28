@@ -7,20 +7,11 @@ import type { PublicQuestion, PublicSet, TestLevel, TestSetId } from "@/lib/leve
 import { submitLevelTest, type LevelTestOutcome } from "./actions";
 import BrandLogo, { type BrandView } from "@/app/BrandLogo";
 
-/**
- * Daraja aniqlash testi — telefon uchun. 3 bosqich:
- *   1) ism + telefon (+ yosh) va DARAJA / TEST tanlovi (A1 → A1.1 yoki A1.2)
- *   2) tanlangan to'plam savollari asl tartibda, bittadan; variant bosilishi
- *      bilan keyingisiga o'tadi (ortga yo'q)
- *   3) natija: ball, foiz, o'tdi/o'tmadi, natijaviy daraja — CRM'ga
- *      serverda yozilgan bo'ladi
- */
 export default function LevelTestForm({ sets, levels, colors, names, brand }: {
   sets: PublicSet[];
   levels: TestLevel[];
   colors: Record<TestLevel, string>;
   names: Record<TestLevel, string>;
-  /** Markaz brendi — server sahifadan (getBrand) keladi */
   brand: BrandView;
 }) {
   const [step, setStep] = useState<"intro" | "quiz" | "done">("intro");
@@ -44,7 +35,6 @@ export default function LevelTestForm({ sets, levels, colors, names, brand }: {
 
   const pickLevel = (l: TestLevel) => {
     setLevel(l);
-    // Darajada bitta test bo'lsa o'zi tanlanadi; ikkita bo'lsa — mijoz tanlaydi
     const list = sets.filter((s) => s.level === l);
     setSetId(list.length === 1 ? list[0].id : null);
     setError(null);
@@ -73,10 +63,9 @@ export default function LevelTestForm({ sets, levels, colors, names, brand }: {
   };
 
   const choose = (q: PublicQuestion, j: number) => {
-    if (pending || answers[String(q.id)] !== undefined) return; // ikki marta bosilmasin
+    if (pending || answers[String(q.id)] !== undefined) return;
     const next = { ...answers, [String(q.id)]: j };
     setAnswers(next);
-    // Tanlangan variant ko'rinib ulgursin, keyin keyingi savol
     timer.current = setTimeout(() => {
       if (idx + 1 < questions.length) { setIdx(idx + 1); window.scrollTo({ top: 0, behavior: "smooth" }); }
       else finish(next);
@@ -92,7 +81,6 @@ export default function LevelTestForm({ sets, levels, colors, names, brand }: {
     window.scrollTo({ top: 0 });
   };
 
-  // ── 1) Kirish ──
   if (step === "intro") {
     return (
       <div className="animate-pop-in">
@@ -129,7 +117,6 @@ export default function LevelTestForm({ sets, levels, colors, names, brand }: {
             <input value={age} onChange={(e) => setAge(e.target.value.replace(/\D/g, "").slice(0, 2))} inputMode="numeric" placeholder="18" className={cn(INPUT, "w-28")} />
           </Field>
 
-          {/* Daraja tanlovi */}
           <div className="mt-4">
             <div className="mb-1.5 text-[12px] font-bold text-slate-600 dark:text-slate-300">Qaysi darajadasiz?</div>
             <div className="grid grid-cols-4 gap-2">
@@ -154,7 +141,6 @@ export default function LevelTestForm({ sets, levels, colors, names, brand }: {
             </div>
           </div>
 
-          {/* Test tanlovi — daraja ichida ikkita */}
           {level && setsOfLevel.length > 1 && (
             <div className="mt-3 animate-pop-in">
               <div className="mb-1.5 text-[12px] font-bold text-slate-600 dark:text-slate-300">Qaysi testni topshirasiz?</div>
@@ -208,7 +194,6 @@ export default function LevelTestForm({ sets, levels, colors, names, brand }: {
     );
   }
 
-  // ── 3) Natija ──
   if (step === "done" && result?.ok) {
     const lvlColor = colors[result.level];
     const color = result.passed ? lvlColor : "#64748b";
@@ -218,7 +203,6 @@ export default function LevelTestForm({ sets, levels, colors, names, brand }: {
         <Header brand={brand} />
 
         <div className="mt-6 overflow-hidden rounded-3xl border border-white/60 bg-white/85 shadow-[0_20px_50px_-24px_rgba(15,23,42,0.35)] backdrop-blur dark:border-white/10 dark:bg-white/[0.06]">
-          {/* Natija — katta rangli blok */}
           <div className="relative px-5 pb-6 pt-7 text-center text-white" style={{ background: `linear-gradient(135deg, ${color}, ${color}cc)` }}>
             <span className="pointer-events-none absolute -right-10 -top-10 h-40 w-40 rounded-full bg-white/15 blur-2xl" />
             <div className="relative text-[11px] font-bold uppercase tracking-[0.18em] text-white/80">{result.set} testi</div>
@@ -237,7 +221,6 @@ export default function LevelTestForm({ sets, levels, colors, names, brand }: {
           </div>
 
           <div className="px-5 py-5">
-            {/* Natijaviy daraja */}
             <div className="flex items-center gap-3 rounded-2xl border border-slate-100 bg-slate-50/70 px-4 py-3 dark:border-white/10 dark:bg-white/[0.04]">
               <span className="flex h-12 w-12 shrink-0 items-center justify-center rounded-xl text-[17px] font-black text-white" style={{ background: result.resultLevel ? colors[result.resultLevel] : "#94a3b8" }}>
                 {shownLevel}
@@ -248,7 +231,6 @@ export default function LevelTestForm({ sets, levels, colors, names, brand }: {
               </div>
             </div>
 
-            {/* Ball chizig'i */}
             <div className="mt-4">
               <div className="mb-1.5 flex items-center justify-between text-[11px] font-semibold text-slate-400">
                 <span>To&apos;g&apos;ri javoblar</span>
@@ -256,7 +238,6 @@ export default function LevelTestForm({ sets, levels, colors, names, brand }: {
               </div>
               <div className="relative h-3 overflow-hidden rounded-full bg-slate-100 dark:bg-white/10">
                 <div className="h-full rounded-full transition-all duration-700" style={{ width: `${result.pct}%`, background: color }} />
-                {/* 70% chegara belgisi */}
                 <span className="absolute top-0 h-full w-0.5 bg-slate-400/70" style={{ left: "70%" }} title="O'tish chegarasi 70%" />
               </div>
               <div className="mt-1 text-right text-[10.5px] text-slate-400">o&apos;tish chegarasi — 70%</div>
@@ -282,7 +263,6 @@ export default function LevelTestForm({ sets, levels, colors, names, brand }: {
     );
   }
 
-  // ── 2) Savollar ──
   const q = questions[idx];
   if (!q || !active) return null;
   const color = colors[active.level];
@@ -291,7 +271,6 @@ export default function LevelTestForm({ sets, levels, colors, names, brand }: {
 
   return (
     <div className="flex min-h-[calc(100dvh-2.5rem)] flex-col sm:min-h-0">
-      {/* Yuqori qism: test nomi + hisob */}
       <div className="flex items-center justify-between">
         <span className="flex items-center gap-2">
           <span className="rounded-lg px-2.5 py-1 text-[12px] font-bold text-white" style={{ background: color }}>{active.id}</span>
@@ -302,12 +281,10 @@ export default function LevelTestForm({ sets, levels, colors, names, brand }: {
         </span>
       </div>
 
-      {/* Progress */}
       <div className="mt-2.5 h-1.5 overflow-hidden rounded-full bg-slate-200/80 dark:bg-white/10">
         <div className="h-full rounded-full transition-all duration-300" style={{ width: `${pct}%`, background: color }} />
       </div>
 
-      {/* Savol kartasi */}
       <div key={q.id} className="animate-pop-in mt-4 flex-1">
         <div className="rounded-3xl border border-white/60 bg-white/85 p-5 shadow-[0_20px_50px_-24px_rgba(15,23,42,0.35)] backdrop-blur dark:border-white/10 dark:bg-white/[0.06]">
           {q.topic && (
@@ -371,8 +348,6 @@ export default function LevelTestForm({ sets, levels, colors, names, brand }: {
   );
 }
 
-// ───────────── Yordamchi qismlar ─────────────
-
 const INPUT =
   "min-h-[52px] w-full rounded-2xl border border-slate-200 bg-white px-4 text-[16px] text-slate-900 outline-none transition placeholder:text-slate-300 focus:border-brand-500 focus:ring-4 focus:ring-brand-500/15 dark:border-white/10 dark:bg-white/[0.06] dark:text-white dark:placeholder:text-slate-600";
 
@@ -402,7 +377,6 @@ function Field({ label, hint, children }: { label: string; hint?: string; childr
   );
 }
 
-/** "___" bo'sh joyini ko'zga tashlanadigan katak qilib chizadi */
 function Blanks({ text, color }: { text: string; color: string }) {
   const parts = text.split("___");
   return (

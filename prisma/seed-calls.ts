@@ -1,6 +1,3 @@
-// Qo'ng'iroqlar markazi uchun demo ma'lumot (idempotent — qayta ishga tushirsa bo'ladi).
-// Ishga tushirish: npx tsx prisma/seed-calls.ts
-
 import { PrismaClient } from "@prisma/client";
 
 const prisma = new PrismaClient();
@@ -22,7 +19,7 @@ async function main() {
   const comments = ["Qayta bog'lanish kerak", "Narx so'radi", "Keyinroq keladi", "Test darsga yozildi", "Manzil so'radi"];
 
   const rows = Array.from({ length: N }, (_, i) => {
-    const startedAt = new Date(now - randInt(5, 46 * 60) * 60 * 1000); // oxirgi ~46 soat
+    const startedAt = new Date(now - randInt(5, 46 * 60) * 60 * 1000);
     const direction = Math.random() < 0.62 ? "INCOMING" : "OUTGOING";
 
     const r = Math.random();
@@ -37,7 +34,6 @@ async function main() {
       ? lead.phone
       : `+998 9${randInt(0, 9)} ${randInt(100, 999)}-${randInt(10, 99)}-${randInt(10, 99)}`;
 
-    // Kiruvchi javob berilmagan qo'ng'iroqning bir qismi operatorsiz (Belgilanmagan)
     const unassigned = !answered && direction === "INCOMING" && Math.random() < 0.35;
     const op = unassigned || operators.length === 0 ? null : pick(operators);
 

@@ -7,18 +7,11 @@ import { notify } from "@/lib/notify";
 import { writeAudit } from "@/lib/audit";
 import { LEAD_STAGE_LABELS, PAYMENT_METHOD_LABELS, ROLE_LABELS, label } from "@/lib/constants";
 
-/**
- * AI yordamchi vositalari. Faqat oldindan belgilangan amallar: ma'lumotni O'QISH
- * va yagona yozish amali — xodimga topshiriq berish. Ixtiyoriy so'rov, kod yoki
- * sozlamalarni o'zgartirish imkoni yo'q.
- */
-
 export interface AiActor { userId: string; fullName: string; role: string }
 
 const DAY = 86_400_000;
 const ymd = /^\d{4}-\d{2}-\d{2}$/;
 
-/** "YYYY-MM-DD" oralig'i → [from 00:00, to+1 00:00); bo'sh bo'lsa bugun */
 function range(from?: string, to?: string): { start: Date; end: Date; label: string } {
   const today = new Date();
   const f = from && ymd.test(from) ? new Date(`${from}T00:00:00`) : new Date(today.getFullYear(), today.getMonth(), today.getDate());
@@ -305,7 +298,6 @@ async function createTask(raw: unknown, actor: AiActor, branchId: string | null)
   return { ok: true, taskId: task.id, assignee: assignee.fullName, title: task.title, dueAt: dueAt?.toISOString() ?? null };
 }
 
-/** Vositani bajarish — natija JSON matn ko'rinishida (model uchun) */
 export async function runAiTool(name: string, input: unknown, actor: AiActor, branchId: string | null): Promise<{ text: string; isError: boolean; wrote?: boolean }> {
   const i = (input && typeof input === "object" ? input : {}) as Record<string, never>;
   try {

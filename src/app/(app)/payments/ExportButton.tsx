@@ -4,7 +4,6 @@ import { exportRows } from "@/lib/export";
 
 type Cell = string | number | null | undefined;
 
-// Sahifada allaqachon ko'rsatilgan qatorlardan CSV eksport qiladi.
 export default function ExportButton({
   rows,
   columns,

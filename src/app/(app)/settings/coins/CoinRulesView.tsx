@@ -7,31 +7,24 @@ import type { Locale } from "@/lib/constants";
 import { Icon } from "../../_components/Icon";
 import { savePointRules } from "./actions";
 
-// Tanga qoidalari — nima uchun necha tanga beriladi.
-
 export type RuleRow = {
   key: string;
   icon: string;
   title: string;
   desc: string;
-  /** Qoida tizimda avtomatik ishlaydimi yoki hali kuzatilmaydimi */
   auto: boolean;
   value: number;
-  /** Hozirgacha shu qoida bo'yicha berilgan umumiy tanga */
   issued: number;
-  /** Nechta hodisa sanalgan (dars, vazifa, o'yin ...) */
   events: number;
 };
 
 export default function CoinRulesView({
   kind, rows, locale, stats, unit,
 }: {
-  /** "coin" — sarflanadigan tanga, "star" — yig'iladigan yulduz */
   kind: "coin" | "star";
   rows: RuleRow[];
   locale: Locale;
   stats: { earned: number; spent: number; balance: number; students: number };
-  /** Ball nomi — "tanga" yoki "yulduz" */
   unit: string;
 }) {
   const T = (uz: string, ru: string, en: string, de: string) => tr(locale, { uz, ru, en, de });
@@ -70,7 +63,6 @@ export default function CoinRulesView({
             )}
       </div>
 
-      {/* ── Umumiy holat ── */}
       <div className={cn("grid gap-3", kind === "coin" ? "sm:grid-cols-4" : "sm:grid-cols-2")}>
         <Stat label={T("O'quvchilar", "Ученики", "Students", "Schüler")} value={nf.format(stats.students)} icon="users" tone="text-slate-500" />
         <Stat label={T("Yig'ilgan", "Начислено", "Earned", "Verdient")} value={nf.format(stats.earned)} icon={kind === "coin" ? "coins" : "trophy"} tone={kind === "coin" ? "text-emerald-500" : "text-amber-500"} />
@@ -82,7 +74,6 @@ export default function CoinRulesView({
         ) : null}
       </div>
 
-      {/* ── Qoidalar ── */}
       <div className="space-y-2.5">
         {rows.map((r) => (
           <div

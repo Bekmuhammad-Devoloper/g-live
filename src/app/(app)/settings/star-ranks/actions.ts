@@ -8,9 +8,6 @@ import { writeAudit } from "@/lib/audit";
 import { tr } from "@/lib/tr";
 import { isSafeBanner } from "@/lib/levelColor";
 
-// Yulduz pog'onalari — menejer va rahbariyat boshqaradi.
-// Pog'ona chegarasi (yulduz) va mukofoti (tanga) shu yerdan o'zgaradi;
-// o'quvchilarning balansi keyingi ochilishda darhol qayta hisoblanadi.
 const ALLOWED = [ROLES.DIRECTOR, ROLES.DEPUTY_DIRECTOR, ROLES.ADMIN, ROLES.MANAGER];
 
 export type RankState = { ok?: boolean; error?: string };
@@ -34,7 +31,6 @@ export type RankInput = {
   stars: number;
   reward: number;
   color: string;
-  /** Belgi — oynadan yuklanganda keladi (yo'q bo'lsa o'zgarmaydi) */
   iconUrl?: string | null;
 };
 
@@ -54,7 +50,6 @@ function clean(locale: Locale, input: RankInput) {
   return {
     data: {
       nameUz,
-      // Tarjima kiritilmasa — o'zbekchasi ishlatiladi
       nameRu: input.nameRu.trim() || nameUz,
       nameEn: input.nameEn.trim() || nameUz,
       nameDe: input.nameDe.trim() || nameUz,
@@ -66,7 +61,6 @@ function clean(locale: Locale, input: RankInput) {
   } as const;
 }
 
-/** Bir xil chegarali ikki pog'ona bo'lsa qaysi biri "hozirgi" ekani noaniq bo'ladi */
 async function starsTaken(stars: number, exceptId?: string): Promise<boolean> {
   const row = await prisma.starRank.findFirst({
     where: { stars, ...(exceptId ? { id: { not: exceptId } } : {}) },
@@ -109,7 +103,6 @@ export async function updateStarRank(id: string, input: RankInput): Promise<Rank
   return { ok: true };
 }
 
-/** Pog'ona belgisi — /api/upload qaytargan manzil (yoki null: olib tashlash) */
 export async function setStarRankIcon(id: string, url: string | null): Promise<RankState> {
   const { s, error } = await guard();
   if (error) return { error };
@@ -138,7 +131,6 @@ export async function deleteStarRank(id: string): Promise<RankState> {
   const row = await prisma.starRank.findUnique({ where: { id }, select: { nameUz: true, stars: true } });
   if (!row) return { error: tr(s.locale, { uz: "Pog'ona topilmadi", ru: "Ступень не найдена", en: "Rank not found", de: "Rang nicht gefunden" }) };
 
-  // Oxirgi pog'ona o'chirilsa ilovada daraja umuman ko'rinmay qoladi
   if ((await prisma.starRank.count()) <= 1) {
     return { error: tr(s.locale, { uz: "Oxirgi pog'onani o'chirib bo'lmaydi — uni o'chirib qo'ying yoki tahrirlang", ru: "Последнюю ступень нельзя удалить — отключите или отредактируйте её", en: "The last rank cannot be deleted — deactivate or edit it instead", de: "Der letzte Rang kann nicht gelöscht werden — deaktivieren oder bearbeiten Sie ihn" }) };
   }

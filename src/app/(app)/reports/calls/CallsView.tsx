@@ -36,7 +36,6 @@ export default function CallsView({ calls, stats, operators, locale, canMark, in
   const [page, setPage] = useState(1);
   const { sync, syncing, note } = useCdrSync(locale);
 
-  // "Barcha qo'ng'iroqlar" tabidagi filtrlar
   const filtered = useMemo(() => {
     const needle = q.trim().toLowerCase();
     return calls.filter((c) => {
@@ -52,9 +51,7 @@ export default function CallsView({ calls, stats, operators, locale, canMark, in
     });
   }, [calls, q, operator, status, type, time]);
 
-  // "Qabul qilinmagan" tabi — o'tkazib yuborilgan qo'ng'iroqlar + qayta bog'lanish filtri
   const missed = useMemo(() => {
-    // MISSED dan tashqari, javobsiz KIRUVCHI qo'ng'iroqlar ham "qabul qilinmagan" hisoblanadi
     const all = calls.filter((c) => c.status === "MISSED" || (c.direction === "INCOMING" && c.status === "NO_ANSWER"));
     return callback ? all.filter((c) => c.callbackStatus === callback) : all;
   }, [calls, callback]);
@@ -112,7 +109,6 @@ export default function CallsView({ calls, stats, operators, locale, canMark, in
 
   return (
     <div className="mx-auto max-w-[1600px] space-y-6">
-      {/* Sarlavha */}
       <div className="flex flex-wrap items-center justify-between gap-3">
         <div className="flex items-center gap-4">
           <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-gradient-to-br from-blue-500 to-indigo-600 text-white shadow-lg shadow-blue-500/20">
@@ -155,7 +151,6 @@ export default function CallsView({ calls, stats, operators, locale, canMark, in
         </div>
       </div>
 
-      {/* 6 ta KPI plitka */}
       <div className="grid grid-cols-2 gap-4 md:grid-cols-3 lg:grid-cols-6">
         {tiles.map((t) => (
           <div
@@ -178,7 +173,6 @@ export default function CallsView({ calls, stats, operators, locale, canMark, in
         ))}
       </div>
 
-      {/* Tablar + filtrlar + jadval — bitta kartada (eski loyihadagidek) */}
       <div className="overflow-hidden rounded-2xl border border-slate-200/70 bg-white shadow-card dark:border-slate-800 dark:bg-slate-900">
         <div className="flex border-b border-slate-100 px-2 pt-2 dark:border-slate-800">
           {tabs.map((t) => {
@@ -218,7 +212,6 @@ export default function CallsView({ calls, stats, operators, locale, canMark, in
 
         {tab === "all" ? (
           <div className="p-5">
-            {/* Filtrlar qatori */}
             <div className="mb-5 flex flex-wrap gap-3">
               <div className="relative min-w-[240px] flex-1">
                 <Icon name="search" className="pointer-events-none absolute left-3.5 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400" />

@@ -13,7 +13,7 @@ import MapPicker from "./MapPicker";
 import { guessHasLevels, type ApplyCourse } from "@/lib/applyCourses";
 import { saveBranch, deleteBranch, setBranchActive, setBranchApplyVisible, forceDeleteBranch, branchPurgeSummary, unassignedCounts, assignUnassignedToBranch, type PurgeSummary, type UnassignedCounts } from "./actions";
 
-export interface VBranch { id: string; name: string; address: string; phone: string; lat: number | null; lng: number | null; radius: number; imageUrl: string | null; staff: number; groups: number; isActive: boolean; /** ochiq ariza formasida ko'rinadi */ showInApply: boolean; /** arizadagi kurslar (bo'sh — kurs so'ralmaydi) */ applyCourses: ApplyCourse[] }
+export interface VBranch { id: string; name: string; address: string; phone: string; lat: number | null; lng: number | null; radius: number; imageUrl: string | null; staff: number; groups: number; isActive: boolean; showInApply: boolean; applyCourses: ApplyCourse[] }
 
 export default function BranchesView({ branches, canManage, canPurge = false, locale }: { branches: VBranch[]; canManage: boolean; canPurge?: boolean; locale: Locale }) {
   const router = useRouter();
@@ -21,7 +21,6 @@ export default function BranchesView({ branches, canManage, canPurge = false, lo
   const [editing, setEditing] = useState<VBranch | null>(null);
   const [open, setOpen] = useState(false);
   const [search, setSearch] = useState("");
-  // Bog'liq ma'lumotli filialni to'liq o'chirish oynasi (faqat direktor)
   const [purge, setPurge] = useState<VBranch | null>(null);
 
   const filtered = useMemo(() => {
@@ -34,14 +33,12 @@ export default function BranchesView({ branches, canManage, canPurge = false, lo
     start(async () => {
       const r = await deleteBranch(id);
       if (r.error) {
-        // Bog'liq xodim/guruh/o'quvchi bo'lsa: direktorga to'liq o'chirish taklif qilinadi, qolganlarga — sabab
         const b = branches.find((x) => x.id === id) ?? null;
         if (canPurge && b) setPurge(b); else void alertDialog(r.error);
       }
       router.refresh();
     });
   };
-  // Nofaol filial: ariza formasi va tanlovlarda chiqmaydi, ma'lumotlari saqlanadi
   const toggleActive = (b: VBranch) => start(async () => { await setBranchActive(b.id, !b.isActive); router.refresh(); });
   const toggleApply = (b: VBranch) => start(async () => { await setBranchApplyVisible(b.id, !b.showInApply); router.refresh(); });
 
@@ -86,7 +83,6 @@ export default function BranchesView({ branches, canManage, canPurge = false, lo
         </button>
       </div>
 
-      {/* Filialsiz eski yozuvlar — qat'iy filial doirasida ular hech qaysi filialda ko'rinmaydi */}
       {canManage && <UnassignedCard branches={branches} locale={locale} />}
 
       <div className={cn("overflow-hidden rounded-2xl border border-slate-200/70 bg-white shadow-card dark:border-slate-800 dark:bg-slate-900", pending && "opacity-70")}>
@@ -125,7 +121,6 @@ export default function BranchesView({ branches, canManage, canPurge = false, lo
                   <td className="px-4 py-3 text-xs text-slate-400">{b.lat != null && b.lng != null ? `${b.lat.toFixed(4)}, ${b.lng.toFixed(4)}` : "—"}</td>
                   <td className="px-4 py-3 text-center text-slate-500">{b.staff}</td>
                   <td className="px-4 py-3 text-center text-slate-500">{b.groups}</td>
-                  {/* Ariza formasida ko'rinishi — faollikdan alohida: filial ichkarida ishlayveradi, lekin arizada chiqmasligi mumkin */}
                   <td className="px-4 py-3 text-center">
                     <button
                       type="button"
@@ -165,11 +160,6 @@ export default function BranchesView({ branches, canManage, canPurge = false, lo
   );
 }
 
-/**
- * Filialsiz (eski) yozuvlar kartasi: nechta xodim/o'quvchi/guruh... filialga
- * biriktirilmagan va ularni bir bosishda tanlangan filialga biriktirish.
- * Qat'iy filial doirasida bunday yozuvlar hech qaysi filialda ko'rinmaydi.
- */
 function UnassignedCard({ branches, locale }: { branches: VBranch[]; locale: Locale }) {
   const router = useRouter();
   const [counts, setCounts] = useState<UnassignedCounts | null>(null);
@@ -243,10 +233,6 @@ function UnassignedCard({ branches, locale }: { branches: VBranch[]; locale: Loc
   );
 }
 
-/**
- * Filialni BARCHA ma'lumotlari bilan o'chirish — nima o'chishi ro'yxati,
- * filial nomini yozib tasdiqlash, qizil tugma. Orqaga qaytmaydi.
- */
 function PurgeModal({ branch, locale, onClose, onDone }: { branch: VBranch; locale: Locale; onClose: () => void; onDone: () => void }) {
   const [sum, setSum] = useState<PurgeSummary | null>(null);
   const [name, setName] = useState("");
@@ -319,7 +305,6 @@ function BranchForm({ editing, onClose, onSaved, locale }: { editing: VBranch | 
   const [lng, setLng] = useState<number | null>(editing?.lng ?? null);
   const [radius, setRadius] = useState<number>(editing?.radius ?? 100);
   const [image, setImage] = useState<string | null>(editing?.imageUrl ?? null);
-  // Arizadagi kurslar — ro'yxat; til kurslarida daraja so'raladi
   const [courses, setCourses] = useState<ApplyCourse[]>(editing?.applyCourses ?? []);
   const [newCourse, setNewCourse] = useState("");
   const addCourse = () => {
@@ -331,8 +316,6 @@ function BranchForm({ editing, onClose, onSaved, locale }: { editing: VBranch | 
   const formRef = useRef<HTMLFormElement>(null);
   const fileRef = useRef<HTMLInputElement>(null);
 
-  // Galereyadan rasm tanlash — brauzerda kichraytirib (max 1600px) data URL'ga aylantiramiz.
-  // Ilgari 256px edi; ochiq ariza sahifasi filial rasmini orqa fon qilgani uchun kattaroq kerak
   const onPickImage = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file) return;
@@ -412,7 +395,6 @@ function BranchForm({ editing, onClose, onSaved, locale }: { editing: VBranch | 
           </div>
           <div><label className={lbl}>{tr(locale, { uz: "Nomi", ru: "Название", en: "Name", de: "Name" })} <span className="text-rose-500">*</span></label><input name="name" required defaultValue={editing?.name ?? ""} placeholder={tr(locale, { uz: "Filial nomi", ru: "Название филиала", en: "Branch name", de: "Name der Filiale" })} className={inp} /></div>
           <div><label className={lbl}>{tr(locale, { uz: "Manzil", ru: "Адрес", en: "Address", de: "Adresse" })}</label><input name="address" defaultValue={editing?.address ?? ""} placeholder={tr(locale, { uz: "Manzil", ru: "Адрес", en: "Address", de: "Adresse" })} className={inp} /></div>
-          {/* Arizadagi kurslar: filial tanlangach ariza beruvchi shulardan birini tanlaydi */}
           <div className="rounded-xl border border-slate-100 bg-slate-50/60 p-3 dark:border-white/5 dark:bg-white/[0.03]">
             <div className="mb-1 text-xs font-medium text-slate-600 dark:text-slate-300">{tr(locale, { uz: "Arizadagi kurslar", ru: "Курсы в заявке", en: "Courses in the application form", de: "Kurse im Antragsformular" })}</div>
             <p className="mb-2.5 text-[11px] leading-relaxed text-slate-400">{tr(locale, { uz: "Filial tanlangach ariza beruvchi shu kurslardan birini tanlaydi. \"Daraja\" yoqilgan kurslarda A1–B2 so'raladi (til kurslari). Ro'yxat bo'sh bo'lsa kurs so'ralmaydi.", ru: "После выбора филиала заявитель выбирает один из этих курсов. У курсов с включённым «Уровень» спрашивается A1–B2 (языковые). Если список пуст — курс не спрашивается.", en: "After picking the branch the applicant chooses one of these courses. Courses with \"Level\" on ask for A1–B2 (languages). An empty list means no course question.", de: "Nach der Filialwahl wählt der Bewerber einen dieser Kurse. Bei Kursen mit „Niveau“ wird A1–B2 abgefragt (Sprachen). Leere Liste: keine Kursfrage." })}</p>

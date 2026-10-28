@@ -16,8 +16,6 @@ export interface BrandSettingsValue {
 
 type LogoKey = "logo" | "logoDark";
 
-// Markaz brendi — nomi va logotiplari (bazada Setting: brand.*). Bo'sh maydon standart
-// qiymatni bildiradi; `defaults` — maydon bo'sh bo'lganda getBrand() qaytaradigan standart qiymatlar.
 export default function BrandSettings({ locale, initial, defaults }: { locale: Locale; initial: BrandSettingsValue; defaults: BrandSettingsValue }) {
   const T = (uz: string, ru: string, en: string, de: string) => tr(locale, { uz, ru, en, de });
   const router = useRouter();
@@ -76,8 +74,6 @@ export default function BrandSettings({ locale, initial, defaults }: { locale: L
     });
   };
 
-  // Ko'rinish: bo'sh maydon o'rniga amaldagi (standart) qiymat
-  // (getBrand bilan bir xil tartib: qorong'i logotip bo'lmasa — standart, u ham bo'lmasa yorug' logotip)
   const name = v.name.trim() || defaults.name;
   const light = v.logo || defaults.logo;
   const dark = v.logoDark || defaults.logoDark || light;
@@ -168,7 +164,6 @@ function LogoSlot({ title, hint, src, dark, name, busy, onPick, onClear, T }: {
   return (
     <div>
       <div className="mb-1.5 text-sm font-medium text-slate-600 dark:text-slate-300">{title}</div>
-      {/* Ko'rinish — fon rejimga mos (yorug'/qorong'i), ilovadagi joylashuvga yaqin */}
       <button type="button" onClick={onPick} disabled={busy}
         className={cn("grid h-32 w-full place-items-center overflow-hidden rounded-xl border border-dashed px-4 transition hover:border-brand-400",
           dark ? "border-slate-600 bg-slate-900" : "border-slate-300 bg-white")}>

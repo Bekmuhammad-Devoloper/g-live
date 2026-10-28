@@ -9,7 +9,6 @@ import LessonCalendar, { type CalLesson } from "../dashboard/LessonCalendar";
 import { groupColor } from "../groups/groupColor";
 import type { Prisma } from "@prisma/client";
 
-// weekdays: 1=Du..7=Ya  →  LessonCalendar day: 0=Yak..6=Sha
 const toCalDay = (wd: number) => (wd === 7 ? 0 : wd);
 const toMin = (t: string | null) => {
   if (!t) return null;
@@ -27,7 +26,6 @@ export default async function SchedulePage() {
 
   let where: Prisma.GroupWhereInput = { status: { not: "CANCELLED" } };
   if (s.role === ROLES.TEACHER) where = { ...where, teacherId: s.userId };
-  // Jadvalda faol filial guruhlarigina ko'rinadi
   where = { AND: [where, branchWhere(s)] };
 
   const groups = await prisma.group.findMany({
@@ -35,7 +33,7 @@ export default async function SchedulePage() {
     include: {
       teacher: { select: { fullName: true } },
       program: { select: { name: true } },
-      _count: { select: { students: { where: { isActive: true } } } }, // blokdagi "9 / 12" uchun
+      _count: { select: { students: { where: { isActive: true } } } },
     },
     orderBy: { name: "asc" },
   });
@@ -67,7 +65,7 @@ export default async function SchedulePage() {
         endISO: isoLocal(g.endDate),
         students: g._count.students,
         capacity: g.capacity,
-        note: g.note, // guruh izohi — blok ustiga kelganda ko'rinadi
+        note: g.note,
         isPast: day < todayCal || (day === todayCal && endMin < nowMin),
       });
     }

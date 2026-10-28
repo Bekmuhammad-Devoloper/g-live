@@ -8,10 +8,7 @@ import { Forbidden } from "../_components/ui";
 import TeacherAttendanceWorkspace, { type VTeacher, type VAtt, type VSlot, type TStatus } from "./TeacherAttendanceWorkspace";
 
 const ALLOWED = [ROLES.DIRECTOR, ROLES.DEPUTY_DIRECTOR, ROLES.MANAGER, ROLES.ADMIN, ROLES.TEACHER];
-// Ish jadvali/maosh sozlash huquqi
 const HEAD = [ROLES.DIRECTOR, ROLES.DEPUTY_DIRECTOR, ROLES.ADMIN];
-// Davomat katakchalarini o'zgartirish huquqi — faqat menejer/direktor/o'rinbosar;
-// admin va ustoz faqat ko'radi (✓ ustozga o'zi davomat o'tkazganda avtomatik tushadi)
 const CAN_MARK = [ROLES.DIRECTOR, ROLES.DEPUTY_DIRECTOR, ROLES.MANAGER];
 const p2 = (n: number) => String(n).padStart(2, "0");
 const fmtDate = (d: Date | null) => (d ? `${p2(d.getDate())}.${p2(d.getMonth() + 1)}.${d.getFullYear()}` : "");
@@ -30,15 +27,12 @@ export default async function TeacherAttendancePage() {
     );
   }
 
-  // O'qituvchi bo'lsa — faqat o'z ma'lumoti (o'zini ko'radi, tahrir qila olmaydi)
   const isTeacher = s.role === ROLES.TEACHER;
-  // faol filial doirasida
   const teachers = await prisma.user.findMany({
     where: { AND: [isTeacher ? { role: ROLES.TEACHER, id: s.userId } : { role: ROLES.TEACHER }, staffBranchWhere(s)] },
     orderBy: { fullName: "asc" },
     select: { id: true, fullName: true, fiksa: true },
   });
-  // TeacherSchedule/TeacherAttendance'da branchId yo'q — filial o'qituvchilari id'si orqali chegaralaymiz
   const teacherIds = teachers.map((t) => t.id);
 
   const [schedules, attendance, groups] = await Promise.all([
@@ -47,7 +41,6 @@ export default async function TeacherAttendancePage() {
       where: isTeacher ? { teacherId: s.userId } : { teacherId: { in: teacherIds } },
       select: { teacherId: true, date: true, present: true, status: true },
     }),
-    // faol filial doirasida
     prisma.group.findMany({
       where: { AND: [{ teacherId: isTeacher ? s.userId : { not: null }, status: { not: "CANCELLED" } }, branchWhere(s)] },
       select: { teacherId: true, weekdays: true, startTime: true, endTime: true, startDate: true, endDate: true },
@@ -56,8 +49,6 @@ export default async function TeacherAttendancePage() {
 
   const schedMap = new Map(schedules.map((x) => [x.teacherId, x]));
 
-  // Har o'qituvchi uchun guruh kunlari birlashmasi (ish kunlari avtomatik shundan olinadi)
-  // Dars vaqtlari (guruh davri bilan) — jurnaldagi ish soatlari shundan hisoblanadi
   const groupWdMap = new Map<string, Set<number>>();
   const slotMap = new Map<string, VSlot[]>();
   for (const g of groups) {
@@ -94,18 +85,16 @@ export default async function TeacherAttendancePage() {
     };
   });
 
-  // status bo'sh (avtomatik belgi yoki eski yozuv) — present maydonidan olinadi
   const vatt: VAtt[] = attendance.map((a) => ({
     teacherId: a.teacherId,
     date: isoDate(a.date),
     status: a.status && STATUSES.includes(a.status as TStatus) ? (a.status as TStatus) : a.present ? "PRESENT" : "ABSENT",
   }));
 
-  // Bugungi sana server vaqtida (TZ=Asia/Tashkent) — SSR va brauzerda bir xil ko'rinsin
   const todayISO = todayISOLocal();
   const defaultMonth = todayISO.slice(0, 7);
-  const canManage = HEAD.includes(s.role as never); // jadval/maosh sozlash
-  const canMark = CAN_MARK.includes(s.role as never); // davomat katakchalari
+  const canManage = HEAD.includes(s.role as never);
+  const canMark = CAN_MARK.includes(s.role as never);
 
   return <TeacherAttendanceWorkspace teachers={vteachers} attendance={vatt} defaultMonth={defaultMonth} todayISO={todayISO} canManage={canManage} canMark={canMark} locale={s.locale} />;
 }

@@ -17,8 +17,8 @@ export interface FLead {
   stage: string;
   source: string | null;
   course: string | null;
-  createdAt: string; // ISO
-  marketing: string | null; // utmSource
+  createdAt: string;
+  marketing: string | null;
   managerId: string | null;
   managerName: string | null;
 }
@@ -30,15 +30,13 @@ interface Props {
   sources: string[];
   marketings: string[];
   managers: { id: string; name: string }[];
-  defaultFrom: string; // YYYY-MM-DD
+  defaultFrom: string;
   defaultTo: string;
 }
 
 const p2 = (n: number) => String(n).padStart(2, "0");
 const dayKey = (d: Date) => `${d.getFullYear()}-${p2(d.getMonth() + 1)}-${p2(d.getDate())}`;
 
-// Hisobot turlari — bosqichlar bizning LEAD_STAGES ga moslashtirilgan.
-// (Sinov darsi / filial ko'chirish bizda kuzatilmaydi → 0.)
 const REPORTS: { n: number; label: TL; stages: string[] | null }[] = [
   { n: 1, label: { uz: "Barcha buyurtmalar soni", ru: "Всего заявок", en: "Total orders", de: "Gesamtzahl der Anfragen" }, stages: null },
   { n: 2, label: { uz: "Buyurtmadan ketganlar", ru: "Отказались от заявки", en: "Dropped the order", de: "Bestellung abgebrochen" }, stages: ["LOST"] },
@@ -86,7 +84,6 @@ export default function FunnelDashboard({ locale, leads, courses, sources, marke
     return { ...r, count: subset.length, courses: distinctCourses(subset) };
   });
 
-  // Trend — davr bo'yicha guruhlash
   const trend = useMemo(() => {
     const start = new Date(`${from}T00:00:00`);
     const end = new Date(`${to}T00:00:00`);
@@ -157,7 +154,6 @@ export default function FunnelDashboard({ locale, leads, courses, sources, marke
 
   return (
     <div className="space-y-4">
-      {/* Filtrlar */}
       <div className="flex flex-wrap items-center gap-2.5">
         <div className="flex h-10 items-center gap-2 rounded-lg border border-slate-200 bg-white px-3 dark:border-slate-700 dark:bg-slate-900">
           <Icon name="calendar" className="h-4 w-4 text-slate-400" />
@@ -183,7 +179,6 @@ export default function FunnelDashboard({ locale, leads, courses, sources, marke
         </button>
       </div>
 
-      {/* 1-qator: hisobot jadvali | O'quvchi/Kurs paneli */}
       <div className="grid gap-4 lg:grid-cols-2">
         <div className="space-y-3">
           <Card>
@@ -242,7 +237,6 @@ export default function FunnelDashboard({ locale, leads, courses, sources, marke
         </Card>
       </div>
 
-      {/* 2-qator: Lidlar tahlili | Kurslar taqsimoti */}
       <div className="grid gap-4 lg:grid-cols-2">
         <Card>
           <h3 className="mb-4 text-center text-base font-bold text-slate-800 dark:text-slate-100">{tr(locale, { uz: "Lidlar tahlili", ru: "Анализ лидов", en: "Lead analysis", de: "Lead-Analyse" })} ({period === "day" ? tr(locale, { uz: "Kun", ru: "День", en: "Day", de: "Tag" }) : period === "week" ? tr(locale, { uz: "Hafta", ru: "Неделя", en: "Week", de: "Woche" }) : tr(locale, { uz: "Oy", ru: "Месяц", en: "Month", de: "Monat" })})</h3>
@@ -262,7 +256,6 @@ export default function FunnelDashboard({ locale, leads, courses, sources, marke
         </Card>
       </div>
 
-      {/* 3-qator: lid holati tablari | Manba taqsimoti */}
       <div className="grid gap-4 lg:grid-cols-2">
         <Card>
           <div className="mb-4 flex flex-wrap gap-1.5 rounded-xl bg-slate-100 p-1 dark:bg-slate-800">

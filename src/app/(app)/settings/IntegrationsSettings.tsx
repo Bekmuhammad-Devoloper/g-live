@@ -34,18 +34,17 @@ export default function IntegrationsSettings({ locale, brandName, isMain }: { lo
     try {
       const raw = localStorage.getItem(STORAGE_KEY);
       if (raw) setF((cur) => ({ ...cur, ...JSON.parse(raw) }));
-    } catch { /* ignore */ }
+    } catch { }
   }, []);
 
   const set = <K extends keyof Form>(k: K, v: Form[K]) => setF((s) => ({ ...s, [k]: v }));
   const save = () => {
-    try { localStorage.setItem(STORAGE_KEY, JSON.stringify(f)); } catch { /* ignore */ }
+    try { localStorage.setItem(STORAGE_KEY, JSON.stringify(f)); } catch { }
     setSaved(true); setTimeout(() => setSaved(false), 1800);
   };
 
   return (
     <div className="space-y-6">
-      {/* Bog'langan integratsiyalar */}
       <div className="rounded-2xl border border-slate-300 bg-white p-6 shadow-card dark:border-slate-600 dark:bg-slate-900">
         <h2 className="text-2xl font-bold text-slate-800 dark:text-slate-100">{tr(locale, { uz: "Bog'langan integratsiyalar", ru: "Подключённые интеграции", en: "Connected integrations", de: "Verbundene Integrationen" })}</h2>
         <p className="mb-5 mt-1 text-sm text-slate-500 dark:text-slate-400">{tr(locale, { uz: "Ijtimoiy tarmoq hisoblari va CRM tizimlarini ulang va boshqaring", ru: "Подключайте и управляйте аккаунтами соцсетей и CRM-системами", en: "Connect and manage social network accounts and CRM systems", de: "Verbinden und verwalten Sie Social-Media-Konten und CRM-Systeme" })}</p>
@@ -67,7 +66,6 @@ export default function IntegrationsSettings({ locale, brandName, isMain }: { lo
       </div>
 
       <div className="grid gap-6 lg:grid-cols-2">
-        {/* Chap ustun */}
         <div className="space-y-6">
           <Fieldset title="Workly">
             <div className="space-y-4">
@@ -92,7 +90,6 @@ export default function IntegrationsSettings({ locale, brandName, isMain }: { lo
           </Fieldset>
         </div>
 
-        {/* O'ng ustun — Telegram Reports */}
         <Fieldset title={tr(locale, { uz: "Telegram hisobotlari", ru: "Отчёты в Telegram", en: "Telegram Reports", de: "Telegram-Berichte" })}>
           <div className="space-y-4">
             <Input value={f.telegramReportId} onChange={(v) => set("telegramReportId", v)} />
@@ -103,7 +100,6 @@ export default function IntegrationsSettings({ locale, brandName, isMain }: { lo
                 <li>2. {tr(locale, { uz: "ID ni nusxalang.", ru: "Скопируйте ID.", en: "Copy the ID.", de: "Kopieren Sie die ID." })}</li>
                 <li>3. {tr(locale, { uz: "\"Telegram for Report\" nomli inputga ID ni joylashtiring.", ru: "Вставьте ID в поле \"Telegram for Report\".", en: "Paste the ID into the \"Telegram for Report\" input.", de: "Fügen Sie die ID in das Feld \"Telegram for Report\" ein." })}</li>
                 <li>4. {tr(locale, { uz: "\"Saqlash\" tugmasiga bosing.", ru: "Нажмите кнопку \"Сохранить\".", en: "Click the \"Save\" button.", de: "Klicken Sie auf die Schaltfläche \"Speichern\"." })}</li>
-                {/* @germaniya_live_bot — faqat asosiy markaz boti; boshqa markazlarda havolasiz ko'rsatiladi */}
                 <li>5. {isMain ? (
                   <>{tr(locale, { uz: `${brandName} botiga (`, ru: `Запустите бота ${brandName} (`, en: `Start the ${brandName} bot (`, de: `Starten Sie den ${brandName}-Bot (` })}<TgLink u="germaniya_live_bot">@germaniya_live_bot</TgLink>{tr(locale, { uz: ") ga start bosing.", ru: ").", en: ").", de: ")." })}</>
                 ) : (

@@ -93,7 +93,7 @@ export function ResultLinksModal({ locale, links, origin, onClose }: { locale: L
                   </div>
                 </div>
                 <button
-                  onClick={async () => { try { await navigator.clipboard.writeText(url); setCopied(i); setTimeout(() => setCopied((c) => (c === i ? null : c)), 2000); } catch { /* ignore */ } }}
+                  onClick={async () => { try { await navigator.clipboard.writeText(url); setCopied(i); setTimeout(() => setCopied((c) => (c === i ? null : c)), 2000); } catch { } }}
                   className={cn("flex shrink-0 items-center gap-1.5 rounded-lg px-3 py-1.5 text-xs font-medium transition",
                     isCopied ? "bg-emerald-500/20 text-emerald-600 dark:text-emerald-400" : "border border-slate-200 bg-white text-slate-500 hover:text-blue-500 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-300")}
                 >

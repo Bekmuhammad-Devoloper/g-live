@@ -13,18 +13,11 @@ import { Icon } from "../_components/Icon";
 import MoneyInput from "../_components/MoneyInput";
 import { confirmDialog, promptDialog } from "../_components/dialogs";
 
-// ISO sana → <input type="datetime-local"> qiymati (mahalliy vaqt)
 function toLocalInput(iso: string | Date): string {
   const d = new Date(iso);
   const p = (n: number) => String(n).padStart(2, "0");
   return `${d.getFullYear()}-${p(d.getMonth() + 1)}-${p(d.getDate())}T${p(d.getHours())}:${p(d.getMinutes())}`;
 }
-
-// O'quvchining TO'LOV HOLATI paneli — bitta komponent, ikki joyda:
-//   • ro'yxatdagi tezkor oyna (StudentDetailModal)
-//   • to'liq profil sahifasi (/students/[id])
-// Bu oy / o'tgan oy, majburiy to'lov ogohlantirishi, jami qarz, qarz qo'shish,
-// to'lov qabul qilish (chek bilan) va so'nggi to'lovlar (tahrirlash/o'chirish).
 
 function fmtDate(iso: string) {
   const d = new Date(iso);
@@ -35,7 +28,6 @@ function fmtDate(iso: string) {
 export default function PaymentPanel({
   studentId, locale, canManage, canPay, rop = false, cashierName, receiptMode, defaultPurpose, onChanged,
 }: {
-  /** ROP: to'lov qabul qilmaydi, faqat 24 soat ichidagi yozuvlar va qarzni tahrirlaydi */
   rop?: boolean;
   studentId: string;
   locale: Locale;
@@ -44,16 +36,15 @@ export default function PaymentPanel({
   cashierName: string;
   receiptMode: ReceiptMode;
   defaultPurpose: string;
-  /** To'lov/qarz o'zgarganda (sahifa yangilash uchun) */
   onChanged?: () => void;
 }) {
   const [pay, setPay] = useState<StudentPayments | null>(null);
   const [, startPay] = useTransition();
   const [payForm, setPayForm] = useState(false);
-  const [debtForm, setDebtForm] = useState(false); // qarzdor holatga tushurish formasi
+  const [debtForm, setDebtForm] = useState(false);
   const [receipt, setReceipt] = useState<ReceiptData | null>(null);
   const [showAll, setShowAll] = useState(false);
-  const [debtEdit, setDebtEdit] = useState(false); // jami qarzni qo'lda tuzatish
+  const [debtEdit, setDebtEdit] = useState(false);
 
   const load = () => startPay(async () => { const r = await getStudentPayments(studentId); if (r.ok && r.data) setPay(r.data); });
   const reloadPay = () => { load(); onChanged?.(); };
@@ -74,7 +65,6 @@ export default function PaymentPanel({
         </div>
         {canPay && !payForm && !debtForm && (
           <div className="flex gap-1.5">
-            {/* Qarzdor holatga tushurish — qo'lda qarz yozuvi */}
             <button onClick={() => setDebtForm(true)} className="flex items-center gap-1 rounded-lg border border-amber-300 px-2.5 py-1 text-[11px] font-semibold text-amber-700 transition hover:bg-amber-50 dark:border-amber-500/40 dark:text-amber-400 dark:hover:bg-amber-500/10">
               <Icon name="alert" className="h-3.5 w-3.5" /> {tr(locale, { uz: "Qarz qo'shish", ru: "Добавить долг", en: "Add debt", de: "Schulden hinzufügen" })}
             </button>
@@ -85,7 +75,6 @@ export default function PaymentPanel({
         )}
       </div>
 
-      {/* Majburiy to'lov — shu oy chegaradan ko'p dars o'tilgan, lekin to'lanmagan */}
       {pay?.paymentMandatory && (
         <div className="mb-3 flex items-center justify-between gap-2 rounded-xl border border-rose-300 bg-rose-50 px-3.5 py-3 dark:border-rose-900/50 dark:bg-rose-950/30">
           <div className="flex items-center gap-2.5">
@@ -131,16 +120,13 @@ export default function PaymentPanel({
       <div className="grid grid-cols-2 gap-3">
         <PayTile label={tr(locale, { uz: "Bu oy", ru: "Этот месяц", en: "This month", de: "Diesen Monat" })} m={pay?.thisMonth} loading={!pay} locale={locale} />
         {pay && !pay.lastMonthApplicable ? (
-          // Hali bir oy bo'lmagan (yaqinda kelgan) — "o'tgan oy" o'rniga qo'shilgan sanasi ko'rsatiladi
           <JoinDateTile joinDate={pay.joinDate} locale={locale} />
         ) : (
           <PayTile label={tr(locale, { uz: "O'tgan oy", ru: "Прошлый месяц", en: "Last month", de: "Letzten Monat" })} m={pay?.lastMonth} loading={!pay} locale={locale} />
         )}
       </div>
 
-      {/* Jami qarzdorlik — qo'shilgan oydan hisoblangan + qo'lda kiritilgan */}
       {pay && (() => {
-        // Bir oygacha qarz — sariq, bir oydan ko'p — qizil
         const over = pay.debt > 0 && pay.debtMonths > 1;
         const box = pay.debt <= 0
           ? "border-emerald-200 bg-emerald-50 dark:border-emerald-900/40 dark:bg-emerald-950/20"
@@ -186,7 +172,6 @@ export default function PaymentPanel({
         />
       )}
 
-      {/* Balans — majburiyatlardan ortiqcha (oldindan) to'langan pul; keyingi oy hisobiga o'tadi */}
       {pay && (
         <div className={cn("mt-2 flex items-center justify-between gap-2 rounded-xl border px-3.5 py-2.5", pay.credit > 0
           ? "border-sky-200 bg-sky-50 dark:border-sky-900/40 dark:bg-sky-950/20"
@@ -238,7 +223,6 @@ export default function PaymentPanel({
   );
 }
 
-// Jami qarzni qo'lda belgilash — farq "Qarz tuzatish" yozuvi bo'lib saqlanadi (sabab majburiy).
 function DebtAdjustForm({ studentId, current, locale, onCancel, onDone }: {
   studentId: string; current: number; locale: Locale; onCancel: () => void; onDone: () => void;
 }) {
@@ -273,7 +257,6 @@ function DebtAdjustForm({ studentId, current, locale, onCancel, onDone }: {
   );
 }
 
-// Qarzdor holatga tushurish — qo'lda qarz yozuvi (PENDING to'lov) ochadi.
 export function AddDebtForm({ studentId, locale, onCancel, onDone }: {
   studentId: string; locale: Locale; onCancel: () => void; onDone: () => void;
 }) {
@@ -331,11 +314,8 @@ export function AddDebtForm({ studentId, locale, onCancel, onDone }: {
   );
 }
 
-// Bitta to'lov qatori — tahrirlash va o'chirish bilan.
-// Noto'g'ri kiritilgan summa/usul/holat shu yerdan tuzatiladi.
 export function PaymentRow({ p, locale, canEdit, onChanged, startEditing = false, onCancel }: {
   p: PayRow; locale: Locale; canEdit: boolean; onChanged: () => void;
-  /** Tahrirlash oynasi to'g'ridan-to'g'ri forma bilan ochilsin (ro'yxat sahifalaridan) */
   startEditing?: boolean;
   onCancel?: () => void;
 }) {
@@ -351,7 +331,6 @@ export function PaymentRow({ p, locale, canEdit, onChanged, startEditing = false
   const [err, setErr] = useState<string | null>(null);
   const [pending, start] = useTransition();
   const L = (uz: string, ru: string, en: string) => tr(locale, { uz, ru, en });
-  // Qoplangan qarz yozuvi — holati PENDING qolsa ham "Qoplandi" deb ko'rinadi
   const covered = p.status === "PENDING" && p.covered;
   const ps = covered ? { fg: "#16a34a", bg: "#16a34a1a" } : payStatusStyle(p.status);
 
@@ -361,7 +340,6 @@ export function PaymentRow({ p, locale, canEdit, onChanged, startEditing = false
     else setErr(r.error === "forbidden" ? L("Ruxsat yo'q.", "Нет доступа.", "No permission.") : r.error === "reason" ? L("Sababini yozing (kamida 3 belgi).", "Укажите причину (не менее 3 символов).", "Enter a reason (at least 3 characters).") : promoErrorText(locale, r.error) ?? L("Saqlanmadi.", "Не сохранено.", "Not saved."));
   });
 
-  // O'chirish — sabab majburiy (audit jurnaliga yoziladi)
   const remove = async () => {
     const why = await promptDialog({
       tone: "danger",
@@ -394,7 +372,6 @@ export function PaymentRow({ p, locale, canEdit, onChanged, startEditing = false
           <span className="rounded-full px-2 py-0.5 text-[10px] font-semibold" style={{ color: ps.fg, background: ps.bg }}>
             {covered ? tr(locale, { uz: "Qoplandi", ru: "Погашен", en: "Covered", de: "Beglichen" }) : label(PAYMENT_STATUS_LABELS, p.status, locale)}
           </span>
-          {/* Qarz tuzatish yozuvi tahrirlanmaydi — kerak bo'lsa o'chiriladi (qarz avvalgi holiga qaytadi) */}
           {canEdit && p.status === "ADJUST" && (
             <button
               type="button"
@@ -475,8 +452,6 @@ export function PaymentRow({ p, locale, canEdit, onChanged, startEditing = false
   );
 }
 
-// To'lov qabul qilish formasi (drawer ichida ochiladi) — Naqd / Karta / Bank hisobi.
-// Chek majburiymi — CEO sozlamasidan keladi (receiptMode), qattiq yozilmagan.
 export function PayAcceptForm({ studentId, defaultPurpose, cashierName, locale, receiptMode, onCancel, onDone }: {
   studentId: string;
   defaultPurpose: string;
@@ -499,9 +474,7 @@ export function PayAcceptForm({ studentId, defaultPurpose, cashierName, locale, 
   const [err, setErr] = useState<string | null>(null);
   const [busy, startBusy] = useTransition();
   const fileRef = useRef<HTMLInputElement>(null);
-  // Kassir izohi — chekda va to'lov ro'yxatlarida ko'rinadi
   const [note, setNote] = useState("");
-  // Promokod (chegirma) — to'lov ko'rinadigan hamma joyda ko'rsatiladi
   const [promo, setPromo] = useState("");
 
   const setAmount = (v: string) => {
@@ -534,7 +507,6 @@ export function PayAcceptForm({ studentId, defaultPurpose, cashierName, locale, 
     startBusy(async () => {
       const payload = { amount, method, purpose: defaultPurpose, receiptUrl: receiptUrl || null, paidAt: new Date(paidAt).toISOString(), note: note.trim() || null, promoCode: promo || null };
       let r = await acceptPayment(studentId, payload);
-      // Kurs soni sharti bajarilmagan — kassirdan tasdiq so'raymiz, tasdiqlasa baribir qo'llanadi
       if (r.error === "promo_courses" && await confirmDialog({
         title: tr(locale, { uz: "Promokod sharti bajarilmagan", ru: "Условие промокода не выполнено", en: "Promo condition not met", de: "Promo-Bedingung nicht erfüllt" }),
         message: (promoErrorText(locale, r.error, r.need, r.have) ?? "") + " " + tr(locale, { uz: "Baribir qo'llansinmi?", ru: "Всё равно применить?", en: "Apply anyway?", de: "Trotzdem anwenden?" }),
@@ -553,7 +525,6 @@ export function PayAcceptForm({ studentId, defaultPurpose, cashierName, locale, 
 
   return (
     <div className="mb-3 space-y-2.5 rounded-xl border border-brand-200 bg-brand-50/50 p-3 dark:border-brand-900/50 dark:bg-brand-950/20">
-      {/* To'lov turi */}
       <div>
         <label className="mb-1 block text-[11px] font-semibold text-slate-500">{tr(locale, { uz: "To'lov turi", ru: "Тип оплаты", en: "Payment type", de: "Zahlungsart" })}</label>
         <div className="flex gap-2">
@@ -563,34 +534,28 @@ export function PayAcceptForm({ studentId, defaultPurpose, cashierName, locale, 
         </div>
       </div>
 
-      {/* Summa */}
       <div>
         <label className="mb-1 block text-[11px] font-semibold text-slate-500">{tr(locale, { uz: "Summa (so'm)", ru: "Сумма (сум)", en: "Amount (sum)", de: "Betrag (UZS)" })}</label>
         <input inputMode="numeric" value={amountStr} onChange={(e) => setAmount(e.target.value)} placeholder="500 000" className={cn(fld, "font-semibold tabular-nums")} autoFocus />
       </div>
 
-      {/* Promokod */}
       <PromoSelect locale={locale} value={promo} onChange={setPromo} className={fld} />
 
-      {/* Vaqt */}
       <div>
         <label className="mb-1 block text-[11px] font-semibold text-slate-500">{tr(locale, { uz: "To'lov vaqti", ru: "Время оплаты", en: "Payment time", de: "Zahlungszeit" })}</label>
         <input type="datetime-local" value={paidAt} onChange={(e) => setPaidAt(e.target.value)} className={fld} />
       </div>
 
-      {/* Izoh — chekda, o'quvchi kartasida va to'lovlar ro'yxatida ko'rinadi */}
       <div>
         <label className="mb-1 block text-[11px] font-semibold text-slate-500">{tr(locale, { uz: "Izoh", ru: "Комментарий", en: "Comment", de: "Kommentar" })} <span className="font-normal text-slate-400">({tr(locale, { uz: "ixtiyoriy", ru: "необязательно", en: "optional", de: "optional" })})</span></label>
         <textarea value={note} onChange={(e) => setNote(e.target.value)} rows={2} maxLength={500} placeholder={tr(locale, { uz: "Masalan: oktyabr uchun, qolgan 200 000 keyinroq", ru: "Например: за октябрь, остаток 200 000 позже", en: "e.g. for October, remaining 200,000 later", de: "z. B. für Oktober, Rest 200.000 später" })} className={cn(fld, "resize-none")} />
       </div>
 
-      {/* Kim qabul qildi (kassir) */}
       <div className="flex items-center justify-between rounded-lg bg-white/70 px-3 py-2 text-xs dark:bg-slate-800/40">
         <span className="text-slate-400">{tr(locale, { uz: "Qabul qildi", ru: "Принял", en: "Received by", de: "Angenommen von" })}</span>
         <span className="font-semibold text-slate-600 dark:text-slate-200">{cashierName}</span>
       </div>
 
-      {/* Chek yuklash — sozlamaga qarab (ixtiyoriy bo'lsa ham yuklash mumkin) */}
       {(
         <div>
           <label className="mb-1 flex items-center gap-1.5 text-[11px] font-semibold text-slate-500">
@@ -648,7 +613,6 @@ export const PAY_METHOD_OPTS: { v: string; l: Record<Locale, string> }[] = [
   { v: "TRANSFER", l: { uz: "O'tkazma", ru: "Перевод", en: "Transfer", de: "Überweisung" } },
 ];
 
-// ─── CHEK (to'lov kviatansiyasi) — chop etsa bo'ladi ───
 export function ReceiptModal({ receipt: r, locale, onClose }: { receipt: ReceiptData; locale: Locale; onClose: () => void }) {
   const [mounted, setMounted] = useState(false);
   useEffect(() => {
@@ -675,7 +639,6 @@ export function ReceiptModal({ receipt: r, locale, onClose }: { receipt: Receipt
       }`}</style>
       <div id="gl-receipt-print" className="fixed inset-0 z-[95] flex items-start justify-center overflow-y-auto bg-slate-900/60 p-4 backdrop-blur-sm sm:pt-16" onMouseDown={onClose}>
         <div onMouseDown={(e) => e.stopPropagation()} className="w-full max-w-[360px]">
-          {/* Chek qog'ozi */}
           <div id="gl-receipt-card" className="rounded-t-2xl bg-white px-6 py-6 text-slate-800 shadow-pop">
             <div className="text-center">
               <div className="text-lg font-black uppercase tracking-tight text-slate-900">{r.orgName}</div>
@@ -714,14 +677,12 @@ export function ReceiptModal({ receipt: r, locale, onClose }: { receipt: Receipt
             <div className="mt-4 text-center text-[11px] italic text-slate-400">{r.footer}</div>
           </div>
 
-          {/* Yuklangan chek fayli (karta to'lovi) — chop etilmaydi */}
           {r.receiptUrl && (
             <a href={r.receiptUrl} target="_blank" rel="noreferrer" className="gl-no-print flex items-center gap-2 bg-white/95 px-4 pt-2 text-xs font-medium text-brand-600 hover:underline">
               <Icon name="card" className="h-4 w-4" /> {tr(locale, { uz: "Yuklangan chekni ko'rish", ru: "Открыть загруженный чек", en: "View uploaded receipt", de: "Hochgeladenen Beleg ansehen" })}
             </a>
           )}
 
-          {/* Amallar (chekda chop etilmaydi) */}
           <div className="gl-no-print flex gap-2 rounded-b-2xl bg-white/95 px-4 pb-4 pt-1">
             <button onClick={() => window.print()} className="flex flex-1 items-center justify-center gap-2 rounded-lg bg-brand-600 py-2.5 text-sm font-semibold text-white transition hover:bg-brand-700">
               <Icon name="printer" className="h-4 w-4" /> {tr(locale, { uz: "Chop etish", ru: "Печать", en: "Print", de: "Drucken" })}
@@ -735,8 +696,6 @@ export function ReceiptModal({ receipt: r, locale, onClose }: { receipt: Receipt
     </>, document.body);
 }
 
-// Oy to'lovi katakchasi — to'langan (yashil) yoki to'lanmagan (qizil)
-// Yaqinda kelgan (hali bir oy bo'lmagan) o'quvchi uchun "o'tgan oy" o'rniga qo'shilgan sanasi
 export function JoinDateTile({ joinDate, locale }: { joinDate: string | null; locale: Locale }) {
   return (
     <div className="rounded-xl border border-brand-200 bg-brand-50/60 px-3.5 py-2.5 dark:border-brand-900/40 dark:bg-brand-950/20">
@@ -777,7 +736,6 @@ export function PayTile({ label: lbl, m, loading, locale }: { label: string; m?:
   );
 }
 
-// To'lov statusi rangi (chip)
 export function payStatusStyle(status: string): { fg: string; bg: string } {
   switch (status) {
     case "PAID": return { fg: "#16a34a", bg: "#16a34a1a" };

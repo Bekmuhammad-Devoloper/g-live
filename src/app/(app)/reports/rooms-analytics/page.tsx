@@ -24,9 +24,8 @@ export default async function RoomsAnalyticsPage({ searchParams }: { searchParam
   const period = ["day", "week", "month"].includes(sp.period || "") ? sp.period! : "day";
   const view = sp.view === "grid" ? "grid" : "list";
 
-  // Darslardan xonalar bandligini yig'ish
   const lessons = await prisma.lesson.findMany({
-    where: { AND: [{ startsAt: { gte: from, lte: to } }, branchViaGroup(s)] }, // faol filial doirasida
+    where: { AND: [{ startsAt: { gte: from, lte: to } }, branchViaGroup(s)] },
     select: { startsAt: true, endsAt: true, group: { select: { name: true, room: true } } },
   });
 
@@ -44,7 +43,6 @@ export default async function RoomsAnalyticsPage({ searchParams }: { searchParam
   const rows = [...map.values()]
     .map((e) => ({ room: e.room, sessions: e.sessions, hours: Math.round((e.minutes / 60) * 10) / 10, days: e.days.size, groups: [...e.groups] }));
 
-  // Saralash (ustun bo'yicha) — URL orqali. Default: seanslar bo'yicha kamayish tartibida.
   const sortKey = ["room", "sessions", "hours", "days"].includes(sp.sort || "") ? sp.sort! : "sessions";
   const dir = sp.dir === "asc" ? "asc" : "desc";
   rows.sort((a, b) => {

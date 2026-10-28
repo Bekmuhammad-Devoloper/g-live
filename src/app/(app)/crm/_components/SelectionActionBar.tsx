@@ -22,7 +22,6 @@ export default function SelectionActionBar({
   managers: Opt[];
   locale: Locale;
   onDone: () => void;
-  /** true — istalgan bosqichdagi tanlangan lidlar o'chadi; aks holda faqat yo'qotilganlar */
   canDelete?: boolean;
 }) {
   const [pending, start] = useTransition();
@@ -39,7 +38,6 @@ export default function SelectionActionBar({
         <span className="mr-1 rounded-lg bg-brand-600 px-2.5 py-1 text-sm font-semibold text-white">{ids.length} {tr(locale, { uz: "ta", ru: "шт.", en: "", de: "" })}</span>
         <span className="mr-1 hidden text-sm text-slate-500 sm:inline dark:text-slate-400">{tr(locale, { uz: "tanlangan", ru: "выбрано", en: "selected", de: "ausgewählt" })}</span>
 
-        {/* Menejer */}
         <div className="relative">
           <BarBtn icon="user" label={tr(locale, { uz: "Menejer", ru: "Менеджер", en: "Manager", de: "Manager" })} onClick={() => setMenu(menu === "manager" ? null : "manager")} disabled={pending} />
           {menu === "manager" && (
@@ -51,7 +49,6 @@ export default function SelectionActionBar({
           )}
         </div>
 
-        {/* Bosqich */}
         <div className="relative">
           <BarBtn icon="chart" label={tr(locale, { uz: "Bosqich", ru: "Этап", en: "Stage", de: "Phase" })} onClick={() => setMenu(menu === "stage" ? null : "stage")} disabled={pending} />
           {menu === "stage" && (
@@ -65,13 +62,11 @@ export default function SelectionActionBar({
           )}
         </div>
 
-        {/* Izoh */}
         <BarBtn icon="pencil" label={tr(locale, { uz: "Izoh", ru: "Комментарий", en: "Note", de: "Notiz" })} disabled={pending} onClick={async () => {
           const note = await promptDialog({ message: tr(locale, { uz: "Izoh (barcha tanlanganlarga):", ru: "Комментарий (для всех выбранных):", en: "Note (for all selected):", de: "Notiz (für alle Ausgewählten):" }), multiline: true });
           if (note && note.trim()) run(() => bulkLeadAction(ids, "add_note", { note: note.trim() }));
         }} />
 
-        {/* O'chirish: huquqi borlarga — hammasi, qolganlarga — faqat yo'qotilganlar */}
         <BarBtn icon="trash" label={tr(locale, { uz: "O'chirish", ru: "Удалить", en: "Delete", de: "Löschen" })} danger disabled={pending} onClick={async () => {
           const msg = canDelete
             ? tr(locale, { uz: `Tanlanganlardan "Daraja testi" va "Yo'qotilgan" bosqichdagilari butunlay o'chiriladi (${ids.length} ta tanlangan). Davom etasizmi?`, ru: `Из выбранных (${ids.length}) будут удалены лиды на этапах «Тест уровня» и «Потерян». Продолжить?`, en: `Of the ${ids.length} selected, leads at the "Level test" and "Lost" stages will be permanently deleted. Continue?`, de: `Von den ${ids.length} ausgewählten werden Leads in den Phasen „Einstufungstest“ und „Verloren“ endgültig gelöscht. Fortfahren?` })

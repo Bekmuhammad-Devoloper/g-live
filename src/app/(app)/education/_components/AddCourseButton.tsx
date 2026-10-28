@@ -8,7 +8,6 @@ import { Icon } from "../../_components/Icon";
 import CourseFormDrawer from "../../courses/CourseFormDrawer";
 import { saveMetaFor } from "../../courses/shared";
 
-// Education bo'limida "Kurs qo'shish" — mavjud kurs (Program) formasini qayta ishlatadi.
 export default function AddCourseButton({ locale }: { locale: Locale }) {
   const [open, setOpen] = useState(false);
   const router = useRouter();

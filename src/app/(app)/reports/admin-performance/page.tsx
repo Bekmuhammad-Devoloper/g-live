@@ -12,8 +12,6 @@ const ALLOWED = [ROLES.DIRECTOR, ROLES.DEPUTY_DIRECTOR, ROLES.ADMIN];
 const p2 = (n: number) => String(n).padStart(2, "0");
 const isoDay = (d: Date) => `${d.getFullYear()}-${p2(d.getMonth() + 1)}-${p2(d.getDate())}`;
 
-// Administratorlar samaradorligi — har administrator (lidni boshqargan menejer)
-// bo'yicha talabalarning davr boshi / o'zgarishlar / davr oxiridagi holati (status kesimida).
 export default async function AdminPerformancePage() {
   const s = await requireSession();
   if (!ALLOWED.includes(s.role as never)) {
@@ -21,7 +19,7 @@ export default async function AdminPerformancePage() {
   }
 
   const students = await prisma.student.findMany({
-    where: branchWhere(s), // faol filial doirasida
+    where: branchWhere(s),
     select: {
       eduStatus: true,
       createdAt: true,

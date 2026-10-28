@@ -8,10 +8,6 @@ import { Icon } from "../_components/Icon";
 import { GraphSim, DEFAULT_FORCES, type Forces, type SimLink, type SimNode } from "./graphSim";
 import type { VTask } from "./TasksView";
 
-// Obsidian "Graph View" uslubidagi bog'lanishlar xaritasi:
-// kuch simulyatsiyasi, cheksiz kanvas, zoom/pan, tugunni sudrash,
-// qo'shni tugunlarni yoritish va jonli sozlamalar paneli.
-
 export type Lens = "all" | "student" | "group" | "staff";
 
 type Urg = "overdue" | "today" | "future" | "done";
@@ -45,7 +41,6 @@ function urgencyOf(t: VTask): Urg {
   return d < a ? "overdue" : d <= b ? "today" : "future";
 }
 
-// Barqaror boshlang'ich joylashuv (Math.random emas — SSR/CSR mos kelsin)
 function hash01(s: string) {
   let h = 2166136261;
   for (let i = 0; i < s.length; i++) { h ^= s.charCodeAt(i); h = Math.imul(h, 16777619); }
@@ -53,9 +48,9 @@ function hash01(s: string) {
 }
 
 interface Display {
-  nodeSize: number;      // 0.4 .. 2
-  linkThickness: number; // 0.4 .. 3
-  textFade: number;      // 0 .. 2   (shu zoomdan pastda yozuvlar yashirinadi)
+  nodeSize: number;
+  linkThickness: number;
+  textFade: number;
   showArrows: boolean;
   showOrphans: boolean;
 }
@@ -72,7 +67,7 @@ export default function GraphView({ tasks, onSelect, lens = "all", locale }: Pro
   const wrapRef = useRef<HTMLDivElement | null>(null);
   const canvasRef = useRef<HTMLCanvasElement | null>(null);
   const simRef = useRef(new GraphSim());
-  const camRef = useRef({ x: 0, y: 0, z: 1 });       // kamera: siljish + masshtab
+  const camRef = useRef({ x: 0, y: 0, z: 1 });
   const hoverRef = useRef<string | null>(null);
   const dragRef = useRef<{ id: string | null; sx: number; sy: number; moved: boolean } | null>(null);
   const rafRef = useRef<number | null>(null);
@@ -86,7 +81,6 @@ export default function GraphView({ tasks, onSelect, lens = "all", locale }: Pro
   const [hoverLabel, setHoverLabel] = useState<string | null>(null);
   const [fullscreen, setFullscreen] = useState(false);
 
-  // ── Ma'lumot → graf ──
   const { nodes, links, groupsUsed } = useMemo(() => {
     const allowed: string[] = lens === "all" ? ["student", "group", "staff"] : [lens];
     const nodeMap = new Map<string, SimNode>();
@@ -122,14 +116,12 @@ export default function GraphView({ tasks, onSelect, lens = "all", locale }: Pro
     return { nodes: list, links, groupsUsed: [...used] };
   }, [tasks, lens, display.showOrphans]);
 
-  // Qidiruvga mos tugunlar (bo'sh so'rovda — hammasi)
   const matched = useMemo(() => {
     const s = q.trim().toLowerCase();
     if (!s) return null;
     return new Set(nodes.filter((n) => n.label.toLowerCase().includes(s)).map((n) => n.id));
   }, [q, nodes]);
 
-  // Qo'shnilar jadvali — hover paytida yoritish uchun
   const neighbors = useMemo(() => {
     const m = new Map<string, Set<string>>();
     const add = (a: string, b: string) => { if (!m.has(a)) m.set(a, new Set()); m.get(a)!.add(b); };
@@ -140,7 +132,6 @@ export default function GraphView({ tasks, onSelect, lens = "all", locale }: Pro
   useEffect(() => { simRef.current.setData(nodes, links); }, [nodes, links]);
   useEffect(() => { simRef.current.forces = forces; simRef.current.reheat(0.35); }, [forces]);
 
-  // Mavzu (yorug'/qorong'i) — kanvas ranglari shunga moslashadi
   useEffect(() => {
     const read = () => { darkRef.current = document.documentElement.classList.contains("dark"); };
     read();
@@ -149,7 +140,6 @@ export default function GraphView({ tasks, onSelect, lens = "all", locale }: Pro
     return () => mo.disconnect();
   }, []);
 
-  // ── Chizish ──
   const draw = useCallback(() => {
     const cv = canvasRef.current;
     const ctx = cv?.getContext("2d");
@@ -168,7 +158,6 @@ export default function GraphView({ tasks, onSelect, lens = "all", locale }: Pro
     const sim = simRef.current;
     sim.center = { x: 0, y: 0 };
 
-    // Dunyodan ekranga: (p - cam) * z + markaz
     const sx = (x: number) => (x - cam.x) * cam.z + w / 2;
     const sy = (y: number) => (y - cam.y) * cam.z + h / 2;
 
@@ -180,7 +169,6 @@ export default function GraphView({ tasks, onSelect, lens = "all", locale }: Pro
       return id === hovered || (near?.has(id) ?? false);
     };
 
-    // ── Bog'lanishlar ──
     ctx.lineCap = "round";
     for (const l of links) {
       const a = sim.get(l.source), b = sim.get(l.target);
@@ -209,7 +197,6 @@ export default function GraphView({ tasks, onSelect, lens = "all", locale }: Pro
       }
     }
 
-    // ── Tugunlar ──
     const labelAlpha = Math.max(0, Math.min(1, (cam.z - display.textFade) / 0.35));
     ctx.textAlign = "center";
     ctx.textBaseline = "top";
@@ -217,12 +204,12 @@ export default function GraphView({ tasks, onSelect, lens = "all", locale }: Pro
     for (const n of sim.nodes) {
       const X = sx(n.x), Y = sy(n.y);
       const r = nodeRadius(n) * cam.z;
-      if (X < -60 || Y < -60 || X > w + 60 || Y > h + 60) continue;   // ekrandan tashqarida
+      if (X < -60 || Y < -60 || X > w + 60 || Y > h + 60) continue;
       const lit = isLit(n.id);
       ctx.globalAlpha = lit ? 1 : 0.12;
 
       const color = GROUP_COLOR[n.group] ?? "#94a3b8";
-      if (n.id === hovered) {                       // hover — yumshoq nur
+      if (n.id === hovered) {
         ctx.beginPath();
         ctx.arc(X, Y, r + 7, 0, Math.PI * 2);
         ctx.fillStyle = color;
@@ -238,7 +225,6 @@ export default function GraphView({ tasks, onSelect, lens = "all", locale }: Pro
       ctx.strokeStyle = dark ? "#0b1220" : "#ffffff";
       ctx.stroke();
 
-      // Yozuv — zoom yetarli bo'lsa yoki shu tugun hover bo'lsa
       const la = n.id === hovered ? 1 : labelAlpha;
       if (la > 0.02 && lit) {
         ctx.globalAlpha = la * (lit ? 1 : 0.2);
@@ -255,7 +241,6 @@ export default function GraphView({ tasks, onSelect, lens = "all", locale }: Pro
     }
   }, [links, neighbors, matched, display]);
 
-  // ── Animatsiya halqasi ──
   useEffect(() => {
     let stop = false;
     const loop = () => {
@@ -268,7 +253,6 @@ export default function GraphView({ tasks, onSelect, lens = "all", locale }: Pro
     return () => { stop = true; if (rafRef.current) cancelAnimationFrame(rafRef.current); };
   }, [draw]);
 
-  // ── Dastlabki moslash: butun graf ekranga sig'sin ──
   const fit = useCallback(() => {
     const cv = canvasRef.current;
     if (!cv) return;
@@ -280,11 +264,10 @@ export default function GraphView({ tasks, onSelect, lens = "all", locale }: Pro
   }, []);
 
   useEffect(() => {
-    const t = setTimeout(fit, 700);   // simulyatsiya biroz joylashgach
+    const t = setTimeout(fit, 700);
     return () => clearTimeout(t);
   }, [fit, nodes.length]);
 
-  // ── Sichqoncha ──
   const worldAt = (e: { clientX: number; clientY: number }) => {
     const cv = canvasRef.current!;
     const r = cv.getBoundingClientRect();
@@ -321,7 +304,6 @@ export default function GraphView({ tasks, onSelect, lens = "all", locale }: Pro
         const n = simRef.current.get(d.id);
         if (n) { const p = worldAt(e); n.x = p.x; n.y = p.y; n.vx = 0; n.vy = 0; simRef.current.reheat(0.3); }
       } else {
-        // Fonni sudrash — kamerani siljitamiz
         const cam = camRef.current;
         cam.x -= (e.clientX - d.sx) / cam.z;
         cam.y -= (e.clientY - d.sy) / cam.z;
@@ -345,8 +327,8 @@ export default function GraphView({ tasks, onSelect, lens = "all", locale }: Pro
     if (!d) return;
     if (d.id) {
       const n = simRef.current.get(d.id);
-      if (n) n.fixed = false;                       // qo'yib yuborilgach yana fizikaga bo'ysunadi
-      if (!d.moved && n?.payload) onSelect(n.payload as VTask);   // bosish — batafsil oyna
+      if (n) n.fixed = false;
+      if (!d.moved && n?.payload) onSelect(n.payload as VTask);
     }
     void e;
   };
@@ -358,7 +340,6 @@ export default function GraphView({ tasks, onSelect, lens = "all", locale }: Pro
     const before = worldAt(e);
     const k = Math.exp(-e.deltaY * 0.0015);
     cam.z = Math.max(0.08, Math.min(6, cam.z * k));
-    // Kursor ostidagi nuqta joyida qolsin
     const after = {
       x: (e.clientX - r.left - r.width / 2) / cam.z + cam.x,
       y: (e.clientY - r.top - r.height / 2) / cam.z + cam.y,
@@ -407,7 +388,6 @@ export default function GraphView({ tasks, onSelect, lens = "all", locale }: Pro
           onWheel={onWheel}
         />
 
-        {/* Yuqori chap: qidiruv + hover nomi */}
         <div className="pointer-events-none absolute left-3 top-3 flex max-w-[60%] flex-col gap-2">
           <div className="pointer-events-auto flex items-center gap-2 rounded-xl border border-slate-200 bg-white/90 px-2.5 py-1.5 shadow-sm backdrop-blur dark:border-slate-700 dark:bg-slate-900/90">
             <Icon name="search" className="h-3.5 w-3.5 shrink-0 text-slate-400" />
@@ -426,7 +406,6 @@ export default function GraphView({ tasks, onSelect, lens = "all", locale }: Pro
           )}
         </div>
 
-        {/* Yuqori o'ng: boshqaruv tugmalari */}
         <div className="absolute right-3 top-3 flex items-center gap-1.5">
           <Ctrl title={tr(locale, { uz: "Kattalashtirish", ru: "Приблизить", en: "Zoom in", de: "Vergrößern" })} icon="plus" onClick={() => zoomBy(1.25)} />
           <Ctrl title={tr(locale, { uz: "Kichraytirish", ru: "Отдалить", en: "Zoom out", de: "Verkleinern" })} icon="minimize" onClick={() => zoomBy(0.8)} />
@@ -435,7 +414,6 @@ export default function GraphView({ tasks, onSelect, lens = "all", locale }: Pro
           <Ctrl title={tr(locale, { uz: "Sozlamalar", ru: "Настройки", en: "Settings", de: "Einstellungen" })} icon="settings" active={panel} onClick={() => setPanel((v) => !v)} />
         </div>
 
-        {/* O'ng panel — Obsidian uslubidagi bo'limlar */}
         {panel && (
           <div className="absolute right-3 top-14 max-h-[calc(100%-72px)] w-[248px] overflow-y-auto rounded-xl border border-slate-200 bg-white/95 p-1 shadow-lg backdrop-blur dark:border-slate-700 dark:bg-slate-900/95">
             <Section title={tr(locale, { uz: "Filtrlar", ru: "Фильтры", en: "Filters", de: "Filter" })} open={open.filter} onToggle={() => setOpen((o) => ({ ...o, filter: !o.filter }))}>
@@ -488,7 +466,6 @@ export default function GraphView({ tasks, onSelect, lens = "all", locale }: Pro
           </div>
         )}
 
-        {/* Pastki chap: hisob */}
         <div className="pointer-events-none absolute bottom-3 left-3 rounded-lg bg-white/85 px-2.5 py-1 text-[11px] text-slate-500 shadow-sm backdrop-blur dark:bg-slate-900/85 dark:text-slate-400">
           {nodes.length} {tr(locale, { uz: "tugun", ru: "узлов", en: "nodes", de: "Knoten" })} · {links.length} {tr(locale, { uz: "bog'lanish", ru: "связей", en: "links", de: "Verbindungen" })}
         </div>
@@ -505,8 +482,6 @@ export default function GraphView({ tasks, onSelect, lens = "all", locale }: Pro
     </div>
   );
 }
-
-// ─────────── Yordamchi boshqaruvlar ───────────
 
 function Ctrl({ title, icon, onClick, active }: { title: string; icon: string; onClick: () => void; active?: boolean }) {
   return (

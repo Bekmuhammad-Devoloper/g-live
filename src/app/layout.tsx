@@ -9,16 +9,9 @@ import { instanceBlockState, isDevPanel, isPathEnabled } from "@/lib/instance";
 import { getBrand } from "@/lib/brand";
 import { BlockedScreen, ModuleOffScreen } from "./InstanceGate";
 
-// Bir xil build bir nechta markaz nusxasida ishlaydi; markaz sozlamalari (nomi, litsenziya,
-// modullar) jarayon muhitidan va bazadan ish vaqtida o'qiladi — statik prerender bo'lmasin.
 export const dynamic = "force-dynamic";
 
-// Eslatma: sidebar "handwriting" shrifti CSS fallback (Segoe Script / cursive)
-// orqali beriladi — globals.css `.font-hand`. Bu ilovani tashqi Google Fonts
-// yuklamasidan mustaqil qiladi (internet uzilsa ham ilova ishlaydi).
-
 export async function generateMetadata(): Promise<Metadata> {
-  // Dev panel: ikonka manzili versiyalangan — brauzer eski (bloklangan paytdagi) belgini eslab qolmasin
   if (isDevPanel()) return { title: "Dev panel — markazlar boshqaruvi", robots: { index: false, follow: false }, icons: { icon: "/icon.png?v=gl2", shortcut: "/favicon.ico?v=gl2", apple: "/apple-icon.png?v=gl2" } };
   const brand = await getBrand();
   return {
@@ -30,14 +23,10 @@ export async function generateMetadata(): Promise<Metadata> {
 export const viewport: Viewport = {
   width: "device-width",
   initialScale: 1,
-  // Android ilovasida ekranning kesik (notch) va pastki chiziq ostigacha
-  // bo'yalsin — chetlarda oq yo'l qolib ketmasin. Xavfsiz masofalarni
-  // `env(safe-area-inset-*)` bilan komponentlarning o'zi hisobga oladi.
   viewportFit: "cover",
   themeColor: "#0b3c4d",
 };
 
-// Sahifa chizilishidan oldin mavzuni qo'llash (dark mode "miltillashi"ning oldini oladi)
 const themeScript = `
 try {
   var t = localStorage.getItem('gl-theme');
@@ -50,7 +39,6 @@ try {
 export default async function RootLayout({ children }: { children: React.ReactNode }) {
   const path = (await headers()).get("x-gl-path") ?? "/";
   const devArea = path === "/dev" || path.startsWith("/dev/");
-  // Dev panel jarayoni faqat /dev ni ko'rsatadi; o'quv markazlarida /dev umuman yo'q
   if (isDevPanel() && !devArea) redirect("/dev");
   let gate: React.ReactNode = null;
   if (!isDevPanel()) {
@@ -64,9 +52,6 @@ export default async function RootLayout({ children }: { children: React.ReactNo
   return (
     <html lang="uz" suppressHydrationWarning>
       <head>
-        {/* Shrift ilova bilan birga keladi (public/fonts). Lotin qismi
-            oldindan yuklanadi: aks holda birinchi chizishda zaxira shrift
-            ko'rinib, keyin Inter kelganda matn "sakrardi". */}
         <link
           rel="preload"
           href="/fonts/inter-latin.woff2"
@@ -77,10 +62,7 @@ export default async function RootLayout({ children }: { children: React.ReactNo
         <script dangerouslySetInnerHTML={{ __html: themeScript }} />
       </head>
       <body>
-        {/* Android ilovasi ichida ishlaydigan qatlam (brauzerda jim turadi):
-            ochilish ekrani, holat qatori, "orqaga" tugmasi, tashqi havolalar */}
         <NativeShell />
-        {/* Deploy'dan keyin eskirgan sahifani yangilaydi — tugmalar jim qolib ketmasin */}
         <DeployWatcher build={getBuildId()} />
         {gate ?? children}
       </body>

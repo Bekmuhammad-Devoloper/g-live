@@ -12,7 +12,6 @@ export interface NotifItem {
   date: string;
 }
 
-// Bildirishnomalar ro'yxati — o'qilmagan yozuvni bosganda o'qilgan deb belgilaydi.
 export default function NotificationList({ items, readHint }: { items: NotifItem[]; readHint: string }) {
   const router = useRouter();
   const [pending, start] = useTransition();

@@ -9,15 +9,7 @@ import Battle, { type WordPair, type Rival, type Invite } from "./Battle";
 import HeaderBadges from "../HeaderBadges";
 import { groupLessonsWhere } from "@/lib/levelLessons";
 
-// "Jang" (Battle) — o'yin sozlash ekrani.
-//
-// So'zlar ikki manbadan olinadi:
-//   1) o'quvchi kursidagi darslarning lug'ati (agar kiritilgan bo'lsa),
-//   2) umumiy nemischa-o'zbekcha lug'at (5000 dan ortiq so'z).
-// Ilgari faqat 1-manba ishlatilar edi va u ko'pincha bo'sh bo'lgani uchun
-// o'yin "So'zlar yetarli emas" deb turib qolardi.
-
-const POOL = 120; // o'yinga tayyorlanadigan so'zlar soni
+const POOL = 120;
 
 export default async function StudentBattlePage() {
   const session = await getSession();
@@ -49,7 +41,6 @@ export default async function StudentBattlePage() {
           select: { title: true, topic: true },
         })
       : Promise.resolve([]),
-    // Duel uchun — ilovaga ulangan guruhdoshlar
     groupId
       ? prisma.groupStudent.findMany({
           where: { groupId, isActive: true, studentId: { not: student.id }, student: { userId: { not: null } } },
@@ -57,7 +48,6 @@ export default async function StudentBattlePage() {
           take: 40,
         })
       : Promise.resolve([]),
-    // Kutayotgan chaqiruvlar
     prisma.gameChallenge.findMany({
       where: {
         expiresAt: { gt: new Date() },
@@ -79,7 +69,6 @@ export default async function StudentBattlePage() {
     }),
   ]);
 
-  // ── So'zlar ──
   const words: WordPair[] = [];
   const seen = new Set<string>();
   const push = (de: string, hint: string, g?: string) => {
@@ -89,20 +78,17 @@ export default async function StudentBattlePage() {
     words.push({ de, hint, g });
   };
 
-  // 1) kurs lug'ati — vergul bilan ajratilgan so'zlar
   for (const l of lessons) {
     for (const raw of (l.topic ?? "").split(/[,;\n]/)) {
       const de = raw.trim();
       if (de) push(de, l.title.replace(/^\[DEMO\]\s*/, ""));
     }
   }
-  // 2) umumiy lug'atdan to'ldiramiz
   for (const w of gameWords(POOL)) {
     if (words.length >= POOL) break;
     push(w.de, shortUz(w.uz));
   }
 
-  // Grammatika uchun rodi aniq otlar
   const nouns = genderNouns(80).map((n) => ({ de: n.de, hint: n.uz, g: n.g }));
 
   const rivals: Rival[] = mates.map((m) => ({

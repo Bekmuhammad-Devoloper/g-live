@@ -14,7 +14,6 @@ import { saveRole, deleteRole } from "./actions";
 
 export interface VRole { id: string; name: string; description: string; department: string; permissions: string[]; bossOnly: boolean; staff: number }
 
-// Bo'limlar (tartib + tanlash uchun) — oxirida "Boshqa" bo'limsizlar uchun
 const DEPARTMENTS = ["Boshqaruv", "Sotuv bo'limi", "Marketing bo'limi", "Moliya bo'limi", "Administrativ", "Ta'lim bo'limi"] as const;
 const DEPT_ICON: Record<string, string> = {
   "Boshqaruv": "shieldCheck",
@@ -37,8 +36,6 @@ export default function RolesView({ roles, canManage, locale }: { roles: VRole[]
     return q ? roles.filter((r) => `${r.name} ${r.description} ${r.department}`.toLowerCase().includes(q)) : roles;
   }, [roles, search]);
 
-  // Bo'limlar bo'yicha guruhlash (tartib: DEPARTMENTS, so'ng maxsus bo'limlar, oxirida bo'limsizlar)
-  // Sentinel kalit — haqiqiy bo'lim nomi bilan to'qnashmasligi uchun maxsus belgi
   const OTHER = "__bolimsiz__";
   const grouped = useMemo(() => {
     const map = new Map<string, VRole[]>();
@@ -215,7 +212,6 @@ function RoleForm({ editing, onClose, onSaved, locale }: { editing: VRole | null
             <span className="ml-auto text-xs text-slate-400">{sel.size} / {ALL_PERM_KEYS.length} {tr(locale, { uz: "ruxsat", ru: "разрешений", en: "permissions", de: "Berechtigungen" })}</span>
           </div>
 
-          {/* Ruxsatlar matritsasi */}
           <div className="space-y-3">
             {PERM_GROUPS.map((grp) => {
               const keys = grp.items.map((i) => i.key);

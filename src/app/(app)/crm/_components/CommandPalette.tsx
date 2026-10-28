@@ -37,8 +37,6 @@ export default function CommandPalette({
   const matchedLeads = useMemo(() => {
     const s = q.trim().toLowerCase();
     if (!s) return [];
-    // Raqam kiritilsa — telefonni faqat raqamga tozalab solishtiramiz
-    // (raqamning oxiridan/o'rtasidan qidirsa ham topiladi).
     const d = s.replace(/\D/g, "");
     return leads
       .filter((l) =>
@@ -52,7 +50,6 @@ export default function CommandPalette({
     return s ? actions.filter((a) => a.label.toLowerCase().includes(s)) : actions;
   }, [q, actions]);
 
-  // Yassi ro'yxat (klaviatura navigatsiyasi uchun)
   const flat = useMemo(
     () => [
       ...matchedActions.map((a) => ({ kind: "action" as const, a })),

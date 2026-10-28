@@ -16,10 +16,9 @@ export default async function SalaryPage({ searchParams }: { searchParams: Promi
     return <Forbidden title={t("err.forbidden")} body={t("err.forbiddenBody")} />;
   }
 
-  // O'qituvchi — o'z yuklamasi bo'yicha dastlabki ma'lumot
   if (s.role === ROLES.TEACHER) {
     const groups = await prisma.group.findMany({
-      where: { AND: [{ teacherId: s.userId }, branchWhere(s)] }, // faol filial doirasida
+      where: { AND: [{ teacherId: s.userId }, branchWhere(s)] },
       include: { _count: { select: { students: { where: { isActive: true } }, lessons: true } } },
     });
     const lessons = groups.reduce((n, g) => n + g._count.lessons, 0);
@@ -46,7 +45,6 @@ export default async function SalaryPage({ searchParams }: { searchParams: Promi
     );
   }
 
-  // Direktor / o'rinbosar — davr bo'yicha ish haqi hisob-kitobi
   const sp = await searchParams;
   const now = new Date();
   const year = Number(sp.year) || now.getFullYear();
@@ -57,14 +55,14 @@ export default async function SalaryPage({ searchParams }: { searchParams: Promi
   const monthEnd = new Date(year, month, 1);
 
   const teachers = await prisma.user.findMany({
-    where: { AND: [{ role: ROLES.TEACHER, isActive: true }, staffBranchWhere(s)] }, // faol filial doirasida
+    where: { AND: [{ role: ROLES.TEACHER, isActive: true }, staffBranchWhere(s)] },
     select: { id: true, fullName: true, fiksa: true, kpiBonus: true },
     orderBy: { fullName: "asc" },
   });
   const teacherIds = teachers.map((tc) => tc.id);
 
   const groups = await prisma.group.findMany({
-    where: { AND: [{ teacherId: { in: teacherIds } }, branchWhere(s)] }, // faol filial doirasida
+    where: { AND: [{ teacherId: { in: teacherIds } }, branchWhere(s)] },
     select: { id: true, teacherId: true },
   });
   const groupToTeacher = new Map(groups.map((g) => [g.id, g.teacherId!]));
@@ -72,11 +70,9 @@ export default async function SalaryPage({ searchParams }: { searchParams: Promi
 
   const [lessonRows, studentRows, salaries] = await Promise.all([
     groupIds.length
-      // faol filial doirasida
       ? prisma.lesson.groupBy({ by: ["groupId"], where: { AND: [{ groupId: { in: groupIds }, startsAt: { gte: monthStart, lt: monthEnd } }, branchViaGroup(s)] }, _count: { _all: true } })
       : Promise.resolve([] as { groupId: string; _count: { _all: number } }[]),
     groupIds.length
-      // faol filial doirasida
       ? prisma.groupStudent.groupBy({ by: ["groupId"], where: { AND: [{ groupId: { in: groupIds }, isActive: true }, branchViaGroup(s)] }, _count: { _all: true } })
       : Promise.resolve([] as { groupId: string; _count: { _all: number } }[]),
     prisma.teacherSalary.findMany({ where: { teacherId: { in: teacherIds }, year, month } }),

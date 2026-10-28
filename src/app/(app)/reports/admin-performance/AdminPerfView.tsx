@@ -11,7 +11,7 @@ import { Icon } from "../../_components/Icon";
 export interface AdminStudent {
   admin: string;
   status: string;
-  createdAt: string; // ISO
+  createdAt: string;
 }
 
 type Tr = { uz: string; ru: string; en: string };
@@ -56,9 +56,9 @@ export default function AdminPerfView({ rows, defaultFrom, defaultTo, locale }: 
       for (const st of list) {
         const day = st.createdAt.slice(0, 10);
         const b = bucketOf(st.status);
-        if (!from || day < from) start[b]++;            // davr boshidan oldin mavjud
-        if ((!from || day >= from) && (!to || day <= to)) change[b]++; // davr ichida qo'shilgan
-        if (!to || day <= to) end[b]++;                 // davr oxiriga qadar jami
+        if (!from || day < from) start[b]++;
+        if ((!from || day >= from) && (!to || day <= to)) change[b]++;
+        if (!to || day <= to) end[b]++;
       }
       return { start, change, end };
     };
@@ -115,7 +115,6 @@ export default function AdminPerfView({ rows, defaultFrom, defaultTo, locale }: 
 
   return (
     <div className="space-y-3">
-      {/* Sana oralig'i */}
       <div className="flex flex-wrap items-center gap-2.5">
         <div className="flex h-11 items-center gap-2 rounded-lg border border-slate-200 bg-white px-3 dark:border-slate-700 dark:bg-slate-900">
           <Icon name="calendar" className="h-4 w-4 text-slate-400" />
@@ -129,7 +128,6 @@ export default function AdminPerfView({ rows, defaultFrom, defaultTo, locale }: 
         </button>
       </div>
 
-      {/* Jadval */}
       <div className="overflow-hidden rounded-2xl border border-slate-200/70 bg-white shadow-card dark:border-slate-800 dark:bg-slate-900">
         <div className="overflow-x-auto">
           <table className="w-full min-w-[1120px] text-left text-sm">

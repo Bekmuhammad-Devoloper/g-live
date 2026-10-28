@@ -11,8 +11,6 @@ import { ROLES } from "@/lib/constants";
 
 export type Res = { ok?: boolean; error?: string };
 
-// Xodim shu o'quvchining yozishmasini ko'ra oladimi?
-// Ustoz — faqat o'z guruhi o'quvchisi bilan; rahbariyat — hammasi bilan.
 async function canTouch(role: string, userId: string, studentId: string): Promise<boolean> {
   if (!canRead(role, MODULES.CHAT)) return false;
   if (role !== ROLES.TEACHER) return true;
@@ -56,9 +54,7 @@ export async function replyToStudent(studentId: string, text: string): Promise<R
     data: { studentId, teacherId, fromStudent: false, authorId: s.userId, text: body },
   });
 
-  // O'quvchini ortiqcha bezovta qilmaymiz: o'qilmagani bo'lsa xabar bermaymiz
   if (student.userId && pending === 0) {
-    // O'quvchining tilida (notify oluvchi tilini o'zi tanlaydi)
     await notify({
       userId: student.userId,
       title: { uz: "Ustozdan javob", ru: "Ответ преподавателя", en: "Reply from your teacher", de: "Antwort der Lehrkraft" },
@@ -73,7 +69,6 @@ export async function replyToStudent(studentId: string, text: string): Promise<R
   return { ok: true };
 }
 
-// O'quvchidan kelgan xabarlarni o'qilgan deb belgilash
 export async function markThreadRead(studentId: string): Promise<Res> {
   const s = await requireSession();
   if (!(await canTouch(s.role, s.userId, studentId))) return { error: tr(s.locale, { uz: "Ruxsat yo'q", ru: "Нет доступа", en: "No permission", de: "Keine Berechtigung" }) };

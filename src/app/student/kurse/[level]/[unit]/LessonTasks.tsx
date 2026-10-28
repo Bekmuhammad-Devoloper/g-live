@@ -5,10 +5,6 @@ import { useRouter } from "next/navigation";
 import { submitAssignment } from "../../../../(app)/homework/actions";
 import type { StudentStrings } from "../../../_i18n";
 
-// Dars vazifasi — muddat, shart, biriktirilgan fayl, o'quvchining
-// jo'natmalari va o'qituvchining izohi. Ketma-ketlik maketdagidek:
-// muddat → vazifa → mening jo'natmalarim → o'qituvchi izohi.
-
 export type VSub = {
   id: string;
   attempt: number;
@@ -31,7 +27,6 @@ export type VTask = {
   note: string | null;
   createdAt: string;
   subs: VSub[];
-  /** Guruhda shu vazifani topshirganlar soni */
   passed: number;
 };
 
@@ -60,7 +55,6 @@ function IcoFile({ s = 18 }: { s?: number }) {
   );
 }
 
-// Jo'natma holati — matn o'quvchi tilida (t), rang doimiy
 const statusOf = (t: StudentStrings): Record<string, { label: string; cls: string }> => ({
   GRADED: { label: t.taskAccepted, cls: "text-emerald-600" },
   RETURNED: { label: t.taskReturned, cls: "text-amber-600" },
@@ -75,7 +69,6 @@ export default function LessonTasks({ tasks, t }: { tasks: VTask[]; t: StudentSt
 
   return (
     <section className="gl-glass overflow-hidden rounded-[26px]">
-      {/* Sarlavha qatori — chapda bo'lim nomi, o'ngda ball */}
       <div className="flex items-center justify-between border-b border-slate-100 px-4 pt-3.5">
         <span className="border-b-2 border-[#c08a4a] pb-2.5 text-[15px] font-bold text-[#a5713a]">{t.tasks}</span>
         {hasScore && <span className="pb-2.5 text-[14px] font-bold text-[#a5713a]">{t.score}: {totalScore}</span>}
@@ -135,9 +128,7 @@ function TaskCard({ task, t }: { task: VTask; t: StudentStrings }) {
   };
 
   return (
-    // Iliq krem maydon ataylab shisha EMAS: shisha ustiga shisha qo'yilmaydi
     <div className="space-y-3 rounded-[20px] bg-[#faf6f2] p-3">
-      {/* ── Muddat ── */}
       {task.dueAt && (
         <div
           className={
@@ -154,7 +145,6 @@ function TaskCard({ task, t }: { task: VTask; t: StudentStrings }) {
         </div>
       )}
 
-      {/* ── Vazifa ── */}
       <div>
         <div className="flex flex-wrap items-baseline justify-between gap-2">
           <h3 className="text-[16.5px] font-bold text-slate-800">{task.title}</h3>
@@ -164,7 +154,6 @@ function TaskCard({ task, t }: { task: VTask; t: StudentStrings }) {
         <div className="mt-2 text-right text-[12px] text-slate-400">{dt(task.createdAt)}</div>
       </div>
 
-      {/* ── Mening jo'natmalarim ── */}
       <div className="rounded-2xl bg-white p-3.5">
         <div className="flex flex-wrap items-baseline justify-between gap-2">
           <h4 className="text-[15px] font-bold text-slate-800">{t.mySubmissions}</h4>
@@ -203,7 +192,6 @@ function TaskCard({ task, t }: { task: VTask; t: StudentStrings }) {
           </div>
         )}
 
-        {/* ── Yuborish ── */}
         <div className="mt-3 space-y-2">
           <textarea
             value={text}
@@ -249,7 +237,6 @@ function TaskCard({ task, t }: { task: VTask; t: StudentStrings }) {
         </div>
       </div>
 
-      {/* ── O'qituvchi izohi ── */}
       {graded && (
         <div className="rounded-2xl bg-white p-3.5">
           <div className="flex flex-wrap items-baseline justify-between gap-2">

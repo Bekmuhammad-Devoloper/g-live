@@ -19,7 +19,6 @@ const schema = z.object({
   examScore: z.coerce.number().int().min(0).max(100).optional(),
 });
 
-// Sertifikat berish — TZ FR-EXM-04/05 (noyob raqam + ishlaydigan QR, vakolatli xodim).
 export async function issueCertificate(_prev: FormState, formData: FormData): Promise<FormState> {
   const s = await requireSession();
   if (!canWrite(s.role, MODULES.CERTIFICATES)) return { error: "forbidden" };
@@ -33,7 +32,6 @@ export async function issueCertificate(_prev: FormState, formData: FormData): Pr
   });
   if (!parsed.success) return { error: "invalid" };
 
-  // Noyob raqam va QR-token
   const year = new Date().getFullYear();
   const rand = randomUUID().slice(0, 6).toUpperCase();
   const number = `GL-${year}-${rand}`;
@@ -52,7 +50,6 @@ export async function issueCertificate(_prev: FormState, formData: FormData): Pr
     },
   });
 
-  // Ta'lim statusini yangilash + audit + bildirishnoma
   await prisma.student.update({ where: { id: parsed.data.studentId }, data: { eduStatus: "CERTIFIED" } });
   await writeAudit({ actorId: s.userId, action: "CREATE", entityType: "Certificate", entityId: cert.id, newValue: { number } });
 
@@ -70,7 +67,6 @@ export async function issueCertificate(_prev: FormState, formData: FormData): Pr
   return { ok: true };
 }
 
-// Sertifikatni bekor qilish — TZ FR-EXM-06
 export async function revokeCertificate(id: string, reason: string): Promise<void> {
   const s = await requireSession();
   if (!canWrite(s.role, MODULES.CERTIFICATES)) return;

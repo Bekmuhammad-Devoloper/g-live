@@ -43,20 +43,19 @@ export default async function LeadsReportPage({
 
   const sp = await searchParams;
   const now = new Date();
-  const defFrom = new Date(now.getFullYear(), 0, 1); // yil boshi
-  const defTo = new Date(now.getFullYear(), now.getMonth() + 1, 0); // joriy oy oxiri
+  const defFrom = new Date(now.getFullYear(), 0, 1);
+  const defTo = new Date(now.getFullYear(), now.getMonth() + 1, 0);
   let fromDate = parseDate(sp.from, defFrom);
   let toDate = parseDate(sp.to, defTo);
-  if (fromDate > toDate) [fromDate, toDate] = [toDate, fromDate]; // xato oraliqni tuzatish
+  if (fromDate > toDate) [fromDate, toDate] = [toDate, fromDate];
   const toEnd = new Date(toDate.getFullYear(), toDate.getMonth(), toDate.getDate(), 23, 59, 59, 999);
 
   const leads = await prisma.lead.findMany({
-    where: { AND: [{ createdAt: { gte: fromDate, lte: toEnd } }, branchWhere(s)] }, // faol filial doirasida
+    where: { AND: [{ createdAt: { gte: fromDate, lte: toEnd } }, branchWhere(s)] },
     select: { createdAt: true },
   });
   const total = leads.length;
 
-  // Oylar bo'yicha guruhlash
   const spanYears = fromDate.getFullYear() !== toDate.getFullYear();
   const buckets = new Map<string, BarPoint>();
   const order: string[] = [];
@@ -87,7 +86,6 @@ export default async function LeadsReportPage({
       </div>
       <PageHeader title={tr(s.locale, { uz: "Lidlar hisobotlari", ru: "Отчёты по лидам", en: "Leads reports", de: "Lead-Berichte" })} />
 
-      {/* Lidlar soni kartochkasi */}
       <div className="mb-5 flex items-center justify-between gap-4 rounded-2xl border border-l-4 border-slate-200/70 border-l-brand-500 bg-white p-5 shadow-card dark:border-slate-800 dark:border-l-brand-500 dark:bg-slate-900">
         <div className="text-lg font-semibold text-slate-800 dark:text-slate-100">
           {tr(s.locale, { uz: "Lidlar soni", ru: "Количество лидов", en: "Number of leads", de: "Anzahl der Leads" })}: {total}{" "}
@@ -98,7 +96,6 @@ export default async function LeadsReportPage({
         </div>
       </div>
 
-      {/* Sana oralig'i + grafik */}
       <div className="grid gap-5 lg:grid-cols-[minmax(0,320px)_1fr] lg:items-start">
         <form method="get" className="flex flex-wrap items-center gap-2">
           <DateInput name="from" defaultValue={toInput(fromDate)} className={inputCls} />

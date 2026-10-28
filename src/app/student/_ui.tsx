@@ -1,24 +1,13 @@
 import Link from "next/link";
 
-// O'quvchi portalining UMUMIY dizayn elementlari — Start ekrani (page.tsx)
-// uslubidan olingan. Barcha ichki sahifalar (Kurse, Üben, Profil,
-// Mitteilungen) shu yerdan oladi, shunda ko'rinish bir xil qoladi.
+export const TEAL = "#0e7490";
+export const NAVY = "#134e5e";
+export const INK = "#111827";
 
-export const TEAL = "#0e7490"; // asosiy rang (maketdagi to'q moviy-feruza)
-export const NAVY = "#134e5e"; // halqa/qiymatlarning to'q varianti
-export const INK = "#111827";  // yuqori qatordagi chiziqli ikonkalar (qo'ng'iroq)
-
-// Shisha karta (Start ekranidagi bilan bir xil).
-// Uslub globals.css `.gl-glass` da: backdrop-filter + qirra yorug'ligi.
-// Ostidagi rangli ambient qatlam layout.tsx da — shisha aynan o'shani
-// sindirib ko'rsatadi, shu sabab ikkalasi birga o'zgaradi.
 export const CARD = "gl-glass";
 
-// Ochiq feruza gradient (Dein Fortschritt kartasi foni)
 export const SOFT_GRADIENT = "linear-gradient(135deg, #cfe7f0 0%, #e7f3f8 55%, #f2f9fc 100%)";
-// To'q feruza gradient (reklama banneri foni)
 export const DEEP_GRADIENT = "linear-gradient(105deg, #0c6a86 0%, #1590b3 45%, #7fd0e6 100%)";
-// Ikonka doirasi gradienti
 export const ICON_GRADIENT = `linear-gradient(135deg, #17a2bf, ${TEAL})`;
 
 export const fmtDate = (d: Date | string | null | undefined) => {
@@ -30,14 +19,7 @@ export const fmtDate = (d: Date | string | null | undefined) => {
 
 export const fmtSum = (n: number) => `${new Intl.NumberFormat("ru-RU").format(n)} so'm`;
 
-// ── Tanga — HAQIQIY zarb qilingan tanga ──
-// Belgi emas, buyum: qirrasi (gurt) tishli, yuzi botiq, yorug'lik tepa-chapdan
-// tushib past-o'ngda soya beradi. Markazda "G" (Germaniya Live) bo'rtma qilib
-// bosilgan — pastda och nusxa, ustida to'q nusxa: metall bo'rtma shundan chiqadi.
-// `mark` — markaz nomining bosh harfi (server sahifa getBrand() dan uzatadi).
 export function CoinGold({ s = 46, mark = "G" }: { s?: number; mark?: string }) {
-  // 26px dan kichigida tishlar va "G" loyqa bo'lib ketadi — o'sha o'lchamda
-  // faqat disk, qirra va porlash chiziladi (bir oiladan, lekin toza).
   const detail = s >= 26;
   return (
     <svg width={s} height={s} viewBox="0 0 48 48" aria-hidden>
@@ -60,38 +42,29 @@ export function CoinGold({ s = 46, mark = "G" }: { s?: number; mark?: string }) 
         </linearGradient>
       </defs>
 
-      {/* qirra (gurt) */}
       <circle cx="24" cy="24" r="23" fill="url(#glCoinRim)" />
-      {/* gurtdagi tishlar — chizilgan emas, uzuq chiziq bilan taqlid qilinadi */}
       {detail && <circle cx="24" cy="24" r="21.1" fill="none" stroke="#8f560f" strokeOpacity="0.38" strokeWidth="3.6" strokeDasharray="1.5 2.5" />}
-      {/* tanga yuzi */}
       <circle cx="24" cy="24" r="19" fill="url(#glCoinFace)" />
-      {/* yuzi bilan qirra orasidagi zinapoya */}
       <circle cx="24" cy="24" r="19" fill="none" stroke="#fff8e0" strokeOpacity="0.75" strokeWidth="1" />
       <circle cx="24" cy="24" r="15.4" fill="none" stroke="#a86a15" strokeOpacity="0.3" strokeWidth="0.9" />
 
-      {/* bo'rtma "G" */}
       {detail && <text x="24" y="24" textAnchor="middle" dominantBaseline="central"
         fontFamily="var(--font-sans)" fontSize="19" fontWeight="800" fill="#fff5cf" fillOpacity="0.85"
         transform="translate(0,1)">{mark}</text>}
       {detail && <text x="24" y="24" textAnchor="middle" dominantBaseline="central"
         fontFamily="var(--font-sans)" fontSize="19" fontWeight="800" fill="#96590d">{mark}</text>}
 
-      {/* umumiy yorug'lik/soya qatlami — tangaga hajm beradi */}
       <circle cx="24" cy="24" r="23" fill="url(#glCoinShade)" />
-      {/* tepa-chapdagi porlash */}
       <ellipse cx="16.5" cy="13.5" rx="8.5" ry="4.6" fill="#fff" fillOpacity="0.42" transform="rotate(-32 16.5 13.5)" />
     </svg>
   );
 }
 
-// ── Halqali foiz (progress ring) ──
 export function Ring({ pct, size = 64, stroke = 5.5, color = NAVY }: { pct: number; size?: number; stroke?: number; color?: string }) {
   const r = (size - stroke - 3) / 2;
   const c = 2 * Math.PI * r;
   return (
     <svg width={size} height={size} viewBox={`0 0 ${size} ${size}`} className="-rotate-90">
-      {/* Markaz shaffof — ostidagi shisha ko'rinib tursin (oq disk uni berkitardi) */}
       <circle cx={size / 2} cy={size / 2} r={r} fill="rgba(255,255,255,0.42)" stroke="rgba(255,255,255,0.8)" strokeWidth={stroke} />
       <circle
         cx={size / 2} cy={size / 2} r={r} fill="none" stroke={color} strokeWidth={stroke}
@@ -101,7 +74,6 @@ export function Ring({ pct, size = 64, stroke = 5.5, color = NAVY }: { pct: numb
   );
 }
 
-// ── Doira shaklidagi Germaniya bayrog'i (rasm qo'yilmagan avatar uchun) ──
 export function FlagAvatar({ s = 44, id = "glUiAvatarClip" }: { s?: number; id?: string }) {
   return (
     <svg width={s} height={s} viewBox="0 0 44 44" className="shrink-0">
@@ -118,7 +90,6 @@ export function FlagAvatar({ s = 44, id = "glUiAvatarClip" }: { s?: number; id?:
   );
 }
 
-// ── Ichki sahifa sarlavhasi: orqaga tugma + katta sarlavha ──
 export function PageHeader({ title, subtitle, back = "/student", backLabel, right }: { title: string; subtitle?: string; back?: string; backLabel?: string; right?: React.ReactNode }) {
   return (
     <div className="flex items-center gap-3 pt-1">
@@ -140,7 +111,6 @@ export function PageHeader({ title, subtitle, back = "/student", backLabel, righ
   );
 }
 
-// ── Gradient doirali kichik ikonka (Münzen kartalaridagi kabi) ──
 export function IconBadge({ children, s = 44 }: { children: React.ReactNode; s?: number }) {
   return (
     <span
@@ -152,12 +122,10 @@ export function IconBadge({ children, s = 44 }: { children: React.ReactNode; s?:
   );
 }
 
-// ── Bo'lim sarlavhasi ──
 export function SectionTitle({ children }: { children: React.ReactNode }) {
   return <div className="px-1 text-[12px] font-bold uppercase tracking-[0.22em]" style={{ color: TEAL }}>{children}</div>;
 }
 
-// ── Holat belgisi (pill) ──
 export function Pill({ tone, children }: { tone: "ok" | "warn" | "bad" | "muted"; children: React.ReactNode }) {
   const map = {
     ok: { color: "#047857", bg: "#d1fae5" },
@@ -173,7 +141,6 @@ export function Pill({ tone, children }: { tone: "ok" | "warn" | "bad" | "muted"
   );
 }
 
-// ── Chiziqli SVG ikonkalar (Start ekrani uslubida, strokeWidth=2) ──
 const sw = 2;
 type IcoProps = { c?: string; s?: number };
 
@@ -241,7 +208,6 @@ export function IcoTeacher({ c = TEAL, s = 24 }: IcoProps) {
     </svg>
   );
 }
-/** O'ngga strelka — chip va yorliqlarda "bosish mumkin" ishorasi */
 export function IcoChevron({ c = TEAL, s = 24 }: IcoProps) {
   return (
     <svg width={s} height={s} viewBox="0 0 24 24" fill="none" stroke={c} strokeWidth={sw} strokeLinecap="round" strokeLinejoin="round">
@@ -293,9 +259,6 @@ export function IcoBell({ c = TEAL, s = 24 }: IcoProps) {
     </svg>
   );
 }
-// Seriya (streak) olovi — emoji uslubida: to'q sariq-qizil tana va ichida
-// sariq yadro. Bir rangli tekis olov kichik o'lchamda dog'ga o'xshab
-// qolardi; ikki qatlam va gradient uni 24px da ham olov qilib ko'rsatadi.
 export function IcoFlame({ s = 26 }: { s?: number }) {
   return (
     <svg width={s} height={s} viewBox="0 0 24 24">
@@ -310,12 +273,10 @@ export function IcoFlame({ s = 26 }: { s?: number }) {
           <stop offset="100%" stopColor="#ffa41b" />
         </linearGradient>
       </defs>
-      {/* Tashqi olov — uchi o'ngga egilgan, chap qirrasi to'lqinli */}
       <path
         d="M13.4 1.8c.6 2.6-.2 4.2-1.6 5.7C10 9.4 7.7 10.8 6.6 13c-1.5 3-.5 6.6 2.2 8.3 3.1 2 7.6 1 9.4-2.2 1.5-2.7.9-5.6-.7-7.9-.4-.6-.9-1.2-1.5-1.7-.2 1.1-.8 1.9-1.7 2.4.9-3.6.3-7.1-1-10.1Z"
         fill="url(#glFlameBody)"
       />
-      {/* Ichki yadro */}
       <path
         d="M12.3 11.2c.4 1.8-.5 2.9-1.4 3.9-.8.9-1.4 1.7-1.4 2.9a3 3 0 0 0 6 .1c0-1.2-.5-2-1.3-3-.8-1-1.6-2.2-1.9-3.9Z"
         fill="url(#glFlameCore)"
@@ -349,15 +310,9 @@ export function IcoDownload({ c = TEAL, s = 24 }: IcoProps) {
   );
 }
 
-// ── Davomat: qaysi status "qatnashdi" hisoblanadi ──
-// Admin tomonidagi kanonik formula bilan bir xil (reports/attendance):
-// PRESENT, LATE, ONLINE va MAKEUP — barchasi qatnashuv.
-// Start va Profil sahifalari SHU funksiyani ishlatadi — raqamlar farq qilmasin.
 export const ATTENDED = new Set(["PRESENT", "LATE", "ONLINE", "MAKEUP"]);
 export const isAttended = (status: string) => ATTENDED.has(status);
 
-// ── URL himoyasi: faqat http(s) va nisbiy yo'llar ──
-// onlineLink/material URL lari bazadan keladi — javascript: kabi sxemalar kesiladi.
 export function safeUrl(u: string | null | undefined): string | null {
   const v = (u ?? "").trim();
   if (!v) return null;

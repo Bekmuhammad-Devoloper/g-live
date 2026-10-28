@@ -34,12 +34,12 @@ export default function AccountSettings({ locale }: { locale: Locale }) {
     try {
       const raw = localStorage.getItem(STORAGE_KEY);
       if (raw) setF((cur) => ({ ...cur, ...JSON.parse(raw) }));
-    } catch { /* ignore */ }
+    } catch { }
   }, []);
 
   const toggle = (k: string) => setF((s) => ({ ...s, opts: { ...s.opts, [k]: !s.opts[k] } }));
   const save = () => {
-    try { localStorage.setItem(STORAGE_KEY, JSON.stringify(f)); } catch { /* ignore */ }
+    try { localStorage.setItem(STORAGE_KEY, JSON.stringify(f)); } catch { }
     setSaved(true); setTimeout(() => setSaved(false), 1800);
   };
 
@@ -48,7 +48,6 @@ export default function AccountSettings({ locale }: { locale: Locale }) {
       <h2 className="mb-6 text-2xl font-bold text-slate-800 dark:text-slate-100">{tr(locale, { uz: "Hisob va to'lovlar", ru: "Счёт и платежи", en: "Account and payments", de: "Konto und Zahlungen" })}</h2>
 
       <div className="max-w-3xl space-y-6">
-        {/* To'lov rejimi */}
         <div>
           <label className="mb-1.5 block text-sm font-medium text-slate-600 dark:text-slate-300">
             {tr(locale, { uz: "Talabalar uchun to'lov rejimi", ru: "Режим оплаты для учеников", en: "Payment mode for students", de: "Zahlungsmodus für Schüler" })} <span className="text-rose-500">*</span>
@@ -62,7 +61,6 @@ export default function AccountSettings({ locale }: { locale: Locale }) {
           </div>
         </div>
 
-        {/* Others — ruxsatlar */}
         <fieldset className="relative rounded-xl border border-slate-300 p-5 pt-6 dark:border-slate-600">
           <legend className="ml-2 px-1.5 text-sm font-semibold text-slate-700 dark:text-slate-200">{tr(locale, { uz: "Boshqalar", ru: "Другое", en: "Others", de: "Sonstiges" })}</legend>
           <div className="space-y-4">

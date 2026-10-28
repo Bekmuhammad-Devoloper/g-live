@@ -5,7 +5,6 @@ import { tr } from "@/lib/tr";
 import { Forbidden } from "../../_components/ui";
 import ContractTemplatesView, { type VTemplate } from "./ContractTemplatesView";
 
-// Shartnoma — faqat rahbariyat
 const ALLOWED = [ROLES.DIRECTOR, ROLES.DEPUTY_DIRECTOR, ROLES.ADMIN];
 
 const p2 = (n: number) => String(n).padStart(2, "0");

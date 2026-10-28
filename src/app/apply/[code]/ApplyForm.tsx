@@ -11,24 +11,11 @@ import CountryPicker from "./CountryPicker";
 import { useApplyBg } from "./ApplyShell";
 import type { ApplyCourse } from "@/lib/applyCourses";
 
-/**
- * Ochiq ariza formasi — telefon uchun:
- *   1) Ta'lim shakli — onlayn / oflayn
- *   2) Oflayn → filial tanlash → (filialda ro'yxat bo'lsa) kurs tanlash
- *   3) Ism-familiya, telefon (davlat kodi bilan), onlayn → Telegram username
- *   4) Daraja — A1 / A2 / B1 / B2 (Sozlamalar > Darajalar ro'yxatidan); kurs tanlangan
- *      bo'lsa faqat til kurslarida (levels=true) so'raladi
- *   + havolaga biriktirilgan qo'shimcha savollar (bo'lsa)
- * Ko'rinish /daraja-testi bilan bir xil brend uslubda.
- */
 export default function ApplyForm({ code, preview, questions = [], levels, branches }: {
   code: string;
   preview: boolean;
-  /** Havola yaratishda belgilangan qo'shimcha savollar (bo'lmasa — faqat asosiy maydonlar) */
   questions?: ApplyQuestion[];
-  /** Sozlamalar > Darajalar katalogidagi kodlar */
   levels: string[];
-  /** Faol filiallar — oflayn ta'lim uchun; `image` — filial surati (tanlanganda orqa fon) */
   branches: { id: string; name: string; address: string | null; image: string | null; courses: ApplyCourse[] }[];
 }) {
   const [pending, start] = useTransition();
@@ -36,32 +23,27 @@ export default function ApplyForm({ code, preview, questions = [], levels, branc
   const [done, setDone] = useState(false);
   const [format, setFormat] = useState<StudyFormat | null>(null);
   const [branchId, setBranchId] = useState("");
-  // Filialdagi kurs (filial ro'yxat bergan bo'lsa)
   const [course, setCourse] = useState("");
   const [fullName, setName] = useState("");
   const [countryIso, setCountryIso] = useState(DEFAULT_COUNTRY_ISO);
   const [phone, setPhone] = useState("");
   const [telegram, setTelegram] = useState("");
-  // Telegram profili — username yozilgach t.me dan ism/rasm olib ko'rsatiladi
   const [tgProfile, setTgProfile] = useState<TelegramProfile | null>(null);
   const [tgLoading, setTgLoading] = useState(false);
   const [level, setLevel] = useState("");
   const [answers, setAnswers] = useState<string[]>(() => questions.map(() => ""));
 
   const country = useMemo(() => phoneCountry(countryIso), [countryIso]);
-  // Oflayn filial tanlanganda uning surati sahifa foniga tushadi (ApplyShell chizadi)
   const branch = format === "OFFLINE" ? branches.find((b) => b.id === branchId) ?? null : null;
   const bgImage = branch?.image ?? null;
   const courseList = branch?.courses ?? [];
   const picked = courseList.find((c) => c.name === course) ?? null;
-  // Daraja: onlaynda doim; oflaynda — filial kurs so'ramasa yoki tanlangan kurs til kursi bo'lsa
   const askCourse = format === "OFFLINE" && !!branch && courseList.length > 0;
   const askLevel = format === "ONLINE" || (format === "OFFLINE" && !!branch && (courseList.length === 0 || !!picked?.levels));
   const pickBranch = (id: string) => { setBranchId(id); setCourse(""); };
   const setBg = useApplyBg();
   useEffect(() => { setBg(bgImage); }, [bgImage, setBg]);
 
-  // Username o'zgarganda 600 ms kutib, profilni tekshiramiz (har harfda emas)
   useEffect(() => {
     const u = telegram.trim();
     if (u.length < 4) { setTgProfile(null); setTgLoading(false); return; }
@@ -77,11 +59,8 @@ export default function ApplyForm({ code, preview, questions = [], levels, branc
   }, [telegram]);
   const setAnswer = (i: number, v: string) => setAnswers((a) => a.map((x, k) => (k === i ? v : x)));
 
-  // O'zbekiston uchun "XX XXX XX XX" maskasi, boshqa davlatlar uchun faqat raqamlar
   const onPhone = (v: string) => setPhone(countryIso === "UZ" ? fmtUzPhoneInput(v) : v.replace(/\D/g, "").slice(0, 12));
   const onCountry = (iso: string) => { setCountryIso(iso); setPhone(""); };
-  // Oflayn (filialda) o'qish — faqat O'zbekiston raqami: davlat kodi +998 ga
-  // qulflanadi, chet el raqami yozilgan bo'lsa tozalanadi
   const pickFormat = (f: StudyFormat) => {
     setFormat(f);
     if (f === "OFFLINE" && countryIso !== "UZ") { setCountryIso("UZ"); setPhone(""); }
@@ -103,7 +82,6 @@ export default function ApplyForm({ code, preview, questions = [], levels, branc
     }
     if (askLevel && !level) { setError("Darajangizni tanlang"); return; }
 
-    // Majburiy savollar tekshiruvi (serverda ham qayta tekshiriladi)
     const missing = questions.findIndex((q, i) => q.required && !answers[i]?.trim());
     if (missing >= 0) { setError(`"${questions[missing].q}" — javob berilishi shart`); return; }
 
@@ -118,7 +96,6 @@ export default function ApplyForm({ code, preview, questions = [], levels, branc
     });
   };
 
-  // ── Yakun ──
   if (done) {
     return (
       <div className="animate-pop-in mt-6">
@@ -138,14 +115,12 @@ export default function ApplyForm({ code, preview, questions = [], levels, branc
 
   return (
     <form onSubmit={submit} className={cn(CARD, "mt-5 p-4")}>
-      {/* 1) Ta'lim shakli */}
       <Label text="Ta'lim shakli" req />
       <div className="grid grid-cols-2 gap-2">
         <Choice on={format === "ONLINE"} onClick={() => pickFormat("ONLINE")} icon="video" title="Onlayn" sub="Ilova orqali" />
         <Choice on={format === "OFFLINE"} onClick={() => pickFormat("OFFLINE")} icon="building" title="Oflayn" sub="Filialda" />
       </div>
 
-      {/* 2) Oflayn — filial */}
       {format === "OFFLINE" && (
         <div className="animate-pop-in mt-4">
           <Label text="Filial" req />
@@ -161,7 +136,6 @@ export default function ApplyForm({ code, preview, questions = [], levels, branc
         </div>
       )}
 
-      {/* 2b) Filialdagi kurs — filial ro'yxat bergan bo'lsa */}
       {askCourse && (
         <div className="animate-pop-in mt-4">
           <Label text="Kurs" req />
@@ -185,16 +159,13 @@ export default function ApplyForm({ code, preview, questions = [], levels, branc
         </div>
       )}
 
-      {/* 3) Shaxsiy ma'lumotlar — shakl tanlangach */}
       {format && (
         <div className="animate-pop-in mt-4">
           <Label text="Ism va familiya" req />
           <input value={fullName} onChange={(e) => setName(e.target.value)} required autoComplete="name" placeholder="Ism Familiya" className={INPUT} />
 
           <Label text="Telefon raqami" req className="mt-3" />
-          {/* INPUT'dagi px-4 bu yerda kerak emas (cn = clsx, px-0 uni yengmaydi) — shuning uchun alohida klasslar */}
           <div className={cn(FIELD_BOX, "gap-2 pr-3")}>
-            {/* Davlat kodi — MDH va Yevropa ro'yxati (SVG bayroqli panel); standart O'zbekiston */}
             <CountryPicker value={format === "OFFLINE" ? "UZ" : countryIso} onChange={onCountry} locked={format === "OFFLINE"} />
             <input
               value={phone}
@@ -222,7 +193,6 @@ export default function ApplyForm({ code, preview, questions = [], levels, branc
                   className="h-[50px] w-full flex-1 bg-transparent text-[16px] outline-none placeholder:text-slate-300 dark:placeholder:text-slate-600"
                 />
               </div>
-              {/* Topilgan profil — ism, rasm, bio; topilmasa ogohlantirish */}
               {telegram.trim().length >= 4 && (tgLoading || tgProfile) && (
                 <div className="animate-pop-in mt-2">
                   {tgLoading || !tgProfile ? (
@@ -254,7 +224,6 @@ export default function ApplyForm({ code, preview, questions = [], levels, branc
             </div>
           )}
 
-          {/* 4) Daraja — til kurslari uchun */}
           {askLevel && (<>
           <Label text="Darajangiz" req className="mt-4" />
           <div className="grid grid-cols-4 gap-2">
@@ -277,7 +246,6 @@ export default function ApplyForm({ code, preview, questions = [], levels, branc
           <p className="mt-1.5 text-[12px] text-slate-400">Bilmasangiz — A1 ni tanlang, darajani birga aniqlaymiz</p>
           </>)}
 
-          {/* Qo'shimcha savollar — yoziladigan yoki variantli */}
           {questions.map((q, i) => (
             <div key={i} className="mt-4">
               <Label text={q.q} req={!!q.required} />
@@ -325,15 +293,11 @@ export default function ApplyForm({ code, preview, questions = [], levels, branc
   );
 }
 
-// ── Uslub va kichik komponentlar (daraja testi sahifasi bilan bir xil) ──
-
-// Shaffof shisha — filial surati fonida orqasi ko'rinib turadi (oq emas)
 const CARD = "rounded-3xl border border-white/70 bg-white/55 shadow-[0_20px_50px_-24px_rgba(15,23,42,0.35)] backdrop-blur-xl dark:border-white/10 dark:bg-white/[0.06]";
 
 const INPUT =
   "min-h-[52px] w-full rounded-2xl border border-slate-200 bg-white px-4 text-[16px] text-slate-900 outline-none transition placeholder:text-slate-300 focus:border-brand-500 focus:ring-4 focus:ring-brand-500/15 dark:border-white/10 dark:bg-white/[0.06] dark:text-white dark:placeholder:text-slate-600";
 
-/** Ichida tugma/prefiks bo'lgan maydon qutisi — INPUT bilan bir xil ko'rinish, lekin ichki bo'shliqsiz (overflow-hidden: tugma burchakni to'ldiradi) */
 const FIELD_BOX =
   "flex min-h-[52px] w-full items-center overflow-hidden rounded-2xl border border-slate-200 bg-white text-[16px] text-slate-900 transition focus-within:border-brand-500 focus-within:ring-4 focus-within:ring-brand-500/15 dark:border-white/10 dark:bg-white/[0.06] dark:text-white";
 
@@ -345,9 +309,7 @@ function Label({ text, req, className }: { text: string; req?: boolean; classNam
   );
 }
 
-/** Katta tanlov kartasi — ta'lim shakli va filial uchun */
 function Choice({ on, onClick, icon, title, sub }: { on: boolean; onClick: () => void; icon: string; title: string; sub?: string }) {
-  // icon — ilovaning Icon to'plamidagi nom (video, building, pin ...); emoji emas — hamma qurilmada bir xil
   return (
     <button
       type="button"

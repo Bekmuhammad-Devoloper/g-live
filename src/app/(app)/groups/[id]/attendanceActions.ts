@@ -22,7 +22,6 @@ import {
   UNLOCK_HOURS,
 } from "@/lib/attendanceWindow";
 
-// Davomat belgilash huquqi: FULL (rahbariyat) yoki shu guruh o'qituvchisi
 async function canMark(groupId: string): Promise<SessionUser | null> {
   const s = await requireSession();
   if (getPermission(s.role, MODULES.GROUPS) === "FULL") return s;
@@ -43,7 +42,6 @@ const dayRange = (dateISO: string) => {
 const hhmmOf = (d: Date) => `${String(d.getHours()).padStart(2, "0")}:${String(d.getMinutes()).padStart(2, "0")}`;
 const dmOf = (d: Date) => `${String(d.getDate()).padStart(2, "0")}.${String(d.getMonth() + 1).padStart(2, "0")} ${hhmmOf(d)}`;
 
-// Shu kundagi darsni topadi; bo'lmasa guruh vaqtida yaratadi (davomat uchun)
 async function findOrCreateLesson(groupId: string, dateISO: string) {
   const { start, end } = dayRange(dateISO);
   const existing = await prisma.lesson.findFirst({ where: { groupId, startsAt: { gte: start, lt: end } } });
@@ -54,38 +52,19 @@ async function findOrCreateLesson(groupId: string, dateISO: string) {
 }
 
 export interface AttendanceWindowInfo {
-  /** Oyna yopilganmi (dars tugashi + 3 soat o'tganmi) */
   closed: boolean;
-  /** Kelajak sanami (oldindan belgilash taqiqlanadi) */
   future: boolean;
-  /** Hozir tahrirlash mumkinmi (ochiq, yoki ruxsat/bypass bor) */
   editable: boolean;
-  /** Oyna yopilish vaqti — "14.08 15:00" ko'rinishida (faqat ko'rsatish uchun) */
   closesAtLabel: string;
-  /** Amaldagi ruxsat qachongacha ("21.08 15:30") — bo'lmasa null */
   unlockedUntilLabel: string | null;
-  /** Joriy foydalanuvchi ruxsat bera oladimi (menejer/direktor/o'rinbosar/ROP) */
   canUnlock: boolean;
-  /** Sana rejadagi dars kunimi (oyiga darslar soni chegarasi ichida) */
   lessonDay?: boolean;
-  /** Kurs/guruh bo'yicha oyiga darslar soni */
   lessonsPerMonth?: number | null;
-  /** Shu oydagi nechanchi dars (1..N) */
   lessonIndex?: number | null;
-  /** Shu oyda rejadagi darslar soni */
   plannedInMonth?: number;
 }
 
-/**
- * Yopilgan kunda belgilanmaganlarni avtomatik "yo'q" (ABSENT) qilib yozadi.
- * Chegaralar: (1) faqat so'nggi MATERIALIZE_MAX_AGE_DAYS ichidagi kunlar —
- * tarixni varaqlash eski oylarni soxta ABSENT bilan to'ldirmasin; (2) faqat
- * guruhning dars kuni (weekdays yoki mavjud dars yozuvi) va guruh davri ichida;
- * (3) faqat o'sha kunga qadar guruhga QO'SHILGAN o'quvchilar (joinedAt).
- * method="AUTO" — qo'lda belgilangandan farqlash uchun.
- */
 async function materializeAutoAbsent(groupId: string, dateISO: string, closesAt: Date): Promise<void> {
-  // Juda eski kun — teginmaymiz (belgilanmagan bo'lib qoladi, hisobot buzilmaydi)
   if (Date.now() - closesAt.getTime() > MATERIALIZE_MAX_AGE_DAYS * 86_400_000) return;
 
   const { start, end } = dayRange(dateISO);
@@ -101,8 +80,6 @@ async function materializeAutoAbsent(groupId: string, dateISO: string, closesAt:
 
   const existingLesson = await prisma.lesson.findFirst({ where: { groupId, startsAt: { gte: start, lt: end } }, select: { id: true } });
   if (!existingLesson) {
-    // Dars yozuvi yo'q — faqat haqiqiy dars kunida yaratamiz (dam olish kuniga yozmaymiz);
-    // oylik chegaradan (kurs/guruh "oyiga darslar soni") tashqaridagi kun ham dars emas
     if (!isLessonDay(dateISO, group.weekdays)) return;
     if (!isPlannedLessonDay(dateISO, group.weekdays, group.lessonsPerMonth ?? group.program.lessonsPerMonth, group.startDate, group.endDate)) return;
     if (group.startDate && new Date(dateISO + "T23:59:59") < group.startDate) return;
@@ -114,7 +91,7 @@ async function materializeAutoAbsent(groupId: string, dateISO: string, closesAt:
   const markedSet = new Set(marked.map((m) => m.studentId));
   const dayEnd = new Date(dateISO + "T23:59:59");
   const missing = group.students.filter(
-    (gs) => !markedSet.has(gs.studentId) && gs.joinedAt.getTime() <= dayEnd.getTime(), // o'sha kuni guruhda bo'lganlargina
+    (gs) => !markedSet.has(gs.studentId) && gs.joinedAt.getTime() <= dayEnd.getTime(),
   );
   if (missing.length === 0) return;
 
@@ -123,13 +100,12 @@ async function materializeAutoAbsent(groupId: string, dateISO: string, closesAt:
       lessonId: lesson.id,
       studentId: gs.studentId,
       status: "ABSENT",
-      method: "AUTO", // oyna yopilgach avtomatik qo'yilgan
+      method: "AUTO",
       confirmed: false,
     })),
   });
 }
 
-// Shu kundagi davomat holati + oyna ma'lumoti: { studentId: status } va window
 export async function getGroupAttendance(
   groupId: string,
   dateISO: string,
@@ -143,19 +119,17 @@ export async function getGroupAttendance(
     select: { startTime: true, endTime: true, weekdays: true, startDate: true, endDate: true, lessonsPerMonth: true, program: { select: { lessonsPerMonth: true } } },
   });
   const win = computeAttendanceWindow(dateISO, group?.startTime, group?.endTime);
-  const future = dateISO > todayISOLocal(); // ISO format leksikografik solishtirishga mos
+  const future = dateISO > todayISOLocal();
   const unlockUntil = win.closed ? await activeUnlockUntil(groupId, dateISO) : null;
 
-  // Rejadagi dars kunimi: guruh kunlari + oyiga darslar soni chegarasi (kurs/guruh sozlamasi)
   const limit = group ? (group.lessonsPerMonth ?? group.program.lessonsPerMonth) : null;
   const [yy, mm] = dateISO.split("-").map(Number);
   const planned = group ? plannedLessonDays(yy, mm - 1, group.weekdays, limit, group.startDate, group.endDate) : [];
   const lessonDay = !group?.weekdays || planned.includes(dateISO);
   const plannedIndex = planned.indexOf(dateISO);
 
-  // Oyna yopilgan va ruxsat ham yo'q — belgilanmaganlar avtomatik "yo'q" bo'ladi
   if (win.closed && !unlockUntil) {
-    try { await materializeAutoAbsent(groupId, dateISO, win.closesAt); } catch { /* materializatsiya yiqilsa ko'rsatishga xalal bermasin */ }
+    try { await materializeAutoAbsent(groupId, dateISO, win.closesAt); } catch { }
   }
 
   const { start, end } = dayRange(dateISO);
@@ -164,7 +138,6 @@ export async function getGroupAttendance(
   if (lesson) for (const a of lesson.attendances) map[a.studentId] = a.status;
 
   const bypass = canBypassAttendanceLock(s.role);
-  // Reja tashqarisidagi kun (oylik chegara) — mavjud dars yozuvi bo'lmasa belgilab bo'lmaydi
   const offPlan = !lessonDay && !lesson;
   const editable = offPlan ? false : future ? bypass : (!win.closed || !!unlockUntil || bypass);
   return {
@@ -185,7 +158,6 @@ export async function getGroupAttendance(
   };
 }
 
-/** Reja tashqarisidagi kunga (oylik chegaradan oshgan) davomat yozilmaydi — dars yozuvi yo'q bo'lsa */
 async function planCheck(groupId: string, dateISO: string): Promise<{ notLessonDay: true } | null> {
   const { start, end } = dayRange(dateISO);
   const [group, lesson] = await Promise.all([
@@ -196,14 +168,12 @@ async function planCheck(groupId: string, dateISO: string): Promise<{ notLessonD
   return isPlannedLessonDay(dateISO, group.weekdays, group.lessonsPerMonth ?? group.program.lessonsPerMonth, group.startDate, group.endDate) ? null : { notLessonDay: true };
 }
 
-/** Yopiq oyna / kelajak sana tekshiruvi: null = tahrirlash mumkin, aks holda sabab. */
 async function lockCheck(
   s: SessionUser,
   groupId: string,
   dateISO: string,
 ): Promise<{ closed?: true; future?: true; closesAtLabel?: string } | null> {
   if (canBypassAttendanceLock(s.role)) return null;
-  // Kelajak sanaga davomat oldindan belgilanmaydi (soxtalashtirish oldini olish)
   if (dateISO > todayISOLocal()) return { future: true };
   const group = await prisma.group.findUnique({ where: { id: groupId }, select: { startTime: true, endTime: true } });
   const win = computeAttendanceWindow(dateISO, group?.startTime, group?.endTime);
@@ -213,11 +183,8 @@ async function lockCheck(
 }
 
 const ALLOWED = ["PRESENT", "ABSENT", "LATE", "EXCUSED"];
-const ATTEND_STATUSES = ["PRESENT", "LATE"]; // "keldi" deb hisoblanadigan holatlar — to'lov bloki shularga tegishli
+const ATTEND_STATUSES = ["PRESENT", "LATE"];
 
-// Bitta o'quvchining shu kundagi davomatini belgilash (bor/yo'q). Bir xil bosilsa — bekor qilinadi.
-// Qoidalar: (1) yopiq oynada (dars + 3 soat o'tgan) o'qituvchi/admin tahrirlay olmaydi — ruxsat kerak;
-// (2) to'lov majburiy bo'lsa yangi "keldi" belgisi bloklanadi.
 export async function markStudentAttendance(
   groupId: string,
   dateISO: string,
@@ -229,16 +196,13 @@ export async function markStudentAttendance(
   if (!ALLOWED.includes(status)) return { ok: false };
   if (!isValidDateISO(dateISO)) return { ok: false };
 
-  // Yopiq oyna tekshiruvi — belgilash HAM, o'chirish HAM taqiqlanadi (avto-"yo'q"ni o'chirib bo'lmasin)
   const lock = await lockCheck(s, groupId, dateISO);
   if (lock) return { ok: false, ...lock };
-  // Oylik chegara: rejadagi darslar soni to'lgan kun — dars emas
   if (await planCheck(groupId, dateISO)) return { ok: false, notLessonDay: true };
 
   const lesson = await findOrCreateLesson(groupId, dateISO);
   const existing = await prisma.attendance.findUnique({ where: { lessonId_studentId: { lessonId: lesson.id, studentId } } });
 
-  // Xuddi shu holat qayta bosilsa — belgini olib tashlaymiz (uchinchi holat: belgisiz)
   if (existing && existing.status === status) {
     await prisma.attendance.delete({ where: { id: existing.id } });
     await autoMarkTeacherPresent(s, groupId, dateISO);
@@ -246,7 +210,6 @@ export async function markStudentAttendance(
     return { ok: true, cleared: true };
   }
 
-  // Yangi "keldi" belgisi (avval keldi deb belgilanmagan bo'lsa) — to'lov majburiyligini tekshiramiz
   const wasAlreadyAttending = existing ? ATTEND_STATUSES.includes(existing.status) : false;
   if (ATTEND_STATUSES.includes(status) && !wasAlreadyAttending) {
     const { mandatory, daysUnpaid } = await isPaymentMandatory(studentId);
@@ -259,12 +222,11 @@ export async function markStudentAttendance(
     update: { status, method: "MANUAL", confirmed: true, markedAt: new Date() },
   });
   await writeAudit({ actorId: s.userId, action: "UPDATE", entityType: "Attendance", entityId: lesson.id, newValue: { studentId, status, date: dateISO } });
-  await autoMarkTeacherPresent(s, groupId, dateISO); // ustozlar davomatiga avtomatik ✓
+  await autoMarkTeacherPresent(s, groupId, dateISO);
   revalidatePath(`/groups/${groupId}`);
   return { ok: true };
 }
 
-// Barcha (belgilanmagan) o'quvchilarni bir bosishда "bor" qilish — to'lovi majburiy (bloklangan)larni o'tkazib yuboradi
 export async function markAllPresent(
   groupId: string,
   dateISO: string,
@@ -291,15 +253,11 @@ export async function markAllPresent(
     await prisma.attendance.create({ data: { lessonId: lesson.id, studentId: gs.studentId, status: "PRESENT", method: "MANUAL", confirmed: true } });
     added++;
   }
-  await autoMarkTeacherPresent(s, groupId, dateISO); // ustozlar davomatiga avtomatik ✓
+  await autoMarkTeacherPresent(s, groupId, dateISO);
   revalidatePath(`/groups/${groupId}`);
   return { ok: true, added, skippedBlocked };
 }
 
-/**
- * Yopilgan davomatni UNLOCK_HOURS (24 soat) ga ochish — faqat rahbariyat
- * (menejer / direktor / o'rinbosar / ROP). Audit bilan yoziladi.
- */
 export async function unlockAttendance(
   groupId: string,
   dateISO: string,
@@ -326,9 +284,8 @@ export async function unlockAttendance(
   return { ok: true, untilLabel: dmOf(expiresAt) };
 }
 
-// ─── Oylik jurnal (Modme uslubi): o'quvchilar × oyning dars sanalari ───
 export interface JournalDay {
-  date: string; // yyyy-mm-dd
+  date: string;
   future: boolean;
   today: boolean;
   closed: boolean;
@@ -338,25 +295,15 @@ export interface JournalDay {
 }
 export interface AttendanceJournal {
   days: JournalDay[];
-  /** marks[date][studentId] = PRESENT | ABSENT | LATE | EXCUSED */
   marks: Record<string, Record<string, string>>;
-  /** studentId → guruhga qo'shilgan sana (yyyy-mm-dd) — undan oldingi kunlar belgilanmaydi */
   joined: Record<string, string>;
   canUnlock: boolean;
-  /** Faqat ko'rish rejimi (belgilash huquqi yo'q) */
   readOnly?: boolean;
 }
 
 const isoOf = (d: Date) => `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`;
 
-/**
- * Bir oylik davomat jurnali. Sanalar — guruhning rejadagi dars kunlari (hafta kunlari + oyiga
- * darslar soni chegarasi + guruh davri) va shu oyda mavjud dars yozuvlari. Har bir kun uchun
- * tahrirlash qoidasi kunlik ko'rinish (getGroupAttendance) bilan bir xil; yopilgan kunlarda
- * belgilanmaganlar avtomatik "yo'q" qilinadi (MATERIALIZE_MAX_AGE_DAYS chegarasi ichida).
- */
 export async function getAttendanceJournal(groupId: string, year: number, month0: number): Promise<{ ok: boolean; data?: AttendanceJournal }> {
-  // Belgilash huquqi bo'lmasa — guruhlarni ko'ra oladigan xodimga faqat ko'rish uchun
   const marker = await canMark(groupId);
   const viewer = marker ? null : await requireSession();
   const readOnly = !marker;
@@ -389,7 +336,7 @@ export async function getAttendanceJournal(groupId: string, year: number, month0
     const future = date > today;
     const unlockUntil = win.closed ? await activeUnlockUntil(groupId, date) : null;
     if (win.closed && !unlockUntil && !readOnly) {
-      try { await materializeAutoAbsent(groupId, date, win.closesAt); } catch { /* ko'rsatishga xalal bermasin */ }
+      try { await materializeAutoAbsent(groupId, date, win.closesAt); } catch { }
     }
     days.push({
       date, future, today: date === today, closed: win.closed,

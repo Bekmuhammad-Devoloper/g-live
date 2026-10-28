@@ -8,11 +8,9 @@ import { Forbidden } from "../../_components/ui";
 import KpiView from "./KpiView";
 import type { Cat, VKpiRow } from "./KpiShared";
 
-// Muvaffaqiyatli lid uchun standart bonus (so'm) — xodimda o'z kpiBonus qiymati bo'lmasa shu.
 const BONUS = 200_000;
 const DAY = 86_400_000;
 
-// Eski loyiha rollari: operator → MANAGER, rop → DEPUTY_DIRECTOR, admin → ADMIN/DIRECTOR.
 const CAT: Record<string, Cat> = {
   [ROLES.MANAGER]: "operator",
   [ROLES.DEPUTY_DIRECTOR]: "rop",
@@ -42,13 +40,13 @@ export default async function KpiPage() {
   const roles = [ROLES.MANAGER, ROLES.DEPUTY_DIRECTOR, ROLES.DIRECTOR, ROLES.ADMIN];
   const [users, leads] = await Promise.all([
     prisma.user.findMany({
-      where: { AND: [{ role: { in: roles }, isActive: true }, staffBranchWhere(s)] }, // faol filial doirasida
+      where: { AND: [{ role: { in: roles }, isActive: true }, staffBranchWhere(s)] },
       orderBy: { fullName: "asc" },
       select: {
         id: true,
         fullName: true,
         role: true,
-        imageUrl: true, // avatar uchun (bo'lmasa ism bosh harflari)
+        imageUrl: true,
         fiksa: true,
         kpiBonus: true,
         branchId: true,
@@ -57,7 +55,7 @@ export default async function KpiPage() {
       },
     }),
     prisma.lead.findMany({
-      where: { AND: [{ managerId: { not: null } }, branchWhere(s)] }, // faol filial doirasida
+      where: { AND: [{ managerId: { not: null } }, branchWhere(s)] },
       select: { managerId: true, stage: true, createdAt: true },
     }),
   ]);
@@ -65,7 +63,6 @@ export default async function KpiPage() {
   const now = new Date();
   const monthStart = new Date(now.getFullYear(), now.getMonth(), 1);
 
-  // Har bir xodim bo'yicha lid statistikasi.
   const agg = new Map<string, Agg>();
   for (const u of users) agg.set(u.id, { total: 0, won: 0, blocked: 0, wonMonth: 0 });
   for (const l of leads) {
@@ -80,8 +77,6 @@ export default async function KpiPage() {
     }
   }
 
-  // ROP qo'l ostidagi operatorlar — bizda bevosita bog'lanish yo'q,
-  // shuning uchun bir filialdagi faol MANAGER'lar ROP'ning jamoasi hisoblanadi.
   const opsByBranch = new Map<string, string[]>();
   for (const u of users) {
     if (u.role !== ROLES.MANAGER || !u.branchId) continue;
@@ -93,7 +88,6 @@ export default async function KpiPage() {
   const rows: VKpiRow[] = users.map((u) => {
     const cat = CAT[u.role] ?? "operator";
 
-    // ROP ko'rsatkichi — jamoasidagi operatorlar yig'indisi (eski loyihadagidek).
     let a = agg.get(u.id) ?? { total: 0, won: 0, blocked: 0, wonMonth: 0 };
     let opsCount = 0;
     if (cat === "rop") {
@@ -111,11 +105,9 @@ export default async function KpiPage() {
       a = sum;
     }
 
-    // Konversiya (1 xonali kasr) va KPI% = min(100, konversiya × 2) — eski formulaning aynan o'zi.
     const conv = a.total > 0 ? Number(((a.won / a.total) * 100).toFixed(1)) : 0;
     const kpiPct = Math.min(100, Math.round(conv * 2));
     const bonus = u.kpiBonus ?? BONUS;
-    // Ish kunlari: ishga qabul qilingandan oxirgi kirishgacha (yoki bugungacha).
     const end = u.lastLoginAt ?? now;
     const workDays = Math.max(1, Math.ceil(Math.abs(end.getTime() - u.createdAt.getTime()) / DAY));
 
@@ -139,8 +131,6 @@ export default async function KpiPage() {
     };
   });
 
-  // Oylik/bonusni tahrirlash — faqat SALARY=FULL (Direktor / o'rinbosar / hisobchi).
-  // "OWN" yetarli emas: o'qituvchi o'z oyligini ko'radi, lekin hech kimnikini tahrirlay olmaydi.
   const canEdit = getPermission(s.role, MODULES.SALARY) === "FULL";
   return <KpiView rows={rows} locale={loc} canEdit={canEdit} />;
 }

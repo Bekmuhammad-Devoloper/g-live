@@ -1,11 +1,3 @@
-// Daraja aniqlash testi — to'plamlar va baholash.
-//
-// Savollar banki: src/lib/levelTestBank.ts — 8 ta ALOHIDA to'plam:
-// A1.1, A1.2, A2.1, A2.2, B1.1, B1.2, B2.1, B2.2 (25 tadan; B2.2 — 24).
-// Mijoz darajani va testni o'zi tanlaydi, savollar to'plamdagi asl tartibda
-// beriladi — aralashtirilmaydi. Javob kaliti (`answer`) mijozga
-// YUBORILMAYDI: sahifa `publicTestSets()` ni oladi, baholash faqat serverda.
-
 import { LEVEL_TEST_BANK } from "./levelTestBank";
 
 export const LEVEL_TEST_LEVELS = ["A1", "A2", "B1", "B2"] as const;
@@ -16,33 +8,25 @@ export type TestSetId = (typeof TEST_SET_IDS)[number];
 
 export interface LevelTestQuestion {
   id: number;
-  /** Qaysi to'plam (A1.1, A2.2, ...) */
   set: TestSetId;
   level: TestLevel;
-  /** Grammatik mavzu — savol ustida ko'rsatiladi (Perfekt, Dativ, ...) */
   topic?: string;
-  /** Nemischa gap; bo'sh joy "___" bilan */
   q: string;
   options: string[];
-  /** To'g'ri variant indeksi (faqat server) */
   answer: number;
 }
 
-/** Mijozga boradigan ko'rinish — javobsiz */
 export type PublicQuestion = Omit<LevelTestQuestion, "answer">;
 
 export interface PublicSet {
   id: TestSetId;
   level: TestLevel;
-  /** Qisqa izoh — daraja ichida qaysi yarim */
   hint: string;
   questions: PublicQuestion[];
 }
 
-/** To'plamni "o'tgan" hisoblash uchun to'g'ri javoblar ulushi (25 dan 18 = 72%) */
 export const PASS_RATIO = 0.7;
 
-/** Daraja ranglari — Sozlamalar > Darajalar katalogidagi standart ranglar bilan bir xil */
 export const LEVEL_COLORS: Record<TestLevel, string> = {
   A1: "#2d5f8a",
   A2: "#0e7490",
@@ -50,7 +34,6 @@ export const LEVEL_COLORS: Record<TestLevel, string> = {
   B2: "#a83a7a",
 };
 
-/** Daraja nomlari (uz) — natija sahifasi va CRM izohi uchun */
 export const LEVEL_NAMES: Record<TestLevel, string> = {
   A1: "Boshlang'ich",
   A2: "Asosiy",
@@ -67,12 +50,10 @@ export const SET_HINT: Record<TestSetId, string> = {
 
 export const levelOfSet = (id: TestSetId): TestLevel => id.slice(0, 2) as TestLevel;
 
-/** Bank — eski nom bilan ham */
 export const LEVEL_TEST_QUESTIONS: LevelTestQuestion[] = LEVEL_TEST_BANK;
 
 const BY_ID = new Map(LEVEL_TEST_BANK.map((q) => [q.id, q]));
 
-/** Barcha to'plamlar, javobsiz — kirish sahifasi shu bilan ishlaydi */
 export function publicTestSets(): PublicSet[] {
   return TEST_SET_IDS.map((id) => ({
     id,
@@ -89,16 +70,10 @@ export interface SetResult {
   total: number;
   pct: number;
   passed: boolean;
-  /** Natijaviy daraja: o'tsa — tanlangan daraja, o'tmasa — bittasi pastroq (A1 o'tmasa null) */
   resultLevel: TestLevel | null;
-  /** O'tgan bo'lsa — keyingi daraja (B2 dan keyin yo'q) */
   nextLevel: TestLevel | null;
 }
 
-/**
- * Javoblarni tozalash: faqat shu to'plam savollari, variant oralig'ida.
- * To'plamdagi HAMMA savolga javob bo'lishi shart — aks holda null.
- */
 export function normalizeSetAnswers(setId: TestSetId, raw: Record<string, unknown>): Record<number, number> | null {
   const answers: Record<number, number> = {};
   for (const q of LEVEL_TEST_BANK) {
@@ -110,7 +85,6 @@ export function normalizeSetAnswers(setId: TestSetId, raw: Record<string, unknow
   return Object.keys(answers).length ? answers : null;
 }
 
-/** Tanlangan to'plamni baholash. `answers` — savol id → tanlangan variant indeksi. */
 export function gradeSet(setId: TestSetId, answers: Record<number, number | undefined>): SetResult {
   const level = levelOfSet(setId);
   let correct = 0;
@@ -130,5 +104,4 @@ export function gradeSet(setId: TestSetId, answers: Record<number, number | unde
 
 export const isTestSetId = (v: unknown): v is TestSetId => typeof v === "string" && (TEST_SET_IDS as readonly string[]).includes(v);
 
-/** Savol id bo'yicha (server ichida) */
 export const questionById = (id: number) => BY_ID.get(id);

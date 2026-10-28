@@ -25,7 +25,7 @@ export default function LoginSettings({ locale }: { locale: Locale }) {
     try {
       const raw = localStorage.getItem(STORAGE_KEY);
       if (raw) setF((cur) => ({ ...cur, ...JSON.parse(raw) }));
-    } catch { /* ignore */ }
+    } catch { }
   }, []);
 
   const set = <K extends keyof Form>(k: K, v: Form[K]) => setF((s) => ({ ...s, [k]: v }));
@@ -47,7 +47,7 @@ export default function LoginSettings({ locale }: { locale: Locale }) {
   };
 
   const save = () => {
-    try { localStorage.setItem(STORAGE_KEY, JSON.stringify(f)); } catch { /* ignore */ }
+    try { localStorage.setItem(STORAGE_KEY, JSON.stringify(f)); } catch { }
     setSaved(true); setTimeout(() => setSaved(false), 1800);
   };
 
@@ -55,7 +55,6 @@ export default function LoginSettings({ locale }: { locale: Locale }) {
     <div>
       <h2 className="mb-6 text-2xl font-bold text-slate-800 dark:text-slate-100">{tr(locale, { uz: "Sistemaga kirish", ru: "Вход в систему", en: "System login", de: "Systemanmeldung" })}</h2>
 
-      {/* Shakl rasm */}
       <h3 className="mb-2.5 text-lg font-semibold text-slate-700 dark:text-slate-200">{tr(locale, { uz: "Shakl rasm", ru: "Изображение формы", en: "Form image", de: "Formularbild" })}</h3>
       <div className="grid gap-4 md:grid-cols-2">
         <div
@@ -85,7 +84,6 @@ export default function LoginSettings({ locale }: { locale: Locale }) {
       </div>
       <p className="mt-2 text-sm text-slate-400">{tr(locale, { uz: "Rasm o'lchami 610x160px bo'lishini tavsiya etamiz", ru: "Рекомендуем размер изображения 610x160px", en: "We recommend an image size of 610x160px", de: "Wir empfehlen eine Bildgröße von 610x160px" })}</p>
 
-      {/* Forma matni */}
       <h3 className="mb-2.5 mt-7 text-lg font-semibold text-slate-700 dark:text-slate-200">{tr(locale, { uz: "Forma matni", ru: "Текст формы", en: "Form text", de: "Formulartext" })}</h3>
       <div className="grid gap-4 md:grid-cols-2">
         <RichEditor locale={locale} value={f.formText} onChange={(html) => set("formText", html)} placeholder={tr(locale, { uz: "Matnni bu yerga kiriting ...", ru: "Введите текст здесь ...", en: "Insert text here ...", de: "Text hier eingeben ..." })} />
@@ -99,7 +97,6 @@ export default function LoginSettings({ locale }: { locale: Locale }) {
         </div>
       </div>
 
-      {/* Shaxsiy CSS */}
       <h3 className="mb-2.5 mt-7 text-lg font-semibold text-slate-700 dark:text-slate-200">{tr(locale, { uz: "Shaxsiy CSS", ru: "Пользовательский CSS", en: "Custom CSS", de: "Eigenes CSS" })}</h3>
       <textarea
         value={f.css}

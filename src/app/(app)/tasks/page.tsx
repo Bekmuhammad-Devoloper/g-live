@@ -14,15 +14,14 @@ export default async function TasksPage() {
 
   const [tasks, staff, students, groups] = await Promise.all([
     prisma.task.findMany({
-      where: { AND: [{ kind: "TASK" }, branchWhere(s)] }, // faol filial topshiriqlari
+      where: { AND: [{ kind: "TASK" }, branchWhere(s)] },
       orderBy: [{ status: "asc" }, { dueAt: "asc" }],
       include: { assignee: true, student: true, group: true, author: true },
       take: 300,
     }),
-    // faol filial doirasida
     prisma.user.findMany({ where: { AND: [{ role: { notIn: [ROLES.STUDENT, ROLES.PARENT] }, isActive: true }, staffBranchWhere(s)] }, select: { id: true, fullName: true }, orderBy: { fullName: "asc" } }),
-    prisma.student.findMany({ where: branchWhere(s), select: { id: true, fullName: true }, orderBy: { fullName: "asc" }, take: 500 }), // faol filial doirasida
-    prisma.group.findMany({ where: branchWhere(s), select: { id: true, name: true }, orderBy: { name: "asc" } }), // faol filial doirasida
+    prisma.student.findMany({ where: branchWhere(s), select: { id: true, fullName: true }, orderBy: { fullName: "asc" }, take: 500 }),
+    prisma.group.findMany({ where: branchWhere(s), select: { id: true, name: true }, orderBy: { name: "asc" } }),
   ]);
 
   const vtasks: VTask[] = tasks.map((t) => ({

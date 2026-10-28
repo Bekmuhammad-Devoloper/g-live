@@ -7,9 +7,6 @@ import { tr } from "@/lib/tr";
 import type { Locale } from "@/lib/constants";
 import { Icon } from "../../_components/Icon";
 
-// Sana filtri — eski loyihadagi kalendar popup. Tanlangan sana ?date=YYYY-MM-DD
-// query parametriga yoziladi va serverda kunlik ko'rsatkichlar qayta hisoblanadi.
-
 const p2 = (n: number) => String(n).padStart(2, "0");
 const key = (y: number, m: number, d: number) => `${y}-${p2(m + 1)}-${p2(d)}`;
 
@@ -61,7 +58,6 @@ export default function DateFilter({ locale, value, label }: { locale: Locale; v
     });
   };
 
-  // 42 katakli oy setkasi (dushanbadan boshlanadi)
   const cells: { d: number; cur: boolean; iso: string }[] = [];
   const first = new Date(view.y, view.m, 1).getDay();
   const start = first === 0 ? 6 : first - 1;

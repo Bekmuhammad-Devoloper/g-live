@@ -6,7 +6,6 @@ import { getStudyLevels } from "@/lib/studyLevels";
 import { PageHeader, Forbidden } from "../../_components/ui";
 import LevelsView, { type LevelRow } from "./LevelsView";
 
-// Daraja katalogi — A1, A2, B1 ... butun tizim shu ro'yxatdan oladi
 const ALLOWED = [ROLES.DIRECTOR, ROLES.DEPUTY_DIRECTOR, ROLES.ADMIN, ROLES.MANAGER];
 
 export default async function LevelsSettingsPage() {
@@ -22,7 +21,6 @@ export default async function LevelsSettingsPage() {
 
   const levels = await getStudyLevels();
 
-  // Har daraja nechta joyda ishlatilgan — o'chirishdan oldin ko'rinib tursin
   const codes = levels.map((l) => l.code);
   const [lessons, groups, materials, certs] = await Promise.all([
     prisma.courseLesson.groupBy({ by: ["levelCode"], where: { levelCode: { in: codes } }, _count: { _all: true } }),

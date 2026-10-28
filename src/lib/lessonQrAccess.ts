@@ -1,14 +1,9 @@
 import "server-only";
 import { prisma } from "./db";
 
-/**
- * QR orqali dars videosini ko'rish huquqi: o'quvchi markazning istalgan
- * guruhida FAOL bo'lishi yetarli (dars o'z kursidan bo'lishi shart emas).
- */
 export interface QrStudent {
   id: string;
   currentLevel: string | null;
-  /** Faol guruhlar — eng oxirgi qo'shilgani birinchi (ilova ham shuni "asosiy" deb oladi) */
   groups: { id: string; programId: string; levelCode: string | null }[];
 }
 

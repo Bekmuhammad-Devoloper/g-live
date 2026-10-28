@@ -14,7 +14,6 @@ function canManage(role: string) { return CAN.includes(role as never); }
 const timeRe = /^([01]\d|2[0-3]):[0-5]\d$/;
 const cleanIds = (raw?: string) => (raw ? Array.from(new Set(raw.split(",").map((x) => x.trim()).filter(Boolean))).join(",") : null);
 
-// ─── Blok test (imtihon) ───
 const examSchema = z.object({
   title: z.string().min(2),
   type: z.enum(["KIRISH", "BLOCK", "YAKUNIY"]).default("BLOCK"),
@@ -51,7 +50,7 @@ export async function createBlockTest(_prev: FormState, formData: FormData): Pro
       durationMin: parsed.data.durationMin,
       responsibleId: parsed.data.responsibleId || null,
       groupIds: cleanIds(parsed.data.groupIds),
-      branchId: s.branchId, // faol filialga biriktiriladi
+      branchId: s.branchId,
     },
   });
   await writeAudit({ actorId: s.userId, action: "CREATE", entityType: "BlockTest", entityId: bt.id, newValue: { title: bt.title } });
@@ -59,7 +58,6 @@ export async function createBlockTest(_prev: FormState, formData: FormData): Pro
   return { ok: true };
 }
 
-// ─── Test turi ───
 const typeSchema = z.object({
   name: z.string().min(2),
   code: z.string().optional(),

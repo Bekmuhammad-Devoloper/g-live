@@ -12,8 +12,6 @@ import {
   type BannerInput, type VideoInput,
 } from "./actions";
 
-// O'quvchi bosh sahifasidagi banner karuseli va "Video va podkastlar" ro'yxati.
-
 export type VBanner = {
   id: string; title: string; subtitle: string | null; btnLabel: string | null;
   href: string | null; imageUrl: string | null; color: string; isActive: boolean;
@@ -57,7 +55,6 @@ export default function HomeContentView({
         <div className="rounded-xl bg-rose-50 px-4 py-3 text-sm font-medium text-rose-700 dark:bg-rose-950/30 dark:text-rose-300">{err}</div>
       ) : null}
 
-      {/* ══ Bannerlar ══ */}
       <section>
         <div className="mb-2.5 flex flex-wrap items-center justify-between gap-2">
           <div>
@@ -143,7 +140,6 @@ export default function HomeContentView({
         )}
       </section>
 
-      {/* ══ Video va podkastlar ══ */}
       <section className="pt-2">
         <div className="mb-2.5 flex flex-wrap items-center justify-between gap-2">
           <div>
@@ -249,7 +245,6 @@ export default function HomeContentView({
   );
 }
 
-/* ── Kichik yordamchilar ── */
 function Empty({ text }: { text: string }) {
   return (
     <div className="rounded-xl border border-dashed border-slate-300 px-4 py-10 text-center text-sm text-slate-400 dark:border-slate-700">
@@ -306,9 +301,6 @@ function Arrows({ first, last, onUp, onDown }: { first: boolean; last: boolean; 
   );
 }
 
-// Banner va video oynalari yonboshdan ochiladi — CRM panellari bilan bir xil.
-// Sarlavha va tugmalar joyida qotib turadi, o'rtasi aylanadi: uzun forma ham
-// "Saqlash"ni ekrandan chiqarib yubormaydi.
 function Drawer({ title, onClose, children, footer }: { title: string; onClose: () => void; children: React.ReactNode; footer: React.ReactNode }) {
   useEffect(() => {
     const onKey = (e: KeyboardEvent) => { if (e.key === "Escape") onClose(); };
@@ -338,7 +330,6 @@ function Drawer({ title, onClose, children, footer }: { title: string; onClose: 
   );
 }
 
-/* ── Banner oynasi ── */
 function BannerDialog({ row, locale, onClose, onSaved }: { row: VBanner | null; locale: Locale; onClose: () => void; onSaved: () => void }) {
   const T = (uz: string, ru: string, en: string, de: string) => tr(locale, { uz, ru, en, de });
   const [f, setF] = useState<BannerInput>({
@@ -396,7 +387,6 @@ function BannerDialog({ row, locale, onClose, onSaved }: { row: VBanner | null; 
         </>
       }
     >
-      {/* Ko'rinishi */}
       <div
         className="relative mb-4 grid min-h-[112px] place-items-start overflow-hidden rounded-2xl p-4 text-white"
         style={f.imageUrl ? { backgroundColor: "#12303f" } : { background: levelGradient(f.color) }}
@@ -472,7 +462,6 @@ function BannerDialog({ row, locale, onClose, onSaved }: { row: VBanner | null; 
   );
 }
 
-/* ── Video oynasi ── */
 function VideoDialog({ row, locale, onClose, onSaved }: { row: VVideo | null; locale: Locale; onClose: () => void; onSaved: () => void }) {
   const T = (uz: string, ru: string, en: string, de: string) => tr(locale, { uz, ru, en, de });
   const [f, setF] = useState<VideoInput>({

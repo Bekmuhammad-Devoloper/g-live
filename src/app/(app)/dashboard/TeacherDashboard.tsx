@@ -18,14 +18,14 @@ const daysLabel = (wd: string | null, locale: Locale) => (wd ?? "").split(",").f
 export default async function TeacherDashboard({ userId, locale }: { userId: string; locale: Locale }) {
   const now = new Date();
   const jsDay = now.getDay();
-  const todayWd = jsDay === 0 ? 7 : jsDay; // 1=Du..7=Ya
+  const todayWd = jsDay === 0 ? 7 : jsDay;
   const nowMin = now.getHours() * 60 + now.getMinutes();
   const monthStart = new Date(now.getFullYear(), now.getMonth(), 1);
   const monthEnd = new Date(now.getFullYear(), now.getMonth() + 1, 1);
 
   const [groups, user, monthLessons, curSalary] = await Promise.all([
     prisma.group.findMany({
-      where: { teacherId: userId, status: "ACTIVE" }, // nofaol qilingan guruh o'qituvchi panelida ko'rinmaydi
+      where: { teacherId: userId, status: "ACTIVE" },
       include: { program: { select: { name: true } }, _count: { select: { students: { where: { isActive: true } } } } },
       orderBy: { name: "asc" },
     }),
@@ -45,7 +45,6 @@ export default async function TeacherDashboard({ userId, locale }: { userId: str
 
   return (
     <div className="space-y-5">
-      {/* KPI kartalar */}
       <div className="grid grid-cols-2 gap-4 lg:grid-cols-5">
         <StatCard label={tr(locale, { uz: "Mening guruhlarim", ru: "Мои группы", en: "My groups", de: "Meine Gruppen" })} value={groups.length} tone="brand" icon="layers" />
         <StatCard label={tr(locale, { uz: "Jami o'quvchilar", ru: "Всего учеников", en: "Total students", de: "Schüler insgesamt" })} value={totalStudents} tone="green" icon="graduation" />
@@ -55,7 +54,6 @@ export default async function TeacherDashboard({ userId, locale }: { userId: str
       </div>
 
       <div className="grid gap-5 lg:grid-cols-3 lg:items-start">
-        {/* Chap ustun: bugungi darslar + mening guruhlarim */}
         <div className="space-y-5 lg:col-span-2">
           <div className="rounded-2xl border border-slate-200/70 bg-white p-5 shadow-card dark:border-slate-800 dark:bg-slate-900">
             <div className="mb-3 flex items-center justify-between">
@@ -100,7 +98,6 @@ export default async function TeacherDashboard({ userId, locale }: { userId: str
             )}
           </div>
 
-          {/* Mening guruhlarim — Bugungi darslar tagida, bir xil kenglikda */}
           <div>
             <h3 className="mb-3 text-sm font-semibold text-slate-700 dark:text-slate-200">{tr(locale, { uz: "Mening guruhlarim", ru: "Мои группы", en: "My groups", de: "Meine Gruppen" })}</h3>
             {groups.length === 0 ? (
@@ -134,7 +131,6 @@ export default async function TeacherDashboard({ userId, locale }: { userId: str
           </div>
         </div>
 
-        {/* Tezkor havolalar */}
         <div className="rounded-2xl border border-slate-200/70 bg-white p-5 shadow-card dark:border-slate-800 dark:bg-slate-900">
           <h3 className="mb-3 text-sm font-semibold text-slate-700 dark:text-slate-200">{tr(locale, { uz: "Tezkor havolalar", ru: "Быстрые ссылки", en: "Quick links", de: "Schnellzugriff" })}</h3>
           <div className="grid grid-cols-2 gap-2.5">

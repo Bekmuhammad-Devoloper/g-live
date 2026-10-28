@@ -23,14 +23,13 @@ export async function saveTelephony(fd: FormData): Promise<State> {
   await setSetting("telephony.provider", "onlinepbx");
   await setSetting("telephony.domain", domain);
   await setSetting("telephony.enabled", enabled ? "1" : "0");
-  if (apiKey) await setSetting("telephony.apiKey", apiKey); // faqat yangi kiritilganda yangilanadi
+  if (apiKey) await setSetting("telephony.apiKey", apiKey);
 
   await writeAudit({ actorId: s.userId, action: "UPDATE", entityType: "Setting", entityId: "telephony", newValue: { domain, enabled } });
   revalidatePath("/settings/telephony");
   return { ok: true };
 }
 
-// Kiritilgan ma'lumotlar formatini tekshirish (haqiqiy ulanish OnlinePBX hisobiga bog'liq)
 export async function checkTelephony(): Promise<{ ok: boolean; message: string }> {
   const s = await requireSession();
   if (!ALLOWED.includes(s.role as never)) return { ok: false, message: tr(s.locale, { uz: "Ruxsat yo'q", ru: "Нет доступа", en: "No permission", de: "Keine Berechtigung" }) };

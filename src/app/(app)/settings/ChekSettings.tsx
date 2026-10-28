@@ -15,7 +15,6 @@ const STORAGE_KEY = "gl-chek-settings";
 
 type L = { uz: string; ru: string; en: string; de: string };
 
-// Chek qatorlari (chekdagi tartibda). value — namunaviy ko'rinish uchun.
 const ROWS: { key: string; label: L; value: (c: string) => string }[] = [
   { key: "checkNumber", label: { uz: "Tekshirish raqami", ru: "Номер чека", en: "Check number", de: "Belegnummer" }, value: () => "№12345" },
   { key: "company", label: { uz: "Kompaniya", ru: "Компания", en: "Company", de: "Unternehmen" }, value: (c) => c },
@@ -34,7 +33,6 @@ const FOOTER: { key: string; label: L; value: string }[] = [
   { key: "staff", label: { uz: "Xodim", ru: "Сотрудник", en: "Staff", de: "Mitarbeiter" }, value: "Admin" },
   { key: "time", label: { uz: "Vaqt", ru: "Время", en: "Time", de: "Uhrzeit" }, value: "01.01.2025 10:00" },
 ];
-// Chap ustundagi barcha "Yashirish:" tartibi
 const TOGGLES = ["logo", "image", "text", ...ROWS.map((r) => r.key), ...FOOTER.map((f) => f.key)];
 const LABELS: Record<string, L> = {
   logo: { uz: "Logotip", ru: "Логотип", en: "Logo", de: "Logo" },
@@ -44,8 +42,7 @@ const LABELS: Record<string, L> = {
   ...Object.fromEntries(FOOTER.map((f) => [f.key, f.label])),
 };
 
-export default function ChekSettings({ locale, centerName, receiptMode, brand }: { locale: Locale; centerName: string; receiptMode: ReceiptMode; /** Markaz brendi — chek ko'rinishidagi logotip */ brand: BrandView }) {
-  // Chek yuklash majburiyligi — BAZAGA yoziladi (qolgan sozlamalar localStorage'da)
+export default function ChekSettings({ locale, centerName, receiptMode, brand }: { locale: Locale; centerName: string; receiptMode: ReceiptMode; brand: BrandView }) {
   const [mode, setMode] = useState<ReceiptMode>(receiptMode);
   const [modeSaved, setModeSaved] = useState(false);
   const [modeErr, setModeErr] = useState<string | null>(null);
@@ -69,13 +66,13 @@ export default function ChekSettings({ locale, centerName, receiptMode, brand }:
     try {
       const raw = localStorage.getItem(STORAGE_KEY);
       if (raw) { const d = JSON.parse(raw); setHide(d.hide ?? {}); setImage(d.image ?? null); }
-    } catch { /* ignore */ }
+    } catch { }
   }, []);
 
   const toggle = (k: string) => setHide((s) => ({ ...s, [k]: !s[k] }));
   const shown = (k: string) => !hide[k];
   const save = () => {
-    try { localStorage.setItem(STORAGE_KEY, JSON.stringify({ hide, image })); } catch { /* ignore */ }
+    try { localStorage.setItem(STORAGE_KEY, JSON.stringify({ hide, image })); } catch { }
     setSaved(true); setTimeout(() => setSaved(false), 1800);
   };
   const reset = () => { setHide({}); setImage(null); };
@@ -92,7 +89,6 @@ export default function ChekSettings({ locale, centerName, receiptMode, brand }:
     <div>
       <h2 className="mb-6 text-2xl font-bold text-slate-800 dark:text-slate-100">{tr(locale, { uz: "Chek", ru: "Чек", en: "Receipt", de: "Beleg" })}</h2>
 
-      {/* ── Chek yuklash majburiyligi (bazaga saqlanadi) ── */}
       <div className="mb-8 rounded-2xl border border-slate-200 bg-white p-5 dark:border-slate-700 dark:bg-slate-900">
         <div className="mb-1 flex items-center gap-2">
           <Icon name="shieldCheck" className="h-5 w-5 text-brand-500" />
@@ -137,7 +133,6 @@ export default function ChekSettings({ locale, centerName, receiptMode, brand }:
       </div>
 
       <div className="grid gap-8 lg:grid-cols-2">
-        {/* Chap: yashirish belgilashlari */}
         <div className="space-y-5">
           {TOGGLES.map((k) => (
             <div key={k}>
@@ -164,7 +159,6 @@ export default function ChekSettings({ locale, centerName, receiptMode, brand }:
           </div>
         </div>
 
-        {/* O'ng: chek ko'rinishi (jonli) */}
         <div className="lg:sticky lg:top-4 lg:self-start">
           <div className="relative mx-auto w-full max-w-[320px] bg-white px-6 pt-6 text-slate-800 shadow-pop">
             {shown("logo") && (
@@ -195,7 +189,6 @@ export default function ChekSettings({ locale, centerName, receiptMode, brand }:
               </dl>
             )}
 
-            {/* Yirtilgan pastki chekka */}
             <div className="mt-5 h-3" style={{
               background: "linear-gradient(-45deg, #fff 6px, transparent 0) 0 6px, linear-gradient(45deg, #fff 6px, transparent 0) 0 6px",
               backgroundSize: "12px 12px", backgroundRepeat: "repeat-x",

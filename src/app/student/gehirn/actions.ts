@@ -6,18 +6,12 @@ import { prisma } from "@/lib/db";
 import { ROLES } from "@/lib/constants";
 import { NOTE_KINDS, type NoteKind } from "./parse";
 
-// "Ikkinchi miya" — o'quvchining SHAXSIY yozuvlari.
-// Har amal faqat o'z yozuvi ustida bajariladi: studentId hamisha sessiyadan
-// olinadi va where shartiga qo'shiladi (id ni bilgan begona o'quvchi ham
-// birovnikini o'zgartira olmaydi).
-
 export type Res = { ok?: boolean; error?: string; id?: string };
 
 const TITLE_MAX = 120;
 const CONTENT_MAX = 20_000;
-const NOTES_MAX = 500; // bitta o'quvchi uchun cheklov (baza to'lib ketmasin)
+const NOTES_MAX = 500;
 
-/** Sessiyadagi o'quvchi — yo'q bo'lsa null. */
 async function me() {
   const s = await requireSession();
   if (s.role !== ROLES.STUDENT) return null;
@@ -33,7 +27,6 @@ function refresh() {
   revalidatePath("/student/gehirn/graph");
 }
 
-/** Yangi yozuv. Sarlavha takrorlansa — oxiriga raqam qo'shiladi. */
 export async function createNote(input: { title: string; content?: string; kind?: string }): Promise<Res> {
   const student = await me();
   if (!student) return { error: "forbidden" };
@@ -45,7 +38,6 @@ export async function createNote(input: { title: string; content?: string; kind?
   const count = await prisma.note.count({ where: { studentId: student.id } });
   if (count >= NOTES_MAX) return { error: "limit" };
 
-  // Sarlavha noyob bo'lishi shart ([[havola]] shu bo'yicha topiladi)
   const taken = await prisma.note.findMany({
     where: { studentId: student.id, title: { startsWith: title } },
     select: { title: true },
@@ -66,7 +58,6 @@ export async function createNote(input: { title: string; content?: string; kind?
   return { ok: true, id: note.id };
 }
 
-/** Mavjud yozuvni saqlash. */
 export async function updateNote(
   id: string,
   input: { title?: string; content?: string; kind?: string; tags?: string; pinned?: boolean },
@@ -105,8 +96,6 @@ export async function updateNote(
   return { ok: true, id };
 }
 
-/** Yozuvni o'chirish. Boshqa yozuvlardagi [[havola]] matnda qoladi — u
- *  "hali yaratilmagan" tugunga aylanadi (Obsidian ham shunday qiladi). */
 export async function deleteNote(id: string): Promise<Res> {
   const student = await me();
   if (!student) return { error: "forbidden" };
@@ -117,7 +106,6 @@ export async function deleteNote(id: string): Promise<Res> {
   return { ok: true };
 }
 
-/** Grafda "hali yo'q" tugun bosilganda — o'sha nom bilan yozuv ochish. */
 export async function createFromLink(title: string): Promise<Res> {
   return createNote({ title });
 }

@@ -8,7 +8,6 @@ import LicenseBanner from "../../_components/LicenseBanner";
 import WithdrawalsView, { type VWithdrawal } from "./WithdrawalsView";
 import { groupAtDate, monthRange } from "../_components/attribution";
 
-// "Yechib olish" — pul qaytarishlar (REFUNDED) ro'yxati: statistika + filtrlar + jadval.
 export default async function WithdrawalsPage() {
   const s = await requireSession();
   if (!canRead(s.role, MODULES.PAYMENTS)) {
@@ -17,7 +16,7 @@ export default async function WithdrawalsPage() {
 
   const [rows, students] = await Promise.all([
     prisma.payment.findMany({
-      where: { AND: [{ status: "REFUNDED" }, branchViaStudent(s)] }, // faol filial doirasida
+      where: { AND: [{ status: "REFUNDED" }, branchViaStudent(s)] },
       orderBy: { createdAt: "desc" },
       include: {
         author: { select: { fullName: true } },
@@ -33,7 +32,6 @@ export default async function WithdrawalsPage() {
         },
       },
     }),
-    // Forma uchun o'quvchilar ro'yxati — faol filial doirasida
     prisma.student.findMany({ where: branchWhere(s), orderBy: { fullName: "asc" }, select: { id: true, fullName: true } }),
   ]);
 

@@ -11,7 +11,6 @@ import { Icon } from "../../_components/Icon";
 import { createStaff, updateStaff, deleteStaff, inviteStaff, importStaff } from "./actions";
 
 export interface VStaff { id: string; shortId: string; fullName: string; role: string; roleLabel: string; position: string | null; phone: string | null; sipExtension: string | null }
-/** SIP raqami (glive1…glive10) va uni kim egallagani */
 export interface SipOption { ext: string; owner: string | null; ownerActive: boolean }
 export interface RoleOption { value: string; label: string }
 
@@ -35,7 +34,6 @@ export default function StaffView({ locale, rows, roleOptions, sipOptions = [], 
 
   return (
     <div className="space-y-5">
-      {/* Header */}
       <div className="flex flex-wrap items-center justify-between gap-3">
         <h1 className="text-[26px] font-bold tracking-tight text-slate-900 dark:text-slate-100">{tr(locale, { uz: "Xodimlar", ru: "Сотрудники", en: "Staff", de: "Mitarbeiter" })}</h1>
         <div className="flex items-center gap-2.5">
@@ -48,7 +46,6 @@ export default function StaffView({ locale, rows, roleOptions, sipOptions = [], 
         </div>
       </div>
 
-      {/* Search */}
       {rows.length > 6 && (
         <div className="relative max-w-xs">
           <Icon name="search" className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400" />
@@ -56,7 +53,6 @@ export default function StaffView({ locale, rows, roleOptions, sipOptions = [], 
         </div>
       )}
 
-      {/* Table */}
       <div className="overflow-hidden rounded-2xl border border-slate-200/70 bg-white shadow-card dark:border-slate-800 dark:bg-slate-900">
         <div className="overflow-x-auto">
           <table className="w-full min-w-[820px] text-left text-sm">
@@ -87,7 +83,6 @@ export default function StaffView({ locale, rows, roleOptions, sipOptions = [], 
                     <div className="flex items-center justify-end gap-2">
                       <button onClick={() => onInvite(r.id)} title={tr(locale, { uz: "Taklif / xabar yuborish", ru: "Отправить приглашение / сообщение", en: "Send invite / message", de: "Einladung / Nachricht senden" })} className="grid h-8 w-8 place-items-center rounded-lg text-amber-500 transition hover:bg-amber-50 dark:hover:bg-amber-500/10"><Icon name="mail" className="h-5 w-5" /></button>
                       <button onClick={() => setDrawer({ edit: r })} title={tr(locale, { uz: "Tahrirlash", ru: "Редактировать", en: "Edit", de: "Bearbeiten" })} className="grid h-8 w-8 place-items-center rounded-lg text-slate-400 opacity-0 transition hover:bg-slate-100 hover:text-brand-600 group-hover:opacity-100 dark:hover:bg-slate-800"><Icon name="pencil" className="h-4 w-4" /></button>
-                      {/* O'chirish — faqat direktor va o'rinbosarida */}
                       {canDelete && <button onClick={() => onDelete(r)} title={tr(locale, { uz: "Olib tashlash", ru: "Удалить", en: "Remove", de: "Entfernen" })} className="grid h-8 w-8 place-items-center rounded-lg text-slate-400 opacity-0 transition hover:bg-rose-50 hover:text-rose-600 group-hover:opacity-100 dark:hover:bg-rose-500/10"><Icon name="trash" className="h-4 w-4" /></button>}
                     </div>
                   </td>
@@ -155,7 +150,6 @@ function StaffDrawer({ locale, edit, roleOptions, sipOptions, onClose, onSaved }
             <Field label={tr(locale, { uz: "Lavozimi", ru: "Должность", en: "Position", de: "Position" })}><input name="position" defaultValue={edit?.position ?? ""} placeholder={tr(locale, { uz: "Masalan: CEO", ru: "Например: CEO", en: "e.g. CEO", de: "z.B. CEO" })} className={inp} /></Field>
           </div>
           <Field label={tr(locale, { uz: "Telefon", ru: "Телефон", en: "Phone", de: "Telefon" })}><input name="phone" defaultValue={edit?.phone ?? ""} placeholder="+998 90 123 45 67" className={inp} /></Field>
-          {/* SIP raqami — brauzer telefoni (softphone) shu orqali ishlaydi; faol xodimniki band, ishdan ketganniki qayta beriladi */}
           <Field label={tr(locale, { uz: "SIP raqami (telefon)", ru: "SIP-номер (телефон)", en: "SIP extension (phone)", de: "SIP-Nummer (Telefon)" })}>
             <select name="sipExtension" defaultValue={edit?.sipExtension ?? ""} className={inp}>
               <option value="">{tr(locale, { uz: "— telefonsiz —", ru: "— без телефона —", en: "— no phone —", de: "— kein Telefon —" })}</option>

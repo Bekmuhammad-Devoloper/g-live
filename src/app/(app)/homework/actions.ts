@@ -17,7 +17,6 @@ async function canManageGroupOf(s: SessionUser, groupId: string) {
   return !!g && g.teacherId === s.userId;
 }
 
-// ─── Vazifa yaratish (o'qituvchi) ───
 const createSchema = z.object({
   groupId: z.string().min(1),
   title: z.string().min(2),
@@ -25,7 +24,6 @@ const createSchema = z.object({
   skill: z.string().optional(),
   maxScore: z.coerce.number().int().positive().max(1000),
   dueAt: z.string().optional(),
-  // Vazifa darsga bog'langan bo'lsa — o'quvchi ilovasida shu dars ichida chiqadi
   courseLessonId: z.string().optional(),
 });
 
@@ -57,7 +55,6 @@ export async function createAssignment(_prev: FormState, formData: FormData): Pr
     },
   });
 
-  // O'quvchilarga bildirishnoma (TZ 4.11 — yangi vazifa)
   const members = await prisma.groupStudent.findMany({
     where: { groupId: parsed.data.groupId, isActive: true },
     include: { student: true },
@@ -79,20 +76,15 @@ export async function createAssignment(_prev: FormState, formData: FormData): Pr
   return { ok: true };
 }
 
-// ─── O'quvchi vazifani topshiradi ───
 export async function submitAssignment(assignmentId: string, content: string, fileUrl?: string | null): Promise<FormState> {
   const s = await requireSession();
   const student = await prisma.student.findUnique({ where: { userId: s.userId } });
   if (!student) return { error: "forbidden" };
   const file = (fileUrl ?? "").trim();
   if (file && !/^\/uploads\/[\w.-]+$/.test(file)) return { error: "invalid" };
-  // Matn yoki fayl — kamida bittasi bo'lsin
   if (!content.trim() && !file) return { error: "invalid" };
-  if (content.length > 20_000) return { error: "invalid" }; // cheksiz matn bazaga yozilmasin
+  if (content.length > 20_000) return { error: "invalid" };
 
-  // Topshiriq mavjudligini VA o'quvchi o'sha guruhning faol a'zosi ekanini tekshirish.
-  // Aks holda istalgan o'quvchi begona guruh topshirig'iga javob yoza olardi
-  // (action to'g'ridan-to'g'ri POST qilinishi mumkin — UI filtriga ishonib bo'lmaydi).
   const assignment = await prisma.assignment.findUnique({
     where: { id: assignmentId },
     select: { groupId: true },
@@ -104,7 +96,6 @@ export async function submitAssignment(assignmentId: string, content: string, fi
   });
   if (!member) return { error: "forbidden" };
 
-  // Oldingi urinishlar soni
   const prev = await prisma.submission.count({ where: { assignmentId, studentId: student.id } });
   await prisma.submission.create({
     data: {
@@ -121,7 +112,6 @@ export async function submitAssignment(assignmentId: string, content: string, fi
   return { ok: true };
 }
 
-// ─── O'qituvchi baholaydi — past bahoga izoh majburiy (FR-HW-05) ───
 export async function gradeSubmission(submissionId: string, score: number, note: string): Promise<FormState> {
   const s = await requireSession();
   const sub = await prisma.submission.findUnique({
@@ -133,7 +123,6 @@ export async function gradeSubmission(submissionId: string, score: number, note:
 
   const max = sub.assignment.maxScore;
   const clamped = Math.max(0, Math.min(score, max));
-  // Belgilangan chegaradan past baho (60%) izohsiz saqlanmaydi
   if (clamped < max * 0.6 && (!note || note.trim().length < 3)) return { error: "note_required" };
 
   await prisma.submission.update({
@@ -142,8 +131,6 @@ export async function gradeSubmission(submissionId: string, score: number, note:
   });
   await writeAudit({ actorId: s.userId, action: "UPDATE", entityType: "Submission", entityId: submissionId, newValue: { score: clamped } });
 
-  // "O'qish" ko'nikmasi — vazifa baholandi; to'liq ballga qo'shimcha.
-  // Kalit topshiriq bo'yicha: qayta baholash ikkinchi marta bermaydi.
   await awardSkill(sub.studentId, "homework", `hw:${submissionId}`);
   if (max > 0 && clamped >= max) await awardSkill(sub.studentId, "homeworkPerfect", `hwp:${submissionId}`);
 

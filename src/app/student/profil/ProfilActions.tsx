@@ -2,14 +2,9 @@ import Link from "next/link";
 import type { StudentStrings } from "../_i18n";
 import { TEAL } from "../_ui";
 
-// Profil sarlavhasidagi ikki tugma: sozlamalar va market
-// (seriya/qo'ng'iroq o'rniga — bu bo'limda shular kerakroq).
-
 const BTN =
   "gl-glass grid h-11 w-11 shrink-0 place-items-center rounded-full transition active:translate-y-[1px]";
 
-// Market o'chirilgan bo'lsa tugma ko'rinmaydi (bosilganda /student ga
-// qaytarib yuborishdan ko'ra umuman ko'rsatmagan tushunarli).
 export default function ProfilActions({ t, showMarket = true }: { t: StudentStrings; showMarket?: boolean }) {
   return (
     <div className="flex shrink-0 items-center gap-2">

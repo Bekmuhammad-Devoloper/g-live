@@ -9,11 +9,8 @@ import AllPaymentsView, { type VPayment } from "./AllPaymentsView";
 import { canEditPayments } from "../../students/actions";
 import { groupAtDate, monthRange } from "../_components/attribution";
 
-// Yechib olishlar ham Payment jadvalida saqlanadi (REFUNDED) — ularning bekor qilinganlari bu ro'yxatga kirmaydi
 const WITHDRAWAL_PURPOSE = "Yechib olish";
 
-// "Barcha to'lovlar" — Moliya hisoboti: statistika + filtrlar + saralanadigan jadval.
-// Ro'yxatda haqiqiy to'lovlar (PAID) va "O'chirilganlar" filtri uchun bekor qilinganlar (CANCELLED).
 export default async function AllPaymentsPage() {
   const s = await requireSession();
   if (!canRead(s.role, MODULES.PAYMENTS)) {
@@ -24,7 +21,7 @@ export default async function AllPaymentsPage() {
     prisma.payment.findMany({
       where: {
         AND: [
-          branchViaStudent(s), // faol filial doirasida (to'lov o'quvchi orqali bog'lanadi)
+          branchViaStudent(s),
           {
             OR: [
               { status: "PAID" },
@@ -59,7 +56,6 @@ export default async function AllPaymentsPage() {
         },
       },
     }),
-    // Sof foyda uchun xarajatlar — xarajatlar sahifasi kabi filial doirasida
     prisma.expense.findMany({ where: branchWhere(s), select: { date: true, amount: true, method: true } }),
   ]);
 

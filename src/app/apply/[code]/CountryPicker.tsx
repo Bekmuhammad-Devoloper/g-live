@@ -6,13 +6,6 @@ import { cn } from "@/lib/cn";
 import { Icon } from "../../(app)/_components/Icon";
 import { PHONE_COUNTRIES, flagSrc, phoneCountry, type PhoneCountry } from "@/lib/phoneCodes";
 
-/**
- * Telefon davlat kodi tanlovi — oddiy <select> o'rniga (uni bezab bo'lmaydi).
- * Tugma: bayroq + kod. Bosilsa telefonda pastdan varaq, katta ekranda oyna:
- * "MDH" va "Yevropa" guruhlari, har qatorda SVG bayroq, davlat nomi, kod, belgi.
- * Bayroqlar emoji emas — /public/flags/*.svg (hamma qurilmada bir xil).
- */
-/** `locked` — davlat o'zgartirilmaydi (oflayn ro'yxat: faqat O'zbekiston raqami). */
 export default function CountryPicker({ value, onChange, locked = false }: { value: string; onChange: (iso: string) => void; locked?: boolean }) {
   const [open, setOpen] = useState(false);
   const country = phoneCountry(value);
@@ -53,7 +46,6 @@ export default function CountryPicker({ value, onChange, locked = false }: { val
             onClick={(e) => e.stopPropagation()}
             className="animate-pop-in flex max-h-[82dvh] w-full flex-col overflow-hidden rounded-t-3xl bg-white shadow-2xl sm:max-w-sm sm:rounded-3xl dark:bg-[#111a2e]"
           >
-            {/* Sarlavha */}
             <div className="flex items-center justify-between px-5 pb-2 pt-4">
               <div>
                 <div className="mx-auto mb-3 h-1 w-10 rounded-full bg-slate-200 sm:hidden dark:bg-white/15" />
@@ -105,7 +97,6 @@ function Group({ title, items, value, onPick }: { title: string; items: PhoneCou
   );
 }
 
-/** SVG bayroq — 4:3, yumaloq burchak, nozik chegara (oq fonli bayroqlar ko'rinsin) */
 export function Flag({ c, className }: { c: PhoneCountry; className?: string }) {
   return (
     // eslint-disable-next-line @next/next/no-img-element

@@ -2,30 +2,19 @@ import "server-only";
 import { cache } from "react";
 import { getSettings, setSetting } from "./settings";
 
-// Seriya va reyting qoidalari — direktor Sozlamalar > Ball va mukofotlar
-// bo'limidan belgilaydi. Qiymatlar Setting jadvalida saqlanadi.
-
 export type RankScope = "group" | "branch" | "center";
 export type RankBasis = "attendance" | "coins" | "score";
 
 export type ProgressRules = {
-  /** Sababli qoldirish (EXCUSED) seriyani uzadimi */
   streakExcusedBreaks: boolean;
-  /** Seriya bonusi necha darsda bir beriladi */
   streakStep: number;
-  /** Reyting kim bilan taqqoslanadi */
   rankScope: RankScope;
-  /** Reyting nima bo'yicha tuziladi */
   rankBasis: RankBasis;
-  /**
-   * Ko'nikma ballari ilova ochilmagan har to'liq kun uchun qancha pasayadi
-   * (0 — pasaymaydi). Bosh sahifadagi to'rt plitka.
-   */
   skillDecayPerDay: number;
 };
 
 export const PROGRESS_DEFAULTS: ProgressRules = {
-  streakExcusedBreaks: false, // sababli qoldirish seriyani uzmaydi
+  streakExcusedBreaks: false,
   streakStep: 7,
   rankScope: "center",
   rankBasis: "attendance",
@@ -55,7 +44,6 @@ export const getProgressRules = cache(async (): Promise<ProgressRules> => {
     streakStep: Number.isFinite(step) && step >= 2 && step <= 100 ? step : PROGRESS_DEFAULTS.streakStep,
     rankScope: RANK_SCOPES.includes(scope) ? scope : PROGRESS_DEFAULTS.rankScope,
     rankBasis: RANK_BASES.includes(basis) ? basis : PROGRESS_DEFAULTS.rankBasis,
-    // Bo'sh qoldirilgan (sozlanmagan) bo'lsa standart; 0 yozilgan bo'lsa — o'chirilgan
     skillDecayPerDay: r[K.skillDecayPerDay] !== undefined && r[K.skillDecayPerDay] !== "" && Number.isFinite(decay) && decay >= 0 && decay <= 100
       ? decay
       : PROGRESS_DEFAULTS.skillDecayPerDay,

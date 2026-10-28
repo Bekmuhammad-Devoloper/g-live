@@ -26,15 +26,12 @@ export default async function TeachersPage() {
 
   const [teachers, branches] = await Promise.all([
     prisma.user.findMany({
-      // faol filial doirasida
       where: { AND: [{ role: ROLES.TEACHER }, staffBranchWhere(s)] },
       orderBy: { fullName: "asc" },
-      // XAVFSIZLIK: select bilan faqat kerakli maydonlar — passwordHash/plainPassword hech qachon yuklanmaydi
       select: {
         id: true, fullName: true, phone: true, email: true, imageUrl: true,
         isActive: true, gender: true, fiksa: true, kpiBonus: true,
         branch: { select: { name: true } },
-        // Faqat faol guruhlar — nofaol qilingan (PLANNED/FINISHED/CANCELLED) profilda ko'rinmaydi
         teacherGroups: { where: { status: "ACTIVE" }, select: { id: true, name: true, color: true, _count: { select: { students: { where: { isActive: true } }, lessons: true } } } },
         salaries: { select: { year: true, month: true, fiksa: true, bonus: true, penalty: true, kpi: true, closed: true }, orderBy: [{ year: "desc" }, { month: "desc" }] },
       },
@@ -47,7 +44,7 @@ export default async function TeachersPage() {
     const cur = t.salaries.find((x) => x.year === curYear && x.month === curMonth);
     const bonus = cur?.bonus ?? 0;
     const penalty = cur?.penalty ?? 0;
-    const kpi = t.kpiBonus; // KPI bonus = asosiy standart summa (fiksa kabi), User modelidan
+    const kpi = t.kpiBonus;
     const total = t.fiksa + bonus + kpi - penalty;
     return {
       id: t.id,
@@ -73,10 +70,8 @@ export default async function TeachersPage() {
   });
 
   const canManage = s.role === ROLES.DIRECTOR || s.role === ROLES.DEPUTY_DIRECTOR;
-  // Tahrirlash — rahbariyat va administrator; butunlay o'chirish — direktor, administrator (o'z filialida)
   const canEdit = canManage || s.role === ROLES.ADMIN;
   const canDelete = s.role === ROLES.DIRECTOR || s.role === ROLES.ADMIN;
-  // Tahrirlash formasi uchun lavozimlar (rahbariyat lavozimlarisiz)
   const catalog = canEdit ? await prisma.staffRole.findMany({ where: { isActive: true }, orderBy: { createdAt: "asc" }, select: { name: true, department: true } }) : [];
   const positions = catalog.filter((r) => r.department !== MANAGEMENT_DEPT).map((r) => ({ value: r.name, label: r.name, department: r.department ?? "" }));
 

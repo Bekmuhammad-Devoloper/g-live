@@ -1,6 +1,3 @@
-// To'lovni guruhga bog'lash: Payment'da groupId yo'q, shu sabab o'quvchining
-// to'lov sanasida faol bo'lgan a'zoligi olinadi (qo'shilgan <= sana, chiqmagan
-// yoki sanadan keyin chiqqan). Bunday a'zolik bo'lmasa — eng oxirgi a'zolik.
 export interface EnrollmentLike<G> {
   joinedAt: Date;
   leftAt: Date | null;
@@ -24,7 +21,6 @@ export function groupAtDate<G>(enrollments: EnrollmentLike<G>[], at: Date): G | 
 const p2 = (n: number) => String(n).padStart(2, "0");
 export const isoDay = (d: Date) => `${d.getFullYear()}-${p2(d.getMonth() + 1)}-${p2(d.getDate())}`;
 
-/** Sahifa ?from=&to= parametrlari; bo'lmasa joriy oy (1-kun — oxirgi kun). */
 export function monthRange(from?: string, to?: string): { from: string; to: string; gte: Date; lte: Date } {
   const now = new Date();
   const re = /^\d{4}-\d{2}-\d{2}$/;

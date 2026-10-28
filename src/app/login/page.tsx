@@ -8,8 +8,6 @@ import { safeNextPath } from "@/lib/lessonLink";
 import { getBrand } from "@/lib/brand";
 import BrandLogo from "@/app/BrandLogo";
 
-// Kirish sahifasida sessiya (va User.locale) yo'q — til brauzerning
-// Accept-Language sarlavhasidan olinadi: birinchi mos kelgan til, aks holda "uz".
 async function browserLocale(): Promise<Locale> {
   const accept = (await headers()).get("accept-language") ?? "";
   for (const part of accept.split(",")) {
@@ -20,19 +18,14 @@ async function browserLocale(): Promise<Locale> {
 }
 
 export default async function LoginPage({ searchParams }: { searchParams: Promise<{ next?: string }> }) {
-  // Dars QR havolasidan kelingan bo'lsa — kirgach o'sha darsga qaytiladi
   const next = safeNextPath((await searchParams).next);
   const session = await getSession();
   if (session) redirect(next ?? "/dashboard");
   const locale = await browserLocale();
   const brand = await getBrand();
 
-  // `gl-native` — kirish sahifasi Android ilovasining BIRINCHI ekrani: seans
-  // tugaganda /student shu yerga yo'naltiradi. Shu sabab unda ham ilova hissi
-  // qoidalari amal qilsin (teginish chaqnashi, uzoq bosish menyusi va h.k.).
   return (
     <div className="gl-native relative flex min-h-screen items-center justify-center overflow-hidden bg-slate-100 px-4 py-10">
-      {/* Fon bezaklari */}
       <div className="pointer-events-none absolute -left-32 -top-32 h-96 w-96 rounded-full bg-brand-200/40 blur-3xl" />
       <div className="pointer-events-none absolute -bottom-40 -right-24 h-96 w-96 rounded-full bg-brand-300/30 blur-3xl" />
 

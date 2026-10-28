@@ -8,7 +8,6 @@ import { tr } from "@/lib/tr";
 import { Icon } from "../../_components/Icon";
 import { fmtDate } from "./Pagination";
 
-// "To'lovlar miqdori" kartasi + Sanadan/Sanagacha filtri (URL ?from=&to= orqali serverga uzatiladi).
 export default function PeriodTotal({ total, from, to, locale }: { total: number; from: string; to: string; locale: Locale }) {
   const router = useRouter();
   const pathname = usePathname();

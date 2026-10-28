@@ -2,8 +2,6 @@ import MissingStudent from "../../../../../MissingStudent";
 import { loadUnit } from "../../_load";
 import { SectionHeader, TaskCard, IcoClipboard, safeUrl } from "../../_parts";
 
-// "Video mashq" — darsning topshirig'i (uy vazifasi emas, u alohida bo'limda).
-
 const ACCENT = "linear-gradient(150deg, #46d8b8 0%, #0f9a90 100%)";
 
 export default async function VideoExercisePage({

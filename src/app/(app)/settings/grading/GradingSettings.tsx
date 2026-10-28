@@ -28,7 +28,6 @@ export default function GradingSettings({ locale }: { locale: Locale }) {
   const [prefs, setPrefs] = useState<Prefs>(DEFAULTS);
   const [saved, setSaved] = useState(false);
 
-  // SSR bilan mos bo'lishi uchun: boshlang'ich qiymatlar DEFAULTS, keyin localStorage'dan yuklanadi
   useEffect(() => {
     try {
       const raw = localStorage.getItem(KEY);
@@ -42,20 +41,19 @@ export default function GradingSettings({ locale }: { locale: Locale }) {
           showBranchRating: !!p.showBranchRating,
         }));
       }
-    } catch { /* localStorage yo'q bo'lsa e'tiborsiz */ }
+    } catch { }
   }, []);
 
   const set = <K extends keyof Prefs>(k: K, v: Prefs[K]) => { setPrefs((p) => ({ ...p, [k]: v })); setSaved(false); };
   const setMax = (v: number) => set("maxGrade", Math.min(100, Math.max(1, v)));
 
   const save = () => {
-    try { localStorage.setItem(KEY, JSON.stringify(prefs)); } catch { /* ignore */ }
+    try { localStorage.setItem(KEY, JSON.stringify(prefs)); } catch { }
     setSaved(true);
   };
 
   return (
     <div className="rounded-2xl border border-slate-200/70 bg-white p-6 shadow-card dark:border-slate-800 dark:bg-slate-900">
-      {/* Ogohlantirish banneri */}
       <div className="mb-6 flex max-w-2xl items-start gap-3 rounded-xl bg-emerald-50 p-4 dark:bg-emerald-950/30">
         <div className="flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-emerald-500 text-white">
           <Icon name="check" className="h-4 w-4" strokeWidth={2.5} />
@@ -68,11 +66,9 @@ export default function GradingSettings({ locale }: { locale: Locale }) {
         </div>
       </div>
 
-      {/* Maksimum baho */}
       <div className="mb-7">
         <div className="mb-2 text-sm font-medium text-slate-700 dark:text-slate-200">{tr(locale, { uz: "Maksimum baho", ru: "Максимальная оценка", en: "Maximum grade", de: "Maximale Note" })}</div>
         <div className="flex flex-wrap items-center gap-3">
-          {/* Preset segmenti 5 / 10 */}
           <div className="inline-flex overflow-hidden rounded-lg border border-slate-200 dark:border-slate-700">
             {[5, 10].map((v) => (
               <button
@@ -91,7 +87,6 @@ export default function GradingSettings({ locale }: { locale: Locale }) {
             ))}
           </div>
 
-          {/* Stepper */}
           <div className="inline-flex items-center overflow-hidden rounded-lg border border-slate-200 bg-slate-50 dark:border-slate-700 dark:bg-slate-800">
             <button
               type="button"
@@ -116,7 +111,6 @@ export default function GradingSettings({ locale }: { locale: Locale }) {
         </div>
       </div>
 
-      {/* Toggle sozlamalari */}
       <div className="space-y-6">
         <ToggleRow label={tr(locale, { uz: "O'tgan sanalar uchun bahoni tahrirlash", ru: "Редактировать оценки за прошедшие даты", en: "Edit grades for past dates", de: "Noten für vergangene Termine bearbeiten" })} on={prefs.editPastGrades} onChange={(v) => set("editPastGrades", v)} />
         <ToggleRow label={tr(locale, { uz: "Ustozlardan tashqari, hodimlar ham baholashga ruxsat berish", ru: "Разрешить оценивать не только преподавателям, но и сотрудникам", en: "Allow staff, not only teachers, to grade", de: "Auch Mitarbeitern, nicht nur Lehrern, das Benoten erlauben" })} on={prefs.staffCanGrade} onChange={(v) => set("staffCanGrade", v)} />
@@ -124,7 +118,6 @@ export default function GradingSettings({ locale }: { locale: Locale }) {
         <ToggleRow label={tr(locale, { uz: "Talaba profilida filial kesimida reytingni ko'rsatish", ru: "Показывать рейтинг по филиалу в профиле ученика", en: "Show branch-wide rating on the student profile", de: "Filialweite Bewertung im Schülerprofil anzeigen" })} on={prefs.showBranchRating} onChange={(v) => set("showBranchRating", v)} />
       </div>
 
-      {/* Saqlash */}
       <div className="mt-8 flex items-center justify-center gap-3">
         <button
           type="button"

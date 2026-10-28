@@ -8,8 +8,6 @@ export interface Series {
   values: number[];
 }
 
-// Ko'p qatorli chiziqli grafik (Lidlar tahlili). Sof SVG — tashqi kutubxonasiz.
-// Ranglar qat'iy tartibda; identifikatsiya legenda + yorliq orqali (rang-yolg'iz emas).
 export default function TrendChart({ labels, series, yLabel }: { labels: string[]; series: Series[]; yLabel?: string }) {
   const [hover, setHover] = useState<number | null>(null);
 
@@ -28,7 +26,6 @@ export default function TrendChart({ labels, series, yLabel }: { labels: string[
     <div>
       <div className="relative w-full overflow-hidden">
         <svg viewBox={`0 0 ${W} ${H}`} className="w-full" style={{ height: "auto" }} onMouseLeave={() => setHover(null)}>
-          {/* Y grid + yorliqlar */}
           {Array.from({ length: steps + 1 }, (_, i) => {
             const v = (maxVal / steps) * (steps - i);
             const yy = PT + (plotH / steps) * i;
@@ -40,14 +37,12 @@ export default function TrendChart({ labels, series, yLabel }: { labels: string[
             );
           })}
 
-          {/* X yorliqlar */}
           {labels.map((lb, i) =>
             i % xLabelEvery === 0 ? (
               <text key={i} x={x(i)} y={H - 8} textAnchor="middle" className="fill-slate-400 text-[9px]">{lb}</text>
             ) : null
           )}
 
-          {/* Qatorlar (area + line) */}
           {series.map((s) => {
             const pts = s.values.map((v, i) => `${x(i)},${y(v)}`).join(" ");
             const area = `${PL},${PT + plotH} ${pts} ${x(n - 1)},${PT + plotH}`;
@@ -59,7 +54,6 @@ export default function TrendChart({ labels, series, yLabel }: { labels: string[
             );
           })}
 
-          {/* Hover crosshair */}
           {hover !== null && (
             <line x1={x(hover)} y1={PT} x2={x(hover)} y2={PT + plotH} className="stroke-slate-300 dark:stroke-slate-600" strokeWidth="1" strokeDasharray="3 3" />
           )}
@@ -67,13 +61,11 @@ export default function TrendChart({ labels, series, yLabel }: { labels: string[
             <circle key={s.name} cx={x(hover)} cy={y(s.values[hover])} r="3.2" fill={s.color} className="stroke-white dark:stroke-slate-900" strokeWidth="1.5" />
           ))}
 
-          {/* Hover hit-zones */}
           {labels.map((_, i) => (
             <rect key={i} x={x(i) - plotW / (2 * Math.max(1, n))} y={PT} width={plotW / Math.max(1, n)} height={plotH} fill="transparent" onMouseEnter={() => setHover(i)} />
           ))}
         </svg>
 
-        {/* Tooltip */}
         {hover !== null && (
           <div
             className="pointer-events-none absolute top-2 rounded-lg border border-slate-200 bg-white px-2.5 py-1.5 text-xs shadow-pop dark:border-slate-700 dark:bg-slate-800"
@@ -91,7 +83,6 @@ export default function TrendChart({ labels, series, yLabel }: { labels: string[
 
       {yLabel && <div className="mt-1 text-center text-[10px] text-slate-400">{yLabel}</div>}
 
-      {/* Legenda */}
       <div className="mt-3 flex flex-wrap justify-center gap-4">
         {series.map((s) => (
           <div key={s.name} className="flex items-center gap-1.5 text-xs text-slate-600 dark:text-slate-300">

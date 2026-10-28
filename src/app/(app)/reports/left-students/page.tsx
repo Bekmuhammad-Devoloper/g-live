@@ -45,11 +45,9 @@ export default async function LeftStudentsPage({ searchParams }: { searchParams:
 
   const [programs, teachers] = await Promise.all([
     prisma.program.findMany({ where: { isActive: true }, select: { id: true, name: true }, orderBy: { name: "asc" } }),
-    // faol filial doirasida
     prisma.user.findMany({ where: { AND: [{ role: "TEACHER" }, staffBranchWhere(s)] }, select: { id: true, fullName: true }, orderBy: { fullName: "asc" } }),
   ]);
 
-  // Guruhni tark etgan = GroupStudent isActive=false
   const where: Prisma.GroupStudentWhereInput = {
     AND: [
       {
@@ -58,7 +56,7 @@ export default async function LeftStudentsPage({ searchParams }: { searchParams:
         ...(courseId || teacherId ? { group: { ...(courseId ? { programId: courseId } : {}), ...(teacherId ? { teacherId } : {}) } } : {}),
         ...(status ? { student: { eduStatus: status } } : {}),
       },
-      branchViaGroup(s), // faol filial doirasida
+      branchViaGroup(s),
     ],
   };
   const left = await prisma.groupStudent.findMany({
@@ -100,7 +98,6 @@ export default async function LeftStudentsPage({ searchParams }: { searchParams:
         <div className="ml-auto"><LeftExport rows={exportRowsData} locale={s.locale} /></div>
       </div>
 
-      {/* Filtr */}
       <form method="GET" className="rounded-2xl border border-slate-200/70 bg-white p-4 shadow-card dark:border-slate-800 dark:bg-slate-900">
         <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-6">
           <div className="relative">
@@ -122,7 +119,6 @@ export default async function LeftStudentsPage({ searchParams }: { searchParams:
         </div>
       </form>
 
-      {/* Diagrammalar */}
       <div className="grid gap-5 lg:grid-cols-2">
         <Chart title={tr(s.locale, { uz: "Ustoz kesimida", ru: "По преподавателям", en: "By teacher", de: "Nach Lehrer" })} data={byTeacher} />
         <Chart title={tr(s.locale, { uz: "Kurs kesimida", ru: "По курсам", en: "By course", de: "Nach Kurs" })} data={byCourse} />

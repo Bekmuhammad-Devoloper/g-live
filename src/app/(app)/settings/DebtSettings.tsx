@@ -8,11 +8,6 @@ import { saveDefaultMonthlyFee } from "./actions";
 
 const fmtDigits = (d: string) => d.replace(/\B(?=(\d{3})+(?!\d))/g, " ");
 
-/**
- * Qarzdorlik sozlamalari — markazning umumiy oylik to'lovi.
- * O'quvchi tizimga qo'shilgan oydan boshlab qarz avtomatik hisoblanadi;
- * guruhda bo'lmagan oylar uchun aynan shu summa olinadi.
- */
 export default function DebtSettings({ locale, defaultFee }: { locale: Locale; defaultFee: number }) {
   const [value, setValue] = useState(defaultFee ? String(defaultFee) : "");
   const [saved, setSaved] = useState(false);

@@ -5,9 +5,6 @@ import { PageHeader, CARD } from "../_ui";
 import { getActiveVideos, videoEmbed, videoThumb } from "@/lib/portalContent";
 import VideoItem from "./VideoItem";
 
-// Video va podkastlar — ma'muriyat qo'ygan YouTube materiallari.
-// O'quvchi ilovadan chiqmasdan ko'radi.
-
 export default async function StudentVideosPage() {
   const session = await getSession();
   if (!session) redirect("/login");

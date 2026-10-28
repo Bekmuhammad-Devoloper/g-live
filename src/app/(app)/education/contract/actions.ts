@@ -7,7 +7,6 @@ import { requireSession } from "@/lib/auth";
 import { writeAudit } from "@/lib/audit";
 import { ROLES, CONTRACT_TEMPLATE_TYPES } from "@/lib/constants";
 
-// Shartnomani boshqaruvchi rollar (rahbariyat)
 const ALLOWED = [ROLES.DIRECTOR, ROLES.DEPUTY_DIRECTOR, ROLES.ADMIN];
 
 export type FormState = { ok?: boolean; error?: string };

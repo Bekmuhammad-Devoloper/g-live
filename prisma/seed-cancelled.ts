@@ -1,11 +1,8 @@
-// Demo bekor qilingan to'lovlar (idempotent). Ishga tushirish: npx tsx prisma/seed-cancelled.ts
-
 import { PrismaClient } from "@prisma/client";
 
 const prisma = new PrismaClient();
 
 async function main() {
-  // Faqat demo (isManual) bekor qilinganlarni tozalaymiz — qayta ishga tushirish uchun
   await prisma.payment.deleteMany({ where: { status: "CANCELLED", note: "demo-cancelled" } });
 
   const students = await prisma.student.findMany({

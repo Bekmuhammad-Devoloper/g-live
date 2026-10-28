@@ -15,7 +15,7 @@ export interface VDebtor {
   group: string | null;
   course: string | null;
   debt: number;
-  due: string | null; // ISO
+  due: string | null;
   status: string;
   hasTask: boolean;
 }
@@ -83,7 +83,6 @@ export default function DebtorsView({ debtors, groups, locale }: { debtors: VDeb
         <span className="text-sm font-normal text-slate-400">{tr(locale, { uz: "Miqdor", ru: "Количество", en: "Count", de: "Anzahl" })} — {filtered.length}</span>
       </h1>
 
-      {/* Statistika */}
       <div className="rounded-2xl border border-l-4 border-slate-300 border-l-brand-600 bg-white p-5 shadow-card dark:border-slate-600 dark:border-l-brand-500 dark:bg-slate-900">
         <div className="flex items-center justify-between gap-3">
           <div className="text-xl text-slate-700 dark:text-slate-200">{tr(locale, { uz: "Jami", ru: "Итого", en: "Total", de: "Gesamt" })}: <span className="font-bold text-slate-900 dark:text-slate-100">{formatMoney(total, locale)}</span></div>
@@ -91,7 +90,6 @@ export default function DebtorsView({ debtors, groups, locale }: { debtors: VDeb
         </div>
       </div>
 
-      {/* Filtrlar */}
       <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-6">
         <FField label={tr(locale, { uz: "Qidiruv", ru: "Поиск", en: "Search", de: "Suchen" })}><input value={q} onChange={(e) => setQ(e.target.value)} placeholder={tr(locale, { uz: "Ism yoki telefon", ru: "Имя или телефон", en: "Name or phone", de: "Name oder Telefon" })} className={inp} /></FField>
         <FField label={tr(locale, { uz: "Talaba holati", ru: "Статус ученика", en: "Student status", de: "Schülerstatus" })}>
@@ -109,7 +107,6 @@ export default function DebtorsView({ debtors, groups, locale }: { debtors: VDeb
         </div>
       </div>
 
-      {/* Natija */}
       {filtered.length === 0 ? (
         <div className="rounded-2xl border border-emerald-200/60 bg-emerald-50/60 px-5 py-5 text-sm text-emerald-700 dark:border-emerald-900/40 dark:bg-emerald-950/20 dark:text-emerald-300">
           {tr(locale, { uz: "Ko'rsatiladigan ma'lumotlar yo'q", ru: "Нет данных для отображения", en: "No data to display", de: "Keine Daten zum Anzeigen" })}

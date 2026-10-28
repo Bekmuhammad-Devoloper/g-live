@@ -2,15 +2,6 @@ import "server-only";
 import { prisma } from "./db";
 import { groupLessonsWhere } from "./levelLessons";
 
-// O'quvchining kurs jarayoni — YAGONA hisob.
-//
-// Ilgari uch ekranda uch xil hisoblanardi:
-//   · Boshi ("Sizning natijangiz") — faqat o'qituvchi o'tgan darslar
-//   · Kurslar ro'yxati             — faqat o'qituvchi o'tgan darslar
-//   · Daraja sahifasi              — o'tilgan + ko'rilgan + topshirilgan
-// Shu sabab o'quvchi darslarni to'liq ko'rib chiqqan bo'lsa ham Boshi
-// ekranida 0% turardi. Endi uchalasi shu fayldan oladi.
-
 export interface LessonRef {
   id: string;
   order: number;
@@ -21,35 +12,14 @@ export interface LessonRef {
 }
 
 export interface StudentProgress {
-  /** Barcha darslar (dastur bo'yicha, tartibda) */
   lessons: LessonRef[];
-  /** Dars id -> to'lish foizi (0..100) */
   pctOf: (lessonId: string) => number;
-  /** Daraja kodi bo'yicha: nechta dars, nechtasi tugagan, umumiy foiz */
   byLevel: Map<string, { total: number; done: number; pct: number }>;
-  /** Butun dastur bo'yicha o'rtacha foiz */
   overallPct: number;
-  /** Hali tugallanmagan birinchi dars (yo'q bo'lsa — oxirgisi) */
   currentLesson: LessonRef | null;
-  /** Tugallangan darslar soni (butun dastur bo'yicha) */
   doneCount: number;
 }
 
-/**
- * Bitta darsning to'lish foizi.
- *
- * Bu ko'rsatkich "SIZNING natijangiz" deb ataladi, shuning uchun u
- * O'QUVCHINING O'Z ishiga qarab hisoblanadi:
- *   · videoni ko'rdimi     — dars videosi bo'lsa
- *   · vazifani topshirdimi — vazifa berilgan bo'lsa
- * Ikkalasi ham yo'q dars (o'quvchi bajaradigan narsa yo'q) — o'qituvchining
- * "o'tildi" belgisiga qarab yopiladi.
- *
- * O'qituvchining belgisi o'quvchining foiziga QO'SHILMAYDI: aks holda
- * darslarni to'liq ko'rib chiqqan o'quvchi ham, ustoz jurnalni to'ldirmaguncha,
- * 100% ga yetolmasdi (aynan shu shikoyat bo'lgan). Guruhning sur'ati
- * alohida ko'rsatiladi — Kurslar sahifasidagi "X / N o'tildi".
- */
 export async function getStudentProgress(
   studentId: string,
   group: { id: string; programId: string; levelCode: string | null } | null,
@@ -106,7 +76,6 @@ export async function getStudentProgress(
       total += 1;
       if (didTask.has(l.id)) got += 1;
     }
-    // O'quvchi bajaradigan narsa yo'q — ustozning belgisiga qaraymiz
     if (total === 0) {
       total = 1;
       got = taught.has(l.id) ? 1 : 0;
@@ -116,7 +85,6 @@ export async function getStudentProgress(
 
   const pctOf = (id: string) => pcts.get(id) ?? 0;
 
-  // Darajaga biriktirilmagan eski darslar guruhning o'z darajasiga tushadi
   const fallback = (group.levelCode ?? "A1").slice(0, 2).toUpperCase();
   const byLevel = new Map<string, { total: number; done: number; pct: number }>();
   const sums = new Map<string, number>();

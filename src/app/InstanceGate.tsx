@@ -1,7 +1,5 @@
 import type { BlockState } from "@/lib/instance";
 
-// Markaz yopilganda (to'xtatilgan yoki litsenziya tugagan) va o'chirilgan modul sahifasida
-// ko'rsatiladigan ekran. Ildiz maketdan chaqiriladi — sahifa kodi umuman bajarilmaydi.
 export function BlockedScreen({ state, orgName }: { state: BlockState; orgName: string }) {
   const expired = state.reason === "expired";
   return (

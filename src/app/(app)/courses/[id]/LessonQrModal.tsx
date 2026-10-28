@@ -8,16 +8,10 @@ import { Icon } from "../../_components/Icon";
 import BrandedQr from "../../_components/BrandedQr";
 import { getLessonQr, type LessonQr } from "./lessonActions";
 
-/**
- * Dars QR kodi. O'quvchi telefonida skan qiladi:
- *   ilova yo'q → yuklab olish sahifasi; seans yo'q → kirish;
- *   faol o'quvchi → shu darsning videosi ilovada ochiladi.
- */
 export default function LessonQrModal({ lessonId, title, order, locale, onClose }: { lessonId: string; title: string; order: number; locale: Locale; onClose: () => void }) {
   const T = (uz: string, ru: string, en: string, de: string) => tr(locale, { uz, ru, en, de });
   const [data, setData] = useState<LessonQr | null>(null);
   const [copied, setCopied] = useState(false);
-  // Brendli QR canvas'da chizilgach PNG shu yerga tushadi (yuklab olish uchun)
   const [png, setPng] = useState<string | null>(null);
 
   useEffect(() => {
@@ -36,7 +30,7 @@ export default function LessonQrModal({ lessonId, title, order, locale, onClose 
 
   const copy = async () => {
     if (!data?.url) return;
-    try { await navigator.clipboard.writeText(data.url); setCopied(true); setTimeout(() => setCopied(false), 1500); } catch { /* buferga ruxsat yo'q */ }
+    try { await navigator.clipboard.writeText(data.url); setCopied(true); setTimeout(() => setCopied(false), 1500); } catch { }
   };
 
   return createPortal(

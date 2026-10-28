@@ -3,24 +3,6 @@ import { readFile } from "node:fs/promises";
 import { importPKCS8, SignJWT } from "jose";
 import { prisma } from "./db";
 
-// Push bildirishnoma — Firebase Cloud Messaging (FCM HTTP v1).
-//
-// SOZLANMAGAN BO'LSA JIM TURADI. Xizmat hisobi berilmagan bo'lsa hamma
-// funksiya darhol qaytadi va hech qanday xato chiqarmaydi: ilovaning
-// qolgan qismi push'siz ham to'liq ishlashi kerak, chunki bildirishnoma
-// baribir bazaga yoziladi va o'quvchi uni ilova ichida ko'radi.
-//
-// SOZLASH (bir marta):
-//   1. Firebase konsolida loyiha ochiladi va Android ilova qo'shiladi
-//      (paket nomi: live.germaniya.app)
-//   2. google-services.json → android/app/google-services.json
-//   3. Project settings → Service accounts → "Generate new private key"
-//      natijadagi JSON → serverga, masalan /opt/gl-edu/fcm-service.json
-//   4. .env ga:  FCM_SERVICE_ACCOUNT_FILE=/opt/gl-edu/fcm-service.json
-//
-// Xizmat hisobi fayli MAXFIY: u bilan bizning nomimizdan istalgan
-// bildirishnoma yuborish mumkin. Gitga tushmasin, jurnalga chiqmasin.
-
 interface ServiceAccount {
   project_id: string;
   client_email: string;
@@ -32,11 +14,8 @@ const SCOPE = "https://www.googleapis.com/auth/firebase.messaging";
 
 let accountPromise: Promise<ServiceAccount | null> | undefined;
 
-/** Xizmat hisobini o'qiydi (bir marta, keyin xotiradan) */
 function serviceAccount(): Promise<ServiceAccount | null> {
   accountPromise ??= (async () => {
-    // Ikki xil berish mumkin: to'g'ridan-to'g'ri JSON matni yoki fayl yo'li.
-    // Fayl afzal — .env ichida ko'p qatorli maxfiy kalit chalkashlik tug'diradi.
     const inline = process.env.FCM_SERVICE_ACCOUNT?.trim();
     const path = process.env.FCM_SERVICE_ACCOUNT_FILE?.trim();
 
@@ -71,14 +50,10 @@ export async function isPushConfigured(): Promise<boolean> {
   return (await serviceAccount()) !== null;
 }
 
-// ── Kirish tokeni ──
-// Google bergan token 1 soat yashaydi. Har yuborishda yangisini so'rash —
-// keraksiz kechikish va so'rovlar chegarasi, shu sabab xotirada saqlaymiz.
 let cached: { token: string; expiresAt: number } | undefined;
 
 async function accessToken(acc: ServiceAccount): Promise<string | null> {
   const now = Date.now();
-  // 60 soniya zaxira: so'rov yo'lda ekan token eskirib qolmasin
   if (cached && cached.expiresAt - 60_000 > now) return cached.token;
 
   try {
@@ -117,16 +92,9 @@ async function accessToken(acc: ServiceAccount): Promise<string | null> {
 export interface PushPayload {
   title: string;
   body?: string;
-  /** Bosilganda ochiladigan sahifa, masalan "/student/mitteilungen" */
   url?: string;
 }
 
-/**
- * Bitta odamning BARCHA qurilmalariga yuboradi.
- *
- * Hech qachon xato ko'tarmaydi: push yuborilmagani uchun uni chaqirgan
- * amal (masalan baho qo'yish) bekor bo'lib qolmasligi kerak.
- */
 export async function sendPush(userId: string, payload: PushPayload): Promise<number> {
   const acc = await serviceAccount();
   if (!acc) return 0;
@@ -154,7 +122,6 @@ export async function sendPush(userId: string, payload: PushPayload): Promise<nu
             message: {
               token: d.token,
               notification: { title: payload.title, body: payload.body ?? "" },
-              // Ilova ochilganda qaysi sahifaga o'tishni shu yerdan biladi
               data: payload.url ? { url: payload.url } : undefined,
               android: {
                 priority: "HIGH",
@@ -174,9 +141,6 @@ export async function sendPush(userId: string, payload: PushPayload): Promise<nu
           return;
         }
 
-        // 404 UNREGISTERED yoki 400 INVALID_ARGUMENT — token endi yaroqsiz.
-        // Ilova o'chirilgan yoki ma'lumotlari tozalangan: yozuvni olib
-        // tashlaymiz, aks holda har safar behuda so'rov ketaveradi.
         if (res.status === 404 || res.status === 400) {
           dead.push(d.id);
         } else {
@@ -194,14 +158,11 @@ export async function sendPush(userId: string, payload: PushPayload): Promise<nu
   return sent;
 }
 
-/** Bir nechta odamga (masalan guruhdagi hamma o'quvchiga) */
 export async function sendPushMany(userIds: string[], payload: PushPayload): Promise<void> {
   const unique = [...new Set(userIds)].filter(Boolean);
   if (unique.length === 0) return;
   if (!(await isPushConfigured())) return;
 
-  // Ketma-ket emas, lekin cheksiz parallel ham emas: bir vaqtda 20 tadan.
-  // Butun guruhga yuborilganda Firebase ni ham, serverni ham bosmaslik uchun.
   const BATCH = 20;
   for (let i = 0; i < unique.length; i += BATCH) {
     await Promise.all(unique.slice(i, i + BATCH).map((id) => sendPush(id, payload)));

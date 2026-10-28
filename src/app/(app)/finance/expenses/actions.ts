@@ -14,14 +14,13 @@ export type ExState = { ok?: boolean; error?: string };
 const schema = z.object({
   name: z.string().min(1),
   date: z.string().min(1),
-  amount: z.coerce.number().int().positive().max(MAX_MONEY), // Int'ga sig'masa sahifa yiqiladi
+  amount: z.coerce.number().int().positive().max(MAX_MONEY),
   method: z.string().min(1),
   categoryId: z.string().optional(),
   recipient: z.string().optional(),
   note: z.string().optional(),
 });
 
-// Yangi xarajat kiritish
 export async function createExpense(_prev: ExState, formData: FormData): Promise<ExState> {
   const s = await requireSession();
   if (!canWrite(s.role, MODULES.EXPENSES)) return { error: "forbidden" };
@@ -47,7 +46,7 @@ export async function createExpense(_prev: ExState, formData: FormData): Promise
       recipient: parsed.data.recipient,
       note: parsed.data.note,
       authorId: s.userId,
-      branchId: s.branchId, // xarajat qaysi filialda kiritilgan bo'lsa — o'shanga biriktiriladi
+      branchId: s.branchId,
     },
   });
 
@@ -65,7 +64,6 @@ export async function createExpense(_prev: ExState, formData: FormData): Promise
   return { ok: true };
 }
 
-// Xarajatni tahrirlash (audit bilan)
 export async function updateExpense(_prev: ExState, formData: FormData): Promise<ExState> {
   const s = await requireSession();
   if (!canWrite(s.role, MODULES.EXPENSES)) return { error: "forbidden" };
@@ -118,7 +116,6 @@ export async function updateExpense(_prev: ExState, formData: FormData): Promise
   return { ok: true };
 }
 
-// Xarajatni o'chirish (audit bilan)
 export async function deleteExpense(id: string): Promise<void> {
   const s = await requireSession();
   if (!canWrite(s.role, MODULES.EXPENSES)) return;

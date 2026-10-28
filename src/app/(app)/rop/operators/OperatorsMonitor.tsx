@@ -21,9 +21,9 @@ export interface VOperator {
   won: number;
   conv: number;
   online: boolean;
-  lastOnline: string | null; // ISO
+  lastOnline: string | null;
   lastLead: string | null;
-  createdAt: string; // ISO
+  createdAt: string;
 }
 
 const p2 = (n: number) => String(n).padStart(2, "0");
@@ -67,7 +67,6 @@ export default function OperatorsMonitor({ operators, totalLeads, todayCalls, wr
 
   return (
     <div className="space-y-5">
-      {/* Header */}
       <div className="flex flex-wrap items-center justify-between gap-4">
         <div className="flex items-center gap-3.5">
           <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-brand-500 text-white"><Icon name="headphones" className="h-6 w-6" /></div>
@@ -88,7 +87,6 @@ export default function OperatorsMonitor({ operators, totalLeads, todayCalls, wr
         </div>
       </div>
 
-      {/* Stat strip */}
       <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-5">
         <Stat icon="users" tone="brand" value={operators.length} label={T("Jami", "Всего", "Total", "Gesamt")} />
         <Stat icon="check" tone="green" value={onlineCount} label="Online" />
@@ -97,7 +95,6 @@ export default function OperatorsMonitor({ operators, totalLeads, todayCalls, wr
         <Stat icon="phone" tone="brand" value={todayCalls} label={T("Bugungi qo'ng'iroqlar", "Звонки сегодня", "Today's calls", "Anrufe heute")} />
       </div>
 
-      {/* Search + tabs */}
       <div className="flex flex-wrap items-center gap-3">
         <div className="relative min-w-[220px] flex-1">
           <Icon name="search" className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400" />
@@ -114,7 +111,6 @@ export default function OperatorsMonitor({ operators, totalLeads, todayCalls, wr
         </div>
       </div>
 
-      {/* Cards */}
       {filtered.length === 0 ? (
         <div className="rounded-2xl border border-slate-200/70 bg-white px-5 py-16 text-center text-sm text-slate-400 shadow-card dark:border-slate-800 dark:bg-slate-900">{T("Operator topilmadi", "Оператор не найден", "No operator found", "Kein Operator gefunden")}</div>
       ) : (
@@ -201,8 +197,6 @@ function Stat({ icon, tone, value, label }: { icon: string; tone: string; value:
   );
 }
 
-// Operator avatari — rasm bo'lsa rasm, bo'lmasa ism bosh harflari.
-// writable bo'lsa: ustiga bosib rasm yuklash/almashtirish (220px JPEG ga siqiladi).
 function OperatorAvatar({ op, writable, locale }: { op: VOperator; writable: boolean; locale: Locale }) {
   const router = useRouter();
   const fileRef = useRef<HTMLInputElement>(null);

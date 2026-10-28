@@ -41,7 +41,6 @@ export default function TelephonyView({ locale, domain: domain0, hasKey, keyHint
 
   return (
     <div className="space-y-5">
-      {/* Header */}
       <div className="flex flex-wrap items-center justify-between gap-3">
         <div className="flex items-center gap-3">
           <span className="grid h-12 w-12 place-items-center rounded-2xl bg-gradient-to-br from-indigo-500 to-blue-500 text-white shadow-soft"><Icon name="phone" className="h-6 w-6" /></span>
@@ -57,13 +56,11 @@ export default function TelephonyView({ locale, domain: domain0, hasKey, keyHint
         )}
       </div>
 
-      {/* Tabs */}
       <div className="border-b border-slate-200 dark:border-slate-800">
         <button className="border-b-2 border-brand-500 px-4 py-2.5 text-sm font-semibold text-brand-600 dark:text-brand-400">OnlinePBX</button>
       </div>
 
       <div className="grid gap-6 lg:grid-cols-[minmax(0,1fr)_320px]">
-        {/* Form */}
         <form onSubmit={submit} className="rounded-2xl border border-slate-200/70 bg-white p-5 shadow-card dark:border-slate-800 dark:bg-slate-900">
           <div className="space-y-4">
             <label className="block">
@@ -95,7 +92,6 @@ export default function TelephonyView({ locale, domain: domain0, hasKey, keyHint
           </div>
         </form>
 
-        {/* Tavsif */}
         <aside className="space-y-4">
           <div className="rounded-2xl border border-slate-200/70 bg-white p-5 shadow-card dark:border-slate-800 dark:bg-slate-900">
             <h3 className="mb-2 flex items-center gap-2 text-base font-semibold text-slate-700 dark:text-slate-200"><Icon name="info" className="h-5 w-5 text-slate-400" /> {tr(locale, { uz: "Tavsif", ru: "Описание", en: "Description", de: "Beschreibung" })}</h3>

@@ -5,15 +5,8 @@ import { useMemo, useState } from "react";
 import type { StudentStrings } from "../_i18n";
 import { CARD, ICON_GRADIENT, TEAL } from "../_ui";
 
-// "Kursim" bo'limi — darslardagi so'zlar.
-// Tarjima faqat ustoz "das Haus - uy" ko'rinishida yozgan bo'lsa chiqadi;
-// aks holda so'zning yonidagi tugma umumiy lug'atdan qidirib beradi
-// (bazani avtomatik ulash noto'g'ri ma'no berishi mumkin, shu sabab tanlov
-// o'quvchida qoladi).
-
 export type VWord = { de: string; uz: string | null; lesson: string; level: string; learned: boolean };
 
-// Katak daftar varag'i — umumiy lug'at bilan bir xil ko'rinish
 const SHEET: React.CSSProperties = {
   backgroundColor: "#fcfdff",
   backgroundImage:
@@ -22,7 +15,7 @@ const SHEET: React.CSSProperties = {
   backgroundSize: "24px 24px",
 };
 
-export default function WordList({ words, t, levelCodes }: { words: VWord[]; t: StudentStrings; /** Sozlamalar > Darajalar tartibi */ levelCodes: string[] }) {
+export default function WordList({ words, t, levelCodes }: { words: VWord[]; t: StudentStrings; levelCodes: string[] }) {
   const [q, setQ] = useState("");
   const [level, setLevel] = useState<string | null>(null);
 
@@ -42,7 +35,6 @@ export default function WordList({ words, t, levelCodes }: { words: VWord[]; t: 
     );
   }, [words, q, level]);
 
-  // Dars bo'yicha guruhlash — tartib asl ro'yxatdagidek
   const groups = useMemo(() => {
     const map = new Map<string, VWord[]>();
     for (const w of shown) {
@@ -64,7 +56,6 @@ export default function WordList({ words, t, levelCodes }: { words: VWord[]; t: 
 
   return (
     <div className="space-y-3">
-      {/* ── O'zlashtirish ── */}
       <div className={CARD + " p-4"}>
         <div className="flex items-baseline justify-between">
           <span className="text-[13px] font-bold text-slate-700">{t.learnedWords}</span>
@@ -77,7 +68,6 @@ export default function WordList({ words, t, levelCodes }: { words: VWord[]; t: 
         </div>
       </div>
 
-      {/* ── Qidiruv ── */}
       <div className="relative">
         <span className="pointer-events-none absolute left-4 top-1/2 -translate-y-1/2">
           <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#94a3b8" strokeWidth="2.2" strokeLinecap="round">
@@ -93,7 +83,6 @@ export default function WordList({ words, t, levelCodes }: { words: VWord[]; t: 
         />
       </div>
 
-      {/* ── Daraja ── */}
       {levels.length > 1 ? (
         <div className="-mx-4 flex gap-1.5 overflow-x-auto px-4 pb-0.5 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
           <Chip active={level === null} onClick={() => setLevel(null)}>
@@ -115,7 +104,6 @@ export default function WordList({ words, t, levelCodes }: { words: VWord[]; t: 
       ) : (
         groups.map(([lesson, items], gi) => (
           <section key={lesson} className="overflow-hidden rounded-[18px] shadow-[0_10px_22px_rgba(19,78,94,0.10)]">
-            {/* Dars sarlavhasi */}
             <div className="flex items-center gap-2.5 px-3 py-2.5">
               <span
                 className="grid h-6 w-6 shrink-0 place-items-center rounded-lg text-[11px] font-extrabold text-white"
@@ -129,7 +117,6 @@ export default function WordList({ words, t, levelCodes }: { words: VWord[]; t: 
               </span>
             </div>
 
-            {/* Katak varaq: chapda nemischa, o'ngda o'zbekcha */}
             <ul style={SHEET}>
               {items.map((w) => (
                 <li key={lesson + w.de} className="grid grid-cols-[1fr_1fr] border-b border-[#bcd8e8] last:border-0">

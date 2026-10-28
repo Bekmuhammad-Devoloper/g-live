@@ -7,7 +7,6 @@ import { ROLES } from "@/lib/constants";
 import { tr } from "@/lib/tr";
 import { writeAudit } from "@/lib/audit";
 
-// Rollarni boshqarish — faqat direktor va o'rinbosari (administrator emas)
 const CAN = [ROLES.DIRECTOR, ROLES.DEPUTY_DIRECTOR];
 const can = (r: string) => CAN.includes(r as never);
 

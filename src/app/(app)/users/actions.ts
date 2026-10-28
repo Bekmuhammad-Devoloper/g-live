@@ -14,14 +14,12 @@ const fmtDate = (d: Date | null) => (d ? `${p2(d.getDate())}.${p2(d.getMonth() +
 export interface StaffDetail {
   id: string; fullName: string; email: string; phone: string | null;
   roleKey: string; roleLabel: string; branch: string | null;
-  /** Tahrirlash formasi uchun xom qiymatlar */
   position: string | null; branchId: string | null; birthDateIso: string | null;
-  /** Qo'shimcha filiallar (asosiysidan tashqari) */
   extraBranchIds: string[];
   gender: "MALE" | "FEMALE" | null; birthDate: string | null; isActive: boolean;
-  password: string | null; // ochiq parol (rahbariyat ko'rishi uchun)
+  password: string | null;
   fiksa: number; kpiBonus: number; monthTotal: number;
-  workdays: number[]; // 1..7 (ish kunlari)
+  workdays: number[];
   startTime: string | null; endTime: string | null;
   groups: string[];
 }
@@ -29,30 +27,23 @@ export interface StaffDetail {
 const CAN = [ROLES.DIRECTOR, ROLES.DEPUTY_DIRECTOR, ROLES.ADMIN];
 const can = (r: string) => CAN.includes(r as never);
 
-// Rahbariyat (direktor, o'rinbosar) parolini faqat direktor yoki hisob egasining o'zi almashtiradi —
-// aks holda administrator direktor parolini o'zgartirib, uning nomidan kira olardi
 const canSetPasswordOf = (s: { role: string; userId: string }, target: { id: string; role: string }): boolean =>
   !MANAGEMENT_ROLES.includes(target.role) || s.role === ROLES.DIRECTOR || s.userId === target.id;
 
-// Rollar katalogidagi lavozim nomidan tizim ruxsatlari (RBAC roli) ni aniqlaydi.
-// Katalog rollari (ROP, Operator, Moliyachi, Marketolog...) erkin qo'shilishi mumkin,
-// shu sabab aniq nomlar bo'yicha kalit so'z orqali eng yaqin RBAC roliga bog'laymiz.
 function roleForPosition(position: string): string {
   const p = position.toLowerCase();
   if (p.includes("administr")) return ROLES.ADMIN;
-  if (p.includes("filial")) return ROLES.DEPUTY_DIRECTOR; // faqat bitta filialni boshqaradi — DIRECTOR emas
+  if (p.includes("filial")) return ROLES.DEPUTY_DIRECTOR;
   if (p.includes("o'rinbosar") || p.includes("o‘rinbosar") || p.includes("orinbosar")) return ROLES.DEPUTY_DIRECTOR;
   if (p.includes("direktor")) return ROLES.DIRECTOR;
   if (p.includes("o'qituvchi") || p.includes("o‘qituvchi") || p.includes("ustoz") || p.includes("teacher")) return ROLES.TEACHER;
-  if (p.includes("moliya") || p.includes("hisobchi") || p.includes("buxgalter") || p.includes("bugalter") || p.includes("accountant")) return ROLES.ACCOUNTANT; // faqat moliya (to'lov/xarajat/oylik) — CRM/guruhlarga kirmaydi
-  // Sotuv bo'limi boshlig'i — alohida ROP roli (operatorlarni boshqaradi)
+  if (p.includes("moliya") || p.includes("hisobchi") || p.includes("buxgalter") || p.includes("bugalter") || p.includes("accountant")) return ROLES.ACCOUNTANT;
   if (isRopPosition(p)) return ROLES.ROP;
-  return ROLES.OPERATOR; // Operator, Marketolog va shunga o'xshash sotuv xodimlari
+  return ROLES.OPERATOR;
 }
 
 export type StaffResult = { ok?: boolean; error?: string; notice?: string };
 
-/** Formadagi qo'shimcha filiallar (asosiysi chiqarib tashlanadi) */
 const extraBranchesOf = (fd: FormData, primary: string | null): string[] =>
   [...new Set(fd.getAll("extraBranches").map(String).filter((b) => b && b !== primary))];
 
@@ -71,7 +62,6 @@ export async function createStaff(fd: FormData): Promise<StaffResult> {
   const gender = ["MALE", "FEMALE"].includes(String(fd.get("gender"))) ? String(fd.get("gender")) : null;
   const birthRaw = String(fd.get("birthDate") || "");
   const birthDate = birthRaw ? new Date(birthRaw) : null;
-  // Yuqori chegara SHART (Int'ga sig'maydigan qiymat sahifani yiqitadi)
   const fiksa = parseMoney(fd.get("fiksa"));
   if (fiksa === null) return { error: tr(s.locale, { uz: "Summa juda katta (eng ko'pi 1 mlrd so'm) — nollar sonini tekshiring", ru: "Сумма слишком велика (макс. 1 млрд сум) — проверьте количество нулей", en: "Amount too large (max 1 billion) — check the number of zeros", de: "Betrag zu groß (max. 1 Mrd.) — Anzahl der Nullen prüfen" }) };
 
@@ -89,7 +79,6 @@ export async function createStaff(fd: FormData): Promise<StaffResult> {
     select: { id: true, fullName: true, branchId: true, branch: { select: { name: true } }, branches: { select: { branchId: true } } },
   });
   if (exists) {
-    // Xodim boshqa filialda allaqachon bor — ikkinchi hisob ochilmaydi, shu filialga ham biriktiriladi
     if (!branchId) return { error: tr(s.locale, { uz: "Bu email allaqachon mavjud", ru: "Этот email уже существует", en: "This email already exists", de: "Diese E-Mail existiert bereits" }) };
     if (exists.branchId === branchId || exists.branches.some((b) => b.branchId === branchId)) {
       return { error: tr(s.locale, { uz: "Bu xodim shu filialda allaqachon bor", ru: "Этот сотрудник уже есть в этом филиале", en: "This staff member is already in this branch", de: "Dieser Mitarbeiter ist bereits in dieser Filiale" }) };
@@ -102,7 +91,6 @@ export async function createStaff(fd: FormData): Promise<StaffResult> {
     const from = exists.branch?.name;
     return {
       ok: true,
-      // Filial nomlari ko'pincha "… filiali" ko'rinishida — shuning uchun "filialida" so'zi qo'shilmaydi
       notice: tr(s.locale, {
         uz: `${exists.fullName} allaqachon ro'yxatda${from ? ` («${from}»)` : ""}. Endi «${target?.name ?? ""}»ga ham biriktirildi — login va paroli o'zgarmadi.`,
         ru: `${exists.fullName} уже есть в списке${from ? ` («${from}»)` : ""}. Теперь также прикреплён к «${target?.name ?? ""}» — логин и пароль не изменились.`,
@@ -124,7 +112,6 @@ export async function createStaff(fd: FormData): Promise<StaffResult> {
   return { ok: true };
 }
 
-// Xodim batafsil ma'lumoti (login/parol/oylik/ish kuni/guruhlar). Faqat rahbariyat, talab bo'yicha.
 export async function getStaffDetail(userId: string): Promise<{ ok: boolean; data?: StaffDetail; error?: string }> {
   const s = await requireSession();
   if (!can(s.role)) return { ok: false, error: "forbidden" };
@@ -145,7 +132,6 @@ export async function getStaffDetail(userId: string): Promise<{ ok: boolean; dat
   ]);
   if (!u) return { ok: false, error: "notfound" };
 
-  // Ish kunlari: jadval bo'lsa — o'sha, bo'lmasa guruhlar kunlaridan
   let workdays: number[] = [];
   if (schedule?.weekdays) workdays = schedule.weekdays.split(",").map(Number).filter((n) => n >= 1 && n <= 7);
   else {
@@ -163,12 +149,10 @@ export async function getStaffDetail(userId: string): Promise<{ ok: boolean; dat
       roleKey: u.role, roleLabel: u.position?.trim() || label(ROLE_LABELS, u.role, s.locale),
       branch: [u.branch?.name, ...u.branches.map((b) => b.branch.name)].filter(Boolean).join(" · ") || null,
       extraBranchIds: u.branches.map((b) => b.branchId),
-      // Lavozimi yozilmagan (eski) xodimda rolidan kelib chiqadigan nom tanlangan holda ochiladi
       position: u.position ?? defaultPositionFor(u.role), branchId: u.branchId,
       birthDateIso: u.birthDate ? u.birthDate.toISOString().slice(0, 10) : null,
       gender: (u.gender === "MALE" || u.gender === "FEMALE" ? u.gender : null) as "MALE" | "FEMALE" | null,
       birthDate: fmtDate(u.birthDate), isActive: u.isActive,
-      // Rahbariyat paroli faqat direktorga (va hisob egasiga) ko'rinadi
       password: canSetPasswordOf(s, u) ? u.plainPassword : null,
       fiksa: u.fiksa, kpiBonus: u.kpiBonus, monthTotal,
       workdays, startTime: schedule?.startTime ?? null, endTime: schedule?.endTime ?? null,
@@ -177,13 +161,6 @@ export async function getStaffDetail(userId: string): Promise<{ ok: boolean; dat
   };
 }
 
-/**
- * Xodimni tahrirlash — "Boshqaruv → Xodimlar" yon panelidagi "Tahrirlash".
- * Ism, telefon, lavozim (rol lavozimdan aniqlanadi — faqat lavozim o'zgarsa),
- * filial (asosiy + qo'shimcha), jins, tug'ilgan sana, oylik, email (login) va parol. Parol maydoni bo'sh
- * yoki o'zgarmagan bo'lsa parolga tegilmaydi.
- * Ruxsat: direktor / o'rinbosari / administrator — o'z-o'zini ham tahrirlaydi.
- */
 export async function updateStaff(fd: FormData): Promise<StaffResult> {
   const s = await requireSession();
   if (!can(s.role)) return { error: tr(s.locale, { uz: "Ruxsat yo'q", ru: "Нет доступа", en: "No access", de: "Kein Zugriff" }) };
@@ -209,7 +186,6 @@ export async function updateStaff(fd: FormData): Promise<StaffResult> {
   if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) return { error: tr(s.locale, { uz: "Email noto'g'ri", ru: "Неверный email", en: "Invalid email", de: "Ungültige E-Mail" }) };
   if (!position) return { error: tr(s.locale, { uz: "Vazifa tanlanmadi", ru: "Должность не выбрана", en: "Position not selected", de: "Position nicht ausgewählt" }) };
 
-  // Parol: bo'sh yoki hozirgisi bilan bir xil bo'lsa — o'zgarmaydi
   const password = String(fd.get("password") || "").trim();
   const newPassword = password && password !== cur.plainPassword ? password : null;
   if (newPassword && newPassword.length < 4) return { error: tr(s.locale, { uz: "Parol kamida 4 ta belgi bo'lsin", ru: "Пароль должен содержать не менее 4 символов", en: "Password must be at least 4 characters", de: "Das Passwort muss mindestens 4 Zeichen enthalten" }) };
@@ -220,16 +196,11 @@ export async function updateStaff(fd: FormData): Promise<StaffResult> {
     if (busy && busy.id !== id) return { error: tr(s.locale, { uz: "Bu email allaqachon mavjud", ru: "Этот email уже существует", en: "This email already exists", de: "Diese E-Mail existiert bereits" }) };
   }
 
-  // Rol lavozimdan aniqlanadi — lekin faqat lavozim o'zgarganda (Sozlamalar → Xodimlar
-  // orqali qo'lda berilgan rol lavozim o'zgarmasa buzilmasin)
-  // Lavozimi yozilmagan xodimda "hozirgi lavozim" — rolidan kelib chiqqan standart nom
   const curPosition = cur.position ?? defaultPositionFor(cur.role) ?? "";
   const role = position !== curPosition ? roleForPosition(position) : cur.role;
-  // Rahbariyat rolini berish yoki olib qo'yish — faqat direktor
   if (role !== cur.role && (MANAGEMENT_ROLES.includes(role) || MANAGEMENT_ROLES.includes(cur.role)) && s.role !== ROLES.DIRECTOR) {
     return { error: tr(s.locale, { uz: "Rahbariyat lavozimini faqat direktor o'zgartiradi", ru: "Руководящую должность меняет только директор", en: "Only the director can change management positions", de: "Leitungspositionen ändert nur der Direktor" }) };
   }
-  // O'zini direktorlikdan tushirib qo'yish — tizimga kira olmay qolmasin
   if (id === s.userId && role !== cur.role) {
     return { error: tr(s.locale, { uz: "O'z rolingizni o'zgartira olmaysiz", ru: "Вы не можете изменить свою роль", en: "You cannot change your own role", de: "Sie können Ihre eigene Rolle nicht ändern" }) };
   }
@@ -241,7 +212,6 @@ export async function updateStaff(fd: FormData): Promise<StaffResult> {
       ...(newPassword ? { passwordHash: await hashPassword(newPassword), plainPassword: newPassword } : {}),
     },
   });
-  // Qo'shimcha filiallar: formadagi ro'yxat bilan tenglashtiriladi
   const extraBranches = extraBranchesOf(fd, branchId);
   await prisma.$transaction([
     prisma.userBranch.deleteMany({ where: { userId: id, branchId: { notIn: extraBranches.length ? extraBranches : ["__none__"] } } }),
@@ -253,19 +223,11 @@ export async function updateStaff(fd: FormData): Promise<StaffResult> {
   return { ok: true };
 }
 
-/**
- * Xodimni bazadan butunlay o'chirish — faqat direktor. Qaytarilmaydi.
- * Xodimning izi qolgan yozuvlar o'chmaydi, faqat undan uziladi: guruhlar ustozsiz,
- * lidlar menejersiz qoladi, to'lov/xarajat/audit yozuvlarida muallif bo'shaydi.
- * Shaxsiy yozuvlar (bildirishnoma, qurilma, oylik, qo'shimcha filial, ish jadvali,
- * o'qituvchi davomati) o'chiriladi.
- */
 export async function deleteStaffPermanent(id: string): Promise<{ ok?: boolean; error?: string }> {
   const s = await requireSession();
   if (id === s.userId) return { error: tr(s.locale, { uz: "O'zingizni o'chira olmaysiz", ru: "Вы не можете удалить себя", en: "You cannot delete yourself", de: "Sie können sich nicht selbst löschen" }) };
   const u = await prisma.user.findUnique({ where: { id }, select: { id: true, fullName: true, email: true, role: true, branchId: true, branches: { select: { branchId: true } } } });
   if (!u) return { error: tr(s.locale, { uz: "Xodim topilmadi", ru: "Сотрудник не найден", en: "Staff member not found", de: "Mitarbeiter nicht gefunden" }) };
-  // Direktor — istalgan xodimni; filial administratori — faqat o'z filialidagi o'qituvchini
   const adminOwnTeacher = s.role === ROLES.ADMIN && u.role === ROLES.TEACHER && !!s.branchId
     && (u.branchId === s.branchId || u.branches.some((b) => b.branchId === s.branchId));
   if (s.role !== ROLES.DIRECTOR && !adminOwnTeacher) {
@@ -290,7 +252,6 @@ export async function deleteStaffPermanent(id: string): Promise<{ ok?: boolean; 
     prisma.parent.updateMany({ where: { userId: id }, data: { userId: null } }),
     prisma.teacherSchedule.deleteMany({ where: { teacherId: id } }),
     prisma.teacherAttendance.deleteMany({ where: { teacherId: id } }),
-    // bildirishnoma, qurilma, oylik va qo'shimcha filial yozuvlari kaskad bilan o'chadi
     prisma.user.delete({ where: { id } }),
   ]);
   await writeAudit({ actorId: s.userId, action: "DELETE", entityType: "User", entityId: id, oldValue: { fullName: u.fullName, email: u.email, role: u.role }, reason: "Xodim bazadan o'chirildi" });
@@ -300,7 +261,6 @@ export async function deleteStaffPermanent(id: string): Promise<{ ok?: boolean; 
   return { ok: true };
 }
 
-// Xodim parolini yangilash (hash + ochiq nusxa). Rahbariyat.
 export async function setUserPassword(userId: string, newPassword: string): Promise<{ ok: boolean; error?: string }> {
   const s = await requireSession();
   if (!can(s.role)) return { ok: false, error: "forbidden" };
@@ -323,11 +283,6 @@ export async function toggleStaffActive(id: string): Promise<void> {
   revalidatePath("/users");
 }
 
-/**
- * Xodim (operator/menejer/administrator…) profil rasmini o'rnatadi yoki o'chiradi (null).
- * O'qituvchilar uchun alohida `teachers/teacherActions.setTeacherImage` bor — bu qolgan xodimlar uchun.
- * Rasm data URL sifatida `User.imageUrl` ga saqlanadi (mijozda 220px ga kichraytirilgan JPEG).
- */
 export async function setStaffImage(userId: string, dataUrl: string | null): Promise<{ ok: boolean; error?: string }> {
   const s = await requireSession();
   if (!can(s.role)) return { ok: false, error: "forbidden" };

@@ -5,19 +5,15 @@ import { useRouter } from "next/navigation";
 import { markRead, markAllRead } from "../../(app)/notifications/actions";
 import { CARD, TEAL, IcoBell } from "../_ui";
 
-// Bildirishnomalar ro'yxati — o'qilmagani bosilganda o'qilgan deb belgilanadi.
-// markRead/markAllRead faqat o'z yozuvlarini yangilaydi (userId bilan himoyalangan).
-
 export interface VNotif {
   id: string;
   title: string;
   body: string | null;
   isRead: boolean;
-  createdAt: string; // ISO
+  createdAt: string;
   event: string | null;
 }
 
-// Bildirishnoma qaysi bo'limga tegishli — bosilganda o'sha yerga o'tadi
 const LINK: Record<string, string> = {
   CHAT: "/student/lehrer",
   MARKET_ORDER: "/student/market",

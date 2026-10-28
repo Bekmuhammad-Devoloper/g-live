@@ -1,17 +1,8 @@
-/**
- * Market uchun boshlang'ich sovg'alar. Faqat yo'q bo'lganini qo'shadi —
- * qayta yurgizilsa nusxa yaratmaydi. O'quv markazi bularni CRM dagi
- * "Market" sahifasidan tahrirlaydi yoki o'chiradi.
- *
- *   node scripts/seed-market.mjs           — nima qo'shilishini ko'rsatadi
- *   node scripts/seed-market.mjs --apply   — bazaga yozadi
- */
 import { PrismaClient } from "@prisma/client";
 
 const prisma = new PrismaClient();
 const apply = process.argv.includes("--apply");
 
-// Narxlar tanga hisobida: 1 dars = 5, 1 baholangan vazifa = 10 tanga
 const ITEMS = [
   { title: "GL ruchka", description: "Germaniya Live logotipli ruchka", price: 100, stock: null },
   { title: "Bloknot", description: "So'zlar yozib borish uchun cho'ntak bloknoti", price: 150, stock: null },

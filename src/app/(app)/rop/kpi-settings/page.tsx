@@ -11,7 +11,6 @@ import { DEFAULT_KPI, kpiSettingsSchema, type RopKpiSettings } from "./schema";
 
 const MANAGE = [ROLES.DIRECTOR, ROLES.DEPUTY_DIRECTOR, ROLES.ADMIN];
 
-// ROP → KPI Sozlamalari: baholash parametrlari + oylik to'lov + operatorlar reytingi.
 export default async function RopKpiSettingsPage() {
   const s = await requireSession();
   if (!canRead(s.role, MODULES.REPORTS) && !canRead(s.role, MODULES.CRM)) {
@@ -20,15 +19,13 @@ export default async function RopKpiSettingsPage() {
 
   const [raw, operators, leads] = await Promise.all([
     getSetting("rop.kpi"),
-    // faol filial doirasida
     prisma.user.findMany({ where: { AND: [{ role: ROLES.OPERATOR, isActive: true }, staffBranchWhere(s)] }, select: { id: true, fullName: true, kpiBonus: true }, orderBy: { fullName: "asc" } }),
-    // faol filial doirasida
     prisma.lead.findMany({ where: { AND: [{ managerId: { not: null } }, branchWhere(s)] }, select: { managerId: true, stage: true } }),
   ]);
 
   let settings: RopKpiSettings = DEFAULT_KPI;
   if (raw) {
-    try { const p = kpiSettingsSchema.safeParse(JSON.parse(raw)); if (p.success) settings = p.data; } catch { /* default */ }
+    try { const p = kpiSettingsSchema.safeParse(JSON.parse(raw)); if (p.success) settings = p.data; } catch { }
   }
 
   const rating: VRatingRow[] = operators

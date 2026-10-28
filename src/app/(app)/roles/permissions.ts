@@ -1,4 +1,3 @@
-// Rol ruxsatlari katalogi (Modme uslubida — bo'limlar bo'yicha)
 export interface Tri { uz: string; ru: string; en: string }
 export interface PermGroup { group: Tri; items: { key: string; label: Tri }[] }
 

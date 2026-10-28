@@ -7,7 +7,6 @@ import { ROLES, MAX_MONEY } from "@/lib/constants";
 import { writeAudit } from "@/lib/audit";
 import { normalizePromo } from "@/lib/promo";
 
-// Promokodlarni faqat rahbariyat (direktor va o'rinbosar) yaratadi va boshqaradi
 const CAN_MANAGE: string[] = [ROLES.DIRECTOR, ROLES.DEPUTY_DIRECTOR];
 
 export type PromoResult = { ok?: boolean; error?: string };
@@ -30,7 +29,6 @@ export async function savePromo(input: { id?: string | null; code: string; disco
   if (input.id) {
     const prev = await prisma.promoCode.findUnique({ where: { id: input.id } });
     if (!prev) return { error: "notfound" };
-    // Ishlatilgan kodning nomini o'zgartirib bo'lmaydi — to'lovlar tarixi eski nom bilan bog'langan
     if (prev.code !== code && (await prisma.payment.count({ where: { promoCode: prev.code } })) > 0) return { error: "used_rename" };
     await prisma.promoCode.update({ where: { id: input.id }, data: { code, discount, minCourses, note } });
     await writeAudit({ actorId: s.userId, action: "UPDATE", entityType: "PromoCode", entityId: input.id, oldValue: { code: prev.code, discount: prev.discount, minCourses: prev.minCourses }, newValue: { code, discount, minCourses, note } });
@@ -52,7 +50,6 @@ export async function setPromoActive(id: string, active: boolean): Promise<Promo
   return { ok: true };
 }
 
-/** O'chirish — faqat hech qachon ishlatilmagan kod. Ishlatilganini o'chirib qo'yish (faolsizlantirish) kerak. */
 export async function deletePromo(id: string): Promise<PromoResult> {
   const s = await requireSession();
   if (!CAN_MANAGE.includes(s.role)) return { error: "forbidden" };

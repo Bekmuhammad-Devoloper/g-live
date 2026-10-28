@@ -6,9 +6,6 @@ import { tr } from "@/lib/tr";
 import type { Locale } from "@/lib/constants";
 import { markThreadRead, replyToStudent } from "./actions";
 
-// O'quvchilar bilan yozishma: chapda suhbatlar, o'ngda tanlangan suhbat.
-// Telefon ekranida ro'yxat va suhbat navbat bilan ko'rinadi.
-
 export type VThread = {
   studentId: string;
   student: string;
@@ -20,11 +17,10 @@ export type VThread = {
 
 export type VMsg = { id: string; fromStudent: boolean; text: string; at: string; author: string | null };
 
-// Telegram (yorug' mavzu) ranglari — o'quvchi ilovasidagi chat bilan bir xil
 const TG = {
   wall: "#d9e4ec",
-  out: "#effdde", // xodim xabari
-  in: "#ffffff", // o'quvchi xabari
+  out: "#effdde",
+  in: "#ffffff",
   outTime: "#5eb35a",
   inTime: "#a1aab3",
   text: "#0f1419",
@@ -96,13 +92,11 @@ export default function ChatView({
     endRef.current?.scrollIntoView({ block: "end" });
   }, [messages.length, active]);
 
-  // Ochilgan suhbat o'qilgan bo'ladi
   useEffect(() => {
     if (active && open && open.unread > 0) void markThreadRead(active).then(() => router.refresh());
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [active, open?.unread]);
 
-  // Yangi xabarni ko'rish uchun sekin yangilanish
   useEffect(() => {
     const id = setInterval(() => router.refresh(), 15000);
     return () => clearInterval(id);
@@ -130,7 +124,6 @@ export default function ChatView({
 
   return (
     <div className="grid h-[calc(100dvh-240px)] min-h-[420px] gap-4 lg:grid-cols-[340px_1fr]">
-      {/* Suhbatlar */}
       <div className={"flex min-h-0 flex-col overflow-hidden rounded-xl border border-slate-200 bg-white " + (active ? "hidden lg:flex" : "")}>
         <div className="border-b border-slate-100 p-2">
           <input
@@ -189,7 +182,6 @@ export default function ChatView({
         )}
       </div>
 
-      {/* Suhbat */}
       <div className={"flex min-h-0 flex-col overflow-hidden rounded-xl border border-slate-200 bg-white " + (active ? "" : "hidden lg:flex")}>
         {!open ? (
           <div className="grid flex-1 place-items-center px-6 py-20 text-center text-sm text-slate-400">
@@ -231,7 +223,7 @@ export default function ChatView({
               ) : null}
 
               {messages.map((m, i) => {
-                const mine = !m.fromStudent; // xodim xabari o'ngda
+                const mine = !m.fromStudent;
                 const k = dayKey(m.at);
                 const newDay = i === 0 || dayKey(messages[i - 1].at) !== k;
                 const next = messages[i + 1];

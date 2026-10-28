@@ -2,16 +2,6 @@
 
 import { useEffect, useState } from "react";
 
-// Sozlamalar sahifasining pastidagi versiya qatori.
-//
-// Ilgari bu yerda "1.1.0" qo'lda yozilgan edi va har yangilanishda eskirib
-// qolardi — qo'llab-quvvatlashga "qaysi versiyada?" deb so'ralganda javob
-// noto'g'ri chiqardi. Endi Android ilovasi o'z versiyasini O'ZIDAN o'qiydi
-// (APK ichidagi versionName), brauzerda esa "veb" deb turadi.
-//
-// Aynan shu qator orqali "yangi APK o'rnatildimi yoki eskisi turibdimi"
-// degan savolga bir qarashda javob olinadi.
-
 export default function AppVersion({ label }: { label: string }) {
   const [text, setText] = useState<string>("…");
 

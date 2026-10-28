@@ -1,13 +1,4 @@
 #!/usr/bin/env bash
-# ════════════════════════════════════════════════════════════════════
-# LAPTOPDAN B (GCP) GA DEPLOY
-#
-#   bash deploy/gcp/push.sh            # to'liq: kod + build + servislar
-#   bash deploy/gcp/push.sh --with-db  # + lokal bazani ham ko'chirish
-#                                        (B'dagi baza USTIDAN yoziladi!)
-#
-# Talab: ~/.ssh/gl-gcp kaliti B'ga qo'shilgan bo'lishi kerak.
-# ════════════════════════════════════════════════════════════════════
 set -euo pipefail
 
 B="uzbekmen94@34.179.202.164"
@@ -25,8 +16,6 @@ rsync -az --delete \
   ./ "$B:$APP/"
 
 echo "── .env tayyorlanmoqda ──"
-# Lokal .env asos, B'ga xos qiymatlar ustidan yoziladi:
-#   AMI/yozuvlar — tunnel orqali (127.0.0.1), baza — B'ning o'zida
 python - <<'PY'
 import io, re
 s = io.open(".env", encoding="utf-8").read()

@@ -3,9 +3,6 @@
 import { useEffect, useState } from "react";
 import { protectScreen, unprotectScreen } from "@/lib/screenGuard";
 
-// Ro'yxatdagi bitta material. Bosilguncha faqat rasm turadi —
-// shu bilan sahifada o'nlab YouTube pleyeri birdan yuklanmaydi.
-
 export type VVideo = {
   id: string;
   title: string;
@@ -19,9 +16,6 @@ export type VVideo = {
 export default function VideoItem({ v, openLabel }: { v: VVideo; openLabel: string }) {
   const [open, setOpen] = useState(false);
 
-  // Video ijro etilayotganda Android ilovasida skrinshot va ekran yozuvi
-  // to'siladi — dars materiali tarqalib ketmasin. Brauzerda e'tiborsiz
-  // qoldiriladi (sahifa qurilma skrinshotini to'sa olmaydi).
   useEffect(() => {
     if (!open) return;
     void protectScreen();
@@ -50,7 +44,6 @@ export default function VideoItem({ v, openLabel }: { v: VVideo; openLabel: stri
           </span>
         </button>
       ) : (
-        // Tanish bo'lmagan havola — yangi oynada ochamiz
         <a href={v.url} target="_blank" rel="noreferrer" className="flex aspect-video w-full items-center justify-center gap-2.5 bg-slate-900 text-white">
           <svg width="22" height="22" viewBox="0 0 24 24" fill="currentColor"><path d="M8 5.2v13.6L19 12 8 5.2Z" /></svg>
           <span className="text-[13.5px] font-bold">{openLabel}</span>

@@ -12,8 +12,6 @@ import type { CallStats, VCall, VOperator } from "./types";
 const ALLOWED: string[] = [ROLES.DIRECTOR, ROLES.DEPUTY_DIRECTOR, ROLES.OPERATOR, ROLES.ROP, ROLES.MANAGER, ROLES.ADMIN];
 const ROW_LIMIT = 500;
 
-// ── Sana/vaqt: Asia/Tashkent (UTC+5, yozgi vaqt yo'q) — deterministik,
-//    toLocaleString ishlatilmaydi (SSR/CSR nomuvofiqligi bo'lmasin).
 const TZ_MIN = 5 * 60;
 const p2 = (n: number) => String(n).padStart(2, "0");
 const tzOf = (d: Date) => new Date(d.getTime() + TZ_MIN * 60000);
@@ -66,7 +64,6 @@ function fmtPhone(phone: string, locale: Locale): string {
   return phone;
 }
 
-// Audio yozuv manzili — faqat haqiqiy .wav fayllar (demo:// va boshqalar rad etiladi).
 function recSrc(url: string | null): string | null {
   if (!url) return null;
   if (url.startsWith("/api/telephony/recordings/")) return url;
@@ -75,7 +72,6 @@ function recSrc(url: string | null): string | null {
   return null;
 }
 
-// Qo'ng'iroqlar markazi — Call jadvalidan real ma'lumot (eski CRM tartibida).
 export default async function CallsPage({ searchParams }: { searchParams?: Promise<{ tab?: string }> }) {
   const s = await requireSession();
   if (!ALLOWED.includes(s.role)) {
@@ -89,11 +85,7 @@ export default async function CallsPage({ searchParams }: { searchParams?: Promi
   const sp = (await searchParams) ?? {};
   const initialTab: "all" | "missed" = sp.tab === "missed" ? "missed" : "all";
 
-  // Operator faqat O'Z qo'ng'iroqlarini ko'radi (REPORTS = "OWN").
-  // ROP va rahbariyat butun jamoanikini ko'radi.
   const own = isScopedToOwn(s.role, MODULES.REPORTS);
-  // Call'da branchId yo'q — qo'ng'iroqni qabul qilgan operator filiali bo'yicha
-  // cheklaymiz (operatorsiz yozuvlar hamma filialda ko'rinadi)
   const branchScope: Prisma.CallWhereInput = s.branchId
     ? { OR: [{ operator: branchWhere(s) }, { operatorId: null }] }
     : {};
@@ -170,7 +162,6 @@ export default async function CallsPage({ searchParams }: { searchParams?: Promi
     loaded: vcalls.length,
   };
 
-  // Operatorlar ro'yxati: faol xodimlar + qo'ng'iroqlardagi tarixiy nomlar (arxivlanganlar ham)
   const opMap = new Map<string, string>();
   for (const u of operatorUsers) opMap.set(u.id, u.fullName);
   for (const c of vcalls) {

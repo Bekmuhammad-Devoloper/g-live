@@ -1,8 +1,5 @@
 import { z } from "zod";
 
-// ROP KPI sozlamalari sxemasi va standart qiymatlari.
-// (Alohida fayl — "use server" actions.ts faqat funksiya eksport qila oladi.)
-
 export const ROP_KPI_KEY = "rop.kpi";
 
 export const kpiSettingsSchema = z.object({

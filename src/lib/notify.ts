@@ -4,21 +4,6 @@ import { sendPush, sendPushMany } from "./push";
 import type { Locale, LocaleText } from "./constants";
 import { tr } from "./tr";
 
-// Bildirishnoma yaratish (TZ 4.11 bildirishnomalar matritsasi).
-//
-// Bildirishnoma DOIM bazaga yoziladi — foydalanuvchi uni ilova ichida
-// ko'radi. Bundan tashqari, agar Android ilovasi o'rnatilgan bo'lsa,
-// telefonga push ham yuboriladi.
-//
-// Push YUBORILMASA ham bu funksiya muvaffaqiyatli tugaydi: uni chaqirgan
-// amal (baho qo'yish, to'lov qabul qilish) push tufayli bekor bo'lib
-// qolmasligi kerak. Firebase sozlanmagan bo'lsa esa umuman urinilmaydi.
-//
-// Matn OLUVCHINING tilida: sarlavha/matn 4 tilli obyekt bo'lsa, oluvchi
-// foydalanuvchining `locale` maydoniga qarab tanlanadi. Aks holda o'quvchi
-// ilovani ruschaga o'tkazsa ham bildirishnomalar o'zbekcha kelaverardi.
-// Oddiy satr ham qabul qilinadi (tarjimasi yo'q dinamik matn uchun).
-
 export type NotifyText = string | LocaleText;
 
 const pick = (t: NotifyText | undefined, locale: Locale): string | undefined =>
@@ -37,7 +22,6 @@ export async function notify(params: {
   body?: NotifyText;
   event?: string;
   channel?: string;
-  /** Push bosilganda ochiladigan sahifa */
   url?: string;
 }): Promise<void> {
   const locale = needsLocale(params.title, params.body) ? await localeOf(params.userId) : "uz";
@@ -57,7 +41,6 @@ export async function notify(params: {
   await sendPush(params.userId, { title, body, url: params.url }).catch(() => {});
 }
 
-// Bir nechta foydalanuvchiga (masalan barcha menejerlarga)
 export async function notifyMany(
   userIds: string[],
   data: { title: NotifyText; body?: NotifyText; event?: string; url?: string },
@@ -65,7 +48,6 @@ export async function notifyMany(
   const unique = [...new Set(userIds)].filter(Boolean);
   if (unique.length === 0) return;
 
-  // Har oluvchi o'z tilida — tillar bo'yicha guruhlab push yuboriladi
   const locales = new Map<string, Locale>();
   if (needsLocale(data.title, data.body)) {
     const users = await prisma.user.findMany({ where: { id: { in: unique } }, select: { id: true, locale: true } });

@@ -45,12 +45,10 @@ export default function NewGroupForm({
   const [format, setFormat] = useState<string>("OFFLINE");
   const [room, setRoom] = useState("");
   const [capacity, setCapacity] = useState(12);
-  // Foydalanuvchi sig'imni o'zi o'zgartirgan bo'lsa — xona almashganda ustidan yozmaymiz
   const [capTouched, setCapTouched] = useState(false);
-  // Oyiga darslar soni — kurs tanlanganda kursnikidan to'ladi, shu formada o'zgartirsa bo'ladi
   const [lessonsPerMonth, setLessonsPerMonth] = useState("12");
   const [color, setColor] = useState(GROUP_COLORS[0]);
-  const [hideErr, setHideErr] = useState(false); // maydon o'zgarganda eski xatoni yashirish
+  const [hideErr, setHideErr] = useState(false);
   const formRef = useRef<HTMLFormElement>(null);
 
   const errMsg = (st: FormState): string => {
@@ -106,13 +104,11 @@ export default function NewGroupForm({
         onMouseDown={(e) => e.stopPropagation()}
         className="animate-slide-in-right absolute right-0 top-0 flex h-full drawer-panel flex-col border-l border-slate-200 bg-white shadow-pop dark:border-white/10 dark:bg-[#15243d]"
       >
-        {/* Header */}
         <div className="flex shrink-0 items-center justify-between border-b border-slate-100 px-5 py-4 dark:border-white/10">
           <h3 className="text-base font-bold text-slate-800 dark:text-slate-100">{tr(locale, { uz: "Yangi guruh qo'shish", ru: "Добавить новую группу", en: "Add new group", de: "Neue Gruppe hinzufügen" })}</h3>
           <button type="button" onClick={onClose} className="flex h-8 w-8 items-center justify-center rounded-lg text-lg text-slate-400 transition hover:bg-slate-100 hover:text-slate-600 dark:hover:bg-white/10">✕</button>
         </div>
 
-        {/* Body */}
         <div className="flex-1 space-y-3.5 overflow-y-auto px-5 py-4">
           <div>
             <label className={label}>{tr(locale, { uz: "Nomi", ru: "Название", en: "Name", de: "Name" })} <span className="text-rose-500">*</span></label>
@@ -137,7 +133,6 @@ export default function NewGroupForm({
             <input name="levelCode" placeholder="A1.2" className={input} />
           </div>
 
-          {/* O'quv shakli */}
           <div>
             <label className={label}>{tr(locale, { uz: "O'quv shakli", ru: "Формат обучения", en: "Study format", de: "Unterrichtsform" })}</label>
             <select name="format" value={format} onChange={(e) => setFormat(e.target.value)} className={input}>
@@ -151,7 +146,6 @@ export default function NewGroupForm({
             </div>
           )}
 
-          {/* Rang */}
           <div>
             <label className={label}>{tr(locale, { uz: "Rang", ru: "Цвет", en: "Color", de: "Farbe" })}</label>
             <div className="flex flex-wrap items-center gap-2">
@@ -169,7 +163,6 @@ export default function NewGroupForm({
             <input type="hidden" name="color" value={color} />
           </div>
 
-          {/* Kunlar */}
           <div>
             <label className={label}>{tr(locale, { uz: "Kunlar", ru: "Дни", en: "Days", de: "Tage" })}</label>
             <div className="flex flex-wrap gap-1.5">
@@ -243,7 +236,6 @@ export default function NewGroupForm({
             </div>
           </div>
 
-          {/* Oyiga darslar soni — kursdan keladi; faqat yaratishda o'zgartirish mumkin */}
           <div>
             <label className={label}>{tr(locale, { uz: "Oyiga darslar soni", ru: "Уроков в месяц", en: "Lessons per month", de: "Unterrichtsstunden pro Monat" })}</label>
             <input name="lessonsPerMonth" value={lessonsPerMonth} onChange={(e) => setLessonsPerMonth(e.target.value.replace(/\D/g, "").slice(0, 2))} type="text" inputMode="numeric" className={input} />
@@ -257,7 +249,6 @@ export default function NewGroupForm({
             </p>
           </div>
 
-          {/* Oylik to'lov — bo'sh qoldirilsa kurs narxi ishlatiladi */}
           <div>
             <label className={label}>{tr(locale, { uz: "Oylik to'lov (so'm)", ru: "Ежемесячная оплата (сум)", en: "Monthly fee (UZS)", de: "Monatliche Zahlung (UZS)" })}</label>
             <MoneyInput name="monthlyFee" placeholder={tr(locale, { uz: "kurs narxi", ru: "цена курса", en: "course price", de: "Kurspreis" })} className={input} />
@@ -271,7 +262,6 @@ export default function NewGroupForm({
             </p>
           </div>
 
-          {/* Izoh — guruh ma'lumoti ko'rinadigan hamma joyda chiqadi */}
           <div>
             <label className={label}>{tr(locale, { uz: "Izoh", ru: "Комментарий", en: "Comment", de: "Kommentar" })}</label>
             <textarea
@@ -295,7 +285,6 @@ export default function NewGroupForm({
           )}
         </div>
 
-        {/* Footer */}
         <div className="flex shrink-0 gap-2 border-t border-slate-100 px-5 py-4 dark:border-white/10">
           <button type="button" onClick={onClose} className="flex-1 rounded-xl border border-slate-200 py-2.5 text-sm font-semibold text-slate-600 transition hover:bg-slate-50 dark:border-white/10 dark:text-slate-300 dark:hover:bg-white/5">
             {tr(locale, { uz: "Bekor qilish", ru: "Отмена", en: "Cancel", de: "Abbrechen" })}

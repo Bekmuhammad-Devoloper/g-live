@@ -1,8 +1,5 @@
 import { NextResponse, type NextRequest } from "next/server";
 
-// So'ralgan yo'lni server komponentlarga uzatadi (x-gl-path). Ildiz maket shu bo'yicha
-// markaz holatini (bloklangan, o'chirilgan modul, Dev panel) bitta joyda tekshiradi.
-// Bu yerda muhit o'zgaruvchilari o'qilmaydi — ular ildiz maketda ish vaqtida o'qiladi.
 export function middleware(req: NextRequest) {
   const headers = new Headers(req.headers);
   headers.set("x-gl-path", req.nextUrl.pathname);

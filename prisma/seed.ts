@@ -1,6 +1,3 @@
-// Demo ma'lumotlar bilan bazani to'ldirish.
-// Ishga tushirish: npm run db:seed   (yoki to'liq qayta: npm run db:reset)
-
 import { PrismaClient } from "@prisma/client";
 import bcrypt from "bcryptjs";
 
@@ -9,12 +6,10 @@ const prisma = new PrismaClient();
 async function main() {
   const passwordHash = await bcrypt.hash("12345678", 10);
 
-  // ─── Filial ─── (seed qayta ishga tushsa dublikat yaratilmasin)
   const branch = (await prisma.branch.findFirst({ where: { name: "Chilonzor filiali" } })) ?? await prisma.branch.create({
     data: { name: "Chilonzor filiali", address: "Toshkent, Chilonzor", phone: "+998 71 200 00 00" },
   });
 
-  // ─── Xodimlar ───
   const mk = (fullName: string, email: string, role: string, phone: string) =>
     prisma.user.create({
       data: { fullName, email, role, phone, passwordHash, branchId: branch.id, locale: "uz" },
@@ -26,7 +21,6 @@ async function main() {
   const teacher = await mk("Nigora Rashidova", "teacher@gl.uz", "TEACHER", "+998 90 444 44 44");
   await mk("Admin", "admin@gl.uz", "ADMIN", "+998 90 999 99 99");
 
-  // ─── O'quvchi (user + profil) ───
   const studentUser = await prisma.user.create({
     data: {
       fullName: "Jasur To'raev",
@@ -48,7 +42,6 @@ async function main() {
     },
   });
 
-  // ─── Ota-ona (user + profil, o'quvchiga bog'langan) ───
   const parentUser = await prisma.user.create({
     data: {
       fullName: "Botir To'raev",
@@ -66,7 +59,6 @@ async function main() {
     data: { studentId: student.id, parentId: parent.id, relation: "ota" },
   });
 
-  // Qo'shimcha o'quvchilar (guruhni to'ldirish uchun, user'siz)
   const extraStudents = await Promise.all(
     ["Malika Karimova", "Bekzod Olimov", "Sevara Nazarova"].map((name) =>
       prisma.student.create({
@@ -75,7 +67,6 @@ async function main() {
     )
   );
 
-  // ─── Dastur va darajalar ───
   const program = await prisma.program.create({
     data: {
       name: "Nemis tili (A1–B2)",
@@ -92,7 +83,6 @@ async function main() {
     },
   });
 
-  // ─── Guruh + o'quvchilarni biriktirish (offline) ───
   const group = await prisma.group.create({
     data: {
       name: "A1 ertalabki (Du-Ch-Ju)",
@@ -114,7 +104,6 @@ async function main() {
     await prisma.groupStudent.create({ data: { groupId: group.id, studentId: s.id } });
   }
 
-  // ─── Onlayn guruh (masofaviy) ───
   const groupOnline = await prisma.group.create({
     data: {
       name: "A2 onlayn kechki (Se-Pa-Sh)",
@@ -136,7 +125,6 @@ async function main() {
     await prisma.groupStudent.create({ data: { groupId: groupOnline.id, studentId: s.id } });
   }
 
-  // ─── Dars + davomat ───
   const lesson = await prisma.lesson.create({
     data: {
       groupId: group.id,
@@ -149,7 +137,6 @@ async function main() {
     data: { lessonId: lesson.id, studentId: student.id, status: "PRESENT", confirmed: true },
   });
 
-  // ─── Lidlar (voronka) ───
   const leadData = [
     { fullName: "Kamola Ismoilova", phone: "+998 91 100 00 01", source: "telegram", stage: "NEW", budget: 1200000 },
     { fullName: "Otabek Yuldashev", phone: "+998 91 100 00 02", source: "sayt", stage: "IN_PROGRESS", budget: 1500000 },
@@ -174,8 +161,6 @@ async function main() {
     });
   }
 
-  // ─── To'lovlar ───
-  // Onlayn (avtomatik)
   await prisma.payment.create({
     data: {
       studentId: student.id,
@@ -187,7 +172,6 @@ async function main() {
       docNumber: "CHK-0001",
     },
   });
-  // Qo'lda (menejer kiritgan, audit bilan)
   const manualPay = await prisma.payment.create({
     data: {
       studentId: student.id,
@@ -212,7 +196,6 @@ async function main() {
     },
   });
 
-  // ─── Namunaviy vazifa + topshiriq ───
   const assignment = await prisma.assignment.create({
     data: {
       groupId: group.id,
@@ -233,7 +216,6 @@ async function main() {
     },
   });
 
-  // ─── Namunaviy sertifikat (tekshiruv sahifasini ko'rsatish uchun) ───
   await prisma.certificate.create({
     data: {
       studentId: extraStudents[0].id,
@@ -248,7 +230,6 @@ async function main() {
   });
   await prisma.student.update({ where: { id: extraStudents[0].id }, data: { eduStatus: "CERTIFIED" } });
 
-  // ─── Shartnoma shablonlari ───
   await prisma.contractTemplate.createMany({
     data: [
       { title: "O'quv shartnomasi (standart)", type: "STANDARD", note: "Asosiy o'quv shartnomasi", isActive: true },
@@ -259,7 +240,6 @@ async function main() {
     ],
   });
 
-  // ─── Xodim rollari katalogi (Rollar sahifasi) — mavjudi qayta yaratilmaydi ───
   const roleCatalog = [
     { name: "Direktor", description: "Butun o'quv markazni boshqaradi", department: "Boshqaruv" },
     { name: "Direktor o'rinbosari", description: "Direktor o'rnini bosadi, boshqaruvda yordam beradi", department: "Boshqaruv" },
@@ -278,7 +258,6 @@ async function main() {
     await prisma.staffRole.create({ data: { name: r.name, description: r.description, department: r.department, bossOnly: false, permissions: "", isActive: true } });
   }
 
-  // ─── Mavsumiy baholash + natijalar ───
   const assessment = await prisma.seasonalAssessment.create({
     data: {
       title: "Qish mavsumi — oraliq baholash",
@@ -306,7 +285,6 @@ async function main() {
     });
   }
 
-  // ─── Namunaviy bildirishnoma ───
   await prisma.notification.create({
     data: { userId: studentUser.id, title: "Xush kelibsiz!", body: "Germaniya Live tizimiga xush kelibsiz.", channel: "APP" },
   });

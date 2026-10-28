@@ -11,13 +11,11 @@ import { notifyMany } from "@/lib/notify";
 
 const ALLOWED = [ROLES.DIRECTOR, ROLES.ADMIN, ROLES.DEPUTY_DIRECTOR];
 const can = (r: string) => ALLOWED.includes(r as never);
-// Butunlay o'chirish — faqat direktor va o'rinbosari (administrator emas)
 const CAN_PURGE = [ROLES.DIRECTOR, ROLES.DEPUTY_DIRECTOR];
 const canPurge = (r: string) => CAN_PURGE.includes(r as never);
 
 export type Res = { ok?: boolean; error?: string; count?: number; failed?: number };
 
-// Qayta tiklash — foydalanuvchini faollashtiradi
 export async function restoreUsers(ids: string[]): Promise<Res> {
   const s = await requireSession();
   if (!can(s.role)) return { error: tr(s.locale, { uz: "Ruxsat yo'q", ru: "Нет доступа", en: "No permission", de: "Keine Berechtigung" }) };
@@ -29,7 +27,6 @@ export async function restoreUsers(ids: string[]): Promise<Res> {
   return { ok: true, count: ids.length };
 }
 
-// Butunlay o'chirish — bog'liq ma'lumotlari borlarni o'chirib bo'lmaydi (FK), ular failed ga tushadi
 export async function deleteUsersPermanent(ids: string[]): Promise<Res> {
   const s = await requireSession();
   if (!canPurge(s.role)) return { error: tr(s.locale, { uz: "Ruxsat yo'q", ru: "Нет доступа", en: "No permission", de: "Keine Berechtigung" }) };
@@ -45,12 +42,10 @@ export async function deleteUsersPermanent(ids: string[]): Promise<Res> {
   return { ok: true, count, failed };
 }
 
-// Belgilanganlarga ilova ichida xabar
 export async function messageUsers(ids: string[], text: string): Promise<Res> {
   const s = await requireSession();
   if (!can(s.role)) return { error: tr(s.locale, { uz: "Ruxsat yo'q", ru: "Нет доступа", en: "No permission", de: "Keine Berechtigung" }) };
   if (ids.length === 0) return { error: tr(s.locale, { uz: "Hech kim tanlanmagan", ru: "Никто не выбран", en: "No one selected", de: "Niemand ausgewählt" }) };
-  // Sarlavha (va bo'sh matn o'rnidagi zaxira) oluvchining tilida
   await notifyMany(ids, {
     title: { uz: "Xabar", ru: "Сообщение", en: "Message", de: "Nachricht" },
     body: text.trim() || { uz: "Sizga xabar bor.", ru: "Для вас есть сообщение.", en: "You have a message.", de: "Sie haben eine Nachricht." },
@@ -59,7 +54,6 @@ export async function messageUsers(ids: string[], text: string): Promise<Res> {
   return { ok: true, count: ids.length };
 }
 
-// Arxivlash sabablari ro'yxatini saqlash (Setting: archive.reasons = JSON string[])
 export async function saveArchiveReasons(list: string[]): Promise<Res> {
   const s = await requireSession();
   if (!can(s.role)) return { error: tr(s.locale, { uz: "Ruxsat yo'q", ru: "Нет доступа", en: "No permission", de: "Keine Berechtigung" }) };

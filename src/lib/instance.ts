@@ -1,16 +1,5 @@
-// Markaz nusxasi (instance) sozlamalari — har bir o'quv markazi bir xil kod bilan, lekin o'z
-// jarayoni, bazasi, fayllari va sozlamalari bilan ishlaydi. Sozlamalar jarayon muhitidan
-// (systemd EnvironmentFile) o'qiladi va Dev paneldan boshqariladi:
-//   GL_INSTANCE          — markaz identifikatori (subdomen), asosiy markaz uchun bo'sh
-//   SUBSCRIPTION_UNTIL   — litsenziya tugash sanasi (yyyy-mm-dd); o'tib ketsa tizim yopiladi
-//   GL_SUSPENDED=1       — markaz to'xtatilgan (to'lov qilinmagan va h.k.)
-//   GL_DISABLED_MODULES  — o'chirilgan modullar, vergul bilan (masalan "telephony,market")
-//   DEV_PANEL=1          — bu jarayon Dev panel (markazlar boshqaruvi), o'quv markazi emas
-// Muhit o'zgaruvchilari ISHGA TUSHISHDA o'qiladi — shu sabab ildiz maket force-dynamic.
-
 export type InstanceModule = "crm" | "telephony" | "finance" | "lms" | "student_app" | "market" | "control" | "marketing";
 
-/** Modullar: nomi va shu modulga tegishli sahifa yo'llari (menyu va sahifa himoyasi shular bo'yicha) */
 export const INSTANCE_MODULES: Record<InstanceModule, { uz: string; ru: string; desc: string; paths: string[] }> = {
   crm: { uz: "CRM (lidlar)", ru: "CRM (лиды)", desc: "Lidlar doskasi, ariza formasi, operator va ROP portallari", paths: ["/crm", "/apply", "/daraja-testi", "/operator", "/rop"] },
   telephony: { uz: "Telefoniya", ru: "Телефония", desc: "Brauzer softfoni, qo'ng'iroqlar tarixi va yozuvlari", paths: ["/calls"] },
@@ -32,7 +21,6 @@ export function disabledModules(): Set<InstanceModule> {
 }
 export const isModuleEnabled = (m: InstanceModule): boolean => !disabledModules().has(m);
 
-/** Yo'l o'chirilgan modulga tegishlimi ("/finance/payments" → finance o'chirilgan bo'lsa false) */
 export function isPathEnabled(pathname: string): boolean {
   const off = disabledModules();
   if (off.size === 0) return true;
@@ -48,7 +36,6 @@ export interface BlockState {
   until: string | null;
 }
 
-/** Markaz yopilganmi: to'xtatilgan yoki litsenziya muddati o'tgan (tugash kuni oxirigacha ishlaydi) */
 export function instanceBlockState(now = new Date()): BlockState {
   const until = process.env.SUBSCRIPTION_UNTIL?.trim() || null;
   if (process.env.GL_SUSPENDED === "1") return { blocked: true, reason: "suspended", until };

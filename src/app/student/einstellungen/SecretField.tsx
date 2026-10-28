@@ -2,9 +2,6 @@
 
 import { useState } from "react";
 
-// Parolni ko'rsatish/yashirish — o'quvchi o'z hisobining parolini unutgan
-// bo'lsa qaraydi. Qiymat faqat shu foydalanuvchining o'ziga yuboriladi.
-
 export default function SecretField({ value, show, hide }: { value: string; show: string; hide: string }) {
   const [open, setOpen] = useState(false);
   return (

@@ -9,17 +9,6 @@ import { SectionHeader } from "../../../kurse/[level]/[unit]/_parts";
 import VideoCover, { VIDEO_ACCENT } from "../../../kurse/[level]/[unit]/dars/video/Cover";
 import { getBrand } from "@/lib/brand";
 
-// QR orqali ochiladigan video dars — o'quvchining O'Z kursidan bo'lmagan dars uchun.
-//
-// Ilovadagi dars sahifalari (kurse/[level]/[unit]) faqat o'quvchi guruhining
-// kursidagi darsni ochadi. QR esa markazning istalgan guruhidagi faol o'quvchiga
-// darsni bepul ko'rsatishi kerak — shuning uchun alohida sahifa: faqat video,
-// lug'at/vazifa bo'limlarisiz. O'z kursidagi dars bu yerga kelmaydi (/l/<id> uni
-// ilovadagi o'z joyiga yo'naltiradi).
-//
-// Manzilda "/dars/video" bo'lishi shart: Android ilovasi ekran himoyasini
-// (skrinshot/yozib olish taqiqi) shu bo'lak bo'yicha yoqadi.
-
 export default async function QrLessonVideoPage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = await params;
   const session = await getSession();
@@ -27,7 +16,6 @@ export default async function QrLessonVideoPage({ params }: { params: Promise<{ 
 
   const st = await qrStudentOf(session.userId);
   if (!st) return <MissingStudent />;
-  // Faol guruhi yo'q — tushuntirish xabari /l/<id> da
   if (st.groups.length === 0) redirect(lessonLinkPath(id));
 
   const lesson = await prisma.courseLesson.findUnique({

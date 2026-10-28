@@ -7,7 +7,6 @@ import BillingSettings from "../BillingSettings";
 
 const ALLOWED = [ROLES.DIRECTOR, ROLES.DEPUTY_DIRECTOR];
 
-// Billing — platforma uchun to'lov (tarif rejalari + to'lov tarixi). Mustaqil sahifa.
 export default async function BillingPage() {
   const s = await requireSession();
   if (!ALLOWED.includes(s.role as never)) {

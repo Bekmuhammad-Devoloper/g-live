@@ -26,7 +26,7 @@ export default function LeadFormSettings({ locale, centerName }: { locale: Local
     try {
       const raw = localStorage.getItem(STORAGE_KEY);
       if (raw) setF((cur) => ({ ...cur, ...JSON.parse(raw) }));
-    } catch { /* ignore */ }
+    } catch { }
   }, []);
 
   const set = <K extends keyof Form>(k: K, v: Form[K]) => setF((s) => ({ ...s, [k]: v }));
@@ -48,7 +48,7 @@ export default function LeadFormSettings({ locale, centerName }: { locale: Local
   };
 
   const save = () => {
-    try { localStorage.setItem(STORAGE_KEY, JSON.stringify(f)); } catch { /* ignore */ }
+    try { localStorage.setItem(STORAGE_KEY, JSON.stringify(f)); } catch { }
     setSaved(true); setTimeout(() => setSaved(false), 1800);
   };
 
@@ -56,7 +56,6 @@ export default function LeadFormSettings({ locale, centerName }: { locale: Local
     <div>
       <h2 className="mb-6 text-2xl font-bold text-slate-800 dark:text-slate-100">{tr(locale, { uz: "Lid forma", ru: "Форма лида", en: "Lead form", de: "Lead-Formular" })}</h2>
 
-      {/* Shakl rasm */}
       <h3 className="mb-2.5 text-lg font-semibold text-slate-700 dark:text-slate-200">{tr(locale, { uz: "Shakl rasm", ru: "Изображение формы", en: "Form image", de: "Formularbild" })}</h3>
       <div className="grid gap-4 md:grid-cols-2">
         <div
@@ -86,12 +85,10 @@ export default function LeadFormSettings({ locale, centerName }: { locale: Local
       </div>
       <p className="mt-2 text-sm text-slate-400">{tr(locale, { uz: "Rasm o'lchami 610x160px bo'lishini tavsiya etamiz", ru: "Рекомендуем размер изображения 610x160px", en: "We recommend an image size of 610x160px", de: "Wir empfehlen eine Bildgröße von 610x160px" })}</p>
 
-      {/* Forma matni + jonli lid forma preview */}
       <h3 className="mb-2.5 mt-7 text-lg font-semibold text-slate-700 dark:text-slate-200">{tr(locale, { uz: "Forma matni", ru: "Текст формы", en: "Form text", de: "Formulartext" })}</h3>
       <div className="grid gap-4 md:grid-cols-2">
         <RichEditor locale={locale} value={f.formText} onChange={(html) => set("formText", html)} placeholder={tr(locale, { uz: "Matnni bu yerga kiriting ...", ru: "Введите текст здесь ...", en: "Insert text here ...", de: "Text hier eingeben ..." })} />
 
-        {/* O'ng: lid forma ko'rinishi (jonli) */}
         <div className="overflow-hidden rounded-xl border border-slate-200 bg-white shadow-sm dark:border-slate-700 dark:bg-slate-900">
           <div className="h-2 bg-rose-400" />
           {f.image && <span className="block h-24 w-full bg-cover bg-center" style={{ backgroundImage: `url(${f.image})` }} />}
@@ -110,7 +107,6 @@ export default function LeadFormSettings({ locale, centerName }: { locale: Local
         </div>
       </div>
 
-      {/* Forma to'ldirilgandan so'ng chiqadigan matn */}
       <h3 className="mb-2.5 mt-7 text-lg font-semibold text-slate-700 dark:text-slate-200">{tr(locale, { uz: "Forma to'ldirilgandan so'ng chiqadigan matn", ru: "Текст, показываемый после заполнения формы", en: "Text shown after the form is submitted", de: "Text, der nach dem Absenden des Formulars angezeigt wird" })}</h3>
       <div className="grid gap-4 md:grid-cols-2">
         <RichEditor locale={locale} value={f.afterText} onChange={(html) => set("afterText", html)} placeholder={tr(locale, { uz: "Matnni bu yerga kiriting ...", ru: "Введите текст здесь ...", en: "Insert text here ...", de: "Text hier eingeben ..." })} />
@@ -124,7 +120,6 @@ export default function LeadFormSettings({ locale, centerName }: { locale: Local
         </div>
       </div>
 
-      {/* Shaxsiy CSS */}
       <h3 className="mb-2 mt-7 text-lg font-semibold text-slate-700 dark:text-slate-200">{tr(locale, { uz: "Shaxsiy CSS", ru: "Пользовательский CSS", en: "Custom CSS", de: "Benutzerdefiniertes CSS" })}</h3>
       <p className="mb-2 text-sm text-slate-500">
         {tr(locale, { uz: "misol:", ru: "пример:", en: "example:", de: "Beispiel:" })} <code className="font-mono text-rose-500">.lead-form-block {"{"}background-color: #fff;{"}"}</code>

@@ -12,7 +12,6 @@ const ALLOWED = [ROLES.DIRECTOR, ROLES.DEPUTY_DIRECTOR, ROLES.ROP, ROLES.MANAGER
 const p2 = (n: number) => String(n).padStart(2, "0");
 const isoDay = (d: Date) => `${d.getFullYear()}-${p2(d.getMonth() + 1)}-${p2(d.getDate())}`;
 
-// Sotuv voronkasi — lidlar bo'yicha voronka analitikasi (hisobot jadvali + grafiklar).
 export default async function FunnelPage() {
   const s = await requireSession();
   if (!ALLOWED.includes(s.role as never)) {
@@ -20,7 +19,7 @@ export default async function FunnelPage() {
   }
 
   const leads = await prisma.lead.findMany({
-    where: branchWhere(s), // faol filial doirasida
+    where: branchWhere(s),
     orderBy: { createdAt: "desc" },
     select: {
       id: true, stage: true, source: true, interestCourse: true, createdAt: true,

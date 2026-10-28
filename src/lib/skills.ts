@@ -6,15 +6,6 @@ import {
   type SkillEventType, type SkillKind, type SkillScores,
 } from "./skillMath";
 
-// Ko'nikma ballari — bazaga yozish/o'qish. Sof hisob lib/skillMath.ts da.
-//
-// Uch kirish nuqtasi:
-//   · touchActivity — ilova ochilganda (student/layout). Pasayishni qo'llab,
-//     "oxirgi faollik"ni yangilaydi. Yozuv soatiga bir marta — har so'rovda
-//     bazaga yozmaslik uchun.
-//   · awardSkill    — mashq bajarilganda. Kalit bo'yicha bir marta.
-//   · getSkills     — bosh sahifa o'qiydi (pasayishni ham qo'llaydi).
-
 const TOUCH_THROTTLE_MS = 60 * 60 * 1000;
 
 type Row = {
@@ -34,10 +25,6 @@ async function rowFor(studentId: string): Promise<Row> {
   });
 }
 
-/**
- * Qo'llanmagan pasayishni bazaga yozadi. Qaytgani — yangilangan ballar.
- * Faollik bo'lmagan kunlar bo'lmasa hech narsa yozmaydi.
- */
 async function settleDecay(row: Row, now: Date): Promise<SkillScores> {
   const { skillDecayPerDay } = await getProgressRules();
   const { days, decayedThrough } = pendingDecayDays(row.lastActiveAt, row.decayedAt, now);
@@ -52,7 +39,6 @@ async function settleDecay(row: Row, now: Date): Promise<SkillScores> {
   return next;
 }
 
-/** Ilova ochildi — pasayishni qo'llab, faollikni belgilaymiz (soatiga bir yozuv) */
 export async function touchActivity(studentId: string): Promise<void> {
   try {
     const now = new Date();
@@ -62,12 +48,10 @@ export async function touchActivity(studentId: string): Promise<void> {
       await prisma.studentSkill.update({ where: { id: row.id }, data: { lastActiveAt: now } });
     }
   } catch (e) {
-    // Ko'nikma hisobi sahifani yiqitmasin
     console.warn("[skills] touch:", e instanceof Error ? e.message : e);
   }
 }
 
-/** Bosh sahifa uchun — hozirgi ballar (pasayish qo'llangan holda) */
 export async function getSkills(studentId: string): Promise<SkillScores> {
   try {
     const row = await rowFor(studentId);
@@ -78,13 +62,6 @@ export async function getSkills(studentId: string): Promise<SkillScores> {
   }
 }
 
-/**
- * Mashq bajarildi — ball beriladi. `key` bo'yicha BIR MARTA: xuddi shu
- * mashqni qayta bajarib ball yig'ib bo'lmaydi. Faollik ham belgilanadi.
- *
- * Hech qachon istisno ko'tarmaydi: ball berilmagani uchun mashqning o'zi
- * bekor bo'lib qolmasligi kerak.
- */
 export async function awardSkill(studentId: string, type: SkillEventType, key: string): Promise<boolean> {
   const { kind, points } = SKILL_POINTS[type];
   try {
@@ -92,10 +69,6 @@ export async function awardSkill(studentId: string, type: SkillEventType, key: s
     const row = await rowFor(studentId);
     const settled = await settleDecay(row, now);
 
-    // Hodisa allaqachon bo'lganmi — unique kalit. Avval o'qib ko'ramiz:
-    // takror mashq oddiy holat, uni P2002 xatosi (jurnalda prisma:error)
-    // bilan aniqlash shart emas. Poyga bo'lsa create baribir yiqiladi —
-    // o'sha ham "bor" degani.
     const dup = await prisma.skillEvent.findUnique({ where: { skillId_key: { skillId: row.id, key } }, select: { id: true } });
     if (!dup) {
       try {
@@ -105,7 +78,6 @@ export async function awardSkill(studentId: string, type: SkillEventType, key: s
         return false;
       }
     } else {
-      // Faollikni baribir belgilaymiz — o'quvchi mashq qildi
       await prisma.studentSkill.update({ where: { id: row.id }, data: { lastActiveAt: now } });
       return false;
     }

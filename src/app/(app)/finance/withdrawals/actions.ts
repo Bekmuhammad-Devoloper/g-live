@@ -14,13 +14,12 @@ const PURPOSE = "Yechib olish";
 
 const schema = z.object({
   studentId: z.string().min(1),
-  amount: z.coerce.number().int().positive().max(MAX_MONEY), // Int'ga sig'masa sahifa yiqiladi
+  amount: z.coerce.number().int().positive().max(MAX_MONEY),
   note: z.string().optional(),
 });
 
 export type WdState = { ok?: boolean; error?: string };
 
-// Yechib olish (pul qaytarish) — REFUNDED yozuv sifatida saqlanadi, audit bilan.
 export async function createWithdrawal(_prev: WdState, formData: FormData): Promise<WdState> {
   const s = await requireSession();
   if (!canWrite(s.role, MODULES.PAYMENTS)) return { error: "forbidden" };
@@ -55,7 +54,6 @@ export async function createWithdrawal(_prev: WdState, formData: FormData): Prom
     reason: "Yechib olish (pul qaytarish)",
   });
 
-  // O'quvchiga bildirishnoma
   const student = await prisma.student.findUnique({
     where: { id: parsed.data.studentId },
     include: { parents: { include: { parent: true } } },
@@ -73,7 +71,6 @@ export async function createWithdrawal(_prev: WdState, formData: FormData): Prom
   return { ok: true };
 }
 
-// Bekor qilish — o'chirish emas, status CANCELLED (audit, TZ FR-PAY-04)
 export async function cancelWithdrawal(id: string, reason: string): Promise<void> {
   const s = await requireSession();
   if (!canWrite(s.role, MODULES.PAYMENTS)) return;

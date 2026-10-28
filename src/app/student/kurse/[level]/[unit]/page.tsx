@@ -6,28 +6,14 @@ import { loadUnit } from "./_load";
 import { loadUnitProgress } from "./_progress";
 import { IcoBack, IcoChevron, IcoClipboard, IcoPlayCircle, IcoWords } from "./_parts";
 
-// Dars ichi — FAQAT uchta kirish kartasi: Lug'at · Dars · Uy vazifasi.
-//
-// Karta o'zi progress chizig'i: fon bo'lim rangi bilan chapdan o'ngga
-// foizgacha to'ladi. Shu sabab o'quvchi bosishdan oldin ham qaysi bo'lim
-// qancha bajarilganini ko'radi — alohida progress element kerak emas.
-//
-// Har bo'lim O'Z MARSHRUTIDA (./lugat, ./dars, ./vazifa): har biriga
-// to'g'ridan-to'g'ri havola beriladi, telefonning "orqaga" tugmasi to'g'ri
-// ishlaydi va bo'limlarni alohida rivojlantirsa bo'ladi.
-
 interface SectionCardProps {
   href: string;
   icon: React.ReactNode;
-  /** To'lish rangi (to'q) */
   accent: string;
-  /** To'lish rangi (och) — kartaning to'lmagan qismi */
   soft: string;
   title: string;
   subtitle: string;
-  /** 0..100 */
   pct: number;
-  /** Bo'lim uchun material bormi — bo'lmasa foiz o'rniga chiziqcha */
   has: boolean;
 }
 
@@ -37,8 +23,6 @@ function SectionCard({ href, icon, accent, soft, title, subtitle, pct, has }: Se
       href={href}
       className="gl-glass relative flex items-center gap-3.5 overflow-hidden rounded-[24px] px-4 py-4 transition active:scale-[0.985]"
     >
-      {/* To'lish qatlami — kontentning ORQASIDA, shuning uchun matn har doim
-          o'qiladi va foiz o'zgarganda hech narsa siljimaydi. */}
       <span aria-hidden className="absolute inset-y-0 left-0" style={{ width: `${has ? pct : 0}%`, background: soft }} />
 
       <span
@@ -83,7 +67,6 @@ export default async function StudentUnitPage({
 
   return (
     <div>
-      {/* ── Yuqori qator ── */}
       <div className="flex items-center gap-2.5 pt-1">
         <Link
           href={`/student/kurse/${code}`}
@@ -120,7 +103,6 @@ export default async function StudentUnitPage({
         )}
       </div>
 
-      {/* ── Uchta bo'lim ── */}
       <div className="mt-4 space-y-3">
         <SectionCard
           href={`${base}/lugat`}

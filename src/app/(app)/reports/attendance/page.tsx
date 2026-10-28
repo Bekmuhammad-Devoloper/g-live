@@ -17,7 +17,6 @@ const iso = (d: Date) => d.toISOString().slice(0, 10);
 const p2 = (n: number) => String(n).padStart(2, "0");
 const isoLocal = (d: Date) => `${d.getFullYear()}-${p2(d.getMonth() + 1)}-${p2(d.getDate())}`;
 
-// Davomat holatlari — ranglar validatordan o'tgan (ΔE≥8, ko'rinadigan yorliqlar bilan)
 const STATUS_META = [
   { key: "PRESENT", color: "#10b981", uz: "Keldi", ru: "Присутствовал", en: "Present", de: "Anwesend" },
   { key: "LATE", color: "#f59e0b", uz: "Kechikdi", ru: "Опоздал", en: "Late", de: "Verspätet" },
@@ -35,7 +34,7 @@ export default async function AttendanceReportPage({ searchParams }: { searchPar
   const sp = await searchParams;
 
   const today = new Date();
-  const def30 = new Date(today); def30.setDate(today.getDate() - 29); // standart: oxirgi 30 kun
+  const def30 = new Date(today); def30.setDate(today.getDate() - 29);
   const fromStr = sp.from || isoLocal(def30);
   const toStr = sp.to || isoLocal(today);
   const from = new Date(fromStr + "T00:00:00");
@@ -45,7 +44,6 @@ export default async function AttendanceReportPage({ searchParams }: { searchPar
 
   const [branches, groups] = await Promise.all([
     prisma.branch.findMany({ where: { isActive: true }, select: { id: true, name: true }, orderBy: { name: "asc" } }),
-    // faol filial doirasida (sahifadagi filial tanlovi bilan birga)
     prisma.group.findMany({ where: { AND: [branchId ? { branchId } : {}, branchWhere(s)] }, select: { id: true, name: true }, orderBy: { name: "asc" } }),
   ]);
 
@@ -56,7 +54,7 @@ export default async function AttendanceReportPage({ searchParams }: { searchPar
         ...(groupId ? { lesson: { groupId } } : {}),
         ...(branchId ? { student: { branchId } } : {}),
       },
-      branchViaLesson(s), // faol filial doirasida
+      branchViaLesson(s),
     ],
   };
   const studentWhere: Prisma.StudentWhereInput = {
@@ -65,7 +63,7 @@ export default async function AttendanceReportPage({ searchParams }: { searchPar
         ...(branchId ? { branchId } : {}),
         ...(groupId ? { enrollments: { some: { groupId } } } : {}),
       },
-      branchWhere(s), // faol filial doirasida
+      branchWhere(s),
     ],
   };
 
@@ -97,7 +95,6 @@ export default async function AttendanceReportPage({ searchParams }: { searchPar
   const kelmagan = vals.filter((e) => e.absent >= 2).length;
   const bosh = Math.max(0, total - byStudent.size);
 
-  // Grafiklar uchun: o'quvchilar taqsimoti (mutlaq bo'linma), foiz, kunlik qator
   const attended = vals.filter((e) => e.present >= 1).length;
   const absentOnly = vals.filter((e) => e.present === 0 && e.absent >= 1).length;
   const rate = totalPresent + totalAbsent > 0 ? Math.round((totalPresent / (totalPresent + totalAbsent)) * 100) : 0;
@@ -148,7 +145,6 @@ export default async function AttendanceReportPage({ searchParams }: { searchPar
       />
 
       <div className="flex flex-col gap-6 lg:flex-row">
-        {/* Chap: jamlanma jadval (batafsil) */}
         <div className="flex-1">
           <div className="overflow-hidden rounded-2xl border border-slate-200/70 bg-white shadow-card dark:border-slate-800 dark:bg-slate-900">
             <div className="overflow-x-auto">
@@ -166,7 +162,6 @@ export default async function AttendanceReportPage({ searchParams }: { searchPar
           </div>
         </div>
 
-        {/* O'ng: filtr paneli */}
         <form method="GET" className="w-full shrink-0 rounded-2xl border border-slate-200/70 bg-white p-5 shadow-card dark:border-slate-800 dark:bg-slate-900 lg:w-80">
           <h3 className="mb-4 text-base font-semibold text-slate-700 dark:text-slate-200">{tr(s.locale, { uz: "Filtr", ru: "Фильтр", en: "Filter", de: "Filter" })}</h3>
           <div className="space-y-4">

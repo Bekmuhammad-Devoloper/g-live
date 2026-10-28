@@ -1,6 +1,3 @@
-// Administrator samaradorligi demo: talabalarni administratorlarga (menejerlarga)
-// bog'lash — lid (WON) orqali. Idempotent. Ishga tushirish: npx tsx prisma/seed-admin.ts
-
 import { PrismaClient } from "@prisma/client";
 import bcrypt from "bcryptjs";
 
@@ -10,7 +7,6 @@ async function main() {
   const passwordHash = await bcrypt.hash("12345678", 10);
   const branch = await prisma.branch.findFirst();
 
-  // 3 administrator (menejer) — mavjud manager@gl.uz + 2 ta demo
   const mk = (fullName: string, email: string, phone: string) =>
     prisma.user.upsert({
       where: { email },

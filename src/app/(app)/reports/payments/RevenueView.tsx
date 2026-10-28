@@ -10,8 +10,8 @@ import { exportRows } from "@/lib/export";
 import { Icon } from "../../_components/Icon";
 
 export interface RevenueData {
-  date: string; // YYYY-MM-DD
-  status: string; // "" — hammasi
+  date: string;
+  status: string;
   students: number;
   expected: number; expectedCount: number;
   carried: number; carriedCount: number;
@@ -42,7 +42,7 @@ export default function RevenueView({ data, locale }: { data: RevenueData; local
   const go = (date: string, status: string) => {
     const q = new URLSearchParams();
     q.set("date", date);
-    q.set("status", status); // bo'sh = barcha holatlar
+    q.set("status", status);
     start(() => router.replace(`?${q.toString()}`));
   };
 
@@ -77,7 +77,6 @@ export default function RevenueView({ data, locale }: { data: RevenueData; local
 
   return (
     <div className={cn("space-y-3", pending && "opacity-60 transition")}>
-      {/* Filtrlar */}
       <div className="flex flex-wrap items-center gap-2.5">
         <div className="flex h-10 items-center gap-2 rounded-lg border border-slate-200 bg-white px-3 dark:border-slate-700 dark:bg-slate-900">
           <Icon name="calendar" className="h-4 w-4 text-slate-400" />
@@ -120,7 +119,6 @@ export default function RevenueView({ data, locale }: { data: RevenueData; local
         </button>
       </div>
 
-      {/* Kirim · Chiqim · Sof natija */}
       <div className="grid gap-3 sm:grid-cols-3">
         <div className={tile}>
           <div className="text-[11px] font-semibold uppercase tracking-wider text-slate-500 dark:text-slate-400">{tr(locale, { uz: "Kirim", ru: "Приход", en: "Income", de: "Einnahmen" })} · {monthName}</div>
@@ -161,7 +159,6 @@ export default function RevenueView({ data, locale }: { data: RevenueData; local
         </div>
       )}
 
-      {/* Jadval */}
       <div className="overflow-hidden rounded-2xl border border-slate-200/70 bg-white shadow-card dark:border-slate-800 dark:bg-slate-900">
         <div className="overflow-x-auto">
           <table className="w-full text-left text-sm">

@@ -104,7 +104,6 @@ export default function VacancyDrawer({ locale, edit, onClose, onSaved }: {
               {L("Faol (arizalar qabul qilinadi)", "Активна (заявки принимаются)", "Active (accepting applications)", "Aktiv (Bewerbungen werden angenommen)")}
             </span>
           </label>
-          {/* checkbox belgilanmasa "false" yuborilishi uchun */}
           <input type="hidden" name="isActive" value="false" />
 
           {edit && edit.linkCount > 0 && (

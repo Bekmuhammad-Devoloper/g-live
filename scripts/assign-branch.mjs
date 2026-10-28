@@ -1,14 +1,3 @@
-// Filialga biriktirilmagan (branchId = null) eski yozuvlarni asosiy filialga
-// biriktiradi. Filial izolyatsiyasi joriy qilingach kerak bo'ldi:
-// biriktirilmagan yozuv HAR filialda ko'rinib qolardi.
-//
-// Ishlatish:
-//   node --env-file=.env scripts/assign-branch.mjs            (ko'rish — hech narsa yozilmaydi)
-//   node --env-file=.env scripts/assign-branch.mjs --apply    (haqiqiy yozish)
-//   node --env-file=.env scripts/assign-branch.mjs --apply --branch "Qibray"
-//
-// Filial berilmasa — eng birinchi yaratilgan faol filial tanlanadi.
-
 import { PrismaClient } from "@prisma/client";
 
 const prisma = new PrismaClient();
@@ -17,7 +6,6 @@ const apply = args.includes("--apply");
 const wantIdx = args.indexOf("--branch");
 const wantName = wantIdx >= 0 ? args[wantIdx + 1] : null;
 
-// branchId maydoni bor barcha modellar
 const MODELS = ["lead", "student", "group", "room", "user", "vacancy", "expense", "task", "blockTest"];
 
 const branches = await prisma.branch.findMany({

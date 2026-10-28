@@ -1,19 +1,4 @@
 #!/usr/bin/env bash
-# ═══════════════════════════════════════════════════════════════════════════
-# 2022 ni IKKINCHI IP'dan ko'tarish (server A) — hosting VM'ga SIP VLAN'dan
-# ikkinchi port (ens5) qo'shgandan KEYIN ishga tushiriladi:
-#
-#   sudo bash /tmp/dual-trunk/second-ip-glive.sh <YANGI_IP> [<INTERFEYS>]
-#   masalan: sudo bash /tmp/dual-trunk/second-ip-glive.sh 10.66.30.211 ens5
-#
-# Nima qiladi:
-#   1) Interfeysga IP'ni netplan orqali doimiy qo'yadi (hosting DHCP bersa — o'tkazib yuboradi)
-#   2) asterisk-glive transport-external → bind=<YANGI_IP>:5062 → provayder 2022 ni
-#      ALOHIDA IP'dan ko'radi (2277 avvalgidek 10.66.30.204 dan)
-#   3) glive'da 2022 registratsiyasini (gl-registration/gl-auth) tiklaydi/yaratadi,
-#      chiquvchi TRUNK=gl-trunk qaytariladi (eski Asterisk orqali relay kerak emas)
-#   4) reload + holat. Zaxira: /root/asterisk-backup-<vaqt>/asterisk-glive
-# ═══════════════════════════════════════════════════════════════════════════
 set -euo pipefail
 NEW_IP="${1:?YANGI_IP kerak, masalan 10.66.30.211}"
 IFACE="${2:-ens5}"
@@ -25,7 +10,6 @@ say(){ printf '\n\033[1;36m▶ %s\033[0m\n' "$*"; }; ok(){ printf '\033[1;32m✓
 
 say "Zaxira → $BK"; mkdir -p "$BK"; cp -a "$GL" "$BK/asterisk-glive"; ok "olindi"
 
-# ── 1) Interfeys va IP ──────────────────────────────────────────────────────
 say "Interfeys $IFACE / IP $NEW_IP"
 ip link show "$IFACE" >/dev/null 2>&1 || { echo "Interfeys $IFACE yo'q — hosting portni qo'shdimi? (ip -br link)"; ip -br link; exit 1; }
 if ip -4 addr show "$IFACE" | grep -q "inet $NEW_IP/"; then
@@ -48,7 +32,6 @@ say "Gateway va provayder ping (yangi IP'dan)"
 ping -c2 -W2 -I "$NEW_IP" 10.66.30.1 >/dev/null && ok "gateway OK" || warn "gateway javob bermadi — port-security/route tekshiring"
 ping -c2 -W2 -I "$NEW_IP" 10.77.37.4 >/dev/null && ok "provayder 10.77.37.4 OK" || warn "provayder ping yo'q (ICMP yopiq bo'lishi mumkin — REGISTER'ni kutamiz)"
 
-# ── 2) asterisk-glive transport → yangi IP ─────────────────────────────────
 say "asterisk-glive transport-external → $NEW_IP:5062"
 python3 - "$GL/pjsip.conf" "$NEW_IP" <<'PY'
 import re,sys
@@ -63,7 +46,6 @@ open(p,'w').write(s2)
 print("transport bind:", re.search(r'(?m)^bind=.*', re.search(r'(?ms)^\[transport-external\]\n.*?(?=^\[|\Z)', s2).group(0)).group(0))
 PY
 
-# ── 3) 2022 registratsiyasi glive'da (to'g'ridan-to'g'ri) ──────────────────
 say "gl-registration / gl-auth"
 python3 - "$GL/pjsip.conf" <<'PY'
 import re,sys
@@ -97,11 +79,9 @@ expiration=3600
 open(p,'w').write(s)
 print("gl-registration:", "bor" if "[gl-registration]" in s else "YO'Q")
 PY
-# eski Asterisk orqali relay kerak emas — o'z trunki
 sed -i 's/^TRUNK=gl-oldast.*$/TRUNK=gl-trunk/' "$GL/extensions.conf"
 grep -n "^TRUNK=" "$GL/extensions.conf"
 
-# ── 4) Reload + holat ───────────────────────────────────────────────────────
 say "Reload"
 "${GL_CLI[@]}" "core reload" >/dev/null; sleep 8
 "${GL_CLI[@]}" "pjsip show transports" | grep -iE "transport-external|bind" || true

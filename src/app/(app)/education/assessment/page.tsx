@@ -22,11 +22,9 @@ export default async function AssessmentPage() {
   }
   const isTeacher = s.role === ROLES.TEACHER;
 
-  // O'qituvchi faqat o'z guruhi va umumiy baholashlarni ko'radi
   const roleWhere: Prisma.SeasonalAssessmentWhereInput = isTeacher
     ? { OR: [{ group: { teacherId: s.userId } }, { groupId: null }] }
     : {};
-  // faol filial doirasida (guruhsiz — umumiy — baholashlar hamma filialda ko'rinadi)
   const branchCond: Prisma.SeasonalAssessmentWhereInput = s.branchId
     ? { OR: [branchViaGroup(s), { groupId: null }] }
     : {};
@@ -39,15 +37,13 @@ export default async function AssessmentPage() {
       include: { group: { select: { name: true } }, _count: { select: { results: true } } },
     }),
     prisma.seasonalAssessment.count({ where: { ...where, status: "COMPLETED" } }),
-    // natijalar o'quvchi orqali faol filial doirasida
     prisma.seasonalResult.aggregate({ where: branchViaStudent(s), _avg: { score: true }, _count: true }),
     prisma.seasonalResult.findMany({
-      where: branchViaStudent(s), // faol filial doirasida
+      where: branchViaStudent(s),
       orderBy: { createdAt: "desc" },
       take: 8,
       include: { student: { select: { fullName: true } }, assessment: { select: { title: true, passScore: true } } },
     }),
-    // faol filial doirasida
     isTeacher
       ? prisma.group.findMany({ where: { AND: [{ teacherId: s.userId }, branchWhere(s)] }, select: { id: true, name: true }, orderBy: { name: "asc" } })
       : prisma.group.findMany({ where: branchWhere(s), select: { id: true, name: true }, orderBy: { name: "asc" } }),

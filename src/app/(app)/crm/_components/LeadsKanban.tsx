@@ -17,52 +17,30 @@ interface Props {
   totals: Record<string, number>;
   locale: Locale;
   selected: Set<string>;
-  /** Kanbanga biriktirilgan guruhlar — har biri alohida ustun */
   groupColumns: GroupColumn[];
-  /** Oddiy nomli ustunlar — "Taklif" dan keyin turadi */
   customColumns: CustomColumn[];
-  /** Xodim saqlagan ustunlar tartibi (kalitlar); bo'sh — standart tartib */
   colOrder?: string[];
-  /** Ustun sarlavhasidan sudrab joyi o'zgartirilganda — yangi to'liq tartib */
   onReorderColumns?: (keys: string[]) => void;
   onOpen: (id: string, e: React.MouseEvent) => void;
-  /** Ikki marta bosilganda — lidning to'liq sahifasi */
   onOpenFull: (id: string) => void;
   onDropToColumn: (columnKey: string, leadId: string) => void;
   onAdd: (defaultStage: string) => void;
-  /** Guruh ustunidagi "+" — mavjud lidni shu guruhga biriktirish */
   onAddToGroup: (groupId: string) => void;
-  /** Guruh ustunini olib tashlash (o'quvchilar guruhda qoladi) */
   onRemoveGroupCol: (groupId: string) => void;
-  /** Oddiy ustundagi "+" — shu ustunga yangi lid */
   onAddToCustom: (columnId: string) => void;
-  /** Oddiy ustunni o'chirish (lidlar o'z bosqichiga qaytadi) */
   onRemoveCustomCol: (columnId: string) => void;
-  /** "Daraja testi" ustunidagi QR — test sayti havolasini ko'rsatish */
   onLevelTestQr: () => void;
-  /** Kartadagi savatcha — lidni o'chirish (huquqi bo'lganlarga beriladi) */
   onDelete?: (id: string) => void;
-  /** Filial rejimi: filial ustunlari (null — odatdagi kanban) */
   branchColumns?: BranchColumn[] | null;
-  /** Guruh kartalari uchun holat (o'quvchilar / sig'im / jadval) */
   groupInfo?: Record<string, GroupInfo>;
-  /** "O'quvchi arxivi" kartasi — arxivlangan o'quvchilar (Student.eduStatus ARCHIVED) */
   archivedStudents?: ArchivedStudent[];
-  /** "sales" — test/taklif o'rnida; "head" — faqat taklif o'rnida (leadColumns.ts) */
   branchMode?: BranchMode | null;
-  /** "Onlayn" ustuni (filial administratorida ko'rsatilmaydi) */
   showOnlineCol?: boolean;
-  /** Ko'rsatilmaydigan standart ustunlar (ROP: "work", "won") */
   hiddenCols?: string[];
-  /** Bo'sh vaqtlarni tahrirlash: "all" | filial id | null */
   slotsEditable?: "all" | string | null;
-  /** Ustunni bo'shatish — ustundagi barcha lidlarni Yangiga qaytarish (huquqi bo'lsa) */
   onResetColumn?: (leadIds: string[], title: string) => void;
 }
 
-/** Har ustunda dastlab shuncha karta chiziladi — qolgani "Yana ko'rsatish" bilan.
- *  Aks holda 2000 lid = 2000 karta × ~10 SVG bir vaqtda DOM'ga tushib, sahifa qotib qolardi. */
-/** Har sahifada nechta karta — ustun cheksiz pastga ketmasin, 1 2 3 4 sahifalar bo'lsin */
 const PAGE = 10;
 
 export default function LeadsKanban({
@@ -71,7 +49,6 @@ export default function LeadsKanban({
 }: Props) {
   const [dragId, setDragId] = useState<string | null>(null);
   const [overCol, setOverCol] = useState<string | null>(null);
-  // Ustun kaliti → joriy sahifa (0 dan). Filtr o'zgarib sahifa chegaradan chiqsa Pager o'zi qisqartiradi
   const [pages, setPages] = useState<Record<string, number>>({});
   const setPage = useCallback((key: string, n: number) => setPages((p) => ({ ...p, [key]: n })), []);
 
@@ -82,12 +59,10 @@ export default function LeadsKanban({
     [branchColumns, branchMode, showOnlineCol, hiddenCols],
   );
 
-  // Tartib: standart 4 ta → oddiy nomli ustunlar → "Qabul qilindi" → guruh ustunlari → "Yo'qotilgan"
   const baseCols = useMemo(
     () => visibleColumns({ locale, groupColumns, customColumns, branchColumns, branchMode, showOnlineCol, hiddenCols }),
     [locale, groupColumns, customColumns, branchColumns, branchMode, showOnlineCol, hiddenCols],
   );
-  // Xodimning o'z tartibi: saqlangan kalitlar shu tartibda, yangi qo'shilgan ustunlar oxirida
   const cols = useMemo(() => {
     if (colOrder.length === 0) return baseCols;
     const pos = new Map(colOrder.map((k, i) => [k, i]));
@@ -96,7 +71,7 @@ export default function LeadsKanban({
       .sort((a, b) => a.k - b.k)
       .map((x) => x.c);
   }, [baseCols, colOrder]);
-  const [colDrag, setColDrag] = useState<string | null>(null); // sudralayotgan ustun
+  const [colDrag, setColDrag] = useState<string | null>(null);
   const [colOver, setColOver] = useState<string | null>(null);
   const COL_MIME = "application/x-gl-column";
   const dropColumn = (target: string) => {
@@ -104,7 +79,6 @@ export default function LeadsKanban({
     const keys = cols.map((c) => c.key).filter((k) => k !== colDrag);
     const from = cols.findIndex((c) => c.key === colDrag);
     const to = cols.findIndex((c) => c.key === target);
-    // O'ngga sudralsa nishondan keyin, chapga sudralsa nishondan oldin qo'yiladi
     const at = keys.indexOf(target) + (from < to ? 1 : 0);
     keys.splice(at, 0, colDrag);
     onReorderColumns(keys);
@@ -119,7 +93,6 @@ export default function LeadsKanban({
     return m;
   }, [cols, leads, colOf]);
 
-  // Barqaror callback'lar — memo qilingan LeadCard'lar bekorga qayta chizilmasin
   const onDragStart = useCallback((id: string, e: React.DragEvent) => {
     e.dataTransfer.setData("text/plain", id);
     e.dataTransfer.effectAllowed = "move";
@@ -127,7 +100,6 @@ export default function LeadsKanban({
   }, []);
   const onDragEnd = useCallback(() => { setDragId(null); setOverCol(null); }, []);
 
-  // Filial ustunidagi "+" — yangi lid "Taklif" bosqichi bilan (filialni keyin tashlab belgilaydi)
   const onDropToColumnHint = () => onAdd("OFFER");
 
   const dragging = dragId ? leads.find((l) => l.id === dragId) ?? null : null;
@@ -137,7 +109,6 @@ export default function LeadsKanban({
     <div
       className={cn(
         "grid auto-cols-[minmax(272px,1fr)] grid-flow-col gap-4 overflow-x-auto pb-4",
-        // Qo'shimcha ustunlar bo'lsa 6 ta ustunga sig'maydi — gorizontal scroll qoladi
         groupColumns.length === 0 && customColumns.length === 0 && !branchColumns && "xl:grid-flow-row xl:grid-cols-6",
       )}
     >
@@ -149,7 +120,6 @@ export default function LeadsKanban({
         return (
           <div
             key={col.key}
-            // Har doim preventDefault — aks holda brauzer drop'ga ruxsat bermaydi
             onDragOver={(e) => {
               e.preventDefault(); e.dataTransfer.dropEffect = "move";
               if (colDrag) { if (colOver !== col.key) setColOver(col.key); return; }
@@ -159,8 +129,6 @@ export default function LeadsKanban({
             onDrop={(e) => {
               e.preventDefault();
               if (colDrag || e.dataTransfer.types.includes(COL_MIME)) { dropColumn(col.key); setColDrag(null); setColOver(null); return; }
-              // Arxiv kartasiga tashlangan bo'lsa — u o'zi hal qilgan (stopPropagation), bu yerga kelmaydi;
-              // qo'shimcha himoya: nishon arxiv kartasi ichida bo'lsa "Yo'qotilgan"ga o'tkazmaymiz
               if ((e.target as HTMLElement).closest?.("[data-archive-drop]")) { setDragId(null); setOverCol(null); return; }
               const id = e.dataTransfer.getData("text/plain") || dragId;
               const lead = id ? leads.find((l) => l.id === id) : null;
@@ -168,7 +136,6 @@ export default function LeadsKanban({
               setDragId(null);
               setOverCol(null);
             }}
-            // flex-col: pager pastga yopishadi — hamma ustun grid qatori bo'yicha TENG uzunlikda
             className={cn(
               "flex min-w-0 flex-col rounded-2xl border p-2.5 transition",
               isOver ? "border-slate-300 bg-slate-100/70 dark:border-white/[0.12] dark:bg-white/[0.04]" : "border-slate-200/50 bg-slate-50/50 dark:border-white/[0.05] dark:bg-white/[0.02]",
@@ -176,7 +143,6 @@ export default function LeadsKanban({
               colDrag && colOver === col.key && colDrag !== col.key && "border-brand-400 ring-2 ring-brand-400/40",
             )}
           >
-            {/* Sarlavha — ushlab sudrab ustun joyini o'zgartirish mumkin */}
             <div
               draggable={!!onReorderColumns}
               onDragStart={onReorderColumns ? (e) => { e.stopPropagation(); e.dataTransfer.setData(COL_MIME, col.key); e.dataTransfer.effectAllowed = "move"; setColDrag(col.key); } : undefined}
@@ -192,9 +158,6 @@ export default function LeadsKanban({
                   <Icon name={col.icon} className="h-4 w-4" strokeWidth={2} />
                 </span>
                 <span className="min-w-0">
-                  {/* Bir qator, qo'lda yozilgan shrift — nom tor ustunga ham sig'adi.
-                      Caveat baland shrift: qator balandligi tor bo'lsa `truncate` harflarning
-                      ustki qismini (i nuqtasi, k/l tepasi) kesib qo'yadi — shuning uchun leading keng */}
                   <span className="font-hand block truncate text-[17px] font-bold leading-[1.35] text-slate-700 dark:text-slate-100">{col.title}</span>
                   {col.sub && <span className="block truncate text-[11px] text-slate-400">{col.sub}</span>}
                 </span>
@@ -202,7 +165,6 @@ export default function LeadsKanban({
               <div className="flex shrink-0 items-center gap-1">
                 <span className="text-sm font-bold" style={{ color: col.color }}>{totals[col.key] ?? items.length}</span>
                 {onResetColumn && col.key !== "new" && items.length > 0 && (
-                  // Ustunni bo'shatish — hamma lid "Yangi"ga (tasdiq so'raladi)
                   <button
                     onClick={() => onResetColumn(items.map((l) => l.id), col.title)}
                     title={tr(locale, { uz: "Barchasini Yangiga qaytarish", ru: "Вернуть все в «Новые»", en: "Return all to New", de: "Alle zurück zu Neu" })}
@@ -212,7 +174,6 @@ export default function LeadsKanban({
                   </button>
                 )}
                 {col.key === "test" && (
-                  // QR — lid telefonida skan qiladi, daraja aniqlash testi saytiga o'tadi
                   <button
                     onClick={onLevelTestQr}
                     title={tr(locale, { uz: "Daraja testi QR kodi", ru: "QR-код теста уровня", en: "Level test QR code", de: "QR-Code des Einstufungstests" })}
@@ -241,11 +202,8 @@ export default function LeadsKanban({
               </div>
             </div>
 
-            {/* Gradient chiziq */}
             <div className="mx-1 mb-3 mt-2 h-1 rounded-full" style={{ background: `linear-gradient(90deg, ${col.color}, ${col.color}22)` }} />
 
-            {/* Filial ustuni: bo'sh xona / vaqtlar — administrator kiritgan, har biri alohida karta.
-                Lid xona kartasiga tashlanadi va uning ichida ko'rinadi; xonasiz lidlar pastda. */}
             {col.branch && (
               <div className="mb-3 space-y-3">
                 <SectionLabel
@@ -266,7 +224,6 @@ export default function LeadsKanban({
                   slotContent={(slotId) => {
                     const inSlot = items.filter((l) => l.branchSlotId === slotId);
                     if (inSlot.length === 0) return null;
-                    // Oddiy lid kartalari — ustundagilar bilan bir xil o'lcham va ko'rinish
                     return (
                       <div className="space-y-3">
                         {inSlot.map((l) => (
@@ -287,12 +244,8 @@ export default function LeadsKanban({
               </div>
             )}
 
-            {/* Kartalar — scrollsiz (butun sahifa scroll bo'ladi); flex-1 — ustun oxirigacha cho'ziladi */}
             <div className="flex flex-1 flex-col space-y-3">
               {col.key === "won" ? (
-                // "Qabul qilindi" — guruhga yo'naltirilgan lidlar bu yerda to'planib
-                // ketmasin: ular guruhlar ro'yxatiga yig'iladi. Kartochka bo'lib
-                // faqat hali guruh kutayotganlari qoladi (ular amal talab qiladi).
                 <WonColumn
                   items={items}
                   locale={locale}
@@ -308,13 +261,10 @@ export default function LeadsKanban({
                   groupInfo={groupInfo}
                 />
               ) : col.branch && col.branch.slots.length > 0 && !items.some((l) => !l.branchSlotId) ? (
-                // Xonalar bor, xonasiz lid yo'q — ustunning o'ziga tashlash uchun kichik zona
                 <div className="rounded-xl border border-dashed border-slate-200 py-4 text-center text-[11px] text-slate-400 dark:border-white/[0.08]">
                   {tr(locale, { uz: "Xonasiz — shu yerga tashlang", ru: "Без аудитории — перетащите сюда", en: "No room — drop here", de: "Ohne Raum — hier ablegen" })}
                 </div>
               ) : col.key === "lost" ? (
-                // "Yo'qotilgan" — yo'qotilgan lidlar + ichida ikki arxiv bo'limi
-                // (Lid arxivi / O'quvchi arxivi); bo'limlar — tashlash joyi
                 <LostColumn
                   items={items}
                   locale={locale}
@@ -331,7 +281,6 @@ export default function LeadsKanban({
                   onArchive={(leadId, toStudents) => { onDropToColumn(toStudents ? STUDENT_ARCHIVE_COL : ARCHIVE_COL, leadId); setDragId(null); setOverCol(null); }}
                 />
               ) : col.key === "test" && items.length > 0 ? (
-                // "Daraja testi" — yechgan test to'plamiga qarab (A1.1, A2.1 ...) alohida bo'limlarda
                 <TestColumn
                   items={items}
                   locale={locale}
@@ -386,14 +335,6 @@ export default function LeadsKanban({
   );
 }
 
-// ───────────────── "Yo'qotilgan" ustuni ─────────────────
-
-/**
- * Yo'qotilgan lidlar (kartalar) + pastda ikki arxiv bo'limi: "Lid arxivi" va
- * "O'quvchi arxivi" (qabul qilingan / Student yozuvi bor). Bo'limning o'zi —
- * tashlash joyi: istalgan ustundan lid tashlansa arxivlanadi (bosqichi saqlanadi).
- * Qaysi bo'limda ko'rinishi lidning o'zidan aniqlanadi.
- */
 function LostColumn({
   items, locale, selected, page, onPage, onOpen, onOpenFull, onDragStart, onDragEnd, onDelete, dragging, onArchive, archivedStudents = [],
 }: {
@@ -417,8 +358,6 @@ function LostColumn({
   const [pending, start] = useTransition();
   const lost = items.filter((l) => !l.archivedAt);
   const archived = items.filter((l) => !!l.archivedAt);
-  // O'quvchi arxivi = arxivlangan o'quvchilar (Student) + o'quvchi yozuvi ro'yxatda
-  // bo'lmagan arxivlangan "qabul qilingan" lidlar (eski holat)
   const archivedStudentIds = new Set(archivedStudents.map((x) => x.id));
   const studentLeads = archived.filter((l) => isStudentArchive(l) && !(l.studentId && archivedStudentIds.has(l.studentId)));
   const sections: { key: string; icon: "archive" | "graduation"; title: string; items: VLead[]; students: ArchivedStudent[] }[] = [
@@ -427,9 +366,6 @@ function LostColumn({
   ];
   const [pickOpen, setPickOpen] = useState(false);
   const restoreStudent = (id: string) => start(async () => { await setStudentArchived(id, false); router.refresh(); });
-  // Sudralayotgan lid arxivlanmagan bo'lsa — kartaga tashlash mumkin.
-  // dragging (state) kechikishi mumkin — shuning uchun tekshiruv yumshoq:
-  // state bo'lmasa ham sudrash hodisasi bo'lsa ruxsat beramiz.
   const canArchive = !dragging?.archivedAt;
   const isLeadDrag = (e: React.DragEvent) => Array.from(e.dataTransfer.types ?? []).includes("text/plain");
 
@@ -460,9 +396,6 @@ function LostColumn({
 
   return (
     <>
-      {/* Arxiv — ikki gorizontal karta, ustma-ust (ustun TEPASIDA). Zamonaviy,
-          toza uslub: gradient ikonka, sarlavha + izoh, o'ngda soni va chevron.
-          Karta — tashlash joyi; bosilsa ichidagilar pastda ochiladi. */}
       <div className="space-y-2">
         {sections.map((sec) => {
           const count = sec.items.length + sec.students.length;
@@ -475,11 +408,9 @@ function LostColumn({
               role="button"
               tabIndex={0}
               data-archive-drop
-              // Drop-zona: <button> emas — brauzerlarda tugma ustiga drop har doim ishlamaydi
               onDragEnter={(e) => { if (!canArchive || !isLeadDrag(e)) return; e.preventDefault(); e.stopPropagation(); setOverSec(sec.key); }}
               onDragOver={(e) => { if (!canArchive || !isLeadDrag(e)) return; e.preventDefault(); e.stopPropagation(); e.dataTransfer.dropEffect = "move"; if (overSec !== sec.key) setOverSec(sec.key); }}
               onDragLeave={(e) => {
-                // Ichki elementga o'tganda "chiqdi" deb hisoblamaymiz (aks holda yaltiraydi)
                 const to = e.relatedTarget as Node | null;
                 if (to && e.currentTarget.contains(to)) return;
                 setOverSec((c) => (c === sec.key ? null : c));
@@ -504,10 +435,8 @@ function LostColumn({
                 count > 0 ? "cursor-pointer hover:-translate-y-0.5 hover:shadow-[0_14px_30px_-14px_rgba(15,23,42,0.45)]" : "cursor-default",
               )}
             >
-              {/* yumshoq rangli fon nuri — o'ng tepada */}
               <span className={cn("pointer-events-none absolute -right-8 -top-10 h-28 w-28 rounded-full blur-2xl", student ? "bg-violet-400/25" : "bg-slate-400/25")} />
 
-              {/* ikonka */}
               <span className={cn(
                 "relative flex h-11 w-11 shrink-0 items-center justify-center rounded-xl text-white",
                 student
@@ -517,7 +446,6 @@ function LostColumn({
                 <Icon name={sec.icon} className="h-5 w-5" strokeWidth={1.9} />
               </span>
 
-              {/* matn */}
               <span className="relative min-w-0 flex-1">
                 <span className="font-hand block text-[17px] font-bold leading-[1.25] text-slate-800 dark:text-slate-100">{sec.title}</span>
                 <span className="block truncate text-[11.5px] text-slate-500 dark:text-slate-400">
@@ -529,7 +457,6 @@ function LostColumn({
                 </span>
               </span>
 
-              {/* soni + chevron (+ o'quvchi arxivida "qo'shish") */}
               <span className="relative flex shrink-0 items-center gap-1.5">
                 {student && (
                   <span
@@ -554,7 +481,6 @@ function LostColumn({
                 {count > 0 && <Icon name="chevronDown" className={cn("h-4 w-4 text-slate-400 transition group-hover:text-slate-600", opened && "rotate-180")} />}
               </span>
 
-              {/* Tashlash ko'rsatkichi — karta ustini qoplaydi */}
               {isOver && (
                 <span className={cn(
                   "absolute inset-0 grid place-items-center rounded-2xl text-[13px] font-bold text-white backdrop-blur-[2px]",
@@ -568,7 +494,6 @@ function LostColumn({
         })}
       </div>
 
-      {/* "+" — arxivlash uchun o'quvchi qidirish */}
       {pickOpen && (
         <StudentArchivePicker
           locale={locale}
@@ -577,7 +502,6 @@ function LostColumn({
         />
       )}
 
-      {/* Ochilgan arxiv — plitkalar ostida, sarlavha bilan: o'quvchi kartalari va/yoki lidlar */}
       {sections.map((sec) => {
         const total = sec.items.length + sec.students.length;
         if (!(openSec[sec.key] ?? false) || total === 0) return null;
@@ -630,7 +554,6 @@ function LostColumn({
   );
 }
 
-/** "O'quvchi arxivi" → "+" : ism/telefon bo'yicha o'quvchi qidirib arxivlash */
 function StudentArchivePicker({ locale, onPicked, onClose }: { locale: Locale; onPicked: (id: string) => void; onClose: () => void }) {
   const [q, setQ] = useState("");
   const [rows, setRows] = useState<ArchivedStudent[]>([]);
@@ -688,27 +611,16 @@ function StudentArchivePicker({ locale, onPicked, onClose }: { locale: Locale; o
   );
 }
 
-// ───────────────── "Daraja testi" ustuni ─────────────────
-
-/** "A1.1" → "A1", "b2.3" → "B2" — to'plamning asosiy darajasi (A1 / A2 / B1 / B2) */
 function setLevel(set: string | null | undefined): string | null {
   const m = /^([ABC])([12])/i.exec((set ?? "").trim());
   return m ? `${m[1].toUpperCase()}${m[2]}` : null;
 }
-/** Darajalarni tabiiy tartibda saralash: A1 < A2 < B1 < B2 < C1 */
 function levelRank(level: string): number {
   const m = /^([ABC])([12])$/.exec(level);
   if (!m) return 999;
   return ({ A: 0, B: 10, C: 20 }[m[1] as "A" | "B" | "C"] ?? 30) + Number(m[2]);
 }
 
-/**
- * Daraja testi ustuni: lidlar yechgan testning DARAJASIGA qarab alohida bo'limlarda
- * (A1 · A2 · B1 · B2 — A1.1 va A1.2 to'plamlari bitta "A1" bo'limida), oxirida
- * "Test topshirilmagan". Har bo'limda soni va o'tgan/o'tmaganlar hisobi.
- * Sahifalash butun ustun bo'yicha — bo'lim sarlavhasi sahifa ichida daraja
- * o'zgarganda chiziladi.
- */
 function TestColumn({
   items, locale, color, selected, page, onPage, onOpen, onOpenFull, onDragStart, onDragEnd, onDelete,
 }: {
@@ -725,16 +637,13 @@ function TestColumn({
   onDelete?: (id: string) => void;
 }) {
   const NONE = "__none__";
-  // Tanlangan daraja — chip bosilsa faqat o'sha darajadagilar ko'rinadi (yana bosilsa — hammasi)
   const [active, setActive] = useState<string | null>(null);
-  // Daraja (A1/A2/B1/B2) → lidlar (ustundagi tartib saqlanadi)
   const groups = new Map<string, VLead[]>();
   for (const l of items) {
     const k = setLevel(l.testSet) ?? NONE;
     (groups.get(k) ?? groups.set(k, []).get(k)!).push(l);
   }
   const keys = [...groups.keys()].sort((a, b) => (a === NONE ? 1 : b === NONE ? -1 : levelRank(a) - levelRank(b)));
-  // Yassi ro'yxat (daraja tartibida; tanlangan daraja bo'lsa — faqat u) — sahifalash shu bo'yicha
   const activeKey = active && groups.has(active) ? active : null;
   const flat: { set: string; lead: VLead }[] = [];
   for (const k of keys) if (!activeKey || k === activeKey) for (const l of groups.get(k)!) flat.push({ set: k, lead: l });
@@ -749,7 +658,6 @@ function TestColumn({
 
   return (
     <>
-      {/* Daraja filtri — chiplar: bosilsa faqat o'sha darajadagilar, yana bosilsa hammasi */}
       <div className="flex flex-wrap items-center gap-1">
         <button
           type="button"
@@ -824,8 +732,6 @@ function TestColumn({
   );
 }
 
-// ───────────────── "Qabul qilindi" ustuni ─────────────────
-
 interface Bucket {
   groupId: string | null;
   groupName: string;
@@ -840,7 +746,6 @@ function WonColumn({
   locale: Locale;
   color: string;
   selected: Set<string>;
-  /** Guruh kutayotganlarning joriy sahifasi */
   page: number;
   onPage: (n: number) => void;
   onOpen: (id: string, e: React.MouseEvent) => void;
@@ -849,7 +754,6 @@ function WonColumn({
   onDragEnd: () => void;
   onDelete?: (id: string) => void;
 }) {
-  // Guruh kutayotganlar kartochka bo'lib qoladi, qolganlari guruhlarga yig'iladi
   const waiting = useMemo(() => items.filter((l) => !l.groupName), [items]);
 
   const buckets = useMemo(() => {
@@ -875,7 +779,6 @@ function WonColumn({
 
   return (
     <>
-      {/* Guruh kutayotganlar — amal talab qiladi, shuning uchun to'liq kartochka */}
       {waiting.length > 0 && (
         <>
           <SectionLabel
@@ -901,7 +804,6 @@ function WonColumn({
         </>
       )}
 
-      {/* Guruhlar — yo'naltirilgan lidlar shu yerga yig'iladi */}
       {buckets.length > 0 && (
         <>
           <SectionLabel
@@ -919,14 +821,12 @@ function WonColumn({
   );
 }
 
-/** Joriy sahifadagi kartalar (sahifa chegaradan chiqsa — oxirgi sahifa) */
 function pageSlice<T>(items: T[], page: number): T[] {
   const last = Math.max(0, Math.ceil(items.length / PAGE) - 1);
   const p = Math.min(page, last);
   return items.slice(p * PAGE, (p + 1) * PAGE);
 }
 
-/** Ko'rsatiladigan sahifa raqamlari: 1 … 5 6 7 … 47 (null — "…") */
 function pageNumbers(count: number, current: number): (number | null)[] {
   if (count <= 7) return Array.from({ length: count }, (_, i) => i);
   const set = new Set<number>([0, count - 1, current - 1, current, current + 1]);
@@ -941,10 +841,6 @@ function pageNumbers(count: number, current: number): (number | null)[] {
   return out;
 }
 
-/**
- * Ustun sahifalari: ‹ 1 2 3 … 47 › — har sahifada PAGE ta karta. Bitta sahifa
- * bo'lsa chizilmaydi. Filtr o'zgarib sahifa chegaradan chiqsa oxirgisiga qisqaradi.
- */
 function Pager({ total, page, onPage, locale }: { total: number; page: number; onPage: (n: number) => void; locale: Locale }) {
   const count = Math.ceil(total / PAGE);
   if (count <= 1) return null;
@@ -1000,7 +896,6 @@ function SectionLabel({ icon, color, text, count }: { icon: string; color: strin
 }
 
 function GroupBucketCard({ bucket, locale, color, info }: { bucket: Bucket; locale: Locale; color: string; info?: GroupInfo }) {
-  // Guruhning haqiqiy holati: o'quvchilar / sig'im, bo'sh joy; to'lganda qizil, 80%+ da sariq
   const students = info?.students ?? 0;
   const capacity = info?.capacity ?? 0;
   const free = Math.max(0, capacity - students);
@@ -1010,7 +905,6 @@ function GroupBucketCard({ bucket, locale, color, info }: { bucket: Bucket; loca
 
   const inner = (
     <>
-      {/* Sarlavha: belgi + nom + kanbandan kelgan lidlar soni */}
       <div className="flex items-center gap-2.5">
         <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg" style={{ color, background: `${color}1f` }}>
           <Icon name="layers" className="h-4 w-4" />
@@ -1023,7 +917,6 @@ function GroupBucketCard({ bucket, locale, color, info }: { bucket: Bucket; loca
 
       {info ? (
         <>
-          {/* O'quvchilar / sig'im va bo'sh joy — bir qatorda, chiplar */}
           <div className="mt-2.5 flex items-center gap-1.5">
             <span className="inline-flex items-center gap-1 whitespace-nowrap rounded-md bg-slate-100 px-1.5 py-0.5 text-[11px] font-semibold text-slate-700 dark:bg-white/10 dark:text-slate-200">
               <Icon name="user" className="h-3 w-3" /> <span className="tabular-nums">{students} / {capacity}</span>
@@ -1032,13 +925,10 @@ function GroupBucketCard({ bucket, locale, color, info }: { bucket: Bucket; loca
               {full ? tr(locale, { uz: "To'ldi", ru: "Полно", en: "Full", de: "Voll" }) : tr(locale, { uz: `${free} joy bo'sh`, ru: `${free} мест`, en: `${free} seats left`, de: `${free} Plätze frei` })}
             </span>
           </div>
-          {/* To'lganlik chizig'i */}
           <div className="mt-2 h-1.5 overflow-hidden rounded-full bg-slate-100 dark:bg-white/10">
             <div className="h-full rounded-full transition-all" style={{ width: `${pct}%`, background: tone }} />
           </div>
-          {/* Xona · jadval · o'qituvchi — har biri o'z qatorida, ikkala rejimda o'qiladi */}
           {(info.room || info.schedule || info.teacher) && (
-            // Aniq ko'rinadigan rang: matn to'q, ikonkalar ustun rangida
             <div className="mt-2 space-y-1 text-[11.5px] font-medium leading-tight text-slate-700 dark:text-slate-100">
               {(info.room || info.schedule) && (
                 <div className="flex items-center gap-1.5">
@@ -1064,7 +954,6 @@ function GroupBucketCard({ bucket, locale, color, info }: { bucket: Bucket; loca
 
   const cls = "block rounded-xl border border-slate-200 bg-white p-3 transition dark:border-white/[0.07] dark:bg-[#15243d]";
 
-  // Guruh o'chirilgan bo'lsa (groupId yo'q) — havolasiz ko'rsatiladi
   return bucket.groupId ? (
     <Link href={`/groups/${bucket.groupId}`} draggable={false} className={cn(cls, "hover:-translate-y-0.5 hover:border-brand-300 hover:shadow-lg")}>
       {inner}

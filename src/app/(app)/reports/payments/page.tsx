@@ -13,16 +13,6 @@ const ALLOWED = [ROLES.DIRECTOR, ROLES.DEPUTY_DIRECTOR, ROLES.MANAGER];
 const p2 = (n: number) => String(n).padStart(2, "0");
 const isoDay = (d: Date) => `${d.getFullYear()}-${p2(d.getMonth() + 1)}-${p2(d.getDate())}`;
 
-/**
- * Kirim-chiqim (tushum) hisoboti — tanlangan oy uchun:
- *   • kutilayotgan oylik to'lov (guruh/kurs/umumiy narx bo'yicha, src/lib/debt.ts),
- *   • o'tgan oydan ko'chgan qarz (o'tgan oy oxiridagi holat),
- *   • o'tgan va shu oyda to'langan summa (PAID to'lovlar),
- *   • qolgan kutilayotgan tushum (tanlangan sanadagi qarz),
- *   • kirim / chiqim / sof natija (Payment PAID − Expense).
- * Hamma raqam faol filial doirasida. Sana va holat filtri URL orqali
- * (?date=YYYY-MM-DD&status=ACTIVE) — hisob serverda bo'ladi.
- */
 export default async function RevenuePage({ searchParams }: { searchParams: Promise<{ date?: string; status?: string }> }) {
   const s = await requireSession();
   if (!ALLOWED.includes(s.role as never)) {
@@ -32,7 +22,6 @@ export default async function RevenuePage({ searchParams }: { searchParams: Prom
   const sp = await searchParams;
   const today = new Date();
   const dateStr = /^\d{4}-\d{2}-\d{2}$/.test(sp.date ?? "") ? String(sp.date) : isoDay(today);
-  // status: "" (hammasi) yoki ro'yxatdagi qiymat; berilmasa — faol o'quvchilar
   const status = sp.status === undefined ? "ACTIVE" : (EDU_STATUSES as readonly string[]).includes(sp.status) ? sp.status : "";
 
   const at = new Date(`${dateStr}T23:59:59`);
@@ -40,7 +29,7 @@ export default async function RevenuePage({ searchParams }: { searchParams: Prom
   const monthStart = new Date(y, m, 1);
   const nextMonthStart = new Date(y, m + 1, 1);
   const prevMonthStart = new Date(y, m - 1, 1);
-  const prevMonthEnd = new Date(y, m, 0, 23, 59, 59); // o'tgan oyning oxirgi kuni
+  const prevMonthEnd = new Date(y, m, 0, 23, 59, 59);
 
   const students = await prisma.student.findMany({
     where: { ...branchWhere(s), ...(status ? { eduStatus: status } : {}) },
@@ -61,7 +50,6 @@ export default async function RevenuePage({ searchParams }: { searchParams: Prom
     prisma.expense.count({ where: { ...branchWhere(s), date: { gte: monthStart, lt: nextMonthStart } } }),
   ]);
 
-  // Holat filtri to'lovlarga ham tegishli (faqat tanlangan o'quvchilarniki)
   const rel = status ? paidRows.filter((p) => idSet.has(p.studentId)) : paidRows;
   const thisM = rel.filter((p) => p.createdAt >= monthStart);
   const lastM = rel.filter((p) => p.createdAt < monthStart);
@@ -75,7 +63,6 @@ export default async function RevenuePage({ searchParams }: { searchParams: Prom
   let remaining = 0, remainingCount = 0;
   for (const v of debtsNow.values()) if (v.debt > 0) { remaining += v.debt; remainingCount++; }
 
-  // To'lov usullari bo'yicha shu oy
   const byMethod = new Map<string, number>();
   for (const p of thisM) byMethod.set(p.method, (byMethod.get(p.method) ?? 0) + p.amount);
 
@@ -93,7 +80,6 @@ export default async function RevenuePage({ searchParams }: { searchParams: Prom
     remaining, remainingCount,
     expenses, expenseCount,
     byMethod: [...byMethod.entries()].sort((a, b) => b[1] - a[1]).map(([method, amount]) => ({ method, amount })),
-    // Narx hech qayerda kiritilmagan bo'lsa — hisobot 0 bo'ladi, sababi aytiladi
     noPrices: ids.length > 0 && expected === 0,
   };
 

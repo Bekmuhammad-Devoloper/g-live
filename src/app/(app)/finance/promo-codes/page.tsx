@@ -7,7 +7,6 @@ import { branchViaStudent } from "@/lib/branchScope";
 import { Forbidden } from "../../_components/ui";
 import PromoCodesView, { type VPromo, type VPromoUse } from "./PromoCodesView";
 
-// Promokodlar — direktor yaratadi; moliya ko'ra oladiganlar ro'yxat va foydalanishni ko'radi.
 export default async function PromoCodesPage() {
   const s = await requireSession();
   if (!canRead(s.role, MODULES.PAYMENTS)) {
@@ -24,7 +23,7 @@ export default async function PromoCodesPage() {
       _sum: { discount: true },
     }),
     prisma.payment.findMany({
-      where: { AND: [{ promoCode: { not: null } }, { status: "PAID" }, branchViaStudent(s)] }, // faol filial doirasida
+      where: { AND: [{ promoCode: { not: null } }, { status: "PAID" }, branchViaStudent(s)] },
       orderBy: { createdAt: "desc" },
       take: 300,
       select: { id: true, createdAt: true, promoCode: true, amount: true, discount: true, studentId: true, student: { select: { fullName: true } }, author: { select: { fullName: true } } },

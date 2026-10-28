@@ -1,6 +1,3 @@
-// Umumiy tizim sozlamalari (key-value) uchun server yordamchilari.
-// Faqat serverda ishlatiladi (prisma). "Setting" modeli — key @id.
-
 import { prisma } from "./db";
 
 export async function getSetting(key: string): Promise<string | null> {

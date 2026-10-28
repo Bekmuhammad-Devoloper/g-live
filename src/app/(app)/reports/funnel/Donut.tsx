@@ -3,8 +3,6 @@
 import { tr } from "@/lib/tr";
 import type { Locale } from "@/lib/constants";
 
-// Donut (halqa) diagramma — buyurtmalar taqsimoti uchun. Sof SVG.
-// Kategorik ranglar qat'iy tartibda; segmentlarda native tooltip (<title>).
 export const CAT = ["#4148ef", "#16a34a", "#f59e0b", "#8b5cf6", "#06b6d4", "#ec4899", "#64748b"];
 
 export default function Donut({ items, locale }: { items: { label: string; value: number }[]; locale: Locale }) {

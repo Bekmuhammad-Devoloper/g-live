@@ -10,23 +10,10 @@ import { awardSkill } from "@/lib/skills";
 
 export const runtime = "nodejs";
 
-// Talaffuz tekshiruvi — lug'at mashqining 4-bosqichi.
-//
-// Ikki kirish:
-//   · transcript — Android ilovasi: nutqni telefon o'zi tanigan, faqat matn
-//   · audio      — brauzer: WAV yozuv, Gemini yopiq tanlov bilan baholaydi
-//
-// Har ikkisida ham:
-//   1. seans va dars tekshiriladi (boshqa kursning so'zini mashq qilib bo'lmasin)
-//   2. MAQSAD SO'Z SERVERDA aniqlanadi — mijoz faqat tartib raqamini yuboradi
-//   3. yakuniy qaror shu yerda va jurnalga yoziladi
-
 const MAX_BYTES = 2 * 1024 * 1024;
 const MIN_BYTES = 2000;
-/** Gemini "chosen" ga qanchalik ishonishi kerak */
 const MIN_CONFIDENCE = 60;
 
-/** Bir o'quvchi bir daqiqada nechta tekshiruv so'rashi mumkin */
 const RATE_LIMIT = 40;
 const RATE_WINDOW_MS = 60_000;
 const hits = new Map<string, { n: number; until: number }>();
@@ -43,7 +30,6 @@ function rateLimited(studentId: string): boolean {
   return cur.n > RATE_LIMIT;
 }
 
-/** Solishtirish uchun: artiklsiz, umlautsiz, kichik harf */
 const stem = (de: string) => foldUmlauts(normalizeSpeech(splitArticle(de).rest));
 
 export async function POST(req: Request) {
@@ -84,7 +70,6 @@ export async function POST(req: Request) {
     return NextResponse.json({ error: "forbidden" }, { status: 403 });
   }
 
-  // Maqsad so'z SERVERDA aniqlanadi — mijoz aytganiga ishonilmaydi
   const words = practicableWords(parseLessonWords(lessonVocabText(lesson)));
   const word = words[wordIndex];
   if (!word) return NextResponse.json({ error: "invalid" }, { status: 400 });
@@ -97,11 +82,8 @@ export async function POST(req: Request) {
   if (hasAudio) {
     via = "audio";
     const buf = Buffer.from(await audio.arrayBuffer());
-    // Jim yozuv modelga umuman yuborilmaydi (u jimlikka ham so'z "eshitadi")
     if (!wavHasVoice(buf)) return NextResponse.json({ error: "no_voice" });
 
-    // Ro'yxat aralashtirib beriladi: maqsad so'z doim bir joyda tursa
-    // model buni sezib qolishi mumkin.
     const shuffled = [...words.map((w) => w.de)].sort(() => Math.random() - 0.5);
     const r = await recognizeWord(buf, shuffled);
     if (!r.ok) {
@@ -111,10 +93,6 @@ export async function POST(req: Request) {
     const v = r.value;
     if (!v.speech || !v.transcript.trim()) return NextResponse.json({ error: "no_voice" });
 
-    // UCH SHART BIRGA: model shu so'zni tanlagan bo'lsin, ishonchi yetarli
-    // bo'lsin VA so'zma-so'z eshitilgani ham maqsadga mos kelsin. Bittasi
-    // yetmaydi — model "chosen" da adashishi, "transcript" da esa haqiqatni
-    // yozib qo'yishi mumkin (yoki aksincha).
     const chosenOk = !!v.chosen && stem(v.chosen) === stem(word.de);
     const textOk = checkPronunciation(word.de, v.transcript, others).ok;
     ok = chosenOk && textOk && v.confidence >= MIN_CONFIDENCE;
@@ -133,13 +111,10 @@ export async function POST(req: Request) {
     );
   }
 
-  // "Gapirish" ko'nikmasi — har so'z uchun bir marta (kalit dars+so'z)
   if (ok) await awardSkill(student.id, "sayWord", `say:${lessonId}:${wordIndex}`);
 
   return NextResponse.json({
     ok,
-    // O'quvchi nima eshitilganini ko'rsin — xatosi qayerdaligi ko'rinadi.
-    // Android bir nechta variant qaytarishi mumkin, birinchisini ko'rsatamiz.
     heard: said.split("|")[0].trim().slice(0, 80),
     via,
   });

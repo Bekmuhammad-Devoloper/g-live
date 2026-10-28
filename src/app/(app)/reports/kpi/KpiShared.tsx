@@ -5,39 +5,24 @@ import { Icon } from "../../_components/Icon";
 
 export type TL = { uz: string; ru: string; en: string; de?: string };
 
-/** Xodim toifasi — eski loyihadagi operator / rop / admin ko'rinishlari. */
 export type Cat = "operator" | "rop" | "admin";
 
-/** Server (page.tsx) tayyorlab beradigan bitta qator — faqat oddiy qiymatlar. */
 export interface VKpiRow {
   id: string;
   name: string;
   cat: Cat;
-  /** Profil rasmi (data URL) — bo'lmasa toifa ikonasi ko'rsatiladi */
   imageUrl?: string | null;
-  /** Jami lidlar (ROP uchun — bo'ysunuvchi operatorlar yig'indisi) */
   total: number;
-  /** Muvaffaqiyatli (WON) lidlar */
   won: number;
-  /** Bloklangan / yo'qotilgan (LOST) lidlar */
   blocked: number;
-  /** ROP qo'l ostidagi operatorlar soni (boshqa toifalarda 0) */
   opsCount: number;
-  /** Konversiya % (1 xonali kasr) */
   conv: number;
-  /** KPI % = min(100, round(konversiya × 2)) */
   kpiPct: number;
-  /** Oylik fiksa to'lov (so'm) */
   fiksa: number;
-  /** Har muvaffaqiyatli lid uchun bonus (so'm) */
   bonus: number;
-  /** Jami KPI puli = won × bonus */
   kpiMoney: number;
-  /** Shu oyda yopilgan muvaffaqiyatli lidlar */
   wonMonth: number;
-  /** Shu oyda yig'ilgan bonus = wonMonth × bonus */
   earnedMonth: number;
-  /** Ish kunlari (ishga qabul qilingandan buyon) */
   workDays: number;
 }
 
@@ -53,7 +38,6 @@ export const TABS: { key: Cat; label: TL; icon: string }[] = [
   { key: "admin", label: { uz: "Adminlar", ru: "Админы", en: "Admins", de: "Admins" }, icon: "shieldCheck" },
 ];
 
-/** Toifa ranglari — eski loyihadagidek: operator ko'k, ROP binafsha, admin to'q sariq. */
 export const TONE: Record<Cat, { active: string; avatar: string; ring: string }> = {
   operator: {
     active: "bg-blue-600 text-white shadow-sm shadow-blue-500/25",
@@ -72,14 +56,12 @@ export const TONE: Record<Cat, { active: string; avatar: string; ring: string }>
   },
 };
 
-/** Medal gradientlari va nishonlari (1/2/3-o'rin) — eski loyihadagi Crown/Medal. */
 export const MEDAL = [
   { grad: "from-yellow-400 to-amber-500", shadow: "shadow-yellow-500/25", ring: "ring-yellow-500/30", icon: "trophy" },
   { grad: "from-slate-300 to-slate-400", shadow: "shadow-slate-400/20", ring: "ring-slate-400/20", icon: "award" },
   { grad: "from-amber-600 to-orange-700", shadow: "shadow-amber-600/20", ring: "ring-amber-600/20", icon: "award" },
 ];
 
-/** Eski loyihadagi getKPIColor: ≥80 yashil, ≥60 sariq, aks holda qizil. */
 export function kpiColor(v: number): string {
   if (v >= 80) return "#10b981";
   if (v >= 60) return "#f59e0b";
@@ -88,21 +70,17 @@ export function kpiColor(v: number): string {
 
 export const firstName = (n: string) => n.split(" ").filter(Boolean)[0] ?? n;
 
-/** Birlik qo'shmasdan raqamni bo'sh joy bilan ajratish (200000 → "200 000"). */
 export const nf = (n: number) => String(Math.round(n)).replace(/\B(?=(\d{3})+(?!\d))/g, " ");
 
-/** Bir xonali kasr bilan o'rtacha (eski loyihadagi toFixed(1)). */
 export const avg1 = (list: number[]) =>
   list.length ? (list.reduce((s, v) => s + v, 0) / list.length).toFixed(1) : "0";
 
-/** Toifaga mos ikonka — operator: naushnik, ROP: grafik, admin: qalqon. */
 export const CAT_ICON: Record<Cat, string> = {
   operator: "headphones",
   rop: "chart",
   admin: "shieldCheck",
 };
 
-/** Xodim avatari — profil rasmi bo'lsa rasm, bo'lmasa toifa ikonasi. */
 export function Avatar({ name, cat, size = 36, imageUrl }: { name: string; cat: Cat; size?: number; imageUrl?: string | null }) {
   if (imageUrl) {
     return (
@@ -113,7 +91,6 @@ export function Avatar({ name, cat, size = 36, imageUrl }: { name: string; cat: 
       />
     );
   }
-  // Rasm yo'q — toifaga mos ikonka (ism harflari o'rniga)
   return (
     <span
       className={cn("grid shrink-0 place-items-center rounded-full", TONE[cat].avatar)}
@@ -125,7 +102,6 @@ export function Avatar({ name, cat, size = 36, imageUrl }: { name: string; cat: 
   );
 }
 
-/** Reyting nishoni — top 3 uchun medal, qolganlari uchun tartib raqami. */
 export function RankBadge({ rank }: { rank: number }) {
   if (rank <= 3) {
     const m = MEDAL[rank - 1];
@@ -142,7 +118,6 @@ export function RankBadge({ rank }: { rank: number }) {
   );
 }
 
-/** Panel sarlavhasi — ikonka + sarlavha + izoh. */
 export function PanelHead({ icon, iconClass, title, sub }: { icon: string; iconClass: string; title: string; sub: string }) {
   return (
     <div className="mb-4 flex items-center gap-3">

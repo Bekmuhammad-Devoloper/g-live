@@ -93,7 +93,6 @@ export default function VacanciesView({ locale, rows, stats, openNew }: {
 
   return (
     <div className="space-y-5">
-      {/* Sarlavha */}
       <div className="flex flex-wrap items-start justify-between gap-3">
         <div>
           <h1 className="text-[26px] font-bold tracking-tight text-slate-900 dark:text-slate-100">
@@ -116,7 +115,6 @@ export default function VacanciesView({ locale, rows, stats, openNew }: {
         </div>
       </div>
 
-      {/* Ko'rsatkichlar */}
       <div className="grid grid-cols-2 gap-4 lg:grid-cols-4">
         <Tile label={L("Jami vakansiya", "Всего вакансий", "Total vacancies", "Stellen insgesamt")} value={stats.total} icon="building" tone="#3b82f6" />
         <Tile label={L("Faol", "Активные", "Active", "Aktiv")} value={stats.active} icon="check" tone="#10b981" />
@@ -124,7 +122,6 @@ export default function VacanciesView({ locale, rows, stats, openNew }: {
         <Tile label={L("Arizalar", "Заявки", "Applications", "Bewerbungen")} value={stats.applications} icon="users" tone="#f59e0b" />
       </div>
 
-      {/* Filtrlar */}
       <div className="flex flex-wrap items-center gap-2">
         <div className="relative min-w-[240px] flex-1">
           <Icon name="search" className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400" />
@@ -152,7 +149,6 @@ export default function VacanciesView({ locale, rows, stats, openNew }: {
         </button>
       </div>
 
-      {/* Jadval */}
       <div className="overflow-hidden rounded-2xl border border-slate-200/70 bg-white shadow-card dark:border-slate-800 dark:bg-slate-900">
         <div className="overflow-x-auto">
           <table className="w-full min-w-[980px] text-left text-sm">

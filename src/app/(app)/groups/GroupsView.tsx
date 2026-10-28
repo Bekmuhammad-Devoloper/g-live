@@ -22,22 +22,21 @@ export interface VGroup {
   weekdays: number[];
   startTime: string | null;
   endTime: string | null;
-  groupTime: string; // boshlanish sanasi (formatlangan)
-  groupEndTime: string; // tugash sanasi (formatlangan)
+  groupTime: string;
+  groupEndTime: string;
   students: number;
   capacity: number;
   room: string | null;
   status: string;
-  // Tahrirlash uchun (EditGroupData'ga mos)
   programId: string;
   teacherId: string | null;
   color: string | null;
   format: string;
   onlineLink: string | null;
-  startDate: string | null; // "yyyy-mm-dd"
-  endDate: string | null; // "yyyy-mm-dd"
-  note: string | null; // izoh/kament
-  monthlyFee: number | null; // guruh oylik to'lovi
+  startDate: string | null;
+  endDate: string | null;
+  note: string | null;
+  monthlyFee: number | null;
   branchId: string | null;
   branchName: string | null;
 }
@@ -99,11 +98,8 @@ export default function GroupsView({
   programNames: string[];
   rooms: string[];
   roomOptions: { id: string; name: string; capacity: number }[];
-  /** Faol filiallar — "Filial" ustunidagi tanlov uchun (rahbariyat) */
   branches?: { id: string; name: string }[];
-  /** Rahbariyat "Barcha filiallar" rejimida — guruhni filialga biriktira oladi */
   canAssignBranch?: boolean;
-  /** Filial tanlangan rejimda ko'rinmay qolgan filialsiz guruhlar soni */
   unassignedGroups?: number;
 }) {
   const [addOpen, setAddOpen] = useState(false);
@@ -160,7 +156,6 @@ export default function GroupsView({
 
   return (
     <div className="space-y-3">
-      {/* Toolbar 1-qator */}
       <div className="flex flex-wrap items-center gap-2">
         {canCreate && (
           <button onClick={() => setAddOpen(true)} className="flex h-10 items-center gap-1.5 rounded-lg bg-brand-600 px-4 text-sm font-semibold text-white shadow-sm transition hover:bg-brand-700">
@@ -186,7 +181,6 @@ export default function GroupsView({
         </button>
       </div>
 
-      {/* Toolbar 2-qator (o'ngga) */}
       <div className="flex flex-wrap items-center justify-end gap-2">
         <FilterSelect value={statusF} onChange={setStatusF} placeholder={tr(locale, { uz: "Holat", ru: "Статус", en: "Status", de: "Status" })} allowEmpty={false}
           options={[{ v: "ACTIVE", label: tr(locale, { uz: "Aktiv guruh", ru: "Активная группа", en: "Active group", de: "Aktive Gruppe" }) }, { v: "ALL", label: tr(locale, { uz: "Barcha guruhlar", ru: "Все группы", en: "All groups", de: "Alle Gruppen" }) }, { v: "PLANNED", label: tr(locale, { uz: "Rejalashtirilgan", ru: "Запланировано", en: "Planned", de: "Geplant" }) }, { v: "FINISHED", label: tr(locale, { uz: "Tugagan", ru: "Завершено", en: "Finished", de: "Abgeschlossen" }) }]} />
@@ -198,14 +192,11 @@ export default function GroupsView({
           options={[{ v: "odd", label: tr(locale, { uz: "Toq kunlar (Du-Ch-Ju)", ru: "Нечётные дни (Пн-Ср-Пт)", en: "Odd days (Mon-Wed-Fri)", de: "Ungerade Tage (Mo-Mi-Fr)" }) }, { v: "even", label: tr(locale, { uz: "Juft kunlar (Se-Pa-Sh)", ru: "Чётные дни (Вт-Чт-Сб)", en: "Even days (Tue-Thu-Sat)", de: "Gerade Tage (Di-Do-Sa)" }) }]} />
       </div>
 
-      {/* Statistika qatori */}
       <div className="flex flex-wrap items-center gap-x-5 gap-y-1 text-sm text-slate-500 dark:text-slate-400">
         <span>{tr(locale, { uz: "Jami o'quvchilar soni:", ru: "Всего учеников:", en: "Total students:", de: "Schüler insgesamt:" })} <b className="text-slate-800 dark:text-slate-200">{totalStudents}</b></span>
         <span>{tr(locale, { uz: "Muzlatilgan o'quvchilar soni:", ru: "Замороженных учеников:", en: "Frozen students:", de: "Eingefrorene Schüler:" })} <b className="text-slate-800 dark:text-slate-200">{frozenStudents}</b></span>
       </div>
 
-      {/* Jadval */}
-      {/* Filialsiz guruhlar — qat'iy filial filtri ularni yashiradi; sababi va yo'li */}
       {unassignedGroups > 0 && (
         <div className="flex items-start gap-3 rounded-2xl border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-800 dark:border-amber-500/30 dark:bg-amber-500/10 dark:text-amber-200">
           <Icon name="alert" className="mt-0.5 h-4 w-4 shrink-0" />
@@ -271,7 +262,6 @@ export default function GroupsView({
                         <Link href={`/groups/${g.id}`} className="font-semibold text-brand-700 hover:underline dark:text-brand-300">{g.name}</Link>
                         <span className={cn("rounded px-1.5 py-0.5 text-[10px] font-semibold", statusTone[g.status] ?? statusTone.PLANNED)}>{statusLabel(g.status, locale)}</span>
                       </div>
-                      {/* Izoh (kament) — guruh nomi ostida */}
                       {g.note && (
                         <div className="mt-1 flex max-w-[280px] items-start gap-1 text-[11px] leading-snug text-amber-600 dark:text-amber-400" title={g.note}>
                           <Icon name="info" className="mt-px h-3 w-3 shrink-0" />
@@ -313,7 +303,6 @@ export default function GroupsView({
           </table>
         </div>
 
-        {/* Footer: sahifa hajmi + navigatsiya */}
         <div className="flex flex-wrap items-center justify-between gap-3 border-t border-slate-100 px-4 py-2.5 dark:border-slate-800">
           <div className="flex items-center gap-2 text-xs text-slate-500 dark:text-slate-400">
             <Icon name="listView" className="h-4 w-4" />
@@ -331,7 +320,6 @@ export default function GroupsView({
         </div>
       </div>
 
-      {/* FAB */}
       {canCreate && (
         <button onClick={() => setAddOpen(true)} title={tr(locale, { uz: "Yangi guruh", ru: "Новая группа", en: "New group", de: "Neue Gruppe" })} className="fixed bottom-6 right-6 z-30 flex h-12 w-12 items-center justify-center rounded-full bg-brand-600 text-white shadow-pop transition hover:scale-105 hover:bg-brand-700">
           <Icon name="plus" className="h-5 w-5" />
@@ -391,7 +379,6 @@ function PageBtn({ children, disabled, onClick }: { children: React.ReactNode; d
   );
 }
 
-// VGroup → EditGroupData (tahrirlash formasi uchun)
 function editDataOf(g: VGroup): EditGroupData {
   return {
     id: g.id, name: g.name, programId: g.programId, teacherId: g.teacherId,
@@ -402,8 +389,6 @@ function editDataOf(g: VGroup): EditGroupData {
   };
 }
 
-// iPhone uslubidagi on/off toggle — guruhni faol/nofaol qiladi
-/** Guruhning filiali — tanlov o'zgarsa darhol biriktiriladi (rahbariyat, barcha filiallar rejimi) */
 function GroupBranchSelect({ id, branchId, branches, locale }: { id: string; branchId: string | null; branches: { id: string; name: string }[]; locale: Locale }) {
   const router = useRouter();
   const [pending, start] = useTransition();
@@ -417,7 +402,7 @@ function GroupBranchSelect({ id, branchId, branches, locale }: { id: string; bra
       onChange={(e) => {
         const next = e.target.value;
         const prev = val;
-        setVal(next); // optimistik
+        setVal(next);
         start(async () => {
           const r = await setGroupBranch(id, next || null);
           if (r.ok) router.refresh();
@@ -446,11 +431,11 @@ function GroupActiveToggle({ id, active, locale }: { id: string; active: boolean
 
   const toggle = () => {
     const next = !on;
-    setOn(next); // optimistik
+    setOn(next);
     start(async () => {
       const r = await setGroupActive(id, next);
       if (r.ok) router.refresh();
-      else setOn(!next); // rollback
+      else setOn(!next);
     });
   };
 

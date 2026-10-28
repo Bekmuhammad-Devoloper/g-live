@@ -12,13 +12,13 @@ export interface VAssignment {
   id: string;
   type: string;
   title: string;
-  dueAt: string; // formatlangan yoki ""
+  dueAt: string;
   teacherName: string | null;
   groupId: string;
   groupName: string;
   maxScore: number;
   note: string | null;
-  createdAt: string; // formatlangan
+  createdAt: string;
   submissions: number;
 }
 
@@ -87,7 +87,6 @@ export default function AssignmentsView({
 
   return (
     <div className="space-y-3">
-      {/* Toolbar */}
       <div className="flex flex-wrap items-center gap-2">
         {canCreate && (
           <button onClick={() => setAddOpen(true)} className="flex h-10 items-center gap-1.5 rounded-lg bg-brand-600 px-4 text-sm font-semibold text-white shadow-sm transition hover:bg-brand-700">
@@ -106,7 +105,6 @@ export default function AssignmentsView({
         </div>
       </div>
 
-      {/* Jadval */}
       <div className="overflow-hidden rounded-2xl border border-slate-200/70 bg-white shadow-card dark:border-slate-800 dark:bg-slate-900">
         <div className="flex items-center justify-end border-b border-slate-100 px-4 py-2 dark:border-slate-800">
           <span className="rounded-lg bg-slate-100 px-2.5 py-1 text-xs font-semibold text-slate-500 dark:bg-slate-800 dark:text-slate-300">{tr(locale, { uz: "Umumiy soni:", ru: "Всего:", en: "Total:", de: "Gesamt:" })} {filtered.length}</span>

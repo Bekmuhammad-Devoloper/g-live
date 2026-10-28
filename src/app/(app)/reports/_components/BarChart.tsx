@@ -1,10 +1,8 @@
-// Yengil ustunli diagramma — tashqi kutubxonasiz, sof SVG (kodbaza uslubida).
 export interface BarPoint {
   label: string;
   value: number;
 }
 
-// Y o'qi uchun "chiroyli" maksimal qiymat
 function niceCeil(v: number): number {
   if (v <= 5) return 5;
   const pow = Math.pow(10, Math.floor(Math.log10(v)));
@@ -43,14 +41,12 @@ export default function BarChart({
 
   return (
     <div className="overflow-x-auto">
-      {/* Legenda */}
       <div className="mb-2 flex items-center justify-center gap-2 text-sm text-slate-500 dark:text-slate-400">
         <span className="inline-block h-3 w-6 rounded-sm" style={{ background: color }} />
         {seriesLabel}
       </div>
 
       <svg viewBox={`0 0 ${W} ${H}`} className="w-full min-w-[520px]" role="img" aria-label={seriesLabel}>
-        {/* Gorizontal to'r chiziqlari + Y belgilari */}
         {yTicks.map((tk, i) => {
           const y = padT + plotH - (tk / niceMax) * plotH;
           return (
@@ -61,10 +57,8 @@ export default function BarChart({
           );
         })}
 
-        {/* Asosiy chiziq */}
         <line x1={padL} y1={padT + plotH} x2={W - padR} y2={padT + plotH} stroke="currentColor" strokeWidth={1} className="text-slate-300 dark:text-slate-600" />
 
-        {/* Ustunlar */}
         {data.map((d, i) => {
           const x = padL + i * band + (band - barW) / 2;
           const h = niceMax > 0 ? (d.value / niceMax) * plotH : 0;

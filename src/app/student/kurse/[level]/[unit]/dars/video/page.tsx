@@ -6,8 +6,6 @@ import { SectionHeader, safeUrl } from "../../_parts";
 import VideoCover, { VIDEO_ACCENT } from "./Cover";
 import { getBrand } from "@/lib/brand";
 
-// Bitta video sahifasi — muqova, "Ko'rish" tugmasi va "Video mashq".
-
 export default async function LessonVideoPage({
   params,
 }: {
@@ -40,7 +38,6 @@ export default async function LessonVideoPage({
       <div className="mt-4 space-y-3">
         <VideoCover lesson={lesson} watched={!!view} t={t} brand={await getBrand()} />
 
-        {/* ── Video mashq ── */}
         <Link
           href={hasExercise ? `${base}/dars/mashq` : `${base}/vazifa`}
           className="flex min-h-[52px] w-full items-center justify-center rounded-[20px] text-[15px] font-extrabold text-white shadow-[0_12px_24px_-12px_rgba(15,60,80,0.8)] transition active:scale-[0.98]"

@@ -5,7 +5,6 @@ After=network.target
 [Service]
 User=deploy
 WorkingDirectory=/opt/gl-edu
-# Asosiy .env kalitlari bo'sh qiymat bilan yopiladi (env.blank), keyin markazning o'z sozlamalari (env)
 ExecStartPre=+/usr/local/sbin/gl-center blanks %i
 EnvironmentFile=-/opt/centers/%i/env.blank
 EnvironmentFile=/opt/centers/%i/env

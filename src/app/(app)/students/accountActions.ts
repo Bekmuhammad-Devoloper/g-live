@@ -8,9 +8,6 @@ import { defaultPassword, freeLogin, translit } from "@/lib/studentLogin";
 import { writeAudit } from "@/lib/audit";
 import { tr } from "@/lib/tr";
 
-// O'quvchining ilova hisobi (login/parol) — CRM dagi o'quvchi kartochkasidan
-// boshqariladi. Sukut: login = ismi kichik harflarda, parol = telefon raqami.
-
 export type Account = { login: string; password: string | null; active: boolean };
 export type AccountRes = { ok?: boolean; error?: string; account?: Account };
 
@@ -22,7 +19,6 @@ async function guard() {
   return { s, error: null as string | null };
 }
 
-// Kartochka ochilganda hisobni ko'rsatish (yo'q bo'lsa — bo'sh)
 export async function getStudentAccount(studentId: string): Promise<AccountRes> {
   const { s, error } = await guard();
   if (error) return { error };
@@ -40,7 +36,6 @@ export async function getStudentAccount(studentId: string): Promise<AccountRes> 
   };
 }
 
-// Hisob yaratish yoki sukutdagi login/parolga qaytarish
 export async function resetStudentAccount(studentId: string): Promise<AccountRes> {
   const { s, error } = await guard();
   if (error) return { error };
@@ -82,7 +77,6 @@ export async function resetStudentAccount(studentId: string): Promise<AccountRes
   return { ok: true, account: { login, password, active: true } };
 }
 
-// Ma'muriyat login/parolni qo'lda o'zgartiradi
 export async function saveStudentAccount(studentId: string, loginRaw: string, passwordRaw: string): Promise<AccountRes> {
   const { s, error } = await guard();
   if (error) return { error };
@@ -134,7 +128,6 @@ export async function saveStudentAccount(studentId: string, loginRaw: string, pa
   return await getStudentAccount(studentId);
 }
 
-// Hisobni vaqtincha yopish / qayta ochish
 export async function toggleStudentAccount(studentId: string, active: boolean): Promise<AccountRes> {
   const { s, error } = await guard();
   if (error) return { error };

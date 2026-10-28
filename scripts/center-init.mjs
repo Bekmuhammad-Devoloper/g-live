@@ -1,10 +1,3 @@
-// Yangi o'quv markazi bazasini boshlang'ich holatga keltiradi (Dev panel chaqiradi).
-// Ishga tushirish: /opt/gl-edu papkasida, markaz muhiti bilan:
-//   DATABASE_URL=file:/opt/centers/<slug>/data/db.sqlite \
-//   CENTER_NAME="..." DIRECTOR_NAME="..." DIRECTOR_EMAIL="..." DIRECTOR_PASSWORD="..." [DIRECTOR_PHONE=...] \
-//   [TEMPLATE_DB=/opt/gl-edu/prisma/dev.db] node scripts/center-init.mjs
-// Sxema avval `prisma db push` bilan yaratilgan bo'lishi kerak. Skript idempotent: qayta
-// ishga tushirilsa direktor/filial takror yaratilmaydi. Natija — oxirgi qatorda JSON.
 import { PrismaClient } from "@prisma/client";
 import bcrypt from "bcryptjs";
 
@@ -22,9 +15,6 @@ const templateDb = env("TEMPLATE_DB", false);
 
 const prisma = new PrismaClient();
 try {
-  // Asosiy markazdan umumiy ma'lumotnomalar: o'quv darajalari, yulduz darajalari,
-  // xodim lavozimlari va o'quvchi kabineti bo'limlari sozlamalari. Kurslar, xonalar,
-  // shartnomalar, telefoniya — markazga xos, ko'chirilmaydi.
   if (templateDb) {
     const empty = (await prisma.studyLevel.count()) === 0;
     if (empty) {

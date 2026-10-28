@@ -6,9 +6,7 @@ import { staffBranchWhere } from "@/lib/branchScope";
 import { Forbidden } from "../../_components/ui";
 import BalanceView, { type VBalanceStaff } from "./BalanceView";
 
-// Moliyaviy hisobot — faqat direktor, o'rinbosari va menejer
 const ALLOWED = [ROLES.DIRECTOR, ROLES.DEPUTY_DIRECTOR, ROLES.MANAGER];
-// Quyidagisi kirish nazorati emas — balans jadvalida ko'rsatiladigan xodimlar ro'yxati
 const STAFF_ROLES = [ROLES.TEACHER, ROLES.MANAGER, ROLES.DEPUTY_DIRECTOR, ROLES.DIRECTOR, ROLES.ADMIN];
 const p2 = (n: number) => String(n).padStart(2, "0");
 const iso = (d: Date) => `${d.getFullYear()}-${p2(d.getMonth() + 1)}-${p2(d.getDate())}`;
@@ -20,7 +18,7 @@ export default async function BalancePage() {
   }
 
   const users = await prisma.user.findMany({
-    where: { AND: [{ role: { in: STAFF_ROLES }, isActive: true }, staffBranchWhere(s)] }, // faol filial doirasida
+    where: { AND: [{ role: { in: STAFF_ROLES }, isActive: true }, staffBranchWhere(s)] },
     orderBy: { fullName: "asc" },
     select: { id: true, fullName: true, phone: true, fiksa: true, salaries: { select: { year: true, month: true, bonus: true, penalty: true } } },
   });

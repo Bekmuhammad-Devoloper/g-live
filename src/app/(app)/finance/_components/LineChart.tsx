@@ -2,7 +2,6 @@
 
 import { useState } from "react";
 
-// Oylik summalar uchun bitta qatorli chiziqli grafik. Sof SVG — tashqi kutubxonasiz.
 export default function LineChart({
   labels,
   values,
@@ -102,10 +101,6 @@ const MONTHS: Record<string, string[]> = {
   de: ["Jan", "Feb", "Mär", "Apr", "Mai", "Jun", "Jul", "Aug", "Sep", "Okt", "Nov", "Dez"],
 };
 
-/**
- * Oxirgi `count` oy bo'yicha summalar: [{key:"YYYY-MM", label:"MMM YY"}] va qiymatlar.
- * `items` — mahalliy sana (YYYY-MM-DD...) va summa.
- */
 export function monthlySeries(items: { day: string; amount: number }[], locale: string, count = 12) {
   const now = new Date();
   const keys: string[] = [];

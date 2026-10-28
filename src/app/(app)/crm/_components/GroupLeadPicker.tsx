@@ -7,9 +7,6 @@ import { LEAD_STAGE_LABELS, label, type Locale } from "@/lib/constants";
 import { Icon } from "../../_components/Icon";
 import { colorOfStage, columnOfLead, groupColKey, type GroupColumn, type VLead } from "../_lib/leadColumns";
 
-// Guruh ustunidagi "+" — lidni sudramasdan ro'yxatdan tanlab biriktirish.
-// Tanlangan lid darhol shu guruhga yoziladi va ustunga ko'chadi.
-
 interface Props {
   locale: Locale;
   leads: VLead[];
@@ -37,7 +34,6 @@ export default function GroupLeadPicker({ locale, leads, pinnedIds, group, onClo
     return () => window.removeEventListener("keydown", onKey);
   }, [onClose]);
 
-  // Shu ustunda turmagan lidlar — yangisi tepada
   const candidates = useMemo(() => {
     if (!group) return [];
     const own = groupColKey(group.groupId);

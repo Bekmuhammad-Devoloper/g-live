@@ -18,7 +18,7 @@ import Pagination, { PAGE_SIZE, fmtDate, fmtDateTime, localDay } from "../_compo
 
 export interface VWithdrawal {
   id: string;
-  date: string; // ISO
+  date: string;
   studentId: string;
   student: string;
   phone: string;
@@ -62,13 +62,11 @@ export default function WithdrawalsView({ withdrawals, courses, students, writab
     });
   }, [withdrawals, from, to, q, sum, course]);
 
-  // Filtr o'zgarsa — birinchi sahifaga qaytish
   useEffect(() => { setPage(1); }, [from, to, q, sum, course]);
   const pageRows = filtered.slice((page - 1) * PAGE_SIZE, page * PAGE_SIZE);
 
   const total = filtered.reduce((n, w) => n + w.amount, 0);
 
-  // Oylik yechib olishlar grafigi — oxirgi 12 oy
   const chart = useMemo(
     () => monthlySeries(withdrawals.map((w) => ({ day: localDay(w.date), amount: w.amount })), locale),
     [withdrawals, locale],
@@ -110,7 +108,6 @@ export default function WithdrawalsView({ withdrawals, courses, students, writab
         {writable && <NewWithdrawal students={students} locale={locale} />}
       </div>
 
-      {/* Statistika + breakdown */}
       <div className="grid gap-4 lg:grid-cols-[minmax(0,420px)_1fr]">
         <div className="rounded-2xl border border-l-4 border-slate-300 border-l-brand-600 bg-white p-5 shadow-card dark:border-slate-600 dark:border-l-brand-500 dark:bg-slate-900">
           <div className="flex items-start justify-between gap-3">
@@ -127,7 +124,6 @@ export default function WithdrawalsView({ withdrawals, courses, students, writab
         </div>
       </div>
 
-      {/* Filtrlar */}
       <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-6">
         <FField label={tr(locale, { uz: "Sanadan boshlab", ru: "С даты", en: "From date", de: "Von Datum" })}><DateInput value={from} onChange={(e) => setFrom(e.target.value)} className={inp} /></FField>
         <FField label={tr(locale, { uz: "Sana bo'yicha", ru: "По дату", en: "To date", de: "Bis Datum" })}><DateInput value={to} onChange={(e) => setTo(e.target.value)} className={inp} /></FField>
@@ -149,7 +145,6 @@ export default function WithdrawalsView({ withdrawals, courses, students, writab
         </div>
       </div>
 
-      {/* Jadval */}
       <div className="overflow-hidden rounded-2xl border border-slate-300 bg-white shadow-card dark:border-slate-600 dark:bg-slate-900">
         <div className="flex flex-wrap items-center justify-between gap-3 border-b border-slate-200/70 px-5 py-3 dark:border-slate-800">
           <span className="text-sm text-slate-500">{tr(locale, { uz: "Jami", ru: "Всего", en: "Total", de: "Gesamt" })}: <b className="text-slate-800 dark:text-slate-100">{filtered.length}</b> {tr(locale, { uz: "ta", ru: "шт", en: "items", de: "Stk." })}</span>
@@ -249,7 +244,6 @@ function NewWithdrawal({ students, locale }: { students: { id: string; fullName:
 
       {open && (
         <div className="fixed inset-0 z-[80]">
-          {/* Yonboshdan ochiladigan panel (ilovadagi boshqa formalar kabi) */}
           <div className="absolute inset-0 bg-slate-900/50 backdrop-blur-sm" />
           <form ref={formRef} action={action} className="animate-slide-in-right absolute right-0 top-0 flex h-full drawer-panel flex-col space-y-3 overflow-y-auto border-l border-slate-200 bg-white p-5 shadow-pop dark:border-white/10 dark:bg-[#15243d]">
             <div className="flex items-center justify-between">

@@ -1,13 +1,4 @@
 #!/usr/bin/env bash
-# ════════════════════════════════════════════════════════════════════
-# 2-BOSQICH: A va B ni ulash (VPN tayyor bo'lgach)
-#
-#   A serverda:  sudo bash 2-link.sh a     # AMI'ni VPN'ga ochish + CRM_URL
-#   B serverda:  sudo bash 2-link.sh b     # ilova AMI'ga A orqali ulanadi
-#
-# ⚠️ ESKI TIZIMGA TEGILMAYDI: faqat /etc/asterisk-glive/* fayllari
-#    o'zgaradi. /etc/asterisk (eski) va uning servisi qo'lga tegmaydi.
-# ════════════════════════════════════════════════════════════════════
 set -euo pipefail
 ROLE="${1:?a yoki b}"
 VPN_A="10.99.0.1"; VPN_B="10.99.0.2"
@@ -17,7 +8,6 @@ APP=/home/ubuntu/gl-edu
 if [ "$ROLE" = "a" ]; then
   echo "══ A: AMI'ni VPN interfeysiga ochish (internetga EMAS) ══"
   cp $ETC/manager.conf $ETC/manager.conf.bak.$(date +%s)
-  # bindaddr: 127.0.0.1 → 0.0.0.0, lekin permit faqat VPN'dan
   sed -i "s|^bindaddr *=.*|bindaddr = 0.0.0.0|" $ETC/manager.conf
   sed -i "s|^permit *=.*|permit = ${VPN_B}/255.255.255.255|" $ETC/manager.conf
   grep -q "^deny" $ETC/manager.conf || sed -i "/^permit/i deny = 0.0.0.0/0.0.0.0" $ETC/manager.conf

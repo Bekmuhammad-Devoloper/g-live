@@ -5,31 +5,6 @@ import { createPortal, flushSync } from "react-dom";
 import { markLessonWatched } from "../../actions";
 import { protectScreen, unprotectScreen } from "@/lib/screenGuard";
 
-// Gorizontal (to'liq ekran) video pleyer.
-//
-// Nega shunday: telefonda dars videosi tik holatda ekranning uchdan birini
-// egallaydi. "Ko'rish" bosilganda pleyer to'liq ekranga chiqadi va imkoni
-// bo'lsa yon holatga buriladi — o'quvchi telefonni burishi shart emas.
-//
-// Ikki texnik nozik joy:
-//   1. To'liq ekran QATLAMNING O'ZIDA so'raladi. Ilgari `documentElement`
-//      da so'ralardi va videoning yon tomonlarida OQ joy qolardi: to'liq
-//      ekranga chiqqan element hujjat ildizi bo'lib, uning ichidagi `body`
-//      ning och foni ko'rinib turardi. Endi to'liq ekran — qora qatlamning
-//      o'zi, ya'ni videodan tashqari hamma joy qora.
-//      Qatlam bosish paytida DOM da bo'lishi uchun `flushSync` ishlatiladi:
-//      React holatni odatda keyinroq qo'llaydi, o'shanda element hali yo'q
-//      bo'lib, requestFullscreen xato berardi.
-//   2. Qatlam `document.body` ga PORTAL orqali chiziladi. Sababi: layout'da
-//      kontent o'rami `relative z-10` — bu stacking context yaratadi va
-//      ichidagi hech narsa undan tashqariga chiqa olmaydi. Pastki menyu esa
-//      o'ramning TASHQARISIDA `z-40` da turadi, shuning uchun pleyerning
-//      `z-[60]` i foyda bermay, menyu video ustida ko'rinib turardi.
-//   3. screen.orientation.lock faqat Android'da va faqat to'liq ekranda
-//      ishlaydi; iOS uni umuman qo'llab-quvvatlamaydi. Shuning uchun
-//      xatosi yutiladi va o'sha holatda ekranda "telefonni buring" eslatmasi
-//      ko'rsatiladi.
-
 type Mode = "file" | "embed" | "link" | "none";
 
 export default function Player({
@@ -37,7 +12,6 @@ export default function Player({
 }: {
   mode: Mode;
   src: string | null;
-  /** Video yuklanguncha ko'rinadigan muqova (banner) */
   poster?: string | null;
   lessonId: string;
   watched: boolean;
@@ -47,14 +21,12 @@ export default function Player({
 }) {
   const [open, setOpen] = useState(false);
   const [portrait, setPortrait] = useState(false);
-  // Portal faqat brauzerda ishlaydi — serverda `document` yo'q
   const [mounted, setMounted] = useState(false);
   const boxRef = useRef<HTMLDivElement>(null);
   const sent = useRef(false);
 
   useEffect(() => setMounted(true), []);
 
-  // Ball bir marta beriladi — takror ko'rish qo'shimcha bermaydi
   const mark = useCallback(() => {
     if (sent.current || watched) return;
     sent.current = true;
@@ -66,35 +38,27 @@ export default function Player({
     try {
       if (document.fullscreenElement) void document.exitFullscreen();
     } catch {
-      /* to'liq ekrandan chiqolmasa ham qatlam yopiladi */
     }
     try {
       (screen.orientation as unknown as { unlock?: () => void })?.unlock?.();
     } catch {
-      /* burilishni ochib bo'lmasa ham muhim emas */
     }
   }, []);
 
   const play = async () => {
-    // Qatlamni DARHOL chizamiz — keyingi qatorda unga murojaat qilamiz
     flushSync(() => setOpen(true));
     try {
-      // Foydalanuvchi harakati ichida — shu sabab brauzer ruxsat beradi
       const box = boxRef.current;
       if (box && !document.fullscreenElement) await box.requestFullscreen();
     } catch {
-      /* to'liq ekran bo'lmasa ham qatlam ochiq qoladi */
     }
     try {
       await (screen.orientation as unknown as { lock?: (o: string) => Promise<void> })?.lock?.("landscape");
     } catch {
-      /* iOS qo'llab-quvvatlamaydi — pastdagi eslatma chiqadi */
     }
     mark();
   };
 
-  // Tizim "orqaga" tugmasi yoki jest bilan to'liq ekrandan chiqilsa —
-  // qatlam ham yopilsin, aks holda foydalanuvchi qora ekranda qolib ketadi.
   useEffect(() => {
     const onFs = () => {
       if (!document.fullscreenElement) setOpen(false);
@@ -103,21 +67,12 @@ export default function Player({
     return () => document.removeEventListener("fullscreenchange", onFs);
   }, []);
 
-  // ── Video ochiq ekan, ekranni himoyalaymiz ──
-  // Android ilovasida skrinshot va ekran yozuvi to'siladi (dars materiali
-  // tarqalib ketmasin). Yopilganda darhol o'chiriladi: qolgan sahifalarni
-  // o'quvchi bemalol skrinshot qila olsin.
-  //
-  // Tozalash funksiyasi HAR HOLDA himoyani o'chiradi — sahifadan chiqib
-  // ketilsa yoki ilova qayta yuklansa ham telefon "himoyalangan" holatda
-  // qolib ketmasligi kerak.
   useEffect(() => {
     if (!open) return;
     void protectScreen();
     return () => { void unprotectScreen(); };
   }, [open]);
 
-  // Ekran tik holatda qolgan bo'lsa (iOS) — burishni so'raymiz
   useEffect(() => {
     if (!open) return;
     const check = () => setPortrait(window.innerHeight > window.innerWidth);

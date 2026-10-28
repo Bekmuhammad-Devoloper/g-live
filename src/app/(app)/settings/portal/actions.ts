@@ -6,7 +6,6 @@ import { ROLES } from "@/lib/constants";
 import { writeAudit } from "@/lib/audit";
 import { PORTAL_FEATURES, setPortalFlag, type PortalFeature } from "@/lib/portalFeatures";
 
-// Portal bo'limlarini yoqish/o'chirish — menejer va rahbariyat
 const ALLOWED = [ROLES.DIRECTOR, ROLES.DEPUTY_DIRECTOR, ROLES.ADMIN, ROLES.MANAGER];
 
 export type PortalState = { ok?: boolean; error?: string };

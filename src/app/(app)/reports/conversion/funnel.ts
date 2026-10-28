@@ -1,10 +1,3 @@
-// Konversiya voronkasi — API (/api/reports/conversion) va UI uchun UMUMIY qoida.
-//
-//   • Voronka YIG'MA: bosqichga "yetgan" = hozirgi bosqichi shu yoki undan keyingi
-//     (Qabul qilingan lid hamma bosqichdan o'tgan hisoblanadi).
-//   • Yo'qotilgan lid faqat "So'rovlar"da sanaladi (qayerga yetgani noma'lum).
-//   • Konversiya = Qabul qilinganlar / So'rovlar × 100.
-
 export const STAGE_ORDER = ["NEW", "IN_PROGRESS", "CONTACTED", "TEST", "OFFER", "AWAITING_PAYMENT", "PAID", "WON"] as const;
 const rank = (stage: string) => STAGE_ORDER.indexOf(stage as (typeof STAGE_ORDER)[number]);
 
@@ -18,7 +11,6 @@ export const FUNNEL_STEPS = [
 ] as const;
 export type StepKey = (typeof FUNNEL_STEPS)[number]["key"];
 
-/** Lid berilgan voronka bosqichiga yetganmi (yig'ma) */
 export function reached(l: { stage: string; studentId: string | null }, key: StepKey | "yoqotilgan"): boolean {
   if (key === "sorovlar") return true;
   if (key === "yoqotilgan") return l.stage === "LOST";

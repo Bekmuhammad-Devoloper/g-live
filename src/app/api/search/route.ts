@@ -13,7 +13,6 @@ export interface SearchHit {
   href: string;
 }
 
-// Global qidiruv — natijalar rol huquqlariga qarab filtrlanadi.
 export async function GET(req: Request) {
   const session = await getSession();
   if (!session) return NextResponse.json({ hits: [] }, { status: 401 });
@@ -21,9 +20,6 @@ export async function GET(req: Request) {
   const q = (new URL(req.url).searchParams.get("q") ?? "").trim();
   if (q.length < 2) return NextResponse.json({ hits: [] });
 
-  // Telefon bazada formatli saqlanadi ("+998 91 100 00 05"), shuning uchun
-  // raqamli qidiruvda ikkala tomonni faqat raqamga tozalab solishtiramiz —
-  // raqamning OXIRIDAN yoki o'rtasidan qidirsa ham topiladi.
   const qDigits = q.replace(/\D/g, "");
   const byDigits = qDigits.length >= 3;
   const digitsOf = (s: string | null | undefined) => (s ?? "").replace(/\D/g, "");
@@ -33,9 +29,8 @@ export async function GET(req: Request) {
   const isStaff = staff.includes(session.role as never);
   const isTeacher = session.role === ROLES.TEACHER;
   const hits: SearchHit[] = [];
-  const branch = branchWhere(session); // qidiruv ham faol filial doirasida
+  const branch = branchWhere(session);
 
-  // O'quvchilar (xodimlar va o'qituvchi ko'radi)
   if (isStaff || isTeacher) {
     const scope = isTeacher ? { enrollments: { some: { group: { teacherId: session.userId } } } } : {};
     const foundS = await prisma.student.findMany({
@@ -59,19 +54,17 @@ export async function GET(req: Request) {
         id: s.id,
         title: s.fullName,
         subtitle: [s.currentLevel, s.phone].filter(Boolean).join(" · ") || null,
-        href: `/students?student=${s.id}`, // ro'yxat ochilib, o'sha talaba kartasi chiqadi
+        href: `/students?student=${s.id}`,
       });
     }
   }
 
-  // Lidlar (CRM huquqi bo'lsa)
   if (canRead(session.role, MODULES.CRM)) {
     const found = await prisma.lead.findMany({
       where: { AND: [{ OR: [{ fullName: { contains: q } }, { phone: { contains: q } }] }, branch] },
       take: 5,
       select: { id: true, fullName: true, phone: true, stage: true },
     });
-    // Raqam bo'yicha qidiruv — formatli telefonlarni JSda tozalab solishtiramiz
     const extra = byDigits
       ? (await prisma.lead.findMany({
           where: branch,
@@ -85,12 +78,10 @@ export async function GET(req: Request) {
       if (seen.has(l.id)) continue;
       seen.add(l.id);
       if (seen.size > 5) break;
-      // Lidni bosganda uning o'z sahifasi ochilsin (barcha ma'lumot bilan)
       hits.push({ type: "lead", id: l.id, title: l.fullName, subtitle: `${l.stage} · ${l.phone}`, href: `/crm/${l.id}` });
     }
   }
 
-  // Guruhlar
   if (canRead(session.role, MODULES.GROUPS)) {
     const groups = await prisma.group.findMany({
       where: {
@@ -113,7 +104,6 @@ export async function GET(req: Request) {
     }
   }
 
-  // O'qituvchilar (faqat xodimlar)
   if (isStaff) {
     const foundT = await prisma.user.findMany({
       where: { AND: [{ role: ROLES.TEACHER, OR: [{ fullName: { contains: q } }, { phone: { contains: q } }] }, branch] },

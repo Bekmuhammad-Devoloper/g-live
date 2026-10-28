@@ -5,7 +5,6 @@ import path from "node:path";
 import { getDevSession, devAudit } from "@/lib/devpanel/auth";
 import { centerDir } from "@/lib/devpanel/registry";
 
-// Markaz bazasining zaxira nusxasini yuklab olish — faqat Dev panelga kirgan foydalanuvchi
 export async function GET(_req: Request, ctx: { params: Promise<{ slug: string; file: string }> }) {
   const dev = await getDevSession();
   if (!dev) return new NextResponse("unauthorized", { status: 401 });

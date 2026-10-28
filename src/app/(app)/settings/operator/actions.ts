@@ -13,7 +13,6 @@ const ALLOWED: string[] = [ROLES.OPERATOR, ROLES.ROP, ROLES.MANAGER, ROLES.DEPUT
 
 export type Res = { ok?: boolean; error?: string };
 
-// Bildirishnoma + avtomatik chiqish sozlamalari — Setting jadvaliga (o'z hisobiga).
 export async function saveOperatorPrefs(fd: FormData): Promise<Res> {
   const s = await requireSession();
   if (!ALLOWED.includes(s.role)) return { error: tr(s.locale, { uz: "Ruxsat yo'q", ru: "Нет доступа", en: "No permission", de: "Keine Berechtigung" }) };
@@ -40,8 +39,6 @@ export async function saveOperatorPrefs(fd: FormData): Promise<Res> {
   return { ok: true };
 }
 
-// Interfeys tili — User.locale. Sessiya cookie'si ham yangilanadi,
-// shuning uchun til qayta kirmasdan darhol qo'llanadi.
 export async function saveOperatorLocale(fd: FormData): Promise<Res> {
   const s = await requireSession();
   if (!ALLOWED.includes(s.role)) return { error: tr(s.locale, { uz: "Ruxsat yo'q", ru: "Нет доступа", en: "No permission", de: "Keine Berechtigung" }) };

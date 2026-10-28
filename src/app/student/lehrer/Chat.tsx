@@ -5,10 +5,6 @@ import { useEffect, useRef, useState, useTransition } from "react";
 import type { StudentStrings } from "../_i18n";
 import { markRead, sendMessage } from "./actions";
 
-// Ustoz bilan yozishma — messenjer uslubida to'liq ekran: tepada sarlavha,
-// o'rtada suriladigan xabarlar, pastda yozish paneli. Pastki menyu bu
-// sahifada ko'rinmaydi (BottomNav ni qarang).
-
 export type VMsg = {
   id: string;
   mine: boolean;
@@ -20,11 +16,10 @@ export type VMsg = {
 
 const MAX = 1000;
 
-// Telegram (yorug' mavzu) ranglari — chat ekrani shu uslubda
 const TG = {
-  wall: "#d9e4ec", // fon
-  out: "#effdde", // o'z xabari
-  in: "#ffffff", // kelgan xabar
+  wall: "#d9e4ec",
+  out: "#effdde",
+  in: "#ffffff",
   outTime: "#5eb35a",
   inTime: "#a1aab3",
   text: "#0f1419",
@@ -86,7 +81,6 @@ export default function Chat({
     return () => clearInterval(id);
   }, [router]);
 
-  // Yozuv maydoni matnga qarab o'sadi (5 qatorgacha)
   const grow = () => {
     const el = boxRef.current;
     if (!el) return;
@@ -113,7 +107,6 @@ export default function Chat({
 
   return (
     <div className="fixed inset-0 z-40 mx-auto flex max-w-md flex-col bg-[#e9eef2]">
-      {/* ── Sarlavha ── */}
       <header className="flex shrink-0 items-center gap-2 border-b border-black/5 bg-white px-1.5 py-2 pt-[calc(8px+env(safe-area-inset-top))]">
         <button
           type="button"
@@ -141,7 +134,6 @@ export default function Chat({
         </div>
       </header>
 
-      {/* ── Xabarlar ── */}
       <div
         className="flex-1 overflow-y-auto overscroll-contain px-2.5 py-3"
         style={{
@@ -163,7 +155,6 @@ export default function Chat({
             const newDay = k !== lastDay;
             lastDay = k;
 
-            // Ketma-ket xabarlar guruhlanadi: dumcha faqat oxirgisida
             const next = messages[i + 1];
             const runEnd = !next || next.mine !== m.mine || dayKey(next.at) !== k;
             const runStart = newDay || i === 0 || messages[i - 1].mine !== m.mine;
@@ -193,7 +184,6 @@ export default function Chat({
                       <div className="mb-[1px] text-[13.5px] font-semibold text-[#0e7490]">{m.author}</div>
                     ) : null}
 
-                    {/* Oxirgi qatorga vaqt sig'ishi uchun bo'sh joy qoldiramiz */}
                     <span className="whitespace-pre-wrap break-words align-top">{m.text}</span>
                     <span className="inline-block w-[54px] select-none align-top" aria-hidden />
 
@@ -210,7 +200,6 @@ export default function Chat({
                       ) : null}
                     </span>
 
-                    {/* Telegramdagi dumcha */}
                     {runEnd ? (
                       <svg
                         width="9"
@@ -231,7 +220,6 @@ export default function Chat({
         <div ref={endRef} />
       </div>
 
-      {/* ── Yozish paneli ── */}
       <div className="shrink-0 bg-white px-2 pb-[calc(env(safe-area-inset-bottom)+7px)] pt-[7px]">
         {err ? <div className="mb-1.5 px-3 text-[12px] font-semibold text-rose-600">{err}</div> : null}
         <div className="flex items-end gap-1.5">

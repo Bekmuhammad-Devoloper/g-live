@@ -1,8 +1,6 @@
 import { notFound } from "next/navigation";
 import { isDevPanel } from "@/lib/instance";
 
-// Dev panel faqat DEV_PANEL=1 jarayonida mavjud; o'quv markazlari nusxalarida /dev — 404.
-// Panel doim qorong'i mavzuda (brend: to'q fon + qizil→sariq gradient urg'u).
 export default function DevRootLayout({ children }: { children: React.ReactNode }) {
   if (!isDevPanel()) notFound();
   return (

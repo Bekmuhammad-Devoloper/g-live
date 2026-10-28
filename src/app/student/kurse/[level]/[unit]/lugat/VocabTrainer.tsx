@@ -8,30 +8,6 @@ import type { StudentStrings } from "../../../../_i18n";
 import { markVocabMastered, recordVocabStage } from "../actions";
 import SpeakStage from "./SpeakStage";
 
-// So'z mashqi — TO'RT BOSQICH, har biri oldingisidan qiyinroq.
-//
-//   1. Tanish   — tarjimasi beriladi, nemischasi variantlardan tanlanadi
-//   2. Teskari  — nemischasi beriladi, tarjimasi variantlardan tanlanadi
-//   3. Yasash   — tarjimasi beriladi, nemischasi HARFLARDAN yig'iladi
-//   4. Talaffuz — so'z ko'rsatiladi, o'quvchi uni OVOZ CHIQARIB aytadi
-//
-// Nega shu tartib: tanish eng oson (javob ko'z oldida turadi), teskarisi
-// so'zni boshqa yo'nalishda tekshiradi, yig'ish so'zni yozma tiklashni
-// talab qiladi, talaffuz esa eng qiyini — so'z endi ekranda emas, og'izda.
-// Ya'ni tanishdan gapirishga o'tiladi.
-//
-// 4-bosqich mikrofon va tashqi xizmat (Gemini) ga tayanadi. Ular yo'q
-// bo'lsa mashq UCH bosqichda tugaydi — `canSpeak` shuni belgilaydi.
-//
-// ASOSIY QOIDA (har bosqichda): bosqich HAMMA so'z to'g'ri bajarilgunicha
-// tugamaydi. Xato qilingan so'z navbatdan chiqmaydi, birozdan keyin qaytib
-// keladi. Barcha bosqich tugagach lug'at o'zlashtirilgan hisoblanadi.
-//
-// Xato qilingan so'z navbatning OXIRIGA emas, bir necha qadam narisiga
-// qo'yiladi: oxiriga tashlansa o'quvchi uni allaqachon unutgan bo'ladi,
-// darhol qaytsa esa javobni eslab qoladi-yu, so'zni emas. Masofa qat'iy
-// emas (3-5), aks holda tartibning o'zi yodlanib qolardi.
-
 const REQUEUE_MIN = 3;
 const REQUEUE_SPREAD = 3;
 type Stage = 1 | 2 | 3 | 4;
@@ -53,21 +29,14 @@ export default function VocabTrainer({
   words: LessonWord[];
   lessonId: string;
   t: StudentStrings;
-  /** Bo'lim rangi — sarlavha va tugmalar bilan bir xil */
   accent: string;
-  /** Tugmadagi yozuv */
   label: string;
-  /** Serverda Gemini kaliti sozlanganmi — brauzerdagi talaffuz shu orqali */
   canSpeak?: boolean;
 }) {
   const pool = useMemo(() => practicableWords(words), [words]);
   const [open, setOpen] = useState(false);
-  /** Androidning o'z nutq tanish tizimi bormi */
   const [nativeSpeech, setNativeSpeech] = useState(false);
 
-  // Talaffuz bosqichi ikki yo'ldan biri bo'lsa: telefon nutqni o'zi
-  // taniydi (ilova, afzal) yoki serverda Gemini kaliti bor (brauzer,
-  // yopiq tanlov bilan). Ikkisi ham bo'lmasa — uch bosqich.
   useEffect(() => {
     let cancelled = false;
     void nativeSpeechAvailable().then((v) => { if (!cancelled) setNativeSpeech(v); });
@@ -113,19 +82,16 @@ function Session({
   lessonId: string;
   t: StudentStrings;
   accent: string;
-  /** Oxirgi bosqich — talaffuz mumkin bo'lmasa 3 */
   lastStage: Stage;
   onClose: () => void;
 }) {
   const total = pool.length;
 
   const [stage, setStage] = useState<Stage>(1);
-  // Navbat — so'zlarning tartib raqamlari, har bosqich boshida aralashadi
   const [queue, setQueue] = useState<number[]>(() => shuffle(pool.map((_, i) => i)));
   const [picked, setPicked] = useState<string | null>(null);
   const [tries, setTries] = useState(0);
   const [right, setRight] = useState(0);
-  /** Nechanchi savol — variantlarni qayta aralashtirish uchun */
   const [round, setRound] = useState(0);
   const [saved, setSaved] = useState(false);
   const timer = useRef<ReturnType<typeof setTimeout> | null>(null);
@@ -136,16 +102,12 @@ function Session({
 
   useEffect(() => () => { if (timer.current) clearTimeout(timer.current); }, []);
 
-  // Barcha bosqich tugagach natijani saqlaymiz — bir marta
   useEffect(() => {
     if (!allDone || saved) return;
     setSaved(true);
     void markVocabMastered(lessonId);
   }, [allDone, saved, lessonId]);
 
-  // Har bosqich tugaganda ko'nikma balli (bosh sahifadagi plitkalar).
-  // Bir bosqich uchun bir marta — ref to'plami; server ham kalit bo'yicha
-  // takrorni o'tkazmaydi, bu yerdagisi ortiqcha so'rov bo'lmasin uchun.
   const recorded = useRef<Set<number>>(new Set());
   useEffect(() => {
     if (!stageDone || recorded.current.has(stage)) return;
@@ -160,19 +122,11 @@ function Session({
     setPicked(null);
   }, [pool, lastStage]);
 
-  /** Talaffuz bosqichini o'tkazib yuborish — mikrofon ishlamasa */
   const skipStage = useCallback(() => {
     setQueue([]);
     setPicked(null);
   }, []);
 
-  /**
-   * Javob qabul qilinadi. `ok` — to'g'rimi.
-   *
-   * Navbat va bosqich holati faqat SHU YERDA o'zgaradi, uchala bosqich
-   * uchun bir xil: bosqichlar faqat savol ko'rinishi bilan farq qiladi,
-   * qoidalari emas.
-   */
   const answer = useCallback((ok: boolean, mark: string) => {
     setPicked(mark);
     setTries((n) => n + 1);
@@ -183,11 +137,9 @@ function Session({
       navigator.vibrate?.([12, 60, 12]);
     }
 
-    // To'g'ri javobda tez o'tamiz; xatoda o'quvchi to'g'risini ko'rib
-    // ulgurishi uchun uzunroq turadi.
     timer.current = setTimeout(() => {
       setPicked(null);
-      setRound((n) => n + 1); // variantlar/harflar qaytadan aralashsin
+      setRound((n) => n + 1);
       setQueue((prev) => {
         const [head, ...rest] = prev;
         if (ok) return rest;
@@ -198,7 +150,6 @@ function Session({
   }, []);
 
   const learned = total - queue.length;
-  // Umumiy jarayon — barcha bosqich bo'yicha
   const overall = Math.round((((stage - 1) * total + learned) / (total * lastStage)) * 100);
 
   const stageName =
@@ -206,7 +157,6 @@ function Session({
 
   return createPortal(
     <div className="fixed inset-0 z-[70] flex flex-col bg-[#f4f7f9]" role="dialog" aria-modal="true">
-      {/* ── Tepa qator: bosqich, jarayon, yopish ── */}
       <div
         className="shrink-0 px-4 pb-3"
         style={{ paddingTop: "calc(14px + var(--gl-safe-top, env(safe-area-inset-top)))" }}
@@ -235,7 +185,6 @@ function Session({
           </span>
         </div>
 
-        {/* Bosqich belgisi — har bosqichga bitta chiziqcha va nomi */}
         <div className="mt-2.5 flex items-center gap-2">
           <div className="flex gap-1">
             {Array.from({ length: lastStage }, (_, i) => i + 1).map((s) => (
@@ -291,8 +240,6 @@ function Session({
   );
 }
 
-/* ── 1 va 2-bosqich: variantlardan tanlash ── */
-
 function ChoiceStage({
   stage, word, pool, idx, t, picked, onAnswer,
 }: {
@@ -304,15 +251,9 @@ function ChoiceStage({
   picked: string | null;
   onAnswer: (ok: boolean, mark: string) => void;
 }) {
-  // 1-bosqich: savol tarjimasi, javob nemischa. 2-bosqich — teskarisi.
   const asking = stage === 1 ? word.uz : word.de;
   const correct = stage === 1 ? word.de : word.uz;
 
-  // Chalg'ituvchi variantlar. JAVOBI aynan shu so'z bilan bir xil bo'lganlari
-  // chiqarib tashlanadi: "das Auto - mashina" va "der Wagen - mashina" bo'lsa,
-  // savol "mashina" bo'lib, ikkala variant ham to'g'ri bo'lardi-yu, bittasi
-  // xato deb belgilanardi. Ikkinchi bosqichda ham xuddi shunday, faqat
-  // tomonlari almashgan.
   const options = useMemo(() => {
     const norm = (s: string) => s.trim().toLowerCase();
     const key = norm(correct);
@@ -337,8 +278,6 @@ function ChoiceStage({
         {options.map((opt) => {
           const isRight = opt === correct;
           const chosen = picked === opt;
-          // Javob berilgunicha hamma variant bir xil. Berilgach: to'g'risi doim
-          // yashil (o'quvchi to'g'risini ko'rsin), tanlangan xato qizil.
           const state = !picked ? "idle" : isRight ? "right" : chosen ? "wrong" : "dim";
           return (
             <button
@@ -370,12 +309,8 @@ function ChoiceStage({
   );
 }
 
-/* ── 3-bosqich: harflardan so'zni yig'ish ── */
-
 interface Tile {
-  /** Harfning o'zi */
   ch: string;
-  /** Qaysi katakka qo'yilgani; qo'yilmagan bo'lsa null */
   slot: number | null;
 }
 
@@ -388,12 +323,8 @@ function BuildStage({
   picked: string | null;
   onAnswer: (ok: boolean, mark: string) => void;
 }) {
-  // Artikl TAYYOR beriladi, faqat ot yig'iladi: "der" ning uch harfi ham
-  // sochilib yursa mashq uzun va ma'nosiz bo'lardi.
   const { article, rest } = useMemo(() => splitArticle(word.de), [word.de]);
 
-  // Bo'sh joy ("guten Morgen" kabi ikki so'zli yozuvlarda) yig'ilmaydi —
-  // u ham tayyor turadi, aks holda o'quvchi ko'rinmas harfni qidirardi.
   const letters = useMemo(() => [...rest], [rest]);
   const buildable = useMemo(
     () => letters.map((ch, i) => ({ ch, i })).filter(({ ch }) => ch.trim() !== ""),
@@ -404,7 +335,6 @@ function BuildStage({
     shuffle(buildable.map(({ ch }) => ch)).map((ch) => ({ ch, slot: null })),
   );
 
-  // Kataklar: bo'sh joylar boshidan to'la, harf kataklari bo'sh
   const filled = useMemo(() => {
     const out: (string | null)[] = letters.map((ch) => (ch.trim() === "" ? ch : null));
     for (const tile of tiles) {
@@ -434,8 +364,6 @@ function BuildStage({
     setTiles((prev) => prev.map((x) => ({ ...x, slot: null })));
   };
 
-  // Hamma katak to'lgach o'zi tekshiradi — alohida "Tekshirish" tugmasi
-  // qo'shimcha bosish demakdir, javob esa allaqachon tayyor.
   const answered = useRef(false);
   useEffect(() => {
     if (answered.current || picked || emptySlots.length > 0) return;
@@ -446,14 +374,9 @@ function BuildStage({
 
   const wrong = picked !== null && picked !== rest;
 
-  // Kataklar bitta qatorga sig'ishi uchun uzun so'zda kichrayadi. Enini
-  // flex hal qiladi, balandlik va shrift esa harflar soniga qarab tanlanadi
-  // — aks holda 14 harfli so'zda ingichka va baland kataklar chiqardi.
   const n = buildable.length;
   const slotH = n > 12 ? 38 : n > 9 ? 42 : 46;
   const slotFont = n > 12 ? 14 : n > 9 ? 17 : 20;
-  // Sochilgan harflar ham shunga yarasha: pastda ular ikki qatorga
-  // sig'ishi mumkin, lekin uch qatorga cho'zilib ketmasin.
   const tileH = n > 12 ? 44 : n > 9 ? 48 : 52;
   const tileFont = n > 12 ? 17 : n > 9 ? 19 : 21;
 
@@ -465,11 +388,6 @@ function BuildStage({
           {word.uz}
         </span>
 
-        {/* Yig'ilayotgan so'z — DOIM BITTA QATORDA.
-            Ilgari `flex-wrap` edi va uzun so'zlarda kataklar pastga tushib
-            ketardi: so'z ikkiga bo'linib, qaysi harf qayerga tegishli
-            ekani ko'rinmay qolardi. Endi kataklar bo'sh joyni teng bo'lib
-            oladi (`flex-1`) va uzun so'zda o'zi kichrayadi. */}
         <div className="mt-3 flex w-full flex-nowrap items-center justify-center gap-[3px] px-1">
           {article && (
             <span className="mr-1 shrink-0 text-[17px] font-bold text-slate-400">{article}</span>
@@ -501,7 +419,6 @@ function BuildStage({
           )}
         </div>
 
-        {/* Xato bo'lsa to'g'ri javob ko'rsatiladi */}
         {wrong && (
           <div className="mt-1 text-[13px] font-semibold text-slate-500">
             {t.correctAnswer}: <span className="font-extrabold text-slate-800">{word.de}</span>
@@ -509,7 +426,6 @@ function BuildStage({
         )}
       </div>
 
-      {/* Sochilgan harflar */}
       <div className="shrink-0">
         <div className="flex flex-wrap justify-center gap-2">
           {tiles.map((tile, ti) => (
@@ -531,7 +447,6 @@ function BuildStage({
           ))}
         </div>
 
-        {/* Tozalash — hech narsa qo'yilmagan bo'lsa o'chiq turadi */}
         <button
           type="button"
           onClick={clear}
@@ -567,7 +482,6 @@ function Mark({ kind }: { kind: "right" | "wrong" }) {
   );
 }
 
-/* ── Bosqichlar orasi ── */
 function StageBreak({
   t, accent, nextStage, onNext,
 }: {
@@ -608,7 +522,6 @@ function StageBreak({
   );
 }
 
-/* ── Tugash ekrani ── */
 function Finished({
   t, accent, tries, right, total, onClose,
 }: {
@@ -619,9 +532,6 @@ function Finished({
   total: number;
   onClose: () => void;
 }) {
-  // Aniqlik — birinchi urinishdan to'g'ri chiqqanlar ulushi. `right` uchala
-  // bosqichdagi to'g'ri javoblar (ya'ni total*3), shuning uchun ma'noli
-  // ko'rsatkich urinishlar soniga nisbatan.
   const acc = tries > 0 ? Math.round((right / tries) * 100) : 100;
 
   return (

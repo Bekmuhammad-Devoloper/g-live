@@ -8,9 +8,6 @@ import { LEAD_STAGE_LABELS, formatMoney, type Locale } from "@/lib/constants";
 import { Icon } from "../../../_components/Icon";
 import type { DLead } from "./OperatorDetail";
 
-// Operatorga biriktirilgan lidlar ro'yxati — har bir qator ochiladi va
-// lid ma'lumotlari, qo'ng'iroq statistikasi hamda faoliyat tarixini ko'rsatadi.
-
 const fmtDur = (sec: number) => {
   const p2 = (n: number) => String(n).padStart(2, "0");
   const h = Math.floor(sec / 3600), m = Math.floor((sec % 3600) / 60);

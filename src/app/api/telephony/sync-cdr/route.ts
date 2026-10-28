@@ -6,9 +6,6 @@ import { getSession } from "@/lib/auth";
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
 
-// Qo'ng'iroqlar sahifasidagi "Yangilash" tugmasi shu yerni chaqiradi.
-// Asterisk CDR — qo'ng'iroqlarning to'liq va ishonchli manbasi: ami-worker
-// ishlamay qolgan paytdagi qo'ng'iroqlar ham shu orqali bazaga tushadi.
 let running: Promise<string> | null = null;
 
 function runSync(): Promise<string> {
@@ -29,14 +26,12 @@ export async function POST() {
   const s = await getSession();
   if (!s) return NextResponse.json({ error: "unauthorized" }, { status: 401 });
 
-  // Bir vaqtda faqat bitta sinxronizatsiya — tugma tez bosilsa ham
   if (!running) {
     running = runSync().finally(() => { running = null; });
   }
 
   try {
     const out = await running;
-    // "jami 36, yangi 35, ..." dan sonlarni ajratamiz
     const created = Number(/yangi (\d+)/.exec(out)?.[1] ?? 0);
     const updated = Number(/yangilandi (\d+)/.exec(out)?.[1] ?? 0);
     return NextResponse.json({ ok: true, created, updated, message: out }, { headers: { "Cache-Control": "no-store" } });

@@ -5,10 +5,6 @@ import { changePassword } from "../../(app)/profile/actions";
 import type { StudentStrings } from "../_i18n";
 import { TEAL, IcoKey } from "../_ui";
 
-// Parolni almashtirish — (app)/profile dagi changePassword action qayta ishlatiladi
-// (joriy parolni tasdiqlaydi, faqat o'z hisobini o'zgartiradi).
-// Barcha matn o'quvchi tilida (t) — ilgari nemischa qolib ketgan edi.
-
 export default function PasswordForm({ t }: { t: StudentStrings }) {
   const [open, setOpen] = useState(false);
   const [msg, setMsg] = useState<{ ok: boolean; text: string } | null>(null);

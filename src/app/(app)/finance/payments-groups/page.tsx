@@ -8,8 +8,6 @@ import LicenseBanner from "../../_components/LicenseBanner";
 import { groupAtDate, monthRange } from "../_components/attribution";
 import GroupPaymentsView, { type VGroupRow } from "./GroupPaymentsView";
 
-// "Guruhlar bo'yicha to'lovlar" — davr ichidagi PAID to'lovlar guruhlar kesimida.
-// To'lov o'quvchining to'lov sanasidagi guruhiga yoziladi; to'lovchilar — alohida o'quvchilar soni.
 export default async function PaymentsByGroupsPage({ searchParams }: { searchParams: Promise<{ from?: string; to?: string }> }) {
   const s = await requireSession();
   if (!canRead(s.role, MODULES.PAYMENTS)) {

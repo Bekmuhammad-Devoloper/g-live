@@ -23,7 +23,6 @@ export default async function RoomsPage() {
     }),
   ]);
 
-  // Hozirgi holat (band/bo'sh) — server vaqti bo'yicha (Du=1..Ya=7)
   const now = new Date();
   const dow = now.getDay() === 0 ? 7 : now.getDay();
   const nowMin = now.getHours() * 60 + now.getMinutes();
@@ -44,7 +43,6 @@ export default async function RoomsPage() {
       const st = toMin(g.startTime);
       if (st != null && st > nowMin && (next == null || st < next)) { next = st; nextTime = g.startTime; }
     }
-    // Bo'sh: `until` = keyingi dars boshlanish vaqti (shu vaqtgacha bo'sh), `freeMin` = qancha bo'sh
     return { busy: false, group: null, course: null, until: nextTime, freeMin: next == null ? null : next - nowMin };
   }
 

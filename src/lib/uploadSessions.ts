@@ -9,34 +9,6 @@ import path from "node:path";
 import { MAX_CHUNK_BYTES, MAX_UPLOAD_BYTES, MIN_CHUNK_BYTES, UPLOAD_SESSION_TTL_MS } from "./upload";
 import { extFor, PARTS_DIR, UPLOAD_DIR } from "./uploadFs";
 
-// Bo'lakli (resumable) yuklash seanslari — diskda.
-//
-// Har seans o'z papkasi: upload-parts/<userId>/<id>/
-//   meta.json   — kim, nima, qancha, bo'lak hajmi, barmoq izi (fp)
-//   data        — faylning o'zi; har bo'lak O'Z OFSETIGA yoziladi (r+), shu
-//                 sabab bo'laklar istalgan tartibda va PARALLEL kelaverishi
-//                 mumkin; oxirida hech narsa qayta ko'chirilmaydi (5 GB ni
-//                 ikki marta yozmaymiz)
-//   done        — bitmap: i-bayt = 1 bo'lsa i-bo'lak to'liq qabul qilingan.
-//                 Bir baytli yozuvlar atomar — parallel belgilash xavfsiz.
-//                 Har bo'lakda yoziladi → mtime = oxirgi faollik vaqti.
-//   result.json — yakunlangach: url. Seans papkasi bir soat saqlanadi, shunda
-//                 "yakunla" so'rovining javobi yo'qolsa mijoz qayta so'rab
-//                 o'sha url'ni oladi (idempotent).
-//
-// Nima uchun diskda, xotirada emas: server qayta ishga tushsa (deploy) ham
-// yarim yuklangan video yo'qolmaydi — mijoz qolgan bo'laklarni yuboradi.
-//
-// Foydalanuvchi bo'yicha papka: bir foydalanuvchida ko'pi bilan 3 faol seans
-// (eng eskisi o'chiriladi), umumiy chegara ham bor — birov diskni yarim
-// fayllar bilan to'ldirib qo'ymasin. Barmoq izi (fp) bir xil bo'lsa yangi
-// seans OCHILMAYDI, mavjudi qaytadi: iPhone'da qayta tanlangan videoning
-// name/lastModified'i o'zgaradi, mazmuni esa o'sha — shunda ham davom etadi.
-//
-// Xavfsizlik: id faqat UUID, userId faqat [A-Za-z0-9_-] (yo'lga chiqib
-// bo'lmaydi), seans faqat o'z papkasidan o'qiladi, indeks va uzunlik har
-// bo'lakda tekshiriladi.
-
 export type UploadMeta = {
   id: string;
   userId: string;
@@ -45,7 +17,6 @@ export type UploadMeta = {
   size: number;
   chunkSize: number;
   chunks: number;
-  /** mijoz hisoblagan barmoq izi (bosh+oxir 256 KB sha256), bo'lmasa null */
   fp: string | null;
   createdAt: number;
 };
@@ -54,11 +25,8 @@ export type UploadDone = { url: string; name: string; size: number; completedAt:
 
 export const MAX_SESSIONS_PER_USER = 3;
 export const MAX_SESSIONS_TOTAL = 300;
-/** Yakunlangan seans papkasi shuncha saqlanadi (takroriy "yakunla" uchun) */
 export const COMPLETED_KEEP_MS = 60 * 60 * 1000;
-/** Faol bo'lsa ham shundan uzoq yashamaydi */
 export const HARD_TTL_MS = 7 * 24 * 60 * 60 * 1000;
-/** Yarim yaratilgan (.tmp) yoki meta'siz papka shundan eski bo'lsa tozalanadi */
 const ORPHAN_GRACE_MS = 10 * 60 * 1000;
 
 const ID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/;
@@ -72,7 +40,6 @@ const dataPath = (m: Pick<UploadMeta, "userId" | "id">) => path.join(dirOf(m.use
 const donePath = (m: Pick<UploadMeta, "userId" | "id">) => path.join(dirOf(m.userId, m.id), "done");
 const resultPath = (m: Pick<UploadMeta, "userId" | "id">) => path.join(dirOf(m.userId, m.id), "result.json");
 
-/** i-bo'lakning kutilgan uzunligi (oxirgisi qisqaroq bo'lishi mumkin) */
 export function chunkLength(meta: Pick<UploadMeta, "size" | "chunkSize" | "chunks">, index: number): number {
   return index < meta.chunks - 1 ? meta.chunkSize : meta.size - index * meta.chunkSize;
 }
@@ -100,7 +67,6 @@ async function listUserSessions(userId: string): Promise<UploadMeta[]> {
   return out;
 }
 
-/** Yakunlangan seansning natijasi (bo'lsa) */
 export async function sessionResult(meta: UploadMeta): Promise<UploadDone | null> {
   try {
     return JSON.parse(await readFile(resultPath(meta), "utf8")) as UploadDone;
@@ -111,11 +77,6 @@ export async function sessionResult(meta: UploadMeta): Promise<UploadDone | null
 
 export type OpenResult = { meta: UploadMeta; received: number[]; done: UploadDone | null };
 
-/**
- * Seans ochadi. Shu foydalanuvchida xuddi shu barmoq izli va hajmli faol
- * seans bo'lsa — YANGISINI ochmaydi, o'shani (qabul qilingan bo'laklari
- * bilan) qaytaradi. Foydalanuvchi chegarasidan oshsa eng eski seans o'chadi.
- */
 export async function openOrCreateSession(input: {
   userId: string; name: string; type: string; size: number; chunkSize: number; fp?: string | null;
 }): Promise<OpenResult> {
@@ -130,7 +91,6 @@ export async function openOrCreateSession(input: {
   await mkdir(userDir(userId), { recursive: true });
   const mine = (await listUserSessions(userId)).sort((a, b) => a.createdAt - b.createdAt);
 
-  // Bir xil fayl — mavjud seansdan davom
   if (fp) {
     for (const m of mine) {
       if (m.fp === fp && m.size === size) {
@@ -140,7 +100,6 @@ export async function openOrCreateSession(input: {
     }
   }
 
-  // Chegaralar: foydalanuvchi bo'yicha (eng eskisi o'chadi) va umumiy (rad)
   const active = mine.filter((m) => m.createdAt > 0);
   while (active.length >= MAX_SESSIONS_PER_USER) {
     const oldest = active.shift()!;
@@ -160,8 +119,6 @@ export async function openOrCreateSession(input: {
     createdAt: Date.now(),
   };
 
-  // Avval .tmp papkada to'liq yig'iladi, keyin rename — ro'yxatga tushgan
-  // papka hech qachon yarim bo'lmaydi (tozalash bilan poyga yo'q)
   const tmp = dirOf(userId, meta.id) + ".tmp";
   await mkdir(tmp, { recursive: true });
   await writeFile(path.join(tmp, "meta.json"), JSON.stringify(meta));
@@ -177,18 +134,16 @@ async function countAllSessions(): Promise<number> {
   let n = 0;
   for (const u of users) {
     if (!USER_RE.test(u)) continue;
-    try { n += (await readdir(userDir(u))).filter((d) => ID_RE.test(d)).length; } catch { /* yo'q bo'lib qolgan */ }
+    try { n += (await readdir(userDir(u))).filter((d) => ID_RE.test(d)).length; } catch { }
   }
   return n;
 }
 
-/** Seansni o'qiydi; yo'q, buzilgan yoki BOSHQA foydalanuvchiniki bo'lsa null */
 export async function loadSession(id: string, userId: string): Promise<UploadMeta | null> {
   if (!ID_RE.test(id) || !USER_RE.test(userId)) return null;
   return readMeta(userId, id);
 }
 
-/** Qabul qilingan bo'laklarning indekslari */
 export async function receivedChunks(meta: UploadMeta): Promise<number[]> {
   let bits: Buffer;
   try { bits = await readFile(donePath(meta)); } catch { return []; }
@@ -199,11 +154,6 @@ export async function receivedChunks(meta: UploadMeta): Promise<number[]> {
 
 export type ChunkResult = { ok: true } | { ok: false; error: "bad_index" | "bad_length" | "completed" | "write_failed" };
 
-/**
- * Bitta bo'lakni o'z ofsetiga yozadi. Uzunligi kutilganga teng bo'lmasa
- * (uzilgan so'rov) bo'lak qabul qilinmaydi — mijoz uni qayta yuboradi.
- * Bir bo'lak ikki marta kelsa ham zarar yo'q: aynan o'sha baytlar o'sha joyga.
- */
 export async function writeChunk(meta: UploadMeta, index: number, body: ReadableStream<Uint8Array>): Promise<ChunkResult> {
   if (!Number.isInteger(index) || index < 0 || index >= meta.chunks) return { ok: false, error: "bad_index" };
   if (await sessionResult(meta)) return { ok: false, error: "completed" };
@@ -230,7 +180,6 @@ export async function writeChunk(meta: UploadMeta, index: number, body: Readable
   }
   if (received !== expected) return { ok: false, error: "bad_length" };
 
-  // Belgi: i-bo'lak tayyor (bir bayt, o'z ofsetiga — parallel xavfsiz)
   try {
     const fh = await open(donePath(meta), "r+");
     try {
@@ -239,7 +188,7 @@ export async function writeChunk(meta: UploadMeta, index: number, body: Readable
       await fh.close();
     }
   } catch {
-    return { ok: false, error: "write_failed" }; // seans shu orada tozalangan
+    return { ok: false, error: "write_failed" };
   }
   return { ok: true };
 }
@@ -249,10 +198,6 @@ export type CompleteResult =
   | { ok: false; error: "incomplete"; missing: number[] }
   | { ok: false; error: "size_mismatch" };
 
-/**
- * Hamma bo'lak kelgan bo'lsa faylni yakuniy nomiga ko'chiradi (rename —
- * nusxasiz). IDEMPOTENT: allaqachon yakunlangan seansga o'sha url qaytadi.
- */
 export async function completeSession(meta: UploadMeta): Promise<CompleteResult> {
   const prev = await sessionResult(meta);
   if (prev) return { ok: true, url: prev.url, name: prev.name, size: prev.size };
@@ -271,7 +216,6 @@ export async function completeSession(meta: UploadMeta): Promise<CompleteResult>
   try {
     await rename(dataPath(meta), dest);
   } catch (e) {
-    // Boshqa diskda bo'lsa (EXDEV) — nusxa, keyin asl o'chadi
     if ((e as NodeJS.ErrnoException).code !== "EXDEV") throw e;
     await copyFile(dataPath(meta), dest);
     await unlink(dataPath(meta));
@@ -286,9 +230,6 @@ export async function abortSession(meta: UploadMeta): Promise<void> {
   await rm(dirOf(meta.userId, meta.id), { recursive: true, force: true });
 }
 
-// Eskirgan seanslarni tozalash — soatiga ko'pi bilan bir marta, yangi seans
-// ochilganda. Muddat OXIRGI FAOLLIKDAN (done faylining mtime) hisoblanadi:
-// telefonda tunda to'xtab ertasiga davom etgan yuklash o'chirilmasin.
 let lastSweep = 0;
 export async function sweepStaleSessions(now = Date.now(), force = false): Promise<number> {
   if (!force && now - lastSweep < 60 * 60 * 1000) return 0;
@@ -306,7 +247,6 @@ export async function sweepStaleSessions(now = Date.now(), force = false): Promi
       const dirAge = async () => now - (await stat(dir)).mtimeMs;
       try {
         if (name.endsWith(".tmp") || !ID_RE.test(name)) {
-          // yarim yaratilgan — faqat eski bo'lsa
           if ((await dirAge()) > ORPHAN_GRACE_MS) { await rm(dir, { recursive: true, force: true }); removed++; }
           continue;
         }
@@ -327,11 +267,9 @@ export async function sweepStaleSessions(now = Date.now(), force = false): Promi
           removed++;
         }
       } catch {
-        // o'qib bo'lmadi — keyingi safar
       }
     }
-    // bo'shab qolgan foydalanuvchi papkasi
-    try { if ((await readdir(userDir(u))).length === 0) await rm(userDir(u), { recursive: true, force: true }); } catch { /* bo'sh emas */ }
+    try { if ((await readdir(userDir(u))).length === 0) await rm(userDir(u), { recursive: true, force: true }); } catch { }
   }
   return removed;
 }

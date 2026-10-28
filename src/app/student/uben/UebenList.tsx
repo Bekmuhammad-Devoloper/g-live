@@ -6,24 +6,20 @@ import { useRouter } from "next/navigation";
 import { submitAssignment } from "../../(app)/homework/actions";
 import { CARD, TEAL, Pill, IcoDoc } from "../_ui";
 
-// Üben ro'yxati — har topshiriq karta bo'lib ochiladi, matn yozib topshiriladi.
-// Server tomonda submitAssignment o'z-o'zini himoya qiladi (Student.userId orqali).
-
 export interface VAssignment {
   id: string;
   title: string;
   type: string;
   skill: string | null;
   maxScore: number;
-  dueAt: string | null; // ISO
+  dueAt: string | null;
   note: string | null;
   groupName: string;
-  createdAt: string; // ISO
-  // O'quvchining oxirgi urinishi (attempt bo'yicha eng kattasi)
+  createdAt: string;
   last: {
     attempt: number;
     score: number | null;
-    status: string; // SUBMITTED | GRADED | RETURNED
+    status: string;
     teacherNote: string | null;
     content: string | null;
     createdAt: string;
@@ -65,7 +61,6 @@ function SubmitBox({ assignmentId, again, onDone, t }: { assignmentId: string; a
         const r = await submitAssignment(assignmentId, text.trim());
         if (r?.error) { setErr(t.tryAgain); return; }
       } catch {
-        // server action kutilmagan xato bilan yiqilsa foydalanuvchi xabarsiz qolmasin
         setErr(t.tryAgain);
         return;
       }
@@ -115,7 +110,6 @@ export default function UebenList({ items, t }: { items: VAssignment[]; t: Stude
     <div className="space-y-3">
       {items.map((a) => {
         const isOpen = open === a.id;
-        // Qayta topshirish: baholangan/qaytarilgan bo'lsa ham yangi urinishga ruxsat
         const canSubmit = !a.last || a.last.status !== "SUBMITTED";
         return (
           <div key={a.id} className={`${CARD} p-4`}>
@@ -138,8 +132,6 @@ export default function UebenList({ items, t }: { items: VAssignment[]; t: Stude
               <div className="mt-3 border-t border-slate-100 pt-3">
                 {a.note && <p className="whitespace-pre-wrap rounded-2xl bg-[#eef6fa] px-3.5 py-2.5 text-[13px] leading-relaxed text-slate-700">{a.note}</p>}
 
-                {/* Oxirgi urinish — shisha karta ustida yana shisha bo'lmaydi,
-                    shuning uchun oddiy yarim tiniq oq chuqurcha */}
                 {a.last && (
                   <div className="mt-3 rounded-2xl bg-white/45 px-3.5 py-2.5">
                     <div className="flex items-center justify-between text-[11.5px] font-semibold text-slate-500">

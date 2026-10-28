@@ -2,23 +2,16 @@ import "server-only";
 import { cache } from "react";
 import { getSettings, setSetting } from "./settings";
 
-// Ball qoidalari — o'quvchi nima uchun necha TANGA va necha YULDUZ oladi.
-// Ikkalasi bir xil hodisalardan beriladi, farqi maqsadida:
-//   tanga  — sarflanadi (Market'da sovg'aga almashtiriladi)
-//   yulduz — sarflanmaydi, yig'ilib boradi (o'quvchining umumiy yutug'i)
-// Direktor Sozlamalar > Ball va mukofotlar bo'limidan o'zgartiradi;
-// qiymatlar Setting jadvalida "coin.*" va "star.*" kalitlari bilan saqlanadi.
-
 export type PointKind = "coin" | "star";
 
 export type CoinRuleKey =
-  | "lesson"        // darsga qatnashgani (davomat)
-  | "lessonView"    // dars videosini ko'rib chiqqani
-  | "homework"      // vazifasi baholangani
-  | "perfect"       // vazifani to'liq ballga bajargani (qo'shimcha)
-  | "gameWin"       // o'yinda yutgani
-  | "streak7"       // seriya to'lgani
-  | "levelUp";      // yangi darajaga ko'tarilgani
+  | "lesson"
+  | "lessonView"
+  | "homework"
+  | "perfect"
+  | "gameWin"
+  | "streak7"
+  | "levelUp";
 
 export type CoinRules = Record<CoinRuleKey, number>;
 
@@ -32,7 +25,6 @@ export const COIN_DEFAULTS: CoinRules = {
   levelUp: 50,
 };
 
-// Yulduz kamroq va "qadrliroq" — sonlar kichik
 export const STAR_DEFAULTS: CoinRules = {
   lesson: 1,
   lessonView: 1,
@@ -47,7 +39,6 @@ export const COIN_RULE_KEYS = Object.keys(COIN_DEFAULTS) as CoinRuleKey[];
 
 const DEFAULTS: Record<PointKind, CoinRules> = { coin: COIN_DEFAULTS, star: STAR_DEFAULTS };
 
-// Bitta qiymat 0 dan 1000 gacha — tasodifan katta son kiritilmasin
 const MAX = 1000;
 const clean = (v: unknown, dflt: number) => {
   const n = Math.round(Number(v));

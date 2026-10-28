@@ -1,11 +1,6 @@
 import "server-only";
 import type Anthropic from "@anthropic-ai/sdk";
 
-/**
- * Gemini (Google AI Studio) REST mijozi — function calling bilan.
- * Vositalar AI_TOOLS ro'yxatidan (bir xil sxema) o'giriladi.
- */
-
 const BASE = "https://generativelanguage.googleapis.com/v1beta";
 export const GEMINI_MODEL = process.env.GEMINI_MODEL || "gemini-2.5-flash";
 
@@ -22,7 +17,6 @@ export class GeminiError extends Error {
   constructor(public status: number, message: string) { super(message); }
 }
 
-/** Anthropic sxemasidagi vositalarni Gemini functionDeclarations ga o'girish */
 export function toGeminiTools(tools: Anthropic.Beta.BetaTool[]) {
   return [{
     functionDeclarations: tools.map((t) => {

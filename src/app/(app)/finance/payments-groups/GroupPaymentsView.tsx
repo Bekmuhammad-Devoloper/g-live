@@ -10,9 +10,9 @@ import PeriodTotal from "../_components/PeriodTotal";
 import Pagination, { PAGE_SIZE, fmtDate } from "../_components/Pagination";
 
 export interface VGroupRow {
-  groupId: string | null; // null — guruhsiz o'quvchilar to'lovlari
+  groupId: string | null;
   name: string | null;
-  startDate: string | null; // ISO
+  startDate: string | null;
   teacher: string | null;
   courseId: string | null;
   course: string | null;

@@ -3,7 +3,6 @@ import { getSession } from "@/lib/auth";
 import { prisma } from "@/lib/db";
 import { ROLES } from "@/lib/constants";
 
-// Softphone "Tarix" bo'limi — joriy operatorning so'nggi qo'ng'iroqlari (qidiruv bilan).
 const ALLOWED: string[] = [ROLES.OPERATOR, ROLES.ROP, ROLES.MANAGER, ROLES.DEPUTY_DIRECTOR, ROLES.DIRECTOR, ROLES.ADMIN];
 
 export async function GET(req: Request) {

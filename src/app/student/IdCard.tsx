@@ -6,15 +6,9 @@ import type { StudentStrings } from "./_i18n";
 import { FlagAvatar, ICON_GRADIENT, TEAL } from "./_ui";
 import { removePhoto, updateProfile } from "./profileActions";
 
-// O'quvchi guvohnomasi — ID-karta ko'rinishidagi shaxsiy ma'lumot.
-// Rasm, ism, tug'ilgan sana va telefonlarni o'quvchining o'zi tahrirlaydi;
-// guruh va daraja o'quv jarayoni ma'lumoti bo'lgani uchun faqat ko'rinadi.
-// ATAYIN shisha (.gl-glass) EMAS: bu bosma guvohnoma taqlidi — qattiq oq fon
-// va o'z soyasi saqlanadi, shunda haqiqiy plastik kartadek ko'rinadi.
-
 export type VProfile = {
   fullName: string;
-  birthDate: string | null; // yyyy-mm-dd
+  birthDate: string | null;
   age: number | null;
   phone: string | null;
   phone2: string | null;
@@ -40,8 +34,6 @@ export default function IdCard({ p, t, brandName, editable = true }: { p: VProfi
   const [uploading, setUploading] = useState(false);
   const fileRef = useRef<HTMLInputElement>(null);
 
-  // Telefon surati 3–5 MB bo'ladi; guvohnoma uchun shuncha kerak emas —
-  // yuklashdan oldin brauzerda 900px gacha kichraytiramiz.
   const shrink = (f: File): Promise<Blob> =>
     new Promise((resolve, reject) => {
       const url = URL.createObjectURL(f);
@@ -75,7 +67,6 @@ export default function IdCard({ p, t, brandName, editable = true }: { p: VProfi
         body = await shrink(f);
         name = "photo.jpg";
       } catch {
-        // kichraytirib bo'lmasa (masalan HEIC) — aslini yuboramiz
       }
       const fd = new FormData();
       fd.append("file", new File([body], name, { type: body.type || f.type }));
@@ -112,7 +103,6 @@ export default function IdCard({ p, t, brandName, editable = true }: { p: VProfi
 
   return (
     <div className="overflow-hidden rounded-[24px] bg-white shadow-[0_14px_30px_rgba(19,78,94,0.14)]">
-      {/* Karta boshi — guvohnoma sarlavhasi */}
       <div className="flex items-center justify-between px-4 py-2.5 text-white" style={{ background: ICON_GRADIENT }}>
         <span className="text-[11px] font-extrabold uppercase tracking-[0.18em]">{brandName}</span>
         <span className="font-mono text-[11px] font-bold text-white/80">ID {p.studentNo}</span>
@@ -120,7 +110,6 @@ export default function IdCard({ p, t, brandName, editable = true }: { p: VProfi
 
       <div className="p-4">
         <div className="flex gap-4">
-          {/* Rasm */}
           <div className="shrink-0">
             <div className="h-[104px] w-[82px] overflow-hidden rounded-2xl bg-slate-100 ring-1 ring-slate-200">
               {img ? (
@@ -132,7 +121,6 @@ export default function IdCard({ p, t, brandName, editable = true }: { p: VProfi
                 </span>
               )}
             </div>
-            {/* Yosh va daraja — rasm ostida, o'ng ustunga joy qolsin */}
             {!edit ? (
               <div className="mt-2 space-y-1.5">
                 <Chip k={t.age} v={p.age !== null ? String(p.age) : "—"} />
@@ -169,7 +157,6 @@ export default function IdCard({ p, t, brandName, editable = true }: { p: VProfi
             ) : null}
           </div>
 
-          {/* Ma'lumotlar */}
           <div className="min-w-0 flex-1">
             {edit ? (
               <form action={submit} className="space-y-2">
@@ -257,10 +244,6 @@ function Field({ label, children }: { label: string; children: React.ReactNode }
   );
 }
 
-// Guvohnoma qatori — yorliq chapda, qiymat o'ngda.
-// Qiymat kesilmaydi: sig'masa butunlay keyingi qatorga tushadi
-// (uzun telefon raqami yoki guruh nomi to'liq ko'rinishi uchun).
-// Rasm ostidagi ixcham qiymat (yosh, daraja)
 function Chip({ k, v }: { k: string; v: string }) {
   return (
     <div className="rounded-xl bg-slate-50 px-1.5 py-1.5 text-center">
@@ -270,17 +253,12 @@ function Chip({ k, v }: { k: string; v: string }) {
   );
 }
 
-// Yorliq + qiymat bitta qatorda. Ilgari qator o'ralar edi va tor telefonlarda
-// "2-chi raqam" tagidagi raqam pastga tushib ketardi. Endi qiymat hech qachon
-// bo'linmaydi (telefon raqamini o'qib bo'lmay qoladi), joy yetmasa YORLIQ
-// qisqaradi — uni kontekstdan tushunsa bo'ladi.
 function Line({ k, v, mono }: { k: string; v: string; mono?: boolean }) {
   return (
     <div className="flex items-baseline gap-x-2">
       <dt className="min-w-0 flex-1 truncate text-[10.5px] font-semibold uppercase text-slate-400">{k}</dt>
       <dd
         className={
-          // max-w — uzun guruh nomi yorliqni siqib chiqarib yubormasin
           "max-w-[70%] shrink-0 truncate text-right text-[13.5px] font-bold tabular-nums text-slate-800" +
           (mono ? " font-mono text-[12.5px]" : "")
         }

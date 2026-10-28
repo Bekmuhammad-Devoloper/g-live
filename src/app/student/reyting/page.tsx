@@ -6,11 +6,6 @@ import { fill, S, type StudentStrings } from "../_i18n";
 import { CARD, FlagAvatar, PageHeader, TEAL } from "../_ui";
 import MissingStudent from "../MissingStudent";
 
-// Reyting — o'quvchi o'z o'rnini va oldindagilarni ko'radi.
-// Taqqoslash doirasi (guruh / filial / markaz) va mezoni (davomat / tanga /
-// o'rtacha ball) Sozlamalar > Ball va mukofotlar bo'limida belgilanadi.
-// Yorliqlar o'quvchi tilida (t) — shu sabab funksiya.
-
 const scopeLabel = (t: StudentStrings): Record<string, string> => ({
   group: t.scopeGroup,
   branch: t.scopeBranch,
@@ -23,21 +18,18 @@ const basisLabel = (t: StudentStrings): Record<string, string> => ({
   score: t.basisScore,
 });
 
-// Ustundagi raqam ostidagi qisqa birlik (uzun matn sig'maydi)
 const unitOf = (t: StudentStrings): Record<string, string> => ({
   attendance: t.lessons,
   coins: t.coins,
   score: "%",
 });
 
-// Birinchi uchta o'rin — medal ranglari
 const MEDAL: Record<number, { bg: string; ring: string }> = {
   1: { bg: "linear-gradient(140deg,#fde68a,#f59e0b 45%,#b45309)", ring: "rgba(245,158,11,0.45)" },
   2: { bg: "linear-gradient(140deg,#f1f5f9,#cbd5e1 45%,#94a3b8)", ring: "rgba(148,163,184,0.45)" },
   3: { bg: "linear-gradient(140deg,#fcd9b6,#d8a06a 45%,#a16207)", ring: "rgba(180,120,60,0.45)" },
 };
 
-// ── Avatar: rasm bo'lsa — o'sha, bo'lmasa Germaniya bayrog'i ──
 function Avatar({ row, size = 42 }: { row: BoardRow; size?: number }) {
   if (row.imageUrl) {
     return (
@@ -50,7 +42,6 @@ function Avatar({ row, size = 42 }: { row: BoardRow; size?: number }) {
       />
     );
   }
-  // clipPath id'si har qatorda noyob bo'lishi shart — aks holda SVG chalkashadi
   return <FlagAvatar s={size} id={`rk-${row.id}`} />;
 }
 
@@ -70,7 +61,6 @@ export default async function StudentRatingPage() {
   const BASIS_LABEL = basisLabel(t);
   const unit = unitOf(t)[basis] ?? "";
 
-  // Nechta o'quvchi bir xil o'rinda turibdi — "teng natija" belgisi uchun
   const samePlace = new Map<number, number>();
   for (const r of rows) samePlace.set(r.place, (samePlace.get(r.place) ?? 0) + 1);
 
@@ -78,13 +68,11 @@ export default async function StudentRatingPage() {
     <div className="space-y-4">
       <PageHeader title={t.rank} subtitle={`${SCOPE_LABEL[scope] ?? ""} · ${BASIS_LABEL[basis] ?? ""}`} />
 
-      {/* ── Mening o'rnim ── */}
       {me && (
         <div
           className="relative overflow-hidden rounded-[26px] p-5 text-white shadow-[0_16px_34px_-18px_rgba(14,116,144,0.9)]"
           style={{ background: `linear-gradient(135deg, #17a2bf, ${TEAL})` }}
         >
-          {/* yumshoq yorug'lik dog'i — kartaga chuqurlik beradi */}
           <span className="pointer-events-none absolute -right-10 -top-14 h-40 w-40 rounded-full bg-white/10 blur-2xl" />
 
           <div className="relative flex items-center gap-3.5">
@@ -112,7 +100,6 @@ export default async function StudentRatingPage() {
         </div>
       )}
 
-      {/* ── Ro'yxat ── */}
       {rows.length === 0 ? (
         <div className={CARD + " rounded-[26px] px-5 py-12 text-center"}>
           <div className="text-[15px] font-semibold text-slate-700">{t.noRatingYet}</div>
@@ -132,10 +119,8 @@ export default async function StudentRatingPage() {
                   (r.isMe ? "bg-[#0e7490]/[0.08]" : "")
                 }
               >
-                {/* O'z qatoringiz — chap chetda rangli chiziq */}
                 {r.isMe && <span className="absolute inset-y-0 left-0 w-[3px] rounded-r" style={{ background: TEAL }} />}
 
-                {/* O'rin */}
                 <span
                   className={
                     "grid h-9 w-9 shrink-0 place-items-center rounded-xl text-[14px] font-extrabold tabular-nums " +

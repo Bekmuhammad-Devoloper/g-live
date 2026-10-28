@@ -5,19 +5,8 @@ import { loadUnitProgress } from "../_progress";
 import { SectionHeader, IcoPlayCircle } from "../_parts";
 import { CoinGold, NAVY, TEAL } from "../../../../_ui";
 
-// "Dars" bo'limi — darsning videolari ro'yxati.
-//
-// Har karta ikki qatordan: VIDEO (ko'rilganmi) va MASHQ (topshirilganmi).
-// Har qatorda o'sha ish uchun beriladigan tanga va yulduz ko'rinadi —
-// o'quvchi nima uchun nima olishini oldindan biladi.
-//
-// Ma'lumot modelida bitta darsda BITTA video bor, shuning uchun ro'yxatda
-// hozircha bitta karta bo'ladi. Tuzilma ro'yxat qilib qurilgan: dasturga
-// darsga bir nechta video qo'shilsa, ro'yxat o'zi kengayadi.
-
 const ACCENT = "linear-gradient(150deg, #2fb9dc 0%, #0e7490 100%)";
 
-/** Kichik yulduz — mukofot chipida */
 function StarSmall({ s = 15 }: { s?: number }) {
   return (
     <svg width={s} height={s} viewBox="0 0 24 24" aria-hidden>
@@ -32,7 +21,6 @@ function StarSmall({ s = 15 }: { s?: number }) {
   );
 }
 
-/** Mukofot chipi: ikonka + olingan/jami */
 function Reward({ icon, got, total }: { icon: React.ReactNode; got: number; total: number }) {
   return (
     <span className="flex items-center gap-1 rounded-full bg-white/75 px-2 py-[3px]">
@@ -44,7 +32,6 @@ function Reward({ icon, got, total }: { icon: React.ReactNode; got: number; tota
   );
 }
 
-/** Bitta qator: nom, mukofotlar va jarayon chizig'i */
 function Row({
   label, pct, coinGot, coinTotal, starGot, starTotal,
 }: {
@@ -81,13 +68,11 @@ export default async function LessonVideosPage({
   const { t, code, lesson, unitLabel } = ctx;
   const p = await loadUnitProgress(ctx);
 
-  // Video mukofoti — bitta hodisa, shuning uchun "olingan/jami" 0/3 yoki 3/3
   const vCoinTotal = p.reward.viewCoin;
   const vStarTotal = p.reward.viewStar;
   const vCoinGot = p.lesson.watched ? vCoinTotal : 0;
   const vStarGot = p.lesson.watched ? vStarTotal : 0;
 
-  // Mashq mukofoti — har topshirilgan vazifa uchun
   const eCoinTotal = p.reward.taskCoin * p.homework.total;
   const eStarTotal = p.reward.taskStar * p.homework.total;
   const eCoinGot = p.reward.taskCoin * p.homework.done;

@@ -8,7 +8,6 @@ import { tr } from "@/lib/tr";
 import { writeAudit } from "@/lib/audit";
 import { parseApplyCourses, serializeApplyCourses } from "@/lib/applyCourses";
 
-// Administrator faqat o'z filialiga tayinlangan — filiallarni boshqara olmaydi (faqat Direktor/o'rinbosar)
 const CAN = [ROLES.DIRECTOR, ROLES.DEPUTY_DIRECTOR];
 const can = (r: string) => CAN.includes(r as never);
 
@@ -23,7 +22,6 @@ export async function saveBranch(fd: FormData): Promise<{ ok?: boolean; error?: 
   const lngRaw = Number(fd.get("lng")); const lng = Number.isFinite(lngRaw) && lngRaw !== 0 ? lngRaw : null;
   const radius = Math.max(1, Math.round(Number(fd.get("radius")) || 100));
   const imageUrl = String(fd.get("image") || "").trim() || null;
-  // Arizadagi kurslar — formadan JSON keladi, tozalab qayta yoziladi
   const applyCourses = serializeApplyCourses(parseApplyCourses(String(fd.get("applyCourses") || "")));
   if (name.length < 2) return { error: tr(s.locale, { uz: "Nomi kamida 2 ta belgi bo'lsin", ru: "Название должно быть не менее 2 символов", en: "Name must be at least 2 characters", de: "Der Name muss mindestens 2 Zeichen lang sein" }) };
   const data = { name, address, phone, lat, lng, radius, imageUrl, applyCourses };
@@ -37,8 +35,6 @@ export async function saveBranch(fd: FormData): Promise<{ ok?: boolean; error?: 
 export async function deleteBranch(id: string): Promise<{ ok?: boolean; error?: string }> {
   const s = await requireSession();
   if (!can(s.role)) return { error: tr(s.locale, { uz: "Ruxsat yo'q", ru: "Нет доступа", en: "No permission", de: "Keine Berechtigung" }) };
-  // Filialga bog'liq foydalanuvchi/guruh/o'quvchi bo'lsa o'chirmaymiz — sababini aytamiz
-  // (ilgari jimgina qaytardi, foydalanuvchi "o'chirilmayapti" deb o'ylardi)
   const [users, groups, students] = await Promise.all([
     prisma.user.count({ where: { branchId: id } }),
     prisma.group.count({ where: { branchId: id } }),
@@ -60,7 +56,6 @@ export async function deleteBranch(id: string): Promise<{ ok?: boolean; error?: 
   return { ok: true };
 }
 
-/** Filialni nofaol/faol qilish — nofaol filial ariza formasida ham, tanlovlarda ham chiqmaydi, ma'lumotlar saqlanadi */
 export async function setBranchActive(id: string, active: boolean): Promise<{ ok?: boolean; error?: string }> {
   const s = await requireSession();
   if (!can(s.role)) return { error: tr(s.locale, { uz: "Ruxsat yo'q", ru: "Нет доступа", en: "No permission", de: "Keine Berechtigung" }) };
@@ -70,7 +65,6 @@ export async function setBranchActive(id: string, active: boolean): Promise<{ ok
   return { ok: true };
 }
 
-/** Ochiq ariza formasida (/apply) filial tanlovida ko'rinsinmi — faollikdan alohida boshqariladi */
 export async function setBranchApplyVisible(id: string, visible: boolean): Promise<{ ok?: boolean; error?: string }> {
   const s = await requireSession();
   if (!can(s.role)) return { error: tr(s.locale, { uz: "Ruxsat yo'q", ru: "Нет доступа", en: "No permission", de: "Keine Berechtigung" }) };
@@ -80,16 +74,8 @@ export async function setBranchApplyVisible(id: string, visible: boolean): Promi
   return { ok: true };
 }
 
-/* ─── Filialni BARCHA ma'lumotlari bilan o'chirish ───────────────────────
-   Orqaga qaytarib bo'lmaydi. Faqat DIREKTOR; filial nomini yozib tasdiqlaydi.
-   O'chadi:  o'quvchilar (to'lov tarixi, davomat, sertifikat, topshiriq javoblari,
-             o'yin natijalari... kaskad bilan) va ularning kirish hisoblari;
-             guruhlar (darslar, davomat, topshiriqlar bilan).
-   Uziladi (o'chmaydi): xodimlar, lidlar, market tovarlari — branchId = null.  */
-
 export interface PurgeSummary { students: number; groups: number; users: number; leads: number; payments: number }
 
-/** O'chirishdan oldin ko'rsatiladigan hisob */
 export async function branchPurgeSummary(id: string): Promise<PurgeSummary> {
   const s = await requireSession();
   if (s.role !== ROLES.DIRECTOR) return { students: 0, groups: 0, users: 0, leads: 0, payments: 0 };
@@ -112,7 +98,6 @@ export async function forceDeleteBranch(id: string, confirmName: string): Promis
   if (confirmName.trim().toLowerCase() !== branch.name.trim().toLowerCase()) {
     return { error: tr(s.locale, { uz: "Tasdiqlash uchun filial nomini aynan yozing", ru: "Для подтверждения введите точное название филиала", en: "Type the exact branch name to confirm", de: "Zur Bestätigung den genauen Filialnamen eingeben" }) };
   }
-  // O'zining filialini o'chirmasin — seans shu filialga bog'langan bo'lsa ishlash buziladi
   if (s.branchId === id) {
     return { error: tr(s.locale, { uz: "Hozir shu filialdasiz — avval yuqoridan boshqa filialga o'ting", ru: "Вы сейчас в этом филиале — сначала переключитесь на другой", en: "You are in this branch now — switch to another one first", de: "Sie sind gerade in dieser Filiale — wechseln Sie zuerst" }) };
   }
@@ -123,23 +108,19 @@ export async function forceDeleteBranch(id: string, confirmName: string): Promis
   const loginIds = students.map((x) => x.userId).filter((x): x is string => !!x);
 
   await prisma.$transaction(async (tx) => {
-    // O'quvchilar: kaskadsiz bog'lanishlarni uzamiz, to'lovlarni o'chiramiz, keyin o'zlarini
     if (studentIds.length) {
       await tx.lead.updateMany({ where: { studentId: { in: studentIds } }, data: { studentId: null } });
       await tx.task.updateMany({ where: { studentId: { in: studentIds } }, data: { studentId: null } });
       await tx.payment.deleteMany({ where: { studentId: { in: studentIds } } });
       await tx.student.deleteMany({ where: { id: { in: studentIds } } });
     }
-    // Guruhlar — GroupStudent/Lesson/Assignment kaskad; Task/SeasonalAssessment/Lead.groupId — null
     await tx.group.deleteMany({ where: { branchId: id } });
-    // Uziladi, o'chmaydi
     await tx.user.updateMany({ where: { branchId: id }, data: { branchId: null } });
     await tx.lead.updateMany({ where: { branchId: id }, data: { branchId: null } });
     await tx.marketItem.updateMany({ where: { branchId: id }, data: { branchId: null } });
     await tx.branch.delete({ where: { id } });
   }, { timeout: 120_000, maxWait: 15_000 });
 
-  // O'quvchilarning kirish hisoblari — tranzaksiyadan tashqarida, birma-bir (boshqa yozuvlar ushlab tursa ham to'xtamaydi)
   for (const uid of loginIds) await prisma.user.delete({ where: { id: uid } }).catch(() => {});
 
   await writeAudit({
@@ -158,12 +139,6 @@ export async function forceDeleteBranch(id: string, confirmName: string): Promis
   return { ok: true, deleted: summary };
 }
 
-/* ─── Filialsiz (eski) yozuvlarni filialga biriktirish ───────────────────
-   2026-09-17 dan filial doirasi QAT'IY: faol filialda faqat o'sha filial
-   yozuvlari ko'rinadi. Ilgari filialsiz yaratilgan xodim/o'quvchi/guruh...
-   hech qaysi filialda chiqmaydi — shu yerdan bir bosishda biriktiriladi.
-   (Market sovg'alari ataylab umumiy — ular ro'yxatga kirmaydi.)            */
-
 export interface UnassignedCounts { users: number; students: number; groups: number; rooms: number; leads: number; vacancies: number; expenses: number; total: number }
 
 export async function unassignedCounts(): Promise<UnassignedCounts> {
@@ -173,7 +148,6 @@ export async function unassignedCounts(): Promise<UnassignedCounts> {
 
   const w = { branchId: null } as const;
   const [users, students, groups, rooms, leads, vacancies, expenses] = await Promise.all([
-    // O'quvchi/ota-ona hisoblari filialsiz bo'lishi normal — ular ro'yxatga kirmaydi
     prisma.user.count({ where: { branchId: null, role: { notIn: [ROLES.STUDENT, ROLES.PARENT] } } }),
     prisma.student.count({ where: w }),
     prisma.group.count({ where: w }),

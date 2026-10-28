@@ -8,7 +8,6 @@ import { writeAudit } from "@/lib/audit";
 import { ROLES } from "@/lib/constants";
 import { canEditProgramLessons } from "@/lib/lessonAccess";
 
-// Kursning o'zi va darajalari. Materiallar alohida qoida bilan — lib/lessonAccess.ts
 const ALLOWED = [ROLES.DIRECTOR, ROLES.DEPUTY_DIRECTOR, ROLES.ADMIN, ROLES.MANAGER];
 
 export type CourseState = { ok?: boolean; error?: string; id?: string };
@@ -16,14 +15,10 @@ export type CourseState = { ok?: boolean; error?: string; id?: string };
 const schema = z.object({
   name: z.string().min(2),
   description: z.string().optional(),
-  // Kurs oylik to'lovi (so'm) — o'quvchi guruhga qo'shilgan oydan boshlab
-  // shu summa har oy qarzga hisoblanadi (src/lib/debt.ts)
   monthlyFee: z.coerce.number().int().min(0).max(1_000_000_000).optional(),
-  // Oyiga darslar soni (1..31) — guruh jadvalida oyda shundan ortiq dars kuni bo'lmaydi
   lessonsPerMonth: z.coerce.number().int().min(1).max(31).optional(),
 });
 
-// Bannerlarni JSON'dan tozalab, faqat data:image URL'larni qaytaradi (maks 6 ta)
 function parseBanners(raw: FormDataEntryValue | null): string[] {
   if (typeof raw !== "string" || !raw) return [];
   try {
@@ -60,7 +55,6 @@ export async function createCourse(_prev: CourseState, formData: FormData): Prom
   return { ok: true, id: p.id };
 }
 
-// Kursni tahrirlash
 export async function updateCourse(id: string, _prev: CourseState, formData: FormData): Promise<CourseState> {
   const s = await requireSession();
   if (!ALLOWED.includes(s.role as never)) return { error: "forbidden" };
@@ -93,7 +87,6 @@ export async function updateCourse(id: string, _prev: CourseState, formData: For
   return { ok: true, id };
 }
 
-// Kursni o'chirish (guruhlari bo'lsa o'chirilmaydi)
 export async function deleteCourse(id: string): Promise<{ ok?: boolean; error?: string }> {
   const s = await requireSession();
   if (!ALLOWED.includes(s.role as never)) return { error: "forbidden" };
@@ -107,7 +100,6 @@ export async function deleteCourse(id: string): Promise<{ ok?: boolean; error?: 
   return { ok: true };
 }
 
-// ─── Daraja (Level) ───
 const levelSchema = z.object({
   code: z.string().min(1),
   name: z.string().min(1),
@@ -142,7 +134,7 @@ export async function createLevel(programId: string, _prev: CourseState, formDat
       },
     });
   } catch {
-    return { error: "duplicate" }; // bir xil kod (programId+code unique)
+    return { error: "duplicate" };
   }
   await writeAudit({ actorId: s.userId, action: "CREATE", entityType: "Level", entityId: programId, newValue: { code: parsed.data.code } });
   revalidatePath(`/courses/${programId}`);
@@ -160,7 +152,6 @@ export async function deleteLevel(id: string): Promise<{ ok?: boolean; error?: s
   return { ok: true };
 }
 
-// ─── Material ───
 const materialSchema = z.object({
   title: z.string().min(1),
   kind: z.enum(["LINK", "VIDEO", "FILE", "DOC"]).optional(),

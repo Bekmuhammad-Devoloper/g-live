@@ -10,11 +10,6 @@ import { Forbidden } from "../../../_components/ui";
 import OperatorDetail, { type DCall, type DLead, type DMonth, type DOperator } from "./OperatorDetail";
 import { TEAM, type TeamKind } from "../teamKind";
 
-// Jamoa a'zosi (operator yoki filial administratori) profili — barcha ko'rsatkichlar
-// real Lead + Call + User ma'lumotidan olinadi. Lid kimniki — boardPage.tsx dagi qoida:
-// operator — Lead.managerId; administrator — menejer yoki lid bilan ishlagan (faoliyat yozgan).
-// Davr filtri: ?period=all|today|month|year yoki ?date=YYYY-MM-DD (aniq kun).
-
 const p2 = (n: number) => String(n).padStart(2, "0");
 const fmtDate = (d: Date) => `${p2(d.getDate())}.${p2(d.getMonth() + 1)}.${d.getFullYear()}`;
 const fmtTime = (d: Date) => `${p2(d.getHours())}:${p2(d.getMinutes())}`;
@@ -48,9 +43,8 @@ export async function TeamDetailPage({
     );
   }
   const canManage = isAdminKind ? canManageAdminTeam(s.role) : canWrite(s.role, MODULES.USERS);
-  // ROP administratorlar bo'limida barcha filiallarni ko'radi (boardPage.tsx bilan bir xil)
   const scope = isAdminKind && s.role === ROLES.ROP ? {} : branchWhere(s);
-  const staffScope = isAdminKind && s.role === ROLES.ROP ? {} : staffBranchWhere(s); // xodim bir nechta filialda bo'lishi mumkin
+  const staffScope = isAdminKind && s.role === ROLES.ROP ? {} : staffBranchWhere(s);
 
   const now = new Date();
   const customDate = typeof sp.date === "string" && /^\d{4}-\d{2}-\d{2}$/.test(sp.date) ? sp.date : null;
@@ -76,10 +70,8 @@ export async function TeamDetailPage({
   const range = from && to ? { gte: from, lt: to } : undefined;
 
   const [op, leads, calls, wonAll] = await Promise.all([
-    // faol filial doirasida (boshqa filial operatori ochilmasin) — shu sabab findFirst
     prisma.user.findFirst({
       where: { AND: [{ id }, staffScope] },
-      // XAVFSIZLIK: faqat kerakli maydonlar
       select: {
         id: true, fullName: true, email: true, phone: true, role: true, isActive: true, imageUrl: true,
         sipExtension: true, position: true, fiksa: true, kpiBonus: true, plainPassword: true,
@@ -87,7 +79,6 @@ export async function TeamDetailPage({
       },
     }),
     prisma.lead.findMany({
-      // Administrator: o'zi ishlagan lidlar — davr faoliyat sanasi bo'yicha
       where: {
         AND: [
           isAdminKind
@@ -117,7 +108,6 @@ export async function TeamDetailPage({
         duration: true, recordingUrl: true, comment: true, startedAt: true,
       },
     }),
-    // faol filial doirasida
     prisma.lead.findMany({
       where: { AND: [isAdminKind ? { stage: "WON", OR: [{ managerId: id }, { activities: { some: { authorId: id } } }] } : { managerId: id, stage: "WON" }, scope] },
       select: { createdAt: true },
@@ -126,7 +116,6 @@ export async function TeamDetailPage({
 
   if (!op || op.role !== cfg.role) notFound();
 
-  // Lid bo'yicha qo'ng'iroq statistikasi (davr ichida)
   const byLead = new Map<string, { calls: number; answered: number; sec: number }>();
   for (const c of calls) {
     if (!c.leadId) continue;
@@ -187,7 +176,6 @@ export async function TeamDetailPage({
   const answered = dcalls.filter((c) => c.status === "ANSWERED");
   const talkSec = answered.reduce((n, c) => n + c.duration, 0);
 
-  // Oylik maosh — fiksa + har muvaffaqiyatli lid uchun kpiBonus (reports/kpi bilan bir xil qoida)
   const months: DMonth[] = [];
   for (let i = 0; i < 6; i++) {
     const d = new Date(now.getFullYear(), now.getMonth() - i, 1);

@@ -30,7 +30,7 @@ export default async function RoomDetailPage({ params }: { params: Promise<{ id:
 
   const [groups, branch] = await Promise.all([
     prisma.group.findMany({
-      where: { AND: [{ room: room.name }, branchWhere(s)] }, // faol filial doirasida
+      where: { AND: [{ room: room.name }, branchWhere(s)] },
       orderBy: { name: "asc" },
       include: {
         teacher: { select: { fullName: true } },
@@ -48,12 +48,10 @@ export default async function RoomDetailPage({ params }: { params: Promise<{ id:
 
   return (
     <div className="space-y-5">
-      {/* Orqaga */}
       <Link href="/rooms" className="inline-flex items-center gap-1.5 text-sm font-medium text-slate-500 transition hover:text-brand-600 dark:text-slate-400 dark:hover:text-brand-300">
         <Icon name="arrow" className="h-4 w-4 rotate-180" /> {L("Xonalar", "Кабинеты", "Rooms", "Räume")}
       </Link>
 
-      {/* Xona sarlavhasi */}
       <div className="flex flex-wrap items-center justify-between gap-4 rounded-2xl border border-slate-200/70 bg-white p-5 shadow-card dark:border-slate-800 dark:bg-slate-900">
         <div className="flex items-center gap-4">
           <span className="grid h-14 w-14 shrink-0 place-items-center rounded-2xl bg-brand-500/15 text-brand-600 dark:text-brand-300"><Icon name="building" className="h-7 w-7" /></span>
@@ -67,14 +65,12 @@ export default async function RoomDetailPage({ params }: { params: Promise<{ id:
         </div>
       </div>
 
-      {/* Ma'lumot kartalari */}
       <div className="grid gap-4 sm:grid-cols-3">
         <InfoCard icon="layers" tone="brand" value={groups.length} label={L("Guruhlar", "Группы", "Groups", "Gruppen")} />
         <InfoCard icon="check" tone="green" value={activeGroups} label={L("Faol guruhlar", "Активные группы", "Active groups", "Aktive Gruppen")} />
         <InfoCard icon="graduation" tone="violet" value={totalStudents} label={L("O'quvchilar", "Ученики", "Students", "Schüler")} />
       </div>
 
-      {/* Izoh */}
       {room.note && room.note.trim() && (
         <div className="rounded-2xl border border-slate-200/70 bg-white p-5 shadow-card dark:border-slate-800 dark:bg-slate-900">
           <div className="mb-1 text-xs font-semibold uppercase tracking-wider text-slate-400">{L("Izoh", "Примечание", "Note", "Notiz")}</div>
@@ -82,7 +78,6 @@ export default async function RoomDetailPage({ params }: { params: Promise<{ id:
         </div>
       )}
 
-      {/* Undagi guruhlar / jadval */}
       <div className="overflow-hidden rounded-2xl border border-slate-200/70 bg-white shadow-card dark:border-slate-800 dark:bg-slate-900">
         <div className="border-b border-slate-200/70 px-6 py-4 dark:border-slate-800">
           <h2 className="flex items-center gap-2 text-base font-semibold text-slate-700 dark:text-slate-200"><Icon name="calendar" className="h-5 w-5 text-brand-500" /> {L("Xonadagi guruhlar va jadval", "Группы и расписание кабинета", "Groups and schedule in this room", "Gruppen und Stundenplan in diesem Raum")}</h2>

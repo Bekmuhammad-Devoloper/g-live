@@ -14,19 +14,18 @@ import EnrollDrawer from "../_components/EnrollDrawer";
 import PaymentPanel from "../../students/PaymentPanel";
 import type { ReceiptMode } from "@/lib/receiptMode";
 
-/** O'quvchiga aylangan lid uchun to'lov paneli sozlamalari (o'quvchi profilidagi bilan bir xil) */
 export interface LeadPayment {
   canManage: boolean; canPay: boolean; rop?: boolean; cashierName: string; receiptMode: ReceiptMode; defaultPurpose: string;
 }
 
 export interface DLead {
   id: string; fullName: string; phone: string; email: string | null; source: string | null;
-  telegram: string | null; studyFormat: string | null; // ochiq arizadan (onlayn/oflayn)
+  telegram: string | null; studyFormat: string | null;
   stage: string; interestCourse: string | null; budget: number | null; note: string | null;
-  age: number | null; level: string | null; // ariza formasidan keladi
+  age: number | null; level: string | null;
   managerId: string | null; managerName: string | null; studentId: string | null; createdAt: string;
   groupId: string | null; groupName: string | null; groupNote: string | null; courseName: string | null; enrollEditCount: number;
-  branchName: string | null; // filial nomi — boshqa filialga ko'chirish uchun
+  branchName: string | null;
 }
 export interface DActivity {
   id: string; type: string; result: string | null; nextStepAt: string | null; authorName: string | null; createdAt: string;
@@ -45,17 +44,14 @@ export default function LeadDetail({ lead, activities, managers, prevId, nextId,
   const [tab, setTab] = useState<"info" | "activity">("info");
   const [note, setNote] = useState("");
   const [pending, start] = useTransition();
-  // Guruhga yo'naltirish paneli — "Qabul qilindi" uchun majburiy
   const [enrollOpen, setEnrollOpen] = useState(false);
   const [flash, setFlash] = useState<string | null>(null);
-  // Lidni butunlay o'chirish — tasdiqlash uchun ism yoziladi
   const [purge, setPurge] = useState(false);
   const [typed, setTyped] = useState("");
   const [purgeErr, setPurgeErr] = useState<string | null>(null);
   const color = colorOfStage(lead.stage);
   const run = (fn: () => Promise<unknown>) => start(async () => { await fn(); router.refresh(); });
 
-  // Klaviatura: Esc → orqaga, ←/→ → oldingi/keyingi
   useEffect(() => {
     const h = (e: KeyboardEvent) => {
       const el = document.activeElement?.tagName;
@@ -72,7 +68,6 @@ export default function LeadDetail({ lead, activities, managers, prevId, nextId,
 
   return (
     <div className="space-y-4">
-      {/* Sarlavha */}
       <div className="flex flex-wrap items-center justify-between gap-3">
         <Link href="/crm" className="flex items-center gap-1.5 text-sm text-slate-500 hover:text-slate-700 dark:text-slate-400">
           <Icon name="arrow" className="h-4 w-4 rotate-180" /> {tr(locale, { uz: "Orqaga", ru: "Назад", en: "Back", de: "Zurück" })}
@@ -84,7 +79,6 @@ export default function LeadDetail({ lead, activities, managers, prevId, nextId,
       </div>
 
       <div className="grid gap-5 lg:grid-cols-3">
-        {/* Chap: profil + tablar */}
         <div className="space-y-4 lg:col-span-2">
           <div className="rounded-2xl border border-slate-200/70 bg-white p-5 shadow-card dark:border-slate-800 dark:bg-slate-900" style={{ borderTop: `3px solid ${color}` }}>
             <div className="flex items-center gap-4">
@@ -109,7 +103,6 @@ export default function LeadDetail({ lead, activities, managers, prevId, nextId,
               </div>
             </div>
 
-            {/* Tablar */}
             <div className="mt-5 flex gap-1 border-b border-slate-100 dark:border-slate-800">
               <TabBtn active={tab === "info"} onClick={() => setTab("info")}>{tr(locale, { uz: "Ma'lumot", ru: "Информация", en: "Info", de: "Info" })}</TabBtn>
               <TabBtn active={tab === "activity"} onClick={() => setTab("activity")}>{tr(locale, { uz: "Faoliyat", ru: "Активность", en: "Activity", de: "Aktivität" })} ({activities.length})</TabBtn>
@@ -155,7 +148,6 @@ export default function LeadDetail({ lead, activities, managers, prevId, nextId,
             )}
           </div>
 
-          {/* To'lovlar — lid o'quvchiga aylangan bo'lsa: qabul qilish, qarz qo'shish, istalgan to'lovni tahrirlash */}
           {lead.studentId && payment && (payment.canManage || payment.canPay || payment.rop) && (
             <div className="mt-5 rounded-2xl border border-slate-200/70 bg-white p-5 shadow-card dark:border-slate-800 dark:bg-slate-900">
               <PaymentPanel
@@ -173,7 +165,6 @@ export default function LeadDetail({ lead, activities, managers, prevId, nextId,
           )}
         </div>
 
-        {/* O'ng: tez amallar */}
         <div className="space-y-4">
           <div className="sticky top-20 space-y-4">
             <div className="rounded-2xl border border-slate-200/70 bg-white p-4 shadow-card dark:border-slate-800 dark:bg-slate-900">
@@ -194,7 +185,6 @@ export default function LeadDetail({ lead, activities, managers, prevId, nextId,
                       disabled={pending}
                       onChange={(e) => {
                         const next = e.target.value;
-                        // "Qabul qilindi" — avval guruh tanlanadi (server ham talab qiladi)
                         if ((next === "WON" || next === "PAID") && !lead.groupId) { setEnrollOpen(true); return; }
                         run(() => moveLeadStage(lead.id, next));
                       }}
@@ -203,7 +193,6 @@ export default function LeadDetail({ lead, activities, managers, prevId, nextId,
                       {COLUMNS.map((c) => <option key={c.key} value={c.defaultStage}>{label(LEAD_STAGE_LABELS, c.defaultStage, locale)}</option>)}
                     </select>
                   </div>
-                  {/* Guruh biriktiruvi — WON uchun majburiy, keyin 1 marta o'zgartirish */}
                   <div className="rounded-xl border border-slate-200 p-3 dark:border-slate-700">
                     <div className="mb-1 flex items-center gap-1.5 text-[11px] font-semibold text-slate-500 dark:text-slate-400">
                       <Icon name="layers" className="h-3.5 w-3.5" />
@@ -213,7 +202,6 @@ export default function LeadDetail({ lead, activities, managers, prevId, nextId,
                       <>
                         <div className="text-sm font-semibold text-slate-800 dark:text-slate-100">{lead.groupName}</div>
                         {lead.courseName && <div className="text-[11px] text-slate-500 dark:text-slate-400">{lead.courseName}</div>}
-                        {/* Guruh izohi (kament) */}
                         {lead.groupNote && (
                           <div className="mt-1.5 flex items-start gap-1 text-[11px] leading-snug text-amber-600 dark:text-amber-400">
                             <Icon name="info" className="mt-px h-3 w-3 shrink-0" />
@@ -244,7 +232,6 @@ export default function LeadDetail({ lead, activities, managers, prevId, nextId,
                     )}
                   </div>
 
-                  {/* Filial — boshqa filialga ko'chirish */}
                   <BranchMover
                     locale={locale}
                     currentBranchName={lead.branchName}
@@ -264,7 +251,6 @@ export default function LeadDetail({ lead, activities, managers, prevId, nextId,
                     <Icon name="copy" className="h-4 w-4" /> {tr(locale, { uz: "Telefonni nusxalash", ru: "Копировать телефон", en: "Copy phone", de: "Telefon kopieren" })}
                   </button>
 
-                  {/* Lidni butunlay o'chirish — direktor, o'rinbosari va administrator */}
                   {canDelete && (!purge ? (
                     <button
                       onClick={() => { setPurge(true); setTyped(""); setPurgeErr(null); }}
@@ -322,7 +308,6 @@ export default function LeadDetail({ lead, activities, managers, prevId, nextId,
               )}
             </div>
 
-            {/* Izoh qo'shish */}
             {canWrite && (
               <div className="rounded-2xl border border-slate-200/70 bg-white p-4 shadow-card dark:border-slate-800 dark:bg-slate-900">
                 <h3 className="mb-2 text-sm font-semibold text-slate-700 dark:text-slate-200">{tr(locale, { uz: "Izoh qo'shish", ru: "Добавить комментарий", en: "Add note", de: "Notiz hinzufügen" })}</h3>

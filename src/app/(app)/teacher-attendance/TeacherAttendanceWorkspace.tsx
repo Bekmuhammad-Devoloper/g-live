@@ -14,12 +14,10 @@ import { saveTeacherSchedule, deleteTeacherSchedule, setTeacherAttendance, type 
 
 export type TStatus = "PRESENT" | "LATE" | "ABSENT" | "EXCUSED";
 export interface VSchedule { weekdays: number[]; startTime: string | null; endTime: string | null; monthlySalary: number; startedAt: string; startedAtIso: string }
-/** Guruh dars vaqti: hafta kunlari, "HH:mm" oralig'i va guruh davri ("" — chegarasiz) */
 export interface VSlot { wd: number[]; start: string; end: string; from: string; to: string }
 export interface VTeacher { id: string; name: string; fiksa: number; groupWeekdays: number[]; slots: VSlot[]; schedule: VSchedule | null }
-export interface VAtt { teacherId: string; date: string; status: TStatus } // date "YYYY-MM-DD"
+export interface VAtt { teacherId: string; date: string; status: TStatus }
 
-// Ish kunlari: qo'lda jadvalda belgilangan bo'lsa — o'sha; bo'lmasa — guruhlar kunlaridan avtomatik
 const effWeekdays = (t: VTeacher): number[] => (t.schedule && t.schedule.weekdays.length ? t.schedule.weekdays : t.groupWeekdays);
 
 const WD: Record<Locale, string[]> = {
@@ -45,7 +43,6 @@ const isoOf = (d: Date) => `${d.getFullYear()}-${p2(d.getMonth() + 1)}-${p2(d.ge
 const wdName = (arr: number[], locale: Locale) => (arr.length ? arr.map((d) => WD[locale][d]).join(", ") : "—");
 const shortDate = (iso: string, locale: Locale) => { const [, m, d] = iso.split("-").map(Number); return `${d} ${MONTHS_SHORT[locale][m]}`; };
 
-/* ───────── Holatlar ───────── */
 const STATUS_ORDER: TStatus[] = ["PRESENT", "LATE", "ABSENT", "EXCUSED"];
 const STATUS_STYLE: Record<TStatus, string> = {
   PRESENT: "bg-emerald-500 text-white",
@@ -59,29 +56,24 @@ const statusLabel = (s: TStatus, locale: Locale) =>
   : s === "LATE" ? tr(locale, { uz: "Kechikdi", ru: "Опоздал", en: "Late", de: "Verspätet" })
   : s === "ABSENT" ? tr(locale, { uz: "Kelmadi", ru: "Не пришёл", en: "Absent", de: "Abwesend" })
   : tr(locale, { uz: "Sababli", ru: "Уважительная", en: "Excused", de: "Entschuldigt" });
-// Jurnal katagidagi qisqa belgi
 const statusGlyph = (s: TStatus, locale: Locale) =>
   s === "PRESENT" ? "✓"
   : s === "ABSENT" ? "✕"
   : s === "LATE" ? tr(locale, { uz: "K", ru: "О", en: "L", de: "V" })
   : tr(locale, { uz: "S", ru: "У", en: "E", de: "E" });
 
-/* ───────── Ish soatlari ───────── */
 const toMin = (hhmm: string | null | undefined) => {
   if (!hhmm || !/^\d{2}:\d{2}$/.test(hhmm)) return null;
   const [h, m] = hhmm.split(":").map(Number);
   return h * 60 + m;
 };
-// "HH:mm" oralig'i daqiqada; tugash boshlanishdan oldin bo'lsa — yarim tundan oshadi
 const spanMin = (a: string | null | undefined, b: string | null | undefined) => {
   const x = toMin(a), y = toMin(b);
   if (x === null || y === null || x === y) return 0;
   return y > x ? y - x : y + 1440 - x;
 };
-// Shu sanada o'tiladigan guruh darslari (hafta kuni + guruh davri)
 const slotsOn = (t: VTeacher, date: string, wd: number) =>
   t.slots.filter((s) => s.wd.includes(wd) && (!s.from || date >= s.from) && (!s.to || date <= s.to));
-// Kunlik ish vaqti: ish jadvalidagi soatlar, bo'lmasa shu kungi guruh darslari yig'indisi
 const dayMinutes = (t: VTeacher, date: string, wd: number) => {
   const own = spanMin(t.schedule?.startTime, t.schedule?.endTime);
   if (own) return own;
@@ -105,8 +97,8 @@ export default function TeacherAttendanceWorkspace({ teachers, attendance, defau
   const router = useRouter();
   const [section, setSection] = useState<"jadval" | "maosh">("jadval");
   const [view, setView] = useState<"month" | "day">("month");
-  const [month, setMonth] = useState(defaultMonth); // YYYY-MM
-  const [day, setDay] = useState(todayISO); // kunlik ko'rinish sanasi
+  const [month, setMonth] = useState(defaultMonth);
+  const [day, setDay] = useState(todayISO);
   const [formTeacher, setFormTeacher] = useState<VTeacher | null>(null);
   const [formOpen, setFormOpen] = useState(false);
   const [marks, setMarks] = useState(() => buildMarks(attendance));
@@ -115,7 +107,6 @@ export default function TeacherAttendanceWorkspace({ teachers, attendance, defau
   const [saving, startSave] = useTransition();
   const popRef = useRef<HTMLDivElement>(null);
 
-  // Server ma'lumoti yangilanganda (router.refresh) mahalliy holat qayta quriladi
   useEffect(() => setMarks(buildMarks(attendance)), [attendance]);
 
   const [year, mon] = month.split("-").map(Number);
@@ -130,7 +121,6 @@ export default function TeacherAttendanceWorkspace({ teachers, attendance, defau
     });
   }, [year, mon, todayISO]);
 
-  // Oylik hisob (maosh hisobi ham shundan): keldi = ish kunidagi PRESENT/LATE
   const calc = (t: VTeacher): Totals => {
     const wds = effWeekdays(t);
     let workDays = 0, keldi = 0, extra = 0, late = 0, absent = 0, excused = 0, minutes = 0;
@@ -151,7 +141,6 @@ export default function TeacherAttendanceWorkspace({ teachers, attendance, defau
     return { workDays, keldi, extra, late, absent, excused, minutes, base, asosiy };
   };
 
-  // Belgilash: ish kuni yoki mavjud belgi (avtomatik qo'yilganini tuzatish uchun)
   const markable = (t: VTeacher, key: string, wd: number) => canMark && (effWeekdays(t).includes(wd) || marks.has(`${t.id}|${key}`));
 
   const errText = (e?: string) =>
@@ -160,7 +149,6 @@ export default function TeacherAttendanceWorkspace({ teachers, attendance, defau
     : e === "notfound" ? tr(locale, { uz: "O'qituvchi joriy filialda topilmadi.", ru: "Преподаватель не найден в текущем филиале.", en: "Teacher not found in the current branch.", de: "Lehrer in der aktuellen Filiale nicht gefunden." })
     : tr(locale, { uz: "Saqlab bo'lmadi.", ru: "Не удалось сохранить.", en: "Could not save.", de: "Speichern fehlgeschlagen." });
 
-  // Holatni o'rnatish; joriy holat qayta tanlansa — belgi olib tashlanadi
   const setMark = (teacherId: string, date: string, status: TStatus | null) => {
     setMenu(null);
     const k = `${teacherId}|${date}`;
@@ -186,7 +174,6 @@ export default function TeacherAttendanceWorkspace({ teachers, attendance, defau
     setMenu({ teacherId: t.id, name: t.name, date: d.key, future: d.future, x, y: up ? r.top - 6 : r.bottom + 6, up });
   };
 
-  // Menyu: tashqarida bosish, Escape, aylantirish yoki o'lcham o'zgarsa yopiladi
   useEffect(() => {
     if (!menu) return;
     const close = () => setMenu(null);
@@ -236,7 +223,6 @@ export default function TeacherAttendanceWorkspace({ teachers, attendance, defau
     <div className="space-y-4">
       <h1 className="text-[24px] font-bold tracking-tight text-slate-900 dark:text-slate-100">{tr(locale, { uz: "Ustozlar davomati", ru: "Посещаемость преподавателей", en: "Teacher attendance", de: "Anwesenheit der Lehrer" })}</h1>
 
-      {/* ── Davomat jurnali (doimiy ko'rinadi) ── */}
       <div className="rounded-2xl border border-slate-200/70 bg-white p-4 shadow-card dark:border-slate-800 dark:bg-slate-900">
         <div className="mb-3 flex flex-wrap items-center gap-2">
           <button type="button" onClick={goToday} disabled={isCurrent} className={cn("rounded-lg border px-3 py-1.5 text-xs font-semibold", isCurrent ? "border-slate-200 text-slate-300 dark:border-slate-700 dark:text-slate-600" : "border-brand-200 bg-brand-50 text-brand-700 hover:bg-brand-100 dark:border-brand-800 dark:bg-brand-500/10 dark:text-brand-300")}>
@@ -275,7 +261,6 @@ export default function TeacherAttendanceWorkspace({ teachers, attendance, defau
         </p>
       </div>
 
-      {/* ── Ish jadvali va maosh hisobi ── */}
       <div className="rounded-2xl border border-slate-200/70 bg-white p-4 shadow-card dark:border-slate-800 dark:bg-slate-900">
         <div className="mb-4 flex flex-wrap items-end gap-x-4 gap-y-2 border-b border-slate-200 dark:border-slate-800">
           <TabBtn active={section === "jadval"} onClick={() => setSection("jadval")}>{tr(locale, { uz: "Ustozlar ish jadvali", ru: "График работы преподавателей", en: "Teacher work schedule", de: "Arbeitsplan der Lehrer" })}</TabBtn>
@@ -294,7 +279,6 @@ export default function TeacherAttendanceWorkspace({ teachers, attendance, defau
         <ScheduleForm teachers={teachers} initial={formTeacher} locale={locale} onClose={() => { setFormOpen(false); setFormTeacher(null); }} />
       )}
 
-      {/* Holat tanlash menyusi (jurnal katagi uchun) */}
       {menu && createPortal(
         <div
           ref={popRef}
@@ -326,7 +310,6 @@ export default function TeacherAttendanceWorkspace({ teachers, attendance, defau
   );
 }
 
-/* ───────── Shartli belgilar ───────── */
 function Legend({ locale }: { locale: Locale }) {
   const box = "grid h-4 w-4 shrink-0 place-items-center rounded text-[9px] font-bold";
   return (
@@ -341,7 +324,6 @@ function Legend({ locale }: { locale: Locale }) {
   );
 }
 
-/* ───────── 1) Oylik jurnal: ustozlar × oy sanalari ───────── */
 function JournalGrid({ teachers, days, marks, calc, markable, onCell, onDay, menu, locale }: {
   teachers: VTeacher[]; days: Day[]; marks: Map<string, TStatus>; calc: (t: VTeacher) => Totals;
   markable: (t: VTeacher, key: string, wd: number) => boolean;
@@ -349,7 +331,6 @@ function JournalGrid({ teachers, days, marks, calc, markable, onCell, onDay, men
   menu: Menu | null; locale: Locale;
 }) {
   const scrollRef = useRef<HTMLDivElement>(null);
-  // Joriy oyda bugungi ustun ko'rinadigan joyga aylantiriladi
   useEffect(() => {
     const box = scrollRef.current;
     if (!box) return;
@@ -450,12 +431,10 @@ function JournalGrid({ teachers, days, marks, calc, markable, onCell, onDay, men
   );
 }
 
-/* ───────── Kunlik ko'rinish: tanlangan sana bo'yicha belgilash ───────── */
 function DayView({ teachers, date, wd, future, marks, canMark, markable, onSet, locale }: {
   teachers: VTeacher[]; date: string; wd: number; future: boolean; marks: Map<string, TStatus>; canMark: boolean;
   markable: (t: VTeacher, key: string, wd: number) => boolean; onSet: (teacherId: string, date: string, status: TStatus | null) => void; locale: Locale;
 }) {
-  // Kun xulosasi: ish kuni bo'lgan ustozlar bo'yicha
   const sum = { PRESENT: 0, LATE: 0, ABSENT: 0, EXCUSED: 0, none: 0 };
   for (const t of teachers) {
     const st = marks.get(`${t.id}|${date}`);
@@ -543,13 +522,11 @@ function DayView({ teachers, date, wd, future, marks, canMark, markable, onSet, 
   );
 }
 
-/* ───────── 2) Ish jadvali ───────── */
 function JadvalTab({ teachers, canManage, locale, onAdd, onEdit }: {
   teachers: VTeacher[]; canManage: boolean; locale: Locale; onAdd: () => void; onEdit: (t: VTeacher) => void;
 }) {
   const router = useRouter();
   const [pending, start] = useTransition();
-  // Ish jadvali yoki guruhi bor barcha o'qituvchi (guruh kunlari avtomatik ish kuni)
   const list = teachers.filter((t) => t.schedule || t.groupWeekdays.length);
   const del = async (teacherId: string) => { if (await confirmDelete(tr(locale, { uz: "Ish jadvalini o'chirasizmi?", ru: "Удалить график работы?", en: "Delete work schedule?", de: "Arbeitsplan löschen?" }))) start(async () => { await deleteTeacherSchedule(teacherId); router.refresh(); }); };
 
@@ -601,7 +578,6 @@ function JadvalTab({ teachers, canManage, locale, onAdd, onEdit }: {
   );
 }
 
-/* ───────── 3) Maosh hisoblash ───────── */
 function MaoshTab({ teachers, calc, locale }: { teachers: VTeacher[]; calc: (t: VTeacher) => { workDays: number; keldi: number; base: number; asosiy: number }; locale: Locale }) {
   if (teachers.length === 0) return <Empty locale={locale} />;
   return (
@@ -635,12 +611,10 @@ function MaoshTab({ teachers, calc, locale }: { teachers: VTeacher[]; calc: (t: 
   );
 }
 
-/* ───────── Ish jadvali formasi (drawer) ───────── */
 const WEEKDAY_VALUES = [1, 2, 3, 4, 5, 6, 7];
 function ScheduleForm({ teachers, initial, locale, onClose }: { teachers: VTeacher[]; initial: VTeacher | null; locale: Locale; onClose: () => void }) {
   const [state, action, pending] = useActionState<FormState, FormData>(saveTeacherSchedule, {});
   const [mounted, setMounted] = useState(false);
-  // Ish kunlari guruh kunlaridan oldindan to'ldiriladi (jadval bo'lsa — o'zining kunlari)
   const [days, setDays] = useState<number[]>(initial?.schedule?.weekdays?.length ? initial.schedule.weekdays : (initial?.groupWeekdays ?? []));
   const formRef = useRef<HTMLFormElement>(null);
   const pickTeacher = (id: string) => {

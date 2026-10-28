@@ -20,7 +20,6 @@ interface Props {
   onCallback: (v: string) => void;
 }
 
-// Qabul qilinmagan qo'ng'iroqlar — eski CRM'dagi kartalar ko'rinishida.
 export default function MissedList({ calls, locale, canMark, callback, onCallback }: Props) {
   const router = useRouter();
   const [busyId, setBusyId] = useState<string | null>(null);

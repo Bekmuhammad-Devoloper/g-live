@@ -9,14 +9,10 @@ import { RECEIPT_MODE_KEY, RECEIPT_MODES, type ReceiptMode } from "@/lib/receipt
 import { DEFAULT_FEE_KEY } from "@/lib/debt";
 import { BRAND_KEYS } from "@/lib/brand";
 
-// Umumiy sozlamalar bo'limining BAZAGA yoziladigan amallari.
-// (Qolgan bo'limlar hozircha localStorage'da — ular faqat ko'rinish sozlamalari.)
-
 const ALLOWED = [ROLES.DIRECTOR, ROLES.DEPUTY_DIRECTOR];
 
 export type SettingResult = { ok?: boolean; error?: string };
 
-/** Chek yuklash majburiyligini saqlaydi (to'lov qabul qilish formasi shunga qaraydi). */
 export async function saveReceiptMode(mode: string): Promise<SettingResult> {
   const s = await requireSession();
   if (!ALLOWED.includes(s.role as never)) return { error: "forbidden" };
@@ -33,18 +29,12 @@ export async function saveReceiptMode(mode: string): Promise<SettingResult> {
     reason: "Chek yuklash siyosati o'zgartirildi",
   });
 
-  // To'lov qabul qilinadigan sahifalar yangi qoidani darhol olsin
   revalidatePath("/settings");
   revalidatePath("/students");
   revalidatePath("/payments");
   return { ok: true };
 }
 
-/**
- * Markazning umumiy oylik to'lovi (so'm). O'quvchi hech qaysi guruhda
- * bo'lmagan oylar uchun qarz shu summadan hisoblanadi (src/lib/debt.ts).
- * 0 — o'chirilgan (guruhsiz oylar hisoblanmaydi).
- */
 export async function saveDefaultMonthlyFee(value: number): Promise<SettingResult> {
   const s = await requireSession();
   if (!ALLOWED.includes(s.role as never)) return { error: "forbidden" };
@@ -67,22 +57,16 @@ export async function saveDefaultMonthlyFee(value: number): Promise<SettingResul
   return { ok: true };
 }
 
-/** Logotip manzili: faqat ilova ichidagi yo'l (/uploads/..., /logo.png) yoki https havola. Bo'sh — standart. */
 function cleanLogoUrl(v: unknown): string | null {
   const s = typeof v === "string" ? v.trim() : "";
   if (!s) return "";
   if (s.length > 500) return null;
-  // Bo'shliq, qo'shtirnoq, burchak qavslar va teskari slesh taqiqlanadi
   if (/[\s"'<>\\]/.test(s)) return null;
   if (s.startsWith("/") && !s.startsWith("//")) return s;
   if (/^https:\/\/\S+$/i.test(s)) return s;
   return null;
 }
 
-/**
- * Markaz brendi — nomi, yorug' va qorong'i fon uchun logotiplar (Setting: brand.*).
- * Bo'sh qiymat saqlanadi: getBrand() u holda standart qiymatga (ORG_NAME / asosiy markaz) qaytadi.
- */
 export async function saveBrand(input: { name: string; logo: string; logoDark: string }): Promise<SettingResult> {
   const s = await requireSession();
   if (!ALLOWED.includes(s.role as never)) return { error: "forbidden" };
@@ -107,7 +91,6 @@ export async function saveBrand(input: { name: string; logo: string; logoDark: s
     reason: "Markaz brendi o'zgartirildi",
   });
 
-  // Nom va logotip butun ilova (sidebar, kirish sahifasi, manifest) bo'ylab ishlatiladi
   revalidatePath("/", "layout");
   return { ok: true };
 }

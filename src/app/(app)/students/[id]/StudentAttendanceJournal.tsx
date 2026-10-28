@@ -15,7 +15,6 @@ const MONTHS: Record<Locale, string[]> = {
   en: ["January", "February", "March", "April", "May", "June", "July", "August", "September", "October", "November", "December"],
   de: ["Januar", "Februar", "März", "April", "Mai", "Juni", "Juli", "August", "September", "Oktober", "November", "Dezember"],
 };
-// Hafta kunlari: 0 = Yakshanba (JS getDay)
 const WEEKDAYS: Record<Locale, string[]> = {
   uz: ["Ya", "Du", "Se", "Ch", "Pa", "Ju", "Sh"],
   ru: ["Вс", "Пн", "Вт", "Ср", "Чт", "Пт", "Сб"],
@@ -23,7 +22,6 @@ const WEEKDAYS: Record<Locale, string[]> = {
   de: ["So", "Mo", "Di", "Mi", "Do", "Fr", "Sa"],
 };
 
-// Ranglar guruh sahifasidagi davomat jurnali (AttendanceJournal) bilan bir xil
 const STATUS_STYLE: Record<string, string> = {
   PRESENT: "bg-emerald-500 text-white",
   LATE: "bg-amber-500 text-white",
@@ -40,10 +38,6 @@ const LEGEND_DOT: Record<string, string> = {
   FUTURE: "border border-dashed border-slate-300 dark:border-slate-600",
 };
 
-/**
- * O'quvchi profilidagi oylik davomat jurnali (faqat ko'rish): har bir guruh uchun
- * oyning barcha dars sanalari va o'quvchining har kungi holati. Belgilash — guruh sahifasida.
- */
 export function StudentAttendanceJournal({ studentId, locale, initial }: { studentId: string; locale: Locale; initial: StudentJournal }) {
   const L = (uz: string, ru: string, en: string, de: string) => tr(locale, { uz, ru, en, de });
   const [ym, setYm] = useState({ y: initial.year, m: initial.month0 });
@@ -54,7 +48,6 @@ export function StudentAttendanceJournal({ studentId, locale, initial }: { stude
 
   const isInitial = (y: number, m: number) => y === initial.year && m === initial.month0;
 
-  // Sahifa yangilanganda (router.refresh) joriy oy ma'lumoti ham yangilanadi
   useEffect(() => {
     if (isInitial(ym.y, ym.m)) { reqRef.current++; setData(initial); setFailed(false); }
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -101,7 +94,6 @@ export function StudentAttendanceJournal({ studentId, locale, initial }: { stude
 
   return (
     <div className="rounded-2xl border border-slate-200/70 bg-white p-4 shadow-card dark:border-slate-800 dark:bg-slate-900">
-      {/* Sarlavha + oy tanlovi + izoh */}
       <div className="mb-3 flex flex-wrap items-center gap-2">
         <h3 className="mr-2 flex items-center gap-2 text-sm font-semibold text-slate-700 dark:text-slate-200">
           <Icon name="calendar" className="h-4 w-4 text-slate-400" /> {L("Oylik davomat", "Посещаемость за месяц", "Monthly attendance", "Monatliche Anwesenheit")}
@@ -149,7 +141,6 @@ export function StudentAttendanceJournal({ studentId, locale, initial }: { stude
                     {g.teacher && <span className="flex items-center gap-1"><Icon name="user" className="h-3 w-3" />{g.teacher}</span>}
                   </div>
                 </div>
-                {/* Oylik xulosa */}
                 <div className="flex flex-wrap gap-1.5 text-[11px] font-semibold tabular-nums">
                   <span className="rounded-full bg-emerald-50 px-2 py-0.5 text-emerald-700 dark:bg-emerald-500/10 dark:text-emerald-400">{L("Keldi", "Пришёл", "Came", "Anwesend")}: {g.came}</span>
                   <span className="rounded-full bg-rose-50 px-2 py-0.5 text-rose-600 dark:bg-rose-500/10 dark:text-rose-400">{L("Kelmadi", "Не пришёл", "Missed", "Gefehlt")}: {g.missed}</span>

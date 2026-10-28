@@ -12,8 +12,6 @@ export type Res = { ok?: boolean; error?: string };
 
 const MAX_PRICE = 1_000_000;
 
-// ── Sovg'alar ──
-
 export async function saveItem(fd: FormData): Promise<Res> {
   const s = await requireSession();
   if (!canWrite(s.role, MODULES.MARKET)) return { error: tr(s.locale, { uz: "Ruxsat yo'q", ru: "Нет доступа", en: "No permission", de: "Keine Berechtigung" }) };
@@ -30,8 +28,6 @@ export async function saveItem(fd: FormData): Promise<Res> {
   const stock = stockRaw === "" ? null : Number(stockRaw);
   if (stock !== null && (!Number.isInteger(stock) || stock < 0)) return { error: tr(s.locale, { uz: "Zaxira noto'g'ri", ru: "Неверный остаток", en: "Invalid stock", de: "Ungültiger Bestand" }) };
 
-  // Filial doirasi formadan: "Barcha filiallar uchun" belgilansa — branchId yo'q
-  // (o'quvchi tomonida filialsiz sovg'a hamma filialga ko'rinadi).
   const allBranches = String(fd.get("allBranches") ?? "") === "1";
 
   const data = {
@@ -77,8 +73,6 @@ export async function deleteItem(id: string): Promise<Res> {
   return { ok: true };
 }
 
-// ── Buyurtmalar ──
-
 export async function setOrderStatus(id: string, status: "DELIVERED" | "CANCELLED" | "PENDING"): Promise<Res> {
   const s = await requireSession();
   if (!canWrite(s.role, MODULES.MARKET)) return { error: tr(s.locale, { uz: "Ruxsat yo'q", ru: "Нет доступа", en: "No permission", de: "Keine Berechtigung" }) };
@@ -100,7 +94,6 @@ export async function setOrderStatus(id: string, status: "DELIVERED" | "CANCELLE
       where: { id },
       data: { status, deliveredAt: status === "DELIVERED" ? new Date() : null },
     });
-    // Bekor qilinsa tanga qaytadi va zaxira tiklanadi
     if (status === "CANCELLED" && order.item.stock !== null) {
       await tx.marketItem.update({ where: { id: order.itemId }, data: { stock: { increment: 1 } } });
     }

@@ -21,25 +21,7 @@ import { buildLessonDays, nextLessonDay } from "./_schedule";
 import MissingStudent from "./MissingStudent";
 import { getBrand } from "@/lib/brand";
 
-// O'quvchi "Start" ekrani — berilgan maket bilan birma-bir.
-// Barcha ikonka va illyustratsiyalar SVG (emoji EMAS — bayroq emojisi
-// Windows'da "DE" harflari bo'lib chiqib ketadi). Raqamlar haqiqiy:
-//   Wörter   — imtihon natijalari o'rtachasi
-//   Lesen    — baholangan uy vazifalari o'rtachasi
-//   Hören    — davomat foizi (keldi/darslar)
-//   Sprechen — guruh kursining o'tilgan darslari foizi
-//   Münzen   — keldi×5 + baholangan vazifa×10
-//   Streak   — so'nggi ketma-ket qatnashgan darslar
-//   Rang     — guruhdoshlar orasida davomat bo'yicha O'RIN (1 = birinchi)
 
-
-// ── Ko'nikma rasmlari (public/skills/) ──
-// Rasm FAQAT kartadagi foizga qarab tanlanadi — 4 ta teng bo'lak:
-//   1 -> 0-25%   2 -> 26-50%   3 -> 51-75%   4 -> 76-100%
-// Ilgari "ma'lumot hali yo'q" holatida o'rtacha rasm qo'yilardi, natijada
-// kartada 0% yozilib, 2-rasm turardi — foiz bilan rasm bir-biriga mos
-// kelmasdi. Endi bunday istisno yo'q.
-// Rasm hali yuklanmagan bo'lsa — pastdagi SVG ikonka ishlatiladi (sayt buzilmaydi).
 function skillLevel(pct: number): 1 | 2 | 3 | 4 {
   if (pct <= 25) return 1;
   if (pct <= 50) return 2;
@@ -47,25 +29,18 @@ function skillLevel(pct: number): 1 | 2 | 3 | 4 {
   return 4;
 }
 function skillImage(base: string, pct: number): string | null {
-  // Ikki xil joylashuv qo'llab-quvvatlanadi:
-  //   public/skills/hoeren/3.png   (papkali)
-  //   public/skills/hoeren-3.png   (yassi)
-  // Aniq daraja topilmasa — pastroq darajadagi eng yaqin rasm olinadi.
-  // Shunda rasmlar to'liq yuklanmagan bo'lsa ham kartalar bir xil ko'rinadi
-  // (ba'zisi rasm, ba'zisi SVG bo'lib chalkashmaydi).
   try {
     for (let lvl = skillLevel(pct); lvl >= 1; lvl--) {
       for (const rel of [`${base}/${lvl}.png`, `${base}-${lvl}.png`]) {
         if (fs.existsSync(path.join(process.cwd(), "public", "skills", rel))) return `/skills/${rel}`;
       }
     }
-  } catch { /* fayl tizimi o'qilmasa — SVG ikonka ishlatiladi */ }
+  } catch { }
   return null;
 }
 
 
-// ── Maket ikonkalari (SVG, chiziqli uslub) ──
-const sw = 2; // stroke-width
+const sw = 2;
 function IcoHeadphones({ c = TEAL, s = 40 }: { c?: string; s?: number }) {
   return (
     <svg width={s} height={s} viewBox="0 0 24 24" fill="none" stroke={c} strokeWidth={sw} strokeLinecap="round" strokeLinejoin="round">
@@ -95,8 +70,6 @@ function IcoTarget({ c = "white", s = 34 }: { c?: string; s?: number }) {
     </svg>
   );
 }
-// Yulduz — yig'ilgan yutuq (sarflanmaydi). Feruza doira ichida OLTIN yulduz:
-// tanga yagona oltin disk bo'lib qolsin, lekin "mukofot = oltin" ishorasi yo'qolmasin.
 function IcoStarGold({ s = 24 }: { s?: number }) {
   return (
     <svg width={s} height={s} viewBox="0 0 24 24" strokeLinejoin="round">
@@ -113,8 +86,6 @@ function IcoStarGold({ s = 24 }: { s?: number }) {
   );
 }
 
-// Yulduz pog'onasi — medal. Ichida yulduz bor: pog'ona aynan yulduz
-// yig'ib ochilishi bir qarashda o'qilsin.
 function IcoMedalGold({ s = 26 }: { s?: number }) {
   return (
     <svg width={s} height={s} viewBox="0 0 24 24">
@@ -125,17 +96,13 @@ function IcoMedalGold({ s = 26 }: { s?: number }) {
           <stop offset="100%" stopColor="#ef9f21" />
         </linearGradient>
       </defs>
-      {/* Lentalar */}
       <path d="M8.2 2.5h3L8.6 8.2 5.6 6.9 8.2 2.5Zm7.6 0h-3l2.6 5.7 3-1.3-2.6-4.4Z" fill="#fff" fillOpacity="0.85" />
-      {/* Disk */}
       <circle cx="12" cy="15" r="6.6" fill="url(#glMedalGold)" stroke="#fff7de" strokeOpacity="0.6" strokeWidth="0.9" />
-      {/* Ichidagi yulduz */}
       <path d="M12 11.3l1.16 2.35 2.59.38-1.87 1.82.44 2.58L12 17.2l-2.32 1.23.44-2.58-1.87-1.82 2.59-.38L12 11.3Z" fill="#fff8e1" />
     </svg>
   );
 }
 
-// Reyting — o'sish strelkasi (chiziqli grafik), tilla rangda
 function IcoGrowthGold({ s = 24 }: { s?: number }) {
   return (
     <svg width={s} height={s} viewBox="0 0 24 24" fill="none" strokeWidth="2.4" strokeLinecap="round" strokeLinejoin="round">
@@ -153,12 +120,9 @@ function IcoGrowthGold({ s = 24 }: { s?: number }) {
 }
 
 
-// ── Germaniya bayrog'i (silliq to'lqin, rasmiy ranglar) ──
-// Uch rangni alohida to'lqinlantirish o'rniga butun bayroq shakli clipPath
-// qilinadi va ichiga tekis chiziqlar chiziladi — chetlari toza chiqadi.
 function GermanFlag({ w = 88 }: { w?: number }) {
   const h = Math.round(w * 0.6);
-  const amp = h * 0.13; // to'lqin balandligi
+  const amp = h * 0.13;
   const wave = `M0 ${amp}
     C ${w * 0.3} ${-amp * 0.6}, ${w * 0.62} ${amp * 1.7}, ${w} ${amp * 0.2}
     L ${w} ${h + amp * 0.2}
@@ -178,11 +142,9 @@ function GermanFlag({ w = 88 }: { w?: number }) {
         </linearGradient>
       </defs>
 
-      {/* tayoq */}
       <rect x="0.5" y="0" width="3" height={h + amp * 2 + 20} rx="1.5" fill="#dceef5" />
       <circle cx="2" cy="2.4" r="2.4" fill="#dceef5" />
 
-      {/* bayroq: uch tekis chiziq, to'lqin shakli bo'yicha kesilgan */}
       <g transform="translate(4.5,3)" clipPath="url(#glFlagClip)">
         <rect x="0" y={-amp * 2} width={w} height={h / 3 + amp * 2} fill="#111111" />
         <rect x="0" y={h / 3} width={w} height={h / 3} fill="#DD0000" />
@@ -193,7 +155,6 @@ function GermanFlag({ w = 88 }: { w?: number }) {
   );
 }
 
-// ── Brandenburg darvozasi (soddalashtirilgan) ──
 function Gate({ w = 58, c = "#e8f2f7" }: { w?: number; c?: string }) {
   const h = Math.round(w * 0.72);
   return (
@@ -208,7 +169,6 @@ function Gate({ w = 58, c = "#e8f2f7" }: { w?: number; c?: string }) {
   );
 }
 
-// ── Planshet (o'ynatish tugmasi bilan) ──
 function Tablet({ w = 64, tone = "#0e7490" }: { w?: number; tone?: string }) {
   const h = Math.round(w * 0.7);
   return (
@@ -221,7 +181,6 @@ function Tablet({ w = 64, tone = "#0e7490" }: { w?: number; tone?: string }) {
   );
 }
 
-// ── Katta quloqchin (Videos & Podcasts illyustratsiyasi) ──
 function BigHeadphones({ w = 92 }: { w?: number }) {
   return (
     <svg width={w} height={w} viewBox="0 0 24 24" fill="none" stroke={TEAL} strokeWidth={1.7} strokeLinecap="round" strokeLinejoin="round">
@@ -254,7 +213,6 @@ export default async function StudentStartPage() {
           group: {
             select: {
               id: true, name: true, levelCode: true, programId: true,
-              // Dars kunlari kalendari va "Keyingi dars" banneri uchun jadval
               weekdays: true, startTime: true, endTime: true, room: true, startDate: true, endDate: true, lessonsPerMonth: true,
               program: { select: { name: true, lessonsPerMonth: true } },
             },
@@ -263,59 +221,42 @@ export default async function StudentStartPage() {
       },
     },
   });
-  // Student yozuvi yo'q — /dashboard ga redirect AYLANISH hosil qiladi
-  // (dashboard STUDENT ni yana shu yerga qaytaradi). Xabar ko'rsatamiz.
   if (!student) return <MissingStudent />;
 
   const group = student.enrollments[0]?.group ?? null;
 
-  // ── Dars jadvali: keyingi dars (kalendar profilda) ──
   const todayISO = todayISOLocal();
   const now = new Date();
-  // Dars kunlari (src/app/student/_schedule.ts) — profildagi kalendar bilan bir xil manba
   const lessonDays = buildLessonDays(student.enrollments.map((e) => e.group), now, 0, 1);
   const hasSchedule = student.enrollments.some((e) => !!e.group.weekdays);
   const nextLesson = nextLessonDay(lessonDays, todayISO, now);
 
   const [prog, levels, mates, unread, skillScores] = await Promise.all([
-    // Jarayon YAGONA joyda (src/lib/studentProgress.ts) — o'quvchi ko'rgan
-    // darslar ham hisobga olinadi, faqat o'qituvchi belgilagani emas
     getStudentProgress(student.id, group),
     getActiveLevels(),
     group
       ? prisma.groupStudent.findMany({ where: { groupId: group.id, isActive: true }, select: { studentId: true } })
       : Promise.resolve([]),
     prisma.notification.count({ where: { userId: session.userId, isRead: false } }),
-    // Ko'nikma plitkalari. Ilgari davomat/vazifa/imtihon o'rtachasidan
-    // hisoblanardi — o'quvchining mashqiga bog'liq emas edi va hech qachon
-    // pasaymasdi. Endi lib/skills.ts: to'g'ri bajarilgan mashq/vazifa ball
-    // qo'shadi, ilova ochilmagan har kun ball ayiradi.
     getSkills(student.id),
   ]);
 
-  // ── Ko'nikmalar ──
   const woerter = skillScores.words;
   const lesen = skillScores.reading;
   const hoeren = skillScores.listening;
   const sprechen = skillScores.speaking;
 
-  // ── Kurs jarayoni ──
-  // Kartochka JORIY daraja haqida gapiradi ("A1 · Bo'lim 3"), shuning uchun
-  // foiz ham o'sha darajaniki bo'lishi kerak — butun dasturniki emas.
   const curLevel = matchLevel(group?.levelCode ?? student.currentLevel, levels);
   const level = curLevel?.code ?? group?.levelCode ?? student.currentLevel ?? "A1";
   const lvlStat = prog.byLevel.get(level) ?? null;
   const chapter = Math.max(1, lvlStat?.done ?? prog.doneCount);
   const kursPct = lvlStat?.pct ?? prog.overallPct;
   const currentLesson = prog.currentLesson;
-  // Kartochka foni — shu darajaning banneri (ma'muriyat yuklagan bo'lsa)
   const levelBanner = curLevel?.bannerUrl ?? null;
   const levelName = curLevel ? levelTitle(curLevel, session.locale) : null;
 
-  // ── Tanga / seriya ──
-  // Hisob bitta joyda (src/lib/coins.ts) — Market va Sozlamalar bilan bir xil
-  const notifOn = await isPortalFeatureOn("mitteilungen"); // o'chirilgan bo'lsa qo'ng'iroqcha yo'q
-  const marketOn = await isPortalFeatureOn("market");        // o'chiq bo'lsa tanga plitkasi havola bo'lmaydi
+  const notifOn = await isPortalFeatureOn("mitteilungen");
+  const marketOn = await isPortalFeatureOn("market");
   const [purse, starPurse, banners, videoList, starRanks] = await Promise.all([
     coinBalance(student.id),
     starBalance(student.id),
@@ -324,60 +265,30 @@ export default async function StudentStartPage() {
     getActiveStarRanks(),
   ]);
   const coins = purse.balance;
-  const stars = starPurse.earned; // yulduz sarflanmaydi
+  const stars = starPurse.earned;
   const streak = purse.streak;
-  // Yulduz pog'onasi — plitkada nomi turadi, batafsili /student/daraja da
   const starStep = progressOf(starRanks, starPurse.earned);
 
-  // Kartada oxirgi videoning rasmi turadi. Vimeo rasm bermaydi — shuning uchun
-  // rasmi bori topilguncha oxiridan boshlab qaraymiz, topilmasa chizma qoladi.
   const lastThumb = [...videoList].reverse().map((v) => videoThumb(v.url)).find(Boolean) ?? null;
 
-  // ── Reyting: o'rin (raqam) ──
-  // Doira va mezon Sozlamalar > Ball va mukofotlar bo'limidan olinadi;
-  // yuqoridagi kubok belgisi ham aynan shu hisobni ko'rsatadi.
   const { place: rangPos } = await studentRank(student.id);
 
-  const kurseHref = "/student/kurse"; // kurs sahifasi endi portal ichida
-  // Salomlashishda TO'LIQ ism-familiya. Bitta qatorga sig'masa ikkinchi
-  // qatorga tushadi — uch nuqta bilan qirqilgani ismni o'qib bo'lmaydigan
-  // qilib qo'yardi ("Abdugaffarova Ezo...").
+  const kurseHref = "/student/kurse";
   const fullName = student.fullName.trim();
-  // Profil rasmi: avval o'quvchi rasmi, keyin foydalanuvchi rasmi; ikkalasi ham yo'q bo'lsa — logotip
   const avatarUrl = student.imageUrl || student.user?.imageUrl || null;
 
-  // Yangi o'quvchida hali hech qanday ma'lumot yo'q. Bunda 0% ko'rsatish
-  // "ma'lumot yo'q" emas, "yiqilding" degan ma'no beradi — ustiga eng past
-  // darajadagi (xafa) ko'nikma rasmi tanlanardi. Shu sabab har ko'nikma uchun
-  // "manbasi bormi" belgisi olib yuriladi: bo'lmasa foiz o'rniga chiziqcha.
   const skills = [
-    // Ma'lumot yo'q bo'lsa rasm YASHIRILMAYDI, balki NEYTRAL daraja (3)
-    // ko'rsatiladi. Aks holda qator aralash chiqadi — bittasi rasm, bittasi
-    // chiziqli ikonka — va yagona rasmli karta eng past (xafa) darajada
-    // bo'lib, yangi o'quvchiga "yomon boshladingiz" degan taassurot beradi.
-    // Foiz o'rnidagi chiziqcha ma'lumot yo'qligini o'zi aytib turadi.
     { key: "w", label: t.words, pct: woerter, img: skillImage("woerter", woerter), icon: <span style={{ color: TEAL }} className="text-[28px] font-extrabold leading-none">W</span> },
     { key: "l", label: t.reading, pct: lesen, img: skillImage("lesen", lesen), icon: <IcoBook s={34} /> },
     { key: "h", label: t.listening, pct: hoeren, img: skillImage("hoeren", hoeren), icon: <IcoHeadphones s={34} /> },
     { key: "s", label: t.speaking, pct: sprechen, img: skillImage("sprechen", sprechen), icon: <IcoMic s={34} /> },
   ];
 
-  // Karta uslubi — yagona manba `_ui.tsx` dagi CARD ("gl-glass").
-  // Ilgari bu yerda aynan shu satr ikkinchi marta yozilgan edi va ikkalasi
-  // vaqt o'tib bir-biridan uzilib qolardi.
   const card = CARD;
 
   return (
     <div className="space-y-[18px]">
-      {/* ── Yuqori qator: o'quvchi, seriya va bildirishnoma ── */}
-      {/* Salomlashish matni ("Salom, ..." va "Nemis tilini o'rganishga
-          tayyormisiz?") olib tashlandi: har ochilganda takrorlanadigan,
-          hech qanday ma'lumot bermaydigan matn edi va ekranning eng
-          qimmatli joyidan — tepasidan — ikki qator yer yerdi.
-          Qator endi bitta satr, shu sabab o'rtaga tekislangan. */}
       <div className="flex items-center gap-2.5 pt-1">
-        {/* Avatar: rasm qo'yilgan bo'lsa — o'sha, bo'lmasa Germaniya bayrog'i (doira).
-            Logotip keng bo'lgani uchun doiraga kesib solinganda chiroyli chiqmasdi. */}
         {avatarUrl ? (
           <img
             src={avatarUrl}
@@ -389,22 +300,9 @@ export default async function StudentStartPage() {
             <FlagAvatar s={44} />
           </span>
         )}
-        {/* Ism IKKI QATORGACHA cho'ziladi, kesilmaydi.
-            Ilgari bitta qatorda `truncate` edi va uzun familiya "Abdugaffarova…"
-            bo'lib qirqilardi: qatorda rasm (44) + seriya (~86) + qo'ng'iroq (44)
-            turgani uchun ismga 360px ekranda atigi ~135px qoladi — bu 16px
-            extrabold da 13-14 ta belgi.
-            Ikki qator 17px dan = 34px, ya'ni avatardan (44px) past — shu sabab
-            qator balandligi umuman o'zgarmaydi. */}
         <h1 className="min-w-0 flex-1 text-[15.5px] font-extrabold leading-[1.1] tracking-[-0.015em] text-slate-900 min-[380px]:text-[16.5px] sm:text-[18px]">
           <span className="line-clamp-2">{fullName}</span>
         </h1>
-        {/* Qo'ng'iroq va seriya — ichki sahifalardagi HeaderBadges bilan
-            bir xil ko'rinish va bir xil tartibda. `relative` shart: nuqta
-            qo'ng'iroqning o'zida turishi kerak, aks holda u eng yaqin
-            joylashtirilgan ota-elementga nisbatan suzib ketadi. */}
-        {/* Seriya — har kuni ko'rinib tursin: pastdagi plitkalargacha
-            aylantirmasdan ham necha kun ketma-ket kelgani bilinadi. */}
         <div className="gl-glass flex h-11 shrink-0 items-center gap-1.5 rounded-2xl px-3">
           <IcoFlame s={26} />
           <div className="leading-none">
@@ -415,7 +313,6 @@ export default async function StudentStartPage() {
         {notifOn && (
         <Link href="/student/mitteilungen" aria-label={t.notifications} className="gl-glass relative grid h-11 w-11 shrink-0 place-items-center rounded-2xl">
           <IcoBell c={INK} s={25} />
-          {/* bildirishnoma nuqtasi — faqat o'qilmagan xabar bo'lsa */}
           {unread > 0 && (
             <span className="absolute right-[9px] top-[9px] h-[9px] w-[9px] rounded-full ring-2 ring-white" style={{ background: "#f4511e" }} />
           )}
@@ -423,7 +320,6 @@ export default async function StudentStartPage() {
         )}
       </div>
 
-      {/* ── 4 ko'nikma kartasi ── */}
       <div className="mt-1 grid grid-cols-4 gap-2.5">
         {skills.map((sk) => (
           <div key={sk.key} className={`${card} flex flex-col items-center gap-2 rounded-[22px] px-1 pb-3.5 pt-4`}>
@@ -433,9 +329,6 @@ export default async function StudentStartPage() {
                 ? <img src={sk.img} alt="" className="h-12 w-12 object-contain" />
                 : sk.icon}
             </div>
-            {/* Qator balandligi qat'iy: `text-[..]` faqat shrift o'lchamini beradi,
-                leading esa body'dan meros bo'lardi — karta balandligi tilga qarab
-                o'zgarib ketardi (uz/ru/de yorliqlari har xil). */}
             <div
               className={
                 "w-full px-0.5 text-center font-semibold leading-[15px] text-slate-800 " +
@@ -446,19 +339,12 @@ export default async function StudentStartPage() {
             </div>
             <div className="relative grid place-items-center">
               <Ring pct={sk.pct} size={52} stroke={4.5} />
-              {/* Ma'lumot bo'lmasa ham foiz ko'rsatiladi (0%) — chiziqcha
-                  o'quvchida "ishlamayapti" degan taassurot qoldirardi */}
               <span className="absolute text-[11px] font-bold leading-none text-slate-800">{sk.pct}%</span>
             </div>
           </div>
         ))}
       </div>
 
-      {/* ── Sizning natijangiz ──
-          Ayni damda o'qilayotgan darajaning banneri fon bo'ladi (ma'muriyat
-          yuklagan bo'lsa), yozuvlar esa o'sha kursga tegishli: daraja nomi,
-          bo'lim raqami va joriy dars mavzusi. Banner bo'lmasa — avvalgi
-          shisha ko'rinish. */}
       <HeroCarousel slides={[
       <Link
         key="course"
@@ -473,8 +359,6 @@ export default async function StudentStartPage() {
           <>
             {/* eslint-disable-next-line @next/next/no-img-element */}
             <img src={levelBanner} alt="" className="absolute inset-0 h-full w-full object-cover" />
-            {/* Yozuvlar rasm ustida ham aniq o'qilishi uchun — chapdan o'ngga
-                so'nuvchi qoramtir parda (matn chap tomonda turadi) */}
             <span className="absolute inset-0 bg-gradient-to-r from-black/85 via-black/60 to-black/25" />
           </>
         ) : null}
@@ -523,7 +407,6 @@ export default async function StudentStartPage() {
         </div>
       </Link>,
 
-      /* ── Keyingi dars — kurs banneri bilan navbatma-navbat ko'rinadi ── */
       <NextLessonBanner
         key="next"
         t={t}
@@ -536,18 +419,11 @@ export default async function StudentStartPage() {
       />,
       ]} />
 
-      {/* ── Tanga · Yulduz · Seriya · Reyting ── */}
       <div className="grid grid-cols-4 gap-2">
         {[
-          // Tanga — doira ichidagi belgi emas, tanganing o'zi (shu sabab `bare`)
-          // Tanga -> Market (sarflanadigan joy), yulduz -> qanday yig'ish
           { icon: <CoinGold s={46} mark={coinMark} />, bare: true, label: t.coins, value: String(coins), href: marketOn ? "/student/market" : undefined },
           { icon: <IcoStarGold />, bare: false, label: t.stars, value: String(stars), href: "/student/yulduz" },
-          // Seriya yuqori qatorga (olov belgisiga) ko'chdi — bu yerda uning
-          // o'rnida yulduz pog'onasi turadi: o'quvchi qaysi bosqichdaligi
-          // raqamdan ko'ra ko'proq narsa aytadi.
           {
-            // Ma'muriyat pog'onaga belgi yuklagan bo'lsa — o'sha turadi
             icon: starStep.current?.iconUrl
               // eslint-disable-next-line @next/next/no-img-element
               ? <img src={starStep.current.iconUrl} alt="" className="h-[46px] w-[46px] object-contain" />
@@ -575,9 +451,6 @@ export default async function StudentStartPage() {
                 </span>
               )}
               <span className="text-[11.5px] font-semibold leading-none text-slate-600">{it.label}</span>
-              {/* Pog'ona nomi bitta qatorga sig'maydi (masalan "Yangi boshlovchi")
-                  — kesib tashlash o'rniga ikki qatorga bo'linadi. Plitkalar
-                  grid ichida bo'lgani uchun balandligi baribir tenglashadi. */}
               <span
                 className={
                   "w-full px-0.5 text-center font-extrabold text-slate-900 " +
@@ -592,7 +465,6 @@ export default async function StudentStartPage() {
           );
           const cls = `${card} flex flex-col items-center gap-2 rounded-[22px] px-1 pb-3 pt-3`;
 
-          // Reyting bosilganda to'liq ro'yxat ochiladi, qolganlari oddiy karta
           return it.href ? (
             <Link key={it.label} href={it.href} className={`${cls} transition active:scale-[0.97]`}>
               {inner}
@@ -603,7 +475,6 @@ export default async function StudentStartPage() {
         })}
       </div>
 
-      {/* ── Reklama banneri (Sozlamalar > Bosh sahifa) ── */}
       <BannerCarousel
         items={banners.map((b) => ({
           id: b.id, title: b.title, subtitle: b.subtitle, btnLabel: b.btnLabel,
@@ -611,11 +482,7 @@ export default async function StudentStartPage() {
         }))}
       />
 
-      {/* ── Videos & Podcasts ── */}
       {lastThumb ? (
-        // Oxirgi videoning rasmi butun kartani egallaydi. Matn pastda,
-        // qora gradient ustida turadi — rasm qanday bo'lishidan qat'i nazar
-        // oq harflar o'qiladi.
         <Link href="/student/videos" className={`${card} relative block overflow-hidden active:scale-[0.99]`}>
           <div className="relative aspect-[16/9] w-full bg-slate-800">
             {/* eslint-disable-next-line @next/next/no-img-element */}
@@ -636,7 +503,6 @@ export default async function StudentStartPage() {
           </div>
         </Link>
       ) : (
-        // Video yo'q — avvalgidek chizma
         <div className={`${card} relative overflow-hidden p-6`}>
           <div className="relative z-10 max-w-[58%]">
             <h2 className="text-[24px] font-extrabold leading-tight tracking-tight text-slate-900">{t.videosPodcasts}</h2>
@@ -658,15 +524,12 @@ export default async function StudentStartPage() {
   );
 }
 
-// ───────────────── Dars jadvali komponentlari ─────────────────
-
 const MONTHS: Record<string, string[]> = {
   uz: ["Yanvar", "Fevral", "Mart", "Aprel", "May", "Iyun", "Iyul", "Avgust", "Sentabr", "Oktabr", "Noyabr", "Dekabr"],
   ru: ["Январь", "Февраль", "Март", "Апрель", "Май", "Июнь", "Июль", "Август", "Сентябрь", "Октябрь", "Ноябрь", "Декабрь"],
   en: ["January", "February", "March", "April", "May", "June", "July", "August", "September", "October", "November", "December"],
   de: ["Januar", "Februar", "März", "April", "Mai", "Juni", "Juli", "August", "September", "Oktober", "November", "Dezember"],
 };
-// Dushanbadan boshlab (kalendar ustunlari ham shu tartibda)
 const WEEKDAYS_SHORT: Record<string, string[]> = {
   uz: ["Du", "Se", "Ch", "Pa", "Ju", "Sh", "Ya"],
   ru: ["Пн", "Вт", "Ср", "Чт", "Пт", "Сб", "Вс"],
@@ -679,7 +542,6 @@ const WEEKDAYS_FULL: Record<string, string[]> = {
   en: ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday", "Sunday"],
   de: ["Montag", "Dienstag", "Mittwoch", "Donnerstag", "Freitag", "Samstag", "Sonntag"],
 };
-/** "YYYY-MM-DD" → dushanba=0 … yakshanba=6 */
 function mondayIndex(iso: string): number {
   const d = new Date(iso + "T12:00:00");
   return (d.getDay() + 6) % 7;
@@ -688,11 +550,6 @@ function daysBetween(fromISO: string, toISO: string): number {
   return Math.round((new Date(toISO + "T12:00:00").getTime() - new Date(fromISO + "T12:00:00").getTime()) / 86_400_000);
 }
 
-/**
- * "Keyingi dars" banneri — kurs banneri ostidagi ikkinchi banner: qaysi kun
- * (Bugun / Ertaga / hafta kuni va sana), soat, xona, guruh. Jadval yo'q bo'lsa —
- * buni aytadigan yumshoq karta (bo'sh joy qolmaydi).
- */
 function NextLessonBanner({ t, locale, todayISO, next, hasSchedule, cardCls, imageUrl }: {
   t: ReturnType<typeof S>;
   locale: string;
@@ -726,7 +583,6 @@ function NextLessonBanner({ t, locale, todayISO, next, hasSchedule, cardCls, ima
 
   const weekday = WEEKDAYS_FULL[L][mondayIndex(next.iso)];
   const NIGHT = "#0b1a33";
-  // Shisha chip: vaqt / xona — chapda ko'k doira ichida belgi, o'ngda strelka
   const chip = "inline-flex items-center gap-1.5 rounded-full bg-white/[0.07] py-[3px] pl-[3px] pr-2 text-[12px] font-semibold ring-1 ring-white/[0.14] backdrop-blur-sm";
   const chipIco = "grid h-6 w-6 shrink-0 place-items-center rounded-full shadow-[0_4px_10px_rgba(37,99,235,0.45)]";
 
@@ -735,7 +591,6 @@ function NextLessonBanner({ t, locale, todayISO, next, hasSchedule, cardCls, ima
       className="relative flex h-full min-h-[136px] flex-col overflow-hidden rounded-[24px] p-3.5 pb-6 text-white ring-1 ring-sky-400/40 shadow-[0_18px_44px_rgba(2,16,40,0.55),0_0_0_1px_rgba(56,189,248,0.12),inset_0_1px_0_rgba(255,255,255,0.12)]"
       style={{ background: `linear-gradient(135deg, ${NIGHT} 0%, #0d2149 55%, #0b3a7a 100%)` }}
     >
-      {/* O'ng tomonda kurs rasmi — tun rangiga singib ketadi */}
       {imageUrl ? (
         <span
           className="pointer-events-none absolute inset-y-0 right-0 w-[58%]"
@@ -750,7 +605,6 @@ function NextLessonBanner({ t, locale, todayISO, next, hasSchedule, cardCls, ima
           }}
         />
       ) : null}
-      {/* Ko'k yorug'lik dog'lari */}
       <span
         className="pointer-events-none absolute -right-16 -top-24 h-64 w-64 rounded-full"
         style={{ background: "radial-gradient(circle, rgba(56,189,248,0.35) 0%, rgba(56,189,248,0) 65%)" }}
@@ -759,7 +613,6 @@ function NextLessonBanner({ t, locale, todayISO, next, hasSchedule, cardCls, ima
         className="pointer-events-none absolute -bottom-28 right-10 h-64 w-64 rounded-full"
         style={{ background: "radial-gradient(circle, rgba(37,99,235,0.45) 0%, rgba(37,99,235,0) 65%)" }}
       />
-      {/* Pastdan o'tuvchi yorug' egri chiziq */}
       <svg className="pointer-events-none absolute bottom-0 right-0 h-[62%] w-[70%]" viewBox="0 0 300 120" fill="none" preserveAspectRatio="none" aria-hidden>
         <path d="M0 118 C 90 118, 150 40, 300 20" stroke="url(#glLine)" strokeWidth="2" />
         <circle cx="210" cy="61" r="4" fill="#38bdf8" />
@@ -772,7 +625,6 @@ function NextLessonBanner({ t, locale, todayISO, next, hasSchedule, cardCls, ima
         </defs>
       </svg>
 
-      {/* Yuqori qator: belgi + sarlavha + chiziq · guruh nomi */}
       <div className="relative flex items-center gap-3">
         <span className="grid h-6 w-6 shrink-0 place-items-center rounded-lg bg-white/[0.08] ring-1 ring-white/[0.14]">
           <IcoCalendar c="#7dd3fc" s={13} />
@@ -786,7 +638,6 @@ function NextLessonBanner({ t, locale, todayISO, next, hasSchedule, cardCls, ima
       </div>
 
       <div className="relative mt-2.5 flex flex-1 items-center gap-3">
-        {/* Sana plitkasi — ko'k sarlavhali kalendar varag'i */}
         <div className="relative w-[62px] shrink-0 overflow-hidden rounded-[14px] bg-[#eef3ff] text-center shadow-[0_12px_28px_rgba(2,16,40,0.55),0_0_0_1px_rgba(56,189,248,0.35)]">
           <span
             className="block w-full py-[4px] text-[10px] font-extrabold uppercase tracking-[0.14em] text-white"

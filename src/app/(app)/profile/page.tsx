@@ -19,7 +19,6 @@ export default async function ProfilePage() {
   });
   if (!u) return null;
 
-  // Faoliyat statistikasi (rolga qarab mos keladigan qismi ko'rsatiladi)
   const [leads, tasksOpen, calls] = await Promise.all([
     prisma.lead.count({ where: { managerId: s.userId } }),
     prisma.task.count({ where: { assigneeId: s.userId, status: { not: "DONE" } } }),

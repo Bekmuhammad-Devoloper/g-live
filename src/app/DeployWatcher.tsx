@@ -2,21 +2,6 @@
 
 import { useEffect, useState } from "react";
 
-// Yangi deploy'dan keyin ochiq qolgan sahifa muammosi.
-//
-// Deploy'da server action identifikatorlari o'zgaradi. Brauzerda eski sahifa ochiq
-// turgan bo'lsa, undagi har bir "Saqlash" serverga eski identifikator bilan boradi va
-// "Failed to find Server Action" bilan yiqiladi — foydalanuvchi uchun tugma shunchaki
-// "ishlamaydi". Bu komponent ikki yo'l bilan oldini oladi:
-//
-//   1. Har 2 daqiqada (va oynaga qaytilganda) /api/version so'raladi. Build o'zgargan
-//      bo'lsa pastda "Tizim yangilandi — Yangilash" eslatmasi chiqadi. Sahifa O'ZICHA
-//      faqat ko'rinmayotgan (boshqa oynaga o'tilgan) va hech narsa yozilmagan holatda
-//      yangilanadi — test yoki forma yarmida turgan odamning ishi yo'qolmasin.
-//   2. Eski sahifadan ketgan so'rov baribir yiqilsa (unhandledrejection / error) —
-//      hech narsa yozilmagan bo'lsa sahifa bir marta yangilanadi (30 s qulf), aks holda
-//      eslatma chiqadi va foydalanuvchi o'zi yangilaydi.
-
 const STALE = /Server Action|older or newer deployment|unexpected response was received|Server Components render|Loading chunk|ChunkLoadError|Failed to fetch dynamically imported module/i;
 const KEY = "gl-stale-reload-at";
 const POLL_MS = 2 * 60 * 1000;
@@ -26,23 +11,19 @@ function reloadOnce(): boolean {
     const last = Number(sessionStorage.getItem(KEY) || 0);
     if (Date.now() - last < 30_000) return false;
     sessionStorage.setItem(KEY, String(Date.now()));
-  } catch { /* xotira yopiq — baribir yangilaymiz */ }
+  } catch { }
   window.location.reload();
   return true;
 }
 
-// Sahifada biror maydon to'ldirilgan yoki tanlov qilinganmi (test javoblari ham) —
-// shunday holatda sahifa hech qachon o'zicha yangilanmaydi
 let dirty = false;
 const markDirty = () => { dirty = true; };
 
-/** Sahifa ko'rinmayapti va unda yozilgan narsa yo'q — yangilash xavfsiz */
 const safeToReload = () => !dirty && document.visibilityState === "hidden" && !document.querySelector('.drawer-panel, [role="dialog"], [role="alertdialog"]');
 
 export default function DeployWatcher({ build }: { build: string }) {
   const [outdated, setOutdated] = useState(false);
 
-  // 2) Eskirgan sahifadan ketgan so'rov xatosi
   useEffect(() => {
     const stale = () => { if (dirty) setOutdated(true); else if (!reloadOnce()) setOutdated(true); };
     const onRejection = (e: PromiseRejectionEvent) => {
@@ -64,7 +45,6 @@ export default function DeployWatcher({ build }: { build: string }) {
     };
   }, []);
 
-  // 1) Build tekshiruvi
   useEffect(() => {
     if (!build || build === "dev") return;
     let stopped = false;
@@ -76,7 +56,7 @@ export default function DeployWatcher({ build }: { build: string }) {
         if (stopped || !j.build || j.build === build) return;
         if (safeToReload()) { reloadOnce(); return; }
         setOutdated(true);
-      } catch { /* tarmoq yo'q — keyingi safar */ }
+      } catch { }
     };
     const timer = setInterval(check, POLL_MS);
     const onVisible = () => { if (document.visibilityState === "visible") void check(); };

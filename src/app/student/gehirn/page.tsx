@@ -9,24 +9,11 @@ import { allTags, buildGraph } from "./parse";
 import NotesView, { type VNote } from "./NotesView";
 import GraphButton from "./GraphButton";
 
-// "Ikkinchi miya" (Zweites Gehirn) — o'quvchining shaxsiy bilim bazasi.
-// Obsidian uslubi: yozuvlar [[sarlavha]] orqali bir-biriga bog'lanadi va
-// bog'lanishlar grafda ko'rinadi.
-
 export default async function BrainPage() {
   const session = await getSession();
   if (!session) redirect("/login");
-  // ── Ikkinchi miya VAQTINCHA O'CHIRILGAN ──
-  // Kartochkasi /student/profil da kommentga olingan; manzil orqali ham
-  // kirilmasin deb shu yerda to'xtatiladi.
-  // Qaytarish: BRAIN_ENABLED ni true qiling (yoki shu blokni o'chirib,
-  // pastdagi eski qatorni tiklang).
-  // ("as boolean" — TypeScript qolgan kodni "yetib bo'lmaydi" deb
-  //  hisoblab, tip tekshiruvini buzmasligi uchun.)
   const BRAIN_ENABLED = false as boolean;
   if (!BRAIN_ENABLED) redirect("/student");
-  // Eski holat (menejer paneli orqali boshqarish):
-  // if (!(await isPortalFeatureOn("gehirn"))) redirect("/student");
   const t = S(session.locale);
 
   const student = await prisma.student.findUnique({
@@ -51,7 +38,6 @@ export default async function BrainPage() {
     tags: allTags(n),
   }));
 
-  // Bog'lanishlar soni — grafdagi qirralar (matndan o'qiladi)
   const { links } = buildGraph(rows);
   const tags = [...new Set(notes.flatMap((n) => n.tags))].sort((a, b) => a.localeCompare(b));
 

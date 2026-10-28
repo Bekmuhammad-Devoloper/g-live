@@ -24,7 +24,6 @@ const statusTone: Record<string, "green" | "amber" | "slate" | "red"> = {
   CANCELLED: "red",
 };
 
-// Onlayn yoki offline kurslar (guruhlar) ro'yxati — o'quv shakli (format) bo'yicha.
 export default async function CoursesSection({ mode }: { mode: "ONLINE" | "OFFLINE" }) {
   const s = await requireSession();
   if (!ALLOWED.includes(s.role as never)) {
@@ -33,7 +32,6 @@ export default async function CoursesSection({ mode }: { mode: "ONLINE" | "OFFLI
 
   const formats = mode === "ONLINE" ? ["ONLINE", "HYBRID"] : ["OFFLINE", "HYBRID"];
   let where: Prisma.GroupWhereInput = { format: { in: formats } };
-  // O'qituvchi faqat o'z guruhlarini ko'radi
   if (s.role === ROLES.TEACHER) where = { ...where, teacherId: s.userId };
 
   const groups = await prisma.group.findMany({
@@ -69,7 +67,6 @@ export default async function CoursesSection({ mode }: { mode: "ONLINE" | "OFFLI
 
   return (
     <>
-      {/* Kurs qo'shish paneli */}
       <div className="mb-5 flex flex-wrap items-center justify-between gap-3 rounded-2xl border border-slate-200/70 bg-white p-4 shadow-card dark:border-slate-800 dark:bg-slate-900">
         <div className="flex items-center gap-3">
           <span className="grid h-11 w-11 shrink-0 place-items-center rounded-xl bg-brand-50 text-brand-600 dark:bg-brand-500/15 dark:text-brand-300"><Icon name="layers" className="h-5 w-5" /></span>

@@ -3,14 +3,6 @@ import { prisma } from "./db";
 import { computeDebts } from "./debt";
 import { writeAudit } from "./audit";
 
-/**
- * O'quvchini guruh(lar)dan chiqarish: a'zolik bugungi sana bilan yopiladi (tarix
- * saqlanadi, keyingi oylar hisoblanmaydi) va shu guruh(lar) uchun to'lanmagan qarz
- * "Qarz tuzatish" (ADJUST) yozuvi bilan o'chiriladi. Boshqa guruhlar qarziga va qo'lda
- * kiritilgan qarzga tegilmaydi. Tuzatish yozuvini o'chirsa — qarz qaytadi.
- *
- * groupIds berilmasa — barcha faol guruhlar (arxivlash, chetlatish).
- */
 export async function leaveGroups(params: {
   studentId: string;
   groupIds?: string[];
@@ -37,7 +29,6 @@ export async function leaveGroups(params: {
       computeDebts([studentId]),
       computeDebts([studentId], new Date(), { excludeGroupIds: groupIds }),
     ]);
-    // Shu guruh(lar) sababli yuzaga kelgan qism — ular bo'lmaganda qarz qancha kam bo'lardi
     cleared = Math.max(0, (withGroups.get(studentId)?.debt ?? 0) - (withoutGroups.get(studentId)?.debt ?? 0));
     if (cleared > 0) {
       await prisma.payment.create({

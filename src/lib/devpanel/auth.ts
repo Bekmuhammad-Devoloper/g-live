@@ -7,8 +7,6 @@ import { promises as fs } from "node:fs";
 import path from "node:path";
 import { CENTERS_ROOT } from "./registry";
 
-// Dev panel kirishi — o'quv markazlari foydalanuvchilaridan butunlay alohida:
-// login/parol muhitdan (DEV_ADMIN_EMAIL, DEV_ADMIN_PASSWORD_HASH — bcrypt), alohida cookie va kalit.
 const COOKIE = "gl_dev";
 const secret = () => new TextEncoder().encode(process.env.DEV_SECRET || "");
 
@@ -32,10 +30,8 @@ export async function requireDev(): Promise<DevSession> {
   return s;
 }
 
-// Email noto'g'ri bo'lsa ham bcrypt bajariladi (javob vaqti bo'yicha farqlab bo'lmasin) — shu xesh bilan
 const DUMMY_HASH = "$2a$10$CwTycUXWue0Thq9StjUM0uJ8.F1vGQ6v0dLMm0z6UhPZPzWqgZ0Gu";
 
-// Parol tanlashga qarshi: IP bo'yicha 15 daqiqada 8 ta urinish
 const attempts = new Map<string, number[]>();
 async function clientIp(): Promise<string> {
   const h = await headers();
@@ -69,14 +65,13 @@ export async function devLogout(): Promise<void> {
   (await cookies()).delete({ name: COOKIE, path: "/dev" });
 }
 
-// ─── Audit jurnali: /opt/centers/dev-audit.jsonl ───
 const AUDIT = path.join(CENTERS_ROOT, "dev-audit.jsonl");
 
 export async function devAudit(action: string, data: Record<string, unknown> = {}): Promise<void> {
   try {
     await fs.mkdir(CENTERS_ROOT, { recursive: true });
     await fs.appendFile(AUDIT, JSON.stringify({ at: new Date().toISOString(), action, ...data }) + "\n", { mode: 0o600 });
-  } catch { /* jurnal yozilmasa amal to'xtamasin */ }
+  } catch { }
 }
 
 export async function readDevAudit(limit = 300): Promise<{ at: string; action: string; [k: string]: unknown }[]> {

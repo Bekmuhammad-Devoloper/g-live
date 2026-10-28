@@ -6,11 +6,6 @@ import { requireSession } from "@/lib/auth";
 import { ROLES } from "@/lib/constants";
 import { writeAudit } from "@/lib/audit";
 
-/* ─── Filialdagi bo'sh xona / bo'sh vaqt ─────────────────────────────────
-   Filial administratori o'z filialiga kiritadi (dashboard), direktor/o'rinbosar
-   istalgan filialga. ROP lidlar kanbanidagi filial ustunida ko'radi — lidni
-   qaysi filialga, qaysi vaqtga yo'naltirish mumkinligini bilish uchun.       */
-
 export interface VSlot {
   id: string;
   branchId: string;
@@ -19,7 +14,6 @@ export interface VSlot {
   startTime: string;
   endTime: string;
   note: string | null;
-  /** Xona sig'imi — shundan ortiq lid tashlab bo'lmaydi */
   capacity: number | null;
 }
 
@@ -27,7 +21,6 @@ export type SlotResult = { ok?: boolean; error?: string; slots?: VSlot[] };
 
 const HEAD = [ROLES.DIRECTOR, ROLES.DEPUTY_DIRECTOR];
 
-/** Kim qaysi filial vaqtlarini tahrirlay oladi: rahbariyat — hammasini, administrator — faqat o'z filialini */
 function canEdit(s: { role: string; branchId: string | null }, branchId: string): boolean {
   if (HEAD.includes(s.role as never)) return true;
   return s.role === ROLES.ADMIN && !!s.branchId && s.branchId === branchId;
@@ -44,7 +37,6 @@ export async function listBranchSlots(branchId: string): Promise<VSlot[]> {
   return rows.map(toV);
 }
 
-/** Filial xonalari — tanlov ro'yxati uchun (Xonalar bo'limidan), sig'imi bilan */
 export async function listBranchRooms(branchId: string): Promise<{ name: string; capacity: number }[]> {
   await requireSession();
   const rooms = await prisma.room.findMany({ where: { branchId, isActive: true }, select: { name: true, capacity: true }, orderBy: { name: "asc" } });
@@ -63,7 +55,6 @@ export async function addBranchSlot(input: { branchId: string; room: string; day
   if (room.length < 1) return { error: "room" };
   if (days.length < 2) return { error: "days" };
   if (!TIME_RE.test(startTime) || !TIME_RE.test(endTime) || startTime >= endTime) return { error: "time" };
-  // Sig'im: 1..200; bo'sh bo'lsa Xonalar bo'limidagi xona sig'imi (nom mos kelsa), u ham bo'lmasa cheksiz
   const capRaw = Math.trunc(Number(input.capacity));
   let capacity: number | null = Number.isFinite(capRaw) && capRaw > 0 ? Math.min(capRaw, 200) : null;
 
@@ -82,7 +73,6 @@ export async function addBranchSlot(input: { branchId: string; room: string; day
   return { ok: true, slots: await listBranchSlots(branch.id) };
 }
 
-/** Mavjud bo'sh vaqtni tahrirlash — xonaga tashlangan lidlar joyida qoladi */
 export async function updateBranchSlot(id: string, input: { room: string; days: string; startTime: string; endTime: string; note?: string; capacity?: number | null }): Promise<SlotResult> {
   const s = await requireSession();
   const row = await prisma.branchSlot.findUnique({ where: { id }, include: { _count: { select: { leads: true } } } });
@@ -97,7 +87,6 @@ export async function updateBranchSlot(id: string, input: { room: string; days: 
   if (room.length < 1) return { error: "room" };
   if (days.length < 2) return { error: "days" };
   if (!TIME_RE.test(startTime) || !TIME_RE.test(endTime) || startTime >= endTime) return { error: "time" };
-  // Sig'im: bo'sh/0 — cheksiz; xonadagi lidlar sonidan kam bo'lishi mumkin emas
   const capRaw = Math.trunc(Number(input.capacity));
   const capacity: number | null = Number.isFinite(capRaw) && capRaw > 0 ? Math.min(capRaw, 200) : null;
   if (capacity !== null && capacity < row._count.leads) return { error: "capacity" };

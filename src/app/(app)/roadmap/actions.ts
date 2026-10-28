@@ -10,7 +10,6 @@ import { ALL_QUESTIONS } from "./roadmap-data";
 
 const ALLOWED = [ROLES.DIRECTOR, ROLES.ADMIN, ROLES.DEPUTY_DIRECTOR];
 
-// Roadmap ballarini saqlash (Setting: roadmap.scores = JSON {qid: 0..10}).
 export async function saveRoadmap(scores: Record<string, number>): Promise<{ ok?: boolean; error?: string }> {
   const s = await requireSession();
   if (!ALLOWED.includes(s.role as never)) return { error: tr(s.locale, { uz: "Ruxsat yo'q", ru: "Нет доступа", en: "No permission", de: "Keine Berechtigung" }) };

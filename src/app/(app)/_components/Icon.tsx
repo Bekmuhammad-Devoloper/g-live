@@ -1,6 +1,3 @@
-// SVG ikonka to'plami — Modme/Radian sidebar uslubiga yaqinlashtirilgan
-// (yupqa chiziqli, katta o'lchamda chiroyli ko'rinadigan konturli ikonkalar).
-
 import type { JSX } from "react";
 
 const dot = (cx: number, cy: number) => (
@@ -8,9 +5,6 @@ const dot = (cx: number, cy: number) => (
 );
 
 const P: Record<string, JSX.Element> = {
-  // ── Sidebar (Modme uslubi) ──
-
-  // Lidlar — yuqorisi ochiq quti ichiga tushayotgan strelka
   download: (
     <>
       <path d="M8.8 3.2H5.5A2.3 2.3 0 0 0 3.2 5.5v13a2.3 2.3 0 0 0 2.3 2.3h13a2.3 2.3 0 0 0 2.3-2.3v-13a2.3 2.3 0 0 0-2.3-2.3h-3.3" />
@@ -19,7 +13,6 @@ const P: Record<string, JSX.Element> = {
     </>
   ),
 
-  // O'qituvchilar — oddiy odam
   teacher: (
     <>
       <circle cx="12" cy="7.5" r="3.4" />
@@ -27,7 +20,6 @@ const P: Record<string, JSX.Element> = {
     </>
   ),
 
-  // Guruhlar — uch qavatli stack
   layers: (
     <>
       <path d="m12 2.5 9.5 4.7-9.5 4.7-9.5-4.7 9.5-4.7Z" />
@@ -36,7 +28,6 @@ const P: Record<string, JSX.Element> = {
     </>
   ),
 
-  // Talabalar — akademik shapka (mortarboard)
   graduation: (
     <>
       <path d="M12 4 2.8 8 12 12l9.2-4L12 4Z" />
@@ -45,7 +36,6 @@ const P: Record<string, JSX.Element> = {
     </>
   ),
 
-  // Eslatmalar — soat (millar 12 va 3 tomon, Modme uslubi)
   clock: (
     <>
       <circle cx="12" cy="12" r="9.2" />
@@ -53,7 +43,6 @@ const P: Record<string, JSX.Element> = {
     </>
   ),
 
-  // Reyting — kubok
   trophy: (
     <>
       <path d="M7 3.5h10v5.2a5 5 0 0 1-10 0V3.5Z" />
@@ -65,7 +54,6 @@ const P: Record<string, JSX.Element> = {
     </>
   ),
 
-  // Davomat hisobotlari — nuqtali kalendar
   calendar: (
     <>
       <rect x="3" y="4.5" width="18" height="16.5" rx="2.2" />
@@ -77,7 +65,6 @@ const P: Record<string, JSX.Element> = {
     </>
   ),
 
-  // Topshiriqlar — belgilangan ro'yxat
   clipboard: (
     <>
       <rect x="8.2" y="2.2" width="7.6" height="3.8" rx="1.2" />
@@ -89,7 +76,6 @@ const P: Record<string, JSX.Element> = {
     </>
   ),
 
-  // O'quv bo'limi — kitob
   book: (
     <>
       <path d="M4 5.3A2.3 2.3 0 0 1 6.3 3H20v15.4H6.3A2.3 2.3 0 0 0 4 20.7V5.3Z" />
@@ -99,7 +85,6 @@ const P: Record<string, JSX.Element> = {
     </>
   ),
 
-  // Blok test — tekshirilgan hujjat
   filecheck: (
     <>
       <path d="M13.8 2.5H6.8a2 2 0 0 0-2 2v15a2 2 0 0 0 2 2h10.4a2 2 0 0 0 2-2V7.8l-5.4-5.3Z" />
@@ -108,7 +93,6 @@ const P: Record<string, JSX.Element> = {
     </>
   ),
 
-  // Moliya — hamyon
   wallet: (
     <>
       <path d="M3.2 7.4a2.2 2.2 0 0 1 2.2-2.2h11.4v2.2" />
@@ -118,14 +102,12 @@ const P: Record<string, JSX.Element> = {
     </>
   ),
 
-  // Nazorat — ko'z
   eye: (
     <>
       <path d="M2.2 12S6 5.4 12 5.4 21.8 12 21.8 12 18 18.6 12 18.6 2.2 12 2.2 12Z" />
       <circle cx="12" cy="12" r="3.1" />
     </>
   ),
-  // Yashirilgan / nofaol — ko'z chizilgan
   eyeOff: (
     <>
       <path d="M2.2 12S6 5.4 12 5.4c1.6 0 3 .4 4.3 1" />
@@ -136,7 +118,6 @@ const P: Record<string, JSX.Element> = {
     </>
   ),
 
-  // Nazorat — qalqon + belgi
   shieldCheck: (
     <>
       <path d="M12 2.5 4.5 5.3v6.2c0 4.7 3.3 7.6 7.5 9.5 4.2-1.9 7.5-4.8 7.5-9.5V5.3L12 2.5Z" />
@@ -144,7 +125,6 @@ const P: Record<string, JSX.Element> = {
     </>
   ),
 
-  // Boshqaruv — panel
   layout: (
     <>
       <rect x="3" y="3.2" width="7.4" height="8.6" rx="1.6" />
@@ -154,7 +134,6 @@ const P: Record<string, JSX.Element> = {
     </>
   ),
 
-  // Hisobotlar — diagramma
   chart: (
     <>
       <path d="M3.2 3.2v17.6h17.6" />
@@ -164,7 +143,6 @@ const P: Record<string, JSX.Element> = {
     </>
   ),
 
-  // Sotuv / Marketing — karnay
   megaphone: (
     <>
       <path d="M3.2 10.4v3.2a1.6 1.6 0 0 0 1.2 1.55l3.2.8v-7.9l-3.2.8a1.6 1.6 0 0 0-1.2 1.55Z" />
@@ -173,7 +151,6 @@ const P: Record<string, JSX.Element> = {
     </>
   ),
 
-  // Sozlamalar — shesternya
   settings: (
     <>
       <circle cx="12" cy="12" r="3.1" />
@@ -181,7 +158,6 @@ const P: Record<string, JSX.Element> = {
     </>
   ),
 
-  // ── Umumiy (kichik o'lchamda ishlatiladi) ──
   home: <><path d="M3 9.5 12 3l9 6.5" /><path d="M5 10v10a1 1 0 0 0 1 1h3v-6h6v6h3a1 1 0 0 0 1-1V10" /></>,
   users: <><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2" /><circle cx="9" cy="7" r="4" /><path d="M22 21v-2a4 4 0 0 0-3-3.87" /><path d="M16 3.13a4 4 0 0 1 0 7.75" /></>,
   bell: <><path d="M6 8a6 6 0 0 1 12 0c0 7 3 9 3 9H3s3-2 3-9" /><path d="M10.3 21a1.94 1.94 0 0 0 3.4 0" /></>,
@@ -193,7 +169,6 @@ const P: Record<string, JSX.Element> = {
   history: <><path d="M3 12a9 9 0 1 0 3-6.7L3 8" /><path d="M3 3v5h5" /><path d="M12 7v5l3 2" /></>,
   menu: <><path d="M4 6h16" /><path d="M4 12h16" /><path d="M4 18h16" /></>,
 
-  // ── Navbar ──
   plus: <><circle cx="12" cy="12" r="9.5" /><path d="M12 8v8" /><path d="M8 12h8" /></>,
   search: <><circle cx="11" cy="11" r="7" /><path d="m20 20-3.5-3.5" /></>,
   building: <>
@@ -239,7 +214,6 @@ const P: Record<string, JSX.Element> = {
   listView: <><path d="M8 6h12" /><path d="M8 12h12" /><path d="M8 18h12" /><path d="M4 6h.01" /><path d="M4 12h.01" /><path d="M4 18h.01" /></>,
   user: <><circle cx="12" cy="8" r="4" /><path d="M4.5 20.5a7.5 7.5 0 0 1 15 0" /></>,
 
-  // ── Dashboard status kartalari ──
   personPlus: <><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2" /><circle cx="9" cy="7" r="4" /><path d="M19 8v6" /><path d="M22 11h-6" /></>,
   personCheck: <><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2" /><circle cx="9" cy="7" r="4" /><path d="m16 11 2 2 4-4" /></>,
   personStar: <><path d="M14 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2" /><circle cx="8" cy="7" r="4" /><path d="m18 4 1.1 2.3 2.4.3-1.8 1.7.5 2.4-2.2-1.2-2.2 1.2.5-2.4-1.8-1.7 2.4-.3L18 4Z" /></>,
@@ -255,14 +229,11 @@ const P: Record<string, JSX.Element> = {
   trash: <><path d="M4 7h16" /><path d="M10 11v6" /><path d="M14 11v6" /><path d="M6 7l1 13a1 1 0 0 0 1 1h8a1 1 0 0 0 1-1l1-13" /><path d="M9 7V4a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v3" /></>,
   coins: <><ellipse cx="12" cy="6" rx="7" ry="2.8" /><path d="M5 6v5c0 1.55 3.13 2.8 7 2.8s7-1.25 7-2.8V6" /><path d="M5 11v5c0 1.55 3.13 2.8 7 2.8s7-1.25 7-2.8v-5" /></>,
 
-  // ── Valyuta (navbardagi kurs) ──
   dollar: <><path d="M12 2.8v18.4" /><path d="M16.6 6.6H10a3.4 3.4 0 0 0 0 6.8h4a3.4 3.4 0 0 1 0 6.8H6.8" /></>,
   euro: <><path d="M19.6 6.1a7.3 7.3 0 0 0-5-2C10.4 4.1 7 7.6 7 12s3.4 7.9 7.6 7.9a7.3 7.3 0 0 0 5-2" /><path d="M4 10.2h9.4" /><path d="M4 14h7.4" /></>,
-  // O'sish / pasayish uchun to'ldirilgan uchburchak
   trendUp: <path d="M12 7.4 18.4 16H5.6L12 7.4Z" fill="currentColor" stroke="none" />,
   trendDown: <path d="M12 16.6 5.6 8h12.8L12 16.6Z" fill="currentColor" stroke="none" />,
 
-  // ── Qo'ng'iroqlar markazi ──
   headphones: <><path d="M3 14a9 9 0 0 1 18 0" /><rect x="3" y="13.5" width="4.5" height="7.5" rx="1.6" /><rect x="16.5" y="13.5" width="4.5" height="7.5" rx="1.6" /></>,
   phoneCall: <><path d="M14.5 3a5.5 5.5 0 0 1 5.5 5.5" /><path d="M14.5 6.5a2 2 0 0 1 2 2" /><path d="M6.6 3.5 4 4c-.7.2-1.1.9-1 1.6C4 12 12 20 18.4 21c.7.1 1.4-.3 1.6-1l.5-2.6a1 1 0 0 0-.6-1.1l-3-1.2a1 1 0 0 0-1.1.3l-1 1.2a13 13 0 0 1-5.4-5.4l1.2-1a1 1 0 0 0 .3-1.1l-1.2-3a1 1 0 0 0-1.1-.6Z" /></>,
   phoneMissed: <><path d="m15.5 3 5 5" /><path d="m20.5 3-5 5" /><path d="M6.6 3.5 4 4c-.7.2-1.1.9-1 1.6C4 12 12 20 18.4 21c.7.1 1.4-.3 1.6-1l.5-2.6a1 1 0 0 0-.6-1.1l-3-1.2a1 1 0 0 0-1.1.3l-1 1.2a13 13 0 0 1-5.4-5.4l1.2-1a1 1 0 0 0 .3-1.1l-1.2-3a1 1 0 0 0-1.1-.6Z" /></>,
@@ -277,19 +248,14 @@ const P: Record<string, JSX.Element> = {
   close: <><path d="m6 6 12 12" /><path d="m18 6-12 12" /></>,
   camera: <><path d="M4 8.5a2 2 0 0 1 2-2h1.6l1-1.6h4.8l1 1.6H18a2 2 0 0 1 2 2v8a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2v-8Z" /><circle cx="12" cy="12.5" r="3.2" /></>,
 
-  // ── Havolalar / platformalar ──
-  // QR kod — uch burchak belgisi + ma'lumot nuqtalari
   qr: <><rect x="3.5" y="3.5" width="6.5" height="6.5" rx="1.2" /><rect x="14" y="3.5" width="6.5" height="6.5" rx="1.2" /><rect x="3.5" y="14" width="6.5" height="6.5" rx="1.2" /><path d="M6.75 6.75h.01M17.25 6.75h.01M6.75 17.25h.01" /><path d="M14 14h3v3h-3zM20.5 14v3M14 20.5h3M20.5 20.5h.01" /></>,
-  // Arxiv — qopqoqli quti
   archive: <><rect x="3" y="3.8" width="18" height="4.4" rx="1.2" /><path d="M4.6 8.2v10a2 2 0 0 0 2 2h10.8a2 2 0 0 0 2-2v-10" /><path d="M9.8 12.2h4.4" /></>,
-  // iOS uslubidagi yuklab olish (SF "arrow.down.to.line") — chiziq ustiga tushayotgan strelka
   arrowDownToLine: <><path d="M12 3.5v12.5" /><path d="m6.5 10.5 5.5 5.5 5.5-5.5" /><path d="M5 20.5h14" /></>,
   link: <><path d="M9.5 14.5 14.5 9.5" /><path d="M11 6.2 12.3 4.9a4 4 0 0 1 5.7 5.7l-1.3 1.3" /><path d="M13 17.8 11.7 19.1a4 4 0 0 1-5.7-5.7l1.3-1.3" /></>,
   globe: <><circle cx="12" cy="12" r="9.2" /><path d="M2.8 12h18.4" /><path d="M12 2.8c2.6 2.5 4 5.8 4 9.2s-1.4 6.7-4 9.2c-2.6-2.5-4-5.8-4-9.2s1.4-6.7 4-9.2Z" /></>,
   telegram: <><path d="M21.5 4.3 2.8 11.5c-.9.35-.88 1.65.03 1.97l4.7 1.66 1.8 5.3c.24.7 1.14.86 1.6.28l2.28-2.83 4.6 3.38c.6.44 1.46.11 1.62-.62l3.2-15.1c.18-.86-.66-1.58-1.53-1.42Z" /><path d="m7.5 15.1 9.7-6.6-7.4 7.6" /></>,
   instagram: <><rect x="3" y="3" width="18" height="18" rx="5" /><circle cx="12" cy="12" r="4" />{dot(17.2, 6.8)}</>,
 
-  // ── Matn muharriri ──
   image: <><rect x="3" y="3" width="18" height="18" rx="2" /><circle cx="8.5" cy="8.5" r="1.7" /><path d="m21 15-5-5L5 21" /></>,
   alignLeft: <><path d="M4 6h16" /><path d="M4 12h10" /><path d="M4 18h13" /></>,
   listOrdered: <><path d="M10 6h11" /><path d="M10 12h11" /><path d="M10 18h11" /><path d="M4.5 5.5h1V10" /><path d="M4 14.5h2l-2 2.5h2" /></>,
@@ -327,7 +293,6 @@ export function Icon({
   );
 }
 
-// Qo'lda chizilgan (doodle) ko'rinish uchun global filter — sahifada bir marta chiqariladi.
 export function SketchDefs() {
   return (
     <svg width="0" height="0" className="absolute" aria-hidden focusable="false">

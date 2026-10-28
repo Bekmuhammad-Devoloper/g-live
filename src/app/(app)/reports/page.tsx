@@ -16,16 +16,15 @@ export default async function ReportsPage() {
   }
 
   const [activeStudents, totalStudents, leads, wonLeads, groups, paidAgg, byStage] = await Promise.all([
-    prisma.student.count({ where: { AND: [{ eduStatus: "ACTIVE" }, branchWhere(s)] } }), // faol filial doirasida
-    prisma.student.count({ where: branchWhere(s) }), // faol filial doirasida
-    prisma.lead.count({ where: branchWhere(s) }), // faol filial doirasida
-    prisma.lead.count({ where: { AND: [{ stage: "WON" }, branchWhere(s)] } }), // faol filial doirasida
-    prisma.group.count({ where: { AND: [{ status: "ACTIVE" }, branchWhere(s)] } }), // faol filial doirasida
-    prisma.payment.aggregate({ _sum: { amount: true }, where: { AND: [{ status: "PAID" }, branchViaStudent(s)] } }), // faol filial doirasida
-    prisma.lead.groupBy({ by: ["stage"], _count: true, where: branchWhere(s) }), // faol filial doirasida
+    prisma.student.count({ where: { AND: [{ eduStatus: "ACTIVE" }, branchWhere(s)] } }),
+    prisma.student.count({ where: branchWhere(s) }),
+    prisma.lead.count({ where: branchWhere(s) }),
+    prisma.lead.count({ where: { AND: [{ stage: "WON" }, branchWhere(s)] } }),
+    prisma.group.count({ where: { AND: [{ status: "ACTIVE" }, branchWhere(s)] } }),
+    prisma.payment.aggregate({ _sum: { amount: true }, where: { AND: [{ status: "PAID" }, branchViaStudent(s)] } }),
+    prisma.lead.groupBy({ by: ["stage"], _count: true, where: branchWhere(s) }),
   ]);
 
-  // Moliyaviy hisobot — faqat direktor, o'rinbosari va menejer
   const canFinance = [ROLES.DIRECTOR, ROLES.DEPUTY_DIRECTOR, ROLES.MANAGER].includes(s.role as never);
   const conversion = leads > 0 ? Math.round((wonLeads / leads) * 100) : 0;
   const stageCount = (st: string) => byStage.find((b) => b.stage === st)?._count ?? 0;
@@ -45,12 +44,9 @@ export default async function ReportsPage() {
       <div className="mb-6 grid gap-3 md:grid-cols-2 xl:grid-cols-3">
         <HubCard href="/reports/leads" icon="download" title={tr(s.locale, { uz: "Lidlar hisoboti", ru: "Отчёт по лидам", en: "Leads report", de: "Lead-Bericht" })} desc={tr(s.locale, { uz: "Sana oralig'i bo'yicha lidlar soni va grafik", ru: "Количество лидов и график по диапазону дат", en: "Lead count and chart by date range", de: "Anzahl der Leads und Diagramm nach Datumsbereich" })} />
         {canFinance && <HubCard href="/reports/payments" icon="wallet" title={tr(s.locale, { uz: "To'lovlar hisoboti", ru: "Отчёт по платежам", en: "Payments report", de: "Zahlungsbericht" })} desc={tr(s.locale, { uz: "Tushum (kirim) sana oralig'i bo'yicha", ru: "Поступления (доход) по диапазону дат", en: "Revenue (income) by date range", de: "Einnahmen (Umsatz) nach Datumsbereich" })} />}
-        {/* Administrator konversiya hisobotini ko'rmaydi (sahifa ham uni to'sadi) */}
         {s.role !== ROLES.ADMIN && (
           <HubCard href="/reports/conversion" icon="chart" title={tr(s.locale, { uz: "Konversiya hisoboti", ru: "Отчёт по конверсии", en: "Conversion report", de: "Konversionsbericht" })} desc={tr(s.locale, { uz: "Savdo voronkasi va konversiya ko'rsatkichlari", ru: "Воронка продаж и показатели конверсии", en: "Sales funnel and conversion metrics", de: "Verkaufstrichter und Konversionskennzahlen" })} />
         )}
-        {/* Davomat analitikasi NAZORAT bo'limida turadi — bu yerda takrorlanmaydi.
-            O'qituvchida Nazorat menyusi yo'q, shuning uchun unga ko'rsatiladi. */}
         {s.role === ROLES.TEACHER && (
           <HubCard href="/reports/attendance" icon="check" title={tr(s.locale, { uz: "Davomat hisoboti", ru: "Отчёт по посещаемости", en: "Attendance report", de: "Anwesenheitsbericht" })} desc={tr(s.locale, { uz: "Guruhlar bo'yicha davomat tahlili", ru: "Анализ посещаемости по группам", en: "Attendance analysis by group", de: "Anwesenheitsanalyse nach Gruppe" })} />
         )}

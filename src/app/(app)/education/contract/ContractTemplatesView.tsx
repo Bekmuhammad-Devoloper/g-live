@@ -14,7 +14,7 @@ export interface VTemplate {
   title: string;
   type: string;
   typeLabel: string;
-  createdAt: string; // formatlangan sana
+  createdAt: string;
   isActive: boolean;
 }
 
@@ -63,7 +63,6 @@ export default function ContractTemplatesView({
 
   return (
     <div className="space-y-3">
-      {/* Toolbar */}
       <div className="flex flex-wrap items-center gap-2">
         {canManage && (
           <button
@@ -84,7 +83,6 @@ export default function ContractTemplatesView({
         </div>
       </div>
 
-      {/* Jadval */}
       <div className="overflow-hidden rounded-2xl border border-slate-200/70 bg-white shadow-card dark:border-slate-800 dark:bg-slate-900">
         <div className="flex items-center justify-end border-b border-slate-100 px-4 py-2 dark:border-slate-800">
           <span className="rounded-lg bg-slate-100 px-2.5 py-1 text-xs font-semibold text-slate-500 dark:bg-slate-800 dark:text-slate-300">{tr(locale, { uz: "Umumiy soni:", ru: "Всего:", en: "Total:", de: "Gesamt:" })} {filtered.length}</span>
@@ -140,7 +138,6 @@ export default function ContractTemplatesView({
           </table>
         </div>
 
-        {/* Footer */}
         <div className="flex flex-wrap items-center justify-between gap-3 border-t border-slate-100 px-4 py-2.5 dark:border-slate-800">
           <div className="flex items-center gap-2 text-xs text-slate-500 dark:text-slate-400">
             <Icon name="listView" className="h-4 w-4" />
@@ -158,7 +155,6 @@ export default function ContractTemplatesView({
         </div>
       </div>
 
-      {/* FAB */}
       {canManage && (
         <button onClick={() => setAddOpen(true)} title={tr(locale, { uz: "Yangi shartnoma", ru: "Новый договор", en: "New contract", de: "Neuer Vertrag" })} className="fixed bottom-6 right-6 z-30 flex h-12 w-12 items-center justify-center rounded-full bg-brand-600 text-white shadow-pop transition hover:scale-105 hover:bg-brand-700">
           <Icon name="plus" className="h-5 w-5" />

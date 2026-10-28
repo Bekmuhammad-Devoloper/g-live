@@ -61,7 +61,6 @@ export default function BalanceView({ staff, defaultFrom, defaultTo, locale }: {
       <div className="flex flex-wrap items-center justify-between gap-3">
         <h1 className="text-[22px] font-bold tracking-tight text-slate-900 dark:text-slate-100">{tr(locale, { uz: "Balans", ru: "Баланс", en: "Balance", de: "Saldo" })}</h1>
         <div className="flex flex-wrap items-center gap-3">
-        {/* Sana oralig'i */}
         <div className="flex h-11 items-center gap-1 rounded-xl border border-slate-200 bg-white px-3 dark:border-slate-700 dark:bg-slate-800">
           <Icon name="calendar" className="h-4 w-4 shrink-0 text-slate-400" />
           <DateInput value={from} onChange={(e) => { setFrom(e.target.value); setPage(1); }} className="w-[120px] bg-transparent text-sm text-slate-700 outline-none dark:text-slate-100" />

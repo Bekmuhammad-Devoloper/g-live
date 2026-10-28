@@ -9,11 +9,6 @@ import { addBranchSlot, listBranchRooms, removeBranchSlot, updateBranchSlot, typ
 import { confirmDelete } from "../../_components/dialogs";
 import CapacityStepper from "../../_components/CapacityStepper";
 
-/**
- * Filialdagi bo'sh xona / bo'sh vaqtlar ro'yxati va qo'shish formasi.
- * Ikki joyda ishlatiladi: administrator dashboardi (o'z filiali) va ROP/rahbariyat
- * kanbanidagi filial ustuni (oyna). `canEdit=false` bo'lsa faqat ro'yxat.
- */
 const DAYS: { key: string; label: { uz: string; ru: string; en: string; de: string } }[] = [
   { key: "Du", label: { uz: "Du", ru: "Пн", en: "Mo", de: "Mo" } },
   { key: "Se", label: { uz: "Se", ru: "Вт", en: "Tu", de: "Di" } },
@@ -29,39 +24,32 @@ export default function BranchSlotsEditor({ branchId, initial, canEdit, locale, 
   initial: VSlot[];
   canEdit: boolean;
   locale: Locale;
-  /** Kanban ustuni ichida — kichik shrift, ixcham qatorlar */
   compact?: boolean;
-  /** Har slot alohida karta (Kanbandagi guruh kartalari kabi) */
   cards?: boolean;
-  /** Karta belgisi rangi (ustun rangi) */
   color?: string;
   onChanged?: (slots: VSlot[]) => void;
-  /** Karta ichida ko'rsatiladigan mazmun (masalan shu xonaga tashlangan lidlar) */
   slotContent?: (slotId: string) => React.ReactNode;
-  /** Kartadagi lidlar soni (belgida) */
   slotCount?: (slotId: string) => number;
-  /** Karta drop-zona: lid tashlanganda (leadId dataTransfer'dan) */
   onDropLead?: (slotId: string, leadId: string) => void;
 }) {
   const [slots, setSlots] = useState<VSlot[]>(initial);
   const [adding, setAdding] = useState(false);
-  const [editingId, setEditingId] = useState<string | null>(null); // tahrirlanayotgan karta
+  const [editingId, setEditingId] = useState<string | null>(null);
   const [rooms, setRooms] = useState<{ name: string; capacity: number }[]>([]);
   const [room, setRoom] = useState("");
-  const [capacity, setCapacity] = useState(""); // sig'im — xona tanlansa Xonalar bo'limidan to'ladi (o'zgartirsa bo'ladi)
+  const [capacity, setCapacity] = useState("");
   const [capTouched, setCapTouched] = useState(false);
-  const [openSlot, setOpenSlot] = useState<string | null>(null); // ichidagi lidlar ochilgan karta
+  const [openSlot, setOpenSlot] = useState<string | null>(null);
   const [days, setDays] = useState<string[]>([]);
   const [start, setStart] = useState("18:00");
   const [end, setEnd] = useState("19:30");
   const [note, setNote] = useState("");
   const [err, setErr] = useState<string | null>(null);
-  const [overSlot, setOverSlot] = useState<string | null>(null); // sudralayotgan lid ustida turgan karta
+  const [overSlot, setOverSlot] = useState<string | null>(null);
   const [pending, run] = useTransition();
   const L = (uz: string, ru: string, en: string, de: string) => tr(locale, { uz, ru, en, de });
 
   useEffect(() => { setSlots(initial); }, [initial]);
-  // Xonalar ro'yxati — forma ochilganda bir marta
   useEffect(() => { if ((adding || editingId) && rooms.length === 0) listBranchRooms(branchId).then(setRooms); }, [adding, editingId, branchId, rooms.length]);
 
   const apply = (r: { ok?: boolean; error?: string; slots?: VSlot[] }) => {
@@ -116,11 +104,9 @@ export default function BranchSlotsEditor({ branchId, initial, canEdit, locale, 
 
   const inp = cn("w-full rounded-lg border border-slate-200 bg-white text-slate-800 outline-none focus:border-brand-400 dark:border-slate-700 dark:bg-slate-800/60 dark:text-slate-100", compact ? "h-8 px-2 text-xs" : "h-9 px-2.5 text-sm");
 
-  // Qo'shish va tahrirlash uchun bitta forma
   const form = canEdit ? (
     <div className={cn("mt-2 space-y-2 rounded-xl border border-emerald-200 bg-emerald-50/60 p-2.5 dark:border-emerald-500/30 dark:bg-emerald-500/5", compact ? "text-xs" : "text-sm")}>
       {editingId && <div className="text-[11px] font-bold text-emerald-700 dark:text-emerald-300">{L("Bo'sh vaqtni tahrirlash", "Редактирование времени", "Edit free slot", "Freie Zeit bearbeiten")}</div>}
-      {/* Xona — ro'yxatdan yoki qo'lda */}
       <div>
         <label className="mb-0.5 block text-[10px] font-semibold text-slate-500">{L("Xona", "Аудитория", "Room", "Raum")} *</label>
         {rooms.length > 0 && (
@@ -135,7 +121,6 @@ export default function BranchSlotsEditor({ branchId, initial, canEdit, locale, 
         )}
         <input value={room} onChange={(e) => setRoom(e.target.value)} placeholder={L("masalan: 3-xona", "например: ауд. 3", "e.g. Room 3", "z. B. Raum 3")} className={inp} />
       </div>
-      {/* Kunlar */}
       <div>
         <label className="mb-0.5 block text-[10px] font-semibold text-slate-500">{L("Kunlar", "Дни", "Days", "Tage")} *</label>
         <div className="flex flex-wrap gap-1">
@@ -146,7 +131,6 @@ export default function BranchSlotsEditor({ branchId, initial, canEdit, locale, 
           ))}
         </div>
       </div>
-      {/* Vaqt */}
       <div className="grid grid-cols-2 gap-2">
         <div>
           <label className="mb-0.5 block text-[10px] font-semibold text-slate-500">{L("Boshlanish", "Начало", "Start", "Beginn")} *</label>
@@ -190,8 +174,6 @@ export default function BranchSlotsEditor({ branchId, initial, canEdit, locale, 
       )}
 
       {slots.length > 0 && cards && (
-        // Alohida kartalar — yashil ("bo'sh, ochiq") uslub, lid kartalaridan ajralib turadi;
-        // har qatorga o'z belgisi: xona, kunlar, vaqt, daraja
         <ul className="space-y-3">
           {slots.map((sl) => {
             const count = slotCount?.(sl.id) ?? 0;
@@ -201,7 +183,6 @@ export default function BranchSlotsEditor({ branchId, initial, canEdit, locale, 
             return (
             <Fragment key={sl.id}>
             <li
-              // Drop-zona: lid shu xonaga tashlanadi (to'lgan bo'lsa — yo'q)
               onDragOver={onDropLead ? (e) => { e.preventDefault(); e.dataTransfer.dropEffect = full ? "none" : "move"; if (overSlot !== sl.id) setOverSlot(sl.id); } : undefined}
               onDragLeave={onDropLead ? () => setOverSlot((c) => (c === sl.id ? null : c)) : undefined}
               onDrop={onDropLead ? (e) => { e.preventDefault(); e.stopPropagation(); const id = e.dataTransfer.getData("text/plain"); setOverSlot(null); if (id && !full) onDropLead(sl.id, id); } : undefined}
@@ -217,7 +198,6 @@ export default function BranchSlotsEditor({ branchId, initial, canEdit, locale, 
                 count > 0 && "cursor-pointer",
               )}
             >
-              {/* chap chiziq: yashil — joy bor, qizil — to'lgan */}
               <span className={cn("absolute inset-y-0 left-0 w-1 bg-gradient-to-b", full ? "from-rose-400 to-rose-600" : "from-emerald-400 to-emerald-600")} />
               <div className="flex items-start gap-3 pl-1.5">
                 <span className={cn("flex h-10 w-10 shrink-0 items-center justify-center rounded-xl text-white", full ? "bg-rose-500 shadow-[0_6px_14px_-6px_rgba(244,63,94,0.8)]" : "bg-emerald-500 shadow-[0_6px_14px_-6px_rgba(16,185,129,0.8)]")}>
@@ -226,7 +206,6 @@ export default function BranchSlotsEditor({ branchId, initial, canEdit, locale, 
                 <div className="min-w-0 flex-1">
                   <div className="flex items-center gap-2">
                     <span className="truncate text-[15px] font-bold text-slate-800 dark:text-slate-100">{sl.room}</span>
-                    {/* Sig'im: "1 / 8" (to'lgan — qizil), bo'sh — "BO'SH · 8 joy" */}
                     {count > 0 || sl.capacity ? (
                       <span className={cn("ml-auto inline-flex shrink-0 items-center gap-1 rounded-full px-2 py-0.5 text-[10px] font-bold tabular-nums", full ? "bg-rose-600 text-white" : count > 0 ? "bg-emerald-600 text-white" : "bg-emerald-500/15 text-emerald-700 dark:text-emerald-300")}>
                         <Icon name="user" className="h-3 w-3" /> {count}{sl.capacity ? ` / ${sl.capacity}` : ""}{full ? ` · ${L("To'ldi", "Полно", "Full", "Voll")}` : ""}
@@ -246,7 +225,6 @@ export default function BranchSlotsEditor({ branchId, initial, canEdit, locale, 
                       <Icon name="graduation" className="h-3.5 w-3.5" /> {sl.note}
                     </div>
                   )}
-                  {/* Shu xonaga tashlangan lidlar — karta bosilganda ochiladi */}
                   {count > 0 && (
                     <div className="mt-2 flex items-center gap-1 text-[11px] font-semibold text-slate-500 dark:text-slate-400">
                       <Icon name="chevronDown" className={cn("h-3.5 w-3.5 transition", opened && "rotate-180")} />
@@ -271,7 +249,6 @@ export default function BranchSlotsEditor({ branchId, initial, canEdit, locale, 
                 )}
               </div>
             </li>
-            {/* Ochilgan xonaning lidlari — karta ostida, oddiy lid kartalari ko'rinishida */}
             {opened && slotContent && (
               <li className="relative ml-3 border-l-2 border-dashed border-emerald-300 pl-3 dark:border-emerald-500/40">
                 {slotContent(sl.id)}

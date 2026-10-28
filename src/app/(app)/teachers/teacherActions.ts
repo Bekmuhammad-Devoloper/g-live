@@ -33,7 +33,6 @@ export async function createTeacher(input: NewTeacherInput): Promise<CreateTeach
   const phone = (input.phone || "").trim() || null;
   const password = input.password || "";
   const branchId = input.branchId || null;
-  // Yuqori chegara SHART (Int'ga sig'maydigan qiymat sahifani yiqitadi — 2026-09-11)
   const fiksa = parseMoney(input.fiksa || 0);
   const kpiBonus = parseMoney(input.kpiBonus ?? 200000);
   if (fiksa === null || kpiBonus === null) return { ok: false, error: tr(s.locale, { uz: "Summa juda katta (eng ko'pi 1 mlrd so'm) — nollar sonini tekshiring", ru: "Сумма слишком велика (макс. 1 млрд сум) — проверьте количество нулей", en: "Amount too large (max 1 billion) — check the number of zeros", de: "Betrag zu groß (max. 1 Mrd.) — Anzahl der Nullen prüfen" }) };
@@ -55,14 +54,13 @@ export async function createTeacher(input: NewTeacherInput): Promise<CreateTeach
       email,
       phone,
       passwordHash,
-      plainPassword: password, // rahbariyat ko'rishi uchun ochiq nusxa
+      plainPassword: password,
       role: ROLES.TEACHER,
       isActive: true,
       fiksa,
       kpiBonus,
       gender,
       branchId,
-      // joriy oy uchun maosh yozuvi darhol ochiladi
       salaries: { create: { year: now.getFullYear(), month: now.getMonth() + 1, fiksa, kpi: kpiBonus } },
     },
   });
@@ -80,7 +78,6 @@ export async function createTeacher(input: NewTeacherInput): Promise<CreateTeach
   return { ok: true, id: teacher.id };
 }
 
-// O'qituvchi profil rasmini o'rnatish/o'chirish (data URL). null → o'chirish.
 export async function setTeacherImage(teacherId: string, dataUrl: string | null): Promise<{ ok: boolean; error?: string }> {
   const s = await requireSession();
   if (!canManage(s.role)) return { ok: false, error: tr(s.locale, { uz: "Ruxsat yo'q", ru: "Нет доступа", en: "No permission", de: "Keine Berechtigung" }) };
@@ -109,8 +106,6 @@ export async function setTeacherImage(teacherId: string, dataUrl: string | null)
   return { ok: true };
 }
 
-// O'qituvchi kirish ma'lumotlari (login + ochiq parol). Faqat rahbariyat.
-// Talab bo'yicha olinadi — parol sahifa HTML'iga oldindan yozilmaydi.
 export async function getTeacherCredentials(teacherId: string): Promise<{ ok: boolean; email?: string; password?: string | null; error?: string }> {
   const s = await requireSession();
   if (!canManage(s.role)) return { ok: false, error: tr(s.locale, { uz: "Ruxsat yo'q", ru: "Нет доступа", en: "No permission", de: "Keine Berechtigung" }) };
@@ -119,7 +114,6 @@ export async function getTeacherCredentials(teacherId: string): Promise<{ ok: bo
   return { ok: true, email: t.email, password: t.plainPassword };
 }
 
-// Parolni yangilash — passwordHash (kirish uchun) + plainPassword (ko'rish uchun) ikkalasi yangilanadi. Rahbariyat.
 export async function setTeacherPassword(teacherId: string, newPassword: string): Promise<{ ok: boolean; error?: string }> {
   const s = await requireSession();
   if (!canManage(s.role)) return { ok: false, error: tr(s.locale, { uz: "Ruxsat yo'q", ru: "Нет доступа", en: "No permission", de: "Keine Berechtigung" }) };

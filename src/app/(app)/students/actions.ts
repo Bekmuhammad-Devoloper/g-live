@@ -25,42 +25,34 @@ export type BulkState = { ok?: boolean; error?: string; count?: number };
 
 const ALLOWED = [ROLES.DIRECTOR, ROLES.DEPUTY_DIRECTOR, ROLES.MANAGER, ROLES.ADMIN];
 
-// ─── O'quvchi to'lovlari (detal oynasi uchun) ───
 export interface MonthPay { paid: boolean; amount: number; date: string | null }
 export interface PayRow {
   id: string; amount: number; method: string; purpose: string | null; status: string; date: string;
-  /** Kassir izohi — to'lov ko'rinadigan hamma joyda chiqadi */
   note: string | null;
-  /** Promokod (bo'lsa) va chegirma summasi */
   promoCode: string | null;
   discount: number;
-  /** PENDING (qarz) yozuvi to'lovlar bilan qoplangan bo'lsa true — ro'yxatda "Qoplandi" */
   covered?: boolean;
-  /** Joriy foydalanuvchi shu yozuvni tahrirlay oladimi (ROP — faqat 24 soat ichida) */
   editable?: boolean;
 }
 export interface StudentPayments {
-  /** Jami qarzni tahrirlash mumkinmi (ROP — o'quvchi guruhga qo'shilgandan 24 soat ichida) */
   canAdjustDebt: boolean;
   thisMonth: MonthPay;
   lastMonth: MonthPay;
   totalPaid: number;
   lastPaidDate: string | null;
-  debt: number; // jami qarzdorlik — qo'shilgan oydan hisoblangan + qo'lda kiritilgan − to'langan
-  credit: number; // balans — majburiyatlardan ortiqcha (oldindan) to'langan pul
-  debtMonths: number; // to'lanmagan oylar soni — 1 sariq, 2+ qizil
-  daysUnpaid: number; // oxirgi to'lovdan (yoki guruhga qo'shilgandan) beri o'tgan kunlar
-  mandatoryThreshold: number; // shuncha kundan keyin to'lov majburiy bo'ladi
-  paymentMandatory: boolean; // to'lovsiz muddat tugagan
-  joinDate: string | null; // o'quvchi kelgan (birinchi guruhga qo'shilgan) sana
-  lastMonthApplicable: boolean; // false bo'lsa — hali bir oy to'lmagan, "o'tgan oy" o'rniga qo'shilgan sana ko'rsatiladi
+  debt: number;
+  credit: number;
+  debtMonths: number;
+  daysUnpaid: number;
+  mandatoryThreshold: number;
+  paymentMandatory: boolean;
+  joinDate: string | null;
+  lastMonthApplicable: boolean;
   recent: PayRow[];
 }
 
-/** O'quvchining to'lov holati: bu oy / o'tgan oy to'lagan-to'lamagani + so'nggi to'lovlar. */
 export async function getStudentPayments(studentId: string): Promise<{ ok: boolean; data?: StudentPayments; error?: string }> {
   const s = await requireSession();
-  // Talaba/xodim boshqaruvidan farqli — bu faqat KO'RISH, shuning uchun moliya o'qish huquqi (masalan Hisobchi) yetarli
   if (!ALLOWED.includes(s.role as never) && !canRead(s.role, MODULES.PAYMENTS) && s.role !== ROLES.ROP) return { ok: false, error: "forbidden" };
   if (!studentId) return { ok: false, error: "invalid" };
 
@@ -88,8 +80,6 @@ export async function getStudentPayments(studentId: string): Promise<{ ok: boole
 
   const thisMonth = monthSummary(y, m);
 
-  // Qarz hisobi va qaysi qo'lda qarz yozuvlari to'lovlar bilan qoplangani:
-  // to'lov avval hisoblangan oylik to'lovni, keyin qarzlarni eskisidan boshlab yopadi
   const debtInfo = await computeDebt(studentId, now);
   const coveredIds = new Set<string>();
   let remaining = debtInfo.paid + debtInfo.discount - debtInfo.accrued;
@@ -97,12 +87,9 @@ export async function getStudentPayments(studentId: string): Promise<{ ok: boole
     if (remaining >= p.amount) { coveredIds.add(p.id); remaining -= p.amount; }
     else break;
   }
-  // Majburiy to'lov: oxirgi to'lovdan (yoki guruhga qo'shilgandan) UNPAID_GRACE_DAYS kun o'tgan
   const paymentMandatory = mandatoryInfo.mandatory;
 
-  // O'quvchi kelgan sana — birinchi guruhga qo'shilgan sana, bo'lmasa ro'yxatga olingan sana
   const joinDate = firstEnrollment?.joinedAt ?? student?.createdAt ?? null;
-  // Hali kamida bir oy bo'lmagan bo'lsa — "o'tgan oy" ma'lumoti tegishli emas (u paytda o'quvchi bo'lmagan)
   const DAY = 86_400_000;
   const lastMonthApplicable = joinDate ? (now.getTime() - joinDate.getTime()) / DAY >= 30 : true;
 
@@ -113,7 +100,6 @@ export async function getStudentPayments(studentId: string): Promise<{ ok: boole
       lastMonth: monthSummary(lastY, lastM),
       totalPaid: paid.reduce((n, p) => n + p.amount, 0),
       lastPaidDate: paid.length ? paid[0].createdAt.toISOString() : null,
-      // Qarz — guruhga qo'shilgan oydan hisoblangan to'lov + qo'lda kiritilgani − to'langan
       debt: debtInfo.debt,
       credit: debtInfo.credit,
       debtMonths: debtInfo.overdueMonths,
@@ -122,7 +108,6 @@ export async function getStudentPayments(studentId: string): Promise<{ ok: boole
       paymentMandatory,
       joinDate: joinDate ? joinDate.toISOString() : null,
       lastMonthApplicable,
-      // Hammasi — klient avval oxirgi 8 tasini, so'ralsa qolganini ham ko'rsatadi (eski to'lovni ham tahrirlash uchun)
       canAdjustDebt: CAN_EDIT_PAY.includes(s.role as never) || (s.role === ROLES.ROP && await ropDebtWindowOpen(studentId)),
       recent: payments.map((p) => ({
         id: p.id, amount: p.amount, method: p.method, purpose: p.purpose, status: p.status, date: p.createdAt.toISOString(), note: p.note,
@@ -134,7 +119,6 @@ export async function getStudentPayments(studentId: string): Promise<{ ok: boole
   };
 }
 
-// ─── To'lov qabul qilish + chek ───
 export interface ReceiptData {
   docNumber: string;
   dateIso: string;
@@ -152,12 +136,11 @@ export interface ReceiptData {
   branchPhone: string | null;
   cashier: string;
   footer: string;
-  receiptUrl: string | null; // karta to'lovida yuklangan chek fayli
+  receiptUrl: string | null;
 }
 
 const p2r = (n: number) => String(n).padStart(2, "0");
 
-/** To'lovni qabul qiladi (status PAID) va chek ma'lumotlarini qaytaradi. */
 export async function acceptPayment(
   studentId: string,
   input: { amount: number; method: string; purpose: string; receiptUrl?: string | null; paidAt?: string | null; note?: string | null; promoCode?: string | null; promoForce?: boolean },
@@ -171,15 +154,12 @@ export async function acceptPayment(
   const purpose = String(input.purpose || "").trim();
   if (purpose.length < 2) return { ok: false, error: "purpose" };
   const note = String(input.note || "").trim().slice(0, 500) || null;
-  // Chek majburiyligi — CEO sozlamasidan (ixtiyoriy / naqd pulsizda / har doim).
-  // Interfeys ham tekshiradi, bu — chetlab o'tib bo'lmaydigan server to'sig'i.
   const receiptUrl = String(input.receiptUrl || "").trim() || null;
   const receiptMode = parseReceiptMode(await getSetting(RECEIPT_MODE_KEY));
   if (isReceiptRequired(receiptMode, input.method) && !receiptUrl) {
     return { ok: false, error: "receipt_required" };
   }
 
-  // To'lov vaqti (bo'sh yoki noto'g'ri bo'lsa — hozir)
   let paidAt = new Date();
   if (input.paidAt) { const d = new Date(input.paidAt); if (!isNaN(d.getTime())) paidAt = d; }
 
@@ -189,7 +169,6 @@ export async function acceptPayment(
   });
   if (!student) return { ok: false, error: "notfound" };
 
-  // Promokod: mavjud, faol va o'quvchi shart qilingan sondagi kursda o'qiydi
   const promo = await checkPromoForStudent(input.promoCode, studentId, { force: !!input.promoForce });
   if (!promo.ok) return { ok: false, error: promo.error, need: promo.need, have: promo.have };
   const promoCode = promo.code || null;
@@ -207,10 +186,8 @@ export async function acceptPayment(
     reason: "To'lov qabul qilindi (chek)",
   });
 
-  // O'quvchi (va ota-onasi)ga bildirishnoma
   const full = await prisma.student.findUnique({ where: { id: studentId }, include: { parents: { include: { parent: true } } } });
   if (full) {
-    // Oluvchining tilida (notify tilni o'zi tanlaydi)
     const sum = amount.toLocaleString("ru-RU");
     const promoTxt = promoCode ? { uz: ` Promokod ${promoCode}: −${discount.toLocaleString("ru-RU")} so'm.`, ru: ` Промокод ${promoCode}: −${discount.toLocaleString("ru-RU")} сум.`, en: ` Promo ${promoCode}: −${discount.toLocaleString("ru-RU")} UZS.`, de: ` Promo ${promoCode}: −${discount.toLocaleString("ru-RU")} UZS.` } : { uz: "", ru: "", en: "", de: "" };
     const title = { uz: "To'lov qabul qilindi", ru: "Платёж принят", en: "Payment received", de: "Zahlung erhalten" };
@@ -224,7 +201,6 @@ export async function acceptPayment(
     for (const link of full.parents) if (link.parent.userId) await notify({ userId: link.parent.userId, title, body, event: "payment_success" });
   }
 
-  // Chek sarlavhasi — CEO sozlamalaridan (bo'lmasa standart)
   const cfg = await getSettings(["receipt.orgName", "receipt.footer"]);
   const author = await prisma.user.findUnique({ where: { id: s.userId }, select: { fullName: true } });
 
@@ -255,7 +231,6 @@ export async function acceptPayment(
   };
 }
 
-/** O'quvchi profil rasmini o'rnatish/o'chirish (data URL). null → o'chirish. */
 export async function setStudentImage(studentId: string, dataUrl: string | null): Promise<{ ok: boolean; error?: string }> {
   const s = await requireSession();
   if (!ALLOWED.includes(s.role as never)) return { ok: false, error: "forbidden" };
@@ -275,7 +250,6 @@ export async function setStudentImage(studentId: string, dataUrl: string | null)
   return { ok: true };
 }
 
-/** Mavjud o'quvchini tahrirlaydi (F.I.Sh., telefon, daraja, o'quv holati). */
 export async function updateStudent(fd: FormData): Promise<EditState> {
   const s = await requireSession();
   if (!ALLOWED.includes(s.role as never)) return { error: "forbidden" };
@@ -299,12 +273,10 @@ export async function updateStudent(fd: FormData): Promise<EditState> {
     where: { id },
     data: { fullName, phone, currentLevel, note, ...(eduStatus ? { eduStatus } : {}) },
   });
-  // Arxiv yoki chetlatilgan holatiga o'tdi — guruhlardan chiqariladi, guruh qarzi o'chiriladi
   if (eduStatus && eduStatus !== existing.eduStatus && (eduStatus === "ARCHIVED" || eduStatus === "EXPELLED")) {
     await leaveGroups({ studentId: id, actorId: s.userId, reason: eduStatus === "EXPELLED" ? "O'quvchi chetlatildi" : "O'quvchi arxivlandi" });
   }
 
-  // Daraja ko'tarilgan bo'lsa yozib qo'yamiz — o'quvchiga tanga beriladi
   await recordLevelUp(id, existing.currentLevel, currentLevel);
 
   await writeAudit({
@@ -320,9 +292,6 @@ export async function updateStudent(fd: FormData): Promise<EditState> {
   return { ok: true };
 }
 
-// ─── Ommaviy (bulk) amallar — tanlangan o'quvchilar ustida ───
-
-/** Tanlangan o'quvchilarni arxivlaydi (eduStatus = ARCHIVED). */
 export async function bulkArchiveStudents(ids: string[]): Promise<BulkState> {
   const s = await requireSession();
   if (!ALLOWED.includes(s.role as never)) return { error: "forbidden" };
@@ -330,7 +299,6 @@ export async function bulkArchiveStudents(ids: string[]): Promise<BulkState> {
   if (!clean.length) return { error: "empty" };
 
   const res = await prisma.student.updateMany({ where: { id: { in: clean } }, data: { eduStatus: "ARCHIVED" } });
-  // Arxivlangan o'quvchi guruhlardan chiqariladi — yangi oylar hisoblanmaydi, guruh qarzi o'chiriladi
   for (const id of clean) await leaveGroups({ studentId: id, actorId: s.userId, reason: "O'quvchi arxivlandi" });
 
   await writeAudit({
@@ -346,7 +314,6 @@ export async function bulkArchiveStudents(ids: string[]): Promise<BulkState> {
   return { ok: true, count: res.count };
 }
 
-/** Tanlangan o'quvchilarni guruhga biriktiradi (mavjud a'zolik takrorlanmaydi). */
 export async function bulkAssignGroup(ids: string[], groupId: string): Promise<BulkState> {
   const s = await requireSession();
   if (!ALLOWED.includes(s.role as never)) return { error: "forbidden" };
@@ -380,7 +347,6 @@ export async function bulkAssignGroup(ids: string[], groupId: string): Promise<B
   return { ok: true, count };
 }
 
-/** Tanlangan o'quvchilar (va ota-onalari)ga bildirishnoma yuboradi. */
 export async function bulkNotifyStudents(ids: string[], message: string): Promise<BulkState> {
   const s = await requireSession();
   if (!ALLOWED.includes(s.role as never)) return { error: "forbidden" };
@@ -430,12 +396,6 @@ export async function bulkNotifyStudents(ids: string[], message: string): Promis
   return { ok: true, count };
 }
 
-// ─── O'quvchini o'chirish (ikki bosqich) ───
-// 1) Arxivlash — yumshoq o'chirish: o'quvchi ro'yxatdan chiqadi, lekin barcha
-//    ma'lumoti (to'lov tarixi, davomat) saqlanadi va qaytarib bo'ladi.
-// 2) Mutloq o'chirish — o'quvchi va unga bog'liq HAMMA yozuv butunlay yo'qoladi.
-
-/** Yumshoq o'chirish: eduStatus = ARCHIVED. Qaytarib bo'ladi. */
 export async function archiveStudent(id: string): Promise<EditState> {
   const s = await requireSession();
   if (!ALLOWED.includes(s.role as never)) return { error: "forbidden" };
@@ -444,7 +404,6 @@ export async function archiveStudent(id: string): Promise<EditState> {
   if (!st) return { error: "notfound" };
 
   await prisma.student.update({ where: { id }, data: { eduStatus: "ARCHIVED" } });
-  // Guruhlardan chiqariladi — yangi oylar hisoblanmaydi, guruh qarzi o'chiriladi
   await leaveGroups({ studentId: id, actorId: s.userId, reason: "O'quvchi arxivlandi" });
   await writeAudit({
     actorId: s.userId,
@@ -460,7 +419,6 @@ export async function archiveStudent(id: string): Promise<EditState> {
   return { ok: true };
 }
 
-/** Arxivdan qaytarish. */
 export async function restoreStudent(id: string): Promise<EditState> {
   const s = await requireSession();
   if (!ALLOWED.includes(s.role as never)) return { error: "forbidden" };
@@ -471,7 +429,6 @@ export async function restoreStudent(id: string): Promise<EditState> {
   });
   if (!st) return { error: "notfound" };
 
-  // Guruhi bo'lsa — faol, bo'lmasa kutish holatiga qaytadi
   const next = st.enrollments.length ? "ACTIVE" : "WAITING";
   await prisma.student.update({ where: { id }, data: { eduStatus: next } });
   await writeAudit({
@@ -487,16 +444,8 @@ export async function restoreStudent(id: string): Promise<EditState> {
   return { ok: true };
 }
 
-/**
- * MUTLOQ o'chirish — orqaga qaytarib bo'lmaydi.
- * O'quvchi bilan birga davomat, topshiriq javoblari, sertifikat, imtihon
- * natijalari va TO'LOV TARIXI ham o'chadi (Payment.studentId majburiy bo'lgani
- * uchun to'lovlarni saqlab qolib bo'lmaydi). Shu sabab faqat direktor va
- * o'rinbosariga ruxsat; audit jurnalida qancha yozuv o'chgani qoladi.
- */
 export async function deleteStudentPermanently(id: string): Promise<EditState> {
   const s = await requireSession();
-  // Administrator ham o'chira oladi
   const CAN_PURGE = [ROLES.DIRECTOR, ROLES.DEPUTY_DIRECTOR, ROLES.ADMIN];
   if (!CAN_PURGE.includes(s.role as never)) return { error: "forbidden" };
 
@@ -507,14 +456,10 @@ export async function deleteStudentPermanently(id: string): Promise<EditState> {
   if (!st) return { error: "notfound" };
 
   await prisma.$transaction(async (tx) => {
-    // Bog'lanishlarni uzamiz (bular kaskad bilan o'chmaydi)
     await tx.lead.updateMany({ where: { studentId: id }, data: { studentId: null } });
     await tx.task.updateMany({ where: { studentId: id }, data: { studentId: null } });
-    // To'lovlar — studentId majburiy, shuning uchun o'chiriladi
     await tx.payment.deleteMany({ where: { studentId: id } });
-    // Qolgani (davomat, javoblar, sertifikat, guruh a'zoligi...) kaskad bilan ketadi
     await tx.student.delete({ where: { id } });
-    // O'quvchining tizimga kirish hisobi bo'lsa — u ham o'chiriladi
     if (st.userId) await tx.user.delete({ where: { id: st.userId } }).catch(() => {});
   });
 
@@ -532,25 +477,16 @@ export async function deleteStudentPermanently(id: string): Promise<EditState> {
   return { ok: true };
 }
 
-// ─── O'quvchini boshqa filialga ko'chirish ───
-// Guruhlar filialga tegishli bo'lgani uchun, ko'chirilganda o'quvchi eski
-// filialdagi guruhlardan chiqariladi (leftAt yoziladi) — aks holda u ko'rinmaydigan
-// guruhda "osilib" qolardi va to'lov hisobi ham davom etaverardi.
-
 export interface BranchOpt { id: string; name: string }
 
-/** Ko'chirish uchun faol filiallar ro'yxati. */
 export async function studentBranchOptions(): Promise<BranchOpt[]> {
   const s = await requireSession();
   if (!ALLOWED.includes(s.role as never)) return [];
   return prisma.branch.findMany({ where: { isActive: true }, orderBy: { name: "asc" }, select: { id: true, name: true } });
 }
 
-/* ─── Guruhdan guruhga o'tkazish (tahrirlash oynasi) ──────────────── */
-
 const WD = ["", "Du", "Se", "Chor", "Pay", "Ju", "Sha", "Ya"];
 
-/** Faol filialdagi faol guruhlar — tanlov uchun (o'quvchilar soni, sig'im, jadval bilan) */
 export async function studentGroupOptions(): Promise<GroupOpt[]> {
   const s = await requireSession();
   if (!ALLOWED.includes(s.role as never)) return [];
@@ -573,12 +509,6 @@ export async function studentGroupOptions(): Promise<GroupOpt[]> {
   });
 }
 
-/**
- * O'quvchini bir guruhdan boshqasiga o'tkazish. Eski guruhdagi a'zolik tugatiladi
- * (isActive=false, leftAt — to'lov hisobi shu oygacha), yangi guruhga yoziladi
- * (avval bo'lgan bo'lsa — qayta faollashtiriladi). fromGroupId null — eski
- * guruhdan chiqarilmaydi (qo'shimcha guruh). Daraja yangi guruhnikiga o'tadi.
- */
 export async function moveStudentToGroup(
   studentId: string,
   fromGroupId: string | null,
@@ -642,7 +572,6 @@ export async function moveStudentToBranch(
   if (!branch || !branch.isActive) return { error: "invalid" };
   if (student.branchId === branchId) return { ok: true, branchName: branch.name, removedGroups: 0 };
 
-  // Yangi filialga tegishli BO'LMAGAN guruhlardagi faol a'zoliklar tugatiladi
   const stale = await prisma.groupStudent.findMany({
     where: { studentId, isActive: true, group: { branchId: { not: branchId } } },
     select: { id: true },
@@ -673,28 +602,17 @@ export async function moveStudentToBranch(
   return { ok: true, branchName: branch.name, removedGroups: stale.length };
 }
 
-// ─── Qarz qo'shish va to'lovni tahrirlash ───
-// "Qarzdor holatga tushurish" — qo'lda qarz yozuvi (PENDING to'lov) ochiladi.
-// To'lovni tahrirlash/o'chirish — noto'g'ri kiritilgan yozuvni tuzatish uchun.
-
 const CAN_EDIT_PAY = [ROLES.DIRECTOR, ROLES.DEPUTY_DIRECTOR, ROLES.MANAGER, ROLES.ADMIN, ROLES.ACCOUNTANT];
-// ROP to'lov yozuvini yaratilganidan keyin shuncha soat ichida tahrirlay oladi
 const ROP_EDIT_HOURS = 24;
 const ropWindow = (from: Date) => Date.now() - from.getTime() < ROP_EDIT_HOURS * 3_600_000;
 function canEditPaymentAt(role: string, createdAt: Date): boolean {
   return CAN_EDIT_PAY.includes(role as never) || (role === ROLES.ROP && ropWindow(createdAt));
 }
-/** ROP uchun qarzni tahrirlash oynasi — o'quvchi oxirgi marta guruhga qo'shilgandan 24 soat */
 async function ropDebtWindowOpen(studentId: string): Promise<boolean> {
   const last = await prisma.groupStudent.findFirst({ where: { studentId }, orderBy: { joinedAt: "desc" }, select: { joinedAt: true } });
   return !!last && ropWindow(last.joinedAt);
 }
 
-/** O'quvchini qarzdor qilish — ko'rsatilgan summada qarz yozuvi ochadi. */
-/**
- * Jami qarzni qo'lda belgilash: joriy hisoblangan qarz bilan farq ADJUST yozuvi
- * sifatida saqlanadi (manfiy — kamaytiradi). Tushum hisobotlariga kirmaydi.
- */
 export async function adjustStudentDebt(
   studentId: string,
   input: { newDebt: number; reason: string },
@@ -711,7 +629,6 @@ export async function adjustStudentDebt(
   if (!st) return { error: "notfound" };
 
   const cur = await computeDebt(studentId, new Date());
-  // Balansda (oldindan to'langan) pul bo'lsa, qarz 0 dan pastda — farqni shu hisobdan olamiz
   const currentNet = cur.debt > 0 ? cur.debt : -cur.credit;
   const diff = target - currentNet;
   if (diff === 0) return { ok: true };
@@ -754,7 +671,6 @@ export async function addStudentDebt(
 
   const amount = Math.trunc(Number(input.amount));
   if (!Number.isFinite(amount) || amount <= 0) return { error: "amount" };
-  // Sabab majburiy — audit jurnalida kim, nega qarz yozgani ko'rinadi
   const reason = String(input.reason || "").trim().slice(0, 300);
   if (reason.length < 3) return { error: "reason" };
 
@@ -769,7 +685,7 @@ export async function addStudentDebt(
       studentId,
       amount,
       method: "CASH",
-      status: "PENDING", // PENDING = qarz
+      status: "PENDING",
       isManual: true,
       purpose: String(input.purpose || "").trim() || "Qarz",
       authorId: s.userId,
@@ -791,7 +707,6 @@ export async function addStudentDebt(
   return { ok: true };
 }
 
-/** To'lov yozuvini tahrirlash (summa, usul, maqsad, holat, sana). */
 export async function updatePaymentRecord(
   paymentId: string,
   input: { amount?: number; method?: string; purpose?: string; status?: string; dateIso?: string | null; note?: string | null; promoCode?: string | null },
@@ -799,7 +714,6 @@ export async function updatePaymentRecord(
 ): Promise<{ ok?: boolean; error?: string }> {
   const s = await requireSession();
   if (!CAN_EDIT_PAY.includes(s.role as never) && s.role !== ROLES.ROP) return { error: "forbidden" };
-  // Har bir tahrir sababi bilan — audit jurnaliga yoziladi
   const why = String(reason || "").trim().slice(0, 300);
   if (why.length < 3) return { error: "reason" };
 
@@ -809,7 +723,6 @@ export async function updatePaymentRecord(
   });
   if (!existing) return { error: "notfound" };
   if (!canEditPaymentAt(s.role, existing.createdAt)) return { error: "forbidden" };
-  // Qarz tuzatish yozuvi oddiy to'lov sifatida tahrirlanmaydi (faqat o'chiriladi)
   if (existing.status === "ADJUST") return { error: "forbidden" };
 
   const data: Record<string, unknown> = {};
@@ -830,10 +743,8 @@ export async function updatePaymentRecord(
   }
   if (input.dateIso) {
     const d = new Date(input.dateIso);
-    // ROP sanani kelajakka surib 24 soatlik oynani uzaytira olmaydi
     if (!isNaN(d.getTime())) data.createdAt = s.role === ROLES.ROP && d.getTime() > Date.now() ? existing.createdAt : d;
   }
-  // Promokod: bo'sh — olib tashlanadi; boshqa kod — tahrirda kurs soni sharti talab qilinmaydi (sabab audit'da)
   if (input.promoCode !== undefined && (input.promoCode || null) !== existing.promoCode) {
     if (!input.promoCode) { data.promoCode = null; data.discount = 0; }
     else {
@@ -861,7 +772,6 @@ export async function updatePaymentRecord(
   return { ok: true };
 }
 
-/** To'lov yozuvini o'chirish (xato kiritilgan bo'lsa). */
 export async function deletePaymentRecord(paymentId: string, reason = ""): Promise<{ ok?: boolean; error?: string }> {
   const s = await requireSession();
   if (!CAN_EDIT_PAY.includes(s.role as never) && s.role !== ROLES.ROP) return { error: "forbidden" };
@@ -891,14 +801,12 @@ export async function deletePaymentRecord(paymentId: string, reason = ""): Promi
   return { ok: true };
 }
 
-/** To'lov formasidagi promokod tanlovi — faqat faol kodlar (to'lov qabul qila oladiganlar uchun) */
 export async function listPromoOptions(): Promise<{ code: string; discount: number; minCourses: number | null; note: string | null }[]> {
   const s = await requireSession();
   if (!canWrite(s.role, MODULES.PAYMENTS)) return [];
   return activePromoOptions();
 }
 
-/** To'lovlar ro'yxati sahifalaridagi tahrirlash oynasi uchun — bitta to'lovning to'liq yozuvi */
 export async function getPaymentForEdit(paymentId: string): Promise<PayRow | null> {
   const s = await requireSession();
   if (!CAN_EDIT_PAY.includes(s.role as never) && s.role !== ROLES.ROP) return null;
@@ -910,7 +818,6 @@ export async function getPaymentForEdit(paymentId: string): Promise<PayRow | nul
   return { id: p.id, amount: p.amount, method: p.method, purpose: p.purpose, status: p.status, date: p.createdAt.toISOString(), note: p.note, promoCode: p.promoCode, discount: p.discount };
 }
 
-/** Joriy foydalanuvchi to'lovni tahrirlay oladimi (ro'yxat sahifalari tugmani shunga qarab ko'rsatadi) */
 export async function canEditPayments(role: string): Promise<boolean> {
   return CAN_EDIT_PAY.includes(role as never);
 }

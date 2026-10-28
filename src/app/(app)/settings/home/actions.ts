@@ -8,7 +8,6 @@ import { writeAudit } from "@/lib/audit";
 import { tr } from "@/lib/tr";
 import { isSafeLink } from "@/lib/portalContent";
 
-// O'quvchi bosh sahifasidagi banner va videolar — direktor va menejer
 const ALLOWED = [ROLES.DIRECTOR, ROLES.DEPUTY_DIRECTOR, ROLES.ADMIN, ROLES.MANAGER, ROLES.ROP];
 
 export type HomeState = { ok?: boolean; error?: string };
@@ -23,8 +22,6 @@ function refresh() {
   revalidatePath("/settings/home");
   revalidatePath("/student", "layout");
 }
-
-/* ══════════ Bannerlar ══════════ */
 
 export type BannerInput = {
   title: string;
@@ -111,8 +108,6 @@ export async function moveBanner(id: string, dir: "up" | "down"): Promise<HomeSt
   refresh();
   return { ok: true };
 }
-
-/* ══════════ Video va podkastlar ══════════ */
 
 export type VideoInput = { title: string; note: string; url: string; kind: string };
 

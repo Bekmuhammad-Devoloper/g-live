@@ -34,12 +34,12 @@ export default function PaymentSettings({ locale, centerName }: { locale: Locale
     try {
       const raw = localStorage.getItem(STORAGE_KEY);
       if (raw) setF((cur) => ({ ...cur, ...JSON.parse(raw) }));
-    } catch { /* ignore */ }
+    } catch { }
   }, []);
 
   const set = <K extends keyof Form>(k: K, v: Form[K]) => setF((s) => ({ ...s, [k]: v }));
   const save = () => {
-    try { localStorage.setItem(STORAGE_KEY, JSON.stringify(f)); } catch { /* ignore */ }
+    try { localStorage.setItem(STORAGE_KEY, JSON.stringify(f)); } catch { }
     setSaved(true); setTimeout(() => setSaved(false), 1800);
   };
 
@@ -48,7 +48,6 @@ export default function PaymentSettings({ locale, centerName }: { locale: Locale
       <h2 className="mb-6 text-2xl font-bold text-slate-800 dark:text-slate-100">{tr(locale, { uz: "To'lov usullari", ru: "Способы оплаты", en: "Payment methods", de: "Zahlungsmethoden" })}</h2>
 
       <div className="grid gap-5 lg:grid-cols-3">
-        {/* Yuqori qator — 3 ta ID kartochkasi */}
         <Fieldset title="Payme merchant ID">
           <SubLabel>{centerName}</SubLabel>
           <Input value={f.paymeMerchantId} onChange={(v) => set("paymeMerchantId", v)} />
@@ -62,7 +61,6 @@ export default function PaymentSettings({ locale, centerName }: { locale: Locale
           <Input value={f.clickServiceId} onChange={(v) => set("clickServiceId", v)} />
         </Fieldset>
 
-        {/* Payme — 2 ustun kenglikda */}
         <Fieldset title="Payme" className="lg:col-span-2">
           <div className="space-y-4">
             <div>
@@ -89,7 +87,6 @@ export default function PaymentSettings({ locale, centerName }: { locale: Locale
           </div>
         </Fieldset>
 
-        {/* Midtrans */}
         <Fieldset title="Midtrans">
           <div className="space-y-4">
             <div>

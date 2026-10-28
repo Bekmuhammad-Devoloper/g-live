@@ -5,8 +5,6 @@ import { getStarRanks } from "@/lib/starRanks";
 import { PageHeader, Forbidden } from "../../_components/ui";
 import StarRanksView, { type RankRow } from "./StarRanksView";
 
-// Yulduz pog'onalari — o'quvchi yulduz yig'ib ko'tariladigan darajalar.
-// Kurs darajasi (A1/A2) bilan aralashtirmaslik uchun alohida bo'lim.
 const ALLOWED = [ROLES.DIRECTOR, ROLES.DEPUTY_DIRECTOR, ROLES.ADMIN, ROLES.MANAGER];
 
 export default async function StarRanksSettingsPage() {

@@ -1,21 +1,4 @@
 #!/bin/bash
-# Yig'ilgan APK ni saytga chiqaradi — SERVERDA ishlatiladi.
-#
-#   bash /opt/gl-edu/scripts/publish-apk.sh
-#
-# Nima qiladi:
-#   1. scripts/verify-apk.py bilan tekshiradi (versiya oshganmi, imzo
-#      o'sha kalitmi, kerakli ruxsat va plaginlar ichidami). Bittasi
-#      o'tmasa — chiqarmaydi.
-#   2. Hozirgi APK ni zaxiraga oladi (oxirgi 5 tasi saqlanadi).
-#   3. Yangisini joyiga qo'yadi.
-#   4. Versiyani aapt2 bilan o'qib, yonidagi .version fayliga yozadi —
-#      germaniya.live/app sahifasi shu fayldan "2.7.0 (11)" ni ko'rsatadi.
-#
-# Nega alohida skript: ilgari chiqarish qo'lda `cp` bilan qilinardi va
-# versiya fayli yozilmasdi. Sahifada faqat hajm va sana turardi, ular esa
-# versiyalar orasida deyarli farq qilmaydi — foydalanuvchi "saytda haliyam
-# eskisi" deb o'ylab, yangisini o'rnatmay yurdi.
 set -euo pipefail
 
 APK_DIR=/opt/gl-edu/apk
@@ -38,13 +21,6 @@ fi
 cp "$NEW" "$CUR"
 chmod 644 "$CUR"
 
-# Versiya: "versionCode='11' versionName='2.7.0'" -> "2.7.0 (11)"
-#
-# DIQQAT: `| head -1` ISHLATILMAYDI. head birinchi qatordan keyin quvurni
-# yopadi, aapt2 SIGPIPE oladi va `set -o pipefail` bilan butun skript
-# 141 kodi bilan to'xtaydi — APK ko'chirilgan, lekin versiya fayli
-# yozilmagan holda. Aynan shu bo'lgan. Shu sabab chiqish to'liq o'qiladi,
-# birinchi qator keyin ajratiladi.
 BADGING="$("$AAPT" dump badging "$CUR" 2>/dev/null || true)"
 BADGING="${BADGING%%$'\n'*}"
 CODE="$(printf '%s' "$BADGING" | sed -n "s/.*versionCode='\([0-9]*\)'.*/\1/p")"

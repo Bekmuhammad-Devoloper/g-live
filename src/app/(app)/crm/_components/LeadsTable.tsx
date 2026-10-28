@@ -19,13 +19,11 @@ interface Props {
   selected: Set<string>;
   onToggle: (id: string, e: React.MouseEvent) => void;
   onOpen: (id: string, e: React.MouseEvent) => void;
-  /** Ikki marta bosilganda — lidning to'liq sahifasi */
   onOpenFull: (id: string) => void;
   allSelected: boolean;
   onToggleAll: () => void;
 }
 
-/** Dastlab shuncha qator chiziladi — 2000 qatorli jadval sahifani qotirmasin */
 const PAGE = 100;
 
 export default function LeadsTable({ leads, locale, selected, onToggle, onOpen, onOpenFull, allSelected, onToggleAll }: Props) {
@@ -59,7 +57,6 @@ export default function LeadsTable({ leads, locale, selected, onToggle, onOpen, 
                 return (
                   <tr
                     key={l.id}
-                    // 1 marta -> yonbosh tezkor oyna, 2 marta -> to'liq sahifa
                     className={cn("cursor-pointer select-none transition hover:bg-slate-50 dark:hover:bg-slate-800/50", sel && "bg-brand-50/60 dark:bg-brand-950/30")}
                     onClick={(e) => onOpen(l.id, e)}
                     onDoubleClick={() => onOpenFull(l.id)}

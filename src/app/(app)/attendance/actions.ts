@@ -10,8 +10,6 @@ import { writeAudit } from "@/lib/audit";
 import { canBypassAttendanceLock, lessonLockState } from "@/lib/attendanceWindow";
 import { autoMarkTeacherPresentForLesson } from "@/lib/teacherAutoAttendance";
 
-// Faqat o'z guruhi (o'qituvchi) yoki to'liq ruxsatga ega rahbariyat davomat belgilaydi.
-// Menejer/Direktor/Admin — faqat ko'rish (READ), talaba/ota-ona — belgilay olmaydi.
 const CAN_MARK_ROLES = [ROLES.TEACHER, ROLES.DEPUTY_DIRECTOR];
 
 type Session = Awaited<ReturnType<typeof requireSession>>;
@@ -24,19 +22,16 @@ async function guardLesson(s: Session, lessonId: string) {
     include: { group: { select: { teacherId: true } } },
   });
   if (!lesson) return null;
-  // O'qituvchi faqat o'z guruhidagi darsni belgilay oladi
   if (s.role === ROLES.TEACHER && lesson.group.teacherId !== s.userId) return null;
   return { s, lesson };
 }
 
-/** Bitta o'quvchining berilgan darsdagi davomat holatini belgilaydi (upsert). */
 export async function markAttendance(lessonId: string, studentId: string, status: string): Promise<{ ok?: boolean; error?: string }> {
   const s = await requireSession();
   const g = await guardLesson(s, lessonId);
   if (!g) return { error: tr(s.locale, { uz: "Ruxsat yo'q", ru: "Нет доступа", en: "No permission", de: "Keine Berechtigung" }) };
   if (!ATTENDANCE_STATUSES.includes(status as never)) return { error: tr(s.locale, { uz: "Holat noto'g'ri", ru: "Неверный статус", en: "Invalid status", de: "Ungültiger Status" }) };
 
-  // Davomat oynasi — dars + 3 soatdan keyin yopiladi (guruh sahifasidagi qoida bilan bir xil)
   if (!canBypassAttendanceLock(g.s.role)) {
     const lock = await lessonLockState(lessonId);
     if (lock && lock.closed && !lock.unlocked) {
@@ -58,12 +53,11 @@ export async function markAttendance(lessonId: string, studentId: string, status
     newValue: { status, method: "MANUAL" },
   });
 
-  await autoMarkTeacherPresentForLesson(g.s, lessonId); // ustozlar davomatiga avtomatik ✓
+  await autoMarkTeacherPresentForLesson(g.s, lessonId);
   revalidatePath("/attendance");
   return { ok: true };
 }
 
-/** Dars bo'yicha butun ro'yxatni tasdiqlaydi (barcha yozuvlar confirmed = true). */
 export async function confirmLesson(lessonId: string): Promise<{ ok?: boolean; error?: string }> {
   const s = await requireSession();
   const g = await guardLesson(s, lessonId);

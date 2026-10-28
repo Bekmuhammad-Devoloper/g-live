@@ -19,10 +19,8 @@ export default async function AssignmentsPage() {
     return <Forbidden title={tr(s.locale, { uz: "Kirish taqiqlangan", ru: "Доступ запрещён", en: "Access denied", de: "Zugriff verweigert" })} body={tr(s.locale, { uz: "Bu bo'lim uchun ruxsat yo'q.", ru: "Нет доступа к этому разделу.", en: "You do not have access to this section.", de: "Sie haben keine Berechtigung für diesen Bereich." })} />;
   }
 
-  // Ko'lam: o'qituvchi faqat o'z guruhlari vazifalarini ko'radi
   let where: Prisma.AssignmentWhereInput = {};
   if (s.role === ROLES.TEACHER) where = { group: { teacherId: s.userId } };
-  // O'quvchi/ota-ona o'z vazifalarini filialdan qat'i nazar ko'radi, xodimlar — faol filial doirasida
   const selfScoped = s.role === ROLES.STUDENT || s.role === ROLES.PARENT;
   if (!selfScoped) where = { AND: [where, branchViaGroup(s)] };
 
@@ -52,7 +50,6 @@ export default async function AssignmentsPage() {
   const canCreate = getPermission(s.role, MODULES.GROUPS) === "FULL" || s.role === ROLES.TEACHER;
   const groups = canCreate
     ? await prisma.group.findMany({
-        // faol filial doirasida
         where: { AND: [s.role === ROLES.TEACHER ? { teacherId: s.userId } : {}, branchWhere(s)] },
         select: { id: true, name: true },
         orderBy: { name: "asc" },

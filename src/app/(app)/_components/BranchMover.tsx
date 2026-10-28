@@ -8,10 +8,6 @@ import { Icon } from "./Icon";
 
 export interface BranchOpt { id: string; name: string }
 
-/**
- * Yozuvni (lid yoki o'quvchi) boshqa filialga ko'chirish.
- * Filiallar ro'yxati faqat blok ochilganda yuklanadi.
- */
 export default function BranchMover({
   locale,
   currentBranchName,
@@ -20,9 +16,7 @@ export default function BranchMover({
   onMove,
 }: {
   locale: Locale;
-  /** Hozirgi filial nomi (bilinmasa null) */
   currentBranchName: string | null;
-  /** Ko'chirishdan oldin ko'rsatiladigan ogohlantirish (ixtiyoriy) */
   warning?: string;
   loadBranches: () => Promise<BranchOpt[]>;
   onMove: (branchId: string) => Promise<{ ok?: boolean; error?: string; branchName?: string }>;

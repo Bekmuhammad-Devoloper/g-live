@@ -1,13 +1,3 @@
-// lib/pronounce.ts qoidalarini sinaydi.
-//
-//   npx tsx scripts/test-pronounce.ts
-//
-// NEGA KERAK. Talaffuz bosqichida "to'g'ri aytdimi" degan qarorni model
-// EMAS, shu modul qabul qiladi (sababi lib/pronounce.ts izohida). Demak
-// mashqning adolatliligi shu qoidalarga bog'liq: juda qattiq bo'lsa
-// to'g'ri aytgan o'quvchi o'ta olmaydi, juda yumshoq bo'lsa boshqa so'z
-// aytilsa ham o'tib ketadi. Ikkala chekka ham shu yerda ushlanadi.
-
 import { checkPronunciation } from "../src/lib/pronounce";
 
 const LESSON = [
@@ -15,7 +5,6 @@ const LESSON = [
   "das Fenster", "der Apfel", "die Milch", "das Buch", "die Schule",
 ];
 
-/** [maqsad so'z, model eshitgani, qabul qilinishi kerakmi, izoh] */
 const CASES: [string, string, boolean, string][] = [
   ["der Hund", "Hund", true, "artiklsiz aytdi"],
   ["der Hund", "der Hund", true, "artikli bilan"],
@@ -40,16 +29,12 @@ const CASES: [string, string, boolean, string][] = [
   ["das Buch", "Bus", false, "ikki harf farq"],
   ["die Milch", "Milch bitte", true, "ortiqcha so'z bilan"],
 
-  // ── Bir harf farq qiladigan BOSHQA so'zlar ──
-  // Chetlanish transkripsiya sirpanishini kechirish uchun, so'z
-  // almashtirish uchun emas. So'z BOSHIDAGI farq -- boshqa so'z.
   ["der Tisch", "Fisch", false, "Fisch — boshqa so'z, bir harf farq"],
   ["das Haus", "Maus", false, "Maus — boshqa so'z, bir harf farq"],
   ["das Buch", "Tuch", false, "Tuch — boshqa so'z"],
   ["der Hund", "Hunt", true, "so'z OXIRIDAGI d/t — nemis jarangsizlanishi"],
   ["das Fenster", "Fenstor", true, "oxiriga yaqin bitta harf"],
 
-  // ── Android bir nechta variant qaytaradi ──
   ["der Tisch", "Tisch | Fisch | tisch", true, "birinchi variant to'g'ri"],
   ["der Tisch", "Fisch | Tisch", true, "ikkinchi variant to'g'ri"],
   ["der Tisch", "Fisch | Wisch | misch", false, "hech biri to'g'ri emas"],

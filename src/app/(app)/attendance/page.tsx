@@ -11,7 +11,6 @@ import type { Prisma } from "@prisma/client";
 
 const CAN_MARK_ROLES = [ROLES.TEACHER, ROLES.DEPUTY_DIRECTOR];
 const p2 = (n: number) => String(n).padStart(2, "0");
-// Serverda deterministik sana formati (hidratsiya xatolarining oldini olish uchun)
 const fmtDateTime = (d: Date) => `${p2(d.getDate())}.${p2(d.getMonth() + 1)}.${d.getFullYear()} ${p2(d.getHours())}:${p2(d.getMinutes())}`;
 
 export default async function AttendancePage() {
@@ -29,7 +28,6 @@ export default async function AttendancePage() {
     const st = await prisma.student.findUnique({ where: { userId: s.userId } });
     where = { group: { students: { some: { studentId: st?.id ?? "__none__" } } } };
   }
-  // O'quvchi/ota-ona o'z darslarini filialdan qat'i nazar ko'radi, xodimlar — faol filial doirasida
   const selfScoped = s.role === ROLES.STUDENT || s.role === ROLES.PARENT;
   if (!selfScoped) where = { AND: [where, branchViaGroup(s)] };
 

@@ -23,10 +23,6 @@ import { getBrand } from "@/lib/brand";
 import MissingStudent from "../MissingStudent";
 import PasswordForm from "./PasswordForm";
 
-// "Profil" — o'quvchining shaxsiy sahifasi (Start ekrani uslubida):
-// ma'lumotlar, to'lovlar (qarz computeDebt dan), davomat, imtihonlar,
-// sertifikatlar, parol almashtirish va chiqish.
-
 const ATT_PILL: Record<string, { tone: "ok" | "warn" | "bad" | "muted"; text: LocaleText }> = {
   PRESENT: { tone: "ok", text: { uz: "Keldi", ru: "Был", en: "Present", de: "Da" } },
   LATE: { tone: "warn", text: { uz: "Kechikdi", ru: "Опоздал", en: "Late", de: "Spät" } },
@@ -74,7 +70,6 @@ export default async function StudentProfilPage() {
           group: {
             select: {
               name: true, levelCode: true,
-              // Dars kunlari kalendari uchun jadval
               weekdays: true, startTime: true, endTime: true, room: true, startDate: true, endDate: true, lessonsPerMonth: true,
               program: { select: { lessonsPerMonth: true } },
             },
@@ -83,7 +78,7 @@ export default async function StudentProfilPage() {
       },
     },
   });
-  if (!student) return <MissingStudent />; // redirect("/dashboard") aylanish hosil qilardi
+  if (!student) return <MissingStudent />;
 
   const [debt, paidAgg, payments, attendance, attAll, exams, examTotal, examPassed, certificates, noteCount, brainOn] = await Promise.all([
     computeDebt(student.id),
@@ -112,7 +107,6 @@ export default async function StudentProfilPage() {
       take: 8,
       select: { id: true, score: true, status: true, takenAt: true, exam: { select: { title: true, passScore: true } } },
     }),
-    // Ko'rsatkich JAMI natija bo'lishi kerak — ro'yxatdagi oxirgi 8 tadan emas
     prisma.examResult.count({ where: { studentId: student.id } }),
     prisma.examResult.count({ where: { studentId: student.id, status: "PASSED" } }),
     prisma.certificate.findMany({
@@ -120,26 +114,21 @@ export default async function StudentProfilPage() {
       orderBy: { issuedAt: "desc" },
       select: { id: true, number: true, programName: true, levelCode: true, qrCode: true, issuedAt: true },
     }),
-    // "Ikkinchi miya" yozuvlari soni — kartochkada ko'rsatiladi
     prisma.note.count({ where: { studentId: student.id } }),
-    // Bo'lim menejer tomonidan yoqilganmi (Sozlamalar > O'quvchi portali).
-    // O'chiq bo'lsa kartochka ko'rinmaydi — sahifasi ham bloklangan.
     isPortalFeatureOn("gehirn"),
   ]);
 
   const group = student.enrollments[0]?.group ?? null;
   const avatarUrl = student.imageUrl || student.user?.imageUrl || null;
   const level = group?.levelCode ?? student.currentLevel ?? "A1";
-  const present = attAll.filter((a) => isAttended(a.status)).length; // kanonik formula (Start bilan bir xil)
+  const present = attAll.filter((a) => isAttended(a.status)).length;
   const attPct = attAll.length ? Math.round((present / attAll.length) * 100) : 0;
   const totalPaid = paidAgg._sum.amount ?? 0;
 
-  // ── Dars kunlari kalendari: 1 oy orqaga, 2 oy oldinga ──
   const now = new Date();
   const todayISO = todayISOLocal();
   const CAL_BEFORE = 1, CAL_AFTER = 2;
   const lessonDays = buildLessonDays(student.enrollments.map((e) => e.group), now, CAL_BEFORE, CAL_AFTER);
-  // O'tgan dars kunlariga davomat belgisi (yashil/sariq/qizil nuqta)
   const attByDay: Record<string, AttMark> = {};
   for (const a of attAll) {
     const iso = todayISOLocal(a.lesson.startsAt);
@@ -161,7 +150,6 @@ export default async function StudentProfilPage() {
     <div className="space-y-[18px]">
       <PageHeader title={t.profile} subtitle={t.yourAccount} backLabel={t.back} right={<ProfilActions t={t} />} />
 
-      {/* ── Guvohnoma ── */}
       <IdCard
         brandName={(await getBrand()).name}
         editable={false}
@@ -181,7 +169,6 @@ export default async function StudentProfilPage() {
         }}
       />
 
-      {/* ── Yig'ma ko'rsatkichlar ── */}
       <div className="grid grid-cols-3 gap-3">
         {[
           { label: t.attendance, value: `${attPct}%` },
@@ -195,42 +182,6 @@ export default async function StudentProfilPage() {
         ))}
       </div>
 
-      {/* ── Ikkinchi miya (shaxsiy rivojlanish) — VAQTINCHA O'CHIRILGAN ──
-          Bo'lim to'liq kommentga olingan.
-          Qaytarish uchun: shu sarlavha qatorlarini va eng pastdagi yopuvchi
-          qatorni olib tashlang, so'ng ichidagi << va >> belgilarini JSX
-          komment belgilariga qaytaring.
-
-      << ── Ikkinchi miya (shaxsiy rivojlanish) ──
-          Ko'rinishi Sozlamalar > O'quvchi portali dan boshqariladi.
-          Hozir o'chirilgan (portal.gehirn = off) — yoqilsa shu yerda chiqadi. >>
-      {brainOn && (
-      <Link
-        href="/student/gehirn"
-        className="relative flex items-center gap-3 overflow-hidden rounded-[24px] p-5 text-white shadow-[0_14px_28px_rgba(91,33,182,0.28)]"
-        style={{ background: "linear-gradient(120deg, #4c1d95 0%, #7c3aed 55%, #a78bfa 100%)" }}
-      >
-        <span className="grid h-[52px] w-[52px] shrink-0 place-items-center rounded-2xl bg-white/20 backdrop-blur-sm">
-          <svg width="30" height="30" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="1.7" strokeLinecap="round" strokeLinejoin="round">
-            <path d="M12 4.2a3 3 0 0 0-3 3 2.7 2.7 0 0 0-2 4.4A2.9 2.9 0 0 0 8.6 16 2.8 2.8 0 0 0 12 19.3Z" />
-            <path d="M12 4.2a3 3 0 0 1 3 3 2.7 2.7 0 0 1 2 4.4A2.9 2.9 0 0 1 15.4 16 2.8 2.8 0 0 1 12 19.3Z" />
-            <path d="M12 4.2v15.1" />
-          </svg>
-        </span>
-        <div className="min-w-0 flex-1">
-          <div className="text-[19px] font-extrabold leading-tight">{t.brain}</div>
-          <div className="mt-0.5 truncate text-[12.5px] text-white/80">
-            {noteCount > 0 ? `${noteCount} ${t.notes}` : t.brainSub}
-          </div>
-        </div>
-        <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="2.6" strokeLinecap="round" strokeLinejoin="round">
-          <path d="m9 6 6 6-6 6" />
-        </svg>
-      </Link>
-      )}
-      */}
-
-      {/* ── Dars kunlari kalendari ── */}
       {lessonDays.length > 0 && (
         <>
           <SectionTitle>{t.lessonDays}</SectionTitle>
@@ -247,7 +198,6 @@ export default async function StudentProfilPage() {
         </>
       )}
 
-      {/* ── To'lovlar ── */}
       <SectionTitle>{t.payments}</SectionTitle>
       <div className={`${CARD} p-5`}>
         <div className="flex items-center gap-3">
@@ -288,7 +238,6 @@ export default async function StudentProfilPage() {
         )}
       </div>
 
-      {/* ── Davomat ── */}
       {attendance.length > 0 && (
         <>
           <SectionTitle>{t.attendance}</SectionTitle>
@@ -310,7 +259,6 @@ export default async function StudentProfilPage() {
         </>
       )}
 
-      {/* ── Imtihonlar ── */}
       {exams.length > 0 && (
         <>
           <SectionTitle>{t.exams}</SectionTitle>
@@ -332,7 +280,6 @@ export default async function StudentProfilPage() {
         </>
       )}
 
-      {/* ── Sertifikatlar ── */}
       {certificates.length > 0 && (
         <>
           <SectionTitle>{t.certificates}</SectionTitle>
@@ -353,7 +300,6 @@ export default async function StudentProfilPage() {
         </>
       )}
 
-      {/* Hisob ma'lumoti */}
       <p className="pb-2 text-center text-[11.5px] text-slate-500">
         {student.user?.email}{student.phone ? ` · ${student.phone}` : ""} · GL {fmtDate(student.createdAt)}
       </p>

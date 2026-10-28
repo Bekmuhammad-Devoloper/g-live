@@ -101,7 +101,6 @@ export default function StaffRatingView({ rows, opts, locale }: { rows: VRating[
 
   return (
     <div className="space-y-3">
-      {/* Filtrlar */}
       <div className="flex flex-wrap items-center gap-2">
         <div className="flex h-11 items-center gap-1 rounded-xl border border-slate-200 bg-white px-3 dark:border-slate-700 dark:bg-slate-800">
           <Icon name="calendar" className="h-4 w-4 shrink-0 text-slate-400" />

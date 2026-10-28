@@ -1,52 +1,36 @@
-# dependencies
 /node_modules
 /.pnp
 .pnp.js
 
-# next.js
 /.next/
+/.next-build/
+/.next-check/
 /.next-verify/
 /out/
-
-# production
 /build
-
-# misc
-.DS_Store
-*.pem
-
-# debug
-npm-debug.log*
-yarn-debug.log*
-yarn-error.log*
-
-# local env files
-.env
-.env*.local
-
-# database (SQLite dev)
-/prisma/dev.db
-/prisma/dev.db-journal
-
-# typescript
 *.tsbuildinfo
 next-env.d.ts
 
-# ── Sirlar va lokal ma'lumotlar (public repo!) ──
-.env.bak
+.env
 .env.*
+!.env.example
 !.env.telephony.example
-*.log
-/prisma/dev.db*
+deploy/gcp/.env.b
 .session-token
 .tok*
-deploy/gcp/.env.b
-cook.txt
-op.html
+*.pem
 
-# Android ilovasi — imzo kaliti va yig'ilgan APK serverda qoladi
-/apk/
+/prisma/dev.db*
+/prisma/backups/
 
-# yuklangan fayllar va yarim yuklashlar — serverda qoladi, git'da emas
 /public/uploads/
 /upload-parts/
+/apk/
+
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+.DS_Store
+cook.txt
+op.html

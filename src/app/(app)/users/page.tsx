@@ -18,16 +18,15 @@ export default async function UsersPage() {
     return <Forbidden title={t("err.forbidden")} body={t("err.forbiddenBody")} />;
   }
 
-  // XAVFSIZLIK: `select` — passwordHash/plainPassword hech qachon xotiraga ham yuklanmaydi
   const users = await prisma.user.findMany({
-    where: { AND: [{ role: { in: STAFF_ROLES } }, staffBranchWhere(s)] }, // faol filial doirasida (qo'shimcha filiallar ham)
+    where: { AND: [{ role: { in: STAFF_ROLES } }, staffBranchWhere(s)] },
     orderBy: { createdAt: "asc" },
     select: {
       id: true, fullName: true, gender: true, role: true, position: true, phone: true, isActive: true,
       branch: { select: { name: true } },
       branches: { select: { branch: { select: { name: true } } } },
       teacherGroups: {
-        where: { AND: [branchWhere(s), { status: "ACTIVE" }] }, // faol filial doirasida, faqat faol guruhlar
+        where: { AND: [branchWhere(s), { status: "ACTIVE" }] },
         select: { id: true, name: true, program: { select: { name: true } }, _count: { select: { students: { where: { isActive: true } } } } },
       },
     },
@@ -40,19 +39,14 @@ export default async function UsersPage() {
     students: u.teacherGroups.reduce((n, g) => n + g._count.students, 0),
     groups: u.teacherGroups.map((g) => ({ id: g.id, name: g.name })),
     role: u.role,
-    // Lavozim (katalog roli) bo'lsa shuni ko'rsatamiz, bo'lmasa RBAC rol nomi
     roleLabel: u.position?.trim() || label(ROLE_LABELS, u.role, s.locale),
-    // Asosiy + qo'shimcha filiallar
     branch: [u.branch?.name, ...u.branches.map((b) => b.branch.name)].filter(Boolean).join(" · ") || null,
     phone: u.phone,
     courses: Array.from(new Set(u.teacherGroups.map((g) => g.program?.name).filter((x): x is string => !!x))),
     active: u.isActive,
   }));
 
-  // "O'quv markazidagi vazifasi" — Rollar katalogidan (bo'lim bo'yicha guruhlanadi)
   const catalog = await prisma.staffRole.findMany({ where: { isActive: true }, orderBy: { createdAt: "asc" }, select: { name: true, department: true } });
-  // Rahbariyat lavozimlari (Direktor, o'rinbosar) faqat direktorga ko'rinadi va katalogdan
-  // o'chirilgan bo'lsa ham tanlovda turadi — aks holda direktorni tahrirlab bo'lmaydi.
   const isDirector = s.role === ROLES.DIRECTOR;
   const fromCatalog = catalog
     .filter((r) => isDirector || r.department !== MANAGEMENT_DEPT)

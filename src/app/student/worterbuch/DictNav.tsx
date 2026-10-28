@@ -5,9 +5,6 @@ import type { StudentStrings } from "../_i18n";
 import { useEffect, useRef, useState, useTransition } from "react";
 import { ICON_GRADIENT } from "../_ui";
 
-// Umumiy lug'at uchun qidiruv va A–Z harf tasmasi. Natijani server chiqaradi
-// (6000+ so'z brauzerga yuborilmasin), shu sabab bu yerda faqat URL yangilanadi.
-
 export default function DictNav({ letters, t }: { letters: string[]; t: StudentStrings }) {
   const router = useRouter();
   const sp = useSearchParams();
@@ -30,7 +27,6 @@ export default function DictNav({ letters, t }: { letters: string[]; t: StudentS
     start(() => router.replace(`?${p.toString()}`, { scroll: false }));
   };
 
-  // Yozayotganda 300 ms kutamiz — har harfda so'rov ketmasin
   useEffect(() => {
     if (first.current) {
       first.current = false;
@@ -73,8 +69,6 @@ export default function DictNav({ letters, t }: { letters: string[]; t: StudentS
         {pending && <span className="absolute -bottom-[7px] left-4 right-4 h-[2px] animate-pulse rounded-full bg-[#17a2bf]/40" />}
       </div>
 
-      {/* A–Z tasmasi. Harflar shisha QILINMAYDI: bir ekranda 30 ga yaqin
-          backdrop-filter GPU ni bo'g'adi va kichik harf o'qilmay qoladi. */}
       <div className="-mx-4 flex gap-1.5 overflow-x-auto px-4 pb-0.5 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
         <Chip active={!active} onClick={() => push({ l: null })}>{t.all}</Chip>
         {letters.map((c) => (

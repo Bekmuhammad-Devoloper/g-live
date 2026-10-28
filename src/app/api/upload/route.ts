@@ -12,19 +12,9 @@ import { extFor, UPLOAD_DIR } from "@/lib/uploadFs";
 
 export const runtime = "nodejs";
 
-/**
- * Katta fayllar (video) uchun asosiy yo'l endi BO'LAKLI rejim —
- * /api/upload/session (lib/chunkedUpload.ts). Bu yerdagi ikki rejim
- * kichik fayllar va eski mijozlar uchun qoladi:
- *   • multipart/form-data — kichik fayllar (rasm, PDF). formData() butun
- *     faylni xotiraga oladi, shuning uchun MAX_FORM_UPLOAD_MB bilan cheklangan.
- *   • boshqa Content-Type — OQIM rejimi (video). So'rov tanasi to'g'ridan-to'g'ri
- *     diskka yoziladi, xotiraga tushmaydi; fayl nomi X-File-Name sarlavhasida.
- *     Chegara MAX_UPLOAD_MB (5 GB).
- */
 export async function POST(req: NextRequest) {
   try {
-    await requireSession(); // faqat tizimga kirganlar
+    await requireSession();
   } catch {
     return NextResponse.json({ error: "unauthorized" }, { status: 401 });
   }
@@ -33,9 +23,7 @@ export async function POST(req: NextRequest) {
   return contentType.startsWith("multipart/form-data") ? handleMultipart(req) : handleStream(req, contentType);
 }
 
-// ── Oqim rejimi (video) ──
 async function handleStream(req: NextRequest, contentType: string) {
-  // Hajm oldindan ma'lum bo'lsa — bir bayt ham o'qimasdan rad etamiz
   const declared = Number(req.headers.get("content-length") || 0);
   if (declared > MAX_UPLOAD_BYTES) {
     return NextResponse.json({ error: "too_large", maxMb: MAX_UPLOAD_MB }, { status: 413 });
@@ -49,7 +37,6 @@ async function handleStream(req: NextRequest, contentType: string) {
   const fname = `${randomUUID()}.${extFor(contentType, origName)}`;
   const dest = path.join(UPLOAD_DIR, fname);
 
-  // Content-Length yolg'on yoki yo'q bo'lishi mumkin — yozish davomida ham sanaymiz
   let received = 0;
   const limiter = new Transform({
     transform(chunk: Buffer, _enc, cb) {
@@ -66,7 +53,7 @@ async function handleStream(req: NextRequest, contentType: string) {
       createWriteStream(dest),
     );
   } catch (e) {
-    await unlink(dest).catch(() => {}); // yarim yozilgan fayl qolmasin
+    await unlink(dest).catch(() => {});
     if (e instanceof Error && e.message === "too_large") {
       return NextResponse.json({ error: "too_large", maxMb: MAX_UPLOAD_MB }, { status: 413 });
     }
@@ -81,9 +68,7 @@ async function handleStream(req: NextRequest, contentType: string) {
   return NextResponse.json({ ok: true, url: `/uploads/${fname}`, name: origName, size: received });
 }
 
-// ── Multipart rejimi (rasm, PDF, hujjat) ──
 async function handleMultipart(req: NextRequest) {
-  // formData() butun tanani xotiraga oladi — katta so'rovni o'qimasdan rad etamiz
   const declared = Number(req.headers.get("content-length") || 0);
   if (declared > MAX_FORM_UPLOAD_BYTES) {
     return NextResponse.json({ error: "too_large", maxMb: MAX_FORM_UPLOAD_MB }, { status: 413 });

@@ -28,13 +28,10 @@ export default async function SalesTeamPage({ searchParams }: { searchParams: Pr
   const to = new Date(toStr + "T23:59:59");
   const loc = s.locale as Locale;
 
-  // faol filial doirasida
   const rangeLead: Prisma.LeadWhereInput = { AND: [{ managerId: { not: null }, createdAt: { gte: from, lte: to } }, branchWhere(s)] };
-  // faol filial operatorlarining qo'ng'iroqlari
   const rangeCall: Prisma.CallWhereInput = { AND: [{ operatorId: { not: null }, startedAt: { gte: from, lte: to } }, { operator: branchWhere(s) }] };
 
   const [ops, leads, calls] = await Promise.all([
-    // faol filial doirasida
     prisma.user.findMany({ where: { AND: [{ role: ROLES.OPERATOR, isActive: true }, staffBranchWhere(s)] }, orderBy: { fullName: "asc" }, select: { id: true, fullName: true, fiksa: true, position: true } }),
     prisma.lead.findMany({ where: rangeLead, select: { managerId: true, stage: true } }),
     prisma.call.findMany({ where: rangeCall, select: { operatorId: true, duration: true, startedAt: true, leadId: true } }),

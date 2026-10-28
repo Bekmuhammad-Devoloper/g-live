@@ -8,10 +8,9 @@ import { AI_TOOLS, runAiTool } from "@/lib/ai/assistantTools";
 import { ASSISTANT_SYSTEM } from "@/lib/ai/assistantPrompt";
 import { geminiGenerate, toGeminiTools, GeminiError, type GeminiContent } from "@/lib/ai/gemini";
 
-// AI yordamchi — faqat rahbariyat uchun
 const AI_ROLES = [ROLES.DIRECTOR, ROLES.DEPUTY_DIRECTOR];
 const MODEL = "claude-opus-5-5";
-const MAX_STEPS = 8; // bitta savolga vositalar bilan aylanishlar chegarasi
+const MAX_STEPS = 8;
 const MAX_HISTORY = 20;
 
 export interface AiChatMessage { role: "user" | "assistant"; text: string }
@@ -19,14 +18,13 @@ export interface AiReply { ok: boolean; text?: string; error?: "forbidden" | "no
 export interface AiChatSummary { id: string; title: string; updatedAt: string; count: number }
 type StoredMsg = AiChatMessage & { at?: number };
 
-const MAX_CHATS = 100; // har foydalanuvchi uchun saqlanadigan suhbatlar
+const MAX_CHATS = 100;
 
 async function aiSession() {
   const s = await requireSession();
   return AI_ROLES.includes(s.role as never) ? s : null;
 }
 
-/** Suhbatlar tarixi (oxirgisi birinchi) */
 export async function listAiChats(): Promise<AiChatSummary[]> {
   const s = await aiSession();
   if (!s) return [];
@@ -36,7 +34,7 @@ export async function listAiChats(): Promise<AiChatSummary[]> {
   });
   return rows.map((r) => {
     let count = 0;
-    try { count = (JSON.parse(r.messages) as unknown[]).length; } catch { /* bo'sh */ }
+    try { count = (JSON.parse(r.messages) as unknown[]).length; } catch { }
     return { id: r.id, title: r.title, updatedAt: r.updatedAt.toISOString(), count };
   });
 }
@@ -56,7 +54,6 @@ export async function deleteAiChat(id: string): Promise<boolean> {
   return r.count > 0;
 }
 
-/** Suhbatni saqlash: yangi bo'lsa yaratiladi (sarlavha — birinchi savol) */
 async function saveChat(userId: string, chatId: string | null, msgs: StoredMsg[]): Promise<string> {
   const data = JSON.stringify(msgs.slice(-60));
   if (chatId) {
@@ -66,13 +63,11 @@ async function saveChat(userId: string, chatId: string | null, msgs: StoredMsg[]
   const firstQ = msgs.find((m) => m.role === "user")?.text ?? "Suhbat";
   const title = firstQ.replace(/\s+/g, " ").trim().slice(0, 80);
   const c = await prisma.aiConversation.create({ data: { userId, title, messages: data }, select: { id: true } });
-  // Eski suhbatlar chegaradan oshsa o'chiriladi
   const old = await prisma.aiConversation.findMany({ where: { userId }, orderBy: { updatedAt: "desc" }, skip: MAX_CHATS, select: { id: true } });
   if (old.length) await prisma.aiConversation.deleteMany({ where: { id: { in: old.map((o) => o.id) } } });
   return c.id;
 }
 
-/** Savol + saqlash: javob bo'lsa suhbat tarixga yoziladi */
 export async function askAndSave(history: StoredMsg[], chatId: string | null): Promise<AiReply> {
   const s = await aiSession();
   if (!s) return { ok: false, error: "forbidden" };
@@ -97,11 +92,9 @@ function todayLine(): string {
 export async function askAssistant(history: AiChatMessage[]): Promise<AiReply> {
   const s = await requireSession();
   if (!AI_ROLES.includes(s.role as never)) return { ok: false, error: "forbidden" };
-  // Provayder: GEMINI_API_KEY bo'lsa Gemini, aks holda Claude (ANTHROPIC_API_KEY)
   const useGemini = !!process.env.GEMINI_API_KEY;
   if (!useGemini && !process.env.ANTHROPIC_API_KEY) return { ok: false, error: "not_configured" };
 
-  // Faqat matnli tarix (oldingi javoblarning thinking/tool bloklari qayta yuborilmaydi)
   const clean = history
     .filter((m) => (m.role === "user" || m.role === "assistant") && typeof m.text === "string" && m.text.trim())
     .slice(-MAX_HISTORY)
@@ -146,7 +139,6 @@ export async function askAssistant(history: AiChatMessage[]): Promise<AiReply> {
         return { ok: true, text: text || "—", tasksCreated };
       }
 
-      // Javobni to'liq (thinking bloklari bilan) qaytaramiz, vositalarni bajaramiz
       messages.push({ role: "assistant", content: res.content });
       const results: Anthropic.Beta.BetaToolResultBlockParam[] = [];
       for (const tu of toolUses) {
@@ -185,7 +177,6 @@ async function askGemini(clean: AiChatMessage[], actor: { userId: string; fullNa
         const text = r.parts.filter((p) => p.text && !p.thought).map((p) => p.text).join("\n").trim();
         return { ok: true, text: text || "—", tasksCreated };
       }
-      // Model javobi o'zgarishsiz (thoughtSignature bilan) qaytariladi
       contents.push({ role: "model", parts: r.parts });
       const responses = [];
       for (const c of calls) {

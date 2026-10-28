@@ -6,7 +6,6 @@ import { Forbidden } from "../_components/ui";
 import { parseApplyCourses } from "@/lib/applyCourses";
 import BranchesView, { type VBranch } from "./BranchesView";
 
-// Administrator faqat o'z filialiga tayinlangan — filiallar ro'yxatini ko'ra/boshqara olmaydi
 const CAN = [ROLES.DIRECTOR, ROLES.DEPUTY_DIRECTOR];
 
 export default async function BranchesPage() {
@@ -20,11 +19,9 @@ export default async function BranchesPage() {
   const rows: VBranch[] = branches.map((b) => ({
     id: b.id, name: b.name, address: b.address ?? "", phone: b.phone ?? "",
     lat: b.lat, lng: b.lng, radius: b.radius, imageUrl: b.imageUrl ?? null,
-    // xodimlar: asosiy filiali shu + qo'shimcha filial sifatida biriktirilganlar
     staff: b._count.users + b._count.staff, groups: b._count.groups, isActive: b.isActive, showInApply: b.showInApply,
     applyCourses: parseApplyCourses(b.applyCourses),
   }));
 
-  // To'liq o'chirish (o'quvchi/guruhlari bilan) — faqat direktor
   return <BranchesView branches={rows} canManage={CAN.includes(s.role as never)} canPurge={s.role === ROLES.DIRECTOR} locale={s.locale} />;
 }

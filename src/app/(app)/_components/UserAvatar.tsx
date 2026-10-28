@@ -3,13 +3,8 @@
 import { cn } from "@/lib/cn";
 import { Icon } from "./Icon";
 
-// Foydalanuvchi avatari — rasm yuklangan bo'lsa rasm, aks holda ROL ikonasi.
-// Ilgari har bir sahifa o'zicha ism harflarini (masalan "AK") chizardi;
-// endi hamma joyda shu komponent ishlatiladi.
-
-// Har bir rol uchun ikonka va rang
 const ROLE_LOOK: Record<string, { icon: string; ring: string }> = {
-  MANAGER:         { icon: "headphones", ring: "from-brand-500 to-brand-700" },      // operator
+  MANAGER:         { icon: "headphones", ring: "from-brand-500 to-brand-700" },
   TEACHER:         { icon: "teacher",    ring: "from-violet-500 to-purple-700" },
   STUDENT:         { icon: "graduation", ring: "from-sky-500 to-blue-700" },
   PARENT:          { icon: "users",      ring: "from-teal-500 to-emerald-700" },
@@ -18,7 +13,6 @@ const ROLE_LOOK: Record<string, { icon: string; ring: string }> = {
   DIRECTOR:        { icon: "shieldCheck", ring: "from-slate-600 to-slate-800" },
   ADMIN:           { icon: "settings",   ring: "from-slate-600 to-slate-800" },
 };
-// Rol noma'lum bo'lsa (lid, mijoz, tashqi kontakt)
 const FALLBACK = { icon: "user", ring: "from-slate-400 to-slate-600" };
 
 export type AvatarSize = "xs" | "sm" | "md" | "lg" | "xl";
@@ -34,7 +28,6 @@ const SIZE: Record<AvatarSize, { box: string; icon: string; radius: string }> = 
 interface Props {
   name?: string | null;
   imageUrl?: string | null;
-  /** ROLES dagi qiymat. Berilmasa — umumiy "odam" ikonasi */
   role?: string | null;
   size?: AvatarSize;
   className?: string;

@@ -1,6 +1,3 @@
-// Yengil i18n — uz/ru lug'atlari. (Arxitektura nemis va boshqa tillarga tayyor:
-// shunchaki yangi til kalitini qo'shish yetarli, kod o'zgarmaydi — TZ NFR "Lokalizatsiya".)
-
 import type { Locale } from "./constants";
 
 type Dict = Record<string, string>;
@@ -106,7 +103,6 @@ const uz: Dict = {
   "err.forbidden": "Kirish taqiqlangan",
   "err.forbiddenBody": "Ushbu bo'limga kirish uchun sizda ruxsat yo'q.",
 
-  // Navbar
   "top.new": "Yaratish",
   "top.newStudent": "Yangi talaba",
   "top.newPayment": "Yangi to'lov",
@@ -237,7 +233,6 @@ const ru: Dict = {
   "err.forbidden": "Доступ запрещён",
   "err.forbiddenBody": "У вас нет прав для доступа к этому разделу.",
 
-  // Navbar
   "top.new": "Создать",
   "top.newStudent": "Новый ученик",
   "top.newPayment": "Новый платёж",
@@ -368,7 +363,6 @@ const en: Dict = {
   "err.forbidden": "Access denied",
   "err.forbiddenBody": "You don't have permission to access this section.",
 
-  // Navbar
   "top.new": "Create",
   "top.newStudent": "New student",
   "top.newPayment": "New payment",
@@ -398,7 +392,6 @@ const en: Dict = {
   "footer.tagline": "learning platform",
 };
 
-// Nemischa lug'at — to'liq (fallback baribir en -> uz zanjiri orqali ishlaydi)
 const de: Dict = {
   "app.name": "Germaniya Live",
   "app.tagline": "Verwaltungssystem des Lernzentrums",
@@ -500,7 +493,6 @@ const de: Dict = {
   "err.forbidden": "Zugriff verweigert",
   "err.forbiddenBody": "Sie haben keine Berechtigung für diesen Bereich.",
 
-  // Navbar
   "top.new": "Erstellen",
   "top.newStudent": "Neuer Schüler",
   "top.newPayment": "Neue Zahlung",
@@ -534,6 +526,5 @@ const DICTS: Record<Locale, Dict> = { uz, ru, en, de };
 
 export function getT(locale: Locale) {
   const d = DICTS[locale] ?? uz;
-  // Tanlangan tilda yo'q kalit: avval inglizcha, keyin o'zbekcha
   return (key: string): string => d[key] ?? en[key] ?? uz[key] ?? key;
 }

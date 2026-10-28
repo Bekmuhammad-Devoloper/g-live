@@ -9,15 +9,13 @@ import { createNote } from "./actions";
 import { NOTE_KINDS, kindColor, parseLinks } from "./parse";
 import KindIcon from "./KindIcon";
 
-// Yozuvlar ro'yxati: qidiruv, teg bo'yicha saralash va yangi yozuv qo'shish.
-
 export interface VNote {
   id: string;
   title: string;
   content: string;
   kind: string;
   pinned: boolean;
-  updatedAt: string; // ISO
+  updatedAt: string;
   tags: string[];
 }
 
@@ -27,7 +25,6 @@ function fmtShort(iso: string) {
   return `${p(d.getDate())}.${p(d.getMonth() + 1)}.${d.getFullYear()}`;
 }
 
-/** Ro'yxatdagi qisqa ko'rinish uchun matnni belgilaridan tozalaydi. */
 function preview(content: string) {
   return content
     .replace(/\[\[([^\][|]+?)(?:\|([^\][]*?))?\]\]/g, (_m, a, b) => (b || a))
@@ -66,7 +63,6 @@ export default function NotesView({
 
   return (
     <>
-      {/* ── Yig'ma ko'rsatkichlar ── */}
       <div className="grid grid-cols-3 gap-3">
         {tiles.map((x) => (
           <div key={x.label} className={`${CARD} flex flex-col items-center gap-1.5 px-1 pb-4 pt-4`}>
@@ -76,14 +72,12 @@ export default function NotesView({
         ))}
       </div>
 
-      {/* ── Birinchi marta: nima uchun kerakligini tushuntiramiz ── */}
       {notes.length === 0 && (
         <div className={`${CARD} px-5 py-5`}>
           <p className="text-[13.5px] leading-relaxed text-slate-600">{t.brainHint}</p>
         </div>
       )}
 
-      {/* ── Qidiruv ── */}
       {notes.length > 0 && (
         <input
           value={q}
@@ -93,7 +87,6 @@ export default function NotesView({
         />
       )}
 
-      {/* ── Teglar ── */}
       {tags.length > 0 && (
         <div className="-mx-4 flex gap-2 overflow-x-auto px-4 pb-1">
           {tags.map((x) => {
@@ -112,7 +105,6 @@ export default function NotesView({
         </div>
       )}
 
-      {/* ── Ro'yxat ── */}
       {shown.length === 0 ? (
         <div className={`${CARD} flex flex-col items-center gap-2 px-6 py-12 text-center`}>
           <span className="text-3xl">🧠</span>
@@ -166,10 +158,6 @@ export default function NotesView({
         </div>
       )}
 
-      {/* ── Yangi yozuv tugmasi ──
-          Pastki menyu bilan bir xil usulda joylashtiriladi: butun kenglikdagi
-          fixed qatlam + mx-auto max-w-md — shunda keng ekranda ham ustun
-          chetiga tegib turadi, o'rtaga qochib ketmaydi. */}
       <div className="pointer-events-none fixed inset-x-0 bottom-[calc(104px+env(safe-area-inset-bottom))] z-30 mx-auto flex max-w-md justify-end px-4">
         <button
           onClick={() => setAdding(true)}
@@ -187,8 +175,6 @@ export default function NotesView({
     </>
   );
 }
-
-// ───────────── Yangi yozuv oynasi (pastdan chiqadi) ─────────────
 
 function NewNoteSheet({ t, onClose, onCreated }: { t: StudentStrings; onClose: () => void; onCreated: (id: string) => void }) {
   const [title, setTitle] = useState("");
@@ -217,7 +203,6 @@ function NewNoteSheet({ t, onClose, onCreated }: { t: StudentStrings; onClose: (
   return (
     <div className="fixed inset-0 z-50 flex items-end justify-center" onMouseDown={onClose}>
       <div className="absolute inset-0 bg-slate-900/40 backdrop-blur-sm" />
-      {/* Oyna SHISHA emas — ostida ixtiyoriy matn turadi, fon quyuq qolsin */}
       <div
         onMouseDown={(e) => e.stopPropagation()}
         className="relative w-full max-w-md rounded-t-[26px] bg-white px-5 pb-7 pt-4 shadow-[0_-10px_30px_rgba(19,78,94,0.2)]"

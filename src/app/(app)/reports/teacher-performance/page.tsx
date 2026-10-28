@@ -33,17 +33,16 @@ export default async function TeacherPerformancePage({ searchParams }: { searchP
   const to = new Date(toStr + "T23:59:59");
 
   const teachers = await prisma.user.findMany({
-    where: { AND: [{ role: ROLES.TEACHER, isActive: true }, staffBranchWhere(s)] }, // faol filial doirasida
+    where: { AND: [{ role: ROLES.TEACHER, isActive: true }, staffBranchWhere(s)] },
     orderBy: { fullName: "asc" },
     select: {
       id: true, fullName: true,
-      // guruhlar ham faol filial doirasida
       teacherGroups: { where: branchWhere(s), select: { students: { select: { joinedAt: true, student: { select: { id: true, eduStatus: true } } } } } },
     },
   });
 
   const rows = teachers.map((t) => {
-    const seen = new Map<string, string>(); // studentId -> eduStatus
+    const seen = new Map<string, string>();
     let joinsInPeriod = 0;
     for (const g of t.teacherGroups) {
       for (const gs of g.students) {
@@ -63,7 +62,6 @@ export default async function TeacherPerformancePage({ searchParams }: { searchP
     return { id: t.id, name: t.fullName, start, changes, end };
   });
 
-  // Saralash (ustun bo'yicha) — URL orqali
   const sortKey = sp.sort || "";
   const dir = sp.dir === "asc" ? "asc" : "desc";
   const flat = (r: (typeof rows)[number]): TeacherRow => ({

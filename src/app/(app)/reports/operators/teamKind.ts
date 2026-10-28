@@ -1,14 +1,10 @@
 import { ROLES, type LocaleText } from "@/lib/constants";
 
-// Jamoa bo'limi ikki tur uchun bitta kod bilan ishlaydi: operatorlar (/reports/operators)
-// va filial administratorlari (/reports/admins). Farqi — rol, manzil va matnlar.
-
 export type TeamKind = "operator" | "admin";
 
 export interface TeamConfig {
   kind: TeamKind;
   role: string;
-  /** Ro'yxat sahifasi manzili; profil — `${base}/${id}` */
   base: string;
   icon: string;
   emailPlaceholder: string;

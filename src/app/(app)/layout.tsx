@@ -14,9 +14,6 @@ import { disabledModules, INSTANCE_MODULES, isModuleEnabled } from "@/lib/instan
 export default async function AppLayout({ children }: { children: React.ReactNode }) {
   const session = await getSession();
   if (!session) redirect("/login");
-  // Diqqat: STUDENT bu yerdan redirect QILINMAYDI — /checkin/[token] (QR-davomat)
-  // shu layout ichida va uni o'quvchining o'zi ochadi. Qolgan sahifalar har biri
-  // o'z RBAC tekshiruvi bilan himoyalangan (canRead bo'lmasa Forbidden).
 
   const t = getT(session.locale);
   const isTeacher = session.role === ROLES.TEACHER;
@@ -24,14 +21,10 @@ export default async function AppLayout({ children }: { children: React.ReactNod
     session.role as never
   );
   const canCreatePayment = canWrite(session.role, MODULES.PAYMENTS);
-  // Administrator faqat o'z filialiga tayinlangan — filial almashtira/qo'sha olmaydi (TZ)
   const canSwitchBranch = [ROLES.DIRECTOR, ROLES.DEPUTY_DIRECTOR].includes(session.role as never);
-  // Telefoniya softphone — operator/ROP/admin rollari uchun
-  // Telefoniya sozlamalarini faqat direktor va administrator o'zgartiradi
   const canConfigureTelephony = [ROLES.DIRECTOR, ROLES.ADMIN].includes(session.role as never);
   const canPhone = [ROLES.OPERATOR, ROLES.ROP, ROLES.MANAGER, ROLES.DEPUTY_DIRECTOR, ROLES.DIRECTOR, ROLES.ADMIN].includes(session.role as never);
 
-  // O'z profil rasmi (topbar avatari uchun) + lavozim
   const me = await prisma.user.findUnique({
     where: { id: session.userId },
     select: {
@@ -40,16 +33,12 @@ export default async function AppLayout({ children }: { children: React.ReactNod
       branches: { select: { branch: { select: { id: true, name: true, isActive: true } } } },
     },
   });
-  // Xodim ishlaydigan filiallar (asosiy + qo'shimcha). Bir nechta bo'lsa — faqat shular
-  // orasida almashtira oladi; rahbariyat esa hamma filialni ko'radi.
   const ownBranches = [me?.branch, ...(me?.branches.map((b) => b.branch) ?? [])]
     .filter((b): b is { id: string; name: string; isActive: boolean } => !!b && b.isActive)
     .filter((b, i, arr) => arr.findIndex((x) => x.id === b.id) === i)
     .map((b) => ({ id: b.id, name: b.name }));
   const canSwitchOwn = !canSwitchBranch && ownBranches.length > 1;
 
-  // Sotuv bo'limi rollari o'z portaliga ega (eski loyihadagi kabi).
-  // Eski MANAGER yozuvlari uchun lavozim bo'yicha zaxira aniqlash saqlanadi.
   const portal =
     session.role === ROLES.ROP ? "rop"
     : session.role === ROLES.OPERATOR ? "operator"
@@ -77,7 +66,6 @@ export default async function AppLayout({ children }: { children: React.ReactNod
       take: 8,
       include: { group: { select: { id: true, name: true } } },
     }),
-    // Yangi talabani darhol guruhga biriktirish uchun (navbar formasi)
     canCreateStudent
       ? prisma.group.findMany({
           where: { status: { in: ["ACTIVE", "PLANNED"] } },
@@ -88,7 +76,6 @@ export default async function AppLayout({ children }: { children: React.ReactNod
       : Promise.resolve([]),
   ]);
 
-  // Rahbariyat — barcha filiallar; qolganlar — o'z filiallari (bo'lmasa joriy filial)
   const branches = canSwitchBranch
     ? allBranches
     : ownBranches.length > 0 ? ownBranches : branch ? [{ id: branch.id, name: branch.name }] : [];
@@ -138,7 +125,6 @@ export default async function AppLayout({ children }: { children: React.ReactNod
           topic: l.topic,
           startsAt: l.startsAt.toISOString(),
         })),
-        // Obuna muddati — .env dagi SUBSCRIPTION_UNTIL orqali sozlanadi
         subscriptionUntil: process.env.SUBSCRIPTION_UNTIL ?? null,
       }}
     >

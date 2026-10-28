@@ -1,10 +1,3 @@
-// Germaniya Live — O'quv markazini boshqarish tizimi
-// Ma'lumotlar modeli (TZ 5-bo'lim asosida)
-//
-// Eslatma: MVP uchun SQLite ishlatilgan (o'rnatishsiz darhol ishlaydi).
-// Production (PostgreSQL)'ga o'tish uchun: provider = "postgresql" qiling.
-// Shuning uchun bu yerda enum ISHLATILMAGAN (statuslar String + lib/constants.ts da).
-
 generator client {
   provider = "prisma-client-js"
 }
@@ -14,22 +7,18 @@ datasource db {
   url      = env("DATABASE_URL")
 }
 
-// ─────────────────────────────────────────────────────────────
-// FOYDALANUVCHILAR VA TASHKILIY TUZILMA
-// ─────────────────────────────────────────────────────────────
-
 model Branch {
   id        String   @id @default(cuid())
   name      String
   address   String?
   phone     String?
-  lat       Float? // manzil kenglik
-  lng       Float? // manzil uzunlik
-  radius    Int      @default(100) // geo-radius (metr) — davomat uchun
-  imageUrl  String? // filial rasmi (data URL — galereyadan yuklangan)
+  lat       Float?
+  lng       Float?
+  radius    Int      @default(100)
+  imageUrl  String?
   isActive  Boolean  @default(true)
-  showInApply Boolean @default(true) // ochiq ariza formasida (/apply) filial tanlovida chiqadimi
-  applyCourses String? // arizadagi kurslar ro'yxati, JSON [{name, levels}] — lib/applyCourses.ts
+  showInApply Boolean @default(true)
+  applyCourses String?
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
@@ -42,9 +31,6 @@ model Branch {
   staff    UserBranch[]
 }
 
-// Xodimning qo'shimcha filiallari. Bitta xodim (bitta login) bir nechta filialda
-// ishlashi mumkin: asosiy filial User.branchId da, qolganlari shu yerda. Xodimlar
-// ro'yxatlari staffBranchWhere (lib/branchScope.ts) bilan filtrlanadi — ikkalasini ham ko'radi.
 model UserBranch {
   id        String   @id @default(cuid())
   userId    String
@@ -57,19 +43,16 @@ model UserBranch {
   @@index([branchId])
 }
 
-// Filialdagi BO'SH XONA / BO'SH VAQT — filial administratori kiritadi,
-// ROP lidlar kanbanidagi filial ustunida ko'radi (lidni qayerga yo'naltirishni
-// bilish uchun). Erkin yozuv: xona nomi, kunlar, vaqt oralig'i, izoh.
 model BranchSlot {
   id        String   @id @default(cuid())
   branchId  String
   branch    Branch   @relation(fields: [branchId], references: [id], onDelete: Cascade)
-  room      String // "3-xona"
-  days      String // "Du, Chor, Ju"
-  startTime String // "18:00"
-  endTime   String // "19:30"
-  note      String? // "A1 yangi guruh, 5 ta joy"
-  capacity  Int? // xona sig'imi — shundan ortiq lid tashlab bo'lmaydi (Xonalar bo'limidan to'ldiriladi)
+  room      String
+  days      String
+  startTime String
+  endTime   String
+  note      String?
+  capacity  Int?
   createdById String?
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
@@ -79,20 +62,18 @@ model BranchSlot {
   @@index([branchId])
 }
 
-// Xodim rollari (boshqaruv)
 model StaffRole {
   id          String   @id @default(cuid())
   name        String
   description String?
-  department  String? // bo'lim (Boshqaruv, Sotuv bo'limi, Moliya bo'limi, ...)
-  bossOnly    Boolean  @default(false) // faqat boss ko'ra oladi
-  permissions String? // vergul bilan ajratilgan ruxsat kalitlari
+  department  String?
+  bossOnly    Boolean  @default(false)
+  permissions String?
   isActive    Boolean  @default(true)
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt
 }
 
-// Teglar / yorliqlar (Nomi, Kodi, Holati)
 model Tag {
   id        String   @id @default(cuid())
   name      String
@@ -108,20 +89,20 @@ model User {
   email        String    @unique
   phone        String?
   passwordHash String
-  plainPassword String? // parolni rahbariyat ko'rishi uchun ochiq nusxa (ichki admin funksiyasi)
-  role         String // ROLES: STUDENT | PARENT | TEACHER | MANAGER | DEPUTY_DIRECTOR | DIRECTOR | ADMIN
+  plainPassword String?
+  role         String
   isActive     Boolean   @default(true)
-  locale       String    @default("uz") // uz | ru
-  gender       String? // MALE | FEMALE
-  birthDate    DateTime? // tug'ilgan sana
-  imageUrl     String? // profil rasmi (data URL — galereyadan yuklangan)
-  fiksa        Int       @default(0) // o'qituvchi uchun belgilangan (fixed) oylik maosh (so'm)
-  kpiBonus     Int       @default(200000) // operator KPI: har bir muvaffaqiyatli lid uchun bonus (so'm)
-  position     String? // lavozim (erkin matn) — Sozlamalar/Xodimlar bo'limi
-  sipExtension String?  @unique // telefoniya: operatorning SIP extension'i (masalan "operator3")
-  archivedAt    DateTime? // arxivlangan (deaktivatsiya) sanasi
-  archiveReason String? // arxivlash/o'chirish sababi
-  archiveNote   String? // arxiv izohi
+  locale       String    @default("uz")
+  gender       String?
+  birthDate    DateTime?
+  imageUrl     String?
+  fiksa        Int       @default(0)
+  kpiBonus     Int       @default(200000)
+  position     String?
+  sipExtension String?  @unique
+  archivedAt    DateTime?
+  archiveReason String?
+  archiveNote   String?
   lastLoginAt  DateTime?
   gradedSubmissions Submission[] @relation("SubmissionGrader")
   createdAt    DateTime  @default(now())
@@ -129,65 +110,51 @@ model User {
 
   branchId String?
   branch   Branch? @relation(fields: [branchId], references: [id])
-  // Qo'shimcha filiallar — xodim bir nechta filialda ishlasa (asosiysi branchId)
   branches UserBranch[]
 
-  // Rolga bog'liq profillar
   studentProfile Student?
   parentProfile  Parent?
   teacherGroups  Group[]  @relation("TeacherGroups")
   teacherChats   ChatMessage[] @relation("ChatTeacher")
   authoredChats  ChatMessage[] @relation("ChatAuthor")
 
-  // CRM
   managedLeads  Lead[]         @relation("LeadManager")
   leadActivities LeadActivity[]
 
-  // Audit / to'lov / bildirishnoma
   auditLogs     AuditLog[]
   createdPayments Payment[]    @relation("PaymentAuthor")
   notifications Notification[]
   pushDevices   PushDevice[]
 
-  // Topshiriq / eslatma
   assignedTasks Task[] @relation("TaskAssignee")
   authoredTasks Task[] @relation("TaskAuthor")
 
-  // Oylik maosh yozuvlari (o'qituvchi)
   salaries TeacherSalary[]
 
-  // Qo'ng'iroqlar markazi — operator sifatida
   calls Call[] @relation("CallOperator")
 
-  // Moliya — kiritilgan xarajatlar
   expenses Expense[] @relation("ExpenseAuthor")
 }
 
-// O'qituvchi oylik maoshi — har oy alohida yozuv (yil+oy bo'yicha).
-// Yangi oy = yangi yozuv (0'dan boshlanadi); eski oylar tarix sifatida saqlanadi.
 model TeacherSalary {
   id        String   @id @default(cuid())
   teacherId String
   teacher   User     @relation(fields: [teacherId], references: [id], onDelete: Cascade)
   year      Int
-  month     Int // 1-12
-  fiksa     Int      @default(0) // shu oydagi belgilangan maosh
+  month     Int
+  fiksa     Int      @default(0)
   bonus     Int      @default(0)
-  penalty   Int      @default(0) // ushlanma
-  kpi       Int      @default(0) // KPI bonus summasi (so'm), jamiga qo'shiladi
-  lessons   Int      @default(0) // shu oyda o'tilgan darslar
-  students  Int      @default(0) // faol o'quvchilar
-  closed    Boolean  @default(false) // oy yopilgan (tarix) bo'lsa true
+  penalty   Int      @default(0)
+  kpi       Int      @default(0)
+  lessons   Int      @default(0)
+  students  Int      @default(0)
+  closed    Boolean  @default(false)
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
   @@unique([teacherId, year, month])
   @@index([teacherId])
 }
-
-// ─────────────────────────────────────────────────────────────
-// CRM — LID VA SAVDO VORONKASI
-// ─────────────────────────────────────────────────────────────
 
 model Lead {
   id        String   @id @default(cuid())
@@ -196,21 +163,21 @@ model Lead {
   email     String?
   telegram  String?
 
-  source    String? // sayt | ilova | telegram | telefon | reklama | tashrif ...
+  source    String?
   utmSource   String?
   utmCampaign String?
   utmMedium   String?
-  vacancyLinkId String? // qaysi maxsus havoladan (Havolalar moduli) kelgan
+  vacancyLinkId String?
 
-  stage     String  @default("NEW") // LEAD_STAGES (lib/constants.ts)
-  studyFormat String? // ta'lim shakli: ONLINE | OFFLINE — ochiq ariza formasida tanlanadi
-  age       Int? // yoshi — ariza formasida so'raladi
-  level     String? // hozirgi daraja (A1, B2 ...) — ariza formasida so'raladi
+  stage     String  @default("NEW")
+  studyFormat String?
+  age       Int?
+  level     String?
   interestCourse String?
-  budget    Int? // taxminiy byudjet (so'm)
+  budget    Int?
   preferredTime  String?
   note      String?
-  lossReason String? // yo'qotilgan bo'lsa sabab
+  lossReason String?
 
   branchId  String?
   branch    Branch? @relation(fields: [branchId], references: [id])
@@ -218,36 +185,21 @@ model Lead {
   managerId String?
   manager   User?   @relation("LeadManager", fields: [managerId], references: [id])
 
-  // Konvertatsiyadan keyin bog'lanadigan o'quvchi
   studentId String?  @unique
   student   Student? @relation(fields: [studentId], references: [id])
 
-  // "Qabul qilindi" (WON) uchun MAJBURIY guruh biriktiruvi.
-  // Guruh kursga (Program) tegishli — shuning uchun kurs alohida saqlanmaydi.
   groupId   String?
   group     Group?   @relation(fields: [groupId], references: [id])
-  // Guruhni keyin FAQAT BIR MARTA o'zgartirish mumkin (0 = hali o'zgartirilmagan)
   enrollEditCount Int @default(0)
 
-  // Kanbandagi oddiy nomli ustun (Setting "crm.kanbanColumns" dagi id).
-  // Bosqichga ta'sir qilmaydi — faqat qaysi ustunda ko'rinishini belgilaydi;
-  // standart ustunga ko'chirilsa yoki guruhga yozilsa tozalanadi.
   kanbanColumnId String?
-  // Daraja testi natijasi — /daraja-testi dan keladi. Ilgari faqat faoliyat
-  // tarixida qolardi, shu sabab kartada ko'rinmasdi.
-  testSet     String? // qaysi to'plam: "A1.1", "B2.2" ...
-  testLevel   String? // natijaviy daraja ("A2"); o'tmasa null
-  testPct     Int? // to'g'ri javoblar foizi
+  testSet     String?
+  testLevel   String?
+  testPct     Int?
   testPassed  Boolean?
   testedAt    DateTime?
-  // Arxiv — lid Kanbandagi "Arxiv" ustuniga tashlangan (bosqichi saqlanadi,
-  // faqat ko'rinishdan chiqadi; qaytarilsa o'z ustuniga qaytadi).
   archivedAt DateTime?
-  // Qaysi arxiv kartasiga tashlangan: "STUDENT" — O'quvchi arxivi, "LEAD" — Lid arxivi.
-  // null (eski yozuvlar) — qabul qilingan/o'quvchisi bor bo'lsa o'quvchi arxivi, aks holda lid arxivi.
   archiveKind String?
-  // Filial ustunidagi bo'sh xona/vaqt kartasi — lid shu xonaga tashlangan bo'lsa
-  // (ROP kanbani). Karta o'chirilsa null bo'ladi, lid filial ustunida qoladi.
   branchSlotId String?
   branchSlot   BranchSlot? @relation(fields: [branchSlotId], references: [id], onDelete: SetNull)
 
@@ -268,7 +220,7 @@ model LeadActivity {
   lead      Lead     @relation(fields: [leadId], references: [id], onDelete: Cascade)
   authorId  String?
   author    User?    @relation(fields: [authorId], references: [id])
-  type      String // call | message | meeting | note | stage_change | test
+  type      String
   result    String?
   nextStep  String?
   nextStepAt DateTime?
@@ -277,23 +229,19 @@ model LeadActivity {
   @@index([leadId])
 }
 
-// ─────────────────────────────────────────────────────────────
-// O'QUVCHI / OTA-ONA
-// ─────────────────────────────────────────────────────────────
-
 model Student {
   id           String   @id @default(cuid())
   userId       String?  @unique
   user         User?    @relation(fields: [userId], references: [id])
   fullName     String
   phone        String?
-  imageUrl     String? // o'quvchi profil rasmi (data URL)
+  imageUrl     String?
   birthDate    DateTime?
-  currentLevel String? // masalan A1.2
-  age          Int? // yoshi (ixtiyoriy)
-  phone2       String? // qo'shimcha telefon (ixtiyoriy)
-  eduStatus    String   @default("WAITING") // EDU_STATUSES (lib/constants.ts)
-  note         String? // o'quvchi haqida izoh — profil, ro'yxat va kartochkada ko'rinadi
+  currentLevel String?
+  age          Int?
+  phone2       String?
+  eduStatus    String   @default("WAITING")
+  note         String?
 
   branchId String?
   branch   Branch? @relation(fields: [branchId], references: [id])
@@ -336,35 +284,25 @@ model Parent {
   createdAt DateTime @default(now())
 }
 
-// O'quvchi ↔ ota-ona bog'lanishi (ko'p-ko'pga)
 model StudentParent {
   id        String  @id @default(cuid())
   studentId String
   student   Student @relation(fields: [studentId], references: [id], onDelete: Cascade)
   parentId  String
   parent    Parent  @relation(fields: [parentId], references: [id], onDelete: Cascade)
-  relation  String? // ota | ona | vasiy ...
+  relation  String?
 
   @@unique([studentId, parentId])
 }
 
-// ─────────────────────────────────────────────────────────────
-// O'QUV DASTURI, GURUH, DARS
-// ─────────────────────────────────────────────────────────────
-
 model Program {
   id          String  @id @default(cuid())
-  name        String // masalan "Nemis tili A1-B2"
+  name        String
   description String?
-  banners     String? // JSON massiv — kurs bannerlari (data URL)
-  gradingType String  @default("PERCENT") // PERCENT | POINTS | FIVE | PASS_FAIL
+  banners     String?
+  gradingType String  @default("PERCENT")
   isActive    Boolean @default(true)
-  // Kurs oylik to'lovi (so'm). Guruhda o'z narxi bo'lmasa shu ishlatiladi.
-  // O'quvchi guruhga qo'shilgan oydan boshlab har oy shu summa hisoblanadi.
   monthlyFee  Int?
-  // Bir oyda nechta dars — guruh jadvalida oyda shundan ortiq dars kuni belgilanmaydi
-  // (haftada 3 kun bo'lsa oyda 13 kun chiqishi mumkin — 13-chisi dars bo'lmaydi).
-  // Guruh yaratishda o'zgartirsa bo'ladi (Group.lessonsPerMonth), keyin — yo'q.
   lessonsPerMonth Int @default(12)
 
   levels    Level[]
@@ -375,39 +313,37 @@ model Program {
   createdAt DateTime @default(now())
 }
 
-// Kurs (dastur) materiallari — havola, fayl, video, hujjat
 model CourseMaterial {
   id        String   @id @default(cuid())
   programId String
   program   Program  @relation(fields: [programId], references: [id], onDelete: Cascade)
-  levelCode String? // ixtiyoriy — qaysi darajaga (denormalizatsiya)
+  levelCode String?
   title     String
-  kind      String   @default("LINK") // LINK | VIDEO | FILE | DOC
-  url       String? // havola yoki fayl (data URL)
+  kind      String   @default("LINK")
+  url       String?
   note      String?
   createdAt DateTime @default(now())
 
   @@index([programId])
 }
 
-// Kurs dars rejasi (syllabus) — ketma-ket darslar: mavzu, video, topshiriq, uy vazifasi
 model CourseLesson {
   id         String   @id @default(cuid())
   programId  String
   program    Program  @relation(fields: [programId], references: [id], onDelete: Cascade)
-  order      Int      @default(0) // ketma-ketlik
-  levelCode  String? // qaysi darajaga tegishli (A1, A2, B1 ...) — o'quvchi portalida bo'limlarga ajratish uchun
-  title      String // dars nomi
-  topic      String? // mavzu tafsiloti
-  videoUrl   String? // yuklangan video yo'li (/uploads/...)
-  videoPosterUrl String? // video banneri (muqova rasmi) — o'quvchi ilovasida dars videosi ustida ko'rinadi
-  vocabText  String? // lug'at, qo'lda yozilgan: "der Hund - it" (har qatorda bitta)
-  vocabFileUrl String? // lug'at fayli (pdf/word/txt) — o'quvchi ilovasidagi "Lug'at" bo'limida ochiladi
-  materialUrl String? // qo'shimcha material/fayl yo'li
-  assignment String? // dars topshirig'i (matn)
-  assignmentFileUrl String? // topshiriq uchun yuklangan fayl
-  homework   String? // uy vazifasi (matn)
-  homeworkFileUrl String? // uy vazifasi uchun yuklangan fayl
+  order      Int      @default(0)
+  levelCode  String?
+  title      String
+  topic      String?
+  videoUrl   String?
+  videoPosterUrl String?
+  vocabText  String?
+  vocabFileUrl String?
+  materialUrl String?
+  assignment String?
+  assignmentFileUrl String?
+  homework   String?
+  homeworkFileUrl String?
   createdAt  DateTime @default(now())
   updatedAt  DateTime @updatedAt
 
@@ -416,7 +352,6 @@ model CourseLesson {
   @@index([programId])
 }
 
-// Har guruh qaysi darsni o'tganini belgilaydi (kurs shabloniga nisbatan)
 model GroupLessonProgress {
   id             String       @id @default(cuid())
   groupId        String
@@ -431,32 +366,13 @@ model GroupLessonProgress {
   @@index([groupId])
 }
 
-// ─────────────────────────────────────────────────────────────
-// DARAJA KATALOGI — Sozlamalar > Darajalar
-// A1, A2, B1 ... butun tizim bo'ylab bitta ro'yxatdan olinadi:
-// o'quvchi ilovasidagi kurslar, dars oynasidagi tanlov, ariza formasi.
-// Pastdagi `Level` modeli BOSHQA narsa — u aynan bitta kursdagi
-// darajaning reja ko'rsatkichlari (hafta, akademik soat, o'tish balli).
-// ─────────────────────────────────────────────────────────────
-// ─────────────────────────────────────────────────────────────
-// TANGA MANBALARI
-// Dars qatnashuvi va vazifalar allaqachon boshqa jadvallarda bor;
-// bu ikkitasi yetishmayotgan manbalarni yozib boradi.
-// ─────────────────────────────────────────────────────────────
-
-// ─────────────────────────────────────────────────────────────
-// O'QUVCHI BOSH SAHIFASI MAZMUNI
-// Direktor va menejer Sozlamalar > Bosh sahifa bo'limidan boshqaradi.
-// ─────────────────────────────────────────────────────────────
-
-// Reklama banneri (karusel)
 model PortalBanner {
   id        String   @id @default(cuid())
   title     String
   subtitle  String?
   btnLabel  String?
-  href      String? // ichki yo'l (/student/kurse) yoki tashqi havola
-  imageUrl  String? // yuklangan rasm; bo'lmasa rangli gradient
+  href      String?
+  imageUrl  String?
   color     String   @default("#0e7490")
   sortOrder Int      @default(0)
   isActive  Boolean  @default(true)
@@ -466,13 +382,12 @@ model PortalBanner {
   @@index([sortOrder])
 }
 
-// Video va podkastlar — YouTube havolalari
 model PortalVideo {
   id        String   @id @default(cuid())
   title     String
   note      String?
-  url       String // YouTube/Vimeo havolasi yoki /uploads/... fayl
-  kind      String   @default("VIDEO") // VIDEO | PODCAST
+  url       String
+  kind      String   @default("VIDEO")
   sortOrder Int      @default(0)
   isActive  Boolean  @default(true)
   createdAt DateTime @default(now())
@@ -481,7 +396,6 @@ model PortalVideo {
   @@index([sortOrder])
 }
 
-// Dars videosini ko'rgani — har darsga BIR marta yoziladi
 model LessonView {
   id             String   @id @default(cuid())
   studentId      String
@@ -493,15 +407,6 @@ model LessonView {
   @@index([studentId])
 }
 
-// Darsning lug'ati o'zlashtirilgani.
-//
-// O'quvchi mashqda darsdagi HAR BIR so'zni to'g'ri tanlab chiqqanda bitta
-// yozuv qo'shiladi. Ilgari lug'at faqat o'qituvchi darsni "o'tildi" deb
-// belgilaganda 100% bo'lardi — o'quvchining o'zi qilgan ishi hech qayerda
-// ko'rinmasdi va u kutib o'tirishdan boshqa ilojsiz edi.
-//
-// `words` — o'sha paytdagi so'zlar soni. Ustoz keyin so'z qo'shsa, eski
-// natija qancha so'zdan olinganini bilib turamiz.
 model VocabMastery {
   id             String   @id @default(cuid())
   studentId      String
@@ -514,18 +419,6 @@ model VocabMastery {
   @@index([studentId])
 }
 
-// O'quvchining to'rt ko'nikmasi (bosh sahifadagi plitkalar): So'zlar,
-// O'qish, Tinglash, Gapirish — 0..100.
-//
-// Ilgari bu foizlar boshqa narsalardan olinardi (imtihon o'rtachasi,
-// davomat, dastur jarayoni) va hech qachon pasaymasdi. Endi ular
-// MASHQ bilan o'sadi (har to'g'ri bajarilgan bosqich/vazifa — ball) va
-// FAOLSIZLIK bilan pasayadi: ilova bir kun ochilmasa — kamayadi, ikki kun
-// — yana. Pasayish qaytmaydi, faqat yangi mashq bilan tiklanadi.
-//
-// Qiymat SAQLANADI (tanga kabi qayta hisoblanmaydi), chunki pasayish
-// tarixga bog'liq: "3 kun kirmadi, keyin qaytdi" holatini hodisalardan
-// qayta hisoblab bo'lmaydi.
 model StudentSkill {
   id           String   @id @default(cuid())
   studentId    String   @unique
@@ -543,15 +436,12 @@ model StudentSkill {
   events SkillEvent[]
 }
 
-// Ball berilgan hodisa. `key` bir marta beriladigan narsani belgilaydi
-// ("vocab:<dars>:s1" — shu darsning 1-bosqichi): xuddi shu mashqni qayta-
-// qayta bajarib ball yig'ib bo'lmaydi.
 model SkillEvent {
   id        String       @id @default(cuid())
   skillId   String
   skill     StudentSkill @relation(fields: [skillId], references: [id], onDelete: Cascade)
   key       String
-  kind      String // words | reading | listening | speaking
+  kind      String
   points    Int
   createdAt DateTime     @default(now())
 
@@ -559,20 +449,16 @@ model SkillEvent {
   @@index([skillId, createdAt])
 }
 
-// "Jang" chaqiruvi — duel (bir ga bir) yoki guruhli o'yin.
-// Ikkala o'yinchi BIR XIL savollarni oladi (seed bir xil), lekin bir vaqtda
-// o'ynashi shart emas: kim qachon ulgursa o'shanda o'ynaydi, natija ikkalasi
-// ham tugatgach aniqlanadi.
 model GameChallenge {
   id          String   @id @default(cuid())
-  kind        String // DUEL | GROUP
-  lobby       String // vocabulary | wordgame | crossword | grammar
-  seed        Int // savollar shu raqamdan hosil bo'ladi
+  kind        String
+  lobby       String
+  seed        Int
   createdById String
   createdBy   Student  @relation("ChallengeAuthor", fields: [createdById], references: [id], onDelete: Cascade)
-  opponentId  String? // DUEL uchun
+  opponentId  String?
   opponent    Student? @relation("ChallengeOpponent", fields: [opponentId], references: [id], onDelete: Cascade)
-  groupId     String? // GROUP uchun
+  groupId     String?
   expiresAt   DateTime
   createdAt   DateTime @default(now())
 
@@ -583,7 +469,6 @@ model GameChallenge {
   @@index([createdById])
 }
 
-// Chaqiruvdagi bitta o'yinchining natijasi
 model GameChallengeEntry {
   id          String        @id @default(cuid())
   challengeId String
@@ -597,22 +482,20 @@ model GameChallengeEntry {
   @@unique([challengeId, studentId])
 }
 
-// "Jang" bo'limidagi o'yin natijasi
 model GameResult {
   id        String   @id @default(cuid())
   studentId String
   student   Student  @relation(fields: [studentId], references: [id], onDelete: Cascade)
-  game      String // vocabulary | wordgame | crossword
-  mode      String // ai | duel | group
-  score     Int // to'g'ri javoblar
-  total     Int // jami savollar
+  game      String
+  mode      String
+  score     Int
+  total     Int
   won       Boolean
   createdAt DateTime @default(now())
 
   @@index([studentId, createdAt])
 }
 
-// Daraja ko'tarilishi (A1 -> A2 ...) — faqat YUQORIGA siljish yoziladi
 model StudentLevelUp {
   id        String   @id @default(cuid())
   studentId String
@@ -624,20 +507,16 @@ model StudentLevelUp {
   @@index([studentId])
 }
 
-// Yulduz darajalari — o'quvchi yulduz yig'ib ko'tariladigan pog'onalar.
-// StudyLevel (A1/A2) dan MUTLAQO boshqa narsa: u kurs darajasi, bu esa
-// o'yin darajasi. Har pog'onaga chiqqanda `reward` tanga beriladi.
-// Boshqaruvi: Sozlamalar > Yulduz darajalari (direktor va menejer).
 model StarRank {
   id        String  @id @default(cuid())
   nameUz    String
   nameRu    String
   nameEn    String
   nameDe    String
-  stars     Int     @default(0) // shu pog'onaga chiqish uchun kerak yulduz
-  reward    Int     @default(0) // ko'tarilgani uchun beriladigan tanga
+  stars     Int     @default(0)
+  reward    Int     @default(0)
   color     String  @default("#0e7490")
-  iconUrl   String? // ma'muriyat yuklagan belgi (bo'lmasa — pog'ona raqami)
+  iconUrl   String?
   isActive  Boolean @default(true)
 
   createdAt DateTime @default(now())
@@ -648,15 +527,15 @@ model StarRank {
 
 model StudyLevel {
   id        String  @id @default(cuid())
-  code      String  @unique // A1, A2, B1.1 ...
+  code      String  @unique
   nameUz    String
   nameRu    String
   nameEn    String
   nameDe    String
-  color     String  @default("#0e7490") // kartochka gradienti shundan hosil bo'ladi
-  bannerUrl String? // ilovada kartochka o'rniga ko'rinadigan rasm
+  color     String  @default("#0e7490")
+  bannerUrl String?
   sortOrder Int     @default(0)
-  isActive  Boolean @default(true) // o'chirilgani ilovada ko'rinmaydi
+  isActive  Boolean @default(true)
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
@@ -668,12 +547,12 @@ model Level {
   id        String  @id @default(cuid())
   programId String
   program   Program @relation(fields: [programId], references: [id], onDelete: Cascade)
-  code      String // A1.1, A1.2 ...
+  code      String
   name      String
   order     Int     @default(0)
-  weeks     Int? // davomiylik (hafta) — sozlanadi
-  academicHours Int? // akademik soat
-  passScore Int? // o'tish balli (foiz)
+  weeks     Int?
+  academicHours Int?
+  passScore Int?
 
   createdAt DateTime @default(now())
 
@@ -689,24 +568,24 @@ model Group {
   teacher   User?    @relation("TeacherGroups", fields: [teacherId], references: [id])
   branchId  String?
   branch    Branch?  @relation(fields: [branchId], references: [id])
-  levelCode String? // joriy daraja
-  color     String? // guruh rangi (hex, masalan #3b82f6)
-  format    String   @default("OFFLINE") // ONLINE | OFFLINE | HYBRID (o'quv shakli)
+  levelCode String?
+  color     String?
+  format    String   @default("OFFLINE")
   room      String?
   onlineLink String?
-  status    String   @default("PLANNED") // PLANNED | ACTIVE | FINISHED | CANCELLED
+  status    String   @default("PLANNED")
   capacity  Int      @default(12)
   startDate DateTime?
-  endDate   DateTime? // guruh tugash sanasi
-  weekdays  String? // dars kunlari: vergul bilan 1..7 (Du=1 ... Ya=7), masalan "1,3,5"
-  startTime String? // dars boshlanish vaqti "HH:mm"
-  endTime   String? // dars tugash vaqti "HH:mm"
-  note      String? // guruh haqida izoh/kament — guruh ma'lumoti ko'rinadigan hamma joyda chiqadi
-  monthlyFee Int? // guruhning oylik to'lovi (so'm); bo'lmasa kurs narxi olinadi
-  lessonsPerMonth Int? // oyiga darslar soni — faqat guruh yaratishda beriladi; bo'lmasa kursniki
+  endDate   DateTime?
+  weekdays  String?
+  startTime String?
+  endTime   String?
+  note      String?
+  monthlyFee Int?
+  lessonsPerMonth Int?
 
   students    GroupStudent[]
-  leads       Lead[] // shu guruhga yo'naltirilgan lidlar
+  leads       Lead[]
   lessons     Lesson[]
   assignments Assignment[]
   tasks       Task[]
@@ -725,7 +604,7 @@ model GroupStudent {
   student   Student  @relation(fields: [studentId], references: [id], onDelete: Cascade)
   joinedAt  DateTime @default(now())
   isActive  Boolean  @default(true)
-  leftAt    DateTime? // guruhdan chiqarilgan sana — to'lov hisobi shu oygacha yuritiladi
+  leftAt    DateTime?
 
   @@unique([groupId, studentId])
 }
@@ -737,7 +616,6 @@ model Lesson {
   topic     String?
   startsAt  DateTime
   endsAt    DateTime?
-  // QR-davomat uchun: har dars uchun dinamik token va amal muddati
   qrToken   String?
   qrExpiresAt DateTime?
 
@@ -754,22 +632,20 @@ model Attendance {
   lesson    Lesson   @relation(fields: [lessonId], references: [id], onDelete: Cascade)
   studentId String
   student   Student  @relation(fields: [studentId], references: [id], onDelete: Cascade)
-  status    String   @default("PRESENT") // PRESENT | LATE | ABSENT | EXCUSED | ONLINE | MAKEUP
-  method    String   @default("QR") // QR | MANUAL
-  confirmed Boolean  @default(false) // o'qituvchi yakuniy ro'yxatni tasdiqlaydi
-  anomaly   Boolean  @default(false) // boshqa qurilma/joydan skanerlash
+  status    String   @default("PRESENT")
+  method    String   @default("QR")
+  confirmed Boolean  @default(false)
+  anomaly   Boolean  @default(false)
   markedAt  DateTime @default(now())
 
   @@unique([lessonId, studentId])
 }
 
-// Yopilgan (dars + 3 soat o'tgan) davomatni vaqtincha ochish ruxsati.
-// Menejer / Direktor / o'rinbosari / ROP beradi; muddati tugagach yana yopiladi.
 model AttendanceUnlock {
   id            String   @id @default(cuid())
   groupId       String
-  date          String // "YYYY-MM-DD" — qaysi kun davomati ochilgan
-  expiresAt     DateTime // shu vaqtgacha tahrirlash mumkin
+  date          String
+  expiresAt     DateTime
   grantedById   String?
   grantedByName String?
   createdAt     DateTime @default(now())
@@ -777,27 +653,23 @@ model AttendanceUnlock {
   @@index([groupId, date])
 }
 
-// O'qituvchi ish jadvali (ustozlar ish jadvali)
 model TeacherSchedule {
   id            String    @id @default(cuid())
   teacherId     String    @unique
-  weekdays      String? // "1,2,3,4,5" (Du=1 ... Ya=7)
-  startTime     String? // "HH:mm"
-  endTime       String? // "HH:mm"
+  weekdays      String?
+  startTime     String?
+  endTime       String?
   monthlySalary Int       @default(0)
-  startedAt     DateTime? // ish faoliyatining boshlanishi
+  startedAt     DateTime?
   createdAt     DateTime  @default(now())
   updatedAt     DateTime  @updatedAt
 }
 
-// O'qituvchi kunlik davomati
 model TeacherAttendance {
   id        String   @id @default(cuid())
   teacherId String
-  date      DateTime // kun (00:00)
-  present   Boolean  @default(true) // keldi (PRESENT yoki LATE) — maosh hisobi shunga tayanadi
-  // Batafsil holat: PRESENT | LATE | ABSENT | EXCUSED. Bo'sh bo'lsa present'dan olinadi
-  // (avtomatik belgilar va eski yozuvlar uchun).
+  date      DateTime
+  present   Boolean  @default(true)
   status    String?
   createdAt DateTime @default(now())
 
@@ -805,23 +677,17 @@ model TeacherAttendance {
   @@index([teacherId])
 }
 
-// ─────────────────────────────────────────────────────────────
-// UY VAZIFA / BAHOLASH
-// ─────────────────────────────────────────────────────────────
-
 model Assignment {
   id        String   @id @default(cuid())
   groupId   String
   group     Group    @relation(fields: [groupId], references: [id], onDelete: Cascade)
-  // Vazifa qaysi darsga tegishli — o'quvchi ilovasida shu dars sahifasida
-  // ko'rinadi. Bo'sh bo'lsa faqat umumiy "Mashq" ro'yxatida turadi.
   courseLessonId String?
   title     String
-  type      String   @default("TASK") // TASK | EXAM | HOMEWORK | TEST
-  skill     String? // SPEAKING | WRITING | READING | LISTENING | GRAMMAR
+  type      String   @default("TASK")
+  skill     String?
   maxScore  Int      @default(100)
   dueAt     DateTime?
-  note      String? // izoh
+  note      String?
 
   submissions Submission[]
 
@@ -847,13 +713,13 @@ model Submission {
   assignment   Assignment @relation(fields: [assignmentId], references: [id], onDelete: Cascade)
   studentId    String
   student      Student  @relation(fields: [studentId], references: [id], onDelete: Cascade)
-  content      String? // matn yoki havola (masalan github)
-  fileUrl      String? // yuklangan fayl (/uploads/...)
+  content      String?
+  fileUrl      String?
   attempt      Int      @default(1)
   score        Int?
-  teacherNote  String? // past baho uchun majburiy izoh
-  status       String   @default("SUBMITTED") // SUBMITTED | GRADED | RETURNED
-  gradedById   String? // kim tekshirgani
+  teacherNote  String?
+  status       String   @default("SUBMITTED")
+  gradedById   String?
   gradedBy     User?    @relation("SubmissionGrader", fields: [gradedById], references: [id])
   gradedAt     DateTime?
   createdAt    DateTime @default(now())
@@ -861,32 +727,26 @@ model Submission {
   @@unique([assignmentId, studentId, attempt])
 }
 
-// ─────────────────────────────────────────────────────────────
-// TO'LOV VA MOLIYA
-// ─────────────────────────────────────────────────────────────
-
 model Payment {
   id          String   @id @default(cuid())
   studentId   String
   student     Student  @relation(fields: [studentId], references: [id])
-  amount      Int // so'm (butun)
-  method      String // CLICK | PAYME | UZUM | CASH | CARD | TRANSFER ...
-  purpose     String? // kurs to'lovi | qarz | ...
-  status      String   @default("PENDING") // PENDING | PAID | REFUNDED | CANCELLED
-  isManual    Boolean  @default(false) // qo'lda kiritilgan
-  transactionId String? @unique // provayder tranzaksiya ID (dublikat oldini olish)
-  docNumber   String? // chek/hujjat raqami
+  amount      Int
+  method      String
+  purpose     String?
+  status      String   @default("PENDING")
+  isManual    Boolean  @default(false)
+  transactionId String? @unique
+  docNumber   String?
   receiptUrl  String?
   note        String?
 
-  authorId    String? // qo'lda kiritgan xodim
+  authorId    String?
   author      User?    @relation("PaymentAuthor", fields: [authorId], references: [id])
 
   cancelledAt DateTime?
   cancelReason String?
 
-  // Promokod bilan to'langan bo'lsa: kod (o'sha paytdagi nusxa — kod keyin o'chirilsa ham tarix saqlanadi)
-  // va chegirma summasi (so'm). amount — haqiqatda olingan pul.
   promoCode   String?
   discount    Int      @default(0)
 
@@ -898,12 +758,10 @@ model Payment {
   @@index([promoCode])
 }
 
-/// Chegirma promokodi — direktor yaratadi. minCourses: o'quvchi kamida shuncha kursda (faol guruhda)
-/// o'qishi shart (masalan 2 ta kurs — 50 000, 3 ta kurs — 100 000).
 model PromoCode {
   id          String   @id @default(cuid())
   code        String   @unique
-  discount    Int // so'm
+  discount    Int
   minCourses  Int?
   note        String?
   isActive    Boolean  @default(true)
@@ -912,14 +770,10 @@ model PromoCode {
   updatedAt   DateTime @updatedAt
 }
 
-// ─────────────────────────────────────────────────────────────
-// IMTIHON VA SERTIFIKAT
-// ─────────────────────────────────────────────────────────────
-
 model Exam {
   id        String   @id @default(cuid())
   title     String
-  format    String   @default("INTERNAL") // INTERNAL | GOETHE | TELC | TESTDAF ...
+  format    String   @default("INTERNAL")
   passScore Int      @default(60)
   createdAt DateTime @default(now())
 
@@ -933,38 +787,35 @@ model ExamResult {
   studentId String
   student   Student  @relation(fields: [studentId], references: [id], onDelete: Cascade)
   score     Int?
-  status    String   @default("PENDING") // PENDING | PASSED | FAILED
+  status    String   @default("PENDING")
   attempt   Int      @default(1)
-  details   String? // JSON (bo'limlar bo'yicha ballar)
+  details   String?
   reviewer  String?
   note      String?
   takenAt   DateTime @default(now())
 }
 
-// Blok test — imtihon hodisasi (kirish/blok/yakuniy)
 model BlockTest {
   id            String    @id @default(cuid())
   title         String
-  type          String    @default("BLOCK") // KIRISH | BLOCK | YAKUNIY
-  status        String    @default("PLANNED") // PLANNED | ACTIVE | FINISHED
+  type          String    @default("BLOCK")
+  status        String    @default("PLANNED")
   date          DateTime?
-  startTime     String? // "HH:mm"
+  startTime     String?
   durationMin   Int       @default(60)
-  responsibleId String? // mas'ul xodim (User id)
-  groupIds      String? // vergul bilan Group id lar
-  // Qaysi filial testi (filial izolyatsiyasi uchun; eski yozuvlarda null)
+  responsibleId String?
+  groupIds      String?
   branchId      String?
   createdAt     DateTime  @default(now())
   updatedAt     DateTime  @updatedAt
 }
 
-// Test turi (shablon)
 model TestType {
   id          String   @id @default(cuid())
   name        String
   code        String?
   durationMin Int      @default(0)
-  courseIds   String? // vergul bilan Program id lar
+  courseIds   String?
   isActive    Boolean  @default(true)
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt
@@ -974,19 +825,15 @@ model Certificate {
   id         String   @id @default(cuid())
   studentId  String
   student    Student  @relation(fields: [studentId], references: [id], onDelete: Cascade)
-  number     String   @unique // noyob raqam
+  number     String   @unique
   programName String
   levelCode  String?
   result     String?
-  qrCode     String   @unique // tekshiruv uchun (URL/token)
-  status     String   @default("ISSUED") // ISSUED | REPLACED | REVOKED
+  qrCode     String   @unique
+  status     String   @default("ISSUED")
   issuedAt   DateTime @default(now())
   issuedBy   String?
 }
-
-// ─────────────────────────────────────────────────────────────
-// BILDIRISHNOMA VA AUDIT
-// ─────────────────────────────────────────────────────────────
 
 model Notification {
   id        String   @id @default(cuid())
@@ -994,44 +841,34 @@ model Notification {
   user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
   title     String
   body      String?
-  channel   String   @default("APP") // APP | PUSH | TELEGRAM | EMAIL | SMS
-  event     String? // hodisa turi
+  channel   String   @default("APP")
+  event     String?
   isRead    Boolean  @default(false)
   createdAt DateTime @default(now())
 
   @@index([userId, isRead])
 }
 
-// Android ilovasidagi qurilma — push bildirishnoma yuborish uchun.
-//
-// Bitta odamda bir nechta qurilma bo'lishi mumkin (telefon, planshet), shu
-// sabab userId bo'yicha ko'plik. `token` esa Firebase bergan manzil: u
-// qurilmaga emas, ILOVA O'RNATMASIGA tegishli va vaqti-vaqti bilan
-// yangilanadi — shuning uchun unique va yangilanganda upsert qilinadi.
-//
-// Firebase "token yaroqsiz" deb javob qaytarsa yozuv o'chiriladi: ilova
-// o'chirilgan yoki ma'lumotlari tozalangan degani.
 model PushDevice {
   id         String   @id @default(cuid())
   userId     String
   user       User     @relation(fields: [userId], references: [id], onDelete: Cascade)
   token      String   @unique
-  platform   String   @default("android") // android | ios
+  platform   String   @default("android")
   createdAt  DateTime @default(now())
   lastSeenAt DateTime @default(now())
 
   @@index([userId])
 }
 
-// Topshiriq va eslatma (bitta model, kind bilan ajratiladi)
 model Task {
   id         String    @id @default(cuid())
-  kind       String    @default("TASK") // TASK | REMINDER
+  kind       String    @default("TASK")
   title      String
   note       String?
-  tag        String? // teg (masalan "to'lov", "qo'ng'iroq")
-  status     String    @default("OPEN") // OPEN | DONE
-  priority   String    @default("NORMAL") // LOW | NORMAL | HIGH
+  tag        String?
+  status     String    @default("OPEN")
+  priority   String    @default("NORMAL")
   dueAt      DateTime?
   doneAt     DateTime?
 
@@ -1045,7 +882,6 @@ model Task {
   groupId    String?
   group      Group?   @relation(fields: [groupId], references: [id])
 
-  // Qaysi filial topshirig'i/eslatmasi (filial izolyatsiyasi; eski yozuvlarda null)
   branchId   String?
 
   createdAt DateTime @default(now())
@@ -1055,25 +891,19 @@ model Task {
   @@index([assigneeId])
 }
 
-// ─────────────────────────────────────────────────────────────
-// O'QUV BO'LIMI — MAVSUMIY BAHOLASH VA SHARTNOMA
-// ─────────────────────────────────────────────────────────────
-
-// Mavsumiy baholash — fasl/chorak bo'yicha davriy baholash sessiyasi.
-// (Har mavsumda guruh/daraja kesimida o'quvchilar baholanadi.)
 model SeasonalAssessment {
   id        String   @id @default(cuid())
   title     String
-  season    String // WINTER | SPRING | SUMMER | AUTUMN
+  season    String
   year      Int
   groupId   String?
   group     Group?   @relation(fields: [groupId], references: [id])
   levelCode String?
-  skill     String? // SPEAKING | WRITING | READING | LISTENING | GRAMMAR | GENERAL
+  skill     String?
   maxScore  Int      @default(100)
   passScore Int      @default(60)
   date      DateTime?
-  status    String   @default("PLANNED") // PLANNED | ONGOING | COMPLETED
+  status    String   @default("PLANNED")
   note      String?
 
   results   SeasonalResult[]
@@ -1092,7 +922,7 @@ model SeasonalResult {
   studentId    String
   student      Student  @relation(fields: [studentId], references: [id], onDelete: Cascade)
   score        Int?
-  grade        String? // A|B|C|D|F yoki daraja belgisi
+  grade        String?
   passed       Boolean?
   note         String?
   createdAt    DateTime @default(now())
@@ -1100,12 +930,11 @@ model SeasonalResult {
   @@unique([assessmentId, studentId])
 }
 
-// Shartnoma shabloni — o'quv markazining shartnoma hujjatlari ro'yxati.
 model ContractTemplate {
   id        String   @id @default(cuid())
-  title     String // sarlavha
-  type      String   @default("STANDARD") // STANDARD | ONLINE | OFFLINE | OFFER | INDIVIDUAL
-  content   String? // shartnoma matni (shablon)
+  title     String
+  type      String   @default("STANDARD")
+  content   String?
   note      String?
   isActive  Boolean  @default(true)
 
@@ -1115,17 +944,16 @@ model ContractTemplate {
   @@index([type])
 }
 
-// Audit jurnali — o'chirib/tahrirlab bo'lmaydi (interfeys darajasida)
 model AuditLog {
   id         String   @id @default(cuid())
   actorId    String?
   actor      User?    @relation(fields: [actorId], references: [id])
-  action     String // CREATE | UPDATE | DELETE | CANCEL | LOGIN | ...
-  entityType String // "Payment", "Lead", "Attendance", ...
+  action     String
+  entityType String
   entityId   String?
-  oldValue   String? // JSON
-  newValue   String? // JSON
-  reason     String? // qo'lda tuzatish sababi
+  oldValue   String?
+  newValue   String?
+  reason     String?
   ip         String?
   createdAt  DateTime @default(now())
 
@@ -1133,35 +961,26 @@ model AuditLog {
   @@index([actorId])
 }
 
-// ─────────────────────────────────────────────────────────────
-// QO'NG'IROQLAR MARKAZI (Call Center)
-// Telefoniya integratsiyasi (Asterisk/SIP) keyingi bosqichda ulanadi;
-// hozircha yozuvlar bazada saqlanadi va hisobotda ko'rsatiladi.
-// ─────────────────────────────────────────────────────────────
 model Call {
   id           String    @id @default(cuid())
-  // Asterisk Linkedid/Uniqueid — CDR sinxronizatsiyasi bir xil qo'ng'iroqni
-  // ikki marta yozmasligi uchun. Qo'lda yaratilgan yozuvlarda null.
   externalId   String?   @unique
-  direction    String // INCOMING | OUTGOING
-  status       String    @default("ANSWERED") // ANSWERED | MISSED | BUSY | NO_ANSWER | FAILED | CANCELLED
+  direction    String
+  status       String    @default("ANSWERED")
 
-  // Operator (xodim) — snapshot nom bilan (xodim o'chirilsa ham qoladi)
   operatorId   String?
   operator     User?     @relation("CallOperator", fields: [operatorId], references: [id])
   operatorName String?
 
-  // Abonent (lid yoki noma'lum raqam)
   leadId       String?
   lead         Lead?     @relation(fields: [leadId], references: [id])
-  contactName  String? // abonent ismi (ma'lum bo'lsa)
-  phone        String // abonent raqami
+  contactName  String?
+  phone        String
 
-  duration     Int       @default(0) // sekund
-  recordingUrl String? // audio yozuv manzili (bo'lmasa null)
+  duration     Int       @default(0)
+  recordingUrl String?
   comment      String?
 
-  callbackStatus String  @default("NONE") // NONE | PENDING | CALLED_BACK | NOT_NEEDED
+  callbackStatus String  @default("NONE")
   callbackAt     DateTime?
 
   startedAt    DateTime  @default(now())
@@ -1176,7 +995,6 @@ model Call {
   @@index([callbackStatus])
 }
 
-// Xodim (o'qituvchi) reytingi — o'quvchi bahosi va izohi
 model Feedback {
   id         String    @id @default(cuid())
   teacherId  String
@@ -1184,27 +1002,21 @@ model Feedback {
   groupId    String?
   lessonDate DateTime?
   comment    String?
-  rating     Int       @default(5) // 1..5
+  rating     Int       @default(5)
   createdAt  DateTime  @default(now())
 
   @@index([teacherId])
 }
 
-// ─────────────────────────────────────────────────────────────
-// HAVOLALAR (Maxsus linklar) — vakansiya + platforma bo'yicha kuzatuv-havola
-// Har havola /apply/<code> ga olib boradi; ko'rishlar va arizalar hisoblanadi.
-// ─────────────────────────────────────────────────────────────
 model Vacancy {
   id          String        @id @default(cuid())
-  title       String // "qassobchilik", "Qurilish sohasi"
-  company     String? // "GL", "BG GLOBAL", "MNG"
-  country     String? // "Germaniya", "Bolgariya", "Mongoliya"
-  countryCode String? // bayroq uchun: de | bg | mn ...
+  title       String
+  company     String?
+  country     String?
+  countryCode String?
   jobTitle    String?
   salary      String?
   description String?
-  // Ariza formasidagi qo'shimcha savollar — JSON massiv:
-  // [{ q, type: "text"|"choice", options?: string[], required?: boolean }]
   questions   String?
   isActive    Boolean       @default(true)
   branchId    String?
@@ -1219,9 +1031,9 @@ model Vacancy {
 
 model VacancyLink {
   id               String    @id @default(cuid())
-  code             String    @unique // /apply/<code>
+  code             String    @unique
   name             String?
-  platform         String    @default("other") // telegram|instagram|facebook|whatsapp|tiktok|youtube|linkedin|bio-link|other
+  platform         String    @default("other")
   vacancyId        String
   vacancy          Vacancy   @relation(fields: [vacancyId], references: [id], onDelete: Cascade)
   views            Int       @default(0)
@@ -1244,18 +1056,12 @@ model VacancyLink {
   @@index([isActive])
 }
 
-// Umumiy tizim sozlamalari (key-value) — telefoniya, biznes qoidalari va h.k.
 model Setting {
   key       String   @id
   value     String
   updatedAt DateTime @updatedAt
 }
 
-// ─────────────────────────────────────────────────────────────
-// MOLIYA — XARAJATLAR (EXPENSES)
-// ─────────────────────────────────────────────────────────────
-
-// Xarajat turkumi (kategoriya) — "Kategoriya qo'shing" bilan yaratiladi
 model ExpenseCategory {
   id        String    @id @default(cuid())
   name      String    @unique
@@ -1264,23 +1070,21 @@ model ExpenseCategory {
   expenses  Expense[]
 }
 
-// Xarajat yozuvi — talabaga bog'liq emas (Payment'dan farqli)
 model Expense {
   id         String   @id @default(cuid())
-  name       String // Nomi
-  date       DateTime // Xarajat sanasi
-  amount     Int // so'm (butun)
-  method     String   @default("CASH") // CASH | PAYME | CARD | UZUM | CLICK | HUMO | BANK
-  recipient  String? // Oluvchi
+  name       String
+  date       DateTime
+  amount     Int
+  method     String   @default("CASH")
+  recipient  String?
   note       String?
 
   categoryId String?
   category   ExpenseCategory? @relation(fields: [categoryId], references: [id], onDelete: SetNull)
 
-  // Qaysi filial xarajati (filial izolyatsiyasi uchun; eski yozuvlarda null)
   branchId   String?
 
-  authorId   String? // kiritgan xodim
+  authorId   String?
   author     User?    @relation("ExpenseAuthor", fields: [authorId], references: [id])
 
   createdAt  DateTime @default(now())
@@ -1290,23 +1094,15 @@ model Expense {
   @@index([categoryId])
 }
 
-// ─────────────────────────────────────────────────────────────
-// ISH HAQI — MAOSH KALKULYATORI QOIDALARI
-// ─────────────────────────────────────────────────────────────
-
-// Maosh hisoblash qoidasi (standart yoki individual).
-// Nishon (o'qituvchi/kurs/guruh/talaba) denormalizatsiya bilan saqlanadi.
 model SalaryRule {
   id         String   @id @default(cuid())
-  scope      String   @default("ALL") // ALL | TEACHER | COURSE | GROUP | STUDENT
-  // fixed | by_student_fixed | by_student_percentage | percentage_by_student_payment |
-  // per_lesson_fixed | per_lesson_percentage (eski yozuvlar: FIXED = fixed, PERCENT = percentage_by_student_payment)
+  scope      String   @default("ALL")
   amountType String   @default("FIXED")
-  amount     Int // Miqdori (so'm yoki %)
-  isDefault  Boolean  @default(false) // 1-bosqich: barcha o'qituvchilar uchun standart
-  targetId   String? // nishon id (teacher/program/group/student)
-  targetName String? // ko'rsatish uchun nom
-  groupId    String? // STUDENT qoidasi uchun: o'quvchining guruhi
+  amount     Int
+  isDefault  Boolean  @default(false)
+  targetId   String?
+  targetName String?
+  groupId    String?
   groupName  String?
   createdById String?
   updatedById String?
@@ -1316,17 +1112,13 @@ model SalaryRule {
   @@index([scope])
 }
 
-// ── Market: o'quvchi yiqqan tangalarini sovg'aga almashtiradi ──
-// Tanga balansi hisoblanadi (davomat + baholangan vazifalar), sarflangani
-// esa MarketOrder yozuvlari yig'indisi bilan aniqlanadi.
-
 model MarketItem {
   id          String  @id @default(cuid())
   title       String
   description String?
-  price       Int // tangada
-  imageUrl    String? // data URL yoki /uploads/...
-  stock       Int? // null = cheklanmagan
+  price       Int
+  imageUrl    String?
+  stock       Int?
   isActive    Boolean @default(true)
 
   branchId String?
@@ -1347,8 +1139,8 @@ model MarketOrder {
   studentId String
   student   Student @relation(fields: [studentId], references: [id], onDelete: Cascade)
 
-  price  Int // sotib olish paytidagi narx (keyin o'zgarsa ham hisob buzilmasin)
-  status String @default("PENDING") // PENDING | DELIVERED | CANCELLED
+  price  Int
+  status String @default("PENDING")
   note   String?
 
   createdAt   DateTime  @default(now())
@@ -1357,10 +1149,6 @@ model MarketOrder {
   @@index([studentId, status])
   @@index([status])
 }
-
-// ── O'quvchi va ustoz yozishmasi ──
-// Suhbat (studentId + teacherId) juftligi bilan aniqlanadi. Ustoz almashsa
-// eski yozishma saqlanib qoladi, yangi suhbat ochiladi.
 
 model ChatMessage {
   id String @id @default(cuid())
@@ -1371,24 +1159,18 @@ model ChatMessage {
   teacherId String?
   teacher   User?   @relation("ChatTeacher", fields: [teacherId], references: [id])
 
-  fromStudent Boolean // true — o'quvchi yozgan, false — ustoz/ma'muriyat
-  authorId    String? // aslida kim yozgani (ustoz o'rniga menejer ham javob berishi mumkin)
+  fromStudent Boolean
+  authorId    String?
   author      User?   @relation("ChatAuthor", fields: [authorId], references: [id])
 
   text   String
-  readAt DateTime? // qarshi tomon o'qigan vaqti
+  readAt DateTime?
 
   createdAt DateTime @default(now())
 
   @@index([studentId, createdAt])
   @@index([teacherId, fromStudent, readAt])
 }
-
-// ── "Ikkinchi miya" (Zweites Gehirn) — o'quvchining shaxsiy bilim bazasi ──
-// Obsidian uslubi: har yozuv sarlavha bilan ataladi, matn ichida [[Sarlavha]]
-// yozilsa boshqa yozuvga bog'lanadi. Bog'lanishlar ALOHIDA jadvalda emas —
-// matndan o'qib olinadi, shunda ular hamisha matn bilan mos bo'ladi va
-// hali yaratilmagan yozuvga ham havola qilish mumkin (Obsidian'dagidek).
 
 model Note {
   id        String  @id @default(cuid())
@@ -1397,26 +1179,22 @@ model Note {
 
   title   String
   content String  @default("")
-  // Vergul bilan ajratilgan teglar (#teg matndan ham yig'iladi)
   tags    String?
-  // Yo'nalish/kategoriya — grafda rang beradi
-  kind    String  @default("NOTE") // NOTE | IDEA | GOAL | BOOK | PERSON | DAILY
+  kind    String  @default("NOTE")
   pinned  Boolean @default(false)
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
-  // Sarlavha o'quvchi doirasida noyob — [[havola]] shu bo'yicha topiladi
   @@unique([studentId, title])
   @@index([studentId, updatedAt])
 }
 
-// AI yordamchi suhbatlari — har rahbarning o'z tarixi
 model AiConversation {
   id        String   @id @default(cuid())
   userId    String
   title     String
-  messages  String   // JSON: [{role, text, at}]
+  messages  String
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 

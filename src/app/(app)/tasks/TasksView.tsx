@@ -36,7 +36,7 @@ interface Props {
   staff: Opt[];
   students: Opt[];
   groups: Opt[];
-  mapOnly?: boolean; // faqat neyron xarita (Eslatmalar uchun)
+  mapOnly?: boolean;
 }
 
 function startOfToday() { const d = new Date(); d.setHours(0, 0, 0, 0); return d; }
@@ -57,7 +57,6 @@ export default function TasksView({ kind, title, locale, tasks, staff, students,
   const [fStatus, setFStatus] = useState("");
   const [dFrom, setDFrom] = useState("");
   const [dTo, setDTo] = useState("");
-  // Faol xarita a'zoligi: null = barcha eslatmalar; massiv = faqat biriktirilganlar
   const [mapTaskIds, setMapTaskIds] = useState<string[] | null>(null);
 
   const filtered = useMemo(() => {
@@ -116,7 +115,6 @@ export default function TasksView({ kind, title, locale, tasks, staff, students,
     setShowMenu(false);
   }
 
-  // Deterministik format (server va client bir xil chiqishi uchun — hydration mos keladi)
   const fmt = (iso: string) => {
     const d = new Date(iso);
     const p = (n: number) => String(n).padStart(2, "0");
@@ -126,7 +124,6 @@ export default function TasksView({ kind, title, locale, tasks, staff, students,
 
   return (
     <div>
-      {/* Sarlavha + amallar */}
       <div className="mb-5 flex flex-wrap items-center justify-between gap-3">
         <div>
           <h1 className="text-[22px] font-bold tracking-tight text-slate-900">{title}</h1>
@@ -163,7 +160,6 @@ export default function TasksView({ kind, title, locale, tasks, staff, students,
         </div>
       </div>
 
-      {/* Filtrlar */}
       {showFilter && (
         <div className="mb-5 flex flex-wrap items-center gap-2">
           <select value={fAssignee} onChange={(e) => setFAssignee(e.target.value)} className={sel}><option value="">{tr(locale, { uz: "Mas'ul shaxs", ru: "Ответственный", en: "Assignee", de: "Zuständig" })}</option>{staff.map((x) => <option key={x.id} value={x.name}>{x.name}</option>)}</select>
@@ -183,7 +179,6 @@ export default function TasksView({ kind, title, locale, tasks, staff, students,
         </div>
       )}
 
-      {/* Bog'lanishlar grafi — boshqariladigan xaritalar (yangi / arxiv / o'chirish) */}
       {view === "map" && (
         <div>
           <MapManager kind={kind} locale={locale} tasks={tasks} onSelect={(l, ids) => { setLens(l); setMapTaskIds(ids); }} />
@@ -191,7 +186,6 @@ export default function TasksView({ kind, title, locale, tasks, staff, students,
         </div>
       )}
 
-      {/* Board */}
       {view === "board" && (
       <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
         {COLUMNS.map((col) => (
@@ -231,7 +225,6 @@ export default function TasksView({ kind, title, locale, tasks, staff, students,
       </div>
       )}
 
-      {/* Batafsil oyna */}
       {selected && (
         <div className="fixed inset-0 z-[60]" onClick={() => setSelected(null)}>
           <div className="absolute inset-0 bg-slate-900/40 backdrop-blur-sm" />

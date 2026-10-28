@@ -7,20 +7,11 @@ import { S, type StudentStrings } from "../../../_i18n";
 import type { Locale } from "@/lib/constants";
 import { groupLessonsWhere } from "@/lib/levelLessons";
 
-// Dars va uning uchta bo'limi (Lug'at · Dars · Vazifa) uchun UMUMIY yuklovchi.
-//
-// To'rtala sahifada ham bir xil tekshiruvlar bajarilishi kerak: sessiya bormi,
-// o'quvchi profili bormi, guruhga biriktirilganmi va so'ralgan dars aynan shu
-// guruhning dasturidanmi. Bu tekshiruvlarni har sahifada qayta yozish — ertami
-// kechmi bittasini o'tkazib yuborish demakdir, ya'ni boshqa kursning darsini
-// URL orqali ochib ko'rish mumkin bo'lib qoladi.
-
-const UNITS_PER_CHAPTER = 3; // Unit 1.1 · 1.2 · 1.3 → keyin 2.1 ...
+const UNITS_PER_CHAPTER = 3;
 
 export interface UnitContext {
   locale: Locale;
   t: StudentStrings;
-  /** Daraja kodi (URL dan, katta harfda) */
   code: string;
   levelName: string;
   levelColor: string;
@@ -31,31 +22,23 @@ export interface UnitContext {
     title: string;
     topic: string | null;
     videoUrl: string | null;
-    /** Video banneri (muqova rasmi) — bo'lmasa ilova logotipi ko'rinadi */
     videoPosterUrl: string | null;
-    /** Lug'at, ustoz qo'lda yozgan: "der Hund - it" */
     vocabText: string | null;
-    /** Lug'at fayli (pdf/word/txt) — "Lug'at" bo'limida ochiladi */
     vocabFileUrl: string | null;
     assignment: string | null;
     assignmentFileUrl: string | null;
     homework: string | null;
     homeworkFileUrl: string | null;
   };
-  /** "1.2" */
   unitNo: string;
-  /** "Unit 1.2" */
   unitLabel: string;
-  /** Shu darajadagi dars tartibi, 0 dan */
   position: number;
   totalInLevel: number;
   prev: { id: string; title: string } | null;
   next: { id: string; title: string } | null;
-  /** Guruhda bu dars o'tilgan deb belgilanganmi */
   taught: boolean;
 }
 
-/** O'quvchi profili biriktirilmagan bo'lsa sahifa MissingStudent ko'rsatadi */
 export type UnitLoad = { missing: true } | ({ missing: false } & UnitContext);
 
 export async function loadUnit(level: string, unit: string): Promise<UnitLoad> {
@@ -96,7 +79,6 @@ export async function loadUnit(level: string, unit: string): Promise<UnitLoad> {
     }),
   ]);
 
-  // Guruhga ko'rinmaydigan (boshqa kurs/daraja) darsga URL orqali kirib bo'lmasin
   if (!lesson || !allLessons.some((l) => l.id === lesson.id)) notFound();
 
   const fallback = (group.levelCode ?? student.currentLevel ?? "A1").slice(0, 2).toUpperCase();

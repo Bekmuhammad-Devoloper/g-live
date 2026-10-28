@@ -28,7 +28,6 @@ export default function NewTeacherForm({ branches, locale, onClose }: { branches
 
   const groupDigits = (d: string) => d.replace(/\B(?=(\d{3})+(?!\d))/g, " ");
   const fmtMoney = (v: string) => { const d = v.replace(/\D/g, "").slice(0, 12); return d ? groupDigits(d) : ""; };
-  // +998 doimiy prefiks; foydalanuvchi faqat qolgan 9 raqamni kiritadi (src/lib/phone.ts)
   const fmtPhone = fmtUzPhoneInput;
   function onFiksaChange(v: string) { setFiksaStr(fmtMoney(v)); }
   function onKpiChange(v: string) { setKpiStr(fmtMoney(v)); }
@@ -68,7 +67,6 @@ export default function NewTeacherForm({ branches, locale, onClose }: { branches
         className="animate-slide-in-right absolute right-0 top-0 flex h-full drawer-panel flex-col border-l border-slate-200 bg-white shadow-pop dark:border-white/10 dark:bg-[#15243d]"
         onMouseDown={(e) => e.stopPropagation()}
       >
-        {/* Header */}
         <div className="flex shrink-0 items-center justify-between border-b border-slate-100 px-5 py-4 dark:border-white/10">
           <div className="flex items-center gap-2 text-base font-bold text-slate-800 dark:text-slate-100">
             <Icon name="personPlus" className="text-brand-500" style={{ height: 18, width: 18 }} />
@@ -77,11 +75,9 @@ export default function NewTeacherForm({ branches, locale, onClose }: { branches
           <button onClick={onClose} className="flex h-8 w-8 items-center justify-center rounded-lg text-lg text-slate-400 transition hover:bg-slate-100 hover:text-slate-600 dark:hover:bg-white/10">✕</button>
         </div>
 
-        {/* Form (scroll) */}
         <div className="flex-1 space-y-3 overflow-y-auto px-5 py-4">
           <Field label={tr(locale, { uz: "Ism-familiya *", ru: "Имя-фамилия *", en: "Full name *", de: "Vor- und Nachname *" })} value={fullName} onChange={setFullName} placeholder={tr(locale, { uz: "Masalan: Nigora Rashidova", ru: "Например: Нигора Рашидова", en: "e.g. Nigora Rashidova", de: "z. B. Nigora Raschidova" })} autoFocus />
 
-          {/* Jinsi */}
           <div>
             <span className="mb-1 block text-[11px] font-medium text-slate-400">{tr(locale, { uz: "Jinsi", ru: "Пол", en: "Gender", de: "Geschlecht" })}</span>
             <div className="grid grid-cols-2 gap-2">
@@ -128,7 +124,6 @@ export default function NewTeacherForm({ branches, locale, onClose }: { branches
             </div>
           </div>
 
-          {/* KPI bonusi */}
           <div>
             <span className="mb-1 block text-[11px] font-medium text-slate-400">{tr(locale, { uz: "KPI bonusi (so'm)", ru: "KPI бонус (сум)", en: "KPI bonus (so'm)", de: "KPI-Bonus (UZS)" })}</span>
             <div className="relative">
@@ -152,7 +147,6 @@ export default function NewTeacherForm({ branches, locale, onClose }: { branches
           )}
         </div>
 
-        {/* Footer */}
         <div className="flex shrink-0 gap-2 border-t border-slate-100 px-5 py-4 dark:border-white/10">
           <button
             onClick={onClose}

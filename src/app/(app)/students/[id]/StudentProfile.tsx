@@ -15,18 +15,8 @@ import { debtTone, DEBT_HEX } from "@/lib/debtTone";
 import { StudentAttendanceJournal } from "./StudentAttendanceJournal";
 import type { StudentJournal } from "./journal";
 
-// O'quvchi profili — sarlavha kartasi + ko'rsatkichlar + bo'limlar.
-// Uslub /profile (xodim profili) bilan bir xil: gradient sarlavha, avatar,
-// statistika plitalari, tab'lar.
-//
-// To'lov holati (qarz qo'shish, to'lov qabul qilish, so'nggi to'lovlar) —
-// ro'yxatdagi tezkor oyna bilan BITTA komponent (PaymentPanel). "Kichik oynada
-// ochish" tugmasi esa o'sha tezkor oynaning o'zini shu sahifada ochadi.
-
-/** Qarz hisobi tafsiloti — src/lib/debt.ts natijasi */
 export interface DebtInfo {
   accrued: number; paid: number; manual: number; debt: number; credit: number; months: number; since: string | null;
-  /** To'lanmagan oylar soni — 1 sariq, 2+ qizil */
   overdueMonths: number;
 }
 
@@ -78,9 +68,7 @@ export default function StudentProfile({
   profile: SProfile;
   locale: Locale;
   debtInfo: DebtInfo;
-  /** Joriy oy davomat jurnali (keyingi oylar profil ichida yuklanadi) */
   journal: StudentJournal;
-  /** Tezkor oyna uchun ro'yxat qatori shakli */
   quick: VStudent;
   canManage: boolean;
   canPay: boolean;
@@ -88,18 +76,15 @@ export default function StudentProfile({
   receiptMode: ReceiptMode;
 }) {
   const router = useRouter();
-  // Qarzi bor o'quvchi ochilsa — darrov to'lovlar bo'limi (amal talab qiladi)
   const [tab, setTab] = useState<Tab>(debtInfo.debt > 0 && (canManage || canPay) ? "payments" : "groups");
   const [quickOpen, setQuickOpen] = useState(false);
   const [editOpen, setEditOpen] = useState(false);
   const L = (uz: string, ru: string, en: string, de: string) => tr(locale, { uz, ru, en, de });
   const tone = STATUS_TONE[st.eduStatus] ?? "#64748b";
-  // Qaysi sanadan faol — eng birinchi faol guruhga qo'shilgan sana
   const activeSince = st.groups.filter((g) => g.isActive).map((g) => g.joinedAt).sort()[0] ?? null;
 
   return (
     <div className="space-y-5">
-      {/* ── Sarlavha ── */}
       <div className="overflow-hidden rounded-2xl border border-slate-200/70 bg-white shadow-card dark:border-slate-800 dark:bg-slate-900">
         <div className="h-24 bg-gradient-to-r from-brand-600 via-brand-500 to-cyan-500" />
         <div className="flex flex-wrap items-end gap-4 px-6 pb-5">
@@ -134,7 +119,6 @@ export default function StudentProfile({
             <Link href="/students" className="flex items-center gap-1.5 rounded-lg border border-slate-200 px-3 py-2 text-sm font-medium text-slate-600 transition hover:bg-slate-50 dark:border-slate-700 dark:text-slate-300 dark:hover:bg-slate-800">
               <Icon name="arrow" className="h-4 w-4 rotate-180" /> {L("Ro'yxatga", "К списку", "Back to list", "Zur Liste")}
             </Link>
-            {/* Ro'yxatdagi tezkor oyna — shu yerda ham ochiladi */}
             {(canManage || canPay) && (
               <button
                 type="button"
@@ -162,7 +146,6 @@ export default function StudentProfile({
         </div>
       </div>
 
-      {/* ── Ko'rsatkichlar ── */}
       <div className="grid grid-cols-2 gap-4 lg:grid-cols-4">
         <Tile icon="layers" tone="#6366f1" label={L("Guruhlar", "Группы", "Groups", "Gruppen")} value={String(st.groups.filter((g) => g.isActive).length)} />
         <Tile icon="wallet" tone="#10b981" label={L("To'langan", "Оплачено", "Paid", "Bezahlt")} value={formatMoney(st.paid, locale)} small />
@@ -184,7 +167,6 @@ export default function StudentProfile({
         />
       </div>
 
-      {/* ── Izoh ── */}
       {st.note && (
         <div className="flex gap-2.5 rounded-2xl border border-amber-200/70 bg-amber-50 px-4 py-3 dark:border-amber-500/25 dark:bg-amber-500/10">
           <Icon name="info" className="mt-0.5 h-4 w-4 shrink-0 text-amber-500" />
@@ -197,7 +179,6 @@ export default function StudentProfile({
         </div>
       )}
 
-      {/* ── Ota-onalar ── */}
       {st.parents.length > 0 && (
         <div className="rounded-2xl border border-slate-200/70 bg-white p-4 shadow-card dark:border-slate-800 dark:bg-slate-900">
           <h3 className="mb-2.5 flex items-center gap-2 text-sm font-semibold text-slate-700 dark:text-slate-200">
@@ -215,10 +196,8 @@ export default function StudentProfile({
         </div>
       )}
 
-      {/* ── Oylik davomat jurnali (doim ko'rinadi) ── */}
       <StudentAttendanceJournal studentId={st.id} locale={locale} initial={journal} />
 
-      {/* ── Tablar ── */}
       <div className="flex flex-wrap gap-2">
         <TabBtn active={tab === "groups"} onClick={() => setTab("groups")} icon="layers" n={st.groups.length}>{L("Guruhlar", "Группы", "Groups", "Gruppen")}</TabBtn>
         <TabBtn active={tab === "payments"} onClick={() => setTab("payments")} icon="wallet" n={st.payments.length}>{L("To'lovlar", "Платежи", "Payments", "Zahlungen")}</TabBtn>
@@ -257,10 +236,8 @@ export default function StudentProfile({
 
         {tab === "payments" && (
           <div>
-            {/* Qarz hisobi — qanday chiqqani to'liq ko'rinadi */}
             <DebtBreakdown info={debtInfo} locale={locale} />
 
-            {/* To'lov holati — tezkor oyna bilan bir xil: qarz qo'shish, to'lov qabul qilish, so'nggi to'lovlar */}
             {(canManage || canPay) && (
               <div className="border-t border-slate-100 px-4 py-4 dark:border-slate-800">
                 <PaymentPanel
@@ -351,13 +328,9 @@ export default function StudentProfile({
   );
 }
 
-// ─────────── Yordamchi komponentlar ───────────
-
-// Qarz qanday hisoblangani: hisoblangan + qo'lda kiritilgan − to'langan
 function DebtBreakdown({ info, locale }: { info: DebtInfo; locale: Locale }) {
   const L = (uz: string, ru: string, en: string, de: string) => tr(locale, { uz, ru, en, de });
   const has = info.debt > 0;
-  // Bir oygacha qarz — sariq, bir oydan ko'p — qizil
   const tone = has ? DEBT_HEX[debtTone(info.debt, info.overdueMonths)] : "#10b981";
   const rows: { label: string; value: string; sign?: string; muted?: boolean }[] = [
     {

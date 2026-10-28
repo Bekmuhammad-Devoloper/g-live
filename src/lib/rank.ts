@@ -4,13 +4,8 @@ import { ATTENDED } from "./coins";
 import { getCoinRules } from "./coinRules";
 import { getProgressRules, type RankBasis, type RankScope } from "./progressRules";
 
-// Reyting o'rni — BITTA joyda hisoblanadi.
-// Ilgari bosh sahifa guruhdoshlar orasida, yuqoridagi belgi esa hamma
-// o'quvchi orasida hisoblardi va ikkalasi har xil raqam ko'rsatardi.
-
 export type Rank = { place: number; total: number; scope: RankScope; basis: RankBasis };
 
-/** Taqqoslash doirasidagi o'quvchilar ro'yxati */
 async function scopeIds(studentId: string, scope: RankScope): Promise<string[]> {
   if (scope === "center") {
     const all = await prisma.student.findMany({ select: { id: true } });
@@ -40,7 +35,6 @@ async function scopeIds(studentId: string, scope: RankScope): Promise<string[]> 
     return mates.map((m) => m.studentId);
   }
 
-  // branch
   const rows = await prisma.student.findMany({
     where: me?.branchId ? { branchId: me.branchId } : {},
     select: { id: true },
@@ -48,7 +42,6 @@ async function scopeIds(studentId: string, scope: RankScope): Promise<string[]> 
   return rows.map((r) => r.id);
 }
 
-/** Har o'quvchi uchun taqqoslash qiymati */
 async function scores(ids: string[], basis: RankBasis): Promise<Map<string, number>> {
   const out = new Map<string, number>(ids.map((id) => [id, 0]));
 
@@ -63,7 +56,6 @@ async function scores(ids: string[], basis: RankBasis): Promise<Map<string, numb
   }
 
   if (basis === "score") {
-    // Baholangan vazifalarning o'rtacha foizi (vazifalarning maksimal balli har xil)
     const subs = await prisma.submission.findMany({
       where: { studentId: { in: ids }, status: "GRADED" },
       select: { studentId: true, score: true, assignment: { select: { maxScore: true } } },
@@ -82,7 +74,6 @@ async function scores(ids: string[], basis: RankBasis): Promise<Map<string, numb
     return out;
   }
 
-  // coins — tanga qoidalari bo'yicha yig'ilgan (seriya bonusisiz: u o'quvchiga xos)
   const rules = await getCoinRules();
   const [att, graded, wins, ups, views] = await Promise.all([
     prisma.attendance.groupBy({
@@ -131,14 +122,11 @@ export async function studentRank(studentId: string): Promise<Rank> {
 
   const map = await scores(ids, rankBasis);
   const mine = map.get(studentId) ?? 0;
-  // Undan yuqori natijalilar soni + 1 = o'rin (teng natijalar bir xil o'rinda)
   let better = 0;
   for (const [id, v] of map) if (id !== studentId && v > mine) better++;
 
   return { place: better + 1, total: ids.length, scope: rankScope, basis: rankBasis };
 }
-
-/* ── Reyting jadvali ── */
 
 export type BoardRow = {
   id: string;
@@ -149,10 +137,6 @@ export type BoardRow = {
   isMe: boolean;
 };
 
-/**
- * O'quvchilar ro'yxati o'rin bo'yicha. Teng natijalilar bir xil o'rinda
- * turadi (1, 2, 2, 4 — sport hisobidagidek).
- */
 export async function rankBoard(
   studentId: string,
   limit = 50,

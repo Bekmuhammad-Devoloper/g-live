@@ -1,6 +1,3 @@
-// Ishlab berilgan soatlar demo: qo'shimcha o'qituvchi/guruh/darslar (iyul oyiga).
-// Idempotent: "auto:" prefiksli darslar qayta yaratiladi. Ishga: npx tsx prisma/seed-lessons.ts
-
 import { PrismaClient } from "@prisma/client";
 import bcrypt from "bcryptjs";
 
@@ -48,7 +45,7 @@ async function main() {
   let count = 0;
   for (const g of groups) {
     for (const d of days) {
-      if (Math.random() < 0.35) continue; // biroz siyrak
+      if (Math.random() < 0.35) continue;
       await prisma.lesson.create({
         data: {
           groupId: g.id,

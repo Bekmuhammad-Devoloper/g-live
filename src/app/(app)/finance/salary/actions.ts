@@ -21,12 +21,11 @@ const schema = z.object({
   id: z.string().optional(),
   scope: z.enum(["ALL", "TEACHER", "COURSE", "GROUP", "STUDENT"]),
   amountType: z.enum(SALARY_TYPES),
-  amount: z.coerce.number().int().positive().max(MAX_MONEY), // Int'ga sig'masa sahifa yiqiladi
+  amount: z.coerce.number().int().positive().max(MAX_MONEY),
   targetId: z.string().optional(),
   groupId: z.string().optional(),
 });
 
-// Nishon nomini serverda aniqlaydi (mijozdan kelgan nomga ishonilmaydi)
 async function targetNameOf(scope: string, id: string): Promise<string | null> {
   if (scope === "TEACHER") return (await prisma.user.findUnique({ where: { id }, select: { fullName: true } }))?.fullName ?? null;
   if (scope === "COURSE") return (await prisma.program.findUnique({ where: { id }, select: { name: true } }))?.name ?? null;
@@ -35,7 +34,6 @@ async function targetNameOf(scope: string, id: string): Promise<string | null> {
   return null;
 }
 
-// Qoida qo'shish yoki tahrirlash (id bo'lsa — tahrir)
 export async function saveSalaryRule(_prev: RuleState, formData: FormData): Promise<RuleState> {
   const s = await requireSession();
   if (!canManage(s.role)) return { error: "forbidden" };
@@ -81,7 +79,6 @@ export async function saveSalaryRule(_prev: RuleState, formData: FormData): Prom
     groupName,
   };
 
-  // Standart (filial) qoida bitta — mavjud bo'lsa o'sha yangilanadi
   let editId = d.id;
   if (!editId && d.scope === "ALL") {
     editId = (await prisma.salaryRule.findFirst({ where: { OR: [{ isDefault: true }, { scope: "ALL" }] }, orderBy: { createdAt: "desc" }, select: { id: true } }))?.id;
@@ -112,7 +109,6 @@ export async function deleteSalaryRule(id: string): Promise<void> {
   revalidatePath("/finance/salary");
 }
 
-// Kalkulyator sozlamalari (Setting: salary_settings.<key> = "1" | "")
 export async function saveSalarySettings(values: Partial<SalarySettings>): Promise<{ ok?: boolean; error?: string }> {
   const s = await requireSession();
   if (!canManage(s.role)) return { error: "forbidden" };
@@ -134,7 +130,6 @@ function parsePeriod(period: string): { year: number; month: number } | null {
 
 export type CalcResponse = { ok?: boolean; error?: string; result?: SalaryCalcResult };
 
-// Hisoblash — faqat natija qaytaradi, hech narsa yozilmaydi
 export async function calculateSalaries(period: string): Promise<CalcResponse> {
   const s = await requireSession();
   if (!canRead(s.role, MODULES.SALARY)) return { error: "forbidden" };
@@ -146,8 +141,6 @@ export async function calculateSalaries(period: string): Promise<CalcResponse> {
 
 export type PublishResponse = { ok?: boolean; error?: string; count?: number; skipped?: number; total?: number };
 
-// "O'qituvchilar profilida ko'rsatish" — TeacherSalary.fiksa (va darslar/o'quvchilar soni) yoziladi.
-// Bonus, ushlanma va KPI o'zgarmaydi; yopilgan oylar tegilmaydi.
 export async function publishSalaries(period: string): Promise<PublishResponse> {
   const s = await requireSession();
   if (!canManage(s.role)) return { error: "forbidden" };

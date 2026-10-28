@@ -4,18 +4,6 @@ import { prisma } from "./db";
 import { tr } from "./tr";
 import type { Locale } from "./constants";
 
-// Yulduz darajalari — o'quvchi yulduz yig'ib ko'tariladigan pog'onalar.
-//
-// Kurs darajasi (A1/A2 — StudyLevel) bilan ADASHTIRMASLIK kerak: u qaysi
-// kitobni o'qiyotganini bildiradi, bu esa qancha mehnat qilganini. Nomlar
-// nemis tiliga bog'liq: o'quvchi "Anfänger"dan "Profi"gacha ko'tariladi.
-//
-// Pog'onaga chiqqani uchun tanga beriladi. Tanga hech qayerda saqlanmaydi —
-// yulduz soniga qarab qayta hisoblanadi, shu sabab qoida o'zgarsa balans
-// ham darhol o'zgaradi (loyihaning umumiy tamoyili).
-//
-// Boshqaruvi: Sozlamalar > Yulduz darajalari (direktor va menejer).
-
 export type StarRankRow = {
   id: string;
   nameUz: string;
@@ -25,7 +13,6 @@ export type StarRankRow = {
   stars: number;
   reward: number;
   color: string;
-  /** Ma'muriyat yuklagan belgi; bo'lmasa pog'ona raqami ko'rsatiladi */
   iconUrl: string | null;
   isActive: boolean;
 };
@@ -35,8 +22,6 @@ const SELECT = {
   stars: true, reward: true, color: true, iconUrl: true, isActive: true,
 } as const;
 
-// Birinchi ishga tushirishda quyiladigan pog'onalar. Birinchisi 0 yulduz —
-// har bir o'quvchi darhol biror darajada turadi, bo'sh joy ko'rinmaydi.
 const DEFAULTS = [
   { nameUz: "Yangi boshlovchi", nameRu: "Новичок", nameEn: "Newcomer", nameDe: "Neuling", stars: 0, reward: 0, color: "#64748b" },
   { nameUz: "Boshlovchi", nameRu: "Начинающий", nameEn: "Beginner", nameDe: "Anfänger", stars: 10, reward: 20, color: "#0ea5e9" },
@@ -53,13 +38,11 @@ async function seedIfEmpty(): Promise<void> {
   await prisma.starRank.createMany({ data: DEFAULTS });
 }
 
-/** Barcha pog'onalar (o'chirilganlari ham) — CRM ro'yxati uchun */
 export const getStarRanks = cache(async (): Promise<StarRankRow[]> => {
   await seedIfEmpty();
   return prisma.starRank.findMany({ orderBy: [{ stars: "asc" }], select: SELECT });
 });
 
-/** Ilovada ko'rinadiganlari */
 export const getActiveStarRanks = cache(async (): Promise<StarRankRow[]> =>
   (await getStarRanks()).filter((r) => r.isActive));
 
@@ -68,24 +51,14 @@ export function rankName(r: StarRankRow, locale: Locale): string {
 }
 
 export type StarProgress = {
-  /** Hozirgi pog'ona (ro'yxat bo'sh bo'lsa null) */
   current: StarRankRow | null;
-  /** Keyingi pog'ona — eng yuqorisida turgan bo'lsa null */
   next: StarRankRow | null;
-  /** Nechanchi pog'ona (1 dan boshlab; pog'ona yo'q bo'lsa 0) */
   place: number;
-  /** Jami pog'onalar soni */
   total: number;
-  /** Keyingisiga qancha yulduz qolgan */
   need: number;
-  /** Shu pog'ona ichidagi yo'l, 0..100 */
   pct: number;
 };
 
-/**
- * Yulduz soniga qarab pog'ona. Chegarasi yulduzdan KATTA bo'lmagan
- * pog'onalarning eng yuqorisi olinadi.
- */
 export function progressOf(ranks: StarRankRow[], stars: number): StarProgress {
   const list = [...ranks].sort((a, b) => a.stars - b.stars);
   let i = -1;
@@ -107,16 +80,13 @@ export function progressOf(ranks: StarRankRow[], stars: number): StarProgress {
   };
 }
 
-/** Chiqilgan pog'onalar soni — birinchisi (kirish darajasi) sanalmaydi */
 export function ranksGained(ranks: StarRankRow[], stars: number): number {
   return Math.max(0, progressOf(ranks, stars).place - 1);
 }
 
-/** Chiqilgan pog'onalar uchun jami tanga */
 export function rankReward(ranks: StarRankRow[], stars: number): number {
   const list = [...ranks].sort((a, b) => a.stars - b.stars);
   let sum = 0;
-  // Birinchi pog'ona kirish darajasi — u uchun mukofot berilmaydi
   for (let k = 1; k < list.length; k++) if (stars >= list[k].stars) sum += list[k].reward;
   return sum;
 }

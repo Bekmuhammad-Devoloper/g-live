@@ -1,13 +1,6 @@
 #!/usr/bin/env bash
-# ════════════════════════════════════════════════════════════════════
-# GERMANLIFE — GL-EDU telefoniya server sozlovi (Ubuntu 22.04)
-# Serverда root sifatida:   sudo bash setup.sh
-# HAR bo'limni ko'rib chiqing. Sirlar SHU YERDA generatsiya bo'ladi va
-# app uchun /root/glive-telephony.env ga yoziladi.
-# ════════════════════════════════════════════════════════════════════
 set -euo pipefail
 
-# ── 0. Parametrlar (real qiymatlar) ─────────────────────────────────
 PUBLIC_IP="89.126.208.123"       # brauzer (WebRTC) tomoni
 TRUNK_IFACE="eth1"               # SIP trunk VLAN 200
 TRUNK_LOCAL_IP="10.66.30.204"
@@ -21,25 +14,20 @@ NUM_OPERATORS=10
 REC_DIR="/var/spool/asterisk/recording"
 CRM_URL="http://127.0.0.1:3000"  # GL-EDU (Next.js) shu serverda ishlasin
 
-# ── 1. Paketlar ─────────────────────────────────────────────────────
 apt update
 apt install -y asterisk asterisk-modules coturn ufw openssl
 
-# ── 2. Sirlar (serverда generatsiya) ────────────────────────────────
 gen(){ openssl rand -hex 16; }
 AMI_PASS="$(gen)"; TURN_USER="glive_turn"; TURN_CRED="$(gen)"
 declare -a OP; for i in $(seq 1 $NUM_OPERATORS); do OP[$i]="$(gen)"; done
 
-# ── 3. Statik route (trunk tarmog'iga) ──────────────────────────────
 ip route replace ${TRUNK_ROUTE} via ${TRUNK_GW} dev ${TRUNK_IFACE} || true
-# Doimiy qilish (netplan) — mavjud konfigingizga qo'shing:
 cat > /etc/networkd-dispatcher/routable.d/50-trunk-route <<EOF || true
 #!/bin/sh
 ip route replace ${TRUNK_ROUTE} via ${TRUNK_GW} dev ${TRUNK_IFACE}
 EOF
 chmod +x /etc/networkd-dispatcher/routable.d/50-trunk-route 2>/dev/null || true
 
-# ── 4. Kalit + papkalar ─────────────────────────────────────────────
 mkdir -p /etc/asterisk/keys
 [ -f /etc/asterisk/keys/asterisk.crt ] || openssl req -x509 -newkey rsa:2048 \
   -keyout /etc/asterisk/keys/asterisk.key -out /etc/asterisk/keys/asterisk.crt \
@@ -47,7 +35,6 @@ mkdir -p /etc/asterisk/keys
 chown -R asterisk:asterisk /etc/asterisk/keys; chmod 640 /etc/asterisk/keys/*
 mkdir -p ${REC_DIR}; chown -R asterisk:asterisk ${REC_DIR}
 
-# ── 5. Asterisk konfiglari ──────────────────────────────────────────
 cat > /etc/asterisk/manager.conf <<EOF
 [general]
 enabled = yes
@@ -93,7 +80,6 @@ leavewhenempty=strict
 maxlen=10
 EOF
 
-# pjsip.conf — transportlar + trunk (eth1) + operatorlar (loop)
 {
 cat <<EOF
 [transport-udp]
@@ -233,7 +219,6 @@ exten => _X.,1,NoOp(Inbound \${CALLERID(num)})
 exten => s,1,Goto(from-trunk,_X.,1)
 EOF
 
-# ── 6. coturn (domensiz — 3478, TLS'siz) ────────────────────────────
 cat > /etc/turnserver.conf <<EOF
 listening-port=3478
 listening-ip=${PUBLIC_IP}
@@ -252,15 +237,12 @@ EOF
 grep -q TURNSERVER_ENABLED /etc/default/coturn && sed -i 's/.*TURNSERVER_ENABLED.*/TURNSERVER_ENABLED=1/' /etc/default/coturn || echo "TURNSERVER_ENABLED=1" >> /etc/default/coturn
 systemctl enable coturn; systemctl restart coturn
 
-# ── 7. Firewall ─────────────────────────────────────────────────────
 ufw allow 22/tcp; ufw allow 80/tcp; ufw allow 443/tcp
 ufw allow 5060/udp; ufw allow 8088/tcp; ufw allow 8089/tcp
 ufw allow 10000:20000/udp; ufw allow 3478/udp; ufw allow 3478/tcp
 ufw allow 49152:65535/udp
-# AMI 5038 — ochilmaydi (loopback)
 yes | ufw enable || true
 
-# ── 8. GL-EDU app uchun .env qiymatlari ─────────────────────────────
 {
 echo "PUBLIC_HOST=${PUBLIC_IP}"
 echo "SIP_DOMAIN=${PUBLIC_IP}"
@@ -280,7 +262,6 @@ for i in $(seq 1 $NUM_OPERATORS); do echo "SIP_OPERATOR${i}_PASS=${OP[$i]}"; don
 } > /root/glive-telephony.env
 chmod 600 /root/glive-telephony.env
 
-# ── 9. Ishga tushirish ──────────────────────────────────────────────
 systemctl enable asterisk; systemctl restart asterisk
 sleep 4
 echo "════════════════════════════════════════════"

@@ -2,21 +2,11 @@
 
 import { useState } from "react";
 
-/** "800000" → "800 000" (faqat raqamlar qoladi, 12 xonagacha) */
 export const fmtMoneyDigits = (v: string | number | null | undefined): string => {
   const d = String(v ?? "").replace(/\D/g, "").slice(0, 12);
   return d ? d.replace(/\B(?=(\d{3})+(?!\d))/g, " ") : "";
 };
 
-/**
- * Pul maydoni — yozayotganda minglik bo'laklarga bo'linadi ("800 000").
- * Formaga (FormData) esa `name` ostida faqat raqamlar ketadi (yashirin input),
- * shuning uchun server tomonda Number(fd.get(name)) avvalgidek ishlaydi.
- *
- * Ikki rejim:
- *   • uncontrolled — defaultValue (raqam yoki satr);
- *   • controlled  — value (faqat raqamlar) + onChange(digits).
- */
 export default function MoneyInput({
   name, value, defaultValue, onChange, className, placeholder = "0", required, disabled, id, autoFocus, suffix,
 }: {
@@ -30,7 +20,6 @@ export default function MoneyInput({
   disabled?: boolean;
   id?: string;
   autoFocus?: boolean;
-  /** o'ng tomonda ko'rsatiladigan birlik, masalan "so'm" */
   suffix?: string;
 }) {
   const [inner, setInner] = useState(() => String(defaultValue ?? "").replace(/\D/g, ""));

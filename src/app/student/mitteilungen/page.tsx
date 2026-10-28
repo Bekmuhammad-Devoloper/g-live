@@ -8,12 +8,9 @@ import { PageHeader } from "../_ui";
 import { MESSAGE_SENT } from "../lehrer/const";
 import NotifList, { type VNotif } from "./NotifList";
 
-// "Mitteilungen" — o'quvchining bildirishnomalari (Start ekrani uslubida).
-
 export default async function StudentMitteilungenPage() {
   const session = await getSession();
   if (!session) redirect("/login");
-  // Bo'lim menejer tomonidan o'chirilgan bo'lsa — bosh sahifaga
   if (!(await isPortalFeatureOn("mitteilungen"))) redirect("/student");
   const t = S(session.locale);
 

@@ -15,7 +15,7 @@ export interface StatusCounts {
   leftNew: number;
   leftActive: number;
   debtors: number;
-  debtTotal: number; // umumiy qarzdorlik summasi (so'm)
+  debtTotal: number;
   groups: number;
   firstPayment: number;
   frozen: number;
@@ -45,8 +45,6 @@ const LABELS: Record<Locale, string[]> = {
   ],
 };
 
-// Har karta: [ikonka, rang(bg), qiymat kaliti, havola]
-// color — ikonka fonи, num — raqam rangi (ikonka rangiga mos, lekin matn uchun to'qroq)
 const META: { icon: string; color: string; num: string; key: keyof StatusCounts; href: string }[] = [
   { icon: "personPlus", color: "bg-emerald-500", num: "text-emerald-600", key: "orders", href: "/crm" },
   { icon: "personCheck", color: "bg-blue-500", num: "text-blue-600", key: "firstLesson", href: "/crm" },
@@ -62,8 +60,6 @@ const META: { icon: string; color: string; num: string; key: keyof StatusCounts;
   { icon: "personOff", color: "bg-slate-400", num: "text-slate-500", key: "archived", href: "/students" },
 ];
 
-// Modme uslubidagi 12 status kartasi uchun sonlar (haqiqiy bazadan)
-// Faol filial doirasida hisoblanadi (filialsiz eski yozuvlar ham qo'shiladi)
 export async function computeStatusCounts(s: { branchId: string | null }): Promise<StatusCounts> {
   const b = branchWhere(s);
   const [
@@ -78,7 +74,7 @@ export async function computeStatusCounts(s: { branchId: string | null }): Promi
     prisma.lead.count({ where: { AND: [{ stage: "LOST" }, b] } }),
     prisma.student.count({ where: { AND: [{ eduStatus: "EXPELLED", payments: { none: { status: "PAID" } } }, b] } }),
     prisma.student.count({ where: { AND: [{ eduStatus: "EXPELLED", payments: { some: { status: "PAID" } } }, b] } }),
-    totalDebt({ AND: [{ eduStatus: { not: "ARCHIVED" } }, b] }), // haqiqiy qarz bo'yicha
+    totalDebt({ AND: [{ eduStatus: { not: "ARCHIVED" } }, b] }),
     prisma.group.count({ where: { AND: [{ status: "ACTIVE" }, b] } }),
     prisma.student.count({ where: { AND: [{ payments: { some: { status: "PAID" } } }, b] } }),
     prisma.student.count({ where: { AND: [{ eduStatus: "FROZEN" }, b] } }),
@@ -104,7 +100,6 @@ export function StatusGrid({ counts, locale }: { counts: StatusCounts; locale: L
           href={m.href}
           className="group rounded-2xl border border-slate-200/70 bg-white p-3.5 shadow-card transition hover:-translate-y-0.5 hover:shadow-soft"
         >
-          {/* Ikonka + yozuv + raqam — bitta qatorda; raqam kartochka rangida */}
           <div className="flex items-center gap-2.5">
             <div className={`flex h-9 w-9 shrink-0 items-center justify-center rounded-xl ${m.color} shadow-sm`}>
               <Icon name={m.icon} className="h-5 w-5 text-white" strokeWidth={2} />
@@ -114,7 +109,6 @@ export function StatusGrid({ counts, locale }: { counts: StatusCounts; locale: L
             </div>
             <div className={`shrink-0 text-2xl font-bold tabular-nums ${m.num}`}>{counts[m.key as keyof StatusCounts]}</div>
           </div>
-          {/* Qarzdorlar kartasida umumiy summa ham ko'rinadi (platforma bo'yicha) */}
           {m.key === "debtors" && counts.debtTotal > 0 && (
             <div className="mt-1.5 border-t border-slate-100 pt-1.5 text-right text-[11px] font-semibold tabular-nums text-rose-600 dark:border-white/5 dark:text-rose-400">
               {formatMoney(counts.debtTotal, locale)}

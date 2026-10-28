@@ -92,7 +92,6 @@ export default async function BranchesStatusPage({ searchParams }: { searchParam
     return r[col.key as keyof Acc];
   };
 
-  // Saralash (ustun bo'yicha) — URL orqali
   const validSort = new Set<string>(["name", ...COLS.map((c) => String(c.key))]);
   const sortKey = sp.sort && validSort.has(sp.sort) ? sp.sort : "";
   const dir = sp.dir === "asc" ? "asc" : "desc";
@@ -106,7 +105,6 @@ export default async function BranchesStatusPage({ searchParams }: { searchParam
     });
   }
 
-  // CSV eksporti uchun tayyor qatorlar
   const exportColumns = [{ key: "name", label: tr(s.locale, { uz: "Filial", ru: "Филиал", en: "Branch", de: "Filiale" }) }, ...COLS.map((c) => ({ key: String(c.key), label: tr(s.locale, c.label) }))];
   const exportData: Record<string, string | number>[] = rows.map((r) => {
     const rec: Record<string, string | number> = { name: r.name };

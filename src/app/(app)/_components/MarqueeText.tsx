@@ -3,9 +3,6 @@
 import { useEffect, useRef, useState } from "react";
 import { cn } from "@/lib/cn";
 
-// Uzun matnni maydonidan chiqarmasdan ko'rsatadi: matn sig'masa 3 soniyadan
-// keyin sekin surilib oxirini ko'rsatadi va qaytadi (globals.css → mqScroll).
-// Sig'sa — hech qanday animatsiya bo'lmaydi.
 export default function MarqueeText({ text, className }: { text: string; className?: string }) {
   const boxRef = useRef<HTMLSpanElement>(null);
   const innerRef = useRef<HTMLSpanElement>(null);
@@ -17,7 +14,7 @@ export default function MarqueeText({ text, className }: { text: string; classNa
       const inner = innerRef.current;
       if (!box || !inner) return;
       const over = inner.scrollWidth - box.clientWidth;
-      setShift(over > 4 ? over : 0); // 4px — o'lchov xatosiga bardosh
+      setShift(over > 4 ? over : 0);
     };
     measure();
     const ro = typeof ResizeObserver !== "undefined" ? new ResizeObserver(measure) : null;

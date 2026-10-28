@@ -9,8 +9,6 @@ import type { Locale } from "@/lib/constants";
 import { Icon } from "../../../_components/Icon";
 import type { DCall } from "./OperatorDetail";
 
-// Operatorning qo'ng'iroqlar tarixi — Call jadvalidan (yozuv bo'lsa audio pleyer bilan).
-
 const PAGE_SIZE = 20;
 
 const fmtDur = (sec: number) => {

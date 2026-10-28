@@ -12,18 +12,15 @@ const ALLOWED = [ROLES.DIRECTOR, ROLES.DEPUTY_DIRECTOR, ROLES.ADMIN, ROLES.MANAG
 const p2 = (n: number) => String(n).padStart(2, "0");
 const isoDay = (d: Date) => `${d.getFullYear()}-${p2(d.getMonth() + 1)}-${p2(d.getDate())}`;
 
-// O'quv markazga ishlab berilgan soatlar — o'tilgan darslar soatlari
-// (o'qituvchi / xona / kurs kesimida, davr bo'yicha).
 export default async function WorkedHoursPage() {
   const s = await requireSession();
   if (!ALLOWED.includes(s.role as never)) {
     return <Forbidden title={tr(s.locale, { uz: "Kirish taqiqlangan", ru: "Доступ запрещён", en: "Access denied", de: "Zugriff verweigert" })} body={tr(s.locale, { uz: "Bu hisobot rahbariyat uchun.", ru: "Этот отчёт для руководства.", en: "This report is for management.", de: "Dieser Bericht ist für die Geschäftsleitung." })} />;
   }
 
-  // O'qituvchi bo'lsa — faqat o'z darslari (o'ziga mos ma'lumot)
   const isTeacher = s.role === ROLES.TEACHER;
   const lessons = await prisma.lesson.findMany({
-    where: { AND: [isTeacher ? { group: { teacherId: s.userId } } : {}, branchViaGroup(s)] }, // faol filial doirasida
+    where: { AND: [isTeacher ? { group: { teacherId: s.userId } } : {}, branchViaGroup(s)] },
     select: {
       startsAt: true,
       endsAt: true,

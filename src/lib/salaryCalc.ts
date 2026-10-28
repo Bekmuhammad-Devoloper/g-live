@@ -4,23 +4,6 @@ import { getSettings } from "./settings";
 import { getDefaultMonthlyFee } from "./debt";
 import { ROLES } from "./constants";
 
-// O'qituvchi maoshi kalkulyatori (Moliya > Ish haqi).
-//
-// Qoida tanlash tartibi (o'qituvchi, guruh, o'quvchi uchun):
-//   Talaba (+guruh) > Guruh > Kurs > O'qituvchi > Filial (standart)
-//
-// Maosh turlari:
-//   fixed                          — o'qituvchiga oyiga o'zgarmas summa (bir qoida bir marta)
-//   by_student_fixed               — har bir o'quvchi uchun oyiga o'zgarmas summa
-//   by_student_percentage          — o'quvchining oylik kurs narxidan foiz (chegirma sozlamaga ko'ra)
-//   percentage_by_student_payment  — o'quvchining shu oydagi PAID to'lovlaridan foiz
-//   per_lesson_fixed               — har bir dars uchun o'zgarmas summa
-//   per_lesson_percentage          — bir dars narxidan foiz (oylik narx / oydagi darslar soni)
-//
-// To'lov guruhlarga bo'linishi: o'quvchi oyda bir nechta guruhda bo'lsa, to'lov
-// (va promokod chegirmasi) guruhlarning oylik narxi ulushida taqsimlanadi;
-// narxlar 0 bo'lsa — teng bo'linadi.
-
 export const SALARY_TYPES = [
   "fixed",
   "by_student_fixed",
@@ -31,7 +14,6 @@ export const SALARY_TYPES = [
 ] as const;
 export type SalaryType = (typeof SALARY_TYPES)[number];
 
-/** Eski yozuvlar: FIXED — oylik o'zgarmas, PERCENT — to'lovdan foiz */
 export function normalizeSalaryType(t: string): SalaryType {
   if (t === "FIXED") return "fixed";
   if (t === "PERCENT") return "percentage_by_student_payment";
@@ -75,11 +57,8 @@ export interface SalaryDetailRow {
   came: number;
   notCame: number;
   notMarked: number;
-  /** O'quvchining shu oy shu guruh ulushiga to'g'ri keladigan to'lovi (fixed qatorlarda null) */
   paid: number | null;
-  /** Belgilangan summa — qoida bo'yicha (davomatgacha) */
   assigned: number;
-  /** Hisoblangan summa */
   amount: number;
   ruleScope: string | null;
   ruleType: SalaryType | null;
@@ -98,7 +77,7 @@ export interface TeacherSalaryCalc {
 export interface SalaryCalcResult {
   year: number;
   month: number;
-  periodStart: string; // YYYY-MM-DD
+  periodStart: string;
   periodEnd: string;
   total: number;
   teachers: TeacherSalaryCalc[];
@@ -139,8 +118,7 @@ export async function computeSalaries(opts: { year: number; month: number; branc
     }),
   ]);
 
-  // Qoidalar xaritalari (eng yangisi ustun)
-  const studentRules = new Map<string, RuleRow>(); // `${studentId}|${groupId ?? ""}`
+  const studentRules = new Map<string, RuleRow>();
   const groupRules = new Map<string, RuleRow>();
   const courseRules = new Map<string, RuleRow>();
   const teacherRules = new Map<string, RuleRow>();
@@ -173,7 +151,6 @@ export async function computeSalaries(opts: { year: number; month: number; branc
       : Promise.resolve([]),
   ]);
 
-  // Sana yozilmagan eski chiqishlar (isActive=false, leftAt=null) — faqat qo'shilgan oyda hisoblanadi
   const enrollments = enrollRaw.filter((e) => {
     if (!e.isActive && !e.leftAt && e.joinedAt < monthStart) return false;
     const st = e.student.eduStatus;
@@ -191,7 +168,6 @@ export async function computeSalaries(opts: { year: number; month: number; branc
     studentIds.length
       ? prisma.payment.findMany({ where: { studentId: { in: studentIds }, status: "PAID", createdAt: { gte: monthStart, lt: monthEnd } }, select: { studentId: true, amount: true, discount: true } })
       : Promise.resolve([]),
-    // To'lovni taqsimlash uchun o'quvchining shu oydagi barcha guruhlari (filialdan qat'i nazar)
     studentIds.length
       ? prisma.groupStudent.findMany({
           where: { studentId: { in: studentIds }, joinedAt: { lt: monthEnd }, OR: [{ leftAt: null }, { leftAt: { gte: monthStart } }] },
@@ -202,7 +178,6 @@ export async function computeSalaries(opts: { year: number; month: number; branc
 
   const feeOf = (g: { monthlyFee: number | null; program: { monthlyFee: number | null } }) => g.monthlyFee ?? g.program.monthlyFee ?? defaultFee;
 
-  // O'quvchi -> guruh ulushi
   const shares = new Map<string, Map<string, number>>();
   {
     const byStudent = new Map<string, { groupId: string; fee: number }[]>();
@@ -241,7 +216,6 @@ export async function computeSalaries(opts: { year: number; month: number; branc
     enrollByGroup.set(e.groupId, arr);
   }
 
-  // O'qituvchilar: filial o'qituvchilari + filial guruhlarining o'qituvchilari
   const teacherIds = new Set<string>(branchTeachers.map((t) => t.id));
   for (const g of groups) if (g.teacherId) teacherIds.add(g.teacherId);
   const extra = [...teacherIds].filter((id) => !branchTeachers.some((t) => t.id === id));
@@ -275,7 +249,6 @@ export async function computeSalaries(opts: { year: number; month: number; branc
     for (const g of tGroups) {
       const gLessons = lessonsByGroup.get(g.id) ?? [];
       const gEnroll = enrollByGroup.get(g.id) ?? [];
-      // Rejadagi (boshlanmagan) guruh — shu oyda dars bo'lmasa hisoblanmaydi
       if (g.status === "PLANNED" && gLessons.length === 0) continue;
       lessonCount += gLessons.length;
       const lessonsPerMonth = g.lessonsPerMonth ?? g.program.lessonsPerMonth ?? 12;
@@ -336,7 +309,6 @@ export async function computeSalaries(opts: { year: number; month: number; branc
       }
     }
 
-    // Guruhsiz o'qituvchi — faqat o'zgarmas (fixed) qoida qo'llanadi
     if (tGroups.length === 0) {
       const r = resolve(tid, null, null, null);
       if (r && normalizeSalaryType(r.amountType) === "fixed") addFixed(r, null);

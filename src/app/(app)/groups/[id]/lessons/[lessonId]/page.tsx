@@ -51,7 +51,6 @@ export default async function LessonPage({ params }: { params: Promise<{ id: str
       <PageHeader title={lesson.topic ?? tr(s.locale, { uz: "Dars", ru: "Урок", en: "Lesson", de: "Unterricht" })} subtitle={fmt(lesson.startsAt)} />
 
       <div className="grid gap-6 lg:grid-cols-3">
-        {/* QR panel */}
         {canManage && (
           <Card className="lg:col-span-1">
             <h3 className="mb-3 text-sm font-semibold text-slate-700">{tr(s.locale, { uz: "QR-davomat", ru: "QR-посещаемость", en: "QR attendance", de: "QR-Anwesenheit" })}</h3>
@@ -75,7 +74,6 @@ export default async function LessonPage({ params }: { params: Promise<{ id: str
           </Card>
         )}
 
-        {/* Davomat ro'yxati */}
         <Card className={canManage ? "lg:col-span-2" : "lg:col-span-3"}>
           <div className="mb-3 flex items-center justify-between">
             <h3 className="text-sm font-semibold text-slate-700">{tr(s.locale, { uz: "Davomat", ru: "Посещаемость", en: "Attendance", de: "Anwesenheit" })} ({lesson.group.students.length})</h3>

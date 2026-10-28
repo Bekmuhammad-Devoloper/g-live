@@ -134,7 +134,6 @@ export default function CallsTable({ rows, locale, total, start, pageSize, page,
         </div>
       </div>
 
-      {/* Sahifalash */}
       <div className="mt-5 flex flex-wrap items-center justify-between gap-3">
         <p className="text-sm text-slate-500 dark:text-slate-400">
           <span className="font-semibold text-slate-700 dark:text-slate-300">

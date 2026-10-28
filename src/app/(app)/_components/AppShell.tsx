@@ -20,23 +20,18 @@ interface SubItem {
   href: string;
   icon: string;
   label: Record<Locale, string>;
-  /** Shu bandni ko'ra oladigan rollar. Berilmasa — hamma (sahifa o'zi tekshiradi). */
   roles?: string[];
 }
 interface SubGroup {
-  label?: Record<Locale, string>; // bo'lim sarlavhasi (ixtiyoriy)
+  label?: Record<Locale, string>;
   items: SubItem[];
-  /** Butun guruhni ko'ra oladigan rollar */
   roles?: string[];
 }
-// qisqa yozuv uchun: L("uz") yoki L("uz","ru","en")
 const L = (uz: string, ru = uz, en = uz, de = en): Record<Locale, string> => ({ uz, ru, en, de });
 
-// Footer havolalari — texnik yordam (Telegram lichka) va video darsliklar kanali
 const SUPPORT_TELEGRAM = "https://t.me/yuksalish_development";
 const VIDEO_CHANNEL = "https://t.me/yuksalish_development";
 
-// Sidebar bo'limlari uchun yonboshdan ochiluvchi submenu (Radian/Modme uslubida)
 const SUBMENUS: Record<string, { title: Record<Locale, string>; groups: SubGroup[] }> = {
   "/groups": {
     title: { uz: "Guruhlar", ru: "Группы", en: "Groups", de: "Gruppen" },
@@ -92,7 +87,6 @@ const SUBMENUS: Record<string, { title: Record<Locale, string>; groups: SubGroup
       ] },
     ],
   },
-  // Nazorat submenu — hisobot elementlari /reports dan ko'chirildi (takrorlanmasin)
   "/control": {
     title: L("Nazorat", "Контроль", "Control", "Kontrolle"),
     groups: [
@@ -151,8 +145,6 @@ const SUBMENUS: Record<string, { title: Record<Locale, string>; groups: SubGroup
   "/settings": {
     title: { uz: "Sozlamalar", ru: "Настройки", en: "Settings", de: "Einstellungen" },
     groups: [
-      // MUHIM: har bandning `roles` ro'yxati sahifasidagi ALLOWED bilan bir xil
-      // bo'lishi kerak — aks holda foydalanuvchi ocholmaydigan tugma ko'radi.
       { items: [
         { href: "/settings/sms", icon: "mail", label: { uz: "SMS sozlamalari", ru: "Настройки SMS", en: "SMS settings", de: "SMS-Einstellungen" }, roles: [ROLES.DIRECTOR, ROLES.DEPUTY_DIRECTOR, ROLES.ADMIN] },
         { href: "/settings/telephony", icon: "phone", label: { uz: "Onlain telefoniya", ru: "Онлайн телефония", en: "Online telephony", de: "Online-Telefonie" }, roles: [ROLES.DIRECTOR, ROLES.ADMIN] },
@@ -164,7 +156,6 @@ const SUBMENUS: Record<string, { title: Record<Locale, string>; groups: SubGroup
         { href: "/settings/star-ranks", icon: "trophy", label: { uz: "Yulduz darajalari", ru: "Звёздные уровни", en: "Star ranks", de: "Sternenstufen" }, roles: [ROLES.DIRECTOR, ROLES.DEPUTY_DIRECTOR, ROLES.ADMIN, ROLES.MANAGER] },
         { href: "/settings/operator", icon: "headphones", label: { uz: "Operator sozlamalari", ru: "Настройки оператора", en: "Operator settings", de: "Operator-Einstellungen" } },
       ] },
-      // Faqat rahbariyat: direktor va o'rinbosari (administrator KIRMAYDI)
       { label: { uz: "Rahbariyat", ru: "Руководство", en: "Management", de: "Geschäftsleitung" }, roles: [ROLES.DIRECTOR, ROLES.DEPUTY_DIRECTOR], items: [
         { href: "/settings", icon: "settings", label: { uz: "Umumiy sozlamalar", ru: "Общие настройки", en: "General settings", de: "Allgemeine Einstellungen" } },
         { href: "/settings/staff", icon: "users", label: { uz: "Xodimlar", ru: "Сотрудники", en: "Staff", de: "Mitarbeiter" } },
@@ -181,11 +172,8 @@ const SUBMENUS: Record<string, { title: Record<Locale, string>; groups: SubGroup
   },
 };
 
-// Portal sidebar bandi. `roles` berilsa — faqat shu rollarda ko'rinadi
-// (masalan Market: menejerda bor, operator/ROP da yo'q — RBAC ham shunday).
 type PortalItem = { href: string; icon: string; label: Record<Locale, string>; exact?: boolean; roles?: string[] };
 
-// ROP (sotuv bo'limi boshlig'i) uchun alohida sidebar bandlari
 const ROP_NAV: PortalItem[] = [
   { href: "/rop", icon: "grid", label: L("Bosh sahifa", "Главная", "Home", "Startseite"), exact: true },
   { href: "/crm", icon: "download", label: L("Lidlar", "Лиды", "Leads", "Leads") },
@@ -203,11 +191,6 @@ const ROP_NAV: PortalItem[] = [
   { href: "/settings/operator", icon: "settings", label: L("Sozlamalar", "Настройки", "Settings", "Einstellungen") },
 ];
 
-// Operator (sotuv menejeri) portali — eski loyihadagi `operator` sidebar bilan
-// bir xil tartib va bo'limlar:
-//   /operator → /operator/leads → /operator/calls → /operator/reminders
-//   → /operator/notifications → /operator/settings
-// Bu loyihadagi mavjud sahifalarga moslashtirilgan.
 const OPERATOR_NAV: PortalItem[] = [
   { href: "/operator", icon: "grid", label: L("Bosh sahifa", "Главная", "Dashboard", "Startseite"), exact: true },
   { href: "/crm", icon: "download", label: L("Lidlar", "Лиды", "Leads", "Leads") },
@@ -227,15 +210,11 @@ interface Props {
   labels: { logout: string; appName: string; tagline: string };
   unreadCount: number;
   topbar: Omit<TopbarProps, "onMenu" | "locale" | "unreadCount" | "user" | "appName">;
-  /** Markaz brendi (nomi va logotiplari) — har nusxada o'zi */
   brand: { name: string; logo: string; logoDark: string };
-  /** Tarifda o'chirilgan modullarning yo'llari — menyudan yashiriladi */
   offPaths?: string[];
   children: React.ReactNode;
 }
 
-// Nazorat menyusidagi bandlar. Ular /reports/... yo'lida tursa ham sidebar'da
-// HISOBOTLAR emas, NAZORAT yonishi kerak (foydalanuvchi qaysi bo'limdan kirgani muhim).
 const CONTROL_ROUTES = new Set<string>([
   "/attendance",
   "/reports/attendance",
@@ -244,10 +223,6 @@ const CONTROL_ROUTES = new Set<string>([
   "/reports/branches-status",
 ]);
 
-// Sotuv / Marketing menyusidagi bandlar. Ular /reports/... yo'lida bo'lsa ham
-// sidebar'da HISOBOTLAR emas, SOTUV / MARKETING yonishi kerak.
-// Bu ro'yxatga o'z sidebar bandi bo'lganlar KIRMAYDI (masalan /crm = "Lidlar"),
-// shuningdek boshqa bo'limga tegishli havolalar (/settings/sms, /reports/sms).
 const MARKETING_ROUTES = new Set<string>([
   "/rop",
   "/operator",
@@ -260,15 +235,12 @@ const MARKETING_ROUTES = new Set<string>([
   "/reports/kpi",
 ]);
 
-// Moliyaviy hisobotlar — faqat direktor, o'rinbosari va menejerga ko'rinadi.
-// (Hisobchida Hisobotlar menyusi yo'q — u /finance bo'limidan foydalanadi.)
 const FINANCE_REPORTS = new Set<string>([
   "/reports/balance",
   "/reports/payments",
   "/reports/cancelled",
 ]);
 
-// O'qituvchi rolida hisobotlar menyusida ko'rinadigan (o'qituvchiga mos) hisobotlar
 const TEACHER_REPORTS = new Set<string>([
   "/reports/attendance",
   "/reports/teacher-performance",
@@ -278,7 +250,6 @@ const TEACHER_REPORTS = new Set<string>([
   "/teacher-attendance",
 ]);
 
-// Mobil menyu qatori (icon + label havola)
 function MobileRow({ href, icon, label, active, onNav }: { href: string; icon: string; label: string; active: boolean; onNav: () => void }) {
   return (
     <Link
@@ -295,10 +266,6 @@ function MobileRow({ href, icon, label, active, onNav }: { href: string; icon: s
   );
 }
 
-// ── Telefon uchun pastki menyu ──
-// Kompyuterda chap tomondagi menyu bor, telefonda esa har safar
-// gamburgerni ochish noqulay. Shu sabab eng ko'p ishlatiladigan 4 ta
-// bo'lim doim qo'l ostida turadi; 5-tugma to'liq menyuni ochadi.
 function BottomNav({
   items, pathname, onMenu, menuLabel,
 }: {
@@ -345,20 +312,14 @@ function BottomNav({
 
 export default function AppShell({ navItems, role, portal, user, locale, labels, unreadCount, topbar, brand, offPaths = [], children }: Props) {
   const pathname = usePathname();
-  // Mijoz komponentlari (masalan DateInput) interfeys tilini shu yerdan oladi
   useEffect(() => { document.documentElement.lang = locale; }, [locale]);
   const pathOn = (href: string) => !offPaths.some((p) => href === p || href.startsWith(p + "/"));
 
-  // ROP va operator o'z sidebar'iga ega (umumiy xodim menyusi o'rniga).
-  // portalNav null bo'lsa — oddiy rolga mos menyu ko'rsatiladi.
   const portalNav = (portal === "rop" ? ROP_NAV : portal === "operator" ? OPERATOR_NAV : null)?.filter(
     (it) => (!it.roles || it.roles.includes(role)) && pathOn(it.href),
   ) ?? null;
 
-  // Submenu guruhlari — o'qituvchi rolida /reports faqat mos hisobotlarga cheklanadi
   const submenuGroups = (href: string): SubGroup[] => {
-    // Rol filtri — foydalanuvchi ocholmaydigan bandlar ko'rsatilmaydi.
-    // (Sahifalar baribir o'zini tekshiradi; bu — o'lik tugmani yashirish.)
     const byRole = (gs: SubGroup[]): SubGroup[] =>
       gs
         .filter((g) => !g.roles || g.roles.includes(role))
@@ -371,8 +332,6 @@ export default function AppShell({ navItems, role, portal, user, locale, labels,
         .map((g) => ({ ...g, items: g.items.filter((it) => TEACHER_REPORTS.has(it.href)) }))
         .filter((g) => g.items.length > 0);
     }
-    // Davomat analitikasi NAZORAT bo'limida turadi — Hisobotlarda takrorlanmasin.
-    // O'qituvchida Nazorat menyusi yo'q, shuning uchun unga qoldiriladi (yuqoridagi shart).
     if (href === "/reports") {
       const canFinance = role === "DIRECTOR" || role === "DEPUTY_DIRECTOR" || role === "MANAGER";
       return groups
@@ -384,7 +343,6 @@ export default function AppShell({ navItems, role, portal, user, locale, labels,
         }))
         .filter((g) => g.items.length > 0);
     }
-    // Administrator faqat o'z filialiga tayinlangan — Filiallar bo'limini boshqara olmaydi
     if (href === "/management" && role === "ADMIN") {
       return groups
         .map((g) => ({ ...g, items: g.items.filter((it) => it.href !== "/branches") }))
@@ -395,7 +353,7 @@ export default function AppShell({ navItems, role, portal, user, locale, labels,
   const [open, setOpen] = useState(false);
   const [fly, setFly] = useState<{ href: string; top: number } | null>(null);
   const [collapsed, setCollapsed] = useState<Set<string>>(new Set());
-  const [mOpen, setMOpen] = useState<Set<string>>(new Set()); // mobil menyu ochilgan bo'limlari
+  const [mOpen, setMOpen] = useState<Set<string>>(new Set());
   const toggleM = (k: string) => setMOpen((p) => { const n = new Set(p); n.has(k) ? n.delete(k) : n.add(k); return n; });
   const closeTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
   const t = getT(locale);
@@ -406,9 +364,6 @@ export default function AppShell({ navItems, role, portal, user, locale, labels,
     return next;
   });
 
-  // Nazorat menyusi bor rollarda (rahbariyat) nazorat yo'llari Nazoratni yoqadi.
-  // O'qituvchida Nazorat yo'q — unda bu sahifalar odatdagidek Hisobotlarni yoqadi.
-  // Pastki menyuga eng kerakli 4 ta band (rolga qarab o'zi shakllanadi)
   const bottomItems = (portalNav
     ? portalNav.map((it) => ({ href: it.href, icon: it.icon, label: it.label[locale] ?? it.label.uz }))
     : navItems
@@ -418,13 +373,11 @@ export default function AppShell({ navItems, role, portal, user, locale, labels,
   const hasMarketing = navItems.some((it) => it.href === "/marketing");
   const isActive = (href: string) => {
     const inControl = hasControl && CONTROL_ROUTES.has(pathname);
-    // Sotuv bo'limi sahifalari (/operator, /rop, KPI...) Sotuv / Marketing'ni yoqadi
     const inMarketing =
       hasMarketing && [...MARKETING_ROUTES].some((r) => pathname === r || pathname.startsWith(r + "/"));
 
     if (href === "/control") return inControl || pathname === href || pathname.startsWith(href + "/");
     if (href === "/marketing") return inMarketing || pathname === href || pathname.startsWith(href + "/");
-    // Bir vaqtda ikkita bo'lim yonib qolmasin
     if (href === "/reports" && (inControl || inMarketing)) return false;
     return pathname === href || pathname.startsWith(href + "/");
   };
@@ -443,7 +396,6 @@ export default function AppShell({ navItems, role, portal, user, locale, labels,
 
   const Rail = (
     <>
-      {/* Logotip */}
       <Link
         href="/dashboard"
         onClick={() => setOpen(false)}
@@ -453,7 +405,6 @@ export default function AppShell({ navItems, role, portal, user, locale, labels,
         <BrandMark brand={brand} className="max-h-10 w-auto max-w-full object-contain" />
       </Link>
 
-      {/* Bo'limlar */}
       <nav className="flex-1 overflow-y-auto py-2">
         {portalNav
           ? portalNav.map((it) => {
@@ -526,7 +477,6 @@ export default function AppShell({ navItems, role, portal, user, locale, labels,
             })}
       </nav>
 
-      {/* Chiqish (ROP portalida sidebar pastida) */}
       {portalNav && (
         <form action={logout} className="shrink-0 border-t border-slate-200 dark:border-white/5">
           <button type="submit" className="group flex w-full flex-col items-center gap-1.5 px-1.5 py-3 text-slate-500 transition hover:text-rose-600 dark:text-slate-400 dark:hover:text-white">
@@ -542,13 +492,10 @@ export default function AppShell({ navItems, role, portal, user, locale, labels,
 
   return (
     <div className="flex min-h-screen bg-slate-100 dark:bg-slate-950">
-      {/* Desktop rail */}
-      {/* Kenglik Modme'dagi saidbar bilan bir xil (120px) */}
       <aside className="sticky top-0 hidden h-screen w-[120px] shrink-0 flex-col border-r border-slate-200 bg-white dark:border-transparent dark:bg-[#0d1b38] md:flex">
         {Rail}
       </aside>
 
-      {/* Yonboshdan ochiluvchi submenu (flyout) */}
       {fly && SUBMENUS[fly.href] && (
         <div
           className="fixed bottom-0 left-[120px] top-16 z-40 hidden w-[272px] md:block"
@@ -601,19 +548,16 @@ export default function AppShell({ navItems, role, portal, user, locale, labels,
         </div>
       )}
 
-      {/* Mobil menyu — kengroq, ochiladigan bo'limlar bilan (barcha sahifalar telefonda ochiladi) */}
       {open && (
         <div className="fixed inset-0 z-50 md:hidden">
           <div className="absolute inset-0 bg-slate-900/50 backdrop-blur-sm" onClick={() => setOpen(false)} />
           <aside className="absolute left-0 top-0 flex h-full w-[284px] max-w-[86%] flex-col bg-white shadow-pop dark:bg-[#0d1b38]">
-            {/* Header */}
             <div className="flex h-16 shrink-0 items-center justify-between border-b border-slate-200 px-4 dark:border-white/5">
               {/* eslint-disable-next-line @next/next/no-img-element */}
               <BrandMark brand={brand} className="max-h-9 w-auto object-contain" />
               <button onClick={() => setOpen(false)} className="flex h-9 w-9 items-center justify-center rounded-lg text-xl text-slate-400 transition hover:bg-slate-100 hover:text-slate-600 dark:hover:bg-white/10">✕</button>
             </div>
 
-            {/* Nav */}
             <nav className="flex-1 overflow-y-auto p-2">
               {portalNav
                 ? portalNav.map((it) => {
@@ -681,7 +625,6 @@ export default function AppShell({ navItems, role, portal, user, locale, labels,
       )}
 
       <div className="flex min-w-0 flex-1 flex-col">
-        {/* Yuqori panel */}
         <Topbar
           {...topbar}
           locale={locale}
@@ -692,11 +635,9 @@ export default function AppShell({ navItems, role, portal, user, locale, labels,
         />
 
         <main className="min-w-0 flex-1 p-4 pb-24 md:p-6 md:pb-6">
-          {/* Kanban/jadval sahifalari keng ekranda (monoblok) to'liq kenglikdan foydalanadi */}
           <div className={cn("mx-auto", /^\/(crm|schedule)(\/|$)/.test(pathname ?? "") ? "max-w-none" : "max-w-[1500px]")}>{children}</div>
         </main>
 
-        {/* Global footer — Modme uslubida */}
         <footer className="hidden flex-wrap items-center justify-between gap-3 border-t border-slate-200/70 bg-white px-4 py-3 dark:border-slate-800 dark:bg-slate-900 md:flex md:px-6">
           <div className="flex flex-wrap items-center gap-x-5 gap-y-1.5 text-xs text-slate-500 dark:text-slate-400">
             <a
@@ -737,7 +678,6 @@ export default function AppShell({ navItems, role, portal, user, locale, labels,
   );
 }
 
-/** Markaz logotipi (yorug'/qorong'i). Logotip yuklanmagan markazda — nomi matn sifatida */
 function BrandMark({ brand, className }: { brand: { name: string; logo: string; logoDark: string }; className: string }) {
   if (!brand.logo) {
     return <span className="max-w-full truncate px-1 text-center text-sm font-extrabold leading-tight text-slate-800 dark:text-white">{brand.name}</span>;

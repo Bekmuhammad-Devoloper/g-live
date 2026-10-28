@@ -5,12 +5,8 @@ import { prisma } from "@/lib/db";
 import { ROLES } from "@/lib/constants";
 import { webrtcConfigFor } from "@/lib/asterisk";
 
-// Operator/ROP brauzer softphone'i uchun SIP ulanish konfiguratsiyasi.
-// XAVFSIZLIK: sessiya majburiy, tez-tez so'rovlar cheklangan (parol qaytaradi).
 const ALLOWED: string[] = [ROLES.OPERATOR, ROLES.ROP, ROLES.MANAGER, ROLES.DEPUTY_DIRECTOR, ROLES.DIRECTOR, ROLES.ADMIN];
 
-// Oddiy xotiradagi rate-limit (30/daqiqa har foydalanuvchi). Bir xodimda bir nechta oyna ochiq
-// bo'lishi va har uzilishda konfig qayta so'ralishi mumkin — 5 ta juda kam edi (softfon 429 olib to'xtardi).
 const hits = new Map<string, number[]>();
 function limited(userId: string): boolean {
   const now = Date.now();

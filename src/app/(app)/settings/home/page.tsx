@@ -5,7 +5,6 @@ import { getBanners, getVideos, videoThumb } from "@/lib/portalContent";
 import { PageHeader, Forbidden } from "../../_components/ui";
 import HomeContentView, { type VBanner, type VVideo } from "./HomeContentView";
 
-// O'quvchi bosh sahifasidagi banner va videolar — direktor va menejer
 const ALLOWED = [ROLES.DIRECTOR, ROLES.DEPUTY_DIRECTOR, ROLES.ADMIN, ROLES.MANAGER, ROLES.ROP];
 
 export default async function HomeContentPage() {

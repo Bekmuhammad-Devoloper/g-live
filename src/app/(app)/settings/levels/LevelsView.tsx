@@ -11,8 +11,6 @@ import {
   type LevelInput,
 } from "./actions";
 
-// Daraja katalogi — qo'shish, tahrirlash, tartib, banner, o'chirish.
-
 export type LevelRow = {
   id: string;
   code: string;
@@ -23,7 +21,6 @@ export type LevelRow = {
   color: string;
   bannerUrl: string | null;
   isActive: boolean;
-  /** Shu daraja nechta joyda ishlatilmoqda — o'chirishdan oldin ogohlantirish uchun */
   usage: number;
 };
 
@@ -140,7 +137,6 @@ export default function LevelsView({ rows, locale }: { rows: LevelRow[]; locale:
               !it.isActive && "opacity-60",
             )}
           >
-            {/* Ilovadagi kartochkaning kichik nusxasi */}
             <div
               className="relative grid h-[62px] w-[104px] shrink-0 place-items-center overflow-hidden rounded-xl text-white"
               style={it.bannerUrl ? { backgroundColor: "#12303f" } : { background: levelGradient(it.color) }}
@@ -167,7 +163,6 @@ export default function LevelsView({ rows, locale }: { rows: LevelRow[]; locale:
               </div>
             </div>
 
-            {/* Tartib */}
             <div className="flex shrink-0 flex-col gap-0.5">
               <button
                 type="button" onClick={() => move(it.id, "up")} disabled={i === 0}
@@ -245,7 +240,7 @@ export default function LevelsView({ rows, locale }: { rows: LevelRow[]; locale:
           onSaved={(saved) => {
             setEditing(null);
             if (saved) setItems((xs) => xs.map((x) => (x.id === saved.id ? { ...x, ...saved } : x)));
-            else location.reload(); // yangi daraja — ro'yxatni serverdan qayta olamiz
+            else location.reload();
           }}
           onBanner={(id, url) => setItems((xs) => xs.map((x) => (x.id === id ? { ...x, bannerUrl: url } : x)))}
         />
@@ -254,7 +249,6 @@ export default function LevelsView({ rows, locale }: { rows: LevelRow[]; locale:
   );
 }
 
-// ── Qo'shish / tahrirlash oynasi ──
 function LevelDialog({
   row, locale, onClose, onSaved, onBanner,
 }: {
@@ -262,7 +256,6 @@ function LevelDialog({
   locale: Locale;
   onClose: () => void;
   onSaved: (v: (LevelInput & { id: string }) | null) => void;
-  /** Banner darhol saqlanadi — ro'yxatdagi kartochka ham yangilansin */
   onBanner: (id: string, url: string | null) => void;
 }) {
   const T = (uz: string, ru: string, en: string, de: string) => tr(locale, { uz, ru, en, de });
@@ -275,17 +268,12 @@ function LevelDialog({
   const [pending, start] = useTransition();
   const set = (k: keyof LevelInput, v: string) => setF((x) => ({ ...x, [k]: v }));
 
-  // ── Banner ──
-  // Ilgari banner faqat ro'yxatdagi qatordan yuklanardi, lekin izoh shu oynada
-  // turgani uchun foydalanuvchi uni shu yerdan qidirardi. Endi shu yerda ham bor.
-  // Banner darhol saqlanadi (Saqlash tugmasini kutmaydi) — chunki u alohida
-  // maydon va rasm serverga yuklangach ortga qaytarishning ma'nosi yo'q.
   const [banner, setBanner] = useState<string | null>(row?.bannerUrl ?? null);
   const [upBusy, setUpBusy] = useState(false);
   const fileRef = useRef<HTMLInputElement | null>(null);
 
   const pickBanner = async (file: File) => {
-    if (!row) return; // yangi daraja — avval saqlanishi kerak
+    if (!row) return;
     setErr(null);
     setUpBusy(true);
     try {
@@ -343,7 +331,6 @@ function LevelDialog({
           </button>
         </div>
 
-        {/* Ilovada qanday ko'rinishi — shu zahoti (banner bo'lsa rang o'rniga o'sha) */}
         <div
           className="relative mb-4 grid h-[92px] place-items-center overflow-hidden rounded-2xl text-white"
           style={banner ? { backgroundColor: "#12303f" } : { background: levelGradient(f.color) }}
@@ -406,7 +393,6 @@ function LevelDialog({
             </p>
           </div>
 
-          {/* ── Banner ── */}
           <div>
             <label className={lbl}>{T("Banner", "Баннер", "Banner", "Banner")}</label>
             {row ? (
@@ -479,7 +465,6 @@ function LevelDialog({
   );
 }
 
-// Banner uchun 1200px yetarli — katta suratni brauzerda kichraytiramiz
 function shrink(f: File): Promise<Blob> {
   return new Promise((resolve, reject) => {
     const url = URL.createObjectURL(f);

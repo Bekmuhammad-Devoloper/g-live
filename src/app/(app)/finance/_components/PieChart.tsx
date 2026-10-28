@@ -9,7 +9,6 @@ export interface PieDatum {
 
 export const PIE_COLORS = ["#f87979", "#f18024", "#3b82f6", "#10b981", "#8b5cf6", "#eab308", "#ec4899", "#14b8a6", "#64748b", "#ef4444", "#6366f1", "#84cc16"];
 
-/** Oddiy SVG doiraviy diagramma + izoh ro'yxati (kutubxonasiz) */
 export default function PieChart({
   data, formatValue = (n) => String(n), emptyText, size = 200,
 }: {
@@ -35,7 +34,6 @@ export default function PieChart({
     const [x0, y0] = p(a0);
     const [x1, y1] = p(a1);
     const large = a1 - a0 > Math.PI ? 1 : 0;
-    // yagona bo'lak — to'liq doira
     const path = items.length === 1
       ? `M ${C} ${C - R} A ${R} ${R} 0 1 1 ${C - 0.01} ${C - R} Z`
       : `M ${C} ${C} L ${x0} ${y0} A ${R} ${R} 0 ${large} 1 ${x1} ${y1} Z`;

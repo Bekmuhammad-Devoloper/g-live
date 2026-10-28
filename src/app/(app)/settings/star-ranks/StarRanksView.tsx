@@ -9,11 +9,6 @@ import { Icon } from "../../_components/Icon";
 import { PRESET_COLORS } from "@/lib/levelColor";
 import { createStarRank, updateStarRank, deleteStarRank, toggleStarRank, setStarRankIcon, type RankInput } from "./actions";
 
-// Yulduz pog'onalari — qo'shish, tahrirlash, o'chirish.
-// Tartib qo'lda emas: ro'yxat YULDUZ CHEGARASI bo'yicha tuziladi, shu sabab
-// "yuqoriga/pastga" tugmalari yo'q — chegarani o'zgartirsangiz o'zi joyiga
-// tushadi va ilovadagi tartib bilan hech qachon ajralib qolmaydi.
-
 export type RankRow = {
   id: string;
   nameUz: string;
@@ -56,7 +51,6 @@ export default function StarRanksView({ rows, locale }: { rows: RankRow[]; local
     start(async () => after(await toggleStarRank(it.id, !it.isActive)));
   };
 
-  // Belgini yuklash — /api/upload manzilni qaytaradi, keyin pog'onaga bog'lanadi
   const uploadIcon = async (it: RankRow, fl: File) => {
     setErr(null);
     setBusy(it.id);
@@ -223,7 +217,6 @@ export default function StarRanksView({ rows, locale }: { rows: RankRow[]; local
   );
 }
 
-/* ── Yonbosh panel ── */
 function RankDrawer({
   row, locale, onClose, onSaved,
 }: {
@@ -246,8 +239,6 @@ function RankDrawer({
 
   const set = <K extends keyof RankInput>(k: K, v: RankInput[K]) => setF((x) => ({ ...x, [k]: v }));
 
-  // Rasm avval serverga yuklanadi, manzili esa "Saqlash" bilan birga ketadi —
-  // shu sabab yangi pog'onaga ham darhol belgi qo'yish mumkin.
   const upload = async (fl: File) => {
     setErr(null);
     setBusy(true);

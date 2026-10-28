@@ -1,5 +1,3 @@
-// Havolalar moduli — platforma va davlat konstantalari (server + client uchun).
-
 export interface PlatformDef { key: string; label: string; color: string; icon: string }
 
 export const PLATFORMS: PlatformDef[] = [
@@ -22,7 +20,7 @@ export function platform(key: string | null | undefined): PlatformDef {
 
 export interface CountryDef { name: string; code: string; flag: string }
 export const COUNTRIES: CountryDef[] = [
-  { name: "O'zbekiston", code: "uz", flag: "🇺🇿" }, // o'quv markazning o'z vakansiyalari
+  { name: "O'zbekiston", code: "uz", flag: "🇺🇿" },
   { name: "Germaniya", code: "de", flag: "🇩🇪" },
   { name: "Bolgariya", code: "bg", flag: "🇧🇬" },
   { name: "Mongoliya", code: "mn", flag: "🇲🇳" },

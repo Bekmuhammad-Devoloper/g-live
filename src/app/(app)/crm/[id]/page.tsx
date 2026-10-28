@@ -10,7 +10,6 @@ import LeadDetail, { type DLead, type DActivity, type LeadPayment } from "./Lead
 import { getSetting } from "@/lib/settings";
 import { RECEIPT_MODE_KEY, parseReceiptMode } from "@/lib/receiptMode";
 
-// To'lov paneli huquqlari — o'quvchi profili bilan bir xil
 const PAY_MANAGE = [ROLES.DIRECTOR, ROLES.DEPUTY_DIRECTOR, ROLES.MANAGER, ROLES.ADMIN];
 
 export default async function LeadDetailPage({ params }: { params: Promise<{ id: string }> }) {
@@ -33,7 +32,7 @@ export default async function LeadDetailPage({ params }: { params: Promise<{ id:
       },
     }),
     prisma.user.findMany({ where: { role: ROLES.OPERATOR, isActive: true }, select: { id: true, fullName: true }, orderBy: { fullName: "asc" } }),
-    prisma.lead.findMany({ where: branchWhere(s), orderBy: { createdAt: "desc" }, select: { id: true } }), // oldingi/keyingi — faol filial doirasida
+    prisma.lead.findMany({ where: branchWhere(s), orderBy: { createdAt: "desc" }, select: { id: true } }),
   ]);
   if (!lead) notFound();
 
@@ -66,10 +65,9 @@ export default async function LeadDetailPage({ params }: { params: Promise<{ id:
     enrollEditCount: lead.enrollEditCount,
     createdAt: lead.createdAt.toISOString(),
   };
-  // O'quvchiga aylangan lid — to'lov paneli (qabul qilish, qarz, tahrirlash)
   const payManage = PAY_MANAGE.includes(s.role as never);
   const payWrite = canWrite(s.role, MODULES.PAYMENTS);
-  const payRop = s.role === ROLES.ROP; // ROP — 24 soatlik tahrirlash oynasi
+  const payRop = s.role === ROLES.ROP;
   const payment: LeadPayment | null = lead.studentId && (payManage || payWrite || payRop) ? {
     canManage: payManage,
     canPay: payWrite,
@@ -97,7 +95,6 @@ export default async function LeadDetailPage({ params }: { params: Promise<{ id:
       nextId={nextId}
       canWrite={canWrite(s.role, MODULES.CRM)}
       payment={payment}
-      // Lidni butunlay o'chirish — direktor, o'rinbosari va administrator
       canDelete={[ROLES.DIRECTOR, ROLES.DEPUTY_DIRECTOR, ROLES.ADMIN].includes(s.role as never)}
       locale={s.locale}
     />

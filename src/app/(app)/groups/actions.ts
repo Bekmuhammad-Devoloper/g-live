@@ -11,12 +11,10 @@ import { GROUP_FORMATS, ROLES } from "@/lib/constants";
 import { findRoomConflict, conflictLabel } from "./roomConflict";
 import { leaveGroups } from "@/lib/leaveGroup";
 
-// FULL huquqli rollar (menejer, dir. o'rinbosari) — guruh/o'quvchi boshqaradi
 function hasFullGroups(role: string) {
   return getPermission(role, MODULES.GROUPS) === "FULL";
 }
 
-// Guruhni boshqarish huquqi: FULL yoki shu guruh o'qituvchisi
 async function canManageGroup(s: SessionUser, groupId: string) {
   if (hasFullGroups(s.role)) return true;
   const g = await prisma.group.findUnique({ where: { id: groupId }, select: { teacherId: true } });
@@ -25,7 +23,6 @@ async function canManageGroup(s: SessionUser, groupId: string) {
 
 export type FormState = { ok?: boolean; error?: string; detail?: string };
 
-// ─── Guruh yaratish ───
 const groupSchema = z.object({
   name: z.string().min(2),
   programId: z.string().min(1),
@@ -38,15 +35,14 @@ const groupSchema = z.object({
   capacity: z.coerce.number().int().positive().max(200),
   startDate: z.string().optional(),
   endDate: z.string().optional(),
-  weekdays: z.string().optional(), // "1,3,5"
-  startTime: z.string().optional(), // "HH:mm"
+  weekdays: z.string().optional(),
+  startTime: z.string().optional(),
   endTime: z.string().optional(),
-  note: z.string().max(1000).optional(), // izoh/kament
-  monthlyFee: z.coerce.number().int().min(0).max(1_000_000_000).optional(), // guruh oylik to'lovi
-  lessonsPerMonth: z.coerce.number().int().min(1).max(31).optional(), // oyiga darslar soni (faqat yaratishda)
+  note: z.string().max(1000).optional(),
+  monthlyFee: z.coerce.number().int().min(0).max(1_000_000_000).optional(),
+  lessonsPerMonth: z.coerce.number().int().min(1).max(31).optional(),
 });
 
-// "1,3,5" ni tozalab 1..7 oralig'idagi noyob kunlarni tartiblab qaytaradi
 function normalizeWeekdays(raw?: string): string | null {
   if (!raw) return null;
   const days = Array.from(new Set(raw.split(",").map((x) => parseInt(x, 10)).filter((n) => n >= 1 && n <= 7)));
@@ -55,7 +51,6 @@ function normalizeWeekdays(raw?: string): string | null {
 }
 const timeRe = /^([01]\d|2[0-3]):[0-5]\d$/;
 
-// ─── Guruh faol/nofaol holatini almashtirish (on/off toggle) ───
 export async function setGroupActive(id: string, active: boolean): Promise<{ ok: boolean; error?: string }> {
   const s = await requireSession();
   if (!hasFullGroups(s.role)) return { ok: false, error: "forbidden" };
@@ -78,11 +73,6 @@ export async function setGroupActive(id: string, active: boolean): Promise<{ ok:
   return { ok: true };
 }
 
-// ─── Guruhni filialga biriktirish ───
-// Filialsiz (branchId=null) yaratilgan guruhlar qat'iy filial filtrida hech qaysi
-// filialda ko'rinmaydi. Direktor "Barcha filiallar" rejimida guruhlar ro'yxatidan
-// har birini o'z filialiga biriktiradi. Guruhning filialsiz o'quvchilari ham
-// o'sha filialga o'tadi (boshqa filialdagilarga tegilmaydi).
 export async function setGroupBranch(groupId: string, branchId: string | null): Promise<{ ok: boolean; error?: string; students?: number }> {
   const s = await requireSession();
   if (!([ROLES.DIRECTOR, ROLES.DEPUTY_DIRECTOR] as string[]).includes(s.role)) return { ok: false, error: "forbidden" };
@@ -109,7 +99,6 @@ export async function setGroupBranch(groupId: string, branchId: string | null): 
   return { ok: true, students: moved.count };
 }
 
-// ─── Guruhni o'chirish ───
 export async function deleteGroup(id: string): Promise<{ ok: boolean; error?: string }> {
   const s = await requireSession();
   if (!hasFullGroups(s.role)) return { ok: false, error: "forbidden" };
@@ -118,7 +107,6 @@ export async function deleteGroup(id: string): Promise<{ ok: boolean; error?: st
   if (!g) return { ok: false, error: "notfound" };
 
   try {
-    // GroupStudent/Lesson/Assignment — Cascade; Task/SeasonalAssessment — SetNull
     await prisma.group.delete({ where: { id } });
   } catch {
     return { ok: false, error: "delete_failed" };
@@ -160,14 +148,12 @@ export async function createGroup(_prev: FormState, formData: FormData): Promise
   const room = parsed.data.room || null;
   const format = parsed.data.format ?? "OFFLINE";
 
-  // Oflayn/gibrid guruh to'liq jadvalga ega bo'lishi shart (xona bandligini tekshirish uchun)
   if (format !== "ONLINE") {
     if (!room) return { error: "room_required" };
     if (!weekdays || !startTime || !endTime) return { error: "schedule_required" };
     if (startTime >= endTime) return { error: "bad_time" };
   }
 
-  // Xona bandligi: bir xonada vaqti kesishadigan guruh bo'lsa — taqiqlanadi
   const conflict = await findRoomConflict({ room, weekdays, startTime, endTime, branchId: s.branchId });
   if (conflict) return { error: "room_conflict", detail: conflictLabel(conflict) };
 
@@ -189,7 +175,6 @@ export async function createGroup(_prev: FormState, formData: FormData): Promise
       endTime,
       note: parsed.data.note?.trim() || null,
       monthlyFee: parsed.data.monthlyFee ?? null,
-      // Oyiga darslar soni — faqat yaratishda; bo'sh bo'lsa kursniki ishlatiladi
       lessonsPerMonth: parsed.data.lessonsPerMonth ?? null,
       branchId: s.branchId,
       status: "ACTIVE",
@@ -200,7 +185,6 @@ export async function createGroup(_prev: FormState, formData: FormData): Promise
   return { ok: true };
 }
 
-// ─── Yangi o'quvchi yaratib guruhga biriktirish ───
 const studentSchema = z.object({
   groupId: z.string().min(1),
   fullName: z.string().min(2),
@@ -221,9 +205,6 @@ export async function createStudentInGroup(_prev: FormState, formData: FormData)
   const group = await prisma.group.findUnique({ where: { id: parsed.data.groupId } });
   if (!group) return { error: "invalid" };
 
-  // Telefon takrorlanmasin: raqamlar bo'yicha (format farqidan qat'i nazar) tekshiramiz.
-  // Shu raqamli o'quvchi bor bo'lsa — yangisi yaratilmaydi, MAVJUD o'quvchi guruhga biriktiriladi
-  // (masalan avval boshqa guruhda o'qigan yoki guruhdan chiqarilgan o'quvchi qaytsa).
   const phone = parsed.data.phone?.trim() || null;
   const digits = phone ? phone.replace(/\D/g, "") : "";
   if (digits.length >= 7) {
@@ -233,7 +214,6 @@ export async function createStudentInGroup(_prev: FormState, formData: FormData)
       const link = await prisma.groupStudent.findUnique({ where: { groupId_studentId: { groupId: group.id, studentId: existing.id } } });
       if (link?.isActive && !link.leftAt) return { error: "already_in_group", detail: existing.fullName };
       if (link) {
-        // Avval shu guruhda bo'lgan — qayta faollashtiriladi, to'lov hisobi qaytgan kundan boshlanadi
         await prisma.groupStudent.update({ where: { id: link.id }, data: { isActive: true, leftAt: null, joinedAt: new Date() } });
       } else {
         await prisma.groupStudent.create({ data: { groupId: group.id, studentId: existing.id } });
@@ -263,8 +243,6 @@ export async function createStudentInGroup(_prev: FormState, formData: FormData)
   return { ok: true };
 }
 
-// ─── Mavjud o'quvchini biriktirish ───
-// ─── Excel/CSV orqali ko'p o'quvchi qo'shish ───
 export async function bulkAddStudents(groupId: string, rows: { name: string; phone: string | null }[]): Promise<{ ok?: boolean; added?: number; error?: string }> {
   const s = await requireSession();
   if (!hasFullGroups(s.role)) return { error: "forbidden" };
@@ -280,7 +258,6 @@ export async function bulkAddStudents(groupId: string, rows: { name: string; pho
 
   let added = 0;
   for (const r of clean) {
-    // Telefon mavjud o'quvchiga mos kelsa — o'shani biriktiramiz (dublikatsiz)
     let studentId: string | null = null;
     if (r.phone) {
       const ex = await prisma.student.findFirst({ where: { phone: r.phone }, select: { id: true } });
@@ -306,11 +283,9 @@ export async function enrollStudent(groupId: string, studentId: string): Promise
   if (!hasFullGroups(s.role)) return;
   const exists = await prisma.groupStudent.findUnique({ where: { groupId_studentId: { groupId, studentId } } });
   if (exists?.isActive) return;
-  // Avval chiqarilgan bo'lsa — a'zolik qayta ochiladi
   if (exists) await prisma.groupStudent.update({ where: { id: exists.id }, data: { isActive: true, leftAt: null, joinedAt: new Date() } });
   else await prisma.groupStudent.create({ data: { groupId, studentId } });
 
-  // Guruhning darajasi o'quvchinikidan yuqori bo'lsa — ko'tarilish sanaladi
   const [g, st] = await Promise.all([
     prisma.group.findUnique({ where: { id: groupId }, select: { levelCode: true } }),
     prisma.student.findUnique({ where: { id: studentId }, select: { currentLevel: true } }),
@@ -324,14 +299,10 @@ export async function enrollStudent(groupId: string, studentId: string): Promise
   revalidatePath(`/groups/${groupId}`);
 }
 
-// ─── O'quvchini guruhdan chiqarish ───
-// A'zolik o'chirilmaydi — bugungi sana bilan yopiladi (o'qigan oylari tarixi saqlanadi),
-// shu guruh uchun to'lanmagan qarz o'chiriladi (lib/leaveGroup.ts).
 export async function removeStudent(groupId: string, studentId: string): Promise<{ cleared: number }> {
   const s = await requireSession();
   if (!hasFullGroups(s.role)) return { cleared: 0 };
   const r = await leaveGroups({ studentId, groupIds: [groupId], actorId: s.userId, reason: "Guruhdan chiqarildi" });
-  // Boshqa faol guruhi qolmagan bo'lsa — kutish holatiga
   const left = await prisma.groupStudent.count({ where: { studentId, isActive: true } });
   if (left === 0) await prisma.student.updateMany({ where: { id: studentId, eduStatus: "ACTIVE" }, data: { eduStatus: "WAITING" } });
   revalidatePath(`/groups/${groupId}`);
@@ -340,7 +311,6 @@ export async function removeStudent(groupId: string, studentId: string): Promise
   return { cleared: r.cleared };
 }
 
-// ─── Dars yaratish ───
 const lessonSchema = z.object({
   groupId: z.string().min(1),
   topic: z.string().optional(),

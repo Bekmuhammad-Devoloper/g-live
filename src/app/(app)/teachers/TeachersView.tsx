@@ -41,28 +41,20 @@ export interface VTeacher {
 
 export default function TeachersView({ teachers, canManage, canEdit = false, canDelete = false, positions = [], locale, branches }: {
   teachers: VTeacher[];
-  /** Maosh va kirish ma'lumotlari */
   canManage: boolean;
-  /** Tahrirlash (direktor, o'rinbosar, administrator) */
   canEdit?: boolean;
-  /** Butunlay o'chirish (direktor; administrator — o'z filialida) */
   canDelete?: boolean;
-  /** Tahrirlash formasidagi lavozimlar ro'yxati */
   positions?: PosOpt[];
   locale: Locale;
   branches: BranchOption[];
 }) {
   const searchParams = useSearchParams();
   const [search, setSearch] = useState("");
-  // Tafsilot oynasi (ism bosilganda)
   const [openId, setOpenId] = useState<string | null>(null);
   const opened = openId ? teachers.find((t) => t.id === openId) ?? null : null;
   const [view, setView] = useState<"grid" | "table">("grid");
   const [addOpen, setAddOpen] = useState(false);
 
-  // Global qidiruvdan kelinganda (/teachers?teacher=<id>) o'sha o'qituvchi
-  // qidiruvga qo'yiladi — kartasi darhol ko'rinadi. useSearchParams sahifa
-  // qayta yuklanmasa ham (yumshoq o'tish) manzil o'zgarishini eshitadi.
   const openTeacherId = searchParams.get("teacher");
   useEffect(() => {
     if (!openTeacherId) return;
@@ -86,7 +78,6 @@ export default function TeachersView({ teachers, canManage, canEdit = false, can
 
   return (
     <div className="space-y-5">
-      {/* Sarlavha */}
       <div className="flex flex-wrap items-center justify-between gap-3">
         <div className="flex items-center gap-3">
           <h1 className="text-[22px] font-bold tracking-tight text-slate-900 dark:text-slate-100">{tr(locale, { uz: "O'qituvchilar", ru: "Преподаватели", en: "Teachers", de: "Lehrer" })}</h1>
@@ -116,7 +107,6 @@ export default function TeachersView({ teachers, canManage, canEdit = false, can
 
       {opened && <TeacherDrawer teacher={opened} locale={locale} canManage={canManage} canEdit={canEdit} canDelete={canDelete} positions={positions} branches={branches} onClose={() => setOpenId(null)} />}
 
-      {/* KPI */}
       <div className="grid grid-cols-2 gap-4 lg:grid-cols-5">
         <StatCard label={tr(locale, { uz: "O'qituvchilar", ru: "Преподаватели", en: "Teachers", de: "Lehrer" })} value={totals.teachers} tone="brand" icon="teacher" />
         <StatCard label={tr(locale, { uz: "Guruhlar", ru: "Группы", en: "Groups", de: "Gruppen" })} value={totals.groups} icon="layers" />
@@ -125,7 +115,6 @@ export default function TeachersView({ teachers, canManage, canEdit = false, can
         <StatCard label={tr(locale, { uz: "Oylik fond", ru: "Месячный фонд", en: "Monthly fund", de: "Monatlicher Fonds" })} value={formatMoney(totals.fund, locale)} tone="amber" icon="wallet" />
       </div>
 
-      {/* Kontent */}
       {shown.length === 0 ? (
         <div className="rounded-2xl border border-dashed border-slate-300 py-16 text-center dark:border-slate-700">
           <div className="text-3xl opacity-30">🧑‍🏫</div>

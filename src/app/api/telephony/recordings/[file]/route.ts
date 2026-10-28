@@ -7,18 +7,12 @@ import { telephonyEnv } from "@/lib/asterisk";
 
 export const runtime = "nodejs";
 
-// Qo'ng'iroq yozuvini (.wav) uzatish — Range (206) qo'llab-quvvatlaydi (audio skrab uchun).
-//
-// Ikki rejim:
-//  1) Fayl shu mashinada bor (server deploy) → to'g'ridan-to'g'ri uzatiladi.
-//  2) Yo'q (lokal ishlab chiqish) → SSH tunnel orqali server ilovasidan olinadi.
 const ALLOWED: string[] = [ROLES.OPERATOR, ROLES.ROP, ROLES.MANAGER, ROLES.DEPUTY_DIRECTOR, ROLES.DIRECTOR, ROLES.ADMIN];
 
 export async function GET(req: Request, { params }: { params: Promise<{ file: string }> }) {
   const { file } = await params;
   if (!/^[\w.-]+\.wav$/.test(file)) return new Response("bad name", { status: 400 });
 
-  // Ichki (proksi) so'rov — faqat maxfiy kalit bilan, loopback orqali
   const internalKey = process.env.TELEPHONY_INTERNAL_KEY || "";
   const isInternal = Boolean(internalKey) && req.headers.get("x-internal-key") === internalKey;
 
@@ -33,7 +27,6 @@ export async function GET(req: Request, { params }: { params: Promise<{ file: st
 
   const stat = await fs.promises.stat(full).catch(() => null);
 
-  // ── Mahalliy fayl yo'q → serverdan (tunnel orqali) olib beramiz ──
   if (!stat || !stat.isFile()) {
     const proxy = process.env.RECORDINGS_PROXY;
     if (!proxy || !internalKey) return new Response("not found", { status: 404 });

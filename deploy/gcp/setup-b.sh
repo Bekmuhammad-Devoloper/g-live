@@ -1,26 +1,4 @@
 #!/usr/bin/env bash
-# ════════════════════════════════════════════════════════════════════
-# B SERVER (GCP 34.179.202.164) — bir martalik tayyorlash
-#
-# Ishlatish (B serverda):  sudo bash setup-b.sh
-#
-# Nima qiladi:
-#   1. Node.js 22 LTS + kerakli paketlar
-#   2. /opt/gl-edu papka
-#   3. A serverga ulanish uchun SSH kalit (gl-a) yaratadi va
-#      OCHIQ qismini ekranga chiqaradi — u A'ga qo'shilishi kerak
-#   4. systemd servislar (hali yoqilmaydi — push.sh dan keyin):
-#        gl-tunnel  — A bilan doimiy SSH kanal:
-#                       -L 5039  → A dagi AMI (ami-worker uchun)
-#                       -L 3012  → A dagi yozuvlar mini-servisi
-#                       -R 3010  → A'da 127.0.0.1:3010 = B'dagi ilova
-#                                  (dialplan route-lookup shu orqali ishlaydi)
-#        gl-edu     — Next.js ilova (port 3000)
-#        gl-ami     — ami-worker (qo'ng'iroq tarixi)
-#        gl-cdr     — sync-cdr har 10 daqiqada (timer)
-#
-# ⚠️ A serverdagi eski CRM'ga HECH QANDAY aloqasi yo'q.
-# ════════════════════════════════════════════════════════════════════
 set -euo pipefail
 
 A_HOST="ubuntu@89.126.208.123"
@@ -36,7 +14,6 @@ node -v
 
 echo "── 2/4 Papka va foydalanuvchi huquqlari ──"
 mkdir -p $APP
-# Skriptni ishga tushirgan (sudo ortidagi) foydalanuvchi egalik qiladi
 OWNER="${SUDO_USER:-$(whoami)}"
 chown -R "$OWNER":"$OWNER" $APP
 

@@ -15,7 +15,6 @@ const todayISO = () => { const d = new Date(); return `${d.getFullYear()}-${p2(d
 
 type AttStudent = { id: string; name: string; blocked?: boolean; daysUnpaid?: number };
 
-/** Davomat: "Jurnal" (oy bo'yicha, hamma sanalar) — asosiy ko'rinish; "Kunlik" — bitta kun bo'yicha */
 export function GroupAttendance({ groupId, students, locale }: { groupId: string; students: AttStudent[]; locale: Locale }) {
   const [view, setView] = useState<"journal" | "day">("journal");
   const tab = (on: boolean) => cn("rounded-md px-3 py-1 text-xs font-semibold transition", on ? "bg-white text-brand-700 shadow-sm dark:bg-slate-700 dark:text-white" : "text-slate-500 hover:text-slate-700 dark:text-slate-400");
@@ -43,26 +42,23 @@ function DayAttendance({ groupId, students, locale }: { groupId: string; student
   const [skippedCount, setSkippedCount] = useState(0);
   const [closedNotice, setClosedNotice] = useState(false);
   const [futureNotice, setFutureNotice] = useState(false);
-  // Poyga himoyasi: faqat ENG SO'NGGI so'rov natijasi qo'llanadi
   const reqRef = useRef(0);
 
   const reload = (forDate: string) => {
     const req = ++reqRef.current;
     startLoad(async () => {
       const r = await getGroupAttendance(groupId, forDate);
-      if (req !== reqRef.current) return; // eskirgan javob — tashlab yuboramiz
+      if (req !== reqRef.current) return;
       if (r.ok) { setMap(r.map ?? {}); setWin(r.window ?? null); }
     });
   };
 
   useEffect(() => {
-    // Sana almashdi — eski oyna/xarita bilan noto'g'ri banner ko'rinmasin
     setWin(null); setMap({}); setClosedNotice(false); setFutureNotice(false); setSkippedCount(0);
     reload(date);
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [groupId, date]);
 
-  // win===null → hali yuklanmoqda: belgilash vaqtincha yopiq (server baribir himoyalangan)
   const editable = win ? win.editable : false;
 
   const notifyDenied = (r: { closed?: boolean; future?: boolean }) => {
@@ -74,11 +70,10 @@ function DayAttendance({ groupId, students, locale }: { groupId: string; student
     if (!editable) { if (win) notifyDenied({ closed: win.closed, future: win.future }); return; }
     const willClear = map[id] === status;
     const prev = map[id];
-    setMap((m) => { const n = { ...m }; if (willClear) delete n[id]; else n[id] = status; return n; }); // optimistik
+    setMap((m) => { const n = { ...m }; if (willClear) delete n[id]; else n[id] = status; return n; });
     startSave(async () => {
       const r = await markStudentAttendance(groupId, date, id, status);
       if (!r.ok) {
-        // Server rad etdi (yopiq/kelajak/to'lov/ruxsat) — optimistik o'zgarishni bekor qilamiz
         setMap((m) => { const n = { ...m }; if (prev === undefined) delete n[id]; else n[id] = prev; return n; });
         if (r.blocked) {
           const st = students.find((x) => x.id === id);
@@ -92,7 +87,7 @@ function DayAttendance({ groupId, students, locale }: { groupId: string; student
     setMap((m) => { const n = { ...m }; for (const s of students) if (!n[s.id] && !s.blocked) n[s.id] = "PRESENT"; return n; });
     startSave(async () => {
       const r = await markAllPresent(groupId, date);
-      if (!r.ok) { notifyDenied(r); reload(date); return; } // optimistik belgilarni serverdagi holatga qaytaramiz
+      if (!r.ok) { notifyDenied(r); reload(date); return; }
       setSkippedCount(r.skippedBlocked ?? 0);
     });
   };
@@ -109,7 +104,6 @@ function DayAttendance({ groupId, students, locale }: { groupId: string; student
 
   return (
     <div>
-      {/* Yopiq oyna banneri — dars + 3 soat o'tgan */}
       {win && win.closed && !win.unlockedUntilLabel && !editable && (
         <div className="mb-3 flex flex-wrap items-center justify-between gap-2 rounded-lg border border-slate-300 bg-slate-100 px-3 py-2 text-sm text-slate-600 dark:border-slate-700 dark:bg-slate-800/60 dark:text-slate-300">
           <span className="flex items-center gap-2">
@@ -124,7 +118,6 @@ function DayAttendance({ groupId, students, locale }: { groupId: string; student
         </div>
       )}
 
-      {/* Rahbariyat uchun ochish tugmasi (yopiq bo'lsa) */}
       {win && win.closed && win.canUnlock && !win.unlockedUntilLabel && (
         <div className="mb-3">
           <button
@@ -138,7 +131,6 @@ function DayAttendance({ groupId, students, locale }: { groupId: string; student
         </div>
       )}
 
-      {/* Ruxsat bilan ochilgan holat */}
       {win && win.closed && win.unlockedUntilLabel && (
         <div className="mb-3 flex items-center gap-2 rounded-lg border border-amber-200 bg-amber-50 px-3 py-2 text-sm text-amber-700 dark:border-amber-900/40 dark:bg-amber-950/20 dark:text-amber-400">
           <Icon name="clock" className="h-4 w-4 shrink-0" />
@@ -151,7 +143,6 @@ function DayAttendance({ groupId, students, locale }: { groupId: string; student
         </div>
       )}
 
-      {/* Yopiq oynada belgilashga urinish xabari */}
       {closedNotice && (
         <div className="mb-3 flex items-center justify-between gap-2 rounded-lg border border-rose-200 bg-rose-50 px-3 py-2 text-sm text-rose-700 dark:border-rose-900/40 dark:bg-rose-950/20 dark:text-rose-400">
           <span className="flex items-center gap-2">
@@ -167,7 +158,6 @@ function DayAttendance({ groupId, students, locale }: { groupId: string; student
         </div>
       )}
 
-      {/* Reja tashqarisidagi kun — oyiga darslar soni to'lgan (kurs/guruh sozlamasi) */}
       {win && win.lessonDay === false && (
         <div className="mb-3 flex items-center gap-2 rounded-lg border border-slate-200 bg-slate-50 px-3 py-2 text-sm text-slate-600 dark:border-white/10 dark:bg-white/[0.04] dark:text-slate-300">
           <Icon name="calendar" className="h-4 w-4 shrink-0 text-slate-400" />
@@ -182,7 +172,6 @@ function DayAttendance({ groupId, students, locale }: { groupId: string; student
         </div>
       )}
 
-      {/* Kelajak sana — oldindan belgilash taqiqlangan */}
       {(futureNotice || (win?.future && !editable)) && (
         <div className="mb-3 flex items-center justify-between gap-2 rounded-lg border border-amber-200 bg-amber-50 px-3 py-2 text-sm text-amber-700 dark:border-amber-900/40 dark:bg-amber-950/20 dark:text-amber-400">
           <span className="flex items-center gap-2">
@@ -198,7 +187,6 @@ function DayAttendance({ groupId, students, locale }: { groupId: string; student
         </div>
       )}
 
-      {/* Bloklangan urinish haqida ogohlantirish */}
       {blockedNotice && (
         <div className="mb-3 flex items-center justify-between gap-2 rounded-lg border border-rose-200 bg-rose-50 px-3 py-2 text-sm text-rose-700 dark:border-rose-900/40 dark:bg-rose-950/20 dark:text-rose-400">
           <span className="flex items-center gap-2">
@@ -229,14 +217,12 @@ function DayAttendance({ groupId, students, locale }: { groupId: string; student
         </div>
       )}
 
-      {/* Sana + hammasi bor + jamlanma */}
       <div className="mb-3 flex flex-wrap items-center gap-2">
         <div className="relative">
           <Icon name="calendar" className="pointer-events-none absolute left-2.5 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400" />
           <DateInput value={date} onChange={(e) => setDate(e.target.value)} className="h-9 rounded-lg border border-slate-200 bg-white pl-8 pr-2 text-sm text-slate-700 outline-none focus:border-brand-400 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-100" />
         </div>
         {isToday && <span className="rounded-full bg-brand-500/10 px-2 py-0.5 text-[11px] font-semibold text-brand-600 dark:text-brand-300">{tr(locale, { uz: "Bugun", ru: "Сегодня", en: "Today", de: "Heute" })}</span>}
-        {/* Ochiq oynada yopilish vaqti eslatmasi */}
         {win && !win.closed && isToday && (
           <span className="rounded-full bg-slate-100 px-2 py-0.5 text-[11px] font-medium text-slate-500 dark:bg-slate-800 dark:text-slate-400" title={tr(locale, { uz: "Dars tugagach 3 soat ichida saqlash mumkin", ru: "Можно сохранить в течение 3 часов после урока", en: "Can be saved within 3 hours after the lesson", de: "Kann innerhalb von 3 Stunden nach dem Unterricht gespeichert werden" })}>
             {tr(locale, { uz: "Yopiladi", ru: "Закроется", en: "Closes", de: "Schließt" })}: {win.closesAtLabel}
@@ -268,7 +254,6 @@ function DayAttendance({ groupId, students, locale }: { groupId: string; student
           {students.map((s) => {
             const st = map[s.id];
             const isAttending = st === "PRESENT" || st === "LATE";
-            // Bloklangan holat faqat hali "keldi" deb belgilanmagan bo'lsa amal qiladi (mavjud belgini o'chirish/o'zgartirish erkin)
             const isBlocked = !!s.blocked && !isAttending;
             return (
               <li key={s.id} className="flex items-center justify-between gap-3 py-2">

@@ -10,7 +10,7 @@ import PeriodTotal from "../_components/PeriodTotal";
 import Pagination, { PAGE_SIZE } from "../_components/Pagination";
 
 export interface VCourseRow {
-  courseId: string | null; // null — guruhsiz o'quvchilar to'lovlari
+  courseId: string | null;
   name: string | null;
   amount: number;
 }

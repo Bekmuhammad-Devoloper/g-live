@@ -1,13 +1,5 @@
-// Telefoniya — Asterisk integratsiyasi (FAQAT server: net/fs ishlatadi).
-// Spec: Asterisk 18+ PBX + AMI (Manager Interface). Bu yordamchi:
-//   - webrtc-config (operator SIP ext + parol + STUN/TURN) — brauzer softphone uchun
-//   - AMI Originate (chiquvchi qo'ng'iroq) — qisqa muddatli TCP soket orqali
-//   - UZ telefon raqamini normallashtirish
-// Doimiy AMI hodisa tinglash — alohida worker (scripts/ami-worker.mjs).
-
 import net from "node:net";
 
-// ─── ENV konfiguratsiya ───
 export function telephonyEnv() {
   const publicHost = process.env.PUBLIC_HOST ?? "";
   const domain = process.env.SIP_DOMAIN || process.env.PUBLIC_DOMAIN || "";
@@ -37,18 +29,12 @@ export function amiConfigured(): boolean {
   return Boolean(a.user && a.pass);
 }
 
-// Extension → SIP paroli.  glive3 yoki operator3 → SIP_OPERATOR3_PASS
-// (yangi instans endpointlari "glive" prefiksi bilan — eski loyihaning "operator" bilan to'qnashmasligi uchun)
 export function operatorPassword(ext: string): string | null {
-  // Bo'sh joy/registr farqiga chidamli: "operator 4", "GLIVE4", " glive4 " —
-  // hammasi 4-raqamli endpoint deb tushuniladi. Ilgari bunday yozuv jimgina
-  // null qaytarib, softphone'da "Telefoniya hali sozlanmagan" ko'rsatardi.
   const m = /^(?:glive|operator)\s*(\d+)$/i.exec(String(ext ?? "").trim());
   if (!m) return null;
   return process.env[`SIP_OPERATOR${m[1]}_PASS`] || null;
 }
 
-/** SIP raqamini Asterisk endpoint nomiga keltiradi: "operator 4" → "glive4" */
 export function normalizeExtension(ext: string): string | null {
   const m = /^(?:glive|operator)\s*(\d+)$/i.exec(String(ext ?? "").trim());
   return m ? `glive${m[1]}` : null;
@@ -67,8 +53,6 @@ export interface WebrtcConfig {
 export function webrtcConfigFor(ext: string): WebrtcConfig | null {
   const e = telephonyEnv();
   const password = operatorPassword(ext);
-  // Asterisk'ga HAR DOIM normallashtirilgan nom yuboriladi — bazadagi
-  // yozuvda bo'sh joy bo'lsa ham SIP ro'yxatdan o'tishi buzilmasin
   const endpoint = normalizeExtension(ext);
   if (!password || !endpoint) return null;
   return {
@@ -82,18 +66,14 @@ export function webrtcConfigFor(ext: string): WebrtcConfig | null {
   };
 }
 
-// UZ raqam: 998XXXXXXXXX ko'rinishiga keltiradi
 export function normalizeUzPhone(raw: string): string {
   const d = raw.replace(/\D/g, "");
-  // MUHIM: 9 xonali mahalliy raqam AVVAL tekshiriladi — "99 888 99 99" ning
-  // o'zi 998 bilan boshlanadi va aks holda mamlakat kodi deb qabul qilinardi.
   if (d.length === 9) return "998" + d;
   if (d.startsWith("998")) return d.slice(0, 12);
   if (d.length === 10 && (d.startsWith("0") || d.startsWith("8"))) return "998" + d.slice(1);
   return d;
 }
 
-// ─── AMI: bitta action yuborish (qisqa muddatli soket) ───
 type Pairs = [string, string][];
 const encode = (pairs: Pairs) => pairs.map(([k, v]) => `${k}: ${v}`).join("\r\n") + "\r\n\r\n";
 
@@ -137,13 +117,9 @@ function amiSend(pairs: Pairs, actionId: string, timeoutMs = 8000): Promise<AmiR
 let seq = 0;
 const nextId = () => `glive-${Date.now().toString(36)}-${(seq++).toString(36)}`;
 
-// Chiquvchi qo'ng'iroq: avval operatorni jiringlatadi (PJSIP/operatorN),
-// javob bergach gl-from-internal dialplan mijozni teradi (trunk orqali).
-// DIQQAT: kontekst "gl-from-internal" — YANGI instansniki. Eski loyihaning
-// "from-internal" konteksti bilan aralashtirmaslik kerak.
 export function amiOriginate(opts: {
-  extension: string; // operator SIP ext (operator3)
-  number: string; // mijoz raqami (normalized)
+  extension: string;
+  number: string;
   callerId?: string;
   callRecordId?: string;
   timeoutMs?: number;
@@ -163,7 +139,6 @@ export function amiOriginate(opts: {
   return amiSend(pairs, id, (opts.timeoutMs ?? 30000) + 4000);
 }
 
-// Ulanishni tekshirish (Ping)
 export function amiPing(): Promise<AmiResult> {
   return amiSend([["Action", "Ping"]], nextId(), 5000);
 }

@@ -17,7 +17,6 @@ export default function StaffDetailModal({ userId, locale, onClose, onEdit }: {
   userId: string;
   locale: Locale;
   onClose: () => void;
-  /** Berilsa — sarlavhada "Tahrirlash" tugmasi (yuklangan ma'lumot bilan forma ochiladi) */
   onEdit?: (d: StaffDetail) => void;
 }) {
   const [d, setD] = useState<StaffDetail | null>(null);
@@ -54,7 +53,6 @@ export default function StaffDetailModal({ userId, locale, onClose, onEdit }: {
     <div className="fixed inset-0 z-[80]" onMouseDown={onClose}>
       <div className="absolute inset-0 bg-slate-900/50 backdrop-blur-sm" />
       <div onMouseDown={(e) => e.stopPropagation()} className="animate-slide-in-right absolute right-0 top-0 flex h-full drawer-panel flex-col border-l border-slate-200 bg-white shadow-pop dark:border-white/10 dark:bg-[#15243d]">
-        {/* Header */}
         <div className="flex shrink-0 items-center justify-between border-b border-slate-100 px-5 py-4 dark:border-white/10">
           <div className="flex min-w-0 items-center gap-3">
             <span className="grid h-11 w-11 shrink-0 place-items-center rounded-full bg-brand-500/15 text-brand-600 dark:text-brand-300"><Icon name="user" className="h-6 w-6" /></span>
@@ -81,7 +79,6 @@ export default function StaffDetailModal({ userId, locale, onClose, onEdit }: {
             <div className="flex items-center justify-center py-16 text-slate-400"><Icon name="refresh" className="h-5 w-5 animate-spin" /></div>
           ) : (
             <>
-              {/* Kirish ma'lumotlari */}
               <Section title={tr(locale, { uz: "Kirish ma'lumotlari", ru: "Данные для входа", en: "Login credentials", de: "Anmeldedaten" })} icon="key">
                 <div className="space-y-2">
                   <div className="flex items-center gap-2">
@@ -103,7 +100,6 @@ export default function StaffDetailModal({ userId, locale, onClose, onEdit }: {
                 </div>
               </Section>
 
-              {/* Ish ma'lumotlari */}
               <Section title={tr(locale, { uz: "Ish ma'lumotlari", ru: "Рабочие данные", en: "Work info", de: "Arbeitsinformationen" })} icon="wallet">
                 <div className="grid grid-cols-2 gap-3">
                   <Stat label={tr(locale, { uz: "Belgilangan oylik", ru: "Установленная зарплата", en: "Base salary", de: "Grundgehalt" })} value={formatMoney(d.fiksa, locale)} />
@@ -114,7 +110,6 @@ export default function StaffDetailModal({ userId, locale, onClose, onEdit }: {
                 </div>
               </Section>
 
-              {/* Guruhlar (o'qituvchi bo'lsa) */}
               {d.groups.length > 0 && (
                 <Section title={tr(locale, { uz: "Guruhlar", ru: "Группы", en: "Groups", de: "Gruppen" })} icon="layers">
                   <div className="flex flex-wrap gap-1.5">
@@ -123,7 +118,6 @@ export default function StaffDetailModal({ userId, locale, onClose, onEdit }: {
                 </Section>
               )}
 
-              {/* Kontakt */}
               <Section title={tr(locale, { uz: "Kontakt", ru: "Контакт", en: "Contact", de: "Kontakt" })} icon="phone">
                 <div className="space-y-1.5 text-sm">
                   <Row label={tr(locale, { uz: "Telefon", ru: "Телефон", en: "Phone", de: "Telefon" })} value={d.phone ?? "—"} />

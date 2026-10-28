@@ -1,18 +1,12 @@
 import { levelGradient } from "@/lib/levelColor";
 
-// Ilova ko'rinishi — telefon ramkasi emas, ilovaning haqiqiy
-// kartochkalari biroz burchak bilan qatlanadi. Ramka chizish har doim
-// "maket"dek ko'rinardi; kartochkalarning o'zi esa mahsulotni ko'rsatadi.
-
 const TEAL = "#0e7490";
 
 export default function AppPreview() {
   return (
     <div className="relative mx-auto w-full max-w-[420px] select-none">
-      {/* orqa fondagi yumshoq nur */}
       <div aria-hidden className="absolute -inset-10 -z-10 rounded-[80px] bg-gradient-to-br from-[#17a2bf]/20 via-transparent to-[#7c3aed]/15 blur-3xl" />
 
-      {/* ── Salomlashish ── */}
       <div className="relative z-30 ml-auto w-[86%] rotate-[-2deg] rounded-[24px] border border-slate-900/[0.05] bg-white p-4 shadow-[0_24px_50px_-24px_rgba(15,60,80,0.45)]">
         <div className="flex items-center gap-3">
           {/* eslint-disable-next-line @next/next/no-img-element */}
@@ -30,7 +24,6 @@ export default function AppPreview() {
         </div>
       </div>
 
-      {/* ── Bugungi dars ── */}
       <div
         className="relative z-20 -mt-3 w-[94%] rotate-[1.4deg] rounded-[26px] p-5 text-white shadow-[0_30px_60px_-28px_rgba(11,60,77,0.85)]"
         style={{ background: levelGradient(TEAL) }}
@@ -55,7 +48,6 @@ export default function AppPreview() {
         </div>
       </div>
 
-      {/* ── Ballar ── */}
       <div className="relative z-30 -mt-3 ml-auto w-[88%] rotate-[-1.2deg] rounded-[24px] border border-slate-900/[0.05] bg-white p-3.5 shadow-[0_24px_50px_-24px_rgba(15,60,80,0.45)]">
         <div className="grid grid-cols-4 gap-2">
           {[
@@ -72,7 +64,6 @@ export default function AppPreview() {
         </div>
       </div>
 
-      {/* ── Ustoz bilan yozishma ── */}
       <div className="relative z-20 -mt-2.5 w-[80%] rotate-[1.8deg] rounded-[24px] border border-slate-900/[0.05] bg-white p-4 shadow-[0_24px_50px_-24px_rgba(15,60,80,0.45)]">
         <div className="flex items-center gap-3">
           <span className="grid h-10 w-10 shrink-0 place-items-center rounded-full bg-emerald-50 text-emerald-500">

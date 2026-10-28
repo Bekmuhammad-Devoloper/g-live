@@ -9,19 +9,11 @@ import { parseMoney } from "@/lib/constants";
 
 export type KpiPayState = { ok?: boolean; error?: string };
 
-/**
- * Xodimning oylik fiksa to'lovi va har bir muvaffaqiyatli lid uchun KPI bonusini yangilaydi.
- * Ruxsat: FAQAT ish haqi moduli FULL (Direktor / o'rinbosar / hisobchi).
- * `canWrite` YETARLI EMAS — o'qituvchida SALARY="OWN" bo'lib, u boshqa xodimning
- * oyligini o'zgartira olishi mumkin edi. Qolgan ustunlar lidlardan hisoblanadi.
- */
 export async function saveKpiPay(userId: string, fiksa: number, kpiBonus: number): Promise<KpiPayState> {
   const s = await requireSession();
   if (getPermission(s.role, MODULES.SALARY) !== "FULL") return { error: "forbidden" };
   if (!userId) return { error: "invalid" };
 
-  // parseMoney: manfiy/cheksiz/1 mlrd dan katta -> null (Int'ga sig'maydigan
-  // qiymat SQLite'ga yozilib, keyin sahifani butunlay yiqitgan — 2026-09-11)
   const f = parseMoney(fiksa);
   const b = parseMoney(kpiBonus);
   if (f === null || b === null) return { error: "invalid" };

@@ -44,13 +44,11 @@ function inline(s: string) {
   });
 }
 
-/** Javob matni: sarlavha, ro'yxat, jadval, qalin, kod */
 function RichText({ text }: { text: string }) {
   const lines = text.replace(/\r/g, "").split("\n");
   const out: React.ReactNode[] = [];
   for (let i = 0; i < lines.length; i++) {
     const t = lines[i].trimEnd();
-    // Jadval bloki
     if (/^\s*\|.*\|\s*$/.test(t)) {
       const rows: string[][] = [];
       while (i < lines.length && /^\s*\|.*\|\s*$/.test(lines[i])) {
@@ -131,10 +129,10 @@ export default function AiAssistant({ locale, userName }: { locale: Locale; user
         if (Array.isArray(v)) setMsgs(v);
         else { setMsgs(v.msgs ?? []); setChatId(v.chatId ?? null); }
       }
-    } catch { /* bo'sh */ }
+    } catch { }
   }, []);
   useEffect(() => {
-    try { sessionStorage.setItem(STORE_KEY, JSON.stringify({ chatId, msgs: msgs.slice(-40) })); } catch { /* bo'sh */ }
+    try { sessionStorage.setItem(STORE_KEY, JSON.stringify({ chatId, msgs: msgs.slice(-40) })); } catch { }
   }, [msgs, chatId]);
   useLayoutEffect(() => {
     const el = scrollRef.current;
@@ -147,13 +145,11 @@ export default function AiAssistant({ locale, userName }: { locale: Locale; user
     const f = setTimeout(() => inputRef.current?.focus(), 80);
     return () => { window.removeEventListener("keydown", k); clearTimeout(f); };
   }, [open]);
-  // "O'ylayapti" bosqichlari
   useEffect(() => {
     if (!pending) { setPhase(0); return; }
     const id = setInterval(() => setPhase((p) => Math.min(p + 1, THINKING.length - 1)), 2200);
     return () => clearInterval(id);
   }, [pending]);
-  // Kiritish maydoni balandligi matnga moslashadi
   useLayoutEffect(() => {
     const el = inputRef.current;
     if (!el) return;
@@ -173,7 +169,7 @@ export default function AiAssistant({ locale, userName }: { locale: Locale; user
       if (r.ok && r.text) {
         setMsgs((m) => [...m, { role: "assistant", text: r.text!, at: Date.now() }]);
         if (r.chatId) setChatId(r.chatId);
-        setChats(null); // tarix keyingi ochilishda yangilanadi
+        setChats(null);
       }
       else setErr(
         r.error === "not_configured" ? tr(locale, { uz: "AI hali sozlanmagan (API kaliti kiritilmagan).", ru: "AI ещё не настроен (нет API-ключа).", en: "AI is not configured yet (no API key).", de: "KI ist noch nicht eingerichtet (kein API-Schlüssel)." })
@@ -186,7 +182,6 @@ export default function AiAssistant({ locale, userName }: { locale: Locale; user
   const retry = () => {
     const lastUser = [...msgs].reverse().find((m) => m.role === "user");
     if (!lastUser || pending) return;
-    // Oxirgi savol javobsiz qolgan — uni olib tashlab qayta yuboramiz
     setMsgs((m) => (m[m.length - 1]?.role === "user" ? m.slice(0, -1) : m));
     setTimeout(() => send(lastUser.text), 0);
   };
@@ -227,7 +222,6 @@ export default function AiAssistant({ locale, userName }: { locale: Locale; user
   const panel = open && typeof document !== "undefined" ? createPortal(
     <div className="animate-dialog-fade fixed inset-0 z-[120] flex justify-end bg-slate-900/40 backdrop-blur-[2px]" onMouseDown={(e) => { if (e.target === e.currentTarget) setOpen(false); }}>
       <div className="animate-slide-in-right flex h-full w-full max-w-[540px] flex-col bg-[#f7f8fc] shadow-[-24px_0_60px_-20px_rgba(15,23,42,0.35)] dark:bg-[#0b1630]">
-        {/* Sarlavha */}
         <div className="relative shrink-0 overflow-hidden bg-gradient-to-r from-[#e3262b] via-[#ee7a24] to-[#f6b51e] px-4 py-3.5 text-white">
           <div aria-hidden className="pointer-events-none absolute inset-0 bg-[radial-gradient(80%_140%_at_100%_0%,rgba(255,255,255,0.28),transparent_60%),radial-gradient(60%_120%_at_0%_100%,rgba(120,10,10,0.25),transparent_70%)]" />
           <div aria-hidden className="pointer-events-none absolute inset-x-0 bottom-0 h-px bg-gradient-to-r from-transparent via-white/25 to-transparent" />
@@ -266,7 +260,6 @@ export default function AiAssistant({ locale, userName }: { locale: Locale; user
           </div>
         </div>
 
-        {/* Suhbat */}
         {view === "history" ? (
           <div className="min-h-0 flex-1 overflow-y-auto px-3 py-4">
             <button type="button" onClick={newChat} className="mb-3 flex w-full items-center justify-center gap-2 rounded-2xl border-2 border-dashed border-violet-200 py-2.5 text-sm font-semibold text-violet-600 transition hover:border-violet-400 hover:bg-violet-50 dark:border-violet-500/30 dark:text-violet-300 dark:hover:bg-violet-500/10">
@@ -391,7 +384,6 @@ export default function AiAssistant({ locale, userName }: { locale: Locale; user
         </div>
         )}
 
-        {/* Kiritish */}
         <form onSubmit={(e) => { e.preventDefault(); setView("chat"); send(input); }} className="shrink-0 bg-gradient-to-t from-[#f7f8fc] via-[#f7f8fc] to-transparent px-4 pb-3 pt-2 dark:from-[#0b1630] dark:via-[#0b1630]">
           <div className="flex items-end gap-2 rounded-[20px] border border-slate-200/90 bg-white p-1.5 pl-2 shadow-[0_6px_24px_-10px_rgba(15,23,42,0.18)] transition focus-within:border-indigo-300 focus-within:shadow-[0_8px_30px_-10px_rgba(79,70,229,0.35)] dark:border-white/10 dark:bg-white/[0.05]">
             <textarea

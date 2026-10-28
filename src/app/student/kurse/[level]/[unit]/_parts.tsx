@@ -1,12 +1,6 @@
 import Link from "next/link";
 import type { StudentStrings } from "../../../_i18n";
 
-// Dars bo'limlari (Lug'at · Dars · Vazifa) uchun UMUMIY qismlar.
-//
-// Bu yordamchilar ilgari dars sahifasining ichida turardi. Sahifa uchta
-// alohida marshrutga bo'lingach, ular bir joyda bo'lishi kerak — aks holda
-// har bo'limda o'z nusxasi paydo bo'lib, vaqt o'tib bir-biridan uzilardi.
-
 export const safeUrl = (u: string | null | undefined) => (u && /^(\/uploads\/|https?:\/\/)/.test(u) ? u : null);
 export const isUpload = (u: string) => u.startsWith("/uploads/");
 export const ext = (u: string) => (u.split("?")[0].split(".").pop() ?? "").toLowerCase();
@@ -16,7 +10,6 @@ export const fileKind = (u: string) => {
   return e && e.length <= 4 ? e : "FAYL";
 };
 
-/** YouTube yoki Vimeo havolasini o'rnatiladigan ko'rinishga o'giradi */
 export function embedUrl(u: string): string | null {
   const yt = /(?:youtube\.com\/(?:watch\?v=|embed\/|shorts\/)|youtu\.be\/)([\w-]{6,})/.exec(u);
   if (yt) return `https://www.youtube.com/embed/${yt[1]}`;
@@ -25,13 +18,11 @@ export function embedUrl(u: string): string | null {
   return null;
 }
 
-/** YouTube videoning muqova rasmi — pleyer bosilgunча shu ko'rinadi */
 export function youtubePoster(u: string): string | null {
   const yt = /(?:youtube\.com\/(?:watch\?v=|embed\/|shorts\/)|youtu\.be\/)([\w-]{6,})/.exec(u);
   return yt ? `https://i.ytimg.com/vi/${yt[1]}/hqdefault.jpg` : null;
 }
 
-/* ── Ikonkalar ── */
 export function IcoBack({ s = 21 }: { s?: number }) {
   return (
     <svg width={s} height={s} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.4" strokeLinecap="round" strokeLinejoin="round">
@@ -47,8 +38,6 @@ export function IcoBook({ s = 26 }: { s?: number }) {
     </svg>
   );
 }
-// Vazifa — planshet va bajarilganlik belgisi. Ilgari ichida chiziqlar
-// turardi: u "hujjat" edi, "bajariladigan ish" emas.
 export function IcoClipboard({ s = 24 }: { s?: number }) {
   return (
     <svg width={s} height={s} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.9" strokeLinecap="round" strokeLinejoin="round">
@@ -97,8 +86,6 @@ export function IcoExpand({ s = 14 }: { s?: number }) {
   );
 }
 
-// Dars — ekran va o'ynatish belgisi. Oddiy doira ichidagi uchburchak
-// har qanday tugmani bildirardi; ekran esa aynan VIDEO darsni.
 export function IcoPlayCircle({ s = 24 }: { s?: number }) {
   return (
     <svg width={s} height={s} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.9" strokeLinecap="round" strokeLinejoin="round">
@@ -108,8 +95,6 @@ export function IcoPlayCircle({ s = 24 }: { s?: number }) {
     </svg>
   );
 }
-// Lug'at — ochiq kitob va xatcho'p. Ilgari ikki ustunli belgi turardi: u
-// "ustunlar" bo'lib o'qilib, lug'atga ishora qilmasdi.
 export function IcoWords({ s = 24 }: { s?: number }) {
   return (
     <svg width={s} height={s} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.9" strokeLinecap="round" strokeLinejoin="round">
@@ -120,7 +105,6 @@ export function IcoWords({ s = 24 }: { s?: number }) {
   );
 }
 
-/* ── Kartaning burchagidagi yumshoq rang dog'i ── */
 export function Wash({ color }: { color: string }) {
   return (
     <span
@@ -131,11 +115,7 @@ export function Wash({ color }: { color: string }) {
   );
 }
 
-/* ── Biriktirilgan fayl ── */
 export function Attachment({ url, tint, accent, t }: { url: string; tint: string; accent: string; t: StudentStrings }) {
-  // Rasm bo'lsa — bitta blok: ustida rasmning o'zi, ostida ingichka qator.
-  // Ilgari rasm ham, alohida "Faylni ochish" qatori ham chizilar edi va
-  // bitta narsa ikki marta ko'rinardi.
   if (isImage(url)) {
     return (
       <a
@@ -178,7 +158,6 @@ export function Attachment({ url, tint, accent, t }: { url: string; tint: string
   );
 }
 
-/* ── Dars topshirig'i / uyga vazifa bloki ── */
 export function TaskCard({
   title, icon, accent, tint, wash, body, fileUrl, t,
 }: {
@@ -219,16 +198,12 @@ export function TaskCard({
 }
 
 
-/* ── Bo'lim sahifalarining umumiy sarlavhasi ── */
-// Uchala bo'lim (Lug'at · Dars · Vazifa) bir xil sarlavha bilan ochiladi:
-// orqaga tugma, bo'lim nomi va ostida qaysi darsdan ekani.
 export function SectionHeader({
   backHref, title, subtitle, accent, backLabel,
 }: {
   backHref: string;
   title: string;
   subtitle: string;
-  /** Bo'limning rangi — ikonka plitasi bilan bir xil */
   accent: string;
   backLabel: string;
 }) {

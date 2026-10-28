@@ -5,7 +5,6 @@ import { PORTAL_FEATURES, getPortalFlags } from "@/lib/portalFeatures";
 import { PageHeader, Forbidden } from "../../_components/ui";
 import PortalFeaturesView, { type FeatureRow } from "./PortalFeaturesView";
 
-// O'quvchi portalidagi bo'limlarni yoqish/o'chirish — menejer va rahbariyat
 const ALLOWED = [ROLES.DIRECTOR, ROLES.DEPUTY_DIRECTOR, ROLES.ADMIN, ROLES.MANAGER];
 
 export default async function PortalSettingsPage() {

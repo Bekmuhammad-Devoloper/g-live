@@ -12,8 +12,6 @@ import { getDefaultMonthlyFee } from "@/lib/debt";
 
 const ALLOWED = [ROLES.DIRECTOR, ROLES.DEPUTY_DIRECTOR];
 
-// Umumiy sozlamalar — markaz nomi/telefoni, ish vaqti, logotip, asosiy rang va h.k.
-// ?tab=... orqali kerakli bo'lim ochiladi (masalan /settings?tab=billing).
 export default async function SettingsPage({ searchParams }: { searchParams: Promise<{ tab?: string }> }) {
   const s = await requireSession();
   if (!ALLOWED.includes(s.role as never)) {
@@ -22,7 +20,7 @@ export default async function SettingsPage({ searchParams }: { searchParams: Pro
 
   const sp = await searchParams;
   const receiptMode = parseReceiptMode(await getSetting(RECEIPT_MODE_KEY));
-  const defaultFee = await getDefaultMonthlyFee(); // qarz hisobidagi umumiy oylik to'lov
+  const defaultFee = await getDefaultMonthlyFee();
   const [branch, allBranches, brand, brandRaw] = await Promise.all([
     s.branchId
       ? prisma.branch.findUnique({ where: { id: s.branchId }, select: { name: true, phone: true } })
@@ -31,7 +29,6 @@ export default async function SettingsPage({ searchParams }: { searchParams: Pro
     getBrand(),
     getSettings([BRAND_KEYS.name, BRAND_KEYS.logo, BRAND_KEYS.logoDark]),
   ]);
-  // Brend maydonlari bo'sh bo'lganda getBrand() qaytaradigan standart qiymatlar (src/lib/brand.ts bilan mos)
   const brandDefaults = {
     name: process.env.ORG_NAME?.trim() || (brand.isMain ? "Germaniya Live" : "O'quv markazi"),
     logo: brand.isMain ? "/logo.png" : "",

@@ -1,8 +1,4 @@
 #!/usr/bin/env bash
-# AQLLI TAQSIMOTni qaytarish:  sudo bash rollback.sh
-#   eski Asterisk: from-trunk'dagi Gosub qatorlari va #include gl-smart/* olib tashlanadi
-#   (route-lookup URL va RECORD_FILE tuzatishlari qoladi — ular Imkon CRM uchun kerak)
-#   glive: #include olib tashlanadi, TRUNK=gl-trunk
 set -euo pipefail
 OLD=/etc/asterisk; GL=/etc/asterisk-glive
 [[ $EUID -eq 0 ]] || { echo "root kerak: sudo bash $0"; exit 1; }

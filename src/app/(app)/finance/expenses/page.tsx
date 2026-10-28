@@ -11,7 +11,6 @@ import { ensureDefaultExpenseCategories } from "../expense-categories/defaults";
 const p2 = (n: number) => String(n).padStart(2, "0");
 const iso = (d: Date) => `${d.getFullYear()}-${p2(d.getMonth() + 1)}-${p2(d.getDate())}`;
 
-// "Xarajatlar" — moliya xarajatlari: statistika + grafik + kiritish formasi + filtrlar + jadval.
 export default async function ExpensesPage() {
   const s = await requireSession();
   if (!canRead(s.role, MODULES.EXPENSES)) {
@@ -22,7 +21,7 @@ export default async function ExpensesPage() {
 
   const [rows, categories] = await Promise.all([
     prisma.expense.findMany({
-      where: branchWhere(s), // faol filial doirasida
+      where: branchWhere(s),
       orderBy: [{ date: "desc" }, { createdAt: "desc" }],
       include: {
         category: { select: { name: true } },

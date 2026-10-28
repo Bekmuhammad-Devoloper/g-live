@@ -48,22 +48,20 @@ export type EditGroupData = {
   room: string | null;
   status: string;
   capacity: number;
-  startDate: string | null; // "yyyy-mm-dd"
-  endDate: string | null; // "yyyy-mm-dd"
+  startDate: string | null;
+  endDate: string | null;
   weekdays: string | null;
   startTime: string | null;
   endTime: string | null;
-  note: string | null; // izoh/kament
-  monthlyFee: number | null; // guruh oylik to'lovi (bo'sh — kurs narxi)
+  note: string | null;
+  monthlyFee: number | null;
 };
 
 export function CreateStudentForm({ groupId, locale }: { groupId: string; locale: Locale }) {
   const [state, action, pending] = useActionState<FormState, FormData>(createStudentInGroup, {});
   const ref = useRef<HTMLFormElement>(null);
   const [phone, setPhone] = useState("");
-  // +998 doimiy prefiks; foydalanuvchi faqat qolgan 9 raqamni kiritadi (src/lib/phone.ts)
   const fmtPhone = fmtUzPhoneInput;
-  // Har muvaffaqiyatli qo'shishda tozalanadi (state — har safar yangi obyekt, shu sabab ketma-ket qo'shishda ham ishlaydi)
   useEffect(() => { if (state.ok) { ref.current?.reset(); setPhone(""); } }, [state]);
 
   return (
@@ -127,7 +125,6 @@ export function EnrollExisting({ groupId, candidates, locale }: { groupId: strin
   );
 }
 
-// Excel'dan nusxa-joylab yoki CSV/xlsx'dan o'quvchilarni ajratib oladi
 const HEADER_RE = /^(ism|name|f\.?\s?i\.?\s?sh|fio|ismi|talaba|o'?quvchi|student|№|no|nomi|telefon|phone)$/i;
 function parseStudentRows(text: string): { name: string; phone: string }[] {
   return text
@@ -241,7 +238,6 @@ export function RemoveStudentButton({ groupId, studentId, locale }: { groupId: s
 export function NewLessonForm({ groupId, locale }: { groupId: string; locale: Locale }) {
   const [state, action, pending] = useActionState<FormState, FormData>(createLesson, {});
   const ref = useRef<HTMLFormElement>(null);
-  // Har muvaffaqiyatli qo'shishda tozalanadi (ketma-ket qo'shish uchun)
   useEffect(() => { if (state.ok) ref.current?.reset(); }, [state]);
 
   return (
@@ -274,7 +270,6 @@ export function EditGroupButton({
   group: EditGroupData;
   programs: { id: string; name: string }[];
   teachers: { id: string; fullName: string }[];
-  /** Filial xonalari — "Xona" ro'yxatdan tanlanadi */
   rooms?: RoomOption[];
   locale: Locale;
   compact?: boolean;
@@ -329,7 +324,6 @@ function EditGroupForm({
   const [color, setColor] = useState<string>(group.color ?? GROUP_COLORS[0]);
   const [capacity, setCapacity] = useState<number>(group.capacity);
   const [room, setRoom] = useState<string>(group.room ?? "");
-  // Guruhda yozilgan xona ro'yxatda bo'lmasa ham ko'rinsin (eski nom yoki boshqa filial)
   const roomList = rooms.some((r) => r.name === room) || !room ? rooms : [{ id: "_current", name: room, capacity: 0 }, ...rooms];
   const [days, setDays] = useState<number[]>(
     (group.weekdays ?? "").split(",").map((x) => parseInt(x, 10)).filter((n) => n >= 1 && n <= 7)
@@ -493,7 +487,6 @@ function EditGroupForm({
             </div>
           </div>
 
-          {/* Oylik to'lov — bo'sh qoldirilsa kurs narxi ishlatiladi */}
           <div>
             <label className={fLabel}>{tr(locale, { uz: "Oylik to'lov (so'm)", ru: "Ежемесячная оплата (сум)", en: "Monthly fee (UZS)", de: "Monatliche Gebühr (UZS)" })}</label>
             <MoneyInput name="monthlyFee" defaultValue={group.monthlyFee ?? ""} placeholder={tr(locale, { uz: "kurs narxi", ru: "цена курса", en: "course price", de: "Kurspreis" })} className={input} />
@@ -507,7 +500,6 @@ function EditGroupForm({
             </p>
           </div>
 
-          {/* Izoh — guruh ma'lumoti ko'rinadigan hamma joyda chiqadi */}
           <div>
             <label className={fLabel}>{tr(locale, { uz: "Izoh", ru: "Комментарий", en: "Comment", de: "Kommentar" })}</label>
             <textarea

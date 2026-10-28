@@ -10,10 +10,9 @@ import { fill, LT, S } from "../_i18n";
 
 export type Res = { ok?: boolean; error?: string };
 
-// O'quvchi ustoziga xabar yozadi.
 export async function sendMessage(text: string): Promise<Res> {
   const s = await requireSession();
-  const t = S(s.locale); // xato xabarlari o'quvchi tilida
+  const t = S(s.locale);
   if (s.role !== ROLES.STUDENT) return { error: t.forbidden };
 
   const body = text.trim();
@@ -28,8 +27,6 @@ export async function sendMessage(text: string): Promise<Res> {
 
   const teacherId = await activeTeacherOf(student.id);
 
-  // Ustozni bezovta qilmaslik uchun: o'qilmagan xabar allaqachon bo'lsa,
-  // yangi bildirishnoma yubormaymiz (chat ichida baribir ko'rinadi).
   const pending = teacherId
     ? await prisma.chatMessage.count({ where: { teacherId, studentId: student.id, fromStudent: true, readAt: null } })
     : 0;
@@ -39,7 +36,6 @@ export async function sendMessage(text: string): Promise<Res> {
   });
 
   if (teacherId && pending === 0) {
-    // Ustozning tilida (notify oluvchi tilini o'zi tanlaydi)
     await notify({
       userId: teacherId,
       title: LT("studentWroteYou", { name: student.fullName }),
@@ -54,7 +50,6 @@ export async function sendMessage(text: string): Promise<Res> {
   return { ok: true };
 }
 
-// Ustozdan kelgan xabarlarni o'qilgan deb belgilash
 export async function markRead(): Promise<Res> {
   const s = await requireSession();
   const t = S(s.locale);

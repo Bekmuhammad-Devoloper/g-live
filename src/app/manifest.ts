@@ -1,7 +1,6 @@
 import type { MetadataRoute } from "next";
 import { getBrand } from "@/lib/brand";
 
-// PWA manifest — TZ NFR "Moslashuvchanlik" (telefonga ilova kabi o'rnatiladi)
 export default async function manifest(): Promise<MetadataRoute.Manifest> {
   const brand = await getBrand();
   return {

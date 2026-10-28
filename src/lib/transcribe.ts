@@ -1,57 +1,17 @@
-// Gemini — talaffuz tekshiruvi (brauzer uchun; ilovada telefon o'zi taniydi).
-//
-// NEGA "YOPIQ TANLOV". Birinchi yondashuv ochiq transkripsiya edi: "nima
-// eshitding?" — keyin serverda maqsad so'z bilan solishtirilardi. Sinov va
-// amaliyot ko'rsatdi: model o'ylab topadi — ohangga, shovqinga, hatto
-// jimlikka ham so'z "eshitadi", noto'g'ri aytilganini ham "to'g'ri"ga
-// yaqin qilib yozadi. Foydalanuvchi buni ikki marta ko'rdi.
-//
-// Endi modelga DARSDAGI BARCHA SO'ZLAR beriladi va u uchta narsani
-// qaytaradi:
-//   · transcript — so'zma-so'z nima eshitilgani (o'zgartirmasdan)
-//   · chosen     — ro'yxatdan QAYSI so'z aytilgani, yoki "" (hech qaysi)
-//   · confidence — 0..100
-// Server uchalasini BIRGA talab qiladi: chosen maqsad so'zga teng bo'lsin,
-// transcript ham maqsad so'zga mos kelsin (lib/pronounce.ts qoidalari),
-// confidence pastda bo'lmasin. "Hech qaysi" — ruxsat etilgan javob, ya'ni
-// modelga rozi bo'lish majburiyati yo'q.
-//
-// Maqsad so'zning O'ZI alohida ko'rsatilmaydi — u ro'yxatdagi o'ntadan
-// biri, xolos. Aks holda model unga qarab rozi bo'lib ketadi (sinovda
-// ohangga "Hund dedi" degan).
-//
-// KVOTA. Bepul tarif — kuniga 20 ta so'rov (har model uchun). Bu kod bilan
-// hal bo'lmaydi: Google konsolida billing yoqilishi kerak. Chegara tugasa
-// "quota" qaytadi va ekranda "kunlik chegara tugadi" deb ko'rsatiladi —
-// nosozlik deb o'ylanmasin.
-//
-// Bu fayl ATAYLAB neytral ("server-only" siz): Next'dan tashqarida sinash
-// mumkin bo'lsin. Ilova kodi lib/gemini.ts orqali murojaat qiladi.
-
 const ENDPOINT = "https://generativelanguage.googleapis.com/v1beta/models";
 
-// Tartib o'lchov asosida: sinovda "3.6-flash" 5 dan 4 marta 15 s da javob
-// bermadi, "3.5-flash" va "flash-latest" javob berdi. Sekin model boshida
-// tursa har so'rov 15 s behuda kutadi. .env dan almashtirsa bo'ladi:
-// GEMINI_MODELS=a,b,c
 const DEFAULT_MODELS = ["gemini-3.5-flash", "gemini-flash-latest", "gemini-3.6-flash"];
 const models = () =>
   process.env.GEMINI_MODELS?.split(",").map((m) => m.trim()).filter(Boolean) ?? DEFAULT_MODELS;
 
-// Qisqa yozuv (≤4 s) uchun javob odatda 3-8 s. Band model shu vaqtni
-// "yeb" qo'ymasin: keyingisiga o'tamiz.
 const TIMEOUT_MS = 15_000;
 
 export const isGeminiConfigured = () => !!process.env.GEMINI_API_KEY?.trim();
 
 export interface Recognition {
-  /** Odam gapirganmi umuman */
   speech: boolean;
-  /** So'zma-so'z eshitilgani */
   transcript: string;
-  /** Ro'yxatdan tanlangan so'z, yoki "" — hech qaysi */
   chosen: string;
-  /** 0..100 */
   confidence: number;
 }
 
@@ -86,10 +46,6 @@ Listen to the audio and return:
 A foreign accent, hesitation or a missing article is fine. A different word is NOT fine, even if it sounds similar.`;
 }
 
-/**
- * Audio (WAV) + darsdagi so'zlar → model qarori.
- * Xato ko'tarmaydi: sababi bilan qaytadi, chaqiruvchi o'zi hal qiladi.
- */
 export async function recognizeWord(wav: Buffer, candidates: string[]): Promise<RecognizeResult> {
   const key = process.env.GEMINI_API_KEY?.trim();
   if (!key) return { ok: false, reason: "not_configured" };
@@ -122,7 +78,6 @@ export async function recognizeWord(wav: Buffer, candidates: string[]): Promise<
       if (!raw) continue;
 
       const p = JSON.parse(raw) as Partial<Recognition>;
-      // Qaysi model javob bergani — sekin modelni ro'yxatdan chiqarish uchun
       console.log("[gemini] javob berdi:", model);
       return {
         ok: true,

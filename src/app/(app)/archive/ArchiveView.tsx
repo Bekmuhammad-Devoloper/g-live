@@ -71,7 +71,6 @@ export default function ArchiveView({ locale, rows, reasons, roleOptions, canPur
 
   return (
     <div className="space-y-4">
-      {/* Header */}
       <div className="flex flex-wrap items-center justify-between gap-3">
         <div className="flex items-baseline gap-3">
           <h1 className="text-[26px] font-bold tracking-tight text-slate-900 dark:text-slate-100">{T("Arxiv", "Архив", "Archive", "Archiv")}</h1>
@@ -80,7 +79,6 @@ export default function ArchiveView({ locale, rows, reasons, roleOptions, canPur
         <button onClick={() => setReasonsOpen(true)} className="flex h-10 items-center gap-1.5 rounded-lg border border-slate-200 bg-white px-4 text-sm font-semibold text-slate-600 transition hover:bg-slate-50 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-300 dark:hover:bg-slate-800">{T("Arxivlash sabablari", "Причины архивирования", "Archive reasons", "Archivierungsgründe")}</button>
       </div>
 
-      {/* Filter bar */}
       <div className="flex flex-wrap items-center gap-2">
         <div className="relative min-w-[180px] flex-1">
           <input value={search} onChange={(e) => setSearch(e.target.value)} placeholder={T("Ism yoki Telefon", "Имя или телефон", "Name or phone", "Name oder Telefon")} className={fInp} />
@@ -95,13 +93,11 @@ export default function ArchiveView({ locale, rows, reasons, roleOptions, canPur
         </select>
         <DateInput value={from} onChange={(e) => setFrom(e.target.value)} className={cn(fInp, "w-[160px]")} title={T("Boshlanish sanasi", "Дата начала", "Start date", "Startdatum")} />
         <DateInput value={to} onChange={(e) => setTo(e.target.value)} className={cn(fInp, "w-[160px]")} title={T("Tugash sanasi", "Дата окончания", "End date", "Enddatum")} />
-        {/* Butunlay o'chirish — faqat direktor va o'rinbosarida */}
         {canPurge && <button onClick={() => need() && onDelete(selIds())} className="flex h-10 items-center gap-1.5 rounded-lg border border-rose-200 bg-white px-4 text-sm font-semibold text-rose-600 transition hover:bg-rose-50 dark:border-rose-500/30 dark:bg-slate-900 dark:hover:bg-rose-500/10"><Icon name="trash" className="h-4 w-4" /> {T("O'chirish", "Удалить", "Delete", "Löschen")}</button>}
         <button onClick={() => need() && onRestore(selIds())} className="flex h-10 items-center gap-1.5 rounded-lg border border-emerald-200 bg-white px-4 text-sm font-semibold text-emerald-600 transition hover:bg-emerald-50 dark:border-emerald-500/30 dark:bg-slate-900 dark:hover:bg-emerald-500/10"><Icon name="refresh" className="h-4 w-4" /> {T("Qayta tiklash", "Восстановить", "Restore", "Wiederherstellen")}</button>
         <button onClick={onMessage} title={T("Belgilanganlarga xabar", "Сообщение выбранным", "Message selected", "Nachricht an Ausgewählte")} className="grid h-10 w-11 place-items-center rounded-lg border border-slate-200 bg-white text-amber-500 transition hover:bg-slate-50 dark:border-slate-700 dark:bg-slate-900 dark:hover:bg-slate-800"><Icon name="mail" className="h-5 w-5" /></button>
       </div>
 
-      {/* Jadval */}
       <div className="overflow-hidden rounded-2xl border border-slate-200/70 bg-white shadow-card dark:border-slate-800 dark:bg-slate-900">
         <div className="overflow-x-auto">
           <table className="w-full min-w-[980px] text-left text-sm">
@@ -142,7 +138,6 @@ export default function ArchiveView({ locale, rows, reasons, roleOptions, canPur
         </div>
       </div>
 
-      {/* Pastki qism: pagination + eksport */}
       <div className="flex flex-wrap items-center justify-between gap-3">
         <div className="flex items-center gap-1.5">
           <PageBtn disabled={curPage <= 1} onClick={() => setPage(curPage - 1)}>‹</PageBtn>

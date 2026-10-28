@@ -21,16 +21,13 @@ interface Props {
   daily: DayPoint[];
 }
 
-// Status/kategoriya ranglari (validator: ΔE≥8, ko'rinadigan yorliqlar bilan)
 const C = { green: "#10b981", rose: "#ef4444", slate: "#94a3b8" };
-// Deterministik (server=client) — toLocaleString ICU farqi hydration xatosi beradi
 const nf = (n: number) => String(Math.round(n)).replace(/\B(?=(\d{3})+(?!\d))/g, " ");
 const dm = (isoStr: string) => { const [, m, d] = isoStr.split("-"); return `${d}.${m}`; };
 
 export default function AttendanceCharts(p: Props) {
   return (
     <div className="space-y-5">
-      {/* KPI kartalar */}
       <div className="grid grid-cols-2 gap-4 lg:grid-cols-4">
         <Kpi label={tr(p.locale, { uz: "Jami o'quvchilar", ru: "Всего учеников", en: "Total students", de: "Schüler gesamt" })} value={nf(p.total)} icon="graduation" tone="brand" />
         <Kpi label={tr(p.locale, { uz: "Davomat foizi", ru: "Посещаемость", en: "Attendance rate", de: "Anwesenheitsquote" })} value={`${p.rate}%`} icon="chart" tone="green" hint={`${nf(p.totalPresent)} / ${nf(p.totalPresent + p.totalAbsent)}`} />
@@ -39,7 +36,6 @@ export default function AttendanceCharts(p: Props) {
       </div>
 
       <div className="grid gap-5 lg:grid-cols-2">
-        {/* Donut: o'quvchilar taqsimoti */}
         <ChartCard title={tr(p.locale, { uz: "O'quvchilar taqsimoti", ru: "Распределение учеников", en: "Student distribution", de: "Schülerverteilung" })}>
           <Donut
             locale={p.locale}
@@ -52,13 +48,11 @@ export default function AttendanceCharts(p: Props) {
           />
         </ChartCard>
 
-        {/* Status taqsimoti (gorizontal bar) */}
         <ChartCard title={tr(p.locale, { uz: "Davomat holatlari bo'yicha", ru: "По статусам посещаемости", en: "By attendance status", de: "Nach Anwesenheitsstatus" })}>
           <StatusBars locale={p.locale} statuses={p.statuses} />
         </ChartCard>
       </div>
 
-      {/* Kunlik davomat (stacked bar) */}
       <ChartCard title={tr(p.locale, { uz: "Kunlik davomat", ru: "Посещаемость по дням", en: "Daily attendance", de: "Tägliche Anwesenheit" })}>
         <DailyBars locale={p.locale} daily={p.daily} />
       </ChartCard>
@@ -66,7 +60,6 @@ export default function AttendanceCharts(p: Props) {
   );
 }
 
-/* ── KPI tile ── */
 function Kpi({ label, value, icon, tone, hint }: { label: string; value: string; icon: string; tone: "brand" | "green" | "rose"; hint?: string }) {
   const t = { brand: "text-brand-600 bg-brand-500/10", green: "text-emerald-600 bg-emerald-500/10", rose: "text-rose-500 bg-rose-500/10" }[tone];
   return (
@@ -92,7 +85,6 @@ function ChartCard({ title, children }: { title: string; children: React.ReactNo
   );
 }
 
-/* ── Donut ── */
 function Donut({ locale, total, slices }: { locale: Locale; total: number; slices: StatusSlice[] }) {
   const R = 42, SW = 16, CIRC = 2 * Math.PI * R, GAP = total > 0 ? 2 : 0;
   const shown = slices.filter((s) => s.count > 0);
@@ -134,7 +126,6 @@ function Donut({ locale, total, slices }: { locale: Locale; total: number; slice
   );
 }
 
-/* ── Status gorizontal bar ── */
 function StatusBars({ locale, statuses }: { locale: Locale; statuses: StatusSlice[] }) {
   const data = statuses.filter((s) => s.count > 0);
   const max = Math.max(1, ...data.map((s) => s.count));
@@ -156,7 +147,6 @@ function StatusBars({ locale, statuses }: { locale: Locale; statuses: StatusSlic
   );
 }
 
-/* ── Kunlik stacked bar ── */
 function DailyBars({ locale, daily }: { locale: Locale; daily: DayPoint[] }) {
   const [hover, setHover] = useState<number | null>(null);
   const data = useMemo(() => daily, [daily]);

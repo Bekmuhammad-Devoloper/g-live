@@ -8,10 +8,6 @@ import { TEAL } from "../../_ui";
 import type { StudentStrings } from "../../_i18n";
 import { kindColor } from "../parse";
 
-// Bog'lanishlar xaritasi (Obsidian Graph View) — telefon uchun:
-// bir barmoq bilan surish, ikki barmoq bilan kattalashtirish,
-// tugunni bosish — yozuv ochiladi, tugunni sudrash — joyini o'zgartirish.
-
 export interface GNode { id: string; title: string; kind: string; deg: number; missing: boolean }
 export interface GLink { source: string; target: string }
 
@@ -28,12 +24,11 @@ export default function BrainGraph({
   const simRef = useRef(new GraphSim());
   const camRef = useRef({ x: 0, y: 0, z: 1 });
   const rafRef = useRef<number | null>(null);
-  const activeRef = useRef<string | null>(null);   // tanlangan tugun
+  const activeRef = useRef<string | null>(null);
   const dragRef = useRef<{ id: string | null; x: number; y: number; moved: boolean } | null>(null);
   const pinchRef = useRef<{ d: number; z: number } | null>(null);
   const [sel, setSel] = useState<GNode | null>(null);
 
-  // ── Ma'lumotni simulyatsiyaga berish ──
   useEffect(() => {
     const R = 160;
     const sn: SimNode[] = nodes.map((n, i) => {
@@ -52,11 +47,9 @@ export default function BrainGraph({
     });
     const sl: SimLink[] = links.map((l) => ({ source: l.source, target: l.target, color: TEAL }));
     simRef.current.setData(sn, sl);
-    // Kichik grafda tugunlar bir-biriga yaqinroq tursin
     simRef.current.forces = { center: 0.5, repel: nodes.length > 40 ? 8 : 14, link: 1, distance: 90 };
   }, [nodes, links]);
 
-  // ── Barcha tugunlarni ekranga sig'dirish ──
   const fit = useCallback(() => {
     const cv = cvRef.current;
     if (!cv || !simRef.current.nodes.length) return;
@@ -69,7 +62,6 @@ export default function BrainGraph({
     camRef.current = { x: (b.x1 + b.x2) / 2, y: (b.y1 + b.y2) / 2, z };
   }, []);
 
-  // ── Chizish sikli ──
   useEffect(() => {
     const cv = cvRef.current;
     const wrap = wrapRef.current;
@@ -92,7 +84,6 @@ export default function BrainGraph({
       const sim = simRef.current;
       const moving = sim.tick();
       if (moving) settleTicks = 0; else settleTicks++;
-      // Joylashib bo'lgach bir marta ekranga moslaymiz
       if (!fitted && !moving && sim.nodes.length) { fit(); fitted = true; }
 
       const cam = camRef.current;
@@ -103,7 +94,6 @@ export default function BrainGraph({
       ctx.clearRect(0, 0, w, h);
 
       const active = activeRef.current;
-      // Tanlangan tugunning qo'shnilari
       const near = new Set<string>();
       if (active) {
         near.add(active);
@@ -113,7 +103,6 @@ export default function BrainGraph({
         }
       }
 
-      // ── Qirralar ──
       ctx.lineCap = "round";
       for (const l of sim.links) {
         const a = sim.get(l.source), b = sim.get(l.target);
@@ -129,7 +118,6 @@ export default function BrainGraph({
       }
       ctx.globalAlpha = 1;
 
-      // ── Tugunlar ──
       ctx.textAlign = "center";
       ctx.textBaseline = "top";
       for (const n of sim.nodes) {
@@ -141,7 +129,6 @@ export default function BrainGraph({
 
         ctx.globalAlpha = lit ? 1 : 0.15;
 
-        // Tanlangan tugun atrofida halqa
         if (n.id === active) {
           ctx.beginPath();
           ctx.arc(X, Y, r + 7, 0, Math.PI * 2);
@@ -154,7 +141,6 @@ export default function BrainGraph({
         ctx.beginPath();
         ctx.arc(X, Y, r, 0, Math.PI * 2);
         if (p.missing) {
-          // Hali yaratilmagan — ichi bo'sh doira
           ctx.fillStyle = "#ffffff";
           ctx.fill();
           ctx.strokeStyle = col;
@@ -170,7 +156,6 @@ export default function BrainGraph({
           ctx.stroke();
         }
 
-        // Yorliq — yetarlicha kattalashtirilganda yoki tanlangan bo'lsa
         if (cam.z > 0.55 || n.id === active) {
           ctx.globalAlpha = lit ? 0.95 : 0.12;
           ctx.font = `600 ${Math.round(11 * Math.max(0.85, Math.min(1.25, cam.z)))}px system-ui, sans-serif`;
@@ -181,8 +166,6 @@ export default function BrainGraph({
       }
       ctx.globalAlpha = 1;
 
-      // Tinchlangandan keyin ham chizishda davom etamiz (kamera surilishi mumkin),
-      // lekin protsessorni bo'shatish uchun kadrni siyraklashtiramiz
       rafRef.current = requestAnimationFrame(settleTicks > 120 ? () => setTimeout(draw, 60) : draw);
     };
 
@@ -190,14 +173,13 @@ export default function BrainGraph({
     return () => { if (rafRef.current) cancelAnimationFrame(rafRef.current); };
   }, [fit]);
 
-  // ── Bosish / sudrash ──
   const nodeAt = (px: number, py: number) => {
     const cv = cvRef.current;
     if (!cv) return null;
     const cam = camRef.current;
     const cx = cv.clientWidth / 2, cy = cv.clientHeight / 2;
     let best: SimNode | null = null;
-    let bestD = 26; // barmoq uchun kengroq nishon
+    let bestD = 26;
     for (const n of simRef.current.nodes) {
       const X = (n.x - cam.x) * cam.z + cx;
       const Y = (n.y - cam.y) * cam.z + cy;
@@ -248,7 +230,6 @@ export default function BrainGraph({
     }
     if (d.moved) return;
 
-    // Oddiy bosish — tugunni tanlash / bo'sh joyga bosilsa tanlovni olib tashlash
     const { x, y } = toLocal(e);
     const hit = nodeAt(x, y);
     if (hit) {
@@ -260,7 +241,6 @@ export default function BrainGraph({
     }
   };
 
-  // ── Ikki barmoq bilan kattalashtirish + sichqoncha g'ildiragi ──
   useEffect(() => {
     const el = wrapRef.current;
     if (!el) return;
@@ -312,7 +292,6 @@ export default function BrainGraph({
         onPointerCancel={() => { dragRef.current = null; }}
       />
 
-      {/* ── Yuqori panel ── */}
       <div className="pointer-events-none absolute inset-x-0 top-0 mx-auto flex max-w-md items-center gap-3 p-4 pt-[calc(16px+env(safe-area-inset-top))]">
         <Link
           href="/student/gehirn"
@@ -340,7 +319,6 @@ export default function BrainGraph({
         </button>
       </div>
 
-      {/* ── Bo'sh holat ── */}
       {nodes.length === 0 && (
         <div className="pointer-events-none absolute inset-0 grid place-items-center px-8 text-center">
           <div>
@@ -350,7 +328,6 @@ export default function BrainGraph({
         </div>
       )}
 
-      {/* ── Tanlangan tugun kartasi ── */}
       {sel ? (
         <div className="absolute inset-x-0 bottom-0 p-4">
           <div className="mx-auto max-w-md rounded-[24px] bg-white p-4 shadow-[0_-6px_24px_rgba(19,78,94,0.18)]">

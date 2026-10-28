@@ -4,9 +4,6 @@ import Link from "next/link";
 import { useEffect, useState } from "react";
 import { levelGradient } from "@/lib/levelColor";
 
-// Bosh sahifadagi banner karuseli — bir nechta banner bo'lsa
-// har 6 sekundda almashadi, nuqtaga bosib ham o'tish mumkin.
-
 export type VBanner = {
   id: string;
   title: string;

@@ -7,25 +7,11 @@ import { tr } from "@/lib/tr";
 import type { Locale } from "@/lib/constants";
 import { Icon } from "./Icon";
 
-// Ilovaning o'z tasdiqlash / xabar / matn so'rash oynalari — brauzerning
-// `confirm`, `alert`, `prompt` oynalari o'rniga.
-//
-// Chaqirish imperativ va Promise qaytaradi, shuning uchun mavjud kodga oson tushadi:
-//
-//   if (!(await confirmDelete("Filialni o'chirasizmi?"))) return;
-//   const reason = await promptDialog({ message: "Bekor qilish sababi", minLength: 3 });
-//   await alertDialog("Fayl hali yuklanmoqda");
-//
-// Oyna `DialogHost` da chiziladi (ilova layoutida bir marta turadi). So'rovlar
-// navbatga tushadi — ketma-ket chaqirilsa birin-ketin ko'rinadi.
-
 type Tone = "default" | "danger" | "warning";
 
 export interface DialogOptions {
-  /** Sarlavha. Berilmasa `message` sarlavha o'rnida ko'rinadi */
   title?: string;
   message?: string;
-  /** Ro'yxat (masalan to'ldirilmagan maydonlar) */
   items?: string[];
   tone?: Tone;
   confirmLabel?: string;
@@ -35,9 +21,7 @@ export interface DialogOptions {
 export interface PromptOptions extends DialogOptions {
   placeholder?: string;
   defaultValue?: string;
-  /** Ko'p qatorli matn (izoh, xabar) */
   multiline?: boolean;
-  /** Kamida shuncha belgi kiritilmaguncha tasdiqlash tugmasi faol bo'lmaydi */
   minLength?: number;
 }
 
@@ -49,7 +33,7 @@ type Request =
 const EMPTY: Request[] = [];
 let queue: Request[] = EMPTY;
 let seq = 0;
-let hosts = 0; // sahifada DialogHost bormi — bo'lmasa brauzer oynasiga qaytamiz
+let hosts = 0;
 const listeners = new Set<() => void>();
 const emit = () => listeners.forEach((l) => l());
 const subscribe = (l: () => void) => { listeners.add(l); return () => { listeners.delete(l); }; };
@@ -65,7 +49,6 @@ export function confirmDialog(o: string | DialogOptions): Promise<boolean> {
   return new Promise((resolve) => push({ id: ++seq, kind: "confirm", opts, resolve }));
 }
 
-/** O'chirish / qaytarib bo'lmaydigan amal uchun tasdiq (qizil tugma) */
 export const confirmDelete = (o: string | DialogOptions): Promise<boolean> => confirmDialog({ tone: "danger", ...norm(o) });
 
 export function alertDialog(o: string | DialogOptions): Promise<void> {
@@ -86,7 +69,6 @@ const TONES: Record<Tone, { icon: string; badge: string; button: string }> = {
   danger: { icon: "trash", badge: "bg-rose-500/15 text-rose-600 dark:text-rose-400", button: "bg-rose-600 hover:bg-rose-700 focus-visible:ring-rose-400/50" },
 };
 
-/** Ilova layoutida bir marta turadi */
 export function DialogHost({ locale }: { locale: Locale }) {
   const items = useSyncExternalStore(subscribe, () => queue, () => EMPTY);
   const [mounted, setMounted] = useState(false);
@@ -125,14 +107,11 @@ function DialogCard({ req, locale }: { req: Request; locale: Locale }) {
   useEffect(() => {
     const before = document.activeElement as HTMLElement | null;
     (inputRef.current ?? okRef.current)?.focus();
-    // Ushlash bosqichida: ostidagi yon panel/oynalarning Escape tinglovchilari ishlamasin
     const onKey = (e: KeyboardEvent) => {
       if (e.key === "Escape") { e.preventDefault(); e.stopPropagation(); finishRef.current(false); return; }
       if (e.key !== "Enter") return;
       const el = e.target as HTMLElement | null;
-      // Ko'p qatorli maydonda Enter — yangi qator; yuborish Ctrl+Enter
       if (el?.tagName === "TEXTAREA" && !(e.ctrlKey || e.metaKey)) return;
-      // "Bekor qilish" ustida turgan bo'lsa — tugmaning o'z bosilishi ishlaydi
       if (el?.tagName === "BUTTON" && el !== okRef.current) return;
       e.preventDefault(); e.stopPropagation();
       if (canRef.current) finishRef.current(true);
@@ -141,7 +120,6 @@ function DialogCard({ req, locale }: { req: Request; locale: Locale }) {
     return () => { document.removeEventListener("keydown", onKey, true); before?.focus?.(); };
   }, []);
 
-  // Brauzer oynasidan qolgan "Sabab:" kabi yakuniy ikki nuqta sarlavhada ortiqcha
   const headline = (o.title ?? o.message ?? "").replace(/:\s*$/, "");
   const body = o.title ? o.message : undefined;
   const confirmLabel = o.confirmLabel ?? (

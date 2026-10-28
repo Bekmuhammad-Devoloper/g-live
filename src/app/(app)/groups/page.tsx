@@ -19,7 +19,6 @@ export default async function GroupsPage() {
     return <Forbidden title={t("err.forbidden")} body={t("err.forbiddenBody")} />;
   }
 
-  // Ko'lam cheklovi: har rol faqat o'ziga tegishlisini ko'radi
   let where: Prisma.GroupWhereInput = {};
   if (s.role === ROLES.TEACHER) {
     where = { teacherId: s.userId };
@@ -31,7 +30,6 @@ export default async function GroupsPage() {
     const ids = parent?.children.map((c) => c.studentId) ?? [];
     where = { students: { some: { studentId: { in: ids.length ? ids : ["__none__"] }, isActive: true } } };
   }
-  // Xodimlar faol filial guruhlarinigina ko'radi (o'quvchi/ota-ona o'z guruhini har doim ko'radi)
   if (![ROLES.STUDENT, ROLES.PARENT].includes(s.role as never)) {
     where = { AND: [where, branchWhere(s)] };
   }
@@ -51,8 +49,6 @@ export default async function GroupsPage() {
     prisma.groupStudent.count({ where: { isActive: false, group: where } }),
   ]);
 
-  // Filialga biriktirish — faqat rahbariyat, "Barcha filiallar" rejimida (filial ustuni chiqadi).
-  // Filial tanlangan bo'lsa-yu filialsiz guruhlar bo'lsa — ro'yxat "bo'sh" ko'rinadi; sababini aytamiz.
   const isHead = ([ROLES.DIRECTOR, ROLES.DEPUTY_DIRECTOR] as string[]).includes(s.role);
   const staffScoped = ![ROLES.STUDENT, ROLES.PARENT, ROLES.TEACHER].includes(s.role as never);
   const [branches, unassignedGroups] = await Promise.all([
@@ -89,8 +85,6 @@ export default async function GroupsPage() {
   }));
 
   const canCreate = getPermission(s.role, MODULES.GROUPS) === "FULL";
-  // Faol filialning barcha faol o'qituvchilari — filtr va guruh formasi uchun
-  // (guruhi bo'lmaganlari ham; qo'shimcha filial sifatida biriktirilganlar ham)
   const branchTeachers = await prisma.user.findMany({
     where: { AND: [{ role: ROLES.TEACHER, isActive: true }, staffBranchWhere(s)] },
     select: { id: true, fullName: true },
@@ -104,8 +98,6 @@ export default async function GroupsPage() {
       ])
     : [[], [], []];
 
-  // Filtr variantlari
-  // Filial o'qituvchilari + guruhlarda turgan (boshqa filialdan bo'lishi mumkin) ustozlar
   const teacherNames = Array.from(new Set([...branchTeachers.map((t) => t.fullName), ...vgroups.map((g) => g.teacherName).filter(Boolean)])) as string[];
   const programNames = Array.from(new Set(vgroups.map((g) => g.program)));
   const rooms = Array.from(new Set(vgroups.map((g) => g.room).filter(Boolean))) as string[];

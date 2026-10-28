@@ -90,7 +90,6 @@ export default function SalaryWorkspace({
 
   return (
     <div className="space-y-4">
-      {/* Boshqaruv paneli: davr navigatori + qidiruv + eksport */}
       <div className="flex flex-wrap items-center gap-2 print:hidden">
         <div className="flex items-center gap-1.5 rounded-lg border border-slate-200 bg-white p-1 dark:border-slate-700 dark:bg-slate-800">
           <button onClick={prev} className="flex h-8 w-8 items-center justify-center rounded-md text-slate-500 transition hover:bg-slate-100 dark:hover:bg-slate-700" aria-label={tr(locale, { uz: "Oldingi oy", ru: "Предыдущий месяц", en: "Previous month", de: "Vorheriger Monat" })}>‹</button>

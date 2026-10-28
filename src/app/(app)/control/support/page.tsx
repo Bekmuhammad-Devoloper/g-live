@@ -8,8 +8,6 @@ import { PageHeader, Card, StatCard, Table, EmptyRow, Badge, Forbidden } from ".
 const ALLOWED = [ROLES.DIRECTOR, ROLES.DEPUTY_DIRECTOR, ROLES.ADMIN];
 const DAYS = 7;
 
-// Qo'llab-quvvatlash analitikasi — tizimdan foydalanish: kim, qancha va qanday
-// amallar bajargani (audit jurnali asosida, oxirgi 7 kun)
 export default async function SupportAnalyticsPage() {
   const s = await requireSession();
   if (!ALLOWED.includes(s.role as never)) {
@@ -19,7 +17,6 @@ export default async function SupportAnalyticsPage() {
 
   const since = new Date(Date.now() - DAYS * 86_400_000);
 
-  // AuditLog'da branchId yo'q — faol filial xodimlari (muallif) orqali cheklaymiz
   const branchStaff = s.branchId
     ? await prisma.user.findMany({ where: staffBranchWhere(s), select: { id: true } })
     : null;

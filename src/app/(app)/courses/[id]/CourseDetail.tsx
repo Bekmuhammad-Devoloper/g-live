@@ -19,18 +19,15 @@ export interface CourseData {
   name: string;
   description: string | null;
   banners: string[];
-  monthlyFee: number | null; // oylik narx (bazadan) — qarz hisobida ishlatiladi
-  lessonsPerMonth: number; // oyiga darslar soni (bazadan)
+  monthlyFee: number | null;
+  lessonsPerMonth: number;
   studentsTotal: number;
   levels: { id: string; code: string; name: string; weeks: number | null; academicHours: number | null; passScore: number | null }[];
-  /** Sozlamalar > Darajalar katalogi (A1, A2 ...) */
   levelCodes: string[];
   groups: { id: string; name: string; teacher: string | null; students: number; status: string }[];
   materials: { id: string; title: string; kind: string; url: string | null; levelCode: string | null; note: string | null }[];
   courseLessons: VLesson[];
-  /** Darslar va materiallarni yuklash / tahrirlash / o'chirish */
   canManage: boolean;
-  /** Kursning O'ZINI va darajalarini tahrirlash/o'chirish (o'qituvchida yo'q — u faqat dars yuklaydi) */
   canEditCourse: boolean;
   locale: Locale;
 }
@@ -73,7 +70,6 @@ export default function CourseDetail({ course }: { course: CourseData }) {
       <h1 className="mb-6 text-3xl font-bold tracking-tight text-slate-900 dark:text-slate-100">{course.name}</h1>
 
       <div className="grid gap-6 lg:grid-cols-[340px_1fr]">
-        {/* Chap: kurs kartochkasi */}
         <div className="overflow-hidden rounded-2xl border border-slate-200/70 bg-white shadow-card dark:border-slate-800 dark:bg-slate-900">
           <div
             className="relative flex h-56 flex-col items-center px-4 pt-8"
@@ -94,7 +90,6 @@ export default function CourseDetail({ course }: { course: CourseData }) {
             {course.banners.length === 0 && <Icon name="graduation" className="mb-4 mt-auto h-16 w-16 text-white/85" />}
           </div>
 
-          {/* Banner galereyasi (bir nechta bo'lsa) */}
           {course.banners.length > 1 && (
             <div className="flex gap-2 overflow-x-auto border-b border-slate-100 px-3 py-2.5 dark:border-slate-800">
               {course.banners.map((b, i) => (
@@ -119,7 +114,6 @@ export default function CourseDetail({ course }: { course: CourseData }) {
           </div>
         </div>
 
-        {/* O'ng: tab'lar */}
         <div>
           <div className="mb-5 flex flex-wrap gap-6 border-b border-slate-200/70 dark:border-slate-800">
             {TABS.map((t) => (
@@ -220,7 +214,6 @@ export default function CourseDetail({ course }: { course: CourseData }) {
       {course.canEditCourse && <CourseFormDrawer
         mode="edit"
         locale={course.locale}
-        // Narx bazadan keladi, qolgan meta (kod, davomiylik) hozircha brauzerda
         initial={{ id: course.id, name: course.name, description: course.description, meta: { ...meta, price: course.monthlyFee ?? undefined, lessonsPerMonth: course.lessonsPerMonth }, banners: course.banners }}
         open={editOpen}
         onClose={() => setEditOpen(false)}

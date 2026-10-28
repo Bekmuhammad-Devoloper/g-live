@@ -5,13 +5,8 @@ import type { Locale } from "@/lib/constants";
 import { tr } from "@/lib/tr";
 import { Icon } from "../../_components/Icon";
 
-// Qo'ng'iroq yozuvi pleyeri — /api/telephony/recordings/<fayl>.wav dan real audio.
-// Birinchi bosilganda fayl yuklanadi, to'lqin (waveform) haqiqiy signaldan hisoblanadi.
-// Bo'sh yozuv (< ~100 bayt) yoki 404 — xato holati sifatida ko'rsatiladi (soxta audio yo'q).
-
 const BAR_COUNT = 32;
 
-// Brauzerdagi AudioContext limitiga tushib qolmaslik uchun bitta umumiy kontekst.
 let sharedCtx: AudioContext | null = null;
 function decoderCtx(): AudioContext | null {
   if (typeof window === "undefined") return null;
@@ -23,17 +18,15 @@ function decoderCtx(): AudioContext | null {
   return sharedCtx;
 }
 
-/** Yuklashdan oldingi barqaror (id bo'yicha) to'lqin — har renderda bir xil. */
 function placeholderBars(seed: string, n = BAR_COUNT): number[] {
   let h = 0;
   for (let i = 0; i < seed.length; i++) h = (h * 31 + seed.charCodeAt(i)) >>> 0;
   return Array.from({ length: n }, (_, i) => {
     h = (h * 1103515245 + 12345) & 0x7fffffff;
-    return 0.18 + ((h >> (i % 9)) % 70) / 100; // 0.18–0.88
+    return 0.18 + ((h >> (i % 9)) % 70) / 100;
   });
 }
 
-/** Dekodlangan audiodan haqiqiy amplituda ustunlari. */
 function computeBars(buffer: AudioBuffer, n = BAR_COUNT): number[] {
   const raw = buffer.getChannelData(0);
   const step = Math.max(1, Math.floor(raw.length / n));
@@ -76,7 +69,7 @@ export default function Waveform({
 }) {
   const [state, setState] = useState<State>("idle");
   const [bars, setBars] = useState<number[]>(() => placeholderBars(id));
-  const [progress, setProgress] = useState(0); // 0..1
+  const [progress, setProgress] = useState(0);
   const [current, setCurrent] = useState(0);
   const [total, setTotal] = useState(duration);
   const [size, setSize] = useState(0);
@@ -107,7 +100,6 @@ export default function Waveform({
         return null;
       }
       const blob = await res.blob();
-      // WAV sarlavhasidan katta bo'lmagan fayl — bo'sh yozuv, ijro etilmaydi
       if (blob.size <= 100) {
         setErrText(empty);
         return null;
@@ -116,7 +108,6 @@ export default function Waveform({
       const url = URL.createObjectURL(blob);
       blobUrlRef.current = url;
 
-      // To'lqinni haqiqiy signaldan hisoblaymiz (dekodlanmasa — o'rnini bosuvchi qoladi)
       try {
         const ctx = decoderCtx();
         if (ctx) {
@@ -126,7 +117,6 @@ export default function Waveform({
           if (isFinite(decoded.duration) && decoded.duration > 0) setTotal(decoded.duration);
         }
       } catch {
-        /* dekodlab bo'lmadi — o'rnini bosuvchi to'lqin qoladi */
       }
       return url;
     } catch {

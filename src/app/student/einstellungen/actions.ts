@@ -8,9 +8,6 @@ import { S } from "../_i18n";
 
 export type Res = { ok?: boolean; error?: string };
 
-// Ilova tilini o'zgartirish — faqat o'z hisobiga ta'sir qiladi.
-// Til sessiya tokenida ham saqlanadi, shu sabab bazani yangilash yetmaydi:
-// token qayta imzolanmasa, ilova eski tilda qolib ketadi.
 export async function setLocale(locale: string): Promise<Res> {
   const s = await requireSession();
   const t = S(s.locale);

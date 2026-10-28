@@ -1,21 +1,14 @@
 import type { Locale } from "@/lib/constants";
 
-// O'quvchi portalining matnlari. Maket nemischa edi, ammo o'quvchi tilni
-// almashtirganda butun ilova o'sha tilga o'tishi kerak — shu sabab barcha
-// ko'rinadigan matn shu yerda. Kurs materiali (dars nomi, so'zlar) tarjima
-// qilinmaydi: u nemis tilining o'zi.
-
 type T = { uz: string; ru: string; en: string; de: string };
 const p = (uz: string, ru: string, en: string, de: string): T => ({ uz, ru, en, de });
 
 const DICT = {
-  // ── Pastki menyu ──
   navStart: p("Boshi", "Главная", "Start", "Start"),
   navCourses: p("Kurslar", "Курсы", "Courses", "Kurse"),
   navPractice: p("Mashq", "Практика", "Practice", "Üben"),
   navProfile: p("Profil", "Профиль", "Profile", "Profil"),
 
-  // ── Umumiy ──
   back: p("Orqaga", "Назад", "Back", "Zurück"),
   loading: p("Yuklanmoqda…", "Загрузка…", "Loading…", "Wird geladen…"),
   save: p("Saqlash", "Сохранить", "Save", "Speichern"),
@@ -26,7 +19,6 @@ const DICT = {
   coins: p("tanga", "монет", "coins", "Münzen"),
   stars: p("yulduz", "звёзд", "stars", "Sterne"),
 
-  // ── Start ekrani: keyingi dars va dars kunlari kalendari ──
   nextLessonTitle: p("Keyingi dars", "Следующий урок", "Next lesson", "Nächste Stunde"),
   tomorrow: p("Ertaga", "Завтра", "Tomorrow", "Morgen"),
   noSchedule: p("Dars jadvali hali belgilanmagan", "Расписание ещё не задано", "Schedule not set yet", "Stundenplan noch nicht festgelegt"),
@@ -47,7 +39,6 @@ const DICT = {
   roomShort: p("xona", "ауд.", "room", "Raum"),
   inDays: p("{n} kundan keyin", "через {n} дн.", "in {n} days", "in {n} Tagen"),
 
-  // ── Start ekrani ──
   words: p("So'zlar", "Слова", "Words", "Wörter"),
   reading: p("O'qish", "Чтение", "Reading", "Lesen"),
   listening: p("Tinglash", "Аудирование", "Listening", "Hören"),
@@ -67,14 +58,12 @@ const DICT = {
   lesson: p("Dars", "Урок", "Lesson", "Lektion"),
   chapter: p("Bo'lim", "Раздел", "Chapter", "Kapitel"),
 
-  // ── Kurslar ──
   courses: p("Kurslar", "Курсы", "Courses", "Kurse"),
   lessons: p("dars", "уроков", "lessons", "Lektionen"),
   current: p("JORIY", "ТЕКУЩИЙ", "CURRENT", "AKTUELL"),
   noLessons: p("Bu daraja uchun hali dars yo'q.", "Для этого уровня уроков пока нет.", "No lessons for this level yet.", "Für dieses Niveau gibt es noch keine Lektionen."),
   teacherAdds: p("Ustoz tez orada qo'shadi.", "Преподаватель скоро добавит.", "The teacher will add them soon.", "Die Lehrkraft fügt sie bald hinzu."),
 
-  // ── Darslar yo'li (daraja ichi) ──
   pathDone: p("O'tildi", "Пройден", "Completed", "Abgeschlossen"),
   pathCurrent: p("Joriy dars", "Текущий урок", "Current lesson", "Aktuelle Lektion"),
   pathUpcoming: p("Navbatda", "Далее", "Up next", "Als Nächstes"),
@@ -83,11 +72,9 @@ const DICT = {
   levelFinishHint: p("Barcha darsni o'tsangiz shu yerga yetasiz", "Пройдите все уроки, чтобы дойти сюда", "Finish every lesson to reach this point", "Schließe alle Lektionen ab, um hierher zu gelangen"),
   levelFinished: p("Bu darajani yakunladingiz!", "Вы завершили этот уровень!", "You finished this level!", "Du hast dieses Niveau abgeschlossen!"),
   vocabulary: p("Lug'at", "Словарь", "Vocabulary", "Wortschatz"),
-  // Ustoz yuklagan lug'at fayli (pdf/word/txt) — "Lug'at" bo'limidagi karta
   vocabFile: p("Lug'at fayli", "Файл словаря", "Vocabulary file", "Wortschatzdatei"),
   vocabFileHint: p("Ustoz tayyorlagan so'zlar ro'yxati", "Список слов от преподавателя", "Word list prepared by your teacher", "Wortliste von der Lehrkraft"),
 
-  // ── So'z mashqi ──
   practiceWords: p("So'zlarni mashq qilish", "Потренировать слова", "Practise the words", "Wörter üben"),
   practiceHint: p("Tarjimasiga qarab nemischasini tanlang", "По переводу выберите немецкое слово", "Pick the German word for each translation", "Wähle zur Übersetzung das deutsche Wort"),
   practiceAgain: p("Yana mashq qilish", "Потренироваться ещё", "Practise again", "Nochmal üben"),
@@ -102,7 +89,6 @@ const DICT = {
   close: p("Yopish", "Закрыть", "Close", "Schließen"),
   vocabTooFew: p("Mashq uchun kamida 2 ta tarjimali so'z kerak", "Для тренировки нужно минимум 2 слова с переводом", "Practice needs at least 2 words with translations", "Zum Üben braucht es mindestens 2 Wörter mit Übersetzung"),
 
-  // ── Mashq bosqichlari ──
   stage: p("Bosqich", "Этап", "Stage", "Stufe"),
   stage1Name: p("Tanish", "Узнавание", "Recognise", "Erkennen"),
   stage2Name: p("Teskari", "Обратно", "Reverse", "Umgekehrt"),
@@ -113,11 +99,8 @@ const DICT = {
   stage3Hint: p("Harflardan so'zni yig'ing", "Соберите слово из букв", "Build the word from its letters", "Setze das Wort aus den Buchstaben zusammen"),
   stage4Hint: p("So'zni ovoz chiqarib ayting", "Произнесите слово вслух", "Say the word out loud", "Sprich das Wort laut aus"),
 
-  // ── Talaffuz bosqichi ──
   sayWord: p("Shu so'zni ayting", "Произнесите это слово", "Say this word", "Sprich dieses Wort"),
   tapToSpeak: p("Bosing va ayting", "Нажмите и говорите", "Tap and speak", "Tippen und sprechen"),
-  // `listening` va `checking` nomlari allaqachon band ("Tinglash" ko'nikmasi
-  // va vazifa tekshiruvi), shu sabab mikrofon holatlari `mic` bilan
   micListening: p("Eshitilmoqda…", "Слушаю…", "Listening…", "Ich höre zu…"),
   micChecking: p("Tekshirilmoqda…", "Проверяю…", "Checking…", "Wird geprüft…"),
   heardYou: p("Eshitildi", "Услышано", "Heard", "Gehört"),
@@ -125,13 +108,9 @@ const DICT = {
   micDenied: p("Mikrofonga ruxsat berilmadi", "Доступ к микрофону запрещён", "Microphone access denied", "Mikrofonzugriff verweigert"),
   speakUnavailable: p("Hozir tekshirib bo'lmadi, qaytadan urinib ko'ring", "Сейчас не удалось проверить, попробуйте снова", "Could not check right now, try again", "Konnte gerade nicht prüfen, versuche es erneut"),
   skipStage: p("Bu bosqichni o'tkazib yuborish", "Пропустить этот этап", "Skip this stage", "Diese Stufe überspringen"),
-  // Gemini bepul tarifi: kuniga 20 ta so'rov
   quotaReached: p("Bugungi tekshiruv chegarasi tugadi — ertaga davom eting yoki Android ilovasida mashq qiling", "Дневной лимит проверок исчерпан — продолжите завтра или в приложении Android", "Today's check limit is used up — continue tomorrow or in the Android app", "Das Tageslimit für Prüfungen ist erreicht — morgen weitermachen oder in der Android-App üben"),
-  // Brauzerda talaffuz bosqichi yo'q — nutqni faqat telefonning o'zi taniydi
   speechOnlyInApp: p("Talaffuz bosqichi faqat Android ilovasida ishlaydi", "Этап произношения работает только в приложении Android", "The pronunciation stage works only in the Android app", "Die Aussprache-Stufe funktioniert nur in der Android-App"),
-  // Telefonda nutq tanish xizmati ishlamadi (Google xizmati yo'q yoki til yo'q)
   speechServiceMissing: p("Telefonda nutq tanish ishlamadi — Google ilovasi va nemis tili paketi kerak", "Распознавание речи на телефоне не работает — нужны приложение Google и немецкий язык", "Speech recognition failed on this phone — the Google app and German language pack are needed", "Spracherkennung auf diesem Telefon fehlgeschlagen — Google-App und deutsches Sprachpaket nötig"),
-  // Ilovaning eski versiyasida nutq tanish plagini yo'q
   updateApp: p("Talaffuz uchun ilovani yangilang: Sozlamalar → Ilovani o'rnatish", "Для произношения обновите приложение: Настройки → Установить приложение", "Update the app for pronunciation: Settings → Install app", "Für die Aussprache App aktualisieren: Einstellungen → App installieren"),
   chooseUzbek: p("Tarjimasi qaysi?", "Какой перевод?", "Which translation?", "Welche Übersetzung?"),
   buildWord: p("Shu so'zni yig'ing", "Соберите это слово", "Build this word", "Setze dieses Wort zusammen"),
@@ -150,7 +129,6 @@ const DICT = {
   lessonAssignment: p("Dars topshirig'i", "Задание урока", "Lesson assignment", "Lektionsaufgabe"),
   homeworkTask: p("Uyga vazifa", "Домашнее задание", "Homework", "Hausaufgabe"),
 
-  // ── Dars ichidagi uch bo'lim ──
   tabTasks: p("Vazifa", "Задание", "Tasks", "Aufgabe"),
   noWordsInLesson: p("Bu darsga hali so'z qo'shilmagan", "К этому уроку ещё не добавлены слова", "No words added to this lesson yet", "Zu dieser Lektion wurden noch keine Wörter hinzugefügt"),
   noTasksInLesson: p("Bu darsda vazifa yo'q", "В этом уроке нет заданий", "No tasks in this lesson", "Keine Aufgaben in dieser Lektion"),
@@ -159,7 +137,6 @@ const DICT = {
   lessonVideoSub: p("Video va dars topshirig'i", "Видео и задание урока", "Video and lesson assignment", "Video und Lektionsaufgabe"),
   lessonHomeworkSub: p("Uyga vazifa va topshirish", "Домашнее задание и сдача", "Homework and submission", "Hausaufgabe und Abgabe"),
 
-  // ── Video bo'limi ──
   videoSection: p("Video", "Видео", "Video", "Video"),
   exercise: p("Mashq", "Упражнение", "Exercise", "Übung"),
   videoExercise: p("Video mashq", "Упражнение к видео", "Video exercise", "Video-Übung"),
@@ -175,20 +152,17 @@ const DICT = {
   markWatched: p("Darsni ko'rib chiqdim", "Я посмотрел урок", "I have watched the lesson", "Ich habe die Lektion gesehen"),
   watchedDone: p("Dars ko'rildi", "Урок просмотрен", "Lesson watched", "Lektion gesehen"),
 
-  // ── Mashq (Üben) ──
   practice: p("Mashq", "Практика", "Practice", "Üben"),
   yourHomework: p("Uy vazifalaringiz", "Ваши домашние задания", "Your homework", "Deine Hausaufgaben"),
   tasks: p("Vazifalar", "Задания", "Tasks", "Aufgaben"),
   gamesAndBattle: p("Jang va o'yinlar", "Битва и игры", "Battle & games", "Kampf & Spiele"),
   testKnowledge: p("Bilimingizni sinab ko'ring", "Проверьте свои знания", "Test your knowledge", "Teste dein Wissen"),
 
-  // ── Bildirishnomalar ──
   messages: p("Xabarlar", "Сообщения", "Messages", "Mitteilungen"),
   yourMessages: p("Sizga kelgan xabarlar", "Ваши сообщения", "Your messages", "Deine Nachrichten"),
   allRead: p("Hammasi o'qilgan", "Все прочитаны", "All read", "Alles gelesen"),
   unreadCount: p("ta o'qilmagan xabar", "непрочитанных", "unread", "ungelesen"),
 
-  // ── Profil ──
   profile: p("Profil", "Профиль", "Profile", "Profil"),
   yourAccount: p("Hisobingiz", "Ваш аккаунт", "Your account", "Dein Konto"),
   attendance: p("Davomat", "Посещаемость", "Attendance", "Anwesenheit"),
@@ -205,7 +179,6 @@ const DICT = {
   absent: p("Kelmadi", "Не был", "Absent", "Fehlt"),
   sinceDate: p("dan beri", "с", "since", "seit"),
 
-  // ── Sozlamalar ──
   settings: p("Sozlamalar", "Настройки", "Settings", "Einstellungen"),
   accountControl: p("Hisobingiz boshqaruvi", "Управление аккаунтом", "Account management", "Kontoverwaltung"),
   appLanguage: p("Ilova tili", "Язык приложения", "App language", "App-Sprache"),
@@ -214,7 +187,6 @@ const DICT = {
   notifications: p("Bildirishnomalar", "Уведомления", "Notifications", "Benachrichtigungen"),
   security: p("Xavfsizlik", "Безопасность", "Security", "Sicherheit"),
 
-  // ── Sozlamalar sahifasi ──
   accountSection: p("Hisob", "Аккаунт", "Account", "Konto"),
   appSection: p("Ilova", "Приложение", "App", "App"),
   installApp: p("Ilovani o'rnatish", "Установить приложение", "Install the app", "App installieren"),
@@ -235,7 +207,6 @@ const DICT = {
   logout: p("Chiqish", "Выход", "Log out", "Abmelden"),
   contactCenter: p("O'zgartirish uchun ma'muriyatga murojaat qiling", "Для изменения обратитесь к администрации", "Contact the centre to change this", "Wenden Sie sich an die Verwaltung"),
 
-  // ── Lug'at ──
   dictionary: p("Lug'at", "Словарь", "Dictionary", "Wörterbuch"),
   myCourse: p("Kursim", "Мой курс", "My course", "Mein Kurs"),
   fullDictionary: p("Umumiy lug'at", "Общий словарь", "Full dictionary", "Gesamtes Wörterbuch"),
@@ -249,7 +220,6 @@ const DICT = {
   emptyDict: p("Lug'at hali bo'sh", "Словарь пока пуст", "The dictionary is empty", "Das Wörterbuch ist leer"),
   teacherAddsWords: p("Ustoz darslarga so'z qo'shgach shu yerda chiqadi.", "Появится, когда преподаватель добавит слова.", "Words appear once the teacher adds them.", "Erscheint, sobald die Lehrkraft Wörter hinzufügt."),
 
-  // ── Market ──
   market: p("Market", "Маркет", "Market", "Markt"),
   exchangeCoins: p("Tangangizni sovg'aga almashtiring", "Обменяйте монеты на призы", "Exchange your coins for rewards", "Tausche deine Münzen gegen Preise"),
   balance: p("Balans", "Баланс", "Balance", "Guthaben"),
@@ -268,11 +238,9 @@ const DICT = {
   ruleLevelUp: p("Yangi darajaga o'tgani", "За новый уровень", "Level up", "Neues Niveau"),
   ruleRankUp: p("Yulduz pog'onasi", "Звёздная ступень", "Star rank", "Sternenstufe"),
   rewards: p("Sovg'alar", "Призы", "Rewards", "Preise"),
-  // Hamyon kartasi
   toCheapest: p("Eng arzon sovg'agacha", "До самого дешёвого приза", "To the cheapest reward", "Bis zum günstigsten Preis"),
   canBuyNow: p("Sovg'a olishga yetadi", "Хватает на приз", "Enough for a reward", "Reicht für einen Preis"),
   notEarnedYet: p("Hali yig'ilmagan", "Пока не начислено", "Not earned yet", "Noch nicht verdient"),
-  // Tanga qoidalari uchun qisqa tushuntirish (aylanuvchi banner)
   hintLesson: p("Har bir darsga kelganingiz uchun", "За каждое посещённое занятие", "For every lesson you attend", "Für jede besuchte Unterrichtsstunde"),
   hintLessonView: p("Dars videosini oxirigacha ko'rsangiz", "Если досмотрите видео урока до конца", "When you watch a lesson video to the end", "Wenn Sie das Lektionsvideo zu Ende sehen"),
   hintHomework: p("Uy vazifasini topshirsangiz", "За сданное домашнее задание", "When you submit your homework", "Wenn Sie die Hausaufgabe abgeben"),
@@ -296,7 +264,6 @@ const DICT = {
   delivered: p("Berildi", "Выдано", "Delivered", "Ausgegeben"),
   cancelled: p("Bekor qilindi", "Отменено", "Cancelled", "Storniert"),
 
-  // ── Ustozga yozish ──
   writeTeacher: p("Ustozga yozish", "Написать преподавателю", "Message the teacher", "Lehrkraft schreiben"),
   yourTeacher: p("Sizning ustozingiz", "Ваш преподаватель", "Your teacher", "Deine Lehrkraft"),
   noTeacher: p("Ustoz biriktirilmagan", "Преподаватель не назначен", "No teacher assigned", "Keine Lehrkraft zugewiesen"),
@@ -307,7 +274,6 @@ const DICT = {
   sentToTeacher: p("Xabar ustozga yuborildi", "Сообщение отправлено", "Message sent", "Nachricht gesendet"),
   sentMessages: p("Yuborilgan xabarlar", "Отправленные сообщения", "Sent messages", "Gesendete Nachrichten"),
 
-  // ── Vazifalar ro'yxati ──
   skillSpeaking: p("Gapirish", "Речь", "Speaking", "Sprechen"),
   skillWriting: p("Yozish", "Письмо", "Writing", "Schreiben"),
   skillReading: p("O'qish", "Чтение", "Reading", "Lesen"),
@@ -331,18 +297,13 @@ const DICT = {
   noMessages: p("Xabar yo'q", "Сообщений нет", "No messages", "Keine Mitteilungen"),
   comingSoon: p("Tez orada", "Скоро", "Coming soon", "Bald verfügbar"),
 
-  // ── Start ekrani (qo'shimcha) ──
   discover: p("Ko'rish", "Смотреть", "Discover", "Entdecken"),
   learnWithContent: p("Qiziqarli materiallar bilan nemis tilini o'rganing", "Учите немецкий с интересными материалами", "Learn German with engaging content", "Lerne Deutsch mit spannenden Inhalten"),
   everydayBasics: p("Kundalik hayot asoslari", "Основы повседневной жизни", "Everyday basics", "Grundlagen des Alltags"),
   comingSoonBadge: p("Tez orada", "Скоро", "Coming soon", "Bald verfügbar"),
 
-  // ── Guvohnoma (ID-karta) ──
   birthDate: p("Tug'ilgan sana", "Дата рождения", "Date of birth", "Geburtsdatum"),
   age: p("Yoshi", "Возраст", "Age", "Alter"),
-  // Guvohnomadagi yorliq ustuni tor: "2-chi raqam" sig'may, "2-CHI RA..."
-  // bo'lib kesilardi. Qatorda raqamning o'zi ko'rinib turgani uchun uni
-  // "nechanchi" ekanini yozish shart emas — oddiy "Telefon" tushunarli.
   phone2: p("Telefon", "Телефон", "Phone", "Telefon"),
   photo: p("Rasm", "Фото", "Photo", "Foto"),
   removePhoto: p("O'chirish", "Удалить", "Remove", "Entfernen"),
@@ -380,7 +341,6 @@ const DICT = {
   today: p("Bugun", "Сегодня", "Today", "Heute"),
   yesterday: p("Kecha", "Вчера", "Yesterday", "Gestern"),
 
-  // ── Ikkinchi miya (Zweites Gehirn) ──
   brain: p("Ikkinchi miya", "Второй мозг", "Second brain", "Zweites Gehirn"),
   brainSub: p("Shaxsiy rivojlanish daftaringiz", "Ваша тетрадь развития", "Your personal growth notebook", "Ihr Notizbuch für persönliche Entwicklung"),
   brainHint: p(
@@ -417,7 +377,6 @@ const DICT = {
   emptyGraph: p("Graf bo'sh — avval yozuv qo'shing", "Граф пуст — добавьте заметки", "The graph is empty — add notes first", "Der Graph ist leer — fügen Sie Notizen hinzu"),
   graphHint: p("Tugunni bosing — yozuv ochiladi", "Нажмите на узел — откроется заметка", "Tap a node to open the note", "Tippen Sie auf einen Knoten, um die Notiz zu öffnen"),
 
-  // Yozuv turlari
   kindNOTE: p("Yozuv", "Заметка", "Note", "Notiz"),
   kindIDEA: p("G'oya", "Идея", "Idea", "Idee"),
   kindGOAL: p("Maqsad", "Цель", "Goal", "Ziel"),
@@ -425,12 +384,10 @@ const DICT = {
   kindPERSON: p("Inson", "Человек", "Person", "Person"),
   kindDAILY: p("Kundalik", "Дневник", "Daily", "Tagebuch"),
 
-  // ── Server amallarining xatolari (o'quvchiga ko'rinadi) ──
   forbidden: p("Ruxsat yo'q", "Нет доступа", "No access", "Kein Zugriff"),
   studentNotFound: p("O'quvchi topilmadi", "Ученик не найден", "Student not found", "Schüler nicht gefunden"),
   unknownLocale: p("Noma'lum til", "Неизвестный язык", "Unknown language", "Unbekannte Sprache"),
 
-  // ── Profil tahriri ──
   nameTooShort: p("Ism-familiya juda qisqa", "Имя и фамилия слишком короткие", "Name is too short", "Name ist zu kurz"),
   nameTooLong: p("Ism-familiya juda uzun", "Имя и фамилия слишком длинные", "Name is too long", "Name ist zu lang"),
   birthInvalid: p("Tug'ilgan sana noto'g'ri", "Неверная дата рождения", "Invalid date of birth", "Ungültiges Geburtsdatum"),
@@ -444,7 +401,6 @@ const DICT = {
   repeatPassword: p("Yangi parol (takror)", "Новый пароль (повторите)", "New password (repeat)", "Neues Passwort (wiederholen)"),
   saving: p("Saqlanmoqda…", "Сохранение…", "Saving…", "Wird gespeichert…"),
 
-  // ── Dars vazifalari ──
   score: p("Ball", "Балл", "Score", "Punkte"),
   taskAccepted: p("Vazifa qabul qilindi", "Задание принято", "Task accepted", "Aufgabe angenommen"),
   taskReturned: p("Qayta ishlash kerak", "Нужно доработать", "Needs rework", "Überarbeitung nötig"),
@@ -467,7 +423,6 @@ const DICT = {
   passedCount: p("O'tganlar", "Сдали", "Passed", "Bestanden"),
   persons: p("nafar", "чел.", "students", "Schüler"),
 
-  // ── Reyting ──
   scopeGroup: p("Guruh ichida", "Внутри группы", "Within the group", "In der Gruppe"),
   scopeBranch: p("Filial bo'yicha", "По филиалу", "Across the branch", "Nach Filiale"),
   scopeCenter: p("Butun markaz", "Весь центр", "Whole centre", "Ganzes Zentrum"),
@@ -483,7 +438,6 @@ const DICT = {
   tiedResult: p("teng natija", "равный результат", "tied", "gleichauf"),
   firstShownOf: p("Birinchi {n} ta ko'rsatilgan — jami {total} o'quvchi", "Показаны первые {n} — всего {total} учеников", "First {n} shown — {total} students in total", "Die ersten {n} angezeigt — insgesamt {total} Schüler"),
 
-  // ── Jang (o'yinlar) ──
   modeAi: p("AI ga qarshi", "Против ИИ", "Against AI", "Gegen KI"),
   modeAiSub: p("Sun'iy intellekt bilan bellashing", "Сразитесь с искусственным интеллектом", "Compete against the AI", "Tritt gegen die KI an"),
   modeDuel: p("Duel", "Дуэль", "Duel", "Duell"),
@@ -539,7 +493,6 @@ const DICT = {
   duelResultTitle: p("Duel yakuni: {verdict}", "Итог дуэли: {verdict}", "Duel result: {verdict}", "Duell-Ergebnis: {verdict}"),
   duelResultBody: p("{a} : {b} ({name})", "{a} : {b} ({name})", "{a} : {b} ({name})", "{a} : {b} ({name})"),
 
-  // ── Market ──
   giftUnavailable: p("Sovg'a mavjud emas", "Подарок недоступен", "Gift unavailable", "Geschenk nicht verfügbar"),
   giftOtherBranch: p("Bu sovg'a boshqa filialda", "Этот подарок в другом филиале", "This gift is at another branch", "Dieses Geschenk ist in einer anderen Filiale"),
   outOfStock: p("Zaxira tugagan", "Закончился", "Out of stock", "Ausverkauft"),
@@ -547,33 +500,27 @@ const DICT = {
   marketNewOrder: p("Market: yangi buyurtma", "Маркет: новый заказ", "Market: new order", "Markt: neue Bestellung"),
   marketOrderBody: p("{name} — {item} ({price} tanga)", "{name} — {item} ({price} монет)", "{name} — {item} ({price} coins)", "{name} — {item} ({price} Münzen)"),
 
-  // ── Ustoz bilan chat ──
   messageEmpty: p("Xabar bo'sh", "Пустое сообщение", "Message is empty", "Nachricht ist leer"),
   messageTooLong: p("Xabar {n} belgidan oshmasin", "Сообщение не длиннее {n} символов", "Message must be at most {n} characters", "Nachricht darf höchstens {n} Zeichen haben"),
   studentWroteYou: p("{name} xabar yozdi", "{name} написал(а) сообщение", "{name} sent a message", "{name} hat geschrieben"),
 
-  // ── Xato sahifasi ──
   errTitle: p("Nimadir noto'g'ri ketdi", "Что-то пошло не так", "Something went wrong", "Etwas ist schiefgelaufen"),
   errBody: p("Sahifani ochib bo'lmadi. Internetni tekshirib, qaytadan urinib ko'ring. Takrorlansa — administratorga xabar bering.", "Не удалось открыть страницу. Проверьте интернет и попробуйте снова. Если повторится — сообщите администратору.", "The page could not be opened. Check your connection and try again. If it repeats, tell the administrator.", "Die Seite konnte nicht geöffnet werden. Prüfe die Verbindung und versuche es erneut. Bei Wiederholung den Administrator informieren."),
   retry: p("Qaytadan urinish", "Попробовать снова", "Try again", "Erneut versuchen"),
   toHome: p("Bosh sahifaga", "На главную", "To home", "Zur Startseite"),
 
-  // ── Hisob bog'lanmagan ──
   accountNotLinked: p("Hisob bog'lanmagan", "Аккаунт не привязан", "Account not linked", "Konto nicht verknüpft"),
   accountNotLinkedBody: p("Sizning hisobingizga o'quvchi profili biriktirilmagan yoki u o'chirilgan. Administratorga murojaat qiling.", "К вашему аккаунту не привязан профиль ученика или он удалён. Обратитесь к администратору.", "No student profile is linked to your account, or it was removed. Contact the administrator.", "Mit deinem Konto ist kein Schülerprofil verknüpft oder es wurde entfernt. Wende dich an die Verwaltung."),
 
-  // ── Bildirishnomalar ro'yxati ──
   noMessagesHint: p("Hozircha xabar yo'q.", "Пока сообщений нет.", "No messages yet.", "Noch keine Mitteilungen."),
   markAllRead: p("Hammasini o'qilgan deb belgilash", "Отметить всё прочитанным", "Mark all as read", "Alle als gelesen markieren"),
 
-  // ── Yozuv sintaksisi eslatmasi ──
   mdLink: p("[[Sarlavha]]", "[[Заголовок]]", "[[Title]]", "[[Titel]]"),
   mdTag: p("#teg", "#тег", "#tag", "#tag"),
   mdHeading: p("# bo'lim", "# раздел", "# section", "# Abschnitt"),
   mdList: p("- ro'yxat", "- список", "- list", "- Liste"),
   mdCheck: p("- [ ] belgi", "- [ ] отметка", "- [ ] checkbox", "- [ ] Kästchen"),
 
-  // ── Lug'at ustuni ──
   uzbekLabel: p("O'zbekcha", "Узбекский", "Uzbek", "Usbekisch"),
 } as const;
 
@@ -588,18 +535,12 @@ export function S(locale: Locale): StudentStrings {
 export type StudentKey = keyof typeof DICT;
 export type StudentText = T;
 
-/** "{name}" kabi joy tutuvchilarni to'ldiradi: fill("{n} kishi", { n: 3 }) → "3 kishi" */
 export function fill(s: string, vars: Record<string, string | number>): string {
   let out = s;
   for (const [k, v] of Object.entries(vars)) out = out.split(`{${k}}`).join(String(v));
   return out;
 }
 
-/**
- * Bitta kalitning TO'RT tili — oluvchining tili keyin aniqlanadigan joylar
- * uchun (bildirishnoma: yozayotgan o'quvchi emas, OLUVCHI tilida ko'rinsin).
- * Joy tutuvchi qiymati satr, son yoki o'zi to'rt tilli matn bo'lishi mumkin.
- */
 export function LT(key: StudentKey, vars: Record<string, string | number | T> = {}): T {
   const v = DICT[key];
   const one = (locale: Locale) => {

@@ -10,10 +10,8 @@ import KindIcon from "../KindIcon";
 import NoteText from "../NoteText";
 import { deleteNote, updateNote } from "../actions";
 
-// Yozuv sahifasi: ko'rish va tahrirlash bitta joyda (mobil uchun qulayroq).
-
 export interface LinkRef {
-  id: string | null; // null — hali yaratilmagan yozuv
+  id: string | null;
   title: string;
   kind: string;
 }
@@ -113,7 +111,6 @@ export default function NoteDetail({
       />
 
       {edit ? (
-        /* ── Tahrirlash ── */
         <div className={`${CARD} space-y-3 p-5`}>
           <input
             value={title}
@@ -147,7 +144,6 @@ export default function NoteDetail({
             className="w-full resize-y rounded-2xl border-0 bg-[#eef6fa] px-4 py-3 font-mono text-[13.5px] leading-relaxed text-slate-800 outline-none placeholder:font-sans placeholder:text-slate-400"
           />
 
-          {/* Sintaksis eslatmasi */}
           <p className="text-[11.5px] leading-relaxed text-slate-600">
             <code className="rounded bg-white/60 px-1">{t.mdLink}</code> · <code className="rounded bg-white/60 px-1">{t.mdTag}</code> ·{" "}
             <code className="rounded bg-white/60 px-1">{t.mdHeading}</code> · <code className="rounded bg-white/60 px-1">{t.mdList}</code> ·{" "}
@@ -173,7 +169,6 @@ export default function NoteDetail({
             </button>
           </div>
 
-          {/* O'chirish */}
           <div className="border-t border-slate-100 pt-3">
             {confirmDel ? (
               <div className="flex items-center gap-2">
@@ -194,7 +189,6 @@ export default function NoteDetail({
         </div>
       ) : (
         <>
-          {/* ── Ko'rish ── */}
           <div className={`${CARD} p-5`}>
             <div className="mb-2 flex flex-wrap items-center gap-1.5">
               <span
@@ -212,18 +206,14 @@ export default function NoteDetail({
             <NoteText content={note.content} ids={ids} empty={t.brainStart} />
           </div>
 
-          {/* ── Bu yozuvdagi havolalar ── */}
           {outgoing.length > 0 && <LinkList title={t.outlinks} items={outgoing} t={t} />}
 
-          {/* ── Bu yozuvga havolalar (backlinks) ── */}
           {incoming.length > 0 && <LinkList title={t.backlinks} items={incoming} t={t} />}
         </>
       )}
     </div>
   );
 }
-
-// ───────────── Havolalar ro'yxati ─────────────
 
 function LinkList({ title, items, t }: { title: string; items: LinkRef[]; t: StudentStrings }) {
   const router = useRouter();

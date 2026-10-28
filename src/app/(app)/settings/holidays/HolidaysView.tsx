@@ -12,8 +12,8 @@ import { Icon } from "../../_components/Icon";
 interface Holiday {
   id: string;
   name: string;
-  date: string; // YYYY-MM-DD
-  createdAt: string; // ISO
+  date: string;
+  createdAt: string;
   affectsPayment: boolean;
 }
 
@@ -31,7 +31,7 @@ function load(): Holiday[] {
   try { const raw = localStorage.getItem(KEY); return raw ? (JSON.parse(raw) as Holiday[]) : []; } catch { return []; }
 }
 function persist(list: Holiday[]) {
-  try { localStorage.setItem(KEY, JSON.stringify(list)); } catch { /* ignore */ }
+  try { localStorage.setItem(KEY, JSON.stringify(list)); } catch { }
 }
 
 export default function HolidaysView({ locale }: { locale: Locale }) {
@@ -63,7 +63,6 @@ export default function HolidaysView({ locale }: { locale: Locale }) {
 
   return (
     <div>
-      {/* Sarlavha + qo'shish */}
       <div className="mb-5 flex flex-wrap items-center justify-between gap-3">
         <h1 className="text-3xl font-bold tracking-tight text-slate-900 dark:text-slate-100">{T("Dam olish kunlari", "Выходные дни", "Holidays", "Feiertage")}</h1>
         <button
@@ -74,7 +73,6 @@ export default function HolidaysView({ locale }: { locale: Locale }) {
         </button>
       </div>
 
-      {/* Tab'lar */}
       <div className="mb-5 flex gap-6 border-b border-slate-200/70 dark:border-slate-800">
         {([["upcoming", T("Kelajakdagi", "Предстоящие", "Upcoming", "Bevorstehend")], ["past", T("Yakunlangan", "Прошедшие", "Past", "Vergangen")]] as const).map(([k, lbl]) => (
           <button
@@ -91,7 +89,6 @@ export default function HolidaysView({ locale }: { locale: Locale }) {
         ))}
       </div>
 
-      {/* Jadval */}
       <div className="overflow-hidden rounded-2xl border border-slate-200/70 bg-white shadow-card dark:border-slate-800 dark:bg-slate-900">
         <div className="overflow-x-auto">
           <table className="w-full min-w-[760px] text-left text-sm">

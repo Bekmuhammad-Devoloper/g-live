@@ -6,9 +6,6 @@ import { tr } from "@/lib/tr";
 import type { Locale } from "@/lib/constants";
 import { getStudentAccount, resetStudentAccount, saveStudentAccount, toggleStudentAccount, type Account } from "./accountActions";
 
-// O'quvchining ilova hisobi. Sukut bo'yicha login — ismi kichik harflarda,
-// parol — telefon raqami; ma'muriyat ikkalasini ham o'zgartira oladi.
-
 export default function AccountBox({
   studentId,
   locale,
@@ -30,7 +27,6 @@ export default function AccountBox({
 
   const L = (uz: string, ru: string, en: string, de: string) => tr(locale, { uz, ru, en, de });
 
-  // Nusxalash — HTTPS da Clipboard API, aks holda eski usul
   const copy = async (text: string, tag: string) => {
     try {
       if (navigator.clipboard?.writeText) await navigator.clipboard.writeText(text);

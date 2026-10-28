@@ -1,7 +1,5 @@
 import { getBrand } from "@/lib/brand";
 
-// O'quvchi portalining PWA manifesti — markaz nomi har bir nusxada o'zining brendidan olinadi
-// (avval public/student.webmanifest statik fayl edi).
 export const dynamic = "force-dynamic";
 
 export async function GET() {

@@ -6,11 +6,6 @@ import { staticBranchImage } from "@/lib/branchImage";
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
 
-// Filial rasmi — ochiq ariza sahifasi (/apply) filial tanlanganda orqa fon qiladi.
-// 1) Branch.imageUrl (galereyadan yuklangan data URL) — HTML ichiga qo'ymasdan
-//    shu yerdan oddiy rasm sifatida beriladi;
-// 2) yuklanmagan bo'lsa — public/branches/<slug>.jpg tayyor fayl (src/lib/branchImage.ts).
-// Login talab qilinmaydi — filial surati.
 export async function GET(_req: NextRequest, ctx: { params: Promise<{ id: string }> }) {
   const { id } = await ctx.params;
   const b = await prisma.branch.findUnique({ where: { id }, select: { name: true, imageUrl: true, isActive: true } });

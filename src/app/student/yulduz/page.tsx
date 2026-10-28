@@ -8,13 +8,6 @@ import { S, type StudentStrings } from "../_i18n";
 import { CARD, PageHeader, TEAL } from "../_ui";
 import MissingStudent from "../MissingStudent";
 
-// Yulduzni qanday yig'ish mumkin. Tanga uchun bunday sahifa Market ichida
-// bor edi, yulduz uchun esa hech qayerda yozilmagandi — o'quvchi raqamni
-// ko'rardi-yu, uni qanday ko'paytirishni bilmasdi.
-//
-// Qoidalar Sozlamalar > Ball va mukofotlar dan olinadi: bu yerda hech
-// qanday raqam qattiq yozilmagan.
-
 const RULE_LABEL = (t: StudentStrings, k: string) =>
   k === "lesson" ? t.ruleLesson
   : k === "lessonView" ? t.ruleLessonView
@@ -56,8 +49,6 @@ export default async function StudentStarsPage() {
   const stars = purse.earned;
   const step = progressOf(ranks, stars);
 
-  // Qiymati 0 bo'lgan qoida yulduz bermaydi — uni ko'rsatish chalg'itadi.
-  // Yig'ilgani tepada tursin: o'quvchiga o'zi bajargani qiziqroq.
   const rules = purse.lines
     .filter((l) => (l.per ?? 0) > 0)
     .sort((a, b) => (b.count > 0 ? 1 : 0) - (a.count > 0 ? 1 : 0) || b.total - a.total);
@@ -66,7 +57,6 @@ export default async function StudentStarsPage() {
     <div className="space-y-4">
       <PageHeader title={t.stars} subtitle={t.starRule} backLabel={t.back} back="/student" />
 
-      {/* ── Hisob ── */}
       <div
         className="relative overflow-hidden rounded-[26px] p-5 text-white shadow-[0_16px_34px_-18px_rgba(14,116,144,0.9)]"
         style={{ background: `linear-gradient(135deg, #17a2bf, ${TEAL})` }}
@@ -84,7 +74,6 @@ export default async function StudentStarsPage() {
           </div>
         </div>
 
-        {/* Yulduz nima uchun kerak — daraja sahifasiga ko'prik */}
         {step.current && (
           <Link
             href="/student/daraja"
@@ -110,7 +99,6 @@ export default async function StudentStarsPage() {
         )}
       </div>
 
-      {/* ── Qoidalar ── */}
       <div className="px-1 text-[11px] font-bold uppercase tracking-[0.18em]" style={{ color: TEAL }}>
         {t.starRule}
       </div>

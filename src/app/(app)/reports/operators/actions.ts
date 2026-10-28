@@ -12,17 +12,12 @@ import { notify } from "@/lib/notify";
 export interface OpResult {
   ok?: boolean;
   error?: string;
-  // Yaratilgandan keyin bir marta ko'rsatiladigan kirish ma'lumotlari
   credentials?: { fullName: string; email: string; password: string };
 }
 
 const txt = (fd: FormData, k: string) => String(fd.get(k) ?? "").trim();
-// Formatlangan ("200 000") qiymatlardan bo'sh joylarni olib tashlab raqamga aylantiramiz
 const numOf = (v: FormDataEntryValue | null) => Math.max(0, Math.round(Number(String(v ?? "").replace(/\s/g, "")) || 0));
 
-// Bo'lim turi formadagi "kind" maydonidan (operator / admin) — huquq ham, rol ham shunga qarab.
-//   operator — Direktor/Administrator (USERS moduli) yoki ROP: operatorlar uning jamoasi;
-//   admin    — faqat rahbariyat va ROP (administrator hamkasbini boshqarmaydi).
 async function guard(fd: FormData) {
   const s = await requireSession();
   const kind: TeamKind = teamKindOf(fd.get("kind"));
@@ -37,15 +32,10 @@ function refresh(kind: TeamKind) {
 
 const notFoundMsg = (locale: string, kind: TeamKind) => tr(locale as never, TEAM[kind].t.notFound);
 
-// ─────────────────────────────────────────────────────────────
-// Yangi operator — MANAGER rolidagi foydalanuvchi yaratadi.
-// Filial (branchId) joriy sessiyadan olinadi.
-// ─────────────────────────────────────────────────────────────
 export async function createOperator(fd: FormData): Promise<OpResult> {
   const { s, error, kind, cfg } = await guard(fd);
   if (error) return { error };
 
-  // Administrator filialga biriktiriladi (formadan); operator — yaratuvchining filialida
   let branchId = s.branchId;
   if (kind === "admin") {
     const picked = txt(fd, "branchId");
@@ -81,7 +71,7 @@ export async function createOperator(fd: FormData): Promise<OpResult> {
       phone,
       sipExtension,
       passwordHash: await hashPassword(password),
-      plainPassword: password, // rahbariyat ko'rishi uchun ochiq nusxa
+      plainPassword: password,
       role: cfg.role,
       branchId,
       fiksa,
@@ -95,9 +85,6 @@ export async function createOperator(fd: FormData): Promise<OpResult> {
   return { ok: true, credentials: { fullName, email, password } };
 }
 
-// ─────────────────────────────────────────────────────────────
-// Operatorni tahrirlash
-// ─────────────────────────────────────────────────────────────
 export async function updateOperator(fd: FormData): Promise<OpResult> {
   const { s, error, kind, cfg } = await guard(fd);
   if (error) return { error };
@@ -117,7 +104,6 @@ export async function updateOperator(fd: FormData): Promise<OpResult> {
   const cur = await prisma.user.findUnique({ where: { id }, select: { id: true, role: true, sipExtension: true } });
   if (!cur || cur.role !== cfg.role) return { error: notFoundMsg(s.locale, kind) };
 
-  // Administratorni boshqa filialga o'tkazish (tanlangan bo'lsa)
   let branchPatch: { branchId?: string } = {};
   if (kind === "admin") {
     const picked = txt(fd, "branchId");
@@ -151,10 +137,6 @@ export async function updateOperator(fd: FormData): Promise<OpResult> {
   return { ok: true };
 }
 
-// ─────────────────────────────────────────────────────────────
-// Operatorni o'chirish = arxivlash (isActive=false).
-// Lid/qo'ng'iroq tarixi saqlanib qolishi uchun to'liq o'chirilmaydi.
-// ─────────────────────────────────────────────────────────────
 export async function archiveOperator(fd: FormData): Promise<OpResult> {
   const { s, error, kind, cfg } = await guard(fd);
   if (error) return { error };
@@ -171,9 +153,6 @@ export async function archiveOperator(fd: FormData): Promise<OpResult> {
   return { ok: true };
 }
 
-// ─────────────────────────────────────────────────────────────
-// Operatorga topshiriq berish (Task + bildirishnoma)
-// ─────────────────────────────────────────────────────────────
 export async function assignOperatorTask(fd: FormData): Promise<OpResult> {
   const { s, error, kind, cfg } = await guard(fd);
   if (error) return { error };
@@ -186,7 +165,6 @@ export async function assignOperatorTask(fd: FormData): Promise<OpResult> {
 
   if (!id) return { error: notFoundMsg(s.locale, kind) };
   if (title.length < 3) return { error: tr(s.locale, { uz: "Sarlavha kamida 3 ta harf bo'lsin", ru: "Заголовок — минимум 3 буквы", en: "Title must be at least 3 letters", de: "Der Titel muss mindestens 3 Buchstaben haben" }) };
-  // Topshiriq faqat shu bo'lim a'zosiga beriladi (administrator bo'limidan — administratorga)
   const target = await prisma.user.findUnique({ where: { id }, select: { role: true, branchId: true } });
   if (!target || target.role !== cfg.role) return { error: notFoundMsg(s.locale, kind) };
 
@@ -199,7 +177,7 @@ export async function assignOperatorTask(fd: FormData): Promise<OpResult> {
       dueAt: /^\d{4}-\d{2}-\d{2}$/.test(due) ? new Date(`${due}T00:00:00`) : null,
       assigneeId: id,
       authorId: s.userId,
-      branchId: kind === "admin" ? target.branchId : s.branchId, // administratorga — uning filialida
+      branchId: kind === "admin" ? target.branchId : s.branchId,
     },
     select: { id: true },
   });
@@ -209,9 +187,6 @@ export async function assignOperatorTask(fd: FormData): Promise<OpResult> {
   return { ok: true };
 }
 
-// ─────────────────────────────────────────────────────────────
-// Operatorga bildirishnoma yuborish
-// ─────────────────────────────────────────────────────────────
 export async function sendOperatorNotification(fd: FormData): Promise<OpResult> {
   const { s, error, kind, cfg } = await guard(fd);
   if (error) return { error };

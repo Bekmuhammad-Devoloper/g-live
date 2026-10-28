@@ -1,11 +1,6 @@
 import "server-only";
 import data from "@/data/dict-de-uz.json";
 
-// Nemischa-o'zbekcha lug'at (bosma nashrdan raqamlashtirilgan, ~6200 so'z).
-// Maydonlar qisqartirilgan — fayl hajmi kichik bo'lishi uchun:
-//   de — nemischa so'z, g — rod (m/f/n/pl), p — so'z turkumi,
-//   f — grammatik shakl, s — soha (zool., bot. ...), uz — tarjima, l — harf.
-
 export type DictEntry = {
   de: string;
   g: "m" | "f" | "n" | "pl" | null;
@@ -21,7 +16,6 @@ const ALL = data as DictEntry[];
 export const DICT_SIZE = ALL.length;
 export const DICT_LETTERS = [...new Set(ALL.map((e) => e.l))].sort();
 
-// Qidiruv uchun oldindan tayyorlangan kichik harfli nusxa (har so'rovda qayta hisoblanmasin)
 const INDEX = ALL.map((e) => ({ de: e.de.toLowerCase(), uz: e.uz.toLowerCase() }));
 
 export type DictQuery = { q?: string; letter?: string; limit?: number };
@@ -39,7 +33,6 @@ export function searchDict({ q = "", letter = "", limit = 60 }: DictQuery) {
       continue;
     }
     const de = INDEX[i].de;
-    // Aniq moslik → so'z boshi → ichida → tarjimada: shu tartibda chiqadi
     const rank = de === needle ? 0 : de.startsWith(needle) ? 1 : de.includes(needle) ? 2 : INDEX[i].uz.includes(needle) ? 3 : -1;
     if (rank >= 0) hits.push({ e, rank });
   }
@@ -48,7 +41,6 @@ export function searchDict({ q = "", letter = "", limit = 60 }: DictQuery) {
   return { total: hits.length, items: hits.slice(0, limit).map((h) => h.e) };
 }
 
-// Artikl — o'quvchi rodni yodda saqlashi uchun eng foydali ma'lumot
 export const ARTICLE: Record<string, string> = { m: "der", f: "die", n: "das", pl: "die" };
 
 export const POS_LABEL: Record<string, string> = {
@@ -62,10 +54,6 @@ export const POS_LABEL: Record<string, string> = {
   konj: "bog'lovchi",
   int: "undov",
 };
-
-// ── Bitta so'zni topish ──
-// Kurs darslaridagi so'zlar ("das Haus", "guten Tag") shu baza bilan
-// bog'lanadi: o'quvchi ustoz tarjima yozmagan bo'lsa ham ma'nosini ko'radi.
 
 const BY_KEY = new Map<string, DictEntry>();
 for (const e of ALL) {
@@ -84,23 +72,17 @@ export function lookup(word: string): DictEntry | null {
 
   const parts = w.split(/\s+/);
   if (parts.length > 1) {
-    // "das Haus" -> "haus"
     if (ARTICLES.has(parts[0])) {
       const rest = BY_KEY.get(parts.slice(1).join(" "));
       if (rest) return rest;
       const one = BY_KEY.get(parts[1]);
       if (one) return one;
     }
-    // "guten Tag" -> asosiy ot odatda oxirida
     const last = BY_KEY.get(parts[parts.length - 1]);
     if (last) return last;
   }
   return null;
 }
-
-// ── "Jang" o'yinlari uchun so'z tanlash ──
-// O'yinga har so'z ham to'g'ri kelmaydi: qo'shma iboralar, juda qisqa yoki
-// juda uzun so'zlar, tarjimasi bo'sh yozuvlar chiqarib tashlanadi.
 
 const clean = (e: DictEntry) =>
   !e.de.includes(" ") &&
@@ -109,14 +91,11 @@ const clean = (e: DictEntry) =>
   /^[A-Za-zÄÖÜäöüß-]+$/.test(e.de) &&
   e.uz.trim().length >= 2;
 
-// Tarjimadagi qavs ichidagi izoh va sinonimlar olib tashlanadi —
-// savolda faqat asosiy ma'no ko'rinsin
 export const shortUz = (uz: string) =>
   uz.replace(/\([^)]*\)/g, "").split(/[,;]/)[0].trim().slice(0, 60);
 
 const GAME_POOL = ALL.filter(clean);
 
-/** O'yin uchun tasodifiy so'zlar (nemischa + o'zbekcha) */
 export function gameWords(limit = 200): { de: string; uz: string }[] {
   const pool = [...GAME_POOL];
   const out: { de: string; uz: string }[] = [];
@@ -128,7 +107,6 @@ export function gameWords(limit = 200): { de: string; uz: string }[] {
   return out;
 }
 
-/** Grammatika o'yini uchun — rodi aniq otlar (der / die / das) */
 export function genderNouns(limit = 200): { de: string; uz: string; g: string }[] {
   const pool = GAME_POOL.filter((e) => e.g === "m" || e.g === "f" || e.g === "n");
   const out: { de: string; uz: string; g: string }[] = [];

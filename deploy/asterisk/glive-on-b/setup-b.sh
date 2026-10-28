@@ -1,23 +1,4 @@
 #!/usr/bin/env bash
-# ═══════════════════════════════════════════════════════════════════════════
-# 3-YO'L: 550552022 ni GCP serveridan (B, 34.179.202.164 — BOSHQA IP) ko'tarish.
-# Uztelecom bir IP = bir trunk qiladi; B'ning IP'si boshqa → 2277 (A) bilan to'qnashmaydi.
-#
-# SHART (Uztelecom'dan olinadi):
-#   SIP_SERVER — 2022 akkaunti INTERNETDAN ulanadigan SIP server (SBC) manzili
-#                (ichki 10.77.37.4 internetdan yopiq, u ishlamaydi)
-# SHART (GCP konsolida, firewall): UDP 5060 (SIP), UDP 10000-20000 (RTP) — 0.0.0.0/0
-#
-#   sudo bash setup-b.sh <SIP_SERVER> [SIP_PORT=5060]
-#   masalan: sudo bash setup-b.sh sbc.uztelecom.uz
-#
-# Nima qiladi: Asterisk 20 (apt) → /etc/asterisk: trunk 2022 (registratsiya + auth),
-# glive1…glive10 WebRTC operatorlari (parollar /opt/gl-edu/.env dagi SIP_OPERATOR{N}_PASS —
-# ilova o'zgarmaydi), AMI 5038 (ilova .env: ASTERISK_HOST=127.0.0.1:5038), dialplan
-# gl-from-trunk (route-lookup 127.0.0.1:3000) / gl-from-internal (chiquvchi 2022).
-# Eski A serveriga TEGMAYDI. Sinov muvaffaqiyatli bo'lsa: WSS_URL/TURN ni B'ga o'tkazish
-# (sip.germaniya.live → 34.179.202.164) va A'dagi smart-routing relayini B'ga burash — keyingi qadam.
-# ═══════════════════════════════════════════════════════════════════════════
 set -euo pipefail
 SIP_SERVER="${1:?Uztelecom internet SIP server manzili kerak (masalan sbc.uztelecom.uz)}"
 SIP_PORT="${2:-5060}"

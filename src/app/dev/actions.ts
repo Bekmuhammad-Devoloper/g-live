@@ -32,7 +32,6 @@ export async function logoutAction(): Promise<void> {
   redirect("/dev/login");
 }
 
-// ─── Markaz yaratish ───
 export interface CreateResult { ok: boolean; error?: string; steps?: Step[]; slug?: string; director?: { email: string; password: string }; url?: string }
 
 export async function createCenterAction(input: {
@@ -107,7 +106,6 @@ export async function createCenterAction(input: {
   return { ok: healthy, steps, slug, director: { email, password }, url: `https://${center.host}` };
 }
 
-// ─── Boshqaruv amallari ───
 async function mutate(slug: string, patch: Partial<Center>, action: string, extra: Record<string, unknown> = {}): Promise<{ ok: boolean; error?: string }> {
   const dev = await requireDev();
   const c = await updateCenter(slug, patch);
@@ -145,7 +143,7 @@ export async function updateInfoAction(slug: string, info: { name: string; plan:
   const c = await getCenter(slug); if (!c) return { ok: false, error: "Markaz topilmadi" };
   const name = info.name.trim().slice(0, 80);
   if (name.length < 2) return { ok: false, error: "Nom juda qisqa" };
-  if (name !== c.name) { try { await setBrandName(centerDb(slug), name); } catch { /* baza band bo'lsa keyingi safar */ } }
+  if (name !== c.name) { try { await setBrandName(centerDb(slug), name); } catch { } }
   return mutate(slug, {
     name, plan: info.plan.trim().slice(0, 40), contactName: info.contactName.trim().slice(0, 80),
     contactPhone: info.contactPhone.trim().slice(0, 30), notes: info.notes.trim().slice(0, 1000),
@@ -188,7 +186,6 @@ export async function backupAction(slug: string): Promise<{ ok: boolean; error?:
   return r.ok ? { ok: true } : { ok: false, error: r.out };
 }
 
-/** O'chirish: xizmat to'xtatiladi, subdomen olib tashlanadi; ma'lumotlar papkasi arxivga (o'chirilmaydi) */
 export async function deleteCenterAction(slug: string, confirm: string): Promise<{ ok: boolean; error?: string }> {
   const dev = await requireDev();
   if (confirm !== slug) return { ok: false, error: "Tasdiqlash uchun subdomenni aynan yozing" };
@@ -196,7 +193,7 @@ export async function deleteCenterAction(slug: string, confirm: string): Promise
   await glCenter("disable", slug);
   await glCenter("unsite", slug);
   const archived = path.join(CENTERS_ROOT, `.deleted-${slug}-${Date.now()}`);
-  try { await fs.rename(centerDir(slug), archived); } catch { /* papka yo'q */ }
+  try { await fs.rename(centerDir(slug), archived); } catch { }
   const reg = await readRegistry();
   reg.centers = reg.centers.map((x) => (x.slug === slug ? { ...x, status: "deleted" as const, lastError: `Arxiv: ${archived}` } : x));
   await writeRegistry(reg);
@@ -205,7 +202,6 @@ export async function deleteCenterAction(slug: string, confirm: string): Promise
   return { ok: true };
 }
 
-/** Hamma markazni joriy kodga moslash: sxema + qayta ishga tushirish (deploy'dan keyin avtomatik ham bajariladi) */
 export async function updateAllAction(): Promise<{ ok: boolean; results: { slug: string; ok: boolean; detail?: string }[] }> {
   const dev = await requireDev();
   const reg = await readRegistry();
@@ -220,7 +216,6 @@ export async function updateAllAction(): Promise<{ ok: boolean; results: { slug:
   return { ok: results.every((r) => r.ok), results };
 }
 
-/** Asosiy markaz (germaniya.live) litsenziyasi — /opt/gl-edu/.env dagi SUBSCRIPTION_UNTIL */
 export async function setMainLicenseAction(date: string): Promise<{ ok: boolean; error?: string }> {
   const dev = await requireDev();
   if (!/^\d{4}-\d{2}-\d{2}$/.test(date)) return { ok: false, error: "Sana noto'g'ri" };
@@ -238,7 +233,6 @@ export async function setMainLicenseAction(date: string): Promise<{ ok: boolean;
   return r.ok ? { ok: true } : { ok: false, error: `Sana yozildi, lekin qayta ishga tushmadi: ${r.out}` };
 }
 
-/** Asosiy markazni (germaniya.live) qayta ishga tushirish */
 export async function restartMainAction(): Promise<{ ok: boolean; error?: string }> {
   const dev = await requireDev();
   const r = await glCenter("main-restart");

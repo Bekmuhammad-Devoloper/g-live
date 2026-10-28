@@ -13,8 +13,8 @@ export interface VCourse {
   name: string;
   levels: number;
   groups: number;
-  banner: string | null; // birinchi banner (muqova)
-  monthlyFee: number | null; // oylik narx — BAZADAN keladi (qarz hisobida ishlatiladi)
+  banner: string | null;
+  monthlyFee: number | null;
 }
 
 export default function CoursesView({ courses, locale, canCreate }: { courses: VCourse[]; locale: Locale; canCreate: boolean }) {
@@ -22,12 +22,10 @@ export default function CoursesView({ courses, locale, canCreate }: { courses: V
   const [meta, setMeta] = useState<Record<string, CourseMeta>>({});
   const [addOpen, setAddOpen] = useState(false);
 
-  // Kurs kodi va davomiyligi hali brauzer xotirasida; narx esa bazadan keladi
   useEffect(() => { setMeta(loadMeta()); }, []);
 
   return (
     <div>
-      {/* Sarlavha + qo'shish tugmasi */}
       <div className="mb-6 flex flex-wrap items-center justify-between gap-3 border-b border-slate-200/70 pb-5 dark:border-slate-800">
         <h1 className="text-3xl font-bold tracking-tight text-slate-900 dark:text-slate-100">{T("Kurslar", "Курсы", "Courses", "Kurse")}</h1>
         {canCreate && (
@@ -40,7 +38,6 @@ export default function CoursesView({ courses, locale, canCreate }: { courses: V
         )}
       </div>
 
-      {/* Kartochkalar */}
       {courses.length === 0 ? (
         <div className="rounded-2xl border border-dashed border-slate-300 bg-white/60 py-20 text-center dark:border-slate-700 dark:bg-slate-900/40">
           <div className="text-4xl opacity-30">📚</div>

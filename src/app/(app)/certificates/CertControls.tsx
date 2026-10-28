@@ -56,7 +56,6 @@ export function IssueForm({ students, locale }: { students: { id: string; fullNa
 
       {open && (
         <div className="fixed inset-0 z-[80]">
-          {/* Yonboshdan ochiladigan panel (ilovadagi boshqa formalar kabi) */}
           <div className="absolute inset-0 bg-slate-900/50 backdrop-blur-sm" />
           <form ref={ref} action={action} className="animate-slide-in-right absolute right-0 top-0 flex h-full drawer-panel flex-col space-y-3 overflow-y-auto border-l border-slate-200 bg-white p-5 shadow-pop dark:border-white/10 dark:bg-[#15243d]">
             <div className="flex items-center justify-between">

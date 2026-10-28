@@ -12,13 +12,13 @@ export interface WLesson {
   teacher: string;
   room: string;
   course: string;
-  startsAt: string; // ISO
+  startsAt: string;
   hours: number;
 }
 
 interface Props {
   lessons: WLesson[];
-  defaultFrom: string; // YYYY-MM-DD
+  defaultFrom: string;
   defaultTo: string;
   locale: Locale;
 }
@@ -43,7 +43,6 @@ const PERIODS: { key: Period; label: Tr }[] = [
 const p2 = (n: number) => String(n).padStart(2, "0");
 const fmtHours = (h: number) => (h === 0 ? "—" : h % 1 === 0 ? String(h) : h.toFixed(1));
 
-// Davr bucketlarini [from,to] oralig'ida yaratish
 function buildBuckets(from: string, to: string, period: Period, locale: Locale) {
   const start = new Date(`${from}T00:00:00`);
   const end = new Date(`${to}T00:00:00`);
@@ -145,7 +144,6 @@ export default function WorkedHoursView({ lessons, defaultFrom, defaultTo, local
 
   return (
     <div className="space-y-4">
-      {/* Header */}
       <div className="flex flex-wrap items-start justify-between gap-3">
         <div>
           <h1 className="text-[24px] font-bold tracking-tight text-slate-900 dark:text-slate-100">{tr(locale, { uz: "O'quv markazga ishlab berilgan soatlar", ru: "Часы, отработанные для учебного центра", en: "Hours worked for the learning center", de: "Für das Lernzentrum geleistete Stunden" })}</h1>
@@ -191,14 +189,12 @@ export default function WorkedHoursView({ lessons, defaultFrom, defaultTo, local
         </div>
       </div>
 
-      {/* Kontent */}
       {isEmpty ? (
         <div className="flex h-64 flex-col items-center justify-center rounded-2xl border border-dashed border-slate-200 text-slate-400 dark:border-slate-700">
           <Icon name="clock" className="h-9 w-9 opacity-40" />
           <p className="mt-3 text-sm">{tr(locale, { uz: "Tanlangan oraliqda o'tilgan dars yo'q", ru: "За выбранный период проведённых уроков нет", en: "No lessons held in the selected range", de: "Im ausgewählten Zeitraum wurden keine Unterrichtsstunden abgehalten" })}</p>
         </div>
       ) : listView ? (
-        // Ro'yxat ko'rinishi — o'lcham bo'yicha jami soatlar
         <div className="overflow-hidden rounded-2xl border border-slate-200/70 bg-white shadow-card dark:border-slate-800 dark:bg-slate-900">
           {rows.map((r, i) => (
             <div key={r.name} className="flex items-center gap-3 border-b border-slate-100 px-5 py-3 last:border-0 dark:border-slate-800">
@@ -212,7 +208,6 @@ export default function WorkedHoursView({ lessons, defaultFrom, defaultTo, local
           ))}
         </div>
       ) : (
-        // Pivot jadval — o'lcham × davr
         <div className="overflow-hidden rounded-2xl border border-slate-200/70 bg-white shadow-card dark:border-slate-800 dark:bg-slate-900">
           <div className="overflow-x-auto">
             <table className="w-full text-left text-sm">

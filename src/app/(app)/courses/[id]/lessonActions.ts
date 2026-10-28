@@ -13,12 +13,12 @@ import { getBrand } from "@/lib/brand";
 
 export interface LessonInput {
   title: string;
-  levelCode?: string; // qaysi darajaga tegishli (A1, A2, B1 ...)
+  levelCode?: string;
   topic?: string;
   videoUrl?: string;
-  videoPosterUrl?: string; // video banneri (muqova rasmi)
-  vocabText?: string; // lug'at, qo'lda yozilgan
-  vocabFileUrl?: string; // lug'at fayli (pdf/word/txt)
+  videoPosterUrl?: string;
+  vocabText?: string;
+  vocabFileUrl?: string;
   materialUrl?: string;
   assignment?: string;
   assignmentFileUrl?: string;
@@ -98,7 +98,6 @@ export async function deleteCourseLesson(id: string): Promise<{ ok: boolean }> {
   return { ok: true };
 }
 
-// Ketma-ketlikni o'zgartirish — qo'shni dars bilan order almashish
 export async function moveCourseLesson(id: string, dir: "up" | "down"): Promise<{ ok: boolean }> {
   const s = await requireSession();
   const cur = await prisma.courseLesson.findUnique({ where: { id } });
@@ -117,18 +116,14 @@ export async function moveCourseLesson(id: string, dir: "up" | "down"): Promise<
   return { ok: true };
 }
 
-// ─── Dars QR kodi ───
 export interface LessonQr {
   url: string;
-  /** Modullar satrma-satr ("0"/"1"), uzunligi size*size — BrandedQr chizadi */
   modules: string;
   size: number;
-  /** QR markazidagi emblema (bo'sh — emblemasiz); faqat asosiy markazda o'z belgisi bor */
   mark?: string;
   error?: string;
 }
 
-/** Dars havolasi (/l/<id>) uchun QR. Darsni ko'ra oladigan har qanday xodimga ochiq. */
 export async function getLessonQr(lessonId: string): Promise<LessonQr> {
   const s = await requireSession();
   const empty = { url: "", modules: "", size: 0 };
@@ -140,7 +135,6 @@ export async function getLessonQr(lessonId: string): Promise<LessonQr> {
   const proto = host.startsWith("localhost") || host.startsWith("127.") ? "http" : "https";
   const url = `${proto}://${host}${lessonLinkPath(lesson.id)}`;
   try {
-    // H — 30% xato tuzatish: markazdagi emblema shu zaxira hisobiga qo'yiladi
     const q = QRCode.create(url, { errorCorrectionLevel: "H" });
     const mark = (await getBrand()).isMain ? "/logo-mark.png" : "";
     return { url, modules: Array.from(q.modules.data, (b) => (b ? "1" : "0")).join(""), size: q.modules.size, mark };

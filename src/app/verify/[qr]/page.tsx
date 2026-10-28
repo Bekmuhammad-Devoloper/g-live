@@ -1,12 +1,10 @@
 import { prisma } from "@/lib/db";
 import { getBrand } from "@/lib/brand";
 
-/** "Germaniya Live" → "GL": nomdagi birinchi ikki so'zning bosh harflari */
 function initials(name: string): string {
   return name.split(/\s+/).filter(Boolean).slice(0, 2).map((w) => w[0]!.toUpperCase()).join("") || "•";
 }
 
-// Ochiq sahifa (login talab qilmaydi) — sertifikat QR-kodini tekshirish.
 export default async function VerifyPage({ params }: { params: Promise<{ qr: string }> }) {
   const { qr } = await params;
   const cert = await prisma.certificate.findFirst({

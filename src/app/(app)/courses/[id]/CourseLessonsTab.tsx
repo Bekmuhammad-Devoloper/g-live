@@ -20,21 +20,15 @@ export interface VLesson {
   videoUrl: string | null; videoPosterUrl?: string | null; vocabText?: string | null; vocabFileUrl?: string | null; materialUrl: string | null; assignment: string | null; assignmentFileUrl: string | null; homework: string | null; homeworkFileUrl: string | null;
 }
 
-/** Lug'at maydonidagi so'zlar soni — yozayotganda darhol ko'rinsin.
-    Ajratish qoidasi o'quvchi ilovasidagi bilan bir xil (lib/lessonWords.ts):
-    vergul, nuqta-vergul yoki yangi qator. */
 const countWords = (text: string) =>
   text.split(/[,;\n]/).filter((s) => s.trim().length >= 2).length;
 
 export default function CourseLessonsTab({ programId, lessons, canManage, canMark = false, locale, levelCodes, groupId, progress }: {
   programId: string;
   lessons: VLesson[];
-  /** Darsni qo'shish / tahrirlash / o'chirish / tartibini o'zgartirish */
   canManage: boolean;
-  /** Guruh sahifasida: "o'tildi" belgisi va darsga vazifa biriktirish */
   canMark?: boolean;
   locale: Locale;
-  /** Sozlamalar > Darajalar ro'yxati */
   levelCodes: string[];
   groupId?: string;
   progress?: Record<string, boolean>;
@@ -94,7 +88,6 @@ function LessonCard({ lesson: l, index, count, canManage, canMark, locale, onEdi
   return (
     <li className={cn("group/ls overflow-hidden rounded-2xl border bg-white shadow-card transition hover:shadow-soft dark:bg-slate-900", pending && "opacity-60", done ? "border-emerald-300 dark:border-emerald-800/70" : "border-slate-200/70 dark:border-slate-800")}>
       <div className="flex items-center gap-3.5 p-4">
-        {/* Tartib / o'tildi belgisi */}
         {groupId && canMark ? (
           <button onClick={toggleTaught} title={tr(locale, { uz: "O'tildi deb belgilash", ru: "Отметить пройденным", en: "Mark as taught", de: "Als unterrichtet markieren" })}
             className={cn("grid h-11 w-11 shrink-0 place-items-center rounded-xl text-[15px] font-extrabold shadow-sm transition", done ? "bg-gradient-to-br from-emerald-500 to-emerald-600 text-white" : "bg-slate-100 text-slate-400 hover:bg-emerald-100 hover:text-emerald-600 dark:bg-slate-800 dark:hover:bg-emerald-500/20")}>
@@ -104,7 +97,6 @@ function LessonCard({ lesson: l, index, count, canManage, canMark, locale, onEdi
           <span className={cn("grid h-11 w-11 shrink-0 place-items-center rounded-xl text-[15px] font-extrabold text-white shadow-sm", done ? "bg-gradient-to-br from-emerald-500 to-emerald-600" : "bg-gradient-to-br from-brand-500 to-brand-600")}>{done ? <Icon name="check" className="h-5 w-5" /> : l.order}</span>
         )}
 
-        {/* Sarlavha + belgilar */}
         <button onClick={() => hasDetails && setExpanded((v) => !v)} className="min-w-0 flex-1 text-left">
           <div className="flex items-center gap-2">
             <span className="truncate text-[15px] font-bold text-slate-800 dark:text-slate-100">{l.title}</span>
@@ -120,9 +112,7 @@ function LessonCard({ lesson: l, index, count, canManage, canMark, locale, onEdi
           </div>
         </button>
 
-        {/* Amallar */}
         <div className="flex shrink-0 items-center gap-1">
-          {/* QR — o'quvchi skan qilib shu dars videosini ilovada ochadi */}
           <button onClick={() => setQrOpen(true)} className="flex h-8 items-center gap-1 rounded-lg border border-slate-200 px-2.5 text-xs font-semibold text-slate-600 transition hover:border-brand-300 hover:bg-brand-50 hover:text-brand-600 dark:border-slate-700 dark:text-slate-300 dark:hover:bg-brand-950/30" title={tr(locale, { uz: "Dars QR kodi", ru: "QR-код урока", en: "Lesson QR code", de: "QR-Code der Lektion" })}>
             <Icon name="qr" className="h-3.5 w-3.5" /> QR
           </button>
@@ -194,7 +184,6 @@ function LessonCard({ lesson: l, index, count, canManage, canMark, locale, onEdi
   );
 }
 
-// Dars belgisi (video/topshiriq/uy vazifa/material)
 function Tag({ emoji, text, tone }: { emoji: string; text: string; tone: "rose" | "amber" | "emerald" | "blue" }) {
   const c = {
     rose: "bg-rose-500/10 text-rose-600 dark:text-rose-400",
@@ -214,11 +203,8 @@ function Field({ label, value }: { label: string; value: string }) {
   );
 }
 
-// Hozir nechta fayl yuklanmoqda (barcha FileUpload'lar bo'yicha) — drawer
-// yopilishidan oldin so'raymiz: tasodifiy bosish yarim yuklashni yo'qotmasin
 let activeUploads = 0;
 
-/* ── Qo'shish / tahrirlash drawer ── */
 function LessonDrawer({ programId, initial, locale, levelCodes, onClose: closeRaw }: { programId: string; initial: VLesson | null; locale: Locale; levelCodes: string[]; onClose: () => void }) {
   const router = useRouter();
   const onClose = async () => {
@@ -251,7 +237,6 @@ function LessonDrawer({ programId, initial, locale, levelCodes, onClose: closeRa
       void alertDialog(tr(locale, { uz: "Fayl hali yuklanmoqda — tugashini kuting, keyin saqlang.", ru: "Файл ещё загружается — дождитесь окончания, затем сохраните.", en: "A file is still uploading — wait for it to finish, then save.", de: "Eine Datei wird noch hochgeladen — warten Sie, bis sie fertig ist, und speichern Sie dann." }));
       return;
     }
-    // Bo'sh qolgan muhim maydonlar haqida eslatma (baribir saqlash mumkin)
     const missing: string[] = [];
     if (!topic.trim()) missing.push(tr(locale, { uz: "Mavzu", ru: "Тема", en: "Topic", de: "Thema" }));
     if (!videoUrl) missing.push(tr(locale, { uz: "Dars videosi", ru: "Видео урока", en: "Lesson video", de: "Lektionsvideo" }));
@@ -296,7 +281,6 @@ function LessonDrawer({ programId, initial, locale, levelCodes, onClose: closeRa
             <label className={lbl}>{tr(locale, { uz: "Mavzu (tafsilot)", ru: "Тема (описание)", en: "Topic (details)", de: "Thema (Details)" })}</label>
             <textarea value={topic} onChange={(e) => setTopic(e.target.value)} rows={2} className={inp} />
           </div>
-          {/* Daraja — o'quvchi portalida darslar shu bo'yicha bo'limlarga ajraladi */}
           <div>
             <label className="mb-1 block text-xs font-medium text-slate-500 dark:text-slate-400">
               {tr(locale, { uz: "Daraja", ru: "Уровень", en: "Level", de: "Niveau" })}
@@ -308,15 +292,6 @@ function LessonDrawer({ programId, initial, locale, levelCodes, onClose: closeRa
             </select>
           </div>
 
-          {/* ── Lug'at ──
-              Ikki yo'l: qo'lda yozish yoki tayyor fayl. Ikkalasi ham
-              bo'lishi mumkin, birortasi ham.
-
-              Qo'lda yozilgani ilovada ikki ustunli ro'yxat bo'lib chiqadi va
-              "So'zlar" bo'limiga ham tushadi; fayl esa ochib o'qish uchun.
-              Ilgari so'zlar "Mavzu" maydoniga yozilardi — bu hech qayerda
-              yozilmagan qoida edi, shu sabab alohida maydon ajratildi.
-              Eski darslar uchun mavzu maydoni zaxira bo'lib qolaveradi. */}
           <div>
             <label className={lbl}>
               {tr(locale, { uz: "Lug'at (qo'lda yozish)", ru: "Словарь (вручную)", en: "Vocabulary (type here)", de: "Wortschatz (manuell)" })}
@@ -348,7 +323,6 @@ function LessonDrawer({ programId, initial, locale, levelCodes, onClose: closeRa
             accept="video/*" current={videoUrl} onChange={setVideoUrl} locale={locale} isVideo
           />
 
-          {/* Video banneri — o'quvchi ilovasida dars videosi muqovasi (logotip o'rnida) */}
           <FileUpload
             label={tr(locale, { uz: "Video banneri (rasm, 16:9)", ru: "Баннер видео (изображение, 16:9)", en: "Video banner (image, 16:9)", de: "Video-Banner (Bild, 16:9)" })}
             accept="image/png,image/jpeg,image/webp" current={videoPosterUrl} onChange={setVideoPosterUrl} locale={locale} isImage
@@ -390,7 +364,6 @@ function LessonDrawer({ programId, initial, locale, levelCodes, onClose: closeRa
     </div>, document.body);
 }
 
-/* ── Fayl yuklash vidjeti (video/material) ── */
 function FileUpload({ label, accept, current, onChange, locale, isVideo, isImage }: { label: string; accept: string; current: string; onChange: (url: string) => void; locale: Locale; isVideo?: boolean; isImage?: boolean }) {
   const ref = useRef<HTMLInputElement>(null);
   const abortRef = useRef<AbortController | null>(null);
@@ -398,14 +371,10 @@ function FileUpload({ label, accept, current, onChange, locale, isVideo, isImage
   const [pct, setPct] = useState(0);
   const [prog, setProg] = useState<UploadProgress | null>(null);
   const [error, setError] = useState<string | null>(null);
-  /** Oxirgi tanlangan fayl — xatodan keyin "Qayta urinish" uchun */
   const [pending, setPending] = useState<File | null>(null);
 
-  // Komponent yopilsa (drawer yopildi) yuklash to'xtaydi, lekin seans va
-  // qolgan joyi saqlanadi — "unmount" sababi bilan, "cancel" emas
   useEffect(() => () => { abortRef.current?.abort("unmount"); }, []);
 
-  // Yuklash paytida sahifani yopishdan/yangilashdan ogohlantirish
   useEffect(() => {
     if (!uploading) return;
     const h = (e: BeforeUnloadEvent) => { e.preventDefault(); e.returnValue = ""; };
@@ -431,15 +400,11 @@ function FileUpload({ label, accept, current, onChange, locale, isVideo, isImage
     });
     const failed = tr(locale, { uz: "Yuklab bo'lmadi", ru: "Не удалось загрузить", en: "Upload failed", de: "Hochladen fehlgeschlagen" });
 
-    // Serverga bekorga yubormaymiz — chegaradan katta fayl shu yerda to'xtaydi
     if (mb > MAX_UPLOAD_MB) { setError(tooBig(mb)); return; }
 
     setError(null); setUploading(true); setPct(0); setProg(null);
 
     if (file.size > CHUNKED_FROM_BYTES) {
-      // Katta fayl (video): bo'lakli, parallel, uzilsa davom etadigan yuklash.
-      // Telefonda bitta uzun so'rov "qotib" qolardi — endi har bo'lak alohida,
-      // uzilgani qayta ketadi, sahifa yangilansa ham qolganidan davom etadi.
       const ac = new AbortController();
       abortRef.current = ac;
       activeUploads++;
@@ -464,19 +429,15 @@ function FileUpload({ label, accept, current, onChange, locale, isVideo, isImage
       return;
     }
 
-    // Kichik fayl — bitta so'rov. Fayl multipart'siz, TO'G'RIDAN-TO'G'RI tana
-    // sifatida yuboriladi — server uni oqim bilan diskka yozadi.
     const url = await new Promise<{ url?: string; error?: string }>((resolve) => {
       const xhr = new XMLHttpRequest();
       xhr.open("POST", "/api/upload");
-      xhr.timeout = 3 * 60_000; // kichik fayl ham cheksiz osilib qolmasin
+      xhr.timeout = 3 * 60_000;
       xhr.ontimeout = () => resolve({ error: "upload_failed" });
       xhr.setRequestHeader("Content-Type", file.type || "application/octet-stream");
       xhr.setRequestHeader("X-File-Name", encodeURIComponent(file.name));
       xhr.upload.onprogress = (ev) => { if (ev.lengthComputable) setPct(Math.round((ev.loaded / ev.total) * 100)); };
       xhr.onload = () => {
-        // nginx chegaradan oshganda JSON emas, HTML sahifa qaytaradi —
-        // shuning uchun holat kodiga ham qaraymiz
         if (xhr.status === 413) return resolve({ error: "too_large" });
         try {
           const j = JSON.parse(xhr.responseText);
@@ -492,7 +453,6 @@ function FileUpload({ label, accept, current, onChange, locale, isVideo, isImage
     else setError(failed);
   };
 
-  // Yuklash holati matni: "240 MB / 1.0 GB · 1.2 MB/s · ~8 daq"
   const progressLine = (p: UploadProgress) => {
     const parts = [`${formatBytes(p.loaded)} / ${formatBytes(p.total)}`];
     if (p.bytesPerSec > 0) parts.push(formatSpeed(p.bytesPerSec));
@@ -564,9 +524,6 @@ function FileUpload({ label, accept, current, onChange, locale, isVideo, isImage
 }
 
 
-/* ── Darsga baholanadigan vazifa biriktirish ──
-   Bu "Dars topshirig'i" matnidan farq qiladi: bunda o'quvchi javob
-   yuboradi, o'qituvchi baholaydi va ball tanga/yulduzga aylanadi. */
 function TaskDialog({
   groupId, lessonId, lessonTitle, locale, onClose,
 }: {

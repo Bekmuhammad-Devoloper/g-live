@@ -7,9 +7,6 @@ import { usePathname } from "next/navigation";
 const TEAL = "#0e7490";
 const GRAY = "#94a3b8";
 
-// Pastki yorliqlar: Start (uy) · Kurse (kitob) · Üben (nishon+o'q) · Profil (odam).
-// Hammasi bir xil o'lchamda (26px), bir xil chiziq qalinligida (2) va bir xil
-// optik og'irlikda chizilgan; faol yorliq to'ldirilgan va rangli, ostida chiziqcha.
 function Ico({ name, active }: { name: string; active: boolean }) {
   const c = active ? TEAL : GRAY;
   const p = { width: 26, height: 26, viewBox: "0 0 24 24", fill: "none", stroke: c, strokeWidth: 2, strokeLinecap: "round" as const, strokeLinejoin: "round" as const };
@@ -40,7 +37,6 @@ function Ico({ name, active }: { name: string; active: boolean }) {
       </svg>
     );
   }
-  // Profil
   return (
     <svg {...p}>
       <circle cx="12" cy="8.2" r="3.7" />
@@ -51,18 +47,15 @@ function Ico({ name, active }: { name: string; active: boolean }) {
 
 export default function BottomNav({ t, showUben = true }: { t: StudentStrings; showUben?: boolean }) {
   const pathname = usePathname();
-  // Jang, yozishma va bog'lanishlar grafi to'liq ekranda ochiladi — menyu ko'rinmaydi
   if (
     pathname.startsWith("/student/battle") ||
     pathname.startsWith("/student/lehrer") ||
     pathname.startsWith("/student/gehirn/graph")
   ) return null;
 
-  // Barcha tablar /student/* ichida — o'quvchi endi xodim (AppShell) sahifalariga chiqib ketmaydi
   const items = [
     { href: "/student", icon: "home", label: t.navStart, exact: true },
     { href: "/student/kurse", icon: "book", label: t.navCourses },
-    // Mashqlar bo'limi menejer tomonidan o'chirilgan bo'lishi mumkin
     ...(showUben ? [{ href: "/student/uben", icon: "target", label: t.navPractice }] : []),
     { href: "/student/profil", icon: "profil", label: t.navProfile },
   ];
@@ -76,8 +69,6 @@ export default function BottomNav({ t, showUben = true }: { t: StudentStrings; s
               key={it.label}
               href={it.href}
               aria-current={active ? "page" : undefined}
-              // Tab almashganda qisqa titrash — haqiqiy ilovadagidek javob
-              // (qo'llab-quvvatlamaydigan qurilmada shunchaki e'tiborsiz qoladi)
               onClick={() => { if (!active) navigator.vibrate?.(8); }}
               className="flex flex-1 flex-col items-center gap-1 px-1 py-1"
             >
@@ -85,7 +76,6 @@ export default function BottomNav({ t, showUben = true }: { t: StudentStrings; s
               <span className="text-[12.5px] font-semibold leading-none" style={{ color: active ? TEAL : GRAY }}>
                 {it.label}
               </span>
-              {/* faol yorliq ostidagi chiziqcha (maketdagidek) */}
               <span className="h-[3px] w-6 rounded-full" style={{ background: active ? TEAL : "transparent" }} />
             </Link>
           );

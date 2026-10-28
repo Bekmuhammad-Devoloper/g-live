@@ -23,7 +23,6 @@ const channelTone: Record<string, "blue" | "green" | "amber" | "purple" | "slate
   SMS: "green", TELEGRAM: "blue", PUSH: "amber", EMAIL: "purple", APP: "slate",
 };
 
-// Yuborilgan xabarlar jurnali — qidiruv, kanal filtri va CSV eksport.
 export default function SmsLog({ rows, locale }: { rows: SmsRow[]; locale: Locale }) {
   const [query, setQuery] = useState("");
   const [channel, setChannel] = useState("");

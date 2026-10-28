@@ -5,15 +5,6 @@ import { createDuel, joinGroupGame, saveGameResult, submitChallenge } from "./ac
 import { fill, type StudentStrings } from "../_i18n";
 import { CARD, ICON_GRADIENT, TEAL, PageHeader } from "../_ui";
 
-// Jang (Battle) — BITTA sahifa: sozlash → o'yin → natija.
-// Sahifa almashmaydi, faqat holat o'zgaradi (view: setup | play | result).
-//
-// Uch xil jang bor:
-//   ai    — sun'iy raqibga qarshi, darhol o'ynaladi
-//   duel  — guruhdoshga chaqiruv; ikkalasi BIR XIL savollarni oladi, lekin
-//           bir vaqtda o'ynashi shart emas (kim qachon ulgursa)
-//   group — guruh chempionati; bir hafta ochiq turadi, hamma o'ynaydi
-
 export interface WordPair { de: string; hint: string; g?: string }
 export interface Rival { id: string; name: string; imageUrl: string | null }
 export interface Invite {
@@ -35,7 +26,6 @@ const ROUNDS = 8;
 const ARTICLES = ["der", "die", "das"];
 const ART: Record<string, string> = { m: "der", f: "die", n: "das" };
 
-// Matnlar o'quvchi tilida (t) — shu sabab ro'yxatlar funksiya
 const modesOf = (t: StudentStrings): { key: Mode; title: string; sub: string }[] => [
   { key: "ai", title: t.modeAi, sub: t.modeAiSub },
   { key: "duel", title: t.modeDuel, sub: t.modeDuelSub },
@@ -56,7 +46,6 @@ const taskTitleOf = (t: StudentStrings): Record<Lobby, string> => ({
   grammar: t.taskGrammar,
 });
 
-// Barqaror (urug'li) aralashtirish — ikkala o'yinchi bir xil savol oladi
 function shuffled<T>(arr: T[], seed: number): T[] {
   const a = [...arr];
   let s = Math.abs(seed) || 1;
@@ -68,7 +57,6 @@ function shuffled<T>(arr: T[], seed: number): T[] {
   return a;
 }
 
-// ── Ikonkalar: bitta rangli, geometrik gliflar (gradient doira ustida oq) ──
 const GLYPH = { fill: "none", stroke: "white", strokeWidth: 1.9, strokeLinecap: "round" as const, strokeLinejoin: "round" as const };
 
 function GlyphRobot({ s = 26 }: { s?: number }) {
@@ -177,7 +165,6 @@ export default function Battle({
   const [err, setErr] = useState<string | null>(null);
   const [starting, setStarting] = useState(false);
 
-  // O'yin holati
   const [seed, setSeed] = useState(1);
   const [challengeId, setChallengeId] = useState<string | null>(null);
   const [step, setStep] = useState(0);
@@ -193,7 +180,6 @@ export default function Battle({
   const pool = lobby === "grammar" ? nouns : words;
   const enough = lobby === "grammar" ? nouns.length >= 4 : words.length >= 4;
 
-  // ── Savollar ── seed bir xil bo'lsa savollar ham bir xil
   const rounds = useMemo<Round[]>(() => {
     if (pool.length < 4) return [];
     const picks = shuffled(pool, seed).slice(0, ROUNDS);
@@ -223,7 +209,6 @@ export default function Battle({
 
   const canStart = enough && (mode !== "duel" || !!rivalId) && !starting;
 
-  // ── Boshlash ──
   const begin = (s: number, chId: string | null) => {
     setSeed(s);
     setChallengeId(chId);
@@ -250,7 +235,6 @@ export default function Battle({
     begin(res.seed, res.id);
   };
 
-  // Kelgan chaqiruvni ochish
   const acceptInvite = (inv: Invite) => {
     setErr(null);
     setMode(inv.kind === "DUEL" ? "duel" : "group");
@@ -260,14 +244,13 @@ export default function Battle({
 
   const nextRound = (correct: boolean) => {
     if (correct) setMe((n) => n + 1);
-    if (((seed + step * 17) % 100) < 65) setAi((n) => n + 1); // AI ~65% aniqlik
+    if (((seed + step * 17) % 100) < 65) setAi((n) => n + 1);
     setTimeout(() => {
       if (step + 1 >= rounds.length) setView("result");
       else { setStep((s) => s + 1); setPicked(null); setTyped(""); }
     }, 850);
   };
 
-  // ── Natija bir marta yoziladi ──
   const sent = useRef<string>("");
   useEffect(() => {
     if (view !== "result") return;
@@ -286,7 +269,6 @@ export default function Battle({
     nextRound(ok);
   };
 
-  // ═══════════ SOZLASH ═══════════
   if (view === "setup") {
     const MODE_ICON = { ai: GlyphRobot, duel: GlyphSwords, group: GlyphGroup } as const;
     const LOBBY_ICON = { vocabulary: GlyphChat, wordgame: GlyphTiles, crossword: GlyphGrid, grammar: GlyphBook } as const;
@@ -296,7 +278,6 @@ export default function Battle({
       <div className="space-y-6 pb-[92px]">
         <PageHeader title={t.gamesAndBattle} subtitle={t.testKnowledge} backLabel={t.back} back="/student/uben" right={badges} />
 
-        {/* ── Kutayotgan chaqiruvlar ── */}
         {waiting.length > 0 && (
           <section>
             <p className="mb-2.5 px-1 text-[11px] font-bold uppercase tracking-[0.18em] text-slate-500">
@@ -329,7 +310,6 @@ export default function Battle({
           </section>
         )}
 
-        {/* ── Jang turi ── */}
         <section>
           <p className="mb-2.5 px-1 text-[11px] font-bold uppercase tracking-[0.18em] text-slate-500">{t.battleType}</p>
           <div className="space-y-2.5">
@@ -358,7 +338,6 @@ export default function Battle({
           </div>
         </section>
 
-        {/* ── Raqib tanlash (duel) ── */}
         {mode === "duel" && (
           <section>
             <p className="mb-2.5 px-1 text-[11px] font-bold uppercase tracking-[0.18em] text-slate-500">{t.yourRival}</p>
@@ -397,7 +376,6 @@ export default function Battle({
           </section>
         )}
 
-        {/* ── O'yin turi ── */}
         <section>
           <p className="mb-2.5 px-1 text-[11px] font-bold uppercase tracking-[0.18em] text-slate-500">{t.gameType}</p>
           <div className="grid grid-cols-2 gap-3">
@@ -426,7 +404,6 @@ export default function Battle({
 
         {err && <p className="px-1 text-[13.5px] font-semibold text-rose-600">{err}</p>}
 
-        {/* ── Boshlash ── */}
         <div className="fixed inset-x-0 bottom-[calc(20px+env(safe-area-inset-bottom))] z-30 mx-auto max-w-md px-4">
           <div className="pointer-events-none absolute inset-x-0 -top-8 bottom-[-20px] bg-gradient-to-b from-transparent to-white/70" />
           <button
@@ -451,7 +428,6 @@ export default function Battle({
     );
   }
 
-  // ═══════════ NATIJA ═══════════
   if (view === "result") {
     const solo = mode === "ai";
     const win = me > ai;
@@ -517,10 +493,8 @@ export default function Battle({
     );
   }
 
-  // ═══════════ O'YIN ═══════════
   return (
     <div className="space-y-4 pb-6">
-      {/* Sarlavha + hisob */}
       <div className="flex items-center gap-2.5 pt-1">
         <button
           type="button"
@@ -548,8 +522,6 @@ export default function Battle({
         )}
       </div>
 
-      {/* Jarayon — yo'lakcha shisha EMAS: ingichka element uchun backdrop-filter
-          faqat GPU yeydi, shu sabab oddiy yarim tiniq oq to'ldirish. */}
       <div className="flex items-center gap-2.5">
         <div className="h-2 flex-1 overflow-hidden rounded-full bg-white/55 shadow-[inset_0_1px_2px_rgba(19,78,94,0.12)]">
           <div className="h-full rounded-full transition-all" style={{ width: `${((step + 1) / rounds.length) * 100}%`, background: ICON_GRADIENT }} />
@@ -557,7 +529,6 @@ export default function Battle({
         <span className="text-[12px] font-bold text-slate-600">{step + 1}/{rounds.length}</span>
       </div>
 
-      {/* Savol */}
       <div className={`${CARD} p-5`}>
         <div className="text-[12px] font-bold uppercase tracking-[0.18em] text-slate-500">{TASK_TITLE[lobby]}</div>
 

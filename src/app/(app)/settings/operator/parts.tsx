@@ -1,8 +1,5 @@
 "use client";
 
-// Operator sozlamalari sahifasining ko'rinish (presentational) bo'laklari.
-// Barcha matnlar tashqaridan tayyor holda uzatiladi — bu yerda tarjima qilinmaydi.
-
 import { cn } from "@/lib/cn";
 import { tr } from "@/lib/tr";
 import type { Locale } from "@/lib/constants";

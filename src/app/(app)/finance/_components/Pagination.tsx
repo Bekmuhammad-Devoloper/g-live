@@ -6,7 +6,6 @@ import type { Locale } from "@/lib/constants";
 
 export const PAGE_SIZE = 50;
 
-// Jadval sahifalash: 50 tadan, raqamli tugmalar (joriy atrofida + chetlar).
 export default function Pagination({ page, total, onChange, locale, pageSize = PAGE_SIZE }: {
   page: number;
   total: number;
@@ -45,20 +44,17 @@ export default function Pagination({ page, total, onChange, locale, pageSize = P
 
 const p2 = (n: number) => String(n).padStart(2, "0");
 
-/** ISO vaqtdan mahalliy kun: "YYYY-MM-DD" (filtrlar shu bilan solishtiriladi). */
 export const localDay = (iso: string) => {
   const d = new Date(iso);
   return `${d.getFullYear()}-${p2(d.getMonth() + 1)}-${p2(d.getDate())}`;
 };
 
-/** "DD.MM.YYYY" — ISO vaqt yoki "YYYY-MM-DD" kun qabul qiladi. */
 export const fmtDate = (v: string) => {
   if (!v) return "—";
   const d = /^\d{4}-\d{2}-\d{2}$/.test(v) ? new Date(`${v}T00:00:00`) : new Date(v);
   return `${p2(d.getDate())}.${p2(d.getMonth() + 1)}.${d.getFullYear()}`;
 };
 
-/** "DD.MM.YYYY HH:mm" */
 export const fmtDateTime = (iso: string) => {
   const d = new Date(iso);
   return `${fmtDate(iso)} ${p2(d.getHours())}:${p2(d.getMinutes())}`;

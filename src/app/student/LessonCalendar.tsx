@@ -3,12 +3,6 @@
 import { useMemo, useState, type CSSProperties } from "react";
 import type { LessonDay } from "./_schedule";
 
-/**
- * Profildagi dars kunlari kalendari. Oylar orasida strelka bilan yuriladi,
- * kunni bosganda pastda o'sha darsning vaqti, xonasi va (o'tgan bo'lsa)
- * davomat holati chiqadi. Rang tili: kelayotgan dars — feruza gradient,
- * o'tgan dars — och feruza va davomat nuqtasi (yashil / sariq / qizil).
- */
 export type AttMark = "ok" | "late" | "absent" | "excused";
 
 export type CalendarLabels = {
@@ -33,7 +27,7 @@ export default function LessonCalendar({ days, attendance, todayISO, initialYear
   monthsAfter: number;
   labels: CalendarLabels;
 }) {
-  const [off, setOff] = useState(0); // joriy oydan siljish
+  const [off, setOff] = useState(0);
   const [sel, setSel] = useState<string | null>(null);
 
   const base = new Date(initialYear, initialMonth0 + off, 1);
@@ -45,7 +39,7 @@ export default function LessonCalendar({ days, attendance, todayISO, initialYear
   const passed = monthDays.filter((d) => d.iso < todayISO).length;
   const left = monthDays.length - passed;
 
-  const lead = (base.getDay() + 6) % 7; // dushanba = 0
+  const lead = (base.getDay() + 6) % 7;
   const total = new Date(year, month0 + 1, 0).getDate();
   const cells: (number | null)[] = [...Array(lead).fill(null), ...Array.from({ length: total }, (_, i) => i + 1)];
   while (cells.length % 7) cells.push(null);
@@ -60,7 +54,6 @@ export default function LessonCalendar({ days, attendance, todayISO, initialYear
 
   return (
     <div className="rounded-[26px] bg-white/70 p-4 shadow-[0_10px_30px_rgba(19,78,94,0.10)] ring-1 ring-white/70 backdrop-blur-md">
-      {/* Sarlavha: oy va yil, strelkalar */}
       <div className="flex items-center justify-between gap-3">
         <div>
           <div className="text-[21px] font-extrabold leading-tight tracking-tight text-slate-900">{L.months[month0]}</div>
@@ -81,7 +74,6 @@ export default function LessonCalendar({ days, attendance, todayISO, initialYear
         </div>
       </div>
 
-      {/* Oy ko'rsatkichlari */}
       <div className="mt-3 grid grid-cols-3 gap-2">
         {[
           { n: monthDays.length, l: L.total, bg: `linear-gradient(135deg, ${TEAL}, ${NAVY})`, fg: "#fff" },
@@ -95,7 +87,6 @@ export default function LessonCalendar({ days, attendance, todayISO, initialYear
         ))}
       </div>
 
-      {/* Kunlar to'ri */}
       <div className="mt-4 grid grid-cols-7 gap-1 text-center">
         {L.weekdaysShort.map((w, i) => (
           <span key={w} className={`pb-1 text-[10.5px] font-bold uppercase tracking-wider ${i >= 5 ? "text-rose-400" : "text-slate-400"}`}>{w}</span>
@@ -131,7 +122,6 @@ export default function LessonCalendar({ days, attendance, todayISO, initialYear
         })}
       </div>
 
-      {/* Tanlangan kun */}
       <div className="mt-3 overflow-hidden rounded-2xl transition-all duration-300" style={{ maxHeight: sel ? 200 : 0, opacity: sel ? 1 : 0 }}>
         {sel && selDate && (
           selDay ? (
@@ -171,7 +161,6 @@ export default function LessonCalendar({ days, attendance, todayISO, initialYear
         )}
       </div>
 
-      {/* Izoh */}
       <div className="mt-3 flex flex-wrap items-center gap-x-3.5 gap-y-1.5 text-[11.5px] font-semibold text-slate-500">
         <span className="inline-flex items-center gap-1.5"><span className="h-3 w-3 rounded-[4px]" style={{ background: TEAL }} /> {L.legendLesson}</span>
         <span className="inline-flex items-center gap-1.5"><span className="h-3 w-3 rounded-[4px]" style={{ background: "rgba(14,116,144,0.25)" }} /> {L.legendPast}</span>

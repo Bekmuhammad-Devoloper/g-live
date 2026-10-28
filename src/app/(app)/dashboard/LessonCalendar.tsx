@@ -10,19 +10,19 @@ import { Icon } from "../_components/Icon";
 export interface CalLesson {
   id: string;
   groupId: string;
-  day: number; // 0=Yakshanba ... 6=Shanba
+  day: number;
   startMin: number;
   endMin: number;
   group: string;
   teacher: string | null;
   room: string | null;
   course: string;
-  color?: string | null; // guruh rangi (hex)
-  startISO?: string | null; // guruh boshlanish sanasi "yyyy-mm-dd"
-  endISO?: string | null; // guruh tugash sanasi "yyyy-mm-dd"
-  students?: number; // guruhdagi o'quvchilar soni
-  capacity?: number; // guruh sig'imi
-  note?: string | null; // guruh izohi (kament)
+  color?: string | null;
+  startISO?: string | null;
+  endISO?: string | null;
+  students?: number;
+  capacity?: number;
+  note?: string | null;
   isPast: boolean;
 }
 
@@ -34,11 +34,10 @@ interface Props {
   rooms: string[];
   courses: string[];
   todayIndex: number;
-  todayISO?: string; // server bugungi sana "yyyy-mm-dd" (hafta navigatsiyasi uchun)
-  weekNav?: boolean; // hafta bo'ylab o'tish (oldingi/keyingi hafta) yoqilsinmi
+  todayISO?: string;
+  weekNav?: boolean;
   defaultView?: "grid" | "list";
-  /** Ro'yxat ko'rinishida qatorlar nima bo'yicha: xona (asosiy) / o'qituvchi / guruh */
-  defaultGroupMode?: "room" | "teacher" | "group"; // "list" = xona×vaqt gorizontal matritsa (Dars jadvali sahifasi shundan boshlanadi)
+  defaultGroupMode?: "room" | "teacher" | "group";
 }
 
 const DAY_LABELS: Record<Locale, string[]> = {
@@ -88,14 +87,13 @@ const T: Record<Locale, Record<string, string>> = {
 };
 
 const ROW = 40;
-const ROW_H = 104; // xona×vaqt matritsasidagi qator balandligi (blokka 4 qator sig'adi)
+const ROW_H = 104;
 const RANGES = [
   { key: "08:00 – 22:00", from: 8, to: 22 },
   { key: "06:00 – 23:00", from: 6, to: 23 },
   { key: "00:00 – 24:00", from: 0, to: 24 },
 ];
 
-// Karta maydonlari (Sozlamalar panelidagi variantlar)
 const FIELD_OPTS = ["", "time", "course", "teacher", "room", "group", "day"] as const;
 type SlotKey = "t1" | "t2" | "t3" | "r1" | "r2" | "r3" | "rb";
 const SLOTS: { key: SlotKey; labelKey: string }[] = [
@@ -108,7 +106,6 @@ function hhmm(min: number) {
   return `${String(Math.floor(min / 60)).padStart(2, "0")}:${String(min % 60).padStart(2, "0")}`;
 }
 
-// "2026-07-01" → "1 iyul" (blokdagi davr yozuvi uchun; deterministik, Intl'siz)
 const MONTHS_SHORT: Record<Locale, string[]> = {
   uz: ["yan", "fev", "mar", "apr", "may", "iyun", "iyul", "avg", "sen", "okt", "noy", "dek"],
   ru: ["янв", "фев", "мар", "апр", "май", "июн", "июл", "авг", "сен", "окт", "ноя", "дек"],
@@ -122,18 +119,14 @@ function shortDate(iso: string | null | undefined, locale: Locale): string {
   return `${d} ${MONTHS_SHORT[locale][m - 1] ?? ""}`;
 }
 
-// Guruh rangiga mos blok uslubi (chap accent + tanlangan rangdagi parda). Rang bo'lmasa undefined.
 function blockStyle(color: string | null | undefined, isPast: boolean): React.CSSProperties | undefined {
   if (!color) return undefined;
   return {
-    borderLeftColor: isPast ? color + "99" : color, // o'tgan dars — biroz xira
-    backgroundColor: color + (isPast ? "1f" : "40"), // parda aniq tanlangan rangda (o'tgan 12%, kelgusi 25%)
+    borderLeftColor: isPast ? color + "99" : color,
+    backgroundColor: color + (isPast ? "1f" : "40"),
   };
 }
 
-// Fon rangiga mos o'qiladigan matn rangi — to'q va oq variantdan KONTRASTI YUQORIsi tanlanadi
-// (WCAG nisbiy yorqinligi bo'yicha). Qat'iy chegara ishlamaydi: yashil/sariq/feruza kabi
-// "o'rtacha" ranglarda oq matn yo'qolib ketardi. Foydalanuvchi istalgan rang tanlasa ham ishlaydi.
 const TXT_DARK = "#1e293b";
 const TXT_LIGHT = "#ffffff";
 function relLum(hex: string): number {
@@ -151,7 +144,6 @@ function readableOn(hex: string): string {
   return contrast(hex, TXT_DARK) >= contrast(hex, TXT_LIGHT) ? TXT_DARK : TXT_LIGHT;
 }
 
-/** Rangni oq bilan aralashtirib ochroq qilish (0..1). */
 function lighten(hex: string, amount: number): string {
   const c = hex.replace("#", "");
   const parts = [0, 2, 4].map((i) => {
@@ -161,17 +153,12 @@ function lighten(hex: string, amount: number): string {
   return "#" + parts.map((v) => v.toString(16).padStart(2, "0")).join("");
 }
 
-/**
- * Xona×vaqt matritsasi uchun TO'LIQ bo'yalgan blok (Modme uslubi).
- * Guruh rangi 25% oq bilan aralashtiriladi: pastel ko'rinish + matn kontrasti AA (eng past 4.98).
- * Toza 500-darajali ranglarda matn kontrasti 3.3 gacha tushib, o'qilmay qolardi.
- */
 function solidBlockStyle(color: string | null | undefined, isPast: boolean): React.CSSProperties {
   const bg = lighten(color || "#64748b", 0.25);
   return {
     backgroundColor: bg,
     color: readableOn(bg),
-    opacity: isPast ? 0.55 : 1, // o'tgan dars — xiraroq
+    opacity: isPast ? 0.55 : 1,
   };
 }
 
@@ -180,7 +167,7 @@ export default function LessonCalendar(p: Props) {
   const days = DAY_LABELS[p.locale] ?? DAY_LABELS.uz;
 
   const [day, setDay] = useState(p.todayIndex);
-  const [weekOffset, setWeekOffset] = useState(0); // 0=joriy hafta, -1=oldingi, +1=keyingi
+  const [weekOffset, setWeekOffset] = useState(0);
   const [showFilter, setShowFilter] = useState(true);
   const [fTeacher, setFTeacher] = useState("");
   const [fGroup, setFGroup] = useState("");
@@ -188,9 +175,7 @@ export default function LessonCalendar(p: Props) {
   const [fCourse, setFCourse] = useState("");
   const [fStatus, setFStatus] = useState("");
 
-  // Qatorlar nima bo'yicha guruhlanadi: xona / o'qituvchi / guruh
   const [groupMode, setGroupMode] = useState<"room" | "teacher" | "group">(p.defaultGroupMode ?? "room");
-  // Dars qaysi qatorga tushishi (tanlangan rejimga qarab)
   const rowKeyOf = (l: CalLesson) => (groupMode === "room" ? l.room : groupMode === "teacher" ? l.teacher : l.group);
   const [viewType, setViewType] = useState<"grid" | "list">(p.defaultView ?? "grid");
   const [rangeIdx, setRangeIdx] = useState(0);
@@ -227,19 +212,16 @@ export default function LessonCalendar(p: Props) {
     return arr;
   }, [range.from, range.to]);
 
-  // Hafta sanalari (yakshanbadan boshlab, weekOffset bo'yicha suriladi)
   const todayDate = useMemo(() => (p.todayISO ? new Date(p.todayISO + "T00:00:00") : new Date()), [p.todayISO]);
   const weekDates = useMemo(() => {
     const base = new Date(todayDate);
     base.setHours(0, 0, 0, 0);
-    base.setDate(base.getDate() - todayDate.getDay() + weekOffset * 7); // ko'rilayotgan haftaning yakshanbasi
+    base.setDate(base.getDate() - todayDate.getDay() + weekOffset * 7);
     return Array.from({ length: 7 }, (_, i) => { const d = new Date(base); d.setDate(base.getDate() + i); return d; });
   }, [todayDate, weekOffset]);
   const selDate = weekDates[day];
   const dm = (d: Date) => `${String(d.getDate()).padStart(2, "0")}.${String(d.getMonth() + 1).padStart(2, "0")}`;
-  // Ko'rilayotgan kun (sana) uchun dars o'tganmi
   const pastAt = (endMin: number) => selDate.getTime() + endMin * 60000 < Date.now();
-  // Guruh shu sanaga qadar boshlanganmi (boshlanish sanasidan oldingi haftalarda ko'rsatilmaydi)
   const startedBy = (l: CalLesson) => !p.weekNav || !l.startISO || new Date(l.startISO + "T00:00:00").getTime() <= selDate.getTime();
 
   const dayLessons = useMemo(() => {
@@ -281,7 +263,6 @@ export default function LessonCalendar(p: Props) {
     return ({ "": t.fNone, time: t.fTime, course: t.fCourse, teacher: t.fTeacher, room: t.fRoom, group: t.fGroup, day: t.fDay } as Record<string, string>)[key];
   }
 
-  // Ro'yxat (matritsa) ko'rinishi uchun qatorlar: xona yoki o'qituvchi
   const rowNames = useMemo(() => {
     const base = groupMode === "room" ? p.rooms : groupMode === "teacher" ? p.teachers : p.groups;
     const set = new Set<string>(base.filter(Boolean));
@@ -312,7 +293,6 @@ export default function LessonCalendar(p: Props) {
 
   return (
     <div ref={rootRef} className="relative rounded-2xl border border-slate-200/70 bg-white shadow-card dark:border-slate-800 dark:bg-slate-900">
-      {/* Sarlavha + Filtr/Eksport */}
       <div className="flex flex-wrap items-center justify-between gap-3 border-b border-slate-100 px-5 py-4">
         <h3 className="flex items-center gap-2 text-sm font-semibold text-slate-700">
           <Icon name="calendar" className="h-4 w-4 text-brand-500" /> {t.title}
@@ -327,7 +307,6 @@ export default function LessonCalendar(p: Props) {
         </div>
       </div>
 
-      {/* Filtrlar */}
       {showFilter && (
         <div className="flex flex-wrap gap-2 border-b border-slate-100 px-5 py-3">
           <select value={fTeacher} onChange={(e) => setFTeacher(e.target.value)} className={sel}><option value="">{t.teacher}: {t.all}</option>{p.teachers.map((x) => <option key={x} value={x}>{x}</option>)}</select>
@@ -338,7 +317,6 @@ export default function LessonCalendar(p: Props) {
         </div>
       )}
 
-      {/* Hafta navigatori (yoqilgan bo'lsa) — oldingi/keyingi hafta */}
       {p.weekNav && (
         <div className="flex flex-wrap items-center gap-2 border-b border-slate-100 px-5 pt-3 pb-1 dark:border-slate-800">
           <button onClick={() => setWeekOffset((o) => o - 1)} className="flex h-8 w-8 items-center justify-center rounded-lg border border-slate-200 text-lg text-slate-500 transition hover:bg-slate-50 dark:border-slate-700 dark:text-slate-300" aria-label={tr(p.locale, { uz: "Oldingi hafta", ru: "Прошлая неделя", en: "Previous week", de: "Vorherige Woche" })}>‹</button>
@@ -350,7 +328,6 @@ export default function LessonCalendar(p: Props) {
         </div>
       )}
 
-      {/* Kun tablari + ko'rinish tugmalari */}
       <div className="flex flex-wrap items-center justify-between gap-3 px-5 py-3">
         <div className="flex flex-wrap gap-1.5">
           {days.map((d, i) => {
@@ -379,7 +356,6 @@ export default function LessonCalendar(p: Props) {
         </div>
       </div>
 
-      {/* Ko'rinish: Panjara */}
       {viewType === "grid" ? (
         <div className={cn("overflow-y-auto px-5 pb-5", isFs ? "max-h-[calc(100vh-220px)]" : "max-h-[520px]")}>
           <div className="flex">
@@ -411,7 +387,6 @@ export default function LessonCalendar(p: Props) {
             <div className="py-12 text-center text-sm text-slate-400">{t.empty}</div>
           ) : (
             <div className="min-w-max pb-2">
-              {/* Sarlavha: vaqt ustunlari (gorizontal) */}
               <div className="sticky top-0 z-20 flex bg-slate-50/95 backdrop-blur dark:bg-slate-800/90">
                 <div className="sticky left-0 z-30 flex w-[150px] shrink-0 items-center border-b border-r border-slate-200 bg-slate-50/95 px-3 py-2.5 text-[11px] font-semibold uppercase tracking-wider text-slate-400 dark:border-slate-700 dark:bg-slate-800/90">
                   {groupMode === "room" ? t.room : groupMode === "teacher" ? t.teacher : t.group}
@@ -420,7 +395,6 @@ export default function LessonCalendar(p: Props) {
                   <div key={s.min} className="flex w-[128px] shrink-0 items-center justify-center border-b border-r border-slate-100 px-1 py-2.5 text-[11px] text-slate-500 dark:border-slate-700/60">{s.label}</div>
                 ))}
               </div>
-              {/* Qatorlar: xona/o'qituvchi + darslar */}
               {rowNames.map((name) => (
                 <div key={name} className="flex">
                   <div className="sticky left-0 z-10 flex w-[150px] shrink-0 items-center border-b border-r border-slate-200 bg-white px-3 py-2 text-sm font-medium text-slate-700 dark:border-slate-700 dark:bg-slate-900">
@@ -444,14 +418,11 @@ export default function LessonCalendar(p: Props) {
                           className="absolute bottom-1.5 top-1.5 flex flex-col overflow-hidden rounded-lg px-2 py-1.5 text-xs transition hover:z-10 hover:brightness-105 hover:shadow-lg"
                           style={{ left: left + 2, width, ...cst }}
                         >
-                          {/* 1-qator: guruh nomi — oq yorliq */}
                           <span className="mb-1 w-fit max-w-full truncate rounded bg-white/85 px-1.5 py-0.5 text-[10px] font-semibold text-slate-700">
                             {l.group}
                           </span>
-                          {/* 2-qator: kurs + o'qituvchi (fon rangiga mos matn) */}
                           <span className="truncate text-[13px] font-semibold leading-tight">{l.course}</span>
                           {l.teacher && <span className="truncate text-[13px] leading-tight opacity-90">{l.teacher}</span>}
-                          {/* Pastki qator: davr (chapda) + o'quvchilar soni (o'ngda, oq yorliq) */}
                           <span className="mt-auto flex items-end justify-between gap-1">
                             {period && <span className="truncate text-[10px] opacity-80">{period}</span>}
                             {l.students !== undefined && (
@@ -471,7 +442,6 @@ export default function LessonCalendar(p: Props) {
         </div>
       )}
 
-      {/* Sozlamalar paneli — butun ekran o'ngidan to'liq ochiladi */}
       {showSettings && (
         <div className="fixed inset-0 z-[60]">
           <div className="absolute inset-0 bg-slate-900/40 backdrop-blur-[2px]" onClick={() => setShowSettings(false)} />
@@ -511,7 +481,6 @@ export default function LessonCalendar(p: Props) {
   );
 }
 
-// Maxsus tooltip (Modme uslubidagi qora pufakcha)
 function Tooltip({ children }: { children: React.ReactNode }) {
   return (
     <span className="pointer-events-none absolute left-1/2 top-full z-30 mt-2 -translate-x-1/2 whitespace-nowrap rounded-md bg-slate-800 px-2 py-1 text-[11px] font-medium text-white opacity-0 shadow-md transition-opacity duration-150 group-hover:opacity-100 dark:bg-slate-700">
@@ -520,7 +489,6 @@ function Tooltip({ children }: { children: React.ReactNode }) {
   );
 }
 
-// Ko'rinish tugmasi — hoverda tooltip, bosilganda faol (ko'k) holat
 function TBtn({ label, active, solo, onClick, children }: { label: string; active?: boolean; solo?: boolean; onClick: () => void; children: React.ReactNode }) {
   return (
     <div className="group relative flex">

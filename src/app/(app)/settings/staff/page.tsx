@@ -6,9 +6,7 @@ import { Forbidden } from "../../_components/ui";
 import StaffView, { type SipOption, type VStaff } from "./StaffView";
 
 const ALLOWED = [ROLES.DIRECTOR, ROLES.DEPUTY_DIRECTOR];
-// Ro'yxatda ko'rinadigan rollar (eski MANAGER yozuvlari ham ko'rinsin)
 const STAFF_ROLES = [ROLES.OPERATOR, ROLES.ROP, ROLES.MANAGER, ROLES.DEPUTY_DIRECTOR, ROLES.DIRECTOR, ROLES.ADMIN, ROLES.TEACHER];
-// Yangi xodimga tanlash mumkin bo'lgan rollar — eski MANAGER berilmaydi
 const ASSIGNABLE_ROLES = [ROLES.OPERATOR, ROLES.ROP, ROLES.DEPUTY_DIRECTOR, ROLES.DIRECTOR, ROLES.ADMIN, ROLES.TEACHER, ROLES.ACCOUNTANT];
 
 export default async function StaffSettingsPage() {
@@ -23,7 +21,6 @@ export default async function StaffSettingsPage() {
     select: { id: true, fullName: true, role: true, position: true, phone: true, sipExtension: true },
   });
 
-  // SIP raqamlari (glive1…glive10) — kim band qilgani (ishdan ketganlar ham, ularniki qayta beriladi)
   const holders = await prisma.user.findMany({ where: { sipExtension: { not: null } }, select: { sipExtension: true, fullName: true, isActive: true } });
   const sipOptions: SipOption[] = Array.from({ length: 10 }, (_, i) => `glive${i + 1}`).map((ext) => {
     const h = holders.find((x) => x.sipExtension === ext);
@@ -43,7 +40,6 @@ export default async function StaffSettingsPage() {
 
   const roleOptions = ASSIGNABLE_ROLES.map((r) => ({ value: r, label: label(ROLE_LABELS, r, s.locale as Locale) }));
 
-  // Xodimni o'chirish — faqat direktor va o'rinbosarida (administratorda emas)
   const canDelete = [ROLES.DIRECTOR, ROLES.DEPUTY_DIRECTOR].includes(s.role as never);
   return <StaffView locale={s.locale} rows={rows} roleOptions={roleOptions} sipOptions={sipOptions} currentUserId={s.userId} canDelete={canDelete} />;
 }

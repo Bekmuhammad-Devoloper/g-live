@@ -10,8 +10,6 @@ import { Icon } from "../../_components/Icon";
 import { Avatar, CAT_ICON, CAT_LABEL, kpiColor, nf, RankBadge, type Cat, type VKpiRow } from "./KpiShared";
 import { saveKpiPay } from "./actions";
 
-// Eski loyihadagi jadval: operator/admin uchun 10 ustun, ROP uchun 7 ustun.
-// canEdit — oylik/bonusni tahrirlash huquqi (ish haqi moduli); qolgan ustunlar hisoblanadi.
 export default function KpiTable({ rows, tab, locale, canEdit = false }: { rows: VKpiRow[]; tab: Cat; locale: Locale; canEdit?: boolean }) {
   const isRop = tab === "rop";
   const cols = (isRop ? 7 : 10) + (canEdit ? 1 : 0);
@@ -73,11 +71,9 @@ export default function KpiTable({ rows, tab, locale, canEdit = false }: { rows:
                 const c = kpiColor(o.kpiPct);
                 return (
                   <tr key={o.id} className="transition hover:bg-slate-50 dark:hover:bg-slate-800/40">
-                    {/* Reyting */}
                     <td className="px-4 py-3.5">
                       <RankBadge rank={rank} />
                     </td>
-                    {/* Xodim */}
                     <td className="px-4 py-3.5">
                       <div className="flex items-center gap-3">
                         <Avatar name={o.name} cat={o.cat} size={36} imageUrl={o.imageUrl} />
@@ -90,16 +86,13 @@ export default function KpiTable({ rows, tab, locale, canEdit = false }: { rows:
                         </div>
                       </div>
                     </td>
-                    {/* Jami lidlar */}
                     <td className="px-4 py-3.5 text-center font-semibold tabular-nums text-slate-700 dark:text-slate-200">{o.total}</td>
-                    {/* Muvaffaqiyat */}
                     <td className="px-4 py-3.5 text-center">
                       <span className="inline-flex items-center gap-1 font-semibold tabular-nums text-emerald-600 dark:text-emerald-400">
                         <Icon name="arrowUpRight" className="h-3.5 w-3.5" />
                         {o.won}
                       </span>
                     </td>
-                    {/* Bloklangan (operator/admin) yoki Operatorlar soni (ROP) */}
                     <td className="px-4 py-3.5 text-center">
                       {isRop ? (
                         <span className="inline-flex items-center gap-1 font-semibold tabular-nums text-blue-600 dark:text-blue-400">
@@ -113,11 +106,9 @@ export default function KpiTable({ rows, tab, locale, canEdit = false }: { rows:
                         </span>
                       )}
                     </td>
-                    {/* Konversiya */}
                     <td className="px-4 py-3.5 text-center font-bold tabular-nums" style={{ color: kpiColor(o.conv) }}>
                       {o.conv}%
                     </td>
-                    {/* KPI (pul) */}
                     <td className="px-4 py-3.5 text-center">
                       <div className="font-bold tabular-nums" style={{ color: c }}>
                         {formatMoney(o.kpiMoney, locale)}
@@ -128,19 +119,16 @@ export default function KpiTable({ rows, tab, locale, canEdit = false }: { rows:
                     </td>
                     {!isRop && (
                       <>
-                        {/* Oylik to'lov (fiksa) */}
                         <td className="px-4 py-3.5 text-center">
                           <div className="font-semibold tabular-nums text-slate-700 dark:text-slate-200">{formatMoney(o.fiksa, locale)}</div>
                           <div className="text-[10px] text-emerald-500">+{nf(o.bonus)}/{t.lead}</div>
                         </td>
-                        {/* Yig'gan (oy) */}
                         <td className="px-4 py-3.5 text-center">
                           <div className="font-semibold tabular-nums text-emerald-600 dark:text-emerald-400">{formatMoney(o.earnedMonth, locale)}</div>
                           <div className="text-[10px] text-slate-400">
                             {o.wonMonth} {t.lead} × {nf(o.bonus)}
                           </div>
                         </td>
-                        {/* Ish kunlari */}
                         <td className="px-4 py-3.5 text-center">
                           <span className="font-semibold tabular-nums text-blue-600 dark:text-blue-400">{o.workDays}</span>{" "}
                           <span className="text-[10px] text-slate-400">{t.days}</span>
@@ -171,7 +159,6 @@ export default function KpiTable({ rows, tab, locale, canEdit = false }: { rows:
   );
 }
 
-// ─── Oylik to'lov + lid bonusini tahrirlash oynasi ───
 function EditPayModal({ row, locale, onClose }: { row: VKpiRow; locale: Locale; onClose: () => void }) {
   const router = useRouter();
   const [mounted, setMounted] = useState(false);
@@ -205,13 +192,11 @@ function EditPayModal({ row, locale, onClose }: { row: VKpiRow; locale: Locale; 
   const inp = "h-11 w-full rounded-xl border border-slate-200 bg-white px-3.5 text-sm font-semibold tabular-nums text-slate-800 outline-none focus:border-brand-400 dark:border-slate-700 dark:bg-slate-800/60 dark:text-slate-100";
   const lbl = "mb-1.5 block text-xs font-medium text-slate-500 dark:text-slate-400";
 
-  // Joriy oy uchun taxminiy hisob — kiritilayotgan qiymatlar bo'yicha
   const preview = num(fiksa) + row.wonMonth * num(bonus);
 
   return createPortal(
     <div className="fixed inset-0 z-[80] grid place-items-center bg-slate-900/50 p-4 backdrop-blur-sm" onMouseDown={onClose}>
       <div onMouseDown={(e) => e.stopPropagation()} className="w-[400px] max-w-full overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-pop dark:border-slate-700 dark:bg-slate-900">
-        {/* Sarlavha */}
         <div className="flex items-center justify-between border-b border-slate-100 px-5 py-4 dark:border-slate-800">
           <div className="flex min-w-0 items-center gap-3">
             <Avatar name={row.name} cat={row.cat} size={38} imageUrl={row.imageUrl} />
@@ -238,7 +223,6 @@ function EditPayModal({ row, locale, onClose }: { row: VKpiRow; locale: Locale; 
             <input inputMode="numeric" value={bonus} onChange={(e) => setBonus(money(e.target.value))} placeholder="200 000" className={inp} />
           </div>
 
-          {/* Taxminiy hisob */}
           <div className="rounded-xl bg-slate-50 px-3.5 py-3 text-xs dark:bg-white/[0.03]">
             <div className="flex items-center justify-between text-slate-500">
               <span>{tr(locale, { uz: "Shu oyda yopilgan lidlar", ru: "Закрыто лидов в этом месяце", en: "Leads won this month", de: "Diesen Monat gewonnene Leads" })}</span>

@@ -14,8 +14,6 @@ import { fmtUzPhoneInput } from "@/lib/phone";
 
 const SOURCES = ["sayt", "ilova", "telegram", "telefon", "reklama", "tashrif"];
 
-// Boshqariladigan (controlled) yon panel — trigger tugmasi tashqarida.
-// EnrollDrawer bilan bir xil uslub: o'ngdan sirg'alib chiqadi.
 export default function NewLeadForm({
   locale,
   open,
@@ -27,14 +25,12 @@ export default function NewLeadForm({
   open: boolean;
   onClose: () => void;
   defaultStage?: string;
-  /** Oddiy nomli ustundagi "+" dan ochilsa — lid shu ustunga tushadi */
   defaultColumn?: { id: string; name: string; color: string } | null;
 }) {
   const t = getT(locale);
   const router = useRouter();
   const [state, action, pending] = useActionState<LeadState, FormData>(createLead, {});
   const formRef = useRef<HTMLFormElement>(null);
-  // Oxirgi yuborilgan ma'lumot — dublikat ogohlantirishidan keyin "Baribir qo'shish" uchun
   const lastData = useRef<FormData | null>(null);
   const submit = (fd: FormData) => { lastData.current = fd; action(fd); };
   const forceAdd = () => {
@@ -45,8 +41,6 @@ export default function NewLeadForm({
     startTransition(() => action(fd));
   };
   const [mounted, setMounted] = useState(false);
-  // Ixtiyoriy guruh biriktiruvi. Ro'yxat HAR ochilishda qayta yuklanadi —
-  // shu orada yaratilgan guruh ham ko'rinsin (bir martalik kesh eskirib qoladi).
   const [groups, setGroups] = useState<EnrollGroupOpt[]>([]);
 
   useEffect(() => setMounted(true), []);
@@ -88,7 +82,6 @@ export default function NewLeadForm({
         onMouseDown={(e) => e.stopPropagation()}
         className="animate-slide-in-right absolute right-0 top-0 flex h-full drawer-panel flex-col border-l border-slate-200 bg-white shadow-pop dark:border-white/10 dark:bg-[#15243d]"
       >
-        {/* Sarlavha */}
         <div className="flex shrink-0 items-center justify-between gap-2 border-b border-slate-100 px-5 py-4 dark:border-white/10">
           <div className="flex items-center gap-2 text-base font-bold text-slate-800 dark:text-slate-100">
             <Icon name="plus" className="h-5 w-5 shrink-0 text-brand-500" />
@@ -99,7 +92,6 @@ export default function NewLeadForm({
           </button>
         </div>
 
-        {/* Maydonlar */}
         <div className="flex-1 overflow-y-auto px-5 py-4">
           {defaultColumn && (
             <>
@@ -208,7 +200,6 @@ export default function NewLeadForm({
           )}
         </div>
 
-        {/* Tugmalar */}
         <div className="flex shrink-0 justify-end gap-2 border-t border-slate-100 px-5 py-4 dark:border-white/10">
           <button type="button" onClick={onClose} className="btn-ghost">{t("common.cancel")}</button>
           <button type="submit" disabled={pending} className="btn-primary">{pending ? "..." : t("common.save")}</button>
@@ -219,8 +210,6 @@ export default function NewLeadForm({
   );
 }
 
-// Telefon maydoni: +998 doimiy prefiks, maska 9 xonadan ortiq yozdirmaydi.
-// Ilgari oddiy input edi — juda uzun, soxta raqamlar ham kiritilardi.
 function PhoneField({ input }: { input: string }) {
   const [phone, setPhone] = useState("");
   return (
@@ -241,8 +230,6 @@ function PhoneField({ input }: { input: string }) {
   );
 }
 
-// Guruh tanlash — brauzerning o'z ro'yxati o'rniga (u maydondan chiqib ketardi).
-// Ro'yxat maydon kengligida qoladi, uzun yozuv esa 3 soniyadan keyin aylanadi.
 function GroupPicker({ locale, groups, inputClass }: { locale: Locale; groups: EnrollGroupOpt[]; inputClass: string }) {
   const [open, setOpen] = useState(false);
   const [picked, setPicked] = useState("");
@@ -254,11 +241,10 @@ function GroupPicker({ locale, groups, inputClass }: { locale: Locale; groups: E
     `${g.courseName} — ${g.name} (${g.taken}/${g.capacity})` +
     (g.schedule ? ` · ${g.schedule}` : "") +
     (g.taken >= g.capacity ? ` · ${fullTxt}` : "") +
-    (g.note ? ` · ${g.note}` : ""); // guruh izohi (kament)
+    (g.note ? ` · ${g.note}` : "");
 
   const current = groups.find((g) => g.id === picked);
 
-  // Tashqariga bosilsa yopiladi
   useEffect(() => {
     if (!open) return;
     const onDown = (e: MouseEvent) => {

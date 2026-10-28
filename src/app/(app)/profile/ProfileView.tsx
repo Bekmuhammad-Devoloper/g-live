@@ -18,7 +18,6 @@ export interface Me {
   position: string | null; sipExtension: string | null; joined: string; lastLogin: string | null;
 }
 
-// +998 doimiy prefiks — foydalanuvchi faqat 9 raqam kiritadi (src/lib/phone.ts)
 const fmtPhone = fmtUzPhoneInput;
 
 export default function ProfileView({ locale, me, stats }: {
@@ -70,7 +69,6 @@ export default function ProfileView({ locale, me, stats }: {
 
   return (
     <div className="space-y-5">
-      {/* ── Sarlavha kartasi ── */}
       <div className="overflow-hidden rounded-2xl border border-slate-200/70 bg-white shadow-card dark:border-slate-800 dark:bg-slate-900">
         <div className="h-24 bg-gradient-to-r from-brand-600 via-brand-500 to-cyan-500" />
         <div className="flex flex-wrap items-end gap-4 px-6 pb-5">
@@ -107,7 +105,6 @@ export default function ProfileView({ locale, me, stats }: {
         </div>
       </div>
 
-      {/* ── Statistika ── */}
       <div className="grid grid-cols-2 gap-4 lg:grid-cols-4">
         <Tile icon="download" tone="#6366f1" label={L("Mening lidlarim", "Мои лиды", "My leads", "Meine Leads")} value={stats.leads} />
         <Tile icon="clipboard" tone="#f59e0b" label={L("Ochiq topshiriqlar", "Открытые задачи", "Open tasks", "Offene Aufgaben")} value={stats.tasksOpen} />
@@ -115,7 +112,6 @@ export default function ProfileView({ locale, me, stats }: {
         <Tile icon="calendar" tone="#0ea5e9" label={L("Ro'yxatdan o'tgan", "Дата регистрации", "Joined", "Beigetreten")} value={me.joined} small />
       </div>
 
-      {/* ── Tablar ── */}
       <div className="flex gap-2">
         <TabBtn active={tab === "info"} onClick={() => setTab("info")} icon="user">{L("Shaxsiy ma'lumotlar", "Личные данные", "Personal info", "Persönliche Daten")}</TabBtn>
         <TabBtn active={tab === "security"} onClick={() => setTab("security")} icon="shieldCheck">{L("Xavfsizlik", "Безопасность", "Security", "Sicherheit")}</TabBtn>
@@ -157,7 +153,6 @@ export default function ProfileView({ locale, me, stats }: {
             </Field>
           </div>
 
-          {/* O'zgartirib bo'lmaydigan ma'lumotlar */}
           <div className="mt-5 grid gap-3 rounded-xl bg-slate-50 p-4 text-sm dark:bg-white/[0.03] sm:grid-cols-3">
             <RO label={L("Lavozim", "Должность", "Position", "Position")} value={me.position ?? me.roleLabel} />
             <RO label={L("Filial", "Филиал", "Branch", "Filiale")} value={me.branchName ?? "—"} />
@@ -180,7 +175,6 @@ export default function ProfileView({ locale, me, stats }: {
         <div className="grid gap-4 lg:grid-cols-2">
           <PasswordCard locale={locale} onDone={flash} />
 
-          {/* Hisob xavfsizligi — o'ng ustun */}
           <div className="rounded-2xl border border-slate-200/70 bg-white p-6 shadow-card dark:border-slate-800 dark:bg-slate-900">
             <h3 className="mb-1 flex items-center gap-2 text-base font-semibold text-slate-800 dark:text-slate-100">
               <Icon name="eye" className="h-5 w-5 text-slate-400" /> {L("Hisob ma'lumotlari", "Данные аккаунта", "Account details", "Kontodaten")}

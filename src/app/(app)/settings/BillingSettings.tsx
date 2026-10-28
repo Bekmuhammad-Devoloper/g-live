@@ -25,7 +25,7 @@ const priceOf = (monthly: number, months: number, off: number) => Math.round(mon
 interface Paid { plan: string; months: number; amount: number; date: string }
 
 export default function BillingSettings({ locale }: { locale: Locale }) {
-  const [sel, setSel] = useState(""); // "PLAN|months"
+  const [sel, setSel] = useState("");
   const [history, setHistory] = useState<Paid[]>([]);
   const [msg, setMsg] = useState(false);
 
@@ -36,7 +36,7 @@ export default function BillingSettings({ locale }: { locale: Locale }) {
     try {
       const raw = localStorage.getItem(STORAGE_KEY);
       if (raw) setHistory(JSON.parse(raw));
-    } catch { /* ignore */ }
+    } catch { }
   }, []);
 
   const options = useMemo(() =>
@@ -54,7 +54,7 @@ export default function BillingSettings({ locale }: { locale: Locale }) {
     const entry: Paid = { plan: opt.plan, months: opt.months, amount: opt.amount, date: `${p2(now.getDate())}.${p2(now.getMonth() + 1)}.${now.getFullYear()}` };
     const next = [entry, ...history];
     setHistory(next);
-    try { localStorage.setItem(STORAGE_KEY, JSON.stringify(next)); } catch { /* ignore */ }
+    try { localStorage.setItem(STORAGE_KEY, JSON.stringify(next)); } catch { }
     setMsg(true); setTimeout(() => setMsg(false), 2500);
     setSel("");
   };
@@ -62,7 +62,6 @@ export default function BillingSettings({ locale }: { locale: Locale }) {
   return (
     <div className="space-y-6">
       <div className="grid gap-6 lg:grid-cols-2">
-        {/* Chap: to'lov formasi */}
         <div className="rounded-2xl border border-slate-300 bg-white p-6 shadow-card dark:border-slate-600 dark:bg-slate-900">
           <h2 className="mb-5 text-xl font-bold text-slate-800 dark:text-slate-100">{tr(locale, { uz: "Platforma uchun to'lov", ru: "Оплата платформы", en: "Platform payment", de: "Zahlung für die Plattform" })}</h2>
           <label className="mb-1.5 block text-sm font-medium text-slate-600 dark:text-slate-300">{tr(locale, { uz: "Davr", ru: "Период", en: "Period", de: "Zeitraum" })} <span className="text-rose-500">*</span></label>
@@ -82,7 +81,6 @@ export default function BillingSettings({ locale }: { locale: Locale }) {
           {msg && <p className="mt-3 text-sm text-emerald-600 dark:text-emerald-400">{tr(locale, { uz: "✓ To'lov qabul qilindi (demo) — tarixga qo'shildi.", ru: "✓ Платёж принят (демо) — добавлен в историю.", en: "✓ Payment accepted (demo) — added to history.", de: "✓ Zahlung angenommen (Demo) — zur Historie hinzugefügt." })}</p>}
         </div>
 
-        {/* O'ng: tarif rejalari */}
         <div className="rounded-2xl border border-slate-300 bg-white p-4 shadow-card dark:border-slate-600 dark:bg-slate-900">
           <div className="grid grid-cols-2 gap-2.5 sm:grid-cols-4">
             {PLANS.map((p) => (
@@ -116,7 +114,6 @@ export default function BillingSettings({ locale }: { locale: Locale }) {
         </div>
       </div>
 
-      {/* To'lov tarixi */}
       <div>
         <h3 className="mb-3 text-xl font-bold text-slate-800 dark:text-slate-100">{tr(locale, { uz: "To'lov tarixi", ru: "История платежей", en: "Payment history", de: "Zahlungsverlauf" })}</h3>
         <div className="overflow-hidden rounded-2xl border border-slate-300 bg-white shadow-card dark:border-slate-600 dark:bg-slate-900">

@@ -1,6 +1,5 @@
 import { PrismaClient } from "@prisma/client";
 
-// Next.js dev rejimida hot-reload paytida ko'p ulanish ochilishining oldini olish
 const globalForPrisma = globalThis as unknown as { prisma?: PrismaClient };
 
 export const prisma =

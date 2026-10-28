@@ -11,12 +11,8 @@ import { isValidDateISO, todayISOLocal } from "@/lib/attendanceWindow";
 
 export type FormState = { ok?: boolean; error?: string };
 
-// Ish jadvali va maosh sozlamalari
 const CAN = [ROLES.DIRECTOR, ROLES.DEPUTY_DIRECTOR, ROLES.ADMIN];
 const canManage = (role: string) => CAN.includes(role as never);
-// Davomat katakchalari: faqat menejer/direktor/o'rinbosar
-// o'zgartiradi; qolganlar (admin, ustoz) faqat ko'radi. Ustozga ✓ o'zi
-// guruhida davomat o'tkazganda avtomatik tushadi (teacherAutoAttendance).
 const CAN_ATT = [ROLES.DIRECTOR, ROLES.DEPUTY_DIRECTOR, ROLES.MANAGER];
 const canMarkAtt = (role: string) => CAN_ATT.includes(role as never);
 const timeRe = /^([01]\d|2[0-3]):[0-5]\d$/;
@@ -27,7 +23,6 @@ function normalizeWeekdays(raw?: string): string | null {
   return d.length ? d.join(",") : null;
 }
 
-// ─── Ish jadvali (upsert) ───
 const schedSchema = z.object({
   teacherId: z.string().min(1),
   weekdays: z.string().optional(),
@@ -74,9 +69,7 @@ export async function deleteTeacherSchedule(teacherId: string): Promise<void> {
   revalidatePath("/teacher-attendance");
 }
 
-// ─── Kunlik davomat: keldi / kechikdi / kelmadi / sababli; status=null — belgini olib tashlash ───
 const STATUSES = ["PRESENT", "LATE", "ABSENT", "EXCUSED"];
-// present maydoni maosh hisobi uchun: kechikib kelgan ham "keldi" hisoblanadi
 const presentOf = (status: string) => status === "PRESENT" || status === "LATE";
 
 export async function setTeacherAttendance(
@@ -88,10 +81,8 @@ export async function setTeacherAttendance(
   if (!canMarkAtt(s.role)) return { ok: false, error: "forbidden" };
   if (!isValidDateISO(dateISO)) return { ok: false, error: "invalid" };
   if (status !== null && !STATUSES.includes(status)) return { ok: false, error: "invalid" };
-  // Kelajak sanaga faqat "sababli" (oldindan kelishilgan ta'til, kasallik) qo'yiladi
   if (status && status !== "EXCUSED" && dateISO > todayISOLocal()) return { ok: false, error: "future" };
 
-  // Faqat faol filial doirasidagi o'qituvchi
   const teacher = await prisma.user.findFirst({
     where: { AND: [{ id: teacherId, role: ROLES.TEACHER }, staffBranchWhere(s)] },
     select: { id: true },

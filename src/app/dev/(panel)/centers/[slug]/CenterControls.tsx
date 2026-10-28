@@ -45,7 +45,6 @@ export default function CenterControls({ center: c, modules, backups }: { center
       )}
 
       <div className="grid gap-4 lg:grid-cols-2">
-        {/* Litsenziya */}
         <section className={box}>
           <h2 className="font-semibold">Litsenziya</h2>
           <p className="mt-1 text-sm text-slate-500">Hozir: <b>{fmtDate(c.licenseUntil)}</b> gacha. Muddat o'tsa markaz avtomatik yopiladi va foydalanuvchilarga ogohlantirish ko'rsatiladi.</p>
@@ -69,7 +68,6 @@ export default function CenterControls({ center: c, modules, backups }: { center
           </div>
         </section>
 
-        {/* Modullar */}
         <section className={box}>
           <h2 className="font-semibold">Modullar</h2>
           <div className="mt-3 space-y-2">
@@ -83,7 +81,6 @@ export default function CenterControls({ center: c, modules, backups }: { center
           <button disabled={pending} onClick={() => act(() => setModulesAction(c.slug, [...mods]), "Modullar saqlandi, markaz qayta ishga tushirildi")} className={`${btnDark} mt-3`}>Saqlash</button>
         </section>
 
-        {/* Ma'lumotlar */}
         <section className={box}>
           <h2 className="font-semibold">Markaz ma'lumotlari</h2>
           <div className="mt-3 grid gap-3 sm:grid-cols-2">
@@ -96,7 +93,6 @@ export default function CenterControls({ center: c, modules, backups }: { center
           <button disabled={pending} onClick={() => act(() => updateInfoAction(c.slug, info), "Ma'lumotlar saqlandi")} className={`${btnDark} mt-3`}>Saqlash</button>
         </section>
 
-        {/* Kirish va xizmat */}
         <section className={box}>
           <h2 className="font-semibold">Direktor kirishi</h2>
           <p className="mt-1 text-sm text-slate-500">Login: <span className="font-mono">{c.directorEmail}</span></p>
@@ -118,7 +114,6 @@ export default function CenterControls({ center: c, modules, backups }: { center
           </div>
         </section>
 
-        {/* Zaxira */}
         <section className={box}>
           <div className="flex items-center justify-between">
             <h2 className="font-semibold">Zaxira nusxalar</h2>
@@ -139,7 +134,6 @@ export default function CenterControls({ center: c, modules, backups }: { center
           </ul>
         </section>
 
-        {/* Xavfli amal */}
         <section className="rounded-2xl border border-red-200 bg-red-50/40 p-5 dark:border-red-500/30 dark:bg-red-500/5">
           <h2 className="font-semibold text-red-700 dark:text-red-300">Markazni o'chirish</h2>
           <p className="mt-1 text-sm text-slate-600 dark:text-slate-300">Xizmat to'xtatiladi va subdomen olib tashlanadi. Ma'lumotlar o'chirilmaydi — serverda arxiv papkaga ko'chiriladi.</p>

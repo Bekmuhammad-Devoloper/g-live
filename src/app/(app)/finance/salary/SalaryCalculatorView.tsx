@@ -79,7 +79,6 @@ const dmy = (s: string) => { const [y, m, d] = s.slice(0, 10).split("-"); return
 const dmyTime = (iso: string) => { const d = new Date(iso); const p = (n: number) => String(n).padStart(2, "0"); return `${p(d.getDate())}.${p(d.getMonth() + 1)}.${d.getFullYear()} ${p(d.getHours())}:${p(d.getMinutes())}`; };
 const fmtAmount = (r: { amountType: string; amount: number }, locale: Locale) => (isPercent(r.amountType) ? `${r.amount}%` : formatMoney(r.amount, locale));
 
-// Excel (.xlsx) fayl — bir yoki bir nechta varaq
 async function downloadXlsx(filename: string, sheets: { name: string; rows: (string | number | null)[][] }[]) {
   const XLSX = await import("xlsx");
   const wb = XLSX.utils.book_new();
@@ -177,7 +176,6 @@ function ruleError(e: string | undefined, locale: Locale): string | null {
   return tr(locale, { uz: "Qiymatni to'g'ri kiriting.", ru: "Введите корректное значение.", en: "Enter a valid value.", de: "Geben Sie einen gültigen Wert ein." });
 }
 
-// Summa + maosh turi (foiz turlarida % maydoni)
 function AmountField({ type, setType, defaultAmount, locale }: { type: string; setType: (t: string) => void; defaultAmount?: number; locale: Locale }) {
   return (
     <div className="min-w-[260px] flex-1">
@@ -199,7 +197,6 @@ function AmountField({ type, setType, defaultAmount, locale }: { type: string; s
   );
 }
 
-// 1-bosqich: filial (standart) qoidasi
 function DefaultRuleForm({ editing, hasDefault, onDone, locale }: { editing: VRule | null; hasDefault: boolean; onDone: () => void; locale: Locale }) {
   const [state, action, pending] = useActionState<RuleState, FormData>(saveSalaryRule, {});
   const [type, setType] = useState(editing?.amountType ?? "fixed");
@@ -220,7 +217,6 @@ function DefaultRuleForm({ editing, hasDefault, onDone, locale }: { editing: VRu
   );
 }
 
-// 2-bosqich: individual qoida (kurs / o'qituvchi / guruh / talaba + guruh)
 function IndividualRuleForm({ editing, onDone, teachers, programs, groups, students, enrollments, locale }: {
   editing: VRule | null; onDone: () => void; teachers: Opt[]; programs: Opt[]; groups: Opt[]; students: Opt[]; enrollments: [string, string][]; locale: Locale;
 }) {
@@ -367,10 +363,8 @@ function Modal({ title, onClose, children, wide }: { title: string; onClose: () 
     window.addEventListener("keydown", h);
     return () => window.removeEventListener("keydown", h);
   }, [onClose]);
-  // body'ga chiqariladi: sahifa konteyneridagi transform fixed joylashuvni kesib qo'ymasligi uchun
   if (typeof document === "undefined") return null;
   return createPortal(
-    // O'ng tomondan chiquvchi panel (Modme uslubida)
     <div className="animate-dialog-fade fixed inset-0 z-[120] flex justify-end bg-slate-900/50" onMouseDown={(e) => { if (e.target === e.currentTarget) onClose(); }}>
       <div className={cn("animate-slide-in-right flex h-full w-full flex-col bg-white shadow-2xl dark:bg-slate-900", wide ? "max-w-[min(1200px,92vw)]" : "max-w-lg")}>
         <div className="flex shrink-0 items-center justify-between border-b border-slate-200/70 px-5 py-4 dark:border-slate-800">

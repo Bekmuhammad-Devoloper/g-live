@@ -1,13 +1,3 @@
-/**
- * Eski "Ustozga yozish" xabarlarini yangi yozishmaga ko'chiradi.
- *
- * Avval xabar Notification sifatida saqlanardi (o'quvchida MESSAGE_SENT
- * nusxasi, ustozda STUDENT_MESSAGE). Endi ChatMessage jadvali bor —
- * o'quvchining eski xabarlari yo'qolmasin.
- *
- *   node scripts/migrate-chat.mjs           — nima ko'chishini ko'rsatadi
- *   node scripts/migrate-chat.mjs --apply   — ko'chiradi
- */
 import { PrismaClient } from "@prisma/client";
 
 const prisma = new PrismaClient();
@@ -44,7 +34,6 @@ for (const n of sent) {
     continue;
   }
 
-  // Ikki marta ko'chirmaslik uchun: shu matn shu o'quvchida bormi?
   const exists = await prisma.chatMessage.findFirst({
     where: { studentId: student.id, text: n.body, fromStudent: true },
     select: { id: true },

@@ -6,13 +6,9 @@ import { S } from "../_i18n";
 import MissingStudent from "../MissingStudent";
 import Chat, { type VMsg } from "./Chat";
 
-// "Ustozga yozish" — o'quvchi va ustoz o'rtasidagi yozishma.
-// Ustoz javobini CRM dagi /chat sahifasidan yozadi.
-
 export default async function StudentLehrerPage() {
   const session = await getSession();
   if (!session) redirect("/login");
-  // Bo'lim menejer tomonidan o'chirilgan bo'lsa — bosh sahifaga
   if (!(await isPortalFeatureOn("lehrer"))) redirect("/student");
   const t = S(session.locale);
 
@@ -29,7 +25,6 @@ export default async function StudentLehrerPage() {
             select: {
               name: true,
               teacherId: true,
-              // Parol maydonlari RSC yukiga tushmasligi uchun select bilan
               teacher: { select: { fullName: true, imageUrl: true } },
             },
           },

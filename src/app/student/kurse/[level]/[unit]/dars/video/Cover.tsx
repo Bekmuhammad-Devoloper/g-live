@@ -3,15 +3,6 @@ import { embedUrl, isImage, isUpload, safeUrl, youtubePoster } from "../../_part
 import Player from "./Player";
 import BrandLogo, { type BrandView } from "@/app/BrandLogo";
 
-// Dars videosining muqovasi + "Ko'rish" tugmasi.
-//
-// Muqova ATAYLAB o'zimizniki: YouTube iframe'i faqat "Ko'rish" bosilganda
-// yuklanadi. Aks holda sahifa ochilishi bilan YouTube o'z brendi, tavsiyalari
-// va bir necha yuz kilobayt skriptini olib kelardi.
-//
-// Ikki joyda ishlatiladi: darsning o'z video sahifasi va QR orqali ochiladigan
-// alohida video sahifa (/student/dars/video/<id>).
-
 export const VIDEO_ACCENT = "linear-gradient(150deg, #2fb9dc 0%, #0e7490 100%)";
 
 export default function VideoCover({
@@ -20,13 +11,11 @@ export default function VideoCover({
   lesson: { id: string; videoUrl: string | null; videoPosterUrl: string | null };
   watched: boolean;
   t: StudentStrings;
-  /** Markaz brendi — muqova bo'lmaganda logotip (yoki nom) ko'rsatiladi */
   brand: BrandView;
 }) {
   const video = safeUrl(lesson.videoUrl);
   const embed = video && !isUpload(video) ? embedUrl(video) : null;
   const mode = !video ? "none" : isUpload(video) ? "file" : embed ? "embed" : "link";
-  // Muqova: ustoz yuklagan video banneri → bo'lmasa YouTube muqovasi → bo'lmasa ilova logotipi
   const banner = safeUrl(lesson.videoPosterUrl);
   const poster = banner && isImage(banner) ? banner : video && !isUpload(video) ? youtubePoster(video) : null;
 
@@ -40,8 +29,6 @@ export default function VideoCover({
         </>
       ) : (
         <>
-          {/* Banner yuklanmagan va video muqovasi yo'q — o'rniga ilova logotipi.
-              Diagonal chiziqlar tekis rangni "jonlantiradi". */}
           <svg aria-hidden className="absolute inset-0 h-full w-full opacity-[0.14]" preserveAspectRatio="none" viewBox="0 0 100 56">
             <g stroke="#fff" strokeWidth="6" fill="none">
               <path d="M-10 66 L40 -10" />
@@ -61,7 +48,6 @@ export default function VideoCover({
         </>
       )}
 
-      {/* "Ko'rish" — bosilganda to'liq ekran gorizontal pleyer ochiladi */}
       <div className="absolute bottom-3.5 right-3.5">
         <Player
           mode={mode}

@@ -34,7 +34,6 @@ export function NewTaskForm({
   const ref = useRef<HTMLFormElement>(null);
   useEffect(() => { if (state.ok) { ref.current?.reset(); setOpen(false); } }, [state.ok]);
 
-  // Escape bilan yopish + fon scroll'ini bloklash (o'ngdan chiquvchi drawer)
   useEffect(() => {
     if (!open) return;
     const onKey = (e: KeyboardEvent) => { if (e.key === "Escape") setOpen(false); };
@@ -63,13 +62,11 @@ export function NewTaskForm({
           >
             <input type="hidden" name="kind" value={kind} />
 
-            {/* Header */}
             <div className="flex shrink-0 items-center justify-between border-b border-slate-100 px-6 py-4 dark:border-white/10">
               <h3 className="text-lg font-bold text-slate-900 dark:text-slate-100">{buttonLabel}</h3>
               <button type="button" onClick={() => setOpen(false)} className="flex h-8 w-8 items-center justify-center rounded-lg text-xl text-slate-400 transition hover:bg-slate-100 hover:text-slate-600 dark:hover:bg-white/10">✕</button>
             </div>
 
-            {/* Body */}
             <div className="flex-1 space-y-3.5 overflow-y-auto px-6 py-5">
               <div>
                 <label className="mb-1 block text-xs font-semibold text-slate-600 dark:text-slate-400">{tr(locale, { uz: "Sarlavha", ru: "Заголовок", en: "Title", de: "Titel" })} <span className="text-red-500">*</span></label>
@@ -127,7 +124,6 @@ export function NewTaskForm({
               {state.error && <p className="rounded-lg bg-red-50 px-3 py-2 text-sm text-red-700">{tr(locale, { uz: "Ma'lumot to'liq emas.", ru: "Данные неполные.", en: "Incomplete data.", de: "Unvollständige Angaben." })}</p>}
             </div>
 
-            {/* Footer */}
             <div className="flex shrink-0 justify-end gap-2 border-t border-slate-100 px-6 py-4 dark:border-white/10">
               <button type="button" onClick={() => setOpen(false)} className="btn-ghost">{tr(locale, { uz: "Bekor qilish", ru: "Отмена", en: "Cancel", de: "Abbrechen" })}</button>
               <button type="submit" disabled={pending} className="btn-primary">{pending ? "..." : tr(locale, { uz: "Saqlash", ru: "Сохранить", en: "Save", de: "Speichern" })}</button>

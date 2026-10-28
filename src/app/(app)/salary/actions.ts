@@ -10,7 +10,6 @@ import { writeAudit } from "@/lib/audit";
 
 export type FormState = { ok?: boolean; error?: string };
 
-// Faqat FULL huquqli rollar (direktor / o'rinbosar) maosh hisobini yopadi.
 function canManageSalary(role: string) {
   return getPermission(role, MODULES.SALARY) === "FULL";
 }
@@ -21,12 +20,10 @@ const schema = z.object({
   month: z.coerce.number().int().min(1).max(12),
   bonus: z.coerce.number().int().min(0).max(1_000_000_000),
   penalty: z.coerce.number().int().min(0).max(1_000_000_000),
-  kpi: z.coerce.number().int().min(0).max(1_000_000_000), // KPI bonus summasi (so'm)
+  kpi: z.coerce.number().int().min(0).max(1_000_000_000),
   closed: z.coerce.boolean(),
 });
 
-// Maosh yozuvini hisoblab saqlash (upsert) — TeacherSalary yozuvi.
-// Darslar/o'quvchilar soni serverda snapshot qilinadi; fiksa kalkulyator natijasidan (bo'lmasa xodim kartochkasidan) olinadi.
 export async function saveTeacherSalary(_prev: FormState, formData: FormData): Promise<FormState> {
   const s = await requireSession();
   if (!canManageSalary(s.role)) return { error: "forbidden" };
@@ -49,7 +46,6 @@ export async function saveTeacherSalary(_prev: FormState, formData: FormData): P
   });
   if (!teacher || teacher.role !== ROLES.TEACHER) return { error: "invalid" };
 
-  // Davr chegaralari
   const monthStart = new Date(d.year, d.month - 1, 1);
   const monthEnd = new Date(d.year, d.month, 1);
 
@@ -69,7 +65,6 @@ export async function saveTeacherSalary(_prev: FormState, formData: FormData): P
     where: { teacherId_year_month: { teacherId: d.teacherId, year: d.year, month: d.month } },
     select: { id: true, fiksa: true },
   });
-  // Kalkulyatorda hisoblangan fiksa saqlanib qoladi; yozuv bo'lmasa yoki 0 bo'lsa — xodim kartochkasidagi fiksa
   const fiksa = existing && existing.fiksa > 0 ? existing.fiksa : teacher.fiksa;
 
   const row = await prisma.teacherSalary.upsert({

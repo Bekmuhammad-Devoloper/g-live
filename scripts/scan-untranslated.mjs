@@ -1,13 +1,3 @@
-// Tarjimasiz qolgan matnlarni topadi — til almashganda hamma so'z o'tishi kerak.
-//
-//   node scripts/scan-untranslated.mjs "src/app/(app)" src/app/student
-//
-// TS AST bilan JSX matnlari va foydalanuvchiga ko'rinadigan joylardagi satr
-// literallarini (placeholder, title, label, error, body...) yig'adi;
-// t()/tr()/T()/L()/S()/LT() orqali kelganlarini o'tkazib yuboradi.
-// Topilmalar qo'lda ko'rib chiqiladi: brend nomi, API kalit maydonlari, til
-// endonimlari, CSS va misol e-pochtalar ataylab tarjima qilinmaydi.
-// Loyiha ildizidan yuritiladi (typescript node_modules dan olinadi).
 import ts from "typescript";
 import fs from "node:fs";
 import path from "node:path";
@@ -26,7 +16,6 @@ function* walk(dir) {
   }
 }
 
-/** Matn ko'rinadigan joydami? */
 function visible(node) {
   if (ts.isJsxText(node)) return true;
   let n = node;

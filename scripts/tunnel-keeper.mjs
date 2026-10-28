@@ -1,12 +1,3 @@
-// SSH tunnel nazoratchisi — tunnel uzilsa AVTOMATIK qayta tiklaydi.
-//
-// NEGA KERAK: `ssh -N` jarayoni tarmoq uzilganda, noutbuk uxlab qolganda
-// yoki server qayta yuklanganda o'ladi. Ilgari uni hech kim tiklamas edi va
-// foydalanuvchi faqat qo'ng'iroq qilmoqchi bo'lganda "tunnel yopiq" xatosini
-// ko'rardi. Endi bu jarayon fonda turadi va tunnelni tirik saqlaydi.
-//
-// Bitta nusxa kafolati — lokal portni band qilish (ami-worker'dagi kabi).
-
 import { spawn } from "node:child_process";
 import net from "node:net";
 import os from "node:os";
@@ -25,7 +16,6 @@ const log = (m) => {
   process.stdout.write(line);
 };
 
-// ── Bitta nusxa ──
 await new Promise((resolve) => {
   const guard = net.createServer();
   guard.once("error", (e) => {
@@ -52,18 +42,16 @@ const SSH_ARGS = [
   "-o", "BatchMode=yes",
   "-o", "StrictHostKeyChecking=accept-new",
   "-o", "ExitOnForwardFailure=yes",
-  // Uzilishni TEZ sezish uchun: 15s×3 = 45s ichida ssh o'zi chiqadi
   "-o", "ServerAliveInterval=15",
   "-o", "ServerAliveCountMax=3",
   "-o", "ConnectTimeout=15",
   "-L", `${PORT}:127.0.0.1:${PORT}`,
-  // 3011 → serverdagi GL-EDU (3010): qo'ng'iroq yozuvlarini eshitish uchun
   "-L", "3011:127.0.0.1:3010",
   HOST,
 ];
 
 let stopping = false;
-let delay = 2000;               // qayta urinish kechikishi
+let delay = 2000;
 const MAX_DELAY = 60_000;
 
 function runOnce() {
@@ -84,11 +72,10 @@ log("tunnel nazoratchisi ishga tushdi");
 while (!stopping) {
   const started = Date.now();
 
-  // Fonda kutamiz: port ochilishi bilan bir marta xabar yozamiz
   void (async () => {
     for (let i = 0; i < 15; i++) {
       await new Promise((r) => setTimeout(r, 1000));
-      if (Date.now() - started > 20_000) return;   // bu urinish barbod bo'ldi
+      if (Date.now() - started > 20_000) return;
       if (await isOpen()) { log("tunnel ochiq (5039)"); return; }
     }
   })();
@@ -97,18 +84,15 @@ while (!stopping) {
   const lived = Date.now() - started;
 
   if (lived > 30_000) {
-    // Uzoq ishlagan — bu oddiy uzilish, darhol qayta ulanamiz
     log(`tunnel uzildi (${Math.round(lived / 1000)}s ishladi) — qayta ulanmoqda`);
     delay = 2000;
   } else {
-    // Tez o'ldi — muammo bor (kalit, tarmoq, port band). Kechikishni oshiramiz.
     log(`ulanib bo'lmadi (code=${code})${stderr ? ": " + stderr.split("\n")[0] : ""} — ${Math.round(delay / 1000)}s dan keyin qayta urinish`);
     delay = Math.min(delay * 2, MAX_DELAY);
   }
 
   await new Promise((r) => setTimeout(r, delay));
 
-  // Boshqa birov tunnelni ochib qo'ygan bo'lsa — kutamiz, urishmaymiz
   if (await isOpen()) {
     log("tunnel boshqa jarayon tomonidan ochilgan — kuzatishda davom etamiz");
     while (!stopping && (await isOpen())) await new Promise((r) => setTimeout(r, 5000));

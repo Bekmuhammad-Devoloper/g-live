@@ -9,7 +9,6 @@ import CancelledView, { type VCancel } from "./CancelledView";
 
 const ALLOWED = [ROLES.DIRECTOR, ROLES.DEPUTY_DIRECTOR, ROLES.MANAGER];
 
-// Bekor qilingan to'lovlar — status = CANCELLED bo'lgan to'lovlar ro'yxati.
 export default async function CancelledPage() {
   const s = await requireSession();
   if (!ALLOWED.includes(s.role as never)) {
@@ -17,7 +16,7 @@ export default async function CancelledPage() {
   }
 
   const pays = await prisma.payment.findMany({
-    where: { AND: [{ status: "CANCELLED" }, branchViaStudent(s)] }, // faol filial doirasida
+    where: { AND: [{ status: "CANCELLED" }, branchViaStudent(s)] },
     orderBy: { cancelledAt: "desc" },
     select: {
       id: true,
@@ -38,7 +37,6 @@ export default async function CancelledPage() {
     },
   });
 
-  // Har bir o'quvchi bo'yicha jami bekor qilingan summa
   const totalByStudent = new Map<string, number>();
   for (const p of pays) totalByStudent.set(p.studentId, (totalByStudent.get(p.studentId) ?? 0) + p.amount);
 

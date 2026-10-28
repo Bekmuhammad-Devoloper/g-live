@@ -1,26 +1,12 @@
-/**
- * Ko'nikma kartalari rasmlarini brend rangiga bo'yaydi.
- *
- * public/skills/ dagi rasmlar juda och kulrang chiziqli chizma edi —
- * telefonda deyarli ko'rinmasdi. Shakl alfa kanalda saqlanadi, shu sabab
- * piksellarning rangini feruzaga almashtirib, alfani (chiziq qalinligini)
- * o'z holicha qoldiramiz. Rangli illyustratsiya tashlansa — "--only-gray"
- * (sukut bo'yicha) uni tegmasdan o'tkazib yuboradi.
- *
- *   node scripts/tint-skill-images.mjs           — nima o'zgarishini aytadi
- *   node scripts/tint-skill-images.mjs --apply   — rasmlarni yangilaydi
- */
 import fs from "node:fs";
 import path from "node:path";
 import sharp from "sharp";
 
 const DIR = path.join(process.cwd(), "public", "skills");
 const apply = process.argv.includes("--apply");
-const force = process.argv.includes("--force"); // rangli rasmlarni ham bo'yash
+const force = process.argv.includes("--force");
 
-// Brend feruzasi (student portali: TEAL / ICON_GRADIENT)
 const TINT = { r: 14, g: 116, b: 144 };
-// Juda och piksellar ko'rinmaydi — alfani biroz kuchaytiramiz
 const ALPHA_BOOST = 1.35;
 
 const files = [];
@@ -38,9 +24,6 @@ for (const file of files) {
   const { data, info } = await img.ensureAlpha().raw().toBuffer({ resolveWithObject: true });
   const px = info.width * info.height;
 
-  // Rasm ekranda o'qiladimi? Chiziqlari juda och bo'lsa (och kulrang yoki
-  // och havorang) 40-56px da ko'rinmaydi — shundaylarini bo'yaymiz.
-  // To'yingan, to'q illyustratsiya bo'lsa tegmaymiz.
   let visible = 0;
   let lumSum = 0;
   for (let i = 0; i < px; i++) {
@@ -58,8 +41,6 @@ for (const file of files) {
     continue;
   }
 
-  // Shakl alfa kanalda — rangni to'liq brend feruzasiga almashtiramiz.
-  // (Manba rangiga bog'lasak, och chizma yana och chiqadi.)
   for (let i = 0; i < px; i++) {
     const o = i * 4;
     const a = data[o + 3];

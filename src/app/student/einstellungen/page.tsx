@@ -14,13 +14,6 @@ import { getBrand } from "@/lib/brand";
 import SecretField from "./SecretField";
 import AppVersion from "./AppVersion";
 
-// Sozlamalar — Profil sarlavhasidagi tishli g'ildirak ostidagi sahifa.
-//
-// Sahifadagi barcha qatorlar BITTA ko'rinishda: chapda rangli ikonka
-// plitasi, o'rtada nom va izoh, o'ngda qiymat yoki o'q. Ilgari uch xil
-// uslub aralash edi — ba'zi bo'lim alohida karta, ba'zisi ro'yxat qatori,
-// ba'zisi esa faqat matn — va sahifa yig'ilmagandek ko'rinardi.
-
 function IcoChevron({ s = 16 }: { s?: number }) {
   return (
     <svg width={s} height={s} viewBox="0 0 24 24" fill="none" stroke="#94a3b8" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
@@ -39,7 +32,6 @@ function IcoGlobe({ s = 20 }: { s?: number }) {
   );
 }
 
-/** Qator ichidagi rangli ikonka plitasi — barcha bo'limda bir xil */
 function Tile({ children, tone = "teal" }: { children: React.ReactNode; tone?: "teal" | "rose" }) {
   return (
     <span
@@ -59,13 +51,11 @@ interface RowProps {
   icon: React.ReactNode;
   title: string;
   subtitle?: string;
-  /** O'ngdagi qiymat — bo'lmasa faqat o'q chiziladi */
   value?: React.ReactNode;
   href?: string;
   tone?: "teal" | "rose";
 }
 
-/** Bitta qator. Havolasi bo'lsa bosiladi va o'q chiqadi. */
 function Row({ icon, title, subtitle, value, href, tone }: RowProps) {
   const inner = (
     <>
@@ -105,7 +95,6 @@ export default async function StudentSettingsPage() {
       birthDate: true,
       age: true,
       currentLevel: true,
-      // Parol maydonlari RSC yukiga tushmasligi uchun aniq select bilan
       user: { select: { email: true, locale: true, plainPassword: true } },
       enrollments: {
         where: { isActive: true },
@@ -128,7 +117,6 @@ export default async function StudentSettingsPage() {
     <div className="space-y-4">
       <PageHeader title={t.settings} subtitle={t.accountControl} backLabel={t.back} back="/student/profil" />
 
-      {/* ── Hisob ── */}
       <SectionTitle>{t.accountSection}</SectionTitle>
       <IdCard
         brandName={(await getBrand()).name}
@@ -155,10 +143,8 @@ export default async function StudentSettingsPage() {
         </div>
       ) : null}
 
-      {/* ── Ilova ── */}
       <SectionTitle>{t.appSection}</SectionTitle>
       <div className={CARD + " divide-y divide-white/50 px-4"}>
-        {/* Til tanlash qatori — tanlagich qator ostida ochiladi */}
         <div className="py-3">
           <div className="flex items-center gap-3">
             <Tile>
@@ -197,7 +183,6 @@ export default async function StudentSettingsPage() {
           />
         )}
 
-        {/* Ilovani telefonga o'rnatish — /app sahifasi qurilmani o'zi aniqlaydi */}
         <Row
           icon={<IcoDownload c="currentColor" s={20} />}
           title={t.installApp}
@@ -206,7 +191,6 @@ export default async function StudentSettingsPage() {
         />
       </div>
 
-      {/* ── Xavfsizlik ── */}
       <SectionTitle>{t.security}</SectionTitle>
       <div className={CARD + " divide-y divide-white/50 px-4"}>
         <div className="py-1">
@@ -222,8 +206,6 @@ export default async function StudentSettingsPage() {
         </form>
       </div>
 
-      {/* Versiya — Android ilovasi o'zidan o'qiydi (APK ichidagi versionName),
-          brauzerda "veb". Qo'llab-quvvatlashga murojaat qilganda so'raladi. */}
       <AppVersion label={t.appVersion} />
     </div>
   );

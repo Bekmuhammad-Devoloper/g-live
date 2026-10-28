@@ -34,12 +34,12 @@ export default function LandingSettings({ locale, branches }: { locale: Locale; 
   const [seed, setSeed] = useState(0);
 
   useEffect(() => {
-    try { const raw = localStorage.getItem(STORAGE_KEY); if (raw) setList(JSON.parse(raw)); } catch { /* ignore */ }
+    try { const raw = localStorage.getItem(STORAGE_KEY); if (raw) setList(JSON.parse(raw)); } catch { }
   }, []);
 
   const persist = (next: Page[]) => {
     setList(next);
-    try { localStorage.setItem(STORAGE_KEY, JSON.stringify(next)); } catch { /* ignore */ }
+    try { localStorage.setItem(STORAGE_KEY, JSON.stringify(next)); } catch { }
   };
 
   const onName = (v: string) => setForm((f) => ({ ...f, name: v, slug: f.slugTouched ? f.slug : slugify(v) }));
@@ -61,7 +61,6 @@ export default function LandingSettings({ locale, branches }: { locale: Locale; 
     <div>
       <h2 className="mb-6 text-2xl font-bold text-slate-800 dark:text-slate-100">{tr(locale, { uz: "Landing page", ru: "Лендинг", en: "Landing page", de: "Landingpage" })}</h2>
 
-      {/* Yaratish formasi */}
       <fieldset className="relative max-w-2xl rounded-xl border border-slate-300 p-6 pt-7 dark:border-slate-600">
         <legend className="ml-2 px-1.5 text-sm font-semibold text-slate-700 dark:text-slate-200">{tr(locale, { uz: "Landing page yaratish", ru: "Создать лендинг", en: "Create landing page", de: "Landingpage erstellen" })}</legend>
         <div className="space-y-4">
@@ -89,7 +88,6 @@ export default function LandingSettings({ locale, branches }: { locale: Locale; 
         </div>
       </fieldset>
 
-      {/* Yaratilgan landinglar jadvali */}
       <div className="mt-6 overflow-hidden rounded-2xl border border-slate-300 bg-white shadow-card dark:border-slate-600 dark:bg-slate-900">
         <div className="overflow-x-auto">
         <table className="w-full min-w-[560px] text-left text-sm">

@@ -14,14 +14,9 @@ import TeacherDashboard from "./TeacherDashboard";
 export default async function DashboardPage() {
   const s = await requireSession();
 
-  // MANAGER roli ikki xil xodim uchun ishlatiladi va ikkalasining ham
-  // o'z boshqaruv paneli bor — menejer dashboard'i emas:
-  //   • ROP (sotuv bo'limi boshlig'i) → /rop
-  //   • operator                      → /operator
   if (s.role === ROLES.ROP) redirect("/rop");
   if (s.role === ROLES.OPERATOR) redirect("/operator");
   if (s.role === ROLES.MANAGER) {
-    // Eski yozuvlar (rol hali ko'chirilmagan) — lavozim bo'yicha aniqlaymiz
     const me = await prisma.user.findUnique({ where: { id: s.userId }, select: { position: true } });
     redirect(isRopPosition(me?.position) ? "/rop" : "/operator");
   }
@@ -52,22 +47,19 @@ async function roleContent({
   locale: Locale;
   t: (k: string) => string;
 }) {
-  // ── CEO (Direktor) / rahbariyat / menejer — status paneli ──
   if (role === ROLES.DIRECTOR || role === ROLES.DEPUTY_DIRECTOR || role === ROLES.MANAGER) {
     return <CeoDashboard locale={locale} />;
   }
 
-  // ── Administrator — alohida texnik panel ──
   if (role === ROLES.ADMIN) {
     return <AdminDashboard locale={locale} />;
   }
 
-  // ── Hisobchi — faqat moliyaviy ko'rsatkichlar ──
   if (role === ROLES.ACCOUNTANT) {
     const now = new Date();
     const monthStart = new Date(now.getFullYear(), now.getMonth(), 1);
     const dayStart = new Date(now.getFullYear(), now.getMonth(), now.getDate());
-    const b = branchViaStudent({ branchId }); // faol filial o'quvchilarining to'lovlari
+    const b = branchViaStudent({ branchId });
     const [monthAgg, todayAgg, debtAgg, recent] = await Promise.all([
       prisma.payment.aggregate({ _sum: { amount: true }, where: { AND: [{ status: "PAID", createdAt: { gte: monthStart } }, b] } }),
       prisma.payment.aggregate({ _sum: { amount: true }, _count: true, where: { AND: [{ status: "PAID", createdAt: { gte: dayStart } }, b] } }),
@@ -106,17 +98,14 @@ async function roleContent({
     );
   }
 
-  // ── O'qituvchi ──
   if (role === ROLES.TEACHER) {
     return <TeacherDashboard userId={userId} locale={locale} />;
   }
 
-  // ── O'quvchi — mobil ilova ko'rinishidagi portalga ──
   if (role === ROLES.STUDENT) {
     redirect("/student");
   }
 
-  // ── Ota-ona ──
   if (role === ROLES.PARENT) {
     const parent = await prisma.parent.findUnique({
       where: { userId },
@@ -140,7 +129,6 @@ async function roleContent({
     );
   }
 
-  // ── Boshqa (zaxira) ──
   return (
     <Card>
       <p className="text-sm text-slate-600">{tr(locale, { uz: "Bosh sahifa.", ru: "Главная.", en: "Home.", de: "Startseite." })}</p>

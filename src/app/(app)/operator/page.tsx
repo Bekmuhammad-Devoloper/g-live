@@ -8,9 +8,6 @@ import { tr } from "@/lib/tr";
 import { Forbidden } from "../_components/ui";
 import { Icon } from "../_components/Icon";
 
-// ─── Operator konsoli (individual operator dashboard) ───
-// Imkon Operator rolidan moslashtirilgan — o'z lid/qo'ng'iroq/KPI statistikasi.
-
 type Period = "today" | "week" | "month" | "year";
 const periodsFor = (locale: Locale): { key: Period; label: string }[] => [
   { key: "today", label: tr(locale, { uz: "Bugun", ru: "Сегодня", en: "Today", de: "Heute" }) },
@@ -58,15 +55,12 @@ export default async function OperatorConsolePage({ searchParams }: { searchPara
     : todayStart;
 
   const [op, calls, leads, reminders] = await Promise.all([
-    // begona operator konsoli faqat faol filial doirasida ochilsin (o'z konsoli doim ochiq)
     prisma.user.findFirst({ where: opId === s.userId ? { id: opId } : { AND: [{ id: opId }, staffBranchWhere(s)] }, select: { fullName: true } }),
     prisma.call.findMany({ where: { operatorId: opId }, select: { direction: true, status: true, duration: true, startedAt: true } }),
-    // faol filial doirasida
     prisma.lead.findMany({ where: { AND: [{ managerId: opId }, branchWhere(s)] }, orderBy: { createdAt: "desc" }, select: { id: true, stage: true, fullName: true, phone: true, source: true, createdAt: true } }),
     prisma.task.findMany({ where: { kind: "REMINDER", assigneeId: opId, status: "OPEN" }, orderBy: { dueAt: "asc" }, take: 6, select: { id: true, title: true, dueAt: true } }),
   ]);
 
-  // ── Qo'ng'iroq statistikasi (davr) ──
   const cp = calls.filter((c) => c.startedAt >= from);
   const incoming = cp.filter((c) => c.direction === "INCOMING").length;
   const outgoing = cp.filter((c) => c.direction === "OUTGOING").length;
@@ -77,7 +71,6 @@ export default async function OperatorConsolePage({ searchParams }: { searchPara
   const answeredPct = totalCalls ? Math.round((answered / totalCalls) * 100) : 0;
   const avgDur = answered ? Math.round(talkSec / answered) : 0;
 
-  // ── Lid statistikasi ──
   const assigned = leads.length;
   const newCount = leads.filter((l) => l.stage === "NEW").length;
   const won = leads.filter((l) => l.stage === "WON").length;
@@ -86,7 +79,6 @@ export default async function OperatorConsolePage({ searchParams }: { searchPara
   const worked = leads.filter((l) => l.stage !== "NEW").length;
   const conv = assigned ? Math.round((won / assigned) * 100) : 0;
 
-  // ── Qo'ng'iroq tahlili (breakdown) ──
   const breakdown: [string, number][] = [
     [T("Javob berilgan", "Отвечено", "Answered", "Beantwortet"), answered],
     [T("O'tkazib yuborilgan", "Пропущено", "Missed", "Verpasst"), missed],
@@ -95,7 +87,6 @@ export default async function OperatorConsolePage({ searchParams }: { searchPara
   ];
   const maxB = Math.max(1, ...breakdown.map(([, v]) => v));
 
-  // ── Haftalik faoliyat (so'nggi 7 kun) ──
   const dow = DOW[locale] ?? DOW.uz;
   const days: { label: string; calls: number; won: number; worked: number }[] = [];
   for (let i = 6; i >= 0; i--) {
@@ -114,7 +105,6 @@ export default async function OperatorConsolePage({ searchParams }: { searchPara
 
   return (
     <div className="space-y-5">
-      {/* Header */}
       <div className="flex flex-wrap items-center justify-between gap-4 rounded-2xl border border-slate-200/70 bg-white p-5 shadow-card dark:border-slate-800 dark:bg-slate-900">
         <div className="flex items-center gap-3.5">
           <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-brand-500 text-white"><Icon name="headphones" className="h-6 w-6" /></div>
@@ -131,7 +121,6 @@ export default async function OperatorConsolePage({ searchParams }: { searchPara
         </div>
       </div>
 
-      {/* Qo'ng'iroq tiles */}
       <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-4">
         <Tile icon="arrowDownLeft" tone="brand" value={incoming} label={T("Kiruvchi qo'ng'iroqlar", "Входящие звонки", "Incoming calls", "Eingehende Anrufe")} />
         <Tile icon="arrowUpRight" tone="violet" value={outgoing} label={T("Chiquvchi qo'ng'iroqlar", "Исходящие звонки", "Outgoing calls", "Ausgehende Anrufe")} />
@@ -139,7 +128,6 @@ export default async function OperatorConsolePage({ searchParams }: { searchPara
         <Tile icon="clock" tone="amber" value={`${Math.round(talkSec / 60)} ${T("daq", "мин", "min", "Min.")}`} label={T("Gaplashilgan vaqt", "Время разговора", "Talk time", "Gesprächszeit")} />
       </div>
 
-      {/* Tahlil + Ko'rsatkichlar */}
       <div className="grid gap-4 lg:grid-cols-[1fr_minmax(0,380px)]">
         <Panel icon="chart" title={T("Qo'ng'iroqlar tahlili", "Анализ звонков", "Call analysis", "Anrufanalyse")}>
           {totalCalls === 0 ? (
@@ -170,7 +158,6 @@ export default async function OperatorConsolePage({ searchParams }: { searchPara
         </Panel>
       </div>
 
-      {/* Lid tiles */}
       <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-4">
         <Tile icon="download" tone="brand" value={assigned} label={T("Tayinlangan lidlar", "Назначенные лиды", "Assigned leads", "Zugewiesene Leads")} delta={`${newCount} ${T("yangi", "новых", "new", "neu")}`} />
         <Tile icon="check" tone="green" value={won} label={T("Muvaffaqiyatli", "Успешные", "Successful", "Erfolgreich")} delta={`${conv}%`} />
@@ -178,7 +165,6 @@ export default async function OperatorConsolePage({ searchParams }: { searchPara
         <Tile icon="eye" tone="violet" value={worked} label={T("Ishlangan lidlar", "Обработанные лиды", "Processed leads", "Bearbeitete Leads")} delta={`${lost} ${T("bloklangan", "заблокировано", "blocked", "blockiert")}`} />
       </div>
 
-      {/* Haftalik faoliyat */}
       <Panel
         icon="chart"
         title={T("Haftalik faoliyat", "Недельная активность", "Weekly activity", "Wöchentliche Aktivität")}
@@ -202,7 +188,6 @@ export default async function OperatorConsolePage({ searchParams }: { searchPara
         </div>
       </Panel>
 
-      {/* Eslatmalar + So'nggi lidlar */}
       <div className="grid gap-4 lg:grid-cols-2">
         <div className="overflow-hidden rounded-2xl border border-slate-200/70 bg-white shadow-card dark:border-slate-800 dark:bg-slate-900">
           <div className="flex items-center justify-between border-b border-slate-200/70 px-5 py-4 dark:border-slate-800">

@@ -12,7 +12,7 @@ export interface VRatingStudent {
   id: string;
   name: string;
   group: string | null;
-  marks: { date: string; pct: number }[]; // date ISO, pct 0..100
+  marks: { date: string; pct: number }[];
 }
 
 type SortKey = "name" | "group" | "baho";
@@ -69,7 +69,6 @@ export default function RatingView({ students, defaultFrom, defaultTo, locale }:
     <div className="space-y-4">
       <h1 className="text-[24px] font-bold tracking-tight text-slate-900 dark:text-slate-100">{tr(locale, { uz: "Reyting", ru: "Рейтинг", en: "Rating", de: "Rangliste" })}</h1>
 
-      {/* Sana oralig'i */}
       <div className="grid gap-3 sm:grid-cols-2">
         <div className="relative">
           <Icon name="calendar" className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400" />
@@ -81,7 +80,6 @@ export default function RatingView({ students, defaultFrom, defaultTo, locale }:
         </div>
       </div>
 
-      {/* Tablar */}
       <div className="flex items-center gap-5 border-b border-slate-200 dark:border-slate-800">
         <TabBtn active={tab === "chart"} onClick={() => setTab("chart")}>{tr(locale, { uz: "Grafik", ru: "График", en: "Chart", de: "Diagramm" })}</TabBtn>
         <TabBtn active={tab === "table"} onClick={() => setTab("table")}>{tr(locale, { uz: "Jadval", ru: "Таблица", en: "Table", de: "Tabelle" })}</TabBtn>
@@ -131,7 +129,6 @@ export default function RatingView({ students, defaultFrom, defaultTo, locale }:
               </tbody>
             </table>
           </div>
-          {/* Sahifalash */}
           <div className="flex items-center gap-2 border-t border-slate-100 px-4 py-3 dark:border-slate-800">
             <select value={pageSize} onChange={(e) => { setPageSize(Number(e.target.value)); setPage(1); }} className="rounded-lg border border-slate-200 bg-white px-2 py-1.5 text-xs outline-none dark:border-slate-700 dark:bg-slate-800 dark:text-slate-200">
               {[20, 50, 100].map((n) => <option key={n} value={n}>{n}/{tr(locale, { uz: "sahifa", ru: "страница", en: "page", de: "Seite" })}</option>)}

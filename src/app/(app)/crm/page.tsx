@@ -15,7 +15,6 @@ import { columnOf, GROUP_COL_COLORS, weekdaysLabel, type ArchivedStudent, type B
 import type { Analytics } from "./_components/AnalyticsTiles";
 import { computeDebts } from "@/lib/debt";
 
-// Yo'qotilgan va arxivdagi lidlardan sahifaga yuklanadigan eng ko'p soni
 const LOST_ARCHIVE_LIMIT = 3000;
 
 export default async function CrmPage() {
@@ -25,28 +24,14 @@ export default async function CrmPage() {
     return <Forbidden title={t("err.forbidden")} body={t("err.forbiddenBody")} />;
   }
 
-  // Filial rejimi (leadColumns.ts BranchMode):
-  //   ROP va filial administratori — "sales": test/taklif o'rniga filial ustunlari;
-  //   direktor / o'rinbosar — "head": hamma ustunlar + filial ustunlari ("Taklif" o'rnida).
-  // ROP barcha filiallar lidlarini ko'radi (ustunlar filial bo'yicha ajratadi); rahbariyat —
-  // tepadagi filial tanloviga qarab: "Barcha filiallar" bo'lsa hammasi, filial tanlangan bo'lsa
-  // faqat o'sha filial lidlari va ustuni; administrator — faqat o'z filialini.
   const branchMode: BranchMode | null =
     s.role === ROLES.ROP || s.role === ROLES.ADMIN ? "sales"
     : s.role === ROLES.DIRECTOR || s.role === ROLES.DEPUTY_DIRECTOR ? "head"
     : null;
-  // Operator (sotuv) ham hamma filialning lidlari bilan ishlaydi — filial ustunlarisiz, oddiy doska
   const allBranches = s.role === ROLES.OPERATOR || (branchMode !== null && s.role !== ROLES.ADMIN && !(branchMode === "head" && s.branchId));
-  // Onlayn lidlar va daraja testi topshirganlar hech qaysi filialniki emas — "Onlayn" va
-  // "Daraja testi" ustunlari HAMMA ko'rinishda bir xil: filial tanlangan bo'lsa ham,
-  // administratorda ham. Filial ustuniga ("br:<id>") qo'lda yo'naltirilgani esa o'sha
-  // filialniki bo'lib qoladi va umumiy ro'yxatdan chiqadi.
   const notRouted = { OR: [{ kanbanColumnId: null }, { NOT: { kanbanColumnId: { startsWith: "br:" } } }] };
   const sharedLeads = [{ studyFormat: "ONLINE", ...notRouted }, { stage: "TEST", ...notRouted }];
 
-  // Lid ro'yxati: ishdagi lidlar (Yo'qotilgan emas, arxivda emas) — HAMMASI;
-  // Yo'qotilgan/arxivdagilar — eng yangi LOST_ARCHIVE_LIMIT tasi (sahifa og'irlashmasin).
-  // Ilgari umumiy "take: 2000" eski lidlarni ro'yxatdan ham, sonlardan ham tushirib qoldirardi.
   const leadScope: Prisma.LeadWhereInput = allBranches ? {} : { OR: [branchWhere(s), ...sharedLeads] };
   const closedLead: Prisma.LeadWhereInput = { OR: [{ stage: "LOST" }, { archivedAt: { not: null } }] };
   const leadSelect = {
@@ -62,7 +47,6 @@ export default async function CrmPage() {
 
   const [openLeads, closedLeads, totalLeads, managers, groupColumns, customColumns, branchRows, lastActs] = await Promise.all([
     prisma.lead.findMany({
-      // faol filial lidlari + hamma onlayn va daraja-test lidlari (filial tanlanganda ham)
       where: { AND: [leadScope, { NOT: closedLead }] },
       orderBy: { createdAt: "desc" },
       select: leadSelect,
@@ -75,25 +59,20 @@ export default async function CrmPage() {
     }),
     prisma.lead.count({ where: leadScope }),
     prisma.user.findMany({ where: { role: ROLES.OPERATOR, isActive: true }, select: { id: true, fullName: true }, orderBy: { fullName: "asc" } }),
-    listKanbanGroups(),   // Kanbanga biriktirilgan guruh ustunlari
-    listKanbanColumns(),  // Oddiy nomli ustunlar
+    listKanbanGroups(),
+    listKanbanColumns(),
     branchMode
       ? prisma.branch.findMany({
-          // Administrator — faqat o'z filiali ustuni. Rahbariyat filial tanlagan bo'lsa ham
-          // hamma filial ustuni turadi: lid boshqa filialga yo'naltirilishi mumkin (u yerga
-          // tashlangan lid o'sha filialniki bo'lib, shu filial ko'rinishidan chiqadi)
           where: { isActive: true, ...(s.role === ROLES.ADMIN && s.branchId ? { id: s.branchId } : {}) },
           select: { id: true, name: true, slots: { select: { id: true, branchId: true, room: true, days: true, startTime: true, endTime: true, note: true, capacity: true }, orderBy: [{ room: "asc" }, { startTime: "asc" }] } },
           orderBy: { name: "asc" },
         })
       : Promise.resolve([]),
-    // Har lid bo'yicha oxirgi harakat vaqti (bitta agregat so'rov)
     prisma.leadActivity.groupBy({ by: ["leadId"], _max: { createdAt: true } }),
   ]);
   const leads = [...openLeads, ...closedLeads].sort((a, b) => b.createdAt.getTime() - a.createdAt.getTime());
   const lastActivityAt = new Map(lastActs.map((a) => [a.leadId, a._max.createdAt]));
 
-  // Yo'qotilgan lidlar: kim va qachon "Yo'qotilgan"ga o'tkazgan — oxirgi bosqich yozuvi
   const lostIds = leads.filter((l) => l.stage === "LOST").map((l) => l.id);
   const lostActs = lostIds.length
     ? await prisma.leadActivity.findMany({
@@ -105,7 +84,6 @@ export default async function CrmPage() {
   const lostInfo = new Map<string, { by: string | null; at: string }>();
   for (const a of lostActs) if (!lostInfo.has(a.leadId)) lostInfo.set(a.leadId, { by: a.author?.fullName ?? null, at: a.createdAt.toISOString() });
 
-  // Sig'im kartada yozilmagan bo'lsa (eski yozuvlar) — Xonalar bo'limidagi xona sig'imi (nom bo'yicha)
   const roomCaps = branchRows.length
     ? await prisma.room.findMany({ where: { isActive: true, branchId: { in: branchRows.map((b) => b.id) }, capacity: { gt: 0 } }, select: { branchId: true, name: true, capacity: true } })
     : [];
@@ -118,23 +96,18 @@ export default async function CrmPage() {
     slots: b.slots.map((sl) => ({ ...sl, capacity: sl.capacity ?? capOf(b.id, sl.room) })),
   }));
 
-  // Eski testlar: natija faqat faoliyat tarixida qolgan (yangi maydonlar kiritilgunga
-  // qadar). Kartada ko'rinsin uchun matnidan o'qib olamiz — yozuvlar kam (faqat
-  // test topshirganlar), shu sabab bitta so'rov yetarli.
   const testActs = await prisma.leadActivity.findMany({
     where: { type: "test" },
-    orderBy: { createdAt: "asc" }, // keyingisi oldingisini almashtiradi → oxirgisi qoladi
+    orderBy: { createdAt: "asc" },
     select: { leadId: true, result: true },
   });
   const parsedTests = new Map<string, { set: string | null; pct: number; passed: boolean; level: string | null }>();
   for (const a of testActs) {
-    // "Daraja testi A1.1: 18/25 to'g'ri (72%) — o'tdi → daraja: A1 (Boshlang'ich)"
     const m = /Daraja testi\s*([A-C][12](?:\.\d)?)?[^:]*:.*?\((\d+)%\)\s*—\s*(o'tdi|o'tmadi)(?:.*?daraja:\s*([A-C][12])(?!\s*dan past))?/i.exec(a.result ?? "");
     if (!m) continue;
     parsedTests.set(a.leadId, { set: m[1] ?? null, pct: Number(m[2]), passed: m[3].toLowerCase() === "o'tdi", level: m[4] ?? null });
   }
 
-  // O'quvchiga aylangan lidlar qarzi (kartada rang bilan ko'rsatiladi)
   const studentIds = [...new Set(leads.map((l) => l.studentId).filter((x): x is string => !!x))];
   const debts = studentIds.length ? await computeDebts(studentIds) : new Map();
 
@@ -178,8 +151,6 @@ export default async function CrmPage() {
     createdAt: l.createdAt.toISOString(),
   }));
 
-  // "Qabul qilindi" ustunidagi guruh kartalari uchun haqiqiy holat: o'quvchilar soni / sig'im, jadval.
-  // Ilgari kartada faqat kanbandan tushgan lidlar soni ("1") turardi — guruhda 7 o'quvchi bo'lsa ham.
   const wonGroupIds = [...new Set(leads.map((l) => l.groupId).filter((x): x is string => !!x))];
   const groupRows = wonGroupIds.length
     ? await prisma.group.findMany({
@@ -199,12 +170,10 @@ export default async function CrmPage() {
     teacher: g.teacher?.fullName ?? null,
   }]));
 
-  // Analitika
   const now = new Date();
   const t0 = new Date(now.getFullYear(), now.getMonth(), now.getDate()).getTime();
   const y0 = t0 - 86400000;
   const byColumn: Record<string, number> = {};
-  // Arxivlanganlar analitikaga kirmaydi
   for (const l of vleads.filter((x) => !x.archivedAt)) byColumn[columnOf(l.stage)] = (byColumn[columnOf(l.stage)] ?? 0) + 1;
   const won = vleads.filter((l) => ["PAID", "WON"].includes(l.stage)).length;
   const analytics: Analytics = {
@@ -217,7 +186,6 @@ export default async function CrmPage() {
 
   const sources = [...new Set(vleads.map((l) => l.source).filter((x): x is string => !!x))];
 
-  // "O'quvchi arxivi" kartasi — arxivlangan o'quvchilar (profil yoki Kanbandan), faol filial doirasida
   const archivedStudents: ArchivedStudent[] = (await prisma.student.findMany({
     where: { AND: [{ eduStatus: "ARCHIVED" }, branchWhere(s)] },
     select: { id: true, fullName: true, phone: true, enrollments: { where: { isActive: true }, take: 1, select: { group: { select: { name: true } } } } },
@@ -225,7 +193,6 @@ export default async function CrmPage() {
     take: 300,
   })).map((r) => ({ id: r.id, fullName: r.fullName, phone: r.phone, groupName: r.enrollments[0]?.group.name ?? null }));
 
-  // O'quvchiga aylangan lidlar — tezkor oynada to'lov paneli (o'quvchi profili bilan bir xil huquqlar)
   const payManage = [ROLES.DIRECTOR, ROLES.DEPUTY_DIRECTOR, ROLES.MANAGER, ROLES.ADMIN].includes(s.role as never);
   const payWrite = canWrite(s.role, MODULES.PAYMENTS);
   const payRop = s.role === ROLES.ROP;
@@ -242,7 +209,6 @@ export default async function CrmPage() {
       sources={sources}
       analytics={analytics}
       canWrite={canWrite(s.role, MODULES.CRM)}
-      // Kanbandan to'g'ridan-to'g'ri o'chirish — actions.ts dagi CAN_DELETE_LEAD bilan bir xil
       canDelete={[ROLES.DIRECTOR, ROLES.DEPUTY_DIRECTOR, ROLES.ADMIN].includes(s.role as never)}
       canResetColumns={[ROLES.DIRECTOR, ROLES.DEPUTY_DIRECTOR, ROLES.ROP].includes(s.role as never)}
       payment={payment}
@@ -253,12 +219,8 @@ export default async function CrmPage() {
       groupInfo={groupInfo}
       archivedStudents={archivedStudents}
       branchMode={branchMode}
-      // ROP'da "Onlayn" ustuni yo'q — onlayn lidlar "Yangi"da turadi
       showOnlineCol={s.role !== ROLES.ROP}
-      // ROP: "Ishda", "Qabul qilindi" va "Daraja testi" yashirin; operator: "Daraja testi" yashirin.
-      // Yashirilgan "Daraja testi"dagi lidlar bosqichi o'zgarmaydi, faqat "Yangi" ustunida ko'rinadi.
       hiddenCols={s.role === ROLES.ROP ? ["work", "won", "test"] : s.role === ROLES.OPERATOR ? ["test"] : []}
-      // Bo'sh vaqtlarni kim tahrirlaydi: rahbariyat — hammasini, administrator — o'z filialini
       slotsEditable={[ROLES.DIRECTOR, ROLES.DEPUTY_DIRECTOR].includes(s.role as never) ? "all" : s.role === ROLES.ADMIN ? (s.branchId ?? null) : null}
     />
   );

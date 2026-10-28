@@ -9,9 +9,8 @@ const KEY = "gl:settings";
 
 interface Prefs { centerName: string; qrMinutes: number; lowScore: number }
 
-export default function SettingsForm({ defaults, locale = "uz", brandName = "" }: { defaults: { qrMinutes: number; lowScore: number }; locale?: Locale; /** Markaz nomi (server ota-komponentdan, getBrand) — maydon namunasi */ brandName?: string }) {
+export default function SettingsForm({ defaults, locale = "uz", brandName = "" }: { defaults: { qrMinutes: number; lowScore: number }; locale?: Locale; brandName?: string }) {
   const T = (uz: string, ru: string, en: string, de: string) => tr(locale, { uz, ru, en, de });
-  // SSR bilan mos bo'lishi uchun boshlang'ich qiymatlar serverdan, keyin localStorage'dan yuklanadi
   const [prefs, setPrefs] = useState<Prefs>({ centerName: "", qrMinutes: defaults.qrMinutes, lowScore: defaults.lowScore });
   const [saved, setSaved] = useState(false);
 
@@ -26,7 +25,7 @@ export default function SettingsForm({ defaults, locale = "uz", brandName = "" }
           lowScore: Number.isFinite(p.lowScore) ? Number(p.lowScore) : cur.lowScore,
         }));
       }
-    } catch { /* localStorage yo'q bo'lsa e'tiborsiz qoldiramiz */ }
+    } catch { }
   }, []);
 
   const set = <K extends keyof Prefs>(k: K, v: Prefs[K]) => { setPrefs((p) => ({ ...p, [k]: v })); setSaved(false); };
@@ -37,7 +36,7 @@ export default function SettingsForm({ defaults, locale = "uz", brandName = "" }
       qrMinutes: Math.min(120, Math.max(1, Math.round(prefs.qrMinutes) || defaults.qrMinutes)),
       lowScore: Math.min(100, Math.max(0, Math.round(prefs.lowScore) || 0)),
     };
-    try { localStorage.setItem(KEY, JSON.stringify(clean)); } catch { /* ignore */ }
+    try { localStorage.setItem(KEY, JSON.stringify(clean)); } catch { }
     setPrefs(clean);
     setSaved(true);
   };

@@ -4,14 +4,6 @@ import { abortSession, chunkLength, completeSession, loadSession, receivedChunks
 
 export const runtime = "nodejs";
 
-// Bo'lakli yuklash seansi:
-//   GET      → holat: qaysi bo'laklar qabul qilingan (davom etish uchun);
-//              yakunlangan bo'lsa completed.url
-//   PUT ?i=N → N-bo'lak (tana — baytlarning o'zi)
-//   POST     → yakunlash: hamma bo'lak bo'lsa fayl tayyor, url qaytadi
-//              (takroriy chaqiruv ham o'sha url — javob yo'qolsa xavfsiz)
-//   DELETE   → bekor qilish, yarim fayl o'chadi
-
 type Ctx = { params: Promise<{ id: string }> };
 
 async function auth() {
@@ -49,7 +41,6 @@ export async function PUT(req: NextRequest, ctx: Ctx) {
   const index = Number(req.nextUrl.searchParams.get("i"));
   if (!Number.isInteger(index) || index < 0 || index >= meta.chunks) return NextResponse.json({ error: "bad_index" }, { status: 400 });
 
-  // Hajm oldindan ma'lum bo'lsa — bir bayt ham o'qimasdan rad etamiz
   const declared = req.headers.get("content-length");
   if (declared !== null && Number(declared) !== chunkLength(meta, index)) {
     return NextResponse.json({ error: "bad_length" }, { status: 400 });

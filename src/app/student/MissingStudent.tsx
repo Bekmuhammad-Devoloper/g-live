@@ -3,13 +3,6 @@ import { logout } from "../(app)/actions";
 import { S } from "./_i18n";
 import { CARD, FlagAvatar } from "./_ui";
 
-// STUDENT rolidagi foydalanuvchida Student yozuvi topilmasa ko'rsatiladi.
-// MUHIM: redirect("/dashboard") ISHLATILMAYDI — dashboard STUDENT rolini
-// yana /student ga qaytaradi va brauzer ERR_TOO_MANY_REDIRECTS bilan
-// yopilib qoladi (o'quvchi o'chirilgan, sessiya esa 7 kunlik JWT bo'lgani
-// uchun tirik qolgan holat). O'rniga tushunarli xabar + chiqish tugmasi.
-// Matn foydalanuvchi tilida — sessiya bor (aks holda layout /login ga yuborardi).
-
 export default async function MissingStudent() {
   const session = await getSession();
   const t = S(session?.locale ?? "uz");

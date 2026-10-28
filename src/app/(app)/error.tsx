@@ -2,14 +2,6 @@
 
 import { useEffect, useState } from "react";
 
-// Boshqaruv tizimi uchun xatolik chegarasi.
-//
-// Ilgari bu yerda chegara yo'q edi: server action yiqilsa (ko'pincha deploy'dan keyin
-// eskirgan sahifa — "Failed to find Server Action") butun ilova Next'ning standart
-// "Application error" ekraniga tushardi. Endi: server tomonidagi xato (digest bor)
-// bo'lsa sahifa bir marta o'zi yangilanadi — eskirgan sahifa shunda tuzaladi;
-// yangilangandan keyin ham xato qaytsa — tushunarli kartochka va tugmalar.
-
 const KEY = "gl-error-reload-at";
 
 export default function AppError({ error, reset }: { error: Error & { digest?: string }; reset: () => void }) {
@@ -19,9 +11,9 @@ export default function AppError({ error, reset }: { error: Error & { digest?: s
     if (!error.digest) return;
     try {
       const last = Number(sessionStorage.getItem(KEY) || 0);
-      if (Date.now() - last < 60_000) return; // yaqinda yangilangan — aylanib qolmaylik
+      if (Date.now() - last < 60_000) return;
       sessionStorage.setItem(KEY, String(Date.now()));
-    } catch { /* xotira yopiq */ }
+    } catch { }
     setReloading(true);
     window.location.reload();
   }, [error]);

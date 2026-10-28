@@ -1,8 +1,3 @@
-// Valyuta kurslari — O'zbekiston Markaziy banki (cbu.uz) ochiq API'sidan.
-// MB kursi ish kunida bir marta yangilanadi, shuning uchun 30 daqiqada bir tekshiramiz.
-// Tashqi API javob bermasa — oxirgi muvaffaqiyatli qiymat qaytariladi (stale: true):
-//   1) shu jarayon xotirasi  2) Setting jadvali (server qayta ishga tushsa ham kurs turaveradi).
-
 import { getSetting, setSetting } from "./settings";
 
 export const RATE_CODES = ["USD", "EUR"] as const;
@@ -10,22 +5,22 @@ export type RateCode = (typeof RATE_CODES)[number];
 
 export interface Rate {
   ccy: RateCode;
-  rate: number; // 1 birlik = necha so'm
-  diff: number; // kechagi kursga nisbatan farq (so'm)
-  date: string; // MB e'lon qilgan sana, "DD.MM.YYYY"
+  rate: number;
+  diff: number;
+  date: string;
 }
 
 export interface RatesPayload {
   rates: Rate[];
-  fetchedAt: string; // ISO — cbu.uz dan oxirgi muvaffaqiyatli olingan payt
-  stale: boolean; // true → cbu.uz javob bermadi, eski qiymat ko'rsatilyapti
+  fetchedAt: string;
+  stale: boolean;
 }
 
 const CBU_URL = "https://cbu.uz/uz/arkhiv-kursov-valyut/json/";
 const SETTING_KEY = "rates.cbu";
-const TTL_MS = 30 * 60_000; // muvaffaqiyatli javobdan keyin
-const RETRY_MS = 5 * 60_000; // xatodan keyin — tezroq qayta urinamiz
-const TIMEOUT_MS = 6_000; // cbu.uz sekin bo'lsa sahifa kutib qolmasin
+const TTL_MS = 30 * 60_000;
+const RETRY_MS = 5 * 60_000;
+const TIMEOUT_MS = 6_000;
 
 let cache: { data: RatesPayload; nextTryAt: number } | null = null;
 let inflight: Promise<RatesPayload | null> | null = null;
@@ -35,7 +30,6 @@ function num(v: unknown): number {
   return Number.isFinite(n) ? n : 0;
 }
 
-/** cbu.uz javobidan faqat bizga kerakli valyutalarni ajratib olamiz. */
 function parseCbu(raw: unknown): Rate[] {
   if (!Array.isArray(raw)) return [];
   const out: Rate[] = [];
@@ -67,7 +61,6 @@ async function fetchCbu(): Promise<Rate[] | null> {
   }
 }
 
-/** DB'dagi oxirgi saqlangan kurs (server qayta ishga tushganda ishlatiladi). */
 async function loadFromDb(): Promise<RatesPayload | null> {
   try {
     const raw = await getSetting(SETTING_KEY);
@@ -89,12 +82,10 @@ async function load(now: number): Promise<RatesPayload | null> {
     try {
       await setSetting(SETTING_KEY, JSON.stringify(data));
     } catch {
-      // DB yozuvi ixtiyoriy — kurs baribir xotirada bor
     }
     return data;
   }
 
-  // cbu.uz javob bermadi → oxirgi ma'lum qiymatni "eskirgan" deb qaytaramiz
   const last = cache?.data ?? (await loadFromDb());
   if (!last) return null;
   const data: RatesPayload = { ...last, stale: true };
@@ -102,7 +93,6 @@ async function load(now: number): Promise<RatesPayload | null> {
   return data;
 }
 
-/** Joriy USD va EUR kurslari. Bir vaqtda kelgan so'rovlar bitta fetch'ni baham ko'radi. */
 export async function getRates(): Promise<RatesPayload | null> {
   const now = Date.now();
   if (cache && now < cache.nextTryAt) return cache.data;

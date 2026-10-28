@@ -11,7 +11,6 @@ const DAYS = 14;
 const p2 = (n: number) => String(n).padStart(2, "0");
 const isoOf = (d: Date) => `${d.getFullYear()}-${p2(d.getMonth() + 1)}-${p2(d.getDate())}`;
 
-// Turniket analitikasi — QR orqali kirishlar statistikasi (Attendance method=QR)
 export default async function TurnstilePage() {
   const s = await requireSession();
   if (!ALLOWED.includes(s.role as never)) {
@@ -25,11 +24,10 @@ export default async function TurnstilePage() {
   since.setDate(since.getDate() - (DAYS - 1));
 
   const entries = await prisma.attendance.findMany({
-    where: { AND: [{ method: "QR", markedAt: { gte: since } }, branchViaLesson(s)] }, // faol filial doirasida
+    where: { AND: [{ method: "QR", markedAt: { gte: since } }, branchViaLesson(s)] },
     select: { markedAt: true, anomaly: true, studentId: true, lesson: { select: { group: { select: { name: true } } } } },
   });
 
-  // Kunlik kirishlar (oxirgi 14 kun)
   const byDay = new Map<string, number>();
   for (let i = 0; i < DAYS; i++) {
     const d = new Date(since); d.setDate(d.getDate() + i);

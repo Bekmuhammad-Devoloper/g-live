@@ -19,7 +19,6 @@ import BranchMover from "../_components/BranchMover";
 import PaymentPanel from "./PaymentPanel";
 import { debtTone, DEBT_BADGE, DEBT_TEXT } from "@/lib/debtTone";
 
-// Sahifaga serverdan keladigan bitta o'quvchi qatori
 export interface VStudent {
   id: string;
   fullName: string;
@@ -30,11 +29,11 @@ export interface VStudent {
   groups: { id: string; name: string }[];
   teachers: string[];
   courses: string[];
-  scheduleDates: string[]; // ISO
+  scheduleDates: string[];
   balance: number;
-  debt: number; // jami qarzdorlik — PENDING to'lovlar yig'indisi
-  debtMonths: number; // to'lanmagan oylar soni (1 — sariq, 2+ — qizil)
-  paidThisMonth: boolean; // shu oy kamida bitta PAID to'lov bo'lganmi
+  debt: number;
+  debtMonths: number;
+  paidThisMonth: boolean;
   note: string | null;
   branchName: string | null;
 }
@@ -46,13 +45,11 @@ interface Props {
   canCreate: boolean;
   canPay: boolean;
   currentUserName: string;
-  /** CEO sozlamasi: chek yuklash majburiymi (server'dan keladi) */
   receiptMode: ReceiptMode;
 }
 
 const PAGE_SIZE = 15;
 
-// "Ustunlar" menyusidan yashirilishi mumkin bo'lgan ustunlar
 const OPTIONAL_COLS = [
   { key: "telefon", label: { uz: "Telefon", ru: "Телефон", en: "Phone", de: "Telefon" } },
   { key: "guruhlar", label: { uz: "Guruhlar", ru: "Группы", en: "Groups", de: "Gruppen" } },
@@ -79,14 +76,12 @@ function fmtDate(iso: string) {
   const p = (n: number) => String(n).padStart(2, "0");
   return `${p(d.getDate())}.${p(d.getMonth() + 1)}.${d.getFullYear()}`;
 }
-// Ism uchun barqaror rang (avatar foni)
 function hue(name: string) {
   let h = 0;
   for (let i = 0; i < name.length; i++) h = (h * 31 + name.charCodeAt(i)) % 360;
   return h;
 }
 
-// FOTO: o'quvchi rasmi bo'lsa rasm, bo'lmasa avatar (initsial). Rahbariyat bosib rasm yuklaydi.
 function StudentAvatar({ id, name, imageUrl, canManage, locale }: { id: string; name: string; imageUrl: string | null; canManage: boolean; locale: Locale }) {
   const h = hue(name);
   const router = useRouter();
@@ -144,33 +139,25 @@ export default function StudentsView({ students, courses, locale, canCreate, can
   const router = useRouter();
   const searchParams = useSearchParams();
 
-  // ── Filtrlar ──
   const [q, setQ] = useState("");
   const [course, setCourse] = useState("");
   const [status, setStatus] = useState("");
   const [fin, setFin] = useState("");
   const [groupCount, setGroupCount] = useState("");
 
-  // ── Saralash / sahifa / belgilash ──
   const [sortDir, setSortDir] = useState<"asc" | "desc">("asc");
   const [page, setPage] = useState(1);
   const [selected, setSelected] = useState<Set<string>>(new Set());
 
-  // ── Ustunlar ko'rinishi ──
   const [hidden, setHidden] = useState<Set<string>>(new Set());
   const [colMenu, setColMenu] = useState(false);
   const isVisible = (key: string) => !hidden.has(key);
 
-  // ── Modal ──
   const [showCreate, setShowCreate] = useState(false);
   const [editing, setEditing] = useState<VStudent | null>(null);
   const [detail, setDetail] = useState<VStudent | null>(null);
-  // 1 marta bosish -> tezkor oyna, 2 marta -> to'liq profil
   const { single, double } = useDoubleClickOpen();
 
-  // Global qidiruvdan kelinganda (/students?student=<id>) o'sha talaba kartasi
-  // darhol ochiladi. useSearchParams — sahifa qayta yuklanmasa ham (yumshoq
-  // o'tish) manzil o'zgarishini eshitadi; parametr karta yopilganda tozalanadi.
   const openId = searchParams.get("student");
   useEffect(() => {
     if (!openId) return;
@@ -183,7 +170,6 @@ export default function StudentsView({ students, courses, locale, canCreate, can
     if (openId) router.replace("/students");
   };
 
-  // ── Ommaviy amallar ──
   const [bulkModal, setBulkModal] = useState<null | "assign" | "message">(null);
   const [bulkBusy, startBulk] = useTransition();
 
@@ -204,7 +190,6 @@ export default function StudentsView({ students, courses, locale, canCreate, can
 
   const activeFilters = [q, course, status, fin, groupCount].filter(Boolean).length;
 
-  // Filtrlash + saralash
   const filtered = useMemo(() => {
     const needle = q.trim().toLowerCase();
     const list = students.filter((st) => {
@@ -214,8 +199,8 @@ export default function StudentsView({ students, courses, locale, canCreate, can
       if (status && st.eduStatus !== status) return false;
       if (fin === "paid" && st.balance <= 0) return false;
       if (fin === "unpaid" && st.balance > 0) return false;
-      if (fin === "debtor_month" && st.paidThisMonth) return false; // bu oy to'lamagan
-      if (fin === "debtor_total" && st.debt <= 0) return false; // umumiy qarzi bor
+      if (fin === "debtor_month" && st.paidThisMonth) return false;
+      if (fin === "debtor_total" && st.debt <= 0) return false;
       if (groupCount === "0" && st.groups.length !== 0) return false;
       if (groupCount === "1" && st.groups.length !== 1) return false;
       if (groupCount === "2" && st.groups.length < 2) return false;
@@ -227,7 +212,6 @@ export default function StudentsView({ students, courses, locale, canCreate, can
     return list;
   }, [students, q, course, status, fin, groupCount, sortDir]);
 
-  // Filtr o'zgarsa 1-sahifaga qaytamiz
   useEffect(() => setPage(1), [q, course, status, fin, groupCount]);
 
   const pageCount = Math.max(1, Math.ceil(filtered.length / PAGE_SIZE));
@@ -252,7 +236,6 @@ export default function StudentsView({ students, courses, locale, canCreate, can
 
   const resetFilters = () => { setQ(""); setCourse(""); setStatus(""); setFin(""); setGroupCount(""); };
 
-  // CSV eksport (joriy filtrlangan ro'yxat)
   const exportCsv = () => {
     const head = [
       tr(locale, { uz: "Ism", ru: "Имя", en: "Name", de: "Name" }),
@@ -284,11 +267,10 @@ export default function StudentsView({ students, courses, locale, canCreate, can
     URL.revokeObjectURL(url);
   };
 
-  const colCount = 2 /* checkbox + Foto */ + 1 /* Ism */ + OPTIONAL_COLS.filter((c) => isVisible(c.key)).length + 1 /* amallar */;
+  const colCount = 2 + 1 + OPTIONAL_COLS.filter((c) => isVisible(c.key)).length + 1 ;
 
   return (
     <div>
-      {/* Sarlavha */}
       <div className="mb-5 flex flex-wrap items-center justify-between gap-3">
         <div className="flex items-center gap-2.5">
           <h1 className="text-[26px] font-bold tracking-tight text-slate-900 dark:text-slate-100">{tr(locale, { uz: "Talabalar", ru: "Ученики", en: "Students", de: "Schüler" })}</h1>
@@ -303,7 +285,6 @@ export default function StudentsView({ students, courses, locale, canCreate, can
         )}
       </div>
 
-      {/* Filtrlar paneli */}
       <div className="mb-4 space-y-3">
         <div className="flex flex-wrap items-center gap-2.5">
           <div className="relative min-w-[220px] flex-1">
@@ -346,7 +327,6 @@ export default function StudentsView({ students, courses, locale, canCreate, can
           <InputDisabled locale={locale} placeholder={tr(locale, { uz: "Tugash sanasi", ru: "Дата окончания", en: "End date", de: "Enddatum" })} icon="calendar" />
         </div>
 
-        {/* Filtrlar / Ustunlar tugmalari */}
         <div className="flex items-center justify-end gap-2">
           <button
             onClick={resetFilters}
@@ -397,7 +377,6 @@ export default function StudentsView({ students, courses, locale, canCreate, can
         </div>
       </div>
 
-      {/* Jadval */}
       <div className="overflow-hidden rounded-2xl border border-slate-200/70 bg-white shadow-card dark:border-slate-800 dark:bg-slate-900">
         <div className="overflow-x-auto">
           <table className="w-full text-left text-sm">
@@ -445,9 +424,6 @@ export default function StudentsView({ students, courses, locale, canCreate, can
                   return (
                     <tr
                       key={st.id}
-                      // 1 marta bosish -> yonboshdan tezkor ko'rish oynasi (to'lov shu yerda)
-                      // 2 marta bosish -> o'quvchining to'liq profil sahifasi
-                      // Katakdagi tugmalar e.stopPropagation() bilan himoyalangan.
                       onClick={() => single(() => setDetail(st))}
                       onDoubleClick={() => double(() => router.push(`/students/${st.id}`))}
                       className={cn("cursor-pointer select-none transition hover:bg-slate-50 dark:hover:bg-slate-800/50", sel && "bg-brand-50/60 dark:bg-brand-950/30")}
@@ -511,7 +487,6 @@ export default function StudentsView({ students, courses, locale, canCreate, can
                       {isVisible("balans") && (
                         <td className="px-4 py-2">
                           {st.debt > 0 ? (
-                            // Qarzdor: bir oygacha — sariq, bir oydan ko'p — qizil
                             <span
                               title={tr(locale, { uz: `${st.debtMonths} oylik qarz`, ru: `Долг за ${st.debtMonths} мес.`, en: `${st.debtMonths} month(s) of debt`, de: `${st.debtMonths} Monat(e) Schulden` })}
                               className={cn("inline-flex items-center gap-1 whitespace-nowrap rounded-md px-2 py-0.5 text-xs font-bold tabular-nums", DEBT_BADGE[debtTone(st.debt, st.debtMonths)])}
@@ -530,7 +505,6 @@ export default function StudentsView({ students, courses, locale, canCreate, can
                       )}
                       <td className="px-4 py-2" onClick={(e) => e.stopPropagation()} onDoubleClick={(e) => e.stopPropagation()}>
                         <div className="flex items-center justify-end gap-1">
-                          {/* To'liq profil sahifasi. Tezkor ko'rish uchun qatorning o'zi bosiladi. */}
                           <Link
                             href={`/students/${st.id}`}
                             onClick={(e) => e.stopPropagation()}
@@ -566,7 +540,6 @@ export default function StudentsView({ students, courses, locale, canCreate, can
           </table>
         </div>
 
-        {/* Jadval osti — sahifalash + eksport/import */}
         <div className="flex flex-wrap items-center justify-between gap-3 border-t border-slate-200/70 px-4 py-3 dark:border-slate-800">
           <Pager page={safePage} pageCount={pageCount} onGo={setPage} />
           <div className="flex items-center gap-2">
@@ -634,8 +607,6 @@ export default function StudentsView({ students, courses, locale, canCreate, can
   );
 }
 
-// ───────────── O'quvchi ma'lumotlari (bosilганда ochiladi) ─────────────
-
 export function StudentDetailModal({
   student: st, locale, canManage, canPay, cashierName, receiptMode, onClose, onEdit,
 }: {
@@ -666,7 +637,6 @@ export function StudentDetailModal({
     <div className="fixed inset-0 z-[80]" onMouseDown={onClose}>
       <div className="absolute inset-0 bg-slate-900/50 backdrop-blur-sm" />
       <div onMouseDown={(e) => e.stopPropagation()} className="animate-slide-in-right absolute right-0 top-0 flex h-full drawer-panel flex-col border-l border-slate-200 bg-white shadow-pop dark:border-white/10 dark:bg-[#15243d]">
-        {/* Header — foto/avatar + ism + holat */}
         <div className="relative shrink-0 overflow-hidden border-b border-slate-100 dark:border-white/10">
           <div className="pointer-events-none absolute inset-0 bg-gradient-to-br from-brand-50 via-white to-white dark:from-brand-950/40 dark:via-[#15243d] dark:to-[#15243d]" />
           <div className="relative flex items-start justify-between gap-3 px-5 py-5">
@@ -687,7 +657,6 @@ export function StudentDetailModal({
               </div>
             </div>
             <div className="flex shrink-0 items-center gap-1">
-              {/* Tezkor oynadan to'liq profil sahifasiga o'tish */}
               <Link
                 href={`/students/${st.id}`}
                 className="flex items-center gap-1.5 rounded-lg border border-slate-200 px-2.5 py-1.5 text-[11px] font-semibold text-slate-600 transition hover:border-brand-300 hover:text-brand-600 dark:border-white/10 dark:text-slate-300 dark:hover:bg-white/10"
@@ -700,7 +669,6 @@ export function StudentDetailModal({
         </div>
 
         <div className="flex-1 space-y-5 overflow-y-auto px-5 py-4">
-          {/* To'lov holati — umumiy panel (to'liq profil sahifasida ham shu) */}
           {(canManage || canPay) && (
             <PaymentPanel
               studentId={st.id}
@@ -713,7 +681,6 @@ export function StudentDetailModal({
             />
           )}
 
-          {/* O'quv ma'lumotlari */}
           <DSection title={tr(locale, { uz: "O'quv ma'lumotlari", ru: "Учебные данные", en: "Study info", de: "Lerninformationen" })} icon="graduation">
             <div className="grid grid-cols-2 gap-3">
               {st.debt > 0 ? (
@@ -727,14 +694,12 @@ export function StudentDetailModal({
             </div>
           </DSection>
 
-          {/* Ilova hisobi — o'quvchi mobil portalga shu login bilan kiradi */}
           {(canManage || canPay) && (
             <DSection title={tr(locale, { uz: "Ilova hisobi", ru: "Аккаунт приложения", en: "App account", de: "App-Konto" })} icon="shield">
               <AccountBox studentId={st.id} locale={locale} canManage={canManage} />
             </DSection>
           )}
 
-          {/* Kontakt */}
           <DSection title={tr(locale, { uz: "Kontakt", ru: "Контакт", en: "Contact", de: "Kontakt" })} icon="phone">
             {st.phone ? (
               <a href={`tel:${st.phone}`} className="flex items-center gap-2 rounded-lg border border-slate-200 bg-slate-50 px-3 py-2 text-sm font-medium text-slate-700 transition hover:border-brand-300 hover:text-brand-600 dark:border-slate-700 dark:bg-slate-800/60 dark:text-slate-200">
@@ -745,7 +710,6 @@ export function StudentDetailModal({
             )}
           </DSection>
 
-          {/* Guruhlar — katta boxlar */}
           <DSection title={tr(locale, { uz: "Guruhlar", ru: "Группы", en: "Groups", de: "Gruppen" })} icon="layers">
             {st.groups.length === 0 ? (
               <p className="text-sm text-slate-400">—</p>
@@ -756,7 +720,6 @@ export function StudentDetailModal({
             )}
           </DSection>
 
-          {/* O'qituvchilar — katta boxlar */}
           {st.teachers.length > 0 && (
             <DSection title={tr(locale, { uz: "O'qituvchilar", ru: "Преподаватели", en: "Teachers", de: "Lehrer" })} icon="teacher">
               <div className="space-y-1.5">
@@ -765,7 +728,6 @@ export function StudentDetailModal({
             </DSection>
           )}
 
-          {/* Kurslar — katta boxlar */}
           {st.courses.length > 0 && (
             <DSection title={tr(locale, { uz: "Kurslar", ru: "Курсы", en: "Courses", de: "Kurse" })} icon="book">
               <div className="space-y-1.5">
@@ -774,7 +736,6 @@ export function StudentDetailModal({
             </DSection>
           )}
 
-          {/* Mashg'ulot sanalari — katta boxlar */}
           {st.scheduleDates.length > 0 && (
             <DSection title={tr(locale, { uz: "Mashg'ulot sanalari", ru: "Даты занятий", en: "Lesson dates", de: "Unterrichtstermine" })} icon="calendar">
               <div className="space-y-1.5">
@@ -783,7 +744,6 @@ export function StudentDetailModal({
             </DSection>
           )}
 
-          {/* Izoh */}
           {st.note && (
             <DSection title={tr(locale, { uz: "Izoh", ru: "Примечание", en: "Note", de: "Notiz" })} icon="edit">
               <p className="whitespace-pre-wrap rounded-lg bg-slate-50 px-3 py-2 text-sm text-slate-600 dark:bg-white/[0.03] dark:text-slate-300">{st.note}</p>
@@ -791,7 +751,6 @@ export function StudentDetailModal({
           )}
         </div>
 
-        {/* Footer amallari. Arxiv va o'chirish tahrirlash oynasi ichida. */}
         {canManage && (
           <div className="flex shrink-0 gap-2 border-t border-slate-100 bg-white px-5 py-3 dark:border-white/10 dark:bg-[#15243d]">
             <button onClick={onEdit} className="flex flex-1 items-center justify-center gap-2 rounded-xl bg-brand-600 py-2.5 text-sm font-semibold text-white shadow-sm transition hover:bg-brand-700 active:scale-[.99]">
@@ -808,9 +767,6 @@ export function StudentDetailModal({
     </div>, document.body);
 }
 
-// O'chirish amallari: arxivlash (qaytariladi) va mutloq o'chirish (qaytarilmaydi).
-// Mutloq o'chirishda to'lov tarixi ham yo'qoladi — shu sabab ism yozib tasdiqlanadi
-// va server tomonda faqat direktor/o'rinbosariga ruxsat beriladi.
 function StudentDangerActions({ student: st, locale, onDone }: { student: VStudent; locale: Locale; onDone: () => void }) {
   const router = useRouter();
   const [pending, start] = useTransition();
@@ -837,7 +793,6 @@ function StudentDangerActions({ student: st, locale, onDone }: { student: VStude
 
   return (
     <div>
-      {/* Arxivlash va butunlay o'chirish */}
       <div className="flex items-stretch gap-2">
         <button
           type="button"
@@ -876,12 +831,10 @@ function StudentDangerActions({ student: st, locale, onDone }: { student: VStude
           <input
             value={typed}
             onChange={(e) => setTyped(e.target.value)}
-            // Enter tahrirlash formasini yubormasin
             onKeyDown={(e) => { if (e.key === "Enter") e.preventDefault(); }}
             className="mt-1.5 h-9 w-full rounded-lg border border-rose-200 bg-white px-2.5 text-sm outline-none focus:border-rose-400 dark:border-rose-500/30 dark:bg-slate-900 dark:text-slate-100"
           />
           {err && <p className="mt-1.5 text-[11px] font-medium text-rose-700 dark:text-rose-300">{err}</p>}
-          {/* type="button" SHART — bu blok tahrirlash formasi ichida turadi */}
           <div className="mt-2 flex gap-2">
             <button
               type="button"
@@ -926,7 +879,6 @@ function DStat({ label, value, accent, toneClass }: { label: string; value: stri
   );
 }
 
-// Katta ma'lumot qatori (KONTAKT uslubida) — o'qituvchi/guruh/kurs/sana
 function BigRow({ icon, text, href, onNav }: { icon: string; text: string; href?: string; onNav?: () => void }) {
   const cls = "flex items-center gap-2.5 rounded-lg border border-slate-200 bg-slate-50 px-3.5 py-2.5 text-sm font-semibold text-slate-700 dark:border-slate-700 dark:bg-slate-800/60 dark:text-slate-200";
   const inner = <><Icon name={icon} className="h-4 w-4 shrink-0 text-brand-500" /><span className="min-w-0 break-words">{text}</span></>;
@@ -934,8 +886,6 @@ function BigRow({ icon, text, href, onNav }: { icon: string; text: string; href?
     ? <Link href={href} onClick={onNav} className={cn(cls, "transition hover:border-brand-300 hover:text-brand-600")}>{inner}</Link>
     : <div className={cls}>{inner}</div>;
 }
-
-// ───────────── Yordamchi komponentlar ─────────────
 
 function Select({
   value, onChange, placeholder, children,
@@ -955,7 +905,6 @@ function Select({
   );
 }
 
-// Ma'lumot hali yo'q — vizual (o'chirilgan) filtr, Modme ko'rinishiga mos
 function SelectDisabled({ placeholder, locale }: { placeholder: string; locale: Locale }) {
   return (
     <div className="flex h-10 cursor-not-allowed items-center gap-1.5 rounded-lg border border-slate-200 bg-slate-50/60 px-3 text-sm text-slate-400 dark:border-slate-800 dark:bg-slate-900/40" title={tr(locale, { uz: "Tez orada", ru: "Скоро", en: "Coming soon", de: "Demnächst" })}>
@@ -992,7 +941,6 @@ function HeadAction({ icon, title, active, onClick }: { icon: string; title: str
   );
 }
 
-// Ommaviy amal modali — guruhga biriktirish yoki xabar yuborish
 function BulkModal({
   mode, count, groups, busy, locale, onClose, onAssign, onMessage,
 }: {
@@ -1078,7 +1026,6 @@ function CreateModal({ locale, onClose, onDone }: { locale: Locale; onClose: () 
     if (state.ok && !done.current) { done.current = true; onDone(); onClose(); }
   }, [state.ok, onDone, onClose]);
 
-  // Escape bilan yopish + fon scroll'ini bloklash (boshqa drawer'lar kabi)
   useEffect(() => {
     const onKey = (e: KeyboardEvent) => { if (e.key === "Escape") onClose(); };
     document.addEventListener("keydown", onKey);
@@ -1098,13 +1045,11 @@ function CreateModal({ locale, onClose, onDone }: { locale: Locale; onClose: () 
         onMouseDown={(e) => e.stopPropagation()}
         className="animate-slide-in-right absolute right-0 top-0 flex h-full drawer-panel flex-col border-l border-slate-200 bg-white shadow-pop dark:border-white/10 dark:bg-[#15243d]"
       >
-        {/* Header */}
         <div className="flex shrink-0 items-center justify-between border-b border-slate-100 px-5 py-4 dark:border-white/10">
           <h3 className="text-base font-bold text-slate-800 dark:text-slate-100">{tr(locale, { uz: "Yangi talaba", ru: "Новый ученик", en: "New student", de: "Neuer Schüler" })}</h3>
           <button type="button" onClick={onClose} className="flex h-8 w-8 items-center justify-center rounded-lg text-lg text-slate-400 transition hover:bg-slate-100 hover:text-slate-600 dark:hover:bg-white/10">✕</button>
         </div>
 
-        {/* Body */}
         <div className="flex-1 space-y-3.5 overflow-y-auto px-5 py-4">
           <div>
             <label className={labelCls}>{tr(locale, { uz: "F.I.Sh.", ru: "Ф.И.О.", en: "Full name", de: "Vollständiger Name" })} <span className="text-rose-500">*</span></label>
@@ -1120,7 +1065,6 @@ function CreateModal({ locale, onClose, onDone }: { locale: Locale; onClose: () 
               <input name="currentLevel" className={inputCls} placeholder="A1.1" />
             </div>
           </div>
-          {/* Qarzdor qilib qo'shish — kiritilsa qarz yozuvi ochiladi (Qarzdorlar ro'yxatiga tushadi) */}
           <div>
             <label className={labelCls}>
               {tr(locale, { uz: "Qarz (so'm)", ru: "Долг (сум)", en: "Debt (UZS)", de: "Schulden (UZS)" })}
@@ -1143,7 +1087,6 @@ function CreateModal({ locale, onClose, onDone }: { locale: Locale; onClose: () 
           )}
         </div>
 
-        {/* Footer */}
         <div className="flex shrink-0 gap-2 border-t border-slate-100 px-5 py-4 dark:border-white/10">
           <button type="button" onClick={onClose} className="flex-1 rounded-xl border border-slate-200 py-2.5 text-sm font-semibold text-slate-600 transition hover:bg-slate-50 dark:border-white/10 dark:text-slate-300 dark:hover:bg-white/5">{tr(locale, { uz: "Bekor qilish", ru: "Отмена", en: "Cancel", de: "Abbrechen" })}</button>
           <button type="submit" disabled={pending} className="flex-[1.4] rounded-xl bg-brand-600 py-2.5 text-sm font-semibold text-white transition hover:bg-brand-700 disabled:opacity-60">{pending ? tr(locale, { uz: "Saqlanmoqda...", ru: "Сохранение...", en: "Saving...", de: "Wird gespeichert..." }) : tr(locale, { uz: "Saqlash", ru: "Сохранить", en: "Save", de: "Speichern" })}</button>
@@ -1157,7 +1100,6 @@ export function EditModal({ student, locale, onClose, onDone }: { student: VStud
   const [pending, start] = useTransition();
   const [error, setError] = useState<string | null>(null);
 
-  // Escape bilan yopish + fon scroll'ini bloklash
   useEffect(() => {
     const onKey = (e: KeyboardEvent) => { if (e.key === "Escape") onClose(); };
     document.addEventListener("keydown", onKey);
@@ -1209,7 +1151,6 @@ export function EditModal({ student, locale, onClose, onDone }: { student: VStud
               <input name="currentLevel" defaultValue={student.currentLevel ?? ""} className={inputCls} placeholder="A1.1" />
             </div>
           </div>
-          {/* Izoh — talaba profili, ro'yxat va kartochkada ko'rinadi */}
           <div>
             <label className={labelCls}>{tr(locale, { uz: "Izoh", ru: "Примечание", en: "Note", de: "Notiz" })}</label>
             <textarea
@@ -1238,7 +1179,6 @@ export function EditModal({ student, locale, onClose, onDone }: { student: VStud
             <p className="rounded-lg bg-rose-50 px-3 py-2 text-sm text-rose-700 dark:bg-rose-500/10 dark:text-rose-400">{error}</p>
           )}
 
-          {/* Guruhdan guruhga o'tkazish */}
           <div className="mt-2 border-t border-slate-100 pt-3.5 dark:border-white/10">
             <GroupMover
               locale={locale}
@@ -1248,7 +1188,6 @@ export function EditModal({ student, locale, onClose, onDone }: { student: VStud
             />
           </div>
 
-          {/* Boshqa filialga ko'chirish */}
           <div className="mt-2 border-t border-slate-100 pt-3.5 dark:border-white/10">
             <BranchMover
               locale={locale}
@@ -1264,7 +1203,6 @@ export function EditModal({ student, locale, onClose, onDone }: { student: VStud
             />
           </div>
 
-          {/* Arxivlash va butunlay o'chirish — tahrirlash oynasi ichida */}
           <div className="mt-2 border-t border-slate-100 pt-3.5 dark:border-white/10">
             <p className={labelCls}>{tr(locale, { uz: "Talabani o'chirish", ru: "Удаление ученика", en: "Remove student", de: "Schüler entfernen" })}</p>
             <StudentDangerActions student={student} locale={locale} onDone={onClose} />

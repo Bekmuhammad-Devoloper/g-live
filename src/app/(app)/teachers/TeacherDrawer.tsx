@@ -16,21 +16,13 @@ import SalaryModal from "./SalaryModal";
 import { colorFor } from "./TeacherCard";
 import type { VTeacher } from "./TeachersView";
 
-// O'qituvchi tafsilotlari — kartadagi ism bosilganda ochiladi.
-// Ichida: aloqa ma'lumotlari, guruhlari (har biri guruh sahifasiga olib boradi),
-// maosh boshqaruvi (rahbariyat), tahrirlash va butunlay o'chirish.
-// Tahrirlash formasi Xodimlar bo'limidagi StaffForm — bitta forma, bitta qoida.
-
 export default function TeacherDrawer({
   teacher: t, locale, canManage, canEdit, canDelete, positions, branches, onClose,
 }: {
   teacher: VTeacher;
   locale: Locale;
-  /** Maosh va kirish ma'lumotlari (direktor, o'rinbosar) */
   canManage: boolean;
-  /** Tahrirlash (direktor, o'rinbosar, administrator) */
   canEdit: boolean;
-  /** Butunlay o'chirish (direktor; administrator — o'z filialida) */
   canDelete: boolean;
   positions: PosOpt[];
   branches: { id: string; name: string }[];
@@ -89,7 +81,6 @@ export default function TeacherDrawer({
       <div className="fixed inset-0 z-[80]" onMouseDown={onClose}>
         <div className="absolute inset-0 bg-slate-900/50 backdrop-blur-sm" />
         <div onMouseDown={(e) => e.stopPropagation()} className="animate-slide-in-right absolute right-0 top-0 flex h-full drawer-panel flex-col border-l border-slate-200 bg-white shadow-pop dark:border-white/10 dark:bg-[#15243d]">
-          {/* Sarlavha */}
           <div className="relative shrink-0 overflow-hidden border-b border-slate-100 dark:border-white/10">
             <div className="pointer-events-none absolute inset-0" style={{ background: `linear-gradient(135deg, ${color}14, transparent 60%)` }} />
             <div className="relative flex items-start justify-between gap-3 px-5 py-5">
@@ -117,21 +108,18 @@ export default function TeacherDrawer({
           </div>
 
           <div className="flex-1 space-y-5 overflow-y-auto px-5 py-4">
-            {/* Aloqa */}
             <Section icon="phone" title={T("Aloqa", "Контакты", "Contact", "Kontakt")}>
               <div className={row}><span className="shrink-0 text-xs text-slate-400">{T("Telefon", "Телефон", "Phone", "Telefon")}</span><span className="text-right text-sm font-medium text-slate-700 dark:text-slate-200">{t.phone ?? "—"}</span></div>
               <div className={row}><span className="shrink-0 text-xs text-slate-400">Email / login</span><span className="min-w-0 break-all text-right text-sm font-medium text-slate-700 dark:text-slate-200">{t.email ?? "—"}</span></div>
               <div className={row}><span className="shrink-0 text-xs text-slate-400">{T("Jinsi", "Пол", "Gender", "Geschlecht")}</span><span className="text-right text-sm font-medium text-slate-700 dark:text-slate-200">{t.gender === "MALE" ? T("Erkak", "Мужчина", "Male", "Männlich") : t.gender === "FEMALE" ? T("Ayol", "Женщина", "Female", "Weiblich") : "—"}</span></div>
             </Section>
 
-            {/* Ko'rsatkichlar */}
             <div className="grid grid-cols-3 gap-2">
               <Stat label={T("Guruh", "Группы", "Groups", "Gruppen")} value={t.groups.length} />
               <Stat label={T("O'quvchi", "Ученики", "Students", "Schüler")} value={t.totalStudents} />
               <Stat label={T("Dars", "Занятия", "Lessons", "Unterrichte")} value={t.totalLessons} />
             </div>
 
-            {/* Guruhlar */}
             <Section icon="layers" title={`${T("Guruhlari", "Группы", "Groups", "Gruppen")} · ${t.groups.length}`}>
               {t.groups.length === 0 ? (
                 <p className="rounded-xl border border-dashed border-slate-200 px-3 py-4 text-center text-xs text-slate-400 dark:border-white/10">{T("Guruh biriktirilmagan", "Группы не назначены", "No groups assigned", "Keine Gruppen zugewiesen")}</p>
@@ -150,7 +138,6 @@ export default function TeacherDrawer({
               )}
             </Section>
 
-            {/* Maosh */}
             <Section icon="wallet" title={T("Bu oy maosh", "Зарплата за месяц", "This month salary", "Gehalt diesen Monat")}>
               <div className="flex items-center justify-between gap-2 rounded-xl border border-amber-200 bg-amber-50/60 px-3.5 py-2.5 dark:border-amber-500/30 dark:bg-amber-500/10">
                 <div>
@@ -166,7 +153,6 @@ export default function TeacherDrawer({
             {error && <p className="rounded-lg bg-rose-50 px-3 py-2 text-sm text-rose-700 dark:bg-rose-500/10 dark:text-rose-400">{error}</p>}
           </div>
 
-          {/* Amallar */}
           {(canEdit || canDelete) && (
             <div className="flex shrink-0 gap-2 border-t border-slate-100 px-5 py-4 dark:border-white/10">
               {canDelete && (

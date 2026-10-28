@@ -3,21 +3,13 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import { TEAL } from "../_ui";
 
-// Tangani qanday yig'ish mumkinligi — birin-ketin aylanadigan banner.
-// Ilgari yettala qoida bitta ro'yxatda turib, hamyon kartasini uzun va
-// o'qishga og'ir qilib qo'yardi. Endi har biri o'z bannerida tushuntiriladi.
-//
-// Xulq: 4 soniyada bir aylanadi; barmoq bilan surish yoki nuqtani bosish
-// aylanishni to'xtatadi (foydalanuvchi o'zi boshqara boshladi degani).
-// Tizimda "harakatni kamaytirish" yoqilgan bo'lsa avtomatik aylanmaydi.
-
 export interface RuleSlide {
   key: string;
-  label: string;   // "Dars videosini ko'rgani"
-  hint: string;    // "Dars videosini oxirigacha ko'rsangiz"
-  per: number | null; // bir marta uchun nechta tanga (pog'ona mukofoti har xil — null)
-  count: number;   // necha marta bajarilgan
-  total: number;   // jami yig'ilgan
+  label: string;
+  hint: string;
+  per: number | null;
+  count: number;
+  total: number;
 }
 
 const ROTATE_MS = 4000;
@@ -48,7 +40,6 @@ function Ico({ name, s = 26 }: { name: string; s?: number }) {
   if (name === "rankUp") return (
     <svg {...base}><path d="M4 20.5h4.5v-6H4v6ZM9.8 20.5h4.4V9h-4.4v11.5ZM15.5 20.5H20V4h-4.5v16.5Z" /><path d="m12 2.2.9 1.9 2 .3-1.5 1.4.4 2-1.8-1-1.8 1 .4-2L9.1 4.4l2-.3.9-1.9Z" fill="white" stroke="none" /></svg>
   );
-  // levelUp
   return (
     <svg {...base}><path d="M4 19.5h16" /><path d="m5.5 15 4-4.5 3 2.5 5.5-6" /><path d="M14.5 6.5h3.6v3.6" /></svg>
   );
@@ -63,7 +54,6 @@ export default function CoinRules({ slides, title, timesLabel, totalLabel }: { s
 
   const go = useCallback((next: number) => setI(((next % n) + n) % n), [n]);
 
-  // Avtomatik aylanish
   useEffect(() => {
     if (!auto || n < 2) return;
     const reduce = typeof window !== "undefined"
@@ -82,7 +72,7 @@ export default function CoinRules({ slides, title, timesLabel, totalLabel }: { s
     const dx = e.touches[0].clientX - s.x;
     if (!s.moved && Math.abs(dx) > 40) {
       s.moved = true;
-      setAuto(false);          // foydalanuvchi o'zi boshqarmoqda
+      setAuto(false);
       go(i + (dx < 0 ? 1 : -1));
     }
   };
@@ -100,7 +90,6 @@ export default function CoinRules({ slides, title, timesLabel, totalLabel }: { s
         onTouchMove={onTouchMove}
         onTouchEnd={onTouchEnd}
       >
-        {/* Lenta — barcha bannerlar yonma-yon, faqat biri ko'rinadi */}
         <div
           ref={trackRef}
           className="flex transition-transform duration-500 ease-out"
@@ -126,8 +115,6 @@ export default function CoinRules({ slides, title, timesLabel, totalLabel }: { s
                   ) : null}
                 </div>
 
-                {/* Bir marta uchun qancha berilishi. Pog'ona mukofoti har
-                    pog'onada har xil — u yerda jami ko'rsatiladi. */}
                 <span className="shrink-0 rounded-2xl bg-white/20 px-3 py-2 text-center backdrop-blur-sm">
                   <span className="block text-[19px] font-extrabold leading-none">+{s.per ?? s.total}</span>
                   {s.per === null ? (
@@ -140,7 +127,6 @@ export default function CoinRules({ slides, title, timesLabel, totalLabel }: { s
         </div>
       </div>
 
-      {/* Nuqtalar — bosilsa o'sha bannerga o'tadi */}
       {n > 1 ? (
         <div className="mt-2 flex items-center justify-center gap-1.5">
           {slides.map((s, k) => (

@@ -5,7 +5,6 @@ import { useEffect, useRef } from "react";
 /* eslint-disable @typescript-eslint/no-explicit-any */
 const TASHKENT: [number, number] = [41.3111, 69.2797];
 
-// Leaflet'ni CDN orqali bir marta yuklaydi
 function ensureLeaflet(): Promise<any> {
   const w = window as any;
   if (w.L) return Promise.resolve(w.L);
@@ -35,7 +34,6 @@ export default function MapPicker({ lat, lng, radius, onChange }: { lat: number 
     let cancelled = false;
     ensureLeaflet().then((L) => {
       if (cancelled || !el.current || store.current.map) return;
-      // default marker ikonkalarini CDN'ga bog'lash (aks holda 404)
       delete (L.Icon.Default.prototype as any)._getIconUrl;
       L.Icon.Default.mergeOptions({
         iconRetinaUrl: "https://unpkg.com/leaflet@1.9.4/dist/images/marker-icon-2x.png",
@@ -51,15 +49,13 @@ export default function MapPicker({ lat, lng, radius, onChange }: { lat: number 
       marker.on("dragend", () => set(marker.getLatLng()));
       map.on("click", (e: any) => set(e.latlng));
       store.current = { map, marker, circle };
-      setTimeout(() => map.invalidateSize(), 300); // drawer animatsiyasidan keyin
+      setTimeout(() => map.invalidateSize(), 300);
     }).catch(() => {});
     return () => { cancelled = true; if (store.current.map) { store.current.map.remove(); store.current = {}; } };
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
-  // radius o'zgarsa doirani yangilash
   useEffect(() => { if (store.current.circle) store.current.circle.setRadius(radius || 100); }, [radius]);
-  // tashqaridan lat/lng o'zgarsa (masalan qo'lda kiritilса) markerni ko'chirish
   useEffect(() => {
     if (store.current.marker && lat != null && lng != null) {
       const cur = store.current.marker.getLatLng();

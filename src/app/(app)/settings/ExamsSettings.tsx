@@ -22,12 +22,12 @@ export default function ExamsSettings({ locale }: { locale: Locale }) {
     try {
       const raw = localStorage.getItem(STORAGE_KEY);
       if (raw) setState(JSON.parse(raw));
-    } catch { /* ignore */ }
+    } catch { }
   }, []);
 
   const toggle = (k: string) => setState((s) => ({ ...s, [k]: !s[k] }));
   const save = () => {
-    try { localStorage.setItem(STORAGE_KEY, JSON.stringify(state)); } catch { /* ignore */ }
+    try { localStorage.setItem(STORAGE_KEY, JSON.stringify(state)); } catch { }
     setSaved(true); setTimeout(() => setSaved(false), 1800);
   };
 

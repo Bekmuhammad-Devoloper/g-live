@@ -16,9 +16,8 @@ export default async function CancelledAttendancePage() {
     return <Forbidden title={tr(s.locale, { uz: "Kirish taqiqlangan", ru: "Доступ запрещён", en: "Access denied", de: "Zugriff verweigert" })} body={tr(s.locale, { uz: "Bu bo'lim uchun ruxsat yo'q.", ru: "Нет доступа к этому разделу.", en: "You don't have access to this section.", de: "Sie haben keinen Zugriff auf diesen Bereich." })} />;
   }
 
-  // Bekor qilingan / sababli davomat = status EXCUSED
   const recs = await prisma.attendance.findMany({
-    where: { AND: [{ status: "EXCUSED" }, branchViaLesson(s)] }, // faol filial doirasida
+    where: { AND: [{ status: "EXCUSED" }, branchViaLesson(s)] },
     orderBy: { markedAt: "desc" },
     take: 1000,
     select: {

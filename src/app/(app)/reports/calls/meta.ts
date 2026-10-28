@@ -1,6 +1,3 @@
-// Holat / yo'nalish / qayta bog'lanish belgilari — jadval va kartalar uchun umumiy.
-// Faqat ma'lumot obyektlari (funksiya emas), shuning uchun klient komponentlarda erkin ishlatiladi.
-
 export interface Tri {
   uz: string;
   ru: string;
@@ -28,7 +25,6 @@ export const CALLBACK: Record<string, { label: Tri; icon: string; tone: string }
   NOT_NEEDED: { label: { uz: "Kerak emas", ru: "Не требуется", en: "Not needed", de: "Nicht nötig" }, icon: "close", tone: "slate" },
 };
 
-// Nishon (badge) ranglari
 export const toneCls: Record<string, string> = {
   emerald: "bg-emerald-50 text-emerald-700 border-emerald-200 dark:bg-emerald-500/10 dark:text-emerald-300 dark:border-emerald-500/30",
   red: "bg-red-50 text-red-700 border-red-200 dark:bg-red-500/10 dark:text-red-300 dark:border-red-500/30",
@@ -38,7 +34,6 @@ export const toneCls: Record<string, string> = {
   blue: "bg-blue-50 text-blue-700 border-blue-200 dark:bg-blue-500/10 dark:text-blue-300 dark:border-blue-500/30",
 };
 
-// KPI plitkalari uchun kvadrat ikonka foni
 export const sq: Record<string, string> = {
   blue: "bg-blue-100 text-blue-600 dark:bg-blue-500/15 dark:text-blue-400",
   emerald: "bg-emerald-100 text-emerald-600 dark:bg-emerald-500/15 dark:text-emerald-400",

@@ -11,19 +11,6 @@ import { qrStudentOf } from "@/lib/lessonQrAccess";
 import { getBrand } from "@/lib/brand";
 import BrandLogo from "@/app/BrandLogo";
 
-// Dars QR kodi ochadigan manzil. Sahifaning o'zi mazmun ko'rsatmaydi — kim
-// kelganiga qarab yo'naltiradi:
-//
-//   seans yo'q, brauzer   → "Ilovada ochish / yuklab olish / kirish" ekrani
-//   seans yo'q, ilova     → /login?next=/l/<id> (kirgach shu yerga qaytadi)
-//   faol o'quvchi         → dars videosi (o'z kursidagi dars — ilovadagi o'z
-//                           o'rnida, boshqa kursniki — alohida video sahifada)
-//   guruhsiz o'quvchi     → tushuntirish xabari
-//   xodim                 → kurs sahifasi (CRM)
-//
-// Ilova o'rnatilgan telefonda havola brauzerga kelmaydi: Android uni to'g'ridan
-// ilovada ochadi (manifestdagi App Links filtri), NativeShell esa shu manzilga o'tadi.
-
 export async function generateMetadata() {
   const brand = await getBrand();
   return { title: brand.name, robots: { index: false, follow: false } };
@@ -54,19 +41,15 @@ export default async function LessonLinkPage({ params }: { params: Promise<{ id:
   const session = await getSession();
 
   if (!session) {
-    // Ilova ichida — to'g'ridan kirish oynasi; "yuklab oling" ekrani ortiqcha
     if (isNativeAppUa(ua)) redirect(loginHref);
 
     const locale = localeOf(h.get("accept-language") ?? "");
     const host = h.get("host") ?? "germaniya.live";
     const isAndroid = /Android/i.test(ua);
-    // Chrome (Android): ilova bor bo'lsa shu manzil bilan ochiladi, yo'q bo'lsa
-    // yuklab olish sahifasiga o'tadi
     const openInApp = isAndroid
       ? `intent://${host}${self}#Intent;scheme=https;package=${ANDROID_PACKAGE};S.browser_fallback_url=${encodeURIComponent(`https://${host}/app`)};end`
       : null;
     const brand = await getBrand();
-    // Mobil ilova faqat asosiy markazniki — boshqa markazlarda ilova tugmalari ko'rsatilmaydi
     return (
       <Gateway
         locale={locale}
@@ -96,8 +79,6 @@ export default async function LessonLinkPage({ params }: { params: Promise<{ id:
       );
     }
 
-    // O'z kursidagi dars — ilovadagi o'z joyida ochiladi (lug'at, mashq, vazifa bilan birga).
-    // Ilova "asosiy" deb eng oxirgi guruhni oladi, shuning uchun aynan shu guruh tekshiriladi.
     const main = st.groups[0];
     if (main.programId === lesson.programId) {
       const fallback = (main.levelCode ?? st.currentLevel ?? "A1").slice(0, 2);
@@ -120,11 +101,8 @@ export default async function LessonLinkPage({ params }: { params: Promise<{ id:
     );
   }
 
-  // Xodim — darsni CRM'dagi kurs sahifasida ko'radi (ruxsatni sahifaning o'zi tekshiradi)
   redirect(`/courses/${lesson.programId}`);
 }
-
-/* ── Ko'rinish ── */
 
 async function Shell({ children }: { children: React.ReactNode }) {
   const brand = await getBrand();

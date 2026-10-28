@@ -23,7 +23,7 @@ interface ApiLead {
   employeeName: string | null;
 }
 interface ApiEmployee {
-  id: string; // "none" — biriktirilmagan
+  id: string;
   name: string | null;
   role: string | null;
   total: number;
@@ -47,7 +47,7 @@ interface ApiResponse {
 }
 
 interface Props {
-  defaultFrom: string; // YYYY-MM-DD
+  defaultFrom: string;
   defaultTo: string;
   locale: Locale;
 }
@@ -73,7 +73,6 @@ export default function ConversionReport({ defaultFrom, defaultTo, locale }: Pro
   const [error, setError] = useState(false);
   const T = (uz: string, ru: string, en: string, de: string) => tr(locale, { uz, ru, en, de });
 
-  // Filtr o'zgarsa — alohida API'dan qayta yuklaymiz
   useEffect(() => {
     const ctrl = new AbortController();
     setLoading(true);
@@ -172,7 +171,6 @@ export default function ConversionReport({ defaultFrom, defaultTo, locale }: Pro
         </div>
       )}
 
-      {/* Filtrlar qatori */}
       <div className="flex flex-wrap items-center gap-2.5">
         <DateBox value={from} onChange={setFrom} />
         <DateBox value={to} onChange={setTo} />
@@ -202,7 +200,6 @@ export default function ConversionReport({ defaultFrom, defaultTo, locale }: Pro
         </div>
       )}
 
-      {/* KPI plitkalar */}
       <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
         <Kpi icon="users" color="#4f46e5" value={String(total)} title={T("So'rovlar", "Заявки", "Requests", "Anfragen")} sub={T("davrda yaratilgan lidlar", "лидов создано за период", "leads created in period", "im Zeitraum erstellte Leads")} onClick={() => setSelected(selected === "sorovlar" ? "" : "sorovlar")} active={selected === "sorovlar"} />
         <Kpi icon="graduation" color="#10b981" value={String(counts.qabul ?? 0)} title={T("Qabul qilindi", "Приняты", "Enrolled", "Aufgenommen")} sub={T("o'quvchiga aylandi", "стали учениками", "became students", "wurden Schüler")} onClick={() => setSelected(selected === "qabul" ? "" : "qabul")} active={selected === "qabul"} />
@@ -210,7 +207,6 @@ export default function ConversionReport({ defaultFrom, defaultTo, locale }: Pro
         <Kpi icon="personX" color="#ef4444" value={String(lost)} title={T("Yo'qotilgan", "Потеряны", "Lost", "Verloren")} sub={`${pct1(lost, total)}% · ${T("ishlovda", "в работе", "in progress", "in Arbeit")}: ${Math.max(0, inWork)}`} onClick={() => setSelected(selected === "yoqotilgan" ? "" : "yoqotilgan")} active={selected === "yoqotilgan"} />
       </div>
 
-      {/* Voronka — yig'ma, har bosqichda: soni, jamidan %, oldingi bosqichdan o'tish % */}
       <div className="rounded-2xl border border-slate-200/70 bg-white p-5 shadow-card dark:border-slate-800 dark:bg-slate-900">
         <div className="mb-4 flex items-center justify-between">
           <h3 className="text-lg font-semibold text-slate-700 dark:text-slate-200">{T("Sotuv voronkasi", "Воронка продаж", "Sales funnel", "Verkaufstrichter")}</h3>
@@ -265,7 +261,6 @@ export default function ConversionReport({ defaultFrom, defaultTo, locale }: Pro
         </div>
       </div>
 
-      {/* Har xodim bo'yicha alohida */}
       <div className="overflow-hidden rounded-2xl border border-slate-200/70 bg-white shadow-card dark:border-slate-800 dark:bg-slate-900">
         <div className="flex items-center justify-between border-b border-slate-100 px-5 py-3.5 dark:border-slate-800">
           <h3 className="text-lg font-semibold text-slate-700 dark:text-slate-200">{T("Xodimlar bo'yicha", "По сотрудникам", "By employee", "Nach Mitarbeitern")}</h3>
@@ -357,7 +352,6 @@ export default function ConversionReport({ defaultFrom, defaultTo, locale }: Pro
         </div>
       </div>
 
-      {/* Lidlar ro'yxati — tanlangan bosqich / xodim bo'yicha */}
       <div className="overflow-hidden rounded-2xl border border-slate-200/70 bg-white shadow-card dark:border-slate-800 dark:bg-slate-900">
         <div className="flex flex-wrap items-center gap-2 border-b border-slate-100 px-5 py-3.5 dark:border-slate-800">
           <h3 className="text-lg font-semibold text-slate-700 dark:text-slate-200">{T("Lidlar", "Лиды", "Leads", "Leads")}</h3>
@@ -416,8 +410,6 @@ export default function ConversionReport({ defaultFrom, defaultTo, locale }: Pro
     </div>
   );
 }
-
-// ───────── Yordamchi komponentlar ─────────
 
 function roleLabel(role: string, locale: Locale) {
   const m: Record<string, { uz: string; ru: string; en: string; de: string }> = {

@@ -25,7 +25,6 @@ const errText = (e: unknown) => {
   return String(x?.stderr || x?.stdout || x?.message || e).trim().split("\n").slice(-4).join(" ").slice(0, 400);
 };
 
-/** Root amali — faqat gl-center skripti orqali (buyruq va argumentlar unda tekshiriladi) */
 export async function glCenter(...args: string[]): Promise<{ ok: boolean; out: string }> {
   try {
     const r = await sh("sudo", ["-n", GL, ...args], { timeout: 180_000 });
@@ -35,7 +34,6 @@ export async function glCenter(...args: string[]): Promise<{ ok: boolean; out: s
   }
 }
 
-/** Markaz bazasi sxemasini joriy kodga moslash (yangi markazda — yaratish) */
 export async function pushSchema(slug: string): Promise<Step> {
   try {
     await sh("npx", ["prisma", "db", "push", "--skip-generate"], { env: { DATABASE_URL: `file:${centerDb(slug)}` }, timeout: 180_000 });
@@ -68,7 +66,6 @@ export async function prepareDirs(slug: string): Promise<void> {
   for (const sub of ["data", "uploads", "upload-parts", "backups"]) await fs.mkdir(path.join(d, sub), { recursive: true });
 }
 
-/** Markaz javob beryaptimi (/api/version) */
 export async function health(port: number, timeoutMs = 3000): Promise<boolean> {
   try {
     const r = await fetch(`http://127.0.0.1:${port}/api/version`, { signal: AbortSignal.timeout(timeoutMs), cache: "no-store" });
@@ -87,7 +84,6 @@ export async function waitHealthy(port: number, totalMs = 60_000): Promise<boole
   return false;
 }
 
-// ─── Statistika (markaz bazasidan faqat o'qish, sqlite3 CLI) ───
 export interface CenterStats {
   students: number; activeStudents: number; staff: number; groups: number; leads: number;
   paidThisMonth: number; dbBytes: number; uploadsBytes: number; lastLoginAt: string | null;
@@ -143,7 +139,6 @@ export async function centerStats(dbFile: string, uploadsDir: string): Promise<C
   }
 }
 
-/** Direktor (yoki istalgan xodim) parolini yangilash — markaz bazasiga to'g'ridan-to'g'ri (sqlite3) */
 export async function resetUserPassword(dbFile: string, email: string, password: string): Promise<boolean> {
   const hash = await bcrypt.hash(password, 10);
   const esc = (s: string) => s.replace(/'/g, "''");
@@ -156,7 +151,6 @@ export async function resetUserPassword(dbFile: string, email: string, password:
   }
 }
 
-/** Markaz brendi nomini bazada ham yangilash (Sozlamalar > Markaz brendi bilan bir xil kalit) */
 export async function setBrandName(dbFile: string, name: string): Promise<void> {
   const esc = name.replace(/'/g, "''");
   await sh("sqlite3", [dbFile, `INSERT INTO Setting(key,value,updatedAt) VALUES('brand.name','${esc}',${Date.now()}) ON CONFLICT(key) DO UPDATE SET value=excluded.value, updatedAt=excluded.updatedAt;`], { timeout: 15_000 });
@@ -185,7 +179,6 @@ export async function appVersion(): Promise<string> {
 
 export { CENTERS_ROOT };
 
-// ─── Server holati (gl-center sysinfo) ───
 export interface SysService { name: string; active: string; since: string | null; memBytes: number | null; restarts: number }
 export interface SysInfo {
   kv: Record<string, string>;
@@ -217,7 +210,6 @@ export async function sysInfo(): Promise<SysInfo> {
   return out;
 }
 
-/** Asosiy markaz (germaniya.live) litsenziyasi — /opt/gl-edu/.env dagi SUBSCRIPTION_UNTIL */
 export async function mainLicense(): Promise<string | null> {
   try {
     const raw = await fs.readFile(path.join(APP_DIR, ".env"), "utf8");
@@ -225,7 +217,6 @@ export async function mainLicense(): Promise<string | null> {
   } catch { return null; }
 }
 
-/** Asosiy markaz bazasining zaxira nusxalari (prisma/dev.db.backup-*) */
 export async function mainBackups(): Promise<{ name: string; bytes: number; at: string }[]> {
   const d = path.join(APP_DIR, "prisma");
   try {

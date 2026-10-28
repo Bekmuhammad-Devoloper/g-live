@@ -9,7 +9,6 @@ import type { Lens } from "./GraphView";
 
 interface PickTask { id: string; title: string; status: string; tag: string | null }
 
-// taskIds: null = barcha eslatmalar (standart xaritalar); massiv = faqat biriktirilganlar (maxsus xarita)
 interface SavedMap { id: string; name: string; lens: Lens; taskIds: string[] | null; archived: boolean; builtin?: boolean }
 
 const LENS_OPTS: { v: Lens; label: { uz: string; ru: string; en: string; de: string } }[] = [
@@ -19,7 +18,6 @@ const LENS_OPTS: { v: Lens; label: { uz: string; ru: string; en: string; de: str
   { v: "staff", label: { uz: "Mas'ul bo'yicha", ru: "По ответственному", en: "By assignee", de: "Nach Zuständigem" } },
 ];
 
-// Standart xaritalarning nomlari — ID bo'yicha lokalizatsiya (localStorage'da uz saqlanadi)
 const DEFAULT_NAMES: Record<string, { uz: string; ru: string; en: string; de: string }> = {
   all: { uz: "To'liq xarita", ru: "Полная карта", en: "Full map", de: "Vollständige Karte" },
   "by-student": { uz: "O'quvchi bo'yicha", ru: "По ученику", en: "By student", de: "Nach Schüler" },
@@ -40,7 +38,6 @@ const newId = () => (typeof crypto !== "undefined" && crypto.randomUUID ? crypto
 export default function MapManager({ kind, locale, tasks, onSelect }: {
   kind: string; locale: Locale; tasks: PickTask[]; onSelect: (lens: Lens, taskIds: string[] | null) => void;
 }) {
-  // Standart xarita bo'lsa — nomini lokalizatsiya qiladi, aks holda foydalanuvchi kiritgan nom
   const mapName = (m: SavedMap) => (DEFAULT_NAMES[m.id] ? tr(locale, DEFAULT_NAMES[m.id]) : m.name);
   const KEY = `glive:maps:${kind}`;
   const [maps, setMaps] = useState<SavedMap[]>(defaults);
@@ -72,7 +69,6 @@ export default function MapManager({ kind, locale, tasks, onSelect }: {
   const resetToAll = () => { setActiveId("all"); onSelect("all", null); };
 
   function createMap() {
-    // Yangi xarita — BO'SH boshlanadi (taskIds: [])
     const m: SavedMap = { id: newId(), name: newName.trim() || tr(locale, { uz: "Yangi xarita", ru: "Новая карта", en: "New map", de: "Neue Karte" }), lens: newLens, taskIds: [], archived: false };
     setMaps((p) => [...p, m]);
     setShowNew(false); setNewName(""); setNewLens("all");
@@ -82,7 +78,6 @@ export default function MapManager({ kind, locale, tasks, onSelect }: {
   const restoreMap = (id: string) => setMaps((p) => p.map((m) => m.id === id ? { ...m, archived: false } : m));
   const deleteMap = (id: string) => { setMaps((p) => p.filter((m) => m.id !== id)); setMenuId(null); setShowArchive(false); if (activeId === id) resetToAll(); };
 
-  // Maxsus xaritaga eslatma biriktirish
   function setMembership(ids: string[]) {
     setMaps((p) => p.map((m) => m.id === activeId ? { ...m, taskIds: ids } : m));
     onSelect(activeMap.lens, ids);
@@ -118,7 +113,6 @@ export default function MapManager({ kind, locale, tasks, onSelect }: {
         </div>
       ))}
 
-      {/* Yangi xarita */}
       <div className="relative">
         <button onClick={() => { setShowNew((v) => !v); setShowArchive(false); }} className="flex items-center gap-1 rounded-full border border-dashed border-slate-300 px-3 py-1.5 text-sm font-medium text-slate-500 transition hover:border-brand-400 hover:text-brand-600 dark:border-slate-600 dark:text-slate-400">
           + {tr(locale, { uz: "Yangi xarita", ru: "Новая карта", en: "New map", de: "Neue Karte" })}
@@ -147,14 +141,12 @@ export default function MapManager({ kind, locale, tasks, onSelect }: {
         )}
       </div>
 
-      {/* Maxsus xaritaga eslatma biriktirish */}
       {isCustom && (
         <button onClick={() => setPickerOpen(true)} className="flex items-center gap-1.5 rounded-full bg-brand-50 px-3 py-1.5 text-sm font-semibold text-brand-600 transition hover:bg-brand-100 dark:bg-brand-500/10 dark:text-brand-300">
           ＋ {tr(locale, { uz: "Eslatma biriktirish", ru: "Прикрепить напоминание", en: "Attach reminder", de: "Erinnerung anhängen" })}
         </button>
       )}
 
-      {/* Arxiv */}
       {archived.length > 0 && (
         <div className="relative ml-auto">
           <button onClick={() => { setShowArchive((v) => !v); setShowNew(false); }} className="flex items-center gap-1.5 rounded-full border border-slate-200 px-3 py-1.5 text-sm font-medium text-slate-500 transition hover:bg-slate-50 dark:border-slate-700 dark:text-slate-400">
@@ -192,7 +184,6 @@ export default function MapManager({ kind, locale, tasks, onSelect }: {
   );
 }
 
-// ── Eslatma tanlash oynasi ──
 function TaskPicker({ tasks, locale, selected, title, onClose, onSave }: {
   tasks: PickTask[]; locale: Locale; selected: string[]; title: string; onClose: () => void; onSave: (ids: string[]) => void;
 }) {

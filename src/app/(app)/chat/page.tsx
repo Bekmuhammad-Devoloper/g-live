@@ -7,9 +7,6 @@ import { tr } from "@/lib/tr";
 import { Forbidden } from "../_components/ui";
 import ChatView, { type VMsg, type VThread } from "./ChatView";
 
-// "O'quvchilar yozishmasi" — o'quvchi /student/lehrer dan yozadi, ustoz
-// shu yerdan javob beradi. Ustoz faqat o'z guruhlari o'quvchilarini ko'radi.
-
 export default async function ChatPage({ searchParams }: { searchParams: Promise<{ s?: string }> }) {
   const s = await requireSession();
   if (!canRead(s.role, MODULES.CHAT)) {
@@ -28,14 +25,11 @@ export default async function ChatPage({ searchParams }: { searchParams: Promise
 
   const { s: active = null } = await searchParams;
 
-  // Ustoz — faqat o'z guruhlaridagi o'quvchilar bilan
   const scope =
     s.role === ROLES.TEACHER
       ? { student: { enrollments: { some: { isActive: true, group: { teacherId: s.userId } } } } }
       : branchViaStudent(s);
 
-  // Ilovaga ulangan o'quvchilar — ustoz yozishmani o'zi boshlashi uchun
-  // ular ham ro'yxatda turadi (hali xabar yozmagan bo'lsa ham).
   const studentScope =
     s.role === ROLES.TEACHER
       ? { userId: { not: null }, enrollments: { some: { isActive: true, group: { teacherId: s.userId } } } }
@@ -84,7 +78,6 @@ export default async function ChatPage({ searchParams }: { searchParams: Promise
     }),
   ]);
 
-  // Suhbatlar ro'yxati — oxirgi xabar bo'yicha
   const byStudent = new Map<string, VThread>();
   for (const m of rows) {
     const cur = byStudent.get(m.studentId);
@@ -101,7 +94,6 @@ export default async function ChatPage({ searchParams }: { searchParams: Promise
       cur.unread++;
     }
   }
-  // Xabar yozmagan o'quvchilar ham ro'yxatda — bo'sh suhbat sifatida
   for (const st of linked) {
     if (byStudent.has(st.id)) continue;
     byStudent.set(st.id, {
@@ -114,7 +106,6 @@ export default async function ChatPage({ searchParams }: { searchParams: Promise
     });
   }
 
-  // Avval o'qilmaganlar, keyin so'nggi xabar, oxirida yozishmasi yo'qlar
   const threads = [...byStudent.values()].sort((a, b) => {
     if ((b.unread > 0 ? 1 : 0) !== (a.unread > 0 ? 1 : 0)) return (b.unread > 0 ? 1 : 0) - (a.unread > 0 ? 1 : 0);
     if (a.lastAt !== b.lastAt) return b.lastAt.localeCompare(a.lastAt);

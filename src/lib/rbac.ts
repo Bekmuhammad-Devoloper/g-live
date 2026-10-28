@@ -1,12 +1,3 @@
-// Rolga asoslangan kirish nazorati (RBAC) — TZ 2.3 "Ruxsatlar matritsasi".
-// Serverning HAR bir so'rovida tekshiriladi (faqat interfeys darajasida emas).
-//
-// Ruxsat darajalari:
-//   FULL — to'liq (yaratish/tahrirlash/ko'rish)
-//   OWN  — faqat o'ziga tegishli resurslar (masalan o'qituvchi o'z guruhi)
-//   READ — faqat ko'rish
-//   NONE — kirish yo'q
-
 import { ROLES, type Role } from "./constants";
 
 export type Permission = "FULL" | "OWN" | "READ" | "NONE";
@@ -28,10 +19,7 @@ export const MODULES = {
 
 export type ModuleKey = (typeof MODULES)[keyof typeof MODULES];
 
-// Matritsa: [module][role] => Permission
 const M: Record<ModuleKey, Partial<Record<Role, Permission>>> = {
-  // O'quvchi–ustoz yozishmasi. Ustoz faqat o'z guruhi o'quvchisi bilan
-  // (tekshiruv actions ichida), rahbariyat hammasini ko'radi.
   CHAT: {
     STUDENT: "OWN",
     TEACHER: "OWN",
@@ -40,21 +28,20 @@ const M: Record<ModuleKey, Partial<Record<Role, Permission>>> = {
     DIRECTOR: "FULL",
     ADMIN: "FULL",
   },
-  // Market — o'quvchilar tangasiga almashtiriladigan sovg'alar va buyurtmalar
   MARKET: {
     STUDENT: "READ",
     MANAGER: "FULL",
     DEPUTY_DIRECTOR: "FULL",
     DIRECTOR: "FULL",
-    ADMIN: "FULL", // sovg'ani topshiradigan administrator
+    ADMIN: "FULL",
   },
   CRM: {
-    OPERATOR: "FULL",  // o'ziga biriktirilgan lidlar bilan ishlaydi
+    OPERATOR: "FULL",
     ROP: "FULL",
     MANAGER: "FULL",
     DEPUTY_DIRECTOR: "FULL",
     DIRECTOR: "FULL",
-    ADMIN: "FULL", // qabul bo'limi: lid qo'shadi va bosqichdan bosqichga ko'chiradi
+    ADMIN: "FULL",
   },
   GROUPS: {
     STUDENT: "READ",
@@ -83,22 +70,17 @@ const M: Record<ModuleKey, Partial<Record<Role, Permission>>> = {
     ADMIN: "READ",
   },
   PAYMENTS: {
-    // Qo'lda to'lov: Menejer, Dir. o'rinbosari, Administrator (kassir) va Hisobchi.
-    // Operator va ROP kiritilmagan — eski loyihada ham sotuv bo'limida
-    // moliya moduli yo'q (faqat CEO da 'view_financial_reports').
     MANAGER: "FULL",
     DEPUTY_DIRECTOR: "FULL",
     DIRECTOR: "READ",
-    ADMIN: "FULL", // administrator to'lov qabul qiladi
-    ACCOUNTANT: "FULL", // hisobchining asosiy vazifasi
+    ADMIN: "FULL",
+    ACCOUNTANT: "FULL",
   },
-  // Xarajatlar — moliyani boshqarish (rahbariyat + menejer + hisobchi)
   EXPENSES: {
     MANAGER: "FULL",
     DEPUTY_DIRECTOR: "FULL",
     DIRECTOR: "FULL",
     ACCOUNTANT: "FULL",
-    // Administrator moliyani boshqarmaydi (faqat to'lov qabul qiladi)
   },
   CERTIFICATES: {
     STUDENT: "READ",
@@ -111,17 +93,16 @@ const M: Record<ModuleKey, Partial<Record<Role, Permission>>> = {
     TEACHER: "OWN",
     DEPUTY_DIRECTOR: "FULL",
     DIRECTOR: "FULL",
-    ACCOUNTANT: "FULL", // ish haqi hisob-kitobi ham hisobchi vazifasi
+    ACCOUNTANT: "FULL",
   },
   REPORTS: {
     TEACHER: "OWN",
-    OPERATOR: "OWN",   // faqat o'z qo'ng'iroq/KPI ko'rsatkichlari
-    ROP: "FULL",       // jamoasi: operatorlar, KPI, qo'ng'iroqlar
+    OPERATOR: "OWN",
+    ROP: "FULL",
     MANAGER: "OWN",
     DEPUTY_DIRECTOR: "FULL",
     DIRECTOR: "FULL",
     ADMIN: "READ",
-    // Hisobchiga umumiy (CRM/sotuv aralash) hisobotlar kerak emas — faqat /finance yetarli
   },
   USERS: {
     DIRECTOR: "FULL",
@@ -137,29 +118,20 @@ export function canRead(role: string, module: ModuleKey): boolean {
   return getPermission(role, module) !== "NONE";
 }
 
-// Yozish (yaratish/tahrirlash) huquqi — FULL yoki OWN bo'lsa (OWN — resurs darajasida qo'shimcha tekshiriladi)
 export function canWrite(role: string, module: ModuleKey): boolean {
   const p = getPermission(role, module);
   return p === "FULL" || p === "OWN";
 }
 
-/**
- * Butun jamoa hisobotlarini (operatorlar ro'yxati, umumiy KPI, ROP paneli)
- * ko'rish huquqi. Operatorda REPORTS = "OWN" — u faqat O'Z ko'rsatkichlarini
- * ko'radi, boshqa operatorlarnikini emas (eski loyihada ham 'view_operator_kpi'
- * faqat ROP da bor).
- */
 export function canSeeTeamReports(role: string): boolean {
   const p = getPermission(role, MODULES.REPORTS);
   return p === "FULL" || p === "READ";
 }
 
-// Faqat o'ziga tegishli resurslar bilan cheklanganmi?
 export function isScopedToOwn(role: string, module: ModuleKey): boolean {
   return getPermission(role, module) === "OWN";
 }
 
-// Har bir rol uchun asosiy (default) kabinet moduli
 export function homeModule(role: string): ModuleKey {
   switch (role) {
     case ROLES.OPERATOR:

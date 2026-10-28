@@ -19,12 +19,10 @@ export default async function StaffRatingPage() {
   }
 
   const [feedback, teachersDb, studentsDb, groupsDb, programsDb] = await Promise.all([
-    // Feedback modelida branchId ham, relation ham yo'q — filial bo'yicha
-    // quyida o'qituvchi ro'yxati orqali filtrlanadi.
     prisma.feedback.findMany({ orderBy: { createdAt: "desc" }, take: 1000 }),
-    prisma.user.findMany({ where: { AND: [{ role: ROLES.TEACHER }, staffBranchWhere(s)] }, select: { id: true, fullName: true } }), // faol filial doirasida
-    prisma.student.findMany({ where: branchWhere(s), select: { id: true, fullName: true } }), // faol filial doirasida
-    prisma.group.findMany({ where: branchWhere(s), select: { id: true, name: true, program: { select: { name: true } } } }), // faol filial doirasida
+    prisma.user.findMany({ where: { AND: [{ role: ROLES.TEACHER }, staffBranchWhere(s)] }, select: { id: true, fullName: true } }),
+    prisma.student.findMany({ where: branchWhere(s), select: { id: true, fullName: true } }),
+    prisma.group.findMany({ where: branchWhere(s), select: { id: true, name: true, program: { select: { name: true } } } }),
     prisma.program.findMany({ select: { name: true }, orderBy: { name: "asc" } }),
   ]);
 
@@ -32,7 +30,6 @@ export default async function StaffRatingPage() {
   const stMap = new Map(studentsDb.map((x) => [x.id, x.fullName]));
   const gMap = new Map(groupsDb.map((x) => [x.id, { name: x.name, course: x.program?.name ?? null }]));
 
-  // faol filial doirasida: faqat shu filial o'qituvchilariga tegishli baholar
   const scopedFeedback = s.branchId ? feedback.filter((f) => tMap.has(f.teacherId)) : feedback;
 
   const rows: VRating[] = scopedFeedback.map((f) => {

@@ -5,8 +5,6 @@ import type { Locale } from "@/lib/constants";
 import { tr } from "@/lib/tr";
 import { deleteItem, saveItem, setOrderStatus, toggleItem } from "./actions";
 
-// Market boshqaruvi: sovg'alar ro'yxati (qo'shish/tahrirlash) va buyurtmalar.
-
 export type VItem = {
   id: string;
   title: string;
@@ -15,7 +13,6 @@ export type VItem = {
   stock: number | null;
   imageUrl: string | null;
   isActive: boolean;
-  /** null = barcha filiallar uchun */
   branchName: string | null;
   orders: number;
 };
@@ -81,7 +78,6 @@ export default function MarketView({
 
   return (
     <div className="space-y-4">
-      {/* Bo'limlar */}
       <div className="flex gap-2">
         <button
           type="button"
@@ -119,7 +115,6 @@ export default function MarketView({
 
       {err ? <div className="rounded-lg bg-rose-50 px-4 py-2.5 text-sm font-medium text-rose-700">{err}</div> : null}
 
-      {/* Forma */}
       {open ? (
         <form action={submit} className="rounded-xl border border-slate-200 bg-white p-4">
           <input type="hidden" name="id" value={edit?.id ?? ""} />
@@ -174,7 +169,6 @@ export default function MarketView({
         </form>
       ) : null}
 
-      {/* Sovg'alar */}
       {tab === "items" ? (
         items.length === 0 ? (
           <Empty text={T("Hozircha sovg'a qo'shilmagan", "Подарки пока не добавлены", "No gifts added yet", "Noch keine Geschenke hinzugefügt")} />
@@ -326,8 +320,6 @@ function Empty({ text }: { text: string }) {
   );
 }
 
-// Sovg'a surati: kompyuterdan yuklash yoki havola kiritish.
-// Rasm qo'yilmasa o'quvchi tomonida nomiga mos belgi chiziladi (ItemCard).
 function ImagePicker({ initial, locale }: { initial: string | null; locale: Locale }) {
   const T = (uz: string, ru: string, en: string, de: string) => tr(locale, { uz, ru, en, de });
   const [url, setUrl] = useState(initial);
@@ -403,7 +395,6 @@ function ImagePicker({ initial, locale }: { initial: string | null; locale: Loca
   );
 }
 
-// Katta suratni brauzerda kichraytiramiz — 800px sovg'a kartochkasiga yetarli
 function shrink(f: File): Promise<Blob> {
   return new Promise((resolve, reject) => {
     const src = URL.createObjectURL(f);

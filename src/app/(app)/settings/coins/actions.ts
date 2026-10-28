@@ -8,7 +8,6 @@ import { writeAudit } from "@/lib/audit";
 import { COIN_RULE_KEYS, setPointRules, type CoinRuleKey, type PointKind } from "@/lib/coinRules";
 import { RANK_BASES, RANK_SCOPES, setProgressRules, type RankBasis, type RankScope } from "@/lib/progressRules";
 
-// Tanga qoidalari — rahbariyat belgilaydi
 const ALLOWED = [ROLES.DIRECTOR, ROLES.DEPUTY_DIRECTOR, ROLES.ADMIN];
 
 export type CoinState = { ok?: boolean; error?: string };
@@ -35,13 +34,11 @@ export async function savePointRules(kind: PointKind, input: Record<string, numb
     reason: kind === "coin" ? "Tanga qoidalari o'zgartirildi" : "Yulduz qoidalari o'zgartirildi",
   });
 
-  // Balanslar qoidadan qayta hisoblanadi — o'quvchi portali ham yangilansin
   revalidatePath("/settings/coins");
   revalidatePath("/student", "layout");
   return { ok: true };
 }
 
-// ── Seriya va reyting qoidalari ──
 export async function saveProgressRules(input: {
   streakExcusedBreaks: boolean;
   streakStep: number;

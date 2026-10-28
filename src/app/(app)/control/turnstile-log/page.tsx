@@ -7,7 +7,6 @@ import { PageHeader, Card, Table, EmptyRow, Badge, Forbidden } from "../../_comp
 
 const ALLOWED = [ROLES.DIRECTOR, ROLES.DEPUTY_DIRECTOR, ROLES.ADMIN];
 
-// Turniket kirish-chiqish jurnali — QR orqali belgilangan kirishlar xronologiyasi
 export default async function TurnstileLogPage() {
   const s = await requireSession();
   if (!ALLOWED.includes(s.role as never)) {
@@ -16,7 +15,7 @@ export default async function TurnstileLogPage() {
   const T = (uz: string, ru: string, en: string, de?: string) => tr(s.locale, { uz, ru, en, de });
 
   const rows = await prisma.attendance.findMany({
-    where: { AND: [{ method: "QR" }, branchViaLesson(s)] }, // faol filial doirasida
+    where: { AND: [{ method: "QR" }, branchViaLesson(s)] },
     orderBy: { markedAt: "desc" },
     take: 100,
     select: {

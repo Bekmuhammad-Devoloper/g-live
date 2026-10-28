@@ -8,13 +8,6 @@ import { Readable } from "node:stream";
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
 
-// Yuklangan fayllarni berish.
-//
-// Next.js public/ papkasi ro'yxatini SERVER ISHGA TUSHGANDA o'qiydi, shu
-// sabab keyin yuklangan fayl /uploads/... manzilida 404 qaytarardi (rasm
-// diskda bor bo'lsa ham ko'rinmasdi). Endi /uploads/* shu yo'lga rewrite
-// qilinadi va fayl har so'rovda diskdan o'qiladi.
-
 const TYPES: Record<string, string> = {
   jpg: "image/jpeg",
   jpeg: "image/jpeg",
@@ -32,7 +25,6 @@ const TYPES: Record<string, string> = {
 export async function GET(req: NextRequest, ctx: { params: Promise<{ name: string }> }) {
   const { name } = await ctx.params;
 
-  // Faqat oddiy fayl nomi — papkadan chiqib ketishga yo'l yo'q
   if (!/^[A-Za-z0-9][A-Za-z0-9._-]{0,120}$/.test(name) || name.includes("..")) {
     return new NextResponse("bad_name", { status: 400 });
   }
@@ -51,15 +43,10 @@ export async function GET(req: NextRequest, ctx: { params: Promise<{ name: strin
   const type = TYPES[ext] ?? "application/octet-stream";
   const base = {
     "Content-Type": type,
-    // Nomi UUID — mazmuni o'zgarmaydi, uzoq keshlash xavfsiz
     "Cache-Control": "public, max-age=31536000, immutable",
-    // Video pleyerga qismlab olish mumkinligini bildiradi
     "Accept-Ranges": "bytes",
   };
 
-  // ── Qismli so'rov (Range) ──
-  // Videoni oldinga surish va iOS'da umuman ochilishi shunga bog'liq:
-  // pleyer "bytes=..." so'raydi, biz 206 bilan faqat o'sha bo'lakni beramiz.
   const range = req.headers.get("range");
   const m = range ? /^bytes=(\d*)-(\d*)$/.exec(range.trim()) : null;
   if (m && size > 0) {
@@ -72,7 +59,6 @@ export async function GET(req: NextRequest, ctx: { params: Promise<{ name: strin
       start = Number(m[1]);
       end = hasEnd ? Math.min(Number(m[2]), size - 1) : size - 1;
     } else if (hasEnd) {
-      // "bytes=-N" — oxirgi N bayt
       const n = Math.min(Number(m[2]), size);
       start = size - n;
       end = size - 1;

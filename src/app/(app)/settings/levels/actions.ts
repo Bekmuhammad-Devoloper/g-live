@@ -8,7 +8,6 @@ import { writeAudit } from "@/lib/audit";
 import { tr } from "@/lib/tr";
 import { isLevelCode, isSafeBanner } from "@/lib/levelColor";
 
-// Daraja katalogi — menejer va rahbariyat boshqaradi
 const ALLOWED = [ROLES.DIRECTOR, ROLES.DEPUTY_DIRECTOR, ROLES.ADMIN, ROLES.MANAGER];
 
 export type LevelState = { ok?: boolean; error?: string };
@@ -44,7 +43,6 @@ function clean(locale: Locale, input: LevelInput) {
     data: {
       code,
       nameUz,
-      // Tarjima kiritilmasa — o'zbekchasi ishlatiladi
       nameRu: input.nameRu.trim() || nameUz,
       nameEn: input.nameEn.trim() || nameUz,
       nameDe: input.nameDe.trim() || nameUz,
@@ -116,7 +114,6 @@ export async function toggleLevel(id: string, on: boolean): Promise<LevelState> 
   return { ok: true };
 }
 
-/** Ro'yxatdagi o'rnini bir pog'ona yuqoriga/pastga suradi */
 export async function moveLevel(id: string, dir: "up" | "down"): Promise<LevelState> {
   const { s, error } = await guard();
   if (error) return { error };
@@ -132,12 +129,6 @@ export async function moveLevel(id: string, dir: "up" | "down"): Promise<LevelSt
   return { ok: true };
 }
 
-/**
- * Darajani butunlay o'chirish. Kod biror joyda ishlatilayotgan bo'lsa
- * (dars, guruh, material, sertifikat) — o'chirilmaydi, chunki o'sha
- * yozuvlar bog'lanishini yo'qotadi. Bunday holda "o'chirish" tugmasi
- * o'rniga darajani vaqtincha o'chirib qo'yish tavsiya etiladi.
- */
 export async function deleteLevel(id: string): Promise<LevelState> {
   const { s, error } = await guard();
   if (error) return { error };

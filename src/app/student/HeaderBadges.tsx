@@ -6,13 +6,6 @@ import { IcoBell, IcoFlame, INK } from "./_ui";
 import { studentStreak } from "@/lib/coins";
 import { isPortalFeatureOn } from "@/lib/portalFeatures";
 
-// Portalning HAR BIR sahifasida yuqori o'ng burchakda turadigan ikki belgi:
-// seriya (ketma-ket qatnashgan kunlar) va bildirishnoma qo'ng'irog'i.
-// Start ekranidagi ko'rinish bilan bir xil bo'lishi uchun bitta joyda saqlanadi.
-
-// `showStreak` — ba'zi sahifalarda sarlavha o'rtada turishi kerak va
-// seriya belgisi qatorni tortib yuboradi. Sukut bo'yicha ko'rinadi, ya'ni
-// mavjud sahifalar o'zgarmaydi.
 export default async function HeaderBadges({ showStreak = true }: { showStreak?: boolean }) {
   const session = await getSession();
   if (!session) return null;
@@ -22,11 +15,9 @@ export default async function HeaderBadges({ showStreak = true }: { showStreak?:
     select: { id: true },
   });
 
-  // Seriya hisobi bitta joyda (src/lib/coins.ts) — sozlamaga bo'ysunadi
   const [streak, unread, notifOn] = await Promise.all([
     student ? studentStreak(student.id) : Promise.resolve(0),
     prisma.notification.count({ where: { userId: session.userId, isRead: false } }),
-    // Bo'lim o'chirilgan bo'lsa qo'ng'iroqcha ham ko'rinmaydi
     isPortalFeatureOn("mitteilungen"),
   ]);
 

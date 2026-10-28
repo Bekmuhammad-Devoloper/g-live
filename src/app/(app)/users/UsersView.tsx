@@ -24,7 +24,6 @@ export interface PosOpt { value: string; label: string; department: string }
 
 export default function UsersView({ staff, positions, branches, canManage, canDelete = false, locale }: {
   staff: VStaff[]; positions: PosOpt[]; branches: Opt[]; canManage: boolean;
-  /** Xodimni bazadan butunlay o'chirish — faqat direktor */
   canDelete?: boolean;
   locale: Locale;
 }) {
@@ -35,12 +34,8 @@ export default function UsersView({ staff, positions, branches, canManage, canDe
   const [status, setStatus] = useState("");
   const [addOpen, setAddOpen] = useState(false);
   const [detailId, setDetailId] = useState<string | null>(null);
-  // Yon paneldagi "Tahrirlash" — o'sha forma, ma'lumotlar bilan to'ldirilgan
   const [editing, setEditing] = useState<StaffDetail | null>(null);
 
-  // Filtr — jadvalda ko'rsatilgan lavozim (roleLabel) bo'yicha, RBAC roli bo'yicha emas.
-  // Sabab: bir nechta lavozim (ROP, Operator, Menejer) bitta RBAC roliga (MANAGER) tushishi mumkin,
-  // filtr esa foydalanuvchi jadvalda ko'rgan aniq lavozimni ajrata olishi kerak.
   const roleOptions = useMemo(() => {
     const set = new Set(staff.map((u) => u.roleLabel).filter(Boolean));
     return Array.from(set).sort((a, b) => a.localeCompare(b));
@@ -84,7 +79,6 @@ export default function UsersView({ staff, positions, branches, canManage, canDe
   };
 
   const toggleActive = (id: string) => start(async () => { await toggleStaffActive(id); router.refresh(); });
-  // Ro'yxatdan to'g'ridan o'chirish — tahrirlash oynasidagi bilan bir xil qoida (faqat direktor)
   const removeStaff = async (u: VStaff) => {
     const ok = await confirmDelete({
       title: tr(locale, { uz: "Xodimni butunlay o'chirish", ru: "Удалить сотрудника навсегда", en: "Delete staff member permanently", de: "Mitarbeiter endgültig löschen" }),
@@ -107,7 +101,6 @@ export default function UsersView({ staff, positions, branches, canManage, canDe
     <div className="space-y-4">
       <h1 className="text-[22px] font-bold tracking-tight text-slate-900 dark:text-slate-100">{tr(locale, { uz: "Xodimlar", ru: "Сотрудники", en: "Staff", de: "Mitarbeiter" })}</h1>
 
-      {/* Toolbar */}
       <div className="flex flex-wrap items-center gap-2">
         {canManage && (
           <button onClick={() => setAddOpen(true)} className="flex h-10 items-center gap-1.5 rounded-lg bg-brand-600 px-4 text-sm font-semibold text-white shadow-sm transition hover:bg-brand-700">
@@ -125,7 +118,6 @@ export default function UsersView({ staff, positions, branches, canManage, canDe
         </button>
       </div>
 
-      {/* Jadval */}
       <div className={cn("overflow-hidden rounded-2xl border border-slate-200/70 bg-white shadow-card dark:border-slate-800 dark:bg-slate-900", pending && "opacity-70")}>
         <div className="flex items-center justify-end border-b border-slate-100 px-4 py-2 dark:border-slate-800">
           <span className="rounded-lg bg-slate-100 px-2.5 py-1 text-xs font-semibold text-slate-500 dark:bg-slate-800 dark:text-slate-300">{tr(locale, { uz: "Umumiy soni", ru: "Всего", en: "Total", de: "Gesamt" })}: {filtered.length}</span>
@@ -181,7 +173,6 @@ export default function UsersView({ staff, positions, branches, canManage, canDe
                             <span className={cn("absolute top-0.5 h-4 w-4 rounded-full bg-white transition-all", u.active ? "left-4" : "left-0.5")} />
                           </span>
                         </button>
-                        {/* Butunlay o'chirish — faqat direktor (tasdiq bilan) */}
                         {canDelete && (
                           <button
                             type="button"
@@ -217,19 +208,14 @@ export default function UsersView({ staff, positions, branches, canManage, canDe
   );
 }
 
-// Telefon +998 prefiksi bilan saqlangan bo'lsa — maydonda faqat qolgan qismi ko'rinadi
 const localPhone = (p: string | null) => (p ?? "").replace(/^\+?998\s?/, "");
 const groupThousands = (s: string) => s.replace(/\D/g, "").replace(/\B(?=(\d{3})+(?!\d))/g, " ");
 
 export function StaffForm({ positions, branches, onClose, locale, edit = null, canDelete = false }: {
   positions: PosOpt[]; branches: Opt[]; onClose: () => void; locale: Locale;
-  /** Tahrirlashda "O'chirish" tugmasi (faqat direktor) */
   canDelete?: boolean;
-  /** Berilsa — tahrirlash rejimi (maydonlar to'ldirilgan; parol o'zgartirilmasa eskisi qoladi) */
   edit?: StaffDetail | null;
 }) {
-  // Lavozimlarni bo'lim bo'yicha guruhlash (optgroup uchun). Tahrirlashda xodimning
-  // hozirgi lavozimi katalogda bo'lmasa (erkin matn) — ro'yxatga qo'shib qo'yamiz.
   const posGroups = useMemo(() => {
     const map = new Map<string, PosOpt[]>();
     const all = [...positions];
@@ -248,7 +234,6 @@ export function StaffForm({ positions, branches, onClose, locale, edit = null, c
   const [gender, setGender] = useState<"" | "MALE" | "FEMALE">(edit?.gender ?? "");
   const [salaryOn, setSalaryOn] = useState((edit?.fiksa ?? 0) > 0);
   const [salaryStr, setSalaryStr] = useState(edit && edit.fiksa > 0 ? groupThousands(String(edit.fiksa)) : "");
-  // Asosiy filial va xodim ishlaydigan qo'shimcha filiallar (ro'yxatlarda hammasida ko'rinadi)
   const [branchId, setBranchId] = useState(edit?.branchId ?? "");
   const [extraBranches, setExtraBranches] = useState<string[]>(edit?.extraBranchIds ?? []);
   const nameParts = (edit?.fullName ?? "").trim().split(/\s+/).filter(Boolean);
@@ -269,7 +254,6 @@ export function StaffForm({ positions, branches, onClose, locale, edit = null, c
   const lbl = "mb-1 block text-xs font-medium text-slate-500 dark:text-slate-400";
   const req = <span className="text-rose-500">*</span>;
 
-  // Butunlay o'chirish — tasdiq oynasi bilan; bog'liq yozuvlar uziladi, o'chmaydi
   const remove = async () => {
     if (!edit) return;
     const ok = await confirmDelete({
@@ -303,7 +287,6 @@ export function StaffForm({ positions, branches, onClose, locale, edit = null, c
       try {
         r = edit ? await updateStaff(fd) : await createStaff(fd);
       } catch {
-        // Deploy'dan keyin eskirgan sahifa — action topilmaydi; yangilash kerak
         setError(tr(locale, { uz: "Sahifa eskirgan — yangilanmoqda…", ru: "Страница устарела — обновляется…", en: "The page is out of date — reloading…", de: "Seite veraltet — wird neu geladen…" }));
         setTimeout(() => window.location.reload(), 800);
         return;
@@ -330,12 +313,10 @@ export function StaffForm({ positions, branches, onClose, locale, edit = null, c
         </div>
 
         <div className="flex-1 space-y-3.5 overflow-y-auto px-5 py-4">
-          {/* Ism / Familiya */}
           <div className="grid grid-cols-2 gap-3">
             <div><label className={lbl}>{tr(locale, { uz: "Ism", ru: "Имя", en: "First name", de: "Vorname" })} {req}</label><input name="ism" required defaultValue={editIsm} placeholder={tr(locale, { uz: "Ism", ru: "Имя", en: "First name", de: "Vorname" })} className={inp} /></div>
             <div><label className={lbl}>{tr(locale, { uz: "Familiya", ru: "Фамилия", en: "Last name", de: "Nachname" })}</label><input name="familiya" defaultValue={editFamiliya} placeholder={tr(locale, { uz: "Familiya", ru: "Фамилия", en: "Last name", de: "Nachname" })} className={inp} /></div>
           </div>
-          {/* Telefon */}
           <div>
             <label className={lbl}>{tr(locale, { uz: "Telefon raqam", ru: "Номер телефона", en: "Phone number", de: "Telefonnummer" })} {req}</label>
             <div className="flex">
@@ -360,7 +341,6 @@ export function StaffForm({ positions, branches, onClose, locale, edit = null, c
               <input name="phone" defaultValue={localPhone(edit?.phone ?? null)} placeholder="90 000 00 00" className={cn(inp, "rounded-l-none")} />
             </div>
           </div>
-          {/* Vazifasi / Jinsi */}
           <div className="grid grid-cols-2 gap-3">
             <div>
               <label className={lbl}>{tr(locale, { uz: "O'quv markazidagi vazifasi", ru: "Должность в учебном центре", en: "Role at the learning center", de: "Rolle im Lernzentrum" })} {req}</label>
@@ -380,13 +360,11 @@ export function StaffForm({ positions, branches, onClose, locale, edit = null, c
               </select>
             </div>
           </div>
-          {/* Tug'ilgan sana / Filial */}
           <div className="grid grid-cols-2 gap-3">
             <div><label className={lbl}>{tr(locale, { uz: "Tug'ilgan sanasi", ru: "Дата рождения", en: "Date of birth", de: "Geburtsdatum" })}</label><DateInput name="birthDate" defaultValue={edit?.birthDateIso ?? ""} className={inp} /></div>
             <div><label className={lbl}>{tr(locale, { uz: "Filial", ru: "Филиал", en: "Branch", de: "Filiale" })}</label><select name="branchId" value={branchId} onChange={(e) => { setBranchId(e.target.value); setExtraBranches((x) => x.filter((b) => b !== e.target.value)); }} className={inp}><option value="">{tr(locale, { uz: "Tanlang", ru: "Выберите", en: "Select", de: "Auswählen" })}</option>{branches.map((b) => <option key={b.id} value={b.id}>{b.name}</option>)}</select></div>
           </div>
 
-          {/* Qo'shimcha filiallar — xodim bir nechta filialda ishlasa, har birining ro'yxatida ko'rinadi */}
           {branches.length > 1 && (
             <div className="rounded-xl border border-slate-100 bg-slate-50/60 p-3 dark:border-white/5 dark:bg-white/[0.03]">
               <div className="mb-2 text-xs font-medium text-slate-500 dark:text-slate-400">{tr(locale, { uz: "Boshqa filiallarda ham ishlaydi", ru: "Работает также в филиалах", en: "Also works in branches", de: "Arbeitet auch in Filialen" })}</div>
@@ -408,7 +386,6 @@ export function StaffForm({ positions, branches, onClose, locale, edit = null, c
             </div>
           )}
 
-          {/* Ish haqi chiqarish */}
           <div className="rounded-xl border border-slate-100 bg-slate-50/60 p-3 dark:border-white/5 dark:bg-white/[0.03]">
             <Switch on={salaryOn} onToggle={() => setSalaryOn((v) => !v)} label={tr(locale, { uz: "Ish haqi chiqarish", ru: "Начислять зарплату", en: "Enable salary", de: "Gehalt aktivieren" })} />
             {salaryOn && (
@@ -419,8 +396,6 @@ export function StaffForm({ positions, branches, onClose, locale, edit = null, c
             )}
           </div>
 
-          {/* Login (email) / Parol. Tahrirlashda parol hozirgisi bilan to'ldiriladi:
-              o'zgartirilmasa yoki bo'sh qoldirilsa — eski parol saqlanadi */}
           <div className="grid grid-cols-2 gap-3">
             <div><label className={lbl}>{tr(locale, { uz: "Elektron pochta", ru: "Электронная почта", en: "Email", de: "E-Mail" })} {req}</label><input name="email" type="email" required defaultValue={edit?.email ?? ""} placeholder="example@gmail.com" className={inp} /></div>
             <div>

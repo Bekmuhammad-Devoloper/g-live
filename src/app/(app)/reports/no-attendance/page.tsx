@@ -18,10 +18,9 @@ export default async function NoAttendancePage() {
     return <Forbidden title={tr(s.locale, { uz: "Kirish taqiqlangan", ru: "Доступ запрещён", en: "Access denied", de: "Zugriff verweigert" })} body={tr(s.locale, { uz: "Bu bo'lim uchun ruxsat yo'q.", ru: "Нет доступа к этому разделу.", en: "You don't have access to this section.", de: "Sie haben keinen Zugriff auf diesen Bereich." })} />;
   }
 
-  // O'tgan, lekin davomati belgilanmagan darslar
   let where: Prisma.LessonWhereInput = { startsAt: { lte: new Date() }, attendances: { none: {} } };
   if (s.role === ROLES.TEACHER) where = { ...where, group: { teacherId: s.userId } };
-  where = { AND: [where, branchViaGroup(s)] }; // faol filial doirasida
+  where = { AND: [where, branchViaGroup(s)] };
 
   const lessons = await prisma.lesson.findMany({
     where,

@@ -21,7 +21,6 @@ export default async function ArchivePage() {
 
   const [users, reasonsRaw] = await Promise.all([
     prisma.user.findMany({
-      // faol filial doirasida
       where: { AND: [{ role: { in: STAFF_ROLES }, isActive: false }, staffBranchWhere(s)] },
       orderBy: [{ archivedAt: "desc" }, { updatedAt: "desc" }],
       select: { id: true, fullName: true, phone: true, role: true, archiveReason: true, archiveNote: true, archivedAt: true, updatedAt: true },
@@ -43,7 +42,6 @@ export default async function ArchivePage() {
 
   let reasons: string[] = [];
   try { if (reasonsRaw) reasons = JSON.parse(reasonsRaw); } catch { reasons = []; }
-  // Standart sabablar (bo'sh bo'lsa)
   if (reasons.length === 0) reasons = [
     tr(s.locale, { uz: "Ishdan bo'shadi", ru: "Уволился", en: "Left the job", de: "Hat die Stelle verlassen" }),
     tr(s.locale, { uz: "Shartnoma tugadi", ru: "Договор завершён", en: "Contract ended", de: "Vertrag beendet" }),
@@ -53,7 +51,6 @@ export default async function ArchivePage() {
 
   const roleOptions = STAFF_ROLES.map((r) => ({ value: r, label: label(ROLE_LABELS, r, s.locale as Locale) }));
 
-  // Butunlay o'chirish — faqat direktor va o'rinbosarida (administratorda emas)
   const canPurge = [ROLES.DIRECTOR, ROLES.DEPUTY_DIRECTOR].includes(s.role as never);
   return <ArchiveView locale={s.locale} rows={rows} reasons={reasons} roleOptions={roleOptions} canPurge={canPurge} />;
 }

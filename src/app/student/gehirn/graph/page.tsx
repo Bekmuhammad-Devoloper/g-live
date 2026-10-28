@@ -6,8 +6,6 @@ import MissingStudent from "../../MissingStudent";
 import { buildGraph } from "../parse";
 import BrainGraph from "./BrainGraph";
 
-// Bog'lanishlar xaritasi — to'liq ekranda (pastki menyu ko'rinmaydi).
-
 export default async function BrainGraphPage() {
   const session = await getSession();
   if (!session) redirect("/login");

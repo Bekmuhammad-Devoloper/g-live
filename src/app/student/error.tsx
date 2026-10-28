@@ -4,23 +4,12 @@ import { useEffect, useState } from "react";
 import type { Locale } from "@/lib/constants";
 import { S } from "./_i18n";
 
-// Kutilmagan xatolik yuz berganda ko'rinadigan sahifa.
-//
-// Bunisiz Next.js o'zining standart xato ekranini ko'rsatardi: ingliz tilida,
-// oq fonda, ilovaning uslubiga umuman o'xshamaydigan. O'quvchi uchun bu
-// "ilova buzildi" degan taassurot qoldirardi va qaytadan urinish yo'li yo'q edi.
-//
-// Til: xato chegarasi klient komponenti, serverdagi sessiyani o'qiy olmaydi.
-// O'quvchi layout'i o'ramga `data-locale` yozib qo'yadi — shu o'qiladi.
-// Birinchi chizilishda o'zbekcha, mount bo'lgach tanlangan til (bir lahza).
-
 const isLocale = (l: string | null | undefined): l is Locale => l === "uz" || l === "ru" || l === "en" || l === "de";
 
 export default function StudentError({ error, reset }: { error: Error & { digest?: string }; reset: () => void }) {
   const [locale, setLocale] = useState<Locale>("uz");
 
   useEffect(() => {
-    // Server jurnalida izlash uchun digest bilan birga yoziladi
     console.error("student portal xatosi:", error);
   }, [error]);
 
@@ -61,7 +50,6 @@ export default function StudentError({ error, reset }: { error: Error & { digest
         </a>
       </div>
 
-      {/* Xato kodi — qo'llab-quvvatlashga aytish uchun */}
       {error.digest ? (
         <div className="pt-1 font-mono text-[11px] text-slate-500">#{error.digest}</div>
       ) : null}

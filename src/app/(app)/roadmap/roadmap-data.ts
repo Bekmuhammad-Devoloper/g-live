@@ -1,6 +1,3 @@
-// Biznes "Roadmap" — o'zini-o'zi audit (yetuklik) skorkarti.
-// Bo'limlar va savollar (Modme "Audit" uslubida). Har savol 0..10 ball.
-
 export type L = { uz: string; ru: string; en: string };
 export interface RmQuestion { id: string; text: L; hint?: L }
 export interface RmSection { key: string; title: L; hex: string; questions: RmQuestion[] }
@@ -108,5 +105,4 @@ export const ROADMAP: RmSection[] = [
 
 export const ALL_QUESTIONS = ROADMAP.flatMap((s) => s.questions);
 export const MAX_PER_Q = 10;
-// Umumiy maksimal ball 60 ga normallashtiriladi (Modme uslubi)
 export const TARGET_MAX = 60;

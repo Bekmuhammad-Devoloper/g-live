@@ -36,7 +36,6 @@ export default async function GroupDetailPage({ params }: { params: Promise<{ id
   const full = getPermission(s.role, MODULES.GROUPS) === "FULL";
   const isOwnerTeacher = s.role === ROLES.TEACHER && group.teacherId === s.userId;
 
-  // Ko'lam cheklovi (URL orqali begona guruhga kirishni bloklash)
   let allowed = full || s.role === ROLES.DIRECTOR || s.role === ROLES.ADMIN || isOwnerTeacher;
   if (!allowed && s.role === ROLES.STUDENT) {
     const st = await prisma.student.findUnique({ where: { userId: s.userId } });
@@ -50,11 +49,8 @@ export default async function GroupDetailPage({ params }: { params: Promise<{ id
   if (!allowed) return <Forbidden title={tr(s.locale, { uz: "Kirish taqiqlangan", ru: "Доступ запрещён", en: "Access denied", de: "Zugriff verweigert" })} body={tr(s.locale, { uz: "Bu guruhga kirish huquqingiz yo'q.", ru: "У вас нет прав доступа к этой группе.", en: "You do not have access to this group.", de: "Sie haben keinen Zugriff auf diese Gruppe." })} />;
 
   const canManage = full || isOwnerTeacher;
-  // Dars rejasining o'zini (video, material) o'zgartirish — torroq doira:
-  // direktor va shu guruh o'qituvchisi. Qolganlar ko'radi va "o'tildi" belgilaydi.
   const canEditPlan = canManage && canEditLessons(s.role);
 
-  // Kurs dars rejasi (video/mavzu/topshiriq/uy vazifasi) + shu guruh o'tgan darslari
   const [courseLessons, progressRows] = await Promise.all([
     prisma.courseLesson.findMany({ where: await groupLessonsWhere(group), orderBy: { order: "asc" } }),
     prisma.groupLessonProgress.findMany({ where: { groupId: group.id }, select: { courseLessonId: true, taught: true } }),
@@ -64,7 +60,6 @@ export default async function GroupDetailPage({ params }: { params: Promise<{ id
   const levelCodes = await getLevelCodes();
   const vLessons = courseLessons.map((cl) => ({ id: cl.id, order: cl.order, levelCode: cl.levelCode, title: cl.title, topic: cl.topic, videoUrl: cl.videoUrl, videoPosterUrl: cl.videoPosterUrl, vocabText: cl.vocabText, vocabFileUrl: cl.vocabFileUrl, materialUrl: cl.materialUrl, assignment: cl.assignment, assignmentFileUrl: cl.assignmentFileUrl, homework: cl.homework, homeworkFileUrl: cl.homeworkFileUrl }));
 
-  // To'lov majburiy holati (3 dan ko'p dars o'tilgan, to'lanmagan) — davomat blokini ko'rsatish uchun
   const enrolledIds = group.students.map((gs) => gs.studentId);
   const mandatoryMap = canManage ? await isPaymentMandatoryBulk(enrolledIds) : new Map();
   const attendanceStudents = group.students.map((gs) => {
@@ -72,10 +67,8 @@ export default async function GroupDetailPage({ params }: { params: Promise<{ id
     return { id: gs.studentId, name: gs.student.fullName, blocked: b?.mandatory ?? false, daysUnpaid: b?.daysUnpaid ?? 0 };
   });
 
-  // Biriktirish uchun nomzodlar (bu guruhda bo'lmagan o'quvchilar)
   const candidates = full
     ? await prisma.student.findMany({
-        // faol filial o'quvchilarigina biriktirish uchun taklif qilinadi
         where: { AND: [{ id: { notIn: enrolledIds.length ? enrolledIds : ["__none__"] } }, branchWhere(s)] },
         select: { id: true, fullName: true },
         orderBy: { fullName: "asc" },
@@ -83,13 +76,10 @@ export default async function GroupDetailPage({ params }: { params: Promise<{ id
       })
     : [];
 
-  // Tahrirlash formasi uchun kurs/o'qituvchi ro'yxatlari (faqat FULL huquqli rollarga)
   const [programs, teachers, rooms] = full
     ? await Promise.all([
         prisma.program.findMany({ where: { isActive: true }, select: { id: true, name: true }, orderBy: { name: "asc" } }),
-        // faol filial o'qituvchilari
         prisma.user.findMany({ where: { AND: [{ role: ROLES.TEACHER }, staffBranchWhere(s)] }, select: { id: true, fullName: true }, orderBy: { fullName: "asc" } }),
-        // faol filial xonalari — "Xona" ro'yxatdan tanlanadi
         prisma.room.findMany({ where: { AND: [{ isActive: true }, branchWhere(s)] }, select: { id: true, name: true, capacity: true }, orderBy: { name: "asc" } }),
       ])
     : [[], [], []];
@@ -134,7 +124,6 @@ export default async function GroupDetailPage({ params }: { params: Promise<{ id
         action={full ? <EditGroupButton group={editData} programs={programs} teachers={teachers} rooms={rooms} locale={s.locale} /> : undefined}
       />
 
-      {/* Guruh izohi (kament) */}
       {group.note && (
         <div className="mb-6 flex gap-2.5 rounded-xl border border-amber-200/70 bg-amber-50 px-4 py-3 dark:border-amber-500/25 dark:bg-amber-500/10">
           <Icon name="info" className="mt-0.5 h-4 w-4 shrink-0 text-amber-500" />
@@ -156,7 +145,6 @@ export default async function GroupDetailPage({ params }: { params: Promise<{ id
           <GroupAttendance groupId={group.id} students={attendanceStudents} locale={s.locale} />
         </Card>
       )}
-      {/* Belgilash huquqi yo'q xodimlar — oylik jurnal faqat ko'rish uchun, doim ko'rinadi */}
       {!canManage && s.role !== ROLES.STUDENT && s.role !== ROLES.PARENT && (
         <Card className="mb-6">
           <h3 className="mb-3 flex items-center gap-2 text-sm font-semibold text-slate-700 dark:text-slate-200">
@@ -176,7 +164,6 @@ export default async function GroupDetailPage({ params }: { params: Promise<{ id
       </Card>
 
       <div className="grid gap-6 lg:grid-cols-2">
-        {/* O'quvchilar */}
         <Card>
           <h3 className="mb-3 text-sm font-semibold text-slate-700">{tr(s.locale, { uz: "O'quvchilar", ru: "Ученики", en: "Students", de: "Schüler" })} ({group.students.length}/{group.capacity})</h3>
           {full && (
@@ -208,7 +195,6 @@ export default async function GroupDetailPage({ params }: { params: Promise<{ id
           )}
         </Card>
 
-        {/* Darslar */}
         <Card>
           <h3 className="mb-3 text-sm font-semibold text-slate-700">{tr(s.locale, { uz: "Darslar", ru: "Уроки", en: "Lessons", de: "Unterricht" })} ({group.lessons.length})</h3>
           {canManage && (

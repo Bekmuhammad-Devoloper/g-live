@@ -7,7 +7,6 @@ import { tr } from "@/lib/tr";
 import { Forbidden } from "../../_components/ui";
 import OperatorsMonitor, { type VOperator } from "./OperatorsMonitor";
 
-// ROP → Operatorlar command-center (monitoring). O'quv markaz sotuv menejerlari.
 export default async function RopOperatorsPage() {
   const s = await requireSession();
   if (!canRead(s.role, MODULES.REPORTS) && !canRead(s.role, MODULES.CRM)) {
@@ -19,13 +18,11 @@ export default async function RopOperatorsPage() {
 
   const [operators, leads, calls] = await Promise.all([
     prisma.user.findMany({
-      where: { AND: [{ role: ROLES.OPERATOR, isActive: true }, staffBranchWhere(s)] }, // faol filial doirasida
+      where: { AND: [{ role: ROLES.OPERATOR, isActive: true }, staffBranchWhere(s)] },
       select: { id: true, fullName: true, phone: true, imageUrl: true, lastLoginAt: true, createdAt: true },
       orderBy: { fullName: "asc" },
     }),
-    // faol filial doirasida
     prisma.lead.findMany({ where: { AND: [{ managerId: { not: null } }, branchWhere(s)] }, orderBy: { createdAt: "desc" }, select: { managerId: true, stage: true, fullName: true } }),
-    // faol filial operatorlarining qo'ng'iroqlari
     prisma.call.findMany({ where: { AND: [{ operatorId: { not: null } }, { operator: branchWhere(s) }] }, select: { operatorId: true, duration: true, startedAt: true } }),
   ]);
 

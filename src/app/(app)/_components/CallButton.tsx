@@ -1,7 +1,5 @@
 "use client";
 
-// Click-to-call — istalgan joydan (lid, kontakt) softphone'ga qo'ng'iroq beradi.
-// Softphone `glive:call` window hodisasini tinglaydi va AMI Originate yuboradi.
 import { tr } from "@/lib/tr";
 import type { Locale } from "@/lib/constants";
 import { Icon } from "./Icon";

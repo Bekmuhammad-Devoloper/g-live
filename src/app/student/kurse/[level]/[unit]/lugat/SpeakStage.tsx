@@ -4,30 +4,10 @@ import { useCallback, useEffect, useRef, useState } from "react";
 import type { StudentStrings } from "../../../../_i18n";
 import { isNativeApp, listenNative, stopNative } from "@/lib/nativeSpeech";
 
-// Talaffuz bosqichi — o'quvchi so'zni ovoz chiqarib aytadi.
-//
-// IKKI YO'L:
-//   1. ANDROID ILOVASI — nutqni telefonning o'zi taniydi (NativeSpeechPlugin).
-//      Bepul, kvotasiz, ovoz telefondan chiqmaydi; serverga faqat MATN boradi.
-//   2. BRAUZER — yozib olinadi, WAV ga o'giriladi, serverga yuboriladi;
-//      u yerda Gemini YOPIQ TANLOV bilan baholaydi (darsdagi so'zlar
-//      ro'yxatidan qaysi biri aytilgani, yoki hech qaysi) va server uch
-//      shartni birga tekshiradi. Ochiq transkripsiya o'ylab topardi —
-//      shuning uchun bu ko'rinishga o'tildi.
-//
-// NEGA WAV. Brauzer MediaRecorder bilan webm yozadi; Gemini WAV ni aniq
-// qabul qiladi. Yozuv brauzerning O'ZIDA o'giriladi (decodeAudioData →
-// 16 kHz mono → WAV). 4 soniya ≈ 128 KB.
-//
-// NEGA OVOZ KUCHI O'LCHANADI. Gemini jimlikka ham so'z "eshitadi". Jim
-// yozuv serverga umuman yuborilmaydi (server ham o'lchaydi — u haqiqiy
-// himoya, bu esa tezkor javob uchun).
-
 const SAMPLE_RATE = 16000;
-/** Bitta so'z uchun 4 soniya yetarli; uzunroq yozuv — sekinroq javob */
 const MAX_MS = 4000;
 const VOICE_RMS = 0.02;
-const VOICE_FRAMES = 12; // 20 ms li bo'laklar → 250 ms
+const VOICE_FRAMES = 12;
 
 type Phase = "idle" | "listening" | "checking" | "result" | "error";
 
@@ -72,32 +52,21 @@ function hasVoice(pcm: Float32Array): boolean {
 export default function SpeakStage({
   word, wordIndex, lessonId, t, accent, picked, onAnswer, onSkip,
 }: {
-  /** Aytilishi kerak bo'lgan so'z, artikli bilan */
   word: string;
-  /** Darsdagi tartib raqami — server maqsad so'zni SHUNDAN aniqlaydi */
   wordIndex: number;
   lessonId: string;
   t: StudentStrings;
   accent: string;
   picked: string | null;
   onAnswer: (ok: boolean, mark: string) => void;
-  /** Tekshiruv umuman ishlamasa — bosqichni o'tkazib yuborish */
   onSkip: () => void;
 }) {
   const [phase, setPhase] = useState<Phase>("idle");
   const [heard, setHeard] = useState<string | null>(null);
-  /**
-   * Serverning QARORI — to'g'rimi. Ilgari yashil/qizil rang "eshitilgan
-   * matn bormi" ga qarab chizilardi: noto'g'ri aytilganda ham server rad
-   * etardi-yu, tugma yashil bo'lib, so'z jimgina navbatga qaytardi. O'quvchi
-   * buni "to'g'ri deb oldi" deb tushunardi.
-   */
   const [verdict, setVerdict] = useState<boolean | null>(null);
   const [problem, setProblem] = useState<string | null>(null);
   const [canSkip, setCanSkip] = useState(false);
-  /** Texnik sabab — xato ostida kichik yozuvda (masalan "err_5", "quota") */
   const [diag, setDiag] = useState<string | null>(null);
-  /** Ilovadamizmi — null: hali aniqlanmadi */
   const [inApp, setInApp] = useState<boolean | null>(null);
 
   const recorder = useRef<MediaRecorder | null>(null);
@@ -126,7 +95,6 @@ export default function SpeakStage({
     setPhase("error");
   }, []);
 
-  /** Yozuvni yoki tanilgan matnni serverga yuboradi — qaror u yerda */
   const send = useCallback(async (payload: { wav: Blob } | { transcript: string }) => {
     setPhase("checking");
     try {
@@ -135,7 +103,6 @@ export default function SpeakStage({
       else fd.set("transcript", payload.transcript);
       fd.set("lessonId", lessonId);
       fd.set("wordIndex", String(wordIndex));
-      // Muddat: so'rov osilib qolsa tugma abadiy o'chib qolardi
       const res = await fetch("/api/pronounce", { method: "POST", body: fd, signal: AbortSignal.timeout(40_000) });
       const data = (await res.json().catch(() => ({}))) as { ok?: boolean; heard?: string; error?: string };
 
@@ -154,7 +121,6 @@ export default function SpeakStage({
     }
   }, [lessonId, wordIndex, t, onAnswer, showError]);
 
-  /** 2-yo'l (brauzer): yozib olib, serverga yuborish */
   const startRecording = useCallback(async () => {
     let ms: MediaStream;
     try {
@@ -191,7 +157,6 @@ export default function SpeakStage({
     stopTimer.current = setTimeout(() => { if (recorder.current?.state === "recording") recorder.current.stop(); }, MAX_MS);
   }, [t, cleanup, send, showError]);
 
-  /** 1-yo'l (ilova): telefonning o'zi taniydi */
   const startNative = useCallback(async () => {
     setPhase("listening");
     navigator.vibrate?.(10);
@@ -202,7 +167,7 @@ export default function SpeakStage({
       if (r.error === "denied") showError(t.micDenied, undefined, true);
       else if (r.error === "no_match") showError(t.noVoice);
       else if (r.error === "network") showError(t.speakUnavailable, r.error);
-      else showError(t.speechServiceMissing, r.error, true); // sababi qavsda
+      else showError(t.speechServiceMissing, r.error, true);
       return;
     }
     if (!r.text.trim()) { showError(t.noVoice); return; }
@@ -212,7 +177,6 @@ export default function SpeakStage({
   const start = useCallback(async () => {
     if (phase !== "idle" && phase !== "error") return;
     setProblem(null); setHeard(null); setDiag(null); setVerdict(null);
-    // Ilovada HAR DOIM telefonning o'zi; brauzerda yozib olish
     if (inApp ?? (await isNativeApp())) await startNative();
     else await startRecording();
   }, [phase, inApp, startNative, startRecording]);
@@ -222,7 +186,6 @@ export default function SpeakStage({
     void stopNative();
   }, []);
 
-  // Rang faqat serverning qaroriga qarab — "eshitildi"ga emas
   const ok = phase === "result" && verdict === true;
   const wrong = phase === "result" && verdict === false;
 
@@ -239,7 +202,6 @@ export default function SpeakStage({
             {t.heardYou}: <span className={"font-extrabold " + (wrong ? "text-rose-700" : "text-emerald-700")}>{heard}</span>
           </div>
         )}
-        {/* Xato bo'lsa — nima kutilgani aniq ko'rinsin, yasash bosqichidagidek */}
         {wrong && (
           <div className="text-[13px] font-semibold text-slate-500">
             {t.correctAnswer}: <span className="font-extrabold text-slate-800">{word}</span>
@@ -248,13 +210,11 @@ export default function SpeakStage({
         {phase === "error" && problem && (
           <div className="mt-1 max-w-[280px] text-[13.5px] font-semibold text-rose-600">{problem}</div>
         )}
-        {/* Texnik sabab — qurilmasiz turib nima bo'lganini bilishning yagona yo'li */}
         {phase === "error" && diag && (
           <div className="text-[11px] font-medium text-slate-400">({diag})</div>
         )}
       </div>
 
-      {/* ── Mikrofon tugmasi ── */}
       <div className="flex shrink-0 flex-col items-center gap-3">
         <button
           type="button"
@@ -296,7 +256,6 @@ export default function SpeakStage({
           {phase === "listening" ? t.micListening : phase === "checking" ? t.micChecking : phase === "idle" || phase === "error" ? t.tapToSpeak : ""}
         </span>
 
-        {/* Tekshiruv umuman ishlamasa — o'quvchining aybi emas, to'sib qo'ymaymiz */}
         {canSkip && (
           <button type="button" onClick={onSkip} className="mt-1 rounded-[14px] px-4 py-2 text-[13px] font-bold text-slate-500 underline underline-offset-4">
             {t.skipStage}

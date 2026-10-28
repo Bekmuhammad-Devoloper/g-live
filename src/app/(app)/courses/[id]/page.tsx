@@ -8,9 +8,6 @@ import { canEditLessons } from "@/lib/lessonAccess";
 import { Forbidden } from "../../_components/ui";
 import CourseDetail, { type CourseData } from "./CourseDetail";
 
-// Kurs sahifasi. Kursning o'zi va darajalari — rahbariyat + menejer (CAN_EDIT_COURSE).
-// Darslar va materiallar — faqat direktor, ROP va o'qituvchi (lib/lessonAccess.ts);
-// qolganlar ularni faqat ko'radi.
 const ALLOWED = [ROLES.DIRECTOR, ROLES.DEPUTY_DIRECTOR, ROLES.ADMIN, ROLES.MANAGER, ROLES.TEACHER, ROLES.ROP];
 const CAN_EDIT_COURSE = [ROLES.DIRECTOR, ROLES.DEPUTY_DIRECTOR, ROLES.ADMIN, ROLES.MANAGER];
 
@@ -35,13 +32,12 @@ export default async function CourseDetailPage({ params }: { params: Promise<{ i
   });
   if (!program) notFound();
 
-  // O'qituvchi faqat o'z guruhlari foydalanadigan kursga kira oladi
   if (s.role === ROLES.TEACHER && !program.groups.some((g) => g.teacherId === s.userId)) notFound();
 
   const studentsTotal = program.groups.reduce((n, g) => n + g._count.students, 0);
 
   let banners: string[] = [];
-  if (program.banners) { try { const a = JSON.parse(program.banners); if (Array.isArray(a)) banners = a.filter((x): x is string => typeof x === "string"); } catch { /* ignore */ } }
+  if (program.banners) { try { const a = JSON.parse(program.banners); if (Array.isArray(a)) banners = a.filter((x): x is string => typeof x === "string"); } catch { } }
 
   const data: CourseData = {
     id: program.id,

@@ -13,7 +13,6 @@ const refresh = () => {
   revalidatePath("/finance/expenses");
 };
 
-// Yangi xarajat toifasi
 export async function createExpenseCategory(name: string): Promise<CatResult> {
   const s = await requireSession();
   if (!canWrite(s.role, MODULES.EXPENSES)) return { error: "forbidden" };
@@ -29,7 +28,6 @@ export async function createExpenseCategory(name: string): Promise<CatResult> {
   return { ok: true };
 }
 
-// Toifa nomini o'zgartirish
 export async function renameExpenseCategory(id: string, name: string): Promise<CatResult> {
   const s = await requireSession();
   if (!canWrite(s.role, MODULES.EXPENSES)) return { error: "forbidden" };
@@ -49,7 +47,6 @@ export async function renameExpenseCategory(id: string, name: string): Promise<C
   return { ok: true };
 }
 
-// Toifani o'chirish — bog'langan xarajatlar toifasiz qoladi (onDelete: SetNull)
 export async function deleteExpenseCategory(id: string): Promise<CatResult> {
   const s = await requireSession();
   if (!canWrite(s.role, MODULES.EXPENSES)) return { error: "forbidden" };

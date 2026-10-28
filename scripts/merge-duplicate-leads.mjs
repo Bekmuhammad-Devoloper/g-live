@@ -1,15 +1,3 @@
-// Bir filial ichida bir xil telefon raqamli takroriy lidlarni birlashtirish.
-//
-//   node scripts/merge-duplicate-leads.mjs          — sinov: nima o'zgarishini ko'rsatadi
-//   node scripts/merge-duplicate-leads.mjs --apply  — bajarish (oldin bazadan zaxira oling)
-//
-// Qoidalar:
-//   • guruh = (telefon, filial); bitta lid qoladi — o'quvchiga aylangani, bo'lmasa
-//     eng ilgarilagan bosqichdagi, teng bo'lsa eng yangisi;
-//   • o'quvchiga aylangan (studentId) lidlar o'chirilmaydi;
-//   • qolganlarining faoliyatlari va qo'ng'iroqlari asosiy lidga ko'chiriladi,
-//     bo'sh maydonlar ulardan to'ldiriladi, izohlari qo'shiladi;
-//   • har birlashtirish audit jurnaliga va lid tarixiga yoziladi.
 import { PrismaClient } from "@prisma/client";
 
 const prisma = new PrismaClient();

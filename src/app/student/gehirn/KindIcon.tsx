@@ -1,8 +1,5 @@
 import { kindColor } from "./parse";
 
-// Yozuv turi ikonkalari — portalning chiziqli uslubida.
-// NOTE varaq · IDEA lampochka · GOAL nishon · BOOK kitob · PERSON odam · DAILY kalendar
-
 export default function KindIcon({ kind, s = 20, c }: { kind: string; s?: number; c?: string }) {
   const col = c ?? kindColor(kind);
   const base = {
@@ -52,7 +49,6 @@ export default function KindIcon({ kind, s = 20, c }: { kind: string; s?: number
       </svg>
     );
   }
-  // NOTE (standart)
   return (
     <svg {...base}>
       <path d="M6 3.5h8l4 4V20a1.5 1.5 0 0 1-1.5 1.5h-10A1.5 1.5 0 0 1 5 20V5a1.5 1.5 0 0 1 1-1.5Z" />

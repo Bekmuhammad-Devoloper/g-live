@@ -1,6 +1,5 @@
 import { prisma } from "@/lib/db";
 
-// Standart xarajat toifalari — jadval bo'sh bo'lsa bir marta yaratiladi
 export const DEFAULT_EXPENSE_CATEGORIES = [
   "Boshqalar",
   "Ma'muriy xarajatlar",
@@ -21,6 +20,5 @@ export async function ensureDefaultExpenseCategories(): Promise<void> {
   try {
     await prisma.expenseCategory.createMany({ data: DEFAULT_EXPENSE_CATEGORIES.map((name) => ({ name })) });
   } catch {
-    // parallel so'rov allaqachon yaratgan bo'lsa (unique name) — e'tiborsiz
   }
 }

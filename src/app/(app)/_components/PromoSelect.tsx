@@ -9,7 +9,6 @@ type Opt = { code: string; discount: number; minCourses: number | null; note: st
 
 const money = (n: number) => n.toLocaleString("ru-RU").replace(/,/g, " ");
 
-/** To'lov formalaridagi promokod tanlovi. `name` berilsa oddiy form maydoni sifatida ham ishlaydi. */
 export default function PromoSelect({ locale, value, onChange, name, className }: {
   locale: Locale;
   value?: string;
@@ -27,7 +26,7 @@ export default function PromoSelect({ locale, value, onChange, name, className }
     return () => { alive = false; };
   }, []);
 
-  if (opts && opts.length === 0) return null; // kod yo'q — maydon ko'rsatilmaydi
+  if (opts && opts.length === 0) return null;
   const sel = opts?.find((o) => o.code === cur);
   const cond = (o: Opt) => (o.minCourses && o.minCourses > 1 ? tr(locale, { uz: `${o.minCourses}+ kurs`, ru: `${o.minCourses}+ курса`, en: `${o.minCourses}+ courses`, de: `${o.minCourses}+ Kurse` }) : "");
 
@@ -61,7 +60,6 @@ export default function PromoSelect({ locale, value, onChange, name, className }
   );
 }
 
-/** Promokod xatosi uchun tushunarli matn (server qaytargan kod bo'yicha); boshqa xato bo'lsa null */
 export function promoErrorText(locale: Locale, error?: string, need?: number, have?: number): string | null {
   if (error === "promo_not_found") return tr(locale, { uz: "Bunday promokod topilmadi", ru: "Промокод не найден", en: "Promo code not found", de: "Promo-Code nicht gefunden" });
   if (error === "promo_inactive") return tr(locale, { uz: "Bu promokod o'chirilgan", ru: "Промокод отключён", en: "This promo code is disabled", de: "Dieser Promo-Code ist deaktiviert" });

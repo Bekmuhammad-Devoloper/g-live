@@ -6,8 +6,6 @@ import MissingStudent from "../../MissingStudent";
 import { allTags, backlinksOf, linkKey, parseLinks } from "../parse";
 import NoteDetail, { type LinkRef } from "./NoteDetail";
 
-// Bitta yozuv: matn, havolalar va "bu yozuvga havola qilganlar" (backlinks).
-
 export default async function NotePage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = await params;
   const session = await getSession();
@@ -20,14 +18,12 @@ export default async function NotePage({ params }: { params: Promise<{ id: strin
   });
   if (!student) return <MissingStudent />;
 
-  // Faqat O'Z yozuvi (id ni bilgan begona o'quvchi ham ocha olmaydi)
   const note = await prisma.note.findFirst({
     where: { id, studentId: student.id },
     select: { id: true, title: true, content: true, kind: true, tags: true, pinned: true, updatedAt: true },
   });
   if (!note) notFound();
 
-  // Havolalarni yechish uchun barcha sarlavhalar kerak
   const all = await prisma.note.findMany({
     where: { studentId: student.id },
     select: { id: true, title: true, content: true, kind: true },

@@ -2,26 +2,6 @@
 @tailwind components;
 @tailwind utilities;
 
-/* ═══════════════════════════════════════════════════════════════
-   SHRIFT — Inter, O'Z SERVERIMIZDAN
-   ───────────────────────────────────────────────────────────────
-   Ilgari `--font-sans` tizim shriftlari ro'yxati edi ("Segoe UI",
-   -apple-system, Roboto...). Bu degani: ilova har telefonda BOSHQA
-   shrift bilan ochilardi — harflar kengligi har xil, shu sabab
-   sarlavhalar ba'zi qurilmada sig'ib, ba'zisida ikki qatorga tushardi
-   va tugmalardagi matn siljib turardi.
-
-   Endi shrift ilovaning O'ZI bilan keladi: hamma qurilmada bir xil.
-
-   Nega Inter: ekranda o'qish uchun ishlangan, mayda o'lchamda ham
-   toza; lotin, lotin-kengaytirilgan (ä ö ü ß) va kirill (ru) to'liq
-   qamrab olingan — ilova to'rt tilda ishlaydi.
-
-   Fayllar O'ZGARUVCHAN (variable): bitta faylda 400 dan 800 gacha
-   barcha qalinlik bor, shu sabab beshta alohida fayl yuklanmaydi.
-   Har qism o'z `unicode-range` i bilan: kirill sahifasi ochilmasa
-   kirill fayli umuman yuklanmaydi.
-   ═══════════════════════════════════════════════════════════════ */
 @font-face {
   font-family: "Inter";
   font-style: normal;
@@ -47,11 +27,6 @@
   unicode-range: U+0301, U+0400-045F, U+0490-0491, U+04B0-04B1, U+2116;
 }
 
-/* ── Caveat — qo'lda yozilgan shrift (SIL Open Font License 1.1) ──
-   Kurs kartochkalari va boshqa "qo'lyozma" yozuvlar uchun. Ilova bilan
-   birga keladi: OS da handwriting shrifti bo'lmagan telefonda ham
-   (Android) bir xil ko'rinadi. Inter kabi bo'laklarga bo'lingan —
-   kirill sahifasi ochilmasa kirill fayli yuklanmaydi. */
 @font-face {
   font-family: "Caveat";
   font-style: normal;
@@ -79,23 +54,14 @@
 
 :root {
   color-scheme: light;
-  /* Zaxira ro'yxat faqat shrift yuklanmaguncha ishlaydi (font-display: swap) */
   --font-sans: "Inter", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
 }
 
 html {
   font-family: var(--font-sans);
-  /* Tizimda "katta shrift" yoqilgan telefonda brauzer matnni O'ZI
-     kattalashtiradi (font boosting) va maketni buzadi: sarlavha ikki
-     qatorga tushadi, tugmadagi so'z sig'may qoladi. Ilova o'z o'lchamlarini
-     px da beradi, shu sabab bu avtomatik kattalashtirish o'chiriladi. */
   -webkit-text-size-adjust: 100%;
   text-size-adjust: 100%;
 
-  /* Oyna (modal) ochilganda sahifa scrollbari yashirinadi — shunda kontent
-     scrollbar kengligiga (~15px) kengayib "sakrab" ketardi: CRM kanbani,
-     jadvallar o'lchami o'zgarib ko'rinardi. `stable` bu joyni doim band
-     qilib turadi, shu sabab tahrirlash oynasi ochilganda maket qimirlamaydi. */
   scrollbar-gutter: stable;
 }
 
@@ -109,7 +75,6 @@ body {
   color-scheme: dark;
 }
 
-/* O'ngdan ochiluvchi panel (drawer) animatsiyasi */
 @keyframes slideInRight {
   from {
     transform: translateX(100%);
@@ -122,7 +87,6 @@ body {
   animation: slideInRight 0.22s ease-out;
 }
 
-/* Tasdiqlash oynasi (dialogs.tsx) — tepadan yumshoq tushadi */
 @keyframes dialogDrop {
   from {
     opacity: 0;
@@ -148,7 +112,6 @@ body {
   animation: dialogFade 0.18s ease-out;
 }
 
-/* Qo'ng'iroq oynasi — pastdan yumshoq ko'tarilish */
 @keyframes slideUp {
   from {
     transform: translateY(24px);
@@ -163,7 +126,6 @@ body {
   animation: slideUp 0.24s cubic-bezier(0.16, 1, 0.3, 1);
 }
 
-/* Ochiluvchi panel (navbar menyulari) — yumshoq paydo bo'lish */
 @keyframes popIn {
   from {
     opacity: 0;
@@ -178,16 +140,11 @@ body {
   animation: popIn 0.16s cubic-bezier(0.16, 1, 0.3, 1);
 }
 
-/* Yonboshdan ochiladigan oynalar (drawer) — HAMMASI bir xil kenglikda.
-   Ilgari har sahifada o'zicha edi (420, 440, 460, 560, 620, 760px): xodim
-   kartasidan "Tahrirlash" ga o'tganda panel kengayib ketardi. */
 .drawer-panel {
-  /* Kichik variant — xodim kartasidagi kabi (ilgari 440px edi) */
   width: 440px;
   max-width: 92%;
 }
 
-/* Nozik scrollbar */
 * {
   scrollbar-width: thin;
   scrollbar-color: #cbd5e1 transparent;
@@ -208,9 +165,6 @@ body {
   background: #c7d7ff;
 }
 
-/* Uzun matn maydondan chiqib ketmasin: 3 soniya turadi, keyin sekin surilib
-   oxirigacha ko'rsatadi, yana qaytadi. Faqat matn sig'magan holatda ishlaydi
-   (MarqueeText komponenti --mq-shift ni o'lchab beradi). */
 @keyframes mqScroll {
   0%, 25% { transform: translateX(0); }
   45%, 70% { transform: translateX(var(--mq-shift, 0)); }
@@ -223,9 +177,6 @@ body {
   .mq-run { animation: none; }
 }
 
-/* Select strelkasi — brauzerniki chetga yopishib turadi, o'rniga ichkariroqda
-   o'zimizniki chiziladi. `.appearance-none` bilan o'z ikonkasini qo'ygan
-   selectlarga tegilmaydi (ular allaqachon chevron Icon bilan yuradi). */
 select:not(.appearance-none):not([multiple]):not([size]) {
   appearance: none;
   -webkit-appearance: none;
@@ -236,7 +187,6 @@ select:not(.appearance-none):not([multiple]):not([size]) {
   padding-right: 2.4rem !important;
 }
 
-/* Qayta ishlatiladigan tugma uslublari */
 @layer components {
   .btn-primary {
     @apply inline-flex items-center justify-center gap-1.5 rounded-lg bg-brand-600 px-4 py-2 text-sm font-semibold text-white shadow-sm transition hover:bg-brand-700 active:scale-[.98] disabled:opacity-60;
@@ -250,20 +200,12 @@ select:not(.appearance-none):not([multiple]):not([size]) {
   .input {
     @apply w-full rounded-lg border border-slate-300 px-3 py-2 text-sm outline-none transition focus:border-brand-500 focus:ring-2 focus:ring-brand-100 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-100 dark:placeholder:text-slate-500 dark:focus:ring-brand-900;
   }
-  /* Qo'lda yozilgan shrift (sidebar yozuvlari) — OS handwriting shriftidan,
-     tashqi yuklamasiz. Windows: "Segoe Script", macOS: "Bradley Hand". */
   .font-hand {
-    /* Avval ilova bilan kelgan Caveat, keyin OS shriftlari (zaxira) */
     font-family: "Caveat", "Segoe Script", "Bradley Hand", "Comic Sans MS", cursive;
-    /* Caveat nozik yozuv — bir oz kattaroq va zichroq bo'lsa aniq o'qiladi */
     letter-spacing: 0.01em;
   }
 }
 
-/* ─── Dark rejim: sahifalar bo'ylab umumiy FALLBACK moslashuv ───
-   :where() bilan spetsifikatsiya 0 ga tushiriladi — shuning uchun komponentdagi
-   aniq `dark:bg-*` / `dark:text-*` variantlari HAR DOIM ustun bo'ladi, faqat
-   variantsiz (un-themed) och elementlargina bu fallbackka tushadi. */
 .dark :where(.bg-white) {
   background-color: #0f172a;
 }
@@ -298,10 +240,6 @@ select:not(.appearance-none):not([multiple]):not([size]) {
   color: #94a3b8;
 }
 
-/* ─── Dark rejim: RANGLI to'q matnlar va ular ostidagi och yorliq fonlari ───
-   `text-emerald-700` kabi to'q ranglar qorong'i fonda yo'qolib ketardi (kontrast ~2).
-   Fon (bg-*-50) va matn JUFT ravishda almashtiriladi: to'q tusli fon + yorqin matn.
-   :where() = 0 spetsifikatsiya, shuning uchun komponentdagi aniq `dark:` variantlari ustun. */
 .dark :where(.bg-emerald-50, .bg-green-50) { background-color: rgb(6 78 59 / 0.4); }
 .dark :where(.bg-red-50, .bg-rose-50) { background-color: rgb(127 29 29 / 0.35); }
 .dark :where(.bg-amber-50, .bg-yellow-50) { background-color: rgb(120 53 15 / 0.35); }
@@ -322,7 +260,6 @@ select:not(.appearance-none):not([multiple]):not([size]) {
 .dark :where(.text-orange-700, .text-orange-800) { color: #fdba74; }
 .dark :where(.text-pink-700) { color: #f9a8d4; }
 
-/* Tungi rejim — scrollbar va matn belgilash */
 .dark * {
   scrollbar-color: #475569 transparent;
 }
@@ -336,19 +273,15 @@ select:not(.appearance-none):not([multiple]):not([size]) {
   background: #1d4ed8;
   color: #e0e7ff;
 }
-/* ─── Chegara chiziqlarini aniq ko'rsatish (butun platforma bo'ylab) ───
-   Juda och (slate-100 / slate-200/70) chegaralar ko'rinmay qolgani uchun
-   ularni ko'rinadigan tonga to'qlashtiramiz — bir joydan. */
 
-/* Och rejim */
 .border-slate-100 {
-  border-color: #e2e8f0; /* slate-200 — ko'rinadigan ajratuvchi */
+  border-color: #e2e8f0;
 }
 .border-slate-200,
 .border-slate-200\/70,
 .border-slate-200\/60,
 .border-slate-200\/50 {
-  border-color: #cbd5e1; /* slate-300 — aniq karta cheti */
+  border-color: #cbd5e1;
 }
 .divide-slate-100 > :not([hidden]) ~ :not([hidden]) {
   border-color: #e2e8f0;
@@ -357,7 +290,6 @@ select:not(.appearance-none):not([multiple]):not([size]) {
   border-color: #cbd5e1;
 }
 
-/* Tungi rejim — chegaralarni ko'rinadigan och tonga suramiz */
 .dark .border-slate-100 {
   border-color: rgb(51 65 85 / 0.7);
 }
@@ -365,7 +297,7 @@ select:not(.appearance-none):not([multiple]):not([size]) {
 .dark .border-slate-300,
 .dark .border-slate-200\/70,
 .dark .border-slate-200\/60 {
-  border-color: #334155; /* slate-700 */
+  border-color: #334155;
 }
 .dark [class~="dark:border-slate-800"],
 .dark [class~="dark:border-slate-800/70"] {
@@ -379,27 +311,6 @@ select:not(.appearance-none):not([multiple]):not([size]) {
   border-color: #334155;
 }
 
-/* ═══════════════════════════════════════════════════════════════
-   SHISHA (glassmorphism) — o'quvchi ilovasi (/student)
-   ───────────────────────────────────────────────────────────────
-   Haqiqiy shisha uchun uch qatlam kerak:
-     1) orqadagi ambient dog'lar (layout.tsx) — bulanadigan narsa;
-        tekis fon ustida backdrop-filter umuman ko'rinmaydi;
-     2) juda kam oq (alpha ~0.2-0.5) + backdrop-filter — TINIQ bo'lsin;
-     3) chetidagi soch tolasidek yorug'lik chizig'i (::before) —
-        yorug'lik shisha qirrasida sinadi.
-
-   `@layer components` ichida: shunda Tailwind utility'lari (masalan
-   `rounded-2xl`) shu yerdagi qiymatlarni bemalol qayta yoza oladi.
-
-   Rang qiymatlari `bg-white/85` kabi Tailwind sinflari orqali emas,
-   shu yerda beriladi: quyidagi `.dark :where(.bg-white/..)` fallback
-   qoidalari o'quvchi ilovasining kartalarini qoraytirib yubormasin
-   (ilova faqat och rejimda ishlaydi).
-
-   Blur 18px — 12+ shisha qatlami bir ekranda turgani uchun ataylab
-   o'rtacha: yuqorisi o'rta darajali Android'da skrollni sekinlashtiradi.
-   ═══════════════════════════════════════════════════════════════ */
 @layer components {
   .gl-glass,
   .gl-glass-hero,
@@ -407,29 +318,19 @@ select:not(.appearance-none):not([multiple]):not([size]) {
     position: relative;
   }
 
-  /* Kartalar ortida FAQAT ambient gradient turadi — silliq gradientni bulash
-     deyarli hech narsani o'zgartirmaydi, lekin GPU'ni yeydi. Shu sabab blur
-     kichik (8px): fon aniq ko'rinadi va shisha FROSTED (muzli) emas, TINIQ
-     bo'lib o'qiladi. Shisha hissi to'yinganlik, yorqinlik, qirra yorug'ligi
-     va soyadan chiqadi. */
   .gl-glass,
   .gl-glass-hero {
     -webkit-backdrop-filter: blur(8px) saturate(190%) brightness(1.05);
     backdrop-filter: blur(8px) saturate(190%) brightness(1.05);
   }
 
-  /* Menyu — bundan farqli o'laroq ostidan HAQIQIY kontent suriladi,
-     shuning uchun bu yerda kuchli blur o'z ishini qiladi. */
   .gl-glass-nav {
     -webkit-backdrop-filter: blur(20px) saturate(180%);
     backdrop-filter: blur(20px) saturate(180%);
   }
 
-  /* Oddiy karta — eng tiniqi */
   .gl-glass {
     border-radius: 26px;
-    /* Diagonal bo'ylab o'zgaruvchan tiniqlik — yassi plyonka emas, hajmli oyna.
-       Tepa-chapda yorug'lik yig'iladi, o'rtasi deyarli ko'rinmas (0.20). */
     background: linear-gradient(
       142deg,
       rgba(255, 255, 255, 0.54) 0%,
@@ -438,15 +339,12 @@ select:not(.appearance-none):not([multiple]):not([size]) {
       rgba(255, 255, 255, 0.36) 100%
     );
     box-shadow:
-      /* yerdagi yumshoq soya — karta suzib turgandek */
       0 16px 34px -12px rgba(19, 78, 94, 0.28),
       0 3px 10px -3px rgba(19, 78, 94, 0.09),
-      /* ichki yorug'lik: tepadan tushib, pastda qaytadi */
       inset 0 1px 0 rgba(255, 255, 255, 0.95),
       inset 0 -1px 0 rgba(255, 255, 255, 0.32);
   }
 
-  /* Asosiy (hero) karta — feruza tusli shisha, boshqalardan ajralib tursin */
   .gl-glass-hero {
     border-radius: 26px;
     background: linear-gradient(
@@ -461,7 +359,6 @@ select:not(.appearance-none):not([multiple]):not([size]) {
       inset 0 -1px 0 rgba(255, 255, 255, 0.3);
   }
 
-  /* Pastki menyu — ustidan matn suriladi, shuning uchun quyuqroq */
   .gl-glass-nav {
     background: linear-gradient(180deg, rgba(255, 255, 255, 0.82), rgba(255, 255, 255, 0.7));
     box-shadow:
@@ -469,9 +366,6 @@ select:not(.appearance-none):not([multiple]):not([size]) {
       inset 0 1px 0 rgba(255, 255, 255, 0.95);
   }
 
-  /* Qirra — 1px gradient ramka. Niqob (mask) bilan faqat chekka bo'yaladi:
-     tepa-chapda oq yorug'lik, past-o'ngda feruza aks-sado. Ichki maydon
-     niqoblanadi — shuning uchun karta matnini hech qachon to'smaydi. */
   .gl-glass::before,
   .gl-glass-hero::before {
     content: "";
@@ -497,8 +391,6 @@ select:not(.appearance-none):not([multiple]):not([size]) {
     mask-composite: exclude;
   }
 
-  /* backdrop-filter yo'q brauzer (eski WebView) — shisha o'rniga
-     quyuqroq sut oyna beriladi, matn baribir o'qiladi. */
   @supports not ((-webkit-backdrop-filter: blur(1px)) or (backdrop-filter: blur(1px))) {
     .gl-glass {
       background: linear-gradient(142deg, rgba(255, 255, 255, 0.93), rgba(255, 255, 255, 0.85));
@@ -512,52 +404,25 @@ select:not(.appearance-none):not([multiple]):not([size]) {
   }
 }
 
-/* To'liq ekranga chiqqan har qanday element qora fonda bo'lsin.
-   Sababi: videoning o'z to'liq ekran tugmasi bosilganda brauzer elementni
-   sahifadan ajratib ko'rsatadi va uning ortida `body` ning OCH foni
-   ko'rinib qoladi — video yon tomonlarida oq chiziqlar paydo bo'lardi. */
 :fullscreen,
 ::backdrop {
   background-color: #000;
 }
 
-/* ═══════════════════════════════════════════════════════════════
-   ILOVA HISSI (o'quvchi portali)
-   ═══════════════════════════════════════════════════════════════
-   TWA/PWA ichida sahifa baribir "sayt" bo'lib turishining sabablari
-   quyidagilar edi — har biri shu yerda yopiladi:
-
-     · barmoq bilan tortilganda sahifa cho'ziladi (rubber-band) va
-       tepaga tortilsa "yangilash" ishga tushadi — haqiqiy ilovada bunday
-       bo'lmaydi
-     · har bosishda kulrang chaqnash (tap highlight)
-     · uzoq bosilsa matn belgilanadi va "Nusxa olish" menyusi chiqadi
-     · ikki marta bosilganda sahifa kattalashadi va shu sabab har bosishda
-       ~300ms kechikish bo'ladi
-
-   Qoidalar FAQAT `.gl-native` ichida — CRM (kompyuterdagi sayt) tegilmaydi:
-   u yerda matn belgilash va yaqinlashtirish kerak. */
-
 .gl-native {
   -webkit-tap-highlight-color: transparent;
-  /* ikki marta bosib kattalashtirishni o'chiradi (barmoq bilan
-     yaqinlashtirish saqlanadi — bu qulaylik uchun kerak) */
   touch-action: manipulation;
 }
 
-/* Uzoq bosilganda chiqadigan tizim menyusi (rasmni saqlash va h.k.) */
 .gl-native img,
 .gl-native button,
 .gl-native a {
   -webkit-touch-callout: none;
 }
 
-/* Quyidagilar faqat O'RNATILGAN ilovada: brauzerda ochilganda sahifa
-   odatdagidek qolsin (matn belgilanadi, sahifa cho'ziladi). */
 @media (display-mode: standalone) {
   html,
   body {
-    /* tepaga tortib "yangilash" va chetlardagi cho'zilish yo'qoladi */
     overscroll-behavior: none;
   }
 
@@ -566,7 +431,6 @@ select:not(.appearance-none):not([multiple]):not([size]) {
     -webkit-user-select: none;
   }
 
-  /* Yozish va o'qish kerak bo'lgan joylar bundan mustasno */
   .gl-native input,
   .gl-native textarea,
   .gl-native [contenteditable],
@@ -576,16 +440,8 @@ select:not(.appearance-none):not([multiple]):not([size]) {
   }
 }
 
-/* ── Android ilovasi (Capacitor) ──
-   Belgini NativeShell qo'yadi va u FAQAT haqiqiy ilovada qo'yiladi.
-
-   Nega yuqoridagi `@media (display-mode: standalone)` yetarli emas: u
-   ilovaning o'zini qanday e'lon qilganiga bog'liq va qurilmadan qurilmaga
-   farq qiladi. `html.gl-app` esa ishlayotgan muhitdan olingan aniq javob —
-   shu sabab ilovaga xos qoidalarni shu yerda takrorlaymiz. */
 html.gl-app,
 html.gl-app body {
-  /* tepaga tortib "yangilash" va chetlardagi cho'zilish yo'q */
   overscroll-behavior: none;
 }
 
@@ -595,7 +451,6 @@ html.gl-app {
   -webkit-tap-highlight-color: transparent;
 }
 
-/* Yozish va nusxa olish kerak bo'lgan joylar bundan mustasno */
 html.gl-app input,
 html.gl-app textarea,
 html.gl-app [contenteditable],
@@ -604,18 +459,6 @@ html.gl-app .gl-selectable {
   -webkit-user-select: text;
 }
 
-/* Ekrandan ekranga o'tish — ilovadagidek yumshoq kirish.
-   ATAYLAB qisqa (200ms) va faqat opacity + kichik siljish: uzun animatsiya
-   sekin ilova taassurotini beradi. Animatsiya tugagach transform QOLMAYDI,
-   shuning uchun ichidagi `fixed` elementlar (suzuvchi tugmalar) buzilmaydi. */
-/* Sahifa almashganda yumshoq paydo bo'lish.
-   FAQAT `opacity` — `transform` ATAYLAB ishlatilmaydi.
-   Sababi: `transform` animatsiyasi bo'lgan element `position: fixed`
-   avlodlari uchun "asos" (containing block) bo'lib qoladi, `fill-mode: both`
-   bilan esa bu holat animatsiya tugagach ham saqlanadi. Natijada ichkaridagi
-   `fixed inset-0` ekranga emas, shu blokka nisbatan hisoblanardi va u
-   yig'ilib qolardi — o'qituvchi bilan chat, miya grafigi, eslatma oynasi,
-   to'liq ekran video pleyeri va Market kartasi shu sabab buzuq ochilardi. */
 @keyframes gl-screen-in {
   from { opacity: 0; }
   to   { opacity: 1; }

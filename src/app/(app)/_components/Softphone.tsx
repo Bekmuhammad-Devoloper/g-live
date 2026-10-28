@@ -10,8 +10,6 @@ import { Icon } from "./Icon";
 
 type UAStatus = "init" | "connecting" | "registered" | "failed" | "disabled";
 
-// SIP tugash sabablari. Ularning ko'pi XATO EMAS — oddiy holat
-// (chaqiruvchi uzdi, band, javob bermadi). Faqat haqiqiy nosozliklar qizil bo'ladi.
 const NORMAL_CAUSES = new Set([
   "Canceled", "Terminated", "BYE", "Busy", "Rejected", "Unavailable",
   "No Answer", "Redirected", "Dialog Error",
@@ -54,16 +52,14 @@ export default function Softphone({ locale, canConfigure = false }: { locale: Lo
   const [callState, setCallState] = useState<CallState>("none");
   const [dial, setDial] = useState("");
   const [peer, setPeer] = useState("");
-  const [peerNumber, setPeerNumber] = useState(""); // suhbatdosh raqami (peer ism bo'lsa, ostida ko'rsatiladi)
+  const [peerNumber, setPeerNumber] = useState("");
   const [muted, setMuted] = useState(false);
   const [held, setHeld] = useState(false);
   const [seconds, setSeconds] = useState(0);
   const [err, setErr] = useState<string | null>(null);
-  // true — bu oddiy xabar (chaqiruvchi uzdi va h.k.), xato emas → kulrang ko'rsatiladi
   const [info, setInfo] = useState(false);
   const [ext, setExt] = useState("");
 
-  // ── Tarix ──
   const [histQ, setHistQ] = useState("");
   const [histLoading, setHistLoading] = useState(false);
   const [calls, setCalls] = useState<CallRow[] | null>(null);
@@ -75,17 +71,16 @@ export default function Softphone({ locale, canConfigure = false }: { locale: Lo
   const timerRef = useRef<ReturnType<typeof setInterval> | null>(null);
   const kaRef = useRef<ReturnType<typeof setInterval> | null>(null);
   const pendingOutRef = useRef(false);
-  const amiOutRef = useRef(false);      // shu seans — AMI orqali chiquvchi qo'ng'iroqmi
-  const callIdRef = useRef<string | null>(null); // baza yozuvi (mijoz javobini kuzatish uchun)
+  const amiOutRef = useRef(false);
+  const callIdRef = useRef<string | null>(null);
   const pollRef = useRef<ReturnType<typeof setInterval> | null>(null);
   const panelRef = useRef<HTMLDivElement | null>(null);
   const launcherRef = useRef<HTMLButtonElement | null>(null);
   const dialInputRef = useRef<HTMLInputElement | null>(null);
 
-  // ── Sudrab ko'chirish (panel VA aylana tugma — ikkalasi ham istalgan joyga) ──
-  const [pos, setPos] = useState<{ x: number; y: number } | null>(null); // panel
-  const [launcherPos, setLauncherPos] = useState<{ x: number; y: number } | null>(null); // aylana tugma
-  const panelDraggedRef = useRef(false); // panelni foydalanuvchi o'zi sudragan bo'lsa — avto-anchor bekor
+  const [pos, setPos] = useState<{ x: number; y: number } | null>(null);
+  const [launcherPos, setLauncherPos] = useState<{ x: number; y: number } | null>(null);
+  const panelDraggedRef = useRef(false);
   type DragTarget = "panel" | "launcher";
   const dragRef = useRef<{ target: DragTarget; startX: number; startY: number; baseX: number; baseY: number; moved: boolean } | null>(null);
 
@@ -116,7 +111,6 @@ export default function Softphone({ locale, canConfigure = false }: { locale: Lo
     };
     const onUp = () => {
       const d = dragRef.current;
-      // Aylana tugma sudralmagan (oddiy bosilgan) bo'lsa — telefonni ochish/yopish
       if (d && d.target === "launcher" && !d.moved) setOpen((o) => !o);
       dragRef.current = null;
     };
@@ -125,7 +119,6 @@ export default function Softphone({ locale, canConfigure = false }: { locale: Lo
     return () => { window.removeEventListener("mousemove", onMove); window.removeEventListener("mouseup", onUp); };
   }, []);
 
-  // Telefon ochilganda — agar panel o'zi sudralmagan bo'lsa, aylana tugma HOZIR qayerda bo'lsa o'sha yerda ochiladi
   useEffect(() => {
     if (!open || panelDraggedRef.current) return;
     const icon = launcherRef.current?.getBoundingClientRect();
@@ -133,7 +126,7 @@ export default function Softphone({ locale, canConfigure = false }: { locale: Lo
     const PANEL_W = 336, PANEL_H = 460, GAP = 12;
     let x = icon.right - PANEL_W;
     let y = icon.top - GAP - PANEL_H;
-    if (y < 4) y = Math.min(icon.bottom + GAP, window.innerHeight - PANEL_H - 4); // yuqorida joy yo'q — ostiga chiqar
+    if (y < 4) y = Math.min(icon.bottom + GAP, window.innerHeight - PANEL_H - 4);
     x = Math.min(Math.max(x, 4), window.innerWidth - PANEL_W - 4);
     y = Math.max(y, 4);
     setPos({ x, y });
@@ -141,8 +134,6 @@ export default function Softphone({ locale, canConfigure = false }: { locale: Lo
 
   useEffect(() => setMounted(true), []);
 
-  // DIQQAT: eski intervalni to'xtatmasdan yangisini ochsak, bir necha interval
-  // birga ishlab soniyani 2-3 barobar tez sanaydi. Shuning uchun avval tozalaymiz.
   const startTimer = useCallback(() => {
     if (timerRef.current) { clearInterval(timerRef.current); timerRef.current = null; }
     setSeconds(0);
@@ -152,8 +143,6 @@ export default function Softphone({ locale, canConfigure = false }: { locale: Lo
     if (timerRef.current) { clearInterval(timerRef.current); timerRef.current = null; }
   }, []);
 
-  // Mikrofon oqimi — 3s ichida javob bermasa yoki rad etilsa, OVOZSIZ oqim bilan davom etamiz.
-  // (Aks holda javob berilmaydi va Asterisk "Originate failed" beradi.)
   const getStream = useCallback(async (): Promise<MediaStream> => {
     const silent = (): MediaStream => {
       const Ctx = (window.AudioContext || (window as any).webkitAudioContext) as typeof AudioContext;
@@ -182,8 +171,6 @@ export default function Softphone({ locale, canConfigure = false }: { locale: Lo
     }
   }, [locale]);
 
-  // MUHIM: ICE yig'ilishi tugamasa JsSIP 200 OK ni umuman yubormaydi va
-  // qo'ng'iroq "jiringlab" qolib ketadi. 2 soniyadan keyin majburan yuboramiz.
   const forceIceTimeout = useCallback((session: any) => {
     let ready: (() => void) | null = null;
     let timer: ReturnType<typeof setTimeout> | null = null;
@@ -195,14 +182,12 @@ export default function Softphone({ locale, canConfigure = false }: { locale: Lo
     });
   }, []);
 
-  // Javob berish parametrlari — barcha yo'llar uchun bir xil
   const answerOptions = useCallback((stream: MediaStream) => ({
     mediaStream: stream,
     rtcAnswerConstraints: { offerToReceiveAudio: true, offerToReceiveVideo: false },
     pcConfig: {
       iceServers: [
         ...iceRef.current,
-        // Zaxira ommaviy STUN — o'z STUN'imiz javob bermasa
         { urls: "stun:stun.l.google.com:19302" },
         { urls: "stun:stun1.l.google.com:19302" },
       ],
@@ -213,7 +198,6 @@ export default function Softphone({ locale, canConfigure = false }: { locale: Lo
     },
   }), []);
 
-  // Ro'yxatdan o'tgach mikrofon ruxsatini oldindan so'raymiz (qo'ng'iroq paytida kechikish bo'lmasin)
   const primeMic = useCallback(() => {
     navigator.mediaDevices?.getUserMedia({ audio: true })
       .then((s) => s.getTracks().forEach((t) => t.stop()))
@@ -229,8 +213,6 @@ export default function Softphone({ locale, canConfigure = false }: { locale: Lo
     amiOutRef.current = false; callIdRef.current = null;
   }, [stopTimer, stopPoll]);
 
-  // Chiquvchi: operator ulandi, Asterisk endi mijozni teryapti.
-  // Mijoz ko'targanini bazadan (ami-worker yozadi) kuzatamiz — shundagina taymer.
   const watchRemoteAnswer = useCallback(() => {
     stopPoll();
     pollRef.current = setInterval(async () => {
@@ -242,13 +224,11 @@ export default function Softphone({ locale, canConfigure = false }: { locale: Lo
         const j = await r.json();
         if (j.answered) { stopPoll(); setCallState("active"); startTimer(); }
         else if (j.ended) { stopPoll(); }
-      } catch { /* tarmoq — keyingi urinishda */ }
+      } catch { }
     }, 1500);
   }, [stopPoll, startTimer]);
 
   const wire = useCallback((session: any) => {
-    // MUHIM: RTCPeerConnection faqat answer()/call() paytida yaratiladi.
-    // Shuning uchun "track" ni 'peerconnection' hodisasida ulaymiz (aks holda ovoz bo'lmaydi).
     const attachTrack = (pc: RTCPeerConnection) => {
       pc.addEventListener("track", (ev: RTCTrackEvent) => {
         if (audioRef.current && ev.streams?.[0]) {
@@ -260,16 +240,12 @@ export default function Softphone({ locale, canConfigure = false }: { locale: Lo
     session.on("peerconnection", (e: any) => attachTrack(e.peerconnection));
     if (session.connection) attachTrack(session.connection);
 
-    // AMI chiquvchi: "accepted/confirmed" = OPERATOR ulandi, mijoz hali ko'tarmagan.
-    // Shuning uchun "chaqirilmoqda" holatida qolamiz va gudokni eshittiramiz.
-    // "accepted" va "confirmed" ikkalasi ham keladi — faqat birinchisiga javob beramiz
     let connectedOnce = false;
     const onConnected = () => {
       if (connectedOnce) return;
       connectedOnce = true;
       if (amiOutRef.current) {
         setCallState("outgoing");
-        // Gudok (ringback) eshitilishi uchun audio oqimini ulaymiz
         const pc: RTCPeerConnection | undefined = sessionRef.current?.connection;
         const recv = pc?.getReceivers?.().find((r) => r.track?.kind === "audio");
         if (recv?.track && audioRef.current && !audioRef.current.srcObject) {
@@ -293,23 +269,17 @@ export default function Softphone({ locale, canConfigure = false }: { locale: Lo
     });
   }, [cleanup, startTimer, locale]);
 
-  // WSS manzili o'zgarganda (masalan IP → domen) ochiq turgan eski sahifa
-  // abadiy eski manzilni urmasligi uchun: har uzilishda serverdan konfigni
-  // qayta so'raymiz — manzil o'zgargan bo'lsa UA yangi manzil bilan qayta quriladi.
   const [uaEpoch, setUaEpoch] = useState(0);
   const wsUrlRef = useRef<string | null>(null);
   const reviveRef = useRef<(() => void) | null>(null);
   const refetchingRef = useRef(false);
 
-  // ─── JsSIP UA init ───
   useEffect(() => {
     let cancelled = false;
     (async () => {
       try {
         const res = await fetch("/api/telephony/webrtc-config", { cache: "no-store" });
         if (!res.ok) {
-          // Vaqtinchalik xato (tezlik cheklovi, server qayta ishga tushmoqda) — "sozlanmagan" deb
-          // qotib qolmaydi: biroz kutib qayta so'raydi. Raqam/parol yo'q (400/403) — haqiqiy sozlanmaganlik.
           if (res.status === 429 || res.status >= 500) {
             setStatus("connecting");
             setTimeout(() => { if (!cancelled) setUaEpoch((n) => n + 1); }, 15_000);
@@ -347,13 +317,10 @@ export default function Softphone({ locale, canConfigure = false }: { locale: Lo
         ua.on("unregistered", () => setStatus("connecting"));
         ua.on("registrationFailed", () => {
           setStatus("failed");
-          // Vaqtinchalik xato (tarmoq, server qayta yuklanishi) — 5 soniyadan keyin qayta ro'yxatdan o'tamiz
           setTimeout(() => { try { if (!cancelled && ua.isConnected() && !ua.isRegistered()) ua.register(); } catch {} }, 5000);
         });
         ua.on("disconnected", () => {
           setStatus("failed");
-          // Manzil serverda o'zgargan bo'lishi mumkin — tekshirib ko'ramiz.
-          // O'zgargan bo'lsa UA yangi manzil bilan qaytadan quriladi.
           if (refetchingRef.current) return;
           refetchingRef.current = true;
           setTimeout(async () => {
@@ -364,7 +331,7 @@ export default function Softphone({ locale, canConfigure = false }: { locale: Lo
                 const fresh = location.protocol === "https:" ? c.wssUrl : (c.wsUrl || c.wssUrl);
                 if (fresh && fresh !== wsUrlRef.current) setUaEpoch((n) => n + 1);
               }
-            } catch { /* tarmoq yo'q — keyingi uzilishda yana uriniladi */ }
+            } catch { }
             finally { refetchingRef.current = false; }
           }, 4000);
         });
@@ -372,8 +339,6 @@ export default function Softphone({ locale, canConfigure = false }: { locale: Lo
           if (e.originator !== "remote") return;
           const session = e.session;
           sessionRef.current = session;
-          // Chiquvchida Asterisk o'z kanalining nomini yuboradi ("asterisk" / operator ismi) —
-          // uni ko'rsatmaymiz, foydalanuvchi tergan raqam qoladi.
           if (!pendingOutRef.current) {
             const ruser = session.remote_identity?.uri?.user || "";
             const rname = session.remote_identity?.display_name || "";
@@ -381,7 +346,6 @@ export default function Softphone({ locale, canConfigure = false }: { locale: Lo
             setPeerNumber(ruser);
           }
           if (pendingOutRef.current) {
-            // Chiquvchi qo'ng'iroq: Asterisk avval BIZNI chaqiradi — avtomatik javob beramiz.
             pendingOutRef.current = false;
             setCallState("outgoing");
             wire(session);
@@ -405,9 +369,6 @@ export default function Softphone({ locale, canConfigure = false }: { locale: Lo
               });
             return;
           } else {
-            // Yangi kiruvchi qo'ng'iroq — oldingi qo'ng'iroqdan qolgan xato
-            // xabarini tozalaymiz (masalan "tunnel yopiq" chiquvchi xatosi
-            // kiruvchi kartada osilib qolmasin).
             setErr(null);
             setInfo(false);
             setCallState("incoming");
@@ -417,9 +378,6 @@ export default function Softphone({ locale, canConfigure = false }: { locale: Lo
         });
         ua.start();
         kaRef.current = setInterval(() => { try { if (ua.isConnected()) ua.register(); } catch {} }, 25000);
-        // Brauzer fon oynasini muzlatib qo'yishi yoki internet uzilishi mumkin. Oyna qayta ko'ringanda
-        // yoki internet tiklanganda ro'yxatdan o'tish holatini tekshiramiz: ulanish bor — qayta
-        // ro'yxatdan o'tamiz, ulanish yo'q — UA butunlay qayta quriladi.
         const revive = () => {
           if (cancelled || document.visibilityState === "hidden") return;
           try {
@@ -446,10 +404,8 @@ export default function Softphone({ locale, canConfigure = false }: { locale: Lo
       reviveRef.current?.(); reviveRef.current = null;
       try { uaRef.current?.stop(); } catch {}
     };
-    // uaEpoch — WSS manzili o'zgarganda UA'ni qayta qurish uchun
   }, [wire, uaEpoch]);
 
-  // ─── Click-to-call (window event: glive:call {number, leadId, contactName}) ───
   const startCall = useCallback(async (number?: string, leadId?: string, contactName?: string) => {
     const num = (number ?? dial).replace(/\s/g, "");
     if (!num) return;
@@ -476,7 +432,6 @@ export default function Softphone({ locale, canConfigure = false }: { locale: Lo
     return () => window.removeEventListener("glive:call", h);
   }, [startCall]);
 
-  // ─── Tarix — Tarix tabiga o'tilganda va qidiruvda (debounce) yuklanadi ───
   const loadHistory = useCallback((q: string) => {
     setHistLoading(true);
     fetch(`/api/telephony/my-calls${q ? `?q=${encodeURIComponent(q)}` : ""}`)
@@ -492,7 +447,6 @@ export default function Softphone({ locale, canConfigure = false }: { locale: Lo
     return () => clearTimeout(t);
   }, [open, tab, histQ, loadHistory]);
 
-  // ─── Controls ───
   const answer = async () => {
     const s = sessionRef.current;
     if (!s) return;
@@ -510,14 +464,12 @@ export default function Softphone({ locale, canConfigure = false }: { locale: Lo
   const toggleHold = () => { const s = sessionRef.current; if (!s) return; try { held ? s.unhold() : s.hold(); } catch {} setHeld(!held); };
   const press = (d: string) => { const s = sessionRef.current; if (callState === "active" && s) { try { s.sendDTMF(d, { duration: 100, interToneGap: 70 }); } catch {} } else setDial((v) => (v + d).slice(0, 15)); };
 
-  // Klaviaturadan (shu jumladan numpad'dan) to'g'ridan-to'g'ri raqam terish — inputga fokus qilmasdan ham
   useEffect(() => {
     const busy = callState === "active" || callState === "outgoing" || callState === "incoming";
     if (!open || tab !== "dial" || busy || status === "disabled") return;
     const onKey = (e: KeyboardEvent) => {
       const activeEl = document.activeElement;
       const activeTag = (activeEl?.tagName || "").toLowerCase();
-      // Boshqa forma maydoni fokusda bo'lsa (dial input'idan tashqari) — aralashmaymiz
       if ((activeTag === "input" || activeTag === "textarea") && activeEl !== dialInputRef.current) return;
       if (/^[0-9*#]$/.test(e.key)) { e.preventDefault(); press(e.key); }
       else if (e.key === "Backspace") { e.preventDefault(); setDial((v) => v.slice(0, -1)); }
@@ -542,7 +494,6 @@ export default function Softphone({ locale, canConfigure = false }: { locale: Lo
   return createPortal(
     <>
       <audio ref={audioRef} autoPlay className="hidden" />
-      {/* Launcher — sudrab istalgan joyga ko'chirsa bo'ladi; oddiy bosilsa telefon ochiladi/yopiladi */}
       <button
         ref={launcherRef}
         onMouseDown={beginDrag("launcher")}
@@ -560,7 +511,6 @@ export default function Softphone({ locale, canConfigure = false }: { locale: Lo
           style={pos ? { left: pos.x, top: pos.y, right: "auto", bottom: "auto" } : undefined}
           className="fixed bottom-24 right-6 z-[70] w-[336px] max-w-[calc(100vw-2rem)] overflow-hidden rounded-2xl border border-slate-800 bg-[#0f1b2e] shadow-pop"
         >
-          {/* Header — teal gradient, sudrab ko'chirish uchun ushlab ko'chirish joyi */}
           <div className="flex items-center justify-between bg-gradient-to-r from-emerald-600 to-teal-500 px-4 py-3.5">
             <div onMouseDown={beginDrag("panel")} className="flex flex-1 cursor-move items-center gap-2 select-none">
               <Icon name="phone" className="h-4 w-4 text-white" />
@@ -577,7 +527,6 @@ export default function Softphone({ locale, canConfigure = false }: { locale: Lo
             </div>
           </div>
 
-          {/* Tabs — faqat sozlangan va suhbatsiz holatda ko'rinadi */}
           {status !== "disabled" && !inCall && (
             <div className="flex border-b border-white/10 px-1">
               <TabBtn active={tab === "dial"} onClick={() => setTab("dial")}>
@@ -593,12 +542,9 @@ export default function Softphone({ locale, canConfigure = false }: { locale: Lo
 
           <div className="min-h-[360px] p-4">
             {status === "disabled" ? (
-              /* Telefoniya sozlanmagan holati */
               <div className="py-4 text-center">
                 <div className="mx-auto mb-3 grid h-12 w-12 place-items-center rounded-full bg-white/5 text-slate-400"><Icon name="phoneOff" className="h-6 w-6" /></div>
                 <p className="text-sm font-medium text-slate-200">{tr(locale, { uz: "Telefoniya hali sozlanmagan", ru: "Телефония ещё не настроена", en: "Telephony not configured yet", de: "Telefonie noch nicht eingerichtet" })}</p>
-                {/* Sozlash huquqi yo'q foydalanuvchini kira olmaydigan sahifaga
-                    yuborish o'rniga — kimga murojaat qilishni aytamiz */}
                 {canConfigure ? (
                   <>
                     <p className="mt-1 text-xs leading-relaxed text-slate-500">{tr(locale, { uz: "Qo'ng'iroqlar uchun Asterisk/WebRTC serverini Sozlamalardan ulang.", ru: "Для звонков подключите Asterisk/WebRTC в настройках.", en: "Connect Asterisk/WebRTC in settings to make calls.", de: "Verbinden Sie Asterisk/WebRTC in den Einstellungen, um Anrufe zu tätigen." })}</p>
@@ -614,7 +560,6 @@ export default function Softphone({ locale, canConfigure = false }: { locale: Lo
                 )}
               </div>
             ) : tab === "history" ? (
-              /* Tarix */
               <>
                 <div className="relative mb-3">
                   <Icon name="search" className="pointer-events-none absolute left-3 top-1/2 h-3.5 w-3.5 -translate-y-1/2 text-slate-500" />
@@ -655,7 +600,6 @@ export default function Softphone({ locale, canConfigure = false }: { locale: Lo
                 )}
               </>
             ) : (
-              /* Raqam terish */
               <>
                 <input
                   ref={dialInputRef}
@@ -693,11 +637,9 @@ export default function Softphone({ locale, canConfigure = false }: { locale: Lo
         </div>
       )}
 
-      {/* Qo'ng'iroq oynasi — kiruvchi / chiquvchi / faol suhbat (markazda, katta) */}
       {inCall && (
         <div className="fixed inset-0 z-[80] flex items-end justify-center bg-slate-950/50 p-4 backdrop-blur-[2px] sm:p-6">
           <div className="animate-slide-up w-[320px] max-w-full rounded-3xl bg-[#1b2638] px-6 py-6 text-center shadow-pop ring-1 ring-white/10">
-            {/* Avatar — jiringlaganda to'lqinli halqalar */}
             <div className="relative mx-auto h-20 w-20">
               {callState !== "active" && (
                 <>
@@ -710,7 +652,6 @@ export default function Softphone({ locale, canConfigure = false }: { locale: Lo
               </div>
             </div>
 
-            {/* Raqam (asosiy) va ism (bo'lsa, ostida) */}
             <div className="mt-4 truncate text-[22px] font-bold tracking-wide text-white tabular-nums">
               {peerNumber || dial || peer || "—"}
             </div>
@@ -718,7 +659,6 @@ export default function Softphone({ locale, canConfigure = false }: { locale: Lo
               <div className="mt-0.5 truncate text-sm text-slate-400">{peer}</div>
             )}
 
-            {/* Jiringlayotganda — "duid duid" nuqtalari; suhbatda — taymer + jonli nuqta */}
             {callState === "active" ? (
               <div className="mt-3 flex items-center justify-center gap-2">
                 <span className="h-2 w-2 animate-pulse rounded-full bg-emerald-400" />
@@ -733,7 +673,6 @@ export default function Softphone({ locale, canConfigure = false }: { locale: Lo
               </div>
             )}
 
-            {/* Holat */}
             <div className="mt-2.5 text-[11px] uppercase tracking-[0.18em] text-slate-400">
               {callState === "incoming"
                 ? tr(locale, { uz: "Kiruvchi qo'ng'iroq", ru: "Входящий звонок", en: "Incoming call", de: "Eingehender Anruf" })
@@ -744,7 +683,6 @@ export default function Softphone({ locale, canConfigure = false }: { locale: Lo
                     : tr(locale, { uz: "Suhbat", ru: "Разговор", en: "In call", de: "Im Gespräch" })}
             </div>
 
-            {/* Boshqaruv tugmalari */}
             <div className="mt-6 flex items-center justify-center gap-4">
               {callState === "incoming" ? (
                 <>
@@ -775,7 +713,6 @@ export default function Softphone({ locale, canConfigure = false }: { locale: Lo
   );
 }
 
-// Qo'ng'iroq oynasidagi dumaloq boshqaruv tugmasi (mikrofon / kutish)
 function RoundBtn({ active, disabled, onClick, icon, label }: { active: boolean; disabled?: boolean; onClick: () => void; icon: string; label: string }) {
   return (
     <button

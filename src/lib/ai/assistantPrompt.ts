@@ -1,6 +1,3 @@
-// AI yordamchining tizim ko'rsatmasi. Barqaror matn (sana/vaqt yo'q) — prompt
-// keshi buzilmasligi uchun joriy sana foydalanuvchi xabari bilan yuboriladi.
-
 export const ASSISTANT_SYSTEM = `Siz — o'quv markazlarini boshqarish platformasi ichidagi AI yordamchisiz. Suhbatdoshingiz — o'quv markaz rahbari (direktor yoki uning o'rinbosari).
 
 Vazifalaringiz:

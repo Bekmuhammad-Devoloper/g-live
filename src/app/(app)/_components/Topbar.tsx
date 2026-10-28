@@ -25,7 +25,6 @@ export interface TopbarProps {
   branches: { id: string; name: string }[];
   currentBranchId: string | null;
   canSwitchBranch: boolean;
-  /** Bir nechta filialda ishlaydigan xodim — ro'yxatdagi (o'z) filiallari orasida almashtira oladi */
   canSwitchOwn: boolean;
   canCreateStudent: boolean;
   canCreatePayment: boolean;
@@ -40,8 +39,6 @@ export interface TopbarProps {
 type Menu = "new" | "branch" | "calendar" | "video" | "user" | null;
 type Modal = "student" | "payment" | null;
 
-// Ro'yxat umumiy manbadan (constants.ts) — bu yerda dublikat saqlanmaydi
-
 export default function Topbar(p: TopbarProps) {
   const t = getT(p.locale);
   const router = useRouter();
@@ -52,12 +49,10 @@ export default function Topbar(p: TopbarProps) {
   const close = () => setMenu(null);
   const toggle = (m: Menu) => setMenu((cur) => (cur === m ? null : m));
 
-  // ── Obuna qolgan kun ──
   const daysLeft = p.subscriptionUntil
     ? Math.ceil((new Date(p.subscriptionUntil).getTime() - Date.now()) / 86400000)
     : null;
 
-  // ── Butun ekran ──
   const [isFs, setIsFs] = useState(false);
   useEffect(() => {
     const h = () => setIsFs(!!document.fullscreenElement);
@@ -82,12 +77,10 @@ export default function Topbar(p: TopbarProps) {
       {menu && <div className="fixed inset-0 z-30" onClick={close} />}
 
       <header className="sticky top-0 z-40 flex h-16 items-center gap-2 border-b border-slate-200/70 bg-white px-3 dark:border-slate-800 dark:bg-slate-900 md:px-4">
-        {/* Mobil menyu */}
         <button onClick={p.onMenu} className={cn(iconBtn, "md:hidden")} aria-label={tr(p.locale, { uz: "Menyu", ru: "Меню", en: "Menu", de: "Menü" })}>
           <Icon name="menu" className="h-5 w-5" />
         </button>
 
-        {/* 1) + Yaratish */}
         {(p.canCreateStudent || p.canCreatePayment) && (
           <div className="relative">
             <button
@@ -114,7 +107,6 @@ export default function Topbar(p: TopbarProps) {
           </div>
         )}
 
-        {/* 2) Filiallar — telefonda faqat belgisi ko'rinadi */}
         <div className="relative">
           <button
             onClick={() => toggle("branch")}
@@ -130,7 +122,6 @@ export default function Topbar(p: TopbarProps) {
               <div className="px-3 py-1.5 text-[10px] font-semibold uppercase tracking-wider text-slate-400">
                 {t("top.branches")}
               </div>
-              {/* Barcha filiallar — faqat rahbariyatda; filialsiz eski yozuvlar shu rejimda ko'rinadi */}
               {p.canSwitchBranch && (
                 <button
                   disabled={pending}
@@ -178,10 +169,8 @@ export default function Topbar(p: TopbarProps) {
           )}
         </div>
 
-        {/* 3) Qidiruv */}
         <SearchBox locale={p.locale} placeholder={t("top.searchPlaceholder")} noResults={t("top.noResults")} />
 
-        {/* 4) Obuna vaqti */}
         {daysLeft !== null && (
           <div
             className={cn(
@@ -199,15 +188,12 @@ export default function Topbar(p: TopbarProps) {
           </div>
         )}
 
-        {/* 4.1) AI yordamchi — faqat rahbariyat */}
         {(p.user.role === "DIRECTOR" || p.user.role === "DEPUTY_DIRECTOR") && <AiAssistant locale={p.locale} userName={p.user.fullName} />}
 
         <div className="flex-1" />
 
-        {/* 5) Valyuta kursi — MB (cbu.uz), avtomatik yangilanadi */}
         <CurrencyRates locale={p.locale} />
 
-        {/* 6) Til */}
         <div className="hidden rounded-lg border border-slate-200 p-0.5 dark:border-slate-700 sm:flex">
           {LOCALES.map((l) => (
             <button
@@ -225,15 +211,12 @@ export default function Topbar(p: TopbarProps) {
           ))}
         </div>
 
-        {/* Light / Dark rejim */}
         <ThemeToggle locale={p.locale} />
 
-        {/* 7) Butun ekran */}
         <button onClick={toggleFs} className={cn(iconBtn, "hidden sm:flex")} title={t("top.fullscreen")}>
           <Icon name="expand" className="h-5 w-5" />
         </button>
 
-        {/* 8) Kalendar */}
         <div className="relative hidden sm:block">
           <button onClick={() => toggle("calendar")} className={iconBtn} title={t("top.calendar")}>
             <Icon name="calendar" className="h-5 w-5" />
@@ -268,7 +251,6 @@ export default function Topbar(p: TopbarProps) {
           )}
         </div>
 
-        {/* 9) Video qo'llanmalar — Telegram kanal (@GermaniyaLiveEdu) */}
         <div className="hidden sm:block">
           <a
             href="https://t.me/GermaniyaLiveEdu"
@@ -281,7 +263,6 @@ export default function Topbar(p: TopbarProps) {
           </a>
         </div>
 
-        {/* 10) Bildirishnoma */}
         <Link href="/notifications" className={iconBtn} title={t("nav.notifications")}>
           <Icon name="bell" className="h-5 w-5" />
           {p.unreadCount > 0 && (
@@ -291,7 +272,6 @@ export default function Topbar(p: TopbarProps) {
           )}
         </Link>
 
-        {/* 11) Avatar */}
         <div className="relative">
           <button onClick={() => toggle("user")} className="flex items-center gap-2 rounded-lg py-1 pl-1 pr-2 transition hover:bg-slate-100 dark:hover:bg-slate-800">
             <UserAvatar name={p.user.fullName} imageUrl={p.user.imageUrl} role={p.user.role} size="sm" className="!h-8 !w-8 !rounded-full" />
@@ -310,11 +290,9 @@ export default function Topbar(p: TopbarProps) {
                 <Icon name="user" className="h-4 w-4 text-slate-400" />
                 {tr(p.locale, { uz: "Mening profilim", ru: "Мой профиль", en: "My profile", de: "Mein Profil" })}
               </Link>
-              {/* Kichik ekranda valyuta kursi navbarga sig'maydi — menyuda ko'rsatamiz */}
               <div className="xl:hidden">
                 <CurrencyRates locale={p.locale} variant="menu" />
               </div>
-              {/* Mobil uchun til */}
               <div className="flex gap-1 border-b border-slate-100 px-3 py-2 sm:hidden">
                 {LOCALES.map((l) => (
                   <button
@@ -340,7 +318,6 @@ export default function Topbar(p: TopbarProps) {
         </div>
       </header>
 
-      {/* Modallar */}
       {modal === "student" && <QuickStudentModal locale={p.locale} groups={p.groups} onClose={() => setModal(null)} />}
       {modal === "payment" && (
         <QuickPaymentModal locale={p.locale} students={p.students} onClose={() => setModal(null)} />
@@ -348,8 +325,6 @@ export default function Topbar(p: TopbarProps) {
     </>
   );
 }
-
-// ─────────── Yordamchi komponentlar ───────────
 
 
 function Panel({ children, className }: { children: React.ReactNode; className?: string }) {
@@ -440,13 +415,10 @@ function SearchBox({ locale, placeholder, noResults }: { locale: Locale; placeho
   );
 }
 
-// Navbardagi tezkor oynalar (yangi talaba / yangi to'lov) — ilovadagi boshqa
-// panellar kabi O'NGDAN sirg'alib chiqadi.
 function ModalShell({ title, onClose, children }: { title: string; onClose: () => void; children: React.ReactNode }) {
   const [mounted, setMounted] = useState(false);
   useEffect(() => setMounted(true), []);
 
-  // Escape bilan yopish + fon scroll'ini bloklash (boshqa drawer'lar kabi)
   useEffect(() => {
     const onKey = (e: KeyboardEvent) => { if (e.key === "Escape") onClose(); };
     document.addEventListener("keydown", onKey);
@@ -526,7 +498,6 @@ function QuickStudentModal({ locale, groups, onClose }: { locale: Locale; groups
           </div>
         </div>
 
-        {/* Guruhga yo'naltirish — tanlansa talaba darhol guruhga biriktiriladi */}
         <div>
           <label className={lbl}>{T("Guruhga yo'naltirish", "Направить в группу", "Assign to a group", "Einer Gruppe zuweisen")}</label>
           <select name="groupId" className="input" defaultValue="">

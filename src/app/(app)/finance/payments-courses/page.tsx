@@ -8,8 +8,6 @@ import LicenseBanner from "../../_components/LicenseBanner";
 import { groupAtDate, monthRange } from "../_components/attribution";
 import CoursePaymentsView, { type VCourseRow } from "./CoursePaymentsView";
 
-// "Kurslar bo'yicha to'lovlar" — davr ichidagi PAID to'lovlar kurslar (Program) kesimida.
-// Kurs o'quvchining to'lov sanasidagi guruhi orqali aniqlanadi.
 export default async function PaymentsByCoursesPage({ searchParams }: { searchParams: Promise<{ from?: string; to?: string }> }) {
   const s = await requireSession();
   if (!canRead(s.role, MODULES.PAYMENTS)) {

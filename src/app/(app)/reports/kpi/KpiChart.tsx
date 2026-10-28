@@ -4,12 +4,9 @@ import type { Locale } from "@/lib/constants";
 import { tr } from "@/lib/tr";
 import { firstName, type VKpiRow } from "./KpiShared";
 
-// Eski loyihadagi recharts BarChart o'rniga — inline SVG (recharts o'rnatilmagan).
-// Ikki qator: KPI % (ko'k) va Konversiya % (yashil), 0..100 shkala.
 const KPI_FILL = "#3b82f6";
 const CONV_FILL = "#10b981";
 
-/** Faqat yuqori burchaklari yumaloq ustun (recharts radius=[6,6,0,0] kabi). */
 function bar(x: number, y: number, w: number, h: number, r = 4): string {
   const rr = Math.max(0, Math.min(r, w / 2, h));
   return `M${x},${y + h} L${x},${y + rr} Q${x},${y} ${x + rr},${y} L${x + w - rr},${y} Q${x + w},${y} ${x + w},${y + rr} L${x + w},${y + h} Z`;
@@ -35,7 +32,6 @@ export default function KpiChart({ rows, locale }: { rows: VKpiRow[]; locale: Lo
   const plotW = W - padL - padR;
   const plotH = H - padT - padB;
   const colW = plotW / rows.length;
-  // Ikki ustun orasida 2px bo'shliq, guruhlar orasida esa kengroq oraliq qoladi.
   const bw = Math.max(6, Math.min(22, colW * 0.28));
   const gap = 3;
   const y = (v: number) => padT + plotH - (Math.max(0, Math.min(100, v)) / 100) * plotH;
@@ -43,7 +39,6 @@ export default function KpiChart({ rows, locale }: { rows: VKpiRow[]; locale: Lo
   return (
     <div>
       <svg viewBox={`0 0 ${W} ${H}`} className="h-[260px] w-full" role="img" aria-label={`${t.kpi} / ${t.conv}`}>
-        {/* To'r chiziqlari */}
         {[0, 25, 50, 75, 100].map((g) => (
           <g key={g}>
             <line

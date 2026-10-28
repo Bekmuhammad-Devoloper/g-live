@@ -1,13 +1,4 @@
 #!/usr/bin/env bash
-# ═══════════════════════════════════════════════════════════════════════════
-# AQLLI TAQSIMOT — bitta trunk (2277), ikki tizim teng.  sudo bash apply.sh
-#   1) zaxira → /root/asterisk-backup-<vaqt>/
-#   2) eski Asterisk: gl-newast ko'prik (#include), from-trunk-smart + from-glive (#include),
-#      [from-trunk] boshiga Gosub(gl-smart-route), route-lookup URL, navbat yozuvi → RECORD_FILE
-#   3) glive: gl-oldast (#include), TRUNK=gl-oldast, provayder registratsiyasi yo'qligini tekshiradi
-#   4) reload + holat
-# QAYTARISH: sudo bash rollback.sh
-# ═══════════════════════════════════════════════════════════════════════════
 set -euo pipefail
 HERE="$(cd "$(dirname "$0")" && pwd)"
 OLD=/etc/asterisk; GL=/etc/asterisk-glive
@@ -18,7 +9,6 @@ say(){ printf '\n\033[1;36m▶ %s\033[0m\n' "$*"; }; ok(){ printf '\033[1;32m✓
 
 say "Zaxira → $BK"; mkdir -p "$BK"; cp -a "$OLD" "$BK/asterisk"; cp -a "$GL" "$BK/asterisk-glive"; ok "olindi"
 
-# Qoldiqlar (dual-trunk yoki avgust) bo'lsa — to'xtaymiz
 for sec in gl2022-registration gl-newast gl-newast-aor gl-newast-identify; do
   grep -q "^\[$sec\]" "$OLD/pjsip.conf" && { warn "eski pjsip.conf da [$sec] bor — avval olib tashlang"; DUP=1; }
 done
@@ -33,16 +23,12 @@ install -m 0644 "$HERE/old-extensions-smart.conf" "$OLD/gl-smart/extensions-smar
 install -m 0644 "$HERE/old-pjsip-2022-outbound.conf" "$OLD/gl-smart/pjsip-2022-outbound.conf"
 grep -q '^#include gl-smart/pjsip-2022-outbound.conf' "$OLD/pjsip.conf"   || printf '
 ; GL-EDU: 2022 faqat chiquvchi, registratsiyasiz (deploy/asterisk/smart-routing)
-#include gl-smart/pjsip-2022-outbound.conf
 ' >> "$OLD/pjsip.conf"
 grep -q '^#include gl-smart/pjsip-bridge.conf' "$OLD/pjsip.conf" \
   || printf '\n; GL-EDU: glive ko\x27prigi (deploy/asterisk/smart-routing)\n#include gl-smart/pjsip-bridge.conf\n' >> "$OLD/pjsip.conf"
 grep -q '^#include gl-smart/extensions-smart.conf' "$OLD/extensions.conf" \
   || printf '\n; GL-EDU: aqlli taqsimot (deploy/asterisk/smart-routing)\n#include gl-smart/extensions-smart.conf\n' >> "$OLD/extensions.conf"
 
-# Imkon CRM kiruvchini Newchannel Context == "from-trunk" bo'lsa hisobga oladi — endpoint
-# konteksti O'ZGARMAYDI. Aqlli taqsimot [from-trunk] boshida Gosub(gl-smart-route) orqali.
-# Qo'shimcha: route-lookup URL (/api/v1/...) va navbat yozuvini RECORD_FILE ga bog'lash.
 python3 - "$OLD/extensions.conf" <<'PY'
 import sys
 p=sys.argv[1]; s=open(p).read()

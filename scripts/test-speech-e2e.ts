@@ -1,16 +1,3 @@
-// Yopiq tanlovli Gemini baholashini HAQIQIY audio bilan sinaydi.
-//
-//   GEMINI_API_KEY=... npx tsx scripts/test-speech-e2e.ts
-//
-// Eng muhim savol: model O'YLAB TOPMAYAPTIMI? Ochiq transkripsiyada u
-// jimlikka "Guten Tag", ohangga "Hund" degan edi. Bu yerda:
-//   · jimlik / ohang / shovqin → speech=false yoki chosen="" bo'lishi SHART
-//   · haqiqiy nutq (Gemini TTS) "die Katze" → chosen="die Katze"
-//   · haqiqiy nutq "die Katze", lekin ro'yxatda Katze YO'Q → chosen=""
-//
-// Tashqi xizmatga murojaat qiladi (kvota sarflaydi) — build zanjirida
-// EMAS, talaffuz mantig'i o'zgarganda qo'lda ishga tushiriladi.
-
 import { recognizeWord } from "../src/lib/transcribe";
 import { wavHasVoice } from "../src/lib/voiceGate";
 
@@ -56,16 +43,11 @@ type Case = {
   list: string[];
   wantChosen: string;
   wantSpeech?: boolean;
-  /** Ovoz darvozasi (wavHasVoice) shu yozuvni to'sishi KERAKmi */
   wantGated?: boolean;
 };
 
 const CASES: Case[] = [
-  // Jimlik modelga yetib bormasligi kerak — darvoza to'ssin. (Model esa
-  // jimlikka "das Fenster, 95%" degan — shuning uchun darvoza zarur.)
   { name: "jimlik", audio: async () => synth(2, () => 0), list: LESSON, wantChosen: "", wantGated: true },
-  // Ohang va shovqin ham darvozada to'silishi kerak: ZCR tarqalishi nutqdagidek
-  // emas. (Model ohangga "der Tisch, 100%" degan edi.)
   { name: "ohang 440Hz", audio: async () => synth(2, (i) => 9000 * Math.sin(2 * Math.PI * 440 * i / 16000)), list: LESSON, wantChosen: "", wantGated: true },
   { name: "shovqin", audio: async () => synth(2, () => (Math.random() * 2 - 1) * 3000), list: LESSON, wantChosen: "", wantGated: true },
   { name: 'nutq "die Katze"', audio: () => speak("die Katze"), list: LESSON, wantChosen: "die Katze" },
@@ -79,7 +61,6 @@ async function main() {
     const a = await c.audio();
     if (!a) { console.log("audio yo'q, o'tkazib yuborildi"); skipped++; continue; }
 
-    // Haqiqiy quvur: avval ovoz darvozasi, keyin model
     const gated = !wavHasVoice(a);
     if (c.wantGated !== undefined) {
       const pass = gated === c.wantGated;

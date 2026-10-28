@@ -10,11 +10,9 @@ import { fill, LT, S } from "../_i18n";
 
 export type Res = { ok?: boolean; error?: string };
 
-// Sovg'ani tangaga sotib olish. Balans va zaxira shu yerda tekshiriladi —
-// mijoz tomonidagi tekshiruvga ishonib bo'lmaydi.
 export async function buyItem(itemId: string): Promise<Res> {
   const s = await requireSession();
-  const t = S(s.locale); // xato xabarlari o'quvchi tilida
+  const t = S(s.locale);
   if (s.role !== ROLES.STUDENT) return { error: t.forbidden };
 
   const student = await prisma.student.findUnique({
@@ -46,7 +44,6 @@ export async function buyItem(itemId: string): Promise<Res> {
     });
   });
 
-  // Ma'muriyat sovg'ani topshirishi kerak — xabar beramiz
   const staff = await prisma.user.findMany({
     where: {
       isActive: true,
@@ -55,7 +52,6 @@ export async function buyItem(itemId: string): Promise<Res> {
     },
     select: { id: true },
   });
-  // Har xodimga o'z tilida (notifyMany oluvchi tilini o'zi tanlaydi)
   await notifyMany(
     staff.map((u) => u.id),
     {

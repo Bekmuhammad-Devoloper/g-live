@@ -1,27 +1,17 @@
-// "Ikkinchi miya" matnini tahlil qilish — Obsidian sintaksisi.
-//
-// Bu fayl ATAYLAB toza: prisma/server importi yo'q, shuning uchun uni
-// server sahifa ham, client komponent ham (tahrirlagich, graf) ishlatadi.
-
-/** Yozuv turlari — grafda rang va ikonka shu bo'yicha beriladi. */
 export const NOTE_KINDS = ["NOTE", "IDEA", "GOAL", "BOOK", "PERSON", "DAILY"] as const;
 export type NoteKind = (typeof NOTE_KINDS)[number];
 
 export const KIND_COLOR: Record<string, string> = {
-  NOTE: "#0e7490",   // feruza — oddiy yozuv
-  IDEA: "#f59e0b",   // sariq — g'oya
-  GOAL: "#10b981",   // yashil — maqsad
-  BOOK: "#8b5cf6",   // binafsha — kitob/manba
-  PERSON: "#ec4899", // pushti — inson
-  DAILY: "#3b82f6",  // ko'k — kundalik
+  NOTE: "#0e7490",
+  IDEA: "#f59e0b",
+  GOAL: "#10b981",
+  BOOK: "#8b5cf6",
+  PERSON: "#ec4899",
+  DAILY: "#3b82f6",
 };
 
 export const kindColor = (k: string) => KIND_COLOR[k] ?? KIND_COLOR.NOTE;
 
-/**
- * Matndagi [[Havolalar]]ni topadi.
- * `[[Sarlavha|ko'rinadigan matn]]` shakli ham qo'llanadi (Obsidian kabi).
- */
 export function parseLinks(content: string): string[] {
   const out: string[] = [];
   const seen = new Set<string>();
@@ -38,11 +28,6 @@ export function parseLinks(content: string): string[] {
   return out;
 }
 
-/**
- * Matndagi #teglarni topadi.
- * Faqat qator boshi yoki bo'shliqdan keyingi # hisoblanadi — shunda
- * "C#" yoki "https://x/#y" kabi joylar teg bo'lib qolmaydi.
- */
 export function parseTags(content: string): string[] {
   const out: string[] = [];
   const seen = new Set<string>();
@@ -58,7 +43,6 @@ export function parseTags(content: string): string[] {
   return out;
 }
 
-/** Vergul bilan yozilgan teglar maydonini ro'yxatga aylantiradi. */
 export function splitTags(raw: string | null | undefined): string[] {
   return (raw ?? "")
     .split(",")
@@ -66,7 +50,6 @@ export function splitTags(raw: string | null | undefined): string[] {
     .filter(Boolean);
 }
 
-/** Yozuvning barcha teglari: alohida maydon + matndan yig'ilganlari. */
 export function allTags(note: { tags?: string | null; content: string }): string[] {
   const out: string[] = [];
   const seen = new Set<string>();
@@ -79,7 +62,6 @@ export function allTags(note: { tags?: string | null; content: string }): string
   return out;
 }
 
-/** Sarlavhani havola uchun solishtirish kaliti (registr va bo'shliqqa bog'liq emas). */
 export const linkKey = (title: string) => title.trim().toLowerCase().replace(/\s+/g, " ");
 
 export interface GraphNote {
@@ -94,11 +76,6 @@ export interface BuiltGraph {
   links: { source: string; target: string }[];
 }
 
-/**
- * Yozuvlar ro'yxatidan graf quradi.
- * Hali yaratilmagan sarlavhaga havola ham tugun bo'ladi ("missing") —
- * Obsidian'da ham shunday: bosilganda o'sha nomdagi yozuv yaratiladi.
- */
 export function buildGraph(notes: GraphNote[]): BuiltGraph {
   const byKey = new Map<string, GraphNote>();
   for (const n of notes) byKey.set(linkKey(n.title), n);
@@ -113,9 +90,8 @@ export function buildGraph(notes: GraphNote[]): BuiltGraph {
     for (const raw of parseLinks(n.content)) {
       const key = linkKey(raw);
       const target = byKey.get(key);
-      // Mavjud bo'lmagan sarlavha — "yo'q" tugun (id sifatida kalitning o'zi)
       const targetId = target ? target.id : `missing:${key}`;
-      if (targetId === n.id) continue; // o'ziga havola hisobga olinmaydi
+      if (targetId === n.id) continue;
       if (!target && !nodes.has(targetId)) {
         nodes.set(targetId, { id: targetId, title: raw, kind: "NOTE", deg: 0, missing: true });
       }
@@ -133,7 +109,6 @@ export function buildGraph(notes: GraphNote[]): BuiltGraph {
   return { nodes: [...nodes.values()], links };
 }
 
-/** Ushbu yozuvga havola qilgan yozuvlar (backlinks). */
 export function backlinksOf(target: { id: string; title: string }, notes: GraphNote[]) {
   const key = linkKey(target.title);
   return notes.filter((n) => n.id !== target.id && parseLinks(n.content).some((l) => linkKey(l) === key));

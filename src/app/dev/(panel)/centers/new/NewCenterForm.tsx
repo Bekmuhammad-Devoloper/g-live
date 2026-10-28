@@ -23,7 +23,6 @@ export default function NewCenterForm({ baseDomain, modules }: { baseDomain: str
     months: 1, plan: "Standart", contactName: "", contactPhone: "", notes: "",
   });
   const [slugTouched, setSlugTouched] = useState(false);
-  // Telefoniya alohida trunk talab qiladi — standart holatda o'chiq
   const [mods, setMods] = useState<Set<string>>(new Set(modules.map((m) => m.key).filter((k) => k !== "telephony")));
   const [pending, start] = useTransition();
   const [res, setRes] = useState<CreateResult | null>(null);

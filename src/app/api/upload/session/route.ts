@@ -6,15 +6,6 @@ import { canEditLessons } from "@/lib/lessonAccess";
 
 export const runtime = "nodejs";
 
-// Bo'lakli yuklashni boshlash: mijoz fayl haqida aytadi, biz seans ochamiz
-// (yoki xuddi shu fayl uchun mavjudini qaytaramiz). Keyin bo'laklar
-// /api/upload/session/<id>?i=N ga PUT bilan keladi.
-//
-//   POST { name, type, size, chunkSize?, fp? }
-//     → { id, chunkSize, chunks, received: number[], completed?: { url } }
-
-/** Tana chegarasi: bu JSON bir necha yuz bayt — nginx 5g ruxsat bersa ham
- *  xotiraga chegarasiz o'qimaymiz (req.json() butun tanani yig'ib olardi) */
 const MAX_JSON_BYTES = 4 * 1024;
 
 async function readJsonCapped(req: NextRequest): Promise<unknown> {
@@ -47,7 +38,6 @@ export async function POST(req: NextRequest) {
   } catch {
     return NextResponse.json({ error: "unauthorized" }, { status: 401 });
   }
-  // Bo'lakli yuklash faqat dars fayllari (video darslik) uchun ishlatiladi
   if (!canEditLessons(s.role)) return NextResponse.json({ error: "forbidden" }, { status: 403 });
 
   const body = (await readJsonCapped(req)) as { name?: unknown; type?: unknown; size?: unknown; chunkSize?: unknown; fp?: unknown } | null;
@@ -57,8 +47,6 @@ export async function POST(req: NextRequest) {
   if (!Number.isFinite(size) || size <= 0) return NextResponse.json({ error: "invalid" }, { status: 400 });
   if (size > MAX_UPLOAD_BYTES) return NextResponse.json({ error: "too_large", maxMb: MAX_UPLOAD_MB }, { status: 413 });
 
-  // Mijoz taklif qilgan bo'lak hajmi (tarmog'iga qarab) chegarada bo'lsa
-  // qabul, aks holda hajmga qarab o'zimiz tanlaymiz
   const wanted = Number(body.chunkSize);
   const chunkSize = Number.isFinite(wanted) && wanted >= MIN_CHUNK_BYTES && wanted <= MAX_CHUNK_BYTES ? Math.floor(wanted) : chunkSizeFor(size);
 

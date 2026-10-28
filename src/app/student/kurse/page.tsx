@@ -12,10 +12,6 @@ import { getActiveLevels, levelTitle, matchLevel } from "@/lib/studyLevels";
 import { levelGradient } from "@/lib/levelColor";
 import { getStudentProgress } from "@/lib/studentProgress";
 
-// "Kurse" — umumiy darajalar ro'yxati (A1 · A2 · B1 · B2 · C1 · C2).
-// Har daraja kartasi: nom, darslar soni, o'tilgan foiz.
-// Darajaga bosilsa — o'sha darajaning unitlari ochiladi (maket ko'rinishida).
-
 function IcoChevron({ s = 20 }: { s?: number }) {
   return (
     <svg width={s} height={s} viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="2.4" strokeLinecap="round" strokeLinejoin="round">
@@ -24,7 +20,6 @@ function IcoChevron({ s = 20 }: { s?: number }) {
   );
 }
 
-// Tog' siluetti — karta foniga hajm beradi (maketdagidek)
 function Mountains() {
   return (
     <svg viewBox="0 0 340 90" preserveAspectRatio="none" className="absolute inset-x-0 bottom-0 h-[64%] w-full opacity-[0.28]">
@@ -38,7 +33,6 @@ export default async function StudentKursePage() {
   const session = await getSession();
   if (!session) redirect("/login");
   const t = S(session.locale);
-  // Sarlavhadagi tugmalar o'chirilgan bo'limga olib bormasin
   const flags = await getPortalFlags();
 
   const student = await prisma.student.findUnique({
@@ -57,13 +51,8 @@ export default async function StudentKursePage() {
 
   const group = student.enrollments[0]?.group ?? null;
 
-  // Jarayon YAGONA joyda hisoblanadi (src/lib/studentProgress.ts): o'qituvchi
-  // o'tgani + o'quvchi ko'rgani + topshirgani. Ilgari bu yerda faqat
-  // "o'qituvchi o'tdi" sanalardi, shu sabab darslarni ko'rib chiqqan
-  // o'quvchida ham 0% turardi.
   const [levels, prog] = await Promise.all([getActiveLevels(), getStudentProgress(student.id, group)]);
 
-  // Darajaga biriktirilmagan darslar guruhning o'z darajasiga (yoki birinchisiga) qo'shiladi
   const fallback = matchLevel(group?.levelCode ?? student.currentLevel, levels) ?? levels[0] ?? null;
   const byLevel = new Map<string, { total: number; done: number; sum: number }>();
   for (const l of levels) byLevel.set(l.code, { total: 0, done: 0, sum: 0 });
@@ -87,10 +76,8 @@ export default async function StudentKursePage() {
         {levels.map((lvl) => {
           const code = lvl.code;
           const st = byLevel.get(code)!;
-          // Foiz — darslarning O'RTACHA to'lishi (faqat tugallanganlar emas)
           const pct = st.total ? Math.round(st.sum / st.total) : 0;
           const active = code === currentLevel;
-          // Ma'muriyat banner yuklagan bo'lsa — kartochka foni o'sha rasm
           const banner = lvl.bannerUrl;
           return (
             <Link
@@ -99,10 +86,6 @@ export default async function StudentKursePage() {
               className="relative block overflow-hidden rounded-[26px] text-white shadow-[0_14px_30px_rgba(19,78,94,0.22)]"
               style={{ background: levelGradient(lvl.color) }}
             >
-              {/* Banner — TO'LIQ ko'rinadi (qirqilmaydi) va atrofida darajaning
-                  o'z rangidan ramka qoladi: rasm chetdan bir oz ichkarida
-                  turadi, kartochka gradienti ramka bo'lib ko'rinadi.
-                  object-cover EMAS — aks holda rasmning usti-osti kesilardi. */}
               {banner ? (
                 <div className="px-2.5 pt-2.5">
                   {/* eslint-disable-next-line @next/next/no-img-element */}
@@ -116,13 +99,11 @@ export default async function StudentKursePage() {
               )}>
               {banner ? null : <Mountains />}
               <div className="relative flex items-start gap-3">
-                {/* daraja belgisi */}
                 <span className="grid h-[46px] w-[46px] shrink-0 place-items-center rounded-xl bg-white/20 text-[16px] font-extrabold backdrop-blur-sm">
                   {code}
                 </span>
                 <div className="min-w-0 flex-1">
                   <div className="flex items-center gap-2">
-                    {/* Qo'lda yozilgan shrift (Caveat). Kesilmasin: eng ko'pi 2 qator. */}
                     <span className="font-hand line-clamp-2 text-[22px] font-bold leading-[1.08]">
                       {levelTitle(lvl, session.locale)}
                     </span>
@@ -139,7 +120,6 @@ export default async function StudentKursePage() {
                 <span className="mt-1 shrink-0"><IcoChevron /></span>
               </div>
 
-              {/* jarayon chizig'i */}
               <div className="relative mt-3 flex items-center gap-2.5">
                 <div className="h-[7px] flex-1 overflow-hidden rounded-full bg-white/25">
                   <div className="h-full rounded-full bg-white" style={{ width: `${pct}%` }} />

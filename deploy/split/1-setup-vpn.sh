@@ -1,17 +1,4 @@
 #!/usr/bin/env bash
-# ════════════════════════════════════════════════════════════════════
-# 1-BOSQICH: WireGuard VPN (A ↔ B)
-#
-# A = 89.126.208.123 (telefoniya, Asterisk) → VPN IP 10.99.0.1
-# B = ilova serveri                          → VPN IP 10.99.0.2
-#
-# Ishlatish:
-#   A serverda:  sudo bash 1-setup-vpn.sh a  <B_PUBLIC_IP>
-#   B serverda:  sudo bash 1-setup-vpn.sh b  89.126.208.123
-#
-# Har ikki tomonda ishga tushirilgach, kalitlar almashtiriladi (skript
-# ko'rsatma beradi). Eski Asterisk/CRM bu tunnelni umuman ko'rmaydi.
-# ════════════════════════════════════════════════════════════════════
 set -euo pipefail
 
 ROLE="${1:?a yoki b}"; PEER_IP="${2:?peer public IP}"
@@ -29,7 +16,6 @@ MYPRIV=$(cat $DIR/priv.key); MYPUB=$(cat $DIR/pub.key)
 
 if [ "$ROLE" = "a" ]; then MYIP=$VPN_A; PEERVPN=$VPN_B; else MYIP=$VPN_B; PEERVPN=$VPN_A; fi
 
-# Peer kalitini kutamiz (ikkinchi ishga tushirishda beriladi)
 PEERPUB="${3:-PEER_PUBLIC_KEY_KEYINROQ}"
 
 cat > $DIR/gl.conf <<EOF

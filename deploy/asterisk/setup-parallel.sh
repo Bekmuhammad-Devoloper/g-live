@@ -1,10 +1,4 @@
 #!/usr/bin/env bash
-# ════════════════════════════════════════════════════════════════════
-# GL-EDU — IKKINCHI (parallel) Asterisk nusxasi
-# Eski ishlayotgan tizimga (trunk 550552277, /etc/asterisk, 5060/5038/8088)
-# UMUMAN TEGMAYDI. Hammasi alohida port/papka/servisda.
-#   sudo bash setup-parallel.sh
-# ════════════════════════════════════════════════════════════════════
 set -euo pipefail
 
 TAG="glive"

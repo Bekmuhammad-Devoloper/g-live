@@ -1,7 +1,6 @@
 import Link from "next/link";
 import { TEAL } from "../_ui";
 
-// Sarlavhadagi graf tugmasi — bog'lanishlar xaritasini ochadi.
 export default function GraphButton({ title }: { title: string }) {
   return (
     <Link

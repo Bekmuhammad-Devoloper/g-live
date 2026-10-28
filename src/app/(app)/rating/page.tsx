@@ -21,10 +21,8 @@ export default async function RatingPage() {
     );
   }
 
-  // O'qituvchi faqat o'z guruhlaridagi o'quvchilarni ko'radi
   let where: Prisma.StudentWhereInput = {};
   if (s.role === ROLES.TEACHER) where = { enrollments: { some: { group: { teacherId: s.userId } } } };
-  // faol filial doirasida
   where = { AND: [where, branchWhere(s)] };
 
   const students = await prisma.student.findMany({

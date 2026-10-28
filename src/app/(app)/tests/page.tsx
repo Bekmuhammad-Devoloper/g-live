@@ -21,9 +21,8 @@ export default async function TestsPage() {
   }
 
   const [blockTests, testTypes, staff, groups, programs] = await Promise.all([
-    prisma.blockTest.findMany({ where: branchWhere(s), orderBy: { createdAt: "desc" } }), // faol filial testlari
+    prisma.blockTest.findMany({ where: branchWhere(s), orderBy: { createdAt: "desc" } }),
     prisma.testType.findMany({ orderBy: { createdAt: "desc" } }),
-    // xodimlar va guruhlar — faol filial doirasida
     prisma.user.findMany({ where: { AND: [{ role: { notIn: [ROLES.STUDENT, ROLES.PARENT] }, isActive: true }, staffBranchWhere(s)] }, select: { id: true, fullName: true }, orderBy: { fullName: "asc" } }),
     prisma.group.findMany({ where: branchWhere(s), select: { id: true, name: true }, orderBy: { name: "asc" } }),
     prisma.program.findMany({ where: { isActive: true }, select: { id: true, name: true }, orderBy: { name: "asc" } }),

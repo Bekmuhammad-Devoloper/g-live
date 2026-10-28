@@ -17,7 +17,7 @@ import PieChart from "../_components/PieChart";
 
 export interface VExpense {
   id: string;
-  date: string; // ISO
+  date: string;
   categoryId: string | null;
   category: string | null;
   name: string;
@@ -26,7 +26,7 @@ export interface VExpense {
   amount: number;
   author: string | null;
   note: string | null;
-  createdAt: string; // ISO
+  createdAt: string;
 }
 
 type L = { uz: string; ru: string; en: string; de: string };
@@ -78,7 +78,6 @@ const fmtDateTime = (iso: string) => {
   return `${p2(d.getDate())}.${p2(d.getMonth() + 1)}.${d.getFullYear()} ${p2(d.getHours())}:${p2(d.getMinutes())}`;
 };
 
-// "YYYY-MM" oylar ketma-ketligi (ikkala chegara ham kiradi)
 function monthRange(fromYm: string, toYm: string, cap = 60): string[] {
   let [y, m] = fromYm.split("-").map(Number);
   const [ty, tm] = toYm.split("-").map(Number);
@@ -96,7 +95,6 @@ const shiftMonth = (ym: string, delta: number) => {
   return `${d.getFullYear()}-${p2(d.getMonth() + 1)}`;
 };
 
-// Excel (.xlsx) eksport — "xlsx" kutubxonasi faqat bosilganda yuklanadi
 async function downloadXlsx(filename: string, sheet: string, rows: (string | number)[][]) {
   const XLSX = await import("xlsx");
   const ws = XLSX.utils.aoa_to_sheet(rows);
@@ -117,7 +115,6 @@ export default function ExpensesView({ expenses, categories, staff, writable, lo
   const [page, setPage] = useState(1);
   const [editing, setEditing] = useState<VExpense | null>(null);
 
-  // Ko'rinadigan filtrlar — brauzerda eslab qolinadi
   const [shown, setShown] = useState<FilterKey[]>(FILTER_KEYS);
   const [filtersOpen, setFiltersOpen] = useState(false);
   useEffect(() => {
@@ -127,17 +124,15 @@ export default function ExpensesView({ expenses, categories, staff, writable, lo
         const arr = JSON.parse(raw);
         if (Array.isArray(arr)) setShown(FILTER_KEYS.filter((k) => arr.includes(k)));
       }
-    } catch { /* localStorage mavjud emas */ }
+    } catch { }
   }, []);
   const toggleFilter = (k: FilterKey) => {
     const next = shown.includes(k) ? shown.filter((x) => x !== k) : FILTER_KEYS.filter((x) => x === k || shown.includes(x));
     setShown(next);
-    // yashirilgan filtr qiymati ham tozalanadi
     if (!next.includes(k)) ({ name: setName, cat: setCat, recipient: setRecipient, method: setMethod, staff: setStaffF })[k]("");
-    try { localStorage.setItem(FILTERS_KEY, JSON.stringify(next)); } catch { /* e'tiborsiz */ }
+    try { localStorage.setItem(FILTERS_KEY, JSON.stringify(next)); } catch { }
   };
 
-  // Sanadan tashqari filtrlar (oylik grafik o'z oralig'ini oladi)
   const baseFiltered = useMemo(() => {
     const n = name.trim().toLowerCase();
     const r = recipient.trim().toLowerCase();
@@ -162,7 +157,6 @@ export default function ExpensesView({ expenses, categories, staff, writable, lo
 
   const total = filtered.reduce((n, e) => n + e.amount, 0);
 
-  // Oylik ustunli grafik: standart oraliqda oxirgi 12 oy, aks holda filtr oralig'i
   const bars = useMemo(() => {
     const isDefault = from === defaultFrom && to === defaultTo;
     const endYm = (to || defaultTo).slice(0, 7);
@@ -182,7 +176,6 @@ export default function ExpensesView({ expenses, categories, staff, writable, lo
     });
   }, [baseFiltered, filtered, from, to, defaultFrom, defaultTo, locale]);
 
-  // Kategoriya bo'yicha doiraviy grafik
   const pie = useMemo(() => {
     const none = tr(locale, { uz: "Kategoriyasiz", ru: "Без категории", en: "Uncategorized", de: "Ohne Kategorie" });
     const m = new Map<string, number>();
@@ -213,7 +206,6 @@ export default function ExpensesView({ expenses, categories, staff, writable, lo
       <h1 className="text-[24px] font-bold tracking-tight text-slate-900 dark:text-slate-100">{tr(locale, { uz: "Xarajatlar", ru: "Расходы", en: "Expenses", de: "Ausgaben" })}</h1>
 
       <div className="grid gap-4 lg:grid-cols-[1fr_minmax(0,380px)]">
-        {/* Chap: statistika + grafiklar */}
         <div className="min-w-0 space-y-4">
           <div className="rounded-2xl border border-l-4 border-slate-300 border-l-brand-600 bg-white p-5 shadow-card dark:border-slate-600 dark:border-l-brand-500 dark:bg-slate-900">
             <div className="flex items-start justify-between gap-3">
@@ -240,11 +232,9 @@ export default function ExpensesView({ expenses, categories, staff, writable, lo
           </div>
         </div>
 
-        {/* O'ng: yangi xarajat formasi */}
         {writable && <NewExpense categories={categories} today={today} locale={locale} />}
       </div>
 
-      {/* Filtrlar */}
       <div className="space-y-2">
         <div className="relative flex justify-end">
           <button onClick={() => setFiltersOpen((v) => !v)}
@@ -280,7 +270,6 @@ export default function ExpensesView({ expenses, categories, staff, writable, lo
         </div>
       </div>
 
-      {/* Jadval */}
       <div className="overflow-hidden rounded-2xl border border-slate-300 bg-white shadow-card dark:border-slate-600 dark:bg-slate-900">
         <div className="flex items-center justify-between border-b border-slate-200/70 px-5 py-3 dark:border-slate-800">
           <span className="text-sm text-slate-500">{tr(locale, { uz: "Jami", ru: "Всего", en: "Total", de: "Gesamt" })}: <b className="text-slate-800 dark:text-slate-100">{filtered.length}</b> {tr(locale, { uz: "ta", ru: "шт", en: "items", de: "St." })}</span>
@@ -336,7 +325,6 @@ export default function ExpensesView({ expenses, categories, staff, writable, lo
           </table>
         </div>
 
-        {/* Pastki qism: sahifalash + export + kategoriyalar */}
         <div className="flex flex-wrap items-center justify-between gap-3 border-t border-slate-200/70 px-5 py-4 dark:border-slate-800">
           <Pager page={cur} pages={pages} onPage={setPage} />
           <div className="flex items-center gap-3">
@@ -381,7 +369,6 @@ function Sel({ value, onChange, options, labels, locale }: { value: string; onCh
 
 function Pager({ page, pages, onPage }: { page: number; pages: number; onPage: (p: number) => void }) {
   if (pages <= 1) return <span />;
-  // joriy sahifa atrofidagi raqamlar
   const nums = [...new Set([1, page - 1, page, page + 1, pages].filter((n) => n >= 1 && n <= pages))].sort((a, b) => a - b);
   const btn = "grid h-9 min-w-9 place-items-center rounded-lg border px-2 text-sm transition disabled:opacity-40";
   return (
@@ -487,7 +474,6 @@ function NewExpense({ categories, today, locale }: { categories: { id: string; n
   const [formKey, setFormKey] = useState(0);
   const formRef = useRef<HTMLFormElement>(null);
 
-  // MoneyInput ichki holatini ham tozalash uchun forma qayta yaratiladi
   useEffect(() => { if (state.ok) { formRef.current?.reset(); setMethod("CASH"); setFormKey((k) => k + 1); } }, [state]);
 
   return (

@@ -9,22 +9,14 @@ import { Icon } from "./Icon";
 export interface GroupOpt {
   id: string;
   name: string;
-  /** Kurs nomi */
   program: string | null;
   level: string | null;
   students: number;
   capacity: number;
-  /** "Du, Chor, Ju · 18:00–19:30" — bo'lmasa null */
   schedule: string | null;
   teacher: string | null;
 }
 
-/**
- * O'quvchini bir guruhdan boshqasiga ko'chirish (tahrirlash oynasi ichida).
- * Guruhlar ro'yxati faqat blok ochilganda yuklanadi; hozirgi guruh(lar)
- * ro'yxatdan chiqarilgan. Eski guruhdagi a'zolik tugatiladi (leftAt), yangi
- * guruhga yoziladi — to'lov hisobi shu oydan yangi guruh bo'yicha yuritiladi.
- */
 export default function GroupMover({
   locale,
   currentGroups,
@@ -32,7 +24,6 @@ export default function GroupMover({
   onMove,
 }: {
   locale: Locale;
-  /** Hozirgi faol guruhlar */
   currentGroups: { id: string; name: string }[];
   loadGroups: () => Promise<GroupOpt[]>;
   onMove: (fromGroupId: string | null, toGroupId: string) => Promise<{ ok?: boolean; error?: string; groupName?: string }>;

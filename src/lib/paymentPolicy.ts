@@ -1,13 +1,10 @@
 import "server-only";
 import { prisma } from "./db";
 
-// To'lovsiz o'qish muddati (kun): oxirgi to'lovdan (to'lov bo'lmasa — guruhga
-// qo'shilgan kundan) shuncha kun o'tgach to'lov MAJBURIY bo'ladi (davomat bloklanadi).
 export const UNPAID_GRACE_DAYS = 30;
 
 const DAY_MS = 86_400_000;
 
-/** Oxirgi PAID to'lov sanasi va faol guruhga eng erta qo'shilgan sana bo'yicha to'lovsiz kunlar soni. */
 async function unpaidDaysMap(studentIds: string[], now = new Date()): Promise<Map<string, number>> {
   const out = new Map<string, number>();
   if (studentIds.length === 0) return out;
@@ -24,13 +21,11 @@ async function unpaidDaysMap(studentIds: string[], now = new Date()): Promise<Ma
   return out;
 }
 
-/** To'lov MAJBURIY holatga o'tganmi: oxirgi to'lovdan (yoki guruhga qo'shilgandan) UNPAID_GRACE_DAYS kun o'tgan. */
 export async function isPaymentMandatory(studentId: string): Promise<{ mandatory: boolean; daysUnpaid: number }> {
   const daysUnpaid = (await unpaidDaysMap([studentId])).get(studentId) ?? 0;
   return { mandatory: daysUnpaid >= UNPAID_GRACE_DAYS, daysUnpaid };
 }
 
-/** Bir nechta o'quvchi uchun bir martada (guruh davomati sahifasi uchun samaraliroq). */
 export async function isPaymentMandatoryBulk(studentIds: string[]): Promise<Map<string, { mandatory: boolean; daysUnpaid: number }>> {
   const days = await unpaidDaysMap(studentIds);
   const out = new Map<string, { mandatory: boolean; daysUnpaid: number }>();

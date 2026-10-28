@@ -18,12 +18,10 @@ export default async function GroupStudentsPage() {
     return <Forbidden title={tr(s.locale, { uz: "Kirish taqiqlangan", ru: "Доступ запрещён", en: "Access denied", de: "Zugriff verweigert" })} body={tr(s.locale, { uz: "Bu bo'lim xodimlar uchun.", ru: "Этот раздел только для сотрудников.", en: "This section is for staff only.", de: "Dieser Bereich ist nur für Mitarbeiter." })} />;
   }
 
-  // O'qituvchi faqat o'z guruhlaridagi o'quvchilarni ko'radi
   let where: Prisma.StudentWhereInput = {};
   if (s.role === ROLES.TEACHER) {
     where = { enrollments: { some: { group: { teacherId: s.userId } } } };
   }
-  // faol filial doirasida
   where = { AND: [where, branchWhere(s)] };
 
   const students = await prisma.student.findMany({

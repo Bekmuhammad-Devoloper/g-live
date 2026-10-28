@@ -2,15 +2,9 @@ import Link from "next/link";
 import type { StudentStrings } from "../_i18n";
 import { TEAL } from "../_ui";
 
-// Kurse sahifasi sarlavhasidagi ikki tugma: lug'at va ustozga yozish
-// (seriya/qo'ng'iroq o'rniga — bu yerda shular kerakroq).
-
-// Shisha tugma — PageHeader'dagi orqaga tugmasi bilan bir xil o'lchov va uslub
 const BTN =
   "gl-glass grid h-11 w-11 shrink-0 place-items-center rounded-full transition active:translate-y-[1px]";
 
-// O'chirilgan bo'lim tugmasi ko'rinmaydi — aks holda bosilganda sahifa
-// /student ga qaytarib yuboradi va "ochilmayapti" degan taassurot qoladi.
 export default function KurseActions({ t, showDict = true, showTeacher = true }: { t: StudentStrings; showDict?: boolean; showTeacher?: boolean }) {
   return (
     <div className="flex shrink-0 items-center gap-2">

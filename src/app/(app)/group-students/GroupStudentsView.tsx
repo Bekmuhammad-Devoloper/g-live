@@ -16,7 +16,7 @@ export interface VGroupStudent {
   eduStatus: string;
   groups: { id: string; name: string; status: string; note?: string | null }[];
   teachers: string[];
-  joinedAt: string; // YYYY-MM-DD yoki ""
+  joinedAt: string;
 }
 
 const STATUS_CLS: Record<string, string> = {
@@ -74,7 +74,6 @@ export default function GroupStudentsView({ locale, students, teacherNames }: { 
 
   return (
     <div className="space-y-3">
-      {/* Toolbar */}
       <div className="flex flex-wrap items-center gap-2">
         <button
           onClick={() => setFrozen((v) => !v)}
@@ -103,7 +102,6 @@ export default function GroupStudentsView({ locale, students, teacherNames }: { 
         </div>
       </div>
 
-      {/* Jadval */}
       <div className="overflow-hidden rounded-2xl border border-slate-200/70 bg-white shadow-card dark:border-slate-800 dark:bg-slate-900">
         <div className="flex items-center justify-end border-b border-slate-100 px-4 py-2 dark:border-slate-800">
           <span className="rounded-lg bg-slate-100 px-2.5 py-1 text-xs font-semibold text-slate-500 dark:bg-slate-800 dark:text-slate-300">{tr(locale, { uz: "Umumiy soni:", ru: "Всего:", en: "Total:", de: "Gesamt:" })} {filtered.length}</span>
@@ -138,7 +136,6 @@ export default function GroupStudentsView({ locale, students, teacherNames }: { 
                     <td className="px-4 py-3">
                       <div className="flex flex-wrap gap-1">
                         {st.groups.length === 0 ? <span className="text-xs text-slate-400">—</span> : st.groups.map((g) => (
-                          // title — guruh izohi (kament) sichqoncha olib borilganda ko'rinadi
                           <Link key={g.id} href={`/groups/${g.id}`} title={g.note || undefined} className="rounded-md bg-slate-100 px-2 py-0.5 text-xs text-slate-600 hover:bg-brand-50 hover:text-brand-700 dark:bg-slate-700/50 dark:text-slate-300">{g.name}</Link>
                         ))}
                       </div>

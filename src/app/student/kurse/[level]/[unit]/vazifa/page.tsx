@@ -4,9 +4,6 @@ import { loadUnit } from "../_load";
 import { SectionHeader, TaskCard, IcoHome, safeUrl } from "../_parts";
 import LessonTasks, { type VTask } from "../LessonTasks";
 
-// Uy vazifasi: o'qituvchi yozgan vazifa matni/fayli va topshirish bloki
-// (topshirilgan ish, bahosi va o'qituvchi izohi).
-
 const ACCENT = "linear-gradient(150deg, #b07bff 0%, #7c3aed 100%)";
 
 export default async function LessonHomeworkPage({
@@ -20,7 +17,6 @@ export default async function LessonHomeworkPage({
 
   const { t, code, lesson, unitLabel } = ctx;
 
-  // Faqat o'quvchining O'Z guruhiga berilgan vazifalar
   const tasks = await prisma.assignment.findMany({
     where: { courseLessonId: lesson.id, groupId: ctx.groupId },
     orderBy: { createdAt: "asc" },

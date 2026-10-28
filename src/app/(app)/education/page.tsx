@@ -6,7 +6,6 @@ import { tr } from "@/lib/tr";
 import { Card, HubCard, Badge, StatCard, Forbidden } from "../_components/ui";
 
 const ALLOWED = [ROLES.DIRECTOR, ROLES.DEPUTY_DIRECTOR, ROLES.ADMIN, ROLES.TEACHER, ROLES.MANAGER];
-// Kurs katalogi va portal sozlamalari — menejer va rahbariyat
 const CAN_MANAGE = [ROLES.DIRECTOR, ROLES.DEPUTY_DIRECTOR, ROLES.ADMIN, ROLES.MANAGER];
 
 export default async function EducationPage() {
@@ -16,13 +15,10 @@ export default async function EducationPage() {
   }
 
   const [programs, groupsCount, onlineCount, contractsCount, assessmentsCount] = await Promise.all([
-    // Dasturlar umumiy ma'lumotnoma, lekin guruh soni faol filial doirasida sanaladi
     prisma.program.findMany({ include: { levels: { orderBy: { order: "asc" } }, _count: { select: { groups: { where: branchWhere(s) } } } } }),
-    // faol filial doirasida
     prisma.group.count({ where: { AND: [{ status: "ACTIVE" }, branchWhere(s)] } }),
     prisma.group.count({ where: { AND: [{ status: "ACTIVE", format: "ONLINE" }, branchWhere(s)] } }),
     prisma.contractTemplate.count(),
-    // guruhsiz (umumiy) baholashlar hamma filialda ko'rinadi — faol filial doirasida
     prisma.seasonalAssessment.count({ where: s.branchId ? { OR: [branchViaGroup(s), { groupId: null }] } : {} }),
   ]);
 

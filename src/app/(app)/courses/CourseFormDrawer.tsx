@@ -10,7 +10,6 @@ import type { Locale } from "@/lib/constants";
 import { createCourse, updateCourse, type CourseState } from "./actions";
 import { LESSON_DURATIONS, type CourseMeta } from "./shared";
 
-// Raqamlarni har 3 xonada bo'shliq bilan ajratadi ("800000" -> "800 000")
 const fmtDigits = (d: string) => d.replace(/\B(?=(\d{3})+(?!\d))/g, " ");
 
 export default function CourseFormDrawer({
@@ -141,7 +140,6 @@ export default function CourseFormDrawer({
           </div>
           <div>
             <label className={label}>{T("Oyiga darslar soni", "Уроков в месяц", "Lessons per month", "Unterrichtsstunden pro Monat")} <span className="text-rose-500">*</span></label>
-            {/* Bazaga yoziladi: guruh jadvalida oyda shundan ortiq dars kuni belgilanmaydi */}
             <input name="lessonsPerMonth" value={lessonsPerMonth} onChange={(e) => setLessonsPerMonth(e.target.value.replace(/\D/g, "").slice(0, 2))} type="text" inputMode="numeric" required className={input} />
             <p className="mt-1 text-xs text-slate-400">
               {T("Masalan 12: haftada 3 kun bo'lsa ham oyda faqat 12 ta dars bo'ladi — 13-kun dars belgilanmaydi. Guruh yaratishda o'zgartirish mumkin.", "Например 12: даже при 3 днях в неделю в месяце будет только 12 уроков — 13-й день не считается уроком. Можно изменить при создании группы.", "E.g. 12: even with 3 days a week, only 12 lessons per month — the 13th day is not a lesson. Can be changed when creating a group.", "Z. B. 12: auch bei 3 Tagen pro Woche nur 12 Stunden im Monat — der 13. Tag ist kein Unterricht. Beim Anlegen der Gruppe änderbar.")}
@@ -160,7 +158,6 @@ export default function CourseFormDrawer({
               />
               <span className="pointer-events-none absolute right-3.5 top-1/2 -translate-y-1/2 text-xs font-medium text-slate-400">{T("so'm", "сум", "UZS", "Sum")}</span>
             </div>
-            {/* Bazaga yoziladi: qarz shu summadan hisoblanadi */}
             <input type="hidden" name="monthlyFee" value={price} />
             <p className="mt-1 text-xs text-slate-400">
               {T("O'quvchi guruhga qo'shilgan oydan boshlab har oy shu summa qarzga hisoblanadi. Guruhda o'z narxi ko'rsatilsa — o'shanisi ustun.", "Начиная с месяца добавления ученика в группу, эта сумма ежемесячно начисляется как долг. Если у группы указана своя цена — она в приоритете.", "Starting from the month the student joins a group, this amount is charged monthly as debt. If the group has its own price, it takes precedence.", "Ab dem Monat, in dem der Schüler der Gruppe beitritt, wird dieser Betrag monatlich als Schuld berechnet. Hat die Gruppe einen eigenen Preis, gilt dieser.")}
@@ -171,7 +168,6 @@ export default function CourseFormDrawer({
             <textarea name="description" rows={3} defaultValue={initial?.description ?? ""} className="w-full resize-y rounded-lg border border-slate-200 bg-white px-3.5 py-2.5 text-sm text-slate-800 outline-none transition focus:border-brand-400 dark:border-slate-700 dark:bg-slate-800/60 dark:text-slate-100" />
           </div>
 
-          {/* Kurs bannerlari (bir nechta rasm) */}
           <div>
             <label className={label}>{T("Kurs bannerlari", "Баннеры курса", "Course banners", "Kursbanner")} <span className="text-slate-400">({T("bir nechta, ixtiyoriy", "несколько, необязательно", "multiple, optional", "mehrere, optional")} · {banners.length}/6)</span></label>
             <p className="-mt-1 mb-2 flex items-start gap-1.5 text-xs leading-relaxed text-slate-400">

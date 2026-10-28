@@ -36,9 +36,8 @@ export default async function LeaveReasonsPage({ searchParams }: { searchParams:
   const to = new Date(toStr + "T23:59:59");
   const reason = sp.reason || "";
 
-  // Sababi ro'yxati — yo'qotilgan lidlarning sabablari
   const distinctReasons = await prisma.lead.findMany({
-    where: { AND: [{ stage: "LOST", lossReason: { not: null } }, branchWhere(s)] }, // faol filial doirasida
+    where: { AND: [{ stage: "LOST", lossReason: { not: null } }, branchWhere(s)] },
     select: { lossReason: true }, distinct: ["lossReason"],
   });
   const reasons = distinctReasons.map((x) => x.lossReason!).filter(Boolean);
@@ -47,9 +46,7 @@ export default async function LeaveReasonsPage({ searchParams }: { searchParams:
   let rows: { name: string; count: number }[] = [];
 
   if (tab === "buyurtma") {
-    // Buyurtmadan ketganlar = yo'qotilgan lidlar (lossReason bo'yicha)
     const leads = await prisma.lead.findMany({
-      // faol filial doirasida
       where: { AND: [{ stage: "LOST", updatedAt: { gte: from, lte: to }, ...(reason ? { lossReason: reason } : {}) }, branchWhere(s)] },
       select: { lossReason: true },
     });
@@ -61,7 +58,7 @@ export default async function LeaveReasonsPage({ searchParams }: { searchParams:
     const where: Prisma.StudentWhereInput = { eduStatus: { in: LEFT_STATUS }, updatedAt: { gte: from, lte: to } };
     if (tab === "tolov_yoq") where.payments = { none: { status: "PAID" } };
     if (tab === "tolov_bor") where.payments = { some: { status: "PAID" } };
-    count = await prisma.student.count({ where: { AND: [where, branchWhere(s)] } }); // faol filial doirasida
+    count = await prisma.student.count({ where: { AND: [where, branchWhere(s)] } });
     rows = count > 0 ? [{ name: tr(s.locale, { uz: "Belgilanmagan", ru: "Не указано", en: "Unspecified", de: "Nicht angegeben" }), count }] : [];
   }
 
@@ -77,7 +74,6 @@ export default async function LeaveReasonsPage({ searchParams }: { searchParams:
 
   return (
     <div className="space-y-5">
-      {/* Tablar */}
       <div className="flex flex-wrap gap-2">
         {TABS.map((tb) => (
           <Link key={tb.key} href={tabHref(tb.key)}
@@ -89,7 +85,6 @@ export default async function LeaveReasonsPage({ searchParams }: { searchParams:
       </div>
 
       <div className="flex flex-col gap-6 lg:flex-row">
-        {/* Chap: sarlavha + son */}
         <div className="lg:w-80">
           <div className="flex items-center gap-3">
             <h1 className="text-[22px] font-bold tracking-tight text-slate-900 dark:text-slate-100">{tr(s.locale, active.title)}</h1>
@@ -97,7 +92,6 @@ export default async function LeaveReasonsPage({ searchParams }: { searchParams:
           </div>
         </div>
 
-        {/* O'ng: filtr + jadval */}
         <div className="flex-1 space-y-3">
           <div className="flex flex-wrap items-center justify-end gap-2">
             <LeaveFilters from={fromStr} to={toStr} reason={reason} reasons={reasons} locale={s.locale} />

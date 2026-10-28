@@ -8,7 +8,6 @@ import { tr } from "@/lib/tr";
 
 export type Res = { ok?: boolean; error?: string };
 
-// O'z profilini tahrirlash — foydalanuvchi FAQAT o'zinikini o'zgartira oladi.
 export async function updateProfile(fd: FormData): Promise<Res> {
   const s = await requireSession();
 
@@ -25,7 +24,6 @@ export async function updateProfile(fd: FormData): Promise<Res> {
   if (imageUrl && imageUrl.length > 900_000) return { error: tr(s.locale, { uz: "Rasm hajmi juda katta (max ~900KB)", ru: "Изображение слишком большое (макс. ~900KB)", en: "Image is too large (max ~900KB)", de: "Das Bild ist zu groß (max. ~900KB)" }) };
   if (imageUrl && !/^data:image\/(png|jpe?g|webp|gif);base64,/.test(imageUrl)) return { error: tr(s.locale, { uz: "Rasm formati noto'g'ri", ru: "Неверный формат изображения", en: "Invalid image format", de: "Ungültiges Bildformat" }) };
 
-  // Email band emasligini tekshirish (o'zinikidan boshqa)
   const busy = await prisma.user.findFirst({ where: { email, NOT: { id: s.userId } }, select: { id: true } });
   if (busy) return { error: tr(s.locale, { uz: "Bu email boshqa foydalanuvchida band", ru: "Этот email занят другим пользователем", en: "This email is used by another user", de: "Diese E-Mail wird von einem anderen Benutzer verwendet" }) };
 
@@ -43,7 +41,6 @@ export async function updateProfile(fd: FormData): Promise<Res> {
   return { ok: true };
 }
 
-// Parolni o'zgartirish — joriy parolni tasdiqlash bilan
 export async function changePassword(fd: FormData): Promise<Res> {
   const s = await requireSession();
   const current = String(fd.get("current") || "");

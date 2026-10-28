@@ -6,7 +6,6 @@ After=network.target
 User=deploy
 WorkingDirectory=/opt/gl-edu
 ExecStartPre=+/bin/sh -c 'mkdir -p /opt/centers && chown deploy:deploy /opt/centers'
-# Dev panel muhiti: DEV_PANEL=1, PORT, DEV_ADMIN_EMAIL, DEV_ADMIN_PASSWORD_HASH, DEV_SECRET ...
 EnvironmentFile=/opt/centers/.dev.env
 Environment=NODE_ENV=production
 Environment=TZ=Asia/Tashkent

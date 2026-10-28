@@ -16,7 +16,6 @@ const MONTHS: Record<Locale, string[]> = {
   de: ["", "Januar", "Februar", "März", "April", "Mai", "Juni", "Juli", "August", "September", "Oktober", "November", "Dezember"],
 };
 const monthLabel = (y: number, m: number, locale: Locale) => `${MONTHS[locale][m] ?? m}, ${y}`;
-// ixcham raqam (birliksiz): 3000000 -> "3 000 000"
 const nf = (n: number) => String(Math.round(n)).replace(/\B(?=(\d{3})+(?!\d))/g, " ");
 
 export default function SalaryModal({ teacher: t, canManage, locale, onClose }: { teacher: VTeacher; canManage: boolean; locale: Locale; onClose: () => void }) {
@@ -42,7 +41,6 @@ export default function SalaryModal({ teacher: t, canManage, locale, onClose }: 
   function save() {
     setErr(null);
     start(async () => {
-      // Summa chegaradan oshsa server rad etadi — oynani yopmay xatoni ko'rsatamiz
       const r1 = await setTeacherFiksa(t.id, fiksa);
       if (!r1.ok) { setErr(r1.error); return; }
       const r2 = await updateCurrentSalary(t.id, bonus, penalty, kpi);
@@ -60,7 +58,6 @@ export default function SalaryModal({ teacher: t, canManage, locale, onClose }: 
         className="animate-slide-in-right absolute right-0 top-0 flex h-full drawer-panel flex-col overflow-y-auto border-l border-slate-200 bg-white shadow-pop dark:border-white/10 dark:bg-[#15243d]"
         onMouseDown={(e) => e.stopPropagation()}
       >
-        {/* Header */}
         <div className="flex items-center justify-between border-b border-slate-100 px-5 py-4 dark:border-white/10">
           <div className="flex min-w-0 items-center gap-3">
             {t.imageUrl ? (
@@ -76,7 +73,6 @@ export default function SalaryModal({ teacher: t, canManage, locale, onClose }: 
           <button onClick={onClose} className="flex h-8 w-8 items-center justify-center rounded-lg text-lg text-slate-400 transition hover:bg-slate-100 hover:text-slate-600 dark:hover:bg-white/10">✕</button>
         </div>
 
-        {/* Joriy oy */}
         <div className="px-5 py-4">
           <div className="mb-3 flex items-center justify-between">
             <span className="text-xs font-semibold uppercase tracking-wide text-slate-400">{tr(locale, { uz: "Joriy oy", ru: "Текущий месяц", en: "Current month", de: "Aktueller Monat" })}</span>
@@ -90,7 +86,6 @@ export default function SalaryModal({ teacher: t, canManage, locale, onClose }: 
             <Field label={tr(locale, { uz: "KPI bonus (so'm)", ru: "KPI бонус (сум)", en: "KPI bonus (so'm)", de: "KPI-Bonus (UZS)" })} value={kpi} onChange={setKpi} disabled={!canManage} color="#8b5cf6" />
           </div>
 
-          {/* Jami */}
           <div className="mt-4 flex items-center justify-between rounded-xl bg-slate-50 px-4 py-3 dark:bg-white/[0.04]">
             <span className="text-sm font-medium text-slate-500 dark:text-slate-300">{tr(locale, { uz: "Bu oy jami", ru: "Итого за месяц", en: "Total this month", de: "Summe diesen Monat" })}</span>
             <span className="text-lg font-extrabold text-slate-900 dark:text-white">{formatMoney(total, locale)}</span>
@@ -113,10 +108,8 @@ export default function SalaryModal({ teacher: t, canManage, locale, onClose }: 
           )}
         </div>
 
-        {/* Kirish ma'lumotlari (faqat rahbariyat) */}
         {canManage && <CredentialsSection teacherId={t.id} email={t.email} locale={locale} />}
 
-        {/* Tarix */}
         <div className="border-t border-slate-100 px-5 py-4 dark:border-white/10">
           <div className="mb-2 flex items-center gap-2 text-xs font-semibold uppercase tracking-wide text-slate-400">
             <Icon name="history" className="h-3.5 w-3.5" /> {tr(locale, { uz: "Oldingi oylar", ru: "Прошлые месяцы", en: "Previous months", de: "Vorherige Monate" })}
@@ -182,9 +175,8 @@ function Field({ label, value, onChange, disabled, color, max }: { label: string
   );
 }
 
-// Kirish ma'lumotlari — login (email) + parol (talab bo'yicha ochiladi) + parolni yangilash
 function CredentialsSection({ teacherId, email, locale }: { teacherId: string; email: string | null; locale: Locale }) {
-  const [password, setPassword] = useState<string | null | undefined>(undefined); // undefined = hali olinmagan
+  const [password, setPassword] = useState<string | null | undefined>(undefined);
   const [show, setShow] = useState(false);
   const [loading, startLoad] = useTransition();
   const [newPw, setNewPw] = useState("");
@@ -211,13 +203,11 @@ function CredentialsSection({ teacherId, email, locale }: { teacherId: string; e
         <Icon name="key" className="h-3.5 w-3.5" /> {tr(locale, { uz: "Kirish ma'lumotlari", ru: "Данные для входа", en: "Login credentials", de: "Anmeldedaten" })}
       </div>
       <div className="space-y-2">
-        {/* Login */}
         <div className="flex items-center gap-2">
           <span className="w-12 shrink-0 text-xs text-slate-400">Login</span>
           <div className={box + " truncate"}>{email || "—"}</div>
           {email && <button type="button" onClick={() => copy(email)} className={ico} title={tr(locale, { uz: "Nusxalash", ru: "Копировать", en: "Copy", de: "Kopieren" })}><Icon name="copy" className="h-4 w-4" /></button>}
         </div>
-        {/* Parol */}
         <div className="flex items-center gap-2">
           <span className="w-12 shrink-0 text-xs text-slate-400">{tr(locale, { uz: "Parol", ru: "Пароль", en: "Password", de: "Passwort" })}</span>
           <div className={box + " font-mono"}>
@@ -232,7 +222,6 @@ function CredentialsSection({ teacherId, email, locale }: { teacherId: string; e
             </>
           )}
         </div>
-        {/* Parolni o'zgartirish */}
         <div className="flex items-center gap-2 pt-1">
           <input value={newPw} onChange={(e) => setNewPw(e.target.value)} placeholder={tr(locale, { uz: "Yangi parol o'rnatish", ru: "Задать новый пароль", en: "Set new password", de: "Neues Passwort festlegen" })} className="h-9 flex-1 rounded-lg border border-slate-200 bg-white px-3 text-sm text-slate-800 outline-none focus:border-brand-400 dark:border-slate-700 dark:bg-slate-800/60 dark:text-slate-100" />
           <button type="button" onClick={savePw} disabled={saving || newPw.trim().length < 4} className="h-9 shrink-0 rounded-lg bg-brand-600 px-3 text-xs font-semibold text-white transition hover:bg-brand-700 disabled:opacity-60">{saving ? "…" : tr(locale, { uz: "O'rnatish", ru: "Задать", en: "Set", de: "Festlegen" })}</button>

@@ -1,14 +1,8 @@
-// Operator / ROP shaxsiy sozlamalari.
-// Setting (key-value) jadvalida har bir foydalanuvchi uchun bitta JSON yozuv saqlanadi:
-//   key = "operator.prefs.<userId>"
-// Bu modul server (page.tsx, actions.ts) tomonidan ishlatiladi — "use server" yo'q,
-// shuning uchun konstanta va oddiy funksiyalarni ham eksport qila oladi.
-
 export type OperatorPrefs = {
-  notifyEmail: boolean;   // email orqali bildirishnoma
-  notifyPush: boolean;    // brauzer push bildirishnomasi
-  notifySound: boolean;   // yangi bildirishnoma kelganda ovoz
-  autoLogoutMinutes: number; // faoliyatsizlikdan keyin avtomatik chiqish (0 = hech qachon)
+  notifyEmail: boolean;
+  notifyPush: boolean;
+  notifySound: boolean;
+  autoLogoutMinutes: number;
 };
 
 export const DEFAULT_PREFS: OperatorPrefs = {
@@ -24,7 +18,6 @@ export const prefsKey = (userId: string) => `operator.prefs.${userId}`;
 
 const bool = (v: unknown, def: boolean) => (typeof v === "boolean" ? v : def);
 
-// Saqlangan JSON qatorini xavfsiz o'qish — buzilgan bo'lsa standart qiymatlar qaytadi.
 export function parsePrefs(raw: string | null): OperatorPrefs {
   if (!raw) return { ...DEFAULT_PREFS };
   try {

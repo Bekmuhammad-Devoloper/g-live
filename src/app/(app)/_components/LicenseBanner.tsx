@@ -4,9 +4,6 @@ import type { Locale } from "@/lib/constants";
 import { tr } from "@/lib/tr";
 import { Icon } from "./Icon";
 
-// Litsenziya (obuna) muddati banneri — Modme uslubida. Sahifalar tepasida ko'rsatiladi.
-// Muddat .env dagi SUBSCRIPTION_UNTIL orqali sozlanadi.
-// `locale` berilmasa sessiyadan olinadi — server komponent, ko'p sahifa propsiz chaqiradi.
 export default async function LicenseBanner({ locale }: { locale?: Locale }) {
   const until = process.env.SUBSCRIPTION_UNTIL ?? null;
   if (!until) return null;

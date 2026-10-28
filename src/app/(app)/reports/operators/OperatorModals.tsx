@@ -12,9 +12,6 @@ import { archiveOperator, assignOperatorTask, createOperator, sendOperatorNotifi
 import type { VOperator } from "./OperatorsBoard";
 import { useTeam } from "./TeamContext";
 
-// Operatorlar bo'limi oynalari: yaratish/tahrirlash (drawer), o'chirish tasdig'i,
-// kirish ma'lumotlari, topshiriq berish va bildirishnoma yuborish.
-
 export const inputCls =
   "h-10 w-full rounded-lg border border-slate-200 bg-white px-3 text-sm outline-none focus:border-brand-400 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-100";
 const money = (v: string) => { const d = v.replace(/\D/g, "").slice(0, 12); return d ? d.replace(/\B(?=(\d{3})+(?!\d))/g, " ") : ""; };
@@ -88,7 +85,7 @@ function useSubmit(locale: Locale, run: (fd: FormData) => Promise<OpResult>, don
     e.preventDefault();
     setError(null);
     const fd = new FormData(e.currentTarget);
-    fd.set("kind", cfg.kind); // server qaysi jamoa (operator / administrator) ekanini shundan biladi
+    fd.set("kind", cfg.kind);
     start(async () => {
       const r = await run(fd);
       if (r.ok) done(r);
@@ -98,7 +95,6 @@ function useSubmit(locale: Locale, run: (fd: FormData) => Promise<OpResult>, don
   return { pending, error, submit };
 }
 
-/* ─────────── Yaratish / Tahrirlash (o'ng tomondan chiqadigan panel) ─────────── */
 export function OperatorDrawer({
   locale, op, onClose, onCreated,
 }: { locale: Locale; op: VOperator | null; onClose: () => void; onCreated: (c: NonNullable<OpResult["credentials"]>) => void }) {
@@ -143,7 +139,6 @@ export function OperatorDrawer({
           <Field label={tr(locale, { uz: "Telefon", ru: "Телефон", en: "Phone", de: "Telefon" })}>
             <input name="phone" defaultValue={op?.phone ?? ""} placeholder="+998 90 123 45 67" className={inputCls} />
           </Field>
-          {/* Administrator filialga biriktiriladi (operatorlar — yaratuvchining filialida) */}
           {cfg.kind === "admin" && branches.length > 0 && (
             <Field label={tr(locale, { uz: "Filial", ru: "Филиал", en: "Branch", de: "Filiale" })} required>
               <select name="branchId" required defaultValue={op?.branchId ?? ""} className={inputCls}>
@@ -187,7 +182,6 @@ export function OperatorDrawer({
   );
 }
 
-/* ─────────── O'chirish (arxivlash) tasdig'i ─────────── */
 export function ArchiveModal({ locale, op, onClose }: { locale: Locale; op: VOperator; onClose: () => void }) {
   const router = useRouter();
   const { cfg } = useTeam();
@@ -213,7 +207,6 @@ export function ArchiveModal({ locale, op, onClose }: { locale: Locale; op: VOpe
   );
 }
 
-/* ─────────── Topshiriq berish ─────────── */
 export function TaskModal({ locale, op, onClose }: { locale: Locale; op: VOperator; onClose: () => void }) {
   const router = useRouter();
   const { pending, error, submit } = useSubmit(locale, assignOperatorTask, () => { onClose(); router.refresh(); });
@@ -246,7 +239,6 @@ export function TaskModal({ locale, op, onClose }: { locale: Locale; op: VOperat
   );
 }
 
-/* ─────────── Bildirishnoma yuborish ─────────── */
 export function NotifyModal({ locale, op, onClose }: { locale: Locale; op: VOperator; onClose: () => void }) {
   const router = useRouter();
   const { pending, error, submit } = useSubmit(locale, sendOperatorNotification, () => { onClose(); router.refresh(); });
@@ -276,7 +268,6 @@ export function NotifyModal({ locale, op, onClose }: { locale: Locale; op: VOper
   );
 }
 
-/* ─────────── Yaratilgan operator kirish ma'lumotlari ─────────── */
 export function CredentialsModal({
   locale, cred, onClose,
 }: { locale: Locale; cred: NonNullable<OpResult["credentials"]>; onClose: () => void }) {

@@ -28,12 +28,12 @@ export default function ContactSettings({ locale }: { locale: Locale }) {
     try {
       const raw = localStorage.getItem(STORAGE_KEY);
       if (raw) setF((cur) => ({ ...cur, ...JSON.parse(raw) }));
-    } catch { /* ignore */ }
+    } catch { }
   }, []);
 
   const set = <K extends keyof Form>(k: K, v: Form[K]) => setF((s) => ({ ...s, [k]: v }));
   const save = () => {
-    try { localStorage.setItem(STORAGE_KEY, JSON.stringify(f)); } catch { /* ignore */ }
+    try { localStorage.setItem(STORAGE_KEY, JSON.stringify(f)); } catch { }
     setSaved(true); setTimeout(() => setSaved(false), 1800);
   };
 
@@ -42,7 +42,6 @@ export default function ContactSettings({ locale }: { locale: Locale }) {
       <h2 className="mb-6 text-2xl font-bold text-slate-800 dark:text-slate-100">{tr(locale, { uz: "Aloqa", ru: "Связь", en: "Contact", de: "Kontakt" })}</h2>
 
       <div className="grid gap-6 lg:grid-cols-2">
-        {/* PlayMobile SMS */}
         <Fieldset title="PlayMobile SMS">
           <div className="space-y-4">
             <div>
@@ -60,7 +59,6 @@ export default function ContactSettings({ locale }: { locale: Locale }) {
           </div>
         </Fieldset>
 
-        {/* Eskiz SMS */}
         <Fieldset title="Eskiz SMS">
           <div className="space-y-4">
             <div>

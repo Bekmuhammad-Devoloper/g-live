@@ -13,16 +13,15 @@ import { checkPromoForStudent } from "@/lib/promo";
 
 const schema = z.object({
   studentId: z.string().min(1),
-  amount: z.coerce.number().int().positive().max(MAX_MONEY), // Int'ga sig'masa sahifa yiqiladi
+  amount: z.coerce.number().int().positive().max(MAX_MONEY),
   method: z.enum(PAYMENT_METHODS),
   purpose: z.string().min(1),
-  docNumber: z.string().min(1), // TZ FR-PAY-03 — hujjat/chek raqami majburiy
+  docNumber: z.string().min(1),
   note: z.string().optional(),
 });
 
 export type PayState = { ok?: boolean; error?: string; need?: number; have?: number };
 
-// Qo'lda to'lov kiritish — faqat MANAGER va DEPUTY_DIRECTOR (TZ FR-PAY-02)
 export async function createManualPayment(_prev: PayState, formData: FormData): Promise<PayState> {
   const s = await requireSession();
 
@@ -40,7 +39,6 @@ export async function createManualPayment(_prev: PayState, formData: FormData): 
   });
   if (!parsed.success) return { error: "invalid" };
 
-  // Promokod (ixtiyoriy): faol va o'quvchi shart qilingan sondagi kursda o'qishi kerak
   const promoForce = formData.get("promoForce") === "1";
   const promo = await checkPromoForStudent(formData.get("promoCode"), parsed.data.studentId, { force: promoForce });
   if (!promo.ok) return { error: promo.error, need: promo.need, have: promo.have };
@@ -56,7 +54,6 @@ export async function createManualPayment(_prev: PayState, formData: FormData): 
     },
   });
 
-  // TZ FR-PAY-04 — har bir qo'lda amal audit bilan saqlanadi
   await writeAudit({
     actorId: s.userId,
     action: "CREATE",
@@ -80,11 +77,9 @@ export async function createManualPayment(_prev: PayState, formData: FormData): 
   return { ok: true };
 }
 
-// Onlayn to'lov (demo provayder callback) — TZ FR-PAY-01 (avto "To'landi" + chek),
-// FR-PAY-06 (bir xil tranzaksiya ID ikkinchi marta bloklanadi = idempotentlik).
 const onlineSchema = z.object({
   studentId: z.string().min(1),
-  amount: z.coerce.number().int().positive().max(MAX_MONEY), // Int'ga sig'masa sahifa yiqiladi
+  amount: z.coerce.number().int().positive().max(MAX_MONEY),
   purpose: z.string().min(1),
   method: z.enum(PAYMENT_METHODS),
   transactionId: z.string().optional(),
@@ -105,7 +100,6 @@ export async function payOnline(_prev: PayState, formData: FormData): Promise<Pa
 
   const txId = parsed.data.transactionId?.trim() || `ONLINE-${randomUUID().slice(0, 8).toUpperCase()}`;
 
-  // Idempotentlik — bir xil tranzaksiya ID ikkinchi marta kelmasin
   const existing = await prisma.payment.findUnique({ where: { transactionId: txId } });
   if (existing) return { error: "duplicate" };
 
@@ -137,7 +131,6 @@ export async function payOnline(_prev: PayState, formData: FormData): Promise<Pa
   return { ok: true };
 }
 
-// O'quvchining (va bog'langan ota-onasining) hisobiga bildirishnoma
 async function notifyStudentPaid(studentId: string, amount: number) {
   const student = await prisma.student.findUnique({
     where: { id: studentId },
@@ -152,7 +145,6 @@ async function notifyStudentPaid(studentId: string, amount: number) {
   }
 }
 
-// O'chirish TAQIQLANADI — faqat "bekor qilish" (TZ FR-PAY-04)
 export async function cancelPayment(paymentId: string, reason: string): Promise<void> {
   const s = await requireSession();
   if (!canWrite(s.role, MODULES.PAYMENTS)) return;

@@ -13,11 +13,6 @@ import WordList, { type VWord } from "./WordList";
 import { getLevelCodes } from "@/lib/studyLevels";
 import { groupLessonsWhere } from "@/lib/levelLessons";
 
-// Wörterbuch — ikki manba:
-//   "Kursim" — o'quvchi darslaridagi so'zlar (CourseLesson.topic)
-//   "Lug'at" — bosma nemischa-o'zbekcha lug'atdan raqamlashtirilgan baza
-// Katta lug'at brauzerga yuborilmaydi: qidiruv serverda bajariladi.
-
 const clean = (s: string) => s.replace(/^\[DEMO\]\s*/, "").trim();
 const PAGE = 60;
 
@@ -29,7 +24,6 @@ export default async function StudentWorterbuchPage({ searchParams }: { searchPa
 
   const session = await getSession();
   if (!session) redirect("/login");
-  // Bo'lim menejer tomonidan o'chirilgan bo'lsa — bosh sahifaga
   if (!(await isPortalFeatureOn("worterbuch"))) redirect("/student");
   const t = S(session.locale);
 
@@ -68,8 +62,6 @@ export default async function StudentWorterbuchPage({ searchParams }: { searchPa
   const words: VWord[] = [];
   const seen = new Set<string>();
   for (const l of lessons) {
-    // Ajratish mantig'i `lib/lessonWords.ts` da — dars sahifasi ham aynan
-    // shu so'zlarni ko'rsatadi, ikki nusxa bo'lmasligi kerak.
     for (const { de, uz } of parseLessonWords(lessonVocabText(l))) {
       const key = de.toLowerCase();
       if (seen.has(key)) continue;
@@ -84,7 +76,6 @@ export default async function StudentWorterbuchPage({ searchParams }: { searchPa
     }
   }
 
-  // ── Umumiy lug'at ──
   const limit = Math.min(Number(sp.n) || PAGE, 600);
   const res = tab === "lugat" ? searchDict({ q: sp.q, letter: sp.l, limit }) : null;
 
@@ -114,7 +105,6 @@ export default async function StudentWorterbuchPage({ searchParams }: { searchPa
         back="/student/kurse"
       />
 
-      {/* Manba tanlash */}
       <div className="gl-glass flex gap-2 rounded-2xl p-1.5">
         <Tab href="/student/worterbuch" active={tab === "kurs"} label={t.myCourse} sub={String(words.length)} />
         <Tab href="/student/worterbuch?tab=lugat" active={tab === "lugat"} label={t.fullDictionary} sub={fmt(DICT_SIZE)} />
@@ -142,10 +132,8 @@ export default async function StudentWorterbuchPage({ searchParams }: { searchPa
             </div>
           ) : (
             <div className="space-y-3">
-              {/* Ramka shisha; katak varaqning o'zi qattiq qoladi — chiziqlar aniq ko'rinsin */}
               {groupByLetter(res!.items, !!sp.q).map(([letter, list]) => (
                 <section key={letter} className="overflow-hidden rounded-[18px] shadow-[0_10px_22px_rgba(19,78,94,0.10)]">
-                  {/* Varaq sarlavhasi: harf va ustun nomlari */}
                   <div className="flex items-center gap-2.5 px-3 py-2">
                     {letter ? (
                       <span
@@ -202,14 +190,12 @@ function Tab({ href, active, label, sub }: { href: string; active: boolean; labe
   );
 }
 
-// Artikl rangi — der/die/das ni yodda saqlash uchun eng foydali ko'rsatma
 const ART_STYLE: Record<string, { bg: string; fg: string }> = {
   der: { bg: "#dbeafe", fg: "#1d4ed8" },
   die: { bg: "#ffe4e6", fg: "#be123c" },
   das: { bg: "#d1fae5", fg: "#047857" },
 };
 
-// Qidiruvda tekis ro'yxat, ko'rib chiqishda harf bo'limlari bilan
 function groupByLetter(items: DictEntry[], flat: boolean): [string, DictEntry[]][] {
   if (flat) return [["", items]];
   const map = new Map<string, DictEntry[]>();
@@ -233,9 +219,6 @@ const POS_KEY: Record<string, keyof StudentStrings> = {
   int: "posInt",
 };
 
-// Bosma lug'atda ma'nolar "1) ... 2) ..." tarzida bir qatorga yozilgan —
-// ekranda ularni alohida qatorlarga ajratsak o'qish ancha oson.
-// Ma'nolar bir katakli qatorga sig'sin — 24px qadam saqlanadi
 function Senses({ uz }: { uz: string }) {
   const parts = uz
     .split(/\s*\d\)\s*/)
@@ -256,8 +239,6 @@ function Senses({ uz }: { uz: string }) {
   );
 }
 
-// Katak daftar varag'i: chiziqlar 24px, qatorlar ham shu qadamda —
-// matn kataklarga tushadi, o'ng ustunda esa qo'lda yozilgandek tarjima.
 const SHEET: React.CSSProperties = {
   backgroundColor: "#fcfdff",
   backgroundImage:
@@ -271,13 +252,10 @@ function Row({ e, t }: { e: DictEntry; t: StudentStrings }) {
   const st = art ? ART_STYLE[art] : null;
   const pos = e.p ? t[POS_KEY[e.p] ?? "posVerb"] : null;
 
-  // Grammatik shakl va turkum alohida kichik qatorda — uzun qo'shma so'zlar
-  // ("Abberufungsschreiben") ustunga sig'masdan bir-biriga kirib ketmasin.
   const meta = [e.f, pos].filter(Boolean).join(" · ");
 
   return (
     <li className="grid grid-cols-[1fr_1fr] border-b border-[#bcd8e8] last:border-0">
-      {/* Nemischa ustun */}
       <div className="min-w-0 border-r-2 border-[#efb0b0] px-3 py-3">
         <div className="hyphens-auto break-words text-[15px] font-extrabold leading-6 text-slate-900">
           {art ? (
@@ -290,7 +268,6 @@ function Row({ e, t }: { e: DictEntry; t: StudentStrings }) {
         {meta ? <div className="font-mono text-[11px] leading-6 text-slate-400">{meta}</div> : null}
       </div>
 
-      {/* O'zbekcha ustun */}
       <div className="min-w-0 break-words px-3 py-3 text-[14px] leading-6 text-slate-700">
         {e.s ? <span className="mr-1 text-[11px] font-semibold italic text-slate-400">{e.s}.</span> : null}
         <Senses uz={e.uz} />

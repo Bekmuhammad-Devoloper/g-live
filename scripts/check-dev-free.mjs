@@ -1,12 +1,3 @@
-// Build oldidan tekshiruv: dev server ishlab turgan bo'lsa BUILD QILMAYMIZ.
-//
-// NEGA: `next build` va `next dev` bitta `.next` papkasidan foydalanadi.
-// Ikkalasi baravar ishlasa kesh buziladi va dev server "Cannot find module
-// '[turbopack]_runtime.js'" yoki "Internal Server Error" bera boshlaydi —
-// buni topish qiyin, chunki kod aybdor emas.
-//
-// Majburan build qilish kerak bo'lsa: FORCE_BUILD=1 npm run build
-
 import net from "node:net";
 
 const PORT = Number(process.env.PORT || 3000);

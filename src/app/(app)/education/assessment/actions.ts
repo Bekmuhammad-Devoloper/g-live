@@ -45,7 +45,6 @@ export async function createAssessment(_prev: FormState, formData: FormData): Pr
   if (!parsed.success) return { error: "invalid" };
   const d = parsed.data;
 
-  // O'qituvchi faqat o'z guruhiga baholash biriktira oladi
   if (d.groupId && s.role === ROLES.TEACHER) {
     const g = await prisma.group.findUnique({ where: { id: d.groupId }, select: { teacherId: true } });
     if (!g || g.teacherId !== s.userId) return { error: "forbidden" };

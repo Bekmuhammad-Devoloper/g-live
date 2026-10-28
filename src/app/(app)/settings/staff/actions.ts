@@ -10,8 +10,6 @@ import { getBrand } from "@/lib/brand";
 
 const CAN = [ROLES.DIRECTOR, ROLES.ADMIN, ROLES.DEPUTY_DIRECTOR];
 const can = (r: string) => CAN.includes(r as never);
-// Xodimni ro'yxatdan olib tashlash — FAQAT direktor va o'rinbosari
-// (administrator boshqa xodimlarni o'chira olmaydi)
 const CAN_DELETE_STAFF = [ROLES.DIRECTOR, ROLES.DEPUTY_DIRECTOR];
 const canDelete = (r: string) => CAN_DELETE_STAFF.includes(r as never);
 const STAFF_ROLES = [ROLES.OPERATOR, ROLES.ROP, ROLES.MANAGER, ROLES.DEPUTY_DIRECTOR, ROLES.DIRECTOR, ROLES.ADMIN, ROLES.TEACHER];
@@ -19,10 +17,6 @@ const emailOk = (e: string) => /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(e);
 
 export type State = { ok?: boolean; error?: string };
 
-/* ─── SIP raqami (telefoniya) ─────────────────────────────────────────
-   Asterisk-glive'da glive1…glive10 endpointlari bor. Bir raqam — bir xodim.
-   Ishdan ketgan (isActive=false) xodimning raqamini yangi xodimga berish mumkin —
-   eskisidan avtomatik olib qo'yiladi. Faol xodimniki band — xato.            */
 const SIP_RE = /^glive(10|[1-9])$/;
 
 async function claimSip(locale: Locale, userId: string | null, raw: string): Promise<{ sip: string | null } | { error: string }> {
@@ -32,7 +26,7 @@ async function claimSip(locale: Locale, userId: string | null, raw: string): Pro
   const holder = await prisma.user.findUnique({ where: { sipExtension: sip }, select: { id: true, fullName: true, isActive: true } });
   if (holder && holder.id !== userId) {
     if (holder.isActive) return { error: tr(locale, { uz: `${sip} band: ${holder.fullName}`, ru: `${sip} занят: ${holder.fullName}`, en: `${sip} is taken: ${holder.fullName}`, de: `${sip} ist belegt: ${holder.fullName}` }) };
-    await prisma.user.update({ where: { id: holder.id }, data: { sipExtension: null } }); // ishdan ketgan — bo'shatamiz
+    await prisma.user.update({ where: { id: holder.id }, data: { sipExtension: null } });
   }
   return { sip };
 }
@@ -55,7 +49,6 @@ export async function createStaff(fd: FormData): Promise<State> {
 
   const dup = await prisma.user.findUnique({ where: { email }, select: { id: true, branchId: true, branches: { select: { branchId: true } } } });
   if (dup) {
-    // Boshqa filialda bor xodim — ikkinchi hisob emas, shu filialga ham biriktiriladi
     if (!s.branchId || dup.branchId === s.branchId || dup.branches.some((b) => b.branchId === s.branchId)) return { error: tr(s.locale, { uz: "Bu email allaqachon mavjud", ru: "Этот email уже существует", en: "This email already exists", de: "Diese E-Mail existiert bereits" }) };
     await prisma.userBranch.create({ data: { userId: dup.id, branchId: s.branchId } });
     await writeAudit({ actorId: s.userId, action: "UPDATE", entityType: "User", entityId: dup.id, newValue: { addBranch: s.branchId }, reason: "Qo'shimcha filialga biriktirildi" });
@@ -101,20 +94,18 @@ export async function updateStaff(fd: FormData): Promise<State> {
 export async function deleteStaff(id: string, reason?: string): Promise<void> {
   const s = await requireSession();
   if (!canDelete(s.role)) return;
-  if (id === s.userId) return; // o'zini o'chira olmaydi
+  if (id === s.userId) return;
   await prisma.user.update({ where: { id }, data: { isActive: false, archivedAt: new Date(), archiveReason: reason?.trim() || null } }).catch(() => {});
   await writeAudit({ actorId: s.userId, action: "UPDATE", entityType: "User", entityId: id, newValue: { archived: true } });
   revalidatePath("/settings/staff");
   revalidatePath("/archive");
 }
 
-// Konvert (Amallar) — xodimga ilova ichida taklif/xabar yuboradi
 export async function inviteStaff(id: string): Promise<State> {
   const s = await requireSession();
   if (!can(s.role)) return { error: tr(s.locale, { uz: "Ruxsat yo'q", ru: "Нет доступа", en: "No permission", de: "Keine Berechtigung" }) };
   const u = await prisma.user.findUnique({ where: { id }, select: { id: true, fullName: true, locale: true } });
   if (!u) return { error: tr(s.locale, { uz: "Xodim topilmadi", ru: "Сотрудник не найден", en: "Staff member not found", de: "Mitarbeiter nicht gefunden" }) };
-  // Matn oluvchi xodimning tilida
   const rl = (u.locale as Locale) ?? "uz";
   const org = (await getBrand()).name;
   await prisma.notification.create({
@@ -134,7 +125,6 @@ export async function inviteStaff(id: string): Promise<State> {
   return { ok: true };
 }
 
-// Import — [{fullName,email,phone,position,role,password}] massividan ommaviy yaratadi
 export async function importStaff(rows: { fullName: string; email: string; phone?: string; position?: string; role?: string; password?: string }[]): Promise<{ created: number; skipped: number; errors: string[] }> {
   const s = await requireSession();
   if (!can(s.role)) return { created: 0, skipped: 0, errors: [tr(s.locale, { uz: "Ruxsat yo'q", ru: "Нет доступа", en: "No permission", de: "Keine Berechtigung" })] };
@@ -143,7 +133,6 @@ export async function importStaff(rows: { fullName: string; email: string; phone
   for (const [i, r] of rows.entries()) {
     const fullName = (r.fullName || "").trim();
     const email = (r.email || "").trim().toLowerCase();
-    // Import faylida rol ko'rsatilmagan bo'lsa — operator (sotuv bo'limi asosiy xodimi)
     const role = STAFF_ROLES.includes((r.role || "") as never) ? (r.role as string) : ROLES.OPERATOR;
     if (fullName.length < 3 || !emailOk(email)) { skipped++; errors.push(tr(s.locale, { uz: `${i + 1}-qator: nom yoki email noto'g'ri`, ru: `Строка ${i + 1}: неверное имя или email`, en: `Row ${i + 1}: invalid name or email`, de: `Zeile ${i + 1}: ungültiger Name oder E-Mail` })); continue; }
     if (await prisma.user.findUnique({ where: { email }, select: { id: true } })) { skipped++; continue; }

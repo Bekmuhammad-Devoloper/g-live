@@ -6,9 +6,6 @@ import { getT } from "@/lib/i18n";
 import type { Locale } from "@/lib/constants";
 import { Icon } from "./Icon";
 
-// Navbar'dagi valyuta kursi (MB — cbu.uz). Ma'lumot /api/rates dan olinadi,
-// tashqi API'ga so'rov esa serverda keshlanadi.
-
 interface Rate {
   ccy: string;
   rate: number;
@@ -24,7 +21,6 @@ interface Payload {
 const LS_KEY = "gl-rates";
 const REFRESH_MS = 30 * 60_000;
 
-// ─── Umumiy do'kon: komponent bir necha joyda tursa ham fetch bitta bo'ladi ───
 let store: Payload | null = null;
 let loadedAt = 0;
 let seeded = false;
@@ -42,7 +38,6 @@ function subscribe(f: () => void) {
   };
 }
 
-/** Sahifa yangilanganda kurs "sakramasin" — oxirgi qiymat localStorage'dan olinadi. */
 function seed() {
   if (seeded) return;
   seeded = true;
@@ -55,7 +50,6 @@ function seed() {
       emit();
     }
   } catch {
-    // buzuq kesh — e'tiborsiz qoldiramiz
   }
 }
 
@@ -73,11 +67,9 @@ async function refresh(force = false) {
       try {
         localStorage.setItem(LS_KEY, JSON.stringify(d));
       } catch {
-        // localStorage yopiq bo'lsa ham ishlayveradi
       }
       emit();
     } catch {
-      // tarmoq xatosi — eski qiymat ekranda qolaveradi
     } finally {
       inflight = null;
     }
@@ -89,7 +81,7 @@ function useRates() {
   const data = useSyncExternalStore(
     subscribe,
     () => store,
-    () => null, // SSR'da bo'sh — hydration mos kelishi uchun
+    () => null,
   );
 
   useEffect(() => {
@@ -107,10 +99,8 @@ function useRates() {
   return data;
 }
 
-// ─── Formatlash (Intl ishlatilmaydi — server/client farqi hydration xatosi berardi) ───
 const group = (s: string) => s.replace(/\B(?=(\d{3})+(?!\d))/g, " ");
 
-/** 11847.16 → { som: "11 847", tiyin: "16" } — butun qismi yirik, tiyini mayda yoziladi */
 function split(n: number) {
   const total = Math.round(Math.abs(n) * 100);
   return {
@@ -119,7 +109,6 @@ function split(n: number) {
   };
 }
 
-/** Kechagi kursga nisbatan foiz: diff — bugungi o'zgarish, rate — bugungi kurs */
 function percent(rate: number, diff: number): number | null {
   const yesterday = rate - diff;
   if (!yesterday) return null;
@@ -131,7 +120,6 @@ const abs = (n: number) => {
   return `${som},${tiyin}`;
 };
 
-// Har bir valyutaning o'z belgisi va rangi (belgi — oq, foni gradientli)
 const META: Record<string, { icon: string; badge: string; name: Record<Locale, string> }> = {
   USD: {
     icon: "dollar",
@@ -165,7 +153,6 @@ function Badge({ ccy, big = false }: { ccy: string; big?: boolean }) {
   );
 }
 
-/** Kurs qiymati: "11 847" yirik + ",16" mayda */
 function Value({ n, big = false }: { n: number; big?: boolean }) {
   const { som, tiyin } = split(n);
   return (
@@ -176,7 +163,6 @@ function Value({ n, big = false }: { n: number; big?: boolean }) {
   );
 }
 
-/** O'sish/pasayish — rangli yumaloq yorliq (panel uchun) yoki yolg'iz strelka (navbar uchun) */
 function Trend({ diff, rate, pill = false }: { diff: number; rate?: number; pill?: boolean }) {
   const up = diff > 0;
   const tone = !diff
@@ -239,10 +225,8 @@ export default function CurrencyRates({ locale, variant = "bar" }: { locale: Loc
   const rates = data?.rates ?? [];
   const date = rates[0]?.date ?? "";
 
-  // Kurs hali kelmagan bo'lsa navbarda joy egallamaydi
   if (rates.length === 0) return null;
 
-  // Har bir valyuta — alohida oq karta (yumshoq kulrang fon ustida)
   const rows = (
     <div className="space-y-2 bg-slate-50/70 p-2 dark:bg-slate-900/40">
       {rates.map((r) => (
@@ -289,7 +273,6 @@ export default function CurrencyRates({ locale, variant = "bar" }: { locale: Loc
     </div>
   );
 
-  // Mobil ko'rinish — avatar menyusi ichida
   if (variant === "menu") {
     return (
       <div className="border-b border-slate-100 dark:border-slate-800">

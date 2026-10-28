@@ -37,7 +37,6 @@ export default function RoadmapView({ locale, initialScores }: { locale: Locale;
 
   return (
     <div className="space-y-5">
-      {/* Header */}
       <div className="flex flex-wrap items-center justify-between gap-3">
         <div>
           <h1 className="text-[22px] font-bold tracking-tight text-slate-900 dark:text-slate-100">Roadmap</h1>
@@ -48,7 +47,6 @@ export default function RoadmapView({ locale, initialScores }: { locale: Locale;
         </button>
       </div>
 
-      {/* Umumiy ball */}
       <div className="overflow-hidden rounded-2xl border border-blue-200 bg-blue-50/70 shadow-card dark:border-blue-500/30 dark:bg-blue-500/10">
         <div className="flex flex-wrap items-center justify-between gap-4 p-5">
           <div className="text-lg font-bold text-slate-800 dark:text-slate-100">{tr(locale, { uz: "Umumiy ball", ru: "Общий балл", en: "Total score", de: "Gesamtpunktzahl" })}</div>
@@ -67,7 +65,6 @@ export default function RoadmapView({ locale, initialScores }: { locale: Locale;
             </div>
           </div>
         </div>
-        {/* Bo'limlar bo'yicha */}
         <div className="grid grid-cols-2 gap-px bg-blue-100 dark:bg-blue-500/20 sm:grid-cols-3 lg:grid-cols-6">
           {ROADMAP.map((s) => (
             <div key={s.key} className="bg-white p-2.5 text-center dark:bg-slate-900">
@@ -78,7 +75,6 @@ export default function RoadmapView({ locale, initialScores }: { locale: Locale;
         </div>
       </div>
 
-      {/* Jadval */}
       <div className="overflow-hidden rounded-2xl border border-slate-200/70 bg-white shadow-card dark:border-slate-800 dark:bg-slate-900">
         <div className="overflow-x-auto">
           <table className="w-full min-w-[860px] text-left text-sm">

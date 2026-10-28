@@ -8,18 +8,14 @@ import { Forbidden } from "../../_components/ui";
 import LicenseBanner from "../../_components/LicenseBanner";
 import DebtorsView, { type VDebtor } from "./DebtorsView";
 
-// "Qarzdorlar" — to'lanmagan (PENDING) to'lovi bor talabalar ro'yxati.
 export default async function DebtorsPage() {
   const s = await requireSession();
   if (!canRead(s.role, MODULES.PAYMENTS)) {
     return <Forbidden title={tr(s.locale, { uz: "Kirish taqiqlangan", ru: "Доступ запрещён", en: "Access denied", de: "Zugriff verweigert" })} body={tr(s.locale, { uz: "Bu bo'lim uchun ruxsatingiz yo'q.", ru: "У вас нет доступа к этому разделу.", en: "You do not have permission for this section.", de: "Sie haben keine Berechtigung für diesen Bereich." })} />;
   }
 
-  // Qarz — o'quvchi guruhga qo'shilgan oydan boshlab hisoblanadi, ustiga qo'lda
-  // kiritilgan (PENDING) qarz qo'shiladi (src/lib/debt.ts). Shu sabab ro'yxat
-  // faol filialning BARCHA o'quvchilaridan tuziladi, keyin qarzi bo'lgani qoladi.
   const students = await prisma.student.findMany({
-    where: branchWhere(s), // faol filial doirasida
+    where: branchWhere(s),
     select: {
       id: true, fullName: true, phone: true, eduStatus: true,
       enrollments: {
@@ -49,7 +45,6 @@ export default async function DebtorsPage() {
     debtors = students.map((st) => {
       const d = debts.get(st.id);
       const g = st.enrollments[0]?.group ?? null;
-      // Muddat: qo'lda kiritilgan eng eski qarz sanasi, bo'lmasa guruhga qo'shilgan sana
       const due = dueById.get(st.id) ?? d?.since ?? null;
       return {
         studentId: st.id,

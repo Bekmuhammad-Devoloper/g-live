@@ -5,8 +5,6 @@ import { randomBytes } from "node:crypto";
 import net from "node:net";
 import type { InstanceModule } from "@/lib/instance";
 
-// Markazlar reyestri — /opt/centers/registry.json (faqat deploy foydalanuvchisi o'qiydi, 600).
-// Har markazning ishga tushish muhiti (env) shu yozuvdan yasaladi; manba — reyestr.
 export const CENTERS_ROOT = process.env.DEV_CENTERS_ROOT || "/opt/centers";
 export const APP_DIR = process.env.DEV_APP_DIR || "/opt/gl-edu";
 export const BASE_DOMAIN = process.env.DEV_BASE_DOMAIN || "germaniya.live";
@@ -19,7 +17,6 @@ export interface Center {
   host: string;
   port: number;
   createdAt: string;
-  /** Litsenziya tugash sanasi yyyy-mm-dd */
   licenseUntil: string;
   suspended: boolean;
   disabledModules: InstanceModule[];
@@ -28,7 +25,6 @@ export interface Center {
   contactPhone: string;
   notes: string;
   directorEmail: string;
-  /** Markaz sessiya kaliti — har markazda alohida */
   authSecret: string;
   status: "provisioning" | "active" | "failed" | "deleted";
   lastError?: string | null;
@@ -46,7 +42,6 @@ export async function readRegistry(): Promise<Registry> {
   }
 }
 
-/** Atomik yozish: vaqtinchalik fayl + rename (yarim yozilgan JSON qolmasin) */
 export async function writeRegistry(r: Registry): Promise<void> {
   await fs.mkdir(CENTERS_ROOT, { recursive: true });
   const tmp = `${REGISTRY}.${process.pid}.tmp`;
@@ -67,7 +62,6 @@ export async function updateCenter(slug: string, patch: Partial<Center>): Promis
   return r.centers[i];
 }
 
-/** Port bo'shmi — serverda boshqa xizmatlar ham ishlaydi (masalan Docker konteynerlar), reyestr yetarli emas */
 function portFree(port: number): Promise<boolean> {
   return new Promise((resolve) => {
     const srv = net.createServer();
@@ -77,7 +71,6 @@ function portFree(port: number): Promise<boolean> {
   });
 }
 
-/** Keyingi bo'sh port: reyestrdagi (o'chirilganlar ham) va serverda band portlar o'tkazib yuboriladi */
 export async function nextPort(r: Registry): Promise<number> {
   const used = new Set(r.centers.map((c) => c.port));
   for (let p = FIRST_PORT; p < 3999; p++) {
@@ -92,11 +85,8 @@ export const newSecret = (bytes = 36) => randomBytes(bytes).toString("base64url"
 export const centerDir = (slug: string) => path.join(CENTERS_ROOT, slug);
 export const centerDb = (slug: string) => path.join(centerDir(slug), "data", "db.sqlite");
 
-// systemd EnvironmentFile qo'shtirnoq ichidagi teskari chiziqni o'zicha talqin qiladi — xavfli belgilar
-// ekranlanmaydi, olib tashlanadi (qiymatlar: markaz nomi, fayl yo'li, base64url kalit)
 const q = (v: string) => `"${String(v).replace(/[\\"$`\r\n]/g, "")}"`;
 
-/** Markazning ishga tushish muhiti (systemd EnvironmentFile). O'zgargach xizmat qayta ishga tushiriladi. */
 export function renderEnv(c: Center): string {
   const d = centerDir(c.slug);
   return [

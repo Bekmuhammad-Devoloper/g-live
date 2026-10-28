@@ -49,14 +49,12 @@ const T: Record<Locale, Record<string, string>> = {
 
 export default async function AdminDashboard({ locale }: { locale: Locale }) {
   const t = T[locale] ?? T.uz;
-  const s = await requireSession(); // faol filial doirasi
+  const s = await requireSession();
 
-  // Joriy hafta (Yakshanbadan boshlab) — dars jadvali uchun
   const now = new Date();
   const weekStart = new Date(now.getFullYear(), now.getMonth(), now.getDate() - now.getDay(), 0, 0, 0);
   const weekEnd = new Date(weekStart.getTime() + 7 * 86400000);
 
-  // O'z filialidagi bo'sh xona/vaqtlar — ROP lidlar kanbanida filial ustunida ko'radi
   const myRooms = s.branchId ? await prisma.room.findMany({ where: { branchId: s.branchId, isActive: true }, select: { name: true, capacity: true } }) : [];
   const myBranch = s.branchId
     ? await prisma.branch.findUnique({ where: { id: s.branchId }, select: { id: true, name: true, slots: { select: { id: true, branchId: true, room: true, days: true, startTime: true, endTime: true, note: true, capacity: true }, orderBy: [{ room: "asc" }, { startTime: "asc" }] } } })
@@ -98,7 +96,6 @@ export default async function AdminDashboard({ locale }: { locale: Locale }) {
 
   return (
     <div className="space-y-6">
-      {/* Texnik KPI */}
       <div className="grid grid-cols-2 gap-4 lg:grid-cols-4">
         <StatCard label={t.users} value={users.length} tone="brand" icon="users" />
         <StatCard label={t.active} value={activeUsers} tone="green" icon="check" />
@@ -106,7 +103,6 @@ export default async function AdminDashboard({ locale }: { locale: Locale }) {
         <StatCard label={t.audit} value={auditCount} icon="history" />
       </div>
 
-      {/* Texnik bo'limlar */}
       <div>
         <h3 className="mb-3 text-sm font-semibold text-slate-700">{t.quick}</h3>
         <div className="grid gap-3 md:grid-cols-2 xl:grid-cols-4">
@@ -117,7 +113,6 @@ export default async function AdminDashboard({ locale }: { locale: Locale }) {
         </div>
       </div>
 
-      {/* Bo'sh xona / vaqt — filial administratori kiritadi, ROP lidlarni shu yerga yo'naltiradi */}
       {myBranch && (
         <div className="rounded-2xl border border-emerald-200 bg-white p-4 shadow-card dark:border-emerald-500/20 dark:bg-[#15243d]">
           <div className="mb-1 flex items-center gap-2">
@@ -134,7 +129,6 @@ export default async function AdminDashboard({ locale }: { locale: Locale }) {
           <div className="mt-3 max-w-xl">
             <BranchSlotsEditor
               branchId={myBranch.id}
-              // Sig'im kartada yo'q bo'lsa — Xonalar bo'limidagi xona sig'imi (nom bo'yicha)
               initial={myBranch.slots.map((sl) => ({ ...sl, capacity: sl.capacity ?? (myRooms.find((r) => r.name.trim().toLowerCase() === sl.room.trim().toLowerCase())?.capacity || null) }))}
               canEdit
               locale={locale}
@@ -143,7 +137,6 @@ export default async function AdminDashboard({ locale }: { locale: Locale }) {
         </div>
       )}
 
-      {/* Dars jadvali — qatorlar GURUHLAR bo'yicha (xona/o'qituvchiga ham almashtirsa bo'ladi) */}
       <LessonCalendar
         locale={locale}
         lessons={calLessons}

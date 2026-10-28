@@ -8,7 +8,6 @@ import { Icon } from "../../_components/Icon";
 
 const BASE = "/reports/teacher-performance";
 
-/** Ustun sarlavhasi — bosilganda saralaydi (URL orqali). */
 export function SortHeader({
   col,
   label,
@@ -57,7 +56,6 @@ export interface TeacherRow {
   e_active: number; e_left: number; e_grad: number; e_frozen: number;
 }
 
-/** Ko'rinib turgan qatorlardan CSV yuklab beradi. */
 export function ExportButton({ rows, locale }: { rows: TeacherRow[]; locale: Locale }) {
   const onClick = () => {
     const boshi = tr(locale, { uz: "Boshi", ru: "Начало", en: "Start", de: "Anfang" });

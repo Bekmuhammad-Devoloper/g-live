@@ -18,7 +18,6 @@ export default async function FinancePage() {
   const now = new Date();
   const monthStart = new Date(now.getFullYear(), now.getMonth(), 1);
 
-  // To'lovlar Student orqali filialga bog'lanadi — faol filial doirasida
   const [paidAgg, monthAgg, cancelled, recent, manualCount] = await Promise.all([
     prisma.payment.aggregate({ _sum: { amount: true }, where: { AND: [{ status: "PAID" }, branchViaStudent(s)] } }),
     prisma.payment.aggregate({ _sum: { amount: true }, where: { AND: [{ status: "PAID", createdAt: { gte: monthStart } }, branchViaStudent(s)] } }),

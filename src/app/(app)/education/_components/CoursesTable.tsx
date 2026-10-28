@@ -31,7 +31,6 @@ const statusTone: Record<string, "green" | "amber" | "slate" | "red"> = {
   CANCELLED: "red",
 };
 
-// Onlayn/offline guruhlar jadvali — holat va qidiruv bo'yicha filtrlanadi (client-side).
 export default function CoursesTable({
   rows,
   isOnline,

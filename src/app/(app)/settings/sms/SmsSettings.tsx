@@ -11,7 +11,7 @@ type L = { uz: string; ru: string; en: string; de: string };
 interface SmsType {
   key: string;
   label: L;
-  counter?: boolean; // +/- sozlagich (masalan necha kun oldin)
+  counter?: boolean;
   desc: L;
   text: L;
 }
@@ -71,7 +71,6 @@ export default function SmsSettings({ locale, centerName }: { locale: Locale; ce
   const [saved, setSaved] = useState(false);
   const areaRef = useRef<HTMLTextAreaElement>(null);
 
-  // localStorage'dan yuklash
   useEffect(() => {
     try {
       const raw = localStorage.getItem(STORAGE_KEY);
@@ -83,12 +82,12 @@ export default function SmsSettings({ locale, centerName }: { locale: Locale; ce
           return next;
         });
       }
-    } catch { /* ignore */ }
+    } catch { }
   }, []);
 
   const persist = (next: State) => {
     setState(next);
-    try { localStorage.setItem(STORAGE_KEY, JSON.stringify(next)); } catch { /* ignore */ }
+    try { localStorage.setItem(STORAGE_KEY, JSON.stringify(next)); } catch { }
   };
 
   const type = SMS_TYPES.find((t) => t.key === active)!;
@@ -130,7 +129,6 @@ export default function SmsSettings({ locale, centerName }: { locale: Locale; ce
     <div className="space-y-4">
       <h1 className="text-[24px] font-bold tracking-tight text-slate-900 dark:text-slate-100">Auto-SMS</h1>
 
-      {/* Tablar */}
       <div className="flex items-center gap-1 border-b border-slate-200/70 dark:border-slate-800">
         {([["auto", "Auto-SMS"], ["templates", tr(locale, { uz: "SMS shablonlar", ru: "SMS-шаблоны", en: "SMS templates", de: "SMS-Vorlagen" })]] as const).map(([k, lb]) => (
           <button key={k} onClick={() => setTab(k)}
@@ -157,7 +155,6 @@ export default function SmsSettings({ locale, centerName }: { locale: Locale; ce
         </div>
       ) : (
         <div className="grid gap-4 lg:grid-cols-[1fr_1.2fr_1fr]">
-          {/* Chap: SMS turi */}
           <div>
             <h3 className="mb-3 text-base font-semibold text-slate-700 dark:text-slate-200">{tr(locale, { uz: "SMS turi", ru: "Тип SMS", en: "SMS type", de: "SMS-Typ" })}</h3>
             <div className="space-y-2.5">
@@ -182,7 +179,6 @@ export default function SmsSettings({ locale, centerName }: { locale: Locale; ce
             </div>
           </div>
 
-          {/* O'rta: matn + misol */}
           <div className="rounded-2xl border border-slate-200/70 bg-white p-5 shadow-card dark:border-slate-800 dark:bg-slate-900">
             <h3 className="mb-3 text-base font-semibold text-slate-700 dark:text-slate-200">{tr(locale, { uz: "SMS matn", ru: "Текст SMS", en: "SMS text", de: "SMS-Text" })}: {tr(locale, type.label)}</h3>
             <textarea
@@ -206,7 +202,6 @@ export default function SmsSettings({ locale, centerName }: { locale: Locale; ce
             </div>
           </div>
 
-          {/* O'ng: tavsif + o'zgaruvchilar */}
           <div className="rounded-2xl border border-slate-200/70 bg-white p-5 shadow-card dark:border-slate-800 dark:bg-slate-900">
             <h3 className="mb-3 text-base font-semibold text-slate-700 dark:text-slate-200">{tr(locale, { uz: "Tavsif", ru: "Описание", en: "Description", de: "Beschreibung" })}</h3>
             <p className="rounded-xl bg-slate-50/70 px-3.5 py-3 text-sm leading-relaxed text-slate-600 dark:bg-slate-800/40 dark:text-slate-300">{tr(locale, type.desc)}</p>

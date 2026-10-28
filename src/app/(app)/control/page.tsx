@@ -13,7 +13,6 @@ export default async function ControlPage() {
     return <Forbidden title={tr(s.locale, { uz: "Kirish taqiqlangan", ru: "Доступ запрещён", en: "Access denied", de: "Zugriff verweigert" })} body={tr(s.locale, { uz: "Bu bo'lim rahbariyat uchun.", ru: "Этот раздел для руководства.", en: "This section is for management.", de: "Dieser Bereich ist für die Geschäftsleitung." })} />;
   }
 
-  // Barcha ko'rsatkichlar faol filial doirasida
   const [anomalies, unconfirmed, manualPayments, lowScores, recentAudit] = await Promise.all([
     prisma.attendance.findMany({
       where: { AND: [{ anomaly: true }, branchViaLesson(s)] },

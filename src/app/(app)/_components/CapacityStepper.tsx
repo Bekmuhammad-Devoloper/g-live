@@ -5,12 +5,6 @@ import { tr } from "@/lib/tr";
 import type { Locale } from "@/lib/constants";
 import { Icon } from "./Icon";
 
-/**
- * Sig'im maydoni — "− / son / +" stepper va tez tanlov chiplari.
- * Xona tanlansa xona sig'imi taklif sifatida to'ladi, lekin QAT'IY chegara emas:
- * guruh yig'ishda 15 kishi yig'ib, keyin 12 tasi qolishi odatiy hol — shuning
- * uchun xonadan ko'p qo'yish mumkin (faqat eslatma chiqadi).
- */
 export default function CapacityStepper({
   name,
   value,
@@ -21,11 +15,9 @@ export default function CapacityStepper({
   max = 200,
   quick = [8, 10, 12, 15, 20],
 }: {
-  /** Forma uchun yashirin input nomi (server action FormData'dan o'qiydi) */
   name?: string;
   value: number;
   onChange: (n: number) => void;
-  /** Tanlangan xonaning sig'imi — taklif va eslatma uchun */
   roomCapacity?: number | null;
   locale: Locale;
   min?: number;
@@ -61,7 +53,6 @@ export default function CapacityStepper({
         </button>
       </div>
 
-      {/* Tez tanlov */}
       <div className="mt-1.5 flex flex-wrap items-center gap-1">
         {Array.from(new Set([...(roomCapacity && roomCapacity > 0 ? [roomCapacity] : []), ...quick])).sort((a, b) => a - b).map((n) => (
           <button
@@ -80,7 +71,6 @@ export default function CapacityStepper({
         ))}
       </div>
 
-      {/* Eslatma: xonadan ko'p — ruxsat, lekin bilib qo'ysin */}
       {over > 0 && (
         <p className="mt-1 text-[11px] leading-snug text-amber-600 dark:text-amber-400">
           {L(

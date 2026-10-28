@@ -27,7 +27,6 @@ export default function PortalFeaturesView({ rows, locale }: { rows: FeatureRow[
 
   return (
     <form action={action}>
-      {/* Yashirin maydonlar — server action shular orqali o'qiydi */}
       {rows.map((r) => (
         <input key={r.key} type="hidden" name={r.key} value={flags[r.key] ? "on" : "off"} />
       ))}

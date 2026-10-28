@@ -8,7 +8,6 @@ import { writeAudit } from "@/lib/audit";
 
 export type CallbackState = { ok?: boolean; error?: string };
 
-/** O'tkazib yuborilgan qo'ng'iroqni "bog'lanildi" deb belgilash. */
 export async function markCalledBack(callId: string): Promise<CallbackState> {
   const s = await requireSession();
   if (!canWrite(s.role, MODULES.CRM)) return { error: "forbidden" };

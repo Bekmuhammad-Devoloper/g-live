@@ -6,9 +6,6 @@ import { branchWhere } from "@/lib/branchScope";
 import { Forbidden } from "../_components/ui";
 import CoursesView, { type VCourse } from "./CoursesView";
 
-// Kurslarni boshqarish: rahbariyat + menejer. O'qituvchi ham kiradi, lekin
-// faqat O'Z guruhlari foydalanadigan kurslarni ko'radi (dars yuklash uchun).
-// ROP — dars va materiallarni yuklash uchun (kursning o'zini yaratmaydi).
 const ALLOWED = [ROLES.DIRECTOR, ROLES.DEPUTY_DIRECTOR, ROLES.ADMIN, ROLES.MANAGER, ROLES.TEACHER, ROLES.ROP];
 const CAN_CREATE = [ROLES.DIRECTOR, ROLES.DEPUTY_DIRECTOR, ROLES.ADMIN, ROLES.MANAGER];
 
@@ -18,8 +15,6 @@ export default async function CoursesPage() {
     return <Forbidden title={tr(s.locale, { uz: "Kirish taqiqlangan", ru: "Доступ запрещён", en: "Access denied", de: "Zugriff verweigert" })} body={tr(s.locale, { uz: "Bu bo'lim rahbariyat uchun.", ru: "Этот раздел только для руководства.", en: "This section is for management only.", de: "Dieser Bereich ist nur für die Leitung." })} />;
   }
 
-  // Kurs katalogi hamma filialda umumiy, lekin guruhlar soni faol filial bo'yicha
-  // O'qituvchi — faqat o'zi dars beradigan guruhlarning kurslari
   const scope = s.role === ROLES.TEACHER ? { groups: { some: { teacherId: s.userId } } } : {};
 
   const programs = await prisma.program.findMany({

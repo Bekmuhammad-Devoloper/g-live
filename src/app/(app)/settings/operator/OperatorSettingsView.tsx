@@ -59,7 +59,6 @@ export default function OperatorSettingsView({ locale, initialTab, me, prefs: pr
   const [error, setError] = useState<string | null>(null);
   const [pending, start] = useTransition();
 
-  // Mavzu — butun ilovada bo'lgani kabi localStorage("gl-theme") + <html class="dark">
   const [dark, setDark] = useState(false);
   const [themeReady, setThemeReady] = useState(false);
   useEffect(() => {
@@ -107,7 +106,6 @@ export default function OperatorSettingsView({ locale, initialTab, me, prefs: pr
 
   return (
     <div className="space-y-5">
-      {/* ── Sarlavha ── */}
       <div className="flex flex-wrap items-center justify-between gap-3">
         <div className="flex items-center gap-3">
           <span className="grid h-12 w-12 place-items-center rounded-2xl bg-gradient-to-br from-violet-500 to-purple-600 text-white shadow-soft">
@@ -127,7 +125,6 @@ export default function OperatorSettingsView({ locale, initialTab, me, prefs: pr
         </span>
       </div>
 
-      {/* ── Profil kartasi (tahrirlash /profile sahifasida) ── */}
       <div className="flex flex-wrap items-center gap-4 rounded-2xl border border-slate-200/70 bg-white p-5 shadow-card dark:border-slate-800 dark:bg-slate-900">
         <UserAvatar name={me.fullName} imageUrl={me.imageUrl} role="MANAGER" size="lg" className="!h-14 !w-14" />
         <div className="min-w-0 flex-1">
@@ -146,7 +143,6 @@ export default function OperatorSettingsView({ locale, initialTab, me, prefs: pr
         </Link>
       </div>
 
-      {/* ── Tablar ── */}
       <div className="flex flex-wrap gap-2">
         <TabBtn active={tab === "notifications"} onClick={() => setTab("notifications")} icon="bell">{L("Bildirishnomalar", "Уведомления", "Notifications", "Benachrichtigungen")}</TabBtn>
         <TabBtn active={tab === "appearance"} onClick={() => setTab("appearance")} icon="sun">{L("Ko'rinish", "Оформление", "Appearance", "Aussehen")}</TabBtn>
@@ -156,7 +152,6 @@ export default function OperatorSettingsView({ locale, initialTab, me, prefs: pr
       {msg && <div className="rounded-lg bg-emerald-50 px-3 py-2 text-sm text-emerald-600 dark:bg-emerald-500/10 dark:text-emerald-400">{msg}</div>}
       {error && <div className="rounded-lg bg-rose-50 px-3 py-2 text-sm text-rose-600 dark:bg-rose-500/10 dark:text-rose-400">{error}</div>}
 
-      {/* ───────── BILDIRISHNOMALAR ───────── */}
       {tab === "notifications" && (
         <div className="grid gap-5 lg:grid-cols-[minmax(0,1fr)_320px]">
           <Card icon="bell" title={L("Bildirishnoma sozlamalari", "Настройки уведомлений", "Notification preferences", "Benachrichtigungseinstellungen")} desc={L("Qaysi hodisalar haqida qanday xabar olishni tanlang.", "Выберите, как получать уведомления о событиях.", "Choose how you want to be notified about events.", "Wählen Sie, wie Sie über Ereignisse benachrichtigt werden möchten.")}>
@@ -200,7 +195,6 @@ export default function OperatorSettingsView({ locale, initialTab, me, prefs: pr
         </div>
       )}
 
-      {/* ───────── KO'RINISH ───────── */}
       {tab === "appearance" && (
         <div className="grid gap-5 lg:grid-cols-2">
           <Card icon="sun" title={L("Mavzu", "Тема", "Theme", "Design")} desc={L("Yorug' yoki tungi rejimni tanlang — darhol qo'llanadi.", "Выберите светлый или тёмный режим — применяется сразу.", "Pick the light or dark mode — applied instantly.", "Wählen Sie den hellen oder dunklen Modus — wird sofort angewendet.")}>
@@ -247,7 +241,6 @@ export default function OperatorSettingsView({ locale, initialTab, me, prefs: pr
         </div>
       )}
 
-      {/* ───────── MAOSH VA KPI ───────── */}
       {tab === "salary" && (
         <div className="space-y-5">
           {salary.configured ? (

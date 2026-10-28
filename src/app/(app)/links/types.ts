@@ -1,7 +1,3 @@
-// Havolalar moduli — server va client o'rtasida uzatiladigan turlar.
-// DIQQAT: bu yerda faqat oddiy (serializatsiya qilinadigan) qiymatlar bo'lsin —
-// funksiya server komponentdan client komponentga o'tolmaydi.
-
 export interface VLink {
   id: string;
   code: string;
@@ -59,7 +55,6 @@ export interface Totals {
   totalSubmissions: number;
 }
 
-/** Ro'yxatdagi yaratilgan havola (natija oynasi uchun). */
 export interface CreatedLink {
   code: string;
   platform: string;

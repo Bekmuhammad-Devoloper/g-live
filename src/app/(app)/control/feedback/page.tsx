@@ -7,7 +7,6 @@ import { PageHeader, Card, StatCard, Table, EmptyRow, Forbidden } from "../../_c
 
 const ALLOWED = [ROLES.DIRECTOR, ROLES.DEPUTY_DIRECTOR, ROLES.ADMIN];
 
-// Fikr-mulohaza — o'qituvchilar haqidagi baho va izohlar (Feedback modeli)
 export default async function FeedbackPage() {
   const s = await requireSession();
   if (!ALLOWED.includes(s.role as never)) {
@@ -15,7 +14,6 @@ export default async function FeedbackPage() {
   }
   const T = (uz: string, ru: string, en: string, de: string = en) => tr(s.locale, { uz, ru, en, de });
 
-  // Feedback'da branchId yo'q — faol filial o'qituvchilari orqali cheklaymiz
   const branchTeachers = s.branchId
     ? await prisma.user.findMany({ where: { AND: [{ role: ROLES.TEACHER }, staffBranchWhere(s)] }, select: { id: true } })
     : null;

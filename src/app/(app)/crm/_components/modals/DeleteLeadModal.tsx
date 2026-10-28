@@ -4,10 +4,6 @@ import { tr } from "@/lib/tr";
 import type { Locale } from "@/lib/constants";
 import { Icon } from "../../../_components/Icon";
 
-// "Daraja testi" lidini Kanbandan to'g'ridan-to'g'ri o'chirish uchun
-// tasdiqlash oynasi. To'liq sahifadagi (ism yozib tasdiqlanadigan)
-// o'chirishdan farqli — tezkor: ikkinchi bosish yetarli.
-// Faqat direktor / o'rinbosari / admin, faqat TEST bosqichi.
 export default function DeleteLeadModal({
   locale, open, leadName, pending, onClose, onConfirm,
 }: {

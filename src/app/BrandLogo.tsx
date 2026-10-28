@@ -1,7 +1,3 @@
-// Markaz logotipi — server va klient komponentlarida birdek ishlatiladi (brand.ts'ni import
-// qilmaydi: brend qiymatlari eng yaqin server ota-komponentdan props orqali keladi).
-// Logotip yuklanmagan markazda <img> o'rniga markaz nomi matn ko'rinishida chiqadi.
-
 export interface BrandView {
   name: string;
   logo: string;
@@ -15,11 +11,8 @@ export default function BrandLogo({
   variant = "auto",
 }: {
   brand: BrandView;
-  /** <img> uchun klasslar */
   className: string;
-  /** Logotip bo'lmaganda chiqadigan nom uchun klasslar */
   textClassName?: string;
-  /** auto — yorug'/qorong'i rejimga qarab almashadi; light/dark — faqat bitta variant */
   variant?: "auto" | "light" | "dark";
 }) {
   const dark = brand.logoDark || brand.logo;

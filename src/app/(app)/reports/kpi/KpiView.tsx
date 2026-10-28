@@ -28,7 +28,6 @@ export default function KpiView({ rows, locale, canEdit = false }: { rows: VKpiR
   const router = useRouter();
   const [tab, setTab] = useState<Cat>("operator");
 
-  // Toifalar bo'yicha ajratish va KPI% bo'yicha saralash (eng yuqori — birinchi).
   const byCat = useMemo(() => {
     const sort = (a: VKpiRow, b: VKpiRow) => b.kpiPct - a.kpiPct || b.won - a.won;
     return {
@@ -41,7 +40,6 @@ export default function KpiView({ rows, locale, canEdit = false }: { rows: VKpiR
   const ops = byCat.operator;
   const group = byCat[tab];
 
-  // Yuqoridagi ko'rsatkichlar — eski loyihadagidek doim operatorlar bo'yicha.
   const avgKpi = avg1(ops.map((o) => o.kpiPct));
   const avgConv = avg1(ops.map((o) => o.conv));
   const totalLeads = ops.reduce((n, o) => n + o.total, 0);
@@ -68,7 +66,6 @@ export default function KpiView({ rows, locale, canEdit = false }: { rows: VKpiR
 
   return (
     <div className="space-y-4">
-      {/* ── Sarlavha kartasi ── */}
       <div className="relative overflow-hidden rounded-2xl border border-slate-200/70 bg-white shadow-card dark:border-slate-800 dark:bg-slate-900">
         <div className="pointer-events-none absolute -right-10 -top-10 h-40 w-40 rounded-full bg-gradient-to-br from-amber-500/10 to-orange-500/5" />
         <div className="relative flex flex-wrap items-center justify-between gap-4 px-5 py-4">
@@ -96,7 +93,6 @@ export default function KpiView({ rows, locale, canEdit = false }: { rows: VKpiR
         </div>
       </div>
 
-      {/* ── 4 ta ko'rsatkich ── */}
       <div className="grid grid-cols-2 gap-3 lg:grid-cols-4">
         <Stat
           icon="chart"
@@ -133,7 +129,6 @@ export default function KpiView({ rows, locale, canEdit = false }: { rows: VKpiR
         />
       </div>
 
-      {/* ── Rol tablari ── */}
       <div className="inline-flex flex-wrap gap-1 rounded-xl border border-slate-200/70 bg-slate-50 p-1 dark:border-slate-800 dark:bg-slate-800/60">
         {TABS.map((x) => (
           <button
@@ -151,9 +146,7 @@ export default function KpiView({ rows, locale, canEdit = false }: { rows: VKpiR
         ))}
       </div>
 
-      {/* ── Top 3 + KPI taqqoslash ── */}
       <div className="grid grid-cols-1 gap-3 lg:grid-cols-5">
-        {/* Top 3 */}
         <div className="rounded-2xl border border-slate-200/70 bg-white p-5 shadow-card lg:col-span-2 dark:border-slate-800 dark:bg-slate-900">
           <PanelHead
             icon="award"
@@ -218,7 +211,6 @@ export default function KpiView({ rows, locale, canEdit = false }: { rows: VKpiR
           )}
         </div>
 
-        {/* KPI taqqoslash grafigi */}
         <div className="rounded-2xl border border-slate-200/70 bg-white p-5 shadow-card lg:col-span-3 dark:border-slate-800 dark:bg-slate-900">
           <PanelHead
             icon="chart"
@@ -230,13 +222,11 @@ export default function KpiView({ rows, locale, canEdit = false }: { rows: VKpiR
         </div>
       </div>
 
-      {/* ── To'liq jadval ── */}
       <KpiTable rows={group} tab={tab} locale={locale} canEdit={canEdit} />
     </div>
   );
 }
 
-/** Yuqoridagi 4 ta ko'rsatkich kartasi (eski loyihadagi gradient ikonkali karta). */
 function Stat({ icon, grad, label, value, sub }: { icon: string; grad: string; label: string; value: string; sub: string }) {
   return (
     <div className="relative overflow-hidden rounded-xl border border-slate-200/70 bg-white p-4 shadow-card dark:border-slate-800 dark:bg-slate-900">

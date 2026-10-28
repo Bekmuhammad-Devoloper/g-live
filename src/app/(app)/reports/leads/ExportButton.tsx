@@ -10,7 +10,6 @@ interface Row {
   value: number;
 }
 
-// Lidlar hisobotini (oylar kesimida) CSV'ga eksport qiladi.
 export default function ExportButton({ filename, rows, locale }: { filename: string; rows: Row[]; locale: Locale }) {
   const handleExport = () => {
     exportRows(

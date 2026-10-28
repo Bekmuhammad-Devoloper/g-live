@@ -8,10 +8,6 @@ import { APK_DIR, APK_FILE } from "@/lib/appRelease";
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
 
-// Android ilovasini yuklab berish.
-// Fayl repozitoriyda emas — serverda /opt/gl-edu/apk/ papkasida turadi,
-// shu sabab uni public/ orqali emas, shu yo'l orqali beramiz.
-
 export async function GET() {
   const file = path.join(APK_DIR, APK_FILE);
   let size: number;

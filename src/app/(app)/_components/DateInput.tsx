@@ -5,12 +5,6 @@ import { createPortal } from "react-dom";
 import { cn } from "@/lib/cn";
 import type { Locale } from "@/lib/constants";
 
-/**
- * Brauzerning <input type="date|month"> o'rniga ilova uslubidagi kalendar.
- * Qiymat formati native bilan bir xil: "YYYY-MM-DD" yoki "YYYY-MM"; onChange
- * ham native kabi e.target.value beradi, name bo'lsa forma bilan yuboriladi.
- */
-
 const MONTHS: Record<Locale, string[]> = {
   uz: ["Yanvar", "Fevral", "Mart", "Aprel", "May", "Iyun", "Iyul", "Avgust", "Sentabr", "Oktabr", "Noyabr", "Dekabr"],
   ru: ["Январь", "Февраль", "Март", "Апрель", "Май", "Июнь", "Июль", "Август", "Сентябрь", "Октябрь", "Ноябрь", "Декабрь"],
@@ -103,7 +97,6 @@ export default function DateInput({ type = "date", name, value, defaultValue, on
     setOpen(true);
   };
 
-  // Joylashuv: trigger ostida, ekrandan chiqib ketsa tepaga / chapga suriladi
   useLayoutEffect(() => {
     if (!open) return;
     const place = () => {
@@ -142,7 +135,6 @@ export default function DateInput({ type = "date", name, value, defaultValue, on
 
   const display = sel ? (isMonth ? `${MONTHS[loc][sel.m]} ${sel.y}` : `${p2(sel.d)}.${p2(sel.m + 1)}.${sel.y}`) : "";
 
-  // Kunlar to'ri: dushanbadan boshlanadi, 6 hafta
   const first = new Date(view.y, view.m, 1);
   const lead = (first.getDay() + 6) % 7;
   const cells = Array.from({ length: 42 }, (_, i) => {
@@ -304,7 +296,6 @@ export default function DateInput({ type = "date", name, value, defaultValue, on
       </button>
       {name && <input type="hidden" name={name} value={current} />}
       {required && (
-        // Forma tekshiruvi uchun ko'rinmas maydon (bo'sh bo'lsa yuborilmaydi)
         <input tabIndex={-1} aria-hidden required value={current} onChange={() => {}} className="pointer-events-none absolute h-0 w-0 opacity-0" />
       )}
       {pop}

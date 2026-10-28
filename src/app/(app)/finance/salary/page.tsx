@@ -11,7 +11,6 @@ import SalaryCalculatorView, { type VRule } from "./SalaryCalculatorView";
 
 const p2 = (n: number) => String(n).padStart(2, "0");
 
-// "Ish haqi" — maosh kalkulyatori (qoidalar, sozlamalar, hisoblash va profilga chiqarish).
 export default async function SalaryCalculatorPage() {
   const s = await requireSession();
   if (!canRead(s.role, MODULES.SALARY)) {
@@ -19,7 +18,6 @@ export default async function SalaryCalculatorPage() {
   }
 
   const [rules, teachers, programs, groups, students, enrollments, settings] = await Promise.all([
-    // SalaryRule va Program — umumiy ma'lumotnoma (filialga bog'liq emas)
     prisma.salaryRule.findMany({ orderBy: [{ isDefault: "desc" }, { createdAt: "desc" }] }),
     prisma.user.findMany({ where: { AND: [{ role: ROLES.TEACHER, isActive: true }, staffBranchWhere(s)] }, select: { id: true, fullName: true }, orderBy: { fullName: "asc" } }),
     prisma.program.findMany({ where: { isActive: true }, select: { id: true, name: true }, orderBy: { name: "asc" } }),
@@ -29,7 +27,6 @@ export default async function SalaryCalculatorPage() {
     getSalarySettings(),
   ]);
 
-  // Qoida jadvali uchun nomlar: yaratgan/yangilagan xodim, guruh kursi va o'qituvchisi
   const userIds = [...new Set(rules.flatMap((r) => [r.createdById, r.updatedById]).filter((x): x is string => !!x))];
   const ruleGroupIds = [...new Set(rules.flatMap((r) => [r.scope === "GROUP" ? r.targetId : null, r.groupId]).filter((x): x is string => !!x))];
   const [users, ruleGroups] = await Promise.all([

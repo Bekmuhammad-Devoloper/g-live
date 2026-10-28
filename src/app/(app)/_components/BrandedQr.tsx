@@ -2,26 +2,12 @@
 
 import { useEffect, useRef } from "react";
 
-/**
- * Brend uslubidagi QR kod — Germaniya Live logotipiga o'xshatilgan:
- *   - modullar logotipdagi qizil → sariq gradientda, yumaloq burchakli;
- *   - uchta burchak belgisi (finder) gradientda, lekin shakli STANDART kvadrat —
- *     skanerlar ularni 1:1:3:1:1 nisbat bilan topadi, yumaloqlansa o'qilmaydi
- *     (OpenCV bilan tekshirildi);
- *   - markazda "G + burgut" emblemasi (oq yumaloq karta ustida).
- * Server `errorCorrectionLevel: "H"` (30% zaxira) bilan yasaydi — emblema
- * ~5% joy oladi, shuning uchun skanerlar bemalol o'qiydi.
- * Canvas'da chiziladi; tayyor PNG `onPng` orqali qaytadi (yuklab olish uchun).
- */
 export default function BrandedQr({
   modules, size, px = 640, logoSrc = "/logo-mark.png", className, onPng,
 }: {
-  /** Modullar satrma-satr: "0"/"1" belgilar, uzunligi size*size */
   modules: string;
   size: number;
-  /** Chizish o'lchami (piksel) — PNG sifati shu */
   px?: number;
-  /** Markazdagi emblema; bo'sh satr — emblemasiz (faqat oq maydon) */
   logoSrc?: string;
   className?: string;
   onPng?: (dataUrl: string) => void;
@@ -34,19 +20,17 @@ export default function BrandedQr({
     const ctx = canvas.getContext("2d");
     if (!ctx) return;
 
-    const QUIET = 2; // atrofdagi bo'sh modullar (skaner uchun kerak)
+    const QUIET = 2;
     const grid = size + QUIET * 2;
-    const m = px / grid; // bitta modul (px)
+    const m = px / grid;
     canvas.width = px;
     canvas.height = px;
 
-    // Fon — oq, yumaloq burchak
     ctx.clearRect(0, 0, px, px);
     ctx.fillStyle = "#ffffff";
     rr(ctx, 0, 0, px, px, m * 1.5);
     ctx.fill();
 
-    // Logotip gradienti (chapdan o'ngga diagonal): qizil → to'q sariq → sariq
     const grad = ctx.createLinearGradient(0, 0, px, px);
     grad.addColorStop(0, "#e11d2b");
     grad.addColorStop(0.55, "#f26a21");
@@ -57,13 +41,11 @@ export default function BrandedQr({
     const inFinder = (r: number, c: number) =>
       (r < 7 && c < 7) || (r < 7 && c >= size - 7) || (r >= size - 7 && c < 7);
 
-    // Markazdagi emblema uchun joy — modullarning ~22% kengligi
     const logoMods = Math.round(size * 0.22);
     const logoStart = Math.floor((size - logoMods) / 2);
     const inLogo = (r: number, c: number) =>
       r >= logoStart && r < logoStart + logoMods && c >= logoStart && c < logoStart + logoMods;
 
-    // Oddiy modullar — yumaloq burchakli, ozgina bo'shliq bilan
     const gap = m * 0.12;
     for (let r = 0; r < size; r++) {
       for (let c = 0; c < size; c++) {
@@ -75,7 +57,6 @@ export default function BrandedQr({
       }
     }
 
-    // Burchak belgilari: tashqi halqa (7×7) + ichki to'ldirilgan kvadrat (3×3) — to'g'ri burchakli
     const finder = (r0: number, c0: number) => {
       const x = (c0 + QUIET) * m;
       const y = (r0 + QUIET) * m;
@@ -90,7 +71,6 @@ export default function BrandedQr({
     finder(0, size - 7);
     finder(size - 7, 0);
 
-    // Markaz — oq yumaloq karta + emblema
     const lx = (logoStart + QUIET) * m;
     const ls = logoMods * m;
     ctx.fillStyle = "#ffffff";
@@ -107,7 +87,7 @@ export default function BrandedQr({
       ctx.drawImage(img, lx + pad, lx + pad, ls - pad * 2, ls - pad * 2);
       onPng?.(canvas.toDataURL("image/png"));
     };
-    img.onerror = () => onPng?.(canvas.toDataURL("image/png")); // emblema yuklanmasa ham QR ishlaydi
+    img.onerror = () => onPng?.(canvas.toDataURL("image/png"));
     img.src = logoSrc;
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [modules, size, px, logoSrc]);
@@ -115,7 +95,6 @@ export default function BrandedQr({
   return <canvas ref={ref} className={className} aria-label="QR" />;
 }
 
-/** Yumaloq burchakli to'rtburchak yo'li */
 function rr(ctx: CanvasRenderingContext2D, x: number, y: number, w: number, h: number, r: number) {
   const rad = Math.min(r, w / 2, h / 2);
   ctx.beginPath();

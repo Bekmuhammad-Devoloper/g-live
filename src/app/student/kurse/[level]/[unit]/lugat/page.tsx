@@ -7,25 +7,13 @@ import { NAVY } from "../../../../_ui";
 import { isGeminiConfigured } from "@/lib/gemini";
 import VocabTrainer from "./VocabTrainer";
 
-// Darsning lug'ati.
-//
-// So'zlarni ustoz "Lug'at" maydoniga "der Hund - it" ko'rinishida yozadi
-// (eski darslarda — "Mavzu" maydoniga). Ajratish mantig'i lib/lessonWords.ts
-// da: dars sahifasi, "So'zlar" bo'limi va shu sahifa bitta manbadan oladi.
-//
-// Sahifa uch qismdan iborat: yuqorida holat va mashq tugmasi, keyin ustoz
-// yuklagan fayl (bo'lsa), pastda so'zlar ro'yxati.
-
 const ACCENT = "linear-gradient(150deg, #f6c453 0%, #e09217 100%)";
 const ACCENT_SOLID = "linear-gradient(135deg, #e8a52a 0%, #d4820f 100%)";
 
-// Artikl rangi — nemis tilida ot artikli bilan yodlanadi. Rang jinsni
-// bir qarashda ajratib beradi: takror ko'rgan sari "die Katze" ning
-// pushti artikli esda qoladi, artiklsiz so'z esa keyin gapda xato beradi.
 const ARTICLE: Record<string, { fg: string }> = {
-  der: { fg: "#1d4ed8" }, // ko'k
-  die: { fg: "#be185d" }, // pushti
-  das: { fg: "#047857" }, // yashil
+  der: { fg: "#1d4ed8" },
+  die: { fg: "#be185d" },
+  das: { fg: "#047857" },
 };
 
 export default async function LessonVocabPage({
@@ -53,10 +41,6 @@ export default async function LessonVocabPage({
         accent={ACCENT}
       />
 
-      {/* ── Holat va mashq ──
-          Ilgari bu yerda faqat ingichka foiz chizig'i turardi va o'quvchi
-          uni o'zi to'ldira olmasdi — dars o'tilishini kutardi. Endi mashq
-          shu yerdan boshlanadi. */}
       {hasVocab && (
         <section
           className="relative mt-4 overflow-hidden rounded-[26px] p-5 text-white shadow-[0_14px_30px_-14px_rgba(180,110,10,0.85)]"
@@ -108,8 +92,6 @@ export default async function LessonVocabPage({
               t={t}
               accent={ACCENT_SOLID}
               label={p.vocab.mastered ? t.practiceAgain : t.practiceWords}
-              // Brauzerdagi talaffuz Gemini orqali (yopiq tanlov). Kalit
-              // bo'lmasa brauzerda uch bosqich — ishlamaydigan tugma chiqmasin.
               canSpeak={isGeminiConfigured()}
             />
           ) : (
@@ -118,8 +100,6 @@ export default async function LessonVocabPage({
         </section>
       )}
 
-      {/* Ustoz yuklagan lug'at fayli (pdf/word/txt). So'zlar ro'yxatiga
-          QO'SHIMCHA — ikkalasi ham bo'lishi mumkin, birortasi ham. */}
       {lesson.vocabFileUrl && (
         <section className="gl-glass mt-3 rounded-[26px] px-4 pb-4 pt-3.5">
           <div className="flex items-center gap-2.5">
@@ -155,17 +135,6 @@ export default async function LessonVocabPage({
   );
 }
 
-/**
- * Bitta so'z qatori — IKKI USTUN: chapda nemischa, o'ngda tarjimasi.
- *
- * Ikkisini ustma-ust qo'yib ham ko'rilgan edi, lekin yonma-yon turgani
- * yaxshiroq: ko'z bir qatorda ikkalasini birdan oladi va ro'yxat ikki
- * baravar kalta bo'ladi.
- *
- * Artikl rangi saqlanadi (der ko'k, die pushti, das yashil), lekin fon
- * berilgan "chip" emas — tor ustunda chip so'zni ikkinchi qatorga surib
- * yuborardi. Rangli yozuvning o'zi ham jinsni bir qarashda ajratadi.
- */
 function WordRow({ word, index }: { word: LessonWord; index: number }) {
   const { article, rest } = splitArticle(word.de);
   const tone = article ? ARTICLE[article] : null;

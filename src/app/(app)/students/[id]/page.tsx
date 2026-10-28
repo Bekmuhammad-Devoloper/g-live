@@ -14,10 +14,6 @@ import type { VStudent } from "../StudentsView";
 import { PROFILE_VIEW_ROLES } from "./access";
 import { currentJournalMonth, loadStudentJournal } from "./journal";
 
-// O'quvchi profili — jadvaldagi qatordan bosilganda shu sahifa ochiladi.
-// Ruxsat ro'yxatlari /students bilan bir xil (PROFILE_VIEW_ROLES); o'qituvchi
-// faqat o'z guruhidagi o'quvchini ko'radi (aks holda notFound).
-// Tahrirlash/qarz qo'shish huquqi — /students ro'yxatidagi CAN_CREATE bilan bir xil
 const CAN_MANAGE = [ROLES.DIRECTOR, ROLES.DEPUTY_DIRECTOR, ROLES.MANAGER, ROLES.ADMIN];
 
 const iso = (d: Date | null | undefined) => (d ? d.toISOString() : null);
@@ -36,7 +32,6 @@ export default async function StudentProfilePage({ params }: { params: Promise<{
   }
 
   const student = await prisma.student.findFirst({
-    // Filial doirasi ro'yxatdagi bilan bir xil — boshqa filial o'quvchisi ochilmaydi
     where: { AND: [{ id }, branchWhere(s)] },
     include: {
       branch: { select: { name: true } },
@@ -63,7 +58,6 @@ export default async function StudentProfilePage({ params }: { params: Promise<{
 
   if (!student) notFound();
 
-  // O'qituvchi faqat o'z guruhidagi o'quvchini ko'radi
   if (s.role === ROLES.TEACHER) {
     const mine = await prisma.groupStudent.findFirst({
       where: { studentId: id, group: { teacherId: s.userId } },
@@ -72,17 +66,13 @@ export default async function StudentProfilePage({ params }: { params: Promise<{
     if (!mine) notFound();
   }
 
-  // Qarz — ro'yxat va tezkor oyna bilan BIR XIL hisob (src/lib/debt.ts):
-  // ro'yxatga olingan oydan hisoblangan to'lov − to'langan + qo'lda kiritilgan qarz.
-  // Ilgari bu yerda faqat PENDING yig'indisi ko'rsatilardi — ro'yxatda qarz
-  // turgan o'quvchi profilida "0 so'm" chiqardi.
   const jm = currentJournalMonth();
   const [debtInfo, receiptMode, journal] = await Promise.all([
     computeDebt(student.id),
     getSetting(RECEIPT_MODE_KEY).then(parseReceiptMode),
-    loadStudentJournal(student.id, jm.year, jm.month0), // oylik davomat jurnali — joriy oy
+    loadStudentJournal(student.id, jm.year, jm.month0),
   ]);
-  const paid = debtInfo.credit; // "Balans" — ortiqcha (oldindan) to'langan pul
+  const paid = debtInfo.credit;
   const debt = debtInfo.debt;
 
   const att = student.attendances;
@@ -138,7 +128,6 @@ export default async function StudentProfilePage({ params }: { params: Promise<{
 
   const uniq = (arr: (string | null | undefined)[]) => Array.from(new Set(arr.filter((x): x is string => !!x)));
   const now = new Date();
-  // "Kichik oynada ochish" — ro'yxatdagi tezkor oyna (StudentDetailModal) shu shaklni kutadi
   const quick: VStudent = {
     id: student.id,
     fullName: student.fullName,

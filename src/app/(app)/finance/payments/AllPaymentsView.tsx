@@ -16,8 +16,8 @@ import Pagination, { PAGE_SIZE, fmtDate, fmtDateTime, localDay } from "../_compo
 
 export interface VPayment {
   id: string;
-  date: string; // ISO
-  createdAt: string; // ISO — yozuv yaratilgan vaqt
+  date: string;
+  createdAt: string;
   studentId: string;
   student: string;
   phone: string;
@@ -31,12 +31,12 @@ export interface VPayment {
   promoCode: string | null;
   discount: number;
   author: string | null;
-  status: string; // PAID | CANCELLED
+  status: string;
   cancelReason: string | null;
 }
 
 export interface VExpense {
-  date: string; // ISO
+  date: string;
   amount: number;
   method: string;
 }
@@ -48,14 +48,12 @@ interface Props {
   locale: Locale;
   defaultFrom: string;
   defaultTo: string;
-  /** To'lovni tahrirlash huquqi (rahbariyat, administrator, hisobchi) */
   canEdit?: boolean;
 }
 
 type SortKey = "date" | "student" | "amount" | "method" | "teacher" | "note" | "author";
 type FilterKey = "from" | "to" | "q" | "group" | "course" | "teacher" | "method" | "sum" | "staff" | "cfrom" | "cto";
 
-// Maxsus tanlov qiymatlari
 const NO_GROUP = "__none__";
 const CANCELLED = "__cancelled__";
 const HIDDEN_KEY = "gl:finance-payments:hidden-filters";
@@ -79,17 +77,16 @@ export default function AllPaymentsView({ payments, expenses, options, locale, d
   const [hidden, setHidden] = useState<FilterKey[]>([]);
   const [filterMenu, setFilterMenu] = useState(false);
 
-  // Yashirilgan filtrlar shu brauzerda eslab qolinadi
   useEffect(() => {
     try {
       const raw = localStorage.getItem(HIDDEN_KEY);
       if (raw) setHidden(JSON.parse(raw) as FilterKey[]);
-    } catch { /* localStorage mavjud emas */ }
+    } catch { }
   }, []);
   const toggleHidden = (k: FilterKey) => {
     setHidden((h) => {
       const next = h.includes(k) ? h.filter((x) => x !== k) : [...h, k];
-      try { localStorage.setItem(HIDDEN_KEY, JSON.stringify(next)); } catch { /* e'tiborsiz */ }
+      try { localStorage.setItem(HIDDEN_KEY, JSON.stringify(next)); } catch { }
       return next;
     });
   };
@@ -136,13 +133,11 @@ export default function AllPaymentsView({ payments, expenses, options, locale, d
     return list;
   }, [payments, from, to, cFrom, cTo, q, group, noGroup, course, teacher, method, sum, staff, sortKey, sortDir]);
 
-  // Filtr o'zgarsa — birinchi sahifaga qaytish
   useEffect(() => { setPage(1); }, [from, to, cFrom, cTo, q, group, course, teacher, method, sum, staff]);
 
   const paid = filtered.filter((p) => p.status === "PAID");
   const total = paid.reduce((n, p) => n + p.amount, 0);
 
-  // Sof foyda: shu davrdagi tushum − shu davrdagi xarajatlar (to'lov turi tanlangan bo'lsa — shu tur bo'yicha)
   const realMethod = method && method !== CANCELLED ? method : "";
   const periodExpenses = useMemo(
     () => expenses.filter((e) => {
@@ -165,7 +160,6 @@ export default function AllPaymentsView({ payments, expenses, options, locale, d
     return [...m.entries()].sort((a, b) => (b[1].inc - b[1].exp) - (a[1].inc - a[1].exp));
   }, [paid, periodExpenses]);
 
-  // Oylik tushum grafigi — oxirgi 12 oy (filial doirasidagi barcha PAID to'lovlar)
   const chart = useMemo(
     () => monthlySeries(payments.filter((p) => p.status === "PAID").map((p) => ({ day: localDay(p.date), amount: p.amount })), locale),
     [payments, locale],
@@ -258,7 +252,6 @@ export default function AllPaymentsView({ payments, expenses, options, locale, d
     <div className="space-y-5">
       <h1 className="text-[24px] font-bold tracking-tight text-slate-900 dark:text-slate-100">{tr(locale, { uz: "Barcha to'lovlar", ru: "Все платежи", en: "All payments", de: "Alle Zahlungen" })}</h1>
 
-      {/* Statistika + oylik grafik */}
       <div className="grid gap-4 lg:grid-cols-[minmax(0,400px)_1fr]">
         <div className="space-y-4">
           <StatCard title={tr(locale, { uz: "To'lovlar miqdori", ru: "Сумма платежей", en: "Payments amount", de: "Zahlungsbetrag" })} value={formatMoney(total, locale)} range={range} />
@@ -318,7 +311,6 @@ export default function AllPaymentsView({ payments, expenses, options, locale, d
         </div>
       </div>
 
-      {/* Filtrlar */}
       <div className="space-y-3">
         <div className="relative flex justify-end">
           <button type="button" onClick={() => setFilterMenu((v) => !v)}
@@ -347,7 +339,6 @@ export default function AllPaymentsView({ payments, expenses, options, locale, d
         </div>
       </div>
 
-      {/* Jadval */}
       <div className="overflow-hidden rounded-2xl border border-slate-300 bg-white shadow-card dark:border-slate-600 dark:bg-slate-900">
         <div className="flex flex-wrap items-center justify-between gap-3 border-b border-slate-200/70 px-5 py-3 dark:border-slate-800">
           <span className="text-sm text-slate-500">{tr(locale, { uz: "Jami", ru: "Всего", en: "Total", de: "Gesamt" })}: <b className="text-slate-800 dark:text-slate-100">{filtered.length}</b> {tr(locale, { uz: "ta", ru: "шт", en: "items", de: "St." })}</span>

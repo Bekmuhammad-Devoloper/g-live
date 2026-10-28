@@ -9,14 +9,9 @@ import { CARD, NAVY, PageHeader, SectionTitle } from "../_ui";
 import MissingStudent from "../MissingStudent";
 import UebenList, { type VAssignment } from "./UebenList";
 
-// "Üben" — o'quvchining uy vazifalari sahifasi (Start ekrani uslubida).
-// Topshiriqlar o'quvchi a'zo bo'lgan guruhlardan olinadi; topshirish
-// submitAssignment server action orqali (o'zini o'zi himoyalaydi).
-
 export default async function StudentUebenPage() {
   const session = await getSession();
   if (!session) redirect("/login");
-  // Bo'lim menejer tomonidan o'chirilgan bo'lsa — bosh sahifaga
   const flags = await getPortalFlags();
   if (!flags.uben) redirect("/student");
   const t = S(session.locale);
@@ -25,7 +20,7 @@ export default async function StudentUebenPage() {
     where: { userId: session.userId },
     select: { id: true },
   });
-  if (!student) return <MissingStudent />; // redirect("/dashboard") aylanish hosil qilardi
+  if (!student) return <MissingStudent />;
 
   const assignments = await prisma.assignment.findMany({
     where: { group: { students: { some: { studentId: student.id, isActive: true } } } },
@@ -65,7 +60,6 @@ export default async function StudentUebenPage() {
       : null,
   }));
 
-  // ── Yig'ma ko'rsatkichlar ──
   const neu = items.filter((i) => !i.last).length;
   const waiting = items.filter((i) => i.last?.status === "SUBMITTED").length;
   const graded = items.filter((i) => i.last?.status === "GRADED");
@@ -83,10 +77,6 @@ export default async function StudentUebenPage() {
     <div className="space-y-[18px]">
       <PageHeader title={t.practice} subtitle={t.yourHomework} backLabel={t.back} right={<RatingBadge />} />
 
-      {/* ── Jang / o'yinlar ──
-          Bo'lim o'chirilgan bo'lsa kartochka ham ko'rinmasin: aks holda
-          bosilganda sahifa /student ga qaytarib yuboradi va "ochilmayapti"
-          degan taassurot qoladi. */}
       {flags.battle && (
       <Link
         href="/student/battle"
@@ -109,7 +99,6 @@ export default async function StudentUebenPage() {
       </Link>
       )}
 
-      {/* ── Yig'ma kartalar ── */}
       <div className="grid grid-cols-3 gap-3">
         {tiles.map((t) => (
           <div key={t.label} className={`${CARD} flex flex-col items-center gap-1.5 px-1.5 pb-4 pt-4`}>

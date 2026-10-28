@@ -19,7 +19,6 @@ export interface SessionUser {
   branchId: string | null;
 }
 
-// ─── Parol ───
 export function hashPassword(plain: string): Promise<string> {
   return bcrypt.hash(plain, 10);
 }
@@ -27,7 +26,6 @@ export function verifyPassword(plain: string, hash: string): Promise<boolean> {
   return bcrypt.compare(plain, hash);
 }
 
-// ─── Sessiya (JWT + httpOnly cookie) ───
 export async function createSession(user: SessionUser): Promise<void> {
   const token = await new SignJWT({ ...user })
     .setProtectedHeader({ alg: "HS256" })
@@ -46,8 +44,6 @@ export async function createSession(user: SessionUser): Promise<void> {
 }
 
 export async function getSession(): Promise<SessionUser | null> {
-  // Dev panel jarayonida markaz sessiyasi yo'q; yopilgan markazda (to'xtatilgan/litsenziya
-  // tugagan) hech kim kira olmaydi — API va server action'lar ham shu orqali yopiladi
   if (isDevPanel() || instanceBlockState().blocked) return null;
   const store = await cookies();
   const token = store.get(COOKIE)?.value;
@@ -57,11 +53,6 @@ export async function getSession(): Promise<SessionUser | null> {
     const userId = String(payload.userId);
     let role = String(payload.role);
 
-    // ── Eski sessiyalar uchun ──
-    // MANAGER roli OPERATOR va ROP ga ajratildi. Cookie ajratishdan OLDIN
-    // berilgan bo'lsa, u hali "MANAGER" deydi va foydalanuvchi o'z bo'limiga
-    // kira olmaydi. Shu holatda hozirgi rolni bazadan olamiz — qayta kirish
-    // talab qilinmaydi. Qo'shimcha so'rov faqat eski token uchun ketadi.
     if (role === ROLES.MANAGER) {
       const u = await prisma.user.findUnique({ where: { id: userId }, select: { role: true } });
       if (u && u.role !== ROLES.MANAGER) role = u.role;
@@ -84,7 +75,6 @@ export async function destroySession(): Promise<void> {
   store.delete(COOKIE);
 }
 
-// Sahifalarda ishlatish uchun: sessiya bo'lmasa /login ga yo'naltiradi.
 export async function requireSession(): Promise<SessionUser> {
   const session = await getSession();
   if (!session) {

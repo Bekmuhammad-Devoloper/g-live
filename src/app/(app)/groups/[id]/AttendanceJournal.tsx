@@ -24,11 +24,7 @@ const STATUS_STYLE: Record<string, string> = {
   ABSENT: "bg-rose-500 text-white",
 };
 
-/**
- * Davomat jurnali: qatorlar — o'quvchilar, ustunlar — oyning dars sanalari (Modme uslubi).
- * Belgilash qoidalari serverda (markStudentAttendance): dars oynasi, kelajak sana, to'lov majburiyligi.
- */
-export function AttendanceJournal({ groupId, students, locale, readOnly = false }: { groupId: string; students: Student[]; locale: Locale; /** Faqat ko'rish (belgilash huquqi yo'q) */ readOnly?: boolean }) {
+export function AttendanceJournal({ groupId, students, locale, readOnly = false }: { groupId: string; students: Student[]; locale: Locale; readOnly?: boolean }) {
   const L = (uz: string, ru: string, en: string, de: string) => tr(locale, { uz, ru, en, de });
   const now = new Date();
   const [ym, setYm] = useState({ y: now.getFullYear(), m: now.getMonth() });
@@ -57,7 +53,6 @@ export function AttendanceJournal({ groupId, students, locale, readOnly = false 
   };
   useEffect(() => { setData(null); load(ym.y, ym.m); /* eslint-disable-next-line react-hooks/exhaustive-deps */ }, [groupId, ym.y, ym.m]);
 
-  // Bugungi (yoki eng yaqin) ustunga avtomatik aylantirish
   useEffect(() => {
     if (!data || !scrollRef.current) return;
     const el = scrollRef.current.querySelector<HTMLElement>("[data-today='1']");
@@ -80,7 +75,6 @@ export function AttendanceJournal({ groupId, students, locale, readOnly = false 
     setMenu(null);
     const prev = data.marks[date]?.[studentId];
     const clear = prev === status;
-    // optimistik
     setData((d) => {
       if (!d) return d;
       const day = { ...(d.marks[date] ?? {}) };
@@ -126,7 +120,6 @@ export function AttendanceJournal({ groupId, students, locale, readOnly = false 
 
   return (
     <div onClick={() => { setMenu(null); setDayMenu(null); }}>
-      {/* Oy tanlovi */}
       <div className="mb-3 flex flex-wrap items-center gap-2">
         <button type="button" onClick={() => setYm({ y: now.getFullYear(), m: now.getMonth() })} disabled={isCurrent} className={cn("rounded-lg border px-3 py-1.5 text-xs font-semibold", isCurrent ? "border-slate-200 text-slate-300 dark:border-slate-700" : "border-brand-200 bg-brand-50 text-brand-700 hover:bg-brand-100 dark:border-brand-800 dark:bg-brand-500/10 dark:text-brand-300")}>
           {L("Joriy", "Текущий", "Current", "Aktuell")}

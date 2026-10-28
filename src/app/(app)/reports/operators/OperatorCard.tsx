@@ -10,9 +10,6 @@ import UserAvatar from "../../_components/UserAvatar";
 import type { VOperator } from "./OperatorsBoard";
 import { useTeam } from "./TeamContext";
 
-// Bitta operator kartasi — avatar/status, kunlik ko'rsatkichlar, konversiya,
-// oxirgi faollik, kirish ma'lumotlari (yopiladigan) va amallar.
-
 export const kpiColor = (v: number) => (v >= 35 ? "#10b981" : v >= 25 ? "#f59e0b" : "#ef4444");
 export const fmtTalk = (sec: number, locale?: Locale) => {
   const h = Math.floor(sec / 3600);
@@ -54,7 +51,6 @@ export default function OperatorCard({ locale, op, canManage, onTask, onNotify, 
   return (
     <div className="overflow-hidden rounded-2xl border border-slate-200/70 bg-white shadow-card transition hover:border-brand-300/60 hover:shadow-lg dark:border-slate-800 dark:bg-slate-900">
       <div className="p-4 pb-0">
-        {/* Sarlavha: avatar + ism + amallar */}
         <div className="mb-3 flex items-start justify-between gap-2">
           <div className="flex min-w-0 items-center gap-3">
             <div className="relative shrink-0">
@@ -66,7 +62,6 @@ export default function OperatorCard({ locale, op, canManage, onTask, onNotify, 
               <div className="mt-0.5 flex items-center gap-1.5">
                 <span className={cn("text-[10px] font-semibold", statusCls)}>{statusText}</span>
                 {op.sip && <span className="rounded bg-slate-100 px-1.5 py-0.5 text-[9px] text-slate-500 dark:bg-slate-800 dark:text-slate-400">SIP: {op.sip}</span>}
-                {/* Administrator filialga biriktirilgan — qaysi filial ekani ko'rinsin */}
                 {cfg.kind === "admin" && op.branch && (
                   <span className="inline-flex items-center gap-1 rounded bg-violet-50 px-1.5 py-0.5 text-[9px] font-semibold text-violet-600 dark:bg-violet-500/10 dark:text-violet-300">
                     <Icon name="building" className="h-2.5 w-2.5" /> {op.branch}
@@ -85,13 +80,11 @@ export default function OperatorCard({ locale, op, canManage, onTask, onNotify, 
           )}
         </div>
 
-        {/* Telefon */}
         <div className="mb-3 flex items-center gap-2 text-xs text-slate-600 dark:text-slate-300">
           <Icon name="phone" className="h-3.5 w-3.5 shrink-0 text-emerald-500" />
           <span>{op.phone || "—"}</span>
         </div>
 
-        {/* Kunlik ko'rsatkichlar */}
         <div className="mb-3 grid grid-cols-2 gap-2">
           <MiniStat icon="phoneCall" tone="text-cyan-500" value={String(op.dayCalls)} label={tr(locale, { uz: "Kunlik qo'ng'iroq", ru: "Звонков за день", en: "Calls that day", de: "Anrufe an diesem Tag" })} />
           <MiniStat icon="clock" tone="text-amber-500" value={fmtTalk(op.dayTalkSec, locale)} label={tr(locale, { uz: "Gaplashgan", ru: "Наговорено", en: "Talk time", de: "Gesprächszeit" })} />
@@ -99,7 +92,6 @@ export default function OperatorCard({ locale, op, canManage, onTask, onNotify, 
 
         <div className="h-px w-full bg-slate-100 dark:bg-slate-800" />
 
-        {/* Konversiya */}
         <div className="py-3">
           <div className="mb-1.5 flex items-center justify-between">
             <span className="flex items-center gap-1.5 text-[11px] font-medium text-slate-400">
@@ -118,7 +110,6 @@ export default function OperatorCard({ locale, op, canManage, onTask, onNotify, 
 
         <div className="h-px w-full bg-slate-100 dark:bg-slate-800" />
 
-        {/* Oxirgi faollik */}
         <div className="space-y-2 py-3 text-[10px] text-slate-400">
           <div className="flex items-center justify-between">
             <span className="flex items-center gap-1.5"><Icon name="clock" className="h-3 w-3" /> {tr(locale, { uz: "Oxirgi online", ru: "Последний онлайн", en: "Last online", de: "Zuletzt online" })}:</span>
@@ -168,7 +159,6 @@ export default function OperatorCard({ locale, op, canManage, onTask, onNotify, 
         )}
       </div>
 
-      {/* Pastki qator */}
       <div className="flex items-center justify-between bg-slate-50 px-4 py-2.5 text-[10px] text-slate-400 dark:bg-white/[0.03]">
         <span>{tr(locale, { uz: "Yaratilgan", ru: "Создан", en: "Created", de: "Erstellt" })}: {op.createdAt}</span>
         <Link href={`${cfg.base}/${op.id}`} className="flex items-center gap-1 font-semibold text-brand-600 transition hover:underline dark:text-brand-300">

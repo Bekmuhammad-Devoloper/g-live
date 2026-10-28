@@ -2,16 +2,10 @@ import "server-only";
 import { prisma } from "@/lib/db";
 import { plannedLessonDays, todayISOLocal } from "@/lib/attendanceWindow";
 
-// O'quvchining oylik davomat jurnali (faqat ko'rish). Sanalar guruh jurnalidagi
-// (getAttendanceJournal) qoida bilan olinadi: rejadagi dars kunlari + shu oyda
-// mavjud dars yozuvlari. Avto-"yo'q" yozilmaydi — bu ko'rinish bazaga tegmaydi.
-
-/** Katak holati: davomat statusi yoki UNMARKED (o'tgan, belgilanmagan),
- *  FUTURE (kelajak dars), OUT (o'quvchi o'sha kuni guruhda bo'lmagan). */
 export type JournalCell = string;
 
 export interface StudentJournalDay {
-  date: string; // yyyy-mm-dd
+  date: string;
   st: JournalCell;
 }
 
@@ -20,17 +14,12 @@ export interface StudentJournalGroup {
   name: string;
   course: string;
   teacher: string | null;
-  /** O'quvchi hozir ham shu guruhdami */
   active: boolean;
   days: StudentJournalDay[];
-  /** Keldi (PRESENT/LATE/ONLINE/MAKEUP) */
   came: number;
-  /** Kelmadi (ABSENT) */
   missed: number;
   excused: number;
-  /** O'tgan, lekin belgilanmagan darslar */
   unmarked: number;
-  /** O'quvchiga tegishli darslar soni (a'zolik davri ichida yoki belgisi bor) */
   total: number;
 }
 
@@ -49,17 +38,11 @@ const isoOf = (d: Date) => `${d.getFullYear()}-${p2(d.getMonth() + 1)}-${p2(d.ge
 export const isValidJournalMonth = (year: number, month0: number) =>
   Number.isInteger(year) && Number.isInteger(month0) && month0 >= 0 && month0 <= 11 && year >= 2000 && year <= 2100;
 
-/** Joriy oy (server mahalliy vaqtida) */
 export function currentJournalMonth(): { year: number; month0: number } {
   const now = new Date();
   return { year: now.getFullYear(), month0: now.getMonth() };
 }
 
-/**
- * Bir oylik jurnal. Ruxsat chaqiruvchida tekshiriladi (canViewStudentProfile).
- * Guruhlar: shu oyda a'zolik davri kesishgan guruhlar + shu oyda belgisi bor
- * guruhlar (guruhdan butunlay olib tashlangan bo'lsa ham).
- */
 export async function loadStudentJournal(studentId: string, year: number, month0: number): Promise<StudentJournal> {
   const monthStart = new Date(year, month0, 1);
   const monthEnd = new Date(year, month0 + 1, 1);
@@ -78,9 +61,6 @@ export async function loadStudentJournal(studentId: string, year: number, month0
     }),
   ]);
 
-  // A'zolik davri [from, until]; until=null — hozir ham guruhda.
-  // Chiqish sanasi yozilmagan eski chiqishlar (isActive=false, leftAt=null) —
-  // qarz hisobidagi kabi faqat qo'shilgan oy oxirigacha deb olinadi.
   const span = new Map<string, { from: string; until: string | null; active: boolean; joinedAt: number }>();
   for (const e of enrollments) {
     const until = e.leftAt
@@ -89,7 +69,7 @@ export async function loadStudentJournal(studentId: string, year: number, month0
     span.set(e.groupId, { from: isoOf(e.joinedAt), until, active: e.isActive && !e.leftAt, joinedAt: e.joinedAt.getTime() });
   }
 
-  const markMap = new Map<string, Map<string, string>>(); // groupId → date → status
+  const markMap = new Map<string, Map<string, string>>();
   for (const m of marks) {
     const g = markMap.get(m.lesson.groupId) ?? new Map<string, string>();
     g.set(isoOf(m.lesson.startsAt), m.status);
@@ -125,7 +105,6 @@ export async function loadStudentJournal(studentId: string, year: number, month0
     lessonDates.set(l.groupId, arr);
   }
 
-  // Hozirgi guruhlar avval, keyin qo'shilgan sanasi bo'yicha (yangisi oldin)
   groups.sort((a, b) => {
     const ra = span.get(a.id), rb = span.get(b.id);
     return Number(!!rb?.active) - Number(!!ra?.active) || (rb?.joinedAt ?? 0) - (ra?.joinedAt ?? 0);
@@ -142,7 +121,6 @@ export async function loadStudentJournal(studentId: string, year: number, month0
     const days: StudentJournalDay[] = dates.map((date) => {
       const mark = gm?.get(date);
       const member = !!sp && date >= sp.from && (sp.until === null || date <= sp.until);
-      // Bugungi dars hali boshlanmagan bo'lsa — belgilanmagan emas, kelajak
       const notStarted = date > today
         || (date === today && !!g.startTime && HHMM.test(g.startTime) && new Date(`${date}T${g.startTime}:00`).getTime() > nowMs);
       const st = mark ?? (!member ? "OUT" : notStarted ? "FUTURE" : "UNMARKED");

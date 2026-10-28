@@ -14,7 +14,6 @@ import LinksTable from "./LinksTable";
 import { DeleteConfirmModal, ResultLinksModal, QrModal } from "./LinkModals";
 import type { CountryOption, CreatedLink, PlatformStat, Totals, VVacancy, VacancyOption } from "./types";
 
-// Serverda ham, brauzerda ham bir xil natija beradigan raqam formati (hidratsiya xatosisiz).
 const nf = (n: number) => String(n).replace(/\B(?=(\d{3})+(?!\d))/g, " ");
 
 export default function LinksView({ locale, vacancies, totals, platformStats, countries, vacancyOptions, courseOptions, canManage, preselectVacancyId }: {
@@ -41,7 +40,6 @@ export default function LinksView({ locale, vacancies, totals, platformStats, co
   const [copiedId, setCopiedId] = useState<string | null>(null);
   const [pendingDelete, setPendingDelete] = useState<null | { kind: "link" | "vacancy"; id: string; label: string }>(null);
   const [toast, setToast] = useState<null | { msg: string; type: "ok" | "err" }>(null);
-  // Bo'sh origin bilan boshlaymiz — SSR va birinchi render mos keladi ("/apply/kod" nisbiy manzil ishlaydi).
   const [origin, setOrigin] = useState("");
   const dropRef = useRef<HTMLDivElement>(null);
 
@@ -161,7 +159,6 @@ export default function LinksView({ locale, vacancies, totals, platformStats, co
 
   return (
     <div className="space-y-6 overflow-x-hidden">
-      {/* Toast — eski loyihadagi kabi yuqori o'ng burchakda */}
       {toast && (
         <div className={cn("fixed right-6 top-6 z-[95] flex items-center gap-2 rounded-xl border px-5 py-3 text-sm font-medium shadow-pop",
           toast.type === "ok"
@@ -172,7 +169,6 @@ export default function LinksView({ locale, vacancies, totals, platformStats, co
         </div>
       )}
 
-      {/* Sarlavha */}
       <div className="flex flex-wrap items-center justify-between gap-3">
         <div>
           <h1 className="text-xl font-semibold text-slate-900 dark:text-slate-100">{tr(locale, { uz: "Maxsus Linklar", ru: "Специальные ссылки", en: "Special Links", de: "Spezielle Links" })}</h1>
@@ -195,7 +191,6 @@ export default function LinksView({ locale, vacancies, totals, platformStats, co
         </div>
       </div>
 
-      {/* 4 ta ko'rsatkich */}
       <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-4">
         <Tile icon="link" tone="text-blue-500 dark:text-blue-400" label={tr(locale, { uz: "Jami linklar", ru: "Всего ссылок", en: "Total links", de: "Links insgesamt" })} value={nf(totals.totalLinks)} />
         <Tile icon="check" tone="text-emerald-500 dark:text-emerald-400" label={tr(locale, { uz: "Faol", ru: "Активные", en: "Active", de: "Aktiv" })} value={nf(totals.activeLinks)} />
@@ -203,7 +198,6 @@ export default function LinksView({ locale, vacancies, totals, platformStats, co
         <Tile icon="users" tone="text-amber-500 dark:text-amber-400" label={tr(locale, { uz: "Arizalar", ru: "Заявки", en: "Applications", de: "Bewerbungen" })} value={nf(totals.totalSubmissions)} />
       </div>
 
-      {/* Platformalar statistikasi */}
       {platformStats.length > 0 && (
         <div className="rounded-2xl border border-slate-200/70 bg-white p-5 shadow-card dark:border-slate-800 dark:bg-slate-900">
           <div className="mb-4 flex items-center justify-between">
@@ -244,7 +238,6 @@ export default function LinksView({ locale, vacancies, totals, platformStats, co
         </div>
       )}
 
-      {/* Ma'lumot bloki */}
       <div className="rounded-2xl border border-blue-500/20 bg-blue-500/10 p-4">
         <div className="flex items-start gap-3">
           <Icon name="link" className="mt-0.5 h-5 w-5 shrink-0 text-blue-500 dark:text-blue-400" />
@@ -259,7 +252,6 @@ export default function LinksView({ locale, vacancies, totals, platformStats, co
         </div>
       </div>
 
-      {/* Filtrlar */}
       <div className="flex flex-wrap items-center gap-3">
         <div className="relative min-w-[220px] max-w-md flex-1">
           <Icon name="search" className="pointer-events-none absolute left-3.5 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400" />

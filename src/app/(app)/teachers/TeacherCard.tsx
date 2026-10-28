@@ -17,10 +17,9 @@ export function colorFor(name: string): string {
   for (let i = 0; i < name.length; i++) h = (h * 31 + name.charCodeAt(i)) >>> 0;
   return PALETTE[h % PALETTE.length];
 }
-// ixcham raqam (birliksiz): 3000000 -> "3 000 000"
 const nf = (n: number) => String(Math.round(n)).replace(/\B(?=(\d{3})+(?!\d))/g, " ");
 
-export default function TeacherCard({ teacher: t, maxStudents, canManage, locale, onOpen }: { teacher: VTeacher; maxStudents: number; canManage: boolean; locale: Locale; /** Ism bosilganda — tafsilot oynasi */ onOpen?: () => void }) {
+export default function TeacherCard({ teacher: t, maxStudents, canManage, locale, onOpen }: { teacher: VTeacher; maxStudents: number; canManage: boolean; locale: Locale; onOpen?: () => void }) {
   const color = colorFor(t.fullName);
   const load = maxStudents > 0 ? Math.round((t.totalStudents / maxStudents) * 100) : 0;
   const [salaryOpen, setSalaryOpen] = useState(false);
@@ -52,7 +51,6 @@ export default function TeacherCard({ teacher: t, maxStudents, canManage, locale
 
   return (
     <div className="rounded-2xl border border-slate-200 bg-[#ffffff] p-4 shadow-card transition hover:-translate-y-0.5 hover:shadow-soft dark:border-white/[0.07] dark:bg-[#15243d]">
-      {/* Avatar + ism */}
       <div className="flex items-start gap-3">
         <div className="group/av relative h-14 w-14 shrink-0">
           {t.imageUrl ? (
@@ -108,14 +106,12 @@ export default function TeacherCard({ teacher: t, maxStudents, canManage, locale
         </div>
       </div>
 
-      {/* Statistika */}
       <div className="mt-3 grid grid-cols-3 gap-2 rounded-xl bg-slate-50 p-2.5 dark:bg-white/[0.03]">
         <Stat icon="layers" value={t.groups.length} label={tr(locale, { uz: "Guruh", ru: "Группы", en: "Groups", de: "Gruppen" })} color="#3b82f6" />
         <Stat icon="graduation" value={t.totalStudents} label={tr(locale, { uz: "O'quvchi", ru: "Ученики", en: "Students", de: "Schüler" })} color="#10b981" />
         <Stat icon="check" value={t.totalLessons} label={tr(locale, { uz: "Dars", ru: "Занятия", en: "Lessons", de: "Unterricht" })} color="#8b5cf6" />
       </div>
 
-      {/* Guruh chiplari */}
       {t.groups.length > 0 && (
         <div className="mt-3 flex flex-wrap gap-1.5">
           {t.groups.map((g) => (
@@ -127,7 +123,6 @@ export default function TeacherCard({ teacher: t, maxStudents, canManage, locale
         </div>
       )}
 
-      {/* Yuklama */}
       <div className="mt-3">
         <div className="mb-1 flex items-center justify-between text-[11px] text-slate-400">
           <span>{tr(locale, { uz: "Yuklama", ru: "Нагрузка", en: "Workload", de: "Arbeitslast" })}</span>
@@ -138,7 +133,6 @@ export default function TeacherCard({ teacher: t, maxStudents, canManage, locale
         </div>
       </div>
 
-      {/* Maosh */}
       <div className="mt-3 rounded-xl border border-slate-100 bg-slate-50/60 p-3 dark:border-white/5 dark:bg-white/[0.03]">
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-1.5 text-[11px] font-medium text-slate-400">

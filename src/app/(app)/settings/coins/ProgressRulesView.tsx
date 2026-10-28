@@ -7,15 +7,11 @@ import type { Locale } from "@/lib/constants";
 import { Icon } from "../../_components/Icon";
 import { saveProgressRules } from "./actions";
 
-// Seriya (yulduzcha) va reyting — o'quvchi bosh sahifasidagi ikkinchi va
-// uchinchi kartochka. Tanga qoidalaridan farqli: bular ball emas, o'lchov.
-
 export type ProgressForm = {
   streakExcusedBreaks: boolean;
   streakStep: number;
   rankScope: string;
   rankBasis: string;
-  /** Ko'nikma plitkalari ilova ochilmagan har kun uchun necha foiz pasayadi */
   skillDecayPerDay: number;
 };
 
@@ -24,7 +20,6 @@ export default function ProgressRulesView({
 }: {
   initial: ProgressForm;
   locale: Locale;
-  /** Seriya to'lganda beriladigan tanga — Tanga qoidalaridan */
   streakBonus: number;
 }) {
   const T = (uz: string, ru: string, en: string, de: string) => tr(locale, { uz, ru, en, de });
@@ -62,7 +57,6 @@ export default function ProgressRulesView({
         {T("Seriya va reyting", "Серия и рейтинг", "Streak and rank", "Serie und Rangliste")}
       </h2>
 
-      {/* ── Seriya ── */}
       <section className="rounded-xl border border-slate-200/70 bg-white p-4 shadow-card dark:border-slate-800 dark:bg-slate-900">
         <div className="flex items-center gap-3">
           <span className="grid h-11 w-11 shrink-0 place-items-center rounded-xl bg-orange-50 text-orange-500 dark:bg-orange-500/15">
@@ -129,7 +123,6 @@ export default function ProgressRulesView({
         </div>
       </section>
 
-      {/* ── Ko'nikmalar ── */}
       <section className="rounded-xl border border-slate-200/70 bg-white p-4 shadow-card dark:border-slate-800 dark:bg-slate-900">
         <div className="flex items-center gap-3">
           <span className="grid h-11 w-11 shrink-0 place-items-center rounded-xl bg-teal-50 text-teal-600 dark:bg-teal-500/15">
@@ -179,7 +172,6 @@ export default function ProgressRulesView({
         </div>
       </section>
 
-      {/* ── Reyting ── */}
       <section className="rounded-xl border border-slate-200/70 bg-white p-4 shadow-card dark:border-slate-800 dark:bg-slate-900">
         <div className="flex items-center gap-3">
           <span className="grid h-11 w-11 shrink-0 place-items-center rounded-xl bg-amber-50 text-amber-500 dark:bg-amber-500/15">

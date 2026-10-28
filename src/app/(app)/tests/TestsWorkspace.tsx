@@ -56,7 +56,6 @@ export default function TestsWorkspace({ exams, types, canCreate, staff, groups,
         <span className="text-sm text-slate-400">{tr(locale, { uz: "Kirish, blok va yakuniy imtihonlar", ru: "Вводные, блочные и итоговые экзамены", en: "Entry, block and final exams", de: "Eingangs-, Block- und Abschlussprüfungen" })}</span>
       </div>
 
-      {/* Tablar + qo'shish tugmasi (yonma-yon) */}
       <div className="flex flex-wrap items-center gap-1.5">
         <TabBtn active={tab === "exams"} onClick={() => setTab("exams")}>{tr(locale, { uz: "Imtihonlar", ru: "Экзамены", en: "Exams", de: "Prüfungen" })} <Count n={exams.length} /></TabBtn>
         <TabBtn active={tab === "types"} onClick={() => setTab("types")}>{tr(locale, { uz: "Test turlari", ru: "Типы тестов", en: "Test types", de: "Testarten" })} <Count n={types.length} /></TabBtn>
@@ -78,7 +77,6 @@ export default function TestsWorkspace({ exams, types, canCreate, staff, groups,
   );
 }
 
-/* ───────── Imtihonlar jadvali ───────── */
 function ExamsTable({ exams, locale }: { exams: VBlockTest[]; locale: Locale }) {
   const [search, setSearch] = useState("");
   const [pageSize, setPageSize] = useState(50);
@@ -127,7 +125,6 @@ function ExamsTable({ exams, locale }: { exams: VBlockTest[]; locale: Locale }) 
   );
 }
 
-/* ───────── Test turlari jadvali ───────── */
 function TypesTable({ types, locale }: { types: VTestType[]; locale: Locale }) {
   const [search, setSearch] = useState("");
   const [pageSize, setPageSize] = useState(50);
@@ -173,7 +170,6 @@ function TypesTable({ types, locale }: { types: VTestType[]; locale: Locale }) {
   );
 }
 
-/* ───────── Umumiy jadval qobig'i ───────── */
 function TableShell({ search, setSearch, total, pageSize, setPageSize, page, setPage, totalPages, head, children, colSpan, empty, minWidth, locale }: {
   search: string; setSearch: (v: string) => void; total: number;
   pageSize: number; setPageSize: (n: number) => void; page: number; setPage: (n: number) => void; totalPages: number;
@@ -226,7 +222,6 @@ function TableShell({ search, setSearch, total, pageSize, setPageSize, page, set
   );
 }
 
-/* ───────── Imtihon qo'shish drawer ───────── */
 function NewBlockTestForm({ staff, groups, locale, onClose }: { staff: Opt[]; groups: Opt[]; locale: Locale; onClose: () => void }) {
   const [state, action, pending] = useActionState<FormState, FormData>(createBlockTest, {});
   const [mounted, setMounted] = useState(false);
@@ -260,7 +255,6 @@ function NewBlockTestForm({ staff, groups, locale, onClose }: { staff: Opt[]; gr
     </Drawer>, document.body);
 }
 
-/* ───────── Tur qo'shish drawer ───────── */
 function NewTestTypeForm({ programs, locale, onClose }: { programs: Opt[]; locale: Locale; onClose: () => void }) {
   const [state, action, pending] = useActionState<FormState, FormData>(createTestType, {});
   const [mounted, setMounted] = useState(false);
@@ -286,7 +280,6 @@ function NewTestTypeForm({ programs, locale, onClose }: { programs: Opt[]; local
     </Drawer>, document.body);
 }
 
-/* ───────── Umumiy UI bo'laklari ───────── */
 const INP = "h-10 w-full rounded-lg border border-slate-200 bg-white px-3 text-sm text-slate-800 outline-none transition focus:border-brand-400 dark:border-slate-700 dark:bg-slate-800/60 dark:text-slate-100";
 
 function useDrawer(onClose: () => void) {

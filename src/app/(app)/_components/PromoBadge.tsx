@@ -1,7 +1,6 @@
 import { tr } from "@/lib/tr";
 import type { Locale } from "@/lib/constants";
 
-/** To'lov qatoridagi promokod belgisi: "Promokod 2KURS · −50 000". Server va klient komponentlarida ishlaydi. */
 export default function PromoBadge({ code, discount, locale, className = "" }: {
   code: string | null | undefined;
   discount?: number | null;
@@ -21,7 +20,6 @@ export default function PromoBadge({ code, discount, locale, className = "" }: {
   );
 }
 
-/** Matn ko'rinishi (CSV eksport, qisqa satrlar uchun) */
 export function promoText(code: string | null | undefined, discount: number | null | undefined, locale: Locale): string {
   if (!code) return "";
   const sum = (discount ?? 0).toLocaleString("ru-RU").replace(/,/g, " ");

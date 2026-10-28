@@ -1,12 +1,10 @@
 import "server-only";
 import { prisma } from "./db";
 
-// Muhim amallarni audit jurnaliga yozish (TZ 2.2, 6-NFR "Audit").
-// Bu yozuvlar interfeys orqali o'chirilmaydi/tahrirlanmaydi.
 export async function writeAudit(params: {
   actorId?: string | null;
-  action: string; // CREATE | UPDATE | CANCEL | LOGIN | ...
-  entityType: string; // "Payment", "Lead", ...
+  action: string;
+  entityType: string;
   entityId?: string | null;
   oldValue?: unknown;
   newValue?: unknown;

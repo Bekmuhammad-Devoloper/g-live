@@ -7,15 +7,9 @@ import { Icon } from "../../../_components/Icon";
 import BrandedQr from "../../../_components/BrandedQr";
 import { getLevelTestQr, type LevelTestQr } from "../../actions";
 
-/**
- * "Daraja testi" ustunidagi QR oynasi.
- * Lid telefonida skan qiladi → ilovaning ochiq /daraja-testi sahifasi ochiladi;
- * natija CRM'ga avtomatik tushadi (lid "Daraja testi" ustuniga o'tadi).
- */
 export default function LevelTestQrModal({ locale, open, onClose }: { locale: Locale; open: boolean; onClose: () => void }) {
   const [data, setData] = useState<LevelTestQr | null>(null);
   const [copied, setCopied] = useState(false);
-  // Brendli QR canvas'da chizilgach PNG shu yerga tushadi (yuklab olish uchun)
   const [png, setPng] = useState<string | null>(null);
 
   useEffect(() => {

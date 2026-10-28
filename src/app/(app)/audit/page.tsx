@@ -16,7 +16,6 @@ const CAN = [ROLES.DIRECTOR, ROLES.DEPUTY_DIRECTOR, ROLES.ADMIN];
 
 type Tr = { uz: string; ru: string; en: string; de?: string };
 
-// Holat filtri chiplari → entityType(lar)
 const FILTERS: { key: string; label: Tr; entity: string[] | "other" }[] = [
   { key: "user", label: { uz: "User", ru: "Ученик", en: "User", de: "Benutzer" }, entity: ["Student"] },
   { key: "kurs", label: { uz: "Kurs", ru: "Курс", en: "Course", de: "Kurs" }, entity: ["Program"] },
@@ -39,7 +38,6 @@ const ACTION_LABEL: Record<string, Tr> = {
 };
 const entityLabel = (locale: Locale, t: string) => (ENTITY_LABEL[t] ? tr(locale, ENTITY_LABEL[t]) : t);
 const actionLabel = (locale: Locale, a: string) => (ACTION_LABEL[a] ? tr(locale, ACTION_LABEL[a]) : a);
-// Amal turi bo'yicha rang (yaratish=yashil, o'zgartirish=ko'k, o'chirish/bekor=qizil)
 const ACTION_TONE: Record<string, string> = {
   CREATE: "text-emerald-600 dark:text-emerald-400",
   UPDATE: "text-brand-600 dark:text-brand-300",
@@ -88,7 +86,6 @@ export default async function AuditPage({ searchParams }: { searchParams: Promis
       }
     : {};
 
-  // AuditLog'da branchId yo'q — faol filial xodimlari (muallif) orqali cheklaymiz
   const branchStaff = s.branchId ? await prisma.user.findMany({ where: staffBranchWhere(s), select: { id: true } }) : null;
   const branchScope: Prisma.AuditLogWhereInput = branchStaff ? { actorId: { in: branchStaff.map((x) => x.id) } } : {};
 
@@ -133,7 +130,6 @@ export default async function AuditPage({ searchParams }: { searchParams: Promis
     <div>
       <LicenseBanner />
       <div className="flex flex-col gap-5 lg:flex-row">
-      {/* Chap: jurnallar ro'yxati */}
       <div className="flex-1 overflow-hidden rounded-2xl border border-slate-200/70 bg-white shadow-card dark:border-slate-800 dark:bg-slate-900">
         <div className="flex items-center justify-between border-b border-slate-100 px-5 py-4 dark:border-slate-800">
           <div className="flex items-baseline gap-2.5">
@@ -146,7 +142,6 @@ export default async function AuditPage({ searchParams }: { searchParams: Promis
           </div>
         </div>
 
-        {/* Qidiruv va sana filtri */}
         <form method="GET" className="flex flex-wrap items-center gap-2 border-b border-slate-100 px-5 py-3 dark:border-slate-800">
           {type && <input type="hidden" name="type" value={type} />}
           <div className="relative flex-1 min-w-[180px]">
@@ -195,7 +190,6 @@ export default async function AuditPage({ searchParams }: { searchParams: Promis
         )}
       </div>
 
-      {/* O'ng: Holat filtri */}
       <div className="w-full shrink-0 lg:w-72">
         <div className="rounded-2xl border border-slate-200/70 bg-white p-5 shadow-card dark:border-slate-800 dark:bg-slate-900">
           <h3 className="mb-3 text-base font-semibold text-slate-700 dark:text-slate-200">{tr(s.locale, { uz: "Holat filtri", ru: "Фильтр по статусу", en: "Status filter", de: "Statusfilter" })}</h3>

@@ -18,7 +18,7 @@ export default function CreateLinkModal({ locale, mode, vacancies, courses, pres
   locale: Locale;
   mode: "new" | "existing";
   vacancies: VacancyOption[];
-  courses: string[]; // o'quv markaz kurslari (Program.name) — ro'yxatdan tanlash uchun
+  courses: string[];
   preselectVacancyId: string | null;
   onClose: () => void;
   onDone: (links: CreatedLink[]) => void;
@@ -27,7 +27,7 @@ export default function CreateLinkModal({ locale, mode, vacancies, courses, pres
   const [pending, start] = useTransition();
   const [error, setError] = useState<string | null>(null);
   const [title, setTitle] = useState("");
-  const [pickedCourse, setPickedCourse] = useState(""); // "" = ro'yxatdan tanlanmagan (qo'lda yoziladi)
+  const [pickedCourse, setPickedCourse] = useState("");
   const [vacancyId, setVacancyId] = useState(preselectVacancyId ?? "");
   const [picked, setPicked] = useState<string[]>(["telegram"]);
   const [questions, setQuestions] = useState<ApplyQuestion[]>([]);
@@ -51,7 +51,6 @@ export default function CreateLinkModal({ locale, mode, vacancies, courses, pres
     const fd = new FormData(e.currentTarget);
     if (picked.length === 0) { setError(tr(locale, { uz: "Kamida bitta platforma tanlang", ru: "Выберите хотя бы одну платформу", en: "Select at least one platform", de: "Wählen Sie mindestens eine Plattform" })); return; }
     for (const p of picked) fd.append("platforms", p);
-    // Savollar JSON matn sifatida yuboriladi (bo'sh savollar serverda tashlanadi)
     fd.set("questions", JSON.stringify(questions.filter((x) => x.q.trim())));
     if (mode === "existing" && !fd.get("vacancyId")) { setError(tr(locale, { uz: "Kursni tanlang", ru: "Выберите курс", en: "Select a course", de: "Wählen Sie einen Kurs" })); return; }
     start(async () => {
@@ -106,7 +105,6 @@ export default function CreateLinkModal({ locale, mode, vacancies, courses, pres
             </>
           ) : (
             <>
-              {/* Kurs havolasi — mahalliy, shuning uchun davlat avtomatik O'zbekiston */}
               <input type="hidden" name="country" value="O'zbekiston" />
               <input type="hidden" name="countryCode" value="uz" />
 
@@ -149,7 +147,6 @@ export default function CreateLinkModal({ locale, mode, vacancies, courses, pres
                 <textarea name="description" rows={3} placeholder={tr(locale, { uz: "Dars jadvali, o'qituvchi, kurs davomiyligi...", ru: "Расписание, преподаватель, длительность курса...", en: "Schedule, teacher, course duration...", de: "Stundenplan, Lehrer, Kursdauer..." })} className={cn(inp, "resize-none")} />
               </Field>
 
-              {/* Ariza formasidagi qo'shimcha savollar */}
               <QuestionsBuilder locale={locale} questions={questions} onChange={setQuestions} />
 
               {title.trim() && (
@@ -239,8 +236,6 @@ function Field({ label, req, children }: { label: string; req?: boolean; childre
   );
 }
 
-// ─── Ariza formasidagi qo'shimcha savollar ───
-// Har bir savol: erkin matn yoki variantli (radio). Variantli savolda kamida bitta variant kerak.
 function QuestionsBuilder({ locale, questions, onChange }: {
   locale: Locale;
   questions: ApplyQuestion[];
@@ -293,7 +288,6 @@ function QuestionsBuilder({ locale, questions, onChange }: {
               </div>
 
               <div className="mt-2 flex flex-wrap items-center gap-3">
-                {/* Javob turi */}
                 <div className="flex overflow-hidden rounded-lg border border-slate-200 dark:border-slate-700">
                   {(["text", "choice"] as const).map((tp) => (
                     <button
@@ -317,7 +311,6 @@ function QuestionsBuilder({ locale, questions, onChange }: {
                 </label>
               </div>
 
-              {/* Variantlar */}
               {q.type === "choice" && (
                 <div className="mt-2 space-y-1.5">
                   {(q.options ?? []).map((opt, oi) => (

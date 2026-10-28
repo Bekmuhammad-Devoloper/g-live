@@ -18,13 +18,11 @@ interface Props {
   managers: Opt[];
   manager: string;
   onManager: (v: string) => void;
-  /** Filial tanlovi — bo'sh bo'lsa ko'rsatilmaydi ("none" — filialsiz lidlar) */
   branches?: Opt[];
   branch?: string;
   onBranch?: (v: string) => void;
   activeCols: Set<string>;
   onToggleCol: (key: string) => void;
-  /** Kanbandagi ustunlar — chiplar aynan shulardan quriladi */
   cols: ViewCol[];
   counts: Record<string, number>;
   hasFilters: boolean;
@@ -81,7 +79,6 @@ export default function FilterBar(p: Props) {
         )}
       </div>
 
-      {/* Bosqich chiplari */}
       <div className="flex flex-wrap gap-2">
         {p.cols.map((c) => {
           const active = p.activeCols.has(c.key);

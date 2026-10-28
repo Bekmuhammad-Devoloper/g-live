@@ -1,14 +1,4 @@
 #!/usr/bin/env bash
-# ════════════════════════════════════════════════════════════════════
-# B SERVER — FAQAT O'QISH uchun audit (Finance V2, Phase 0 SAFETY).
-#
-# Hech narsani o'zgartirmaydi: fayl yozmaydi, bazaga yozmaydi, servisga
-# tegmaydi. Faqat holatni chop etadi: baza yo'li/hajmi/journal rejimi,
-# sqlite3 CLI bor-yo'qligi, disk, backup, sxema farqi (drift).
-#
-#   Serverda:        bash /opt/gl-edu/deploy/gcp/audit-readonly.sh
-#   CI (Actions):    .github/workflows/server-audit.yml shu skriptni yuboradi
-# ════════════════════════════════════════════════════════════════════
 set -u
 APP=/opt/gl-edu
 cd "$APP" || { echo "!! $APP topilmadi"; exit 1; }
@@ -25,7 +15,6 @@ section "Git"
 echo "HEAD=$(git rev-parse --short HEAD) branch=$(git rev-parse --abbrev-ref HEAD) o'zgargan fayllar=$(git status --short | wc -l | tr -d ' ')"
 
 section "DATABASE_URL (.env)"
-# Faqat sqlite kutiladi; boshqa provider bo'lsa parol yashiriladi
 grep -E '^DATABASE_URL=' .env 2>/dev/null | sed -E 's#(://[^:/]+:)[^@]+@#\1***@#' || echo ".env da DATABASE_URL yo'q"
 
 section "Baza fayllari"
@@ -95,7 +84,6 @@ echo "node=$(node -v) npm=$(npm -v)"
 npx prisma --version 2>/dev/null | grep -E '^(prisma|@prisma/client)' || true
 
 section "Sxema farqi (prod baza ↔ prisma/schema.prisma), read-only"
-# Bo'sh chiqsa — baza sxemaga to'liq mos. SQL chiqsa — db push shuni bajargan bo'lardi.
 npx prisma migrate diff --from-url "file:$APP/prisma/dev.db" --to-schema-datamodel prisma/schema.prisma --script 2>&1 | head -60
 
 section "Deploy trigger"

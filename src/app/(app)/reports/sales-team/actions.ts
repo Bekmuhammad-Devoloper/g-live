@@ -9,7 +9,6 @@ import { writeAudit } from "@/lib/audit";
 
 const CAN = [ROLES.DIRECTOR, ROLES.ADMIN, ROLES.DEPUTY_DIRECTOR];
 
-// Operatorni ROP (savdo bo'limi rahbari) qilib belgilash yoki bekor qilish.
 export async function setRop(userId: string, isRop: boolean): Promise<{ ok?: boolean; error?: string }> {
   const s = await requireSession();
   if (!CAN.includes(s.role as never)) return { error: tr(s.locale, { uz: "Ruxsat yo'q", ru: "Нет доступа", en: "No permission", de: "Keine Berechtigung" }) };

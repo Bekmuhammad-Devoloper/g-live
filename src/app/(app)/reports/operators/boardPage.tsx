@@ -9,16 +9,6 @@ import { Forbidden } from "../../_components/ui";
 import OperatorsBoard, { type VOperator } from "./OperatorsBoard";
 import { TEAM, type TeamKind } from "./teamKind";
 
-// Jamoa monitoringi (operatorlar yoki filial administratorlari) — barcha ko'rsatkichlar
-// real User + Lead + Call ma'lumotidan. Sana filtri (?date=YYYY-MM-DD) kunlik
-// qo'ng'iroq ko'rsatkichlarini o'zgartiradi.
-//
-// Lid kimniki:
-//   operator      — lidga biriktirilgan menejer (Lead.managerId);
-//   administrator — menejer YOKI lid bilan ishlagan (faoliyat yozgan) administrator:
-//                   administratorlarga lid biriktirilmaydi, ular filialga kelgan lidni
-//                   bosqichdan bosqichga o'tkazadi va guruhga qabul qiladi.
-
 const p2 = (n: number) => String(n).padStart(2, "0");
 const fmtDate = (d: Date) => `${p2(d.getDate())}.${p2(d.getMonth() + 1)}.${d.getFullYear()}`;
 const fmtTime = (d: Date) => `${p2(d.getHours())}:${p2(d.getMinutes())}`;
@@ -34,8 +24,8 @@ function ago(d: Date | null, locale: Locale): string {
   return tr(locale, { uz: `${days} kun oldin`, ru: `${days} дн назад`, en: `${days} days ago`, de: `vor ${days} Tagen` });
 }
 
-const ONLINE_MS = 15 * 60 * 1000; // oxirgi 15 daqiqada kirgan bo'lsa — online
-const ON_CALL_MS = 2 * 60 * 60 * 1000; // tugamagan (endedAt=null) va 2 soatdan yangi qo'ng'iroq — liniyada
+const ONLINE_MS = 15 * 60 * 1000;
+const ON_CALL_MS = 2 * 60 * 60 * 1000;
 
 export async function TeamBoardPage({ kind, searchParams }: { kind: TeamKind; searchParams: Promise<{ date?: string }> }) {
   const sp = await searchParams;
@@ -53,13 +43,10 @@ export async function TeamBoardPage({ kind, searchParams }: { kind: TeamKind; se
       />
     );
   }
-  // Yaratish / tahrirlash / o'chirish tugmalari va parol ko'rinishi shunga bog'liq
   const canManage = isAdminKind ? canManageAdminTeam(s.role) : await canManageOperators(s.role, s.userId);
 
-  // ROP filial almashtira olmaydi va lidlarni HAMMA filialga yo'naltiradi —
-  // administratorlar bo'limida u barcha filial administratorlarini ko'radi.
   const scope = isAdminKind && s.role === ROLES.ROP ? {} : branchWhere(s);
-  const staffScope = isAdminKind && s.role === ROLES.ROP ? {} : staffBranchWhere(s); // xodim bir nechta filialda bo'lishi mumkin
+  const staffScope = isAdminKind && s.role === ROLES.ROP ? {} : staffBranchWhere(s);
 
   const now = new Date();
   const picked = typeof sp.date === "string" && /^\d{4}-\d{2}-\d{2}$/.test(sp.date) ? sp.date : null;
@@ -69,7 +56,6 @@ export async function TeamBoardPage({ kind, searchParams }: { kind: TeamKind; se
   const ops = await prisma.user.findMany({
     where: { AND: [{ role: cfg.role, isActive: true }, staffScope] },
     orderBy: { fullName: "asc" },
-    // XAVFSIZLIK: select bilan faqat kerakli maydonlar (passwordHash hech qachon yuklanmaydi)
     select: {
       id: true, fullName: true, email: true, phone: true, imageUrl: true, sipExtension: true,
       fiksa: true, kpiBonus: true, plainPassword: true, lastLoginAt: true, createdAt: true,
@@ -78,7 +64,6 @@ export async function TeamBoardPage({ kind, searchParams }: { kind: TeamKind; se
   });
   const ids = ops.map((o) => o.id);
 
-  // Lidlar — har biri uchun "egalar" ro'yxati (yuqoridagi qoida bo'yicha)
   interface LeadRow { owners: string[]; stage: string; label: string }
   const loadLeads = async (): Promise<LeadRow[]> => {
     if (ids.length === 0) return [];
@@ -118,7 +103,6 @@ export async function TeamBoardPage({ kind, searchParams }: { kind: TeamKind; se
       take: 400,
       select: { operatorId: true, contactName: true, phone: true, startedAt: true, endedAt: true },
     }),
-    // Administrator filialga biriktiriladi — yaratish/tahrirlash oynasidagi tanlov uchun
     isAdminKind && canManage
       ? prisma.branch.findMany({ where: { isActive: true }, select: { id: true, name: true }, orderBy: { name: "asc" } })
       : Promise.resolve([]),
@@ -135,7 +119,7 @@ export async function TeamBoardPage({ kind, searchParams }: { kind: TeamKind; se
       a.total++;
       if (l.stage === "WON") a.won++;
       if (l.stage === "LOST") a.lost++;
-      if (!a.lastLead) a.lastLead = l.label; // lidlar createdAt desc tartibida
+      if (!a.lastLead) a.lastLead = l.label;
     }
   }
   for (const c of dayCalls) {
@@ -146,7 +130,7 @@ export async function TeamBoardPage({ kind, searchParams }: { kind: TeamKind; se
   }
   for (const c of recentCalls) {
     const a = c.operatorId ? map.get(c.operatorId) : null;
-    if (!a || a.lastCall) continue; // calls startedAt desc — birinchisi oxirgi qo'ng'iroq
+    if (!a || a.lastCall) continue;
     a.lastCall = `${c.contactName || c.phone} • ${fmtTime(c.startedAt)}`;
     a.onCall = c.endedAt === null && now.getTime() - c.startedAt.getTime() < ON_CALL_MS;
   }
@@ -189,7 +173,6 @@ export async function TeamBoardPage({ kind, searchParams }: { kind: TeamKind; se
       locale={loc}
       operators={operators}
       avgKpi={avgKpi}
-      // takrorsiz lidlar (bitta lid bilan ikki administrator ishlagan bo'lsa ham bir marta)
       totalLeads={leads.length}
       dayCallsTotal={operators.reduce((n, o) => n + o.dayCalls, 0)}
       selectedDate={picked}

@@ -24,7 +24,6 @@ export default async function AssignmentDetailPage({ params }: { params: Promise
   const isOwner = s.role === ROLES.TEACHER && a.group.teacherId === s.userId;
   const isStaff = [ROLES.DIRECTOR, ROLES.ADMIN, ROLES.DEPUTY_DIRECTOR, ROLES.MANAGER].includes(s.role as never);
 
-  // O'quvchi ko'rinishi
   if (s.role === ROLES.STUDENT) {
     const st = await prisma.student.findUnique({ where: { userId: s.userId } });
     const enrolled = a.group.students.some((gs) => gs.studentId === st?.id);
@@ -65,7 +64,6 @@ export default async function AssignmentDetailPage({ params }: { params: Promise
 
   if (!isOwner && !isStaff) return <Forbidden title={tr(s.locale, { uz: "Kirish taqiqlangan", ru: "Доступ запрещён", en: "Access denied", de: "Zugriff verweigert" })} body={tr(s.locale, { uz: "Ruxsat yo'q.", ru: "Нет доступа.", en: "No access.", de: "Kein Zugriff." })} />;
 
-  // Har o'quvchi bo'yicha oxirgi urinish
   const latestByStudent = new Map<string, (typeof a.submissions)[number]>();
   for (const sub of a.submissions) {
     if (!latestByStudent.has(sub.studentId)) latestByStudent.set(sub.studentId, sub);

@@ -56,7 +56,6 @@ export default function KpiSettingsView({ settings, rating, canManage, locale }:
 
   return (
     <div className="space-y-5">
-      {/* Header */}
       <div className="flex flex-wrap items-center justify-between gap-4">
         <div>
           <h1 className="text-[24px] font-bold tracking-tight text-slate-900 dark:text-slate-100">{T("KPI Sozlamalari", "Настройки KPI", "KPI Settings", "KPI-Einstellungen")}</h1>
@@ -71,7 +70,6 @@ export default function KpiSettingsView({ settings, rating, canManage, locale }:
       {err && <p className="text-sm text-rose-500">{err}</p>}
 
       <div className="grid gap-4 lg:grid-cols-2">
-        {/* Asosiy sozlamalar */}
         <div className="rounded-2xl border border-slate-200/70 bg-white p-5 shadow-card dark:border-slate-800 dark:bg-slate-900">
           <h2 className="mb-4 flex items-center gap-2 text-base font-semibold text-slate-700 dark:text-slate-200"><Icon name="settings" className="h-5 w-5 text-slate-400" /> {T("Asosiy sozlamalar", "Основные настройки", "Main settings", "Grundeinstellungen")}</h2>
           <div className="space-y-4">
@@ -90,7 +88,6 @@ export default function KpiSettingsView({ settings, rating, canManage, locale }:
           </div>
         </div>
 
-        {/* Oylik to'lov sozlamalari */}
         <div className="rounded-2xl border border-slate-200/70 bg-white p-5 shadow-card dark:border-slate-800 dark:bg-slate-900">
           <h2 className="flex items-center gap-2 text-base font-semibold text-slate-700 dark:text-slate-200"><Icon name="coins" className="h-5 w-5 text-emerald-500" /> {T("Oylik to'lov sozlamalari", "Настройки ежемесячной оплаты", "Monthly payment settings", "Einstellungen der monatlichen Zahlung")}</h2>
           <p className="mb-4 text-sm text-brand-600 dark:text-brand-300">{T("Umumiy (barcha operatorlar uchun)", "Общие (для всех операторов)", "General (for all operators)", "Allgemein (für alle Operatoren)")}</p>
@@ -113,7 +110,6 @@ export default function KpiSettingsView({ settings, rating, canManage, locale }:
         </div>
       </div>
 
-      {/* Operatorlar reytingi */}
       <div className="overflow-hidden rounded-2xl border border-slate-200/70 bg-white shadow-card dark:border-slate-800 dark:bg-slate-900">
         <div className="border-b border-slate-200/70 px-5 py-4 dark:border-slate-800">
           <h2 className="flex items-center gap-2 text-base font-semibold text-slate-700 dark:text-slate-200"><Icon name="users" className="h-5 w-5 text-brand-500" /> {T("Operatorlar reytingi", "Рейтинг операторов", "Operator rating", "Operator-Rangliste")} <span className="text-sm font-normal text-slate-400">({T(`${rating.length} ta`, `${rating.length} чел.`, `${rating.length} total`, `${rating.length} gesamt`)})</span></h2>

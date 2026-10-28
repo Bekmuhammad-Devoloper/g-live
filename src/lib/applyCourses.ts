@@ -1,11 +1,5 @@
-// Filialning ochiq ariza formasidagi kurslar ro'yxati (Branch.applyCourses — JSON).
-// Filial tanlangach ariza beruvchi shu kurslardan birini tanlaydi; til kurslarida
-// (levels=true) daraja so'raladi, qolganlarida (Matematika, Pochemushka...) so'ralmaydi.
-// Ro'yxat bo'sh bo'lsa forma avvalgidek — kurs so'ralmaydi, daraja so'raladi.
-
 export interface ApplyCourse {
   name: string;
-  /** Daraja (A1–B2) so'ralsinmi — til kurslari uchun */
   levels: boolean;
 }
 
@@ -32,5 +26,4 @@ export function parseApplyCourses(raw: string | null | undefined): ApplyCourse[]
 
 export const serializeApplyCourses = (list: ApplyCourse[]): string | null => (list.length ? JSON.stringify(list) : null);
 
-/** Yangi qator uchun taxmin: nomida "til"/IELTS/CEFR bo'lsa — daraja so'raladi */
 export const guessHasLevels = (name: string): boolean => /\btil|ielts|cefr|deutsch|english|sprach/i.test(name);

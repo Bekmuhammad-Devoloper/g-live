@@ -9,7 +9,6 @@ import { notify } from "@/lib/notify";
 
 export type TaskState = { ok?: boolean; error?: string };
 
-// Topshiriq/eslatma bilan ishlash — o'quvchi va ota-onadan tashqari barcha xodimlar
 function isStaff(role: string) {
   return role !== ROLES.STUDENT && role !== ROLES.PARENT;
 }
@@ -55,11 +54,10 @@ export async function createTask(_prev: TaskState, formData: FormData): Promise<
       groupId: parsed.data.groupId || null,
       authorId: s.userId,
       dueAt: parsed.data.dueAt ? new Date(parsed.data.dueAt) : null,
-      branchId: s.branchId, // faol filialga biriktiriladi
+      branchId: s.branchId,
     },
   });
 
-  // Mas'ul xodimga bildirishnoma
   if (task.assigneeId && task.assigneeId !== s.userId) {
     await notify({
       userId: task.assigneeId,

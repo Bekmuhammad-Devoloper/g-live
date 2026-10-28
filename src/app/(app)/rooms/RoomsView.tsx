@@ -30,7 +30,6 @@ export default function RoomsView({ locale, rooms, canManage }: { locale: Locale
 
   return (
     <div className="space-y-5">
-      {/* Header */}
       <div className="flex flex-wrap items-center justify-between gap-3">
         <h1 className="text-[26px] font-bold tracking-tight text-slate-900 dark:text-slate-100">{tr(locale, { uz: "Xonalar", ru: "Кабинеты", en: "Rooms", de: "Räume" })}</h1>
         {canManage && (
@@ -47,7 +46,6 @@ export default function RoomsView({ locale, rooms, canManage }: { locale: Locale
         </div>
       )}
 
-      {/* Jadval */}
       <div className="overflow-hidden rounded-2xl border border-slate-200/70 bg-white shadow-card dark:border-slate-800 dark:bg-slate-900">
         <div className="overflow-x-auto">
           <table className="w-full min-w-[620px] text-left text-sm">
@@ -109,7 +107,6 @@ function durStr(m: number, locale: Locale): string {
   return `${mm} ${daq}`;
 }
 
-// Hozirgi holat: band bo'lsa qaysi guruh, bo'sh bo'lsa qancha vaqt bo'sh
 function StatusPill({ status, locale }: { status: RoomStatus; locale: Locale }) {
   if (status.busy) {
     return (

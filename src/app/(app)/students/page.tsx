@@ -13,7 +13,6 @@ import { Icon } from "../_components/Icon";
 import StudentsView, { type VStudent } from "./StudentsView";
 import type { Prisma } from "@prisma/client";
 
-// Hisobchi faqat ro'yxatni ko'radi va to'lov qabul qiladi — talaba yaratish/tahrirlash huquqi yo'q (CAN_CREATE'da yo'q)
 const ALLOWED = [ROLES.DIRECTOR, ROLES.DEPUTY_DIRECTOR, ROLES.MANAGER, ROLES.ADMIN, ROLES.TEACHER, ROLES.ACCOUNTANT];
 const CAN_CREATE = [ROLES.DIRECTOR, ROLES.DEPUTY_DIRECTOR, ROLES.MANAGER, ROLES.ADMIN];
 
@@ -28,15 +27,12 @@ export default async function StudentsPage() {
     );
   }
 
-  // O'qituvchi faqat o'z guruhlaridagi o'quvchilarni ko'radi
   let where: Prisma.StudentWhereInput = {};
   if (s.role === ROLES.TEACHER) {
     where = { enrollments: { some: { group: { teacherId: s.userId } } } };
   }
-  // Faol filial o'quvchilarigina (filialsiz eski yozuvlar ham ko'rinadi)
   where = { AND: [where, branchWhere(s)] };
 
-  // Chek majburiyligi — CEO sozlamasi (Sozlamalar > Chek)
   const receiptMode = parseReceiptMode(await getSetting(RECEIPT_MODE_KEY));
 
   const students = await prisma.student.findMany({
@@ -45,7 +41,6 @@ export default async function StudentsPage() {
     include: {
       branch: { select: { name: true } },
       enrollments: {
-        // Faqat faol a'zoliklar — guruhdan chiqarilgan (leftAt) guruhlar ro'yxatda ko'rinmasin
         where: { isActive: true },
         include: {
           group: {
@@ -60,7 +55,6 @@ export default async function StudentsPage() {
     },
   });
 
-  // Qarz — o'quvchi guruhga qo'shilgan oydan boshlab hisoblanadi (src/lib/debt.ts)
   const debts = await computeDebts(students.map((st) => st.id));
 
   const uniq = (arr: (string | null | undefined)[]) =>
@@ -84,13 +78,9 @@ export default async function StudentsPage() {
       scheduleDates: st.enrollments
         .map((e) => e.group.startDate?.toISOString())
         .filter((x): x is string => !!x),
-      // Balans — majburiyatlardan ortiqcha (oldindan) to'langan pul; ilgari jami to'langan summa ko'rsatilardi
       balance: debts.get(st.id)?.credit ?? 0,
-      // Qarz = qo'shilgan oydan hisoblangan to'lov − to'langani + qo'lda kiritilgan qarz
       debt: debts.get(st.id)?.debt ?? 0,
-      // To'lanmagan oylar soni — qarz rangi: 1 oy sariq, ko'p qizil
       debtMonths: debts.get(st.id)?.overdueMonths ?? 0,
-      // Shu oy kamida bitta PAID to'lov bo'lganmi (davomat/to'lov holati bo'limi bilan bir xil mantiq)
       paidThisMonth: paid.some((p) => p.createdAt.getFullYear() === curY && p.createdAt.getMonth() === curM),
       note: st.note,
       branchName: st.branch?.name ?? null,
@@ -99,7 +89,6 @@ export default async function StudentsPage() {
 
   const courses = Array.from(new Set(vstudents.flatMap((st) => st.courses))).sort();
 
-  // Litsenziya (obuna) muddati — .env dagi SUBSCRIPTION_UNTIL
   const until = process.env.SUBSCRIPTION_UNTIL ?? null;
   const daysLeft = until ? Math.ceil((new Date(until).getTime() - Date.now()) / 86400000) : null;
 
@@ -119,7 +108,6 @@ export default async function StudentsPage() {
   );
 }
 
-// Yuqoridagi litsenziya banneri (Modme uslubida)
 function LicenseBanner({ until, daysLeft, locale }: { until: string; daysLeft: number; locale: Locale }) {
   const d = new Date(until);
   const p = (n: number) => String(n).padStart(2, "0");

@@ -2,13 +2,6 @@
 
 import { useEffect, useState } from "react";
 
-// Ilovani o'rnatish tugmasi.
-//
-// Uch xil holat bor va qurilmaga qarab kerakligi ko'rsatiladi:
-//   Android  — APK fayl (bo'lsa) yoki brauzerning "o'rnatish" taklifi
-//   iPhone   — Safari'da "Bosh ekranga qo'shish" (boshqa yo'li yo'q)
-//   Kompyuter— telefon bilan ochish uchun eslatma
-
 type Platform = "android" | "ios" | "desktop";
 
 interface BipEvent extends Event {
@@ -23,7 +16,6 @@ export default function InstallApp({
   apkReady: boolean;
   apkSize: number | null;
   apkDate: string | null;
-  /** "2.7.0 (11)" — chiqarish skripti yozmagan bo'lsa null */
   apkVersion: string | null;
 }) {
   const [platform, setPlatform] = useState<Platform>("desktop");
@@ -68,7 +60,6 @@ export default function InstallApp({
 
   return (
     <div className="space-y-2.5">
-      {/* Android — APK */}
       {platform !== "ios" && apkReady ? (
         <a href={apkHref} className={btn + " bg-white text-[#0b3c4d] shadow-[0_10px_26px_-10px_rgba(0,0,0,0.5)]"}>
           <IcoAndroid />
@@ -79,7 +70,6 @@ export default function InstallApp({
         </a>
       ) : null}
 
-      {/* Brauzer orqali o'rnatish */}
       {prompt ? (
         <button type="button" onClick={install} className={btn + " bg-white/15 text-white ring-1 ring-white/25 backdrop-blur-sm"}>
           <IcoDownload />
@@ -87,7 +77,6 @@ export default function InstallApp({
         </button>
       ) : null}
 
-      {/* iPhone — qo'lda qo'shiladi */}
       {platform === "ios" ? (
         <>
           <button type="button" onClick={() => setIosHelp((v) => !v)} className={btn + " bg-white text-[#0b3c4d] shadow-[0_10px_26px_-10px_rgba(0,0,0,0.5)]"}>
@@ -104,16 +93,12 @@ export default function InstallApp({
         </>
       ) : null}
 
-      {/* Hech qaysi yo'l chiqmasa — kirish havolasi baribir ishlaydi */}
       {platform === "desktop" && !apkReady && !prompt ? (
         <div className="rounded-2xl bg-white/12 px-5 py-4 text-center text-[13.5px] leading-relaxed text-white/85 ring-1 ring-white/15">
           Ilovani telefonda o&apos;rnatasiz — shu sahifani telefoningizda oching.
         </div>
       ) : null}
 
-      {/* Versiya — hajm va sana yetarli emas: hajm versiyalar orasida deyarli
-          o'zgarmaydi, bir kunda bir nechta chiqarilsa sana ham bir xil.
-          Telefondagi Sozlamalar → "Ilova versiyasi" bilan solishtiriladi. */}
       {apkReady && (apkVersion || apkDate) ? (
         <div className="text-center text-[12px] text-white/55">
           {apkVersion ? <span className="font-semibold text-white/80">Versiya {apkVersion}</span> : null}

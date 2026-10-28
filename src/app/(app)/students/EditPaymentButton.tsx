@@ -9,10 +9,6 @@ import { Icon } from "../_components/Icon";
 import { PaymentRow } from "./PaymentPanel";
 import { getPaymentForEdit, type PayRow } from "./actions";
 
-/**
- * To'lovlar ro'yxati sahifalaridagi tahrirlash tugmasi: to'lovning joriy yozuvini yuklab,
- * o'quvchi oynasidagi bilan bir xil tahrirlash formasini oynada ochadi (sabab majburiy, audit).
- */
 export default function EditPaymentButton({ paymentId, locale }: { paymentId: string; locale: Locale }) {
   const router = useRouter();
   const [row, setRow] = useState<PayRow | null>(null);

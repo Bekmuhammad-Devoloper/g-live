@@ -1,16 +1,8 @@
 #!/bin/bash
-# GL EDU — o'quv markazlari nusxalarini boshqarish (root). Dev panel `sudo -n gl-center ...` orqali chaqiradi.
-# O'rnatish: update-b.sh har deployda /usr/local/sbin/gl-center ga nusxalaydi.
-#
-# Tuzilma:  /opt/centers/<slug>/{env, env.blank, data/db.sqlite, uploads/, upload-parts/, backups/}
-#           systemd: gl-center@<slug>.service (WorkingDirectory=/opt/gl-edu — umumiy build)
-#           nginx:   /etc/nginx/sites-available/gl-center-<slug>  (<slug>.germaniya.live)
 set -euo pipefail
 ROOT=/opt/centers
 APP=/opt/gl-edu
 MAIN_ENV=$APP/.env
-# Markazlar asosiy .env dan faqat shularni meros oladi; qolgan hamma kalit (SIP parollari,
-# AMI, TURN, telefoniya kalitlari, AUTH_SECRET ...) env.blank orqali bo'sh qiymat bilan yopiladi.
 SHARED_KEYS="NEXT_SERVER_ACTIONS_ENCRYPTION_KEY GEMINI_API_KEY"
 
 die() { echo "XATO: $*" >&2; exit 1; }
@@ -21,7 +13,6 @@ port_ok() { [[ "${1:-}" =~ ^3[0-9]{3}$ ]] || die "noto'g'ri port: ${1:-}"; }
 cmd="${1:-}"; shift || true
 case "$cmd" in
   blanks)
-    # systemd ExecStartPre: asosiy .env kalitlarini bo'sh qiymat bilan yopadigan fayl
     slug_ok "$1"; d=$ROOT/$1; [ -d "$d" ] || die "markaz yo'q"
     tmp=$(mktemp)
     if [ -f "$MAIN_ENV" ]; then
@@ -47,7 +38,6 @@ case "$cmd" in
     journalctl -u "gl-center@$1" -n "$n" --no-pager -o short-iso
     ;;
   site)
-    # nginx sayt + Let's Encrypt sertifikati
     slug_ok "$1"; port_ok "$2"; host_ok "$3"
     f=/etc/nginx/sites-available/gl-center-$1
     sed -e "s/__HOST__/$3/g" -e "s/__PORT__/$2/g" "$APP/deploy/centers/nginx-center.conf" > "$f"
@@ -71,7 +61,6 @@ case "$cmd" in
     nginx -t && systemctl reload nginx
     ;;
   backup)
-    # Izchil nusxa (VACUUM INTO) — oxirgi 14 tasi saqlanadi
     slug_ok "$1"; d=$ROOT/$1; [ -f "$d/data/db.sqlite" ] || die "baza yo'q"
     mkdir -p "$d/backups"; out="$d/backups/db-$(date +%Y%m%d-%H%M%S).sqlite"
     sqlite3 "$d/data/db.sqlite" "VACUUM INTO '$out'"
@@ -85,8 +74,6 @@ case "$cmd" in
     echo ok
     ;;
   main-backup)
-    # Asosiy markaz (germaniya.live) bazasi — izchil nusxa, oxirgi 14 tasi saqlanadi.
-    # Nom "dev.db.backup-*" — Dev paneldagi "Baza zaxira nusxalari" ro'yxati shuni o'qiydi.
     main=$APP/prisma; [ -f "$main/dev.db" ] || die "asosiy baza yo'q"
     out="$main/dev.db.backup-$(date +%Y%m%d-%H%M%S)"
     sqlite3 -cmd ".timeout 60000" "$main/dev.db" "VACUUM INTO '$out'"
@@ -95,12 +82,9 @@ case "$cmd" in
     echo "$out"
     ;;
   main-restart)
-    # Asosiy markaz (germaniya.live) — litsenziya sanasi o'zgargach
     systemctl restart gl-edu
     ;;
   sysinfo)
-    # Dev panel "Server" sahifasi uchun to'liq holat. Satr formati: <tur>|<maydonlar...>
-    # Faqat o'qish: bitta qism xatosi (masalan head quvurni yopishi) qolganini to'xtatmasin
     set +e +o pipefail
     . /etc/os-release 2>/dev/null || true
     echo "kv|os|${PRETTY_NAME:-?}"
@@ -114,7 +98,6 @@ case "$cmd" in
     echo "kv|node|$(node -v 2>/dev/null)"
     echo "kv|nginx|$(nginx -v 2>&1 | sed 's/.*nginx\///')"
     awk '/^MemTotal/{t=$2} /^MemAvailable/{a=$2} /^SwapTotal/{st=$2} /^SwapFree/{sf=$2} END{print "kv|mem_total|"t*1024"\nkv|mem_available|"a*1024"\nkv|swap_total|"st*1024"\nkv|swap_used|"(st-sf)*1024}' /proc/meminfo
-    # CPU band'lik: 1 soniyalik o'lchov
     read -r _ u1 n1 s1 i1 w1 x1 y1 z1 _ < /proc/stat; sleep 1; read -r _ u2 n2 s2 i2 w2 x2 y2 z2 _ < /proc/stat
     t1=$((u1+n1+s1+i1+w1+x1+y1+z1)); t2=$((u2+n2+s2+i2+w2+x2+y2+z2))
     echo "kv|cpu_pct|$(( (100*((t2-t1)-(i2-i1))) / ((t2-t1)>0 ? (t2-t1) : 1) ))"
@@ -133,7 +116,6 @@ case "$cmd" in
       n=$(basename "$d"); [ -f "$d/cert.pem" ] || continue
       echo "cert|$n|$(openssl x509 -in "$d/cert.pem" -noout -enddate | cut -d= -f2)|$(openssl x509 -in "$d/cert.pem" -noout -ext subjectAltName 2>/dev/null | grep -oE 'DNS:[^,]+' | sed 's/DNS://' | tr '\n' ' ')"
     done
-    # Nom oxirida: unda bo'sh joy bo'lishi mumkin ("next-server (v15...)")
     ps -eo pid,%cpu,rss,etimes,args --sort=-rss | tail -n +2 | head -10 | awk '{a=$5; for(i=6;i<=NF&&i<=7;i++) a=a" "$i; print "proc|"$1"|"$2"|"$3*1024"|"$4"|"a}'
     echo "timer|backup|$(systemctl show gl-centers-backup.timer -p LastTriggerUSec --value 2>/dev/null)|$(systemctl show gl-centers-backup.timer -p NextElapseUSecRealtime --value 2>/dev/null)"
     if command -v docker >/dev/null; then docker ps --format 'docker|{{.Names}}|{{.Status}}|{{.Image}}' 2>/dev/null; fi
@@ -141,7 +123,6 @@ case "$cmd" in
     echo "kv|last_deploy|$(git -C $APP log -1 --format='%h|%cI|%s' 2>/dev/null | tr '|' '~')"
     ;;
   stats)
-    # Server holati (Dev panel bosh sahifasi uchun)
     echo "load=$(cut -d' ' -f1-3 /proc/loadavg)"
     free -m | awk '/^Mem:/ {print "mem_total="$2"\nmem_used="$3}'
     df -m / | awk 'NR==2 {print "disk_total="$2"\ndisk_used="$3}'

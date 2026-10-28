@@ -31,7 +31,6 @@ export default function ThemeToggle({ locale = "uz" }: { locale?: Locale }) {
       title={dark ? tr(locale, { uz: "Yorug' rejim", ru: "Светлый режим", en: "Light mode", de: "Heller Modus" }) : tr(locale, { uz: "Tungi rejim", ru: "Тёмный режим", en: "Dark mode", de: "Dunkler Modus" })}
       aria-label={tr(locale, { uz: "Mavzu", ru: "Тема", en: "Theme", de: "Design" })}
     >
-      {/* Miltillashning oldini olish uchun ready bo'lgunча ko'rsatmaymiz */}
       {ready && <Icon name={dark ? "sun" : "moon"} className="h-5 w-5" />}
     </button>
   );

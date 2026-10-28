@@ -19,20 +19,15 @@ export async function generateMetadata(): Promise<Metadata> {
   };
 }
 
-/** "500000" → "500 000 so'm"; matn bo'lsa (masalan "500 000 so'm/oy") o'zgarmaydi */
 function fmtPrice(raw: string): string {
   const d = raw.replace(/\s/g, "");
   return /^\d{3,}$/.test(d) ? `${Number(d).toLocaleString("ru-RU")} so'm` : raw;
 }
 
-/** "a1" → "A1"; boshqa matn o'zgarmaydi */
 function fmtLevel(raw: string): string {
   return /^[abc][12](\.\d)?$/i.test(raw.trim()) ? raw.trim().toUpperCase() : raw.trim();
 }
 
-// Ochiq sahifa (login talab qilmaydi) — kursga yozilish arizasi.
-// Ko'rish har ochilganda hisoblanadi (?preview=1 bundan mustasno).
-// Telefon uchun mo'ljallangan: /daraja-testi bilan bir xil brend uslub.
 export default async function ApplyPage({ params, searchParams }: {
   params: Promise<{ code: string }>;
   searchParams: Promise<{ preview?: string }>;
@@ -50,32 +45,24 @@ export default async function ApplyPage({ params, searchParams }: {
     await prisma.vacancyLink.update({ where: { id: link.id }, data: { views: { increment: 1 }, lastViewedAt: new Date() } });
   }
 
-  // Daraja tugmalari (Sozlamalar > Darajalar, faqat A1–B2 — arizada C1 shart emas)
-  // va oflayn uchun faol filiallar
-  // + Android ilovasi — pastdagi "Ilovani yuklab oling" kartasi (serverdagi eng oxirgi APK)
   const [allLevels, branches, app, brand] = await Promise.all([
     getLevelCodes(),
-    // Faqat faol va arizada ko'rsatishga ruxsat berilgan filiallar (Filiallar bo'limidagi "Arizada" tugmasi)
     prisma.branch.findMany({ where: { isActive: true, showInApply: true }, select: { id: true, name: true, address: true, imageUrl: true, applyCourses: true }, orderBy: { name: "asc" } }),
     getAppRelease(),
     getBrand(),
   ]);
 
   const APPLY_LEVELS = ["A1", "A2", "B1", "B2"];
-  // Tartib doim A1 → B2 (katalogdagi sortOrder o'zgartirilgan bo'lsa ham)
   const levelCodes = APPLY_LEVELS.filter((c) => allLevels.some((l) => l.toUpperCase() === c));
 
   const v = link?.vacancy ?? null;
-  // Chiplar: daraja (graduation) va narx (wallet) — ikonkali
   const chips: { icon: string; text: string }[] = v
     ? [v.jobTitle && { icon: "graduation", text: fmtLevel(v.jobTitle) }, v.salary && { icon: "wallet", text: fmtPrice(v.salary) }].filter((x): x is { icon: string; text: string } => !!x)
     : [];
 
   return (
-    // ApplyShell — sahifa foni (filial tanlanganda uning surati) va bezak dog'lari
     <ApplyShell>
       <div className="relative mx-auto flex min-h-[100dvh] w-full max-w-md flex-col px-4 pb-[max(1.25rem,env(safe-area-inset-bottom))] pt-[max(1rem,env(safe-area-inset-top))] sm:justify-center sm:py-10">
-        {/* Sarlavha: logotip + yorliq */}
         <div className="flex items-center justify-between">
           <BrandLogo brand={brand} className="h-9 w-auto object-contain" textClassName="text-lg font-extrabold tracking-tight text-slate-900 dark:text-white" />
           <span className="rounded-full border border-slate-200/80 bg-white/70 px-3 py-1 text-[11px] font-semibold text-slate-600 backdrop-blur dark:border-white/10 dark:bg-white/[0.06] dark:text-slate-300">
@@ -87,7 +74,6 @@ export default async function ApplyPage({ params, searchParams }: {
           <Notice icon="link" title="Havola topilmadi" text="Bunday havola mavjud emas yoki o'chirilgan." />
         ) : (
           <>
-            {/* Kurs haqida */}
             <div className="mt-6">
               <h1 className="text-[26px] font-black leading-[1.15] tracking-tight text-slate-900 dark:text-white">{v!.title}</h1>
               {chips.length > 0 && (
@@ -121,8 +107,6 @@ export default async function ApplyPage({ params, searchParams }: {
                   preview={preview}
                   questions={parseQuestions(v!.questions)}
                   levels={levelCodes}
-                  // Rasm data URL'ni HTML'ga qo'ymaymiz — /api/branches/[id]/image orqali
-                  // (yuklangan rasm yoki public/branches/<nom>.jpg tayyor fayl)
                   branches={branches.map((b) => ({ id: b.id, name: b.name, address: b.address, image: branchHasImage(b) ? `/api/branches/${b.id}/image` : null, courses: parseApplyCourses(b.applyCourses) }))}
                 />
               </>
@@ -130,17 +114,13 @@ export default async function ApplyPage({ params, searchParams }: {
           </>
         )}
 
-        {/* Ilovani yuklab olish — har doim eng oxirgi versiya (/api/app/android serverdagi faylni beradi) */}
-        {/* Mobil ilova faqat asosiy markazniki */}
         {brand.isMain && app.available && (
           <a
             href={app.href}
             className="mt-6 flex items-center gap-3 rounded-3xl border border-white/70 bg-white/55 p-3.5 shadow-[0_20px_50px_-24px_rgba(15,23,42,0.35)] backdrop-blur-xl transition active:scale-[0.98] dark:border-white/10 dark:bg-white/[0.06]"
           >
-            {/* Ilovaning o'z ikonkasi — telefonda o'rnatilganda shu ko'rinadi */}
             {/* eslint-disable-next-line @next/next/no-img-element */}
             <img src="/icons/icon-192.png" alt={brand.name} width={52} height={52} className="shrink-0 rounded-2xl shadow-md ring-1 ring-black/10" style={{ width: 52, height: 52 }} />
-            {/* Matn kesilmaydi — tor ekranda o'raladi; tugma kichik, dumaloq */}
             <span className="min-w-0 flex-1">
               <span className="block break-words text-[15px] font-bold leading-tight text-slate-900 dark:text-white">{brand.name}</span>
               <span className="mt-1 block break-words text-[12px] leading-tight text-slate-500 dark:text-slate-400">

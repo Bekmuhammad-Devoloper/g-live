@@ -7,10 +7,6 @@ import { S } from "../_i18n";
 import { CARD, PageHeader, TEAL } from "../_ui";
 import MissingStudent from "../MissingStudent";
 
-// Yulduz pog'onalari — o'quvchi qayerda turgani va keyingisiga qancha
-// qolgani. Ro'yxatni ma'muriyat Sozlamalar > Yulduz darajalari dan
-// boshqaradi, shu sabab bu yerda hech narsa qattiq yozilmagan.
-
 function IcoStar({ s = 15 }: { s?: number }) {
   return (
     <svg width={s} height={s} viewBox="0 0 24 24" fill="currentColor">
@@ -47,7 +43,6 @@ export default async function StudentStarRankPage() {
     <div className="space-y-4">
       <PageHeader title={t.starRank} subtitle={t.starRankSub} backLabel={t.back} back="/student" />
 
-      {/* ── Hozirgi pog'ona ── */}
       <div
         className="relative overflow-hidden rounded-[26px] p-5 text-white shadow-[0_16px_34px_-18px_rgba(14,116,144,0.9)]"
         style={{ background: `linear-gradient(135deg, ${step.current?.color ?? "#17a2bf"}, ${TEAL})` }}
@@ -56,7 +51,6 @@ export default async function StudentStarRankPage() {
 
         <div className="relative">
           <div className="flex items-start gap-3">
-            {/* Ma'muriyat yuklagan belgi — pog'onani nomidan oldin tanitadi */}
             {step.current?.iconUrl ? (
               // eslint-disable-next-line @next/next/no-img-element
               <img src={step.current.iconUrl} alt="" className="h-14 w-14 shrink-0 object-contain drop-shadow-[0_6px_12px_rgba(0,0,0,0.3)]" />
@@ -92,7 +86,6 @@ export default async function StudentStarRankPage() {
         </div>
       </div>
 
-      {/* ── Pog'onalar ro'yxati ── */}
       {ranks.length === 0 ? (
         <div className={CARD + " rounded-[26px] px-5 py-12 text-center"}>
           <div className="text-[15px] font-semibold text-slate-700">—</div>
@@ -113,9 +106,6 @@ export default async function StudentStarRankPage() {
                     (isNow ? "bg-[#0e7490]/[0.08]" : "")
                   }
                 >
-                  {/* Belgi yuklangan bo'lsa — o'sha, bo'lmasa pog'ona raqami.
-                      Ochilmagan pog'ona kulrangda: nima kutayotgani ko'rinadi,
-                      lekin allaqachon qo'lga kiritilgandek turmaydi. */}
                   {r.iconUrl ? (
                     // eslint-disable-next-line @next/next/no-img-element
                     <img
