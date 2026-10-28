@@ -1,5 +1,6 @@
 import { requireSession } from "@/lib/auth";
 import { prisma } from "@/lib/db";
+import type { Prisma } from "@prisma/client";
 import { getT } from "@/lib/i18n";
 import { canRead, canWrite, MODULES } from "@/lib/rbac";
 import { ROLES } from "@/lib/constants";
@@ -13,6 +14,9 @@ import { listKanbanGroups, listKanbanColumns, getKanbanOrder } from "./actions";
 import { columnOf, GROUP_COL_COLORS, weekdaysLabel, type ArchivedStudent, type BranchColumn, type BranchMode, type GroupInfo, type VLead } from "./_lib/leadColumns";
 import type { Analytics } from "./_components/AnalyticsTiles";
 import { computeDebts } from "@/lib/debt";
+
+// Yo'qotilgan va arxivdagi lidlardan sahifaga yuklanadigan eng ko'p soni
+const LOST_ARCHIVE_LIMIT = 3000;
 
 export default async function CrmPage() {
   const s = await requireSession();
@@ -40,25 +44,36 @@ export default async function CrmPage() {
   const notRouted = { OR: [{ kanbanColumnId: null }, { NOT: { kanbanColumnId: { startsWith: "br:" } } }] };
   const sharedLeads = [{ studyFormat: "ONLINE", ...notRouted }, { stage: "TEST", ...notRouted }];
 
-  const [leads, managers, groupColumns, customColumns, branchRows, lastActs] = await Promise.all([
+  // Lid ro'yxati: ishdagi lidlar (Yo'qotilgan emas, arxivda emas) — HAMMASI;
+  // Yo'qotilgan/arxivdagilar — eng yangi LOST_ARCHIVE_LIMIT tasi (sahifa og'irlashmasin).
+  // Ilgari umumiy "take: 2000" eski lidlarni ro'yxatdan ham, sonlardan ham tushirib qoldirardi.
+  const leadScope: Prisma.LeadWhereInput = allBranches ? {} : { OR: [branchWhere(s), ...sharedLeads] };
+  const closedLead: Prisma.LeadWhereInput = { OR: [{ stage: "LOST" }, { archivedAt: { not: null } }] };
+  const leadSelect = {
+    id: true, fullName: true, phone: true, email: true, telegram: true, studyFormat: true, source: true, stage: true,
+    interestCourse: true, age: true, level: true, budget: true, note: true,
+    managerId: true, studentId: true, groupId: true, enrollEditCount: true, kanbanColumnId: true, createdAt: true, branchId: true, branchSlotId: true, archivedAt: true, archiveKind: true,
+    testSet: true, testLevel: true, testPct: true, testPassed: true, lossReason: true,
+    manager: { select: { fullName: true } },
+    branch: { select: { name: true } },
+    group: { select: { name: true } },
+    _count: { select: { activities: true } },
+  } satisfies Prisma.LeadSelect;
+
+  const [openLeads, closedLeads, totalLeads, managers, groupColumns, customColumns, branchRows, lastActs] = await Promise.all([
     prisma.lead.findMany({
       // faol filial lidlari + hamma onlayn va daraja-test lidlari (filial tanlanganda ham)
-      where: allBranches ? {} : { OR: [branchWhere(s), ...sharedLeads] },
+      where: { AND: [leadScope, { NOT: closedLead }] },
       orderBy: { createdAt: "desc" },
-      // Faqat kerakli ustunlar — `include: { manager: true }` har lid uchun butun
-      // User yozuvini (parol maydonlari bilan) tortib, 2000 lidda sahifani sekinlashtirardi
-      select: {
-        id: true, fullName: true, phone: true, email: true, telegram: true, studyFormat: true, source: true, stage: true,
-        interestCourse: true, age: true, level: true, budget: true, note: true,
-        managerId: true, studentId: true, groupId: true, enrollEditCount: true, kanbanColumnId: true, createdAt: true, branchId: true, branchSlotId: true, archivedAt: true, archiveKind: true,
-        testSet: true, testLevel: true, testPct: true, testPassed: true, lossReason: true,
-        manager: { select: { fullName: true } },
-        branch: { select: { name: true } },
-        group: { select: { name: true } },
-        _count: { select: { activities: true } },
-      },
-      take: 2000,
+      select: leadSelect,
     }),
+    prisma.lead.findMany({
+      where: { AND: [leadScope, closedLead] },
+      orderBy: { createdAt: "desc" },
+      select: leadSelect,
+      take: LOST_ARCHIVE_LIMIT,
+    }),
+    prisma.lead.count({ where: leadScope }),
     prisma.user.findMany({ where: { role: ROLES.OPERATOR, isActive: true }, select: { id: true, fullName: true }, orderBy: { fullName: "asc" } }),
     listKanbanGroups(),   // Kanbanga biriktirilgan guruh ustunlari
     listKanbanColumns(),  // Oddiy nomli ustunlar
@@ -75,6 +90,7 @@ export default async function CrmPage() {
     // Har lid bo'yicha oxirgi harakat vaqti (bitta agregat so'rov)
     prisma.leadActivity.groupBy({ by: ["leadId"], _max: { createdAt: true } }),
   ]);
+  const leads = [...openLeads, ...closedLeads].sort((a, b) => b.createdAt.getTime() - a.createdAt.getTime());
   const lastActivityAt = new Map(lastActs.map((a) => [a.leadId, a._max.createdAt]));
 
   // Yo'qotilgan lidlar: kim va qachon "Yo'qotilgan"ga o'tkazgan — oxirgi bosqich yozuvi
@@ -221,6 +237,7 @@ export default async function CrmPage() {
     <LeadsWorkspace
       locale={s.locale}
       initialLeads={vleads}
+      totalLeads={totalLeads}
       managers={managers.map((m) => ({ id: m.id, name: m.fullName }))}
       sources={sources}
       analytics={analytics}

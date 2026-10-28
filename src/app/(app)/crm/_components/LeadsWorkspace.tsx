@@ -32,6 +32,8 @@ interface Opt { id: string; name: string }
 interface Props {
   locale: Locale;
   initialLeads: VLead[];
+  /** Bazadagi haqiqiy jami (sahifaga yuklanmagan eski yo'qotilganlar bilan) */
+  totalLeads?: number;
   managers: Opt[];
   sources: string[];
   analytics: Analytics;
@@ -64,7 +66,7 @@ interface Props {
   slotsEditable?: "all" | string | null;
 }
 
-export default function LeadsWorkspace({ locale, initialLeads, managers, sources, analytics, canWrite, canDelete = false, canResetColumns = false, payment = null, initialGroupColumns, initialCustomColumns, initialColOrder = [], branchColumns = null, groupInfo = {}, archivedStudents = [], branchMode = null, showOnlineCol = true, hiddenCols = [], slotsEditable = null }: Props) {
+export default function LeadsWorkspace({ locale, initialLeads, totalLeads, managers, sources, analytics, canWrite, canDelete = false, canResetColumns = false, payment = null, initialGroupColumns, initialCustomColumns, initialColOrder = [], branchColumns = null, groupInfo = {}, archivedStudents = [], branchMode = null, showOnlineCol = true, hiddenCols = [], slotsEditable = null }: Props) {
   const router = useRouter();
   const pathname = usePathname();
   const params = useSearchParams();
@@ -469,7 +471,7 @@ export default function LeadsWorkspace({ locale, initialLeads, managers, sources
             <div>
               <div className="flex items-center gap-2">
                 <h1 className="text-lg font-bold text-slate-900 dark:text-slate-100">{tr(locale, { uz: "Lidlar bazasi", ru: "База лидов", en: "Leads database", de: "Lead-Datenbank" })}</h1>
-                <span className="rounded-full bg-emerald-500/15 px-2 py-0.5 text-xs font-bold text-emerald-500">{leads.length}</span>
+                <span className="rounded-full bg-emerald-500/15 px-2 py-0.5 text-xs font-bold text-emerald-500" title={totalLeads && totalLeads > leads.length ? tr(locale, { uz: `Sahifada ${leads.length} tasi — eng eski yo'qotilgan/arxiv lidlar yuklanmagan`, ru: `На странице ${leads.length} — самые старые потерянные/архивные не загружены`, en: `${leads.length} on page — oldest lost/archived not loaded`, de: `${leads.length} auf der Seite — älteste verlorene/archivierte nicht geladen` }) : undefined}>{Math.max(totalLeads ?? 0, leads.length)}</span>
               </div>
               <p className="text-xs text-slate-400">{tr(locale, { uz: "Barcha lidlar ro'yxati", ru: "Список всех лидов", en: "List of all leads", de: "Liste aller Leads" })}</p>
             </div>

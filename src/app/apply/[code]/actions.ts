@@ -98,6 +98,44 @@ export async function submitApplication(
     if (a) qa.push(`${q.q}: ${a}`);
   }
 
+  // Takroriy ariza: shu filialda shu raqam bilan ochiq lid (o'quvchiga aylanmagan, arxivda emas)
+  // bo'lsa — yangi lid yaratilmaydi, mavjudiga "qayta ariza" yoziladi. Yo'qotilgan lid
+  // qayta qiziqish bildirgani uchun "Yangi"ga qaytariladi. Boshqa filial — yangi lid.
+  const existing = await prisma.lead.findFirst({
+    where: { phone: tel, branchId, studentId: null, archivedAt: null },
+    orderBy: { createdAt: "desc" },
+    select: { id: true, stage: true, level: true, interestCourse: true, telegram: true },
+  });
+  if (existing) {
+    await prisma.lead.update({
+      where: { id: existing.id },
+      data: {
+        ...(existing.stage === "LOST" ? { stage: "NEW", lossReason: null, kanbanColumnId: null } : {}),
+        ...(!existing.level && needLevel && levelStr ? { level: levelStr } : {}),
+        ...(!existing.interestCourse && course ? { interestCourse: course.name } : {}),
+        ...(!existing.telegram && format === "ONLINE" && tg ? { telegram: `@${tg}` } : {}),
+        activities: {
+          create: {
+            type: "note",
+            result: [
+              `Qayta ariza yubordi (${link.platform ?? "havola"}: ${link.vacancy.title})${existing.stage === "LOST" ? " — Yo'qotilgandan Yangiga qaytarildi" : ""}`,
+              ...(course ? [`Kurs: ${course.name}`] : []),
+              ...(needLevel && levelStr ? [`Daraja: ${levelStr}`] : []),
+              ...qa,
+            ].join("\n"),
+          },
+        },
+      },
+    });
+    await prisma.vacancyLink.update({
+      where: { id: link.id },
+      data: { submissions: { increment: 1 }, lastSubmissionAt: new Date() },
+    });
+    revalidatePath("/links");
+    revalidatePath("/crm");
+    return { ok: true };
+  }
+
   await prisma.lead.create({
     data: {
       fullName: name,
