@@ -9,7 +9,9 @@ import { getSetting } from "./settings";
 //   • o'sha oyda o'quvchi guruh(lar)da bo'lsa — guruh narxi (Group.monthlyFee),
 //     bo'lmasa kurs narxi (Program.monthlyFee); bir nechta guruhda bo'lsa yig'iladi;
 //   • hech qaysi guruhda bo'lmasa — markazning umumiy narxi (sozlamalardan).
-// Qo'shilgan/ro'yxatga olingan oyning O'ZI to'liq hisoblanadi.
+// Guruhga qo'shilgan oy — faqat qolgan darslar ulushi: oylik narx × (qo'shilgan
+// kundan boshlab shu oydagi darslar) / (oydagi jami darslar). Masalan 12 darslik
+// 600 000 so'mli guruhga 7-darsdan qo'shilsa — 6 dars, 300 000 so'm.
 //
 //   qarz   = max(0, hisoblangan + qo'lda kiritilgan qarz (PENDING) − to'langan − promokod chegirmasi)
 //   balans = max(0, to'langan + chegirma − hisoblangan − qo'lda qarz)  — oldindan to'langan pul
@@ -55,6 +57,58 @@ const EMPTY: StudentDebt = { accrued: 0, paid: 0, manual: 0, discount: 0, debt: 
 /** Sanani "oy indeksi"ga aylantiradi (yil*12 + oy) — oylarni solishtirish uchun. */
 const monthIndex = (d: Date) => d.getFullYear() * 12 + d.getMonth();
 
+/** Qo'shilgan oyni darslar ulushi bo'yicha hisoblash shu kundan boshlab qo'shilganlarga qo'llanadi */
+export const PRORATE_FROM = new Date(2026, 9, 28);
+
+/** Narx hisobi uchun guruh ma'lumoti */
+export interface FeeGroup {
+  monthlyFee: number | null;
+  weekdays: string | null;
+  lessonsPerMonth: number | null;
+  program: { monthlyFee: number | null; lessonsPerMonth: number | null };
+}
+const FEE_GROUP_SELECT = {
+  monthlyFee: true, weekdays: true, lessonsPerMonth: true,
+  program: { select: { monthlyFee: true, lessonsPerMonth: true } },
+} as const;
+
+/** Oyning dars kunlari (sana raqamlari) — guruh jadvali bo'yicha, oyiga darslar soni bilan cheklangan */
+export function monthLessonDays(g: FeeGroup, mIdx: number): number[] | null {
+  const days = new Set((g.weekdays ?? "").split(",").map((x) => parseInt(x, 10)).filter((n) => n >= 1 && n <= 7));
+  if (days.size === 0) return null;
+  const y = Math.floor(mIdx / 12), mo = mIdx % 12;
+  const dim = new Date(y, mo + 1, 0).getDate();
+  const out: number[] = [];
+  for (let d = 1; d <= dim; d++) {
+    const wd = ((new Date(y, mo, d).getDay() + 6) % 7) + 1; // Du=1 ... Ya=7
+    if (days.has(wd)) out.push(d);
+  }
+  const cap = g.lessonsPerMonth ?? g.program.lessonsPerMonth ?? 0;
+  return cap > 0 ? out.slice(0, cap) : out;
+}
+
+/**
+ * Guruh a'zoligining shu oy uchun narxi. Qo'shilgan oyda — faqat qolgan darslar
+ * ulushi (dars jadvali bo'lmasa — qolgan kunlar ulushi), keyingi oylarda — to'liq.
+ */
+export function enrollmentMonthFee(g: FeeGroup, joinedAt: Date, mIdx: number): number {
+  const fee = g.monthlyFee ?? g.program.monthlyFee ?? 0;
+  if (fee <= 0 || monthIndex(joinedAt) !== mIdx) return fee;
+  // Qoida shu sanadan keyin qo'shilganlarga — avvalgi hisob-kitoblar o'zgarmaydi
+  if (joinedAt.getTime() < PRORATE_FROM.getTime()) return fee;
+  const joinDay = joinedAt.getDate();
+  const lessons = monthLessonDays(g, mIdx);
+  let share: number;
+  if (lessons && lessons.length > 0) {
+    share = lessons.filter((d) => d >= joinDay).length / lessons.length;
+  } else {
+    const dim = new Date(Math.floor(mIdx / 12), (mIdx % 12) + 1, 0).getDate();
+    share = (dim - joinDay + 1) / dim;
+  }
+  // 1 000 so'mgacha yaxlitlanadi
+  return Math.round((fee * share) / 1000) * 1000;
+}
+
 /**
  * Ikki sana orasidagi to'lov oylari soni — boshlangan oyning O'ZI ham kiradi.
  * (Tashqi kodda ishlatiladi; ichkarida oylik sikl bor.)
@@ -62,6 +116,15 @@ const monthIndex = (d: Date) => d.getFullYear() * 12 + d.getMonth();
 export function billedMonths(from: Date, now: Date, until?: Date | null): number {
   const end = until && until.getTime() < now.getTime() ? until : now;
   return Math.max(0, monthIndex(end) - monthIndex(from) + 1);
+}
+
+/** Shu oyda narxi belgilangan guruhda bo'lganmi — qo'shilgan oy ulushi 0 bo'lsa umumiy narx olinmasin */
+function enrolledWithFee(enr: { joinedAt: Date; leftAt: Date | null; isActive: boolean; group: FeeGroup }[], m: number): boolean {
+  return enr.some((e) => {
+    const from = monthIndex(e.joinedAt);
+    const until = e.leftAt ? monthIndex(e.leftAt) : (e.isActive ? Infinity : from);
+    return m >= from && m <= until && (e.group.monthlyFee ?? e.group.program.monthlyFee ?? 0) > 0;
+  });
 }
 
 /** Bir nechta o'quvchi uchun bir martada (ro'yxat sahifalari uchun). */
@@ -78,7 +141,7 @@ export async function computeDebts(studentIds: string[], now = new Date()): Prom
         joinedAt: true,
         leftAt: true,
         isActive: true,
-        group: { select: { monthlyFee: true, program: { select: { monthlyFee: true } } } },
+        group: { select: FEE_GROUP_SELECT },
       },
     }),
     prisma.payment.findMany({
@@ -109,17 +172,21 @@ export async function computeDebts(studentIds: string[], now = new Date()): Prom
     for (let m = monthIndex(since); m <= nowIdx; m++) {
       months++;
       let monthFee = 0;
+      let inGroup = false;
       for (const e of enr) {
         const from = monthIndex(e.joinedAt);
         // Guruhdan chiqarilgan bo'lsa — o'sha oygacha; sana yozilmagan eski
         // yozuvlarda (isActive=false) faqat qo'shilgan oy hisoblanadi.
         const until = e.leftAt ? monthIndex(e.leftAt) : (e.isActive ? Infinity : from);
         if (m >= from && m <= until) {
-          monthFee += e.group.monthlyFee ?? e.group.program.monthlyFee ?? 0;
+          inGroup = true;
+          monthFee += enrollmentMonthFee(e.group, e.joinedAt, m);
         }
       }
       // Shu oyda hech qaysi guruhda bo'lmagan bo'lsa — markazning umumiy narxi
-      accrued += monthFee > 0 ? monthFee : defaultFee;
+      // Guruh(lar)da bo'lsa — guruh narxi (qo'shilgan oyda ulush 0 ham bo'lishi mumkin);
+      // narxi belgilanmagan guruh yoki guruhsiz oy — markazning umumiy narxi
+      accrued += inGroup && monthFee > 0 ? monthFee : inGroup && enrolledWithFee(enr, m) ? 0 : defaultFee;
     }
 
     out.set(st.id, { ...EMPTY, accrued, months, since });
@@ -174,7 +241,7 @@ export async function monthlyFees(studentIds: string[], month: Date): Promise<Ma
       where: { studentId: { in: studentIds } },
       select: {
         studentId: true, joinedAt: true, leftAt: true, isActive: true,
-        group: { select: { monthlyFee: true, program: { select: { monthlyFee: true } } } },
+        group: { select: FEE_GROUP_SELECT },
       },
     }),
     getDefaultMonthlyFee(),
@@ -194,9 +261,9 @@ export async function monthlyFees(studentIds: string[], month: Date): Promise<Ma
     for (const e of enr) {
       const from = monthIndex(e.joinedAt);
       const until = e.leftAt ? monthIndex(e.leftAt) : (e.isActive ? Infinity : from);
-      if (m >= from && m <= until) fee += e.group.monthlyFee ?? e.group.program.monthlyFee ?? 0;
+      if (m >= from && m <= until) fee += enrollmentMonthFee(e.group, e.joinedAt, m);
     }
-    out.set(st.id, fee > 0 ? fee : defaultFee);
+    out.set(st.id, fee > 0 ? fee : enrolledWithFee(enr, m) ? 0 : defaultFee);
   }
   return out;
 }
