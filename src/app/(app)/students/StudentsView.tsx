@@ -17,6 +17,7 @@ import GroupMover from "../_components/GroupMover";
 import { Icon } from "../_components/Icon";
 import BranchMover from "../_components/BranchMover";
 import PaymentPanel from "./PaymentPanel";
+import { debtTone, DEBT_BADGE, DEBT_TEXT } from "@/lib/debtTone";
 
 // Sahifaga serverdan keladigan bitta o'quvchi qatori
 export interface VStudent {
@@ -32,6 +33,7 @@ export interface VStudent {
   scheduleDates: string[]; // ISO
   balance: number;
   debt: number; // jami qarzdorlik — PENDING to'lovlar yig'indisi
+  debtMonths: number; // to'lanmagan oylar soni (1 — sariq, 2+ — qizil)
   paidThisMonth: boolean; // shu oy kamida bitta PAID to'lov bo'lganmi
   note: string | null;
   branchName: string | null;
@@ -508,9 +510,19 @@ export default function StudentsView({ students, courses, locale, canCreate, can
                       )}
                       {isVisible("balans") && (
                         <td className="px-4 py-2">
-                          <span className={cn("font-semibold", st.balance > 0 ? "text-emerald-600" : "text-slate-400")}>
-                            {formatMoney(st.balance, locale)}
-                          </span>
+                          {st.debt > 0 ? (
+                            // Qarzdor: bir oygacha — sariq, bir oydan ko'p — qizil
+                            <span
+                              title={tr(locale, { uz: `${st.debtMonths} oylik qarz`, ru: `Долг за ${st.debtMonths} мес.`, en: `${st.debtMonths} month(s) of debt`, de: `${st.debtMonths} Monat(e) Schulden` })}
+                              className={cn("inline-flex items-center gap-1 whitespace-nowrap rounded-md px-2 py-0.5 text-xs font-bold tabular-nums", DEBT_BADGE[debtTone(st.debt, st.debtMonths)])}
+                            >
+                              −{formatMoney(st.debt, locale)}
+                            </span>
+                          ) : (
+                            <span className={cn("font-semibold", st.balance > 0 ? "text-emerald-600" : "text-slate-400")}>
+                              {formatMoney(st.balance, locale)}
+                            </span>
+                          )}
                         </td>
                       )}
                       {isVisible("izoh") && (
@@ -704,7 +716,11 @@ export function StudentDetailModal({
           {/* O'quv ma'lumotlari */}
           <DSection title={tr(locale, { uz: "O'quv ma'lumotlari", ru: "Учебные данные", en: "Study info", de: "Lerninformationen" })} icon="graduation">
             <div className="grid grid-cols-2 gap-3">
-              <DStat label={tr(locale, { uz: "Balans", ru: "Баланс", en: "Balance", de: "Saldo" })} value={formatMoney(st.balance, locale)} accent={st.balance > 0} />
+              {st.debt > 0 ? (
+                <DStat label={tr(locale, { uz: `Qarz (${st.debtMonths} oy)`, ru: `Долг (${st.debtMonths} мес.)`, en: `Debt (${st.debtMonths} mo)`, de: `Schulden (${st.debtMonths} Mon.)` })} value={formatMoney(st.debt, locale)} toneClass={DEBT_TEXT[debtTone(st.debt, st.debtMonths)]} />
+              ) : (
+                <DStat label={tr(locale, { uz: "Balans", ru: "Баланс", en: "Balance", de: "Saldo" })} value={formatMoney(st.balance, locale)} accent={st.balance > 0} />
+              )}
               <DStat label={tr(locale, { uz: "Daraja", ru: "Уровень", en: "Level", de: "Niveau" })} value={st.currentLevel ?? "—"} />
               <DStat label={tr(locale, { uz: "Filial", ru: "Филиал", en: "Branch", de: "Filiale" })} value={st.branchName ?? "—"} />
               <DStat label={tr(locale, { uz: "Kurslar soni", ru: "Кол-во курсов", en: "Courses", de: "Kurse" })} value={String(st.courses.length)} />
@@ -901,11 +917,11 @@ function DSection({ title, icon, children }: { title: string; icon: string; chil
     </div>
   );
 }
-function DStat({ label, value, accent }: { label: string; value: string; accent?: boolean }) {
+function DStat({ label, value, accent, toneClass }: { label: string; value: string; accent?: boolean; toneClass?: string }) {
   return (
     <div className="rounded-xl border border-slate-100 bg-slate-50/70 px-3.5 py-2.5 transition hover:border-slate-200 dark:border-white/5 dark:bg-white/[0.03]">
       <div className="text-[11px] font-medium text-slate-400">{label}</div>
-      <div className={cn("mt-0.5 truncate text-sm font-bold tabular-nums", accent ? "text-emerald-600 dark:text-emerald-400" : "text-slate-800 dark:text-slate-100")}>{value}</div>
+      <div className={cn("mt-0.5 truncate text-sm font-bold tabular-nums", toneClass ?? (accent ? "text-emerald-600 dark:text-emerald-400" : "text-slate-800 dark:text-slate-100"))}>{value}</div>
     </div>
   );
 }

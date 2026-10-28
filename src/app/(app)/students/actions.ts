@@ -47,6 +47,7 @@ export interface StudentPayments {
   lastPaidDate: string | null;
   debt: number; // jami qarzdorlik — qo'shilgan oydan hisoblangan + qo'lda kiritilgan − to'langan
   credit: number; // balans — majburiyatlardan ortiqcha (oldindan) to'langan pul
+  debtMonths: number; // to'lanmagan oylar soni — 1 sariq, 2+ qizil
   daysUnpaid: number; // oxirgi to'lovdan (yoki guruhga qo'shilgandan) beri o'tgan kunlar
   mandatoryThreshold: number; // shuncha kundan keyin to'lov majburiy bo'ladi
   paymentMandatory: boolean; // to'lovsiz muddat tugagan
@@ -114,6 +115,7 @@ export async function getStudentPayments(studentId: string): Promise<{ ok: boole
       // Qarz — guruhga qo'shilgan oydan hisoblangan to'lov + qo'lda kiritilgani − to'langan
       debt: debtInfo.debt,
       credit: debtInfo.credit,
+      debtMonths: debtInfo.overdueMonths,
       daysUnpaid: mandatoryInfo.daysUnpaid,
       mandatoryThreshold: UNPAID_GRACE_DAYS,
       paymentMandatory,

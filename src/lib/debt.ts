@@ -50,9 +50,14 @@ export interface StudentDebt {
   months: number;
   /** Hisob boshlangan sana (ro'yxatga olingan yoki birinchi guruhga qo'shilgan) */
   since: Date | null;
+  /**
+   * To'lanmagan oylar soni — to'lovlar eng eski oylarni birinchi yopadi.
+   * 1 — faqat bir oy (yoki qisman) qarz, 2+ — bir oydan ko'p qarz.
+   */
+  overdueMonths: number;
 }
 
-const EMPTY: StudentDebt = { accrued: 0, paid: 0, manual: 0, discount: 0, debt: 0, credit: 0, months: 0, since: null };
+const EMPTY: StudentDebt = { accrued: 0, paid: 0, manual: 0, discount: 0, debt: 0, credit: 0, months: 0, since: null, overdueMonths: 0 };
 
 /** Sanani "oy indeksi"ga aylantiradi (yil*12 + oy) — oylarni solishtirish uchun. */
 const monthIndex = (d: Date) => d.getFullYear() * 12 + d.getMonth();
@@ -160,6 +165,8 @@ export async function computeDebts(studentIds: string[], now = new Date()): Prom
   }
 
   const nowIdx = monthIndex(now);
+  // Har o'quvchining oyma-oy hisoblangan summalari (eski oydan yangisiga) — qarz oylarini sanash uchun
+  const feesByStudent = new Map<string, number[]>();
 
   for (const st of students) {
     const enr = byStudent.get(st.id) ?? [];
@@ -169,6 +176,7 @@ export async function computeDebts(studentIds: string[], now = new Date()): Prom
 
     let accrued = 0;
     let months = 0;
+    const fees: number[] = [];
     for (let m = monthIndex(since); m <= nowIdx; m++) {
       months++;
       let monthFee = 0;
@@ -186,9 +194,12 @@ export async function computeDebts(studentIds: string[], now = new Date()): Prom
       // Shu oyda hech qaysi guruhda bo'lmagan bo'lsa — markazning umumiy narxi
       // Guruh(lar)da bo'lsa — guruh narxi (qo'shilgan oyda ulush 0 ham bo'lishi mumkin);
       // narxi belgilanmagan guruh yoki guruhsiz oy — markazning umumiy narxi
-      accrued += inGroup && monthFee > 0 ? monthFee : inGroup && enrolledWithFee(enr, m) ? 0 : defaultFee;
+      const fee = inGroup && monthFee > 0 ? monthFee : inGroup && enrolledWithFee(enr, m) ? 0 : defaultFee;
+      accrued += fee;
+      fees.push(fee);
     }
 
+    feesByStudent.set(st.id, fees);
     out.set(st.id, { ...EMPTY, accrued, months, since });
   }
 
@@ -206,6 +217,20 @@ export async function computeDebts(studentIds: string[], now = new Date()): Prom
     // Promokod chegirmasi to'langan pul kabi majburiyatni yopadi
     v.debt = Math.max(0, v.accrued + v.manual - v.paid - v.discount);
     v.credit = Math.max(0, v.paid + v.discount - v.accrued - v.manual);
+  }
+
+  // To'lanmagan oylar: to'lov (+chegirma, +manfiy tuzatish) avval eng eski oylarni yopadi
+  for (const [id, v] of out) {
+    if (v.debt <= 0) continue;
+    let cover = v.paid + v.discount + (v.manual < 0 ? -v.manual : 0);
+    let uncovered = 0;
+    for (const fee of feesByStudent.get(id) ?? []) {
+      if (fee <= 0) continue;
+      if (cover >= fee) cover -= fee;
+      else { cover = 0; uncovered++; }
+    }
+    // Faqat qo'lda kiritilgan qarz bo'lsa ham — kamida bir oy
+    v.overdueMonths = Math.max(1, uncovered);
   }
   return out;
 }

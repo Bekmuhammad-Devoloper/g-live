@@ -5,6 +5,7 @@ import { cn } from "@/lib/cn";
 import { formatMoney, LEAD_STAGE_LABELS, label, type Locale } from "@/lib/constants";
 import { tr } from "@/lib/tr";
 import { columnDef, columnOf, initials, type VLead } from "../_lib/leadColumns";
+import { debtTone, DEBT_BADGE } from "@/lib/debtTone";
 
 function fmt(iso: string) {
   const d = new Date(iso);
@@ -91,7 +92,14 @@ export default function LeadsTable({ leads, locale, selected, onToggle, onOpen, 
                       </span>
                     </td>
                     <td className="px-4 py-2.5 text-slate-500">{l.managerName ?? "—"}</td>
-                    <td className="px-4 py-2.5 text-slate-600 dark:text-slate-300">{l.budget ? formatMoney(l.budget, locale) : "—"}</td>
+                    <td className="px-4 py-2.5 text-slate-600 dark:text-slate-300">
+                      {l.budget ? formatMoney(l.budget, locale) : "—"}
+                      {l.debt && l.debt > 0 ? (
+                        <span className={cn("ml-1.5 inline-flex whitespace-nowrap rounded-md px-1.5 py-0.5 text-[11px] font-bold tabular-nums", DEBT_BADGE[debtTone(l.debt, l.debtMonths ?? 1)])}>
+                          −{formatMoney(l.debt, locale)}
+                        </span>
+                      ) : null}
+                    </td>
                     <td className="px-4 py-2.5 text-slate-400">{fmt(l.createdAt)}</td>
                   </tr>
                 );

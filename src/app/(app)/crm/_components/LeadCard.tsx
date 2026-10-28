@@ -6,6 +6,7 @@ import { formatMoney, LEAD_STAGE_LABELS, label, type Locale } from "@/lib/consta
 import { tr } from "@/lib/tr";
 import { Icon } from "../../_components/Icon";
 import { columnDef, columnOf, type VLead } from "../_lib/leadColumns";
+import { debtTone, DEBT_BADGE } from "@/lib/debtTone";
 
 function daysSince(iso: string) {
   return Math.floor((Date.now() - new Date(iso).getTime()) / 86400000);
@@ -151,6 +152,16 @@ export default memo(function LeadCard({ lead, locale, selected, onOpen, onOpenFu
           </div>
         )}
         {lead.budget ? <div className="text-xs font-semibold text-emerald-500">{formatMoney(lead.budget, locale)}</div> : null}
+        {/* O'quvchi qarzi: bir oygacha — sariq, bir oydan ko'p — qizil */}
+        {lead.debt && lead.debt > 0 ? (
+          <div
+            title={tr(locale, { uz: `${lead.debtMonths ?? 1} oylik qarz`, ru: `Долг за ${lead.debtMonths ?? 1} мес.`, en: `${lead.debtMonths ?? 1} month(s) of debt`, de: `${lead.debtMonths ?? 1} Monat(e) Schulden` })}
+            className={cn("inline-flex w-fit items-center gap-1 rounded-md px-1.5 py-0.5 text-[11px] font-bold tabular-nums", DEBT_BADGE[debtTone(lead.debt, lead.debtMonths ?? 1)])}
+          >
+            {tr(locale, { uz: "Qarz", ru: "Долг", en: "Debt", de: "Schuld" })}: {formatMoney(lead.debt, locale)}
+            <span className="font-medium opacity-75">· {lead.debtMonths ?? 1} {tr(locale, { uz: "oy", ru: "мес.", en: "mo", de: "Mon." })}</span>
+          </div>
+        ) : null}
       </div>
 
       {/* Ajratuvchi */}

@@ -12,6 +12,7 @@ import { RECEIPT_MODE_KEY, parseReceiptMode } from "@/lib/receiptMode";
 import { listKanbanGroups, listKanbanColumns, getKanbanOrder } from "./actions";
 import { columnOf, GROUP_COL_COLORS, weekdaysLabel, type ArchivedStudent, type BranchColumn, type BranchMode, type GroupInfo, type VLead } from "./_lib/leadColumns";
 import type { Analytics } from "./_components/AnalyticsTiles";
+import { computeDebts } from "@/lib/debt";
 
 export default async function CrmPage() {
   const s = await requireSession();
@@ -117,6 +118,10 @@ export default async function CrmPage() {
     parsedTests.set(a.leadId, { set: m[1] ?? null, pct: Number(m[2]), passed: m[3].toLowerCase() === "o'tdi", level: m[4] ?? null });
   }
 
+  // O'quvchiga aylangan lidlar qarzi (kartada rang bilan ko'rsatiladi)
+  const studentIds = [...new Set(leads.map((l) => l.studentId).filter((x): x is string => !!x))];
+  const debts = studentIds.length ? await computeDebts(studentIds) : new Map();
+
   const vleads: VLead[] = leads.map((l) => ({
     id: l.id,
     fullName: l.fullName,
@@ -146,6 +151,8 @@ export default async function CrmPage() {
     groupId: l.groupId,
     groupName: l.group?.name ?? null,
     enrollEditCount: l.enrollEditCount,
+    debt: l.studentId ? debts.get(l.studentId)?.debt ?? 0 : 0,
+    debtMonths: l.studentId ? debts.get(l.studentId)?.overdueMonths ?? 0 : 0,
     kanbanColumnId: l.kanbanColumnId,
     activityCount: l._count.activities,
     lastActivity: lastActivityAt.get(l.id)?.toISOString() ?? null,

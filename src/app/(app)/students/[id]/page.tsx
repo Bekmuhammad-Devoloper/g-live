@@ -149,6 +149,7 @@ export default async function StudentProfilePage({ params }: { params: Promise<{
     scheduleDates: student.enrollments.map((e) => e.group.startDate?.toISOString()).filter((x): x is string => !!x),
     balance: paid,
     debt,
+    debtMonths: debtInfo.overdueMonths,
     paidThisMonth: student.payments.some((p) => p.status === "PAID" && p.createdAt.getFullYear() === now.getFullYear() && p.createdAt.getMonth() === now.getMonth()),
     note: student.note,
     branchName: student.branch?.name ?? null,
@@ -166,6 +167,7 @@ export default async function StudentProfilePage({ params }: { params: Promise<{
         credit: debtInfo.credit,
         months: debtInfo.months,
         since: iso(debtInfo.since),
+        overdueMonths: debtInfo.overdueMonths,
       }}
       quick={quick}
       canManage={CAN_MANAGE.includes(s.role as never)}

@@ -11,6 +11,7 @@ import type { ReceiptMode } from "@/lib/receiptMode";
 import { Icon } from "../../_components/Icon";
 import PaymentPanel from "../PaymentPanel";
 import { StudentDetailModal, EditModal, type VStudent } from "../StudentsView";
+import { debtTone, DEBT_HEX } from "@/lib/debtTone";
 
 // O'quvchi profili — sarlavha kartasi + ko'rsatkichlar + bo'limlar.
 // Uslub /profile (xodim profili) bilan bir xil: gradient sarlavha, avatar,
@@ -23,6 +24,8 @@ import { StudentDetailModal, EditModal, type VStudent } from "../StudentsView";
 /** Qarz hisobi tafsiloti — src/lib/debt.ts natijasi */
 export interface DebtInfo {
   accrued: number; paid: number; manual: number; debt: number; credit: number; months: number; since: string | null;
+  /** To'lanmagan oylar soni — 1 sariq, 2+ qizil */
+  overdueMonths: number;
 }
 
 export interface SGroup {
@@ -161,10 +164,10 @@ export default function StudentProfile({
         <Tile icon="wallet" tone="#10b981" label={L("To'langan", "Оплачено", "Paid", "Bezahlt")} value={formatMoney(st.paid, locale)} small />
         <Tile
           icon="alert"
-          tone={st.debt > 0 ? "#ef4444" : "#94a3b8"}
+          tone={DEBT_HEX[debtTone(st.debt, debtInfo.overdueMonths)]}
           label={L("Qarzdorlik", "Задолженность", "Debt", "Schulden")}
           value={formatMoney(st.debt, locale)}
-          hint={debtInfo.months ? `${debtInfo.months} ${L("oy", "мес.", "mo", "Mon.")}` : undefined}
+          hint={st.debt > 0 ? `${debtInfo.overdueMonths} ${L("oylik qarz", "мес. долга", "mo overdue", "Mon. offen")}` : undefined}
           small
           onClick={() => setTab("payments")}
         />
@@ -347,7 +350,8 @@ export default function StudentProfile({
 function DebtBreakdown({ info, locale }: { info: DebtInfo; locale: Locale }) {
   const L = (uz: string, ru: string, en: string, de: string) => tr(locale, { uz, ru, en, de });
   const has = info.debt > 0;
-  const tone = has ? "#ef4444" : "#10b981";
+  // Bir oygacha qarz — sariq, bir oydan ko'p — qizil
+  const tone = has ? DEBT_HEX[debtTone(info.debt, info.overdueMonths)] : "#10b981";
   const rows: { label: string; value: string; sign?: string; muted?: boolean }[] = [
     {
       label: L("Hisob boshlangan", "Начало расчёта", "Billing since", "Abrechnung seit"),

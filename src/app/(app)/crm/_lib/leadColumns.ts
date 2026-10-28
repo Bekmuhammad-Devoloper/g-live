@@ -42,6 +42,9 @@ export interface VLead {
   groupName: string | null;
   /** Guruh necha marta o'zgartirilgan (1 dan keyin bloklanadi) */
   enrollEditCount: number;
+  /** O'quvchiga aylangan lid: jami qarz va to'lanmagan oylar (1 — sariq, 2+ — qizil) */
+  debt?: number;
+  debtMonths?: number;
   /** Oddiy nomli Kanban ustuni (bo'lsa — lid shu ustunda ko'rinadi) */
   kanbanColumnId: string | null;
   activityCount: number;

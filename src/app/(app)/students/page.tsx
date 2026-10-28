@@ -88,6 +88,8 @@ export default async function StudentsPage() {
       balance: debts.get(st.id)?.credit ?? 0,
       // Qarz = qo'shilgan oydan hisoblangan to'lov − to'langani + qo'lda kiritilgan qarz
       debt: debts.get(st.id)?.debt ?? 0,
+      // To'lanmagan oylar soni — qarz rangi: 1 oy sariq, ko'p qizil
+      debtMonths: debts.get(st.id)?.overdueMonths ?? 0,
       // Shu oy kamida bitta PAID to'lov bo'lganmi (davomat/to'lov holati bo'limi bilan bir xil mantiq)
       paidThisMonth: paid.some((p) => p.createdAt.getFullYear() === curY && p.createdAt.getMonth() === curM),
       note: st.note,
