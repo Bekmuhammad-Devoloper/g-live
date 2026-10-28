@@ -55,12 +55,24 @@ export async function GET(req: Request) {
     orderBy: { createdAt: "desc" },
     select: {
       id: true, fullName: true, phone: true, stage: true, source: true, createdAt: true, managerId: true, studentId: true, archivedAt: true,
-      activities: { where: { authorId: { not: null } }, orderBy: { createdAt: "desc" }, take: 1, select: { authorId: true } },
     },
   });
 
+  // Menejeri yo'q lidlar uchun oxirgi faoliyat muallifi — bo'laklab olinadi
+  // (bog'lanish orqali olinsa barcha id'lar bitta IN ga tushib, SQLite parametr chegarasidan oshadi)
+  const lastAuthor = new Map<string, string>();
+  const noManager = leads.filter((l) => !l.managerId).map((l) => l.id);
+  for (let i = 0; i < noManager.length; i += 500) {
+    const rows = await prisma.leadActivity.findMany({
+      where: { leadId: { in: noManager.slice(i, i + 500) }, authorId: { not: null } },
+      orderBy: { createdAt: "desc" },
+      select: { leadId: true, authorId: true },
+    });
+    for (const r of rows) if (r.authorId && !lastAuthor.has(r.leadId)) lastAuthor.set(r.leadId, r.authorId);
+  }
+
   // Xodim: menejer → oxirgi faoliyat muallifi → null
-  const withEmp = leads.map((l) => ({ ...l, employeeId: l.managerId ?? l.activities[0]?.authorId ?? null }));
+  const withEmp = leads.map((l) => ({ ...l, employeeId: l.managerId ?? lastAuthor.get(l.id) ?? null }));
 
   // Xodim nomlari (davrdagi hamma xodimlar — filtr variantlari ham shundan)
   const empIds = Array.from(new Set(withEmp.map((l) => l.employeeId).filter((x): x is string => !!x)));
