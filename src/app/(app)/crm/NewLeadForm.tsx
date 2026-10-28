@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useRef, useState } from "react";
+import { startTransition, useEffect, useRef, useState } from "react";
 import { useActionState } from "react";
 import { createPortal } from "react-dom";
 import { useRouter } from "next/navigation";
@@ -34,6 +34,16 @@ export default function NewLeadForm({
   const router = useRouter();
   const [state, action, pending] = useActionState<LeadState, FormData>(createLead, {});
   const formRef = useRef<HTMLFormElement>(null);
+  // Oxirgi yuborilgan ma'lumot — dublikat ogohlantirishidan keyin "Baribir qo'shish" uchun
+  const lastData = useRef<FormData | null>(null);
+  const submit = (fd: FormData) => { lastData.current = fd; action(fd); };
+  const forceAdd = () => {
+    if (!lastData.current) return;
+    const fd = new FormData();
+    lastData.current.forEach((v, k) => fd.append(k, v));
+    fd.set("force", "1");
+    startTransition(() => action(fd));
+  };
   const [mounted, setMounted] = useState(false);
   // Ixtiyoriy guruh biriktiruvi. Ro'yxat HAR ochilishda qayta yuklanadi —
   // shu orada yaratilgan guruh ham ko'rinsin (bir martalik kesh eskirib qoladi).
@@ -74,7 +84,7 @@ export default function NewLeadForm({
       <div className="absolute inset-0 bg-slate-900/50 backdrop-blur-sm" />
       <form
         ref={formRef}
-        action={action}
+        action={submit}
         onMouseDown={(e) => e.stopPropagation()}
         className="animate-slide-in-right absolute right-0 top-0 flex h-full drawer-panel flex-col border-l border-slate-200 bg-white shadow-pop dark:border-white/10 dark:bg-[#15243d]"
       >
@@ -144,7 +154,34 @@ export default function NewLeadForm({
             </div>
           </div>
 
-          {state.error && (
+          {state.error === "duplicate" && (
+            <div className="mt-3 rounded-xl border border-amber-200 bg-amber-50 px-3.5 py-3 text-sm text-amber-800 dark:border-amber-500/30 dark:bg-amber-500/10 dark:text-amber-200">
+              <div className="font-semibold">
+                {tr(locale, { uz: "Bu raqam bilan lid allaqachon bor", ru: "Лид с этим номером уже есть", en: "A lead with this number already exists", de: "Ein Lead mit dieser Nummer existiert bereits" })}
+                {state.dup && state.dup.count > 1 ? ` (${state.dup.count})` : ""}
+              </div>
+              {state.dup && (
+                <div className="mt-1 text-[13px]">
+                  {tr(locale, {
+                    uz: `${state.dup.name} · filial: ${state.dup.branch ?? "—"} · bosqich: ${label(LEAD_STAGE_LABELS, state.dup.stage, locale)}`,
+                    ru: `${state.dup.name} · филиал: ${state.dup.branch ?? "—"} · этап: ${label(LEAD_STAGE_LABELS, state.dup.stage, locale)}`,
+                    en: `${state.dup.name} · branch: ${state.dup.branch ?? "—"} · stage: ${label(LEAD_STAGE_LABELS, state.dup.stage, locale)}`,
+                    de: `${state.dup.name} · Filiale: ${state.dup.branch ?? "—"} · Phase: ${label(LEAD_STAGE_LABELS, state.dup.stage, locale)}`,
+                  })}
+                </div>
+              )}
+              <div className="mt-2.5 flex flex-wrap items-center gap-2">
+                <button type="button" onClick={forceAdd} disabled={pending} className="rounded-lg bg-amber-600 px-3 py-1.5 text-xs font-semibold text-white transition hover:bg-amber-700 disabled:opacity-50">
+                  {pending ? "..." : tr(locale, { uz: "Baribir yangi lid qo'shish", ru: "Всё равно добавить новый лид", en: "Add as a new lead anyway", de: "Trotzdem als neuen Lead anlegen" })}
+                </button>
+                <span className="text-[12px] text-amber-700/80 dark:text-amber-300/80">
+                  {tr(locale, { uz: "Masalan, boshqa filialdagi o'quvchi shu filialga ham yozilsa", ru: "Например, ученик другого филиала записывается и сюда", en: "E.g. a student from another branch also joins this one", de: "Z. B. ein Schüler einer anderen Filiale meldet sich auch hier an" })}
+                </span>
+              </div>
+            </div>
+          )}
+
+          {state.error && state.error !== "duplicate" && (
             <p className="mt-3 rounded-lg bg-red-50 px-3 py-2 text-sm text-red-700 dark:bg-red-500/10 dark:text-red-300">
               {state.error === "duplicate"
                 ? tr(locale, { uz: "Bu telefon raqami bilan lid allaqachon mavjud (dublikat).", ru: "Лид с этим номером телефона уже существует (дубликат).", en: "A lead with this phone number already exists (duplicate).", de: "Ein Lead mit dieser Telefonnummer existiert bereits (Duplikat)." }) +

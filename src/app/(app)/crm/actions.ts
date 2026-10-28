@@ -31,7 +31,7 @@ const schema = z.object({
 
 /** dup — dublikat topilganda mavjud lid haqida qisqa ma'lumot. Qidiruv filial bo'yicha
  *  cheklangani uchun lid boshqa filialda bo'lsa foydalanuvchi uni ro'yxatda ko'rmaydi. */
-export type LeadState = { ok?: boolean; error?: string; dup?: { name: string; branch: string | null; stage: string } };
+export type LeadState = { ok?: boolean; error?: string; dup?: { name: string; branch: string | null; stage: string; count: number } };
 
 export async function createLead(_prev: LeadState, formData: FormData): Promise<LeadState> {
   const s = await requireSession();
@@ -82,12 +82,19 @@ export async function createLead(_prev: LeadState, formData: FormData): Promise<
     if (g._count.students >= g.capacity) return { error: "group_full" };
   }
 
-  // Dublikat telefon tekshiruvi (TZ FR-CRM-03 — ogohlantirish)
-  const dup = await prisma.lead.findFirst({
+  // Dublikat telefon tekshiruvi (TZ FR-CRM-03 — ogohlantirish). Xodim tasdiqlasa
+  // (force=1) takroriy lid ham yaratiladi — masalan, boshqa filialdagi o'quvchi
+  // shu filialga ham yozilmoqchi bo'lsa.
+  const force = formData.get("force") === "1";
+  const dups = await prisma.lead.findMany({
     where: { phone: leadData.phone }, // tartibga solingan raqam bo'yicha
+    orderBy: { createdAt: "desc" },
     select: { fullName: true, stage: true, branch: { select: { name: true } } },
   });
-  if (dup) return { error: "duplicate", dup: { name: dup.fullName, branch: dup.branch?.name ?? null, stage: dup.stage } };
+  if (dups.length > 0 && !force) {
+    const d = dups[0];
+    return { error: "duplicate", dup: { name: d.fullName, branch: d.branch?.name ?? null, stage: d.stage, count: dups.length } };
+  }
 
   const lead = await prisma.lead.create({
     data: {
@@ -98,7 +105,12 @@ export async function createLead(_prev: LeadState, formData: FormData): Promise<
       branchId: s.branchId,
       managerId: isSalesRole(s.role) ? s.userId : null,
       activities: {
-        create: { authorId: s.userId, type: "note", result: groupId ? "Lid yaratildi va guruhga yo'naltirildi" : "Lid yaratildi" },
+        create: {
+          authorId: s.userId,
+          type: "note",
+          result: (groupId ? "Lid yaratildi va guruhga yo'naltirildi" : "Lid yaratildi")
+            + (dups.length > 0 ? ` (takroriy: bu raqam bilan avval ${dups.length} ta lid bor — ${Array.from(new Set(dups.map((d) => d.branch?.name ?? "filialsiz"))).join(", ")})` : ""),
+        },
       },
     },
   });
