@@ -223,7 +223,12 @@ export function RemoveStudentButton({ groupId, studentId, locale }: { groupId: s
       title={tr(locale, { uz: "Guruhdan olib tashlash", ru: "Убрать из группы", en: "Remove from group", de: "Aus der Gruppe entfernen" })}
       disabled={pending}
       onClick={async () => {
-        if (!(await confirmDelete(tr(locale, { uz: "O'quvchini guruhdan olib tashlaysizmi?", ru: "Убрать ученика из группы?", en: "Remove the student from the group?", de: "Den Schüler aus der Gruppe entfernen?" })))) return;
+        if (!(await confirmDelete(tr(locale, {
+          uz: "O'quvchini guruhdan chiqarasizmi? Shu guruh uchun to'lanmagan qarzi o'chiriladi, o'qigan oylari tarixi saqlanadi.",
+          ru: "Исключить ученика из группы? Неоплаченный долг за эту группу будет списан, история сохранится.",
+          en: "Remove the student from the group? Unpaid debt for this group will be cleared; history is kept.",
+          de: "Schüler aus der Gruppe entfernen? Offene Schulden dieser Gruppe werden gelöscht, der Verlauf bleibt.",
+        })))) return;
         start(async () => { await removeStudent(groupId, studentId); router.refresh(); });
       }}
       className="rounded-md px-2 py-1 text-xs font-medium text-red-600 transition hover:bg-red-50 disabled:opacity-50"

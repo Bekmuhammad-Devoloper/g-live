@@ -9,6 +9,7 @@ import { getPermission, MODULES } from "@/lib/rbac";
 import { writeAudit } from "@/lib/audit";
 import { GROUP_FORMATS, ROLES } from "@/lib/constants";
 import { findRoomConflict, conflictLabel } from "./roomConflict";
+import { leaveGroups } from "@/lib/leaveGroup";
 
 // FULL huquqli rollar (menejer, dir. o'rinbosari) — guruh/o'quvchi boshqaradi
 function hasFullGroups(role: string) {
@@ -304,8 +305,10 @@ export async function enrollStudent(groupId: string, studentId: string): Promise
   const s = await requireSession();
   if (!hasFullGroups(s.role)) return;
   const exists = await prisma.groupStudent.findUnique({ where: { groupId_studentId: { groupId, studentId } } });
-  if (exists) return;
-  await prisma.groupStudent.create({ data: { groupId, studentId } });
+  if (exists?.isActive) return;
+  // Avval chiqarilgan bo'lsa — a'zolik qayta ochiladi
+  if (exists) await prisma.groupStudent.update({ where: { id: exists.id }, data: { isActive: true, leftAt: null, joinedAt: new Date() } });
+  else await prisma.groupStudent.create({ data: { groupId, studentId } });
 
   // Guruhning darajasi o'quvchinikidan yuqori bo'lsa — ko'tarilish sanaladi
   const [g, st] = await Promise.all([
@@ -321,16 +324,20 @@ export async function enrollStudent(groupId: string, studentId: string): Promise
   revalidatePath(`/groups/${groupId}`);
 }
 
-// ─── O'quvchini guruhdan olib tashlash (GroupStudent yozuvini o'chirish) ───
-export async function removeStudent(groupId: string, studentId: string): Promise<void> {
+// ─── O'quvchini guruhdan chiqarish ───
+// A'zolik o'chirilmaydi — bugungi sana bilan yopiladi (o'qigan oylari tarixi saqlanadi),
+// shu guruh uchun to'lanmagan qarz o'chiriladi (lib/leaveGroup.ts).
+export async function removeStudent(groupId: string, studentId: string): Promise<{ cleared: number }> {
   const s = await requireSession();
-  if (!hasFullGroups(s.role)) return;
-  // Yozuv o'chiriladi — to'lov hisobi ham shu bilan to'xtaydi (leftAt keraksiz)
-  const res = await prisma.groupStudent.deleteMany({ where: { groupId, studentId } });
-  if (res.count > 0) {
-    await writeAudit({ actorId: s.userId, action: "DELETE", entityType: "GroupStudent", oldValue: { groupId, studentId } });
-  }
+  if (!hasFullGroups(s.role)) return { cleared: 0 };
+  const r = await leaveGroups({ studentId, groupIds: [groupId], actorId: s.userId, reason: "Guruhdan chiqarildi" });
+  // Boshqa faol guruhi qolmagan bo'lsa — kutish holatiga
+  const left = await prisma.groupStudent.count({ where: { studentId, isActive: true } });
+  if (left === 0) await prisma.student.updateMany({ where: { id: studentId, eduStatus: "ACTIVE" }, data: { eduStatus: "WAITING" } });
   revalidatePath(`/groups/${groupId}`);
+  revalidatePath("/students");
+  revalidatePath("/finance/debtors");
+  return { cleared: r.cleared };
 }
 
 // ─── Dars yaratish ───

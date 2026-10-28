@@ -14,6 +14,7 @@ import { parseUzPhone } from "@/lib/phone";
 import { getSetting, setSetting } from "@/lib/settings";
 import { getBrand } from "@/lib/brand";
 import { GROUP_COL_COLORS, GROUP_COL_ICONS, branchColKey, type CustomColumn, type GroupColumn } from "./_lib/leadColumns";
+import { leaveGroups } from "@/lib/leaveGroup";
 
 const schema = z.object({
   fullName: z.string().min(2),
@@ -987,6 +988,8 @@ async function setStudentArchivedInternal(actorId: string, studentId: string, ar
   // Guruhi bo'lsa — faol, bo'lmasa kutish holatiga qaytadi (students/actions.ts restoreStudent bilan bir xil)
   const next = archived ? "ARCHIVED" : st.enrollments.length ? "ACTIVE" : "WAITING";
   await prisma.student.update({ where: { id: studentId }, data: { eduStatus: next } });
+  // Arxivlanganda guruhlardan chiqariladi — yangi oylar hisoblanmaydi, guruh qarzi o'chiriladi
+  if (archived) await leaveGroups({ studentId, actorId, reason: "O'quvchi arxivlandi (Kanban)" });
   if (touchLeads) {
     await prisma.lead.updateMany({ where: { studentId }, data: archived ? { archivedAt: new Date(), branchSlotId: null } : { archivedAt: null } });
   }

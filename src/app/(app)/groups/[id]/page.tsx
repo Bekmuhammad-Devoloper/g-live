@@ -27,7 +27,7 @@ export default async function GroupDetailPage({ params }: { params: Promise<{ id
     include: {
       teacher: true,
       program: true,
-      students: { include: { student: true }, orderBy: { joinedAt: "asc" } },
+      students: { where: { isActive: true }, include: { student: true }, orderBy: { joinedAt: "asc" } },
       lessons: { orderBy: { startsAt: "desc" } },
     },
   });

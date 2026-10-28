@@ -35,7 +35,7 @@ export default async function RoomDetailPage({ params }: { params: Promise<{ id:
       include: {
         teacher: { select: { fullName: true } },
         program: { select: { name: true } },
-        _count: { select: { students: true } },
+        _count: { select: { students: { where: { isActive: true } } } },
       },
     }),
     room.branchId ? prisma.branch.findUnique({ where: { id: room.branchId }, select: { name: true } }) : Promise.resolve(null),

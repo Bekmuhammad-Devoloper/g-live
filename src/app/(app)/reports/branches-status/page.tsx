@@ -48,7 +48,7 @@ export default async function BranchesStatusPage({ searchParams }: { searchParam
     prisma.branch.findMany({ orderBy: { name: "asc" }, select: { id: true, name: true } }),
     prisma.student.findMany({ select: { branchId: true, eduStatus: true, createdAt: true, _count: { select: { payments: { where: { status: "PAID" } } } } } }),
     prisma.lead.findMany({ select: { branchId: true, stage: true } }),
-    prisma.group.findMany({ select: { branchId: true, _count: { select: { students: true } } } }),
+    prisma.group.findMany({ select: { branchId: true, _count: { select: { students: { where: { isActive: true } } } } } }),
   ]);
 
   const acc = new Map<string, Acc>();

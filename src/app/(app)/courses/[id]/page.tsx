@@ -27,7 +27,7 @@ export default async function CourseDetailPage({ params }: { params: Promise<{ i
       levels: { orderBy: { order: "asc" } },
       groups: {
         orderBy: { createdAt: "desc" },
-        include: { teacher: { select: { fullName: true } }, _count: { select: { students: true } } },
+        include: { teacher: { select: { fullName: true } }, _count: { select: { students: { where: { isActive: true } } } } },
       },
       materials: { orderBy: { createdAt: "desc" } },
       courseLessons: { orderBy: { order: "asc" } },

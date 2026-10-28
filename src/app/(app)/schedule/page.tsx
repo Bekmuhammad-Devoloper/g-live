@@ -35,7 +35,7 @@ export default async function SchedulePage() {
     include: {
       teacher: { select: { fullName: true } },
       program: { select: { name: true } },
-      _count: { select: { students: true } }, // blokdagi "9 / 12" uchun
+      _count: { select: { students: { where: { isActive: true } } } }, // blokdagi "9 / 12" uchun
     },
     orderBy: { name: "asc" },
   });

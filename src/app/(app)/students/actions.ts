@@ -18,6 +18,7 @@ import type { GroupOpt } from "../_components/GroupMover";
 import { getSetting } from "@/lib/settings";
 import { RECEIPT_MODE_KEY, parseReceiptMode, isReceiptRequired } from "@/lib/receiptMode";
 import { checkPromoForStudent, activePromoOptions } from "@/lib/promo";
+import { leaveGroups } from "@/lib/leaveGroup";
 
 export type EditState = { ok?: boolean; error?: string };
 export type BulkState = { ok?: boolean; error?: string; count?: number };
@@ -298,6 +299,10 @@ export async function updateStudent(fd: FormData): Promise<EditState> {
     where: { id },
     data: { fullName, phone, currentLevel, note, ...(eduStatus ? { eduStatus } : {}) },
   });
+  // Arxiv yoki chetlatilgan holatiga o'tdi — guruhlardan chiqariladi, guruh qarzi o'chiriladi
+  if (eduStatus && eduStatus !== existing.eduStatus && (eduStatus === "ARCHIVED" || eduStatus === "EXPELLED")) {
+    await leaveGroups({ studentId: id, actorId: s.userId, reason: eduStatus === "EXPELLED" ? "O'quvchi chetlatildi" : "O'quvchi arxivlandi" });
+  }
 
   // Daraja ko'tarilgan bo'lsa yozib qo'yamiz — o'quvchiga tanga beriladi
   await recordLevelUp(id, existing.currentLevel, currentLevel);
@@ -325,6 +330,8 @@ export async function bulkArchiveStudents(ids: string[]): Promise<BulkState> {
   if (!clean.length) return { error: "empty" };
 
   const res = await prisma.student.updateMany({ where: { id: { in: clean } }, data: { eduStatus: "ARCHIVED" } });
+  // Arxivlangan o'quvchi guruhlardan chiqariladi — yangi oylar hisoblanmaydi, guruh qarzi o'chiriladi
+  for (const id of clean) await leaveGroups({ studentId: id, actorId: s.userId, reason: "O'quvchi arxivlandi" });
 
   await writeAudit({
     actorId: s.userId,
@@ -437,6 +444,8 @@ export async function archiveStudent(id: string): Promise<EditState> {
   if (!st) return { error: "notfound" };
 
   await prisma.student.update({ where: { id }, data: { eduStatus: "ARCHIVED" } });
+  // Guruhlardan chiqariladi — yangi oylar hisoblanmaydi, guruh qarzi o'chiriladi
+  await leaveGroups({ studentId: id, actorId: s.userId, reason: "O'quvchi arxivlandi" });
   await writeAudit({
     actorId: s.userId,
     action: "UPDATE",

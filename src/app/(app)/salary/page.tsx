@@ -20,7 +20,7 @@ export default async function SalaryPage({ searchParams }: { searchParams: Promi
   if (s.role === ROLES.TEACHER) {
     const groups = await prisma.group.findMany({
       where: { AND: [{ teacherId: s.userId }, branchWhere(s)] }, // faol filial doirasida
-      include: { _count: { select: { students: true, lessons: true } } },
+      include: { _count: { select: { students: { where: { isActive: true } }, lessons: true } } },
     });
     const lessons = groups.reduce((n, g) => n + g._count.lessons, 0);
     const students = groups.reduce((n, g) => n + g._count.students, 0);

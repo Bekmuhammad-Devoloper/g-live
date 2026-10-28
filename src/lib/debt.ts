@@ -133,9 +133,15 @@ function enrolledWithFee(enr: { joinedAt: Date; leftAt: Date | null; isActive: b
 }
 
 /** Bir nechta o'quvchi uchun bir martada (ro'yxat sahifalari uchun). */
-export async function computeDebts(studentIds: string[], now = new Date()): Promise<Map<string, StudentDebt>> {
+export async function computeDebts(
+  studentIds: string[],
+  now = new Date(),
+  /** Shu guruhlar a'zoligi hisobga olinmaydi — "guruhsiz qarz qancha bo'lardi" (guruhdan chiqarishda) */
+  opts: { excludeGroupIds?: string[] } = {},
+): Promise<Map<string, StudentDebt>> {
   const out = new Map<string, StudentDebt>();
   if (studentIds.length === 0) return out;
+  const excluded = new Set(opts.excludeGroupIds ?? []);
 
   const [students, enrollments, payments, defaultFee] = await Promise.all([
     prisma.student.findMany({ where: { id: { in: studentIds } }, select: { id: true, createdAt: true } }),
@@ -143,6 +149,7 @@ export async function computeDebts(studentIds: string[], now = new Date()): Prom
       where: { studentId: { in: studentIds } },
       select: {
         studentId: true,
+        groupId: true,
         joinedAt: true,
         leftAt: true,
         isActive: true,
@@ -159,6 +166,7 @@ export async function computeDebts(studentIds: string[], now = new Date()): Prom
 
   const byStudent = new Map<string, typeof enrollments>();
   for (const e of enrollments) {
+    if (excluded.has(e.groupId)) continue;
     const arr = byStudent.get(e.studentId) ?? [];
     arr.push(e);
     byStudent.set(e.studentId, arr);

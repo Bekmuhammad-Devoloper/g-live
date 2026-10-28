@@ -25,11 +25,11 @@ export default async function GroupsPage() {
     where = { teacherId: s.userId };
   } else if (s.role === ROLES.STUDENT) {
     const st = await prisma.student.findUnique({ where: { userId: s.userId } });
-    where = { students: { some: { studentId: st?.id ?? "__none__" } } };
+    where = { students: { some: { studentId: st?.id ?? "__none__", isActive: true } } };
   } else if (s.role === ROLES.PARENT) {
     const parent = await prisma.parent.findUnique({ where: { userId: s.userId }, include: { children: true } });
     const ids = parent?.children.map((c) => c.studentId) ?? [];
-    where = { students: { some: { studentId: { in: ids.length ? ids : ["__none__"] } } } };
+    where = { students: { some: { studentId: { in: ids.length ? ids : ["__none__"] }, isActive: true } } };
   }
   // Xodimlar faol filial guruhlarinigina ko'radi (o'quvchi/ota-ona o'z guruhini har doim ko'radi)
   if (![ROLES.STUDENT, ROLES.PARENT].includes(s.role as never)) {
@@ -44,7 +44,7 @@ export default async function GroupsPage() {
         teacher: { select: { fullName: true } },
         program: { select: { name: true } },
         branch: { select: { name: true } },
-        _count: { select: { students: true } },
+        _count: { select: { students: { where: { isActive: true } } } },
       },
     }),
     prisma.groupStudent.count({ where: { group: where } }),

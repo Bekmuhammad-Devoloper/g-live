@@ -42,7 +42,7 @@ export default async function CoursesSection({ mode }: { mode: "ONLINE" | "OFFLI
     include: {
       teacher: { select: { fullName: true } },
       program: { select: { name: true } },
-      _count: { select: { students: true } },
+      _count: { select: { students: { where: { isActive: true } } } },
     },
   });
 
