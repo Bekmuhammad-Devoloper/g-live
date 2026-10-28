@@ -28,7 +28,7 @@ const STATUS_STYLE: Record<string, string> = {
  * Davomat jurnali: qatorlar — o'quvchilar, ustunlar — oyning dars sanalari (Modme uslubi).
  * Belgilash qoidalari serverda (markStudentAttendance): dars oynasi, kelajak sana, to'lov majburiyligi.
  */
-export function AttendanceJournal({ groupId, students, locale }: { groupId: string; students: Student[]; locale: Locale }) {
+export function AttendanceJournal({ groupId, students, locale, readOnly = false }: { groupId: string; students: Student[]; locale: Locale; /** Faqat ko'rish (belgilash huquqi yo'q) */ readOnly?: boolean }) {
   const L = (uz: string, ru: string, en: string, de: string) => tr(locale, { uz, ru, en, de });
   const now = new Date();
   const [ym, setYm] = useState({ y: now.getFullYear(), m: now.getMonth() });
@@ -166,7 +166,7 @@ export function AttendanceJournal({ groupId, students, locale }: { groupId: stri
                   <th key={d.date} data-today={d.today ? "1" : undefined} className="relative px-1 py-2 text-center">
                     <button
                       type="button"
-                      onClick={(e) => { e.stopPropagation(); setMenu(null); setDayMenu(dayMenu === d.date ? null : d.date); }}
+                      onClick={(e) => { e.stopPropagation(); if (readOnly) return; setMenu(null); setDayMenu(dayMenu === d.date ? null : d.date); }}
                       className={cn("whitespace-nowrap rounded-md px-1.5 py-0.5 text-[11px] font-semibold",
                         d.today ? "bg-brand-600 text-white" : d.future ? "text-slate-400" : d.editable ? "text-slate-600 hover:bg-slate-200 dark:text-slate-300 dark:hover:bg-slate-700" : "text-slate-400")}
                       title={d.closed && !d.unlockedUntilLabel ? L("Yopilgan", "Закрыто", "Closed", "Geschlossen") : d.unlockedUntilLabel ? L(`${d.unlockedUntilLabel} gacha ochiq`, `Открыто до ${d.unlockedUntilLabel}`, `Open until ${d.unlockedUntilLabel}`, `Offen bis ${d.unlockedUntilLabel}`) : undefined}
@@ -214,7 +214,7 @@ export function AttendanceJournal({ groupId, students, locale }: { groupId: stri
                         ) : (
                           <button
                             type="button"
-                            onClick={(e) => { e.stopPropagation(); setDayMenu(null); if (!d.editable) { deny({ future: d.future }, s.name); return; } setMenu(open ? null : { date: d.date, studentId: s.id }); }}
+                            onClick={(e) => { e.stopPropagation(); if (readOnly) return; setDayMenu(null); if (!d.editable) { deny({ future: d.future }, s.name); return; } setMenu(open ? null : { date: d.date, studentId: s.id }); }}
                             className={cn("inline-flex h-6 min-w-[52px] items-center justify-center rounded-md px-1.5 text-[10.5px] font-semibold transition",
                               st ? STATUS_STYLE[st] : d.editable ? "border border-slate-200 text-transparent hover:border-brand-400 dark:border-slate-700" : "border border-dashed border-slate-200 text-transparent dark:border-slate-800",
                               !d.editable && st && "opacity-80")}

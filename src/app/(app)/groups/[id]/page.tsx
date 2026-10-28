@@ -10,6 +10,7 @@ import { PageHeader, Card, Table, EmptyRow, Badge, Forbidden } from "../../_comp
 import { Icon } from "../../_components/Icon";
 import { CreateStudentForm, EnrollExisting, BulkImportStudents, NewLessonForm, RemoveStudentButton, EditGroupButton } from "./GroupForms";
 import { GroupAttendance } from "./GroupAttendance";
+import { AttendanceJournal } from "./AttendanceJournal";
 import CourseLessonsTab from "../../courses/[id]/CourseLessonsTab";
 import { getLevelCodes } from "@/lib/studyLevels";
 import { groupColor } from "../groupColor";
@@ -153,6 +154,16 @@ export default async function GroupDetailPage({ params }: { params: Promise<{ id
             <span className="text-xs font-normal text-slate-400">({tr(s.locale, { uz: "bor / yo'q", ru: "есть / нет", en: "present / absent", de: "anwesend / abwesend" })})</span>
           </h3>
           <GroupAttendance groupId={group.id} students={attendanceStudents} locale={s.locale} />
+        </Card>
+      )}
+      {/* Belgilash huquqi yo'q xodimlar — oylik jurnal faqat ko'rish uchun, doim ko'rinadi */}
+      {!canManage && s.role !== ROLES.STUDENT && s.role !== ROLES.PARENT && (
+        <Card className="mb-6">
+          <h3 className="mb-3 flex items-center gap-2 text-sm font-semibold text-slate-700 dark:text-slate-200">
+            {tr(s.locale, { uz: "Davomat jurnali", ru: "Журнал посещаемости", en: "Attendance journal", de: "Anwesenheitsjournal" })}
+            <span className="text-xs font-normal text-slate-400">({tr(s.locale, { uz: "faqat ko'rish", ru: "только просмотр", en: "view only", de: "nur ansehen" })})</span>
+          </h3>
+          <AttendanceJournal groupId={group.id} students={attendanceStudents} locale={s.locale} readOnly />
         </Card>
       )}
 

@@ -343,6 +343,8 @@ export interface AttendanceJournal {
   /** studentId → guruhga qo'shilgan sana (yyyy-mm-dd) — undan oldingi kunlar belgilanmaydi */
   joined: Record<string, string>;
   canUnlock: boolean;
+  /** Faqat ko'rish rejimi (belgilash huquqi yo'q) */
+  readOnly?: boolean;
 }
 
 const isoOf = (d: Date) => `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`;
@@ -354,8 +356,12 @@ const isoOf = (d: Date) => `${d.getFullYear()}-${String(d.getMonth() + 1).padSta
  * belgilanmaganlar avtomatik "yo'q" qilinadi (MATERIALIZE_MAX_AGE_DAYS chegarasi ichida).
  */
 export async function getAttendanceJournal(groupId: string, year: number, month0: number): Promise<{ ok: boolean; data?: AttendanceJournal }> {
-  const s = await canMark(groupId);
-  if (!s) return { ok: false };
+  // Belgilash huquqi bo'lmasa — guruhlarni ko'ra oladigan xodimga faqat ko'rish uchun
+  const marker = await canMark(groupId);
+  const viewer = marker ? null : await requireSession();
+  const readOnly = !marker;
+  if (readOnly && (!viewer || getPermission(viewer.role, MODULES.GROUPS) === "NONE" || viewer.role === ROLES.STUDENT || viewer.role === ROLES.PARENT)) return { ok: false };
+  const s = (marker ?? viewer)!;
   if (!Number.isInteger(year) || !Number.isInteger(month0) || month0 < 0 || month0 > 11 || year < 2000 || year > 2100) return { ok: false };
 
   const group = await prisma.group.findUnique({
@@ -382,12 +388,12 @@ export async function getAttendanceJournal(groupId: string, year: number, month0
     const win = computeAttendanceWindow(date, group.startTime, group.endTime);
     const future = date > today;
     const unlockUntil = win.closed ? await activeUnlockUntil(groupId, date) : null;
-    if (win.closed && !unlockUntil) {
+    if (win.closed && !unlockUntil && !readOnly) {
       try { await materializeAutoAbsent(groupId, date, win.closesAt); } catch { /* ko'rsatishga xalal bermasin */ }
     }
     days.push({
       date, future, today: date === today, closed: win.closed,
-      editable: future ? bypass : (!win.closed || !!unlockUntil || bypass),
+      editable: readOnly ? false : future ? bypass : (!win.closed || !!unlockUntil || bypass),
       unlockedUntilLabel: unlockUntil ? dmOf(unlockUntil) : null,
       closesAtLabel: dmOf(win.closesAt),
     });
@@ -406,5 +412,5 @@ export async function getAttendanceJournal(groupId: string, year: number, month0
   const joined: Record<string, string> = {};
   for (const gs of group.students) joined[gs.studentId] = isoOf(gs.joinedAt);
 
-  return { ok: true, data: { days, marks, joined, canUnlock: canGrantAttendanceUnlock(s.role) } };
+  return { ok: true, data: { days, marks, joined, canUnlock: !readOnly && canGrantAttendanceUnlock(s.role), readOnly } };
 }

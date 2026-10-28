@@ -81,7 +81,18 @@ case "$cmd" in
     ;;
   backup-all)
     for d in "$ROOT"/*/; do s=$(basename "$d"); [ -f "$d/data/db.sqlite" ] && "$0" backup "$s" >/dev/null || true; done
+    "$0" main-backup >/dev/null || true
     echo ok
+    ;;
+  main-backup)
+    # Asosiy markaz (germaniya.live) bazasi — izchil nusxa, oxirgi 14 tasi saqlanadi.
+    # Nom "dev.db.backup-*" — Dev paneldagi "Baza zaxira nusxalari" ro'yxati shuni o'qiydi.
+    main=$APP/prisma; [ -f "$main/dev.db" ] || die "asosiy baza yo'q"
+    out="$main/dev.db.backup-$(date +%Y%m%d-%H%M%S)"
+    sqlite3 -cmd ".timeout 60000" "$main/dev.db" "VACUUM INTO '$out'"
+    chown deploy:deploy "$out"; chmod 600 "$out"
+    ls -1t "$main"/dev.db.backup-* 2>/dev/null | tail -n +15 | xargs -r rm -f
+    echo "$out"
     ;;
   main-restart)
     # Asosiy markaz (germaniya.live) — litsenziya sanasi o'zgargach
@@ -137,6 +148,6 @@ case "$cmd" in
     echo "uptime=$(uptime -p)"
     ;;
   *)
-    die "buyruqlar: blanks|start|stop|restart|enable|disable|status|logs|site|unsite|dev-site|backup|backup-all|main-restart|stats|sysinfo"
+    die "buyruqlar: blanks|start|stop|restart|enable|disable|status|logs|site|unsite|dev-site|backup|backup-all|main-backup|main-restart|stats|sysinfo"
     ;;
 esac
