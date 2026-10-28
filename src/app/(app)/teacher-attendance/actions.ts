@@ -6,6 +6,8 @@ import { prisma } from "@/lib/db";
 import { requireSession } from "@/lib/auth";
 import { ROLES } from "@/lib/constants";
 import { writeAudit } from "@/lib/audit";
+import { staffBranchWhere } from "@/lib/branchScope";
+import { isValidDateISO, todayISOLocal } from "@/lib/attendanceWindow";
 
 export type FormState = { ok?: boolean; error?: string };
 
@@ -72,18 +74,56 @@ export async function deleteTeacherSchedule(teacherId: string): Promise<void> {
   revalidatePath("/teacher-attendance");
 }
 
-// ─── Kunlik davomat (uch holatli aylanma: yo'q → keldi → kelmadi → yo'q) ───
-export async function cycleTeacherAttendance(teacherId: string, dateISO: string): Promise<void> {
+// ─── Kunlik davomat: keldi / kechikdi / kelmadi / sababli; status=null — belgini olib tashlash ───
+const STATUSES = ["PRESENT", "LATE", "ABSENT", "EXCUSED"];
+// present maydoni maosh hisobi uchun: kechikib kelgan ham "keldi" hisoblanadi
+const presentOf = (status: string) => status === "PRESENT" || status === "LATE";
+
+export async function setTeacherAttendance(
+  teacherId: string,
+  dateISO: string,
+  status: string | null,
+): Promise<{ ok: boolean; error?: "forbidden" | "invalid" | "future" | "notfound" }> {
   const s = await requireSession();
-  if (!canMarkAtt(s.role)) return;
+  if (!canMarkAtt(s.role)) return { ok: false, error: "forbidden" };
+  if (!isValidDateISO(dateISO)) return { ok: false, error: "invalid" };
+  if (status !== null && !STATUSES.includes(status)) return { ok: false, error: "invalid" };
+  // Kelajak sanaga faqat "sababli" (oldindan kelishilgan ta'til, kasallik) qo'yiladi
+  if (status && status !== "EXCUSED" && dateISO > todayISOLocal()) return { ok: false, error: "future" };
+
+  // Faqat faol filial doirasidagi o'qituvchi
+  const teacher = await prisma.user.findFirst({
+    where: { AND: [{ id: teacherId, role: ROLES.TEACHER }, staffBranchWhere(s)] },
+    select: { id: true },
+  });
+  if (!teacher) return { ok: false, error: "notfound" };
+
   const date = new Date(dateISO + "T00:00:00");
-  const existing = await prisma.teacherAttendance.findUnique({ where: { teacherId_date: { teacherId, date } } });
-  if (!existing) {
-    await prisma.teacherAttendance.create({ data: { teacherId, date, present: true } });
-  } else if (existing.present) {
-    await prisma.teacherAttendance.update({ where: { id: existing.id }, data: { present: false } });
+  const prev = await prisma.teacherAttendance.findUnique({
+    where: { teacherId_date: { teacherId, date } },
+    select: { id: true, present: true, status: true },
+  });
+  const prevStatus = prev ? prev.status ?? (prev.present ? "PRESENT" : "ABSENT") : null;
+  if (prevStatus === status) return { ok: true };
+
+  if (!status) {
+    if (prev) await prisma.teacherAttendance.delete({ where: { id: prev.id } });
   } else {
-    await prisma.teacherAttendance.delete({ where: { id: existing.id } });
+    const data = { status, present: presentOf(status) };
+    await prisma.teacherAttendance.upsert({
+      where: { teacherId_date: { teacherId, date } },
+      create: { teacherId, date, ...data },
+      update: data,
+    });
   }
+  await writeAudit({
+    actorId: s.userId,
+    action: status ? "UPDATE" : "DELETE",
+    entityType: "TeacherAttendance",
+    entityId: teacherId,
+    oldValue: prevStatus ? { date: dateISO, status: prevStatus } : null,
+    newValue: status ? { date: dateISO, status } : null,
+  });
   revalidatePath("/teacher-attendance");
+  return { ok: true };
 }

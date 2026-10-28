@@ -795,7 +795,10 @@ model TeacherAttendance {
   id        String   @id @default(cuid())
   teacherId String
   date      DateTime // kun (00:00)
-  present   Boolean  @default(true)
+  present   Boolean  @default(true) // keldi (PRESENT yoki LATE) — maosh hisobi shunga tayanadi
+  // Batafsil holat: PRESENT | LATE | ABSENT | EXCUSED. Bo'sh bo'lsa present'dan olinadi
+  // (avtomatik belgilar va eski yozuvlar uchun).
+  status    String?
   createdAt DateTime @default(now())
 
   @@unique([teacherId, date])

@@ -3,8 +3,9 @@ import { prisma } from "@/lib/db";
 import { ROLES } from "@/lib/constants";
 import { branchWhere, staffBranchWhere } from "@/lib/branchScope";
 import { tr } from "@/lib/tr";
+import { todayISOLocal } from "@/lib/attendanceWindow";
 import { Forbidden } from "../_components/ui";
-import TeacherAttendanceWorkspace, { type VTeacher, type VAtt } from "./TeacherAttendanceWorkspace";
+import TeacherAttendanceWorkspace, { type VTeacher, type VAtt, type VSlot, type TStatus } from "./TeacherAttendanceWorkspace";
 
 const ALLOWED = [ROLES.DIRECTOR, ROLES.DEPUTY_DIRECTOR, ROLES.MANAGER, ROLES.ADMIN, ROLES.TEACHER];
 // Ish jadvali/maosh sozlash huquqi
@@ -15,6 +16,8 @@ const CAN_MARK = [ROLES.DIRECTOR, ROLES.DEPUTY_DIRECTOR, ROLES.MANAGER];
 const p2 = (n: number) => String(n).padStart(2, "0");
 const fmtDate = (d: Date | null) => (d ? `${p2(d.getDate())}.${p2(d.getMonth() + 1)}.${d.getFullYear()}` : "");
 const isoDate = (d: Date) => `${d.getFullYear()}-${p2(d.getMonth() + 1)}-${p2(d.getDate())}`;
+const STATUSES: TStatus[] = ["PRESENT", "LATE", "ABSENT", "EXCUSED"];
+const parseWeekdays = (raw: string | null) => (raw ? raw.split(",").map(Number).filter((n) => n >= 1 && n <= 7) : []);
 
 export default async function TeacherAttendancePage() {
   const s = await requireSession();
@@ -40,20 +43,34 @@ export default async function TeacherAttendancePage() {
 
   const [schedules, attendance, groups] = await Promise.all([
     prisma.teacherSchedule.findMany({ where: isTeacher ? { teacherId: s.userId } : { teacherId: { in: teacherIds } } }),
-    prisma.teacherAttendance.findMany({ where: isTeacher ? { teacherId: s.userId } : { teacherId: { in: teacherIds } } }),
+    prisma.teacherAttendance.findMany({
+      where: isTeacher ? { teacherId: s.userId } : { teacherId: { in: teacherIds } },
+      select: { teacherId: true, date: true, present: true, status: true },
+    }),
     // faol filial doirasida
-    prisma.group.findMany({ where: { AND: [{ teacherId: isTeacher ? s.userId : { not: null }, status: { not: "CANCELLED" } }, branchWhere(s)] }, select: { teacherId: true, weekdays: true } }),
+    prisma.group.findMany({
+      where: { AND: [{ teacherId: isTeacher ? s.userId : { not: null }, status: { not: "CANCELLED" } }, branchWhere(s)] },
+      select: { teacherId: true, weekdays: true, startTime: true, endTime: true, startDate: true, endDate: true },
+    }),
   ]);
 
   const schedMap = new Map(schedules.map((x) => [x.teacherId, x]));
 
   // Har o'qituvchi uchun guruh kunlari birlashmasi (ish kunlari avtomatik shundan olinadi)
+  // Dars vaqtlari (guruh davri bilan) — jurnaldagi ish soatlari shundan hisoblanadi
   const groupWdMap = new Map<string, Set<number>>();
+  const slotMap = new Map<string, VSlot[]>();
   for (const g of groups) {
     if (!g.teacherId || !g.weekdays) continue;
+    const wds = parseWeekdays(g.weekdays);
     const set = groupWdMap.get(g.teacherId) ?? new Set<number>();
-    for (const n of g.weekdays.split(",").map(Number)) if (n >= 1 && n <= 7) set.add(n);
+    for (const n of wds) set.add(n);
     groupWdMap.set(g.teacherId, set);
+    if (wds.length && g.startTime && g.endTime) {
+      const list = slotMap.get(g.teacherId) ?? [];
+      list.push({ wd: wds, start: g.startTime, end: g.endTime, from: g.startDate ? isoDate(g.startDate) : "", to: g.endDate ? isoDate(g.endDate) : "" });
+      slotMap.set(g.teacherId, list);
+    }
   }
 
   const vteachers: VTeacher[] = teachers.map((t) => {
@@ -63,9 +80,10 @@ export default async function TeacherAttendancePage() {
       name: t.fullName,
       fiksa: t.fiksa,
       groupWeekdays: Array.from(groupWdMap.get(t.id) ?? []).sort((a, b) => a - b),
+      slots: slotMap.get(t.id) ?? [],
       schedule: sc
         ? {
-            weekdays: sc.weekdays ? sc.weekdays.split(",").map(Number).filter((n) => n >= 1 && n <= 7) : [],
+            weekdays: parseWeekdays(sc.weekdays),
             startTime: sc.startTime,
             endTime: sc.endTime,
             monthlySalary: sc.monthlySalary,
@@ -76,12 +94,18 @@ export default async function TeacherAttendancePage() {
     };
   });
 
-  const vatt: VAtt[] = attendance.map((a) => ({ teacherId: a.teacherId, date: isoDate(a.date), present: a.present }));
+  // status bo'sh (avtomatik belgi yoki eski yozuv) — present maydonidan olinadi
+  const vatt: VAtt[] = attendance.map((a) => ({
+    teacherId: a.teacherId,
+    date: isoDate(a.date),
+    status: a.status && STATUSES.includes(a.status as TStatus) ? (a.status as TStatus) : a.present ? "PRESENT" : "ABSENT",
+  }));
 
-  const now = new Date();
-  const defaultMonth = `${now.getFullYear()}-${p2(now.getMonth() + 1)}`;
+  // Bugungi sana server vaqtida (TZ=Asia/Tashkent) — SSR va brauzerda bir xil ko'rinsin
+  const todayISO = todayISOLocal();
+  const defaultMonth = todayISO.slice(0, 7);
   const canManage = HEAD.includes(s.role as never); // jadval/maosh sozlash
   const canMark = CAN_MARK.includes(s.role as never); // davomat katakchalari
 
-  return <TeacherAttendanceWorkspace teachers={vteachers} attendance={vatt} defaultMonth={defaultMonth} canManage={canManage} canMark={canMark} locale={s.locale} />;
+  return <TeacherAttendanceWorkspace teachers={vteachers} attendance={vatt} defaultMonth={defaultMonth} todayISO={todayISO} canManage={canManage} canMark={canMark} locale={s.locale} />;
 }
