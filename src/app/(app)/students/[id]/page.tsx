@@ -2,7 +2,7 @@ import { notFound } from "next/navigation";
 import { requireSession } from "@/lib/auth";
 import { prisma } from "@/lib/db";
 import { ROLES, type Locale } from "@/lib/constants";
-import { branchWhere } from "@/lib/branchScope";
+import { studentBranchWhere } from "@/lib/branchScope";
 import { canWrite, MODULES } from "@/lib/rbac";
 import { computeDebt } from "@/lib/debt";
 import { getSetting } from "@/lib/settings";
@@ -32,7 +32,7 @@ export default async function StudentProfilePage({ params }: { params: Promise<{
   }
 
   const student = await prisma.student.findFirst({
-    where: { AND: [{ id }, branchWhere(s)] },
+    where: { AND: [{ id }, studentBranchWhere(s)] },
     include: {
       branch: { select: { name: true } },
       enrollments: {

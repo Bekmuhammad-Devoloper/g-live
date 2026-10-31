@@ -1,3 +1,4 @@
+import type { Prisma } from "@prisma/client";
 type BW = { branchId: string } | Record<string, never>;
 type BWShared = { OR: ({ branchId: string } | { branchId: null })[] } | Record<string, never>;
 
@@ -13,6 +14,12 @@ export function staffBranchWhere(s: { branchId: string | null }): BWStaff {
 
 export function branchWhereShared(s: { branchId: string | null }): BWShared {
   return s.branchId ? { OR: [{ branchId: s.branchId }, { branchId: null }] } : {};
+}
+
+export function studentBranchWhere(s: { branchId: string | null }): Prisma.StudentWhereInput {
+  return s.branchId
+    ? { OR: [{ branchId: s.branchId }, { branchId: null }, { enrollments: { some: { group: { branchId: s.branchId } } } }] }
+    : {};
 }
 
 export function branchViaStudent(s: { branchId: string | null }): { student: BW } | Record<string, never> {

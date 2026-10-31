@@ -1,7 +1,7 @@
 import "server-only";
 import { prisma } from "@/lib/db";
 import { ROLES } from "@/lib/constants";
-import { branchWhere } from "@/lib/branchScope";
+import { studentBranchWhere } from "@/lib/branchScope";
 import type { SessionUser } from "@/lib/auth";
 
 export const PROFILE_VIEW_ROLES: string[] = [
@@ -11,7 +11,7 @@ export const PROFILE_VIEW_ROLES: string[] = [
 export async function canViewStudentProfile(s: SessionUser, studentId: string): Promise<boolean> {
   if (!PROFILE_VIEW_ROLES.includes(s.role)) return false;
   const student = await prisma.student.findFirst({
-    where: { AND: [{ id: studentId }, branchWhere(s)] },
+    where: { AND: [{ id: studentId }, studentBranchWhere(s)] },
     select: { id: true },
   });
   if (!student) return false;
