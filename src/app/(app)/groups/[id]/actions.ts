@@ -1,6 +1,7 @@
 "use server";
 
 import { revalidatePath } from "next/cache";
+import { syncEduStatuses } from "@/lib/eduStatus";
 import { prisma } from "@/lib/db";
 import { requireSession } from "@/lib/auth";
 import { getPermission, MODULES } from "@/lib/rbac";
@@ -104,6 +105,7 @@ export async function updateGroup(_prev: FormState, formData: FormData): Promise
     },
     newValue: { name, programId, teacherId, levelCode, format, room, capacity, status },
   });
+  if (status !== existing.status) await syncEduStatuses();
   revalidatePath(`/groups/${id}`);
   revalidatePath("/groups");
   return { ok: true };

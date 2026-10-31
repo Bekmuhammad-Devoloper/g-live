@@ -4,6 +4,7 @@ import { formatMoney } from "@/lib/constants";
 import { prisma } from "@/lib/db";
 import { branchWhere } from "@/lib/branchScope";
 import { totalDebt } from "@/lib/debt";
+import { activeStudentWhere } from "@/lib/eduStatus";
 import type { Locale } from "@/lib/constants";
 
 export interface StatusCounts {
@@ -70,7 +71,7 @@ export async function computeStatusCounts(s: { branchId: string | null }): Promi
     prisma.lead.count({ where: { AND: [{ stage: { in: ["NEW", "IN_PROGRESS", "CONTACTED"] } }, b] } }),
     prisma.lead.count({ where: { AND: [{ stage: { in: ["TEST", "OFFER", "AWAITING_PAYMENT"] } }, b] } }),
     prisma.student.count({ where: { AND: [{ eduStatus: "WAITING" }, b] } }),
-    prisma.student.count({ where: { AND: [{ eduStatus: "ACTIVE" }, b] } }),
+    prisma.student.count({ where: activeStudentWhere(s) }),
     prisma.lead.count({ where: { AND: [{ stage: "LOST" }, b] } }),
     prisma.student.count({ where: { AND: [{ eduStatus: "EXPELLED", payments: { none: { status: "PAID" } } }, b] } }),
     prisma.student.count({ where: { AND: [{ eduStatus: "EXPELLED", payments: { some: { status: "PAID" } } }, b] } }),

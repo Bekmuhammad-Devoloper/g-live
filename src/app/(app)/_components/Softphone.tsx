@@ -7,6 +7,7 @@ import type { Locale } from "@/lib/constants";
 import { tr } from "@/lib/tr";
 import { cn } from "@/lib/cn";
 import { Icon } from "./Icon";
+import { markCalledBack } from "../reports/calls/actions";
 
 type UAStatus = "init" | "connecting" | "registered" | "failed" | "disabled";
 
@@ -37,8 +38,9 @@ function causeText(c: string, locale: Locale): string {
 }
 type CallState = "none" | "incoming" | "outgoing" | "active";
 type Tab = "dial" | "history";
+type HistView = "mine" | "missed";
 
-interface CallRow { id: string; direction: string; status: string; phone: string; contactName: string | null; duration: number; startedAt: string }
+interface CallRow { id: string; direction: string; status: string; phone: string; contactName: string | null; duration: number; startedAt: string; callbackStatus?: string; operatorName?: string | null }
 
 const fmtDur = (s: number) => `${Math.floor(s / 60)}:${String(s % 60).padStart(2, "0")}`;
 const p2 = (n: number) => String(n).padStart(2, "0");
@@ -63,6 +65,8 @@ export default function Softphone({ locale, canConfigure = false }: { locale: Lo
   const [histQ, setHistQ] = useState("");
   const [histLoading, setHistLoading] = useState(false);
   const [calls, setCalls] = useState<CallRow[] | null>(null);
+  const [histView, setHistView] = useState<HistView>("mine");
+  const [missedPending, setMissedPending] = useState(0);
 
   const uaRef = useRef<any>(null);
   const sessionRef = useRef<any>(null);
@@ -432,20 +436,30 @@ export default function Softphone({ locale, canConfigure = false }: { locale: Lo
     return () => window.removeEventListener("glive:call", h);
   }, [startCall]);
 
-  const loadHistory = useCallback((q: string) => {
+  const loadHistory = useCallback((q: string, view: HistView) => {
     setHistLoading(true);
-    fetch(`/api/telephony/my-calls${q ? `?q=${encodeURIComponent(q)}` : ""}`)
+    const p = new URLSearchParams();
+    if (q) p.set("q", q);
+    if (view === "missed") p.set("view", "missed");
+    fetch(`/api/telephony/my-calls${p.toString() ? `?${p}` : ""}`, { cache: "no-store" })
       .then((r) => (r.ok ? r.json() : { calls: [] }))
-      .then((j) => setCalls(j.calls ?? []))
+      .then((j) => { setCalls(j.calls ?? []); setMissedPending(j.pending ?? 0); })
       .catch(() => setCalls([]))
       .finally(() => setHistLoading(false));
   }, []);
 
   useEffect(() => {
     if (!open || tab !== "history") return;
-    const t = setTimeout(() => loadHistory(histQ), histQ ? 300 : 0);
+    const t = setTimeout(() => loadHistory(histQ, histView), histQ ? 300 : 0);
     return () => clearTimeout(t);
-  }, [open, tab, histQ, loadHistory]);
+  }, [open, tab, histQ, histView, loadHistory]);
+
+  const markDone = async (id: string) => {
+    setCalls((cs) => cs?.map((c) => (c.id === id ? { ...c, callbackStatus: "CALLED_BACK" } : c)) ?? cs);
+    setMissedPending((n) => Math.max(0, n - 1));
+    const r = await markCalledBack(id).catch(() => ({ error: "failed" }));
+    if ("error" in r && r.error) loadHistory(histQ, histView);
+  };
 
   const answer = async () => {
     const s = sessionRef.current;
@@ -561,6 +575,25 @@ export default function Softphone({ locale, canConfigure = false }: { locale: Lo
               </div>
             ) : tab === "history" ? (
               <>
+                <div className="mb-3 grid grid-cols-2 gap-1 rounded-xl bg-white/5 p-1">
+                  {(["mine", "missed"] as const).map((v) => (
+                    <button
+                      key={v}
+                      onClick={() => { if (v !== histView) { setCalls(null); setHistView(v); } }}
+                      className={cn(
+                        "flex items-center justify-center gap-1.5 rounded-lg py-1.5 text-xs font-medium transition",
+                        histView === v ? "bg-white/10 text-white" : "text-slate-500 hover:text-slate-300"
+                      )}
+                    >
+                      {v === "mine"
+                        ? tr(locale, { uz: "Mening qo'ng'iroqlarim", ru: "Мои звонки", en: "My calls", de: "Meine Anrufe" })
+                        : tr(locale, { uz: "Javobsizlar", ru: "Пропущенные", en: "Missed", de: "Verpasst" })}
+                      {v === "missed" && missedPending > 0 && (
+                        <span className="rounded-full bg-rose-500 px-1.5 text-[10px] font-bold leading-4 text-white">{missedPending}</span>
+                      )}
+                    </button>
+                  ))}
+                </div>
                 <div className="relative mb-3">
                   <Icon name="search" className="pointer-events-none absolute left-3 top-1/2 h-3.5 w-3.5 -translate-y-1/2 text-slate-500" />
                   <input
@@ -581,6 +614,8 @@ export default function Softphone({ locale, canConfigure = false }: { locale: Lo
                   <ul className="-mx-1 max-h-72 space-y-0.5 overflow-y-auto">
                     {calls.map((c) => {
                       const ok = c.status === "ANSWERED";
+                      const pending = histView === "missed" && c.callbackStatus === "PENDING";
+                      const calledBack = histView === "missed" && c.callbackStatus === "CALLED_BACK";
                       return (
                         <li key={c.id} className="flex items-center gap-2.5 rounded-lg px-2 py-2 transition hover:bg-white/5">
                           <span className={cn("grid h-8 w-8 shrink-0 place-items-center rounded-full", ok ? "bg-emerald-500/15 text-emerald-400" : "bg-rose-500/15 text-rose-400")}>
@@ -588,8 +623,17 @@ export default function Softphone({ locale, canConfigure = false }: { locale: Lo
                           </span>
                           <span className="min-w-0 flex-1">
                             <span className="block truncate text-sm font-medium text-slate-100">{c.contactName || c.phone}</span>
-                            <span className="block text-[11px] text-slate-500">{fmtWhen(c.startedAt)}{ok && c.duration ? ` · ${fmtDur(c.duration)}` : ""}</span>
+                            <span className="block truncate text-[11px] text-slate-500">
+                              {fmtWhen(c.startedAt)}{ok && c.duration ? ` · ${fmtDur(c.duration)}` : ""}
+                              {histView === "missed" && c.operatorName ? ` · ${c.operatorName}` : ""}
+                              {calledBack && <span className="text-emerald-400"> · {tr(locale, { uz: "qayta qo'ng'iroq qilingan", ru: "перезвонили", en: "called back", de: "zurückgerufen" })}</span>}
+                            </span>
                           </span>
+                          {pending && (
+                            <button onClick={() => markDone(c.id)} className="grid h-8 w-8 shrink-0 place-items-center rounded-full text-slate-500 transition hover:bg-emerald-500/15 hover:text-emerald-400" title={tr(locale, { uz: "Qayta qo'ng'iroq qilindi deb belgilash", ru: "Отметить как перезвонили", en: "Mark as called back", de: "Als zurückgerufen markieren" })}>
+                              <Icon name="check" className="h-3.5 w-3.5" />
+                            </button>
+                          )}
                           <button onClick={() => startCall(c.phone, undefined, c.contactName || undefined)} className="grid h-8 w-8 shrink-0 place-items-center rounded-full text-slate-500 transition hover:bg-emerald-500/15 hover:text-emerald-400" title={tr(locale, { uz: "Qayta qo'ng'iroq", ru: "Перезвонить", en: "Call again", de: "Erneut anrufen" })}>
                             <Icon name="phone" className="h-3.5 w-3.5" />
                           </button>

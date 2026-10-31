@@ -5,6 +5,7 @@ import { canRead, MODULES } from "@/lib/rbac";
 import { LEAD_STAGES, LEAD_STAGE_LABELS, label, formatMoney, ROLES } from "@/lib/constants";
 import { tr } from "@/lib/tr";
 import { branchWhere, branchViaStudent } from "@/lib/branchScope";
+import { activeStudentWhere } from "@/lib/eduStatus";
 import { PageHeader, StatCard, Card, HubCard, Forbidden } from "../_components/ui";
 
 export default async function ReportsPage() {
@@ -16,7 +17,7 @@ export default async function ReportsPage() {
   }
 
   const [activeStudents, totalStudents, leads, wonLeads, groups, paidAgg, byStage] = await Promise.all([
-    prisma.student.count({ where: { AND: [{ eduStatus: "ACTIVE" }, branchWhere(s)] } }),
+    prisma.student.count({ where: activeStudentWhere(s) }),
     prisma.student.count({ where: branchWhere(s) }),
     prisma.lead.count({ where: branchWhere(s) }),
     prisma.lead.count({ where: { AND: [{ stage: "WON" }, branchWhere(s)] } }),

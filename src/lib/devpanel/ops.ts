@@ -111,7 +111,7 @@ export async function centerStats(dbFile: string, uploadsDir: string): Promise<C
     const dayStart = new Date(now.getFullYear(), now.getMonth(), now.getDate()).getTime();
     const [row] = await sqlite(dbFile, `SELECT
       (SELECT count(*) FROM Student),
-      (SELECT count(*) FROM Student WHERE eduStatus='ACTIVE'),
+      (SELECT count(DISTINCT s.id) FROM Student s JOIN GroupStudent gs ON gs.studentId=s.id AND gs.isActive=1 JOIN "Group" g ON g.id=gs.groupId AND g.status='ACTIVE' WHERE s.eduStatus='ACTIVE'),
       (SELECT count(*) FROM User WHERE isActive=1 AND role NOT IN ('STUDENT','PARENT')),
       (SELECT count(*) FROM "Group" WHERE status='ACTIVE'),
       (SELECT count(*) FROM Lead),

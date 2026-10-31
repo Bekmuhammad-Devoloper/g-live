@@ -15,6 +15,7 @@ import { getSetting, setSetting } from "@/lib/settings";
 import { getBrand } from "@/lib/brand";
 import { GROUP_COL_COLORS, GROUP_COL_ICONS, branchColKey, type CustomColumn, type GroupColumn } from "./_lib/leadColumns";
 import { leaveGroups } from "@/lib/leaveGroup";
+import { syncEduStatuses } from "@/lib/eduStatus";
 
 const schema = z.object({
   fullName: z.string().min(2),
@@ -179,6 +180,7 @@ async function applyEnrollment(
     update: { isActive: true },
     create: { groupId, studentId, isActive: true },
   });
+  await syncEduStatuses();
 
   return studentId;
 }
@@ -869,6 +871,7 @@ async function setStudentArchivedInternal(actorId: string, studentId: string, ar
     oldValue: { eduStatus: st.eduStatus }, newValue: { eduStatus: next },
     reason: archived ? `O'quvchi arxivlandi (Kanban): ${st.fullName}` : `O'quvchi arxivdan qaytarildi (Kanban): ${st.fullName}`,
   });
+  if (!archived) await syncEduStatuses();
   return true;
 }
 

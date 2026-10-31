@@ -10,6 +10,7 @@ import { writeAudit } from "@/lib/audit";
 import { GROUP_FORMATS, ROLES } from "@/lib/constants";
 import { findRoomConflict, conflictLabel } from "./roomConflict";
 import { leaveGroups } from "@/lib/leaveGroup";
+import { syncEduStatuses } from "@/lib/eduStatus";
 
 function hasFullGroups(role: string) {
   return getPermission(role, MODULES.GROUPS) === "FULL";
@@ -69,6 +70,7 @@ export async function setGroupActive(id: string, active: boolean): Promise<{ ok:
     newValue: { status },
     reason: active ? "Guruh faollashtirildi" : "Guruh nofaol qilindi",
   });
+  await syncEduStatuses();
   revalidatePath("/groups");
   return { ok: true };
 }
@@ -113,6 +115,7 @@ export async function deleteGroup(id: string): Promise<{ ok: boolean; error?: st
   }
 
   await writeAudit({ actorId: s.userId, action: "DELETE", entityType: "Group", entityId: id, oldValue: { name: g.name }, reason: "Guruh o'chirildi" });
+  await syncEduStatuses();
   revalidatePath("/groups");
   return { ok: true };
 }
@@ -222,6 +225,7 @@ export async function createStudentInGroup(_prev: FormState, formData: FormData)
       if (group.levelCode) await recordLevelUp(existing.id, st?.currentLevel, group.levelCode);
       await prisma.student.update({ where: { id: existing.id }, data: { eduStatus: "ACTIVE", ...(group.levelCode ? { currentLevel: group.levelCode } : {}) } });
       await writeAudit({ actorId: s.userId, action: "CREATE", entityType: "GroupStudent", entityId: group.id, newValue: { groupId: group.id, studentId: existing.id, existingStudent: true } });
+      await syncEduStatuses();
       revalidatePath(`/groups/${group.id}`);
       revalidatePath("/students");
       return { ok: true, detail: `existing:${existing.fullName}` };
@@ -239,6 +243,7 @@ export async function createStudentInGroup(_prev: FormState, formData: FormData)
   });
   await prisma.groupStudent.create({ data: { groupId: group.id, studentId: student.id } });
   await writeAudit({ actorId: s.userId, action: "CREATE", entityType: "Student", entityId: student.id, newValue: { fullName: student.fullName, groupId: group.id } });
+  await syncEduStatuses();
   revalidatePath(`/groups/${group.id}`);
   return { ok: true };
 }
@@ -274,6 +279,7 @@ export async function bulkAddStudents(groupId: string, rows: { name: string; pho
   }
 
   await writeAudit({ actorId: s.userId, action: "CREATE", entityType: "GroupStudent", entityId: groupId, newValue: { bulkAdded: added }, reason: "Excel/CSV orqali o'quvchilar qo'shildi" });
+  await syncEduStatuses();
   revalidatePath(`/groups/${groupId}`);
   return { ok: true, added };
 }
@@ -296,6 +302,7 @@ export async function enrollStudent(groupId: string, studentId: string): Promise
     where: { id: studentId },
     data: { eduStatus: "ACTIVE", ...(g?.levelCode ? { currentLevel: g.levelCode } : {}) },
   });
+  await syncEduStatuses();
   revalidatePath(`/groups/${groupId}`);
 }
 
@@ -303,8 +310,7 @@ export async function removeStudent(groupId: string, studentId: string): Promise
   const s = await requireSession();
   if (!hasFullGroups(s.role)) return { cleared: 0 };
   const r = await leaveGroups({ studentId, groupIds: [groupId], actorId: s.userId, reason: "Guruhdan chiqarildi" });
-  const left = await prisma.groupStudent.count({ where: { studentId, isActive: true } });
-  if (left === 0) await prisma.student.updateMany({ where: { id: studentId, eduStatus: "ACTIVE" }, data: { eduStatus: "WAITING" } });
+  await syncEduStatuses();
   revalidatePath(`/groups/${groupId}`);
   revalidatePath("/students");
   revalidatePath("/finance/debtors");

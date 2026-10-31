@@ -19,6 +19,7 @@ import { getSetting } from "@/lib/settings";
 import { RECEIPT_MODE_KEY, parseReceiptMode, isReceiptRequired } from "@/lib/receiptMode";
 import { checkPromoForStudent, activePromoOptions } from "@/lib/promo";
 import { leaveGroups } from "@/lib/leaveGroup";
+import { syncEduStatuses } from "@/lib/eduStatus";
 
 export type EditState = { ok?: boolean; error?: string };
 export type BulkState = { ok?: boolean; error?: string; count?: number };
@@ -341,6 +342,7 @@ export async function bulkAssignGroup(ids: string[], groupId: string): Promise<B
     newValue: { groupId, students: count },
     reason: `Ommaviy guruhga biriktirish (${group.name})`,
   });
+  await syncEduStatuses();
 
   revalidatePath("/students");
   revalidatePath("/group-students");
@@ -439,6 +441,7 @@ export async function restoreStudent(id: string): Promise<EditState> {
     newValue: { eduStatus: next },
     reason: `O'quvchi arxivdan qaytarildi: ${st.fullName}`,
   });
+  await syncEduStatuses();
 
   revalidatePath("/students");
   return { ok: true };
@@ -548,6 +551,7 @@ export async function moveStudentToGroup(
     oldValue: { groupId: fromGroupId }, newValue: { groupId: toGroupId },
     reason: `Guruhdan guruhga o'tkazildi: ${student.fullName} → ${to.name}`,
   });
+  await syncEduStatuses();
 
   revalidatePath("/students");
   revalidatePath(`/students/${studentId}`);
@@ -596,6 +600,7 @@ export async function moveStudentToBranch(
     newValue: { branchId, closedEnrollments: stale.length },
     reason: `O'quvchi boshqa filialga ko'chirildi: ${student.fullName} → ${branch.name}`,
   });
+  await syncEduStatuses();
 
   revalidatePath("/students");
   revalidatePath("/groups");
