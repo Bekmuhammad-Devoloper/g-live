@@ -8,6 +8,7 @@ import { Icon } from "../../_components/Icon";
 import { addBranchSlot, listBranchRooms, removeBranchSlot, updateBranchSlot, type VSlot } from "./actions";
 import { confirmDelete } from "../../_components/dialogs";
 import CapacityStepper from "../../_components/CapacityStepper";
+import OpenGroupFromSlot from "./OpenGroupFromSlot";
 
 const DAYS: { key: string; label: { uz: string; ru: string; en: string; de: string } }[] = [
   { key: "Du", label: { uz: "Du", ru: "Пн", en: "Mo", de: "Mo" } },
@@ -230,6 +231,9 @@ export default function BranchSlotsEditor({ branchId, initial, canEdit, locale, 
                       <Icon name="chevronDown" className={cn("h-3.5 w-3.5 transition", opened && "rotate-180")} />
                       {opened ? L("Yopish", "Свернуть", "Collapse", "Zuklappen") : L(`${count} ta lidni ko'rish`, `Показать ${count} лидов`, `Show ${count} leads`, `${count} Leads anzeigen`)}
                     </div>
+                  )}
+                  {count > 0 && canEdit && (
+                    <OpenGroupFromSlot slot={sl} count={count} locale={locale} onDone={(next) => { setSlots(next); onChanged?.(next); }} />
                   )}
                   {onDropLead && overSlot === sl.id && (
                     <div className={cn("mt-2 rounded-lg border border-dashed py-1.5 text-center text-[11px] font-semibold", full ? "border-rose-400 bg-rose-50/80 text-rose-700 dark:bg-rose-500/10 dark:text-rose-300" : "border-emerald-400 bg-emerald-50/80 text-emerald-700 dark:bg-emerald-500/10 dark:text-emerald-300")}>
