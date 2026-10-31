@@ -3,7 +3,10 @@ import { notFound } from "next/navigation";
 import { requireSession } from "@/lib/auth";
 import { prisma } from "@/lib/db";
 import { getPermission, MODULES } from "@/lib/rbac";
-import { ROLES } from "@/lib/constants";
+import { ROLES, formatMoney } from "@/lib/constants";
+import { computeDebts } from "@/lib/debt";
+import { debtTone, debtMonthsLabel, DEBT_BADGE, DEBT_TEXT } from "@/lib/debtTone";
+import { cn } from "@/lib/cn";
 import { branchWhere, staffBranchWhere } from "@/lib/branchScope";
 import { tr } from "@/lib/tr";
 import { PageHeader, Card, Table, EmptyRow, Badge, Forbidden } from "../../_components/ui";
@@ -61,6 +64,8 @@ export default async function GroupDetailPage({ params }: { params: Promise<{ id
   const vLessons = courseLessons.map((cl) => ({ id: cl.id, order: cl.order, levelCode: cl.levelCode, title: cl.title, topic: cl.topic, videoUrl: cl.videoUrl, videoPosterUrl: cl.videoPosterUrl, vocabText: cl.vocabText, vocabFileUrl: cl.vocabFileUrl, materialUrl: cl.materialUrl, assignment: cl.assignment, assignmentFileUrl: cl.assignmentFileUrl, homework: cl.homework, homeworkFileUrl: cl.homeworkFileUrl }));
 
   const enrolledIds = group.students.map((gs) => gs.studentId);
+  const isStaff = s.role !== ROLES.STUDENT && s.role !== ROLES.PARENT;
+  const debts = isStaff ? await computeDebts(enrolledIds) : new Map();
   const mandatoryMap = canManage ? await isPaymentMandatoryBulk(enrolledIds) : new Map();
   const attendanceStudents = group.students.map((gs) => {
     const b = mandatoryMap.get(gs.studentId);
@@ -177,20 +182,46 @@ export default async function GroupDetailPage({ params }: { params: Promise<{ id
             <p className="text-sm text-slate-400">{tr(s.locale, { uz: "O'quvchi yo'q", ru: "Нет учеников", en: "No students", de: "Keine Schüler" })}</p>
           ) : (
             <ul className="divide-y divide-slate-100">
-              {group.students.map((gs) => (
+              {group.students.map((gs) => {
+                const d = debts.get(gs.studentId);
+                const tone = d ? debtTone(d.debt, d.overdueMonths, d.credit) : "none";
+                return (
                 <li key={gs.id} className="flex items-center justify-between py-2 text-sm">
-                  <Link
-                    href={`/students/${gs.studentId}`}
-                    className="truncate text-slate-700 transition hover:text-brand-600 hover:underline dark:hover:text-brand-300"
-                  >
-                    {gs.student.fullName}
-                  </Link>
+                  <span className="group/st relative min-w-0">
+                    <Link
+                      href={`/students/${gs.studentId}`}
+                      className={cn("block truncate transition hover:underline", tone === "none" ? "text-slate-700 hover:text-brand-600 dark:hover:text-brand-300" : DEBT_TEXT[tone])}
+                    >
+                      {gs.student.fullName}
+                    </Link>
+                    {isStaff && (
+                      <span className="pointer-events-none absolute left-0 top-full z-30 mt-2 hidden w-72 rounded-xl border border-slate-200 bg-white p-3 text-left shadow-xl group-hover/st:block dark:border-white/10 dark:bg-[#15243d]">
+                        <span className="absolute -top-1.5 left-5 h-3 w-3 rotate-45 border-l border-t border-slate-200 bg-white dark:border-white/10 dark:bg-[#15243d]" />
+                        <span className="block text-[11px] font-semibold uppercase tracking-wide text-slate-400">{tr(s.locale, { uz: "Qarzdorligi", ru: "Задолженность", en: "Debt", de: "Schulden" })}</span>
+                        <span className="mt-1 flex items-center gap-2">
+                          {d && d.debt > 0 ? (
+                            <>
+                              <span className={cn("rounded-md px-2 py-0.5 text-xs font-bold tabular-nums", DEBT_BADGE[tone])}>{formatMoney(d.debt, s.locale)}</span>
+                              <span className="text-xs text-slate-500">{debtMonthsLabel(d.overdueMonths, s.locale)}</span>
+                            </>
+                          ) : d && d.credit > 0 ? (
+                            <span className={cn("rounded-md px-2 py-0.5 text-xs font-bold tabular-nums", DEBT_BADGE.credit)}>+{formatMoney(d.credit, s.locale)}</span>
+                          ) : (
+                            <span className="text-xs font-medium text-slate-500">{tr(s.locale, { uz: "Qarzi yo'q", ru: "Долга нет", en: "No debt", de: "Keine Schulden" })}</span>
+                          )}
+                        </span>
+                        <span className="mt-2.5 block text-[11px] font-semibold uppercase tracking-wide text-slate-400">{tr(s.locale, { uz: "Izoh", ru: "Комментарий", en: "Comment", de: "Kommentar" })}</span>
+                        <span className="mt-1 block whitespace-pre-wrap break-words text-xs text-slate-700 dark:text-slate-200">{gs.student.note?.trim() || "—"}</span>
+                      </span>
+                    )}
+                  </span>
                   <div className="flex items-center gap-2">
                     <Badge tone="slate">{gs.student.currentLevel ?? "—"}</Badge>
                     {full && <RemoveStudentButton groupId={group.id} studentId={gs.studentId} locale={s.locale} />}
                   </div>
                 </li>
-              ))}
+                );
+              })}
             </ul>
           )}
         </Card>
