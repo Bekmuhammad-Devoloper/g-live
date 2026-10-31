@@ -5,7 +5,7 @@ import { cn } from "@/lib/cn";
 import { formatMoney, LEAD_STAGE_LABELS, label, type Locale } from "@/lib/constants";
 import { tr } from "@/lib/tr";
 import { columnDef, columnOf, initials, type VLead } from "../_lib/leadColumns";
-import { debtTone, DEBT_BADGE } from "@/lib/debtTone";
+import { debtTone, DEBT_BADGE, DEBT_TEXT } from "@/lib/debtTone";
 
 function fmt(iso: string) {
   const d = new Date(iso);
@@ -70,7 +70,7 @@ export default function LeadsTable({ leads, locale, selected, onToggle, onOpen, 
                           {initials(l.fullName)}
                         </span>
                         <div className="min-w-0">
-                          <div className="truncate font-medium text-slate-800 dark:text-slate-100">{l.fullName}</div>
+                          <div className={cn("truncate font-medium", debtTone(l.debt ?? 0, l.debtMonths ?? 1, l.credit ?? 0) === "none" ? "text-slate-800 dark:text-slate-100" : DEBT_TEXT[debtTone(l.debt ?? 0, l.debtMonths ?? 1, l.credit ?? 0)])}>{l.fullName}</div>
                           <button
                             onClick={(e) => { e.preventDefault(); e.stopPropagation(); window.dispatchEvent(new CustomEvent("glive:call", { detail: { number: l.phone, leadId: l.id, contactName: l.fullName } })); }}
                             onDoubleClick={(e) => e.stopPropagation()}

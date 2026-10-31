@@ -11,7 +11,7 @@ import type { ReceiptMode } from "@/lib/receiptMode";
 import { Icon } from "../../_components/Icon";
 import PaymentPanel from "../PaymentPanel";
 import { StudentDetailModal, EditModal, type VStudent } from "../StudentsView";
-import { debtTone, DEBT_HEX } from "@/lib/debtTone";
+import { debtTone, debtMonthsLabel, DEBT_HEX } from "@/lib/debtTone";
 import { StudentAttendanceJournal } from "./StudentAttendanceJournal";
 import type { StudentJournal } from "./journal";
 
@@ -151,10 +151,10 @@ export default function StudentProfile({
         <Tile icon="wallet" tone="#10b981" label={L("To'langan", "Оплачено", "Paid", "Bezahlt")} value={formatMoney(st.paid, locale)} small />
         <Tile
           icon="alert"
-          tone={DEBT_HEX[debtTone(st.debt, debtInfo.overdueMonths)]}
+          tone={DEBT_HEX[debtTone(st.debt, debtInfo.overdueMonths, debtInfo.credit)]}
           label={L("Qarzdorlik", "Задолженность", "Debt", "Schulden")}
           value={formatMoney(st.debt, locale)}
-          hint={st.debt > 0 ? `${debtInfo.overdueMonths} ${L("oylik qarz", "мес. долга", "mo overdue", "Mon. offen")}` : undefined}
+          hint={st.debt > 0 ? debtMonthsLabel(debtInfo.overdueMonths, locale) : undefined}
           small
           onClick={() => setTab("payments")}
         />
@@ -331,7 +331,7 @@ export default function StudentProfile({
 function DebtBreakdown({ info, locale }: { info: DebtInfo; locale: Locale }) {
   const L = (uz: string, ru: string, en: string, de: string) => tr(locale, { uz, ru, en, de });
   const has = info.debt > 0;
-  const tone = has ? DEBT_HEX[debtTone(info.debt, info.overdueMonths)] : "#10b981";
+  const tone = has ? DEBT_HEX[debtTone(info.debt, info.overdueMonths, info.credit)] : "#10b981";
   const rows: { label: string; value: string; sign?: string; muted?: boolean }[] = [
     {
       label: L("Hisob boshlangan", "Начало расчёта", "Billing since", "Abrechnung seit"),

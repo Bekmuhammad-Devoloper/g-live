@@ -32,6 +32,7 @@ export interface VLead {
   enrollEditCount: number;
   debt?: number;
   debtMonths?: number;
+  credit?: number;
   kanbanColumnId: string | null;
   activityCount: number;
   lastActivity: string | null;

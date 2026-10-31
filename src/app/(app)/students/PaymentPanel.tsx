@@ -12,6 +12,7 @@ import { getStudentPayments, acceptPayment, addStudentDebt, adjustStudentDebt, u
 import { Icon } from "../_components/Icon";
 import MoneyInput from "../_components/MoneyInput";
 import { confirmDialog, promptDialog } from "../_components/dialogs";
+import { debtTone, debtMonthsLabel, DEBT_PANEL } from "@/lib/debtTone";
 
 function toLocalInput(iso: string | Date): string {
   const d = new Date(iso);
@@ -127,20 +128,18 @@ export default function PaymentPanel({
       </div>
 
       {pay && (() => {
-        const over = pay.debt > 0 && pay.debtMonths > 1;
-        const box = pay.debt <= 0
-          ? "border-emerald-200 bg-emerald-50 dark:border-emerald-900/40 dark:bg-emerald-950/20"
-          : over ? "border-rose-200 bg-rose-50 dark:border-rose-900/40 dark:bg-rose-950/20" : "border-amber-200 bg-amber-50 dark:border-amber-900/40 dark:bg-amber-950/20";
-        const text = pay.debt <= 0 ? "text-emerald-700 dark:text-emerald-400" : over ? "text-rose-700 dark:text-rose-400" : "text-amber-700 dark:text-amber-400";
+        const tone = DEBT_PANEL[debtTone(pay.debt, pay.debtMonths, pay.credit)];
+        const box = tone.box;
+        const text = tone.text;
         return (
         <div className={cn("mt-3 flex items-center justify-between gap-2 rounded-xl border px-3.5 py-2.5", box)}>
           <div className="flex items-center gap-2">
-            <span className={cn("flex h-7 w-7 items-center justify-center rounded-full", pay.debt <= 0 ? "bg-emerald-500/15" : over ? "bg-rose-500/15" : "bg-amber-500/15")}>
-              <Icon name={pay.debt > 0 ? "info" : "check"} className={cn("h-4 w-4", pay.debt <= 0 ? "text-emerald-600" : over ? "text-rose-600" : "text-amber-600")} />
+            <span className={cn("flex h-7 w-7 items-center justify-center rounded-full", tone.icon)}>
+              <Icon name={pay.debt > 0 ? "info" : "check"} className="h-4 w-4" />
             </span>
             <span className={cn("text-sm font-semibold", text)}>
               {tr(locale, { uz: "Jami qarzdorlik", ru: "Общая задолженность", en: "Total debt", de: "Gesamtschulden" })}
-              {pay.debt > 0 && <span className="ml-1 text-[11px] font-medium opacity-75">· {tr(locale, { uz: `${pay.debtMonths} oy`, ru: `${pay.debtMonths} мес.`, en: `${pay.debtMonths} mo`, de: `${pay.debtMonths} Mon.` })}</span>}
+              {pay.debt > 0 && <span className="ml-1 text-[11px] font-medium opacity-75">· {debtMonthsLabel(pay.debtMonths, locale)}</span>}
             </span>
           </div>
           <div className="flex items-center gap-1.5">

@@ -17,7 +17,7 @@ import GroupMover from "../_components/GroupMover";
 import { Icon } from "../_components/Icon";
 import BranchMover from "../_components/BranchMover";
 import PaymentPanel from "./PaymentPanel";
-import { debtTone, DEBT_BADGE, DEBT_TEXT } from "@/lib/debtTone";
+import { debtTone, debtMonthsLabel, DEBT_BADGE, DEBT_TEXT } from "@/lib/debtTone";
 
 export interface VStudent {
   id: string;
@@ -435,7 +435,7 @@ export default function StudentsView({ students, courses, locale, canCreate, can
                         <StudentAvatar id={st.id} name={st.fullName} imageUrl={st.imageUrl} canManage={canCreate} locale={locale} />
                       </td>
                       <td className="px-4 py-2">
-                        <div className="truncate font-medium text-slate-800 dark:text-slate-100">{st.fullName}</div>
+                        <div className={cn("truncate font-medium", debtTone(st.debt, st.debtMonths, st.balance) === "none" ? "text-slate-800 dark:text-slate-100" : DEBT_TEXT[debtTone(st.debt, st.debtMonths, st.balance)])}>{st.fullName}</div>
                         <div className="mt-0.5 flex items-center gap-1.5">
                           <span
                             className="inline-flex items-center rounded-full px-2 py-0.5 text-[11px] font-semibold"
@@ -488,14 +488,14 @@ export default function StudentsView({ students, courses, locale, canCreate, can
                         <td className="px-4 py-2">
                           {st.debt > 0 ? (
                             <span
-                              title={tr(locale, { uz: `${st.debtMonths} oylik qarz`, ru: `Долг за ${st.debtMonths} мес.`, en: `${st.debtMonths} month(s) of debt`, de: `${st.debtMonths} Monat(e) Schulden` })}
-                              className={cn("inline-flex items-center gap-1 whitespace-nowrap rounded-md px-2 py-0.5 text-xs font-bold tabular-nums", DEBT_BADGE[debtTone(st.debt, st.debtMonths)])}
+                              title={debtMonthsLabel(st.debtMonths, locale)}
+                              className={cn("inline-flex items-center gap-1 whitespace-nowrap rounded-md px-2 py-0.5 text-xs font-bold tabular-nums", DEBT_BADGE[debtTone(st.debt, st.debtMonths, st.balance)])}
                             >
                               −{formatMoney(st.debt, locale)}
                             </span>
                           ) : (
-                            <span className={cn("font-semibold", st.balance > 0 ? "text-emerald-600" : "text-slate-400")}>
-                              {formatMoney(st.balance, locale)}
+                            <span className={cn("inline-flex whitespace-nowrap rounded-md px-2 py-0.5 text-xs font-bold tabular-nums", st.balance > 0 ? DEBT_BADGE.credit : "text-slate-400")}>
+                              {st.balance > 0 ? "+" : ""}{formatMoney(st.balance, locale)}
                             </span>
                           )}
                         </td>
@@ -684,7 +684,7 @@ export function StudentDetailModal({
           <DSection title={tr(locale, { uz: "O'quv ma'lumotlari", ru: "Учебные данные", en: "Study info", de: "Lerninformationen" })} icon="graduation">
             <div className="grid grid-cols-2 gap-3">
               {st.debt > 0 ? (
-                <DStat label={tr(locale, { uz: `Qarz (${st.debtMonths} oy)`, ru: `Долг (${st.debtMonths} мес.)`, en: `Debt (${st.debtMonths} mo)`, de: `Schulden (${st.debtMonths} Mon.)` })} value={formatMoney(st.debt, locale)} toneClass={DEBT_TEXT[debtTone(st.debt, st.debtMonths)]} />
+                <DStat label={tr(locale, { uz: `Qarz (${debtMonthsLabel(st.debtMonths, "uz")})`, ru: `Долг (${debtMonthsLabel(st.debtMonths, "ru")})`, en: `Debt (${debtMonthsLabel(st.debtMonths, "en")})`, de: `Schulden (${debtMonthsLabel(st.debtMonths, "de")})` })} value={formatMoney(st.debt, locale)} toneClass={DEBT_TEXT[debtTone(st.debt, st.debtMonths, st.balance)]} />
               ) : (
                 <DStat label={tr(locale, { uz: "Balans", ru: "Баланс", en: "Balance", de: "Saldo" })} value={formatMoney(st.balance, locale)} accent={st.balance > 0} />
               )}

@@ -6,7 +6,7 @@ import { formatMoney, LEAD_STAGE_LABELS, label, type Locale } from "@/lib/consta
 import { tr } from "@/lib/tr";
 import { Icon } from "../../_components/Icon";
 import { columnDef, columnOf, type VLead } from "../_lib/leadColumns";
-import { debtTone, DEBT_BADGE } from "@/lib/debtTone";
+import { debtTone, debtMonthsLabel, DEBT_BADGE, DEBT_TEXT } from "@/lib/debtTone";
 
 function daysSince(iso: string) {
   return Math.floor((Date.now() - new Date(iso).getTime()) / 86400000);
@@ -78,7 +78,7 @@ export default memo(function LeadCard({ lead, locale, selected, onOpen, onOpenFu
         </div>
         <div className="min-w-0 flex-1">
           <div className="flex flex-wrap items-center gap-x-1.5">
-            <span className="break-words text-[14px] font-semibold leading-tight text-slate-800 dark:text-slate-100">{first}</span>
+            <span className={cn("break-words text-[14px] font-semibold leading-tight", debtTone(lead.debt ?? 0, lead.debtMonths ?? 1, lead.credit ?? 0) === "none" ? "text-slate-800 dark:text-slate-100" : DEBT_TEXT[debtTone(lead.debt ?? 0, lead.debtMonths ?? 1, lead.credit ?? 0)])}>{first}</span>
             {stuck && <span className="shrink-0 text-xs font-bold text-red-500">{days} {tr(locale, { uz: "kun", ru: "дн.", en: "days", de: "Tage" })}</span>}
           </div>
           {rest && <div className="mt-0.5 break-words text-xs leading-tight text-slate-400">{rest}</div>}
@@ -143,11 +143,15 @@ export default memo(function LeadCard({ lead, locale, selected, onOpen, onOpenFu
         {lead.budget ? <div className="text-xs font-semibold text-emerald-500">{formatMoney(lead.budget, locale)}</div> : null}
         {lead.debt && lead.debt > 0 ? (
           <div
-            title={tr(locale, { uz: `${lead.debtMonths ?? 1} oylik qarz`, ru: `Долг за ${lead.debtMonths ?? 1} мес.`, en: `${lead.debtMonths ?? 1} month(s) of debt`, de: `${lead.debtMonths ?? 1} Monat(e) Schulden` })}
+            title={debtMonthsLabel(lead.debtMonths ?? 1, locale)}
             className={cn("inline-flex w-fit items-center gap-1 rounded-md px-1.5 py-0.5 text-[11px] font-bold tabular-nums", DEBT_BADGE[debtTone(lead.debt, lead.debtMonths ?? 1)])}
           >
             {tr(locale, { uz: "Qarz", ru: "Долг", en: "Debt", de: "Schuld" })}: {formatMoney(lead.debt, locale)}
-            <span className="font-medium opacity-75">· {lead.debtMonths ?? 1} {tr(locale, { uz: "oy", ru: "мес.", en: "mo", de: "Mon." })}</span>
+            <span className="font-medium opacity-75">· {debtMonthsLabel(lead.debtMonths ?? 1, locale)}</span>
+          </div>
+        ) : lead.credit && lead.credit > 0 ? (
+          <div className={cn("inline-flex w-fit items-center gap-1 rounded-md px-1.5 py-0.5 text-[11px] font-bold tabular-nums", DEBT_BADGE.credit)}>
+            {tr(locale, { uz: "Balans", ru: "Баланс", en: "Balance", de: "Guthaben" })}: +{formatMoney(lead.credit, locale)}
           </div>
         ) : null}
       </div>

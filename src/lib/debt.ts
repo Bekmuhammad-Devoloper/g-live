@@ -168,13 +168,14 @@ export async function computeDebts(
   for (const [id, v] of out) {
     if (v.debt <= 0) continue;
     let cover = v.paid + v.discount + (v.manual < 0 ? -v.manual : 0);
-    let uncovered = 0;
+    let owed = 0;
     for (const fee of feesByStudent.get(id) ?? []) {
       if (fee <= 0) continue;
-      if (cover >= fee) cover -= fee;
-      else { cover = 0; uncovered++; }
+      if (cover >= fee) { cover -= fee; continue; }
+      owed += (fee - cover) / fee;
+      cover = 0;
     }
-    v.overdueMonths = Math.max(1, uncovered);
+    v.overdueMonths = owed > 0 ? Math.round(owed * 10) / 10 : 1;
   }
   return out;
 }

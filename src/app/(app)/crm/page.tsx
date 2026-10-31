@@ -142,6 +142,7 @@ export default async function CrmPage() {
     enrollEditCount: l.enrollEditCount,
     debt: l.studentId ? debts.get(l.studentId)?.debt ?? 0 : 0,
     debtMonths: l.studentId ? debts.get(l.studentId)?.overdueMonths ?? 0 : 0,
+    credit: l.studentId ? debts.get(l.studentId)?.credit ?? 0 : 0,
     kanbanColumnId: l.kanbanColumnId,
     activityCount: l._count.activities,
     lastActivity: lastActivityAt.get(l.id)?.toISOString() ?? null,
