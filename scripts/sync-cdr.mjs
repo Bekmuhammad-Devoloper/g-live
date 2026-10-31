@@ -68,6 +68,13 @@ const toDate = (s) => {
   return isNaN(d.getTime()) ? null : d;
 };
 
+const recTime = (f) => {
+  const m = /^(\d{4})(\d{2})(\d{2})-(\d{2})(\d{2})(\d{2})-/.exec(f);
+  return m ? Date.UTC(+m[1], +m[2] - 1, +m[3], +m[4], +m[5], +m[6]) : null;
+};
+
+const REC_SLACK_MS = 10_000;
+
 const isRealNumber = (v) => {
   const s = String(v ?? "").trim();
   return Boolean(s) && !/^<?unknown>?$/i.test(s) && !/^anonymous$/i.test(s) && /\d{5,}/.test(s);
@@ -96,9 +103,24 @@ async function main() {
     return m ? m[1] : null;
   };
 
+  const recIndex = recs.map((f) => ({ f, t: recTime(f) })).filter((r) => r.t !== null);
+  const usedRecs = new Set();
+  const pickRecording = (tail, from, to) => {
+    let best = null;
+    for (const r of recIndex) {
+      if (usedRecs.has(r.f) || !r.f.includes(tail)) continue;
+      if (r.t < from - REC_SLACK_MS || r.t > to + REC_SLACK_MS) continue;
+      if (!best || Math.abs(r.t - from) < Math.abs(best.t - from)) best = r;
+    }
+    if (best) usedRecs.add(best.f);
+    return best?.f ?? null;
+  };
+
+  const ordered = [...calls.entries()].sort((a, b) => (toDate(a[1].rows[0][C.START])?.getTime() ?? 0) - (toDate(b[1].rows[0][C.START])?.getTime() ?? 0));
+
   let created = 0, updated = 0, skipped = 0;
 
-  for (const [uid, g] of calls) {
+  for (const [uid, g] of ordered) {
     const first = g.rows[0];
     const src = first[C.SRC];
     const dst = first[C.DST];
@@ -129,11 +151,11 @@ async function main() {
     const opUser = opChan ? byExt.get(extOf(opChan) || "") : null;
 
     const digits = String(phone).replace(/\D/g, "");
-    const stamp = first[C.START]?.replace(/[-: ]/g, "").slice(0, 8);
-    const rec = recs.find((f) => f.includes(digits) && (!stamp || f.startsWith(stamp)));
+    const tail = digits.slice(-9);
+    const callEnd = endedAt ?? new Date(startedAt.getTime() + duration * 1000);
+    const rec = answered && tail ? pickRecording(tail, startedAt.getTime(), callEnd.getTime()) : null;
     const recordingUrl = rec ? `/api/telephony/recordings/${rec}` : null;
 
-    const tail = digits.slice(-9);
     const lead = tail
       ? await prisma.lead.findFirst({ where: { phone: { contains: tail } }, orderBy: { updatedAt: "desc" }, select: { id: true, fullName: true, managerId: true, manager: { select: { fullName: true } } } })
       : null;
@@ -147,7 +169,7 @@ async function main() {
       operatorId: opUser?.id ?? lead?.managerId ?? null,
       operatorName: opUser?.fullName ?? lead?.manager?.fullName ?? null,
     };
-    if (recordingUrl) base.recordingUrl = recordingUrl;
+    base.recordingUrl = recordingUrl;
 
     const existing = await prisma.call.findUnique({ where: { externalId: uid }, select: { id: true } });
     if (existing) {
