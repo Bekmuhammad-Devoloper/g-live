@@ -59,6 +59,12 @@ export function AttendanceJournal({ groupId, students, locale, readOnly = false 
     if (el) scrollRef.current.scrollLeft = Math.max(0, el.offsetLeft - 260);
   }, [data]);
 
+  useEffect(() => {
+    if (!notice) return;
+    const t = setTimeout(() => setNotice(null), 8000);
+    return () => clearTimeout(t);
+  }, [notice]);
+
   const shift = (d: number) => setYm(({ y, m }) => { const t = new Date(y, m + d, 1); return { y: t.getFullYear(), m: t.getMonth() }; });
   const isCurrent = ym.y === now.getFullYear() && ym.m === now.getMonth();
   const dayLabel = (iso: string) => { const [, mm, dd] = iso.split("-").map(Number); return `${dd} ${(MONTHS[locale] ?? MONTHS.uz)[mm - 1]}`; };
@@ -138,8 +144,8 @@ export function AttendanceJournal({ groupId, students, locale, readOnly = false 
       </div>
 
       {notice && (
-        <div className={cn("mb-3 flex items-center justify-between gap-2 rounded-lg border px-3 py-2 text-sm",
-          notice.tone === "rose" ? "border-rose-200 bg-rose-50 text-rose-700 dark:border-rose-900/40 dark:bg-rose-950/20 dark:text-rose-400" : "border-amber-200 bg-amber-50 text-amber-700 dark:border-amber-900/40 dark:bg-amber-950/20 dark:text-amber-400")}>
+        <div role="alert" onClick={(e) => e.stopPropagation()} className={cn("fixed inset-x-4 bottom-20 z-[70] mx-auto flex max-w-lg items-center justify-between gap-2 rounded-xl border px-3 py-2.5 text-sm shadow-lg",
+          notice.tone === "rose" ? "border-rose-200 bg-rose-50 text-rose-700 dark:border-rose-900/40 dark:bg-rose-950 dark:text-rose-300" : "border-amber-200 bg-amber-50 text-amber-700 dark:border-amber-900/40 dark:bg-amber-950 dark:text-amber-300")}>
           <span className="flex items-center gap-2"><Icon name="alert" className="h-4 w-4 shrink-0" />{notice.text}</span>
           <button type="button" onClick={() => setNotice(null)} className="shrink-0 opacity-60 hover:opacity-100">✕</button>
         </div>
