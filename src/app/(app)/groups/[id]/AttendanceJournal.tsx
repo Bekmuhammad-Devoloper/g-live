@@ -216,7 +216,7 @@ export function AttendanceJournal({ groupId, students, locale, readOnly = false 
                           </button>
                         )}
                         {open && (
-                          <div onClick={(e) => e.stopPropagation()} className="absolute left-1/2 top-full z-30 mt-1 flex -translate-x-1/2 gap-1 rounded-lg border border-slate-200 bg-white p-1 shadow-lg dark:border-slate-700 dark:bg-slate-900">
+                          <div onClick={(e) => e.stopPropagation()} className={cn("absolute left-1/2 z-30 flex -translate-x-1/2 gap-1 rounded-lg border border-slate-200 bg-white p-1 shadow-lg dark:border-slate-700 dark:bg-slate-900", i >= students.length - 2 ? "bottom-full mb-1" : "top-full mt-1")}>
                             {(["PRESENT", "ABSENT", "LATE", "EXCUSED"] as const).map((x) => (
                               <button key={x} type="button" onClick={() => setMark(d.date, s.id, x)} className={cn("whitespace-nowrap rounded-md px-2 py-1 text-[11px] font-semibold", STATUS_STYLE[x], st === x && "ring-2 ring-offset-1 ring-slate-400")}>
                                 {label(x)}
