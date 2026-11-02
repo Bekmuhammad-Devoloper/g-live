@@ -26,7 +26,7 @@ export default function GroupMover({
   locale: Locale;
   currentGroups: { id: string; name: string }[];
   loadGroups: () => Promise<GroupOpt[]>;
-  onMove: (fromGroupId: string | null, toGroupId: string) => Promise<{ ok?: boolean; error?: string; groupName?: string }>;
+  onMove: (fromGroupId: string | null, toGroupId: string, raiseCapacity?: boolean) => Promise<{ ok?: boolean; error?: string; groupName?: string }>;
 }) {
   const router = useRouter();
   const [open, setOpen] = useState(false);
@@ -53,7 +53,7 @@ export default function GroupMover({
     if (!to) return;
     setErr(null);
     start(async () => {
-      const r = await onMove(from || null, to);
+      const r = await onMove(from || null, to, full);
       if (r.ok) {
         setMsg(L(`Ko'chirildi: ${r.groupName ?? ""}`, `Переведён: ${r.groupName ?? ""}`, `Moved to ${r.groupName ?? ""}`, `Verschoben: ${r.groupName ?? ""}`));
         setOpen(false);
@@ -134,6 +134,16 @@ export default function GroupMover({
               {full && <span className="ml-1 font-semibold text-rose-600">· {L("to'lgan", "полна", "full", "voll")}</span>}
             </div>
           )}
+          {full && target && (
+            <p className="text-[11px] leading-relaxed text-amber-600 dark:text-amber-400">
+              {L(
+                `Guruh to'lgan (${target.students}/${target.capacity}). O'tkazilsa sig'im ${target.students + 1} ga oshiriladi.`,
+                `Группа заполнена (${target.students}/${target.capacity}). При переводе вместимость станет ${target.students + 1}.`,
+                `The group is full (${target.students}/${target.capacity}). Moving raises capacity to ${target.students + 1}.`,
+                `Die Gruppe ist voll (${target.students}/${target.capacity}). Beim Verschieben wird die Kapazität auf ${target.students + 1} erhöht.`,
+              )}
+            </p>
+          )}
           {from && (
             <p className="text-[11px] leading-relaxed text-amber-600 dark:text-amber-400">
               {L(
@@ -157,10 +167,10 @@ export default function GroupMover({
             <button
               type="button"
               onClick={move}
-              disabled={pending || !to || full}
+              disabled={pending || !to}
               className="flex-[1.4] rounded-lg bg-brand-600 py-1.5 text-xs font-semibold text-white transition hover:bg-brand-700 disabled:opacity-40"
             >
-              {pending ? L("O'tkazilmoqda…", "Перевод…", "Moving…", "Wird verschoben…") : L("O'tkazish", "Перевести", "Move", "Verschieben")}
+              {pending ? L("O'tkazilmoqda…", "Перевод…", "Moving…", "Wird verschoben…") : full ? L("Sig'imni oshirib o'tkazish", "Перевести, увеличив места", "Raise capacity & move", "Kapazität erhöhen & verschieben") : L("O'tkazish", "Перевести", "Move", "Verschieben")}
             </button>
           </div>
         </div>

@@ -1184,7 +1184,7 @@ export function EditModal({ student, locale, onClose, onDone }: { student: VStud
               locale={locale}
               currentGroups={student.groups}
               loadGroups={studentGroupOptions}
-              onMove={(fromGroupId, toGroupId) => moveStudentToGroup(student.id, fromGroupId, toGroupId)}
+              onMove={(fromGroupId, toGroupId, raise) => moveStudentToGroup(student.id, fromGroupId, toGroupId, raise)}
             />
           </div>
 

@@ -74,7 +74,8 @@ export default function EnrollDrawer({
     if (!picked) return;
     setErr(null);
     start(async () => {
-      const r = await enrollLeadToGroup(leadId, picked);
+      const pg = groups.find((g) => g.id === picked);
+      const r = await enrollLeadToGroup(leadId, picked, !!pg && pg.taken >= pg.capacity);
       if (r.ok) {
         onDone(
           isChange
@@ -92,7 +93,7 @@ export default function EnrollDrawer({
       setErr(M[r.error ?? ""] ?? L("Amal bajarilmadi", "Не удалось выполнить", "Action failed", "Aktion fehlgeschlagen"));
       setConfirming(false);
     });
-  }, [picked, leadId, leadName, isChange, onDone, locale]);
+  }, [picked, groups, leadId, leadName, isChange, onDone, locale]);
 
   if (!mounted || !open) return null;
 
@@ -187,11 +188,9 @@ export default function EnrollDrawer({
                       <button
                         key={g.id}
                         type="button"
-                        disabled={full}
                         onClick={() => setPicked(g.id)}
                         className={cn(
                           "w-full rounded-xl border p-3 text-left transition",
-                          full && "cursor-not-allowed opacity-50",
                           on
                             ? "border-emerald-400 bg-emerald-50 ring-2 ring-emerald-400/30 dark:border-emerald-500/50 dark:bg-emerald-500/10"
                             : "border-slate-200 hover:border-brand-300 hover:bg-slate-50 dark:border-slate-700 dark:hover:bg-white/5",
@@ -239,6 +238,14 @@ export default function EnrollDrawer({
                 {isChange
                   ? L("guruhni o'zgartirasizmi? Bu oxirgi imkoniyat.", "сменить группу? Это последняя возможность.", "change the group? This is the last chance.", "die Gruppe ändern? Dies ist die letzte Möglichkeit.")
                   : L("lidni shu guruhga qabul qilasizmi?", "принять лида в эту группу?", "enroll the lead in this group?", "den Lead dieser Gruppe zuweisen?")}
+                {pickedGroup.taken >= pickedGroup.capacity && (
+                  <span className="mt-1 block font-semibold text-amber-600 dark:text-amber-400">
+                    {L(`Guruh to'lgan (${pickedGroup.taken}/${pickedGroup.capacity}) — sig'im ${pickedGroup.taken + 1} ga oshiriladi.`,
+                      `Группа заполнена (${pickedGroup.taken}/${pickedGroup.capacity}) — вместимость станет ${pickedGroup.taken + 1}.`,
+                      `The group is full (${pickedGroup.taken}/${pickedGroup.capacity}) — capacity will be raised to ${pickedGroup.taken + 1}.`,
+                      `Die Gruppe ist voll (${pickedGroup.taken}/${pickedGroup.capacity}) — Kapazität wird auf ${pickedGroup.taken + 1} erhöht.`)}
+                  </span>
+                )}
               </p>
               <div className="flex gap-2">
                 <button type="button" onClick={() => setConfirming(false)} disabled={pending}

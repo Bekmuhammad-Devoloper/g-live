@@ -516,6 +516,7 @@ export async function moveStudentToGroup(
   studentId: string,
   fromGroupId: string | null,
   toGroupId: string,
+  raiseCapacity = false,
 ): Promise<{ ok?: boolean; error?: string; groupName?: string }> {
   const s = await requireSession();
   if (!ALLOWED.includes(s.role as never)) return { error: "forbidden" };
@@ -529,9 +530,11 @@ export async function moveStudentToGroup(
   if (fromGroupId === toGroupId) return { ok: true, groupName: to.name };
 
   const already = await prisma.groupStudent.findUnique({ where: { groupId_studentId: { groupId: toGroupId, studentId } }, select: { isActive: true } });
-  if (!already?.isActive && to._count.students >= to.capacity) return { error: "full" };
+  const full = !already?.isActive && to._count.students >= to.capacity;
+  if (full && !raiseCapacity) return { error: "full" };
 
   await prisma.$transaction(async (tx) => {
+    if (full) await tx.group.update({ where: { id: toGroupId }, data: { capacity: to._count.students + 1 } });
     if (fromGroupId) {
       await tx.groupStudent.updateMany({ where: { groupId: fromGroupId, studentId, isActive: true }, data: { isActive: false, leftAt: new Date() } });
     }
@@ -548,7 +551,7 @@ export async function moveStudentToGroup(
 
   await writeAudit({
     actorId: s.userId, action: "UPDATE", entityType: "GroupStudent", entityId: studentId,
-    oldValue: { groupId: fromGroupId }, newValue: { groupId: toGroupId },
+    oldValue: { groupId: fromGroupId, ...(full ? { capacity: to.capacity } : {}) }, newValue: { groupId: toGroupId, ...(full ? { capacity: to._count.students + 1 } : {}) },
     reason: `Guruhdan guruhga o'tkazildi: ${student.fullName} → ${to.name}`,
   });
   await syncEduStatuses();

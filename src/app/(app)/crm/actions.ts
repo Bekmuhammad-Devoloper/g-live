@@ -291,7 +291,7 @@ export async function enrollOptions(): Promise<EnrollOptions> {
 
 export type EnrollResult = { ok?: boolean; error?: string; groupName?: string; editsLeft?: number };
 
-export async function enrollLeadToGroup(leadId: string, groupId: string): Promise<EnrollResult> {
+export async function enrollLeadToGroup(leadId: string, groupId: string, raiseCapacity = false): Promise<EnrollResult> {
   const s = await requireSession();
   if (!canWrite(s.role, MODULES.CRM)) return { error: "forbidden" };
 
@@ -314,7 +314,11 @@ export async function enrollLeadToGroup(leadId: string, groupId: string): Promis
   if (lead.groupId === groupId && lead.stage === "WON") {
     return { ok: true, groupName: group.name, editsLeft: Math.max(0, 1 - lead.enrollEditCount) };
   }
-  if (group._count.students >= group.capacity) return { error: "group_full" };
+  if (group._count.students >= group.capacity) {
+    if (!raiseCapacity) return { error: "group_full" };
+    await prisma.group.update({ where: { id: groupId }, data: { capacity: group._count.students + 1 } });
+    await writeAudit({ actorId: s.userId, action: "UPDATE", entityType: "Group", entityId: groupId, oldValue: { capacity: group.capacity }, newValue: { capacity: group._count.students + 1 }, reason: "Guruh to'lgan, lid yo'naltirilganda sig'im oshirildi" });
+  }
 
   const studentId = await applyEnrollment(lead, groupId);
 
