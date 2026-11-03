@@ -5,6 +5,7 @@ import bcrypt from "bcryptjs";
 import { ROLES, type Locale } from "./constants";
 import { prisma } from "./db";
 import { instanceBlockState, isDevPanel } from "./instance";
+import { normalizePassword } from "./credentials";
 
 const COOKIE = "gl_session";
 const secret = new TextEncoder().encode(
@@ -24,6 +25,12 @@ export function hashPassword(plain: string): Promise<string> {
 }
 export function verifyPassword(plain: string, hash: string): Promise<boolean> {
   return bcrypt.compare(plain, hash);
+}
+
+export async function verifyPasswordInput(input: string, hash: string): Promise<boolean> {
+  const clean = normalizePassword(input);
+  if (clean && (await verifyPassword(clean, hash))) return true;
+  return input !== clean && verifyPassword(input, hash);
 }
 
 export async function createSession(user: SessionUser): Promise<void> {

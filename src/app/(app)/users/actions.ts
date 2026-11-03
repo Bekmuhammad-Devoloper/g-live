@@ -6,6 +6,7 @@ import { requireSession, hashPassword } from "@/lib/auth";
 import { ROLES, ROLE_LABELS, label, isRopPosition, parseMoney } from "@/lib/constants";
 import { tr } from "@/lib/tr";
 import { writeAudit } from "@/lib/audit";
+import { archivedEmailError, isValidStaffEmail, normalizeLogin, normalizePassword, staffEmailError } from "@/lib/credentials";
 import { MANAGEMENT_ROLES, defaultPositionFor } from "./positions";
 
 const p2 = (n: number) => String(n).padStart(2, "0");
@@ -54,9 +55,9 @@ export async function createStaff(fd: FormData): Promise<StaffResult> {
   const ism = String(fd.get("ism") || "").trim();
   const familiya = String(fd.get("familiya") || "").trim();
   const fullName = `${ism} ${familiya}`.trim();
-  const email = String(fd.get("email") || "").trim().toLowerCase();
+  const email = normalizeLogin(fd.get("email"));
   const phone = String(fd.get("phone") || "").trim() || null;
-  const password = String(fd.get("password") || "");
+  const password = normalizePassword(fd.get("password"));
   const position = String(fd.get("position") || "").trim();
   const branchId = String(fd.get("branchId") || "") || null;
   const gender = ["MALE", "FEMALE"].includes(String(fd.get("gender"))) ? String(fd.get("gender")) : null;
@@ -66,7 +67,7 @@ export async function createStaff(fd: FormData): Promise<StaffResult> {
   if (fiksa === null) return { error: tr(s.locale, { uz: "Summa juda katta (eng ko'pi 1 mlrd so'm) — nollar sonini tekshiring", ru: "Сумма слишком велика (макс. 1 млрд сум) — проверьте количество нулей", en: "Amount too large (max 1 billion) — check the number of zeros", de: "Betrag zu groß (max. 1 Mrd.) — Anzahl der Nullen prüfen" }) };
 
   if (ism.length < 2) return { error: tr(s.locale, { uz: "Ism kamida 2 ta harf bo'lsin", ru: "Имя должно содержать не менее 2 букв", en: "First name must be at least 2 letters", de: "Der Vorname muss mindestens 2 Buchstaben enthalten" }) };
-  if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) return { error: tr(s.locale, { uz: "Email noto'g'ri", ru: "Неверный email", en: "Invalid email", de: "Ungültige E-Mail" }) };
+  if (!isValidStaffEmail(email)) return { error: staffEmailError(s.locale) };
   if (password.length < 4) return { error: tr(s.locale, { uz: "Parol kamida 4 ta belgi bo'lsin", ru: "Пароль должен содержать не менее 4 символов", en: "Password must be at least 4 characters", de: "Das Passwort muss mindestens 4 Zeichen enthalten" }) };
   if (!position) return { error: tr(s.locale, { uz: "Vazifa tanlanmadi", ru: "Должность не выбрана", en: "Position not selected", de: "Position nicht ausgewählt" }) };
   const role = roleForPosition(position);
@@ -76,9 +77,10 @@ export async function createStaff(fd: FormData): Promise<StaffResult> {
 
   const exists = await prisma.user.findUnique({
     where: { email },
-    select: { id: true, fullName: true, branchId: true, branch: { select: { name: true } }, branches: { select: { branchId: true } } },
+    select: { id: true, fullName: true, isActive: true, branchId: true, branch: { select: { name: true } }, branches: { select: { branchId: true } } },
   });
   if (exists) {
+    if (!exists.isActive) return { error: archivedEmailError(s.locale, exists.fullName) };
     if (!branchId) return { error: tr(s.locale, { uz: "Bu email allaqachon mavjud", ru: "Этот email уже существует", en: "This email already exists", de: "Diese E-Mail existiert bereits" }) };
     if (exists.branchId === branchId || exists.branches.some((b) => b.branchId === branchId)) {
       return { error: tr(s.locale, { uz: "Bu xodim shu filialda allaqachon bor", ru: "Этот сотрудник уже есть в этом филиале", en: "This staff member is already in this branch", de: "Dieser Mitarbeiter ist bereits in dieser Filiale" }) };
@@ -92,10 +94,10 @@ export async function createStaff(fd: FormData): Promise<StaffResult> {
     return {
       ok: true,
       notice: tr(s.locale, {
-        uz: `${exists.fullName} allaqachon ro'yxatda${from ? ` («${from}»)` : ""}. Endi «${target?.name ?? ""}»ga ham biriktirildi — login va paroli o'zgarmadi.`,
-        ru: `${exists.fullName} уже есть в списке${from ? ` («${from}»)` : ""}. Теперь также прикреплён к «${target?.name ?? ""}» — логин и пароль не изменились.`,
-        en: `${exists.fullName} is already in the list${from ? ` (${from})` : ""}. Now also assigned to ${target?.name ?? ""} — login and password are unchanged.`,
-        de: `${exists.fullName} ist bereits in der Liste${from ? ` (${from})` : ""}. Jetzt auch ${target?.name ?? ""} zugeordnet — Login und Passwort bleiben gleich.`,
+        uz: `${exists.fullName} allaqachon ro'yxatda${from ? ` («${from}»)` : ""}. Endi «${target?.name ?? ""}»ga ham biriktirildi — login va paroli o'zgarmadi (kiritilgan yangi parol saqlanmadi). Parolni xodim kartasidagi «Tahrirlash» orqali o'zgartiring.`,
+        ru: `${exists.fullName} уже есть в списке${from ? ` («${from}»)` : ""}. Теперь также прикреплён к «${target?.name ?? ""}» — логин и пароль не изменились (введённый пароль не сохранён). Пароль меняется через «Редактировать» в карточке сотрудника.`,
+        en: `${exists.fullName} is already in the list${from ? ` (${from})` : ""}. Now also assigned to ${target?.name ?? ""} — login and password are unchanged (the password you typed was not saved). Change the password via "Edit" on the staff card.`,
+        de: `${exists.fullName} ist bereits in der Liste${from ? ` (${from})` : ""}. Jetzt auch ${target?.name ?? ""} zugeordnet — Login und Passwort bleiben gleich (das eingegebene Passwort wurde nicht gespeichert). Passwort über „Bearbeiten" auf der Mitarbeiterkarte ändern.`,
       }),
     };
   }
@@ -172,7 +174,7 @@ export async function updateStaff(fd: FormData): Promise<StaffResult> {
   const ism = String(fd.get("ism") || "").trim();
   const familiya = String(fd.get("familiya") || "").trim();
   const fullName = `${ism} ${familiya}`.trim();
-  const email = String(fd.get("email") || "").trim().toLowerCase();
+  const email = normalizeLogin(fd.get("email"));
   const phone = String(fd.get("phone") || "").trim() || null;
   const position = String(fd.get("position") || "").trim();
   const branchId = String(fd.get("branchId") || "") || null;
@@ -183,10 +185,10 @@ export async function updateStaff(fd: FormData): Promise<StaffResult> {
   if (fiksa === null) return { error: tr(s.locale, { uz: "Summa juda katta (eng ko'pi 1 mlrd so'm) — nollar sonini tekshiring", ru: "Сумма слишком велика (макс. 1 млрд сум) — проверьте количество нулей", en: "Amount too large (max 1 billion) — check the number of zeros", de: "Betrag zu groß (max. 1 Mrd.) — Anzahl der Nullen prüfen" }) };
 
   if (ism.length < 2) return { error: tr(s.locale, { uz: "Ism kamida 2 ta harf bo'lsin", ru: "Имя должно содержать не менее 2 букв", en: "First name must be at least 2 letters", de: "Der Vorname muss mindestens 2 Buchstaben enthalten" }) };
-  if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) return { error: tr(s.locale, { uz: "Email noto'g'ri", ru: "Неверный email", en: "Invalid email", de: "Ungültige E-Mail" }) };
+  if (email !== cur.email && !isValidStaffEmail(email)) return { error: staffEmailError(s.locale) };
   if (!position) return { error: tr(s.locale, { uz: "Vazifa tanlanmadi", ru: "Должность не выбрана", en: "Position not selected", de: "Position nicht ausgewählt" }) };
 
-  const password = String(fd.get("password") || "").trim();
+  const password = normalizePassword(fd.get("password"));
   const newPassword = password && password !== cur.plainPassword ? password : null;
   if (newPassword && newPassword.length < 4) return { error: tr(s.locale, { uz: "Parol kamida 4 ta belgi bo'lsin", ru: "Пароль должен содержать не менее 4 символов", en: "Password must be at least 4 characters", de: "Das Passwort muss mindestens 4 Zeichen enthalten" }) };
   if (newPassword && !canSetPasswordOf(s, cur)) return { error: tr(s.locale, { uz: "Rahbariyat parolini faqat direktor o'zgartiradi", ru: "Пароль руководства меняет только директор", en: "Only the director can change a management password", de: "Passwörter der Leitung ändert nur der Direktor" }) };
@@ -264,7 +266,7 @@ export async function deleteStaffPermanent(id: string): Promise<{ ok?: boolean; 
 export async function setUserPassword(userId: string, newPassword: string): Promise<{ ok: boolean; error?: string }> {
   const s = await requireSession();
   if (!can(s.role)) return { ok: false, error: "forbidden" };
-  const pw = (newPassword || "").trim();
+  const pw = normalizePassword(newPassword);
   if (pw.length < 4) return { ok: false, error: "short" };
   const u = await prisma.user.findUnique({ where: { id: userId }, select: { id: true, role: true } });
   if (!u) return { ok: false, error: "notfound" };

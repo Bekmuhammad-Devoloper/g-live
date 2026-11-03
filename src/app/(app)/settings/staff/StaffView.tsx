@@ -1,6 +1,6 @@
 "use client";
 
-import { confirmDelete } from "../../_components/dialogs";
+import { alertDialog, confirmDelete } from "../../_components/dialogs";
 import { useEffect, useMemo, useRef, useState, useTransition } from "react";
 import { createPortal } from "react-dom";
 import { useRouter } from "next/navigation";
@@ -124,7 +124,8 @@ function StaffDrawer({ locale, edit, roleOptions, sipOptions, onClose, onSaved }
     const fd = new FormData(e.currentTarget);
     start(async () => {
       const r = edit ? await updateStaff(fd) : await createStaff(fd);
-      if (r.ok) onSaved(edit ? tr(locale, { uz: "Saqlandi", ru: "Сохранено", en: "Saved", de: "Gespeichert" }) : tr(locale, { uz: "Xodim qo'shildi", ru: "Сотрудник добавлен", en: "Staff member added", de: "Mitarbeiter hinzugefügt" }));
+      if (r.ok && r.notice) { onSaved(tr(locale, { uz: "Filialga biriktirildi", ru: "Прикреплён к филиалу", en: "Assigned to branch", de: "Der Filiale zugeordnet" })); void alertDialog(r.notice); }
+      else if (r.ok) onSaved(edit ? tr(locale, { uz: "Saqlandi", ru: "Сохранено", en: "Saved", de: "Gespeichert" }) : tr(locale, { uz: "Xodim qo'shildi", ru: "Сотрудник добавлен", en: "Staff member added", de: "Mitarbeiter hinzugefügt" }));
       else setError(r.error ?? tr(locale, { uz: "Xatolik", ru: "Ошибка", en: "Error", de: "Fehler" }));
     });
   };

@@ -9,6 +9,7 @@ import { tr } from "@/lib/tr";
 import { writeAudit } from "@/lib/audit";
 import { notify } from "@/lib/notify";
 import { claimSipExtension } from "@/lib/sipAssign";
+import { isValidStaffEmail, normalizeLogin, normalizePassword, staffEmailError } from "@/lib/credentials";
 
 export interface OpResult {
   ok?: boolean;
@@ -46,14 +47,14 @@ export async function createOperator(fd: FormData): Promise<OpResult> {
   }
 
   const fullName = txt(fd, "fullName");
-  const email = txt(fd, "email").toLowerCase();
+  const email = normalizeLogin(fd.get("email"));
   const phone = txt(fd, "phone") || null;
-  const password = String(fd.get("password") ?? "");
+  const password = normalizePassword(fd.get("password"));
   const fiksa = numOf(fd.get("fiksa"));
   const kpiBonus = numOf(fd.get("kpiBonus"));
 
   if (fullName.length < 3) return { error: tr(s.locale, { uz: "F.I.Sh. kamida 3 ta harf bo'lsin", ru: "Ф.И.О. — минимум 3 буквы", en: "Full name must be at least 3 letters", de: "Der vollständige Name muss mindestens 3 Buchstaben haben" }) };
-  if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) return { error: tr(s.locale, { uz: "Email noto'g'ri", ru: "Неверный email", en: "Invalid email", de: "Ungültige E-Mail" }) };
+  if (!isValidStaffEmail(email)) return { error: staffEmailError(s.locale) };
   if (password.length < 4) return { error: tr(s.locale, { uz: "Parol kamida 4 ta belgi bo'lsin", ru: "Пароль — минимум 4 символа", en: "Password must be at least 4 characters", de: "Das Passwort muss mindestens 4 Zeichen haben" }) };
 
   const exists = await prisma.user.findUnique({ where: { email }, select: { id: true } });
@@ -91,7 +92,7 @@ export async function updateOperator(fd: FormData): Promise<OpResult> {
   const id = txt(fd, "id");
   const fullName = txt(fd, "fullName");
   const phone = txt(fd, "phone") || null;
-  const password = String(fd.get("password") ?? "");
+  const password = normalizePassword(fd.get("password"));
   const fiksa = numOf(fd.get("fiksa"));
   const kpiBonus = numOf(fd.get("kpiBonus"));
 

@@ -8,39 +8,48 @@ import { writeAudit } from "@/lib/audit";
 import { tr } from "@/lib/tr";
 import { getBrand } from "@/lib/brand";
 import { claimSipExtension } from "@/lib/sipAssign";
+import { archivedEmailError, isValidStaffEmail, normalizeLogin, normalizePassword, staffEmailError } from "@/lib/credentials";
 
 const CAN = [ROLES.DIRECTOR, ROLES.ADMIN, ROLES.DEPUTY_DIRECTOR];
 const can = (r: string) => CAN.includes(r as never);
 const CAN_DELETE_STAFF = [ROLES.DIRECTOR, ROLES.DEPUTY_DIRECTOR];
 const canDelete = (r: string) => CAN_DELETE_STAFF.includes(r as never);
 const STAFF_ROLES = [ROLES.OPERATOR, ROLES.ROP, ROLES.MANAGER, ROLES.DEPUTY_DIRECTOR, ROLES.DIRECTOR, ROLES.ADMIN, ROLES.TEACHER];
-const emailOk = (e: string) => /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(e);
 
-export type State = { ok?: boolean; error?: string };
+export type State = { ok?: boolean; error?: string; notice?: string };
 
 export async function createStaff(fd: FormData): Promise<State> {
   const s = await requireSession();
   if (!can(s.role)) return { error: tr(s.locale, { uz: "Ruxsat yo'q", ru: "Нет доступа", en: "No permission", de: "Keine Berechtigung" }) };
 
   const fullName = String(fd.get("fullName") || "").trim();
-  const email = String(fd.get("email") || "").trim().toLowerCase();
+  const email = normalizeLogin(fd.get("email"));
   const phone = String(fd.get("phone") || "").trim() || null;
   const position = String(fd.get("position") || "").trim() || null;
-  const password = String(fd.get("password") || "");
+  const password = normalizePassword(fd.get("password"));
   const role = String(fd.get("role") || "");
 
   if (fullName.length < 3) return { error: tr(s.locale, { uz: "F.I.Sh. kamida 3 ta harf bo'lsin", ru: "Ф.И.О. — не менее 3 букв", en: "Full name must be at least 3 characters", de: "Der Name muss mindestens 3 Zeichen lang sein" }) };
-  if (!emailOk(email)) return { error: tr(s.locale, { uz: "Email noto'g'ri", ru: "Неверный email", en: "Invalid email", de: "Ungültige E-Mail" }) };
+  if (!isValidStaffEmail(email)) return { error: staffEmailError(s.locale as Locale) };
   if (password.length < 4) return { error: tr(s.locale, { uz: "Parol kamida 4 ta belgi bo'lsin", ru: "Пароль должен быть не менее 4 символов", en: "Password must be at least 4 characters", de: "Das Passwort muss mindestens 4 Zeichen lang sein" }) };
   if (!STAFF_ROLES.includes(role as never)) return { error: tr(s.locale, { uz: "Rol tanlanmagan", ru: "Роль не выбрана", en: "Role not selected", de: "Keine Rolle ausgewählt" }) };
 
-  const dup = await prisma.user.findUnique({ where: { email }, select: { id: true, branchId: true, branches: { select: { branchId: true } } } });
+  const dup = await prisma.user.findUnique({ where: { email }, select: { id: true, fullName: true, isActive: true, branchId: true, branches: { select: { branchId: true } } } });
   if (dup) {
+    if (!dup.isActive) return { error: archivedEmailError(s.locale as Locale, dup.fullName) };
     if (!s.branchId || dup.branchId === s.branchId || dup.branches.some((b) => b.branchId === s.branchId)) return { error: tr(s.locale, { uz: "Bu email allaqachon mavjud", ru: "Этот email уже существует", en: "This email already exists", de: "Diese E-Mail existiert bereits" }) };
     await prisma.userBranch.create({ data: { userId: dup.id, branchId: s.branchId } });
     await writeAudit({ actorId: s.userId, action: "UPDATE", entityType: "User", entityId: dup.id, newValue: { addBranch: s.branchId }, reason: "Qo'shimcha filialga biriktirildi" });
     revalidatePath("/settings/staff");
-    return { ok: true };
+    return {
+      ok: true,
+      notice: tr(s.locale as Locale, {
+        uz: `${dup.fullName} allaqachon ro'yxatda — endi shu filialga ham biriktirildi. Login va paroli o'zgarmadi (kiritilgan yangi parol saqlanmadi). Parolni xodimni tahrirlab o'zgartiring.`,
+        ru: `${dup.fullName} уже есть в списке — теперь также прикреплён к этому филиалу. Логин и пароль не изменились (введённый пароль не сохранён). Пароль меняется через редактирование сотрудника.`,
+        en: `${dup.fullName} already exists — now also assigned to this branch. Login and password are unchanged (the password you typed was not saved). Change the password by editing the staff member.`,
+        de: `${dup.fullName} existiert bereits — jetzt auch dieser Filiale zugeordnet. Login und Passwort bleiben gleich (das eingegebene Passwort wurde nicht gespeichert). Passwort über Bearbeiten ändern.`,
+      }),
+    };
   }
 
   const claimed = await claimSipExtension(s.locale as Locale, null, String(fd.get("sipExtension") || ""), s.userId);
@@ -62,7 +71,7 @@ export async function updateStaff(fd: FormData): Promise<State> {
   const phone = String(fd.get("phone") || "").trim() || null;
   const position = String(fd.get("position") || "").trim() || null;
   const role = String(fd.get("role") || "");
-  const password = String(fd.get("password") || "");
+  const password = normalizePassword(fd.get("password"));
   if (fullName.length < 3) return { error: tr(s.locale, { uz: "F.I.Sh. kamida 3 ta harf bo'lsin", ru: "Ф.И.О. — не менее 3 букв", en: "Full name must be at least 3 characters", de: "Der Name muss mindestens 3 Zeichen lang sein" }) };
   if (!STAFF_ROLES.includes(role as never)) return { error: tr(s.locale, { uz: "Rol tanlanmagan", ru: "Роль не выбрана", en: "Role not selected", de: "Keine Rolle ausgewählt" }) };
 
@@ -119,12 +128,12 @@ export async function importStaff(rows: { fullName: string; email: string; phone
   const errors: string[] = [];
   for (const [i, r] of rows.entries()) {
     const fullName = (r.fullName || "").trim();
-    const email = (r.email || "").trim().toLowerCase();
+    const email = normalizeLogin(r.email);
     const role = STAFF_ROLES.includes((r.role || "") as never) ? (r.role as string) : ROLES.OPERATOR;
-    if (fullName.length < 3 || !emailOk(email)) { skipped++; errors.push(tr(s.locale, { uz: `${i + 1}-qator: nom yoki email noto'g'ri`, ru: `Строка ${i + 1}: неверное имя или email`, en: `Row ${i + 1}: invalid name or email`, de: `Zeile ${i + 1}: ungültiger Name oder E-Mail` })); continue; }
+    if (fullName.length < 3 || !isValidStaffEmail(email)) { skipped++; errors.push(tr(s.locale, { uz: `${i + 1}-qator: nom yoki email noto'g'ri`, ru: `Строка ${i + 1}: неверное имя или email`, en: `Row ${i + 1}: invalid name or email`, de: `Zeile ${i + 1}: ungültiger Name oder E-Mail` })); continue; }
     if (await prisma.user.findUnique({ where: { email }, select: { id: true } })) { skipped++; continue; }
     await prisma.user.create({
-      data: { fullName, email, phone: (r.phone || "").trim() || null, position: (r.position || "").trim() || null, role, branchId: s.branchId, passwordHash: await hashPassword((r.password || "").trim() || "12345678"), isActive: true },
+      data: { fullName, email, phone: (r.phone || "").trim() || null, position: (r.position || "").trim() || null, role, branchId: s.branchId, passwordHash: await hashPassword(normalizePassword(r.password) || "12345678"), isActive: true },
     });
     created++;
   }

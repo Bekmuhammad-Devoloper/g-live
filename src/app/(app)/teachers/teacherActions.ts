@@ -6,6 +6,7 @@ import { requireSession, hashPassword } from "@/lib/auth";
 import { ROLES, parseMoney } from "@/lib/constants";
 import { writeAudit } from "@/lib/audit";
 import { tr } from "@/lib/tr";
+import { isValidStaffEmail, normalizeLogin, normalizePassword, staffEmailError } from "@/lib/credentials";
 
 function canManage(role: string) {
   return [ROLES.DIRECTOR, ROLES.DEPUTY_DIRECTOR].includes(role as never);
@@ -29,9 +30,9 @@ export async function createTeacher(input: NewTeacherInput): Promise<CreateTeach
   if (!canManage(s.role)) return { ok: false, error: tr(s.locale, { uz: "Ruxsat yo'q", ru: "Нет доступа", en: "No permission", de: "Keine Berechtigung" }) };
 
   const fullName = (input.fullName || "").trim();
-  const email = (input.email || "").trim().toLowerCase();
+  const email = normalizeLogin(input.email);
   const phone = (input.phone || "").trim() || null;
-  const password = input.password || "";
+  const password = normalizePassword(input.password);
   const branchId = input.branchId || null;
   const fiksa = parseMoney(input.fiksa || 0);
   const kpiBonus = parseMoney(input.kpiBonus ?? 200000);
@@ -39,7 +40,7 @@ export async function createTeacher(input: NewTeacherInput): Promise<CreateTeach
   const gender = input.gender === "MALE" || input.gender === "FEMALE" ? input.gender : null;
 
   if (fullName.length < 3) return { ok: false, error: tr(s.locale, { uz: "Ism-familiya kamida 3 ta harf bo'lsin", ru: "Имя и фамилия — не менее 3 букв", en: "Full name must be at least 3 characters", de: "Der Name muss mindestens 3 Zeichen lang sein" }) };
-  if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) return { ok: false, error: tr(s.locale, { uz: "Email noto'g'ri kiritildi", ru: "Email введён неверно", en: "Invalid email address", de: "Ungültige E-Mail-Adresse" }) };
+  if (!isValidStaffEmail(email)) return { ok: false, error: staffEmailError(s.locale) };
   if (password.length < 4) return { ok: false, error: tr(s.locale, { uz: "Parol kamida 4 ta belgi bo'lsin", ru: "Пароль должен быть не менее 4 символов", en: "Password must be at least 4 characters", de: "Das Passwort muss mindestens 4 Zeichen lang sein" }) };
 
   const exists = await prisma.user.findUnique({ where: { email } });
@@ -117,7 +118,7 @@ export async function getTeacherCredentials(teacherId: string): Promise<{ ok: bo
 export async function setTeacherPassword(teacherId: string, newPassword: string): Promise<{ ok: boolean; error?: string }> {
   const s = await requireSession();
   if (!canManage(s.role)) return { ok: false, error: tr(s.locale, { uz: "Ruxsat yo'q", ru: "Нет доступа", en: "No permission", de: "Keine Berechtigung" }) };
-  const pw = (newPassword || "").trim();
+  const pw = normalizePassword(newPassword);
   if (pw.length < 4) return { ok: false, error: tr(s.locale, { uz: "Parol kamida 4 ta belgi bo'lsin", ru: "Пароль должен быть не менее 4 символов", en: "Password must be at least 4 characters", de: "Das Passwort muss mindestens 4 Zeichen lang sein" }) };
   const t = await prisma.user.findUnique({ where: { id: teacherId }, select: { role: true } });
   if (!t || t.role !== ROLES.TEACHER) return { ok: false, error: tr(s.locale, { uz: "O'qituvchi topilmadi", ru: "Преподаватель не найден", en: "Teacher not found", de: "Lehrer nicht gefunden" }) };

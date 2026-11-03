@@ -3,7 +3,9 @@
 import { redirect } from "next/navigation";
 import { z } from "zod";
 import { prisma } from "@/lib/db";
-import { verifyPassword, createSession } from "@/lib/auth";
+import { createSession } from "@/lib/auth";
+import { normalizeLogin } from "@/lib/credentials";
+import { passwordMatches } from "@/lib/loginCheck";
 import { writeAudit } from "@/lib/audit";
 import type { Locale } from "@/lib/constants";
 import { safeNextPath } from "@/lib/lessonLink";
@@ -17,16 +19,23 @@ export type LoginState = { error?: string };
 
 export async function login(_prev: LoginState, formData: FormData): Promise<LoginState> {
   const parsed = schema.safeParse({
-    email: String(formData.get("email") ?? "").trim().toLowerCase(),
+    email: normalizeLogin(formData.get("email")),
     password: String(formData.get("password") ?? ""),
   });
   if (!parsed.success) return { error: "invalid" };
 
   const user = await prisma.user.findUnique({ where: { email: parsed.data.email } });
-  if (!user || !user.isActive) return { error: "invalid" };
+  if (!user) return { error: "invalid" };
+  if (!user.isActive) {
+    await writeAudit({ action: "LOGIN_FAILED", entityType: "User", entityId: user.id, reason: "inactive" });
+    return { error: "invalid" };
+  }
 
-  const ok = await verifyPassword(parsed.data.password, user.passwordHash);
-  if (!ok) return { error: "invalid" };
+  const ok = await passwordMatches(user, parsed.data.password);
+  if (!ok) {
+    await writeAudit({ action: "LOGIN_FAILED", entityType: "User", entityId: user.id, reason: "bad_password" });
+    return { error: "invalid" };
+  }
 
   await prisma.user.update({ where: { id: user.id }, data: { lastLoginAt: new Date() } });
   await writeAudit({ actorId: user.id, action: "LOGIN", entityType: "User", entityId: user.id });

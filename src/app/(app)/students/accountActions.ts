@@ -7,6 +7,7 @@ import { ROLES } from "@/lib/constants";
 import { defaultPassword, freeLogin, translit } from "@/lib/studentLogin";
 import { writeAudit } from "@/lib/audit";
 import { tr } from "@/lib/tr";
+import { normalizeLogin, normalizePassword } from "@/lib/credentials";
 
 export type Account = { login: string; password: string | null; active: boolean };
 export type AccountRes = { ok?: boolean; error?: string; account?: Account };
@@ -81,8 +82,8 @@ export async function saveStudentAccount(studentId: string, loginRaw: string, pa
   const { s, error } = await guard();
   if (error) return { error };
 
-  const login = translit(loginRaw) || loginRaw.trim().toLowerCase();
-  const password = passwordRaw.trim();
+  const login = translit(loginRaw) || normalizeLogin(loginRaw);
+  const password = normalizePassword(passwordRaw);
 
   if (login.length < 3) return { error: tr(s.locale, { uz: "Login kamida 3 ta belgi bo'lsin", ru: "Логин должен быть не менее 3 символов", en: "Login must be at least 3 characters", de: "Der Login muss mindestens 3 Zeichen lang sein" }) };
   if (/\s/.test(login)) return { error: tr(s.locale, { uz: "Loginda bo'shliq bo'lmasin", ru: "Логин не должен содержать пробелов", en: "Login must not contain spaces", de: "Der Login darf keine Leerzeichen enthalten" }) };
