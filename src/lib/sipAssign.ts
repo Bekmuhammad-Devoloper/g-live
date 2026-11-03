@@ -3,9 +3,19 @@ import { prisma } from "./db";
 import { tr } from "./tr";
 import { writeAudit } from "./audit";
 import { ROLES, type Locale } from "./constants";
-import { SIP_EXTENSIONS, SIP_RANGE_LABEL, canonicalSipExtension, parseSipExtension, type SipOption } from "./sip";
+import { DEFAULT_SIP_COUNT, canonicalSipExtension, sipRangeLabel, type SipOption } from "./sip";
 
 export type SipClaim = { sip: string | null } | { error: string };
+
+export function configuredSipExtensions(): string[] {
+  const nums = Object.keys(process.env)
+    .map((k) => /^SIP_OPERATOR(\d+)_PASS$/.exec(k))
+    .filter((m): m is RegExpExecArray => !!m && !!process.env[m[0]])
+    .map((m) => Number(m[1]))
+    .filter((n) => n >= 1);
+  const list = nums.length ? nums : Array.from({ length: DEFAULT_SIP_COUNT }, (_, i) => i + 1);
+  return [...new Set(list)].sort((a, b) => a - b).map((n) => `glive${n}`);
+}
 
 const CAN_RELEASE: string[] = [ROLES.DIRECTOR, ROLES.DEPUTY_DIRECTOR, ROLES.ADMIN];
 export const canReleaseSip = (role: string): boolean => CAN_RELEASE.includes(role);
@@ -29,9 +39,11 @@ export async function claimSipExtension(
   if (!input) return { sip: null };
   if (current && (input === current || (canonicalSipExtension(input) ?? input) === canonicalSipExtension(current))) return { sip: current };
 
-  const sip = parseSipExtension(input);
-  if (!sip) {
-    return { error: tr(locale, { uz: `SIP raqami ${SIP_RANGE_LABEL} dan biri bo'lishi kerak`, ru: `SIP-номер должен быть одним из ${SIP_RANGE_LABEL}`, en: `SIP extension must be one of ${SIP_RANGE_LABEL}`, de: `SIP-Nummer muss eine von ${SIP_RANGE_LABEL} sein` }) };
+  const allowed = configuredSipExtensions();
+  const sip = canonicalSipExtension(input);
+  if (!sip || !allowed.includes(sip)) {
+    const range = sipRangeLabel(allowed);
+    return { error: tr(locale, { uz: `SIP raqami ${range} dan biri bo'lishi kerak`, ru: `SIP-номер должен быть одним из ${range}`, en: `SIP extension must be one of ${range}`, de: `SIP-Nummer muss eine von ${range} sein` }) };
   }
 
   const holders = await holdersOf(sip, userId);
@@ -55,7 +67,7 @@ export async function listSipOptions(): Promise<SipOption[]> {
     where: { sipExtension: { not: null } },
     select: { sipExtension: true, fullName: true, isActive: true },
   });
-  return SIP_EXTENSIONS.map((ext) => {
+  return configuredSipExtensions().map((ext) => {
     const own = holders.filter((h) => canonicalSipExtension(h.sipExtension) === ext);
     const h = own.find((x) => x.isActive) ?? own[0];
     return { ext, owner: h?.fullName ?? null, ownerActive: h?.isActive ?? false };

@@ -2,10 +2,11 @@
 
 import { tr } from "@/lib/tr";
 import type { Locale } from "@/lib/constants";
-import { parseSipExtension, type SipOption } from "@/lib/sip";
+import { canonicalSipExtension, type SipOption } from "@/lib/sip";
 
 export default function SipSelect({ locale, options, current, className, canRelease = true }: { locale: Locale; options: SipOption[]; current?: string | null; className?: string; canRelease?: boolean }) {
-  const canonical = parseSipExtension(current);
+  const ext = canonicalSipExtension(current);
+  const canonical = ext && options.some((o) => o.ext === ext) ? ext : null;
   const invalid = current && !canonical ? current : null;
   return (
     <select name="sipExtension" defaultValue={canonical ?? invalid ?? ""} className={className}>

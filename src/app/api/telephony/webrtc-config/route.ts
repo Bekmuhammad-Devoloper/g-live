@@ -4,7 +4,8 @@ import { tr } from "@/lib/tr";
 import { prisma } from "@/lib/db";
 import { ROLES } from "@/lib/constants";
 import { normalizeExtension, webrtcConfigFor } from "@/lib/asterisk";
-import { SIP_RANGE_LABEL } from "@/lib/sip";
+import { configuredSipExtensions } from "@/lib/sipAssign";
+import { sipRangeLabel } from "@/lib/sip";
 
 const ALLOWED: string[] = [ROLES.OPERATOR, ROLES.ROP, ROLES.MANAGER, ROLES.DEPUTY_DIRECTOR, ROLES.DIRECTOR, ROLES.ADMIN];
 
@@ -28,7 +29,7 @@ export async function GET() {
     return NextResponse.json({ error: "no_extension", message: tr(s.locale, { uz: "Sizga SIP extension biriktirilmagan", ru: "Вам не назначен SIP extension", en: "No SIP extension is assigned to you", de: "Ihnen ist keine SIP-Extension zugewiesen" }) }, { status: 400 });
   }
   if (!normalizeExtension(u.sipExtension)) {
-    return NextResponse.json({ error: "bad_extension", message: tr(s.locale, { uz: `SIP raqami noto'g'ri: "${u.sipExtension}" (faqat ${SIP_RANGE_LABEL})`, ru: `Неверный SIP-номер: "${u.sipExtension}" (только ${SIP_RANGE_LABEL})`, en: `Invalid SIP extension: "${u.sipExtension}" (only ${SIP_RANGE_LABEL})`, de: `Ungültige SIP-Nummer: "${u.sipExtension}" (nur ${SIP_RANGE_LABEL})` }) }, { status: 400 });
+    return NextResponse.json({ error: "bad_extension", message: tr(s.locale, { uz: `SIP raqami noto'g'ri: "${u.sipExtension}" (faqat ${sipRangeLabel(configuredSipExtensions())})`, ru: `Неверный SIP-номер: "${u.sipExtension}" (только ${sipRangeLabel(configuredSipExtensions())})`, en: `Invalid SIP extension: "${u.sipExtension}" (only ${sipRangeLabel(configuredSipExtensions())})`, de: `Ungültige SIP-Nummer: "${u.sipExtension}" (nur ${sipRangeLabel(configuredSipExtensions())})` }) }, { status: 400 });
   }
   const cfg = webrtcConfigFor(u.sipExtension);
   if (!cfg) {

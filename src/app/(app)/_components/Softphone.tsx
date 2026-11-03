@@ -6,7 +6,6 @@ import { createPortal } from "react-dom";
 import type { Locale } from "@/lib/constants";
 import { tr } from "@/lib/tr";
 import { cn } from "@/lib/cn";
-import { SIP_RANGE_LABEL } from "@/lib/sip";
 import { Icon } from "./Icon";
 import { markCalledBack } from "../reports/calls/actions";
 
@@ -801,26 +800,26 @@ function BlockedInfo({ locale, blocked, canConfigure }: { locale: Locale; blocke
   if (code === "no_extension") {
     title = tr(locale, { uz: "SIP raqami biriktirilmagan", ru: "SIP-номер не назначен", en: "No SIP extension assigned", de: "Keine SIP-Nummer zugewiesen" });
     body = tr(locale, {
-      uz: `Sizga telefon raqami (${SIP_RANGE_LABEL}) hali biriktirilmagan. Direktor, o'rinbosar yoki ROP xodim kartangizda SIP raqamini tanlasin.`,
-      ru: `Вам ещё не назначен номер (${SIP_RANGE_LABEL}). Директор, заместитель или РОП должен выбрать SIP-номер в вашей карточке сотрудника.`,
-      en: `No phone extension (${SIP_RANGE_LABEL}) is assigned to you yet. A director, deputy or ROP should pick a SIP extension on your staff card.`,
-      de: `Ihnen ist noch keine Nebenstelle (${SIP_RANGE_LABEL}) zugewiesen. Direktor, Stellvertreter oder ROP muss auf Ihrer Mitarbeiterkarte eine SIP-Nummer wählen.`,
+      uz: "Sizga telefon (SIP) raqami hali biriktirilmagan. Direktor, o'rinbosar yoki ROP xodim kartangizda SIP raqamini tanlasin.",
+      ru: "Вам ещё не назначен SIP-номер. Директор, заместитель или РОП должен выбрать его в вашей карточке сотрудника.",
+      en: "No SIP extension is assigned to you yet. A director, deputy or ROP should pick one on your staff card.",
+      de: "Ihnen ist noch keine SIP-Nummer zugewiesen. Direktor, Stellvertreter oder ROP muss sie auf Ihrer Mitarbeiterkarte wählen.",
     });
   } else if (code === "bad_extension") {
     title = tr(locale, { uz: "SIP raqami noto'g'ri", ru: "Неверный SIP-номер", en: "Invalid SIP extension", de: "Ungültige SIP-Nummer" });
     body = serverMsg + tr(locale, {
-      uz: `Xodim kartasida ${SIP_RANGE_LABEL} dan bo'sh raqamni tanlash kerak.`,
-      ru: `В карточке сотрудника нужно выбрать свободный номер из ${SIP_RANGE_LABEL}.`,
-      en: `Pick a free extension from ${SIP_RANGE_LABEL} on the staff card.`,
-      de: `Auf der Mitarbeiterkarte eine freie Nummer aus ${SIP_RANGE_LABEL} wählen.`,
+      uz: "Xodim kartasida ro'yxatdan bo'sh SIP raqamini tanlash kerak.",
+      ru: "В карточке сотрудника нужно выбрать свободный SIP-номер из списка.",
+      en: "Pick a free SIP extension from the list on the staff card.",
+      de: "Auf der Mitarbeiterkarte eine freie SIP-Nummer aus der Liste wählen.",
     });
   } else if (code === "no_password") {
     title = tr(locale, { uz: "SIP raqami serverda sozlanmagan", ru: "SIP-номер не настроен на сервере", en: "SIP extension not configured on the server", de: "SIP-Nummer auf dem Server nicht eingerichtet" });
     body = serverMsg + tr(locale, {
-      uz: `Bu raqam telefoniya serverida sozlanmagan. Xodim kartasida ${SIP_RANGE_LABEL} dan bo'sh raqamni tanlang yoki dasturchiga murojaat qiling.`,
-      ru: `Этот номер не настроен на сервере телефонии. Выберите свободный номер из ${SIP_RANGE_LABEL} в карточке сотрудника или обратитесь к разработчику.`,
-      en: `This extension is not set up on the telephony server. Pick a free one from ${SIP_RANGE_LABEL} on the staff card or contact the developer.`,
-      de: `Diese Nummer ist auf dem Telefonieserver nicht eingerichtet. Auf der Mitarbeiterkarte eine freie aus ${SIP_RANGE_LABEL} wählen oder den Entwickler kontaktieren.`,
+      uz: "Bu raqam telefoniya serverida sozlanmagan. Xodim kartasida ro'yxatdan bo'sh SIP raqamini tanlang yoki dasturchiga murojaat qiling.",
+      ru: "Этот номер не настроен на сервере телефонии. Выберите свободный SIP-номер из списка в карточке сотрудника или обратитесь к разработчику.",
+      en: "This extension is not set up on the telephony server. Pick a free SIP extension from the list on the staff card or contact the developer.",
+      de: "Diese Nummer ist auf dem Telefonieserver nicht eingerichtet. Auf der Mitarbeiterkarte eine freie SIP-Nummer aus der Liste wählen oder den Entwickler kontaktieren.",
     });
   } else if (code === "unauthorized") {
     title = tr(locale, { uz: "Sessiya tugagan", ru: "Сессия истекла", en: "Session expired", de: "Sitzung abgelaufen" });
