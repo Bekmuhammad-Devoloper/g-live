@@ -20,6 +20,8 @@ import {
   todayISOLocal,
   MATERIALIZE_MAX_AGE_DAYS,
   UNLOCK_HOURS,
+  offPlanReason,
+  type OffPlanReason,
 } from "@/lib/attendanceWindow";
 
 async function canMark(groupId: string): Promise<SessionUser | null> {
@@ -62,6 +64,7 @@ export interface AttendanceWindowInfo {
   lessonsPerMonth?: number | null;
   lessonIndex?: number | null;
   plannedInMonth?: number;
+  offPlanReason?: OffPlanReason | null;
 }
 
 async function materializeAutoAbsent(groupId: string, dateISO: string, closesAt: Date): Promise<void> {
@@ -154,6 +157,7 @@ export async function getGroupAttendance(
       lessonsPerMonth: limit ?? null,
       lessonIndex: plannedIndex >= 0 ? plannedIndex + 1 : null,
       plannedInMonth: planned.length,
+      offPlanReason: offPlan && group ? offPlanReason(dateISO, group.weekdays, limit, group.startDate, group.endDate) : null,
     },
   };
 }
@@ -190,9 +194,9 @@ export async function markStudentAttendance(
   dateISO: string,
   studentId: string,
   status: string,
-): Promise<{ ok: boolean; cleared?: boolean; blocked?: boolean; daysUnpaid?: number; closed?: boolean; future?: boolean; closesAtLabel?: string; notLessonDay?: boolean }> {
+): Promise<{ ok: boolean; cleared?: boolean; blocked?: boolean; daysUnpaid?: number; closed?: boolean; future?: boolean; closesAtLabel?: string; notLessonDay?: boolean; forbidden?: boolean }> {
   const s = await canMark(groupId);
-  if (!s) return { ok: false };
+  if (!s) return { ok: false, forbidden: true };
   if (!ALLOWED.includes(status)) return { ok: false };
   if (!isValidDateISO(dateISO)) return { ok: false };
 
@@ -230,16 +234,16 @@ export async function markStudentAttendance(
 export async function markAllPresent(
   groupId: string,
   dateISO: string,
-): Promise<{ ok: boolean; added?: number; skippedBlocked?: number; closed?: boolean; future?: boolean; closesAtLabel?: string; notLessonDay?: boolean }> {
+): Promise<{ ok: boolean; added?: number; skippedBlocked?: number; closed?: boolean; future?: boolean; closesAtLabel?: string; notLessonDay?: boolean; forbidden?: boolean }> {
   const s = await canMark(groupId);
-  if (!s) return { ok: false };
+  if (!s) return { ok: false, forbidden: true };
   if (!isValidDateISO(dateISO)) return { ok: false };
 
   const lock = await lockCheck(s, groupId, dateISO);
   if (lock) return { ok: false, ...lock };
   if (await planCheck(groupId, dateISO)) return { ok: false, notLessonDay: true };
 
-  const group = await prisma.group.findUnique({ where: { id: groupId }, include: { students: { select: { studentId: true } } } });
+  const group = await prisma.group.findUnique({ where: { id: groupId }, include: { students: { where: { isActive: true }, select: { studentId: true } } } });
   if (!group) return { ok: false };
   const lesson = await findOrCreateLesson(groupId, dateISO);
   const marked = await prisma.attendance.findMany({ where: { lessonId: lesson.id }, select: { studentId: true } });

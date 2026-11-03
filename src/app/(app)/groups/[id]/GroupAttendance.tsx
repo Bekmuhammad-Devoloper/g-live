@@ -162,12 +162,33 @@ function DayAttendance({ groupId, students, locale }: { groupId: string; student
         <div className="mb-3 flex items-center gap-2 rounded-lg border border-slate-200 bg-slate-50 px-3 py-2 text-sm text-slate-600 dark:border-white/10 dark:bg-white/[0.04] dark:text-slate-300">
           <Icon name="calendar" className="h-4 w-4 shrink-0 text-slate-400" />
           <span>
-            {tr(locale, {
-              uz: `Bu kun dars kuni emas: shu oyda rejadagi ${win.lessonsPerMonth ?? win.plannedInMonth ?? ""} ta dars kuni to'lgan. Kalendar bo'yicha ortiqcha kun dars hisoblanmaydi.`,
-              ru: `Этот день не учебный: в этом месяце запланированные ${win.lessonsPerMonth ?? win.plannedInMonth ?? ""} уроков уже распределены. Лишний календарный день уроком не считается.`,
-              en: `Not a lesson day: this month's planned ${win.lessonsPerMonth ?? win.plannedInMonth ?? ""} lesson days are already used. The extra calendar day does not count as a lesson.`,
-              de: `Kein Unterrichtstag: die geplanten ${win.lessonsPerMonth ?? win.plannedInMonth ?? ""} Unterrichtstage dieses Monats sind vergeben. Der zusätzliche Kalendertag zählt nicht als Unterricht.`,
-            })}
+            {win.offPlanReason === "notWeekday"
+              ? tr(locale, {
+                  uz: "Bu kun dars kuni emas: guruh jadvalidagi hafta kunlariga kirmaydi. Dars bo'lgan bo'lsa, administrator guruhni tahrirlab hafta kunlarini to'g'rilasin.",
+                  ru: "Этот день не учебный: не входит в дни недели по расписанию группы. Если урок был, администратор должен исправить дни недели в настройках группы.",
+                  en: "Not a lesson day: it is not one of the group's scheduled weekdays. If a lesson took place, an administrator should fix the weekdays in the group settings.",
+                  de: "Kein Unterrichtstag: Der Tag gehört nicht zu den Wochentagen der Gruppe. Falls Unterricht stattfand, sollte ein Administrator die Wochentage der Gruppe korrigieren.",
+                })
+              : win.offPlanReason === "beforeStart"
+                ? tr(locale, {
+                    uz: "Bu kun dars kuni emas: guruhning boshlanish sanasidan oldin. Guruh oldinroq boshlangan bo'lsa, administrator boshlanish sanasini to'g'rilasin.",
+                    ru: "Этот день не учебный: он раньше даты начала группы. Если группа начала раньше, администратор должен исправить дату начала.",
+                    en: "Not a lesson day: it is before the group's start date. If the group started earlier, an administrator should fix the start date.",
+                    de: "Kein Unterrichtstag: Der Tag liegt vor dem Startdatum der Gruppe. Falls die Gruppe früher begann, sollte ein Administrator das Startdatum korrigieren.",
+                  })
+                : win.offPlanReason === "afterEnd"
+                  ? tr(locale, {
+                      uz: "Bu kun dars kuni emas: guruhning tugash sanasi o'tib ketgan. Guruh davom etayotgan bo'lsa, administrator tugash sanasini uzaytirsin.",
+                      ru: "Этот день не учебный: дата окончания группы уже прошла. Если группа продолжается, администратор должен продлить дату окончания.",
+                      en: "Not a lesson day: the group's end date has passed. If the group continues, an administrator should extend the end date.",
+                      de: "Kein Unterrichtstag: Das Enddatum der Gruppe ist überschritten. Falls die Gruppe weiterläuft, sollte ein Administrator das Enddatum verlängern.",
+                    })
+                  : tr(locale, {
+                      uz: `Bu kun dars kuni emas: shu oyda rejadagi ${win.lessonsPerMonth ?? win.plannedInMonth ?? ""} ta dars kuni to'lgan. Kalendar bo'yicha ortiqcha kun dars hisoblanmaydi.`,
+                      ru: `Этот день не учебный: в этом месяце запланированные ${win.lessonsPerMonth ?? win.plannedInMonth ?? ""} уроков уже распределены. Лишний календарный день уроком не считается.`,
+                      en: `Not a lesson day: this month's planned ${win.lessonsPerMonth ?? win.plannedInMonth ?? ""} lesson days are already used. The extra calendar day does not count as a lesson.`,
+                      de: `Kein Unterrichtstag: die geplanten ${win.lessonsPerMonth ?? win.plannedInMonth ?? ""} Unterrichtstage dieses Monats sind vergeben. Der zusätzliche Kalendertag zählt nicht als Unterricht.`,
+                    })}
           </span>
         </div>
       )}

@@ -53,7 +53,7 @@ export async function updateGroup(_prev: FormState, formData: FormData): Promise
 
   const startDateRaw = String(formData.get("startDate") ?? "");
   const endDateRaw = String(formData.get("endDate") ?? "");
-  const teacherId = String(formData.get("teacherId") ?? "").trim() || null;
+  const teacherId = formData.has("teacherId") ? String(formData.get("teacherId") ?? "").trim() || null : existing.teacherId;
   const levelCode = String(formData.get("levelCode") ?? "").trim() || null;
   const colorRaw = String(formData.get("color") ?? "").trim();
   const color = /^#[0-9a-fA-F]{6}$/.test(colorRaw) ? colorRaw : null;
@@ -102,8 +102,13 @@ export async function updateGroup(_prev: FormState, formData: FormData): Promise
       room: existing.room,
       capacity: existing.capacity,
       status: existing.status,
+      weekdays: existing.weekdays,
+      startTime: existing.startTime,
+      endTime: existing.endTime,
+      startDate: existing.startDate,
+      endDate: existing.endDate,
     },
-    newValue: { name, programId, teacherId, levelCode, format, room, capacity, status },
+    newValue: { name, programId, teacherId, levelCode, format, room, capacity, status, weekdays, startTime, endTime, startDate: data.startDate, endDate: data.endDate },
   });
   if (status !== existing.status) await syncEduStatuses();
   revalidatePath(`/groups/${id}`);

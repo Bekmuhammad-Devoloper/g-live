@@ -110,6 +110,23 @@ export function isPlannedLessonDay(
   return plannedLessonDays(y, m - 1, weekdays, limit, startDate, endDate).includes(dateISO);
 }
 
+export type OffPlanReason = "notWeekday" | "beforeStart" | "afterEnd" | "capReached";
+
+export function offPlanReason(
+  dateISO: string,
+  weekdays: string | null | undefined,
+  limit: number | null | undefined,
+  startDate?: Date | null,
+  endDate?: Date | null,
+): OffPlanReason | null {
+  if (!weekdays || isPlannedLessonDay(dateISO, weekdays, limit, startDate, endDate)) return null;
+  if (!isLessonDay(dateISO, weekdays)) return "notWeekday";
+  const d = new Date(dateISO + "T12:00:00");
+  if (startDate && d < new Date(startDate.getFullYear(), startDate.getMonth(), startDate.getDate())) return "beforeStart";
+  if (endDate && d > new Date(endDate.getFullYear(), endDate.getMonth(), endDate.getDate(), 23, 59)) return "afterEnd";
+  return "capReached";
+}
+
 export async function lessonLockState(lessonId: string): Promise<{
   closed: boolean;
   unlocked: boolean;

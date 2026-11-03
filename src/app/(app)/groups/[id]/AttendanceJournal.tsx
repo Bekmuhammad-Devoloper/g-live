@@ -69,11 +69,13 @@ export function AttendanceJournal({ groupId, students, locale, readOnly = false 
   const isCurrent = ym.y === now.getFullYear() && ym.m === now.getMonth();
   const dayLabel = (iso: string) => { const [, mm, dd] = iso.split("-").map(Number); return `${dd} ${(MONTHS[locale] ?? MONTHS.uz)[mm - 1]}`; };
 
-  const deny = (r: { closed?: boolean; future?: boolean; notLessonDay?: boolean; blocked?: boolean; daysUnpaid?: number }, name: string) => {
+  const deny = (r: { closed?: boolean; future?: boolean; notLessonDay?: boolean; blocked?: boolean; daysUnpaid?: number; forbidden?: boolean }, name: string) => {
     if (r.blocked) setNotice({ tone: "rose", text: L(`${name} — ${r.daysUnpaid ?? 0} kundan beri to'lov qilinmagan. Avval to'lovni qabul qiling.`, `${name} — нет оплаты уже ${r.daysUnpaid ?? 0} дн. Сначала примите оплату.`, `${name} — no payment for ${r.daysUnpaid ?? 0} days. Accept payment first.`, `${name} — seit ${r.daysUnpaid ?? 0} Tagen keine Zahlung. Bitte zuerst die Zahlung erfassen.`) });
     else if (r.future) setNotice({ tone: "amber", text: L("Kelajak sanaga davomat oldindan belgilanmaydi.", "Будущую дату отметить заранее нельзя.", "A future date cannot be pre-marked.", "Zukünftiges Datum kann nicht vorab markiert werden.") });
     else if (r.notLessonDay) setNotice({ tone: "amber", text: L("Bu kun dars kuni emas.", "Это не учебный день.", "Not a lesson day.", "Kein Unterrichtstag.") });
-    else setNotice({ tone: "rose", text: L("Bu kun davomati yopilgan — menejer yoki direktor ruxsat berishi kerak.", "Посещаемость этого дня закрыта — нужно разрешение.", "This day is closed — a manager or director must unlock it.", "Dieser Tag ist geschlossen — Freischaltung erforderlich.") });
+    else if (r.forbidden) setNotice({ tone: "rose", text: L("Bu guruhda davomat qilish huquqingiz yo'q — guruh o'qituvchisi sifatida boshqa xodim belgilangan.", "У вас нет права отмечать посещаемость в этой группе — преподавателем группы указан другой сотрудник.", "You cannot mark attendance in this group — another staff member is set as its teacher.", "Sie dürfen in dieser Gruppe keine Anwesenheit erfassen — ein anderer Mitarbeiter ist als Lehrer eingetragen.") });
+    else if (r.closed) setNotice({ tone: "rose", text: L("Bu kun davomati yopilgan — menejer yoki direktor ruxsat berishi kerak.", "Посещаемость этого дня закрыта — нужно разрешение.", "This day is closed — a manager or director must unlock it.", "Dieser Tag ist geschlossen — Freischaltung erforderlich.") });
+    else setNotice({ tone: "rose", text: L("Saqlanmadi — sahifani yangilab qayta urinib ko'ring.", "Не сохранено — обновите страницу и попробуйте снова.", "Not saved — reload the page and try again.", "Nicht gespeichert — Seite neu laden und erneut versuchen.") });
   };
 
   const setMark = (date: string, studentId: string, status: string) => {
@@ -213,7 +215,7 @@ export function AttendanceJournal({ groupId, students, locale, readOnly = false 
                         ) : (
                           <button
                             type="button"
-                            onClick={(e) => { e.stopPropagation(); if (readOnly) return; setDayMenu(null); if (!d.editable) { deny({ future: d.future }, s.name); return; } setMenu(open ? null : { date: d.date, studentId: s.id }); }}
+                            onClick={(e) => { e.stopPropagation(); if (readOnly) return; setDayMenu(null); if (!d.editable) { deny({ future: d.future, closed: !d.future }, s.name); return; } setMenu(open ? null : { date: d.date, studentId: s.id }); }}
                             className={cn("inline-flex h-6 min-w-[52px] items-center justify-center rounded-md px-1.5 text-[10.5px] font-semibold transition",
                               st ? STATUS_STYLE[st] : d.editable ? "border border-slate-200 text-transparent hover:border-brand-400 dark:border-slate-700" : "border border-dashed border-slate-200 text-transparent dark:border-slate-800",
                               !d.editable && st && "opacity-80")}
