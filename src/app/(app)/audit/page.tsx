@@ -34,7 +34,7 @@ const ENTITY_LABEL: Record<string, Tr> = {
   Attendance: { uz: "Davomat", ru: "Посещаемость", en: "Attendance", de: "Anwesenheit" }, Certificate: { uz: "Sertifikat", ru: "Сертификат", en: "Certificate", de: "Zertifikat" }, Call: { uz: "Qo'ng'iroq", ru: "Звонок", en: "Call", de: "Anruf" }, Notification: { uz: "Bildirishnoma", ru: "Уведомление", en: "Notification", de: "Benachrichtigung" },
 };
 const ACTION_LABEL: Record<string, Tr> = {
-  CREATE: { uz: "Yaratildi", ru: "Создано", en: "Created", de: "Erstellt" }, UPDATE: { uz: "O'zgartirildi", ru: "Изменено", en: "Updated", de: "Aktualisiert" }, DELETE: { uz: "O'chirildi", ru: "Удалено", en: "Deleted", de: "Gelöscht" }, CANCEL: { uz: "Bekor qilindi", ru: "Отменено", en: "Cancelled", de: "Storniert" }, LOGIN: { uz: "Tizimga kirdi", ru: "Вход в систему", en: "Logged in", de: "Angemeldet" },
+  CREATE: { uz: "Yaratildi", ru: "Создано", en: "Created", de: "Erstellt" }, UPDATE: { uz: "O'zgartirildi", ru: "Изменено", en: "Updated", de: "Aktualisiert" }, DELETE: { uz: "O'chirildi", ru: "Удалено", en: "Deleted", de: "Gelöscht" }, CANCEL: { uz: "Bekor qilindi", ru: "Отменено", en: "Cancelled", de: "Storniert" }, LOGIN: { uz: "Tizimga kirdi", ru: "Вход в систему", en: "Logged in", de: "Angemeldet" }, LOGIN_FAILED: { uz: "Kirish rad etildi", ru: "Неудачный вход", en: "Login failed", de: "Anmeldung fehlgeschlagen" },
 };
 const entityLabel = (locale: Locale, t: string) => (ENTITY_LABEL[t] ? tr(locale, ENTITY_LABEL[t]) : t);
 const actionLabel = (locale: Locale, a: string) => (ACTION_LABEL[a] ? tr(locale, ACTION_LABEL[a]) : a);
@@ -44,6 +44,7 @@ const ACTION_TONE: Record<string, string> = {
   DELETE: "text-red-600 dark:text-red-400",
   CANCEL: "text-red-600 dark:text-red-400",
   LOGIN: "text-slate-500 dark:text-slate-400",
+  LOGIN_FAILED: "text-amber-600 dark:text-amber-400",
 };
 const p2 = (n: number) => String(n).padStart(2, "0");
 const fmt = (d: Date) => `${p2(d.getDate())}.${p2(d.getMonth() + 1)}.${d.getFullYear()} ${p2(d.getHours())}:${p2(d.getMinutes())}`;

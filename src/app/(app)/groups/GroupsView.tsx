@@ -381,7 +381,7 @@ function PageBtn({ children, disabled, onClick }: { children: React.ReactNode; d
 
 function editDataOf(g: VGroup): EditGroupData {
   return {
-    id: g.id, name: g.name, programId: g.programId, teacherId: g.teacherId,
+    id: g.id, name: g.name, programId: g.programId, teacherId: g.teacherId, teacherName: g.teacherName,
     levelCode: g.level, color: g.color, format: g.format, onlineLink: g.onlineLink, room: g.room,
     status: g.status, capacity: g.capacity, startDate: g.startDate, endDate: g.endDate,
     weekdays: g.weekdays.length ? g.weekdays.join(",") : null,

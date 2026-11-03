@@ -84,11 +84,7 @@ export default async function GroupDetailPage({ params }: { params: Promise<{ id
   const [programs, teachers, rooms] = full
     ? await Promise.all([
         prisma.program.findMany({ where: { isActive: true }, select: { id: true, name: true }, orderBy: { name: "asc" } }),
-        prisma.user.findMany({
-          where: { OR: [{ AND: [{ role: ROLES.TEACHER }, staffBranchWhere(s)] }, ...(group.teacherId ? [{ id: group.teacherId }] : [])] },
-          select: { id: true, fullName: true },
-          orderBy: { fullName: "asc" },
-        }),
+        prisma.user.findMany({ where: { AND: [{ role: ROLES.TEACHER }, staffBranchWhere(s)] }, select: { id: true, fullName: true }, orderBy: { fullName: "asc" } }),
         prisma.room.findMany({ where: { AND: [{ isActive: true }, branchWhere(s)] }, select: { id: true, name: true, capacity: true }, orderBy: { name: "asc" } }),
       ])
     : [[], [], []];
@@ -98,6 +94,7 @@ export default async function GroupDetailPage({ params }: { params: Promise<{ id
     name: group.name,
     programId: group.programId,
     teacherId: group.teacherId,
+    teacherName: group.teacher?.fullName ?? null,
     levelCode: group.levelCode,
     color: group.color,
     format: group.format,

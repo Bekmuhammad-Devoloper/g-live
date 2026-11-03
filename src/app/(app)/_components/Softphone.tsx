@@ -344,14 +344,16 @@ export default function Softphone({ locale, canConfigure = false }: { locale: Lo
         });
         uaRef.current = ua;
         setStatus("connecting");
-        ua.on("registered", () => { setStatus("registered"); setRegFail(null); primeMic(); });
-        ua.on("unregistered", () => setStatus("connecting"));
+        ua.on("registered", () => { if (cancelled) return; setStatus("registered"); setRegFail(null); primeMic(); });
+        ua.on("unregistered", () => { if (!cancelled) setStatus("connecting"); });
         ua.on("registrationFailed", (e: any) => {
+          if (cancelled) return;
           setStatus("failed");
           setRegFail({ cause: String(e?.cause || ""), code: Number(e?.response?.status_code) || undefined });
           setTimeout(() => { try { if (!cancelled && ua.isConnected() && !ua.isRegistered()) ua.register(); } catch {} }, 5000);
         });
         ua.on("disconnected", () => {
+          if (cancelled) return;
           setStatus("failed");
           setRegFail({ cause: "Connection Error" });
           if (refetchingRef.current) return;
@@ -815,10 +817,10 @@ function BlockedInfo({ locale, blocked, canConfigure }: { locale: Locale; blocke
   } else if (code === "no_password") {
     title = tr(locale, { uz: "SIP raqami serverda sozlanmagan", ru: "SIP-номер не настроен на сервере", en: "SIP extension not configured on the server", de: "SIP-Nummer auf dem Server nicht eingerichtet" });
     body = serverMsg + tr(locale, {
-      uz: "Telefoniya serverida bu raqam uchun parol yo'q — dasturchiga murojaat qiling.",
-      ru: "На сервере телефонии нет пароля для этого номера — обратитесь к разработчику.",
-      en: "The telephony server has no password for this extension — contact the developer.",
-      de: "Auf dem Telefonieserver fehlt das Passwort für diese Nummer — wenden Sie sich an den Entwickler.",
+      uz: `Bu raqam telefoniya serverida sozlanmagan. Xodim kartasida ${SIP_RANGE_LABEL} dan bo'sh raqamni tanlang yoki dasturchiga murojaat qiling.`,
+      ru: `Этот номер не настроен на сервере телефонии. Выберите свободный номер из ${SIP_RANGE_LABEL} в карточке сотрудника или обратитесь к разработчику.`,
+      en: `This extension is not set up on the telephony server. Pick a free one from ${SIP_RANGE_LABEL} on the staff card or contact the developer.`,
+      de: `Diese Nummer ist auf dem Telefonieserver nicht eingerichtet. Auf der Mitarbeiterkarte eine freie aus ${SIP_RANGE_LABEL} wählen oder den Entwickler kontaktieren.`,
     });
   } else if (code === "unauthorized") {
     title = tr(locale, { uz: "Sessiya tugagan", ru: "Сессия истекла", en: "Session expired", de: "Sitzung abgelaufen" });

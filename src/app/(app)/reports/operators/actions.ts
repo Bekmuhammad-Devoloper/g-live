@@ -60,7 +60,7 @@ export async function createOperator(fd: FormData): Promise<OpResult> {
   const exists = await prisma.user.findUnique({ where: { email }, select: { id: true } });
   if (exists) return { error: tr(s.locale, { uz: "Bu email allaqachon mavjud", ru: "Этот email уже существует", en: "This email already exists", de: "Diese E-Mail existiert bereits" }) };
 
-  const claimed = await claimSipExtension(s.locale, null, txt(fd, "sipExtension"), s.userId);
+  const claimed = await claimSipExtension(s.locale, null, txt(fd, "sipExtension"), s);
   if ("error" in claimed) return { error: claimed.error };
   const sipExtension = claimed.sip;
 
@@ -113,7 +113,7 @@ export async function updateOperator(fd: FormData): Promise<OpResult> {
     }
   }
 
-  const claimed = await claimSipExtension(s.locale, id, txt(fd, "sipExtension"), s.userId);
+  const claimed = await claimSipExtension(s.locale, id, txt(fd, "sipExtension"), s, cur.sipExtension);
   if ("error" in claimed) return { error: claimed.error };
   const sipExtension = claimed.sip;
 

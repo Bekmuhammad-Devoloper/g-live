@@ -1,5 +1,5 @@
 import net from "node:net";
-import { parseSipExtension } from "./sip";
+import { canonicalSipExtension } from "./sip";
 
 export function telephonyEnv() {
   const publicHost = process.env.PUBLIC_HOST ?? "";
@@ -31,7 +31,7 @@ export function amiConfigured(): boolean {
 }
 
 export function normalizeExtension(ext: string): string | null {
-  return parseSipExtension(ext);
+  return canonicalSipExtension(ext);
 }
 
 export function operatorPassword(ext: string): string | null {

@@ -6,9 +6,13 @@ export const SIP_RANGE_LABEL = `${SIP_EXTENSIONS[0]}…${SIP_EXTENSIONS[SIP_EXTE
 
 export interface SipOption { ext: string; owner: string | null; ownerActive: boolean }
 
-export function parseSipExtension(raw: string | null | undefined): string | null {
+export function canonicalSipExtension(raw: string | null | undefined): string | null {
   const m = /^(?:glive|operator)\s*(\d+)$/i.exec(String(raw ?? "").trim());
-  if (!m) return null;
-  const ext = `glive${Number(m[1])}`;
-  return SIP_EXTENSIONS.includes(ext) ? ext : null;
+  if (!m || Number(m[1]) < 1) return null;
+  return `glive${Number(m[1])}`;
+}
+
+export function parseSipExtension(raw: string | null | undefined): string | null {
+  const ext = canonicalSipExtension(raw);
+  return ext && SIP_EXTENSIONS.includes(ext) ? ext : null;
 }

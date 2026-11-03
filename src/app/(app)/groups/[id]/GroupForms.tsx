@@ -41,6 +41,7 @@ export type EditGroupData = {
   name: string;
   programId: string;
   teacherId: string | null;
+  teacherName?: string | null;
   levelCode: string | null;
   color: string | null;
   format: string;
@@ -398,6 +399,9 @@ function EditGroupForm({
             <label className={fLabel}>{tr(locale, { uz: "O'qituvchi", ru: "Преподаватель", en: "Teacher", de: "Lehrer" })}</label>
             <select name="teacherId" defaultValue={group.teacherId ?? ""} className={`${input} truncate`}>
               <option value="">—</option>
+              {group.teacherId && !teachers.some((tt) => tt.id === group.teacherId) && (
+                <option value={group.teacherId}>{group.teacherName ?? tr(locale, { uz: "Hozirgi o'qituvchi", ru: "Текущий преподаватель", en: "Current teacher", de: "Aktueller Lehrer" })}</option>
+              )}
               {teachers.map((tt) => <option key={tt.id} value={tt.id}>{tt.fullName}</option>)}
             </select>
           </div>

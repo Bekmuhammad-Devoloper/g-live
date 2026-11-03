@@ -97,10 +97,14 @@ async function main() {
     where: { sipExtension: { not: null } },
     select: { id: true, fullName: true, sipExtension: true },
   });
-  const byExt = new Map(users.map((u) => [String(u.sipExtension), u]));
+  const canonExt = (raw) => {
+    const m = /^(?:glive|operator)\s*(\d+)$/i.exec(String(raw ?? "").trim());
+    return m && Number(m[1]) >= 1 ? `glive${Number(m[1])}` : String(raw ?? "");
+  };
+  const byExt = new Map(users.map((u) => [canonExt(u.sipExtension), u]));
   const extOf = (chan) => {
     const m = /^PJSIP\/([A-Za-z0-9_-]+?)-[0-9a-f]+$/.exec(String(chan || ""));
-    return m ? m[1] : null;
+    return m ? canonExt(m[1]) : null;
   };
 
   const recIndex = recs.map((f) => ({ f, t: recTime(f) })).filter((r) => r.t !== null);

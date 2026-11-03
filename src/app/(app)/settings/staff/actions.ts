@@ -52,7 +52,7 @@ export async function createStaff(fd: FormData): Promise<State> {
     };
   }
 
-  const claimed = await claimSipExtension(s.locale as Locale, null, String(fd.get("sipExtension") || ""), s.userId);
+  const claimed = await claimSipExtension(s.locale as Locale, null, String(fd.get("sipExtension") || ""), s);
   if ("error" in claimed) return { error: claimed.error };
 
   const u = await prisma.user.create({
@@ -75,7 +75,9 @@ export async function updateStaff(fd: FormData): Promise<State> {
   if (fullName.length < 3) return { error: tr(s.locale, { uz: "F.I.Sh. kamida 3 ta harf bo'lsin", ru: "Ф.И.О. — не менее 3 букв", en: "Full name must be at least 3 characters", de: "Der Name muss mindestens 3 Zeichen lang sein" }) };
   if (!STAFF_ROLES.includes(role as never)) return { error: tr(s.locale, { uz: "Rol tanlanmagan", ru: "Роль не выбрана", en: "Role not selected", de: "Keine Rolle ausgewählt" }) };
 
-  const claimed = await claimSipExtension(s.locale as Locale, id, String(fd.get("sipExtension") || ""), s.userId);
+  const cur = await prisma.user.findUnique({ where: { id }, select: { sipExtension: true } });
+  if (!cur) return { error: tr(s.locale, { uz: "Xodim topilmadi", ru: "Сотрудник не найден", en: "Staff member not found", de: "Mitarbeiter nicht gefunden" }) };
+  const claimed = await claimSipExtension(s.locale as Locale, id, String(fd.get("sipExtension") || ""), s, cur.sipExtension);
   if ("error" in claimed) return { error: claimed.error };
 
   await prisma.user.update({

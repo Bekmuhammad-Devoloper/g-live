@@ -3,7 +3,7 @@ import { getSession } from "@/lib/auth";
 import { tr } from "@/lib/tr";
 import { prisma } from "@/lib/db";
 import { ROLES } from "@/lib/constants";
-import { amiOriginate, amiConfigured, normalizeExtension, normalizeUzPhone } from "@/lib/asterisk";
+import { amiOriginate, amiConfigured, normalizeExtension, normalizeUzPhone, operatorPassword } from "@/lib/asterisk";
 import { SIP_RANGE_LABEL } from "@/lib/sip";
 import { writeAudit } from "@/lib/audit";
 
@@ -19,6 +19,7 @@ export async function POST(req: Request) {
   if (!u?.sipExtension) return NextResponse.json({ error: "no_extension", message: tr(s.locale, { uz: "Sizga SIP extension biriktirilmagan", ru: "Вам не назначен SIP extension", en: "No SIP extension is assigned to you", de: "Ihnen ist keine SIP-Extension zugewiesen" }) }, { status: 400 });
   const extension = normalizeExtension(u.sipExtension);
   if (!extension) return NextResponse.json({ error: "bad_extension", message: tr(s.locale, { uz: `SIP raqami noto'g'ri: "${u.sipExtension}" (faqat ${SIP_RANGE_LABEL})`, ru: `Неверный SIP-номер: "${u.sipExtension}" (только ${SIP_RANGE_LABEL})`, en: `Invalid SIP extension: "${u.sipExtension}" (only ${SIP_RANGE_LABEL})`, de: `Ungültige SIP-Nummer: "${u.sipExtension}" (nur ${SIP_RANGE_LABEL})` }) }, { status: 400 });
+  if (!operatorPassword(extension)) return NextResponse.json({ error: "no_password", message: tr(s.locale, { uz: `SIP parol topilmadi (${extension})`, ru: `SIP-пароль не найден (${extension})`, en: `SIP password not found (${extension})`, de: `SIP-Passwort nicht gefunden (${extension})` }) }, { status: 400 });
 
   const body = (await req.json().catch(() => ({}))) as { number?: string; leadId?: string; contactName?: string };
   const number = normalizeUzPhone(String(body.number ?? ""));
