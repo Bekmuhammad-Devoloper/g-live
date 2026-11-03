@@ -3,7 +3,8 @@ import { getSession } from "@/lib/auth";
 import { tr } from "@/lib/tr";
 import { prisma } from "@/lib/db";
 import { ROLES } from "@/lib/constants";
-import { amiOriginate, amiConfigured, normalizeUzPhone } from "@/lib/asterisk";
+import { amiOriginate, amiConfigured, normalizeExtension, normalizeUzPhone } from "@/lib/asterisk";
+import { SIP_RANGE_LABEL } from "@/lib/sip";
 import { writeAudit } from "@/lib/audit";
 
 const ALLOWED: string[] = [ROLES.OPERATOR, ROLES.ROP, ROLES.MANAGER, ROLES.DEPUTY_DIRECTOR, ROLES.DIRECTOR, ROLES.ADMIN];
@@ -16,6 +17,8 @@ export async function POST(req: Request) {
 
   const u = await prisma.user.findUnique({ where: { id: s.userId }, select: { sipExtension: true, fullName: true } });
   if (!u?.sipExtension) return NextResponse.json({ error: "no_extension", message: tr(s.locale, { uz: "Sizga SIP extension biriktirilmagan", ru: "Вам не назначен SIP extension", en: "No SIP extension is assigned to you", de: "Ihnen ist keine SIP-Extension zugewiesen" }) }, { status: 400 });
+  const extension = normalizeExtension(u.sipExtension);
+  if (!extension) return NextResponse.json({ error: "bad_extension", message: tr(s.locale, { uz: `SIP raqami noto'g'ri: "${u.sipExtension}" (faqat ${SIP_RANGE_LABEL})`, ru: `Неверный SIP-номер: "${u.sipExtension}" (только ${SIP_RANGE_LABEL})`, en: `Invalid SIP extension: "${u.sipExtension}" (only ${SIP_RANGE_LABEL})`, de: `Ungültige SIP-Nummer: "${u.sipExtension}" (nur ${SIP_RANGE_LABEL})` }) }, { status: 400 });
 
   const body = (await req.json().catch(() => ({}))) as { number?: string; leadId?: string; contactName?: string };
   const number = normalizeUzPhone(String(body.number ?? ""));
@@ -34,7 +37,7 @@ export async function POST(req: Request) {
     },
   });
 
-  const r = await amiOriginate({ extension: u.sipExtension, number, callerId: u.fullName, callRecordId: call.id });
+  const r = await amiOriginate({ extension, number, callerId: u.fullName, callRecordId: call.id });
   await writeAudit({ actorId: s.userId, action: "CREATE", entityType: "Call", entityId: call.id, newValue: { number, ok: r.ok } });
 
   if (!r.ok) {

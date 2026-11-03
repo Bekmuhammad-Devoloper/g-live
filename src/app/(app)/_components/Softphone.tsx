@@ -6,6 +6,7 @@ import { createPortal } from "react-dom";
 import type { Locale } from "@/lib/constants";
 import { tr } from "@/lib/tr";
 import { cn } from "@/lib/cn";
+import { SIP_RANGE_LABEL } from "@/lib/sip";
 import { Icon } from "./Icon";
 import { markCalledBack } from "../reports/calls/actions";
 
@@ -36,6 +37,27 @@ function causeText(c: string, locale: Locale): string {
   if (t) return tr(locale, t);
   return c ? tr(locale, { uz: "Qo'ng'iroq uzildi: ", ru: "Звонок прерван: ", en: "Call ended: ", de: "Anruf beendet: " }) + c : "";
 }
+interface Blocked { code: string; message: string }
+interface RegFail { cause: string; code?: number }
+
+function regFailText(f: RegFail, locale: Locale): string {
+  const code = f.code ? ` (${f.code})` : "";
+  switch (f.cause) {
+    case "Authentication Error":
+      return tr(locale, { uz: "SIP paroli mos kelmadi — telefoniya serveridagi parol boshqa", ru: "SIP-пароль не подошёл — на сервере телефонии другой пароль", en: "SIP password rejected — the telephony server has a different password", de: "SIP-Passwort abgelehnt — auf dem Telefonieserver ist ein anderes Passwort hinterlegt" }) + code;
+    case "Connection Error":
+      return tr(locale, { uz: "Telefoniya serveriga ulanib bo'lmadi (internet yoki server)", ru: "Не удалось подключиться к серверу телефонии (интернет или сервер)", en: "Could not connect to the telephony server (internet or server)", de: "Keine Verbindung zum Telefonieserver (Internet oder Server)" });
+    case "Request Timeout":
+      return tr(locale, { uz: "Telefoniya serveri javob bermadi", ru: "Сервер телефонии не ответил", en: "The telephony server did not respond", de: "Der Telefonieserver hat nicht geantwortet" });
+    case "Not Found":
+      return tr(locale, { uz: "Bu SIP raqam telefoniya serverida topilmadi", ru: "Этот SIP-номер не найден на сервере телефонии", en: "This SIP extension was not found on the telephony server", de: "Diese SIP-Nummer wurde auf dem Telefonieserver nicht gefunden" }) + code;
+    case "Rejected":
+      return tr(locale, { uz: "Telefoniya serveri ro'yxatdan o'tishni rad etdi", ru: "Сервер телефонии отклонил регистрацию", en: "The telephony server rejected the registration", de: "Der Telefonieserver hat die Registrierung abgelehnt" }) + code;
+    default:
+      return tr(locale, { uz: "Ro'yxatdan o'tib bo'lmadi", ru: "Не удалось зарегистрироваться", en: "Registration failed", de: "Registrierung fehlgeschlagen" }) + (f.cause ? `: ${f.cause}` : "") + code;
+  }
+}
+
 type CallState = "none" | "incoming" | "outgoing" | "active";
 type Tab = "dial" | "history";
 type HistView = "mine" | "missed";
@@ -61,6 +83,8 @@ export default function Softphone({ locale, canConfigure = false }: { locale: Lo
   const [err, setErr] = useState<string | null>(null);
   const [info, setInfo] = useState(false);
   const [ext, setExt] = useState("");
+  const [blocked, setBlocked] = useState<Blocked | null>(null);
+  const [regFail, setRegFail] = useState<RegFail | null>(null);
 
   const [histQ, setHistQ] = useState("");
   const [histLoading, setHistLoading] = useState(false);
@@ -289,13 +313,16 @@ export default function Softphone({ locale, canConfigure = false }: { locale: Lo
             setTimeout(() => { if (!cancelled) setUaEpoch((n) => n + 1); }, 15_000);
             return;
           }
+          const j = await res.json().catch(() => ({}));
+          setBlocked({ code: String(j.error || (res.status === 401 ? "unauthorized" : "server")), message: typeof j.message === "string" ? j.message : "" });
           setStatus("disabled");
           return;
         }
         const cfg = await res.json();
         setExt(cfg.extension || "");
         const wsUrl = location.protocol === "https:" ? cfg.wssUrl : (cfg.wsUrl || cfg.wssUrl);
-        if (!wsUrl || !cfg.domain) { setStatus("disabled"); return; }
+        if (!wsUrl || !cfg.domain) { setBlocked({ code: "server", message: "" }); setStatus("disabled"); return; }
+        setBlocked(null);
         wsUrlRef.current = wsUrl;
         const ice: any[] = [];
         if (cfg.stunServer) ice.push(cfg.stunServer);
@@ -317,14 +344,16 @@ export default function Softphone({ locale, canConfigure = false }: { locale: Lo
         });
         uaRef.current = ua;
         setStatus("connecting");
-        ua.on("registered", () => { setStatus("registered"); primeMic(); });
+        ua.on("registered", () => { setStatus("registered"); setRegFail(null); primeMic(); });
         ua.on("unregistered", () => setStatus("connecting"));
-        ua.on("registrationFailed", () => {
+        ua.on("registrationFailed", (e: any) => {
           setStatus("failed");
+          setRegFail({ cause: String(e?.cause || ""), code: Number(e?.response?.status_code) || undefined });
           setTimeout(() => { try { if (!cancelled && ua.isConnected() && !ua.isRegistered()) ua.register(); } catch {} }, 5000);
         });
         ua.on("disconnected", () => {
           setStatus("failed");
+          setRegFail({ cause: "Connection Error" });
           if (refetchingRef.current) return;
           refetchingRef.current = true;
           setTimeout(async () => {
@@ -399,6 +428,7 @@ export default function Softphone({ locale, canConfigure = false }: { locale: Lo
           window.removeEventListener("focus", revive);
         };
       } catch {
+        setBlocked({ code: "server", message: "" });
         setStatus("disabled");
       }
     })();
@@ -555,24 +585,11 @@ export default function Softphone({ locale, canConfigure = false }: { locale: Lo
           )}
 
           <div className="min-h-[360px] p-4">
+            {status === "failed" && regFail && (
+              <p className="mb-3 rounded-lg bg-amber-500/10 px-3 py-2 text-xs text-amber-200">{regFailText(regFail, locale)}{ext ? ` · ${ext}` : ""}</p>
+            )}
             {status === "disabled" ? (
-              <div className="py-4 text-center">
-                <div className="mx-auto mb-3 grid h-12 w-12 place-items-center rounded-full bg-white/5 text-slate-400"><Icon name="phoneOff" className="h-6 w-6" /></div>
-                <p className="text-sm font-medium text-slate-200">{tr(locale, { uz: "Telefoniya hali sozlanmagan", ru: "Телефония ещё не настроена", en: "Telephony not configured yet", de: "Telefonie noch nicht eingerichtet" })}</p>
-                {canConfigure ? (
-                  <>
-                    <p className="mt-1 text-xs leading-relaxed text-slate-500">{tr(locale, { uz: "Qo'ng'iroqlar uchun Asterisk/WebRTC serverini Sozlamalardan ulang.", ru: "Для звонков подключите Asterisk/WebRTC в настройках.", en: "Connect Asterisk/WebRTC in settings to make calls.", de: "Verbinden Sie Asterisk/WebRTC in den Einstellungen, um Anrufe zu tätigen." })}</p>
-                    <a href="/settings/telephony" className="mt-3 inline-block rounded-lg bg-gradient-to-br from-emerald-500 to-teal-600 px-4 py-2 text-xs font-semibold text-white transition hover:opacity-90">{tr(locale, { uz: "Telefoniya sozlamalari", ru: "Настройки телефонии", en: "Telephony settings", de: "Telefonie-Einstellungen" })}</a>
-                  </>
-                ) : (
-                  <p className="mt-1 text-xs leading-relaxed text-slate-500">{tr(locale, {
-                    uz: "Sizga SIP raqami biriktirilmagan. Administrator yoki ROP'ga murojaat qiling.",
-                    ru: "Вам не назначен SIP-номер. Обратитесь к администратору или РОПу.",
-                    en: "No SIP extension assigned to you. Contact your administrator or ROP.",
-                    de: "Ihnen ist keine SIP-Nebenstelle zugewiesen. Wenden Sie sich an Ihren Administrator oder ROP.",
-                  })}</p>
-                )}
-              </div>
+              <BlockedInfo locale={locale} blocked={blocked} canConfigure={canConfigure} />
             ) : tab === "history" ? (
               <>
                 <div className="mb-3 grid grid-cols-2 gap-1 rounded-xl bg-white/5 p-1">
@@ -770,6 +787,61 @@ function RoundBtn({ active, disabled, onClick, icon, label }: { active: boolean;
     >
       <Icon name={icon} className="h-6 w-6" />
     </button>
+  );
+}
+
+function BlockedInfo({ locale, blocked, canConfigure }: { locale: Locale; blocked: Blocked | null; canConfigure: boolean }) {
+  const code = blocked?.code ?? "server";
+  const serverMsg = blocked?.message ? `${blocked.message}. ` : "";
+  let title: string;
+  let body: string;
+  let showSettings = false;
+  if (code === "no_extension") {
+    title = tr(locale, { uz: "SIP raqami biriktirilmagan", ru: "SIP-номер не назначен", en: "No SIP extension assigned", de: "Keine SIP-Nummer zugewiesen" });
+    body = tr(locale, {
+      uz: `Sizga telefon raqami (${SIP_RANGE_LABEL}) hali biriktirilmagan. Direktor, o'rinbosar yoki ROP xodim kartangizda SIP raqamini tanlasin.`,
+      ru: `Вам ещё не назначен номер (${SIP_RANGE_LABEL}). Директор, заместитель или РОП должен выбрать SIP-номер в вашей карточке сотрудника.`,
+      en: `No phone extension (${SIP_RANGE_LABEL}) is assigned to you yet. A director, deputy or ROP should pick a SIP extension on your staff card.`,
+      de: `Ihnen ist noch keine Nebenstelle (${SIP_RANGE_LABEL}) zugewiesen. Direktor, Stellvertreter oder ROP muss auf Ihrer Mitarbeiterkarte eine SIP-Nummer wählen.`,
+    });
+  } else if (code === "bad_extension") {
+    title = tr(locale, { uz: "SIP raqami noto'g'ri", ru: "Неверный SIP-номер", en: "Invalid SIP extension", de: "Ungültige SIP-Nummer" });
+    body = serverMsg + tr(locale, {
+      uz: `Xodim kartasida ${SIP_RANGE_LABEL} dan bo'sh raqamni tanlash kerak.`,
+      ru: `В карточке сотрудника нужно выбрать свободный номер из ${SIP_RANGE_LABEL}.`,
+      en: `Pick a free extension from ${SIP_RANGE_LABEL} on the staff card.`,
+      de: `Auf der Mitarbeiterkarte eine freie Nummer aus ${SIP_RANGE_LABEL} wählen.`,
+    });
+  } else if (code === "no_password") {
+    title = tr(locale, { uz: "SIP raqami serverda sozlanmagan", ru: "SIP-номер не настроен на сервере", en: "SIP extension not configured on the server", de: "SIP-Nummer auf dem Server nicht eingerichtet" });
+    body = serverMsg + tr(locale, {
+      uz: "Telefoniya serverida bu raqam uchun parol yo'q — dasturchiga murojaat qiling.",
+      ru: "На сервере телефонии нет пароля для этого номера — обратитесь к разработчику.",
+      en: "The telephony server has no password for this extension — contact the developer.",
+      de: "Auf dem Telefonieserver fehlt das Passwort für diese Nummer — wenden Sie sich an den Entwickler.",
+    });
+  } else if (code === "unauthorized") {
+    title = tr(locale, { uz: "Sessiya tugagan", ru: "Сессия истекла", en: "Session expired", de: "Sitzung abgelaufen" });
+    body = tr(locale, { uz: "Sahifani yangilang va qayta kiring.", ru: "Обновите страницу и войдите снова.", en: "Reload the page and sign in again.", de: "Seite neu laden und erneut anmelden." });
+  } else if (code === "forbidden") {
+    title = tr(locale, { uz: "Telefoniya yopiq", ru: "Телефония недоступна", en: "Telephony unavailable", de: "Telefonie nicht verfügbar" });
+    body = tr(locale, { uz: "Sizning lavozimingiz uchun telefoniya ruxsat etilmagan.", ru: "Телефония не разрешена для вашей должности.", en: "Telephony is not allowed for your role.", de: "Telefonie ist für Ihre Rolle nicht erlaubt." });
+  } else {
+    title = tr(locale, { uz: "Telefoniya hali sozlanmagan", ru: "Телефония ещё не настроена", en: "Telephony not configured yet", de: "Telefonie noch nicht eingerichtet" });
+    body = canConfigure
+      ? tr(locale, { uz: "Qo'ng'iroqlar uchun Asterisk/WebRTC serverini Sozlamalardan ulang.", ru: "Для звонков подключите Asterisk/WebRTC в настройках.", en: "Connect Asterisk/WebRTC in settings to make calls.", de: "Verbinden Sie Asterisk/WebRTC in den Einstellungen, um Anrufe zu tätigen." })
+      : tr(locale, { uz: "Telefoniya serveri sozlanmagan. Rahbariyatga murojaat qiling.", ru: "Сервер телефонии не настроен. Обратитесь к руководству.", en: "The telephony server is not configured. Contact management.", de: "Der Telefonieserver ist nicht eingerichtet. Wenden Sie sich an die Leitung." });
+    showSettings = canConfigure;
+  }
+  return (
+    <div className="py-4 text-center">
+      <div className="mx-auto mb-3 grid h-12 w-12 place-items-center rounded-full bg-white/5 text-slate-400"><Icon name="phoneOff" className="h-6 w-6" /></div>
+      <p className="text-sm font-medium text-slate-200">{title}</p>
+      <p className="mt-1 text-xs leading-relaxed text-slate-500">{body}</p>
+      {showSettings && (
+        <a href="/settings/telephony" className="mt-3 inline-block rounded-lg bg-gradient-to-br from-emerald-500 to-teal-600 px-4 py-2 text-xs font-semibold text-white transition hover:opacity-90">{tr(locale, { uz: "Telefoniya sozlamalari", ru: "Настройки телефонии", en: "Telephony settings", de: "Telefonie-Einstellungen" })}</a>
+      )}
+    </div>
   );
 }
 

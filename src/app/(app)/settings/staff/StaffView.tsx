@@ -8,10 +8,11 @@ import { cn } from "@/lib/cn";
 import { tr } from "@/lib/tr";
 import type { Locale } from "@/lib/constants";
 import { Icon } from "../../_components/Icon";
+import SipSelect from "../../_components/SipSelect";
+import type { SipOption } from "@/lib/sip";
 import { createStaff, updateStaff, deleteStaff, inviteStaff, importStaff } from "./actions";
 
 export interface VStaff { id: string; shortId: string; fullName: string; role: string; roleLabel: string; position: string | null; phone: string | null; sipExtension: string | null }
-export interface SipOption { ext: string; owner: string | null; ownerActive: boolean }
 export interface RoleOption { value: string; label: string }
 
 export default function StaffView({ locale, rows, roleOptions, sipOptions = [], currentUserId, canDelete }: { locale: Locale; rows: VStaff[]; roleOptions: RoleOption[]; sipOptions?: SipOption[]; currentUserId: string; canDelete: boolean }) {
@@ -151,19 +152,7 @@ function StaffDrawer({ locale, edit, roleOptions, sipOptions, onClose, onSaved }
           </div>
           <Field label={tr(locale, { uz: "Telefon", ru: "Телефон", en: "Phone", de: "Telefon" })}><input name="phone" defaultValue={edit?.phone ?? ""} placeholder="+998 90 123 45 67" className={inp} /></Field>
           <Field label={tr(locale, { uz: "SIP raqami (telefon)", ru: "SIP-номер (телефон)", en: "SIP extension (phone)", de: "SIP-Nummer (Telefon)" })}>
-            <select name="sipExtension" defaultValue={edit?.sipExtension ?? ""} className={inp}>
-              <option value="">{tr(locale, { uz: "— telefonsiz —", ru: "— без телефона —", en: "— no phone —", de: "— kein Telefon —" })}</option>
-              {sipOptions.map((o) => {
-                const mine = !!edit && o.ext === edit.sipExtension;
-                const takenByActive = !!o.owner && o.ownerActive && !mine;
-                const hint = mine
-                  ? tr(locale, { uz: "hozirgi", ru: "текущий", en: "current", de: "aktuell" })
-                  : o.owner
-                    ? `${o.owner}${o.ownerActive ? "" : ` · ${tr(locale, { uz: "ishdan ketgan, bo'shatiladi", ru: "уволен, освободится", en: "left, will be freed", de: "ausgeschieden, wird frei" })}`}`
-                    : tr(locale, { uz: "bo'sh", ru: "свободен", en: "free", de: "frei" });
-                return <option key={o.ext} value={o.ext} disabled={takenByActive}>{o.ext} — {hint}</option>;
-              })}
-            </select>
+            <SipSelect locale={locale} options={sipOptions} current={edit?.sipExtension} className={inp} />
           </Field>
           <Field label={edit ? tr(locale, { uz: "Yangi parol (ixtiyoriy)", ru: "Новый пароль (необязательно)", en: "New password (optional)", de: "Neues Passwort (optional)" }) : tr(locale, { uz: "Parol", ru: "Пароль", en: "Password", de: "Passwort" })} req={!edit}><input name="password" type="text" required={!edit} placeholder={edit ? tr(locale, { uz: "O'zgartirish uchun kiriting", ru: "Введите, чтобы изменить", en: "Enter to change", de: "Zum Ändern eingeben" }) : tr(locale, { uz: "Kamida 4 ta belgi", ru: "Минимум 4 символа", en: "At least 4 characters", de: "Mindestens 4 Zeichen" })} className={inp} /></Field>
           {error && <div className="rounded-lg bg-rose-50 px-3 py-2 text-sm text-rose-600 dark:bg-rose-500/10 dark:text-rose-400">{error}</div>}

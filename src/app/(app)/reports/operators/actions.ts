@@ -8,6 +8,7 @@ import { TEAM, teamKindOf, type TeamKind } from "./teamKind";
 import { tr } from "@/lib/tr";
 import { writeAudit } from "@/lib/audit";
 import { notify } from "@/lib/notify";
+import { claimSipExtension } from "@/lib/sipAssign";
 
 export interface OpResult {
   ok?: boolean;
@@ -47,7 +48,6 @@ export async function createOperator(fd: FormData): Promise<OpResult> {
   const fullName = txt(fd, "fullName");
   const email = txt(fd, "email").toLowerCase();
   const phone = txt(fd, "phone") || null;
-  const sipExtension = txt(fd, "sipExtension") || null;
   const password = String(fd.get("password") ?? "");
   const fiksa = numOf(fd.get("fiksa"));
   const kpiBonus = numOf(fd.get("kpiBonus"));
@@ -59,10 +59,9 @@ export async function createOperator(fd: FormData): Promise<OpResult> {
   const exists = await prisma.user.findUnique({ where: { email }, select: { id: true } });
   if (exists) return { error: tr(s.locale, { uz: "Bu email allaqachon mavjud", ru: "Этот email уже существует", en: "This email already exists", de: "Diese E-Mail existiert bereits" }) };
 
-  if (sipExtension) {
-    const busy = await prisma.user.findUnique({ where: { sipExtension }, select: { id: true } });
-    if (busy) return { error: tr(s.locale, { uz: "Bu SIP raqam band", ru: "Этот SIP номер занят", en: "This SIP extension is taken", de: "Diese SIP-Nummer ist bereits vergeben" }) };
-  }
+  const claimed = await claimSipExtension(s.locale, null, txt(fd, "sipExtension"), s.userId);
+  if ("error" in claimed) return { error: claimed.error };
+  const sipExtension = claimed.sip;
 
   const u = await prisma.user.create({
     data: {
@@ -80,7 +79,7 @@ export async function createOperator(fd: FormData): Promise<OpResult> {
     },
     select: { id: true },
   });
-  await writeAudit({ actorId: s.userId, action: "CREATE", entityType: "User", entityId: u.id, newValue: { fullName, role: cfg.role } });
+  await writeAudit({ actorId: s.userId, action: "CREATE", entityType: "User", entityId: u.id, newValue: { fullName, role: cfg.role, sipExtension } });
   refresh(kind);
   return { ok: true, credentials: { fullName, email, password } };
 }
@@ -92,7 +91,6 @@ export async function updateOperator(fd: FormData): Promise<OpResult> {
   const id = txt(fd, "id");
   const fullName = txt(fd, "fullName");
   const phone = txt(fd, "phone") || null;
-  const sipExtension = txt(fd, "sipExtension") || null;
   const password = String(fd.get("password") ?? "");
   const fiksa = numOf(fd.get("fiksa"));
   const kpiBonus = numOf(fd.get("kpiBonus"));
@@ -114,10 +112,9 @@ export async function updateOperator(fd: FormData): Promise<OpResult> {
     }
   }
 
-  if (sipExtension && sipExtension !== cur.sipExtension) {
-    const busy = await prisma.user.findUnique({ where: { sipExtension }, select: { id: true } });
-    if (busy) return { error: tr(s.locale, { uz: "Bu SIP raqam band", ru: "Этот SIP номер занят", en: "This SIP extension is taken", de: "Diese SIP-Nummer ist bereits vergeben" }) };
-  }
+  const claimed = await claimSipExtension(s.locale, id, txt(fd, "sipExtension"), s.userId);
+  if ("error" in claimed) return { error: claimed.error };
+  const sipExtension = claimed.sip;
 
   await prisma.user.update({
     where: { id },
@@ -131,7 +128,7 @@ export async function updateOperator(fd: FormData): Promise<OpResult> {
       ...(password ? { passwordHash: await hashPassword(password), plainPassword: password } : {}),
     },
   });
-  await writeAudit({ actorId: s.userId, action: "UPDATE", entityType: "User", entityId: id, newValue: { fullName, phone, fiksa, kpiBonus, ...branchPatch } });
+  await writeAudit({ actorId: s.userId, action: "UPDATE", entityType: "User", entityId: id, oldValue: { sipExtension: cur.sipExtension }, newValue: { fullName, phone, fiksa, kpiBonus, sipExtension, ...branchPatch } });
   refresh(kind);
   revalidatePath(`${cfg.base}/${id}`);
   return { ok: true };

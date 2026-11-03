@@ -7,6 +7,7 @@ import { ROLES, type Locale } from "@/lib/constants";
 import { writeAudit } from "@/lib/audit";
 import { tr } from "@/lib/tr";
 import { getBrand } from "@/lib/brand";
+import { claimSipExtension } from "@/lib/sipAssign";
 
 const CAN = [ROLES.DIRECTOR, ROLES.ADMIN, ROLES.DEPUTY_DIRECTOR];
 const can = (r: string) => CAN.includes(r as never);
@@ -16,20 +17,6 @@ const STAFF_ROLES = [ROLES.OPERATOR, ROLES.ROP, ROLES.MANAGER, ROLES.DEPUTY_DIRE
 const emailOk = (e: string) => /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(e);
 
 export type State = { ok?: boolean; error?: string };
-
-const SIP_RE = /^glive(10|[1-9])$/;
-
-async function claimSip(locale: Locale, userId: string | null, raw: string): Promise<{ sip: string | null } | { error: string }> {
-  const sip = raw.trim();
-  if (!sip) return { sip: null };
-  if (!SIP_RE.test(sip)) return { error: tr(locale, { uz: "SIP raqami glive1…glive10 bo'lishi kerak", ru: "SIP-номер должен быть glive1…glive10", en: "SIP extension must be glive1…glive10", de: "SIP-Nummer muss glive1…glive10 sein" }) };
-  const holder = await prisma.user.findUnique({ where: { sipExtension: sip }, select: { id: true, fullName: true, isActive: true } });
-  if (holder && holder.id !== userId) {
-    if (holder.isActive) return { error: tr(locale, { uz: `${sip} band: ${holder.fullName}`, ru: `${sip} занят: ${holder.fullName}`, en: `${sip} is taken: ${holder.fullName}`, de: `${sip} ist belegt: ${holder.fullName}` }) };
-    await prisma.user.update({ where: { id: holder.id }, data: { sipExtension: null } });
-  }
-  return { sip };
-}
 
 export async function createStaff(fd: FormData): Promise<State> {
   const s = await requireSession();
@@ -56,7 +43,7 @@ export async function createStaff(fd: FormData): Promise<State> {
     return { ok: true };
   }
 
-  const claimed = await claimSip(s.locale as Locale, null, String(fd.get("sipExtension") || ""));
+  const claimed = await claimSipExtension(s.locale as Locale, null, String(fd.get("sipExtension") || ""), s.userId);
   if ("error" in claimed) return { error: claimed.error };
 
   const u = await prisma.user.create({
@@ -79,7 +66,7 @@ export async function updateStaff(fd: FormData): Promise<State> {
   if (fullName.length < 3) return { error: tr(s.locale, { uz: "F.I.Sh. kamida 3 ta harf bo'lsin", ru: "Ф.И.О. — не менее 3 букв", en: "Full name must be at least 3 characters", de: "Der Name muss mindestens 3 Zeichen lang sein" }) };
   if (!STAFF_ROLES.includes(role as never)) return { error: tr(s.locale, { uz: "Rol tanlanmagan", ru: "Роль не выбрана", en: "Role not selected", de: "Keine Rolle ausgewählt" }) };
 
-  const claimed = await claimSip(s.locale as Locale, id, String(fd.get("sipExtension") || ""));
+  const claimed = await claimSipExtension(s.locale as Locale, id, String(fd.get("sipExtension") || ""), s.userId);
   if ("error" in claimed) return { error: claimed.error };
 
   await prisma.user.update({

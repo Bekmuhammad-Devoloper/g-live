@@ -12,6 +12,7 @@ import OperatorCard, { fmtTalk, kpiColor } from "./OperatorCard";
 import { ArchiveModal, CredentialsModal, NotifyModal, OperatorDrawer, TaskModal } from "./OperatorModals";
 import type { OpResult } from "./actions";
 import { TeamProvider, type BranchOpt } from "./TeamContext";
+import type { SipOption } from "@/lib/sip";
 import { TEAM, type TeamKind } from "./teamKind";
 
 export interface VOperator {
@@ -43,6 +44,7 @@ export interface VOperator {
 interface Props {
   kind?: TeamKind;
   branches?: BranchOpt[];
+  sipOptions?: SipOption[];
   locale: Locale;
   operators: VOperator[];
   avgKpi: number;
@@ -55,7 +57,7 @@ interface Props {
 
 type Tab = "all" | "online" | "offline";
 
-export default function OperatorsBoard({ kind = "operator", branches = [], locale, operators, avgKpi, totalLeads, dayCallsTotal, selectedDate, selectedDateLabel, canManage }: Props) {
+export default function OperatorsBoard({ kind = "operator", branches = [], sipOptions = [], locale, operators, avgKpi, totalLeads, dayCallsTotal, selectedDate, selectedDateLabel, canManage }: Props) {
   const router = useRouter();
   const cfg = TEAM[kind];
   const [search, setSearch] = useState("");
@@ -119,7 +121,7 @@ export default function OperatorsBoard({ kind = "operator", branches = [], local
   };
 
   return (
-    <TeamProvider kind={kind} branches={branches}>
+    <TeamProvider kind={kind} branches={branches} sipOptions={sipOptions}>
     <div className="space-y-4">
       <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
         <div className="flex items-center gap-3">

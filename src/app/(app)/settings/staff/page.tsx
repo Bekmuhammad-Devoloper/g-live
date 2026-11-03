@@ -3,7 +3,8 @@ import { prisma } from "@/lib/db";
 import { ROLES, ROLE_LABELS, label, type Locale } from "@/lib/constants";
 import { tr } from "@/lib/tr";
 import { Forbidden } from "../../_components/ui";
-import StaffView, { type SipOption, type VStaff } from "./StaffView";
+import { listSipOptions } from "@/lib/sipAssign";
+import StaffView, { type VStaff } from "./StaffView";
 
 const ALLOWED = [ROLES.DIRECTOR, ROLES.DEPUTY_DIRECTOR];
 const STAFF_ROLES = [ROLES.OPERATOR, ROLES.ROP, ROLES.MANAGER, ROLES.DEPUTY_DIRECTOR, ROLES.DIRECTOR, ROLES.ADMIN, ROLES.TEACHER];
@@ -21,11 +22,7 @@ export default async function StaffSettingsPage() {
     select: { id: true, fullName: true, role: true, position: true, phone: true, sipExtension: true },
   });
 
-  const holders = await prisma.user.findMany({ where: { sipExtension: { not: null } }, select: { sipExtension: true, fullName: true, isActive: true } });
-  const sipOptions: SipOption[] = Array.from({ length: 10 }, (_, i) => `glive${i + 1}`).map((ext) => {
-    const h = holders.find((x) => x.sipExtension === ext);
-    return { ext, owner: h?.fullName ?? null, ownerActive: h?.isActive ?? false };
-  });
+  const sipOptions = await listSipOptions();
 
   const rows: VStaff[] = users.map((u) => ({
     id: u.id,

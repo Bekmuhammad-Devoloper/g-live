@@ -1,4 +1,5 @@
 import net from "node:net";
+import { parseSipExtension } from "./sip";
 
 export function telephonyEnv() {
   const publicHost = process.env.PUBLIC_HOST ?? "";
@@ -29,15 +30,14 @@ export function amiConfigured(): boolean {
   return Boolean(a.user && a.pass);
 }
 
-export function operatorPassword(ext: string): string | null {
-  const m = /^(?:glive|operator)\s*(\d+)$/i.exec(String(ext ?? "").trim());
-  if (!m) return null;
-  return process.env[`SIP_OPERATOR${m[1]}_PASS`] || null;
+export function normalizeExtension(ext: string): string | null {
+  return parseSipExtension(ext);
 }
 
-export function normalizeExtension(ext: string): string | null {
-  const m = /^(?:glive|operator)\s*(\d+)$/i.exec(String(ext ?? "").trim());
-  return m ? `glive${m[1]}` : null;
+export function operatorPassword(ext: string): string | null {
+  const endpoint = normalizeExtension(ext);
+  if (!endpoint) return null;
+  return process.env[`SIP_OPERATOR${endpoint.replace(/^glive/, "")}_PASS`] || null;
 }
 
 export interface WebrtcConfig {
