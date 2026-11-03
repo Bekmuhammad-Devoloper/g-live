@@ -26,18 +26,17 @@ export async function login(_prev: LoginState, formData: FormData): Promise<Logi
   if (!parsed.success) return { error: "invalid" };
 
   const legacyLogin = rawLogin.trim().toLowerCase();
-  const user =
-    (await prisma.user.findUnique({ where: { email: parsed.data.email } })) ??
-    (legacyLogin !== parsed.data.email ? await prisma.user.findUnique({ where: { email: legacyLogin } }) : null);
-  if (!user) return { error: "invalid" };
-  if (!user.isActive) {
-    await recordFailedLogin(user, "inactive");
-    return { error: "invalid" };
-  }
+  const legacyUser = legacyLogin !== parsed.data.email ? await prisma.user.findUnique({ where: { email: legacyLogin } }) : null;
+  const cleanUser = await prisma.user.findUnique({ where: { email: parsed.data.email } });
+  const candidates = [legacyUser, cleanUser].filter((u, i, arr): u is NonNullable<typeof u> => !!u && arr.findIndex((x) => x?.id === u.id) === i);
+  if (!candidates.length) return { error: "invalid" };
 
-  const ok = await passwordMatches(user, parsed.data.password);
-  if (!ok) {
-    await recordFailedLogin(user, "bad_password");
+  let user: (typeof candidates)[number] | null = null;
+  for (const c of candidates) {
+    if (c.isActive && (await passwordMatches(c, parsed.data.password))) { user = c; break; }
+  }
+  if (!user) {
+    await recordFailedLogin(candidates[0], candidates[0].isActive ? "bad_password" : "inactive");
     return { error: "invalid" };
   }
   await healLegacyEmail(user, parsed.data.email);

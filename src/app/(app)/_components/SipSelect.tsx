@@ -4,7 +4,7 @@ import { tr } from "@/lib/tr";
 import type { Locale } from "@/lib/constants";
 import { parseSipExtension, type SipOption } from "@/lib/sip";
 
-export default function SipSelect({ locale, options, current, className }: { locale: Locale; options: SipOption[]; current?: string | null; className?: string }) {
+export default function SipSelect({ locale, options, current, className, canRelease = true }: { locale: Locale; options: SipOption[]; current?: string | null; className?: string; canRelease?: boolean }) {
   const canonical = parseSipExtension(current);
   const invalid = current && !canonical ? current : null;
   return (
@@ -18,12 +18,16 @@ export default function SipSelect({ locale, options, current, className }: { loc
       {options.map((o) => {
         const mine = o.ext === canonical;
         const takenByActive = !!o.owner && o.ownerActive && !mine;
+        const lockedArchived = !!o.owner && !o.ownerActive && !mine && !canRelease;
+        const archivedHint = canRelease
+          ? tr(locale, { uz: "ishdan ketgan, bo'shatiladi", ru: "уволен, освободится", en: "left, will be freed", de: "ausgeschieden, wird frei" })
+          : tr(locale, { uz: "ishdan ketgan — direktor bo'shatadi", ru: "уволен — освобождает директор", en: "left — a director must free it", de: "ausgeschieden — Direktor gibt frei" });
         const hint = mine
           ? tr(locale, { uz: "hozirgi", ru: "текущий", en: "current", de: "aktuell" })
           : o.owner
-            ? `${o.owner}${o.ownerActive ? "" : ` · ${tr(locale, { uz: "ishdan ketgan, bo'shatiladi", ru: "уволен, освободится", en: "left, will be freed", de: "ausgeschieden, wird frei" })}`}`
+            ? `${o.owner}${o.ownerActive ? "" : ` · ${archivedHint}`}`
             : tr(locale, { uz: "bo'sh", ru: "свободен", en: "free", de: "frei" });
-        return <option key={o.ext} value={o.ext} disabled={takenByActive}>{o.ext} — {hint}</option>;
+        return <option key={o.ext} value={o.ext} disabled={takenByActive || lockedArchived}>{o.ext} — {hint}</option>;
       })}
     </select>
   );

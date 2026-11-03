@@ -88,7 +88,10 @@ export default async function AuditPage({ searchParams }: { searchParams: Promis
     : {};
 
   const branchStaff = s.branchId ? await prisma.user.findMany({ where: staffBranchWhere(s), select: { id: true } }) : null;
-  const branchScope: Prisma.AuditLogWhereInput = branchStaff ? { actorId: { in: branchStaff.map((x) => x.id) } } : {};
+  const branchIds = branchStaff?.map((x) => x.id) ?? [];
+  const branchScope: Prisma.AuditLogWhereInput = branchStaff
+    ? { OR: [{ actorId: { in: branchIds } }, { action: "LOGIN_FAILED", entityType: "User", entityId: { in: branchIds } }] }
+    : {};
 
   const where: Prisma.AuditLogWhereInput = { AND: [typeWhere, dateWhere, searchWhere, branchScope] };
 

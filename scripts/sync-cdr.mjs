@@ -95,7 +95,8 @@ async function main() {
 
   const users = await prisma.user.findMany({
     where: { sipExtension: { not: null } },
-    select: { id: true, fullName: true, sipExtension: true },
+    select: { id: true, fullName: true, sipExtension: true, isActive: true },
+    orderBy: [{ isActive: "asc" }, { id: "asc" }],
   });
   const canonExt = (raw) => {
     const m = /^(?:glive|operator)\s*(\d+)$/i.exec(String(raw ?? "").trim());

@@ -5,7 +5,7 @@ import { canManageAdminTeam, canManageOperators, canSeeAdminTeam } from "@/lib/o
 import { ROLES, type Locale } from "@/lib/constants";
 import { branchWhere, staffBranchWhere } from "@/lib/branchScope";
 import { tr } from "@/lib/tr";
-import { listSipOptions } from "@/lib/sipAssign";
+import { canReleaseSip, listSipOptions } from "@/lib/sipAssign";
 import { Forbidden } from "../../_components/ui";
 import OperatorsBoard, { type VOperator } from "./OperatorsBoard";
 import { TEAM, type TeamKind } from "./teamKind";
@@ -172,6 +172,7 @@ export async function TeamBoardPage({ kind, searchParams }: { kind: TeamKind; se
       kind={kind}
       branches={branches}
       sipOptions={canManage ? await listSipOptions() : []}
+      sipCanRelease={canReleaseSip(s.role)}
       locale={loc}
       operators={operators}
       avgKpi={avgKpi}

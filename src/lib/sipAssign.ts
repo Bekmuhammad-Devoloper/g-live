@@ -8,6 +8,7 @@ import { SIP_EXTENSIONS, SIP_RANGE_LABEL, canonicalSipExtension, parseSipExtensi
 export type SipClaim = { sip: string | null } | { error: string };
 
 const CAN_RELEASE: string[] = [ROLES.DIRECTOR, ROLES.DEPUTY_DIRECTOR, ROLES.ADMIN];
+export const canReleaseSip = (role: string): boolean => CAN_RELEASE.includes(role);
 
 async function holdersOf(ext: string, exceptUserId: string | null) {
   const users = await prisma.user.findMany({
@@ -38,7 +39,7 @@ export async function claimSipExtension(
   if (active) {
     return { error: tr(locale, { uz: `${sip} band: ${active.fullName}`, ru: `${sip} занят: ${active.fullName}`, en: `${sip} is taken: ${active.fullName}`, de: `${sip} ist belegt: ${active.fullName}` }) };
   }
-  if (holders.length && !CAN_RELEASE.includes(actor.role)) {
+  if (holders.length && !canReleaseSip(actor.role)) {
     const name = holders[0].fullName;
     return { error: tr(locale, { uz: `${sip} arxivdagi xodimda (${name}) — uni direktor yoki administrator bo'shatishi kerak`, ru: `${sip} у сотрудника в архиве (${name}) — освободить может директор или администратор`, en: `${sip} belongs to an archived staff member (${name}) — a director or administrator must free it`, de: `${sip} gehört einem archivierten Mitarbeiter (${name}) — nur Direktor oder Administrator kann sie freigeben` }) };
   }

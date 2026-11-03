@@ -100,7 +100,7 @@ export function OperatorDrawer({
   locale, op, onClose, onCreated,
 }: { locale: Locale; op: VOperator | null; onClose: () => void; onCreated: (c: NonNullable<OpResult["credentials"]>) => void }) {
   const router = useRouter();
-  const { cfg, branches, sipOptions } = useTeam();
+  const { cfg, branches, sipOptions, sipCanRelease } = useTeam();
   const isEdit = !!op;
   const [fiksaStr, setFiksaStr] = useState(op ? grouped(op.fiksa) : "");
   const [kpiStr, setKpiStr] = useState(op ? grouped(op.kpiBonus) : "200 000");
@@ -149,7 +149,7 @@ export function OperatorDrawer({
             </Field>
           )}
           <Field label={tr(locale, { uz: "SIP raqam (telefoniya)", ru: "SIP номер (телефония)", en: "SIP extension (telephony)", de: "SIP-Nummer (Telefonie)" })}>
-            <SipSelect locale={locale} options={sipOptions} current={op?.sip} className={inputCls} />
+            <SipSelect locale={locale} options={sipOptions} current={op?.sip} className={inputCls} canRelease={sipCanRelease} />
           </Field>
           <Field label={tr(locale, { uz: "Parol", ru: "Пароль", en: "Password", de: "Passwort" })} required={!isEdit}>
             <input
