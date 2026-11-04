@@ -3,13 +3,32 @@
 import { useMemo, useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
 import { formatPhone, LEAD_STATUSES, type SalesLead, type SalesLink, type SalesPlan } from "@/lib/devpanel/salesTypes";
-import { Card, fmtDate } from "../ui";
+import { fmtDate } from "../ui";
 import { createLinkAction, setLeadStatusAction, setLinkActiveAction } from "./actions";
 import LeadDrawer from "./LeadDrawer";
 
-const BTN = "h-9 rounded-lg border border-white/10 px-3 text-xs font-semibold text-slate-200 transition hover:border-orange-400/50 disabled:opacity-50";
+const ICON = {
+  link: "M10 13a5 5 0 0 0 7 0l3-3a5 5 0 0 0-7-7l-1 1M14 11a5 5 0 0 0-7 0l-3 3a5 5 0 0 0 7 7l1-1",
+  copy: "M9 9h11v11H9zM5 15H4V4h11v1",
+  check: "M5 12l5 5L20 7",
+  open: "M14 4h6v6M20 4l-9 9M18 14v6H4V6h6",
+  power: "M12 3v9M6.3 7.3a8 8 0 1 0 11.4 0",
+  search: "M11 19a8 8 0 1 0 0-16 8 8 0 0 0 0 16M21 21l-4.3-4.3",
+  phone: "M5 4h4l2 5-2.5 1.5a11 11 0 0 0 5 5L15 13l5 2v4a1 1 0 0 1-1 1A16 16 0 0 1 4 5a1 1 0 0 1 1-1",
+  plus: "M12 5v14M5 12h14",
+};
 
-function LinksCard({ links, leads, origin }: { links: SalesLink[]; leads: SalesLead[]; origin: string }) {
+function Glyph({ d, className = "h-4 w-4" }: { d: string; className?: string }) {
+  return (
+    <svg viewBox="0 0 24 24" className={className} fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" aria-hidden>
+      <path d={d} />
+    </svg>
+  );
+}
+
+const ACTION = "inline-flex h-9 items-center gap-1.5 rounded-lg border border-white/10 bg-white/[0.03] px-3 text-xs font-semibold text-slate-200 transition hover:border-orange-400/50 hover:bg-white/[0.06] disabled:cursor-not-allowed disabled:opacity-40";
+
+function LinksPanel({ links, leads, origin }: { links: SalesLink[]; leads: SalesLead[]; origin: string }) {
   const router = useRouter();
   const [name, setName] = useState("");
   const [error, setError] = useState<string | null>(null);
@@ -46,63 +65,113 @@ function LinksCard({ links, leads, origin }: { links: SalesLink[]; leads: SalesL
     await setLinkActiveAction(l.code, !l.active);
     router.refresh();
   });
+  const ready = name.trim().length >= 2;
 
   return (
-    <Card>
-      <div className="flex flex-wrap items-end justify-between gap-3">
-        <div>
-          <h2 className="text-base font-bold">Lid tushadigan havolalar</h2>
-          <p className="mt-0.5 text-xs text-slate-500">Har reklama uchun alohida havola yarating, qaysi biri lid olib kelayotgani ko'rinadi.</p>
+    <section className="relative overflow-hidden rounded-2xl border border-white/[0.07] bg-[#0d1424]">
+      <span aria-hidden className="absolute inset-x-0 top-0 h-px bg-gradient-to-r from-transparent via-orange-400/50 to-transparent" />
+      <div className="flex flex-col gap-4 p-5 md:flex-row md:items-center md:justify-between md:p-6">
+        <div className="flex items-start gap-3.5">
+          <span className="grid h-11 w-11 shrink-0 place-items-center rounded-xl bg-gradient-to-br from-[#e3262b]/20 to-[#f6b51e]/10 text-orange-300 ring-1 ring-orange-400/20">
+            <Glyph d={ICON.link} className="h-5 w-5" />
+          </span>
+          <div>
+            <h2 className="text-base font-bold text-white">Lid tushadigan havolalar</h2>
+            <p className="mt-0.5 max-w-md text-[13px] leading-relaxed text-slate-400">Har reklama uchun alohida havola yarating, qaysi biri lid olib kelayotgani ko'rinadi.</p>
+          </div>
         </div>
-        <form onSubmit={create} className="flex w-full gap-2 sm:w-auto">
-          <input value={name} onChange={(e) => setName(e.target.value)} placeholder="Masalan: Instagram" className="h-9 min-w-0 flex-1 rounded-lg border border-white/10 bg-white/[0.04] px-3 text-sm outline-none focus:border-orange-400/60 sm:w-52" />
-          <button type="submit" disabled={pending || name.trim().length < 2} className="h-9 shrink-0 rounded-lg bg-gradient-to-r from-[#e3262b] to-[#ee7a24] px-3 text-xs font-bold text-white disabled:opacity-50">Yaratish</button>
+        <form onSubmit={create} className="flex w-full gap-2 md:w-[340px]">
+          <input
+            value={name}
+            onChange={(e) => setName(e.target.value)}
+            placeholder="Masalan: Instagram"
+            className="h-10 min-w-0 flex-1 rounded-lg border border-white/10 bg-white/[0.04] px-3 text-sm text-white outline-none transition placeholder:text-slate-500 focus:border-orange-400/60"
+          />
+          <button
+            type="submit"
+            disabled={pending || !ready}
+            className={`inline-flex h-10 shrink-0 items-center gap-1.5 rounded-lg px-4 text-[13px] font-bold transition ${ready ? "bg-gradient-to-r from-[#e3262b] via-[#ee7a24] to-[#f6b51e] text-white hover:brightness-110" : "cursor-not-allowed bg-white/[0.06] text-slate-500"}`}
+          >
+            <Glyph d={ICON.plus} />
+            Yaratish
+          </button>
         </form>
       </div>
-      {error && <p className="mt-3 rounded-lg bg-red-500/10 px-3 py-2 text-sm text-red-300">{error}</p>}
-      <ul className="mt-4 divide-y divide-white/[0.06]">
-        {links.map((l) => (
-          <li key={l.code} className="flex flex-wrap items-center gap-x-4 gap-y-2 py-3">
-            <div className="min-w-0 flex-1 basis-64">
-              <div className="flex items-center gap-2 text-sm font-semibold">
-                {l.name}
-                {!l.active && <span className="rounded-full bg-slate-800 px-2 py-0.5 text-[10px] font-semibold text-slate-400">o'chirilgan</span>}
+      {error && <p className="mx-5 mb-4 rounded-lg bg-red-500/10 px-3 py-2 text-sm text-red-300 md:mx-6">{error}</p>}
+      <ul className="divide-y divide-white/[0.05] border-t border-white/[0.06]">
+        {links.map((l) => {
+          const count = counts.get(l.code) ?? 0;
+          return (
+            <li key={l.code} className="flex flex-col gap-3 px-5 py-4 md:px-6 lg:flex-row lg:items-center lg:gap-5">
+              <div className="min-w-0 flex-1">
+                <div className="flex items-center gap-2">
+                  <span className={`h-2 w-2 shrink-0 rounded-full ${l.active ? "bg-emerald-400 shadow-[0_0_8px] shadow-emerald-400/60" : "bg-slate-600"}`} />
+                  <span className="truncate text-sm font-semibold text-white">{l.name}</span>
+                  {!l.active && <span className="rounded-full bg-white/[0.06] px-2 py-0.5 text-[10px] font-semibold text-slate-400">o'chirilgan</span>}
+                </div>
+                <div className="mt-1.5 truncate font-mono text-xs text-slate-400">{urlOf(l.code)}</div>
               </div>
-              <div className="truncate font-mono text-xs text-slate-500">{urlOf(l.code)}</div>
-            </div>
-            <div className="text-xs text-slate-400">{counts.get(l.code) ?? 0} ta lid</div>
-            <div className="flex gap-2">
-              <button type="button" onClick={() => copy(l.code)} disabled={!l.active} className={BTN}>{copied === l.code ? "Nusxalandi" : "Nusxalash"}</button>
-              <a href={urlOf(l.code)} target="_blank" rel="noreferrer" className={`${BTN} inline-flex items-center ${l.active ? "" : "pointer-events-none opacity-50"}`}>Ochish</a>
-              <button type="button" onClick={() => toggle(l)} disabled={pending} className={BTN}>{l.active ? "O'chirish" : "Yoqish"}</button>
-            </div>
-          </li>
-        ))}
+              <div className="flex flex-wrap items-center gap-2">
+                <span className={`mr-1 rounded-full px-2.5 py-1 text-xs font-semibold tabular-nums ${count ? "bg-orange-400/15 text-orange-300" : "bg-white/[0.05] text-slate-400"}`}>{count} ta lid</span>
+                <button type="button" onClick={() => copy(l.code)} disabled={!l.active} className={copied === l.code ? `${ACTION} !border-emerald-400/50 !text-emerald-300` : ACTION}>
+                  <Glyph d={copied === l.code ? ICON.check : ICON.copy} className="h-3.5 w-3.5" />
+                  {copied === l.code ? "Nusxalandi" : "Nusxalash"}
+                </button>
+                <a href={urlOf(l.code)} target="_blank" rel="noreferrer" className={`${ACTION} ${l.active ? "" : "pointer-events-none opacity-40"}`}>
+                  <Glyph d={ICON.open} className="h-3.5 w-3.5" />
+                  Ochish
+                </a>
+                <button type="button" onClick={() => toggle(l)} disabled={pending} className={`${ACTION} ${l.active ? "text-slate-400 hover:!border-red-400/50 hover:text-red-300" : ""}`}>
+                  <Glyph d={ICON.power} className="h-3.5 w-3.5" />
+                  {l.active ? "O'chirish" : "Yoqish"}
+                </button>
+              </div>
+            </li>
+          );
+        })}
       </ul>
-    </Card>
+    </section>
   );
 }
 
 function LeadCard({ lead, onOpen, onStatus }: { lead: SalesLead; onOpen: () => void; onStatus: (s: string) => void }) {
   return (
-    <div role="button" tabIndex={0} onClick={onOpen} onKeyDown={(e) => { if (e.key === "Enter") onOpen(); }} className="cursor-pointer rounded-xl border border-white/[0.07] bg-[#0d1424] p-3 outline-none transition hover:border-orange-400/40 focus-visible:border-orange-400/60">
-      <div className="truncate text-sm font-bold text-white">{lead.centerName}</div>
-      <div className="mt-0.5 truncate text-xs text-slate-400">{lead.contactName}</div>
-      <a href={`tel:${lead.phone}`} onClick={(e) => e.stopPropagation()} className="mt-1 block font-mono text-xs text-orange-300 hover:underline">{formatPhone(lead.phone)}</a>
-      <div className="mt-2 flex flex-wrap gap-1 text-[10px] text-slate-400">
-        {lead.planName && <span className="rounded bg-white/[0.06] px-1.5 py-0.5">{lead.planName}</span>}
-        {lead.students !== null && <span className="rounded bg-white/[0.06] px-1.5 py-0.5">{lead.students} o'quvchi</span>}
-        {lead.city && <span className="rounded bg-white/[0.06] px-1.5 py-0.5">{lead.city}</span>}
-        {lead.submissions > 1 && <span className="rounded bg-amber-500/15 px-1.5 py-0.5 text-amber-300">{lead.submissions} marta</span>}
+    <div
+      role="button"
+      tabIndex={0}
+      onClick={onOpen}
+      onKeyDown={(e) => { if (e.key === "Enter") onOpen(); }}
+      className="group cursor-pointer rounded-xl border border-white/[0.07] bg-[#0f1729] p-3 outline-none transition hover:-translate-y-0.5 hover:border-orange-400/40 hover:shadow-lg hover:shadow-black/30 focus-visible:border-orange-400/60"
+    >
+      <div className="flex items-center gap-2.5">
+        <span className="grid h-8 w-8 shrink-0 place-items-center rounded-lg bg-gradient-to-br from-[#e3262b] to-[#f6b51e] text-xs font-bold text-white">
+          {lead.centerName.trim().slice(0, 1).toUpperCase()}
+        </span>
+        <div className="min-w-0">
+          <div className="truncate text-[13px] font-bold text-white">{lead.centerName}</div>
+          <div className="truncate text-[11px] text-slate-400">{lead.contactName}</div>
+        </div>
       </div>
-      <div className="mt-2 flex items-center justify-between gap-2">
-        <span className="truncate text-[10px] text-slate-500">{fmtDate(lead.createdAt)} · {lead.linkName ?? "Qo'lda"}</span>
+      <a href={`tel:${lead.phone}`} onClick={(e) => e.stopPropagation()} className="mt-2.5 flex items-center gap-1.5 text-[11.5px] font-medium tabular-nums text-orange-300 hover:underline">
+        <Glyph d={ICON.phone} className="h-3 w-3 shrink-0" />
+        <span className="truncate">{formatPhone(lead.phone)}</span>
+      </a>
+      {(lead.planName || lead.students !== null || lead.city || lead.submissions > 1) && (
+        <div className="mt-2 flex flex-wrap gap-1 text-[10px] font-medium text-slate-300">
+          {lead.planName && <span className="rounded-md bg-orange-400/10 px-1.5 py-0.5 text-orange-200">{lead.planName}</span>}
+          {lead.students !== null && <span className="rounded-md bg-white/[0.06] px-1.5 py-0.5">{lead.students} o'quvchi</span>}
+          {lead.city && <span className="rounded-md bg-white/[0.06] px-1.5 py-0.5">{lead.city}</span>}
+          {lead.submissions > 1 && <span className="rounded-md bg-amber-500/15 px-1.5 py-0.5 text-amber-300">{lead.submissions} marta</span>}
+        </div>
+      )}
+      <div className="mt-2.5 border-t border-white/[0.05] pt-2">
+        <div className="truncate text-[10px] text-slate-500">{fmtDate(lead.createdAt)} · {lead.linkName ?? "Qo'lda"}</div>
         <select
           value={lead.status}
           onClick={(e) => e.stopPropagation()}
           onChange={(e) => onStatus(e.target.value)}
           aria-label="Holat"
-          className="h-6 max-w-[96px] rounded border border-white/10 bg-[#0a1020] px-1 text-[10px] text-slate-300 outline-none"
+          className="mt-1.5 h-7 w-full rounded-md border border-white/10 bg-[#0a1020] px-1.5 text-[11px] text-slate-300 outline-none transition focus:border-orange-400/60"
         >
           {LEAD_STATUSES.map((s) => <option key={s.key} value={s.key}>{s.label}</option>)}
         </select>
@@ -111,7 +180,13 @@ function LeadCard({ lead, onOpen, onStatus }: { lead: SalesLead; onOpen: () => v
   );
 }
 
-export default function SalesWorkspace({ leads, links, plans, origin }: { leads: SalesLead[]; links: SalesLink[]; plans: SalesPlan[]; origin: string }) {
+export default function SalesWorkspace({ leads, links, plans, origin, stats }: {
+  leads: SalesLead[];
+  links: SalesLink[];
+  plans: SalesPlan[];
+  origin: string;
+  stats: React.ReactNode;
+}) {
   const router = useRouter();
   const [q, setQ] = useState("");
   const [drawer, setDrawer] = useState<SalesLead | "new" | null>(null);
@@ -142,34 +217,62 @@ export default function SalesWorkspace({ leads, links, plans, origin }: { leads:
 
   return (
     <div className="space-y-6">
-      <LinksCard links={links} leads={leads} origin={origin} />
-
-      <div className="flex flex-wrap items-center gap-3">
-        <input value={q} onChange={(e) => setQ(e.target.value)} placeholder="Markaz, ism yoki telefon bo'yicha qidirish" className="h-10 min-w-0 flex-1 rounded-lg border border-white/10 bg-white/[0.04] px-3 text-sm outline-none focus:border-orange-400/60 sm:max-w-sm" />
-        <button type="button" onClick={() => setDrawer("new")} className="h-10 rounded-lg bg-gradient-to-r from-[#e3262b] via-[#ee7a24] to-[#f6b51e] px-4 text-sm font-bold text-white">+ Lid qo'shish</button>
-      </div>
-      {error && <p className="rounded-lg bg-red-500/10 px-3 py-2 text-sm text-red-300">{error}</p>}
-
-      <div className="-mx-4 overflow-x-auto px-4 pb-2 md:mx-0 md:px-0">
-        <div className="flex min-w-max gap-3">
-          {LEAD_STATUSES.map((s) => {
-            const col = rows.filter((l) => l.status === s.key);
-            return (
-              <section key={s.key} className="w-64 shrink-0 rounded-2xl border border-white/[0.06] bg-white/[0.02] p-2.5">
-                <header className="mb-2.5 flex items-center gap-2 px-1">
-                  <span className={`h-2 w-2 rounded-full ${s.accent}`} />
-                  <h3 className="text-xs font-bold text-slate-200">{s.label}</h3>
-                  <span className="ml-auto text-xs tabular-nums text-slate-500">{col.length}</span>
-                </header>
-                <div className="space-y-2">
-                  {col.map((l) => <LeadCard key={l.id} lead={l} onOpen={() => setDrawer(l)} onStatus={(v) => setStatus(l.id, v)} />)}
-                  {col.length === 0 && <p className="px-1 py-4 text-center text-xs text-slate-600">Lid yo'q</p>}
-                </div>
-              </section>
-            );
-          })}
+      <div className="flex flex-wrap items-end justify-between gap-4">
+        <div>
+          <h1 className="text-2xl font-bold">Obuna lidlari</h1>
+          <p className="mt-1 text-sm text-slate-500">O'quv markazlaridan tushgan arizalar va sotuv jarayoni</p>
         </div>
+        <button
+          type="button"
+          onClick={() => setDrawer("new")}
+          className="inline-flex h-10 items-center gap-1.5 rounded-xl bg-gradient-to-r from-[#e3262b] via-[#ee7a24] to-[#f6b51e] px-4 text-sm font-bold text-white shadow-lg shadow-orange-600/25 transition hover:brightness-110"
+        >
+          <Glyph d={ICON.plus} />
+          Lid qo'shish
+        </button>
       </div>
+
+      {stats}
+
+      <LinksPanel links={links} leads={leads} origin={origin} />
+
+      <section>
+        <div className="mb-3 flex flex-wrap items-center justify-between gap-3">
+          <h2 className="text-base font-bold text-white">Sotuv jarayoni</h2>
+          <div className="relative w-full sm:w-80">
+            <Glyph d={ICON.search} className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-500" />
+            <input
+              value={q}
+              onChange={(e) => setQ(e.target.value)}
+              placeholder="Markaz, ism yoki telefon"
+              className="h-10 w-full rounded-lg border border-white/10 bg-white/[0.04] pl-9 pr-3 text-sm text-white outline-none transition placeholder:text-slate-500 focus:border-orange-400/60"
+            />
+          </div>
+        </div>
+        {error && <p className="mb-3 rounded-lg bg-red-500/10 px-3 py-2 text-sm text-red-300">{error}</p>}
+        <div className="-mx-4 overflow-x-auto px-4 pb-2 md:mx-0 md:px-0">
+          <div className="grid min-w-[1110px] grid-cols-6 gap-2.5">
+            {LEAD_STATUSES.map((s) => {
+              const col = rows.filter((l) => l.status === s.key);
+              return (
+                <div key={s.key} className="flex min-h-[320px] min-w-0 flex-col overflow-hidden rounded-2xl border border-white/[0.06] bg-[#0b1120]/70">
+                  <span aria-hidden className={`h-0.5 ${s.accent}`} />
+                  <header className="flex items-center gap-2 px-3 py-2.5">
+                    <h3 className="truncate text-xs font-bold text-slate-200">{s.label}</h3>
+                    <span className={`ml-auto rounded-full px-2 py-0.5 text-[11px] font-semibold tabular-nums ${col.length ? "bg-white/[0.1] text-white" : "bg-white/[0.04] text-slate-500"}`}>{col.length}</span>
+                  </header>
+                  <div className="flex flex-1 flex-col gap-2 p-2 pt-0">
+                    {col.map((l) => <LeadCard key={l.id} lead={l} onOpen={() => setDrawer(l)} onStatus={(v) => setStatus(l.id, v)} />)}
+                    {col.length === 0 && (
+                      <div className="grid flex-1 place-items-center rounded-xl border border-dashed border-white/[0.07] text-xs text-slate-600">Lid yo'q</div>
+                    )}
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+        </div>
+      </section>
 
       {drawer && (
         <LeadDrawer
