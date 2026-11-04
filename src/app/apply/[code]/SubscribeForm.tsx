@@ -111,11 +111,11 @@ export default function SubscribeForm({ code, plans }: { code: string; plans: Sa
                   <span className={cn("mt-1 block text-[12px]", on ? "text-white/80" : "text-slate-500 dark:text-slate-400")}>
                     {limitLabel(p.students, "o'quvchi")} · {limitLabel(p.branches, "filial")}
                   </span>
-                  {on && p.features.length > 0 && (
-                    <span className="animate-pop-in mt-2 block space-y-1 border-t border-white/20 pt-2">
+                  {p.features.length > 0 && (
+                    <span className={cn("mt-2 block space-y-1 border-t pt-2", on ? "border-white/20" : "border-slate-100 dark:border-white/10")}>
                       {p.features.map((x) => (
                         <span key={x} className="flex items-start gap-1.5 text-[12.5px] leading-snug">
-                          <Icon name="check" className="mt-0.5 h-3.5 w-3.5 shrink-0" strokeWidth={2.4} />
+                          <Icon name="check" className={cn("mt-0.5 h-3.5 w-3.5 shrink-0", !on && "text-emerald-500")} strokeWidth={2.4} />
                           {x}
                         </span>
                       ))}
