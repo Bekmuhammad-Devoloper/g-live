@@ -89,6 +89,7 @@ function DayAttendance({ groupId, students, locale }: { groupId: string; student
       const r = await markAllPresent(groupId, date);
       if (!r.ok) { notifyDenied(r); reload(date); return; }
       setSkippedCount(r.skippedBlocked ?? 0);
+      reload(date);
     });
   };
   const doUnlock = () => startUnlock(async () => {
@@ -245,7 +246,7 @@ function DayAttendance({ groupId, students, locale }: { groupId: string; student
         </div>
         {isToday && <span className="rounded-full bg-brand-500/10 px-2 py-0.5 text-[11px] font-semibold text-brand-600 dark:text-brand-300">{tr(locale, { uz: "Bugun", ru: "Сегодня", en: "Today", de: "Heute" })}</span>}
         {win && !win.closed && isToday && (
-          <span className="rounded-full bg-slate-100 px-2 py-0.5 text-[11px] font-medium text-slate-500 dark:bg-slate-800 dark:text-slate-400" title={tr(locale, { uz: "Dars tugagach 3 soat ichida saqlash mumkin", ru: "Можно сохранить в течение 3 часов после урока", en: "Can be saved within 3 hours after the lesson", de: "Kann innerhalb von 3 Stunden nach dem Unterricht gespeichert werden" })}>
+          <span className="rounded-full bg-slate-100 px-2 py-0.5 text-[11px] font-medium text-slate-500 dark:bg-slate-800 dark:text-slate-400" title={tr(locale, { uz: `${win.closesAtLabel} gacha belgilash mumkin`, ru: `Можно отметить до ${win.closesAtLabel}`, en: `Can be marked until ${win.closesAtLabel}`, de: `Kann bis ${win.closesAtLabel} markiert werden` })}>
             {tr(locale, { uz: "Yopiladi", ru: "Закроется", en: "Closes", de: "Schließt" })}: {win.closesAtLabel}
           </span>
         )}

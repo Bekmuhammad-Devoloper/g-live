@@ -7,7 +7,7 @@ import { requireSession, type SessionUser } from "@/lib/auth";
 import { getPermission, MODULES } from "@/lib/rbac";
 import { writeAudit } from "@/lib/audit";
 import { ATTENDANCE_STATUSES } from "@/lib/constants";
-import { canBypassAttendanceLock, lessonLockState } from "@/lib/attendanceWindow";
+import { canBypassAttendanceLock, lessonLockState, teacherCanEdit } from "@/lib/attendanceWindow";
 import { autoMarkTeacherPresentForLesson } from "@/lib/teacherAutoAttendance";
 
 async function canManageLesson(s: SessionUser, lessonId: string): Promise<{ ok: boolean; groupId?: string }> {
@@ -47,7 +47,7 @@ export async function markAttendance(lessonId: string, studentId: string, status
 
   if (!canBypassAttendanceLock(s.role)) {
     const lock = await lessonLockState(lessonId);
-    if (lock && lock.closed && !lock.unlocked) return;
+    if (lock && lock.closed && !lock.unlocked && !teacherCanEdit(s.role, lock.dateISO)) return;
   }
 
   await prisma.attendance.upsert({

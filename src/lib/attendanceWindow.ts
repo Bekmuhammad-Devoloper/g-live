@@ -5,6 +5,7 @@ import { ROLES } from "./constants";
 export const GRACE_HOURS = 3;
 export const UNLOCK_HOURS = 24;
 export const MATERIALIZE_MAX_AGE_DAYS = 7;
+export const TEACHER_EDIT_DAYS = 7;
 
 const BYPASS_ROLES: string[] = [ROLES.DIRECTOR, ROLES.DEPUTY_DIRECTOR, ROLES.MANAGER, ROLES.ROP];
 const UNLOCK_GRANTERS: string[] = [ROLES.DIRECTOR, ROLES.DEPUTY_DIRECTOR, ROLES.MANAGER, ROLES.ROP];
@@ -52,6 +53,18 @@ export function computeAttendanceWindow(
   }
   const closesAt = new Date(end.getTime() + GRACE_HOURS * 3_600_000);
   return { closesAt, closed: now.getTime() > closesAt.getTime() };
+}
+
+export function teacherEditEndsAt(dateISO: string): Date {
+  const d = new Date(`${dateISO}T23:59:59`);
+  d.setDate(d.getDate() + TEACHER_EDIT_DAYS);
+  return d;
+}
+
+export function teacherCanEdit(role: string, dateISO: string, now: Date = new Date()): boolean {
+  if (role !== ROLES.TEACHER) return false;
+  if (dateISO > todayISOLocal(now)) return false;
+  return now.getTime() <= teacherEditEndsAt(dateISO).getTime();
 }
 
 export async function activeUnlockUntil(groupId: string, dateISO: string): Promise<Date | null> {

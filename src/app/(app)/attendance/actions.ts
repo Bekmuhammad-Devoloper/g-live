@@ -7,7 +7,7 @@ import { tr } from "@/lib/tr";
 import { canWrite, MODULES } from "@/lib/rbac";
 import { ROLES, ATTENDANCE_STATUSES } from "@/lib/constants";
 import { writeAudit } from "@/lib/audit";
-import { canBypassAttendanceLock, lessonLockState } from "@/lib/attendanceWindow";
+import { canBypassAttendanceLock, lessonLockState, teacherCanEdit } from "@/lib/attendanceWindow";
 import { autoMarkTeacherPresentForLesson } from "@/lib/teacherAutoAttendance";
 
 const CAN_MARK_ROLES = [ROLES.TEACHER, ROLES.DEPUTY_DIRECTOR];
@@ -34,8 +34,8 @@ export async function markAttendance(lessonId: string, studentId: string, status
 
   if (!canBypassAttendanceLock(g.s.role)) {
     const lock = await lessonLockState(lessonId);
-    if (lock && lock.closed && !lock.unlocked) {
-      return { error: tr(s.locale, { uz: "Davomat yopilgan (dars + 3 soat o'tdi) — menejer yoki direktor ruxsati kerak", ru: "Посещаемость закрыта (прошло 3 часа после урока) — нужно разрешение менеджера или директора", en: "Attendance is closed (lesson + 3 hours passed) — manager or director approval required", de: "Anwesenheit ist geschlossen (Unterricht + 3 Stunden vorbei) — Freigabe durch Manager oder Direktor erforderlich" }) };
+    if (lock && lock.closed && !lock.unlocked && !teacherCanEdit(g.s.role, lock.dateISO)) {
+      return { error: tr(s.locale, { uz: "Davomat yopilgan (muddat o'tgan) — menejer yoki direktor ruxsati kerak", ru: "Посещаемость закрыта (срок истёк) — нужно разрешение менеджера или директора", en: "Attendance is closed (the window has passed) — manager or director approval required", de: "Anwesenheit ist geschlossen (Frist abgelaufen) — Freigabe durch Manager oder Direktor erforderlich" }) };
     }
   }
 

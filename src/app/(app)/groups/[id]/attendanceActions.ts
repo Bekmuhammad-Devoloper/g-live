@@ -17,6 +17,8 @@ import {
   isPlannedLessonDay,
   plannedLessonDays,
   isValidDateISO,
+  teacherCanEdit,
+  teacherEditEndsAt,
   todayISOLocal,
   MATERIALIZE_MAX_AGE_DAYS,
   UNLOCK_HOURS,
@@ -43,6 +45,7 @@ const dayRange = (dateISO: string) => {
 
 const hhmmOf = (d: Date) => `${String(d.getHours()).padStart(2, "0")}:${String(d.getMinutes()).padStart(2, "0")}`;
 const dmOf = (d: Date) => `${String(d.getDate()).padStart(2, "0")}.${String(d.getMonth() + 1).padStart(2, "0")} ${hhmmOf(d)}`;
+const closesLabel = (role: string, dateISO: string, closesAt: Date) => dmOf(role === ROLES.TEACHER ? teacherEditEndsAt(dateISO) : closesAt);
 
 async function findOrCreateLesson(groupId: string, dateISO: string) {
   const { start, end } = dayRange(dateISO);
@@ -142,7 +145,7 @@ export async function getGroupAttendance(
 
   const bypass = canBypassAttendanceLock(s.role);
   const offPlan = !lessonDay && !lesson;
-  const editable = offPlan ? false : future ? bypass : (!win.closed || !!unlockUntil || bypass);
+  const editable = offPlan ? false : future ? bypass : (!win.closed || !!unlockUntil || bypass || teacherCanEdit(s.role, dateISO));
   return {
     ok: true,
     map,
@@ -150,7 +153,7 @@ export async function getGroupAttendance(
       closed: win.closed,
       future,
       editable,
-      closesAtLabel: dmOf(win.closesAt),
+      closesAtLabel: closesLabel(s.role, dateISO, win.closesAt),
       unlockedUntilLabel: unlockUntil ? dmOf(unlockUntil) : null,
       canUnlock: canGrantAttendanceUnlock(s.role),
       lessonDay: !offPlan,
@@ -179,11 +182,12 @@ async function lockCheck(
 ): Promise<{ closed?: true; future?: true; closesAtLabel?: string } | null> {
   if (canBypassAttendanceLock(s.role)) return null;
   if (dateISO > todayISOLocal()) return { future: true };
+  if (teacherCanEdit(s.role, dateISO)) return null;
   const group = await prisma.group.findUnique({ where: { id: groupId }, select: { startTime: true, endTime: true } });
   const win = computeAttendanceWindow(dateISO, group?.startTime, group?.endTime);
   if (!win.closed) return null;
   if (await activeUnlockUntil(groupId, dateISO)) return null;
-  return { closed: true, closesAtLabel: dmOf(win.closesAt) };
+  return { closed: true, closesAtLabel: closesLabel(s.role, dateISO, win.closesAt) };
 }
 
 const ALLOWED = ["PRESENT", "ABSENT", "LATE", "EXCUSED"];
@@ -243,20 +247,28 @@ export async function markAllPresent(
   if (lock) return { ok: false, ...lock };
   if (await planCheck(groupId, dateISO)) return { ok: false, notLessonDay: true };
 
-  const group = await prisma.group.findUnique({ where: { id: groupId }, include: { students: { where: { isActive: true }, select: { studentId: true } } } });
+  const group = await prisma.group.findUnique({
+    where: { id: groupId },
+    select: { students: { where: { isActive: true }, select: { studentId: true, joinedAt: true } } },
+  });
   if (!group) return { ok: false };
   const lesson = await findOrCreateLesson(groupId, dateISO);
-  const marked = await prisma.attendance.findMany({ where: { lessonId: lesson.id }, select: { studentId: true } });
-  const markedSet = new Set(marked.map((m) => m.studentId));
-  const toCheck = group.students.map((gs) => gs.studentId).filter((id) => !markedSet.has(id));
-  const blockMap = await isPaymentMandatoryBulk(toCheck);
+  const marked = await prisma.attendance.findMany({ where: { lessonId: lesson.id }, select: { studentId: true, status: true, method: true } });
+  const keep = new Set(marked.filter((m) => !(m.method === "AUTO" && m.status === "ABSENT")).map((m) => m.studentId));
+  const dayEnd = new Date(dateISO + "T23:59:59");
+  const toMark = group.students.filter((gs) => !keep.has(gs.studentId) && gs.joinedAt.getTime() <= dayEnd.getTime()).map((gs) => gs.studentId);
+  const blockMap = await isPaymentMandatoryBulk(toMark);
   let added = 0, skippedBlocked = 0;
-  for (const gs of group.students) {
-    if (markedSet.has(gs.studentId)) continue;
-    if (blockMap.get(gs.studentId)?.mandatory) { skippedBlocked++; continue; }
-    await prisma.attendance.create({ data: { lessonId: lesson.id, studentId: gs.studentId, status: "PRESENT", method: "MANUAL", confirmed: true } });
+  for (const studentId of toMark) {
+    if (blockMap.get(studentId)?.mandatory) { skippedBlocked++; continue; }
+    await prisma.attendance.upsert({
+      where: { lessonId_studentId: { lessonId: lesson.id, studentId } },
+      create: { lessonId: lesson.id, studentId, status: "PRESENT", method: "MANUAL", confirmed: true },
+      update: { status: "PRESENT", method: "MANUAL", confirmed: true, markedAt: new Date() },
+    });
     added++;
   }
+  if (added > 0) await writeAudit({ actorId: s.userId, action: "UPDATE", entityType: "Attendance", entityId: lesson.id, newValue: { allPresent: added, date: dateISO } });
   await autoMarkTeacherPresent(s, groupId, dateISO);
   revalidatePath(`/groups/${groupId}`);
   return { ok: true, added, skippedBlocked };
@@ -344,9 +356,9 @@ export async function getAttendanceJournal(groupId: string, year: number, month0
     }
     days.push({
       date, future, today: date === today, closed: win.closed,
-      editable: readOnly ? false : future ? bypass : (!win.closed || !!unlockUntil || bypass),
+      editable: readOnly ? false : future ? bypass : (!win.closed || !!unlockUntil || bypass || teacherCanEdit(s.role, date)),
       unlockedUntilLabel: unlockUntil ? dmOf(unlockUntil) : null,
-      closesAtLabel: dmOf(win.closesAt),
+      closesAtLabel: closesLabel(s.role, date, win.closesAt),
     });
   }
 

@@ -170,7 +170,7 @@ export function AttendanceJournal({ groupId, students, locale, readOnly = false 
                       onClick={(e) => { e.stopPropagation(); if (readOnly) return; setMenu(null); setDayMenu(dayMenu === d.date ? null : d.date); }}
                       className={cn("whitespace-nowrap rounded-md px-1.5 py-0.5 text-[11px] font-semibold",
                         d.today ? "bg-brand-600 text-white" : d.future ? "text-slate-400" : d.editable ? "text-slate-600 hover:bg-slate-200 dark:text-slate-300 dark:hover:bg-slate-700" : "text-slate-400")}
-                      title={d.closed && !d.unlockedUntilLabel ? L("Yopilgan", "Закрыто", "Closed", "Geschlossen") : d.unlockedUntilLabel ? L(`${d.unlockedUntilLabel} gacha ochiq`, `Открыто до ${d.unlockedUntilLabel}`, `Open until ${d.unlockedUntilLabel}`, `Offen bis ${d.unlockedUntilLabel}`) : undefined}
+                      title={d.closed && !d.unlockedUntilLabel && d.editable && !data?.canUnlock ? L(`${d.closesAtLabel} gacha ochiq`, `Открыто до ${d.closesAtLabel}`, `Open until ${d.closesAtLabel}`, `Offen bis ${d.closesAtLabel}`) : d.closed && !d.unlockedUntilLabel ? L("Yopilgan", "Закрыто", "Closed", "Geschlossen") : d.unlockedUntilLabel ? L(`${d.unlockedUntilLabel} gacha ochiq`, `Открыто до ${d.unlockedUntilLabel}`, `Open until ${d.unlockedUntilLabel}`, `Offen bis ${d.unlockedUntilLabel}`) : undefined}
                     >
                       {dayLabel(d.date)}
                       {d.closed && !d.unlockedUntilLabel && !d.editable && <Icon name="lock" className="ml-0.5 inline h-3 w-3" />}
