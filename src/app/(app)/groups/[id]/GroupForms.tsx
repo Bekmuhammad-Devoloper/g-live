@@ -56,6 +56,7 @@ export type EditGroupData = {
   endTime: string | null;
   note: string | null;
   monthlyFee: number | null;
+  lessonsPerMonth: number | null;
 };
 
 export function CreateStudentForm({ groupId, locale }: { groupId: string; locale: Locale }) {
@@ -269,7 +270,7 @@ export function EditGroupButton({
   compact,
 }: {
   group: EditGroupData;
-  programs: { id: string; name: string }[];
+  programs: { id: string; name: string; lessonsPerMonth?: number }[];
   teachers: { id: string; fullName: string }[];
   rooms?: RoomOption[];
   locale: Locale;
@@ -312,7 +313,7 @@ function EditGroupForm({
   onClose,
 }: {
   group: EditGroupData;
-  programs: { id: string; name: string }[];
+  programs: { id: string; name: string; lessonsPerMonth?: number }[];
   teachers: { id: string; fullName: string }[];
   rooms?: RoomOption[];
   locale: Locale;
@@ -325,6 +326,7 @@ function EditGroupForm({
   const [color, setColor] = useState<string>(group.color ?? GROUP_COLORS[0]);
   const [capacity, setCapacity] = useState<number>(group.capacity);
   const [room, setRoom] = useState<string>(group.room ?? "");
+  const [lessons, setLessons] = useState<string>(String(group.lessonsPerMonth ?? programs.find((p) => p.id === group.programId)?.lessonsPerMonth ?? ""));
   const roomList = rooms.some((r) => r.name === room) || !room ? rooms : [{ id: "_current", name: room, capacity: 0 }, ...rooms];
   const [days, setDays] = useState<number[]>(
     (group.weekdays ?? "").split(",").map((x) => parseInt(x, 10)).filter((n) => n >= 1 && n <= 7)
@@ -450,6 +452,19 @@ function EditGroupForm({
               })}
             </div>
             <input type="hidden" name="weekdays" value={days.join(",")} />
+          </div>
+
+          <div>
+            <label className={fLabel}>{tr(locale, { uz: "Oyiga darslar soni", ru: "Уроков в месяц", en: "Lessons per month", de: "Unterrichtsstunden pro Monat" })}</label>
+            <input name="lessonsPerMonth" value={lessons} onChange={(e) => setLessons(e.target.value.replace(/\D/g, "").slice(0, 2))} type="text" inputMode="numeric" className={input} />
+            <p className="mt-1 text-[11px] text-slate-400">
+              {tr(locale, {
+                uz: "Oyda shundan ortiq dars kuni belgilanmaydi. Bo'sh qolsa, kursdagi son olinadi. O'zgarish guruh jurnali, birinchi oy to'lovi va darsbay oylik hisobiga ta'sir qiladi.",
+                ru: "В месяце не будет больше учебных дней, чем указано. Если пусто, берётся значение курса. Изменение влияет на журнал группы, оплату первого месяца и расчёт зарплаты за урок.",
+                en: "No more lesson days per month than this. If empty, the course value is used. Changing it affects the group journal, the first-month fee and per-lesson salary.",
+                de: "Nicht mehr Unterrichtstage pro Monat als angegeben. Wenn leer, gilt der Kurswert. Eine Änderung wirkt sich auf das Gruppenjournal, die Gebühr des ersten Monats und das Gehalt pro Unterricht aus.",
+              })}
+            </p>
           </div>
 
           <div className="grid grid-cols-2 gap-3">

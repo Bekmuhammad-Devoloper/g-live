@@ -80,6 +80,7 @@ export default async function GroupsPage() {
     endDate: g.endDate ? g.endDate.toISOString().slice(0, 10) : null,
     note: g.note,
     monthlyFee: g.monthlyFee,
+    lessonsPerMonth: g.lessonsPerMonth,
     branchId: g.branchId,
     branchName: g.branch?.name ?? null,
   }));

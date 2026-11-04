@@ -241,10 +241,10 @@ export default function NewGroupForm({
             <input name="lessonsPerMonth" value={lessonsPerMonth} onChange={(e) => setLessonsPerMonth(e.target.value.replace(/\D/g, "").slice(0, 2))} type="text" inputMode="numeric" className={input} />
             <p className="mt-1 text-[11px] text-slate-400">
               {tr(locale, {
-                uz: "Oyda shundan ortiq dars kuni belgilanmaydi (haftada 3 kun bo'lsa oyda 13 kun chiqishi mumkin — 13-chisi dars bo'lmaydi). Keyin o'zgartirib bo'lmaydi.",
-                ru: "В месяце не будет больше уроков, чем указано (при 3 днях в неделю может выйти 13 дней — 13-й не урок). Позже изменить нельзя.",
-                en: "No more lesson days per month than this (3 days a week can yield 13 — the 13th is not a lesson). Cannot be changed later.",
-                de: "Nicht mehr Unterrichtstage pro Monat als angegeben (3 Tage/Woche können 13 ergeben — der 13. ist kein Unterricht). Später nicht änderbar.",
+                uz: "Oyda shundan ortiq dars kuni belgilanmaydi (haftada 3 kun bo'lsa oyda 13 kun chiqishi mumkin — 13-chisi dars bo'lmaydi).",
+                ru: "В месяце не будет больше уроков, чем указано (при 3 днях в неделю может выйти 13 дней — 13-й не урок).",
+                en: "No more lesson days per month than this (3 days a week can yield 13 — the 13th is not a lesson).",
+                de: "Nicht mehr Unterrichtstage pro Monat als angegeben (3 Tage/Woche können 13 ergeben — der 13. ist kein Unterricht).",
               })}
             </p>
           </div>

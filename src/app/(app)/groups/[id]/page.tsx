@@ -83,7 +83,7 @@ export default async function GroupDetailPage({ params }: { params: Promise<{ id
 
   const [programs, teachers, rooms] = full
     ? await Promise.all([
-        prisma.program.findMany({ where: { isActive: true }, select: { id: true, name: true }, orderBy: { name: "asc" } }),
+        prisma.program.findMany({ where: { isActive: true }, select: { id: true, name: true, lessonsPerMonth: true }, orderBy: { name: "asc" } }),
         prisma.user.findMany({ where: { AND: [{ role: ROLES.TEACHER }, staffBranchWhere(s)] }, select: { id: true, fullName: true }, orderBy: { fullName: "asc" } }),
         prisma.room.findMany({ where: { AND: [{ isActive: true }, branchWhere(s)] }, select: { id: true, name: true, capacity: true }, orderBy: { name: "asc" } }),
       ])
@@ -109,6 +109,7 @@ export default async function GroupDetailPage({ params }: { params: Promise<{ id
     endTime: group.endTime,
     note: group.note,
     monthlyFee: group.monthlyFee,
+    lessonsPerMonth: group.lessonsPerMonth,
   };
 
   const fmt = (d: Date) =>

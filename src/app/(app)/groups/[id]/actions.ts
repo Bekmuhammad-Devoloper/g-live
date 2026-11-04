@@ -30,7 +30,7 @@ export async function updateGroup(_prev: FormState, formData: FormData): Promise
   const id = String(formData.get("groupId") ?? "");
   if (!id) return { error: "invalid" };
 
-  const existing = await prisma.group.findUnique({ where: { id } });
+  const existing = await prisma.group.findUnique({ where: { id }, include: { program: { select: { lessonsPerMonth: true } } } });
   if (!existing) return { error: "invalid" };
 
   const name = String(formData.get("name") ?? "").trim();
@@ -64,6 +64,15 @@ export async function updateGroup(_prev: FormState, formData: FormData): Promise
   const feeRaw = parseInt(String(formData.get("monthlyFee") ?? ""), 10);
   const monthlyFee = Number.isFinite(feeRaw) && feeRaw >= 0 ? feeRaw : null;
 
+  let lessonsPerMonth = existing.lessonsPerMonth;
+  if (formData.has("lessonsPerMonth")) {
+    const raw = String(formData.get("lessonsPerMonth") ?? "").trim();
+    const n = Number(raw);
+    if (raw && (!Number.isInteger(n) || n < 1 || n > 31)) return { error: "invalid" };
+    const inherited = existing.lessonsPerMonth === null && n === existing.program.lessonsPerMonth;
+    lessonsPerMonth = !raw || inherited ? null : n;
+  }
+
   const conflict = await findRoomConflict({ room, weekdays, startTime, endTime, branchId: existing.branchId, excludeId: id });
   if (conflict) return { error: "room_conflict", detail: conflictLabel(conflict) };
 
@@ -85,6 +94,7 @@ export async function updateGroup(_prev: FormState, formData: FormData): Promise
     endTime,
     note,
     monthlyFee,
+    lessonsPerMonth,
   };
 
   await prisma.group.update({ where: { id }, data });
@@ -107,8 +117,9 @@ export async function updateGroup(_prev: FormState, formData: FormData): Promise
       endTime: existing.endTime,
       startDate: existing.startDate,
       endDate: existing.endDate,
+      lessonsPerMonth: existing.lessonsPerMonth,
     },
-    newValue: { name, programId, teacherId, levelCode, format, room, capacity, status, weekdays, startTime, endTime, startDate: data.startDate, endDate: data.endDate },
+    newValue: { name, programId, teacherId, levelCode, format, room, capacity, status, weekdays, startTime, endTime, startDate: data.startDate, endDate: data.endDate, lessonsPerMonth },
   });
   if (status !== existing.status) await syncEduStatuses();
   revalidatePath(`/groups/${id}`);

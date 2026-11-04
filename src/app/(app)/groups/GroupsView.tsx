@@ -37,6 +37,7 @@ export interface VGroup {
   endDate: string | null;
   note: string | null;
   monthlyFee: number | null;
+  lessonsPerMonth: number | null;
   branchId: string | null;
   branchName: string | null;
 }
@@ -92,7 +93,7 @@ export default function GroupsView({
   totalStudents: number;
   frozenStudents: number;
   canCreate: boolean;
-  programs: { id: string; name: string }[];
+  programs: { id: string; name: string; lessonsPerMonth?: number }[];
   teachers: { id: string; fullName: string }[];
   teacherNames: string[];
   programNames: string[];
@@ -385,7 +386,7 @@ function editDataOf(g: VGroup): EditGroupData {
     levelCode: g.level, color: g.color, format: g.format, onlineLink: g.onlineLink, room: g.room,
     status: g.status, capacity: g.capacity, startDate: g.startDate, endDate: g.endDate,
     weekdays: g.weekdays.length ? g.weekdays.join(",") : null,
-    startTime: g.startTime, endTime: g.endTime, note: g.note, monthlyFee: g.monthlyFee,
+    startTime: g.startTime, endTime: g.endTime, note: g.note, monthlyFee: g.monthlyFee, lessonsPerMonth: g.lessonsPerMonth,
   };
 }
 
