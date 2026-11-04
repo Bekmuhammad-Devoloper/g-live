@@ -1,7 +1,7 @@
 "use client";
 
 import DateInput from "@/app/(app)/_components/DateInput";
-import { useEffect, useRef, useState, useTransition } from "react";
+import { Fragment, useEffect, useRef, useState, useTransition } from "react";
 import Link from "next/link";
 import { Icon } from "../../_components/Icon";
 import { cn } from "@/lib/cn";
@@ -13,7 +13,16 @@ import { getGroupAttendance, markStudentAttendance, markAllPresent, unlockAttend
 const p2 = (n: number) => String(n).padStart(2, "0");
 const todayISO = () => { const d = new Date(); return `${d.getFullYear()}-${p2(d.getMonth() + 1)}-${p2(d.getDate())}`; };
 
-type AttStudent = { id: string; name: string; blocked?: boolean; daysUnpaid?: number };
+type AttStudent = { id: string; name: string; blocked?: boolean; daysUnpaid?: number; frozen?: boolean };
+
+export function FrozenHeading({ count, locale }: { count: number; locale: Locale }) {
+  return (
+    <li className="mt-2 flex items-center gap-1.5 !border-t-0 pb-1 pt-2 text-xs font-bold text-sky-700 dark:text-sky-300">
+      <Icon name="snowflake" className="h-3.5 w-3.5" />
+      {tr(locale, { uz: "Muzlatilgan", ru: "Замороженные", en: "Frozen", de: "Eingefroren" })} ({count})
+    </li>
+  );
+}
 
 export function GroupAttendance({ groupId, students, locale }: { groupId: string; students: AttStudent[]; locale: Locale }) {
   const [view, setView] = useState<"journal" | "day">("journal");
@@ -273,17 +282,19 @@ function DayAttendance({ groupId, students, locale }: { groupId: string; student
         <p className="py-4 text-center text-sm text-slate-400">{tr(locale, { uz: "O'quvchi yo'q", ru: "Нет учеников", en: "No students", de: "Keine Schüler" })}</p>
       ) : (
         <ul className="divide-y divide-slate-100 dark:divide-slate-800">
-          {students.map((s) => {
+          {students.map((s, i) => {
             const st = map[s.id];
             const isAttending = st === "PRESENT" || st === "LATE";
             const isBlocked = !!s.blocked && !isAttending;
             return (
-              <li key={s.id} className="flex items-center justify-between gap-3 py-2">
+              <Fragment key={s.id}>
+              {s.frozen && !students[i - 1]?.frozen && <FrozenHeading count={students.filter((x) => x.frozen).length} locale={locale} />}
+              <li className={cn("flex items-center justify-between gap-3 py-2", s.frozen && "-mx-2 rounded-lg !border-t-0 bg-sky-50 px-2 dark:bg-sky-500/10")}>
                 <div className="flex min-w-0 items-center gap-2">
                   <Link
                     href={`/students/${s.id}`}
                     title={tr(locale, { uz: "O'quvchi ma'lumotlari", ru: "Данные ученика", en: "Student details", de: "Schülerdetails" })}
-                    className="min-w-0 truncate text-sm text-slate-700 transition hover:text-brand-600 hover:underline dark:text-slate-200 dark:hover:text-brand-300"
+                    className={cn("min-w-0 truncate text-sm transition hover:underline", s.frozen ? "text-sky-700 dark:text-sky-300" : "text-slate-700 hover:text-brand-600 dark:text-slate-200 dark:hover:text-brand-300")}
                   >
                     {s.name}
                   </Link>
@@ -313,6 +324,7 @@ function DayAttendance({ groupId, students, locale }: { groupId: string; student
                   >✕</button>
                 </div>
               </li>
+              </Fragment>
             );
           })}
         </ul>

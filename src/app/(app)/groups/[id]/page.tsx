@@ -1,3 +1,4 @@
+import { Fragment } from "react";
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { requireSession } from "@/lib/auth";
@@ -12,7 +13,7 @@ import { tr } from "@/lib/tr";
 import { PageHeader, Card, Table, EmptyRow, Badge, Forbidden } from "../../_components/ui";
 import { Icon } from "../../_components/Icon";
 import { CreateStudentForm, EnrollExisting, BulkImportStudents, NewLessonForm, RemoveStudentButton, EditGroupButton } from "./GroupForms";
-import { GroupAttendance } from "./GroupAttendance";
+import { GroupAttendance, FrozenHeading } from "./GroupAttendance";
 import { AttendanceJournal } from "./AttendanceJournal";
 import CourseLessonsTab from "../../courses/[id]/CourseLessonsTab";
 import { getLevelCodes } from "@/lib/studyLevels";
@@ -66,10 +67,13 @@ export default async function GroupDetailPage({ params }: { params: Promise<{ id
   const enrolledIds = group.students.map((gs) => gs.studentId);
   const isStaff = s.role !== ROLES.STUDENT && s.role !== ROLES.PARENT;
   const debts = isStaff ? await computeDebts(enrolledIds) : new Map();
-  const mandatoryMap = canManage ? await isPaymentMandatoryBulk(enrolledIds) : new Map();
-  const attendanceStudents = group.students.map((gs) => {
+  const mandatoryMap = isStaff ? await isPaymentMandatoryBulk(enrolledIds) : new Map();
+  const isFrozen = (gs: (typeof group.students)[number]) => isStaff && (gs.student.eduStatus === "FROZEN" || !!mandatoryMap.get(gs.studentId)?.mandatory);
+  const frozenStudents = group.students.filter(isFrozen);
+  const orderedStudents = [...group.students.filter((gs) => !isFrozen(gs)), ...frozenStudents];
+  const attendanceStudents = orderedStudents.map((gs) => {
     const b = mandatoryMap.get(gs.studentId);
-    return { id: gs.studentId, name: gs.student.fullName, blocked: b?.mandatory ?? false, daysUnpaid: b?.daysUnpaid ?? 0 };
+    return { id: gs.studentId, name: gs.student.fullName, blocked: b?.mandatory ?? false, daysUnpaid: b?.daysUnpaid ?? 0, frozen: isFrozen(gs) };
   });
 
   const candidates = full
@@ -184,15 +188,18 @@ export default async function GroupDetailPage({ params }: { params: Promise<{ id
             <p className="text-sm text-slate-400">{tr(s.locale, { uz: "O'quvchi yo'q", ru: "Нет учеников", en: "No students", de: "Keine Schüler" })}</p>
           ) : (
             <ul className="divide-y divide-slate-100">
-              {group.students.map((gs) => {
+              {orderedStudents.map((gs, i) => {
                 const d = debts.get(gs.studentId);
                 const tone = d ? debtTone(d.debt, d.overdueMonths, d.credit) : "none";
+                const frozen = isFrozen(gs);
                 return (
-                <li key={gs.id} className="flex items-center justify-between py-2 text-sm">
+                <Fragment key={gs.id}>
+                {frozen && i === orderedStudents.length - frozenStudents.length && <FrozenHeading count={frozenStudents.length} locale={s.locale} />}
+                <li className={cn("flex items-center justify-between py-2 text-sm", frozen && "-mx-2 rounded-lg !border-t-0 bg-sky-50 px-2 dark:bg-sky-500/10")}>
                   <span className="group/st relative min-w-0">
                     <Link
                       href={`/students/${gs.studentId}`}
-                      className={cn("block truncate transition hover:underline", tone === "none" ? "text-slate-700 hover:text-brand-600 dark:hover:text-brand-300" : DEBT_TEXT[tone])}
+                      className={cn("block truncate transition hover:underline", frozen ? "text-sky-700 dark:text-sky-300" : tone === "none" ? "text-slate-700 hover:text-brand-600 dark:hover:text-brand-300" : DEBT_TEXT[tone])}
                     >
                       {gs.student.fullName}
                     </Link>
@@ -222,6 +229,7 @@ export default async function GroupDetailPage({ params }: { params: Promise<{ id
                     {full && <RemoveStudentButton groupId={group.id} studentId={gs.studentId} locale={s.locale} />}
                   </div>
                 </li>
+                </Fragment>
                 );
               })}
             </ul>

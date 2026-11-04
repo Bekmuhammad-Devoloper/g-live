@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useRef, useState, useTransition } from "react";
+import { Fragment, useEffect, useRef, useState, useTransition } from "react";
 import Link from "next/link";
 import { cn } from "@/lib/cn";
 import { tr } from "@/lib/tr";
@@ -8,7 +8,7 @@ import type { Locale } from "@/lib/constants";
 import { Icon } from "../../_components/Icon";
 import { getAttendanceJournal, markStudentAttendance, markAllPresent, unlockAttendance, type AttendanceJournal as Journal, type JournalDay } from "./attendanceActions";
 
-type Student = { id: string; name: string; blocked?: boolean; daysUnpaid?: number };
+type Student = { id: string; name: string; blocked?: boolean; daysUnpaid?: number; frozen?: boolean };
 
 const MONTHS: Record<Locale, string[]> = {
   uz: ["yan", "fev", "mar", "apr", "may", "iyun", "iyul", "avg", "sen", "okt", "noy", "dek"],
@@ -196,11 +196,22 @@ export function AttendanceJournal({ groupId, students, locale, readOnly = false 
             </thead>
             <tbody>
               {students.map((s, i) => (
-                <tr key={s.id} className="border-t border-slate-100 dark:border-slate-800">
-                  <td className="sticky left-0 z-10 bg-white px-3 py-1.5 dark:bg-slate-900">
+                <Fragment key={s.id}>
+                {s.frozen && !students[i - 1]?.frozen && (
+                  <tr className="border-t-2 border-sky-200 bg-sky-100 dark:border-sky-500/30 dark:bg-[#123049]">
+                    <td colSpan={days.length + 3} className="px-3 py-1.5">
+                      <span className="sticky left-3 inline-flex items-center gap-1.5 text-xs font-bold text-sky-700 dark:text-sky-300">
+                        <Icon name="snowflake" className="h-3.5 w-3.5" />
+                        {L("Muzlatilgan", "Замороженные", "Frozen", "Eingefroren")} ({students.filter((x) => x.frozen).length})
+                      </span>
+                    </td>
+                  </tr>
+                )}
+                <tr className={cn("border-t", s.frozen ? "border-sky-100 bg-sky-50 dark:border-sky-500/20 dark:bg-[#10283f]" : "border-slate-100 dark:border-slate-800")}>
+                  <td className={cn("sticky left-0 z-10 px-3 py-1.5", s.frozen ? "bg-sky-50 dark:bg-[#10283f]" : "bg-white dark:bg-slate-900")}>
                     <div className="flex items-center gap-2">
                       <span className="w-5 text-right text-[11px] text-slate-400">{i + 1}.</span>
-                      <Link href={`/students/${s.id}`} className="max-w-[170px] truncate text-[13px] text-slate-700 hover:text-brand-600 hover:underline dark:text-slate-200">{s.name}</Link>
+                      <Link href={`/students/${s.id}`} className={cn("max-w-[170px] truncate text-[13px] hover:underline", s.frozen ? "text-sky-700 dark:text-sky-300" : "text-slate-700 hover:text-brand-600 dark:text-slate-200")}>{s.name}</Link>
                       {s.blocked && <span className="h-2 w-2 shrink-0 rounded-full bg-rose-500" title={L("To'lov kerak", "Нужна оплата", "Payment needed", "Zahlung erforderlich")} />}
                     </div>
                   </td>
@@ -209,7 +220,7 @@ export function AttendanceJournal({ groupId, students, locale, readOnly = false 
                     const before = !!data?.joined[s.id] && d.date < data.joined[s.id];
                     const open = menu?.date === d.date && menu.studentId === s.id;
                     return (
-                      <td key={d.date} className={cn("relative px-1 py-1 text-center", d.today && "bg-brand-50/50 dark:bg-brand-500/5")}>
+                      <td key={d.date} className={cn("relative px-1 py-1 text-center", d.today && !s.frozen && "bg-brand-50/50 dark:bg-brand-500/5")}>
                         {before ? (
                           <span className="text-xs text-slate-300">—</span>
                         ) : (
@@ -241,6 +252,7 @@ export function AttendanceJournal({ groupId, students, locale, readOnly = false 
                   <td className="px-2 py-1 text-center text-xs font-semibold tabular-nums text-emerald-600">{countFor(s.id, true)}</td>
                   <td className="px-2 py-1 text-center text-xs font-semibold tabular-nums text-rose-500">{countFor(s.id, false)}</td>
                 </tr>
+                </Fragment>
               ))}
             </tbody>
           </table>
