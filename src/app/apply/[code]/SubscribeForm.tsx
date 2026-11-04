@@ -98,42 +98,7 @@ export default function SubscribeForm({ code, plans }: { code: string; plans: Sa
 
   return (
     <form onSubmit={submit} className={cn(CARD, "mt-5 p-4")}>
-      {plans.length > 0 && (
-        <>
-          <Label text="Tarif" />
-          <PlanCarousel plans={plans} selected={planId} onSelect={setPlanId} promo={promo} />
-
-          <Label text="Promokod" className="mt-4" />
-          <div className="flex gap-2">
-            <input
-              value={promoText}
-              onChange={(e) => onPromoText(e.target.value)}
-              onKeyDown={(e) => { if (e.key === "Enter") { e.preventDefault(); applyPromo(); } }}
-              autoComplete="off"
-              autoCapitalize="characters"
-              spellCheck={false}
-              placeholder="Promokod bo'lsa kiriting"
-              className={cn(INPUT, "min-w-0 flex-1 font-semibold placeholder:font-normal")}
-            />
-            <button
-              type="button"
-              onClick={applyPromo}
-              disabled={!promoText || checking || !!promo}
-              className="h-[50px] shrink-0 rounded-2xl border-2 border-brand-500 px-4 text-[14px] font-bold text-brand-600 transition active:scale-[0.98] disabled:opacity-50 dark:text-brand-200"
-            >
-              {checking ? "..." : promo ? "Qo'llandi" : "Qo'llash"}
-            </button>
-          </div>
-          {promo && (
-            <p className="animate-pop-in mt-2 text-[13px] font-semibold text-emerald-600 dark:text-emerald-300">
-              {promoPeriod(promo.months)} uchun {sumLabel(promo.discount)} chegirma
-            </p>
-          )}
-          {promoError && <p className="animate-pop-in mt-2 text-[13px] font-medium text-rose-600 dark:text-rose-300">{promoError}</p>}
-        </>
-      )}
-
-      <Label text="O'quv markazi nomi" req className={plans.length > 0 ? "mt-4" : undefined} />
+      <Label text="O'quv markazi nomi" req />
       <input value={centerName} onChange={(e) => setCenterName(e.target.value)} required autoComplete="organization" placeholder="Markaz nomi" className={INPUT} />
 
       <Label text="Ism va familiya" req className="mt-3" />
@@ -166,6 +131,41 @@ export default function SubscribeForm({ code, plans }: { code: string; plans: Sa
 
       <Label text="Izoh" className="mt-3" />
       <textarea value={message} onChange={(e) => setMessage(e.target.value)} rows={3} placeholder="Savolingiz bo'lsa yozing" className={cn(INPUT, "py-3")} />
+
+      {plans.length > 0 && (
+        <>
+          <Label text="Tarif" className="mt-4" />
+          <PlanCarousel plans={plans} selected={planId} onSelect={setPlanId} promo={promo} />
+
+          <Label text="Promokod" className="mt-4" />
+          <div className="flex gap-2">
+            <input
+              value={promoText}
+              onChange={(e) => onPromoText(e.target.value)}
+              onKeyDown={(e) => { if (e.key === "Enter") { e.preventDefault(); applyPromo(); } }}
+              autoComplete="off"
+              autoCapitalize="characters"
+              spellCheck={false}
+              placeholder="Promokod bo'lsa kiriting"
+              className={cn(INPUT, "min-w-0 flex-1 font-semibold placeholder:font-normal")}
+            />
+            <button
+              type="button"
+              onClick={applyPromo}
+              disabled={!promoText || checking || !!promo}
+              className="h-[50px] shrink-0 rounded-2xl border-2 border-brand-500 px-4 text-[14px] font-bold text-brand-600 transition active:scale-[0.98] disabled:opacity-50 dark:text-brand-200"
+            >
+              {checking ? "..." : promo ? "Qo'llandi" : "Qo'llash"}
+            </button>
+          </div>
+          {promo && (
+            <p className="animate-pop-in mt-2 text-[13px] font-semibold text-emerald-600 dark:text-emerald-300">
+              {promoPeriod(promo.months)} uchun {sumLabel(promo.discount)} chegirma
+            </p>
+          )}
+          {promoError && <p className="animate-pop-in mt-2 text-[13px] font-medium text-rose-600 dark:text-rose-300">{promoError}</p>}
+        </>
+      )}
 
       <input aria-hidden tabIndex={-1} autoComplete="off" name="website" value={website} onChange={(e) => setWebsite(e.target.value)} className="absolute -left-[9999px] h-0 w-0 opacity-0" />
 
