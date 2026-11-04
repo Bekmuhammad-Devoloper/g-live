@@ -23,16 +23,20 @@ export interface SalesData {
 const defaults = (): SalesData => ({
   plans: [
     {
-      id: "start", name: "Start", price: null, students: 100, branches: 1, popular: false, visible: true,
+      id: "start", name: "Start", price: 400_000, students: 100, branches: 1, popular: false, visible: true,
       features: ["O'quvchilar va guruhlar", "Davomat jurnali", "To'lov va qarzdorlik", "Lidlar CRM"],
     },
     {
-      id: "standart", name: "Standart", price: null, students: 300, branches: 3, popular: true, visible: true,
+      id: "standart", name: "Standart", price: 940_000, students: 300, branches: 3, popular: true, visible: true,
       features: ["Start tarifidagi hamma imkoniyat", "Moliya va oylik hisobi", "Hisobotlar"],
     },
     {
-      id: "premium", name: "Premium", price: null, students: null, branches: null, popular: false, visible: true,
-      features: ["Standart tarifidagi hamma imkoniyat", "AI yordamchi", "Telefoniya (alohida ulanadi)"],
+      id: "pro", name: "Pro", price: 1_460_000, students: 1000, branches: 5, popular: false, visible: true,
+      features: ["Standart tarifidagi hamma imkoniyat", "Ko'proq o'quvchi va filial"],
+    },
+    {
+      id: "premium", name: "Premium", price: 2_900_000, students: null, branches: null, popular: false, visible: true,
+      features: ["Pro tarifidagi hamma imkoniyat", "AI yordamchi", "Telefoniya (alohida ulanadi)"],
     },
   ],
   links: [{ code: DEFAULT_LINK_CODE, name: "Umumiy havola", createdAt: new Date(0).toISOString(), active: true }],
