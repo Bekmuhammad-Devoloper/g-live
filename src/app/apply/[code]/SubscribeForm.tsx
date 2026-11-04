@@ -4,11 +4,12 @@ import { useMemo, useState, useTransition } from "react";
 import { cn } from "@/lib/cn";
 import { fmtUzPhoneInput } from "@/lib/phone";
 import { DEFAULT_COUNTRY_ISO, localDigitsOk, phoneCountry } from "@/lib/phoneCodes";
-import { planPriceLabel, type SalesPlan } from "@/lib/devpanel/salesTypes";
+import { normalizePromo, promoPeriod, sumLabel, type SalesPlan } from "@/lib/devpanel/salesTypes";
 import { Icon } from "../../(app)/_components/Icon";
 import CountryPicker from "./CountryPicker";
 import { CARD, FIELD_BOX, INPUT, Label } from "./ApplyForm";
-import { submitSubscribeLead } from "./subscribeAction";
+import PlanCarousel, { type AppliedPromo } from "./PlanCarousel";
+import { checkSubscribePromo, submitSubscribeLead } from "./subscribeAction";
 
 const ERRORS: Record<string, string> = {
   center: "O'quv markazi nomini kiriting",
@@ -17,12 +18,7 @@ const ERRORS: Record<string, string> = {
   too_many: "Juda ko'p urinish. Birozdan keyin qayta urinib ko'ring",
   closed: "Bu havola endi faol emas",
   full: "Ariza qabul qilinmadi. Keyinroq urinib ko'ring",
-};
-
-const limitLabel = (n: number | null, unit: string) => {
-  if (!n) return `Cheksiz ${unit}`;
-  if (n === 1) return `1 ta ${unit}`;
-  return `${n} tagacha ${unit}`;
+  promo: "Bunday promokod yo'q yoki muddati tugagan",
 };
 
 export default function SubscribeForm({ code, plans }: { code: string; plans: SalesPlan[] }) {
@@ -38,10 +34,30 @@ export default function SubscribeForm({ code, plans }: { code: string; plans: Sa
   const [students, setStudents] = useState("");
   const [message, setMessage] = useState("");
   const [website, setWebsite] = useState("");
+  const [promoText, setPromoText] = useState("");
+  const [promo, setPromo] = useState<AppliedPromo | null>(null);
+  const [promoError, setPromoError] = useState<string | null>(null);
+  const [checking, startCheck] = useTransition();
 
   const country = useMemo(() => phoneCountry(countryIso), [countryIso]);
   const onPhone = (v: string) => setPhone(countryIso === "UZ" ? fmtUzPhoneInput(v) : v.replace(/\D/g, "").slice(0, 12));
   const onCountry = (iso: string) => { setCountryIso(iso); setPhone(""); };
+
+  const onPromoText = (v: string) => {
+    setPromoText(normalizePromo(v));
+    setPromo(null);
+    setPromoError(null);
+  };
+
+  const applyPromo = () => {
+    if (!promoText) return;
+    setPromoError(null);
+    startCheck(async () => {
+      const r = await checkSubscribePromo(code, promoText);
+      if (r.ok) setPromo({ code: r.code, discount: r.discount, months: r.months });
+      else setPromoError(ERRORS[r.error] ?? ERRORS.promo);
+    });
+  };
 
   const submit = (e: React.FormEvent) => {
     e.preventDefault();
@@ -53,7 +69,7 @@ export default function SubscribeForm({ code, plans }: { code: string; plans: Sa
       return;
     }
     start(async () => {
-      const r = await submitSubscribeLead(code, { centerName, contactName, phone: `${country.code} ${phone}`, city, students, planId, message, website });
+      const r = await submitSubscribeLead(code, { centerName, contactName, phone: `${country.code} ${phone}`, city, students, planId, message, website, promo: promoText });
       if (r.ok) { setDone(true); window.scrollTo({ top: 0 }); }
       else setError(ERRORS[r.error ?? ""] ?? "Ariza yuborilmadi. Qayta urinib ko'ring");
     });
@@ -70,6 +86,11 @@ export default function SubscribeForm({ code, plans }: { code: string; plans: Sa
           <p className="mt-1.5 text-[15px] leading-relaxed text-slate-500 dark:text-slate-400">
             {contactName.trim().split(" ")[0]}, tez orada siz bilan bog&apos;lanamiz.
           </p>
+          {promo && (
+            <p className="mt-3 rounded-2xl bg-emerald-500/15 px-3.5 py-2.5 text-[13px] font-semibold text-emerald-700 dark:text-emerald-300">
+              {promo.code} promokodi arizangizga qo&apos;shildi
+            </p>
+          )}
         </div>
       </div>
     );
@@ -80,51 +101,35 @@ export default function SubscribeForm({ code, plans }: { code: string; plans: Sa
       {plans.length > 0 && (
         <>
           <Label text="Tarif" />
-          <div className="space-y-2">
-            {plans.map((p) => {
-              const on = planId === p.id;
-              return (
-                <button
-                  key={p.id}
-                  type="button"
-                  aria-pressed={on}
-                  onClick={() => setPlanId(on ? "" : p.id)}
-                  className={cn(
-                    "block w-full rounded-2xl border-2 px-3.5 py-3 text-left transition active:scale-[0.99]",
-                    on
-                      ? "border-brand-600 bg-brand-600 text-white shadow-[0_10px_24px_-10px_rgba(65,72,239,0.7)]"
-                      : "border-slate-200 bg-white text-slate-700 hover:border-brand-300 dark:border-white/10 dark:bg-white/[0.04] dark:text-slate-200",
-                  )}
-                >
-                  <span className="flex items-baseline justify-between gap-3">
-                    <span className="flex min-w-0 items-center gap-2">
-                      <span className="truncate text-[15px] font-bold">{p.name}</span>
-                      {p.popular && (
-                        <span className={cn("shrink-0 rounded-full px-2 py-0.5 text-[10px] font-bold", on ? "bg-white/20 text-white" : "bg-brand-50 text-brand-600 dark:bg-white/[0.08] dark:text-brand-300")}>Ko&apos;p tanlanadi</span>
-                      )}
-                    </span>
-                    <span className="shrink-0 text-right text-[14px] font-extrabold tabular-nums">
-                      {planPriceLabel(p.price)}
-                      {!!p.price && <span className={cn("ml-1 text-[11px] font-medium", on ? "text-white/80" : "text-slate-400")}>/ oy</span>}
-                    </span>
-                  </span>
-                  <span className={cn("mt-1 block text-[12px]", on ? "text-white/80" : "text-slate-500 dark:text-slate-400")}>
-                    {limitLabel(p.students, "o'quvchi")} · {limitLabel(p.branches, "filial")}
-                  </span>
-                  {p.features.length > 0 && (
-                    <span className={cn("mt-2 block space-y-1 border-t pt-2", on ? "border-white/20" : "border-slate-100 dark:border-white/10")}>
-                      {p.features.map((x) => (
-                        <span key={x} className="flex items-start gap-1.5 text-[12.5px] leading-snug">
-                          <Icon name="check" className={cn("mt-0.5 h-3.5 w-3.5 shrink-0", !on && "text-emerald-500")} strokeWidth={2.4} />
-                          {x}
-                        </span>
-                      ))}
-                    </span>
-                  )}
-                </button>
-              );
-            })}
+          <PlanCarousel plans={plans} selected={planId} onSelect={setPlanId} promo={promo} />
+
+          <Label text="Promokod" className="mt-4" />
+          <div className="flex gap-2">
+            <input
+              value={promoText}
+              onChange={(e) => onPromoText(e.target.value)}
+              onKeyDown={(e) => { if (e.key === "Enter") { e.preventDefault(); applyPromo(); } }}
+              autoComplete="off"
+              autoCapitalize="characters"
+              spellCheck={false}
+              placeholder="Promokod bo'lsa kiriting"
+              className={cn(INPUT, "min-w-0 flex-1 font-semibold placeholder:font-normal")}
+            />
+            <button
+              type="button"
+              onClick={applyPromo}
+              disabled={!promoText || checking || !!promo}
+              className="h-[50px] shrink-0 rounded-2xl border-2 border-brand-500 px-4 text-[14px] font-bold text-brand-600 transition active:scale-[0.98] disabled:opacity-50 dark:text-brand-200"
+            >
+              {checking ? "..." : promo ? "Qo'llandi" : "Qo'llash"}
+            </button>
           </div>
+          {promo && (
+            <p className="animate-pop-in mt-2 text-[13px] font-semibold text-emerald-600 dark:text-emerald-300">
+              {promoPeriod(promo.months)} uchun {sumLabel(promo.discount)} chegirma
+            </p>
+          )}
+          {promoError && <p className="animate-pop-in mt-2 text-[13px] font-medium text-rose-600 dark:text-rose-300">{promoError}</p>}
         </>
       )}
 

@@ -3,7 +3,7 @@
 import { useEffect, useState, useTransition } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { formatPhone, LEAD_STATUSES, type LeadStatus, type SalesLead, type SalesPlan } from "@/lib/devpanel/salesTypes";
+import { formatPhone, LEAD_STATUSES, promoPeriod, sumLabel, type LeadStatus, type SalesLead, type SalesPlan } from "@/lib/devpanel/salesTypes";
 import { createLeadAction, deleteLeadAction, updateLeadAction } from "./actions";
 
 export default function LeadDrawer({ lead, defaultStatus, plans, onClose }: { lead: SalesLead | null; defaultStatus: LeadStatus; plans: SalesPlan[]; onClose: () => void }) {
@@ -92,6 +92,11 @@ export default function LeadDrawer({ lead, defaultStatus, plans, onClose }: { le
               {plans.map((p) => <option key={p.id} value={p.id} className="bg-[#0d1424]">{p.name}</option>)}
             </select>
           </div>
+          {lead?.promoCode && (
+            <div className="rounded-lg border border-orange-400/30 bg-orange-400/10 px-3 py-2 text-sm text-orange-200">
+              <span className="font-bold">{lead.promoCode}</span> · {promoPeriod(lead.promoMonths ?? 1)} uchun {sumLabel(lead.promoDiscount ?? 0)} chegirma
+            </div>
+          )}
           <div><label className={lbl}>Mijoz izohi</label><textarea rows={3} value={f.message} onChange={(e) => set("message", e.target.value)} className={`${fld} h-auto py-2`} /></div>
           <div><label className={lbl}>Sotuv eslatmasi</label><textarea rows={4} value={f.note} onChange={(e) => set("note", e.target.value)} placeholder="Nima kelishildi, qachon qayta bog'lanish kerak" className={`${fld} h-auto py-2`} /></div>
           {error && <p className="rounded-lg bg-red-500/10 px-3 py-2 text-sm text-red-300">{error}</p>}

@@ -4,7 +4,7 @@ import { useEffect, useMemo, useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
 import { cn } from "@/lib/cn";
 import { Icon } from "@/app/(app)/_components/Icon";
-import { formatPhone, LEAD_STATUSES, planPriceLabel, type LeadStatus, type SalesLead, type SalesLink, type SalesPlan } from "@/lib/devpanel/salesTypes";
+import { formatPhone, LEAD_STATUSES, planPriceLabel, promoPeriod, sumLabel, type LeadStatus, type SalesLead, type SalesLink, type SalesPlan } from "@/lib/devpanel/salesTypes";
 import { fmtDate } from "../ui";
 import { createLinkAction, setLeadStatusAction, setLinkActiveAction } from "./actions";
 import LeadDrawer from "./LeadDrawer";
@@ -191,6 +191,11 @@ function LeadCard({ lead, price, onOpen, onDragStart, onDragEnd }: {
           </div>
         )}
         {!!price && <div className="text-xs font-semibold text-emerald-500">{planPriceLabel(price)}</div>}
+        {lead.promoCode && (
+          <div className="truncate text-xs font-semibold text-orange-300">
+            {lead.promoCode} · {promoPeriod(lead.promoMonths ?? 1)}: −{sumLabel(lead.promoDiscount ?? 0)}
+          </div>
+        )}
       </div>
 
       <div className="my-2.5 h-px bg-white/[0.06]" />
@@ -315,7 +320,10 @@ function LeadsTable({ rows, onOpen, onMove }: { rows: SalesLead[]; onOpen: (l: S
                 </td>
                 <td className="px-4 py-3 text-slate-300">{l.city || "—"}</td>
                 <td className="px-4 py-3 tabular-nums text-slate-300">{l.students ?? "—"}</td>
-                <td className="px-4 py-3 text-slate-300">{l.planName ?? "—"}</td>
+                <td className="px-4 py-3 text-slate-300">
+                  {l.planName ?? "—"}
+                  {l.promoCode && <span className="ml-2 rounded bg-orange-400/15 px-1.5 py-0.5 text-[11px] font-semibold text-orange-300">{l.promoCode}</span>}
+                </td>
                 <td className="px-4 py-3 text-slate-400">{l.linkName ?? "Qo'lda"}</td>
                 <td className="whitespace-nowrap px-4 py-3 text-slate-400">{fmtDate(l.createdAt)}</td>
                 <td className="px-4 py-3">

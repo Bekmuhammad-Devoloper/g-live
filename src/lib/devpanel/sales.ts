@@ -4,8 +4,8 @@ import path from "node:path";
 import { randomBytes } from "node:crypto";
 import { CENTERS_ROOT } from "./registry";
 import {
-  DEFAULT_LINK_CODE, normalizePhone, parseStudents, isOpenStatus,
-  type LeadInput, type SalesLead, type SalesLink, type SalesPlan,
+  DEFAULT_LINK_CODE, normalizePhone, normalizePromo, parseStudents, isOpenStatus,
+  type LeadInput, type SalesLead, type SalesLink, type SalesPlan, type SalesPromo,
 } from "./salesTypes";
 
 const FILE = path.join(CENTERS_ROOT, "sales.json");
@@ -18,29 +18,31 @@ export interface SalesData {
   plans: SalesPlan[];
   links: SalesLink[];
   leads: SalesLead[];
+  promos: SalesPromo[];
 }
 
 const defaults = (): SalesData => ({
   plans: [
     {
-      id: "start", name: "Start", price: 400_000, students: 100, branches: 1, popular: false, visible: true,
+      id: "start", name: "Start", price: 350_000, students: 100, branches: 1, popular: false, visible: true,
       features: ["O'quvchilar va guruhlar", "Davomat jurnali", "To'lov va qarzdorlik", "Lidlar CRM"],
     },
     {
-      id: "standart", name: "Standart", price: 940_000, students: 300, branches: 3, popular: true, visible: true,
+      id: "standart", name: "Standart", price: 890_000, students: 300, branches: 3, popular: true, visible: true,
       features: ["Start tarifidagi hamma imkoniyat", "Moliya va oylik hisobi", "Hisobotlar"],
     },
     {
-      id: "pro", name: "Pro", price: 1_460_000, students: 1000, branches: 5, popular: false, visible: true,
+      id: "pro", name: "Pro", price: 1_410_000, students: 1000, branches: 5, popular: false, visible: true,
       features: ["Standart tarifidagi hamma imkoniyat", "Ko'proq o'quvchi va filial"],
     },
     {
-      id: "premium", name: "Premium", price: 2_900_000, students: null, branches: null, popular: false, visible: true,
+      id: "premium", name: "Premium", price: 2_850_000, students: null, branches: null, popular: false, visible: true,
       features: ["Pro tarifidagi hamma imkoniyat", "AI yordamchi", "Telefoniya (alohida ulanadi)"],
     },
   ],
   links: [{ code: DEFAULT_LINK_CODE, name: "Umumiy havola", createdAt: new Date(0).toISOString(), active: true }],
   leads: [],
+  promos: [{ code: "GL100", discount: 100_000, months: 1, active: true, createdAt: new Date(0).toISOString() }],
 });
 
 export async function readSales(): Promise<SalesData> {
@@ -53,7 +55,7 @@ export async function readSales(): Promise<SalesData> {
   }
   const d = JSON.parse(raw) as Partial<SalesData>;
   const base = defaults();
-  return { plans: d.plans ?? base.plans, links: d.links ?? base.links, leads: d.leads ?? [] };
+  return { plans: d.plans ?? base.plans, links: d.links ?? base.links, leads: d.leads ?? [], promos: d.promos ?? base.promos };
 }
 
 async function writeSales(d: SalesData): Promise<void> {
@@ -126,9 +128,15 @@ export function leadFields(d: SalesData, input: LeadInput) {
   };
 }
 
-export function addLead(d: SalesData, input: LeadInput, link: SalesLink | null): SalesLead | "full" {
+export function findPromo(d: SalesData, raw: string): SalesPromo | null {
+  const code = normalizePromo(raw);
+  return d.promos.find((p) => p.code === code && p.active) ?? null;
+}
+
+export function addLead(d: SalesData, input: LeadInput, link: SalesLink | null, promo: SalesPromo | null = null): SalesLead | "full" {
   const fields = leadFields(d, input);
   const now = new Date().toISOString();
+  const promoFields = promo ? { promoCode: promo.code, promoDiscount: promo.discount, promoMonths: promo.months } : {};
   const open = d.leads.find((l) => l.phone === fields.phone && isOpenStatus(l.status));
   if (open) {
     Object.assign(open, {
@@ -141,6 +149,7 @@ export function addLead(d: SalesData, input: LeadInput, link: SalesLink | null):
       message: [open.message, fields.message].filter(Boolean).join("\n").slice(0, 2000),
       submissions: open.submissions + 1,
       updatedAt: now,
+      ...promoFields,
     });
     return open;
   }
@@ -148,7 +157,7 @@ export function addLead(d: SalesData, input: LeadInput, link: SalesLink | null):
   const lead: SalesLead = {
     id: randomBytes(8).toString("hex"), ...fields, status: "NEW", note: "",
     linkCode: link?.code ?? null, linkName: link?.name ?? null, centerSlug: null,
-    submissions: 1, createdAt: now, updatedAt: now,
+    submissions: 1, createdAt: now, updatedAt: now, ...promoFields,
   };
   d.leads.unshift(lead);
   return lead;

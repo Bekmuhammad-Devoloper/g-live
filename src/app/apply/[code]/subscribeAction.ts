@@ -3,28 +3,43 @@
 import { headers } from "next/headers";
 import { isDevPanel } from "@/lib/instance";
 import { devAudit } from "@/lib/devpanel/auth";
-import { addLead, validateLead, withSales } from "@/lib/devpanel/sales";
+import { addLead, findPromo, readSales, validateLead, withSales } from "@/lib/devpanel/sales";
 import type { LeadInput } from "@/lib/devpanel/salesTypes";
 
 const WINDOW_MS = 15 * 60_000;
 const MAX_PER_WINDOW = 5;
+const MAX_PROMO_CHECKS = 20;
 const hits = new Map<string, number[]>();
+const promoHits = new Map<string, number[]>();
 
-function tooMany(ip: string): boolean {
+function tooMany(store: Map<string, number[]>, ip: string, max: number): boolean {
   const now = Date.now();
-  for (const [key, list] of hits) {
-    if (list.every((t) => now - t >= WINDOW_MS)) hits.delete(key);
+  for (const [key, list] of store) {
+    if (list.every((t) => now - t >= WINDOW_MS)) store.delete(key);
   }
-  const list = (hits.get(ip) ?? []).filter((t) => now - t < WINDOW_MS);
-  if (list.length >= MAX_PER_WINDOW) return true;
+  const list = (store.get(ip) ?? []).filter((t) => now - t < WINDOW_MS);
+  if (list.length >= max) return true;
   list.push(now);
-  hits.set(ip, list);
+  store.set(ip, list);
   return false;
 }
 
 const text = (v: unknown) => (typeof v === "string" ? v : "");
 
-export async function submitSubscribeLead(code: string, raw: LeadInput & { website?: string }): Promise<{ ok: boolean; error?: string }> {
+export type PromoCheck = { ok: true; code: string; discount: number; months: number } | { ok: false; error: string };
+
+export async function checkSubscribePromo(code: string, raw: string): Promise<PromoCheck> {
+  if (process.env.GL_INSTANCE || isDevPanel()) return { ok: false, error: "closed" };
+  const ip = (await headers()).get("x-real-ip");
+  if (ip && tooMany(promoHits, ip, MAX_PROMO_CHECKS)) return { ok: false, error: "too_many" };
+  const d = await readSales();
+  if (!d.links.some((l) => l.code === code && l.active)) return { ok: false, error: "closed" };
+  const promo = findPromo(d, text(raw));
+  if (!promo) return { ok: false, error: "promo" };
+  return { ok: true, code: promo.code, discount: promo.discount, months: promo.months };
+}
+
+export async function submitSubscribeLead(code: string, raw: LeadInput & { website?: string; promo?: string }): Promise<{ ok: boolean; error?: string }> {
   if (process.env.GL_INSTANCE || isDevPanel()) return { ok: false, error: "closed" };
   if (text(raw.website)) return { ok: true };
 
@@ -36,15 +51,18 @@ export async function submitSubscribeLead(code: string, raw: LeadInput & { websi
   if (invalid) return { ok: false, error: invalid };
 
   const ip = (await headers()).get("x-real-ip");
-  if (ip && tooMany(ip)) return { ok: false, error: "too_many" };
+  if (ip && tooMany(hits, ip, MAX_PER_WINDOW)) return { ok: false, error: "too_many" };
 
+  const promoText = text(raw.promo).trim();
   const result = await withSales((d) => {
     const link = d.links.find((l) => l.code === code && l.active);
     if (!link) return "closed" as const;
-    return addLead(d, input, link);
+    const promo = promoText ? findPromo(d, promoText) : null;
+    if (promoText && !promo) return "promo" as const;
+    return addLead(d, input, link, promo);
   });
-  if (result === "closed" || result === "full") return { ok: false, error: result };
+  if (result === "closed" || result === "full" || result === "promo") return { ok: false, error: result };
 
-  await devAudit("sales_lead", { lead: result.id, center: result.centerName, link: result.linkName, submissions: result.submissions });
+  await devAudit("sales_lead", { lead: result.id, center: result.centerName, link: result.linkName, submissions: result.submissions, promo: result.promoCode ?? null });
   return { ok: true };
 }

@@ -32,6 +32,14 @@ export interface SalesLink {
   active: boolean;
 }
 
+export interface SalesPromo {
+  code: string;
+  discount: number;
+  months: number;
+  active: boolean;
+  createdAt: string;
+}
+
 export interface SalesLead {
   id: string;
   centerName: string;
@@ -50,6 +58,9 @@ export interface SalesLead {
   submissions: number;
   createdAt: string;
   updatedAt: string;
+  promoCode?: string | null;
+  promoDiscount?: number;
+  promoMonths?: number;
 }
 
 export interface LeadInput {
@@ -79,7 +90,19 @@ export function parseStudents(raw: string): number | null {
   return d ? Number(d) : null;
 }
 
+export function sumLabel(n: number): string {
+  return `${n.toLocaleString("ru-RU").replace(/[,  ]/g, " ")} so'm`;
+}
+
 export function planPriceLabel(price: number | null): string {
   if (!price) return "Narxi kelishiladi";
-  return `${price.toLocaleString("ru-RU").replace(/[,  ]/g, " ")} so'm`;
+  return sumLabel(price);
+}
+
+export function normalizePromo(raw: string): string {
+  return raw.toUpperCase().replace(/[^A-Z0-9_-]/g, "").slice(0, 24);
+}
+
+export function promoPeriod(months: number): string {
+  return months === 1 ? "Birinchi oy" : `Dastlabki ${months} oy`;
 }

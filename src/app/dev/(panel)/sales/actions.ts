@@ -3,7 +3,7 @@
 import { revalidatePath } from "next/cache";
 import { devAudit, requireDev } from "@/lib/devpanel/auth";
 import { addLead, leadFields, newCode, validateLead, withSales } from "@/lib/devpanel/sales";
-import { isLeadStatus, type LeadInput, type SalesPlan } from "@/lib/devpanel/salesTypes";
+import { isLeadStatus, normalizePromo, type LeadInput, type SalesPlan } from "@/lib/devpanel/salesTypes";
 
 export type ActionResult = { ok: boolean; error?: string };
 
@@ -132,6 +132,53 @@ export async function savePlansAction(plans: SalesPlan[]): Promise<ActionResult>
     d.plans = clean;
   });
   await devAudit("sales_plans_save", { by: dev.email, plans: clean.map((p) => ({ name: p.name, price: p.price })) });
+  refresh();
+  return { ok: true };
+}
+
+export async function createPromoAction(input: { code: string; discount: number; months: number }): Promise<ActionResult> {
+  const dev = await requireDev();
+  const code = normalizePromo(String(input.code ?? ""));
+  const discount = limit(input.discount, 1_000_000_000);
+  const months = limit(input.months, 36);
+  if (code.length < 3) return { ok: false, error: "Promokod kamida 3 belgi bo'lsin" };
+  if (!discount) return { ok: false, error: "Chegirma summasini kiriting" };
+  if (!months) return { ok: false, error: "Necha oyga ekanini kiriting" };
+  const created = await withSales((d) => {
+    if (d.promos.some((p) => p.code === code)) return false;
+    d.promos.push({ code, discount, months, active: true, createdAt: new Date().toISOString() });
+    return true;
+  });
+  if (!created) return { ok: false, error: "Bunday promokod bor" };
+  await devAudit("sales_promo_create", { by: dev.email, code, discount, months });
+  refresh();
+  return { ok: true };
+}
+
+export async function setPromoActiveAction(code: string, active: boolean): Promise<ActionResult> {
+  const dev = await requireDev();
+  const found = await withSales((d) => {
+    const promo = d.promos.find((p) => p.code === code);
+    if (!promo) return false;
+    promo.active = active;
+    return true;
+  });
+  if (!found) return { ok: false, error: "Promokod topilmadi" };
+  await devAudit("sales_promo_toggle", { by: dev.email, code, active });
+  refresh();
+  return { ok: true };
+}
+
+export async function deletePromoAction(code: string): Promise<ActionResult> {
+  const dev = await requireDev();
+  const found = await withSales((d) => {
+    const i = d.promos.findIndex((p) => p.code === code);
+    if (i < 0) return false;
+    d.promos.splice(i, 1);
+    return true;
+  });
+  if (!found) return { ok: false, error: "Promokod topilmadi" };
+  await devAudit("sales_promo_delete", { by: dev.email, code });
   refresh();
   return { ok: true };
 }
