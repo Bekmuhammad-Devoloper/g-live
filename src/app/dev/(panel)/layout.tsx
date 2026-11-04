@@ -37,7 +37,9 @@ export default async function DevPanelLayout({ children }: { children: React.Rea
             <img src="/logo-dark.png" alt="Germaniya Live" className="h-7 w-auto object-contain" />
           </Link>
           <div className="flex gap-4 text-sm">
-            <Link href="/dev/centers/new" className="font-semibold text-orange-300">+ Markaz</Link>
+            <Link href="/dev/sales" className="font-semibold text-orange-300">Lidlar</Link>
+            <Link href="/dev/plans" className="text-slate-400">Tariflar</Link>
+            <Link href="/dev/centers/new" className="text-slate-400">+ Markaz</Link>
             <Link href="/dev/audit" className="text-slate-400">Jurnal</Link>
           </div>
         </header>

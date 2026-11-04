@@ -71,6 +71,11 @@ case "$cmd" in
   backup-all)
     for d in "$ROOT"/*/; do s=$(basename "$d"); [ -f "$d/data/db.sqlite" ] && "$0" backup "$s" >/dev/null || true; done
     "$0" main-backup >/dev/null || true
+    if [ -f "$ROOT/sales.json" ]; then
+      mkdir -p "$ROOT/.sales-backups"; chmod 700 "$ROOT/.sales-backups"
+      cp -p "$ROOT/sales.json" "$ROOT/.sales-backups/sales-$(date +%Y%m%d-%H%M%S).json"
+      ls -1t "$ROOT"/.sales-backups/sales-*.json 2>/dev/null | tail -n +15 | xargs -r rm -f
+    fi
     echo ok
     ;;
   main-backup)

@@ -17,10 +17,12 @@ const genPass = () => {
   return Array.from(a, (x) => c[x % c.length]).join("");
 };
 
-export default function NewCenterForm({ baseDomain, modules }: { baseDomain: string; modules: Mod[] }) {
+type Initial = { leadId: string; name: string; directorName: string; directorPhone: string; contactName: string; contactPhone: string; plan: string; notes: string };
+
+export default function NewCenterForm({ baseDomain, modules, plans, initial }: { baseDomain: string; modules: Mod[]; plans: string[]; initial?: Initial }) {
   const [f, setF] = useState({
-    name: "", slug: "", directorName: "", directorEmail: "", directorPhone: "", directorPassword: genPass(),
-    months: 1, plan: "Standart", contactName: "", contactPhone: "", notes: "",
+    name: initial?.name ?? "", slug: initial ? translit(initial.name) : "", directorName: initial?.directorName ?? "", directorEmail: "", directorPhone: initial?.directorPhone ?? "", directorPassword: genPass(),
+    months: 1, plan: initial?.plan || "Standart", contactName: initial?.contactName ?? "", contactPhone: initial?.contactPhone ?? "", notes: initial?.notes ?? "",
   });
   const [slugTouched, setSlugTouched] = useState(false);
   const [mods, setMods] = useState<Set<string>>(new Set(modules.map((m) => m.key).filter((k) => k !== "telephony")));
@@ -37,7 +39,7 @@ export default function NewCenterForm({ baseDomain, modules }: { baseDomain: str
 
   const submit = () => {
     setRes(null);
-    start(async () => setRes(await createCenterAction({ ...f, modules: [...mods] })));
+    start(async () => setRes(await createCenterAction({ ...f, modules: [...mods], leadId: initial?.leadId })));
   };
 
   if (res?.steps && (res.ok || res.slug)) {
@@ -87,7 +89,11 @@ export default function NewCenterForm({ baseDomain, modules }: { baseDomain: str
               <span className="pr-3 font-mono text-sm text-slate-400">.{baseDomain}</span>
             </div>
           </div>
-          <div><label className={lbl}>Tarif</label><input value={f.plan} onChange={(e) => set("plan", e.target.value)} className={fld} /></div>
+          <div>
+            <label className={lbl}>Tarif</label>
+            <input list="center-plans" value={f.plan} onChange={(e) => set("plan", e.target.value)} className={fld} />
+            <datalist id="center-plans">{plans.map((p) => <option key={p} value={p} />)}</datalist>
+          </div>
           <div>
             <label className={lbl}>Litsenziya muddati</label>
             <select value={f.months} onChange={(e) => set("months", Number(e.target.value))} className={fld}>

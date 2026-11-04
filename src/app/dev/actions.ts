@@ -10,6 +10,7 @@ import {
   centerDb, centerDir, BASE_DOMAIN, APP_DIR, CENTERS_ROOT, type Center,
 } from "@/lib/devpanel/registry";
 import { glCenter, pushSchema, initCenterDb, prepareDirs, waitHealthy, resetUserPassword, setBrandName, type Step } from "@/lib/devpanel/ops";
+import { linkLeadToCenter } from "@/lib/devpanel/sales";
 import { ALL_INSTANCE_MODULES, type InstanceModule } from "@/lib/instance";
 
 const SLUG_RE = /^[a-z0-9][a-z0-9-]{1,30}$/;
@@ -36,7 +37,7 @@ export interface CreateResult { ok: boolean; error?: string; steps?: Step[]; slu
 
 export async function createCenterAction(input: {
   name: string; slug: string; directorName: string; directorEmail: string; directorPhone: string; directorPassword: string;
-  months: number; plan: string; modules: string[]; contactName: string; contactPhone: string; notes: string;
+  months: number; plan: string; modules: string[]; contactName: string; contactPhone: string; notes: string; leadId?: string;
 }): Promise<CreateResult> {
   const dev = await requireDev();
   const name = input.name.trim().slice(0, 80);
@@ -102,7 +103,9 @@ export async function createCenterAction(input: {
 
   await updateCenter(slug, { status: healthy ? "active" : "failed", lastError: healthy ? (certOk ? null : "SSL olinmadi") : "Markaz javob bermadi" });
   await devAudit("center_created", { by: dev.email, slug, name, port: center.port, ssl: certOk });
+  if (healthy && input.leadId) await linkLeadToCenter(input.leadId, slug);
   revalidatePath("/dev");
+  revalidatePath("/dev/sales");
   return { ok: healthy, steps, slug, director: { email, password }, url: `https://${center.host}` };
 }
 
