@@ -8,12 +8,13 @@ import { cn } from "@/lib/cn";
 import { tr } from "@/lib/tr";
 import type { Locale } from "@/lib/constants";
 import { AttendanceJournal } from "./AttendanceJournal";
+import StudentHoverCard, { type StudentHoverInfo } from "./StudentHoverCard";
 import { getGroupAttendance, markStudentAttendance, markAllPresent, unlockAttendance, type AttendanceWindowInfo } from "./attendanceActions";
 
 const p2 = (n: number) => String(n).padStart(2, "0");
 const todayISO = () => { const d = new Date(); return `${d.getFullYear()}-${p2(d.getMonth() + 1)}-${p2(d.getDate())}`; };
 
-type AttStudent = { id: string; name: string; blocked?: boolean; daysUnpaid?: number; frozen?: boolean };
+type AttStudent = { id: string; name: string; blocked?: boolean; daysUnpaid?: number; frozen?: boolean; info?: StudentHoverInfo };
 
 export function FrozenHeading({ count, locale }: { count: number; locale: Locale }) {
   return (
@@ -291,13 +292,14 @@ function DayAttendance({ groupId, students, locale }: { groupId: string; student
               {s.frozen && !students[i - 1]?.frozen && <FrozenHeading count={students.filter((x) => x.frozen).length} locale={locale} />}
               <li className={cn("flex items-center justify-between gap-3 py-2", s.frozen && "-mx-2 rounded-lg !border-t-0 bg-sky-50 px-2 dark:bg-sky-500/10")}>
                 <div className="flex min-w-0 items-center gap-2">
-                  <Link
-                    href={`/students/${s.id}`}
-                    title={tr(locale, { uz: "O'quvchi ma'lumotlari", ru: "Данные ученика", en: "Student details", de: "Schülerdetails" })}
-                    className={cn("min-w-0 truncate text-sm transition hover:underline", s.frozen ? "text-sky-700 dark:text-sky-300" : "text-slate-700 hover:text-brand-600 dark:text-slate-200 dark:hover:text-brand-300")}
-                  >
-                    {s.name}
-                  </Link>
+                  <StudentHoverCard info={s.info} locale={locale} className="min-w-0 truncate">
+                    <Link
+                      href={`/students/${s.id}`}
+                      className={cn("text-sm transition hover:underline", s.frozen ? "text-sky-700 dark:text-sky-300" : "text-slate-700 hover:text-brand-600 dark:text-slate-200 dark:hover:text-brand-300")}
+                    >
+                      {s.name}
+                    </Link>
+                  </StudentHoverCard>
                   {isBlocked && (
                     <span className="inline-flex shrink-0 items-center gap-1 rounded-full bg-rose-500/10 px-2 py-0.5 text-[10px] font-semibold text-rose-600 dark:text-rose-400" title={tr(locale, { uz: `${s.daysUnpaid} kundan beri to'lov yo'q — to'lov majburiy`, ru: `Нет оплаты ${s.daysUnpaid} дн. — оплата обязательна`, en: `No payment for ${s.daysUnpaid} days — payment required`, de: `Seit ${s.daysUnpaid} Tagen keine Zahlung — Zahlung erforderlich` })}>
                       <Icon name="alert" className="h-3 w-3" /> {tr(locale, { uz: "To'lov kerak", ru: "Нужна оплата", en: "Payment needed", de: "Zahlung erforderlich" })}

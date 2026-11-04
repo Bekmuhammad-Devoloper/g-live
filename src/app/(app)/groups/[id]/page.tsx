@@ -4,9 +4,9 @@ import { notFound } from "next/navigation";
 import { requireSession } from "@/lib/auth";
 import { prisma } from "@/lib/db";
 import { getPermission, MODULES } from "@/lib/rbac";
-import { ROLES, formatMoney } from "@/lib/constants";
+import { ROLES } from "@/lib/constants";
 import { computeDebts } from "@/lib/debt";
-import { debtTone, debtMonthsLabel, DEBT_BADGE, DEBT_TEXT } from "@/lib/debtTone";
+import { debtTone, DEBT_TEXT } from "@/lib/debtTone";
 import { cn } from "@/lib/cn";
 import { branchWhere, staffBranchWhere } from "@/lib/branchScope";
 import { tr } from "@/lib/tr";
@@ -14,6 +14,7 @@ import { PageHeader, Card, Table, EmptyRow, Badge, Forbidden } from "../../_comp
 import { Icon } from "../../_components/Icon";
 import { CreateStudentForm, EnrollExisting, BulkImportStudents, NewLessonForm, RemoveStudentButton, EditGroupButton } from "./GroupForms";
 import { GroupAttendance, FrozenHeading } from "./GroupAttendance";
+import StudentHoverCard, { type StudentHoverInfo } from "./StudentHoverCard";
 import { AttendanceJournal } from "./AttendanceJournal";
 import CourseLessonsTab from "../../courses/[id]/CourseLessonsTab";
 import { getLevelCodes } from "@/lib/studyLevels";
@@ -71,9 +72,14 @@ export default async function GroupDetailPage({ params }: { params: Promise<{ id
   const isFrozen = (gs: (typeof group.students)[number]) => isStaff && (gs.student.eduStatus === "FROZEN" || !!mandatoryMap.get(gs.studentId)?.mandatory);
   const frozenStudents = group.students.filter(isFrozen);
   const orderedStudents = [...group.students.filter((gs) => !isFrozen(gs)), ...frozenStudents];
+  const infoOf = (gs: (typeof group.students)[number]): StudentHoverInfo | undefined => {
+    if (!isStaff) return undefined;
+    const d = debts.get(gs.studentId);
+    return { phone: gs.student.phone, note: gs.student.note, debt: d?.debt ?? 0, overdueMonths: d?.overdueMonths ?? 0, credit: d?.credit ?? 0 };
+  };
   const attendanceStudents = orderedStudents.map((gs) => {
     const b = mandatoryMap.get(gs.studentId);
-    return { id: gs.studentId, name: gs.student.fullName, blocked: b?.mandatory ?? false, daysUnpaid: b?.daysUnpaid ?? 0, frozen: isFrozen(gs) };
+    return { id: gs.studentId, name: gs.student.fullName, blocked: b?.mandatory ?? false, daysUnpaid: b?.daysUnpaid ?? 0, frozen: isFrozen(gs), info: infoOf(gs) };
   });
 
   const candidates = full
@@ -196,34 +202,14 @@ export default async function GroupDetailPage({ params }: { params: Promise<{ id
                 <Fragment key={gs.id}>
                 {frozen && i === orderedStudents.length - frozenStudents.length && <FrozenHeading count={frozenStudents.length} locale={s.locale} />}
                 <li className={cn("flex items-center justify-between py-2 text-sm", frozen && "-mx-2 rounded-lg !border-t-0 bg-sky-50 px-2 dark:bg-sky-500/10")}>
-                  <span className="group/st relative min-w-0">
+                  <StudentHoverCard info={infoOf(gs)} locale={s.locale} className="min-w-0">
                     <Link
                       href={`/students/${gs.studentId}`}
                       className={cn("block truncate transition hover:underline", frozen ? "text-sky-700 dark:text-sky-300" : tone === "none" ? "text-slate-700 hover:text-brand-600 dark:hover:text-brand-300" : DEBT_TEXT[tone])}
                     >
                       {gs.student.fullName}
                     </Link>
-                    {isStaff && (
-                      <span className="pointer-events-none absolute left-0 top-full z-30 mt-2 hidden w-72 rounded-xl border border-slate-200 bg-white p-3 text-left shadow-xl group-hover/st:block dark:border-white/10 dark:bg-[#15243d]">
-                        <span className="absolute -top-1.5 left-5 h-3 w-3 rotate-45 border-l border-t border-slate-200 bg-white dark:border-white/10 dark:bg-[#15243d]" />
-                        <span className="block text-[11px] font-semibold uppercase tracking-wide text-slate-400">{tr(s.locale, { uz: "Qarzdorligi", ru: "Задолженность", en: "Debt", de: "Schulden" })}</span>
-                        <span className="mt-1 flex items-center gap-2">
-                          {d && d.debt > 0 ? (
-                            <>
-                              <span className={cn("rounded-md px-2 py-0.5 text-xs font-bold tabular-nums", DEBT_BADGE[tone])}>{formatMoney(d.debt, s.locale)}</span>
-                              <span className="text-xs text-slate-500">{debtMonthsLabel(d.overdueMonths, s.locale)}</span>
-                            </>
-                          ) : d && d.credit > 0 ? (
-                            <span className={cn("rounded-md px-2 py-0.5 text-xs font-bold tabular-nums", DEBT_BADGE.credit)}>+{formatMoney(d.credit, s.locale)}</span>
-                          ) : (
-                            <span className="text-xs font-medium text-slate-500">{tr(s.locale, { uz: "Qarzi yo'q", ru: "Долга нет", en: "No debt", de: "Keine Schulden" })}</span>
-                          )}
-                        </span>
-                        <span className="mt-2.5 block text-[11px] font-semibold uppercase tracking-wide text-slate-400">{tr(s.locale, { uz: "Izoh", ru: "Комментарий", en: "Comment", de: "Kommentar" })}</span>
-                        <span className="mt-1 block whitespace-pre-wrap break-words text-xs text-slate-700 dark:text-slate-200">{gs.student.note?.trim() || "—"}</span>
-                      </span>
-                    )}
-                  </span>
+                  </StudentHoverCard>
                   <div className="flex items-center gap-2">
                     <Badge tone="slate">{gs.student.currentLevel ?? "—"}</Badge>
                     {full && <RemoveStudentButton groupId={group.id} studentId={gs.studentId} locale={s.locale} />}
