@@ -4,11 +4,14 @@ import path from "node:path";
 import { randomBytes } from "node:crypto";
 import { CENTERS_ROOT } from "./registry";
 import {
-  normalizePhone, parseStudents, isOpenStatus,
+  DEFAULT_LINK_CODE, normalizePhone, parseStudents, isOpenStatus,
   type LeadInput, type SalesLead, type SalesLink, type SalesPlan,
 } from "./salesTypes";
 
 const FILE = path.join(CENTERS_ROOT, "sales.json");
+const LOCK = `${FILE}.lock`;
+const LOCK_STALE_MS = 30_000;
+const LOCK_WAIT_MS = 10_000;
 const MAX_LEADS = 5000;
 
 export interface SalesData {
@@ -32,7 +35,7 @@ const defaults = (): SalesData => ({
       features: ["Standart tarifidagi hamma imkoniyat", "AI yordamchi", "Telefoniya (alohida ulanadi)"],
     },
   ],
-  links: [{ code: "umumiy", name: "Umumiy havola", createdAt: new Date(0).toISOString(), active: true }],
+  links: [{ code: DEFAULT_LINK_CODE, name: "Umumiy havola", createdAt: new Date(0).toISOString(), active: true }],
   leads: [],
 });
 
@@ -56,14 +59,39 @@ async function writeSales(d: SalesData): Promise<void> {
   await fs.rename(tmp, FILE);
 }
 
+async function acquireLock(): Promise<void> {
+  await fs.mkdir(CENTERS_ROOT, { recursive: true });
+  const deadline = Date.now() + LOCK_WAIT_MS;
+  for (;;) {
+    try {
+      await fs.mkdir(LOCK);
+      return;
+    } catch (e) {
+      if ((e as NodeJS.ErrnoException).code !== "EEXIST") throw e;
+    }
+    const held = await fs.stat(LOCK).catch(() => null);
+    if (held && Date.now() - held.mtimeMs > LOCK_STALE_MS) {
+      await fs.rmdir(LOCK).catch(() => undefined);
+      continue;
+    }
+    if (Date.now() > deadline) throw new Error("sales.json band");
+    await new Promise((r) => setTimeout(r, 50));
+  }
+}
+
 const store = globalThis as unknown as { __glSalesChain?: Promise<unknown> };
 
 export function withSales<T>(fn: (d: SalesData) => T | Promise<T>): Promise<T> {
   const run = (store.__glSalesChain ?? Promise.resolve()).then(async () => {
-    const d = await readSales();
-    const r = await fn(d);
-    await writeSales(d);
-    return r;
+    await acquireLock();
+    try {
+      const d = await readSales();
+      const r = await fn(d);
+      await writeSales(d);
+      return r;
+    } finally {
+      await fs.rmdir(LOCK).catch(() => undefined);
+    }
   });
   store.__glSalesChain = run.catch(() => undefined);
   return run;

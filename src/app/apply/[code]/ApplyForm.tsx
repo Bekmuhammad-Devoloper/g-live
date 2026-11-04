@@ -293,15 +293,15 @@ export default function ApplyForm({ code, preview, questions = [], levels, branc
   );
 }
 
-const CARD = "rounded-3xl border border-white/70 bg-white/55 shadow-[0_20px_50px_-24px_rgba(15,23,42,0.35)] backdrop-blur-xl dark:border-white/10 dark:bg-white/[0.06]";
+export const CARD = "rounded-3xl border border-white/70 bg-white/55 shadow-[0_20px_50px_-24px_rgba(15,23,42,0.35)] backdrop-blur-xl dark:border-white/10 dark:bg-white/[0.06]";
 
-const INPUT =
+export const INPUT =
   "min-h-[52px] w-full rounded-2xl border border-slate-200 bg-white px-4 text-[16px] text-slate-900 outline-none transition placeholder:text-slate-300 focus:border-brand-500 focus:ring-4 focus:ring-brand-500/15 dark:border-white/10 dark:bg-white/[0.06] dark:text-white dark:placeholder:text-slate-600";
 
-const FIELD_BOX =
+export const FIELD_BOX =
   "flex min-h-[52px] w-full items-center overflow-hidden rounded-2xl border border-slate-200 bg-white text-[16px] text-slate-900 transition focus-within:border-brand-500 focus-within:ring-4 focus-within:ring-brand-500/15 dark:border-white/10 dark:bg-white/[0.06] dark:text-white";
 
-function Label({ text, req, className }: { text: string; req?: boolean; className?: string }) {
+export function Label({ text, req, className }: { text: string; req?: boolean; className?: string }) {
   return (
     <div className={cn("mb-1.5 text-[12px] font-bold text-slate-600 dark:text-slate-300", className)}>
       {text} {req && <span className="text-rose-500">*</span>}

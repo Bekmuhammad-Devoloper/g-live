@@ -1,7 +1,6 @@
 "use server";
 
 import { headers } from "next/headers";
-import { revalidatePath } from "next/cache";
 import { isDevPanel } from "@/lib/instance";
 import { devAudit } from "@/lib/devpanel/auth";
 import { addLead, validateLead, withSales } from "@/lib/devpanel/sales";
@@ -25,8 +24,8 @@ function tooMany(ip: string): boolean {
 
 const text = (v: unknown) => (typeof v === "string" ? v : "");
 
-export async function submitSalesLead(code: string, raw: LeadInput & { website?: string }): Promise<{ ok: boolean; error?: string }> {
-  if (!isDevPanel()) return { ok: false, error: "closed" };
+export async function submitSubscribeLead(code: string, raw: LeadInput & { website?: string }): Promise<{ ok: boolean; error?: string }> {
+  if (process.env.GL_INSTANCE || isDevPanel()) return { ok: false, error: "closed" };
   if (text(raw.website)) return { ok: true };
 
   const input: LeadInput = {
@@ -36,8 +35,8 @@ export async function submitSalesLead(code: string, raw: LeadInput & { website?:
   const invalid = validateLead(input);
   if (invalid) return { ok: false, error: invalid };
 
-  const ip = (await headers()).get("x-real-ip") || "unknown";
-  if (tooMany(ip)) return { ok: false, error: "too_many" };
+  const ip = (await headers()).get("x-real-ip");
+  if (ip && tooMany(ip)) return { ok: false, error: "too_many" };
 
   const result = await withSales((d) => {
     const link = d.links.find((l) => l.code === code && l.active);
@@ -47,6 +46,5 @@ export async function submitSalesLead(code: string, raw: LeadInput & { website?:
   if (result === "closed" || result === "full") return { ok: false, error: result };
 
   await devAudit("sales_lead", { lead: result.id, center: result.centerName, link: result.linkName, submissions: result.submissions });
-  revalidatePath("/dev/sales");
   return { ok: true };
 }

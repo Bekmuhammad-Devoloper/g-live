@@ -1,4 +1,4 @@
-import { readRegistry } from "@/lib/devpanel/registry";
+import { BASE_DOMAIN, readRegistry } from "@/lib/devpanel/registry";
 import { readSales } from "@/lib/devpanel/sales";
 import PlansEditor from "./PlansEditor";
 
@@ -12,5 +12,6 @@ export default async function PlansPage() {
     const key = c.plan.toLowerCase();
     usage[key] = (usage[key] ?? 0) + 1;
   }
-  return <PlansEditor plans={sales.plans} usage={usage} />;
+  const link = sales.links.find((l) => l.active);
+  return <PlansEditor plans={sales.plans} usage={usage} publicUrl={link ? `https://${BASE_DOMAIN}/apply/${link.code}` : null} />;
 }

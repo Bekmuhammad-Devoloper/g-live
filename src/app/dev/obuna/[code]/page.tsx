@@ -1,19 +1,8 @@
-import type { Metadata } from "next";
-import { notFound } from "next/navigation";
-import { readSales } from "@/lib/devpanel/sales";
-import Landing from "../Landing";
+import { redirect } from "next/navigation";
+import { BASE_DOMAIN } from "@/lib/devpanel/registry";
+import { DEFAULT_LINK_CODE } from "@/lib/devpanel/salesTypes";
 
-export const dynamic = "force-dynamic";
-
-export const metadata: Metadata = {
-  title: "Germaniya Live CRM — o'quv markazlari uchun obuna",
-  description: "Lidlar, guruhlar, davomat, to'lovlar va oylik hisobi uchun tayyor CRM.",
-};
-
-export default async function SalesLinkPage({ params }: { params: Promise<{ code: string }> }) {
+export default async function SalesLinkRedirect({ params }: { params: Promise<{ code: string }> }) {
   const { code } = await params;
-  const sales = await readSales();
-  const link = sales.links.find((l) => l.code === code && l.active);
-  if (!link) notFound();
-  return <Landing code={link.code} plans={sales.plans.filter((p) => p.visible)} />;
+  redirect(`https://${BASE_DOMAIN}/apply/${code === "umumiy" ? DEFAULT_LINK_CODE : encodeURIComponent(code)}`);
 }

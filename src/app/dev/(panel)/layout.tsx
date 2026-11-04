@@ -43,7 +43,7 @@ export default async function DevPanelLayout({ children }: { children: React.Rea
             <Link href="/dev/audit" className="text-slate-400">Jurnal</Link>
           </div>
         </header>
-        <main className="mx-auto max-w-7xl p-4 md:p-8">{children}</main>
+        <main className="mx-auto max-w-[1800px] p-4 md:p-8">{children}</main>
       </div>
     </div>
   );

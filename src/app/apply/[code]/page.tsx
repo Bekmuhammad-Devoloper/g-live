@@ -6,13 +6,34 @@ import { parseApplyCourses } from "@/lib/applyCourses";
 import { getAppRelease } from "@/lib/appRelease";
 import ApplyForm from "./ApplyForm";
 import ApplyShell from "./ApplyShell";
+import SubscribeForm from "./SubscribeForm";
+import { readSales } from "@/lib/devpanel/sales";
+import type { SalesLink, SalesPlan } from "@/lib/devpanel/salesTypes";
 import { parseQuestions } from "../../(app)/links/questions";
 import { Icon } from "../../(app)/_components/Icon";
 import { getBrand } from "@/lib/brand";
 import BrandLogo from "@/app/BrandLogo";
 
-export async function generateMetadata(): Promise<Metadata> {
+async function findSalesLink(code: string): Promise<{ link: SalesLink; plans: SalesPlan[] } | null> {
+  if (process.env.GL_INSTANCE) return null;
+  try {
+    const sales = await readSales();
+    const link = sales.links.find((l) => l.code === code);
+    return link ? { link, plans: sales.plans.filter((p) => p.visible) } : null;
+  } catch {
+    return null;
+  }
+}
+
+export async function generateMetadata({ params }: { params: Promise<{ code: string }> }): Promise<Metadata> {
   const brand = await getBrand();
+  const { code } = await params;
+  if (await findSalesLink(code)) {
+    return {
+      title: `Obuna uchun ariza — ${brand.name}`,
+      description: "O'quv markazingiz uchun tayyor CRM: lidlar, guruhlar, davomat, to'lovlar va oylik hisobi",
+    };
+  }
   return {
     title: `Kursga yozilish — ${brand.name}`,
     description: "Nemis tili kursiga ariza qoldiring — tez orada bog'lanamiz",
@@ -43,6 +64,42 @@ export default async function ApplyPage({ params, searchParams }: {
 
   if (link && !closed && !preview) {
     await prisma.vacancyLink.update({ where: { id: link.id }, data: { views: { increment: 1 }, lastViewedAt: new Date() } });
+  }
+
+  const sales = link ? null : await findSalesLink(code);
+  if (sales) {
+    const salesBrand = await getBrand();
+    return (
+      <ApplyShell>
+        <div className="relative mx-auto flex min-h-[100dvh] w-full max-w-md flex-col px-4 pb-[max(1.25rem,env(safe-area-inset-bottom))] pt-[max(1rem,env(safe-area-inset-top))] sm:justify-center sm:py-10">
+          <div className="flex items-center justify-between">
+            <BrandLogo brand={salesBrand} className="h-9 w-auto object-contain" textClassName="text-lg font-extrabold tracking-tight text-slate-900 dark:text-white" />
+            <span className="rounded-full border border-slate-200/80 bg-white/70 px-3 py-1 text-[11px] font-semibold text-slate-600 backdrop-blur dark:border-white/10 dark:bg-white/[0.06] dark:text-slate-300">
+              Obuna uchun ariza
+            </span>
+          </div>
+          <div className="mt-6">
+            <h1 className="text-[26px] font-black leading-[1.15] tracking-tight text-slate-900 dark:text-white">O&apos;quv markazingiz uchun CRM</h1>
+            <div className="mt-2.5 flex flex-wrap gap-1.5">
+              {[{ icon: "wallet", text: "Oylik obuna" }, { icon: "building", text: "O'z manzil va bazasi" }].map((c) => (
+                <span key={c.text} className="inline-flex items-center gap-1.5 rounded-full bg-white/80 px-2.5 py-1 text-[12px] font-semibold text-slate-700 shadow-sm ring-1 ring-slate-200/70 backdrop-blur dark:bg-white/[0.06] dark:text-slate-200 dark:ring-white/10">
+                  <Icon name={c.icon} className="h-3.5 w-3.5 text-brand-600 dark:text-brand-300" strokeWidth={1.8} /> {c.text}
+                </span>
+              ))}
+            </div>
+            <p className="mt-3 text-[14.5px] leading-relaxed text-slate-500 dark:text-slate-400">
+              Lidlar, guruhlar, davomat, to&apos;lovlar va oylik hisobi bitta tizimda. Ariza qoldiring, tizimni ko&apos;rsatib beramiz.
+            </p>
+          </div>
+          {sales.link.active ? (
+            <SubscribeForm code={sales.link.code} plans={sales.plans} />
+          ) : (
+            <Notice icon="alert" title="Vaqtincha yopiq" text="Bu havola hozircha ariza qabul qilmayapti." tone="amber" />
+          )}
+          <div className="mt-6 text-center text-[11px] text-slate-400 dark:text-slate-500">© {new Date().getFullYear()} {salesBrand.name}</div>
+        </div>
+      </ApplyShell>
+    );
   }
 
   const [allLevels, branches, app, brand] = await Promise.all([

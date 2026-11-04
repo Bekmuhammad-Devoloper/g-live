@@ -81,7 +81,7 @@ function LimitField({ icon, label, value, onChange, max }: { icon: string; label
   );
 }
 
-export default function PlansEditor({ plans, usage }: { plans: SalesPlan[]; usage: Record<string, number> }) {
+export default function PlansEditor({ plans, usage, publicUrl }: { plans: SalesPlan[]; usage: Record<string, number>; publicUrl: string | null }) {
   const router = useRouter();
   const [rows, setRows] = useState<Draft[]>(() => plans.map(toDraft));
   const [saved, setSaved] = useState<Draft[]>(rows);
@@ -136,10 +136,12 @@ export default function PlansEditor({ plans, usage }: { plans: SalesPlan[]; usag
           <p className="mt-1 text-sm text-slate-500">Oylik obuna narxlari. Saqlangach, ochiq ariza sahifasida darhol yangilanadi.</p>
         </div>
         <div className="flex flex-wrap gap-2">
-          <a href="/dev/obuna" target="_blank" rel="noreferrer" className="inline-flex h-10 items-center gap-1.5 rounded-xl border border-white/10 bg-white/[0.03] px-4 text-sm font-semibold text-slate-200 transition hover:border-orange-400/50">
-            <Glyph d={PATH.open} />
-            Ochiq sahifa
-          </a>
+          {publicUrl && (
+            <a href={publicUrl} target="_blank" rel="noreferrer" className="inline-flex h-10 items-center gap-1.5 rounded-xl border border-white/10 bg-white/[0.03] px-4 text-sm font-semibold text-slate-200 transition hover:border-orange-400/50">
+              <Glyph d={PATH.open} />
+              Ochiq sahifa
+            </a>
+          )}
           <button type="button" onClick={add} disabled={rows.length >= 12} className="inline-flex h-10 items-center gap-1.5 rounded-xl border border-white/10 bg-white/[0.03] px-4 text-sm font-semibold text-slate-200 transition hover:border-orange-400/50 disabled:cursor-not-allowed disabled:opacity-40">
             <Glyph d={PATH.plus} />
             Tarif qo'shish

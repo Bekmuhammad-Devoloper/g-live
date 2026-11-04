@@ -19,25 +19,31 @@ const refresh = () => {
   revalidatePath("/dev/plans");
 };
 
-export async function createLeadAction(input: LeadInput): Promise<ActionResult> {
+export async function createLeadAction(input: LeadInput & { status?: string }): Promise<ActionResult> {
   const dev = await requireDev();
   const invalid = validateLead(input);
   if (invalid) return { ok: false, error: LEAD_ERRORS[invalid] };
-  const r = await withSales((d) => addLead(d, input, null));
+  const r = await withSales((d) => {
+    const lead = addLead(d, input, null);
+    if (lead !== "full" && input.status && isLeadStatus(input.status)) lead.status = input.status;
+    return lead;
+  });
   if (r === "full") return { ok: false, error: LEAD_ERRORS.full };
   await devAudit("sales_lead", { by: dev.email, lead: r.id, center: r.centerName, manual: true });
   refresh();
   return { ok: true };
 }
 
-export async function updateLeadAction(id: string, input: LeadInput & { note: string }): Promise<ActionResult> {
+export async function updateLeadAction(id: string, input: LeadInput & { note: string; status: string }): Promise<ActionResult> {
   const dev = await requireDev();
   const invalid = validateLead(input);
   if (invalid) return { ok: false, error: LEAD_ERRORS[invalid] };
+  if (!isLeadStatus(input.status)) return { ok: false, error: "Holat noto'g'ri" };
+  const status = input.status;
   const found = await withSales((d) => {
     const lead = d.leads.find((l) => l.id === id);
     if (!lead) return false;
-    Object.assign(lead, leadFields(d, input), { note: input.note.trim().slice(0, 2000), updatedAt: new Date().toISOString() });
+    Object.assign(lead, leadFields(d, input), { status, note: input.note.trim().slice(0, 2000), updatedAt: new Date().toISOString() });
     return true;
   });
   if (!found) return { ok: false, error: "Lid topilmadi" };
@@ -127,6 +133,5 @@ export async function savePlansAction(plans: SalesPlan[]): Promise<ActionResult>
   });
   await devAudit("sales_plans_save", { by: dev.email, plans: clean.map((p) => ({ name: p.name, price: p.price })) });
   refresh();
-  revalidatePath("/dev/obuna", "layout");
   return { ok: true };
 }

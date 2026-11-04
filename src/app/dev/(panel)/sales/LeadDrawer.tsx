@@ -3,10 +3,10 @@
 import { useEffect, useState, useTransition } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { formatPhone, type SalesLead, type SalesPlan } from "@/lib/devpanel/salesTypes";
+import { formatPhone, LEAD_STATUSES, type LeadStatus, type SalesLead, type SalesPlan } from "@/lib/devpanel/salesTypes";
 import { createLeadAction, deleteLeadAction, updateLeadAction } from "./actions";
 
-export default function LeadDrawer({ lead, plans, onClose }: { lead: SalesLead | null; plans: SalesPlan[]; onClose: () => void }) {
+export default function LeadDrawer({ lead, defaultStatus, plans, onClose }: { lead: SalesLead | null; defaultStatus: LeadStatus; plans: SalesPlan[]; onClose: () => void }) {
   const router = useRouter();
   const [f, setF] = useState({
     centerName: lead?.centerName ?? "",
@@ -17,6 +17,7 @@ export default function LeadDrawer({ lead, plans, onClose }: { lead: SalesLead |
     planId: lead?.planId ?? "",
     message: lead?.message ?? "",
     note: lead?.note ?? "",
+    status: lead?.status ?? defaultStatus,
   });
   const [error, setError] = useState<string | null>(null);
   const [confirming, setConfirming] = useState(false);
@@ -71,6 +72,12 @@ export default function LeadDrawer({ lead, plans, onClose }: { lead: SalesLead |
               )}
             </div>
           )}
+          <div>
+            <label className={lbl}>Holat</label>
+            <select value={f.status} onChange={(e) => set("status", e.target.value)} className={fld}>
+              {LEAD_STATUSES.map((s) => <option key={s.key} value={s.key} className="bg-[#0d1424]">{s.label}</option>)}
+            </select>
+          </div>
           <div><label className={lbl}>O'quv markazi nomi *</label><input value={f.centerName} onChange={(e) => set("centerName", e.target.value)} className={fld} /></div>
           <div><label className={lbl}>Bog'lanish uchun ism *</label><input value={f.contactName} onChange={(e) => set("contactName", e.target.value)} className={fld} /></div>
           <div><label className={lbl}>Telefon *</label><input type="tel" value={f.phone} placeholder="+998 90 123 45 67" onChange={(e) => set("phone", e.target.value)} className={fld} /></div>

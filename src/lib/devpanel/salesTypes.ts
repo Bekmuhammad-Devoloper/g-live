@@ -1,10 +1,12 @@
+export const DEFAULT_LINK_CODE = "k7m2xq9p";
+
 export const LEAD_STATUSES = [
-  { key: "NEW", label: "Yangi", accent: "bg-sky-400" },
-  { key: "CONTACTED", label: "Bog'lanildi", accent: "bg-violet-400" },
-  { key: "DEMO", label: "Demo ko'rsatildi", accent: "bg-amber-400" },
-  { key: "OFFER", label: "Taklif berildi", accent: "bg-orange-400" },
-  { key: "WON", label: "Sotildi", accent: "bg-emerald-400" },
-  { key: "LOST", label: "Rad etdi", accent: "bg-slate-500" },
+  { key: "NEW", label: "Yangi", color: "#3b82f6", icon: "download" },
+  { key: "CONTACTED", label: "Bog'lanildi", color: "#f59e0b", icon: "phone" },
+  { key: "DEMO", label: "Demo ko'rsatildi", color: "#0ea5e9", icon: "video" },
+  { key: "OFFER", label: "Taklif berildi", color: "#8b5cf6", icon: "wallet" },
+  { key: "WON", label: "Sotildi", color: "#10b981", icon: "check" },
+  { key: "LOST", label: "Rad etdi", color: "#ef4444", icon: "close" },
 ] as const;
 
 export type LeadStatus = (typeof LEAD_STATUSES)[number]["key"];
