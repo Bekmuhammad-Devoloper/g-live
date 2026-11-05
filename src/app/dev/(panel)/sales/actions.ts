@@ -1,11 +1,17 @@
 "use server";
 
+import QRCode from "qrcode";
 import { revalidatePath } from "next/cache";
+import { PLATFORMS, platform } from "@/app/(app)/links/platforms";
 import { devAudit, requireDev } from "@/lib/devpanel/auth";
 import { addLead, leadFields, newCode, validateLead, withSales } from "@/lib/devpanel/sales";
-import { isLeadStatus, normalizePromo, type LeadInput, type SalesPlan } from "@/lib/devpanel/salesTypes";
+import { BASE_DOMAIN } from "@/lib/devpanel/registry";
+import { AUTOMATION_LINK_CODE, DEFAULT_LINK_CODE, isBusinessType, isLeadStatus, kindLabel, linkKind, normalizePromo, type LeadInput, type LinkKind, type SalesPlan } from "@/lib/devpanel/salesTypes";
 
 export type ActionResult = { ok: boolean; error?: string };
+export type CreatedSalesLink = { code: string; name: string };
+
+const MAX_LINKS = 500;
 
 const LEAD_ERRORS: Record<string, string> = {
   center: "Markaz nomini kiriting",
@@ -17,6 +23,7 @@ const LEAD_ERRORS: Record<string, string> = {
 const refresh = () => {
   revalidatePath("/dev/sales");
   revalidatePath("/dev/plans");
+  revalidatePath("/dev/links");
 };
 
 export async function createLeadAction(input: LeadInput & { status?: string }): Promise<ActionResult> {
@@ -44,6 +51,7 @@ export async function updateLeadAction(id: string, input: LeadInput & { note: st
     const lead = d.leads.find((l) => l.id === id);
     if (!lead) return false;
     Object.assign(lead, leadFields(d, input), { status, note: input.note.trim().slice(0, 2000), updatedAt: new Date().toISOString() });
+    if (linkKind(lead) === "automation") lead.businessType = isBusinessType(input.businessType) ? input.businessType : null;
     return true;
   });
   if (!found) return { ok: false, error: "Lid topilmadi" };
@@ -81,17 +89,53 @@ export async function deleteLeadAction(id: string): Promise<ActionResult> {
   return { ok: true };
 }
 
-export async function createLinkAction(rawName: string): Promise<ActionResult> {
+export async function createLinksAction(input: { name: string; kind: string; businessType: string; platforms: string[] }): Promise<ActionResult & { links?: CreatedSalesLink[] }> {
   const dev = await requireDev();
-  const name = rawName.trim().slice(0, 60);
-  if (name.length < 2) return { ok: false, error: "Havola nomini kiriting" };
-  const code = newCode();
-  await withSales((d) => {
-    d.links.push({ code, name, createdAt: new Date().toISOString(), active: true });
+  const kind: LinkKind = input.kind === "automation" ? "automation" : "subscribe";
+  const keys = [...new Set(Array.isArray(input.platforms) ? input.platforms : [])].filter((k) => PLATFORMS.some((p) => p.key === k));
+  if (keys.length === 0) return { ok: false, error: "Kamida bitta platforma tanlang" };
+  const title = String(input.name ?? "").trim().slice(0, 60) || kindLabel(kind);
+  const businessType = kind === "automation" && isBusinessType(input.businessType) ? input.businessType : null;
+  const now = new Date().toISOString();
+  const created = keys.map((key) => ({
+    code: newCode(), name: `${title} · ${platform(key).label}`, createdAt: now, active: true, kind, platform: key, businessType, views: 0, lastViewedAt: null,
+  }));
+  const ok = await withSales((d) => {
+    if (d.links.length + created.length > MAX_LINKS) return false;
+    d.links.push(...created);
+    return true;
   });
-  await devAudit("sales_link_create", { by: dev.email, code, name });
+  if (!ok) return { ok: false, error: "Havolalar soni chegaraga yetdi" };
+  await devAudit("sales_link_create", { by: dev.email, kind, codes: created.map((l) => l.code), name: title });
+  refresh();
+  return { ok: true, links: created.map((l) => ({ code: l.code, name: l.name })) };
+}
+
+export async function deleteLinkAction(code: string): Promise<ActionResult> {
+  const dev = await requireDev();
+  if (code === DEFAULT_LINK_CODE || code === AUTOMATION_LINK_CODE) return { ok: false, error: "Asosiy havola o'chirilmaydi" };
+  const result = await withSales((d) => {
+    const i = d.links.findIndex((l) => l.code === code);
+    if (i < 0) return "missing" as const;
+    if (d.leads.some((l) => l.linkCode === code)) return "used" as const;
+    d.links.splice(i, 1);
+    return "ok" as const;
+  });
+  if (result === "missing") return { ok: false, error: "Havola topilmadi" };
+  if (result === "used") return { ok: false, error: "Arizasi bor havola o'chirilmaydi, uni o'chirib qo'ying" };
+  await devAudit("sales_link_delete", { by: dev.email, code });
   refresh();
   return { ok: true };
+}
+
+export async function salesLinkQrAction(code: string): Promise<{ url: string; qr: string } | { error: string }> {
+  await requireDev();
+  const url = `https://${BASE_DOMAIN}/apply/${encodeURIComponent(code)}`;
+  try {
+    return { url, qr: await QRCode.toDataURL(url, { width: 512, margin: 1 }) };
+  } catch {
+    return { error: "QR yaratib bo'lmadi" };
+  }
 }
 
 export async function setLinkActiveAction(code: string, active: boolean): Promise<ActionResult> {

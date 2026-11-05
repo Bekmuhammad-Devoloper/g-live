@@ -1,133 +1,19 @@
 "use client";
 
-import { useEffect, useMemo, useState, useTransition } from "react";
+import { useMemo, useState, useTransition } from "react";
+import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { cn } from "@/lib/cn";
 import { Icon } from "@/app/(app)/_components/Icon";
-import { formatPhone, LEAD_STATUSES, planPriceLabel, promoPeriod, sumLabel, type LeadStatus, type SalesLead, type SalesLink, type SalesPlan } from "@/lib/devpanel/salesTypes";
+import { BUSINESS_TYPES, businessLabel, formatPhone, LEAD_STATUSES, linkKind, LINK_KINDS, planPriceLabel, promoPeriod, sumLabel, type LeadStatus, type LinkKind, type SalesLead, type SalesLink, type SalesPlan } from "@/lib/devpanel/salesTypes";
 import { fmtDate } from "../ui";
-import { createLinkAction, setLeadStatusAction, setLinkActiveAction } from "./actions";
+import { setLeadStatusAction } from "./actions";
 import LeadDrawer from "./LeadDrawer";
 
 const statusOf = (key: LeadStatus) => LEAD_STATUSES.find((s) => s.key === key) ?? LEAD_STATUSES[0];
 const daysSince = (iso: string) => Math.floor((Date.now() - new Date(iso).getTime()) / 86_400_000);
 const FILTER = "h-10 rounded-lg border border-slate-700 bg-slate-800 px-3 text-sm text-slate-300 outline-none focus:border-brand-400";
 const TOOL = "flex h-9 items-center gap-1.5 rounded-lg border border-white/[0.1] px-3 text-sm font-medium text-slate-300 transition hover:bg-white/[0.05]";
-const LINK_ACTION = "inline-flex h-9 items-center gap-1.5 rounded-lg border border-white/10 bg-white/[0.03] px-3 text-xs font-semibold text-slate-200 transition hover:border-brand-400/60 hover:bg-white/[0.06] disabled:cursor-not-allowed disabled:opacity-40";
-
-function LinksDrawer({ links, leads, publicBase, onClose }: { links: SalesLink[]; leads: SalesLead[]; publicBase: string; onClose: () => void }) {
-  const router = useRouter();
-  const [name, setName] = useState("");
-  const [error, setError] = useState<string | null>(null);
-  const [copied, setCopied] = useState<string | null>(null);
-  const [pending, start] = useTransition();
-
-  useEffect(() => {
-    const onKey = (e: KeyboardEvent) => { if (e.key === "Escape") onClose(); };
-    document.addEventListener("keydown", onKey);
-    const prev = document.body.style.overflow;
-    document.body.style.overflow = "hidden";
-    return () => {
-      document.removeEventListener("keydown", onKey);
-      document.body.style.overflow = prev;
-    };
-  }, [onClose]);
-
-  const counts = useMemo(() => {
-    const m = new Map<string, number>();
-    for (const l of leads) if (l.linkCode) m.set(l.linkCode, (m.get(l.linkCode) ?? 0) + 1);
-    return m;
-  }, [leads]);
-
-  const urlOf = (code: string) => `${publicBase}/apply/${code}`;
-  const copy = async (code: string) => {
-    try {
-      await navigator.clipboard.writeText(urlOf(code));
-      setCopied(code);
-      setTimeout(() => setCopied(null), 1800);
-    } catch {
-      setError("Nusxalanmadi, havolani qo'lda belgilang");
-    }
-  };
-  const create = (e: React.FormEvent) => {
-    e.preventDefault();
-    setError(null);
-    start(async () => {
-      const r = await createLinkAction(name);
-      if (!r.ok) { setError(r.error ?? "Havola yaratilmadi"); return; }
-      setName("");
-      router.refresh();
-    });
-  };
-  const toggle = (l: SalesLink) => start(async () => {
-    await setLinkActiveAction(l.code, !l.active);
-    router.refresh();
-  });
-  const ready = name.trim().length >= 2;
-
-  return (
-    <div className="fixed inset-0 z-50 !mt-0 flex justify-end bg-slate-950/60 backdrop-blur-sm" onMouseDown={(e) => { if (e.target === e.currentTarget) onClose(); }}>
-      <div className="animate-slide-in-right flex h-full w-full max-w-lg flex-col border-l border-white/10 bg-[#0d1424] shadow-2xl">
-        <div className="flex items-center justify-between border-b border-white/[0.07] px-5 py-4">
-          <div>
-            <h2 className="text-base font-bold text-white">Lid tushadigan havolalar</h2>
-            <p className="mt-0.5 text-xs text-slate-400">Har reklama uchun alohida havola yarating, qaysi biri lid olib kelayotgani ko'rinadi.</p>
-          </div>
-          <button type="button" onClick={onClose} aria-label="Yopish" className="grid h-8 w-8 shrink-0 place-items-center rounded-lg text-slate-400 hover:bg-white/10">
-            <Icon name="close" className="h-4 w-4" />
-          </button>
-        </div>
-        <form onSubmit={create} className="flex gap-2 border-b border-white/[0.07] px-5 py-4">
-          <input
-            value={name}
-            onChange={(e) => setName(e.target.value)}
-            placeholder="Masalan: Instagram"
-            className="h-10 min-w-0 flex-1 rounded-lg border border-white/10 bg-white/[0.04] px-3 text-sm text-white outline-none transition placeholder:text-slate-500 focus:border-brand-400"
-          />
-          <button
-            type="submit"
-            disabled={pending || !ready}
-            className={cn("inline-flex h-10 shrink-0 items-center gap-1.5 rounded-lg px-4 text-sm font-semibold transition", ready ? "bg-brand-600 text-white hover:bg-brand-700" : "cursor-not-allowed bg-white/[0.06] text-slate-500")}
-          >
-            <Icon name="plus" className="h-4 w-4" />
-            Yaratish
-          </button>
-        </form>
-        {error && <p className="mx-5 mt-4 rounded-lg bg-red-500/10 px-3 py-2 text-sm text-red-300">{error}</p>}
-        <ul className="flex-1 divide-y divide-white/[0.05] overflow-y-auto">
-          {links.map((l) => {
-            const count = counts.get(l.code) ?? 0;
-            return (
-              <li key={l.code} className="px-5 py-4">
-                <div className="flex items-center gap-2">
-                  <span className={cn("h-2 w-2 shrink-0 rounded-full", l.active ? "bg-emerald-400 shadow-[0_0_8px] shadow-emerald-400/60" : "bg-slate-600")} />
-                  <span className="min-w-0 truncate text-sm font-semibold text-white">{l.name}</span>
-                  {!l.active && <span className="rounded-full bg-white/[0.06] px-2 py-0.5 text-[10px] font-semibold text-slate-400">o'chirilgan</span>}
-                  <span className={cn("ml-auto shrink-0 rounded-full px-2.5 py-0.5 text-xs font-semibold tabular-nums", count ? "bg-brand-500/15 text-brand-300" : "bg-white/[0.05] text-slate-400")}>{count} ta lid</span>
-                </div>
-                <div className="mt-1.5 truncate font-mono text-xs text-slate-400">{urlOf(l.code)}</div>
-                <div className="mt-3 flex flex-wrap gap-2">
-                  <button type="button" onClick={() => copy(l.code)} disabled={!l.active} className={copied === l.code ? `${LINK_ACTION} !border-emerald-400/50 !text-emerald-300` : LINK_ACTION}>
-                    <Icon name={copied === l.code ? "check" : "copy"} className="h-3.5 w-3.5" />
-                    {copied === l.code ? "Nusxalandi" : "Nusxalash"}
-                  </button>
-                  <a href={urlOf(l.code)} target="_blank" rel="noreferrer" className={cn(LINK_ACTION, !l.active && "pointer-events-none opacity-40")}>
-                    <Icon name="arrowUpRight" className="h-3.5 w-3.5" />
-                    Ochish
-                  </a>
-                  <button type="button" onClick={() => toggle(l)} disabled={pending} className={cn(LINK_ACTION, l.active && "text-slate-400 hover:!border-red-400/50 hover:text-red-300")}>
-                    <Icon name={l.active ? "eyeOff" : "eye"} className="h-3.5 w-3.5" />
-                    {l.active ? "O'chirish" : "Yoqish"}
-                  </button>
-                </div>
-              </li>
-            );
-          })}
-        </ul>
-      </div>
-    </div>
-  );
-}
 
 function LeadCard({ lead, price, onOpen, onDragStart, onDragEnd }: {
   lead: SalesLead;
@@ -172,6 +58,12 @@ function LeadCard({ lead, price, onOpen, onDragStart, onDragEnd }: {
           <Icon name="download" className="h-3.5 w-3.5 shrink-0" />
           <span className="truncate">{lead.linkName ?? "Qo'lda qo'shilgan"}</span>
         </div>
+        {linkKind(lead) === "automation" && (
+          <div className="flex items-center gap-2 text-xs font-semibold text-purple-300">
+            <Icon name="building" className="h-3.5 w-3.5 shrink-0" />
+            <span className="truncate">{businessLabel(lead.businessType) || "Avtomatlashtirish"}</span>
+          </div>
+        )}
         {lead.planName && (
           <div className="flex items-center gap-2 text-xs text-slate-400">
             <Icon name="layers" className="h-3.5 w-3.5 shrink-0" />
@@ -186,7 +78,7 @@ function LeadCard({ lead, price, onOpen, onDragStart, onDragEnd }: {
         )}
         {(lead.students !== null || lead.submissions > 1) && (
           <div className="flex flex-wrap items-center gap-1.5 text-[11px]">
-            {lead.students !== null && <span className="rounded bg-slate-800 px-1.5 py-0.5 font-medium text-slate-300">{lead.students} o'quvchi</span>}
+            {lead.students !== null && <span className="rounded bg-slate-800 px-1.5 py-0.5 font-medium text-slate-300">{lead.students} {linkKind(lead) === "automation" ? "xodim" : "o'quvchi"}</span>}
             {lead.submissions > 1 && <span className="rounded bg-amber-500/15 px-1.5 py-0.5 font-medium text-amber-300">{lead.submissions} marta</span>}
           </div>
         )}
@@ -297,11 +189,11 @@ function LeadsTable({ rows, onOpen, onMove }: { rows: SalesLead[]; onOpen: (l: S
         <table className="w-full min-w-[920px] text-sm">
           <thead className="bg-white/[0.03] text-left text-xs font-semibold uppercase text-slate-400">
             <tr>
-              <th className="px-4 py-3">Markaz</th>
+              <th className="px-4 py-3">Nomi</th>
               <th className="px-4 py-3">Telefon</th>
               <th className="px-4 py-3">Shahar</th>
-              <th className="px-4 py-3">O'quvchi</th>
-              <th className="px-4 py-3">Tarif</th>
+              <th className="px-4 py-3">Soni</th>
+              <th className="px-4 py-3">Tarif yoki tur</th>
               <th className="px-4 py-3">Manba</th>
               <th className="px-4 py-3">Sana</th>
               <th className="px-4 py-3">Holat</th>
@@ -321,7 +213,7 @@ function LeadsTable({ rows, onOpen, onMove }: { rows: SalesLead[]; onOpen: (l: S
                 <td className="px-4 py-3 text-slate-300">{l.city || "—"}</td>
                 <td className="px-4 py-3 tabular-nums text-slate-300">{l.students ?? "—"}</td>
                 <td className="px-4 py-3 text-slate-300">
-                  {l.planName ?? "—"}
+                  {linkKind(l) === "automation" ? (businessLabel(l.businessType) || "Avtomatlashtirish") : (l.planName ?? "—")}
                   {l.promoCode && <span className="ml-2 rounded bg-orange-400/15 px-1.5 py-0.5 text-[11px] font-semibold text-orange-300">{l.promoCode}</span>}
                 </td>
                 <td className="px-4 py-3 text-slate-400">{l.linkName ?? "Qo'lda"}</td>
@@ -355,22 +247,22 @@ function ToggleBtn({ active, onClick, icon, label }: { active: boolean; onClick:
   );
 }
 
-export default function SalesWorkspace({ leads, links, plans, publicBase, summary }: {
+export default function SalesWorkspace({ leads, links, plans, summary }: {
   leads: SalesLead[];
   links: SalesLink[];
   plans: SalesPlan[];
-  publicBase: string;
   summary: string;
 }) {
   const router = useRouter();
   const [q, setQ] = useState("");
   const [source, setSource] = useState("");
   const [plan, setPlan] = useState("");
+  const [kind, setKind] = useState<"" | LinkKind>("");
+  const [business, setBusiness] = useState("");
   const [sort, setSort] = useState<"newest" | "oldest" | "name">("newest");
   const [activeCols, setActiveCols] = useState<Set<LeadStatus>>(new Set());
   const [view, setView] = useState<"kanban" | "table">("kanban");
   const [drawer, setDrawer] = useState<{ lead: SalesLead | null; status: LeadStatus } | null>(null);
-  const [linksOpen, setLinksOpen] = useState(false);
   const [overrides, setOverrides] = useState<Record<string, LeadStatus>>({});
   const [error, setError] = useState<string | null>(null);
   const [refreshing, startRefresh] = useTransition();
@@ -385,13 +277,15 @@ export default function SalesWorkspace({ leads, links, plans, publicBase, summar
         || `${l.centerName} ${l.contactName} ${l.city}`.toLowerCase().includes(needle)
         || (digits.length >= 3 && l.phone.includes(digits)))
       .filter((l) => !source || (source === "manual" ? !l.linkCode : l.linkCode === source))
-      .filter((l) => !plan || l.planId === plan);
+      .filter((l) => !plan || l.planId === plan)
+      .filter((l) => !kind || linkKind(l) === kind)
+      .filter((l) => !business || l.businessType === business);
     const sorted = [...list];
     if (sort === "oldest") sorted.sort((a, b) => a.createdAt.localeCompare(b.createdAt));
     else if (sort === "name") sorted.sort((a, b) => a.centerName.localeCompare(b.centerName));
     else sorted.sort((a, b) => b.createdAt.localeCompare(a.createdAt));
     return sorted;
-  }, [leads, overrides, q, source, plan, sort]);
+  }, [leads, overrides, q, source, plan, kind, business, sort]);
 
   const rows = useMemo(() => (activeCols.size ? matched.filter((l) => activeCols.has(l.status)) : matched), [matched, activeCols]);
 
@@ -420,8 +314,8 @@ export default function SalesWorkspace({ leads, links, plans, publicBase, summar
     if (n.has(key)) n.delete(key); else n.add(key);
     return n;
   });
-  const hasFilters = !!q || !!source || !!plan || activeCols.size > 0;
-  const clearFilters = () => { setQ(""); setSource(""); setPlan(""); setActiveCols(new Set()); };
+  const hasFilters = !!q || !!source || !!plan || !!kind || !!business || activeCols.size > 0;
+  const clearFilters = () => { setQ(""); setSource(""); setPlan(""); setKind(""); setBusiness(""); setActiveCols(new Set()); };
 
   return (
     <div className="space-y-4">
@@ -433,7 +327,7 @@ export default function SalesWorkspace({ leads, links, plans, publicBase, summar
             </div>
             <div>
               <div className="flex items-center gap-2">
-                <h1 className="text-lg font-bold text-slate-100">Obuna lidlari</h1>
+                <h1 className="text-lg font-bold text-slate-100">Lidlar</h1>
                 <span className="rounded-full bg-emerald-500/15 px-2 py-0.5 text-xs font-bold text-emerald-500">{leads.length}</span>
               </div>
               <p className="text-xs text-slate-400">{summary}</p>
@@ -448,11 +342,11 @@ export default function SalesWorkspace({ leads, links, plans, publicBase, summar
                 </span>
               ))}
             </div>
-            <button type="button" onClick={() => setLinksOpen(true)} className={TOOL}>
+            <Link href="/dev/links" className={TOOL}>
               <Icon name="link" className="h-4 w-4" />
               <span>Havolalar</span>
               <span className="rounded bg-white/[0.08] px-1.5 text-xs font-bold">{links.length}</span>
-            </button>
+            </Link>
             <button type="button" onClick={() => startRefresh(() => { router.refresh(); })} title="Yangilash" className={TOOL}>
               <Icon name="refresh" className={cn("h-4 w-4", refreshing && "animate-spin")} />
               <span className="hidden sm:inline">Yangilash</span>
@@ -475,19 +369,31 @@ export default function SalesWorkspace({ leads, links, plans, publicBase, summar
               <input
                 value={q}
                 onChange={(e) => setQ(e.target.value)}
-                placeholder="Markaz, ism, telefon bo'yicha qidirish..."
+                placeholder="Nomi, ism, telefon bo'yicha qidirish..."
                 className="h-10 w-full rounded-lg border border-slate-700 bg-slate-800 pl-9 pr-3 text-sm text-slate-100 outline-none placeholder:text-slate-500 focus:border-brand-400"
               />
             </div>
+            <select aria-label="Yo'nalish" value={kind} onChange={(e) => { setKind(e.target.value as "" | LinkKind); setBusiness(""); setPlan(""); }} className={FILTER}>
+              <option value="">Yo&apos;nalish: Barchasi</option>
+              {LINK_KINDS.map((k) => <option key={k.key} value={k.key}>{k.label}</option>)}
+            </select>
+            {kind === "automation" && (
+              <select aria-label="Biznes turi" value={business} onChange={(e) => setBusiness(e.target.value)} className={FILTER}>
+                <option value="">Biznes turi: Barchasi</option>
+                {BUSINESS_TYPES.map((b) => <option key={b.key} value={b.key}>{b.label}</option>)}
+              </select>
+            )}
             <select aria-label="Manba" value={source} onChange={(e) => setSource(e.target.value)} className={FILTER}>
               <option value="">Manba: Barchasi</option>
               {links.map((l) => <option key={l.code} value={l.code}>{l.name}</option>)}
               <option value="manual">Qo'lda qo'shilgan</option>
             </select>
-            <select aria-label="Tarif" value={plan} onChange={(e) => setPlan(e.target.value)} className={FILTER}>
-              <option value="">Tarif: Barchasi</option>
-              {plans.map((p) => <option key={p.id} value={p.id}>{p.name}</option>)}
-            </select>
+            {kind !== "automation" && (
+              <select aria-label="Tarif" value={plan} onChange={(e) => setPlan(e.target.value)} className={FILTER}>
+                <option value="">Tarif: Barchasi</option>
+                {plans.map((p) => <option key={p.id} value={p.id}>{p.name}</option>)}
+              </select>
+            )}
             <select aria-label="Saralash" value={sort} onChange={(e) => setSort(e.target.value as typeof sort)} className={FILTER}>
               <option value="newest">Saralash: Eng yangi</option>
               <option value="oldest">Saralash: Eng eski</option>
@@ -537,7 +443,6 @@ export default function SalesWorkspace({ leads, links, plans, publicBase, summar
           onClose={() => setDrawer(null)}
         />
       )}
-      {linksOpen && <LinksDrawer links={links} leads={leads} publicBase={publicBase} onClose={() => setLinksOpen(false)} />}
     </div>
   );
 }

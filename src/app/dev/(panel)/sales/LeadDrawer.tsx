@@ -3,7 +3,7 @@
 import { useEffect, useState, useTransition } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { formatPhone, LEAD_STATUSES, promoPeriod, sumLabel, type LeadStatus, type SalesLead, type SalesPlan } from "@/lib/devpanel/salesTypes";
+import { BUSINESS_TYPES, formatPhone, LEAD_STATUSES, linkKind, LINK_KINDS, promoPeriod, sumLabel, type LeadStatus, type LinkKind, type SalesLead, type SalesPlan } from "@/lib/devpanel/salesTypes";
 import { createLeadAction, deleteLeadAction, updateLeadAction } from "./actions";
 
 export default function LeadDrawer({ lead, defaultStatus, plans, onClose }: { lead: SalesLead | null; defaultStatus: LeadStatus; plans: SalesPlan[]; onClose: () => void }) {
@@ -18,11 +18,14 @@ export default function LeadDrawer({ lead, defaultStatus, plans, onClose }: { le
     message: lead?.message ?? "",
     note: lead?.note ?? "",
     status: lead?.status ?? defaultStatus,
+    kind: (lead ? linkKind(lead) : "subscribe") as LinkKind,
+    businessType: lead?.businessType ?? "",
   });
   const [error, setError] = useState<string | null>(null);
   const [confirming, setConfirming] = useState(false);
   const [pending, start] = useTransition();
   const set = (k: keyof typeof f, v: string) => setF((p) => ({ ...p, [k]: v }));
+  const automation = f.kind === "automation";
 
   useEffect(() => {
     const onKey = (e: KeyboardEvent) => { if (e.key === "Escape") onClose(); };
@@ -65,7 +68,7 @@ export default function LeadDrawer({ lead, defaultStatus, plans, onClose }: { le
           {lead && (
             <div className="flex flex-wrap gap-2">
               <a href={`tel:${lead.phone}`} className="inline-flex h-9 items-center rounded-lg bg-emerald-600 px-3 text-xs font-bold text-white hover:bg-emerald-700">Qo'ng'iroq qilish</a>
-              {lead.centerSlug ? (
+              {automation ? null : lead.centerSlug ? (
                 <Link href={`/dev/centers/${lead.centerSlug}`} className="inline-flex h-9 items-center rounded-lg border border-white/10 px-3 text-xs font-bold text-slate-200 hover:border-orange-400/50">Markazni ochish</Link>
               ) : (
                 <Link href={`/dev/centers/new?lead=${lead.id}`} className="inline-flex h-9 items-center rounded-lg bg-gradient-to-r from-[#e3262b] to-[#ee7a24] px-3 text-xs font-bold text-white">Markaz yaratish</Link>
@@ -78,20 +81,39 @@ export default function LeadDrawer({ lead, defaultStatus, plans, onClose }: { le
               {LEAD_STATUSES.map((s) => <option key={s.key} value={s.key} className="bg-[#0d1424]">{s.label}</option>)}
             </select>
           </div>
-          <div><label className={lbl}>O'quv markazi nomi *</label><input value={f.centerName} onChange={(e) => set("centerName", e.target.value)} className={fld} /></div>
+          {!lead && (
+            <div>
+              <label className={lbl}>Yo&apos;nalish</label>
+              <select value={f.kind} onChange={(e) => setF((p) => ({ ...p, kind: e.target.value as LinkKind, planId: "", businessType: "" }))} className={fld}>
+                {LINK_KINDS.map((k) => <option key={k.key} value={k.key} className="bg-[#0d1424]">{k.label}</option>)}
+              </select>
+            </div>
+          )}
+          {automation && (
+            <div>
+              <label className={lbl}>Biznes turi</label>
+              <select value={f.businessType} onChange={(e) => set("businessType", e.target.value)} className={fld}>
+                <option value="" className="bg-[#0d1424]">Tanlanmagan</option>
+                {BUSINESS_TYPES.map((b) => <option key={b.key} value={b.key} className="bg-[#0d1424]">{b.label}</option>)}
+              </select>
+            </div>
+          )}
+          <div><label className={lbl}>{automation ? "Biznes nomi *" : "O'quv markazi nomi *"}</label><input value={f.centerName} onChange={(e) => set("centerName", e.target.value)} className={fld} /></div>
           <div><label className={lbl}>Bog'lanish uchun ism *</label><input value={f.contactName} onChange={(e) => set("contactName", e.target.value)} className={fld} /></div>
           <div><label className={lbl}>Telefon *</label><input type="tel" value={f.phone} placeholder="+998 90 123 45 67" onChange={(e) => set("phone", e.target.value)} className={fld} /></div>
           <div className="grid grid-cols-2 gap-3">
             <div><label className={lbl}>Shahar</label><input value={f.city} onChange={(e) => set("city", e.target.value)} className={fld} /></div>
-            <div><label className={lbl}>O'quvchilar soni</label><input inputMode="numeric" value={f.students} onChange={(e) => set("students", e.target.value.replace(/\D/g, "").slice(0, 6))} className={fld} /></div>
+            <div><label className={lbl}>{automation ? "Xodimlar soni" : "O'quvchilar soni"}</label><input inputMode="numeric" value={f.students} onChange={(e) => set("students", e.target.value.replace(/\D/g, "").slice(0, 6))} className={fld} /></div>
           </div>
-          <div>
-            <label className={lbl}>Tarif</label>
-            <select value={f.planId} onChange={(e) => set("planId", e.target.value)} className={fld}>
-              <option value="" className="bg-[#0d1424]">Tanlanmagan</option>
-              {plans.map((p) => <option key={p.id} value={p.id} className="bg-[#0d1424]">{p.name}</option>)}
-            </select>
-          </div>
+          {!automation && (
+            <div>
+              <label className={lbl}>Tarif</label>
+              <select value={f.planId} onChange={(e) => set("planId", e.target.value)} className={fld}>
+                <option value="" className="bg-[#0d1424]">Tanlanmagan</option>
+                {plans.map((p) => <option key={p.id} value={p.id} className="bg-[#0d1424]">{p.name}</option>)}
+              </select>
+            </div>
+          )}
           {lead?.promoCode && (
             <div className="rounded-lg border border-orange-400/30 bg-orange-400/10 px-3 py-2 text-sm text-orange-200">
               <span className="font-bold">{lead.promoCode}</span> · {promoPeriod(lead.promoMonths ?? 1)} uchun {sumLabel(lead.promoDiscount ?? 0)} chegirma

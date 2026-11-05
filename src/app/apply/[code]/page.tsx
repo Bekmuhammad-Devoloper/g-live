@@ -7,8 +7,9 @@ import { getAppRelease } from "@/lib/appRelease";
 import ApplyForm from "./ApplyForm";
 import ApplyShell from "./ApplyShell";
 import SubscribeForm from "./SubscribeForm";
-import { readSales } from "@/lib/devpanel/sales";
-import type { SalesLink, SalesPlan } from "@/lib/devpanel/salesTypes";
+import AutomationForm from "./AutomationForm";
+import { countLinkView, readSales } from "@/lib/devpanel/sales";
+import { linkKind, type SalesLink, type SalesPlan } from "@/lib/devpanel/salesTypes";
 import { parseQuestions } from "../../(app)/links/questions";
 import { Icon } from "../../(app)/_components/Icon";
 import { getBrand } from "@/lib/brand";
@@ -28,7 +29,14 @@ async function findSalesLink(code: string): Promise<{ link: SalesLink; plans: Sa
 export async function generateMetadata({ params }: { params: Promise<{ code: string }> }): Promise<Metadata> {
   const brand = await getBrand();
   const { code } = await params;
-  if (await findSalesLink(code)) {
+  const salesLink = await findSalesLink(code);
+  if (salesLink && linkKind(salesLink.link) === "automation") {
+    return {
+      title: `Biznesni avtomatlashtirish — ${brand.name}`,
+      description: "Agentlik, apteka, o'quv markazi, maktab va boshqa bizneslar uchun avtomatlashtirish: ariza qoldiring",
+    };
+  }
+  if (salesLink) {
     return {
       title: `Obuna uchun ariza — ${brand.name}`,
       description: "O'quv markazingiz uchun tayyor CRM: lidlar, guruhlar, davomat, to'lovlar va oylik hisobi",
@@ -68,31 +76,40 @@ export default async function ApplyPage({ params, searchParams }: {
 
   const sales = link ? null : await findSalesLink(code);
   if (sales) {
+    if (sales.link.active && !preview) countLinkView(sales.link.code);
     const salesBrand = await getBrand();
+    const automation = linkKind(sales.link) === "automation";
     return (
       <ApplyShell>
         <div className="relative mx-auto flex min-h-[100dvh] w-full max-w-md flex-col px-4 pb-[max(1.25rem,env(safe-area-inset-bottom))] pt-[max(1rem,env(safe-area-inset-top))] sm:justify-center sm:py-10">
           <div className="flex items-center justify-between">
             <BrandLogo brand={salesBrand} className="h-9 w-auto object-contain" textClassName="text-lg font-extrabold tracking-tight text-slate-900 dark:text-white" />
             <span className="rounded-full border border-slate-200/80 bg-white/70 px-3 py-1 text-[11px] font-semibold text-slate-600 backdrop-blur dark:border-white/10 dark:bg-white/[0.06] dark:text-slate-300">
-              Obuna uchun ariza
+              {automation ? "Avtomatlashtirish" : "Obuna uchun ariza"}
             </span>
           </div>
           <div className="mt-6">
-            <h1 className="text-[26px] font-black leading-[1.15] tracking-tight text-slate-900 dark:text-white">O&apos;quv markazingiz uchun CRM</h1>
+            <h1 className="text-[26px] font-black leading-[1.15] tracking-tight text-slate-900 dark:text-white">{automation ? "Biznesingizni avtomatlashtiramiz" : "O'quv markazingiz uchun CRM"}</h1>
             <div className="mt-2.5 flex flex-wrap gap-1.5">
-              {[{ icon: "wallet", text: "Oylik obuna" }, { icon: "building", text: "O'z manzil va bazasi" }].map((c) => (
+              {(automation
+                ? [{ icon: "building", text: "Biznesingizga moslab" }, { icon: "chart", text: "Hisobotlar bitta tizimda" }]
+                : [{ icon: "wallet", text: "Oylik obuna" }, { icon: "building", text: "O'z manzil va bazasi" }]
+              ).map((c) => (
                 <span key={c.text} className="inline-flex items-center gap-1.5 rounded-full bg-white/80 px-2.5 py-1 text-[12px] font-semibold text-slate-700 shadow-sm ring-1 ring-slate-200/70 backdrop-blur dark:bg-white/[0.06] dark:text-slate-200 dark:ring-white/10">
                   <Icon name={c.icon} className="h-3.5 w-3.5 text-brand-600 dark:text-brand-300" strokeWidth={1.8} /> {c.text}
                 </span>
               ))}
             </div>
             <p className="mt-3 text-[14.5px] leading-relaxed text-slate-500 dark:text-slate-400">
-              Lidlar, guruhlar, davomat, to&apos;lovlar va oylik hisobi bitta tizimda. Ariza qoldiring, tizimni ko&apos;rsatib beramiz.
+              {automation
+                ? "Mijozlar, to'lovlar va hisobotlarni qo'lda yuritishdan bitta tizimga o'tkazamiz. Ariza qoldiring, ehtiyojingizni o'rganib, yechim taklif qilamiz."
+                : "Lidlar, guruhlar, davomat, to'lovlar va oylik hisobi bitta tizimda. Ariza qoldiring, tizimni ko'rsatib beramiz."}
             </p>
           </div>
           {sales.link.active ? (
-            <SubscribeForm code={sales.link.code} plans={sales.plans} />
+            automation
+              ? <AutomationForm code={sales.link.code} initialType={sales.link.businessType ?? null} />
+              : <SubscribeForm code={sales.link.code} plans={sales.plans} />
           ) : (
             <Notice icon="alert" title="Vaqtincha yopiq" text="Bu havola hozircha ariza qabul qilmayapti." tone="amber" />
           )}

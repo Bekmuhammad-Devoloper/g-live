@@ -1,5 +1,6 @@
 import { BASE_DOMAIN, readRegistry } from "@/lib/devpanel/registry";
 import { readSales } from "@/lib/devpanel/sales";
+import { linkKind } from "@/lib/devpanel/salesTypes";
 import PlansEditor from "./PlansEditor";
 import PromosEditor from "./PromosEditor";
 
@@ -17,7 +18,7 @@ export default async function PlansPage() {
   for (const l of sales.leads) {
     if (l.promoCode) uses[l.promoCode] = (uses[l.promoCode] ?? 0) + 1;
   }
-  const link = sales.links.find((l) => l.active);
+  const link = sales.links.find((l) => l.active && linkKind(l) === "subscribe");
   return (
     <div className="space-y-8">
       <PlansEditor plans={sales.plans} usage={usage} publicUrl={link ? `https://${BASE_DOMAIN}/apply/${link.code}` : null} />

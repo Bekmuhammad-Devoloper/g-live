@@ -1,4 +1,4 @@
-import { BASE_DOMAIN, readRegistry } from "@/lib/devpanel/registry";
+import { readRegistry } from "@/lib/devpanel/registry";
 import { readSales } from "@/lib/devpanel/sales";
 import { fmtMoney } from "../ui";
 import SalesWorkspace from "./SalesWorkspace";
@@ -16,5 +16,5 @@ export default async function SalesPage() {
   const rate = sales.leads.length ? Math.round((won / sales.leads.length) * 100) : 0;
   const summary = `Konversiya: ${rate}% · Oylik obuna: ${fmtMoney(monthly)} · Faol markaz: ${live.length}`;
 
-  return <SalesWorkspace leads={sales.leads} links={sales.links} plans={sales.plans} publicBase={`https://${BASE_DOMAIN}`} summary={summary} />;
+  return <SalesWorkspace leads={sales.leads} links={sales.links} plans={sales.plans} summary={summary} />;
 }

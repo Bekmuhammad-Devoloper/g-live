@@ -4,7 +4,7 @@ import path from "node:path";
 import { randomBytes } from "node:crypto";
 import { CENTERS_ROOT } from "./registry";
 import {
-  DEFAULT_LINK_CODE, normalizePhone, normalizePromo, parseStudents, isOpenStatus,
+  AUTOMATION_LINK_CODE, DEFAULT_LINK_CODE, isBusinessType, linkKind, normalizePhone, normalizePromo, parseStudents, isOpenStatus,
   type LeadInput, type SalesLead, type SalesLink, type SalesPlan, type SalesPromo,
 } from "./salesTypes";
 
@@ -13,6 +13,7 @@ const LOCK = `${FILE}.lock`;
 const LOCK_STALE_MS = 30_000;
 const LOCK_WAIT_MS = 10_000;
 const MAX_LEADS = 5000;
+const VIEW_FLUSH_MS = 3000;
 
 export interface SalesData {
   plans: SalesPlan[];
@@ -20,6 +21,14 @@ export interface SalesData {
   leads: SalesLead[];
   promos: SalesPromo[];
 }
+
+const automationLink = (): SalesLink => ({
+  code: AUTOMATION_LINK_CODE,
+  name: "Avtomatlashtirish: umumiy",
+  createdAt: "2026-11-05T00:00:00.000Z",
+  active: true,
+  kind: "automation",
+});
 
 const defaults = (): SalesData => ({
   plans: [
@@ -40,7 +49,7 @@ const defaults = (): SalesData => ({
       features: ["Pro tarifidagi hamma imkoniyat", "AI yordamchi", "Telefoniya (alohida ulanadi)"],
     },
   ],
-  links: [{ code: DEFAULT_LINK_CODE, name: "Umumiy havola", createdAt: new Date(0).toISOString(), active: true }],
+  links: [{ code: DEFAULT_LINK_CODE, name: "Umumiy havola", createdAt: new Date(0).toISOString(), active: true }, automationLink()],
   leads: [],
   promos: [{ code: "GL100", discount: 100_000, months: 1, active: true, createdAt: new Date(0).toISOString() }],
 });
@@ -55,7 +64,9 @@ export async function readSales(): Promise<SalesData> {
   }
   const d = JSON.parse(raw) as Partial<SalesData>;
   const base = defaults();
-  return { plans: d.plans ?? base.plans, links: d.links ?? base.links, leads: d.leads ?? [], promos: d.promos ?? base.promos };
+  const links = d.links ?? base.links;
+  if (!links.some((l) => l.code === AUTOMATION_LINK_CODE)) links.push(automationLink());
+  return { plans: d.plans ?? base.plans, links, leads: d.leads ?? [], promos: d.promos ?? base.promos };
 }
 
 async function writeSales(d: SalesData): Promise<void> {
@@ -103,6 +114,28 @@ export function withSales<T>(fn: (d: SalesData) => T | Promise<T>): Promise<T> {
   return run;
 }
 
+const viewStore = globalThis as unknown as { __glSalesViews?: Map<string, number>; __glSalesViewTimer?: ReturnType<typeof setTimeout> | null };
+
+export function countLinkView(code: string): void {
+  const pending = (viewStore.__glSalesViews ??= new Map<string, number>());
+  pending.set(code, (pending.get(code) ?? 0) + 1);
+  if (viewStore.__glSalesViewTimer) return;
+  viewStore.__glSalesViewTimer = setTimeout(() => {
+    viewStore.__glSalesViewTimer = null;
+    const batch = [...pending];
+    pending.clear();
+    const now = new Date().toISOString();
+    withSales((d) => {
+      for (const [key, n] of batch) {
+        const link = d.links.find((l) => l.code === key);
+        if (!link) continue;
+        link.views = (link.views ?? 0) + n;
+        link.lastViewedAt = now;
+      }
+    }).catch(() => undefined);
+  }, VIEW_FLUSH_MS);
+}
+
 export const newCode = () => randomBytes(4).toString("hex");
 
 export type LeadError = "center" | "contact" | "phone" | "full";
@@ -137,7 +170,9 @@ export function addLead(d: SalesData, input: LeadInput, link: SalesLink | null, 
   const fields = leadFields(d, input);
   const now = new Date().toISOString();
   const promoFields = promo ? { promoCode: promo.code, promoDiscount: promo.discount, promoMonths: promo.months } : {};
-  const open = d.leads.find((l) => l.phone === fields.phone && isOpenStatus(l.status));
+  const kind = link ? linkKind(link) : input.kind === "automation" ? "automation" : "subscribe";
+  const businessType = kind === "automation" && isBusinessType(input.businessType) ? input.businessType : null;
+  const open = d.leads.find((l) => l.phone === fields.phone && isOpenStatus(l.status) && linkKind(l) === kind);
   if (open) {
     Object.assign(open, {
       centerName: fields.centerName,
@@ -149,6 +184,7 @@ export function addLead(d: SalesData, input: LeadInput, link: SalesLink | null, 
       message: [open.message, fields.message].filter(Boolean).join("\n").slice(0, 2000),
       submissions: open.submissions + 1,
       updatedAt: now,
+      businessType: businessType ?? open.businessType ?? null,
       ...promoFields,
     });
     return open;
@@ -157,7 +193,7 @@ export function addLead(d: SalesData, input: LeadInput, link: SalesLink | null, 
   const lead: SalesLead = {
     id: randomBytes(8).toString("hex"), ...fields, status: "NEW", note: "",
     linkCode: link?.code ?? null, linkName: link?.name ?? null, centerSlug: null,
-    submissions: 1, createdAt: now, updatedAt: now, ...promoFields,
+    submissions: 1, createdAt: now, updatedAt: now, kind, businessType, ...promoFields,
   };
   d.leads.unshift(lead);
   return lead;

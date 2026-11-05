@@ -1,4 +1,28 @@
 export const DEFAULT_LINK_CODE = "k7m2xq9p";
+export const AUTOMATION_LINK_CODE = "a9t4mz7k";
+
+export const LINK_KINDS = [
+  { key: "subscribe", label: "Obuna" },
+  { key: "automation", label: "Avtomatlashtirish" },
+] as const;
+
+export type LinkKind = (typeof LINK_KINDS)[number]["key"];
+
+export const kindLabel = (kind: LinkKind) => LINK_KINDS.find((k) => k.key === kind)?.label ?? kind;
+
+export const BUSINESS_TYPES = [
+  { key: "agency", label: "Xususiy bandlik agentligi", icon: "users" },
+  { key: "pharmacy", label: "Apteka", icon: "plus" },
+  { key: "center", label: "O'quv markazi", icon: "book" },
+  { key: "school", label: "Maktab", icon: "building" },
+  { key: "kindergarten", label: "Bog'cha", icon: "users" },
+  { key: "clinic", label: "Klinika", icon: "plus" },
+  { key: "shop", label: "Savdo do'koni", icon: "wallet" },
+  { key: "other", label: "Boshqa", icon: "grid" },
+] as const;
+
+export const isBusinessType = (v: unknown): v is string => BUSINESS_TYPES.some((b) => b.key === v);
+export const businessLabel = (key: string | null | undefined) => BUSINESS_TYPES.find((b) => b.key === key)?.label ?? "";
 
 export const LEAD_STATUSES = [
   { key: "NEW", label: "Yangi", color: "#3b82f6", icon: "download" },
@@ -30,7 +54,14 @@ export interface SalesLink {
   name: string;
   createdAt: string;
   active: boolean;
+  kind?: LinkKind;
+  platform?: string | null;
+  businessType?: string | null;
+  views?: number;
+  lastViewedAt?: string | null;
 }
+
+export const linkKind = (l: { kind?: LinkKind }): LinkKind => l.kind ?? "subscribe";
 
 export interface SalesPromo {
   code: string;
@@ -61,6 +92,8 @@ export interface SalesLead {
   promoCode?: string | null;
   promoDiscount?: number;
   promoMonths?: number;
+  kind?: LinkKind;
+  businessType?: string | null;
 }
 
 export interface LeadInput {
@@ -71,6 +104,8 @@ export interface LeadInput {
   students: string;
   planId: string;
   message: string;
+  kind?: LinkKind;
+  businessType?: string;
 }
 
 export function normalizePhone(raw: string): string | null {
