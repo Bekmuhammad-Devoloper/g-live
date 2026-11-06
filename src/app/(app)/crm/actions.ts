@@ -6,15 +6,15 @@ import { z } from "zod";
 import QRCode from "qrcode";
 import { prisma } from "@/lib/db";
 import { requireSession } from "@/lib/auth";
-import { canRead, canWrite, MODULES } from "@/lib/rbac";
+import { canRead, canWrite, getPermission, MODULES } from "@/lib/rbac";
 import { writeAudit } from "@/lib/audit";
 import { branchWhere } from "@/lib/branchScope";
-import { ROLES, LEAD_STAGES, isSalesRole } from "@/lib/constants";
+import { ROLES, LEAD_STAGES, LEAD_STAGE_LABELS, isSalesRole } from "@/lib/constants";
 import { parseUzPhone } from "@/lib/phone";
 import { getSetting, setSetting } from "@/lib/settings";
 import { getBrand } from "@/lib/brand";
 import { GROUP_COL_COLORS, GROUP_COL_ICONS, branchColKey, type CustomColumn, type GroupColumn } from "./_lib/leadColumns";
-import { leaveGroups } from "@/lib/leaveGroup";
+import { leaveGroups, rejoinGroup } from "@/lib/leaveGroup";
 import { syncEduStatuses } from "@/lib/eduStatus";
 
 const schema = z.object({
@@ -111,7 +111,7 @@ export async function createLead(_prev: LeadState, formData: FormData): Promise<
   });
 
   if (groupId && ENROLL_REQUIRED_STAGES.includes(lead.stage)) {
-    const studentId = await applyEnrollment(lead, groupId);
+    const studentId = await applyEnrollment(lead, groupId, s.userId);
     await prisma.lead.update({ where: { id: lead.id }, data: { studentId } });
     revalidatePath("/groups");
   }
@@ -157,6 +157,7 @@ export async function convertLead(leadId: string): Promise<void> {
 async function applyEnrollment(
   lead: { id: string; fullName: string; phone: string; branchId: string | null; studentId: string | null; groupId: string | null },
   groupId: string,
+  actorId: string,
 ): Promise<string> {
   let studentId = lead.studentId;
   if (!studentId) {
@@ -175,14 +176,130 @@ async function applyEnrollment(
     }).catch(() => {});
   }
 
-  await prisma.groupStudent.upsert({
-    where: { groupId_studentId: { groupId, studentId } },
-    update: { isActive: true },
-    create: { groupId, studentId, isActive: true },
-  });
+  await rejoinGroup({ studentId, groupId, actorId, reason: "Lid guruhga qaytdi" });
   await syncEduStatuses();
 
   return studentId;
+}
+
+const RETURN_STAGES: string[] = LEAD_STAGES.filter((st) => !["PAID", "WON", "LOST"].includes(st));
+
+export type ReturnLeadResult = { ok?: boolean; error?: string; leadId?: string; cleared?: number };
+
+export async function returnStudentToLead(input: {
+  groupId: string;
+  studentId: string;
+  target: string;
+  resumeOn?: string;
+  note?: string;
+  clearDebt?: boolean;
+}): Promise<ReturnLeadResult> {
+  const s = await requireSession();
+  if (!canWrite(s.role, MODULES.CRM) || getPermission(s.role, MODULES.GROUPS) !== "FULL") return { error: "forbidden" };
+
+  const target = String(input.target ?? "");
+  let stage = "NEW";
+  let kanbanColumnId: string | null = null;
+  let targetLabel = "";
+  if (target.startsWith("col:")) {
+    const col = (await readCustomColumns()).find((c) => c.id === target.slice(4));
+    if (!col) return { error: "invalid_target" };
+    kanbanColumnId = col.id;
+    targetLabel = col.name;
+  } else {
+    if (!RETURN_STAGES.includes(target)) return { error: "invalid_target" };
+    stage = target;
+    targetLabel = LEAD_STAGE_LABELS[target]?.uz ?? target;
+  }
+
+  const resumeOn = /^\d{4}-\d{2}-\d{2}$/.test(input.resumeOn ?? "") ? String(input.resumeOn) : null;
+  const note = String(input.note ?? "").trim().slice(0, 500);
+
+  const [enrollment, student] = await Promise.all([
+    prisma.groupStudent.findUnique({
+      where: { groupId_studentId: { groupId: input.groupId, studentId: input.studentId } },
+      select: { isActive: true, group: { select: { name: true, branchId: true, program: { select: { name: true } } } } },
+    }),
+    prisma.student.findUnique({
+      where: { id: input.studentId },
+      select: {
+        id: true, fullName: true, phone: true, phone2: true, branchId: true, currentLevel: true, age: true,
+        lead: { select: { id: true, stage: true } },
+        parents: { select: { parent: { select: { phone: true } } } },
+      },
+    }),
+  ]);
+  if (!enrollment?.isActive) return { error: "not_in_group" };
+  if (!student) return { error: "not_found" };
+
+  const rawPhone = [student.phone, student.phone2, ...student.parents.map((p) => p.parent.phone)].find((p) => p && p.trim()) ?? "";
+  const phone = parseUzPhone(rawPhone) ?? rawPhone.trim();
+  const digits = phone.replace(/\D/g, "").length;
+  if (!student.lead && (digits < 7 || digits > 15)) return { error: "no_phone" };
+
+  const openLead = student.lead ?? await prisma.lead.findFirst({
+    where: { phone, studentId: null, stage: { notIn: ["WON", "PAID"] } },
+    orderBy: { updatedAt: "desc" },
+    select: { id: true, stage: true },
+  });
+
+  const summary = [
+    `Guruhdan lidga qaytarildi: ${enrollment.group.program.name} — ${enrollment.group.name}`,
+    `Holat: ${targetLabel}`,
+    resumeOn ? `Davom etadi: ${resumeOn.split("-").reverse().join(".")}` : "",
+    note,
+  ].filter(Boolean).join(". ");
+  const activity = { authorId: s.userId, type: "note", result: summary, nextStepAt: resumeOn ? new Date(`${resumeOn}T09:00:00`) : null };
+  const placement = { stage, kanbanColumnId, groupId: null, enrollEditCount: 0, branchSlotId: null, archivedAt: null, archiveKind: null, lossReason: null };
+
+  const lead = openLead
+    ? await prisma.lead.update({
+        where: { id: openLead.id },
+        data: { ...placement, studentId: student.id, activities: { create: activity } },
+        select: { id: true },
+      })
+    : await prisma.lead.create({
+        data: {
+          ...placement,
+          fullName: student.fullName,
+          phone,
+          age: student.age,
+          level: student.currentLevel,
+          interestCourse: enrollment.group.program.name,
+          branchId: enrollment.group.branchId ?? student.branchId,
+          managerId: isSalesRole(s.role) ? s.userId : null,
+          studentId: student.id,
+          activities: { create: activity },
+        },
+        select: { id: true },
+      });
+
+  const left = await leaveGroups({
+    studentId: student.id,
+    groupIds: [input.groupId],
+    actorId: s.userId,
+    reason: "Guruhdan lidga qaytarildi",
+    clearDebt: !!input.clearDebt,
+  });
+  await syncEduStatuses();
+
+  await writeAudit({
+    actorId: s.userId,
+    action: "UPDATE",
+    entityType: "Lead",
+    entityId: lead.id,
+    oldValue: { stage: openLead?.stage ?? null, groupId: input.groupId },
+    newValue: { stage, kanbanColumnId, resumeOn, clearedDebt: left.cleared },
+    reason: `O'quvchi guruhdan lidga qaytarildi: ${student.fullName}`,
+  });
+
+  revalidatePath("/crm");
+  revalidatePath(`/crm/${lead.id}`);
+  revalidatePath("/groups");
+  revalidatePath(`/groups/${input.groupId}`);
+  revalidatePath("/students");
+  revalidatePath("/finance/debtors");
+  return { ok: true, leadId: lead.id, cleared: left.cleared };
 }
 
 const ENROLL_REQUIRED_STAGES = ["WON", "PAID"];
@@ -205,7 +322,7 @@ export async function moveLeadStage(leadId: string, stage: string, reason?: stri
   if (stage === "LOST" && reason) data.lossReason = reason;
 
   if (ENROLL_REQUIRED_STAGES.includes(stage) && before.groupId) {
-    const studentId = await applyEnrollment(before, before.groupId);
+    const studentId = await applyEnrollment(before, before.groupId, s.userId);
     data.studentId = studentId;
   }
 
@@ -320,7 +437,7 @@ export async function enrollLeadToGroup(leadId: string, groupId: string, raiseCa
     await writeAudit({ actorId: s.userId, action: "UPDATE", entityType: "Group", entityId: groupId, oldValue: { capacity: group.capacity }, newValue: { capacity: group._count.students + 1 }, reason: "Guruh to'lgan, lid yo'naltirilganda sig'im oshirildi" });
   }
 
-  const studentId = await applyEnrollment(lead, groupId);
+  const studentId = await applyEnrollment(lead, groupId, s.userId);
 
   const updated = await prisma.lead.update({
     where: { id: leadId },

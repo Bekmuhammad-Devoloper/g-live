@@ -34,7 +34,7 @@ export interface FeeGroup {
   lessonsPerMonth: number | null;
   program: { monthlyFee: number | null; lessonsPerMonth: number | null };
 }
-const FEE_GROUP_SELECT = {
+export const FEE_GROUP_SELECT = {
   monthlyFee: true, weekdays: true, lessonsPerMonth: true,
   program: { select: { monthlyFee: true, lessonsPerMonth: true } },
 } as const;
@@ -67,6 +67,16 @@ export function enrollmentMonthFee(g: FeeGroup, joinedAt: Date, mIdx: number): n
     share = (dim - joinDay + 1) / dim;
   }
   return Math.round((fee * share) / 1000) * 1000;
+}
+
+export function pauseCredit(g: FeeGroup, leftAt: Date, rejoinAt: Date): number {
+  const fee = g.monthlyFee ?? g.program.monthlyFee ?? 0;
+  const lastIdx = monthIndex(leftAt);
+  const rejoinIdx = monthIndex(rejoinAt);
+  if (fee <= 0 || rejoinIdx <= lastIdx) return 0;
+  const skipped = (rejoinIdx - lastIdx - 1) * fee;
+  const firstMonth = Math.max(0, fee - enrollmentMonthFee(g, rejoinAt, rejoinIdx));
+  return skipped + firstMonth;
 }
 
 export function billedMonths(from: Date, now: Date, until?: Date | null): number {

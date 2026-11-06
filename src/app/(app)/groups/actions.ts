@@ -9,7 +9,7 @@ import { getPermission, MODULES } from "@/lib/rbac";
 import { writeAudit } from "@/lib/audit";
 import { GROUP_FORMATS, ROLES } from "@/lib/constants";
 import { findRoomConflict, conflictLabel } from "./roomConflict";
-import { leaveGroups } from "@/lib/leaveGroup";
+import { leaveGroups, rejoinGroup } from "@/lib/leaveGroup";
 import { syncEduStatuses } from "@/lib/eduStatus";
 
 function hasFullGroups(role: string) {
@@ -287,10 +287,14 @@ export async function bulkAddStudents(groupId: string, rows: { name: string; pho
 export async function enrollStudent(groupId: string, studentId: string): Promise<void> {
   const s = await requireSession();
   if (!hasFullGroups(s.role)) return;
-  const exists = await prisma.groupStudent.findUnique({ where: { groupId_studentId: { groupId, studentId } } });
+  const exists = await prisma.groupStudent.findUnique({ where: { groupId_studentId: { groupId, studentId } }, select: { isActive: true } });
   if (exists?.isActive) return;
-  if (exists) await prisma.groupStudent.update({ where: { id: exists.id }, data: { isActive: true, leftAt: null, joinedAt: new Date() } });
-  else await prisma.groupStudent.create({ data: { groupId, studentId } });
+  await rejoinGroup({ studentId, groupId, actorId: s.userId, reason: "Guruhga qaytdi" });
+  await prisma.lead.updateMany({
+    where: { studentId, stage: { notIn: ["WON", "PAID"] } },
+    data: { stage: "WON", groupId, kanbanColumnId: null, branchSlotId: null, archivedAt: null, archiveKind: null },
+  });
+  revalidatePath("/crm");
 
   const [g, st] = await Promise.all([
     prisma.group.findUnique({ where: { id: groupId }, select: { levelCode: true } }),

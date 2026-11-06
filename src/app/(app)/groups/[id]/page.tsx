@@ -3,8 +3,8 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 import { requireSession } from "@/lib/auth";
 import { prisma } from "@/lib/db";
-import { getPermission, MODULES } from "@/lib/rbac";
-import { ROLES } from "@/lib/constants";
+import { canWrite, getPermission, MODULES } from "@/lib/rbac";
+import { LEAD_STAGE_LABELS, ROLES } from "@/lib/constants";
 import { computeDebts } from "@/lib/debt";
 import { debtTone, DEBT_TEXT } from "@/lib/debtTone";
 import { cn } from "@/lib/cn";
@@ -15,6 +15,8 @@ import { Icon } from "../../_components/Icon";
 import { CreateStudentForm, EnrollExisting, BulkImportStudents, NewLessonForm, RemoveStudentButton, EditGroupButton } from "./GroupForms";
 import { GroupAttendance, FrozenHeading } from "./GroupAttendance";
 import StudentHoverCard, { type StudentHoverInfo } from "./StudentHoverCard";
+import ReturnToLeadButton, { type LeadTarget } from "./ReturnToLeadButton";
+import { listKanbanColumns } from "../../crm/actions";
 import { AttendanceJournal } from "./AttendanceJournal";
 import CourseLessonsTab from "../../courses/[id]/CourseLessonsTab";
 import { getLevelCodes } from "@/lib/studyLevels";
@@ -81,6 +83,14 @@ export default async function GroupDetailPage({ params }: { params: Promise<{ id
     const b = mandatoryMap.get(gs.studentId);
     return { id: gs.studentId, name: gs.student.fullName, blocked: b?.mandatory ?? false, daysUnpaid: b?.daysUnpaid ?? 0, frozen: isFrozen(gs), info: infoOf(gs) };
   });
+
+  const canReturnToLead = full && canWrite(s.role, MODULES.CRM);
+  const leadTargets: LeadTarget[] = canReturnToLead
+    ? [
+        ...["NEW", "IN_PROGRESS", "CONTACTED", "TEST", "OFFER", "AWAITING_PAYMENT"].map((st) => ({ value: st, label: tr(s.locale, LEAD_STAGE_LABELS[st]) })),
+        ...(await listKanbanColumns()).map((c) => ({ value: `col:${c.id}`, label: c.name })),
+      ]
+    : [];
 
   const candidates = full
     ? await prisma.student.findMany({
@@ -212,6 +222,7 @@ export default async function GroupDetailPage({ params }: { params: Promise<{ id
                   </StudentHoverCard>
                   <div className="flex items-center gap-2">
                     <Badge tone="slate">{gs.student.currentLevel ?? "—"}</Badge>
+                    {canReturnToLead && <ReturnToLeadButton groupId={group.id} studentId={gs.studentId} studentName={gs.student.fullName} debt={d?.debt ?? 0} targets={leadTargets} locale={s.locale} />}
                     {full && <RemoveStudentButton groupId={group.id} studentId={gs.studentId} locale={s.locale} />}
                   </div>
                 </li>

@@ -1,7 +1,54 @@
 import "server-only";
 import { prisma } from "./db";
-import { computeDebts } from "./debt";
+import { computeDebts, FEE_GROUP_SELECT, pauseCredit } from "./debt";
 import { writeAudit } from "./audit";
+
+export async function rejoinGroup(params: {
+  studentId: string;
+  groupId: string;
+  actorId: string;
+  reason: string;
+  now?: Date;
+}): Promise<{ credit: number }> {
+  const { studentId, groupId, actorId, reason } = params;
+  const now = params.now ?? new Date();
+  const row = await prisma.groupStudent.findUnique({
+    where: { groupId_studentId: { groupId, studentId } },
+    select: { id: true, isActive: true, joinedAt: true, leftAt: true, group: { select: { name: true, ...FEE_GROUP_SELECT } } },
+  });
+  if (!row) {
+    await prisma.groupStudent.create({ data: { groupId, studentId, isActive: true, joinedAt: now } });
+    return { credit: 0 };
+  }
+  if (row.isActive) return { credit: 0 };
+
+  const credit = pauseCredit(row.group, row.leftAt ?? row.joinedAt, now);
+  await prisma.groupStudent.update({ where: { id: row.id }, data: { isActive: true, leftAt: null } });
+  if (credit > 0) {
+    await prisma.payment.create({
+      data: {
+        studentId,
+        amount: -credit,
+        method: "ADJUST",
+        status: "ADJUST",
+        isManual: true,
+        purpose: "Qarz tuzatish",
+        note: `${reason}: ${row.group.name} — tanaffus davri hisobdan chiqarildi`,
+        authorId: actorId,
+      },
+    });
+  }
+  await writeAudit({
+    actorId,
+    action: "UPDATE",
+    entityType: "GroupStudent",
+    entityId: studentId,
+    oldValue: { group: row.group.name, leftAt: row.leftAt },
+    newValue: { rejoined: true, pauseCredit: credit },
+    reason,
+  });
+  return { credit };
+}
 
 export async function leaveGroups(params: {
   studentId: string;
