@@ -6,7 +6,7 @@ import { cn } from "@/lib/cn";
 import { tr } from "@/lib/tr";
 import type { Locale } from "@/lib/constants";
 import { Icon } from "../../_components/Icon";
-import StudentHoverCard, { type StudentHoverInfo } from "./StudentHoverCard";
+import StudentHoverCard, { studentNameTone, type StudentHoverInfo } from "./StudentHoverCard";
 import { getAttendanceJournal, markStudentAttendance, markAllPresent, unlockAttendance, type AttendanceJournal as Journal, type JournalDay } from "./attendanceActions";
 
 type Student = { id: string; name: string; blocked?: boolean; daysUnpaid?: number; frozen?: boolean; info?: StudentHoverInfo };
@@ -213,7 +213,7 @@ export function AttendanceJournal({ groupId, students, locale, readOnly = false 
                     <div className="flex items-center gap-2">
                       <span className="w-5 text-right text-[11px] text-slate-400">{i + 1}.</span>
                       <StudentHoverCard info={s.info} locale={locale} className="min-w-0 max-w-[170px] truncate">
-                        <Link href={`/students/${s.id}`} className={cn("text-[13px] hover:underline", s.frozen ? "text-sky-700 dark:text-sky-300" : "text-slate-700 hover:text-brand-600 dark:text-slate-200")}>{s.name}</Link>
+                        <Link href={`/students/${s.id}`} className={cn("text-[13px] hover:underline", s.frozen ? "text-sky-700 dark:text-sky-300" : studentNameTone(s.info) ?? "text-slate-700 hover:text-brand-600 dark:text-slate-200")}>{s.name}</Link>
                       </StudentHoverCard>
                       {s.blocked && <span className="h-2 w-2 shrink-0 rounded-full bg-rose-500" title={L("To'lov kerak", "Нужна оплата", "Payment needed", "Zahlung erforderlich")} />}
                     </div>

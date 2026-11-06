@@ -8,7 +8,7 @@ import { cn } from "@/lib/cn";
 import { tr } from "@/lib/tr";
 import type { Locale } from "@/lib/constants";
 import { AttendanceJournal } from "./AttendanceJournal";
-import StudentHoverCard, { type StudentHoverInfo } from "./StudentHoverCard";
+import StudentHoverCard, { studentNameTone, type StudentHoverInfo } from "./StudentHoverCard";
 import { getGroupAttendance, markStudentAttendance, markAllPresent, unlockAttendance, type AttendanceWindowInfo } from "./attendanceActions";
 
 const p2 = (n: number) => String(n).padStart(2, "0");
@@ -295,7 +295,7 @@ function DayAttendance({ groupId, students, locale }: { groupId: string; student
                   <StudentHoverCard info={s.info} locale={locale} className="min-w-0 truncate">
                     <Link
                       href={`/students/${s.id}`}
-                      className={cn("text-sm transition hover:underline", s.frozen ? "text-sky-700 dark:text-sky-300" : "text-slate-700 hover:text-brand-600 dark:text-slate-200 dark:hover:text-brand-300")}
+                      className={cn("text-sm transition hover:underline", s.frozen ? "text-sky-700 dark:text-sky-300" : studentNameTone(s.info) ?? "text-slate-700 hover:text-brand-600 dark:text-slate-200 dark:hover:text-brand-300")}
                     >
                       {s.name}
                     </Link>

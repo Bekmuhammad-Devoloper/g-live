@@ -5,7 +5,7 @@ import { createPortal } from "react-dom";
 import { cn } from "@/lib/cn";
 import { tr } from "@/lib/tr";
 import { formatMoney, type Locale } from "@/lib/constants";
-import { debtTone, debtMonthsLabel, DEBT_BADGE } from "@/lib/debtTone";
+import { debtTone, debtMonthsLabel, DEBT_BADGE, DEBT_TEXT } from "@/lib/debtTone";
 import { Icon } from "../../_components/Icon";
 
 export interface StudentHoverInfo {
@@ -14,6 +14,12 @@ export interface StudentHoverInfo {
   debt: number;
   overdueMonths: number;
   credit: number;
+}
+
+export function studentNameTone(info?: StudentHoverInfo): string | null {
+  if (!info) return null;
+  const tone = debtTone(info.debt, info.overdueMonths, info.credit);
+  return tone === "none" ? null : DEBT_TEXT[tone];
 }
 
 const CARD_WIDTH = 288;
