@@ -71,7 +71,7 @@ export default async function GroupDetailPage({ params }: { params: Promise<{ id
   const isStaff = s.role !== ROLES.STUDENT && s.role !== ROLES.PARENT;
   const debts = isStaff ? await computeDebts(enrolledIds) : new Map();
   const mandatoryMap = isStaff ? await isPaymentMandatoryBulk(enrolledIds) : new Map();
-  const isFrozen = (gs: (typeof group.students)[number]) => isStaff && (gs.student.eduStatus === "FROZEN" || !!mandatoryMap.get(gs.studentId)?.mandatory);
+  const isFrozen = (gs: (typeof group.students)[number]) => isStaff && gs.student.eduStatus === "FROZEN";
   const frozenStudents = group.students.filter(isFrozen);
   const orderedStudents = [...group.students.filter((gs) => !isFrozen(gs)), ...frozenStudents];
   const infoOf = (gs: (typeof group.students)[number]): StudentHoverInfo | undefined => {
