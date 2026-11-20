@@ -26,6 +26,7 @@ export const businessLabel = (key: string | null | undefined) => BUSINESS_TYPES.
 
 export const LEAD_STATUSES = [
   { key: "NEW", label: "Yangi", color: "#3b82f6", icon: "download" },
+  { key: "CENTER", label: "O'quv markaziga", color: "#14b8a6", icon: "building" },
   { key: "CONTACTED", label: "Bog'lanildi", color: "#f59e0b", icon: "phone" },
   { key: "DEMO", label: "Demo ko'rsatildi", color: "#0ea5e9", icon: "video" },
   { key: "OFFER", label: "Taklif berildi", color: "#8b5cf6", icon: "wallet" },
@@ -36,7 +37,7 @@ export const LEAD_STATUSES = [
 export type LeadStatus = (typeof LEAD_STATUSES)[number]["key"];
 
 export const isLeadStatus = (v: string): v is LeadStatus => LEAD_STATUSES.some((s) => s.key === v);
-export const isOpenStatus = (s: LeadStatus) => s !== "WON" && s !== "LOST";
+export const isOpenStatus = (s: LeadStatus) => s !== "WON" && s !== "LOST" && s !== "CENTER";
 
 export interface SalesPlan {
   id: string;
@@ -94,6 +95,7 @@ export interface SalesLead {
   promoMonths?: number;
   kind?: LinkKind;
   businessType?: string | null;
+  centerLeadId?: string | null;
 }
 
 export interface LeadInput {

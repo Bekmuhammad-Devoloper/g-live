@@ -114,6 +114,11 @@ export default function LeadDrawer({ lead, defaultStatus, plans, onClose }: { le
               </select>
             </div>
           )}
+          {lead?.centerLeadId && (
+            <div className="rounded-lg border border-teal-400/30 bg-teal-400/10 px-3 py-2 text-sm text-teal-200">
+              O'quv markazi lidlariga yuborilgan. U yerda manbasi "Dev panel" bo'lib turibdi.
+            </div>
+          )}
           {lead?.promoCode && (
             <div className="rounded-lg border border-orange-400/30 bg-orange-400/10 px-3 py-2 text-sm text-orange-200">
               <span className="font-bold">{lead.promoCode}</span> · {promoPeriod(lead.promoMonths ?? 1)} uchun {sumLabel(lead.promoDiscount ?? 0)} chegirma

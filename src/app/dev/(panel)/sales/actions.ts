@@ -5,6 +5,7 @@ import { revalidatePath } from "next/cache";
 import { PLATFORMS, platform } from "@/app/(app)/links/platforms";
 import { devAudit, requireDev } from "@/lib/devpanel/auth";
 import { addLead, leadFields, newCode, validateLead, withSales } from "@/lib/devpanel/sales";
+import { forwardLeadToCenter } from "@/lib/devpanel/mainDb";
 import { BASE_DOMAIN } from "@/lib/devpanel/registry";
 import { AUTOMATION_LINK_CODE, DEFAULT_LINK_CODE, isBusinessType, isLeadStatus, kindLabel, linkKind, normalizePromo, type LeadInput, type LinkKind, type SalesPlan } from "@/lib/devpanel/salesTypes";
 
@@ -30,14 +31,23 @@ export async function createLeadAction(input: LeadInput & { status?: string }): 
   const dev = await requireDev();
   const invalid = validateLead(input);
   if (invalid) return { ok: false, error: LEAD_ERRORS[invalid] };
+  const toCenter = input.status === "CENTER";
   const r = await withSales((d) => {
     const lead = addLead(d, input, null);
-    if (lead !== "full" && input.status && isLeadStatus(input.status)) lead.status = input.status;
+    if (lead !== "full" && !toCenter && input.status && isLeadStatus(input.status)) lead.status = input.status;
     return lead;
   });
   if (r === "full") return { ok: false, error: LEAD_ERRORS.full };
   await devAudit("sales_lead", { by: dev.email, lead: r.id, center: r.centerName, manual: true });
+  const forwarded = toCenter ? await forward(dev.email, r.id) : null;
   refresh();
+  return forwarded ?? { ok: true };
+}
+
+async function forward(by: string, id: string): Promise<ActionResult> {
+  const r = await forwardLeadToCenter(id);
+  if (!r.ok) return { ok: false, error: r.error };
+  await devAudit("sales_lead_forward", { by, lead: id, centerLead: r.centerLeadId });
   return { ok: true };
 }
 
@@ -47,22 +57,30 @@ export async function updateLeadAction(id: string, input: LeadInput & { note: st
   if (invalid) return { ok: false, error: LEAD_ERRORS[invalid] };
   if (!isLeadStatus(input.status)) return { ok: false, error: "Holat noto'g'ri" };
   const status = input.status;
+  const toCenter = status === "CENTER";
   const found = await withSales((d) => {
     const lead = d.leads.find((l) => l.id === id);
     if (!lead) return false;
-    Object.assign(lead, leadFields(d, input), { status, note: input.note.trim().slice(0, 2000), updatedAt: new Date().toISOString() });
+    Object.assign(lead, leadFields(d, input), { note: input.note.trim().slice(0, 2000), updatedAt: new Date().toISOString() });
+    if (!toCenter) lead.status = status;
     if (linkKind(lead) === "automation") lead.businessType = isBusinessType(input.businessType) ? input.businessType : null;
     return true;
   });
   if (!found) return { ok: false, error: "Lid topilmadi" };
   await devAudit("sales_lead_update", { by: dev.email, lead: id });
+  const forwarded = toCenter ? await forward(dev.email, id) : null;
   refresh();
-  return { ok: true };
+  return forwarded ?? { ok: true };
 }
 
 export async function setLeadStatusAction(id: string, status: string): Promise<ActionResult> {
   const dev = await requireDev();
   if (!isLeadStatus(status)) return { ok: false, error: "Holat noto'g'ri" };
+  if (status === "CENTER") {
+    const r = await forward(dev.email, id);
+    refresh();
+    return r;
+  }
   const found = await withSales((d) => {
     const lead = d.leads.find((l) => l.id === id);
     if (!lead) return false;

@@ -4,7 +4,7 @@ import { Card, fmtDate } from "../ui";
 export const dynamic = "force-dynamic";
 
 const LABELS: Record<string, string> = {
-  sales_lead: "Yangi obuna lidi", sales_lead_update: "Lid tahrirlandi", sales_lead_status: "Lid holati o'zgardi", sales_lead_delete: "Lid o'chirildi",
+  sales_lead: "Yangi obuna lidi", sales_lead_update: "Lid tahrirlandi", sales_lead_status: "Lid holati o'zgardi", sales_lead_forward: "Lid o'quv markaziga yo'naltirildi", sales_lead_delete: "Lid o'chirildi",
   sales_link_create: "Lid havolasi yaratildi", sales_link_toggle: "Lid havolasi yoqildi yoki o'chirildi", sales_link_delete: "Lid havolasi o'chirildi", sales_plans_save: "Tariflar saqlandi", sales_promo_create: "Promokod yaratildi", sales_promo_toggle: "Promokod yoqildi yoki o'chirildi", sales_promo_delete: "Promokod o'chirildi",
   login: "Kirish", login_failed: "Kirish rad etildi", center_create_start: "Markaz yaratish boshlandi", center_created: "Markaz yaratildi",
   center_create_failed: "Markaz yaratishda xato", license_extend: "Litsenziya uzaytirildi", license_set: "Litsenziya sanasi o'rnatildi",
