@@ -109,12 +109,16 @@ function Kanban({ rows, priceOf, onOpen, onAdd, onMove }: {
 }) {
   const [dragId, setDragId] = useState<string | null>(null);
   const [overCol, setOverCol] = useState<LeadStatus | null>(null);
+  const [pages, setPages] = useState<Partial<Record<LeadStatus, number>>>({});
   const dragging = dragId ? rows.find((l) => l.id === dragId) ?? null : null;
 
   return (
     <div className="grid auto-cols-[minmax(240px,1fr)] grid-flow-col gap-4 overflow-x-auto pb-4">
       {LEAD_STATUSES.map((col) => {
         const items = rows.filter((l) => l.status === col.key);
+        const pageCount = Math.max(1, Math.ceil(items.length / PAGE));
+        const page = Math.min(pages[col.key] ?? 0, pageCount - 1);
+        const visible = items.slice(page * PAGE, (page + 1) * PAGE);
         return (
           <div
             key={col.key}
@@ -154,7 +158,7 @@ function Kanban({ rows, priceOf, onOpen, onAdd, onMove }: {
             </div>
             <div className="mx-1 mb-3 mt-2 h-1 rounded-full" style={{ background: `linear-gradient(90deg, ${col.color}, ${col.color}22)` }} />
             <div className="flex flex-1 flex-col space-y-3">
-              {items.map((l) => (
+              {visible.map((l) => (
                 <LeadCard
                   key={l.id}
                   lead={l}
@@ -174,10 +178,69 @@ function Kanban({ rows, priceOf, onOpen, onAdd, onMove }: {
                   <p className="mt-2 text-xs text-slate-400">{dragging ? "Lidni shu yerga tashlang" : "Lid yo'q"}</p>
                 </div>
               )}
+              <Pager total={items.length} page={page} onPage={(n) => setPages((p) => ({ ...p, [col.key]: n }))} />
             </div>
           </div>
         );
       })}
+    </div>
+  );
+}
+
+const PAGE = 10;
+
+function pageNumbers(count: number, current: number): (number | null)[] {
+  if (count <= 7) return Array.from({ length: count }, (_, i) => i);
+  const set = new Set<number>([0, count - 1, current - 1, current, current + 1]);
+  if (current <= 2) { set.add(1); set.add(2); set.add(3); }
+  if (current >= count - 3) { set.add(count - 2); set.add(count - 3); set.add(count - 4); }
+  const nums = [...set].filter((n) => n >= 0 && n < count).sort((a, b) => a - b);
+  const out: (number | null)[] = [];
+  for (let i = 0; i < nums.length; i++) {
+    if (i > 0 && nums[i] - nums[i - 1] > 1) out.push(null);
+    out.push(nums[i]);
+  }
+  return out;
+}
+
+function Pager({ total, page, onPage }: { total: number; page: number; onPage: (n: number) => void }) {
+  const count = Math.ceil(total / PAGE);
+  if (count <= 1) return null;
+  const cur = Math.min(page, count - 1);
+  const from = cur * PAGE + 1;
+  const to = Math.min(total, (cur + 1) * PAGE);
+  const nav = "grid h-7 w-7 place-items-center rounded-lg text-slate-400 transition hover:bg-white/[0.06] disabled:opacity-30 disabled:hover:bg-transparent";
+  return (
+    <div className="!mt-auto pt-3">
+      <div className="rounded-xl border border-white/[0.08] bg-white/[0.03] px-2 py-2">
+        <div className="flex items-center justify-center gap-0.5">
+          <button type="button" onClick={() => onPage(cur - 1)} disabled={cur === 0} className={nav} aria-label="Oldingi sahifa">
+            <Icon name="chevronDown" className="h-3.5 w-3.5 rotate-90" />
+          </button>
+          {pageNumbers(count, cur).map((n, i) =>
+            n === null ? (
+              <span key={`e${i}`} className="w-5 text-center text-[11px] text-slate-500">…</span>
+            ) : (
+              <button
+                key={n}
+                type="button"
+                onClick={() => onPage(n)}
+                aria-current={n === cur ? "page" : undefined}
+                className={cn(
+                  "h-7 min-w-[28px] rounded-lg px-1.5 text-[12px] font-semibold tabular-nums transition",
+                  n === cur ? "bg-brand-600 text-white shadow-[0_4px_10px_-4px_rgba(79,70,229,0.8)]" : "text-slate-300 hover:bg-white/[0.06]",
+                )}
+              >
+                {n + 1}
+              </button>
+            ),
+          )}
+          <button type="button" onClick={() => onPage(cur + 1)} disabled={cur >= count - 1} className={nav} aria-label="Keyingi sahifa">
+            <Icon name="chevronDown" className="h-3.5 w-3.5 -rotate-90" />
+          </button>
+        </div>
+        <div className="mt-1 text-center text-[10.5px] tabular-nums text-slate-500">{from}–{to} / {total}</div>
+      </div>
     </div>
   );
 }
