@@ -19,12 +19,14 @@ export type CommissionMap = Map<string, Map<string, MonthCommission>>;
 interface SalesOwner {
   ownerId: string;
   since: Date;
+  until?: Date;
 }
 
 const OWNER_ROLES: string[] = [ROLES.OPERATOR, ROLES.ROP, ROLES.MANAGER, ROLES.ADMIN];
 const DAY = 86_400_000;
 const CHUNK = 500;
-const AUTO_NOTES = [/^Ustunga ko'chirildi:/, /^Filialga yo'naltirildi:/, /^Onlayn (ustuniga o'tkazildi|belgisi olib tashlandi)/, /^Arxiv(ga tashlandi|dan qaytarildi)/, /^Yangiga qaytarildi/, /^Bosqich:/];
+const DIRECT_STUDENT_DAYS = 31;
+const AUTO_NOTES = [/^Arxiv(ga tashlandi|dan qaytarildi)/, /^Yangiga qaytarildi/];
 
 export const isAutoNote = (text: string | null | undefined): boolean => !!text && AUTO_NOTES.some((re) => re.test(text.trim()));
 
@@ -60,7 +62,7 @@ export async function salesOwnerByStudent(): Promise<Map<string, SalesOwner>> {
   const [leads, acts, calls] = await Promise.all([
     prisma.lead.findMany({ where: converted, select: { id: true, studentId: true, managerId: true, createdAt: true } }),
     prisma.leadActivity.findMany({
-      where: { authorId: { in: staffIds }, type: { not: "stage_change" }, lead: converted },
+      where: { authorId: { in: staffIds }, lead: converted },
       select: { leadId: true, authorId: true, createdAt: true, result: true },
     }),
     prisma.call.findMany({
@@ -80,6 +82,14 @@ export async function salesOwnerByStudent(): Promise<Map<string, SalesOwner>> {
     if (!l.studentId) continue;
     const ownerId = first.get(l.id)?.id ?? (l.managerId && staffSet.has(l.managerId) ? l.managerId : null);
     if (ownerId) out.set(l.studentId, { ownerId, since: l.createdAt });
+  }
+  const direct = await prisma.auditLog.findMany({
+    where: { entityType: "Student", action: "CREATE", actorId: { in: staffIds } },
+    select: { entityId: true, actorId: true, createdAt: true },
+  });
+  for (const a of direct) {
+    if (!a.entityId || !a.actorId || out.has(a.entityId)) continue;
+    out.set(a.entityId, { ownerId: a.actorId, since: a.createdAt, until: new Date(a.createdAt.getTime() + DIRECT_STUDENT_DAYS * DAY) });
   }
   return out;
 }
@@ -106,6 +116,7 @@ export async function firstPaymentsByManager(managerIds: string[]): Promise<Firs
   for (const [studentId, p] of firstPay) {
     const o = mine.get(studentId)!;
     if (p.createdAt.getTime() < o.since.getTime() - DAY) continue;
+    if (o.until && p.createdAt.getTime() > o.until.getTime()) continue;
     out.push({ managerId: o.ownerId, studentId, amount: p.amount, paidAt: p.createdAt });
   }
   return out;
