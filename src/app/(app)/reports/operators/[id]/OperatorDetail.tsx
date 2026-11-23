@@ -29,7 +29,7 @@ export interface DCall {
   phone: string; duration: number; recordingUrl: string | null; comment: string | null;
   date: string; time: string;
 }
-export interface DMonth { key: string; label: string; won: number; bonus: number; base: number; kpi: number; fiksa: number; total: number; current: boolean }
+export interface DMonth { key: string; label: string; won: number; bonus: number; base: number; kpi: number; coll: number; collBase: number; collCount: number; collPct: number; fiksa: number; total: number; current: boolean }
 export interface DStats {
   total: number; won: number; lost: number; fresh: number; missedCalls: number;
   conv: number; callsTotal: number; answered: number; talkSec: number;
@@ -67,7 +67,7 @@ export default function OperatorDetail({ kind = "operator", locale, op, leads, c
   const shownLeads = tab === "talked" ? talked : tab === "no_answer" ? noAnswer : leads;
 
   const cur = months.find((m) => m.current);
-  const prev = months.filter((m) => !m.current && m.won > 0);
+  const prev = months.filter((m) => !m.current && (m.won > 0 || m.collCount > 0));
 
   const periods: { k: Props["period"]; label: string }[] = [
     { k: "all", label: tr(locale, { uz: "Barchasi", ru: "Все", en: "All", de: "Alle" }) },
@@ -190,7 +190,7 @@ export default function OperatorDetail({ kind = "operator", locale, op, leads, c
             </p>
           </div>
           <div className="p-5">
-            <div className="grid gap-3 sm:grid-cols-3">
+            <div className={cn("grid gap-3", kind === "admin" ? "sm:grid-cols-2 lg:grid-cols-4" : "sm:grid-cols-3")}>
               <Pay icon="coins" tone="#8b5cf6" label={tr(locale, { uz: "Fiksa maosh", ru: "Фикса", en: "Fixed salary", de: "Festgehalt" })} value={formatMoney(cur.fiksa, locale)} />
               <Pay
                 icon="chart"
@@ -199,12 +199,21 @@ export default function OperatorDetail({ kind = "operator", locale, op, leads, c
                 value={formatMoney(cur.kpi, locale)}
                 hint={`${tr(locale, { uz: "Birinchi to'lov qilganlar", ru: "Первая оплата", en: "First payments", de: "Erste Zahlungen" })}: ${cur.won} · ${formatMoney(cur.base, locale)} × ${cur.bonus}%`}
               />
+              {kind === "admin" && (
+                <Pay
+                  icon="wallet"
+                  tone="#0ea5e9"
+                  label={`${tr(locale, { uz: "To'lov qabul qilish", ru: "Приём оплат", en: "Payments accepted", de: "Angenommene Zahlungen" })} ${cur.collPct}%`}
+                  value={formatMoney(cur.coll, locale)}
+                  hint={`${cur.collCount} ${tr(locale, { uz: "ta to'lov", ru: "оплат", en: "payments", de: "Zahlungen" })} · ${formatMoney(cur.collBase, locale)} × ${cur.collPct}%`}
+                />
+              )}
               <Pay
                 icon="award"
                 tone="#10b981"
                 label={`${tr(locale, { uz: "Jami oylik", ru: "Итого за месяц", en: "Monthly total", de: "Monatssumme" })} (${cur.label})`}
                 value={formatMoney(cur.total, locale)}
-                hint={`${grp(cur.fiksa)} + ${grp(cur.kpi)}`}
+                hint={`${grp(cur.fiksa)} + ${grp(cur.kpi)}${cur.coll ? ` + ${grp(cur.coll)}` : ""}`}
                 accent
               />
             </div>

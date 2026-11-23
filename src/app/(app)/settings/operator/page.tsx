@@ -1,4 +1,4 @@
-import { commissionByManagerMonth, commissionOf, monthCommission } from "@/lib/salesCommission";
+import { collectionsByAuthorMonth, commissionByManagerMonth, commissionOf, monthCommission } from "@/lib/salesCommission";
 import { requireSession } from "@/lib/auth";
 import { prisma } from "@/lib/db";
 import { ROLES, ROLE_LABELS, label, type Locale } from "@/lib/constants";
@@ -45,7 +45,7 @@ export default async function OperatorSettingsPage({ searchParams }: { searchPar
       where: { id: s.userId },
       select: {
         fullName: true, email: true, role: true, imageUrl: true, locale: true,
-        position: true, sipExtension: true, fiksa: true, kpiPercent: true, lastLoginAt: true,
+        position: true, sipExtension: true, fiksa: true, kpiPercent: true, collectPercent: true, lastLoginAt: true,
         branch: { select: { name: true } },
       },
     }),
@@ -64,24 +64,29 @@ export default async function OperatorSettingsPage({ searchParams }: { searchPar
   for (const l of wonLeads) counts.set(keyOf(l.createdAt), (counts.get(keyOf(l.createdAt)) ?? 0) + 1);
 
   const pct = u.kpiPercent ?? 0;
+  const isAdmin = u.role === ROLES.ADMIN;
+  const cpct = isAdmin ? u.collectPercent ?? 0 : 0;
   const fiksa = u.fiksa ?? 0;
   const wonThisMonth = counts.get(keyOf(now)) ?? 0;
-  const commissions = await commissionByManagerMonth([s.userId]);
+  const [commissions, collections] = await Promise.all([commissionByManagerMonth([s.userId]), collectionsByAuthorMonth(isAdmin ? [s.userId] : [])]);
   const curMonth = monthCommission(commissions, s.userId, now);
-  const kpiNow = commissionOf(curMonth.base, pct);
+  const curColl = monthCommission(collections, s.userId, now);
+  const kpiNow = commissionOf(curMonth.base, pct) + commissionOf(curColl.base, cpct);
+  const collPart = (base: number) => (isAdmin ? ` + ${money(base)} × ${cpct}%` : "");
 
   const previous: { key: string; label: string; count: number; total: string; formula: string }[] = [];
   for (let i = 1; i < 6; i++) {
     const d = new Date(now.getFullYear(), now.getMonth() - i, 1);
     const cm = monthCommission(commissions, s.userId, d);
-    if (cm.students === 0) continue;
-    const kpi = commissionOf(cm.base, pct);
+    const cc = monthCommission(collections, s.userId, d);
+    if (cm.students === 0 && cc.students === 0) continue;
+    const kpi = commissionOf(cm.base, pct) + commissionOf(cc.base, cpct);
     previous.push({
       key: keyOf(d),
       label: `${MONTHS[locale][d.getMonth()]} ${d.getFullYear()}`,
       count: cm.students,
       total: money(fiksa + kpi),
-      formula: `${money(fiksa)} + ${money(cm.base)} × ${pct}%`,
+      formula: `${money(fiksa)} + ${money(cm.base)} × ${pct}%${collPart(cc.base)}`,
     });
   }
 
@@ -104,15 +109,15 @@ export default async function OperatorSettingsPage({ searchParams }: { searchPar
       }}
       prefs={parsePrefs(rawPrefs)}
       salary={{
-        configured: fiksa > 0 || pct > 0,
+        configured: fiksa > 0 || pct > 0 || cpct > 0,
         fiksa: money(fiksa),
-        bonusPerLead: `${pct}%`,
+        bonusPerLead: isAdmin ? `${pct}% + ${cpct}%` : `${pct}%`,
         paidThisMonth: curMonth.students,
         monthLabel: MONTHS[locale][now.getMonth()],
         wonThisMonth,
         bonusThisMonth: money(kpiNow),
         total: money(fiksa + kpiNow),
-        formula: `${money(fiksa)} + ${money(curMonth.base)} × ${pct}%`,
+        formula: `${money(fiksa)} + ${money(curMonth.base)} × ${pct}%${collPart(curColl.base)}`,
         wonTotal: wonLeads.length,
         previous,
         monthLeads: monthLeads.slice(0, 8).map((l) => ({

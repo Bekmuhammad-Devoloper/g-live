@@ -99,6 +99,7 @@ model User {
   fiksa        Int       @default(0)
   kpiBonus     Int       @default(200000)
   kpiPercent   Float     @default(0)
+  collectPercent Float   @default(0)
   position     String?
   sipExtension String?  @unique
   archivedAt    DateTime?

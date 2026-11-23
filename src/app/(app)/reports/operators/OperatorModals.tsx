@@ -104,6 +104,7 @@ export function OperatorDrawer({
   const isEdit = !!op;
   const [fiksaStr, setFiksaStr] = useState(op ? grouped(op.fiksa) : "");
   const [kpiStr, setKpiStr] = useState(op && op.kpiPercent > 0 ? String(op.kpiPercent) : "");
+  const [collectStr, setCollectStr] = useState(op && op.collectPercent > 0 ? String(op.collectPercent) : "");
   useLockBody(onClose);
 
   const { pending, error, submit } = useSubmit(locale, isEdit ? updateOperator : createOperator, (r) => {
@@ -174,6 +175,14 @@ export function OperatorDrawer({
               <span className="pointer-events-none absolute right-3 top-1/2 -translate-y-1/2 text-xs font-medium text-slate-400">%</span>
             </div>
           </Field>
+          {cfg.kind === "admin" && (
+            <Field label={tr(locale, { uz: "KPI — qabul qilingan har bir to'lovdan foiz", ru: "KPI — процент с каждой принятой оплаты", en: "KPI — percent of every accepted payment", de: "KPI — Prozent jeder angenommenen Zahlung" })}>
+              <div className="relative">
+                <input name="collectPercent" type="text" inputMode="decimal" value={collectStr} onChange={(e) => setCollectStr(e.target.value.replace(/[^\d.,]/g, "").slice(0, 5))} placeholder="5" className={cn(inputCls, "pr-12 font-semibold")} style={{ borderLeft: "3px solid #0ea5e9" }} />
+                <span className="pointer-events-none absolute right-3 top-1/2 -translate-y-1/2 text-xs font-medium text-slate-400">%</span>
+              </div>
+            </Field>
+          )}
           <ErrorBox text={error} />
           <Actions locale={locale} pending={pending} onClose={onClose} />
         </form>

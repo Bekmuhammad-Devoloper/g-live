@@ -35,3 +35,5 @@ export const isSalesPosition = (position: string | null | undefined): boolean =>
   const r = roleForPosition(position);
   return r === ROLES.OPERATOR || r === ROLES.ROP;
 };
+
+export const isAdminPosition = (position: string | null | undefined): boolean => !!position && roleForPosition(position) === ROLES.ADMIN;

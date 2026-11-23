@@ -1,6 +1,6 @@
 "use client";
 
-import { isSalesPosition } from "./positions";
+import { isAdminPosition, isSalesPosition } from "./positions";
 import DateInput from "@/app/(app)/_components/DateInput";
 import { useEffect, useMemo, useRef, useState, useTransition } from "react";
 import { createPortal } from "react-dom";
@@ -238,6 +238,7 @@ export function StaffForm({ positions, branches, onClose, locale, edit = null, c
   const [branchId, setBranchId] = useState(edit?.branchId ?? "");
   const [position, setPosition] = useState(edit?.position ?? "");
   const [kpiStr, setKpiStr] = useState(edit && edit.kpiPercent > 0 ? String(edit.kpiPercent) : "");
+  const [collectStr, setCollectStr] = useState(edit && edit.collectPercent > 0 ? String(edit.collectPercent) : "");
   const [extraBranches, setExtraBranches] = useState<string[]>(edit?.extraBranchIds ?? []);
   const nameParts = (edit?.fullName ?? "").trim().split(/\s+/).filter(Boolean);
   const editIsm = nameParts[0] ?? "";
@@ -399,11 +400,18 @@ export function StaffForm({ positions, branches, onClose, locale, edit = null, c
             )}
           </div>
 
-          {isSalesPosition(position) && (
+          {(isSalesPosition(position) || isAdminPosition(position)) && (
             <div className="rounded-xl border border-slate-100 bg-slate-50/60 p-3 dark:border-white/5 dark:bg-white/[0.03]">
-              <label className={lbl}>{tr(locale, { uz: "KPI foizi (%)", ru: "Процент KPI (%)", en: "KPI percent (%)", de: "KPI-Prozentsatz (%)" })}</label>
+              <label className={lbl}>{tr(locale, { uz: "Sotuv KPI foizi (%)", ru: "Процент KPI за продажи (%)", en: "Sales KPI percent (%)", de: "Vertriebs-KPI-Prozentsatz (%)" })}</label>
               <input name="kpiPercent" inputMode="decimal" value={kpiStr} onChange={(e) => setKpiStr(e.target.value.replace(/[^\d.,]/g, "").slice(0, 5))} placeholder="10" className={inp} />
-              <p className="mt-1.5 text-[11px] leading-snug text-slate-400">{tr(locale, { uz: "Xodim gaplashib olib kelgan o'quvchi birinchi to'lovni qilganda shu to'lovdan foiz hisoblanadi.", ru: "Процент начисляется с первой оплаты ученика, которого привёл сотрудник.", en: "The percent is paid from the first payment of a student this employee brought in.", de: "Der Prozentsatz wird von der ersten Zahlung eines vom Mitarbeiter gewonnenen Schülers berechnet." })}</p>
+              <p className="mt-1.5 text-[11px] leading-snug text-slate-400">{tr(locale, { uz: "Lid bilan birinchi ishlagan xodim (operator yoki administrator) olib kelgan o'quvchi birinchi to'lovni qilganda shu to'lovdan hisoblanadi.", ru: "Начисляется с первой оплаты ученика сотруднику, который первым работал с лидом (оператор или администратор).", en: "Paid from a student's first payment to whoever worked with the lead first (operator or administrator).", de: "Wird von der ersten Zahlung des Schülers berechnet, für wer zuerst mit dem Lead gearbeitet hat (Operator oder Administrator)." })}</p>
+              {isAdminPosition(position) && (
+                <>
+                  <label className={`${lbl} mt-3`}>{tr(locale, { uz: "To'lov qabul qilish KPI foizi (%)", ru: "Процент KPI за приём оплат (%)", en: "Payment collection KPI percent (%)", de: "KPI-Prozentsatz für angenommene Zahlungen (%)" })}</label>
+                  <input name="collectPercent" inputMode="decimal" value={collectStr} onChange={(e) => setCollectStr(e.target.value.replace(/[^\d.,]/g, "").slice(0, 5))} placeholder="5" className={inp} />
+                  <p className="mt-1.5 text-[11px] leading-snug text-slate-400">{tr(locale, { uz: "Administrator qabul qilgan har bir to'lovning to'liq summasidan hisoblanadi (qarz to'lovlari ham).", ru: "Начисляется с полной суммы каждой оплаты, принятой администратором (включая долги).", en: "Paid from the full amount of every payment the administrator accepts (debts included).", de: "Wird vom vollen Betrag jeder vom Administrator angenommenen Zahlung berechnet (auch Schulden)." })}</p>
+                </>
+              )}
             </div>
           )}
 
