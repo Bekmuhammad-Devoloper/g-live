@@ -12,10 +12,13 @@ import SipSelect from "../../_components/SipSelect";
 import type { SipOption } from "@/lib/sip";
 import { createStaff, updateStaff, deleteStaff, inviteStaff, importStaff } from "./actions";
 
-export interface VStaff { id: string; shortId: string; fullName: string; role: string; roleLabel: string; position: string | null; phone: string | null; sipExtension: string | null }
+export interface VStaff { id: string; shortId: string; fullName: string; role: string; roleLabel: string; position: string | null; phone: string | null; sipExtension: string | null; branchIds: string[] }
 export interface RoleOption { value: string; label: string }
+export interface BranchOption { id: string; name: string }
 
-export default function StaffView({ locale, rows, roleOptions, sipOptions = [], currentUserId, canDelete }: { locale: Locale; rows: VStaff[]; roleOptions: RoleOption[]; sipOptions?: SipOption[]; currentUserId: string; canDelete: boolean }) {
+const MULTI_BRANCH_ROLES = ["ROP", "OPERATOR", "MANAGER", "TEACHER"];
+
+export default function StaffView({ locale, rows, roleOptions, sipOptions = [], branches = [], currentBranchId = null, currentUserId, canDelete }: { locale: Locale; rows: VStaff[]; roleOptions: RoleOption[]; sipOptions?: SipOption[]; branches?: BranchOption[]; currentBranchId?: string | null; currentUserId: string; canDelete: boolean }) {
   const router = useRouter();
   const [, start] = useTransition();
   const [search, setSearch] = useState("");
@@ -78,6 +81,7 @@ export default function StaffView({ locale, rows, roleOptions, sipOptions = [], 
                   <td className="px-6 py-4 text-slate-500 dark:text-slate-400">
                     {r.position ?? "—"}
                     {r.sipExtension && <span className="ml-2 inline-flex items-center gap-1 rounded-md bg-emerald-50 px-1.5 py-0.5 text-[11px] font-semibold text-emerald-700 dark:bg-emerald-500/10 dark:text-emerald-300"><Icon name="phone" className="h-3 w-3" />{r.sipExtension}</span>}
+                    {r.branchIds.length > 1 && <span title={branches.filter((b) => r.branchIds.includes(b.id)).map((b) => b.name).join(", ")} className="ml-2 inline-flex items-center gap-1 rounded-md bg-sky-50 px-1.5 py-0.5 text-[11px] font-semibold text-sky-700 dark:bg-sky-500/10 dark:text-sky-300"><Icon name="building" className="h-3 w-3" />{r.branchIds.length} {tr(locale, { uz: "filial", ru: "филиала", en: "branches", de: "Filialen" })}</span>}
                   </td>
                   <td className="px-6 py-4 tabular-nums text-slate-600 dark:text-slate-300">{r.phone ?? "—"}</td>
                   <td className="px-6 py-4">
@@ -94,7 +98,7 @@ export default function StaffView({ locale, rows, roleOptions, sipOptions = [], 
         </div>
       </div>
 
-      {drawer && <StaffDrawer locale={locale} edit={drawer.edit} roleOptions={roleOptions} sipOptions={sipOptions} onClose={() => setDrawer(null)} onSaved={(m) => { setDrawer(null); router.refresh(); flash(m); }} />}
+      {drawer && <StaffDrawer locale={locale} edit={drawer.edit} roleOptions={roleOptions} sipOptions={sipOptions} branches={branches} currentBranchId={currentBranchId} onClose={() => setDrawer(null)} onSaved={(m) => { setDrawer(null); router.refresh(); flash(m); }} />}
       {importOpen && <ImportModal locale={locale} onClose={() => setImportOpen(false)} onDone={(m) => { setImportOpen(false); router.refresh(); flash(m); }} />}
       {toast && <div className="fixed bottom-6 left-1/2 z-[90] -translate-x-1/2 rounded-xl bg-slate-900 px-4 py-2.5 text-sm font-medium text-white shadow-pop dark:bg-slate-700">{toast}</div>}
     </div>
@@ -103,8 +107,11 @@ export default function StaffView({ locale, rows, roleOptions, sipOptions = [], 
 
 const inp = "h-10 w-full rounded-lg border border-slate-200 bg-white px-3 text-sm text-slate-800 outline-none focus:border-brand-400 dark:border-slate-700 dark:bg-slate-800/60 dark:text-slate-100";
 
-function StaffDrawer({ locale, edit, roleOptions, sipOptions, onClose, onSaved }: { locale: Locale; edit: VStaff | null; roleOptions: RoleOption[]; sipOptions: SipOption[]; onClose: () => void; onSaved: (msg: string) => void }) {
+function StaffDrawer({ locale, edit, roleOptions, sipOptions, branches, currentBranchId, onClose, onSaved }: { locale: Locale; edit: VStaff | null; roleOptions: RoleOption[]; sipOptions: SipOption[]; branches: BranchOption[]; currentBranchId: string | null; onClose: () => void; onSaved: (msg: string) => void }) {
   const [mounted, setMounted] = useState(false);
+  const [role, setRole] = useState(edit?.role ?? "");
+  const [picked, setPicked] = useState<string[]>(edit ? edit.branchIds : currentBranchId ? [currentBranchId] : []);
+  const multiBranch = MULTI_BRANCH_ROLES.includes(role) && branches.length > 1;
   const [pending, start] = useTransition();
   const [error, setError] = useState<string | null>(null);
   const formRef = useRef<HTMLFormElement>(null);
@@ -144,13 +151,41 @@ function StaffDrawer({ locale, edit, roleOptions, sipOptions, onClose, onSaved }
           {!edit && <Field label={tr(locale, { uz: "Email (login)", ru: "Email (логин)", en: "Email (login)", de: "E-Mail (Login)" })} req><input name="email" type="email" required placeholder="xodim@gl.uz" className={inp} /></Field>}
           <div className="grid grid-cols-2 gap-3">
             <Field label={tr(locale, { uz: "Rol", ru: "Роль", en: "Role", de: "Rolle" })} req>
-              <select name="role" required defaultValue={edit?.role ?? ""} className={inp}>
+              <select name="role" required value={role} onChange={(e) => setRole(e.target.value)} className={inp}>
                 <option value="" disabled>{tr(locale, { uz: "— tanlang —", ru: "— выберите —", en: "— select —", de: "— auswählen —" })}</option>
                 {roleOptions.map((o) => <option key={o.value} value={o.value}>{o.label}</option>)}
               </select>
             </Field>
             <Field label={tr(locale, { uz: "Lavozimi", ru: "Должность", en: "Position", de: "Position" })}><input name="position" defaultValue={edit?.position ?? ""} placeholder={tr(locale, { uz: "Masalan: CEO", ru: "Например: CEO", en: "e.g. CEO", de: "z.B. CEO" })} className={inp} /></Field>
           </div>
+          {multiBranch && (
+            <div>
+              <span className="mb-1 block text-xs font-semibold text-slate-500 dark:text-slate-400">{tr(locale, { uz: "Filiallar", ru: "Филиалы", en: "Branches", de: "Filialen" })}<span className="text-rose-500"> *</span></span>
+              <input type="hidden" name="branchesSent" value="1" />
+              {picked.map((id) => <input key={id} type="hidden" name="branches" value={id} />)}
+              <div className="flex flex-wrap gap-1.5">
+                {branches.map((b) => {
+                  const on = picked.includes(b.id);
+                  return (
+                    <button
+                      key={b.id}
+                      type="button"
+                      aria-pressed={on}
+                      onClick={() => setPicked((cur) => (on ? cur.filter((x) => x !== b.id) : [...cur, b.id]))}
+                      className={cn(
+                        "inline-flex items-center gap-1 rounded-lg border px-2.5 py-1.5 text-xs font-medium transition",
+                        on ? "border-brand-500 bg-brand-50 text-brand-700 dark:border-brand-400 dark:bg-brand-500/15 dark:text-brand-200" : "border-slate-200 text-slate-500 hover:bg-slate-50 dark:border-white/10 dark:text-slate-400 dark:hover:bg-white/5",
+                      )}
+                    >
+                      {on && <Icon name="check" className="h-3.5 w-3.5" />}
+                      {b.name}
+                    </button>
+                  );
+                })}
+              </div>
+              <p className="mt-1.5 text-[11px] leading-snug text-slate-400">{tr(locale, { uz: "Belgilangan har bir filialning lidlari, o'quvchilari va jamoasini ko'ra oladi — yuqoridagi filial tanlagichdan almashtiradi.", ru: "Видит лиды, учеников и команду каждого отмеченного филиала — переключение через выбор филиала вверху.", en: "Can see leads, students and team of every selected branch — switch via the branch picker at the top.", de: "Sieht Leads, Schüler und Team jeder ausgewählten Filiale — Wechsel über die Filialauswahl oben." })}</p>
+            </div>
+          )}
           <Field label={tr(locale, { uz: "Telefon", ru: "Телефон", en: "Phone", de: "Telefon" })}><input name="phone" defaultValue={edit?.phone ?? ""} placeholder="+998 90 123 45 67" className={inp} /></Field>
           <Field label={tr(locale, { uz: "SIP raqami (telefon)", ru: "SIP-номер (телефон)", en: "SIP extension (phone)", de: "SIP-Nummer (Telefon)" })}>
             <SipSelect locale={locale} options={sipOptions} current={edit?.sipExtension} className={inp} />

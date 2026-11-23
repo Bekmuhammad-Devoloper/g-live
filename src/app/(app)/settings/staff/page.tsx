@@ -19,10 +19,11 @@ export default async function StaffSettingsPage() {
   const users = await prisma.user.findMany({
     where: { role: { in: STAFF_ROLES }, isActive: true },
     orderBy: [{ createdAt: "asc" }],
-    select: { id: true, fullName: true, role: true, position: true, phone: true, sipExtension: true },
+    select: { id: true, fullName: true, role: true, position: true, phone: true, sipExtension: true, branchId: true, branches: { select: { branchId: true } } },
   });
 
   const sipOptions = await listSipOptions();
+  const branches = await prisma.branch.findMany({ where: { isActive: true }, orderBy: { name: "asc" }, select: { id: true, name: true } });
 
   const rows: VStaff[] = users.map((u) => ({
     id: u.id,
@@ -33,12 +34,13 @@ export default async function StaffSettingsPage() {
     position: u.position,
     phone: u.phone,
     sipExtension: u.sipExtension,
+    branchIds: [...new Set([u.branchId, ...u.branches.map((b) => b.branchId)].filter((b): b is string => !!b))],
   }));
 
   const roleOptions = ASSIGNABLE_ROLES.map((r) => ({ value: r, label: label(ROLE_LABELS, r, s.locale as Locale) }));
 
   const canDelete = [ROLES.DIRECTOR, ROLES.DEPUTY_DIRECTOR].includes(s.role as never);
-  return <StaffView locale={s.locale} rows={rows} roleOptions={roleOptions} sipOptions={sipOptions} currentUserId={s.userId} canDelete={canDelete} />;
+  return <StaffView locale={s.locale} rows={rows} roleOptions={roleOptions} sipOptions={sipOptions} branches={branches} currentBranchId={s.branchId} currentUserId={s.userId} canDelete={canDelete} />;
 }
 
 export const dynamic = "force-dynamic";
