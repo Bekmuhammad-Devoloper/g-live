@@ -1,3 +1,4 @@
+import { commissionByManagerMonth, commissionOf, monthCommission, totalCommission } from "@/lib/salesCommission";
 import { requireSession } from "@/lib/auth";
 import { prisma } from "@/lib/db";
 import { canRead, canSeeTeamReports, getPermission, MODULES } from "@/lib/rbac";
@@ -8,7 +9,6 @@ import { Forbidden } from "../../_components/ui";
 import KpiView from "./KpiView";
 import type { Cat, VKpiRow } from "./KpiShared";
 
-const BONUS = 200_000;
 const DAY = 86_400_000;
 
 const CAT: Record<string, Cat> = {
@@ -48,7 +48,7 @@ export default async function KpiPage() {
         role: true,
         imageUrl: true,
         fiksa: true,
-        kpiBonus: true,
+        kpiPercent: true,
         branchId: true,
         createdAt: true,
         lastLoginAt: true,
@@ -60,6 +60,7 @@ export default async function KpiPage() {
     }),
   ]);
 
+  const commissions = await commissionByManagerMonth(users.map((u) => u.id));
   const now = new Date();
   const monthStart = new Date(now.getFullYear(), now.getMonth(), 1);
 
@@ -107,7 +108,9 @@ export default async function KpiPage() {
 
     const conv = a.total > 0 ? Number(((a.won / a.total) * 100).toFixed(1)) : 0;
     const kpiPct = Math.min(100, Math.round(conv * 2));
-    const bonus = u.kpiBonus ?? BONUS;
+    const pct = u.kpiPercent ?? 0;
+    const all = totalCommission(commissions, u.id);
+    const month = monthCommission(commissions, u.id, now);
     const end = u.lastLoginAt ?? now;
     const workDays = Math.max(1, Math.ceil(Math.abs(end.getTime() - u.createdAt.getTime()) / DAY));
 
@@ -123,10 +126,13 @@ export default async function KpiPage() {
       conv,
       kpiPct,
       fiksa: u.fiksa,
-      bonus,
-      kpiMoney: a.won * bonus,
+      bonus: pct,
+      kpiMoney: commissionOf(all.base, pct),
+      paidAll: all.students,
       wonMonth: a.wonMonth,
-      earnedMonth: a.wonMonth * bonus,
+      paidMonth: month.students,
+      baseMonth: month.base,
+      earnedMonth: commissionOf(month.base, pct),
       workDays,
     };
   });

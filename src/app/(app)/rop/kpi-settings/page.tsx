@@ -1,3 +1,4 @@
+import { commissionByManagerMonth, commissionOf, monthCommission } from "@/lib/salesCommission";
 import { requireSession } from "@/lib/auth";
 import { prisma } from "@/lib/db";
 import { canRead, MODULES } from "@/lib/rbac";
@@ -19,7 +20,7 @@ export default async function RopKpiSettingsPage() {
 
   const [raw, operators, leads] = await Promise.all([
     getSetting("rop.kpi"),
-    prisma.user.findMany({ where: { AND: [{ role: ROLES.OPERATOR, isActive: true }, staffBranchWhere(s)] }, select: { id: true, fullName: true, kpiBonus: true }, orderBy: { fullName: "asc" } }),
+    prisma.user.findMany({ where: { AND: [{ role: ROLES.OPERATOR, isActive: true }, staffBranchWhere(s)] }, select: { id: true, fullName: true, kpiPercent: true }, orderBy: { fullName: "asc" } }),
     prisma.lead.findMany({ where: { AND: [{ managerId: { not: null } }, branchWhere(s)] }, select: { managerId: true, stage: true } }),
   ]);
 
@@ -28,13 +29,14 @@ export default async function RopKpiSettingsPage() {
     try { const p = kpiSettingsSchema.safeParse(JSON.parse(raw)); if (p.success) settings = p.data; } catch { }
   }
 
+  const commissions = await commissionByManagerMonth(operators.map((o) => o.id));
   const rating: VRatingRow[] = operators
     .map((op) => {
       const mine = leads.filter((l) => l.managerId === op.id);
       const won = mine.filter((l) => l.stage === "WON").length;
       const rejected = mine.filter((l) => l.stage === "LOST").length;
       const conv = mine.length ? Math.round((won / mine.length) * 100) : 0;
-      return { id: op.id, name: op.fullName, total: mine.length, won, rejected, conv, kpi: conv, pay: won * (op.kpiBonus ?? 200000) };
+      return { id: op.id, name: op.fullName, total: mine.length, won, rejected, conv, kpi: conv, pay: commissionOf(monthCommission(commissions, op.id, new Date()).base, op.kpiPercent) };
     })
     .sort((a, b) => b.conv - a.conv || b.won - a.won);
 

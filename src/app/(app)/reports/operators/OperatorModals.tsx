@@ -103,7 +103,7 @@ export function OperatorDrawer({
   const { cfg, branches, sipOptions, sipCanRelease } = useTeam();
   const isEdit = !!op;
   const [fiksaStr, setFiksaStr] = useState(op ? grouped(op.fiksa) : "");
-  const [kpiStr, setKpiStr] = useState(op ? grouped(op.kpiBonus) : "200 000");
+  const [kpiStr, setKpiStr] = useState(op && op.kpiPercent > 0 ? String(op.kpiPercent) : "");
   useLockBody(onClose);
 
   const { pending, error, submit } = useSubmit(locale, isEdit ? updateOperator : createOperator, (r) => {
@@ -168,10 +168,10 @@ export function OperatorDrawer({
               <span className="pointer-events-none absolute right-3 top-1/2 -translate-y-1/2 text-xs font-medium text-slate-400">{tr(locale, { uz: "so'm", ru: "сум", en: "UZS", de: "UZS" })}</span>
             </div>
           </Field>
-          <Field label={tr(locale, { uz: "KPI — har muvaffaqiyatli lid uchun bonus (so'm)", ru: "KPI — бонус за каждый успешный лид (сум)", en: "KPI — bonus per successful lead (UZS)", de: "KPI — Bonus für jeden erfolgreichen Lead (UZS)" })}>
+          <Field label={tr(locale, { uz: "KPI — o'quvchining birinchi to'lovidan foiz", ru: "KPI — процент с первой оплаты ученика", en: "KPI — percent of the student's first payment", de: "KPI — Prozent der ersten Zahlung des Schülers" })}>
             <div className="relative">
-              <input name="kpiBonus" type="text" inputMode="numeric" value={kpiStr} onChange={(e) => setKpiStr(money(e.target.value))} placeholder="200 000" className={cn(inputCls, "pr-12 font-semibold")} style={{ borderLeft: "3px solid #10b981" }} />
-              <span className="pointer-events-none absolute right-3 top-1/2 -translate-y-1/2 text-xs font-medium text-slate-400">{tr(locale, { uz: "so'm", ru: "сум", en: "UZS", de: "UZS" })}</span>
+              <input name="kpiPercent" type="text" inputMode="decimal" value={kpiStr} onChange={(e) => setKpiStr(e.target.value.replace(/[^\d.,]/g, "").slice(0, 5))} placeholder="10" className={cn(inputCls, "pr-12 font-semibold")} style={{ borderLeft: "3px solid #10b981" }} />
+              <span className="pointer-events-none absolute right-3 top-1/2 -translate-y-1/2 text-xs font-medium text-slate-400">%</span>
             </div>
           </Field>
           <ErrorBox text={error} />

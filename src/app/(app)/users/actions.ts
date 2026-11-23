@@ -3,11 +3,12 @@
 import { revalidatePath } from "next/cache";
 import { prisma } from "@/lib/db";
 import { requireSession, hashPassword } from "@/lib/auth";
-import { ROLES, ROLE_LABELS, label, isRopPosition, parseMoney } from "@/lib/constants";
+import { ROLES, ROLE_LABELS, label, isSalesRole, parseMoney } from "@/lib/constants";
 import { tr } from "@/lib/tr";
 import { writeAudit } from "@/lib/audit";
 import { archivedEmailError, isValidStaffEmail, normalizeLogin, normalizePassword, staffEmailError } from "@/lib/credentials";
-import { MANAGEMENT_ROLES, defaultPositionFor } from "./positions";
+import { MANAGEMENT_ROLES, defaultPositionFor, roleForPosition } from "./positions";
+import { commissionByManagerMonth, commissionOf, monthCommission, parsePercent } from "@/lib/salesCommission";
 
 const p2 = (n: number) => String(n).padStart(2, "0");
 const fmtDate = (d: Date | null) => (d ? `${p2(d.getDate())}.${p2(d.getMonth() + 1)}.${d.getFullYear()}` : null);
@@ -19,7 +20,7 @@ export interface StaffDetail {
   extraBranchIds: string[];
   gender: "MALE" | "FEMALE" | null; birthDate: string | null; isActive: boolean;
   password: string | null;
-  fiksa: number; kpiBonus: number; monthTotal: number;
+  fiksa: number; kpiBonus: number; kpiPercent: number; kpiMonth: number; monthTotal: number;
   workdays: number[];
   startTime: string | null; endTime: string | null;
   groups: string[];
@@ -30,18 +31,6 @@ const can = (r: string) => CAN.includes(r as never);
 
 const canSetPasswordOf = (s: { role: string; userId: string }, target: { id: string; role: string }): boolean =>
   !MANAGEMENT_ROLES.includes(target.role) || s.role === ROLES.DIRECTOR || s.userId === target.id;
-
-function roleForPosition(position: string): string {
-  const p = position.toLowerCase();
-  if (p.includes("administr")) return ROLES.ADMIN;
-  if (p.includes("filial")) return ROLES.DEPUTY_DIRECTOR;
-  if (p.includes("o'rinbosar") || p.includes("o‘rinbosar") || p.includes("orinbosar")) return ROLES.DEPUTY_DIRECTOR;
-  if (p.includes("direktor")) return ROLES.DIRECTOR;
-  if (p.includes("o'qituvchi") || p.includes("o‘qituvchi") || p.includes("ustoz") || p.includes("teacher")) return ROLES.TEACHER;
-  if (p.includes("moliya") || p.includes("hisobchi") || p.includes("buxgalter") || p.includes("bugalter") || p.includes("accountant")) return ROLES.ACCOUNTANT;
-  if (isRopPosition(p)) return ROLES.ROP;
-  return ROLES.OPERATOR;
-}
 
 export type StaffResult = { ok?: boolean; error?: string; notice?: string };
 
@@ -64,6 +53,8 @@ export async function createStaff(fd: FormData): Promise<StaffResult> {
   const birthRaw = String(fd.get("birthDate") || "");
   const birthDate = birthRaw ? new Date(birthRaw) : null;
   const fiksa = parseMoney(fd.get("fiksa"));
+  const kpiPercent = fd.has("kpiPercent") ? parsePercent(fd.get("kpiPercent")) : undefined;
+  if (kpiPercent === null) return { error: tr(s.locale, { uz: "KPI foizi 0 dan 100 gacha bo'lsin", ru: "Процент KPI должен быть от 0 до 100", en: "KPI percent must be between 0 and 100", de: "Der KPI-Prozentsatz muss zwischen 0 und 100 liegen" }) };
   if (fiksa === null) return { error: tr(s.locale, { uz: "Summa juda katta (eng ko'pi 1 mlrd so'm) — nollar sonini tekshiring", ru: "Сумма слишком велика (макс. 1 млрд сум) — проверьте количество нулей", en: "Amount too large (max 1 billion) — check the number of zeros", de: "Betrag zu groß (max. 1 Mrd.) — Anzahl der Nullen prüfen" }) };
 
   if (ism.length < 2) return { error: tr(s.locale, { uz: "Ism kamida 2 ta harf bo'lsin", ru: "Имя должно содержать не менее 2 букв", en: "First name must be at least 2 letters", de: "Der Vorname muss mindestens 2 Buchstaben enthalten" }) };
@@ -105,7 +96,7 @@ export async function createStaff(fd: FormData): Promise<StaffResult> {
   const extraBranches = extraBranchesOf(fd, branchId);
   const u = await prisma.user.create({
     data: {
-      fullName, email, phone, passwordHash: await hashPassword(password), plainPassword: password, role, position, branchId, gender, birthDate, fiksa, isActive: true,
+      fullName, email, phone, passwordHash: await hashPassword(password), plainPassword: password, role, position, branchId, gender, birthDate, fiksa, kpiPercent: kpiPercent ?? 0, isActive: true,
       branches: { create: extraBranches.map((b) => ({ branchId: b })) },
     },
   });
@@ -123,7 +114,7 @@ export async function getStaffDetail(userId: string): Promise<{ ok: boolean; dat
       where: { id: userId },
       select: {
         id: true, fullName: true, email: true, phone: true, role: true, position: true, isActive: true,
-        gender: true, birthDate: true, fiksa: true, kpiBonus: true, plainPassword: true, branchId: true,
+        gender: true, birthDate: true, fiksa: true, kpiBonus: true, kpiPercent: true, plainPassword: true, branchId: true,
         branch: { select: { name: true } },
         branches: { select: { branchId: true, branch: { select: { name: true } } } },
         teacherGroups: { where: { status: "ACTIVE" }, select: { name: true, weekdays: true } },
@@ -142,7 +133,8 @@ export async function getStaffDetail(userId: string): Promise<{ ok: boolean; dat
     workdays = [...set].sort((a, b) => a - b);
   }
   const cur = u.salaries[0];
-  const monthTotal = u.fiksa + u.kpiBonus + (cur?.bonus ?? 0) - (cur?.penalty ?? 0);
+  const kpiMonth = isSalesRole(u.role) ? commissionOf(monthCommission(await commissionByManagerMonth([u.id]), u.id, now).base, u.kpiPercent) : u.kpiBonus;
+  const monthTotal = u.fiksa + kpiMonth + (cur?.bonus ?? 0) - (cur?.penalty ?? 0);
 
   return {
     ok: true,
@@ -156,7 +148,7 @@ export async function getStaffDetail(userId: string): Promise<{ ok: boolean; dat
       gender: (u.gender === "MALE" || u.gender === "FEMALE" ? u.gender : null) as "MALE" | "FEMALE" | null,
       birthDate: fmtDate(u.birthDate), isActive: u.isActive,
       password: canSetPasswordOf(s, u) ? u.plainPassword : null,
-      fiksa: u.fiksa, kpiBonus: u.kpiBonus, monthTotal,
+      fiksa: u.fiksa, kpiBonus: u.kpiBonus, kpiPercent: u.kpiPercent, kpiMonth, monthTotal,
       workdays, startTime: schedule?.startTime ?? null, endTime: schedule?.endTime ?? null,
       groups: u.teacherGroups.map((g) => g.name),
     },
@@ -182,6 +174,8 @@ export async function updateStaff(fd: FormData): Promise<StaffResult> {
   const birthRaw = String(fd.get("birthDate") || "");
   const birthDate = birthRaw ? new Date(birthRaw) : null;
   const fiksa = parseMoney(fd.get("fiksa"));
+  const kpiPercent = fd.has("kpiPercent") ? parsePercent(fd.get("kpiPercent")) : undefined;
+  if (kpiPercent === null) return { error: tr(s.locale, { uz: "KPI foizi 0 dan 100 gacha bo'lsin", ru: "Процент KPI должен быть от 0 до 100", en: "KPI percent must be between 0 and 100", de: "Der KPI-Prozentsatz muss zwischen 0 und 100 liegen" }) };
   if (fiksa === null) return { error: tr(s.locale, { uz: "Summa juda katta (eng ko'pi 1 mlrd so'm) — nollar sonini tekshiring", ru: "Сумма слишком велика (макс. 1 млрд сум) — проверьте количество нулей", en: "Amount too large (max 1 billion) — check the number of zeros", de: "Betrag zu groß (max. 1 Mrd.) — Anzahl der Nullen prüfen" }) };
 
   if (ism.length < 2) return { error: tr(s.locale, { uz: "Ism kamida 2 ta harf bo'lsin", ru: "Имя должно содержать не менее 2 букв", en: "First name must be at least 2 letters", de: "Der Vorname muss mindestens 2 Buchstaben enthalten" }) };
@@ -211,6 +205,7 @@ export async function updateStaff(fd: FormData): Promise<StaffResult> {
     where: { id },
     data: {
       fullName, email, phone, position, role, branchId, gender, birthDate, fiksa,
+      ...(kpiPercent !== undefined ? { kpiPercent } : {}),
       ...(newPassword ? { passwordHash: await hashPassword(newPassword), plainPassword: newPassword } : {}),
     },
   });

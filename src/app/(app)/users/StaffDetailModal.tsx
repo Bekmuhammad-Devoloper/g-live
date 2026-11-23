@@ -103,7 +103,9 @@ export default function StaffDetailModal({ userId, locale, onClose, onEdit }: {
               <Section title={tr(locale, { uz: "Ish ma'lumotlari", ru: "Рабочие данные", en: "Work info", de: "Arbeitsinformationen" })} icon="wallet">
                 <div className="grid grid-cols-2 gap-3">
                   <Stat label={tr(locale, { uz: "Belgilangan oylik", ru: "Установленная зарплата", en: "Base salary", de: "Grundgehalt" })} value={formatMoney(d.fiksa, locale)} />
-                  <Stat label={tr(locale, { uz: "KPI bonus", ru: "KPI бонус", en: "KPI bonus", de: "KPI-Bonus" })} value={formatMoney(d.kpiBonus, locale)} />
+                  {["OPERATOR", "ROP", "MANAGER"].includes(d.roleKey)
+                    ? <Stat label={tr(locale, { uz: "KPI (bu oy)", ru: "KPI (этот месяц)", en: "KPI (this month)", de: "KPI (dieser Monat)" })} value={`${formatMoney(d.kpiMonth, locale)} · ${d.kpiPercent}%`} />
+                    : <Stat label={tr(locale, { uz: "KPI bonus", ru: "KPI бонус", en: "KPI bonus", de: "KPI-Bonus" })} value={formatMoney(d.kpiBonus, locale)} />}
                   <Stat label={tr(locale, { uz: "Bu oy jami", ru: "Итого за месяц", en: "This month total", de: "Gesamt diesen Monat" })} value={formatMoney(d.monthTotal, locale)} accent />
                   <Stat label={tr(locale, { uz: "Ish kunlari", ru: "Рабочие дни", en: "Work days", de: "Arbeitstage" })} value={d.workdays.length ? d.workdays.map((n) => WD[locale][n]).join(", ") : "—"} />
                   {(d.startTime || d.endTime) && <Stat label={tr(locale, { uz: "Ish vaqti", ru: "Время работы", en: "Work time", de: "Arbeitszeit" })} value={`${d.startTime ?? "—"} – ${d.endTime ?? "—"}`} />}

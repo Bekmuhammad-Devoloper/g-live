@@ -21,7 +21,10 @@ export interface VKpiRow {
   fiksa: number;
   bonus: number;
   kpiMoney: number;
+  paidAll: number;
   wonMonth: number;
+  paidMonth: number;
+  baseMonth: number;
   earnedMonth: number;
   workDays: number;
 }

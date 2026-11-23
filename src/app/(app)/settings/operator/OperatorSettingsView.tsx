@@ -18,6 +18,7 @@ export type SalaryInfo = {
   configured: boolean;
   fiksa: string;
   bonusPerLead: string;
+  paidThisMonth: number;
   monthLabel: string;
   wonThisMonth: number;
   bonusThisMonth: string;
@@ -249,10 +250,10 @@ export default function OperatorSettingsView({ locale, initialTab, me, prefs: pr
                 <MoneyCard icon="coins" tone="violet" label={L("Fiksa maosh", "Фиксированная зарплата", "Fixed salary", "Festgehalt")} value={salary.fiksa} unit={L("so'm", "сум", "UZS", "UZS")} />
                 <MoneyCard
                   icon="chart" tone="amber"
-                  label={`${L("KPI bonus", "KPI бонус", "KPI bonus", "KPI-Bonus")} (${salary.monthLabel})`}
+                  label={`${L("KPI foizi", "Процент KPI", "KPI percent", "KPI-Prozentsatz")} (${salary.monthLabel})`}
                   value={salary.bonusPerLead}
-                  unit={L("so'm / lid", "сум / лид", "UZS / lead", "UZS / Lead")}
-                  hint={`${L("Muvaffaqiyatli lidlar", "Успешные лиды", "Successful leads", "Erfolgreiche Leads")}: ${salary.wonThisMonth} = ${salary.bonusThisMonth} ${L("so'm", "сум", "UZS", "UZS")}`}
+                  unit={L("1-to'lovdan", "с 1-й оплаты", "of 1st payment", "der 1. Zahlung")}
+                  hint={`${L("Birinchi to'lov qilganlar", "Первая оплата", "First payments", "Erste Zahlungen")}: ${salary.paidThisMonth} = ${salary.bonusThisMonth} ${L("so'm", "сум", "UZS", "UZS")}`}
                 />
                 <MoneyCard
                   icon="award" tone="emerald"
@@ -299,7 +300,7 @@ export default function OperatorSettingsView({ locale, initialTab, me, prefs: pr
                         <div>
                           <div className="text-sm font-medium text-slate-800 dark:text-slate-100">{m.label}</div>
                           <div className="mt-0.5 text-xs text-slate-400">
-                            {L("Muvaffaqiyatli lidlar", "Успешные лиды", "Successful leads", "Erfolgreiche Leads")}: <span className="font-semibold text-emerald-600 dark:text-emerald-400">{m.count}</span>
+                            {L("Birinchi to'lov qilganlar", "Первая оплата", "First payments", "Erste Zahlungen")}: <span className="font-semibold text-emerald-600 dark:text-emerald-400">{m.count}</span>
                           </div>
                         </div>
                         <div className="text-right">

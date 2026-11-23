@@ -59,7 +59,7 @@ export async function TeamBoardPage({ kind, searchParams }: { kind: TeamKind; se
     orderBy: { fullName: "asc" },
     select: {
       id: true, fullName: true, email: true, phone: true, imageUrl: true, sipExtension: true,
-      fiksa: true, kpiBonus: true, plainPassword: true, lastLoginAt: true, createdAt: true,
+      fiksa: true, kpiBonus: true, kpiPercent: true, plainPassword: true, lastLoginAt: true, createdAt: true,
       branchId: true, branch: { select: { name: true } },
     },
   });
@@ -148,6 +148,7 @@ export async function TeamBoardPage({ kind, searchParams }: { kind: TeamKind; se
       password: canManage ? o.plainPassword : null,
       fiksa: o.fiksa,
       kpiBonus: o.kpiBonus,
+      kpiPercent: o.kpiPercent,
       branchId: o.branchId,
       branch: o.branch?.name ?? null,
       dayCalls: a.calls,

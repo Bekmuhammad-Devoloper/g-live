@@ -29,7 +29,7 @@ export interface DCall {
   phone: string; duration: number; recordingUrl: string | null; comment: string | null;
   date: string; time: string;
 }
-export interface DMonth { key: string; label: string; won: number; bonus: number; fiksa: number; total: number; current: boolean }
+export interface DMonth { key: string; label: string; won: number; bonus: number; base: number; kpi: number; fiksa: number; total: number; current: boolean }
 export interface DStats {
   total: number; won: number; lost: number; fresh: number; missedCalls: number;
   conv: number; callsTotal: number; answered: number; talkSec: number;
@@ -186,7 +186,7 @@ export default function OperatorDetail({ kind = "operator", locale, op, leads, c
               <Icon name="wallet" className="h-5 w-5 text-violet-500" /> {tr(locale, { uz: "Oylik maosh", ru: "Месячная зарплата", en: "Monthly salary", de: "Monatsgehalt" })}
             </h2>
             <p className="mt-1 text-sm text-slate-400">
-              {tr(locale, { uz: "Fiksa va KPI bonus — muvaffaqiyatli lidlar bo'yicha", ru: "Фикса и KPI бонус — по успешным лидам", en: "Fixed salary and KPI bonus — based on successful leads", de: "Festgehalt und KPI-Bonus — basierend auf erfolgreichen Leads" })}
+              {tr(locale, { uz: "Fiksa va KPI — olib kelgan o'quvchilarning birinchi to'lovidan foiz", ru: "Фикса и KPI — процент с первой оплаты приведённых учеников", en: "Fixed salary and KPI — percent of first payments of students brought in", de: "Festgehalt und KPI — Prozent der ersten Zahlungen gewonnener Schüler" })}
             </p>
           </div>
           <div className="p-5">
@@ -195,16 +195,16 @@ export default function OperatorDetail({ kind = "operator", locale, op, leads, c
               <Pay
                 icon="chart"
                 tone="#f97316"
-                label={`${tr(locale, { uz: "KPI bonus", ru: "KPI бонус", en: "KPI bonus", de: "KPI-Bonus" })} (${cur.label})`}
-                value={formatMoney(cur.bonus, locale)}
-                hint={`${tr(locale, { uz: "Muvaffaqiyatli lidlar", ru: "Успешные лиды", en: "Successful leads", de: "Erfolgreiche Leads" })}: ${cur.won} → ${formatMoney(cur.won * cur.bonus, locale)}`}
+                label={`KPI ${cur.bonus}% (${cur.label})`}
+                value={formatMoney(cur.kpi, locale)}
+                hint={`${tr(locale, { uz: "Birinchi to'lov qilganlar", ru: "Первая оплата", en: "First payments", de: "Erste Zahlungen" })}: ${cur.won} · ${formatMoney(cur.base, locale)} × ${cur.bonus}%`}
               />
               <Pay
                 icon="award"
                 tone="#10b981"
                 label={`${tr(locale, { uz: "Jami oylik", ru: "Итого за месяц", en: "Monthly total", de: "Monatssumme" })} (${cur.label})`}
                 value={formatMoney(cur.total, locale)}
-                hint={`${grp(cur.fiksa)} + ${cur.won} × ${grp(cur.bonus)}`}
+                hint={`${grp(cur.fiksa)} + ${grp(cur.kpi)}`}
                 accent
               />
             </div>
@@ -220,7 +220,7 @@ export default function OperatorDetail({ kind = "operator", locale, op, leads, c
                       <div>
                         <p className="text-sm font-medium text-slate-700 dark:text-slate-200">{m.label}</p>
                         <p className="text-xs text-slate-400">
-                          {tr(locale, { uz: "Muvaffaqiyatli lidlar", ru: "Успешные лиды", en: "Successful leads", de: "Erfolgreiche Leads" })}: <b className="text-emerald-600 dark:text-emerald-400">{m.won}</b>
+                          {tr(locale, { uz: "Birinchi to'lov qilganlar", ru: "Первая оплата", en: "First payments", de: "Erste Zahlungen" })}: <b className="text-emerald-600 dark:text-emerald-400">{m.won}</b>
                         </p>
                       </div>
                       <p className="text-base font-bold text-emerald-600 dark:text-emerald-400">{formatMoney(m.total, locale)}</p>

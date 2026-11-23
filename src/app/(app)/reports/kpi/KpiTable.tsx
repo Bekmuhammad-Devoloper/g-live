@@ -114,19 +114,19 @@ export default function KpiTable({ rows, tab, locale, canEdit = false }: { rows:
                         {formatMoney(o.kpiMoney, locale)}
                       </div>
                       <div className="text-[10px] text-slate-400">
-                        {o.won} {t.lead} × {nf(o.bonus)}
+                        {o.paidAll} × {tr(locale, { uz: "1-to'lov", ru: "1-я оплата", en: "1st payment", de: "1. Zahlung" })} · {o.bonus}%
                       </div>
                     </td>
                     {!isRop && (
                       <>
                         <td className="px-4 py-3.5 text-center">
                           <div className="font-semibold tabular-nums text-slate-700 dark:text-slate-200">{formatMoney(o.fiksa, locale)}</div>
-                          <div className="text-[10px] text-emerald-500">+{nf(o.bonus)}/{t.lead}</div>
+                          <div className="text-[10px] text-emerald-500">+{o.bonus}% · {tr(locale, { uz: "1-to'lov", ru: "1-я оплата", en: "1st payment", de: "1. Zahlung" })}</div>
                         </td>
                         <td className="px-4 py-3.5 text-center">
                           <div className="font-semibold tabular-nums text-emerald-600 dark:text-emerald-400">{formatMoney(o.earnedMonth, locale)}</div>
                           <div className="text-[10px] text-slate-400">
-                            {o.wonMonth} {t.lead} × {nf(o.bonus)}
+                            {o.paidMonth} × {tr(locale, { uz: "1-to'lov", ru: "1-я оплата", en: "1st payment", de: "1. Zahlung" })} · {o.bonus}%
                           </div>
                         </td>
                         <td className="px-4 py-3.5 text-center">
@@ -163,7 +163,7 @@ function EditPayModal({ row, locale, onClose }: { row: VKpiRow; locale: Locale; 
   const router = useRouter();
   const [mounted, setMounted] = useState(false);
   const [fiksa, setFiksa] = useState(nf(row.fiksa));
-  const [bonus, setBonus] = useState(nf(row.bonus));
+  const [bonus, setBonus] = useState(row.bonus > 0 ? String(row.bonus) : "");
   const [err, setErr] = useState<string | null>(null);
   const [busy, start] = useTransition();
 
@@ -177,11 +177,12 @@ function EditPayModal({ row, locale, onClose }: { row: VKpiRow; locale: Locale; 
 
   const money = (v: string) => v.replace(/\D/g, "").replace(/\B(?=(\d{3})+(?!\d))/g, " ");
   const num = (v: string) => Number(v.replace(/\s/g, "")) || 0;
+  const pctOf = (v: string) => Math.min(100, Math.max(0, Number(v.replace(",", ".")) || 0));
 
   const submit = () => {
     setErr(null);
     start(async () => {
-      const r = await saveKpiPay(row.id, num(fiksa), num(bonus));
+      const r = await saveKpiPay(row.id, num(fiksa), pctOf(bonus));
       if (r.ok) { onClose(); router.refresh(); }
       else setErr(r.error === "forbidden"
         ? tr(locale, { uz: "Sizda ish haqini tahrirlash huquqi yo'q", ru: "Нет прав на изменение зарплаты", en: "No permission to edit pay", de: "Sie haben keine Berechtigung, das Gehalt zu bearbeiten" })
@@ -192,7 +193,7 @@ function EditPayModal({ row, locale, onClose }: { row: VKpiRow; locale: Locale; 
   const inp = "h-11 w-full rounded-xl border border-slate-200 bg-white px-3.5 text-sm font-semibold tabular-nums text-slate-800 outline-none focus:border-brand-400 dark:border-slate-700 dark:bg-slate-800/60 dark:text-slate-100";
   const lbl = "mb-1.5 block text-xs font-medium text-slate-500 dark:text-slate-400";
 
-  const preview = num(fiksa) + row.wonMonth * num(bonus);
+  const preview = num(fiksa) + Math.round((row.baseMonth * pctOf(bonus)) / 100);
 
   return createPortal(
     <div className="fixed inset-0 z-[80] grid place-items-center bg-slate-900/50 p-4 backdrop-blur-sm" onMouseDown={onClose}>
@@ -219,14 +220,14 @@ function EditPayModal({ row, locale, onClose }: { row: VKpiRow; locale: Locale; 
             <input inputMode="numeric" value={fiksa} onChange={(e) => setFiksa(money(e.target.value))} placeholder="5 000 000" className={inp} autoFocus />
           </div>
           <div>
-            <label className={lbl}>{tr(locale, { uz: "Har bir muvaffaqiyatli lid uchun bonus (so'm)", ru: "Бонус за успешный лид (сум)", en: "Bonus per won lead (UZS)", de: "Bonus pro gewonnenem Lead (UZS)" })}</label>
-            <input inputMode="numeric" value={bonus} onChange={(e) => setBonus(money(e.target.value))} placeholder="200 000" className={inp} />
+            <label className={lbl}>{tr(locale, { uz: "KPI foizi — o'quvchining birinchi to'lovidan (%)", ru: "Процент KPI — с первой оплаты ученика (%)", en: "KPI percent — of the student's first payment (%)", de: "KPI-Prozentsatz — der ersten Zahlung des Schülers (%)" })}</label>
+            <input inputMode="decimal" value={bonus} onChange={(e) => setBonus(e.target.value.replace(/[^\d.,]/g, "").slice(0, 5))} placeholder="10" className={inp} />
           </div>
 
           <div className="rounded-xl bg-slate-50 px-3.5 py-3 text-xs dark:bg-white/[0.03]">
             <div className="flex items-center justify-between text-slate-500">
-              <span>{tr(locale, { uz: "Shu oyda yopilgan lidlar", ru: "Закрыто лидов в этом месяце", en: "Leads won this month", de: "Diesen Monat gewonnene Leads" })}</span>
-              <span className="font-semibold text-slate-700 dark:text-slate-200">{row.wonMonth}</span>
+              <span>{tr(locale, { uz: "Shu oydagi birinchi to'lovlar", ru: "Первые оплаты в этом месяце", en: "First payments this month", de: "Erste Zahlungen diesen Monat" })}</span>
+              <span className="font-semibold text-slate-700 dark:text-slate-200">{row.paidMonth} · {formatMoney(row.baseMonth, locale)}</span>
             </div>
             <div className="mt-1.5 flex items-center justify-between border-t border-slate-200/70 pt-1.5 dark:border-slate-700">
               <span className="font-medium text-slate-600 dark:text-slate-300">{tr(locale, { uz: "Taxminiy oylik jami", ru: "Примерно за месяц", en: "Estimated month total", de: "Geschätzte Monatssumme" })}</span>

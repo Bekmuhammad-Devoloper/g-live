@@ -1,4 +1,4 @@
-import { ROLES } from "@/lib/constants";
+import { ROLES, isRopPosition } from "@/lib/constants";
 
 export const MANAGEMENT_DEPT = "Boshqaruv";
 
@@ -17,3 +17,21 @@ const DEFAULT_POSITION: Record<string, string> = {
   [ROLES.MANAGER]: "Menejer",
 };
 export const defaultPositionFor = (role: string): string | null => DEFAULT_POSITION[role] ?? null;
+
+export function roleForPosition(position: string): string {
+  const p = position.toLowerCase();
+  if (p.includes("administr")) return ROLES.ADMIN;
+  if (p.includes("filial")) return ROLES.DEPUTY_DIRECTOR;
+  if (p.includes("o'rinbosar") || p.includes("o‘rinbosar") || p.includes("orinbosar")) return ROLES.DEPUTY_DIRECTOR;
+  if (p.includes("direktor")) return ROLES.DIRECTOR;
+  if (p.includes("o'qituvchi") || p.includes("o‘qituvchi") || p.includes("ustoz") || p.includes("teacher")) return ROLES.TEACHER;
+  if (p.includes("moliya") || p.includes("hisobchi") || p.includes("buxgalter") || p.includes("bugalter") || p.includes("accountant")) return ROLES.ACCOUNTANT;
+  if (isRopPosition(p)) return ROLES.ROP;
+  return ROLES.OPERATOR;
+}
+
+export const isSalesPosition = (position: string | null | undefined): boolean => {
+  if (!position) return false;
+  const r = roleForPosition(position);
+  return r === ROLES.OPERATOR || r === ROLES.ROP;
+};

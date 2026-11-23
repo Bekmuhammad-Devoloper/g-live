@@ -1,5 +1,6 @@
 "use server";
 
+import { parsePercent } from "@/lib/salesCommission";
 import { revalidatePath } from "next/cache";
 import { prisma } from "@/lib/db";
 import { requireSession, hashPassword } from "@/lib/auth";
@@ -51,7 +52,8 @@ export async function createOperator(fd: FormData): Promise<OpResult> {
   const phone = txt(fd, "phone") || null;
   const password = normalizePassword(fd.get("password"));
   const fiksa = numOf(fd.get("fiksa"));
-  const kpiBonus = numOf(fd.get("kpiBonus"));
+  const kpiPercent = parsePercent(fd.get("kpiPercent"));
+  if (kpiPercent === null) return { error: tr(s.locale, { uz: "KPI foizi 0 dan 100 gacha bo'lsin", ru: "Процент KPI должен быть от 0 до 100", en: "KPI percent must be between 0 and 100", de: "Der KPI-Prozentsatz muss zwischen 0 und 100 liegen" }) };
 
   if (fullName.length < 3) return { error: tr(s.locale, { uz: "F.I.Sh. kamida 3 ta harf bo'lsin", ru: "Ф.И.О. — минимум 3 буквы", en: "Full name must be at least 3 letters", de: "Der vollständige Name muss mindestens 3 Buchstaben haben" }) };
   if (!isValidStaffEmail(email)) return { error: staffEmailError(s.locale) };
@@ -75,7 +77,7 @@ export async function createOperator(fd: FormData): Promise<OpResult> {
       role: cfg.role,
       branchId,
       fiksa,
-      kpiBonus,
+      kpiPercent,
       isActive: true,
     },
     select: { id: true },
@@ -94,7 +96,8 @@ export async function updateOperator(fd: FormData): Promise<OpResult> {
   const phone = txt(fd, "phone") || null;
   const password = normalizePassword(fd.get("password"));
   const fiksa = numOf(fd.get("fiksa"));
-  const kpiBonus = numOf(fd.get("kpiBonus"));
+  const kpiPercent = parsePercent(fd.get("kpiPercent"));
+  if (kpiPercent === null) return { error: tr(s.locale, { uz: "KPI foizi 0 dan 100 gacha bo'lsin", ru: "Процент KPI должен быть от 0 до 100", en: "KPI percent must be between 0 and 100", de: "Der KPI-Prozentsatz muss zwischen 0 und 100 liegen" }) };
 
   if (!id) return { error: notFoundMsg(s.locale, kind) };
   if (fullName.length < 3) return { error: tr(s.locale, { uz: "F.I.Sh. kamida 3 ta harf bo'lsin", ru: "Ф.И.О. — минимум 3 буквы", en: "Full name must be at least 3 letters", de: "Der vollständige Name muss mindestens 3 Buchstaben haben" }) };
@@ -124,12 +127,12 @@ export async function updateOperator(fd: FormData): Promise<OpResult> {
       phone,
       sipExtension,
       fiksa,
-      kpiBonus,
+      kpiPercent,
       ...branchPatch,
       ...(password ? { passwordHash: await hashPassword(password), plainPassword: password } : {}),
     },
   });
-  await writeAudit({ actorId: s.userId, action: "UPDATE", entityType: "User", entityId: id, oldValue: { sipExtension: cur.sipExtension }, newValue: { fullName, phone, fiksa, kpiBonus, sipExtension, ...branchPatch } });
+  await writeAudit({ actorId: s.userId, action: "UPDATE", entityType: "User", entityId: id, oldValue: { sipExtension: cur.sipExtension }, newValue: { fullName, phone, fiksa, kpiPercent, sipExtension, ...branchPatch } });
   refresh(kind);
   revalidatePath(`${cfg.base}/${id}`);
   return { ok: true };

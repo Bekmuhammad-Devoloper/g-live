@@ -1,5 +1,6 @@
 "use client";
 
+import { isSalesPosition } from "./positions";
 import DateInput from "@/app/(app)/_components/DateInput";
 import { useEffect, useMemo, useRef, useState, useTransition } from "react";
 import { createPortal } from "react-dom";
@@ -235,6 +236,8 @@ export function StaffForm({ positions, branches, onClose, locale, edit = null, c
   const [salaryOn, setSalaryOn] = useState((edit?.fiksa ?? 0) > 0);
   const [salaryStr, setSalaryStr] = useState(edit && edit.fiksa > 0 ? groupThousands(String(edit.fiksa)) : "");
   const [branchId, setBranchId] = useState(edit?.branchId ?? "");
+  const [position, setPosition] = useState(edit?.position ?? "");
+  const [kpiStr, setKpiStr] = useState(edit && edit.kpiPercent > 0 ? String(edit.kpiPercent) : "");
   const [extraBranches, setExtraBranches] = useState<string[]>(edit?.extraBranchIds ?? []);
   const nameParts = (edit?.fullName ?? "").trim().split(/\s+/).filter(Boolean);
   const editIsm = nameParts[0] ?? "";
@@ -344,7 +347,7 @@ export function StaffForm({ positions, branches, onClose, locale, edit = null, c
           <div className="grid grid-cols-2 gap-3">
             <div>
               <label className={lbl}>{tr(locale, { uz: "O'quv markazidagi vazifasi", ru: "Должность в учебном центре", en: "Role at the learning center", de: "Rolle im Lernzentrum" })} {req}</label>
-              <select name="position" required defaultValue={edit?.position ?? ""} className={inp}>
+              <select name="position" required value={position} onChange={(e) => setPosition(e.target.value)} className={inp}>
                 <option value="" disabled>{tr(locale, { uz: "Tanlang", ru: "Выберите", en: "Select", de: "Auswählen" })}</option>
                 {posGroups.map(([dept, items]) => (
                   <optgroup key={dept} label={dept}>
@@ -395,6 +398,14 @@ export function StaffForm({ positions, branches, onClose, locale, edit = null, c
               </div>
             )}
           </div>
+
+          {isSalesPosition(position) && (
+            <div className="rounded-xl border border-slate-100 bg-slate-50/60 p-3 dark:border-white/5 dark:bg-white/[0.03]">
+              <label className={lbl}>{tr(locale, { uz: "KPI foizi (%)", ru: "Процент KPI (%)", en: "KPI percent (%)", de: "KPI-Prozentsatz (%)" })}</label>
+              <input name="kpiPercent" inputMode="decimal" value={kpiStr} onChange={(e) => setKpiStr(e.target.value.replace(/[^\d.,]/g, "").slice(0, 5))} placeholder="10" className={inp} />
+              <p className="mt-1.5 text-[11px] leading-snug text-slate-400">{tr(locale, { uz: "Xodim gaplashib olib kelgan o'quvchi birinchi to'lovni qilganda shu to'lovdan foiz hisoblanadi.", ru: "Процент начисляется с первой оплаты ученика, которого привёл сотрудник.", en: "The percent is paid from the first payment of a student this employee brought in.", de: "Der Prozentsatz wird von der ersten Zahlung eines vom Mitarbeiter gewonnenen Schülers berechnet." })}</p>
+            </div>
+          )}
 
           <div className="grid grid-cols-2 gap-3">
             <div><label className={lbl}>{tr(locale, { uz: "Elektron pochta", ru: "Электронная почта", en: "Email", de: "E-Mail" })} {req}</label><input name="email" type="email" required defaultValue={edit?.email ?? ""} placeholder="example@gmail.com" className={inp} /></div>

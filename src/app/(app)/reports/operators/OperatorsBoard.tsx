@@ -25,6 +25,7 @@ export interface VOperator {
   password: string | null;
   fiksa: number;
   kpiBonus: number;
+  kpiPercent: number;
   branchId: string | null;
   branch: string | null;
   dayCalls: number;

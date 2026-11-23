@@ -1,3 +1,4 @@
+import { commissionByManagerMonth, commissionOf, monthCommission } from "@/lib/salesCommission";
 import { notFound } from "next/navigation";
 import { requireSession } from "@/lib/auth";
 import { prisma } from "@/lib/db";
@@ -74,7 +75,7 @@ export async function TeamDetailPage({
       where: { AND: [{ id }, staffScope] },
       select: {
         id: true, fullName: true, email: true, phone: true, role: true, isActive: true, imageUrl: true,
-        sipExtension: true, position: true, fiksa: true, kpiBonus: true, plainPassword: true,
+        sipExtension: true, position: true, fiksa: true, kpiBonus: true, kpiPercent: true, plainPassword: true,
         lastLoginAt: true, createdAt: true, branch: { select: { name: true } },
       },
     }),
@@ -176,17 +177,21 @@ export async function TeamDetailPage({
   const answered = dcalls.filter((c) => c.status === "ANSWERED");
   const talkSec = answered.reduce((n, c) => n + c.duration, 0);
 
+  const commissions = await commissionByManagerMonth([op.id]);
   const months: DMonth[] = [];
   for (let i = 0; i < 6; i++) {
     const d = new Date(now.getFullYear(), now.getMonth() - i, 1);
-    const cnt = wonAll.filter((w) => w.createdAt.getFullYear() === d.getFullYear() && w.createdAt.getMonth() === d.getMonth()).length;
+    const cm = monthCommission(commissions, op.id, d);
+    const kpi = commissionOf(cm.base, op.kpiPercent);
     months.push({
       key: `${d.getFullYear()}-${p2(d.getMonth() + 1)}`,
       label: `${MONTHS[loc][d.getMonth()]} ${d.getFullYear()}`,
-      won: cnt,
-      bonus: op.kpiBonus,
+      won: cm.students,
+      bonus: op.kpiPercent,
+      base: cm.base,
+      kpi,
       fiksa: op.fiksa,
-      total: op.fiksa + cnt * op.kpiBonus,
+      total: op.fiksa + kpi,
       current: i === 0,
     });
   }
