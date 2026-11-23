@@ -24,6 +24,9 @@ interface SalesOwner {
 const OWNER_ROLES: string[] = [ROLES.OPERATOR, ROLES.ROP, ROLES.MANAGER, ROLES.ADMIN];
 const DAY = 86_400_000;
 const CHUNK = 500;
+const AUTO_NOTES = [/^Ustunga ko'chirildi:/, /^Filialga yo'naltirildi:/, /^Onlayn (ustuniga o'tkazildi|belgisi olib tashlandi)/, /^Arxiv(ga tashlandi|dan qaytarildi)/, /^Yangiga qaytarildi/, /^Bosqich:/];
+
+export const isAutoNote = (text: string | null | undefined): boolean => !!text && AUTO_NOTES.some((re) => re.test(text.trim()));
 
 export function parsePercent(raw: unknown): number | null {
   const t = String(raw ?? "").trim().replace(",", ".");
@@ -58,7 +61,7 @@ export async function salesOwnerByStudent(): Promise<Map<string, SalesOwner>> {
     prisma.lead.findMany({ where: converted, select: { id: true, studentId: true, managerId: true, createdAt: true } }),
     prisma.leadActivity.findMany({
       where: { authorId: { in: staffIds }, type: { not: "stage_change" }, lead: converted },
-      select: { leadId: true, authorId: true, createdAt: true },
+      select: { leadId: true, authorId: true, createdAt: true, result: true },
     }),
     prisma.call.findMany({
       where: { operatorId: { in: staffIds }, lead: converted },
@@ -71,7 +74,7 @@ export async function salesOwnerByStudent(): Promise<Map<string, SalesOwner>> {
     const cur = first.get(leadId);
     if (!cur || at < cur.at) first.set(leadId, { id: userId, at });
   };
-  for (const a of acts) consider(a.leadId, a.authorId, a.createdAt);
+  for (const a of acts) if (!isAutoNote(a.result)) consider(a.leadId, a.authorId, a.createdAt);
   for (const c of calls) consider(c.leadId, c.operatorId, c.startedAt);
   for (const l of leads) {
     if (!l.studentId) continue;
