@@ -1,5 +1,6 @@
 "use server";
 
+import { KANBAN_COLUMNS_KEY } from "@/lib/kanbanLinkColumn";
 import { revalidatePath } from "next/cache";
 import { headers } from "next/headers";
 import { z } from "zod";
@@ -772,7 +773,6 @@ export async function unpinKanbanGroup(groupId: string): Promise<PinResult> {
   return { ok: true, columns: await listKanbanGroups() };
 }
 
-const KANBAN_COLUMNS_KEY = "crm.kanbanColumns";
 const MAX_CUSTOM_COLUMNS = 12;
 
 async function readCustomColumns(): Promise<CustomColumn[]> {
@@ -783,7 +783,7 @@ async function readCustomColumns(): Promise<CustomColumn[]> {
     if (!Array.isArray(arr)) return [];
     return arr
       .filter((x): x is CustomColumn => !!x && typeof x.id === "string" && typeof x.name === "string")
-      .map((x) => ({ id: x.id, name: x.name, color: String(x.color || GROUP_COL_COLORS[0]), icon: String(x.icon || GROUP_COL_ICONS[0]) }));
+      .map((x) => ({ id: x.id, name: x.name, color: String(x.color || GROUP_COL_COLORS[0]), icon: String(x.icon || GROUP_COL_ICONS[0]), ...(typeof x.linkId === "string" ? { linkId: x.linkId } : {}) }));
   } catch {
     return [];
   }
@@ -837,6 +837,73 @@ export async function createKanbanColumn(name: string, color: string, icon: stri
 
   revalidatePath("/crm");
   return { ok: true, columns: [...cols, col] };
+}
+
+export interface LinkColumnOpt {
+  id: string;
+  label: string;
+  vacancy: string;
+  platform: string;
+  code: string;
+  submissions: number;
+  taken: boolean;
+}
+
+export async function linkColumnOptions(): Promise<LinkColumnOpt[]> {
+  const s = await requireSession();
+  if (!canWrite(s.role, MODULES.CRM)) return [];
+  const [links, cols] = await Promise.all([
+    prisma.vacancyLink.findMany({
+      where: { isActive: true, ...(s.branchId ? { vacancy: { OR: [{ branchId: s.branchId }, { branchId: null }] } } : {}) },
+      orderBy: { createdAt: "desc" },
+      take: 300,
+      select: { id: true, code: true, name: true, platform: true, submissions: true, vacancy: { select: { title: true } } },
+    }),
+    readCustomColumns(),
+  ]);
+  const taken = new Set(cols.map((c) => c.linkId).filter(Boolean));
+  return links.map((l) => ({
+    id: l.id,
+    label: l.name?.trim() || l.vacancy.title,
+    vacancy: l.vacancy.title,
+    platform: l.platform,
+    code: l.code,
+    submissions: l.submissions,
+    taken: taken.has(l.id),
+  }));
+}
+
+export async function createLinkColumn(linkId: string, color: string, icon: string): Promise<ColumnResult & { moved?: number }> {
+  const s = await requireSession();
+  if (!canWrite(s.role, MODULES.CRM)) return { error: "forbidden" };
+
+  const link = await prisma.vacancyLink.findUnique({ where: { id: linkId }, select: { id: true, code: true, name: true, vacancy: { select: { title: true } } } });
+  if (!link) return { error: "not_found" };
+
+  const cols = await readCustomColumns();
+  if (cols.some((c) => c.linkId === link.id)) return { error: "duplicate" };
+  if (cols.length >= MAX_CUSTOM_COLUMNS) return { error: "limit" };
+
+  const base = (link.name?.trim() || link.vacancy.title).replace(/\s+/g, " ").trim().slice(0, 40);
+  const used = new Set(cols.map((c) => c.name.toLowerCase()));
+  const name = used.has(base.toLowerCase()) ? `${base.slice(0, 40 - link.code.length - 3)} (${link.code})` : base;
+
+  const col: CustomColumn = {
+    id: `c${Date.now().toString(36)}${Math.random().toString(36).slice(2, 6)}`,
+    name,
+    color: GROUP_COL_COLORS.includes(color) ? color : GROUP_COL_COLORS[0],
+    icon: GROUP_COL_ICONS.includes(icon) ? icon : "link",
+    linkId: link.id,
+  };
+  await setSetting(KANBAN_COLUMNS_KEY, JSON.stringify([...cols, col]));
+  const moved = await prisma.lead.updateMany({
+    where: { vacancyLinkId: link.id, stage: "NEW", kanbanColumnId: null, groupId: null, studentId: null, archivedAt: null },
+    data: { kanbanColumnId: col.id },
+  });
+  await writeAudit({ actorId: s.userId, action: "CREATE", entityType: "KanbanColumn", entityId: col.id, newValue: { name, linkId: link.id, moved: moved.count } });
+
+  revalidatePath("/crm");
+  return { ok: true, columns: [...cols, col], moved: moved.count };
 }
 
 export async function removeKanbanColumn(id: string): Promise<ColumnResult> {

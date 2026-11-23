@@ -125,6 +125,7 @@ export interface CustomColumn {
   name: string;
   color: string;
   icon: string;
+  linkId?: string;
 }
 
 export const CUSTOM_COL_PREFIX = "col:";
@@ -213,7 +214,7 @@ export const GROUP_COL_COLORS = [
 
 export const GROUP_COL_ICONS = [
   "layers", "graduation", "users", "book",
-  "trophy", "award", "calendar", "globe",
+  "trophy", "award", "calendar", "globe", "link",
 ];
 
 export interface ViewCol {

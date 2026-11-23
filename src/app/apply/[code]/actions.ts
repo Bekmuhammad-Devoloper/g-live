@@ -1,5 +1,6 @@
 "use server";
 
+import { linkColumnId } from "@/lib/kanbanLinkColumn";
 import { revalidatePath } from "next/cache";
 import { prisma } from "@/lib/db";
 import { parseQuestions } from "../../(app)/links/questions";
@@ -78,6 +79,7 @@ export async function submitApplication(
     if (a) qa.push(`${q.q}: ${a}`);
   }
 
+  const linkCol = await linkColumnId(link.id);
   const existing = await prisma.lead.findFirst({
     where: { phone: tel, branchId, studentId: null, archivedAt: null },
     orderBy: { createdAt: "desc" },
@@ -87,7 +89,7 @@ export async function submitApplication(
     await prisma.lead.update({
       where: { id: existing.id },
       data: {
-        ...(existing.stage === "LOST" ? { stage: "NEW", lossReason: null, kanbanColumnId: null } : {}),
+        ...(existing.stage === "LOST" ? { stage: "NEW", lossReason: null, kanbanColumnId: linkCol } : {}),
         ...(!existing.level && needLevel && levelStr ? { level: levelStr } : {}),
         ...(!existing.interestCourse && course ? { interestCourse: course.name } : {}),
         ...(!existing.telegram && format === "ONLINE" && tg ? { telegram: `@${tg}` } : {}),
@@ -126,6 +128,7 @@ export async function submitApplication(
       utmMedium: link.utmMedium,
       utmCampaign: link.utmCampaign,
       vacancyLinkId: link.id,
+      kanbanColumnId: linkCol,
       branchId,
       note: [
         `Kurs/vakansiya: ${link.vacancy.title}${link.vacancy.country ? " (" + link.vacancy.country + ")" : ""}`,

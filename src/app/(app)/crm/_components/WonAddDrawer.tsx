@@ -6,7 +6,7 @@ import { cn } from "@/lib/cn";
 import { tr } from "@/lib/tr";
 import type { Locale } from "@/lib/constants";
 import { Icon } from "../../_components/Icon";
-import { createKanbanColumn, enrollOptions, pinKanbanGroup, type EnrollGroupOpt } from "../actions";
+import { createKanbanColumn, createLinkColumn, enrollOptions, linkColumnOptions, pinKanbanGroup, type EnrollGroupOpt, type LinkColumnOpt } from "../actions";
 import { GROUP_COL_COLORS, GROUP_COL_ICONS, type CustomColumn, type GroupColumn } from "../_lib/leadColumns";
 
 interface Props {
@@ -21,7 +21,7 @@ interface Props {
   onColumnCreated?: (columns: CustomColumn[]) => void;
 }
 
-type Mode = "choose" | "group" | "custom";
+type Mode = "choose" | "group" | "custom" | "link";
 
 function norm(s: string) {
   return s.toLowerCase().replace(/\s+/g, " ").trim();
@@ -40,6 +40,8 @@ export default function WonAddDrawer({
   const [color, setColor] = useState(GROUP_COL_COLORS[0]);
   const [icon, setIcon] = useState(GROUP_COL_ICONS[0]);
   const [err, setErr] = useState<string | null>(null);
+  const [links, setLinks] = useState<LinkColumnOpt[] | null>(null);
+  const [pickedLink, setPickedLink] = useState<string | null>(null);
   const [saving, start] = useTransition();
 
   const L = (uz: string, ru: string, en: string, de: string) => tr(locale, { uz, ru, en, de });
@@ -53,6 +55,18 @@ export default function WonAddDrawer({
     enrollOptions()
       .then((o) => { if (alive) setGroups(o.groups); })
       .catch(() => { if (alive) setErr(L("Guruhlarni yuklab bo'lmadi", "Не удалось загрузить группы", "Could not load groups", "Gruppen konnten nicht geladen werden")); })
+      .finally(() => { if (alive) setLoading(false); });
+    return () => { alive = false; };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [mode]);
+
+  useEffect(() => {
+    if (mode !== "link" || links) return;
+    let alive = true;
+    setLoading(true);
+    linkColumnOptions()
+      .then((o) => { if (alive) setLinks(o); })
+      .catch(() => { if (alive) setErr(L("Havolalarni yuklab bo'lmadi", "Не удалось загрузить ссылки", "Could not load links", "Links konnten nicht geladen werden")); })
       .finally(() => { if (alive) setLoading(false); });
     return () => { alive = false; };
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -74,6 +88,13 @@ export default function WonAddDrawer({
     return groups.filter((g) => norm(g.name).includes(needle) || norm(g.courseName).includes(needle));
   }, [groups, q]);
 
+  const shownLinks = useMemo(() => {
+    const needle = norm(q);
+    const all = links ?? [];
+    if (!needle) return all;
+    return all.filter((l) => norm(l.label).includes(needle) || norm(l.vacancy).includes(needle) || norm(l.platform).includes(needle) || l.code.toLowerCase().includes(needle));
+  }, [links, q]);
+
   const nameTaken = useMemo(() => {
     const n = norm(name);
     return !!n && customColumns.some((c) => norm(c.name) === n);
@@ -85,6 +106,8 @@ export default function WonAddDrawer({
     setMode("choose");
     setQ("");
     setPicked(null);
+    setPickedLink(null);
+    setLinks(null);
     setName("");
     setErr(null);
     onClose();
@@ -93,6 +116,8 @@ export default function WonAddDrawer({
   function back() {
     setMode("choose");
     setPicked(null);
+    setPickedLink(null);
+    setQ("");
     setName("");
     setErr(null);
   }
@@ -132,7 +157,28 @@ export default function WonAddDrawer({
     });
   }
 
+  function submitLink() {
+    if (!pickedLink) return;
+    setErr(null);
+    start(async () => {
+      const r = await createLinkColumn(pickedLink, color, icon);
+      if (r.error || !r.columns) {
+        setErr(
+          r.error === "duplicate"
+            ? L("Bu havola uchun ustun allaqachon bor", "Для этой ссылки столбец уже есть", "This link already has a column", "Für diesen Link gibt es bereits eine Spalte")
+            : r.error === "limit"
+              ? L("Ustunlar soni chegarasiga yetdi", "Достигнут лимит столбцов", "Column limit reached", "Spaltenlimit erreicht")
+              : L("Saqlab bo'lmadi", "Не удалось сохранить", "Could not save", "Konnte nicht gespeichert werden"),
+        );
+        return;
+      }
+      onColumnCreated?.(r.columns);
+      close();
+    });
+  }
+
   const pickedGroup = groups.find((g) => g.id === picked) ?? null;
+  const pickedLinkOpt = (links ?? []).find((l) => l.id === pickedLink) ?? null;
   const isMain = variant === "main";
 
   const title =
@@ -140,7 +186,9 @@ export default function WonAddDrawer({
       ? L("Guruhga yo'naltirilgan ustun", "Столбец для группы", "Group column", "Gruppenspalte")
       : mode === "custom"
         ? L("Oddiy nomli ustun", "Столбец с названием", "Named column", "Benannte Spalte")
-        : isMain
+        : mode === "link"
+          ? L("Havolaga bog'langan ustun", "Столбец по ссылке", "Link column", "Link-Spalte")
+          : isMain
           ? L("Qo'shish", "Добавить", "Add", "Hinzufügen")
           : L("Qabul qilindi", "Принят", "Won", "Aufgenommen");
 
@@ -149,7 +197,9 @@ export default function WonAddDrawer({
       ? L("Guruh Kanbanda alohida ustun bo'ladi", "Группа станет отдельным столбцом", "The group becomes its own column", "Die Gruppe wird eine eigene Spalte")
       : mode === "custom"
         ? L("Nom, rang va belgi tanlang", "Введите название, цвет и значок", "Choose a name, colour and icon", "Name, Farbe und Symbol wählen")
-        : isMain
+        : mode === "link"
+          ? L("Havoladan kelgan lidlar shu ustunga tushadi", "Лиды по ссылке попадут в этот столбец", "Leads from the link land in this column", "Leads über den Link landen in dieser Spalte")
+          : isMain
           ? L("Nimani qo'shamiz?", "Что добавляем?", "What do we add?", "Was fügen wir hinzu?")
           : L("Qanday qo'shamiz?", "Как добавляем?", "How do we add?", "Wie hinzufügen?");
 
@@ -222,6 +272,21 @@ export default function WonAddDrawer({
                   "Sie benennen sie — Leads dort sammeln, die Phase bleibt gleich",
                 )}
                 onClick={() => setMode("custom")}
+              />
+            )}
+
+            {isMain && (
+              <Choice
+                icon="link"
+                tone="sky"
+                title={L("Havolaga bog'langan ustun", "Столбец по ссылке", "Link column", "Link-Spalte")}
+                text={L(
+                  "Havolani tanlaysiz — shu havoladan kelgan lidlar avtomatik shu ustunga tushadi",
+                  "Выберите ссылку — лиды по ней автоматически попадут в этот столбец",
+                  "Pick a link — leads from it land in this column automatically",
+                  "Link wählen — Leads darüber landen automatisch in dieser Spalte",
+                )}
+                onClick={() => { setIcon("link"); setMode("link"); }}
               />
             )}
 
@@ -333,6 +398,77 @@ export default function WonAddDrawer({
           </>
         )}
 
+        {mode === "link" && (
+          <>
+            <div className="border-b border-slate-200 p-3 dark:border-white/10">
+              <input
+                value={q}
+                onChange={(e) => setQ(e.target.value)}
+                autoFocus
+                placeholder={L("Havola, vakansiya yoki platforma", "Ссылка, вакансия или платформа", "Link, vacancy or platform", "Link, Stelle oder Plattform")}
+                className="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm outline-none focus:border-brand-500 focus:ring-2 focus:ring-brand-100 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-100"
+              />
+            </div>
+
+            <div className="min-h-0 flex-1 overflow-y-auto p-3">
+              {loading || !links ? (
+                <p className="py-10 text-center text-sm text-slate-400">{L("Yuklanmoqda…", "Загрузка…", "Loading…", "Lädt…")}</p>
+              ) : shownLinks.length === 0 ? (
+                <p className="py-10 text-center text-sm text-slate-400">
+                  {L("Faol havola topilmadi", "Активные ссылки не найдены", "No active links found", "Keine aktiven Links gefunden")}
+                </p>
+              ) : (
+                <div className="space-y-1.5">
+                  {shownLinks.map((l) => {
+                    const active = pickedLink === l.id;
+                    return (
+                      <button
+                        key={l.id}
+                        type="button"
+                        disabled={l.taken}
+                        onClick={() => setPickedLink(l.id)}
+                        className={cn(
+                          "flex w-full items-center gap-2.5 rounded-xl border p-2.5 text-left transition disabled:cursor-not-allowed disabled:opacity-60",
+                          active
+                            ? "border-brand-500 bg-brand-50/70 dark:bg-white/[0.06]"
+                            : "border-slate-200 hover:border-brand-300 hover:bg-slate-50 dark:border-white/10 dark:hover:bg-white/[0.04]",
+                        )}
+                      >
+                        <span className="min-w-0 flex-1">
+                          <span className="block truncate text-sm font-semibold text-slate-900 dark:text-slate-100">{l.label}</span>
+                          <span className="block truncate text-[11.5px] text-slate-400">
+                            {l.platform} · /apply/{l.code}{l.label !== l.vacancy ? ` · ${l.vacancy}` : ""}
+                          </span>
+                        </span>
+                        {l.taken && (
+                          <span className="shrink-0 rounded-md bg-emerald-500/15 px-1.5 py-0.5 text-[10.5px] font-bold text-emerald-600">
+                            {L("ustunda", "в столбце", "has column", "hat Spalte")}
+                          </span>
+                        )}
+                        <span className="shrink-0 text-[11px] font-semibold tabular-nums text-slate-400" title={L("Arizalar", "Заявки", "Submissions", "Bewerbungen")}>
+                          {l.submissions}
+                        </span>
+                      </button>
+                    );
+                  })}
+                </div>
+              )}
+            </div>
+
+            <StylePicker
+              locale={locale}
+              color={color} onColor={setColor}
+              icon={icon} onIcon={setIcon}
+              previewName={pickedLinkOpt?.label ?? null}
+              err={err}
+              disabled={!pickedLink || saving}
+              saving={saving}
+              submitLabel={L("Ustun yaratish", "Создать столбец", "Create column", "Spalte erstellen")}
+              onSubmit={submitLink}
+            />
+          </>
+        )}
+
         {mode === "custom" && (
           <>
             <div className="flex-1 overflow-y-auto p-4">
@@ -387,6 +523,7 @@ const TONE = {
   brand: { hover: "hover:border-brand-400 hover:bg-brand-50/60 dark:hover:border-brand-500", badge: "bg-brand-500/15 text-brand-600" },
   violet: { hover: "hover:border-violet-400 hover:bg-violet-50/60 dark:hover:border-violet-500", badge: "bg-violet-500/15 text-violet-600" },
   emerald: { hover: "hover:border-emerald-400 hover:bg-emerald-50/60 dark:hover:border-emerald-500", badge: "bg-emerald-500/15 text-emerald-600" },
+  sky: { hover: "hover:border-sky-400 hover:bg-sky-50/60 dark:hover:border-sky-500", badge: "bg-sky-500/15 text-sky-600" },
 } as const;
 
 function Choice({ icon, tone, title, text, onClick }: { icon: string; tone: keyof typeof TONE; title: string; text: string; onClick: () => void }) {
