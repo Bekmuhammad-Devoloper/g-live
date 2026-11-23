@@ -1,5 +1,6 @@
 import "server-only";
 import { prisma } from "./db";
+import { computeDebts } from "./debt";
 
 export const UNPAID_GRACE_DAYS = 30;
 
@@ -22,16 +23,16 @@ async function unpaidDaysMap(studentIds: string[], now = new Date()): Promise<Ma
 }
 
 export async function isPaymentMandatory(studentId: string): Promise<{ mandatory: boolean; daysUnpaid: number }> {
-  const daysUnpaid = (await unpaidDaysMap([studentId])).get(studentId) ?? 0;
-  return { mandatory: daysUnpaid >= UNPAID_GRACE_DAYS, daysUnpaid };
+  return (await isPaymentMandatoryBulk([studentId])).get(studentId) ?? { mandatory: false, daysUnpaid: 0 };
 }
 
 export async function isPaymentMandatoryBulk(studentIds: string[]): Promise<Map<string, { mandatory: boolean; daysUnpaid: number }>> {
-  const days = await unpaidDaysMap(studentIds);
+  const [days, debts] = await Promise.all([unpaidDaysMap(studentIds), computeDebts(studentIds)]);
   const out = new Map<string, { mandatory: boolean; daysUnpaid: number }>();
   for (const id of studentIds) {
     const d = days.get(id) ?? 0;
-    out.set(id, { mandatory: d >= UNPAID_GRACE_DAYS, daysUnpaid: d });
+    const inDebt = (debts.get(id)?.debt ?? 0) > 0;
+    out.set(id, { mandatory: inDebt && d >= UNPAID_GRACE_DAYS, daysUnpaid: d });
   }
   return out;
 }
