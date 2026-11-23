@@ -243,6 +243,7 @@ model Student {
   age          Int?
   phone2       String?
   eduStatus    String   @default("WAITING")
+  payGraceUntil DateTime?
   note         String?
 
   branchId String?

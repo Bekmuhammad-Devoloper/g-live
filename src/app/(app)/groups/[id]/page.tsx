@@ -21,7 +21,7 @@ import { AttendanceJournal } from "./AttendanceJournal";
 import CourseLessonsTab from "../../courses/[id]/CourseLessonsTab";
 import { getLevelCodes } from "@/lib/studyLevels";
 import { groupColor } from "../groupColor";
-import { isPaymentMandatoryBulk } from "@/lib/paymentPolicy";
+import { isPaymentMandatoryBulk, PAY_GRACE_ROLES } from "@/lib/paymentPolicy";
 import { canEditLessons } from "@/lib/lessonAccess";
 import { groupLessonsWhere } from "@/lib/levelLessons";
 
@@ -81,7 +81,7 @@ export default async function GroupDetailPage({ params }: { params: Promise<{ id
   };
   const attendanceStudents = orderedStudents.map((gs) => {
     const b = mandatoryMap.get(gs.studentId);
-    return { id: gs.studentId, name: gs.student.fullName, blocked: b?.mandatory ?? false, daysUnpaid: b?.daysUnpaid ?? 0, frozen: isFrozen(gs), info: infoOf(gs) };
+    return { id: gs.studentId, name: gs.student.fullName, blocked: b?.mandatory ?? false, daysUnpaid: b?.daysUnpaid ?? 0, graceUntil: b?.graceUntil ?? null, frozen: isFrozen(gs), info: infoOf(gs) };
   });
 
   const canReturnToLead = full && canWrite(s.role, MODULES.CRM);
@@ -169,7 +169,7 @@ export default async function GroupDetailPage({ params }: { params: Promise<{ id
             {tr(s.locale, { uz: "Davomat", ru: "Посещаемость", en: "Attendance", de: "Anwesenheit" })}
             <span className="text-xs font-normal text-slate-400">({tr(s.locale, { uz: "bor / yo'q", ru: "есть / нет", en: "present / absent", de: "anwesend / abwesend" })})</span>
           </h3>
-          <GroupAttendance groupId={group.id} students={attendanceStudents} locale={s.locale} />
+          <GroupAttendance groupId={group.id} students={attendanceStudents} locale={s.locale} canGrace={PAY_GRACE_ROLES.includes(s.role)} />
         </Card>
       )}
       {!canManage && s.role !== ROLES.STUDENT && s.role !== ROLES.PARENT && (

@@ -22,17 +22,33 @@ async function unpaidDaysMap(studentIds: string[], now = new Date()): Promise<Ma
   return out;
 }
 
-export async function isPaymentMandatory(studentId: string): Promise<{ mandatory: boolean; daysUnpaid: number }> {
-  return (await isPaymentMandatoryBulk([studentId])).get(studentId) ?? { mandatory: false, daysUnpaid: 0 };
+export const PAY_GRACE_ROLES: string[] = ["ADMIN", "DIRECTOR", "DEPUTY_DIRECTOR"];
+export const PAY_GRACE_MAX_DAYS = 60;
+
+export interface PaymentState {
+  mandatory: boolean;
+  daysUnpaid: number;
+  graceUntil: string | null;
 }
 
-export async function isPaymentMandatoryBulk(studentIds: string[]): Promise<Map<string, { mandatory: boolean; daysUnpaid: number }>> {
-  const [days, debts] = await Promise.all([unpaidDaysMap(studentIds), computeDebts(studentIds)]);
-  const out = new Map<string, { mandatory: boolean; daysUnpaid: number }>();
+export async function isPaymentMandatory(studentId: string): Promise<PaymentState> {
+  return (await isPaymentMandatoryBulk([studentId])).get(studentId) ?? { mandatory: false, daysUnpaid: 0, graceUntil: null };
+}
+
+export async function isPaymentMandatoryBulk(studentIds: string[]): Promise<Map<string, PaymentState>> {
+  const now = new Date();
+  const [days, debts, graces] = await Promise.all([
+    unpaidDaysMap(studentIds, now),
+    computeDebts(studentIds, now),
+    studentIds.length ? prisma.student.findMany({ where: { id: { in: studentIds }, payGraceUntil: { gte: now } }, select: { id: true, payGraceUntil: true } }) : Promise.resolve([]),
+  ]);
+  const grace = new Map(graces.map((g) => [g.id, g.payGraceUntil]));
+  const out = new Map<string, PaymentState>();
   for (const id of studentIds) {
     const d = days.get(id) ?? 0;
     const inDebt = (debts.get(id)?.debt ?? 0) > 0;
-    out.set(id, { mandatory: inDebt && d >= UNPAID_GRACE_DAYS, daysUnpaid: d });
+    const until = grace.get(id) ?? null;
+    out.set(id, { mandatory: inDebt && d >= UNPAID_GRACE_DAYS && !until, daysUnpaid: d, graceUntil: until ? until.toISOString() : null });
   }
   return out;
 }

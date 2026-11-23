@@ -10,6 +10,7 @@ import PromoSelect, { promoErrorText } from "../_components/PromoSelect";
 import PromoBadge from "../_components/PromoBadge";
 import { getStudentPayments, acceptPayment, addStudentDebt, adjustStudentDebt, updatePaymentRecord, deletePaymentRecord, type StudentPayments, type MonthPay, type PayRow, type ReceiptData } from "./actions";
 import { Icon } from "../_components/Icon";
+import PaymentGraceButton, { graceLabel } from "../_components/PaymentGraceButton";
 import MoneyInput from "../_components/MoneyInput";
 import { confirmDialog, promptDialog } from "../_components/dialogs";
 import { debtTone, debtMonthsLabel, DEBT_PANEL } from "@/lib/debtTone";
@@ -94,6 +95,29 @@ export default function PaymentPanel({
               </div>
             </div>
           </div>
+          {pay.canGrace && <PaymentGraceButton studentId={studentId} until={pay.graceUntil} locale={locale} onDone={load} />}
+        </div>
+      )}
+
+      {pay && pay.graceUntil && !pay.paymentMandatory && (
+        <div className="mb-3 flex items-center justify-between gap-2 rounded-xl border border-sky-200 bg-sky-50 px-3.5 py-2.5 dark:border-sky-900/50 dark:bg-sky-950/30">
+          <div className="flex items-center gap-2.5">
+            <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-sky-500/15">
+              <Icon name="clock" className="h-4 w-4 text-sky-600" />
+            </span>
+            <div>
+              <div className="text-sm font-bold text-sky-700 dark:text-sky-300">{tr(locale, { uz: "TO'LOV MUDDATI BERILGAN", ru: "ДАНА ОТСРОЧКА ПО ОПЛАТЕ", en: "PAYMENT GRACE GIVEN", de: "ZAHLUNGSFRIST GEWÄHRT" })}</div>
+              <div className="text-xs text-sky-600/80 dark:text-sky-400/80">
+                {tr(locale, {
+                  uz: `${graceLabel(pay.graceUntil)} gacha faol — ustoz davomat belgilay oladi.`,
+                  ru: `Активен до ${graceLabel(pay.graceUntil)} — преподаватель может отмечать посещаемость.`,
+                  en: `Active until ${graceLabel(pay.graceUntil)} — the teacher can mark attendance.`,
+                  de: `Aktiv bis ${graceLabel(pay.graceUntil)} — die Lehrkraft kann Anwesenheit eintragen.`,
+                })}
+              </div>
+            </div>
+          </div>
+          {pay.canGrace && <PaymentGraceButton studentId={studentId} until={pay.graceUntil} locale={locale} onDone={load} />}
         </div>
       )}
 

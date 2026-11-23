@@ -14,7 +14,7 @@ import { getGroupAttendance, markStudentAttendance, markAllPresent, unlockAttend
 const p2 = (n: number) => String(n).padStart(2, "0");
 const todayISO = () => { const d = new Date(); return `${d.getFullYear()}-${p2(d.getMonth() + 1)}-${p2(d.getDate())}`; };
 
-type AttStudent = { id: string; name: string; blocked?: boolean; daysUnpaid?: number; frozen?: boolean; info?: StudentHoverInfo };
+type AttStudent = { id: string; name: string; blocked?: boolean; daysUnpaid?: number; frozen?: boolean; graceUntil?: string | null; info?: StudentHoverInfo };
 
 export function FrozenHeading({ count, locale }: { count: number; locale: Locale }) {
   return (
@@ -25,7 +25,7 @@ export function FrozenHeading({ count, locale }: { count: number; locale: Locale
   );
 }
 
-export function GroupAttendance({ groupId, students, locale }: { groupId: string; students: AttStudent[]; locale: Locale }) {
+export function GroupAttendance({ groupId, students, locale, canGrace = false }: { groupId: string; students: AttStudent[]; locale: Locale; canGrace?: boolean }) {
   const [view, setView] = useState<"journal" | "day">("journal");
   const tab = (on: boolean) => cn("rounded-md px-3 py-1 text-xs font-semibold transition", on ? "bg-white text-brand-700 shadow-sm dark:bg-slate-700 dark:text-white" : "text-slate-500 hover:text-slate-700 dark:text-slate-400");
   return (
@@ -35,7 +35,7 @@ export function GroupAttendance({ groupId, students, locale }: { groupId: string
         <button type="button" onClick={() => setView("day")} className={tab(view === "day")}>{tr(locale, { uz: "Kunlik", ru: "По дням", en: "Daily", de: "Täglich" })}</button>
       </div>
       {view === "journal"
-        ? <AttendanceJournal groupId={groupId} students={students} locale={locale} />
+        ? <AttendanceJournal groupId={groupId} students={students} locale={locale} canGrace={canGrace} />
         : <DayAttendance groupId={groupId} students={students} locale={locale} />}
     </div>
   );

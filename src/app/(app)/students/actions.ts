@@ -10,10 +10,11 @@ import { canWrite, canRead, MODULES } from "@/lib/rbac";
 import { getSettings } from "@/lib/settings";
 import { getBrand } from "@/lib/brand";
 import { writeAudit } from "@/lib/audit";
+import { tr } from "@/lib/tr";
 import { notify } from "@/lib/notify";
-import { isPaymentMandatory, UNPAID_GRACE_DAYS } from "@/lib/paymentPolicy";
+import { isPaymentMandatory, PAY_GRACE_MAX_DAYS, PAY_GRACE_ROLES, UNPAID_GRACE_DAYS } from "@/lib/paymentPolicy";
 import { computeDebt } from "@/lib/debt";
-import { branchWhere } from "@/lib/branchScope";
+import { branchWhere, studentBranchWhere } from "@/lib/branchScope";
 import type { GroupOpt } from "../_components/GroupMover";
 import { getSetting } from "@/lib/settings";
 import { RECEIPT_MODE_KEY, parseReceiptMode, isReceiptRequired } from "@/lib/receiptMode";
@@ -47,6 +48,8 @@ export interface StudentPayments {
   daysUnpaid: number;
   mandatoryThreshold: number;
   paymentMandatory: boolean;
+  graceUntil: string | null;
+  canGrace: boolean;
   joinDate: string | null;
   lastMonthApplicable: boolean;
   recent: PayRow[];
@@ -107,6 +110,8 @@ export async function getStudentPayments(studentId: string): Promise<{ ok: boole
       daysUnpaid: mandatoryInfo.daysUnpaid,
       mandatoryThreshold: UNPAID_GRACE_DAYS,
       paymentMandatory,
+      graceUntil: mandatoryInfo.graceUntil,
+      canGrace: PAY_GRACE_ROLES.includes(s.role),
       joinDate: joinDate ? joinDate.toISOString() : null,
       lastMonthApplicable,
       canAdjustDebt: CAN_EDIT_PAY.includes(s.role as never) || (s.role === ROLES.ROP && await ropDebtWindowOpen(studentId)),
@@ -828,4 +833,36 @@ export async function getPaymentForEdit(paymentId: string): Promise<PayRow | nul
 
 export async function canEditPayments(role: string): Promise<boolean> {
   return CAN_EDIT_PAY.includes(role as never);
+}
+
+export async function setPaymentGrace(studentId: string, until: string | null): Promise<{ ok?: boolean; error?: string }> {
+  const s = await requireSession();
+  if (!PAY_GRACE_ROLES.includes(s.role)) return { error: tr(s.locale, { uz: "Ruxsat yo'q", ru: "Нет доступа", en: "No permission", de: "Keine Berechtigung" }) };
+  const st = await prisma.student.findFirst({ where: { AND: [{ id: studentId }, studentBranchWhere(s)] }, select: { id: true, eduStatus: true, payGraceUntil: true } });
+  if (!st) return { error: tr(s.locale, { uz: "O'quvchi topilmadi", ru: "Ученик не найден", en: "Student not found", de: "Schüler nicht gefunden" }) };
+
+  let date: Date | null = null;
+  if (until) {
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+    date = /^\d{4}-\d{2}-\d{2}$/.test(until) ? new Date(`${until}T23:59:59`) : null;
+    if (!date || isNaN(date.getTime()) || date < today || date.getTime() > today.getTime() + (PAY_GRACE_MAX_DAYS + 1) * 86_400_000) {
+      return { error: tr(s.locale, { uz: `Sana bugundan ${PAY_GRACE_MAX_DAYS} kungacha bo'lsin`, ru: `Дата — от сегодня до ${PAY_GRACE_MAX_DAYS} дней`, en: `Pick a date within ${PAY_GRACE_MAX_DAYS} days from today`, de: `Datum innerhalb von ${PAY_GRACE_MAX_DAYS} Tagen ab heute wählen` }) };
+    }
+  }
+
+  const unfreeze = !!date && st.eduStatus === "FROZEN";
+  await prisma.student.update({ where: { id: st.id }, data: { payGraceUntil: date, ...(unfreeze ? { eduStatus: "ACTIVE" } : {}) } });
+  await writeAudit({
+    actorId: s.userId,
+    action: "UPDATE",
+    entityType: "Student",
+    entityId: st.id,
+    oldValue: { payGraceUntil: st.payGraceUntil?.toISOString() ?? null, eduStatus: st.eduStatus },
+    newValue: { payGraceUntil: date?.toISOString() ?? null, ...(unfreeze ? { eduStatus: "ACTIVE" } : {}) },
+    reason: date ? "To'lov uchun muddat berildi" : "To'lov muddati olib tashlandi",
+  });
+  revalidatePath(`/students/${st.id}`);
+  revalidatePath("/groups/[id]", "page");
+  return { ok: true };
 }

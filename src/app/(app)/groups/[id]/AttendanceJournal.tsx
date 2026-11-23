@@ -6,10 +6,11 @@ import { cn } from "@/lib/cn";
 import { tr } from "@/lib/tr";
 import type { Locale } from "@/lib/constants";
 import { Icon } from "../../_components/Icon";
+import PaymentGraceButton, { graceLabel } from "../../_components/PaymentGraceButton";
 import StudentHoverCard, { studentNameTone, type StudentHoverInfo } from "./StudentHoverCard";
 import { getAttendanceJournal, markStudentAttendance, markAllPresent, unlockAttendance, type AttendanceJournal as Journal, type JournalDay } from "./attendanceActions";
 
-type Student = { id: string; name: string; blocked?: boolean; daysUnpaid?: number; frozen?: boolean; info?: StudentHoverInfo };
+type Student = { id: string; name: string; blocked?: boolean; daysUnpaid?: number; frozen?: boolean; graceUntil?: string | null; info?: StudentHoverInfo };
 
 const MONTHS: Record<Locale, string[]> = {
   uz: ["yan", "fev", "mar", "apr", "may", "iyun", "iyul", "avg", "sen", "okt", "noy", "dek"],
@@ -25,7 +26,7 @@ const STATUS_STYLE: Record<string, string> = {
   ABSENT: "bg-rose-500 text-white",
 };
 
-export function AttendanceJournal({ groupId, students, locale, readOnly = false }: { groupId: string; students: Student[]; locale: Locale; readOnly?: boolean }) {
+export function AttendanceJournal({ groupId, students, locale, readOnly = false, canGrace = false }: { groupId: string; students: Student[]; locale: Locale; readOnly?: boolean; canGrace?: boolean }) {
   const L = (uz: string, ru: string, en: string, de: string) => tr(locale, { uz, ru, en, de });
   const now = new Date();
   const [ym, setYm] = useState({ y: now.getFullYear(), m: now.getMonth() });
@@ -216,6 +217,11 @@ export function AttendanceJournal({ groupId, students, locale, readOnly = false 
                         <Link href={`/students/${s.id}`} className={cn("text-[13px] hover:underline", s.frozen ? "text-sky-700 dark:text-sky-300" : studentNameTone(s.info) ?? "text-slate-700 hover:text-brand-600 dark:text-slate-200")}>{s.name}</Link>
                       </StudentHoverCard>
                       {s.blocked && <span className="h-2 w-2 shrink-0 rounded-full bg-rose-500" title={L("To'lov kerak", "Нужна оплата", "Payment needed", "Zahlung erforderlich")} />}
+                      {canGrace && (s.blocked || s.graceUntil)
+                        ? <PaymentGraceButton compact studentId={s.id} until={s.graceUntil ?? null} locale={locale} />
+                        : s.graceUntil
+                          ? <span className="shrink-0 text-sky-500" title={L(`${graceLabel(s.graceUntil)} gacha muddat berilgan`, `Отсрочка до ${graceLabel(s.graceUntil)}`, `Grace until ${graceLabel(s.graceUntil)}`, `Frist bis ${graceLabel(s.graceUntil)}`)}><Icon name="clock" className="h-3.5 w-3.5" /></span>
+                          : null}
                     </div>
                   </td>
                   {days.map((d) => {
