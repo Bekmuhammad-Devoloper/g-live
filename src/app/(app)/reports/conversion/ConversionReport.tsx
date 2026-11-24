@@ -205,9 +205,7 @@ export default function ConversionReport({ defaultFrom, defaultTo, locale }: Pro
 
       {loading && (
         <div className="pointer-events-none fixed inset-0 z-40 grid place-items-center">
-          <div className="rounded-3xl bg-white/90 px-7 pb-10 pt-7 shadow-pop backdrop-blur dark:bg-slate-900/90">
-            <LogoLoader />
-          </div>
+          <LogoLoader size={96} />
         </div>
       )}
 
