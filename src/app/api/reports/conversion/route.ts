@@ -58,10 +58,11 @@ export async function GET(req: Request) {
 
   const empIds = Array.from(new Set(withEmp.map((l) => l.employeeId).filter((x): x is string => !!x)));
   const users = empIds.length
-    ? await prisma.user.findMany({ where: { id: { in: empIds } }, select: { id: true, fullName: true, role: true } })
+    ? await prisma.user.findMany({ where: { id: { in: empIds } }, select: { id: true, fullName: true, role: true, imageUrl: true } })
     : [];
   const nameById = new Map(users.map((u) => [u.id, u.fullName]));
   const roleById = new Map(users.map((u) => [u.id, u.role]));
+  const imageById = new Map(users.map((u) => [u.id, u.imageUrl]));
 
   const actWhere: Prisma.LeadActivityWhereInput = {
     authorId: { not: null },
@@ -94,6 +95,7 @@ export async function GET(req: Request) {
       id,
       name: id === "none" ? null : nameById.get(id) ?? "—",
       role: id === "none" ? null : roleById.get(id) ?? null,
+      imageUrl: id === "none" ? null : imageById.get(id) ?? null,
       total: rows.length,
       ...c,
       activities: id === "none" ? 0 : actsById.get(id) ?? 0,

@@ -1,5 +1,6 @@
 "use client";
 
+import UserAvatar from "../../_components/UserAvatar";
 import DateInput from "@/app/(app)/_components/DateInput";
 import { useEffect, useMemo, useState } from "react";
 import Link from "next/link";
@@ -26,6 +27,7 @@ interface ApiEmployee {
   id: string;
   name: string | null;
   role: string | null;
+  imageUrl?: string | null;
   total: number;
   sorovlar: number;
   ishlov: number;
@@ -302,9 +304,11 @@ export default function ConversionReport({ defaultFrom, defaultTo, locale }: Pro
                     >
                       <td className="px-4 py-3">
                         <div className="flex items-center gap-2.5">
-                          <span className={cn("grid h-8 w-8 shrink-0 place-items-center rounded-full text-[12px] font-bold", unassigned ? "bg-slate-100 text-slate-400 dark:bg-slate-800" : "bg-brand-500/15 text-brand-700 dark:text-brand-300")}>
-                            {unassigned ? "?" : (e.name ?? "—").split(" ").map((w) => w[0]).slice(0, 2).join("").toUpperCase()}
-                          </span>
+                          {unassigned ? (
+                            <span className="grid h-8 w-8 shrink-0 place-items-center rounded-lg bg-slate-100 text-[12px] font-bold text-slate-400 dark:bg-slate-800">?</span>
+                          ) : (
+                            <UserAvatar name={e.name} imageUrl={e.imageUrl} role={e.role} size="xs" />
+                          )}
                           <div className="min-w-0">
                             <div className={cn("truncate font-semibold", unassigned ? "text-slate-500" : "text-slate-800 dark:text-slate-100")}>{unassigned ? T("Biriktirilmagan", "Не назначен", "Unassigned", "Nicht zugewiesen") : e.name}</div>
                             {e.role && <div className="text-[11px] text-slate-400">{roleLabel(e.role, locale)}</div>}
