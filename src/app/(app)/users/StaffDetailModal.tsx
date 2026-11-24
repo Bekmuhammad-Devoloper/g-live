@@ -3,6 +3,7 @@
 import { useEffect, useState, useTransition } from "react";
 import { createPortal } from "react-dom";
 import { Icon } from "../_components/Icon";
+import LogoLoader from "../_components/LogoLoader";
 import { formatMoney, type Locale } from "@/lib/constants";
 import { tr } from "@/lib/tr";
 import { getStaffDetail, setUserPassword, type StaffDetail } from "./actions";
@@ -76,7 +77,7 @@ export default function StaffDetailModal({ userId, locale, onClose, onEdit }: {
 
         <div className="flex-1 space-y-5 overflow-y-auto px-5 py-4">
           {!d ? (
-            <div className="flex items-center justify-center py-16 text-slate-400"><Icon name="refresh" className="h-5 w-5 animate-spin" /></div>
+            <div className="flex items-center justify-center py-16"><LogoLoader size={64} /></div>
           ) : (
             <>
               <Section title={tr(locale, { uz: "Kirish ma'lumotlari", ru: "Данные для входа", en: "Login credentials", de: "Anmeldedaten" })} icon="key">

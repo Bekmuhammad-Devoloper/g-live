@@ -9,6 +9,7 @@ import { LEAD_STAGE_LABELS, label, type Locale } from "@/lib/constants";
 import { tr } from "@/lib/tr";
 import { exportRows } from "@/lib/export";
 import { Icon } from "../../_components/Icon";
+import LogoLoader from "../../_components/LogoLoader";
 import { FUNNEL_STEPS, reached, type StepKey } from "./funnel";
 
 interface ApiLead {
@@ -151,7 +152,7 @@ export default function ConversionReport({ defaultFrom, defaultTo, locale }: Pro
     <div className="space-y-4">
       <div className="flex flex-wrap items-center gap-3">
         <h1 className="text-[26px] font-bold tracking-tight text-slate-900 dark:text-slate-100">{T("Konversiya hisobotlari", "Отчёты по конверсии", "Conversion reports", "Konversionsberichte")}</h1>
-        {loading && <Icon name="refresh" className="h-4 w-4 animate-spin text-slate-400" />}
+        {loading && <LogoLoader size={24} shadow={false} />}
         <button
           type="button"
           onClick={() => setShowHow((v) => !v)}
@@ -202,6 +203,15 @@ export default function ConversionReport({ defaultFrom, defaultTo, locale }: Pro
         </div>
       )}
 
+      {loading && (
+        <div className="pointer-events-none fixed inset-0 z-40 grid place-items-center">
+          <div className="rounded-3xl bg-white/90 px-7 pb-10 pt-7 shadow-pop backdrop-blur dark:bg-slate-900/90">
+            <LogoLoader />
+          </div>
+        </div>
+      )}
+
+      <div className={cn("space-y-4 transition-opacity", loading && "opacity-40")}>
       <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
         <Kpi icon="users" color="#4f46e5" value={String(total)} title={T("So'rovlar", "Заявки", "Requests", "Anfragen")} sub={T("davrda yaratilgan lidlar", "лидов создано за период", "leads created in period", "im Zeitraum erstellte Leads")} onClick={() => setSelected(selected === "sorovlar" ? "" : "sorovlar")} active={selected === "sorovlar"} />
         <Kpi icon="graduation" color="#10b981" value={String(counts.qabul ?? 0)} title={T("Qabul qilindi", "Приняты", "Enrolled", "Aufgenommen")} sub={T("o'quvchiga aylandi", "стали учениками", "became students", "wurden Schüler")} onClick={() => setSelected(selected === "qabul" ? "" : "qabul")} active={selected === "qabul"} />
@@ -410,6 +420,7 @@ export default function ConversionReport({ defaultFrom, defaultTo, locale }: Pro
             </div>
           )}
         </div>
+      </div>
       </div>
     </div>
   );

@@ -6,6 +6,7 @@ import { cn } from "@/lib/cn";
 import { tr } from "@/lib/tr";
 import type { Locale } from "@/lib/constants";
 import { Icon } from "../../_components/Icon";
+import LogoLoader from "../../_components/LogoLoader";
 import PaymentGraceButton, { graceLabel } from "../../_components/PaymentGraceButton";
 import StudentHoverCard, { studentNameTone, type StudentHoverInfo } from "./StudentHoverCard";
 import { getAttendanceJournal, markStudentAttendance, markAllPresent, unlockAttendance, type AttendanceJournal as Journal, type JournalDay } from "./attendanceActions";
@@ -139,7 +140,7 @@ export function AttendanceJournal({ groupId, students, locale, readOnly = false,
           {(MONTHS[locale] ?? MONTHS.uz)[ym.m]} {ym.y}
         </span>
         <button type="button" onClick={() => shift(1)} className={navBtn} aria-label="next"><Icon name="chevronDown" className="h-4 w-4 -rotate-90" /></button>
-        {loading && <Icon name="refresh" className="h-4 w-4 animate-spin text-slate-400" />}
+        {loading && <LogoLoader size={22} shadow={false} />}
         <div className="ml-auto flex flex-wrap items-center gap-2 text-[11px] text-slate-500">
           {(["PRESENT", "ABSENT", "LATE", "EXCUSED"] as const).map((s) => (
             <span key={s} className="flex items-center gap-1"><span className={cn("h-2.5 w-2.5 rounded-full", STATUS_STYLE[s])} />{label(s)}</span>

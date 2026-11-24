@@ -6,6 +6,7 @@ import { cn } from "@/lib/cn";
 import { tr } from "@/lib/tr";
 import type { Locale } from "@/lib/constants";
 import { Icon } from "../../_components/Icon";
+import LogoLoader from "../../_components/LogoLoader";
 import { getStudentAttendanceJournal } from "./journalActions";
 import type { StudentJournal } from "./journal";
 
@@ -106,7 +107,7 @@ export function StudentAttendanceJournal({ studentId, locale, initial }: { stude
           {months[ym.m]} {ym.y}
         </span>
         <button type="button" onClick={() => shift(1)} className={navBtn} aria-label={L("Keyingi oy", "Следующий месяц", "Next month", "Nächster Monat")}><Icon name="chevronDown" className="h-4 w-4 -rotate-90" /></button>
-        {loading && <Icon name="refresh" className="h-4 w-4 animate-spin text-slate-400" />}
+        {loading && <LogoLoader size={22} shadow={false} />}
         <div className="ml-auto flex flex-wrap items-center gap-x-2.5 gap-y-1 text-[11px] text-slate-500 dark:text-slate-400">
           {legend.map((s) => (
             <span key={s} className="flex items-center gap-1"><span className={cn("h-2.5 w-2.5 rounded-full", LEGEND_DOT[s])} />{label(s)}</span>
