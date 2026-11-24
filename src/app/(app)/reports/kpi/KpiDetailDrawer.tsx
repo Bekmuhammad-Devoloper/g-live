@@ -120,12 +120,12 @@ export default function KpiDetailDrawer({ row, tab: initialTab, locale, onClose 
             rightSub: `KPI +${money(kpiOf(c.amount, cpct))}`,
           }));
 
-  const tabs: { key: KpiDetailTab; text: string; count: number }[] = view
+  const tabs: { key: KpiDetailTab; text: string; short: string; count: number }[] = view
     ? [
-        { key: "leads", text: L("Lidlar", "Лиды", "Leads", "Leads"), count: view.leads.length + view.direct.length },
-        { key: "paid", text: L("To'lov qilganlar", "Оплатившие", "Paid", "Bezahlt"), count: view.paid.length },
-        { key: "lost", text: L("Bloklangan", "Заблокировано", "Blocked", "Blockiert"), count: view.lost.length },
-        ...(isAdmin ? [{ key: "coll" as const, text: L("Qabul qilgan to'lovlar", "Принятые оплаты", "Accepted payments", "Angenommene Zahlungen"), count: view.coll.length }] : []),
+        { key: "leads", text: L("Lidlar", "Лиды", "Leads", "Leads"), short: L("Lidlar", "Лиды", "Leads", "Leads"), count: view.leads.length + view.direct.length },
+        { key: "paid", text: L("To'lov qilganlar", "Оплатившие", "Paid", "Bezahlt"), short: L("To'lov qilgan", "Оплатили", "Paid", "Bezahlt"), count: view.paid.length },
+        { key: "lost", text: L("Bloklangan", "Заблокировано", "Blocked", "Blockiert"), short: L("Bloklangan", "Блок", "Blocked", "Blockiert"), count: view.lost.length },
+        ...(isAdmin ? [{ key: "coll" as const, text: L("Qabul qilgan to'lovlar", "Принятые оплаты", "Accepted payments", "Angenommene Zahlungen"), short: L("Qabul qilgan", "Принято", "Accepted", "Angenommen"), count: view.coll.length }] : []),
       ]
     : [];
 
@@ -172,19 +172,20 @@ export default function KpiDetailDrawer({ row, tab: initialTab, locale, onClose 
               </button>
             ))}
           </div>
-          <div className="flex flex-wrap gap-1.5">
+          <div className="grid auto-cols-fr grid-flow-col gap-1.5">
             {tabs.map((t) => (
               <button
                 key={t.key}
                 type="button"
                 onClick={() => setTab(t.key)}
+                title={t.text}
                 className={cn(
-                  "inline-flex items-center gap-1.5 rounded-lg border px-2.5 py-1.5 text-xs font-semibold transition",
+                  "flex min-w-0 flex-col items-center justify-center gap-0.5 rounded-lg border px-1.5 py-1.5 transition",
                   tab === t.key ? "border-brand-500 bg-brand-50 text-brand-700 dark:border-brand-400 dark:bg-brand-500/15 dark:text-brand-200" : "border-slate-200 text-slate-500 hover:bg-slate-50 dark:border-white/10 dark:text-slate-400 dark:hover:bg-white/5",
                 )}
               >
-                {t.text}
-                <span className="rounded-md bg-slate-900/5 px-1.5 tabular-nums dark:bg-white/10">{t.count}</span>
+                <span className="text-base font-bold leading-none tabular-nums">{t.count}</span>
+                <span className="text-center text-[10.5px] font-semibold leading-tight">{t.short}</span>
               </button>
             ))}
           </div>
