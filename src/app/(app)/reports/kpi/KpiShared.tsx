@@ -11,6 +11,7 @@ export interface VKpiRow {
   id: string;
   name: string;
   cat: Cat;
+  role: string;
   imageUrl?: string | null;
   total: number;
   won: number;
@@ -20,11 +21,15 @@ export interface VKpiRow {
   kpiPct: number;
   fiksa: number;
   bonus: number;
+  collectPct: number;
   kpiMoney: number;
   paidAll: number;
+  collCountAll: number;
   wonMonth: number;
   paidMonth: number;
   baseMonth: number;
+  collCountMonth: number;
+  collBaseMonth: number;
   earnedMonth: number;
   workDays: number;
 }

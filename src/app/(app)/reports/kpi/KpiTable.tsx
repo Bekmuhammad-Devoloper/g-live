@@ -12,7 +12,7 @@ import { saveKpiPay } from "./actions";
 
 export default function KpiTable({ rows, tab, locale, canEdit = false }: { rows: VKpiRow[]; tab: Cat; locale: Locale; canEdit?: boolean }) {
   const isRop = tab === "rop";
-  const cols = (isRop ? 7 : 10) + (canEdit ? 1 : 0);
+  const cols = 10 + (canEdit ? 1 : 0);
   const [editing, setEditing] = useState<VKpiRow | null>(null);
 
   const t = {
@@ -37,7 +37,7 @@ export default function KpiTable({ rows, tab, locale, canEdit = false }: { rows:
   return (
     <div className="overflow-hidden rounded-2xl border border-slate-200/70 bg-white shadow-card dark:border-slate-800 dark:bg-slate-900">
       <div className="overflow-x-auto">
-        <table className={`w-full text-left text-sm ${isRop ? "min-w-[760px]" : "min-w-[1100px]"}`}>
+        <table className="w-full min-w-[1100px] text-left text-sm">
           <thead className="border-b border-slate-200/70 bg-slate-50/60 dark:border-slate-800 dark:bg-white/[0.02]">
             <tr>
               <th className={`${th} w-14 text-center`}>#</th>
@@ -47,13 +47,9 @@ export default function KpiTable({ rows, tab, locale, canEdit = false }: { rows:
               <th className={`${th} text-center`}>{isRop ? t.operators : t.blocked}</th>
               <th className={`${th} text-center`}>{t.conv}</th>
               <th className={`${th} text-center`}>KPI</th>
-              {!isRop && (
-                <>
-                  <th className={`${th} text-center`}>{t.salary}</th>
-                  <th className={`${th} text-center`}>{t.earned}</th>
-                  <th className={`${th} text-center`}>{t.workDays}</th>
-                </>
-              )}
+              <th className={`${th} text-center`}>{t.salary}</th>
+              <th className={`${th} text-center`}>{t.earned}</th>
+              <th className={`${th} text-center`}>{t.workDays}</th>
               {canEdit && <th className={`${th} text-right`}>{t.actions}</th>}
             </tr>
           </thead>
@@ -115,26 +111,27 @@ export default function KpiTable({ rows, tab, locale, canEdit = false }: { rows:
                       </div>
                       <div className="text-[10px] text-slate-400">
                         {o.paidAll} × {tr(locale, { uz: "1-to'lov", ru: "1-я оплата", en: "1st payment", de: "1. Zahlung" })} · {o.bonus}%
+                        {o.role === "ADMIN" && <div>{o.collCountAll} × {tr(locale, { uz: "qabul", ru: "приём", en: "accepted", de: "angenommen" })} · {o.collectPct}%</div>}
                       </div>
                     </td>
-                    {!isRop && (
-                      <>
+                    <>
                         <td className="px-4 py-3.5 text-center">
                           <div className="font-semibold tabular-nums text-slate-700 dark:text-slate-200">{formatMoney(o.fiksa, locale)}</div>
                           <div className="text-[10px] text-emerald-500">+{o.bonus}% · {tr(locale, { uz: "1-to'lov", ru: "1-я оплата", en: "1st payment", de: "1. Zahlung" })}</div>
+                          {o.role === "ADMIN" && <div className="text-[10px] text-sky-500">+{o.collectPct}% · {tr(locale, { uz: "qabul", ru: "приём", en: "accepted", de: "angenommen" })}</div>}
                         </td>
                         <td className="px-4 py-3.5 text-center">
                           <div className="font-semibold tabular-nums text-emerald-600 dark:text-emerald-400">{formatMoney(o.earnedMonth, locale)}</div>
                           <div className="text-[10px] text-slate-400">
                             {o.paidMonth} × {tr(locale, { uz: "1-to'lov", ru: "1-я оплата", en: "1st payment", de: "1. Zahlung" })} · {o.bonus}%
+                            {o.role === "ADMIN" && <div>{o.collCountMonth} × {tr(locale, { uz: "qabul", ru: "приём", en: "accepted", de: "angenommen" })} · {o.collectPct}%</div>}
                           </div>
                         </td>
                         <td className="px-4 py-3.5 text-center">
                           <span className="font-semibold tabular-nums text-blue-600 dark:text-blue-400">{o.workDays}</span>{" "}
                           <span className="text-[10px] text-slate-400">{t.days}</span>
                         </td>
-                      </>
-                    )}
+                    </>
                     {canEdit && (
                       <td className="px-4 py-3.5 text-right">
                         <button
@@ -164,6 +161,8 @@ function EditPayModal({ row, locale, onClose }: { row: VKpiRow; locale: Locale; 
   const [mounted, setMounted] = useState(false);
   const [fiksa, setFiksa] = useState(nf(row.fiksa));
   const [bonus, setBonus] = useState(row.bonus > 0 ? String(row.bonus) : "");
+  const [collect, setCollect] = useState(row.collectPct > 0 ? String(row.collectPct) : "");
+  const isAdmin = row.role === "ADMIN";
   const [err, setErr] = useState<string | null>(null);
   const [busy, start] = useTransition();
 
@@ -182,7 +181,7 @@ function EditPayModal({ row, locale, onClose }: { row: VKpiRow; locale: Locale; 
   const submit = () => {
     setErr(null);
     start(async () => {
-      const r = await saveKpiPay(row.id, num(fiksa), pctOf(bonus));
+      const r = await saveKpiPay(row.id, num(fiksa), pctOf(bonus), isAdmin ? pctOf(collect) : undefined);
       if (r.ok) { onClose(); router.refresh(); }
       else setErr(r.error === "forbidden"
         ? tr(locale, { uz: "Sizda ish haqini tahrirlash huquqi yo'q", ru: "Нет прав на изменение зарплаты", en: "No permission to edit pay", de: "Sie haben keine Berechtigung, das Gehalt zu bearbeiten" })
@@ -193,7 +192,7 @@ function EditPayModal({ row, locale, onClose }: { row: VKpiRow; locale: Locale; 
   const inp = "h-11 w-full rounded-xl border border-slate-200 bg-white px-3.5 text-sm font-semibold tabular-nums text-slate-800 outline-none focus:border-brand-400 dark:border-slate-700 dark:bg-slate-800/60 dark:text-slate-100";
   const lbl = "mb-1.5 block text-xs font-medium text-slate-500 dark:text-slate-400";
 
-  const preview = num(fiksa) + Math.round((row.baseMonth * pctOf(bonus)) / 100);
+  const preview = num(fiksa) + Math.round((row.baseMonth * pctOf(bonus)) / 100) + (isAdmin ? Math.round((row.collBaseMonth * pctOf(collect)) / 100) : 0);
 
   return createPortal(
     <div className="fixed inset-0 z-[80] grid place-items-center bg-slate-900/50 p-4 backdrop-blur-sm" onMouseDown={onClose}>
@@ -223,12 +222,24 @@ function EditPayModal({ row, locale, onClose }: { row: VKpiRow; locale: Locale; 
             <label className={lbl}>{tr(locale, { uz: "KPI foizi — o'quvchining birinchi to'lovidan (%)", ru: "Процент KPI — с первой оплаты ученика (%)", en: "KPI percent — of the student's first payment (%)", de: "KPI-Prozentsatz — der ersten Zahlung des Schülers (%)" })}</label>
             <input inputMode="decimal" value={bonus} onChange={(e) => setBonus(e.target.value.replace(/[^\d.,]/g, "").slice(0, 5))} placeholder="10" className={inp} />
           </div>
+          {isAdmin && (
+            <div>
+              <label className={lbl}>{tr(locale, { uz: "To'lov qabul qilish KPI foizi — qabul qilgan har bir to'lovdan (%)", ru: "Процент KPI за приём оплат — с каждой принятой оплаты (%)", en: "Collection KPI percent — of every accepted payment (%)", de: "KPI-Prozentsatz für angenommene Zahlungen (%)" })}</label>
+              <input inputMode="decimal" value={collect} onChange={(e) => setCollect(e.target.value.replace(/[^\d.,]/g, "").slice(0, 5))} placeholder="1" className={inp} />
+            </div>
+          )}
 
           <div className="rounded-xl bg-slate-50 px-3.5 py-3 text-xs dark:bg-white/[0.03]">
             <div className="flex items-center justify-between text-slate-500">
               <span>{tr(locale, { uz: "Shu oydagi birinchi to'lovlar", ru: "Первые оплаты в этом месяце", en: "First payments this month", de: "Erste Zahlungen diesen Monat" })}</span>
               <span className="font-semibold text-slate-700 dark:text-slate-200">{row.paidMonth} · {formatMoney(row.baseMonth, locale)}</span>
             </div>
+            {isAdmin && (
+              <div className="mt-1 flex items-center justify-between text-slate-500">
+                <span>{tr(locale, { uz: "Shu oy qabul qilgan to'lovlari", ru: "Принятые оплаты в этом месяце", en: "Payments accepted this month", de: "Diesen Monat angenommene Zahlungen" })}</span>
+                <span className="font-semibold text-slate-700 dark:text-slate-200">{row.collCountMonth} · {formatMoney(row.collBaseMonth, locale)}</span>
+              </div>
+            )}
             <div className="mt-1.5 flex items-center justify-between border-t border-slate-200/70 pt-1.5 dark:border-slate-700">
               <span className="font-medium text-slate-600 dark:text-slate-300">{tr(locale, { uz: "Taxminiy oylik jami", ru: "Примерно за месяц", en: "Estimated month total", de: "Geschätzte Monatssumme" })}</span>
               <span className="font-bold tabular-nums text-emerald-600 dark:text-emerald-400">{formatMoney(preview, locale)}</span>

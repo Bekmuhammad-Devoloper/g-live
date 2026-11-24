@@ -10,26 +10,27 @@ import { parsePercent } from "@/lib/salesCommission";
 
 export type KpiPayState = { ok?: boolean; error?: string };
 
-export async function saveKpiPay(userId: string, fiksa: number, kpiPercent: number): Promise<KpiPayState> {
+export async function saveKpiPay(userId: string, fiksa: number, kpiPercent: number, collectPercent?: number): Promise<KpiPayState> {
   const s = await requireSession();
   if (getPermission(s.role, MODULES.SALARY) !== "FULL") return { error: "forbidden" };
   if (!userId) return { error: "invalid" };
 
   const f = parseMoney(fiksa);
   const b = parsePercent(kpiPercent) ?? 0;
+  const c = collectPercent === undefined ? undefined : parsePercent(collectPercent) ?? 0;
   if (f === null || b === null) return { error: "invalid" };
 
-  const before = await prisma.user.findUnique({ where: { id: userId }, select: { fullName: true, fiksa: true, kpiPercent: true } });
+  const before = await prisma.user.findUnique({ where: { id: userId }, select: { fullName: true, role: true, fiksa: true, kpiPercent: true, collectPercent: true } });
   if (!before) return { error: "notfound" };
 
-  await prisma.user.update({ where: { id: userId }, data: { fiksa: f, kpiPercent: b } });
+  await prisma.user.update({ where: { id: userId }, data: { fiksa: f, kpiPercent: b, ...(c !== undefined && before.role === "ADMIN" ? { collectPercent: c } : {}) } });
   await writeAudit({
     actorId: s.userId,
     action: "UPDATE",
     entityType: "User",
     entityId: userId,
-    oldValue: { fiksa: before.fiksa, kpiPercent: before.kpiPercent },
-    newValue: { fiksa: f, kpiPercent: b },
+    oldValue: { fiksa: before.fiksa, kpiPercent: before.kpiPercent, collectPercent: before.collectPercent },
+    newValue: { fiksa: f, kpiPercent: b, ...(c !== undefined ? { collectPercent: c } : {}) },
     reason: `KPI to'lovi yangilandi (${before.fullName})`,
   });
 

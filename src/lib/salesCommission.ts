@@ -1,4 +1,5 @@
 import "server-only";
+import type { Prisma } from "@prisma/client";
 import { prisma } from "./db";
 import { ROLES } from "./constants";
 
@@ -16,7 +17,7 @@ export interface MonthCommission {
 
 export type CommissionMap = Map<string, Map<string, MonthCommission>>;
 
-interface SalesOwner {
+export interface SalesOwner {
   ownerId: string;
   since: Date;
   until?: Date;
@@ -52,23 +53,26 @@ function addTo(map: CommissionMap, userId: string, d: Date, amount: number) {
   map.set(userId, byMonth);
 }
 
-export async function salesOwnerByStudent(): Promise<Map<string, SalesOwner>> {
+export interface LeadOwnerRow {
+  id: string;
+  studentId: string | null;
+  stage: string;
+  createdAt: Date;
+  ownerId: string | null;
+}
+
+export async function leadOwners(where: Prisma.LeadWhereInput = {}): Promise<LeadOwnerRow[]> {
   const staff = await prisma.user.findMany({ where: { role: { in: OWNER_ROLES } }, select: { id: true } });
-  const out = new Map<string, SalesOwner>();
-  if (staff.length === 0) return out;
   const staffIds = staff.map((u) => u.id);
   const staffSet = new Set(staffIds);
-  const converted = { studentId: { not: null } };
   const [leads, acts, calls] = await Promise.all([
-    prisma.lead.findMany({ where: converted, select: { id: true, studentId: true, managerId: true, createdAt: true } }),
-    prisma.leadActivity.findMany({
-      where: { authorId: { in: staffIds }, lead: converted },
-      select: { leadId: true, authorId: true, createdAt: true, result: true },
-    }),
-    prisma.call.findMany({
-      where: { operatorId: { in: staffIds }, lead: converted },
-      select: { leadId: true, operatorId: true, startedAt: true },
-    }),
+    prisma.lead.findMany({ where, select: { id: true, studentId: true, managerId: true, stage: true, createdAt: true } }),
+    staffIds.length
+      ? prisma.leadActivity.findMany({ where: { authorId: { in: staffIds }, lead: { is: where } }, select: { leadId: true, authorId: true, createdAt: true, result: true } })
+      : Promise.resolve([]),
+    staffIds.length
+      ? prisma.call.findMany({ where: { operatorId: { in: staffIds }, lead: { is: where } }, select: { leadId: true, operatorId: true, startedAt: true } })
+      : Promise.resolve([]),
   ]);
   const first = new Map<string, { id: string; at: Date }>();
   const consider = (leadId: string | null, userId: string | null, at: Date) => {
@@ -78,13 +82,24 @@ export async function salesOwnerByStudent(): Promise<Map<string, SalesOwner>> {
   };
   for (const a of acts) if (!isAutoNote(a.result)) consider(a.leadId, a.authorId, a.createdAt);
   for (const c of calls) consider(c.leadId, c.operatorId, c.startedAt);
-  for (const l of leads) {
-    if (!l.studentId) continue;
-    const ownerId = first.get(l.id)?.id ?? (l.managerId && staffSet.has(l.managerId) ? l.managerId : null);
-    if (ownerId) out.set(l.studentId, { ownerId, since: l.createdAt });
+  return leads.map((l) => ({
+    id: l.id,
+    studentId: l.studentId,
+    stage: l.stage,
+    createdAt: l.createdAt,
+    ownerId: first.get(l.id)?.id ?? (l.managerId && staffSet.has(l.managerId) ? l.managerId : null),
+  }));
+}
+
+export async function salesOwnerByStudent(): Promise<Map<string, SalesOwner>> {
+  const out = new Map<string, SalesOwner>();
+  for (const l of await leadOwners({ studentId: { not: null } })) {
+    if (l.studentId && l.ownerId) out.set(l.studentId, { ownerId: l.ownerId, since: l.createdAt });
   }
+  const staff = await prisma.user.findMany({ where: { role: { in: OWNER_ROLES } }, select: { id: true } });
+  if (staff.length === 0) return out;
   const direct = await prisma.auditLog.findMany({
-    where: { entityType: "Student", action: "CREATE", actorId: { in: staffIds } },
+    where: { entityType: "Student", action: "CREATE", actorId: { in: staff.map((u) => u.id) } },
     select: { entityId: true, actorId: true, createdAt: true },
   });
   for (const a of direct) {
@@ -94,11 +109,11 @@ export async function salesOwnerByStudent(): Promise<Map<string, SalesOwner>> {
   return out;
 }
 
-export async function firstPaymentsByManager(managerIds: string[]): Promise<FirstPayment[]> {
+export async function firstPaymentsByManager(managerIds: string[], owners?: Map<string, SalesOwner>): Promise<FirstPayment[]> {
   if (managerIds.length === 0) return [];
   const wanted = new Set(managerIds);
   const mine = new Map<string, SalesOwner>();
-  for (const [studentId, o] of await salesOwnerByStudent()) if (wanted.has(o.ownerId)) mine.set(studentId, o);
+  for (const [studentId, o] of owners ?? (await salesOwnerByStudent())) if (wanted.has(o.ownerId)) mine.set(studentId, o);
   if (mine.size === 0) return [];
 
   const ids = [...mine.keys()];
@@ -122,9 +137,9 @@ export async function firstPaymentsByManager(managerIds: string[]): Promise<Firs
   return out;
 }
 
-export async function commissionByManagerMonth(managerIds: string[]): Promise<CommissionMap> {
+export async function commissionByManagerMonth(managerIds: string[], owners?: Map<string, SalesOwner>): Promise<CommissionMap> {
   const out: CommissionMap = new Map();
-  for (const it of await firstPaymentsByManager(managerIds)) addTo(out, it.managerId, it.paidAt, it.amount);
+  for (const it of await firstPaymentsByManager(managerIds, owners)) addTo(out, it.managerId, it.paidAt, it.amount);
   return out;
 }
 
