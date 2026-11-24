@@ -3,10 +3,11 @@
 import { revalidatePath } from "next/cache";
 import { prisma } from "@/lib/db";
 import { requireSession } from "@/lib/auth";
-import { getPermission, MODULES } from "@/lib/rbac";
+import { canSeeTeamReports, getPermission, MODULES } from "@/lib/rbac";
+import { staffBranchWhere } from "@/lib/branchScope";
 import { writeAudit } from "@/lib/audit";
 import { parseMoney } from "@/lib/constants";
-import { parsePercent } from "@/lib/salesCommission";
+import { firstPaymentsByManager, leadOwners, parsePercent, salesOwnerByStudent } from "@/lib/salesCommission";
 
 export type KpiPayState = { ok?: boolean; error?: string };
 
@@ -37,4 +38,72 @@ export async function saveKpiPay(userId: string, fiksa: number, kpiPercent: numb
   revalidatePath("/reports/kpi");
   revalidatePath("/users");
   return { ok: true };
+}
+
+export interface KpiDetailLead { id: string; name: string; phone: string; stage: string; createdAt: string }
+export interface KpiDetailDirect { studentId: string; name: string; createdAt: string }
+export interface KpiDetailPay { studentId: string; name: string; amount: number; paidAt: string; leadId: string | null }
+export interface KpiDetailColl { id: string; studentId: string; name: string; amount: number; method: string; createdAt: string }
+export interface KpiDetails {
+  role: string;
+  kpiPercent: number;
+  collectPercent: number;
+  leads: KpiDetailLead[];
+  direct: KpiDetailDirect[];
+  paid: KpiDetailPay[];
+  collections: KpiDetailColl[];
+}
+
+const CHUNK = 500;
+
+async function inChunks<T>(ids: string[], run: (part: string[]) => Promise<T[]>): Promise<T[]> {
+  const out: T[] = [];
+  for (let i = 0; i < ids.length; i += CHUNK) out.push(...(await run(ids.slice(i, i + CHUNK))));
+  return out;
+}
+
+export async function getKpiDetails(userId: string): Promise<{ data?: KpiDetails; error?: string }> {
+  const s = await requireSession();
+  if (!canSeeTeamReports(s.role)) return { error: "forbidden" };
+  const u = await prisma.user.findFirst({ where: { AND: [{ id: userId }, staffBranchWhere(s)] }, select: { id: true, role: true, kpiPercent: true, collectPercent: true } });
+  if (!u) return { error: "notfound" };
+
+  const [owned, owners] = await Promise.all([leadOwners(), salesOwnerByStudent()]);
+  const mine = owned.filter((l) => l.ownerId === u.id);
+  const leadByStudent = new Map(mine.filter((l) => l.studentId).map((l) => [l.studentId as string, l.id]));
+  const directIds = [...owners].filter(([, o]) => o.ownerId === u.id && o.until).map(([sid]) => sid);
+  const firsts = await firstPaymentsByManager([u.id], owners);
+
+  const [leadRows, directRows, paidStudents, coll] = await Promise.all([
+    inChunks(mine.map((l) => l.id), (part) => prisma.lead.findMany({ where: { id: { in: part } }, select: { id: true, fullName: true, phone: true, stage: true, createdAt: true } })),
+    inChunks(directIds, (part) => prisma.student.findMany({ where: { id: { in: part } }, select: { id: true, fullName: true, createdAt: true } })),
+    inChunks(firsts.map((f) => f.studentId), (part) => prisma.student.findMany({ where: { id: { in: part } }, select: { id: true, fullName: true } })),
+    u.role === "ADMIN"
+      ? prisma.payment.findMany({
+          where: { authorId: u.id, status: "PAID", amount: { gt: 0 } },
+          orderBy: { createdAt: "desc" },
+          take: 3000,
+          select: { id: true, studentId: true, amount: true, method: true, createdAt: true, student: { select: { fullName: true } } },
+        })
+      : Promise.resolve([]),
+  ]);
+  const nameOf = new Map(paidStudents.map((st) => [st.id, st.fullName]));
+
+  return {
+    data: {
+      role: u.role,
+      kpiPercent: u.kpiPercent,
+      collectPercent: u.role === "ADMIN" ? u.collectPercent : 0,
+      leads: leadRows
+        .sort((a, b) => b.createdAt.getTime() - a.createdAt.getTime())
+        .map((l) => ({ id: l.id, name: l.fullName, phone: l.phone, stage: l.stage, createdAt: l.createdAt.toISOString() })),
+      direct: directRows
+        .sort((a, b) => b.createdAt.getTime() - a.createdAt.getTime())
+        .map((d) => ({ studentId: d.id, name: d.fullName, createdAt: d.createdAt.toISOString() })),
+      paid: firsts
+        .sort((a, b) => b.paidAt.getTime() - a.paidAt.getTime())
+        .map((f) => ({ studentId: f.studentId, name: nameOf.get(f.studentId) ?? "—", amount: f.amount, paidAt: f.paidAt.toISOString(), leadId: leadByStudent.get(f.studentId) ?? null })),
+      collections: coll.map((c) => ({ id: c.id, studentId: c.studentId, name: c.student.fullName, amount: c.amount, method: c.method, createdAt: c.createdAt.toISOString() })),
+    },
+  };
 }

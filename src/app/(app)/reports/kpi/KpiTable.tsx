@@ -9,11 +9,14 @@ import { tr } from "@/lib/tr";
 import { Icon } from "../../_components/Icon";
 import { Avatar, CAT_ICON, CAT_LABEL, kpiColor, nf, RankBadge, type Cat, type VKpiRow } from "./KpiShared";
 import { saveKpiPay } from "./actions";
+import KpiDetailDrawer, { type KpiDetailTab } from "./KpiDetailDrawer";
 
 export default function KpiTable({ rows, tab, locale, canEdit = false }: { rows: VKpiRow[]; tab: Cat; locale: Locale; canEdit?: boolean }) {
   const isRop = tab === "rop";
   const cols = 10 + (canEdit ? 1 : 0);
   const [editing, setEditing] = useState<VKpiRow | null>(null);
+  const [detail, setDetail] = useState<{ row: VKpiRow; tab: KpiDetailTab } | null>(null);
+  const open = (o: VKpiRow, tab: KpiDetailTab) => (e: React.MouseEvent) => { e.stopPropagation(); setDetail({ row: o, tab }); };
 
   const t = {
     employee: tr(locale, { uz: "Xodim", ru: "Сотрудник", en: "Employee", de: "Mitarbeiter" }),
@@ -66,7 +69,7 @@ export default function KpiTable({ rows, tab, locale, canEdit = false }: { rows:
                 const rank = i + 1;
                 const c = kpiColor(o.kpiPct);
                 return (
-                  <tr key={o.id} className="transition hover:bg-slate-50 dark:hover:bg-slate-800/40">
+                  <tr key={o.id} onClick={() => setDetail({ row: o, tab: "paid" })} className="cursor-pointer transition hover:bg-slate-50 dark:hover:bg-slate-800/40">
                     <td className="px-4 py-3.5">
                       <RankBadge rank={rank} />
                     </td>
@@ -82,14 +85,14 @@ export default function KpiTable({ rows, tab, locale, canEdit = false }: { rows:
                         </div>
                       </div>
                     </td>
-                    <td className="px-4 py-3.5 text-center font-semibold tabular-nums text-slate-700 dark:text-slate-200">{o.total}</td>
-                    <td className="px-4 py-3.5 text-center">
+                    <td onClick={open(o, "leads")} className="px-4 py-3.5 text-center font-semibold tabular-nums text-slate-700 underline-offset-4 hover:underline dark:text-slate-200">{o.total}</td>
+                    <td onClick={open(o, "paid")} className="px-4 py-3.5 text-center">
                       <span className="inline-flex items-center gap-1 font-semibold tabular-nums text-emerald-600 dark:text-emerald-400">
                         <Icon name="arrowUpRight" className="h-3.5 w-3.5" />
                         {o.won}
                       </span>
                     </td>
-                    <td className="px-4 py-3.5 text-center">
+                    <td onClick={isRop ? undefined : open(o, "lost")} className="px-4 py-3.5 text-center">
                       {isRop ? (
                         <span className="inline-flex items-center gap-1 font-semibold tabular-nums text-blue-600 dark:text-blue-400">
                           <Icon name="users" className="h-3.5 w-3.5" />
@@ -111,7 +114,7 @@ export default function KpiTable({ rows, tab, locale, canEdit = false }: { rows:
                       </div>
                       <div className="text-[10px] text-slate-400">
                         {o.paidAll} × {tr(locale, { uz: "1-to'lov", ru: "1-я оплата", en: "1st payment", de: "1. Zahlung" })} · {o.bonus}%
-                        {o.role === "ADMIN" && <div>{o.collCountAll} × {tr(locale, { uz: "qabul", ru: "приём", en: "accepted", de: "angenommen" })} · {o.collectPct}%</div>}
+                        {o.role === "ADMIN" && <div onClick={open(o, "coll")} className="hover:underline">{o.collCountAll} × {tr(locale, { uz: "qabul", ru: "приём", en: "accepted", de: "angenommen" })} · {o.collectPct}%</div>}
                       </div>
                     </td>
                     <>
@@ -135,7 +138,7 @@ export default function KpiTable({ rows, tab, locale, canEdit = false }: { rows:
                     {canEdit && (
                       <td className="px-4 py-3.5 text-right">
                         <button
-                          onClick={() => setEditing(o)}
+                          onClick={(e) => { e.stopPropagation(); setEditing(o); }}
                           title={t.edit}
                           className="inline-grid h-8 w-8 place-items-center rounded-lg text-slate-400 transition hover:bg-slate-100 hover:text-brand-600 dark:hover:bg-slate-800"
                         >
@@ -152,6 +155,7 @@ export default function KpiTable({ rows, tab, locale, canEdit = false }: { rows:
       </div>
 
       {editing && <EditPayModal row={editing} locale={locale} onClose={() => setEditing(null)} />}
+      {detail && <KpiDetailDrawer row={detail.row} tab={detail.tab} locale={locale} onClose={() => setDetail(null)} />}
     </div>
   );
 }
