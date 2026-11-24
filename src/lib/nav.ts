@@ -17,9 +17,9 @@ const TOP = [ROLES.DIRECTOR, ROLES.ADMIN];
 const ALL: NavItem[] = [
   { href: "/tasks", icon: "clipboard", i18nKey: "nav.tasks", roles: [...STAFF, ROLES.TEACHER] },
   { href: "/crm", icon: "download", i18nKey: "nav.leads", module: MODULES.CRM },
-  { href: "/teachers", icon: "teacher", i18nKey: "nav.teachers", roles: STAFF },
+  { href: "/teachers", icon: "teacherBoard", i18nKey: "nav.teachers", roles: STAFF },
   { href: "/groups", icon: "layers", i18nKey: "nav.groups", module: MODULES.GROUPS },
-  { href: "/students", icon: "graduation", i18nKey: "nav.students", roles: [...STAFF, ROLES.TEACHER] },
+  { href: "/students", icon: "graduate", i18nKey: "nav.students", roles: [...STAFF, ROLES.TEACHER] },
   { href: "/education", icon: "book", i18nKey: "nav.education", roles: [...HEAD, ROLES.TEACHER, ROLES.MANAGER] },
   { href: "/chat", icon: "mail", i18nKey: "nav.chat", roles: [ROLES.TEACHER] },
   { href: "/reminders", icon: "clock", i18nKey: "nav.reminders", roles: [...STAFF, ROLES.TEACHER] },
