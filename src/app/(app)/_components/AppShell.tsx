@@ -405,7 +405,7 @@ export default function AppShell({ navItems, role, portal, user, locale, labels,
         <BrandMark brand={brand} className="max-h-10 w-auto max-w-full object-contain" />
       </Link>
 
-      <nav className="flex-1 overflow-y-auto py-2">
+      <nav className="no-scrollbar flex-1 overflow-y-auto py-2">
         {portalNav
           ? portalNav.map((it) => {
               const on = it.exact ? pathname === it.href : pathname === it.href || pathname.startsWith(it.href + "/");
@@ -506,7 +506,7 @@ export default function AppShell({ navItems, role, portal, user, locale, labels,
             <div className="shrink-0 border-b border-slate-200 px-4 py-3 text-[15px] font-bold text-slate-800 dark:border-white/5 dark:text-white">
               {SUBMENUS[fly.href].title[locale] ?? SUBMENUS[fly.href].title.uz}
             </div>
-            <div className="flex-1 overflow-y-auto py-1.5">
+            <div className="no-scrollbar flex-1 overflow-y-auto py-1.5">
             {submenuGroups(fly.href).map((grp, gi) => {
               const gkey = `${fly.href}:${gi}`;
               const isCol = collapsed.has(gkey);
@@ -558,7 +558,7 @@ export default function AppShell({ navItems, role, portal, user, locale, labels,
               <button onClick={() => setOpen(false)} className="flex h-9 w-9 items-center justify-center rounded-lg text-xl text-slate-400 transition hover:bg-slate-100 hover:text-slate-600 dark:hover:bg-white/10">✕</button>
             </div>
 
-            <nav className="flex-1 overflow-y-auto p-2">
+            <nav className="no-scrollbar flex-1 overflow-y-auto p-2">
               {portalNav
                 ? portalNav.map((it) => {
                     const on = it.exact ? pathname === it.href : pathname === it.href || pathname.startsWith(it.href + "/");
