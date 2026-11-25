@@ -5,7 +5,7 @@ import { z } from "zod";
 import { MAX_MONEY } from "@/lib/constants";
 import { prisma } from "@/lib/db";
 import { requireSession } from "@/lib/auth";
-import { canWrite, MODULES } from "@/lib/rbac";
+import { canWriteFor, MODULES } from "@/lib/rbac";
 import { writeAudit } from "@/lib/audit";
 import { branchWhere } from "@/lib/branchScope";
 
@@ -23,7 +23,7 @@ const schema = z.object({
 
 export async function createExpense(_prev: ExState, formData: FormData): Promise<ExState> {
   const s = await requireSession();
-  if (!canWrite(s.role, MODULES.EXPENSES)) return { error: "forbidden" };
+  if (!canWriteFor(s, MODULES.EXPENSES)) return { error: "forbidden" };
 
   const parsed = schema.safeParse({
     name: formData.get("name"),
@@ -66,7 +66,7 @@ export async function createExpense(_prev: ExState, formData: FormData): Promise
 
 export async function updateExpense(_prev: ExState, formData: FormData): Promise<ExState> {
   const s = await requireSession();
-  if (!canWrite(s.role, MODULES.EXPENSES)) return { error: "forbidden" };
+  if (!canWriteFor(s, MODULES.EXPENSES)) return { error: "forbidden" };
 
   const id = String(formData.get("id") ?? "");
   const parsed = schema.safeParse({
@@ -118,7 +118,7 @@ export async function updateExpense(_prev: ExState, formData: FormData): Promise
 
 export async function deleteExpense(id: string): Promise<void> {
   const s = await requireSession();
-  if (!canWrite(s.role, MODULES.EXPENSES)) return;
+  if (!canWriteFor(s, MODULES.EXPENSES)) return;
 
   const before = await prisma.expense.findFirst({ where: { id, ...branchWhere(s) } });
   if (!before) return;

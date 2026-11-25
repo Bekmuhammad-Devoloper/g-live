@@ -1,6 +1,6 @@
 import { requireSession } from "@/lib/auth";
 import { prisma } from "@/lib/db";
-import { canRead, canWrite, MODULES } from "@/lib/rbac";
+import { canReadFor, canWriteFor, MODULES } from "@/lib/rbac";
 import { tr } from "@/lib/tr";
 import { branchWhere } from "@/lib/branchScope";
 import { Forbidden } from "../../_components/ui";
@@ -13,7 +13,7 @@ const iso = (d: Date) => `${d.getFullYear()}-${p2(d.getMonth() + 1)}-${p2(d.getD
 
 export default async function ExpensesPage() {
   const s = await requireSession();
-  if (!canRead(s.role, MODULES.EXPENSES)) {
+  if (!canReadFor(s, MODULES.EXPENSES)) {
     return <Forbidden title={tr(s.locale, { uz: "Kirish taqiqlangan", ru: "Доступ запрещён", en: "Access denied", de: "Zugriff verweigert" })} body={tr(s.locale, { uz: "Bu bo'lim uchun ruxsatingiz yo'q.", ru: "У вас нет доступа к этому разделу.", en: "You do not have permission for this section.", de: "Sie haben keine Berechtigung für diesen Bereich." })} />;
   }
 
@@ -58,7 +58,7 @@ export default async function ExpensesPage() {
         expenses={expenses}
         categories={categories}
         staff={staff}
-        writable={canWrite(s.role, MODULES.EXPENSES)}
+        writable={canWriteFor(s, MODULES.EXPENSES)}
         locale={s.locale}
         defaultFrom={from}
         defaultTo={to}

@@ -20,7 +20,7 @@ export const defaultPositionFor = (role: string): string | null => DEFAULT_POSIT
 
 export function roleForPosition(position: string): string {
   const p = position.toLowerCase();
-  if (p.includes("administr")) return ROLES.ADMIN;
+  if (p.includes("admin")) return ROLES.ADMIN;
   if (p.includes("filial")) return ROLES.DEPUTY_DIRECTOR;
   if (p.includes("o'rinbosar") || p.includes("o‘rinbosar") || p.includes("orinbosar")) return ROLES.DEPUTY_DIRECTOR;
   if (p.includes("direktor")) return ROLES.DIRECTOR;
@@ -37,3 +37,8 @@ export const isSalesPosition = (position: string | null | undefined): boolean =>
 };
 
 export const isAdminPosition = (position: string | null | undefined): boolean => !!position && roleForPosition(position) === ROLES.ADMIN;
+
+export const financeForPosition = (position: string | null | undefined): boolean => {
+  const p = (position ?? "").toLowerCase();
+  return p.includes("admin") && /moliya|kassa|hisob|buxgalter|bugalter|finance/.test(p);
+};

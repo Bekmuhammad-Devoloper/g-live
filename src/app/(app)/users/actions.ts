@@ -7,7 +7,7 @@ import { ROLES, ROLE_LABELS, label, isSalesRole, parseMoney } from "@/lib/consta
 import { tr } from "@/lib/tr";
 import { writeAudit } from "@/lib/audit";
 import { archivedEmailError, isValidStaffEmail, normalizeLogin, normalizePassword, staffEmailError } from "@/lib/credentials";
-import { MANAGEMENT_ROLES, defaultPositionFor, roleForPosition } from "./positions";
+import { MANAGEMENT_ROLES, defaultPositionFor, financeForPosition, roleForPosition } from "./positions";
 import { collectionsByAuthorMonth, commissionByManagerMonth, commissionOf, monthCommission, parsePercent } from "@/lib/salesCommission";
 
 const p2 = (n: number) => String(n).padStart(2, "0");
@@ -98,7 +98,7 @@ export async function createStaff(fd: FormData): Promise<StaffResult> {
   const extraBranches = extraBranchesOf(fd, branchId);
   const u = await prisma.user.create({
     data: {
-      fullName, email, phone, passwordHash: await hashPassword(password), plainPassword: password, role, position, branchId, gender, birthDate, fiksa, kpiPercent: kpiPercent ?? 0, collectPercent: collectPercent ?? 0, isActive: true,
+      fullName, email, phone, passwordHash: await hashPassword(password), plainPassword: password, role, position, branchId, gender, birthDate, fiksa, kpiPercent: kpiPercent ?? 0, collectPercent: collectPercent ?? 0, financeAccess: role === ROLES.ADMIN && financeForPosition(position), isActive: true,
       branches: { create: extraBranches.map((b) => ({ branchId: b })) },
     },
   });
@@ -213,6 +213,7 @@ export async function updateStaff(fd: FormData): Promise<StaffResult> {
     where: { id },
     data: {
       fullName, email, phone, position, role, branchId, gender, birthDate, fiksa,
+      financeAccess: role === ROLES.ADMIN && financeForPosition(position),
       ...(kpiPercent !== undefined ? { kpiPercent } : {}),
       ...(collectPercent !== undefined ? { collectPercent } : {}),
       ...(newPassword ? { passwordHash: await hashPassword(newPassword), plainPassword: newPassword } : {}),

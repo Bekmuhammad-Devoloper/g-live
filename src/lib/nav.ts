@@ -36,9 +36,10 @@ const ALL: NavItem[] = [
   { href: "/settings/operator", icon: "headphones", i18nKey: "nav.mySettings", roles: [ROLES.OPERATOR, ROLES.ROP, ROLES.MANAGER] },
 ];
 
-export function navFor(role: string): NavItem[] {
+export function navFor(role: string, extra: { finance?: boolean } = {}): NavItem[] {
   return ALL.filter((it) => {
     if (!isPathEnabled(it.href)) return false;
+    if (it.href === "/finance" && extra.finance) return true;
     if (it.module) return canRead(role, it.module);
     if (it.roles) return it.roles.includes(role);
     return true;

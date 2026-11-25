@@ -82,7 +82,7 @@ export default async function AppLayout({ children }: { children: React.ReactNod
 
   const brand = await getBrand();
   const offPaths = [...disabledModules()].flatMap((m) => INSTANCE_MODULES[m].paths);
-  const navItems = navFor(session.role).map((it) => ({
+  const navItems = navFor(session.role, session).map((it) => ({
     href: it.href,
     icon: it.icon,
     label: t(it.i18nKey),

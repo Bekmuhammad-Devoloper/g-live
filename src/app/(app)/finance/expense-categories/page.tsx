@@ -1,6 +1,6 @@
 import { requireSession } from "@/lib/auth";
 import { prisma } from "@/lib/db";
-import { canRead, canWrite, MODULES } from "@/lib/rbac";
+import { canReadFor, canWriteFor, MODULES } from "@/lib/rbac";
 import { tr } from "@/lib/tr";
 import { branchWhere } from "@/lib/branchScope";
 import { Forbidden } from "../../_components/ui";
@@ -9,7 +9,7 @@ import ExpenseCategoriesView, { type VCategory } from "./ExpenseCategoriesView";
 
 export default async function ExpenseCategoriesPage() {
   const s = await requireSession();
-  if (!canRead(s.role, MODULES.EXPENSES)) {
+  if (!canReadFor(s, MODULES.EXPENSES)) {
     return <Forbidden title={tr(s.locale, { uz: "Kirish taqiqlangan", ru: "Доступ запрещён", en: "Access denied", de: "Zugriff verweigert" })} body={tr(s.locale, { uz: "Bu bo'lim uchun ruxsatingiz yo'q.", ru: "У вас нет доступа к этому разделу.", en: "You do not have permission for this section.", de: "Sie haben keine Berechtigung für diesen Bereich." })} />;
   }
 
@@ -37,5 +37,5 @@ export default async function ExpenseCategoriesPage() {
     refs: c._count.expenses,
   }));
 
-  return <ExpenseCategoriesView categories={categories} writable={canWrite(s.role, MODULES.EXPENSES)} locale={s.locale} />;
+  return <ExpenseCategoriesView categories={categories} writable={canWriteFor(s, MODULES.EXPENSES)} locale={s.locale} />;
 }

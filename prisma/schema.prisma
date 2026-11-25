@@ -100,6 +100,7 @@ model User {
   kpiBonus     Int       @default(200000)
   kpiPercent   Float     @default(0)
   collectPercent Float   @default(0)
+  financeAccess Boolean  @default(false)
   position     String?
   sipExtension String?  @unique
   archivedAt    DateTime?

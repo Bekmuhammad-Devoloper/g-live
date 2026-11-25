@@ -123,6 +123,23 @@ export function canWrite(role: string, module: ModuleKey): boolean {
   return p === "FULL" || p === "OWN";
 }
 
+const FINANCE_EXTRA: Partial<Record<ModuleKey, Permission>> = { PAYMENTS: "FULL", EXPENSES: "FULL" };
+
+export function permissionFor(s: { role: string; finance?: boolean }, module: ModuleKey): Permission {
+  const base = getPermission(s.role, module);
+  const extra = s.finance ? FINANCE_EXTRA[module] : undefined;
+  return extra && base !== "FULL" ? extra : base;
+}
+
+export function canReadFor(s: { role: string; finance?: boolean }, module: ModuleKey): boolean {
+  return permissionFor(s, module) !== "NONE";
+}
+
+export function canWriteFor(s: { role: string; finance?: boolean }, module: ModuleKey): boolean {
+  const p = permissionFor(s, module);
+  return p === "FULL" || p === "OWN";
+}
+
 export function canSeeTeamReports(role: string): boolean {
   const p = getPermission(role, MODULES.REPORTS);
   return p === "FULL" || p === "READ";

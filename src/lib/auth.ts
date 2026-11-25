@@ -18,6 +18,7 @@ export interface SessionUser {
   fullName: string;
   locale: Locale;
   branchId: string | null;
+  finance?: boolean;
 }
 
 export function hashPassword(plain: string): Promise<string> {
@@ -60,9 +61,11 @@ export async function getSession(): Promise<SessionUser | null> {
     const userId = String(payload.userId);
     let role = String(payload.role);
 
-    if (role === ROLES.MANAGER) {
-      const u = await prisma.user.findUnique({ where: { id: userId }, select: { role: true } });
-      if (u && u.role !== ROLES.MANAGER) role = u.role;
+    let finance = false;
+    if (role === ROLES.MANAGER || role === ROLES.ADMIN || role === ROLES.ACCOUNTANT) {
+      const u = await prisma.user.findUnique({ where: { id: userId }, select: { role: true, financeAccess: true } });
+      if (u && u.role !== role && (u.role === ROLES.ADMIN || u.role === ROLES.ACCOUNTANT || role === ROLES.MANAGER)) role = u.role;
+      finance = !!u && u.role === ROLES.ADMIN && u.financeAccess;
     }
 
     return {
@@ -71,6 +74,7 @@ export async function getSession(): Promise<SessionUser | null> {
       fullName: String(payload.fullName),
       locale: (payload.locale as Locale) ?? "uz",
       branchId: (payload.branchId as string | null) ?? null,
+      finance,
     };
   } catch {
     return null;
