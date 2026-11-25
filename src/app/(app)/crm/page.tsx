@@ -24,9 +24,14 @@ export default async function CrmPage() {
     return <Forbidden title={t("err.forbidden")} body={t("err.forbiddenBody")} />;
   }
 
+  const operatorBranchIds = s.role === ROLES.OPERATOR
+    ? await prisma.user.findUnique({ where: { id: s.userId }, select: { branchId: true, branches: { select: { branchId: true } } } })
+        .then((u) => [...new Set([u?.branchId, ...(u?.branches.map((b) => b.branchId) ?? [])].filter((b): b is string => !!b))])
+    : [];
   const branchMode: BranchMode | null =
     s.role === ROLES.ROP || s.role === ROLES.ADMIN ? "sales"
     : s.role === ROLES.DIRECTOR || s.role === ROLES.DEPUTY_DIRECTOR ? "head"
+    : s.role === ROLES.OPERATOR ? "head"
     : null;
   const allBranches = s.role === ROLES.OPERATOR || (branchMode !== null && s.role !== ROLES.ADMIN && !(branchMode === "head" && s.branchId));
   const notRouted = { OR: [{ kanbanColumnId: null }, { NOT: { kanbanColumnId: { startsWith: "br:" } } }] };
@@ -63,7 +68,7 @@ export default async function CrmPage() {
     listKanbanColumns(),
     branchMode
       ? prisma.branch.findMany({
-          where: { isActive: true, ...(s.role === ROLES.ADMIN && s.branchId ? { id: s.branchId } : {}) },
+          where: { isActive: true, ...(s.role === ROLES.ADMIN && s.branchId ? { id: s.branchId } : {}), ...(s.role === ROLES.OPERATOR && operatorBranchIds.length > 0 ? { id: { in: operatorBranchIds } } : {}) },
           select: { id: true, name: true, slots: { select: { id: true, branchId: true, room: true, days: true, startTime: true, endTime: true, note: true, capacity: true }, orderBy: [{ room: "asc" }, { startTime: "asc" }] } },
           orderBy: { name: "asc" },
         })
@@ -220,7 +225,7 @@ export default async function CrmPage() {
       groupInfo={groupInfo}
       archivedStudents={archivedStudents}
       branchMode={branchMode}
-      showOnlineCol={s.role !== ROLES.ROP}
+      showOnlineCol={s.role !== ROLES.ROP && s.role !== ROLES.OPERATOR}
       hiddenCols={s.role === ROLES.ROP ? ["work", "won", "test"] : s.role === ROLES.OPERATOR ? ["test"] : []}
       slotsEditable={[ROLES.DIRECTOR, ROLES.DEPUTY_DIRECTOR].includes(s.role as never) ? "all" : s.role === ROLES.ADMIN ? (s.branchId ?? null) : null}
     />
