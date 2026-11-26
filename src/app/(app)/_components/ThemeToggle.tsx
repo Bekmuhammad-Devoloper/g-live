@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useRef, useState, type MouseEvent } from "react";
+import { flushSync } from "react-dom";
 import { tr } from "@/lib/tr";
 import type { Locale } from "@/lib/constants";
 import { prepareThemeInk, switchTheme } from "@/lib/themeSwitch";
@@ -54,8 +55,7 @@ export default function ThemeToggle({ locale = "uz" }: { locale?: Locale }) {
 
   function toggle(e: MouseEvent<HTMLButtonElement>) {
     const next = !document.documentElement.classList.contains("dark");
-    switchTheme(next, centerOf(e.currentTarget));
-    setDark(next);
+    switchTheme(next, centerOf(e.currentTarget), () => flushSync(() => setDark(next)));
   }
 
   return (

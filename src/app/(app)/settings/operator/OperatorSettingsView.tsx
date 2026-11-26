@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useState, useTransition } from "react";
+import { flushSync } from "react-dom";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { cn } from "@/lib/cn";
@@ -69,8 +70,7 @@ export default function OperatorSettingsView({ locale, initialTab, me, prefs: pr
   }, []);
 
   const applyTheme = (next: boolean) => {
-    switchTheme(next);
-    setDark(next);
+    switchTheme(next, undefined, () => flushSync(() => setDark(next)));
   };
 
   const flash = (m: string) => { setError(null); setMsg(m); setTimeout(() => setMsg(null), 2500); };

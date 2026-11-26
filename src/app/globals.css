@@ -205,7 +205,7 @@ html.gl-theme-vt.gl-ink::view-transition-new(root) {
   mask-size: 100% 100%;
   -webkit-mask-repeat: no-repeat;
   mask-repeat: no-repeat;
-  animation: glInkHold var(--gl-ink-ms, 1700ms) linear both;
+  animation: glInkHold var(--gl-ink-ms, 900ms) linear both;
 }
 @keyframes glInkHold {
   from { opacity: 1; }
