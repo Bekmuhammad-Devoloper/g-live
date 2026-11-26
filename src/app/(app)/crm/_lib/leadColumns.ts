@@ -18,6 +18,7 @@ export interface VLead {
   managerId: string | null;
   managerName: string | null;
   studentId: string | null;
+  paid?: boolean;
   branchId: string | null;
   branchName: string | null;
   branchSlotId: string | null;
@@ -56,6 +57,7 @@ export const COLUMNS: ColumnDef[] = [
   { key: "work", label: { uz: "Ishda", ru: "В работе", en: "In progress", de: "In Arbeit" }, color: "#f59e0b", icon: "clock", stages: ["IN_PROGRESS", "CONTACTED"], defaultStage: "IN_PROGRESS" },
   { key: "test", label: { uz: "Daraja testi", ru: "Тест уровня", en: "Level test", de: "Einstufungstest" }, color: "#06b6d4", icon: "clipboard", stages: ["TEST"], defaultStage: "TEST" },
   { key: "offer", label: { uz: "Taklif", ru: "Предложение", en: "Offer", de: "Angebot" }, color: "#8b5cf6", icon: "filecheck", stages: ["OFFER", "AWAITING_PAYMENT"], defaultStage: "OFFER" },
+  { key: "awaiting", label: { uz: "To'lov kutilmoqda", ru: "Ожидает оплаты", en: "Awaiting payment", de: "Wartet auf Zahlung" }, color: "#f97316", icon: "wallet", stages: [], defaultStage: "WON" },
   { key: "won", label: { uz: "Qabul qilindi", ru: "Принят", en: "Won", de: "Aufgenommen" }, color: "#10b981", icon: "check", stages: ["PAID", "WON"], defaultStage: "WON" },
   { key: "lost", label: { uz: "Yo'qotilgan", ru: "Потерян", en: "Lost", de: "Verloren" }, color: "#ef4444", icon: "personX", stages: ["LOST"], defaultStage: "LOST" },
 ];
@@ -185,7 +187,7 @@ export function branchReplaces(mode: BranchMode): Set<string> {
 }
 
 export function columnOfLead(
-  lead: { stage: string; groupId: string | null; kanbanColumnId?: string | null; branchId?: string | null; studyFormat?: string | null; archivedAt?: string | null; studentId?: string | null },
+  lead: { stage: string; groupId: string | null; kanbanColumnId?: string | null; branchId?: string | null; studyFormat?: string | null; archivedAt?: string | null; studentId?: string | null; paid?: boolean },
   pinned: Set<string>,
   custom: Set<string> = EMPTY,
   branch: BranchModeCfg | null = null,
@@ -198,6 +200,7 @@ export function columnOfLead(
   if (lead.kanbanColumnId && custom.has(lead.kanbanColumnId)) return customColKey(lead.kanbanColumnId);
   const base = columnOf(lead.stage);
   if (base === "won" && lead.groupId && pinned.has(lead.groupId)) return groupColKey(lead.groupId);
+  if (base === "won" && lead.stage !== "PAID" && lead.studentId && lead.paid === false) return "awaiting";
   if (branch) {
     const eff = branch.mode === "sales" && (base === "offer" || (base === "test" && branch.hideTest)) ? "new" : base;
     if (eff === "new" && lead.studyFormat === "ONLINE" && branch.online) return ONLINE_COL;
@@ -262,9 +265,9 @@ export function visibleColumns(opts: {
       sub: tr(locale, { uz: "Onlayn o'qimoqchilar", ru: "Хотят учиться онлайн", en: "Want to study online", de: "Möchten online lernen" }),
       color: "#0ea5e9", icon: "video", defaultStage: "NEW", groupId: null, customId: null,
     };
-    return [std("new"), std("work"), std("test"), ...(showOnlineCol ? [online] : []), ...(branchMode === "head" ? [std("offer")] : []), ...brs, ...custom, std("won"), ...groups, std("lost")]
+    return [std("new"), std("work"), std("test"), ...(showOnlineCol ? [online] : []), ...(branchMode === "head" ? [std("offer")] : []), ...brs, ...custom, std("awaiting"), std("won"), ...groups, std("lost")]
       .filter((c) => !hidden.has(c.key));
   }
-  return [std("new"), std("work"), std("test"), std("offer"), ...custom, std("won"), ...groups, std("lost")]
+  return [std("new"), std("work"), std("test"), std("offer"), ...custom, std("awaiting"), std("won"), ...groups, std("lost")]
     .filter((c) => !hidden.has(c.key));
 }

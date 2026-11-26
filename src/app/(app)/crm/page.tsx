@@ -115,6 +115,11 @@ export default async function CrmPage() {
 
   const studentIds = [...new Set(leads.map((l) => l.studentId).filter((x): x is string => !!x))];
   const debts = studentIds.length ? await computeDebts(studentIds) : new Map();
+  const paidStudents = new Set<string>();
+  for (let i = 0; i < studentIds.length; i += 500) {
+    const rows = await prisma.payment.groupBy({ by: ["studentId"], where: { studentId: { in: studentIds.slice(i, i + 500) }, status: "PAID", amount: { gt: 0 } } });
+    for (const r of rows) paidStudents.add(r.studentId);
+  }
 
   const vleads: VLead[] = leads.map((l) => ({
     id: l.id,
@@ -133,6 +138,7 @@ export default async function CrmPage() {
     managerId: l.managerId,
     managerName: l.manager?.fullName ?? null,
     studentId: l.studentId,
+    paid: !!l.studentId && paidStudents.has(l.studentId),
     branchId: l.branchId,
     branchName: l.branch?.name ?? null,
     branchSlotId: l.branchSlotId,
@@ -180,8 +186,12 @@ export default async function CrmPage() {
   const t0 = new Date(now.getFullYear(), now.getMonth(), now.getDate()).getTime();
   const y0 = t0 - 86400000;
   const byColumn: Record<string, number> = {};
-  for (const l of vleads.filter((x) => !x.archivedAt)) byColumn[columnOf(l.stage)] = (byColumn[columnOf(l.stage)] ?? 0) + 1;
-  const won = vleads.filter((l) => ["PAID", "WON"].includes(l.stage)).length;
+  const tileOf = (l: VLead) => {
+    const c = columnOf(l.stage);
+    return c === "won" && l.stage !== "PAID" && l.studentId && !l.paid ? "awaiting" : c;
+  };
+  for (const l of vleads.filter((x) => !x.archivedAt)) byColumn[tileOf(l)] = (byColumn[tileOf(l)] ?? 0) + 1;
+  const won = vleads.filter((l) => tileOf(l) === "won").length;
   const analytics: Analytics = {
     total: vleads.length,
     newToday: vleads.filter((l) => new Date(l.createdAt).getTime() >= t0).length,
@@ -226,7 +236,7 @@ export default async function CrmPage() {
       archivedStudents={archivedStudents}
       branchMode={branchMode}
       showOnlineCol={s.role !== ROLES.ROP && s.role !== ROLES.OPERATOR}
-      hiddenCols={s.role === ROLES.ROP ? ["work", "won", "test"] : s.role === ROLES.OPERATOR ? ["test"] : []}
+      hiddenCols={s.role === ROLES.ROP ? ["work", "won", "awaiting", "test"] : s.role === ROLES.OPERATOR ? ["test"] : []}
       slotsEditable={[ROLES.DIRECTOR, ROLES.DEPUTY_DIRECTOR].includes(s.role as never) ? "all" : s.role === ROLES.ADMIN ? (s.branchId ?? null) : null}
     />
   );

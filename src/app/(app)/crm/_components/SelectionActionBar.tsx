@@ -53,7 +53,7 @@ export default function SelectionActionBar({
           <BarBtn icon="chart" label={tr(locale, { uz: "Bosqich", ru: "Этап", en: "Stage", de: "Phase" })} onClick={() => setMenu(menu === "stage" ? null : "stage")} disabled={pending} />
           {menu === "stage" && (
             <Pop>
-              {COLUMNS.map((c) => (
+              {COLUMNS.filter((c) => c.key !== "awaiting").map((c) => (
                 <PopItem key={c.key} onClick={() => run(() => bulkLeadAction(ids, "set_stage", { stage: c.defaultStage }))}>
                   <span className="mr-2 inline-block h-2 w-2 rounded-full" style={{ background: c.color }} /> {label(LEAD_STAGE_LABELS, c.defaultStage, locale)}
                 </PopItem>

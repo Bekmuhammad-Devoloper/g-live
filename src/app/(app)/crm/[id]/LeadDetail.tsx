@@ -190,7 +190,7 @@ export default function LeadDetail({ lead, activities, managers, prevId, nextId,
                       }}
                       className="input"
                     >
-                      {COLUMNS.map((c) => <option key={c.key} value={c.defaultStage}>{label(LEAD_STAGE_LABELS, c.defaultStage, locale)}</option>)}
+                      {COLUMNS.filter((c) => c.key !== "awaiting").map((c) => <option key={c.key} value={c.defaultStage}>{label(LEAD_STAGE_LABELS, c.defaultStage, locale)}</option>)}
                     </select>
                   </div>
                   <div className="rounded-xl border border-slate-200 p-3 dark:border-slate-700">

@@ -286,7 +286,7 @@ export default function LeadsWorkspace({ locale, initialLeads, totalLeads, manag
       setReject({ id: leadId, name: lead?.fullName ?? "" });
       return;
     }
-    if (colKey === "won") {
+    if (colKey === "won" || colKey === "awaiting") {
       const lead = leads.find((l) => l.id === leadId);
       setEnroll({ id: leadId, name: lead?.fullName ?? "", groupId: lead?.groupId ?? null, editCount: lead?.enrollEditCount ?? 0 });
       return;
