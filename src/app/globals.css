@@ -198,6 +198,19 @@ html.gl-theme-vt::view-transition-new(root) {
 }
 html.gl-theme-vt::view-transition-old(root) { z-index: 1; }
 html.gl-theme-vt::view-transition-new(root) { z-index: 2; }
+html.gl-theme-vt.gl-ink::view-transition-new(root) {
+  -webkit-mask-image: var(--gl-ink-mask);
+  mask-image: var(--gl-ink-mask);
+  -webkit-mask-size: 100% 100%;
+  mask-size: 100% 100%;
+  -webkit-mask-repeat: no-repeat;
+  mask-repeat: no-repeat;
+  animation: glInkHold var(--gl-ink-ms, 1700ms) linear both;
+}
+@keyframes glInkHold {
+  from { opacity: 1; }
+  to { opacity: 1; }
+}
 
 @keyframes glThemeIcon {
   from { transform: rotate(-120deg) scale(0.4); opacity: 0; }
