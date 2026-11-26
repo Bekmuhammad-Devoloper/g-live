@@ -4,6 +4,7 @@ import type { Prisma } from "@prisma/client";
 import { ROLES, type Locale } from "@/lib/constants";
 import { canWrite, isScopedToOwn, MODULES } from "@/lib/rbac";
 import { branchWhere } from "@/lib/branchScope";
+import { MISSED_CALL_WHERE, MISSED_PENDING_WHERE } from "@/lib/missedCalls";
 import { tr } from "@/lib/tr";
 import { Forbidden } from "../../_components/ui";
 import CallsView from "./CallsView";
@@ -93,23 +94,22 @@ export default async function CallsPage({ searchParams }: { searchParams?: Promi
     ? { AND: [{ operatorId: s.userId }, branchScope] }
     : branchScope;
 
-  const [calls, totalCount, byStatus, byDirection, answeredAgg, missedPending, operatorUsers] = await Promise.all([
-    prisma.call.findMany({
-      where: scope,
-      orderBy: { startedAt: "desc" },
-      take: ROW_LIMIT,
-      select: {
-        id: true, direction: true, status: true, operatorId: true, operatorName: true,
-        leadId: true, contactName: true, phone: true, duration: true,
-        recordingUrl: true, comment: true, callbackStatus: true, callbackAt: true, startedAt: true,
-        lead: { select: { fullName: true, manager: { select: { fullName: true } } } },
-      },
-    }),
+  const callSelect = {
+    id: true, direction: true, status: true, operatorId: true, operatorName: true,
+    leadId: true, contactName: true, phone: true, duration: true,
+    recordingUrl: true, comment: true, callbackStatus: true, callbackAt: true, startedAt: true,
+    lead: { select: { fullName: true, manager: { select: { fullName: true } } } },
+  } satisfies Prisma.CallSelect;
+
+  const [calls, missedRows, totalCount, byStatus, byDirection, answeredAgg, missedTotal, missedPending, operatorUsers] = await Promise.all([
+    prisma.call.findMany({ where: scope, orderBy: { startedAt: "desc" }, take: ROW_LIMIT, select: callSelect }),
+    prisma.call.findMany({ where: MISSED_CALL_WHERE, orderBy: { startedAt: "desc" }, take: ROW_LIMIT, select: callSelect }),
     prisma.call.count({ where: scope }),
     prisma.call.groupBy({ by: ["status"], where: scope, _count: { _all: true } }),
     prisma.call.groupBy({ by: ["direction"], where: scope, _count: { _all: true } }),
     prisma.call.aggregate({ where: { ...scope, status: "ANSWERED" }, _avg: { duration: true } }),
-    prisma.call.count({ where: { ...scope, status: "MISSED", callbackStatus: "PENDING" } }),
+    prisma.call.count({ where: MISSED_CALL_WHERE }),
+    prisma.call.count({ where: MISSED_PENDING_WHERE }),
     prisma.user.findMany({
       where: { isActive: true, role: { in: [ROLES.OPERATOR, ROLES.ROP, ROLES.MANAGER, ROLES.DEPUTY_DIRECTOR, ROLES.DIRECTOR, ROLES.ADMIN] } },
       select: { id: true, fullName: true },
@@ -121,7 +121,7 @@ export default async function CallsPage({ searchParams }: { searchParams?: Promi
   const nowMs = now.getTime();
   const today = dayIdx(now);
 
-  const vcalls: VCall[] = calls.map((c) => {
+  const toV = (c: (typeof calls)[number]): VCall => {
     const contactName = c.contactName ?? c.lead?.fullName ?? null;
     return {
       id: c.id,
@@ -146,7 +146,9 @@ export default async function CallsPage({ searchParams }: { searchParams?: Promi
       callbackAtLabel: c.callbackAt ? `${dayLabel(c.callbackAt, today, s.locale)} ${timeLabel(c.callbackAt)}` : null,
       daysAgo: today - dayIdx(c.startedAt),
     };
-  });
+  };
+  const vcalls: VCall[] = calls.map(toV);
+  const vmissed: VCall[] = missedRows.map(toV);
 
   const statusCount = (key: string) => byStatus.find((r) => r.status === key)?._count._all ?? 0;
   const dirCount = (key: string) => byDirection.find((r) => r.direction === key)?._count._all ?? 0;
@@ -154,7 +156,7 @@ export default async function CallsPage({ searchParams }: { searchParams?: Promi
   const stats: CallStats = {
     total: totalCount,
     answered: statusCount("ANSWERED"),
-    missed: statusCount("MISSED"),
+    missed: missedTotal,
     incoming: dirCount("INCOMING"),
     outgoing: dirCount("OUTGOING"),
     avgDurationLabel: fmtDur(Math.round(answeredAgg._avg.duration ?? 0)),
@@ -164,7 +166,7 @@ export default async function CallsPage({ searchParams }: { searchParams?: Promi
 
   const opMap = new Map<string, string>();
   for (const u of operatorUsers) opMap.set(u.id, u.fullName);
-  for (const c of vcalls) {
+  for (const c of [...vcalls, ...vmissed]) {
     if (c.operatorKey && c.operatorName && !opMap.has(c.operatorKey)) opMap.set(c.operatorKey, c.operatorName);
   }
   const operators: VOperator[] = Array.from(opMap, ([key, name]) => ({ key, name })).sort((a, b) =>
@@ -174,6 +176,7 @@ export default async function CallsPage({ searchParams }: { searchParams?: Promi
   return (
     <CallsView
       calls={vcalls}
+      missedCalls={vmissed}
       stats={stats}
       operators={operators}
       locale={s.locale}

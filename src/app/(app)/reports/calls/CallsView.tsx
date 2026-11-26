@@ -15,6 +15,7 @@ import { useCdrSync } from "./useCdrSync";
 
 interface Props {
   calls: VCall[];
+  missedCalls: VCall[];
   stats: CallStats;
   operators: VOperator[];
   locale: Locale;
@@ -24,7 +25,7 @@ interface Props {
 
 const PAGE_SIZE = 20;
 
-export default function CallsView({ calls, stats, operators, locale, canMark, initialTab }: Props) {
+export default function CallsView({ calls, missedCalls, stats, operators, locale, canMark, initialTab }: Props) {
   const router = useRouter();
   const [tab, setTab] = useState<"all" | "missed">(initialTab);
   const [q, setQ] = useState("");
@@ -51,10 +52,10 @@ export default function CallsView({ calls, stats, operators, locale, canMark, in
     });
   }, [calls, q, operator, status, type, time]);
 
-  const missed = useMemo(() => {
-    const all = calls.filter((c) => c.status === "MISSED" || (c.direction === "INCOMING" && c.status === "NO_ANSWER"));
-    return callback ? all.filter((c) => c.callbackStatus === callback) : all;
-  }, [calls, callback]);
+  const missed = useMemo(
+    () => (callback ? missedCalls.filter((c) => c.callbackStatus === callback) : missedCalls),
+    [missedCalls, callback],
+  );
 
   useEffect(() => setPage(1), [tab, q, operator, status, type, time]);
 

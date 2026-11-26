@@ -3,13 +3,9 @@ import type { Prisma } from "@prisma/client";
 import { getSession } from "@/lib/auth";
 import { prisma } from "@/lib/db";
 import { ROLES } from "@/lib/constants";
-import { branchWhere } from "@/lib/branchScope";
+import { MISSED_CALL_WHERE, MISSED_PENDING_WHERE } from "@/lib/missedCalls";
 
 const ALLOWED: string[] = [ROLES.OPERATOR, ROLES.ROP, ROLES.MANAGER, ROLES.DEPUTY_DIRECTOR, ROLES.DIRECTOR, ROLES.ADMIN];
-
-const MISSED: Prisma.CallWhereInput = {
-  OR: [{ status: "MISSED" }, { direction: "INCOMING", status: { in: ["NO_ANSWER", "BUSY"] } }],
-};
 
 export async function GET(req: Request) {
   const s = await getSession();
@@ -20,11 +16,8 @@ export async function GET(req: Request) {
   const q = sp.get("q")?.trim() || "";
   const missed = sp.get("view") === "missed";
   const search: Prisma.CallWhereInput = q ? { OR: [{ phone: { contains: q } }, { contactName: { contains: q } }] } : {};
-  const branchScope: Prisma.CallWhereInput = s.branchId
-    ? { OR: [{ operator: branchWhere(s) }, { operatorId: null }] }
-    : {};
   const where: Prisma.CallWhereInput = missed
-    ? { AND: [MISSED, branchScope, search] }
+    ? { AND: [MISSED_CALL_WHERE, search] }
     : { AND: [{ operatorId: s.userId }, search] };
 
   const [calls, pending] = await Promise.all([
@@ -38,7 +31,7 @@ export async function GET(req: Request) {
         lead: { select: { fullName: true } },
       },
     }),
-    prisma.call.count({ where: { AND: [MISSED, branchScope, { callbackStatus: "PENDING" }] } }),
+    prisma.call.count({ where: MISSED_PENDING_WHERE }),
   ]);
 
   return NextResponse.json({
