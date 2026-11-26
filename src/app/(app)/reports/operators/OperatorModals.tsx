@@ -176,7 +176,7 @@ export function OperatorDrawer({
             </div>
           </Field>
           {cfg.kind === "admin" && (
-            <Field label={tr(locale, { uz: "KPI — qabul qilingan har bir to'lovdan foiz", ru: "KPI — процент с каждой принятой оплаты", en: "KPI — percent of every accepted payment", de: "KPI — Prozent jeder angenommenen Zahlung" })}>
+            <Field label={tr(locale, { uz: "KPI — qarzdorlikdan undirilgan to'lovlardan foiz (1-to'lovdan keyingi)", ru: "KPI — процент с погашенных долгов (после первой оплаты)", en: "KPI — percent of debt collected (payments after the first)", de: "KPI — Prozent eingezogener Schulden (nach der ersten Zahlung)" })}>
               <div className="relative">
                 <input name="collectPercent" type="text" inputMode="decimal" value={collectStr} onChange={(e) => setCollectStr(e.target.value.replace(/[^\d.,]/g, "").slice(0, 5))} placeholder="5" className={cn(inputCls, "pr-12 font-semibold")} style={{ borderLeft: "3px solid #0ea5e9" }} />
                 <span className="pointer-events-none absolute right-3 top-1/2 -translate-y-1/2 text-xs font-medium text-slate-400">%</span>

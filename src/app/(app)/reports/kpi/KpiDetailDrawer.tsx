@@ -123,9 +123,9 @@ export default function KpiDetailDrawer({ row, tab: initialTab, locale, onClose 
   const tabs: { key: KpiDetailTab; text: string; short: string; count: number }[] = view
     ? [
         { key: "leads", text: L("Lidlar", "Лиды", "Leads", "Leads"), short: L("Lidlar", "Лиды", "Leads", "Leads"), count: view.leads.length + view.direct.length },
-        { key: "paid", text: L("To'lov qilganlar", "Оплатившие", "Paid", "Bezahlt"), short: L("To'lov qilgan", "Оплатили", "Paid", "Bezahlt"), count: view.paid.length },
+        { key: "paid", text: L("1-to'lov qilganlar", "Первая оплата", "First payments", "Erste Zahlungen"), short: L("1-to'lov", "1-я оплата", "1st payment", "1. Zahlung"), count: view.paid.length },
         { key: "lost", text: L("Bloklangan", "Заблокировано", "Blocked", "Blockiert"), short: L("Bloklangan", "Блок", "Blocked", "Blockiert"), count: view.lost.length },
-        ...(isAdmin ? [{ key: "coll" as const, text: L("Qabul qilgan to'lovlar", "Принятые оплаты", "Accepted payments", "Angenommene Zahlungen"), short: L("Qabul qilgan", "Принято", "Accepted", "Angenommen"), count: view.coll.length }] : []),
+        ...(isAdmin ? [{ key: "coll" as const, text: L("Qarzdorlikdan undirilgan", "Погашение долгов", "Debt collected", "Eingezogene Schulden"), short: L("Qarzdan undirilgan", "Долги", "Debt", "Schulden"), count: view.coll.length }] : []),
       ]
     : [];
 
@@ -148,7 +148,7 @@ export default function KpiDetailDrawer({ row, tab: initialTab, locale, onClose 
             <div className="flex items-center gap-1 text-[11px] text-slate-400">
               <Icon name={CAT_ICON[row.cat]} className="h-3 w-3" />
               {tr(locale, CAT_LABEL[row.cat])}
-              <span>· {L("sotuv", "продажи", "sales", "Verkauf")} {pct}%{isAdmin ? ` · ${L("qabul", "приём", "accepted", "angenommen")} ${cpct}%` : ""}</span>
+              <span>· {L("1-to'lov", "1-я оплата", "1st payment", "1. Zahlung")} {pct}%{isAdmin ? ` · ${L("qarzdan", "долги", "debt", "Schulden")} ${cpct}%` : ""}</span>
             </div>
           </div>
           <button onClick={onClose} className="grid h-8 w-8 place-items-center rounded-lg text-slate-400 transition hover:bg-slate-100 dark:hover:bg-white/10" aria-label={L("Yopish", "Закрыть", "Close", "Schließen")}>

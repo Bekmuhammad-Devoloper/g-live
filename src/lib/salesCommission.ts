@@ -121,7 +121,7 @@ export async function firstPaymentsByManager(managerIds: string[], owners?: Map<
   for (let i = 0; i < ids.length; i += CHUNK) {
     const payments = await prisma.payment.findMany({
       where: { studentId: { in: ids.slice(i, i + CHUNK) }, status: "PAID", amount: { gt: 0 } },
-      orderBy: { createdAt: "asc" },
+      orderBy: [{ createdAt: "asc" }, { id: "asc" }],
       select: { studentId: true, amount: true, createdAt: true },
     });
     for (const p of payments) if (!firstPay.has(p.studentId)) firstPay.set(p.studentId, { amount: p.amount, createdAt: p.createdAt });
@@ -143,14 +143,30 @@ export async function commissionByManagerMonth(managerIds: string[], owners?: Ma
   return out;
 }
 
+export async function firstPaymentIds(studentIds: string[]): Promise<Set<string>> {
+  const out = new Set<string>();
+  const seen = new Set<string>();
+  const ids = [...new Set(studentIds)];
+  for (let i = 0; i < ids.length; i += CHUNK) {
+    const rows = await prisma.payment.findMany({
+      where: { studentId: { in: ids.slice(i, i + CHUNK) }, status: "PAID", amount: { gt: 0 } },
+      orderBy: [{ createdAt: "asc" }, { id: "asc" }],
+      select: { id: true, studentId: true },
+    });
+    for (const r of rows) if (!seen.has(r.studentId)) { seen.add(r.studentId); out.add(r.id); }
+  }
+  return out;
+}
+
 export async function collectionsByAuthorMonth(authorIds: string[]): Promise<CommissionMap> {
   const out: CommissionMap = new Map();
   if (authorIds.length === 0) return out;
   const payments = await prisma.payment.findMany({
     where: { authorId: { in: authorIds }, status: "PAID", amount: { gt: 0 } },
-    select: { authorId: true, amount: true, createdAt: true },
+    select: { id: true, studentId: true, authorId: true, amount: true, createdAt: true },
   });
-  for (const p of payments) if (p.authorId) addTo(out, p.authorId, p.createdAt, p.amount);
+  const firsts = await firstPaymentIds(payments.map((p) => p.studentId));
+  for (const p of payments) if (p.authorId && !firsts.has(p.id)) addTo(out, p.authorId, p.createdAt, p.amount);
   return out;
 }
 

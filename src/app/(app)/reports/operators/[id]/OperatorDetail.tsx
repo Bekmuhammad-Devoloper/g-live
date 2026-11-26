@@ -203,7 +203,7 @@ export default function OperatorDetail({ kind = "operator", locale, op, leads, c
                 <Pay
                   icon="wallet"
                   tone="#0ea5e9"
-                  label={`${tr(locale, { uz: "To'lov qabul qilish", ru: "Приём оплат", en: "Payments accepted", de: "Angenommene Zahlungen" })} ${cur.collPct}%`}
+                  label={`${tr(locale, { uz: "Qarzdan undirilgan", ru: "Погашение долгов", en: "Debt collected", de: "Eingezogene Schulden" })} ${cur.collPct}%`}
                   value={formatMoney(cur.coll, locale)}
                   hint={`${cur.collCount} ${tr(locale, { uz: "ta to'lov", ru: "оплат", en: "payments", de: "Zahlungen" })} · ${formatMoney(cur.collBase, locale)} × ${cur.collPct}%`}
                 />

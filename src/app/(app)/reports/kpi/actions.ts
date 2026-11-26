@@ -7,7 +7,7 @@ import { canSeeTeamReports, getPermission, MODULES } from "@/lib/rbac";
 import { staffBranchWhere } from "@/lib/branchScope";
 import { writeAudit } from "@/lib/audit";
 import { parseMoney } from "@/lib/constants";
-import { firstPaymentsByManager, leadOwners, parsePercent, salesOwnerByStudent } from "@/lib/salesCommission";
+import { firstPaymentIds, firstPaymentsByManager, leadOwners, parsePercent, salesOwnerByStudent } from "@/lib/salesCommission";
 
 export type KpiPayState = { ok?: boolean; error?: string };
 
@@ -88,6 +88,7 @@ export async function getKpiDetails(userId: string): Promise<{ data?: KpiDetails
       : Promise.resolve([]),
   ]);
   const nameOf = new Map(paidStudents.map((st) => [st.id, st.fullName]));
+  const firstIds = await firstPaymentIds(coll.map((c) => c.studentId));
 
   return {
     data: {
@@ -103,7 +104,7 @@ export async function getKpiDetails(userId: string): Promise<{ data?: KpiDetails
       paid: firsts
         .sort((a, b) => b.paidAt.getTime() - a.paidAt.getTime())
         .map((f) => ({ studentId: f.studentId, name: nameOf.get(f.studentId) ?? "—", amount: f.amount, paidAt: f.paidAt.toISOString(), leadId: leadByStudent.get(f.studentId) ?? null })),
-      collections: coll.map((c) => ({ id: c.id, studentId: c.studentId, name: c.student.fullName, amount: c.amount, method: c.method, createdAt: c.createdAt.toISOString() })),
+      collections: coll.filter((c) => !firstIds.has(c.id)).map((c) => ({ id: c.id, studentId: c.studentId, name: c.student.fullName, amount: c.amount, method: c.method, createdAt: c.createdAt.toISOString() })),
     },
   };
 }

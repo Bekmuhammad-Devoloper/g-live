@@ -114,20 +114,20 @@ export default function KpiTable({ rows, tab, locale, canEdit = false }: { rows:
                       </div>
                       <div className="text-[10px] text-slate-400">
                         {o.paidAll} × {tr(locale, { uz: "1-to'lov", ru: "1-я оплата", en: "1st payment", de: "1. Zahlung" })} · {o.bonus}%
-                        {o.role === "ADMIN" && <div onClick={open(o, "coll")} className="hover:underline">{o.collCountAll} × {tr(locale, { uz: "qabul", ru: "приём", en: "accepted", de: "angenommen" })} · {o.collectPct}%</div>}
+                        {o.role === "ADMIN" && <div onClick={open(o, "coll")} className="hover:underline">{o.collCountAll} × {tr(locale, { uz: "qarzdan", ru: "долги", en: "debt", de: "Schulden" })} · {o.collectPct}%</div>}
                       </div>
                     </td>
                     <>
                         <td className="px-4 py-3.5 text-center">
                           <div className="font-semibold tabular-nums text-slate-700 dark:text-slate-200">{formatMoney(o.fiksa, locale)}</div>
                           <div className="text-[10px] text-emerald-500">+{o.bonus}% · {tr(locale, { uz: "1-to'lov", ru: "1-я оплата", en: "1st payment", de: "1. Zahlung" })}</div>
-                          {o.role === "ADMIN" && <div className="text-[10px] text-sky-500">+{o.collectPct}% · {tr(locale, { uz: "qabul", ru: "приём", en: "accepted", de: "angenommen" })}</div>}
+                          {o.role === "ADMIN" && <div className="text-[10px] text-sky-500">+{o.collectPct}% · {tr(locale, { uz: "qarzdan", ru: "долги", en: "debt", de: "Schulden" })}</div>}
                         </td>
                         <td className="px-4 py-3.5 text-center">
                           <div className="font-semibold tabular-nums text-emerald-600 dark:text-emerald-400">{formatMoney(o.earnedMonth, locale)}</div>
                           <div className="text-[10px] text-slate-400">
                             {o.paidMonth} × {tr(locale, { uz: "1-to'lov", ru: "1-я оплата", en: "1st payment", de: "1. Zahlung" })} · {o.bonus}%
-                            {o.role === "ADMIN" && <div>{o.collCountMonth} × {tr(locale, { uz: "qabul", ru: "приём", en: "accepted", de: "angenommen" })} · {o.collectPct}%</div>}
+                            {o.role === "ADMIN" && <div>{o.collCountMonth} × {tr(locale, { uz: "qarzdan", ru: "долги", en: "debt", de: "Schulden" })} · {o.collectPct}%</div>}
                           </div>
                         </td>
                         <td className="px-4 py-3.5 text-center">
@@ -228,7 +228,7 @@ function EditPayModal({ row, locale, onClose }: { row: VKpiRow; locale: Locale; 
           </div>
           {isAdmin && (
             <div>
-              <label className={lbl}>{tr(locale, { uz: "To'lov qabul qilish KPI foizi — qabul qilgan har bir to'lovdan (%)", ru: "Процент KPI за приём оплат — с каждой принятой оплаты (%)", en: "Collection KPI percent — of every accepted payment (%)", de: "KPI-Prozentsatz für angenommene Zahlungen (%)" })}</label>
+              <label className={lbl}>{tr(locale, { uz: "Qarzdorlikdan undirilgan to'lov KPI foizi — 1-to'lovdan keyingi to'lovlardan (%)", ru: "Процент KPI с погашенных долгов — с оплат после первой (%)", en: "Debt collection KPI percent — of payments after the first (%)", de: "KPI-Prozentsatz für eingezogene Schulden — Zahlungen nach der ersten (%)" })}</label>
               <input inputMode="decimal" value={collect} onChange={(e) => setCollect(e.target.value.replace(/[^\d.,]/g, "").slice(0, 5))} placeholder="1" className={inp} />
             </div>
           )}
@@ -240,7 +240,7 @@ function EditPayModal({ row, locale, onClose }: { row: VKpiRow; locale: Locale; 
             </div>
             {isAdmin && (
               <div className="mt-1 flex items-center justify-between text-slate-500">
-                <span>{tr(locale, { uz: "Shu oy qabul qilgan to'lovlari", ru: "Принятые оплаты в этом месяце", en: "Payments accepted this month", de: "Diesen Monat angenommene Zahlungen" })}</span>
+                <span>{tr(locale, { uz: "Shu oy qarzdorlikdan undirgani", ru: "Погашено долгов в этом месяце", en: "Debt collected this month", de: "Diesen Monat eingezogene Schulden" })}</span>
                 <span className="font-semibold text-slate-700 dark:text-slate-200">{row.collCountMonth} · {formatMoney(row.collBaseMonth, locale)}</span>
               </div>
             )}
