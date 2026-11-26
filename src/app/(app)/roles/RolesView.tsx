@@ -222,11 +222,11 @@ function RoleForm({ editing, onClose, onSaved, locale }: { editing: VRole | null
                     <span className={cn("grid h-4 w-4 place-items-center rounded border text-[10px]", groupAll ? "border-brand-600 bg-brand-600 text-white" : "border-slate-300 dark:border-slate-600")}>{groupAll ? "✓" : ""}</span>
                     {tr(locale, grp.group)}
                   </button>
-                  <div className="grid gap-1.5 sm:grid-cols-2 lg:grid-cols-3">
+                  <div className="grid gap-1.5 sm:grid-cols-2">
                     {grp.items.map((it) => (
-                      <label key={it.key} className={cn("flex cursor-pointer items-center gap-2 rounded-lg border px-3 py-2 text-sm transition", sel.has(it.key) ? "border-brand-300 bg-brand-50 text-brand-700 dark:border-brand-500/40 dark:bg-brand-500/10 dark:text-brand-200" : "border-slate-200 text-slate-600 hover:bg-slate-50 dark:border-slate-700 dark:text-slate-300 dark:hover:bg-white/5")}>
-                        <input type="checkbox" checked={sel.has(it.key)} onChange={() => toggle(it.key)} className="h-4 w-4 rounded border-slate-300 accent-brand-600" />
-                        <span className="truncate">{tr(locale, it.label)}</span>
+                      <label key={it.key} title={tr(locale, it.label)} className={cn("flex cursor-pointer items-start gap-2 rounded-lg border px-3 py-2 text-sm transition", sel.has(it.key) ? "border-brand-300 bg-brand-50 text-brand-700 dark:border-brand-500/40 dark:bg-brand-500/10 dark:text-brand-200" : "border-slate-200 text-slate-600 hover:bg-slate-50 dark:border-slate-700 dark:text-slate-300 dark:hover:bg-white/5")}>
+                        <input type="checkbox" checked={sel.has(it.key)} onChange={() => toggle(it.key)} className="mt-0.5 h-4 w-4 shrink-0 rounded border-slate-300 accent-brand-600" />
+                        <span className="min-w-0 break-words leading-snug">{tr(locale, it.label)}</span>
                       </label>
                     ))}
                   </div>
