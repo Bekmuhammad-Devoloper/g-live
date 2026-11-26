@@ -6,6 +6,7 @@ import { useRouter } from "next/navigation";
 import { cn } from "@/lib/cn";
 import { tr } from "@/lib/tr";
 import type { Locale } from "@/lib/constants";
+import { switchTheme } from "@/lib/themeSwitch";
 import { Icon } from "../../_components/Icon";
 import UserAvatar from "../../_components/UserAvatar";
 import { AUTO_LOGOUT_OPTIONS, type OperatorPrefs } from "./prefs";
@@ -68,8 +69,7 @@ export default function OperatorSettingsView({ locale, initialTab, me, prefs: pr
   }, []);
 
   const applyTheme = (next: boolean) => {
-    document.documentElement.classList.toggle("dark", next);
-    try { localStorage.setItem("gl-theme", next ? "dark" : "light"); } catch {}
+    switchTheme(next);
     setDark(next);
   };
 
