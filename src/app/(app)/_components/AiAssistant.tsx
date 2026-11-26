@@ -35,6 +35,80 @@ function Sparkle({ className }: { className?: string }) {
   );
 }
 
+const FACE = { eye: "#2a1a10", mouth: "#b5643f" };
+
+function Face({ cx = 16, cy = 15 }: { cx?: number; cy?: number }) {
+  return (
+    <>
+      <circle cx={cx - 2.1} cy={cy} r=".8" fill={FACE.eye} />
+      <circle cx={cx + 2.1} cy={cy} r=".8" fill={FACE.eye} />
+      <path d={`M${cx - 1.4} ${cy + 2.7}c.8.6 2 .6 2.8 0`} stroke={FACE.mouth} strokeWidth=".9" fill="none" strokeLinecap="round" />
+    </>
+  );
+}
+
+const AI_HEADS = [
+  (
+    <svg key="a" viewBox="0 0 32 32" className="h-full w-full">
+      <rect width="32" height="32" fill="#bae6fd" />
+      <path d="M8.5 15.5C8.5 9.5 11.8 6 16 6s7.5 3.5 7.5 9.5V25h-15z" fill="#3b2314" />
+      <path d="M4 32c0-6.2 5.4-9.5 12-9.5S28 25.8 28 32z" fill="#7c3aed" />
+      <rect x="13.6" y="18.5" width="4.8" height="5" rx="2" fill="#e8b48f" />
+      <ellipse cx="16" cy="14.4" rx="5.6" ry="6.2" fill="#f2c4a0" />
+      <path d="M10.3 13.4c.6-4.2 3-6.2 5.9-6.2 3.2 0 5.4 2.2 5.8 6-2.8-.4-6-1.8-7.8-3.8-.9 1.9-2.3 3.2-3.9 4z" fill="#3b2314" />
+      <Face cy={15.2} />
+    </svg>
+  ),
+  (
+    <svg key="b" viewBox="0 0 32 32" className="h-full w-full">
+      <rect width="32" height="32" fill="#fde68a" />
+      <path d="M4 32c0-6.2 5.4-9.5 12-9.5S28 25.8 28 32z" fill="#1e3a8a" />
+      <path d="M13.4 22.6 16 26l2.6-3.4z" fill="#f8fafc" />
+      <rect x="13.6" y="18.5" width="4.8" height="4.6" rx="2" fill="#d39a70" />
+      <ellipse cx="16" cy="14.4" rx="5.4" ry="6" fill="#e0a87e" />
+      <path d="M10.6 13.2c-.3-4.4 2.2-7 5.5-7 3.6 0 5.9 2.4 5.5 7-1-.2-1.6-1.6-2-2.8-2.3 1-5.6 1.3-8 .4-.4 1-.5 1.8-1 2.4z" fill="#5b3a1e" />
+      <Face cy={15.1} />
+    </svg>
+  ),
+  (
+    <svg key="c" viewBox="0 0 32 32" className="h-full w-full">
+      <rect width="32" height="32" fill="#a7f3d0" />
+      <path d="M4 32c0-6.5 5.2-10.5 12-10.5S28 25.5 28 32z" fill="#e11d48" />
+      <path d="M9.2 15.5C9.2 9.8 12.2 6.2 16 6.2s6.8 3.6 6.8 9.3c0 3.6-1.6 6.6-3.4 8h-6.8c-1.8-1.4-3.4-4.4-3.4-8z" fill="#e11d48" />
+      <ellipse cx="16" cy="15.2" rx="4.6" ry="5.4" fill="#f5cfae" />
+      <path d="M11.4 13.4c.8-3.3 2.6-4.9 4.6-4.9s3.8 1.6 4.6 4.9" stroke="#be123c" strokeWidth="1.2" fill="none" />
+      <Face cy={15.4} />
+    </svg>
+  ),
+  (
+    <svg key="d" viewBox="0 0 32 32" className="h-full w-full">
+      <rect width="32" height="32" fill="#fecdd3" />
+      <path d="M4 32c0-6.2 5.4-9.5 12-9.5S28 25.8 28 32z" fill="#059669" />
+      <rect x="13.6" y="18.5" width="4.8" height="4.6" rx="2" fill="#b07552" />
+      <ellipse cx="16" cy="14.6" rx="5.4" ry="6" fill="#c68863" />
+      <path d="M10 13.6c-1.2-1.8-.6-4.6 1.4-5.4.4-2 2.6-3 4.6-2.4 1.6-1 3.8-.4 4.6 1.2 2 .4 2.8 2.8 1.6 4.8-.2.6-.6 1.2-1 1.8-.6-1.6-1.4-2.6-2.4-3.2-2 .8-4.6.8-6.4 0-.8.8-1.6 2-2.4 3.2z" fill="#1f1611" />
+      <g stroke="#1f2937" strokeWidth=".9" fill="none"><circle cx="13.8" cy="15" r="1.8" /><circle cx="18.2" cy="15" r="1.8" /><path d="M15.6 15h.8" /></g>
+      <path d="M14.6 17.9c.8.6 2 .6 2.8 0" stroke={FACE.mouth} strokeWidth=".9" fill="none" strokeLinecap="round" />
+    </svg>
+  ),
+];
+
+function AiHeads() {
+  return (
+    <span aria-hidden className="flex items-center -space-x-1.5">
+      {AI_HEADS.map((h, i) => (
+        <span
+          key={i}
+          style={{ zIndex: AI_HEADS.length - i, transitionDelay: `${i * 40}ms` }}
+          className="relative h-5 w-5 overflow-hidden rounded-full ring-[1.5px] ring-white/90 transition-transform duration-200 group-hover:-translate-y-0.5"
+        >
+          {h}
+        </span>
+      ))}
+    </span>
+  );
+}
+
 function inline(s: string) {
   return s.split(/(\*\*[^*]+\*\*|`[^`]+`|\*[^*\s][^*]*\*)/g).map((part, i) => {
     if (part.startsWith("**") && part.endsWith("**")) return <strong key={i} className="font-semibold text-slate-900 dark:text-white">{part.slice(2, -2)}</strong>;
@@ -419,10 +493,10 @@ export default function AiAssistant({ locale, userName }: { locale: Locale; user
         type="button"
         onClick={() => setOpen(true)}
         title={title}
-        className="group relative flex items-center gap-1.5 overflow-hidden rounded-lg bg-gradient-to-r from-violet-600 to-brand-600 px-2.5 py-1.5 text-[11px] font-semibold text-white shadow-sm shadow-violet-500/30 transition hover:shadow-md hover:shadow-violet-500/40 hover:brightness-110"
+        className="group relative flex items-center gap-2 overflow-hidden rounded-lg bg-gradient-to-r from-violet-600 to-brand-600 py-1 pl-1.5 pr-2.5 text-[11px] font-semibold text-white shadow-sm shadow-violet-500/30 transition hover:shadow-md hover:shadow-violet-500/40 hover:brightness-110"
       >
-        <span aria-hidden className="pointer-events-none absolute inset-y-0 -left-8 w-6 -skew-x-12 bg-white/30 transition-all duration-700 group-hover:left-[120%]" />
-        <Sparkle className="h-3.5 w-3.5" />
+        <span aria-hidden className="pointer-events-none absolute inset-y-0 -left-8 z-10 w-6 -skew-x-12 bg-white/30 transition-all duration-700 group-hover:left-[120%]" />
+        <AiHeads />
         <span className="hidden sm:inline">AI</span>
       </button>
       {panel}
