@@ -1,4 +1,5 @@
 import { prisma } from "@/lib/db";
+import { branchRooms } from "@/lib/branchRooms";
 import { requireSession } from "@/lib/auth";
 import { branchWhere, branchViaGroup, staffBranchWhere } from "@/lib/branchScope";
 import LessonCalendar, { type CalLesson } from "./LessonCalendar";
@@ -50,6 +51,7 @@ const T: Record<Locale, Record<string, string>> = {
 export default async function AdminDashboard({ locale }: { locale: Locale }) {
   const t = T[locale] ?? T.uz;
   const s = await requireSession();
+  const roomMap = await branchRooms(s.branchId);
 
   const now = new Date();
   const weekStart = new Date(now.getFullYear(), now.getMonth(), now.getDate() - now.getDay(), 0, 0, 0);
@@ -85,14 +87,14 @@ export default async function AdminDashboard({ locale }: { locale: Locale }) {
       endMin: en.getHours() * 60 + en.getMinutes(),
       group: l.group.name,
       teacher: l.group.teacher?.fullName ?? null,
-      room: l.group.room ?? null,
+      room: roomMap.resolve(l.group.room),
       course: l.group.program.name,
       color: groupColor(l.group.id, l.group.color),
       isPast: en.getTime() < now.getTime(),
     };
   });
 
-  const rooms = [...new Set(groupRows.map((g) => g.room).filter((x): x is string => !!x))];
+  const rooms = roomMap.rooms ?? [...new Set(groupRows.map((g) => g.room).filter((x): x is string => !!x))];
 
   return (
     <div className="space-y-6">

@@ -95,7 +95,7 @@ export default async function GroupsPage() {
     ? await Promise.all([
         prisma.program.findMany({ where: { isActive: true }, select: { id: true, name: true, lessonsPerMonth: true }, orderBy: { name: "asc" } }),
         Promise.resolve(branchTeachers),
-        prisma.room.findMany({ where: { isActive: true }, select: { id: true, name: true, capacity: true }, orderBy: { name: "asc" } }),
+        prisma.room.findMany({ where: { AND: [{ isActive: true }, branchWhere(s)] }, select: { id: true, name: true, capacity: true }, orderBy: { name: "asc" } }),
       ])
     : [[], [], []];
 

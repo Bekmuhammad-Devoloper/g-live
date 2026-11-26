@@ -1,5 +1,6 @@
 import { requireSession } from "@/lib/auth";
 import { prisma } from "@/lib/db";
+import { branchRooms } from "@/lib/branchRooms";
 import { canRead, MODULES } from "@/lib/rbac";
 import { ROLES } from "@/lib/constants";
 import { branchWhere } from "@/lib/branchScope";
@@ -20,6 +21,7 @@ const isoLocal = (d: Date | null) => (d ? `${d.getFullYear()}-${p2(d.getMonth() 
 
 export default async function SchedulePage() {
   const s = await requireSession();
+  const roomMap = await branchRooms(s.branchId);
   if (!canRead(s.role, MODULES.GROUPS)) {
     return <Forbidden title={tr(s.locale, { uz: "Kirish taqiqlangan", ru: "Доступ запрещён", en: "Access denied", de: "Zugriff verweigert" })} body={tr(s.locale, { uz: "Bu bo'lim uchun ruxsat yo'q.", ru: "Нет доступа к этому разделу.", en: "You do not have access to this section.", de: "Sie haben keine Berechtigung für diesen Bereich." })} />;
   }
@@ -58,7 +60,7 @@ export default async function SchedulePage() {
         endMin,
         group: g.name,
         teacher: g.teacher?.fullName ?? null,
-        room: g.room ?? null,
+        room: roomMap.resolve(g.room),
         course: g.program.name,
         color: groupColor(g.id, g.color),
         startISO: isoLocal(g.startDate),
@@ -73,7 +75,7 @@ export default async function SchedulePage() {
 
   const teachers = [...new Set(groups.map((g) => g.teacher?.fullName).filter((x): x is string => !!x))];
   const groupNames = [...new Set(groups.map((g) => g.name))];
-  const rooms = [...new Set(groups.map((g) => g.room).filter((x): x is string => !!x))];
+  const rooms = roomMap.rooms ?? [...new Set(groups.map((g) => g.room).filter((x): x is string => !!x))];
   const courses = [...new Set(groups.map((g) => g.program.name))];
 
   return (
