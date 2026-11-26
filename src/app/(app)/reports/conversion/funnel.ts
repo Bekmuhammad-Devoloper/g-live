@@ -11,10 +11,12 @@ export const FUNNEL_STEPS = [
 ] as const;
 export type StepKey = (typeof FUNNEL_STEPS)[number]["key"];
 
-export function reached(l: { stage: string; studentId: string | null }, key: StepKey | "yoqotilgan"): boolean {
+export function reached(l: { stage: string; studentId: string | null; paid?: boolean }, key: StepKey | "yoqotilgan"): boolean {
   if (key === "sorovlar") return true;
   if (key === "yoqotilgan") return l.stage === "LOST";
-  if (key === "qabul") return l.stage === "WON" || l.stage === "PAID" || !!l.studentId;
+  const enrolled = !!l.paid;
+  if (key === "qabul") return enrolled;
+  if (enrolled || l.stage === "WON" || l.stage === "PAID" || !!l.studentId) return true;
   if (l.stage === "LOST") return false;
   const min = FUNNEL_STEPS.find((s) => s.key === key)!.min;
   return rank(l.stage) >= rank(min);

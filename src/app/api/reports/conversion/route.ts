@@ -43,6 +43,13 @@ export async function GET(req: Request) {
     },
   });
 
+  const studentIds = [...new Set(leads.map((l) => l.studentId).filter((x): x is string => !!x))];
+  const paidStudents = new Set<string>();
+  for (let i = 0; i < studentIds.length; i += 500) {
+    const rows = await prisma.payment.groupBy({ by: ["studentId"], where: { studentId: { in: studentIds.slice(i, i + 500) }, status: "PAID", amount: { gt: 0 } } });
+    for (const r of rows) paidStudents.add(r.studentId);
+  }
+
   const lastAuthor = new Map<string, string>();
   const noManager = leads.filter((l) => !l.managerId).map((l) => l.id);
   for (let i = 0; i < noManager.length; i += 500) {
@@ -54,7 +61,7 @@ export async function GET(req: Request) {
     for (const r of rows) if (r.authorId && !lastAuthor.has(r.leadId)) lastAuthor.set(r.leadId, r.authorId);
   }
 
-  const withEmp = leads.map((l) => ({ ...l, employeeId: l.managerId ?? lastAuthor.get(l.id) ?? null }));
+  const withEmp = leads.map((l) => ({ ...l, paid: !!l.studentId && paidStudents.has(l.studentId), employeeId: l.managerId ?? lastAuthor.get(l.id) ?? null }));
 
   const empIds = Array.from(new Set(withEmp.map((l) => l.employeeId).filter((x): x is string => !!x)));
   const users = empIds.length
@@ -115,6 +122,7 @@ export async function GET(req: Request) {
     source: l.source,
     createdAt: l.createdAt.toISOString(),
     studentId: l.studentId,
+    paid: l.paid,
     archived: !!l.archivedAt,
     employeeId: l.employeeId,
     employeeName: l.employeeId ? nameById.get(l.employeeId) ?? null : null,
