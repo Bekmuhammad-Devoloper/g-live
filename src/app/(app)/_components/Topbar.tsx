@@ -17,6 +17,7 @@ import ThemeToggle from "./ThemeToggle";
 import CurrencyRates from "./CurrencyRates";
 import MoneyInput from "./MoneyInput";
 import AiAssistant from "./AiAssistant";
+import type { AiAvatarState } from "@/lib/aiAvatarShared";
 
 export interface TopbarProps {
   locale: Locale;
@@ -32,6 +33,7 @@ export interface TopbarProps {
   groups: { id: string; name: string }[];
   upcoming: { id: string; groupId: string; groupName: string; topic: string | null; startsAt: string }[];
   subscriptionUntil: string | null;
+  ai?: AiAvatarState | null;
   onMenu: () => void;
   appName: string;
 }
@@ -188,7 +190,7 @@ export default function Topbar(p: TopbarProps) {
           </div>
         )}
 
-        {(p.user.role === "DIRECTOR" || p.user.role === "DEPUTY_DIRECTOR") && <AiAssistant locale={p.locale} userName={p.user.fullName} />}
+        {(p.user.role === "DIRECTOR" || p.user.role === "DEPUTY_DIRECTOR") && <AiAssistant locale={p.locale} userName={p.user.fullName} ai={p.ai} />}
 
         <div className="flex-1" />
 

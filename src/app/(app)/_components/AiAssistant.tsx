@@ -8,6 +8,8 @@ import type { Locale } from "@/lib/constants";
 import { Icon } from "./Icon";
 import { askAndSave, listAiChats, getAiChat, deleteAiChat, type AiChatMessage, type AiChatSummary } from "../ai/actions";
 import { confirmDelete } from "./dialogs";
+import { AI_AVATAR_FALLBACK, type AiAvatarState } from "@/lib/aiAvatarShared";
+import AiAvatarPicker, { AiAvatar } from "./AiAvatarPicker";
 
 const STORE_KEY = "gl-ai-chat";
 
@@ -32,80 +34,6 @@ function Sparkle({ className }: { className?: string }) {
     <svg viewBox="0 0 24 24" className={className} fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
       <path d="M12 3l1.9 5.1L19 10l-5.1 1.9L12 17l-1.9-5.1L5 10l5.1-1.9z" /><path d="M19 15l.8 2.2L22 18l-2.2.8L19 21l-.8-2.2L16 18l2.2-.8z" />
     </svg>
-  );
-}
-
-const FACE = { eye: "#2a1a10", mouth: "#b5643f" };
-
-function Face({ cx = 16, cy = 15 }: { cx?: number; cy?: number }) {
-  return (
-    <>
-      <circle cx={cx - 2.1} cy={cy} r=".8" fill={FACE.eye} />
-      <circle cx={cx + 2.1} cy={cy} r=".8" fill={FACE.eye} />
-      <path d={`M${cx - 1.4} ${cy + 2.7}c.8.6 2 .6 2.8 0`} stroke={FACE.mouth} strokeWidth=".9" fill="none" strokeLinecap="round" />
-    </>
-  );
-}
-
-const AI_HEADS = [
-  (
-    <svg key="a" viewBox="0 0 32 32" className="h-full w-full">
-      <rect width="32" height="32" fill="#bae6fd" />
-      <path d="M8.5 15.5C8.5 9.5 11.8 6 16 6s7.5 3.5 7.5 9.5V25h-15z" fill="#3b2314" />
-      <path d="M4 32c0-6.2 5.4-9.5 12-9.5S28 25.8 28 32z" fill="#7c3aed" />
-      <rect x="13.6" y="18.5" width="4.8" height="5" rx="2" fill="#e8b48f" />
-      <ellipse cx="16" cy="14.4" rx="5.6" ry="6.2" fill="#f2c4a0" />
-      <path d="M10.3 13.4c.6-4.2 3-6.2 5.9-6.2 3.2 0 5.4 2.2 5.8 6-2.8-.4-6-1.8-7.8-3.8-.9 1.9-2.3 3.2-3.9 4z" fill="#3b2314" />
-      <Face cy={15.2} />
-    </svg>
-  ),
-  (
-    <svg key="b" viewBox="0 0 32 32" className="h-full w-full">
-      <rect width="32" height="32" fill="#fde68a" />
-      <path d="M4 32c0-6.2 5.4-9.5 12-9.5S28 25.8 28 32z" fill="#1e3a8a" />
-      <path d="M13.4 22.6 16 26l2.6-3.4z" fill="#f8fafc" />
-      <rect x="13.6" y="18.5" width="4.8" height="4.6" rx="2" fill="#d39a70" />
-      <ellipse cx="16" cy="14.4" rx="5.4" ry="6" fill="#e0a87e" />
-      <path d="M10.6 13.2c-.3-4.4 2.2-7 5.5-7 3.6 0 5.9 2.4 5.5 7-1-.2-1.6-1.6-2-2.8-2.3 1-5.6 1.3-8 .4-.4 1-.5 1.8-1 2.4z" fill="#5b3a1e" />
-      <Face cy={15.1} />
-    </svg>
-  ),
-  (
-    <svg key="c" viewBox="0 0 32 32" className="h-full w-full">
-      <rect width="32" height="32" fill="#a7f3d0" />
-      <path d="M4 32c0-6.5 5.2-10.5 12-10.5S28 25.5 28 32z" fill="#e11d48" />
-      <path d="M9.2 15.5C9.2 9.8 12.2 6.2 16 6.2s6.8 3.6 6.8 9.3c0 3.6-1.6 6.6-3.4 8h-6.8c-1.8-1.4-3.4-4.4-3.4-8z" fill="#e11d48" />
-      <ellipse cx="16" cy="15.2" rx="4.6" ry="5.4" fill="#f5cfae" />
-      <path d="M11.4 13.4c.8-3.3 2.6-4.9 4.6-4.9s3.8 1.6 4.6 4.9" stroke="#be123c" strokeWidth="1.2" fill="none" />
-      <Face cy={15.4} />
-    </svg>
-  ),
-  (
-    <svg key="d" viewBox="0 0 32 32" className="h-full w-full">
-      <rect width="32" height="32" fill="#fecdd3" />
-      <path d="M4 32c0-6.2 5.4-9.5 12-9.5S28 25.8 28 32z" fill="#059669" />
-      <rect x="13.6" y="18.5" width="4.8" height="4.6" rx="2" fill="#b07552" />
-      <ellipse cx="16" cy="14.6" rx="5.4" ry="6" fill="#c68863" />
-      <path d="M10 13.6c-1.2-1.8-.6-4.6 1.4-5.4.4-2 2.6-3 4.6-2.4 1.6-1 3.8-.4 4.6 1.2 2 .4 2.8 2.8 1.6 4.8-.2.6-.6 1.2-1 1.8-.6-1.6-1.4-2.6-2.4-3.2-2 .8-4.6.8-6.4 0-.8.8-1.6 2-2.4 3.2z" fill="#1f1611" />
-      <g stroke="#1f2937" strokeWidth=".9" fill="none"><circle cx="13.8" cy="15" r="1.8" /><circle cx="18.2" cy="15" r="1.8" /><path d="M15.6 15h.8" /></g>
-      <path d="M14.6 17.9c.8.6 2 .6 2.8 0" stroke={FACE.mouth} strokeWidth=".9" fill="none" strokeLinecap="round" />
-    </svg>
-  ),
-];
-
-function AiHeads() {
-  return (
-    <span aria-hidden className="flex items-center -space-x-1.5">
-      {AI_HEADS.map((h, i) => (
-        <span
-          key={i}
-          style={{ zIndex: AI_HEADS.length - i, transitionDelay: `${i * 40}ms` }}
-          className="relative h-5 w-5 overflow-hidden rounded-full ring-[1.5px] ring-white/90 transition-transform duration-200 group-hover:-translate-y-0.5"
-        >
-          {h}
-        </span>
-      ))}
-    </span>
   );
 }
 
@@ -181,8 +109,10 @@ function CopyBtn({ text, locale }: { text: string; locale: Locale }) {
 
 const hhmm = (ms?: number) => { if (!ms) return ""; const d = new Date(ms); return `${String(d.getHours()).padStart(2, "0")}:${String(d.getMinutes()).padStart(2, "0")}`; };
 
-export default function AiAssistant({ locale, userName }: { locale: Locale; userName?: string }) {
+export default function AiAssistant({ locale, userName, ai }: { locale: Locale; userName?: string; ai?: AiAvatarState | null }) {
   const [open, setOpen] = useState(false);
+  const [avatar, setAvatar] = useState<AiAvatarState>(ai ?? AI_AVATAR_FALLBACK);
+  const [picking, setPicking] = useState(false);
   const [msgs, setMsgs] = useState<Msg[]>([]);
   const [input, setInput] = useState("");
   const [err, setErr] = useState<string | null>(null);
@@ -218,6 +148,9 @@ export default function AiAssistant({ locale, userName }: { locale: Locale; user
     window.addEventListener("keydown", k);
     const f = setTimeout(() => inputRef.current?.focus(), 80);
     return () => { window.removeEventListener("keydown", k); clearTimeout(f); };
+  }, [open]);
+  useEffect(() => {
+    if (!open) setPicking(false);
   }, [open]);
   useEffect(() => {
     if (!pending) { setPhase(0); return; }
@@ -301,10 +234,19 @@ export default function AiAssistant({ locale, userName }: { locale: Locale; user
           <div aria-hidden className="pointer-events-none absolute inset-x-0 bottom-0 h-px bg-gradient-to-r from-transparent via-white/25 to-transparent" />
           <div className="relative flex items-center justify-between gap-3">
             <div className="flex min-w-0 items-center gap-3">
-              <span className="relative grid h-10 w-10 shrink-0 place-items-center rounded-xl bg-white/20 shadow-lg shadow-red-900/20 ring-1 ring-white/40 backdrop-blur">
-                <Sparkle className="h-5 w-5" />
+              <button
+                type="button"
+                onClick={() => setPicking((v) => !v)}
+                title={tr(locale, { uz: "Avatarni almashtirish", ru: "Сменить аватар", en: "Change avatar", de: "Avatar ändern" })}
+                aria-expanded={picking}
+                className="group/av relative h-11 w-11 shrink-0 rounded-full shadow-lg shadow-red-900/25 ring-2 ring-white/70 transition hover:ring-white"
+              >
+                <AiAvatar src={avatar.chosen} className="h-full w-full" />
                 <span className="absolute -bottom-0.5 -right-0.5 h-3 w-3 rounded-full border-2 border-[#e9522a] bg-emerald-400" />
-              </span>
+                <span className={cn("absolute -left-1 -top-1 grid h-5 w-5 place-items-center rounded-full bg-white text-[#e3262b] shadow transition", picking ? "opacity-100" : "opacity-0 group-hover/av:opacity-100")}>
+                  <svg viewBox="0 0 24 24" className="h-3 w-3" fill="none" stroke="currentColor" strokeWidth="2.4" strokeLinecap="round" strokeLinejoin="round"><path d="M12 20h9" /><path d="M16.5 3.5a2.1 2.1 0 0 1 3 3L7 19l-4 1 1-4Z" /></svg>
+                </span>
+              </button>
               <div className="min-w-0">
                 <div className="truncate text-[15px] font-semibold tracking-tight">{title}</div>
                 <div className="truncate text-[11px] text-white/80">
@@ -333,6 +275,8 @@ export default function AiAssistant({ locale, userName }: { locale: Locale; user
             </div>
           </div>
         </div>
+
+        {picking && <AiAvatarPicker state={avatar} locale={locale} onChange={setAvatar} onClose={() => setPicking(false)} />}
 
         {view === "history" ? (
           <div className="min-h-0 flex-1 overflow-y-auto px-3 py-4">
@@ -378,9 +322,17 @@ export default function AiAssistant({ locale, userName }: { locale: Locale; user
             <div className="flex min-h-full flex-col justify-center py-4">
               <div className="relative mx-auto mb-6">
                 <div aria-hidden className="absolute inset-0 -m-6 rounded-full bg-gradient-to-br from-violet-400/30 to-indigo-400/20 blur-2xl" />
-                <div className="relative grid h-[72px] w-[72px] place-items-center rounded-[22px] bg-gradient-to-br from-violet-500 via-indigo-500 to-blue-500 text-white shadow-xl shadow-indigo-500/30 ring-4 ring-white dark:ring-[#0b1630]">
-                  <Sparkle className="h-9 w-9" />
-                </div>
+                <button
+                  type="button"
+                  onClick={() => setPicking(true)}
+                  title={tr(locale, { uz: "Avatarni almashtirish", ru: "Сменить аватар", en: "Change avatar", de: "Avatar ändern" })}
+                  className="relative block h-[84px] w-[84px] rounded-full shadow-xl shadow-indigo-500/30 ring-4 ring-white transition hover:scale-[1.03] dark:ring-[#0b1630]"
+                >
+                  <AiAvatar src={avatar.chosen} className="h-full w-full" />
+                  <span className="absolute -bottom-1 -right-1 grid h-7 w-7 place-items-center rounded-full bg-violet-500 text-white shadow ring-2 ring-white dark:ring-[#0b1630]">
+                    <svg viewBox="0 0 24 24" className="h-3.5 w-3.5" fill="none" stroke="currentColor" strokeWidth="2.4" strokeLinecap="round" strokeLinejoin="round"><path d="M12 20h9" /><path d="M16.5 3.5a2.1 2.1 0 0 1 3 3L7 19l-4 1 1-4Z" /></svg>
+                  </span>
+                </button>
               </div>
               <h3 className="text-center text-[22px] font-bold tracking-tight text-slate-900 dark:text-white">
                 {first ? tr(locale, { uz: `Salom, ${first}`, ru: `Здравствуйте, ${first}`, en: `Hi, ${first}`, de: `Hallo, ${first}` }) : tr(locale, { uz: "Salom", ru: "Здравствуйте", en: "Hi", de: "Hallo" })}
@@ -424,7 +376,7 @@ export default function AiAssistant({ locale, userName }: { locale: Locale; user
                 </div>
               ) : (
                 <div key={i} className="flex gap-2.5">
-                  <span className="mt-0.5 grid h-8 w-8 shrink-0 place-items-center rounded-xl bg-gradient-to-br from-violet-500 to-brand-600 text-white shadow-sm"><Sparkle className="h-4 w-4" /></span>
+                  <AiAvatar src={avatar.chosen} className="mt-0.5 h-8 w-8 shadow-sm ring-1 ring-slate-200 dark:ring-white/10" />
                   <div className="min-w-0 flex-1">
                     <div className="rounded-2xl rounded-tl-md border border-slate-200/80 bg-white px-4 py-3 text-sm leading-relaxed text-slate-700 shadow-sm dark:border-white/10 dark:bg-white/[0.04] dark:text-slate-200">
                       <RichText text={m.text} />
@@ -438,7 +390,7 @@ export default function AiAssistant({ locale, userName }: { locale: Locale; user
               ))}
               {pending && (
                 <div className="flex gap-2.5">
-                  <span className="grid h-8 w-8 shrink-0 animate-pulse place-items-center rounded-xl bg-gradient-to-br from-violet-500 to-brand-600 text-white"><Sparkle className="h-4 w-4" /></span>
+                  <AiAvatar src={avatar.chosen} className="h-8 w-8 animate-pulse ring-1 ring-slate-200 dark:ring-white/10" />
                   <div className="flex items-center gap-2.5 rounded-2xl rounded-tl-md border border-slate-200/80 bg-white px-4 py-3 text-[13px] text-slate-500 shadow-sm dark:border-white/10 dark:bg-white/[0.04] dark:text-slate-400">
                     <span className="flex gap-1">{[0, 1, 2].map((d) => <span key={d} className="h-1.5 w-1.5 animate-bounce rounded-full bg-violet-500" style={{ animationDelay: `${d * 150}ms` }} />)}</span>
                     {tr(locale, THINKING[phase])}
@@ -496,7 +448,7 @@ export default function AiAssistant({ locale, userName }: { locale: Locale; user
         className="group relative flex items-center gap-2 overflow-hidden rounded-lg bg-gradient-to-r from-violet-600 to-brand-600 py-1 pl-1.5 pr-2.5 text-[11px] font-semibold text-white shadow-sm shadow-violet-500/30 transition hover:shadow-md hover:shadow-violet-500/40 hover:brightness-110"
       >
         <span aria-hidden className="pointer-events-none absolute inset-y-0 -left-8 z-10 w-6 -skew-x-12 bg-white/30 transition-all duration-700 group-hover:left-[120%]" />
-        <AiHeads />
+        <AiAvatar src={avatar.chosen} className="h-6 w-6 ring-[1.5px] ring-white/90" />
         <span className="hidden sm:inline">AI</span>
       </button>
       {panel}

@@ -10,6 +10,7 @@ import { DialogHost } from "./_components/dialogs";
 import Softphone from "./_components/Softphone";
 import { getBrand } from "@/lib/brand";
 import { disabledModules, INSTANCE_MODULES, isModuleEnabled } from "@/lib/instance";
+import { getAiAvatarState } from "@/lib/aiAvatars";
 
 export default async function AppLayout({ children }: { children: React.ReactNode }) {
   const session = await getSession();
@@ -81,6 +82,7 @@ export default async function AppLayout({ children }: { children: React.ReactNod
     : ownBranches.length > 0 ? ownBranches : branch ? [{ id: branch.id, name: branch.name }] : [];
 
   const brand = await getBrand();
+  const ai = session.role === ROLES.DIRECTOR || session.role === ROLES.DEPUTY_DIRECTOR ? await getAiAvatarState(session.userId) : null;
   const offPaths = [...disabledModules()].flatMap((m) => INSTANCE_MODULES[m].paths);
   const navItems = navFor(session.role, session).map((it) => ({
     href: it.href,
@@ -126,6 +128,7 @@ export default async function AppLayout({ children }: { children: React.ReactNod
           startsAt: l.startsAt.toISOString(),
         })),
         subscriptionUntil: process.env.SUBSCRIPTION_UNTIL ?? null,
+        ai,
       }}
     >
       {children}
