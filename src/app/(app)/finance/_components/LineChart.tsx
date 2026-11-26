@@ -1,6 +1,9 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useId, useState } from "react";
+
+const DURATION = 1100;
+const easeOut = (t: number) => 1 - Math.pow(1 - t, 3);
 
 export default function LineChart({
   labels,
@@ -18,6 +21,26 @@ export default function LineChart({
   height?: number;
 }) {
   const [hover, setHover] = useState<number | null>(null);
+  const [progress, setProgress] = useState(0);
+  const clipId = `lc${useId().replace(/[^a-zA-Z0-9]/g, "")}`;
+  const signature = values.join(",");
+
+  useEffect(() => {
+    if (window.matchMedia?.("(prefers-reduced-motion: reduce)").matches) {
+      setProgress(1);
+      return;
+    }
+    let frame = 0;
+    const start = performance.now();
+    const tick = (now: number) => {
+      const t = Math.min(1, (now - start) / DURATION);
+      setProgress(t);
+      if (t < 1) frame = requestAnimationFrame(tick);
+    };
+    setProgress(0);
+    frame = requestAnimationFrame(tick);
+    return () => cancelAnimationFrame(frame);
+  }, [signature]);
 
   if (values.length === 0 || values.every((v) => !v)) {
     return <div className="flex items-center justify-center text-sm text-slate-400" style={{ height }}>{emptyText}</div>;
@@ -31,7 +54,9 @@ export default function LineChart({
 
   const x = (i: number) => PL + (n <= 1 ? plotW / 2 : (i / (n - 1)) * plotW);
   const y = (v: number) => PT + plotH - (v / maxVal) * plotH;
-  const pts = values.map((v, i) => `${x(i)},${y(v)}`).join(" ");
+  const rise = easeOut(progress);
+  const reveal = easeOut(Math.min(1, progress / 0.75));
+  const pts = values.map((v, i) => `${x(i)},${y(v * rise)}`).join(" ");
   const area = `${x(0)},${PT + plotH} ${pts} ${x(n - 1)},${PT + plotH}`;
   const xLabelEvery = Math.max(1, Math.ceil(n / 12));
 
@@ -53,11 +78,18 @@ export default function LineChart({
             <text key={i} x={x(i)} y={H - 8} textAnchor="middle" className="fill-slate-400 text-[10px]">{lb}</text>
           ) : null,
         )}
-        <polyline points={area} fill={color} opacity="0.1" stroke="none" />
-        <polyline points={pts} fill="none" stroke={color} strokeWidth="2.5" strokeLinejoin="round" strokeLinecap="round" />
-        {values.map((v, i) => (
-          <circle key={i} cx={x(i)} cy={y(v)} r={hover === i ? 4.5 : 3} fill={color} className="stroke-white dark:stroke-slate-900" strokeWidth="1.5" />
-        ))}
+        <defs>
+          <clipPath id={clipId}>
+            <rect x={0} y={0} width={PL + plotW * reveal + 8} height={H} />
+          </clipPath>
+        </defs>
+        <g clipPath={`url(#${clipId})`}>
+          <polyline points={area} fill={color} opacity="0.1" stroke="none" />
+          <polyline points={pts} fill="none" stroke={color} strokeWidth="2.5" strokeLinejoin="round" strokeLinecap="round" />
+          {values.map((v, i) => (
+            <circle key={i} cx={x(i)} cy={y(v * rise)} r={hover === i ? 4.5 : 3} fill={color} className="stroke-white dark:stroke-slate-900" strokeWidth="1.5" />
+          ))}
+        </g>
         {hover !== null && (
           <line x1={x(hover)} y1={PT} x2={x(hover)} y2={PT + plotH} className="stroke-slate-300 dark:stroke-slate-600" strokeWidth="1" strokeDasharray="3 3" />
         )}
