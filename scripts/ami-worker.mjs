@@ -24,7 +24,7 @@ await new Promise((resolve) => {
   guard.listen(LOCK_PORT, "127.0.0.1", () => { guard.unref(); resolve(); });
 });
 
-const CAUSE_STATUS = { "16": "ANSWERED", "17": "BUSY", "19": "NO_ANSWER", "21": "FAILED", "0": "NO_ANSWER" };
+const CAUSE_STATUS = { "17": "BUSY", "21": "FAILED", "34": "FAILED", "38": "FAILED" };
 const DID = String(process.env.TELEPHONY_DID || "550552022").replace(/\D/g, "");
 const isRealNumber = (v) => {
   const s = String(v ?? "").trim();
@@ -51,8 +51,7 @@ async function onEvent(ev) {
         if (!id) break;
         const c = chans.get(id) || {};
         const num = String(ev.CallerIDNum ?? "").trim();
-        const real = num && !/^<?unknown>?$/i.test(num) && !/^anonymous$/i.test(num);
-        if (real) c.phone = num;
+        if (isRealNumber(num) && !isRealNumber(c.phone)) c.phone = num;
         else if (!c.phone) c.phone = num;
         if (c.inbound === undefined) {
           const fromTrunk = String(ev.Context || "").includes("from-trunk");
@@ -71,7 +70,7 @@ async function onEvent(ev) {
         break;
       }
       case "DialEnd":
-        if (ev.DialStatus && ev.DialStatus !== "ANSWER") break;
+        if (!ev.Channel || ev.DialStatus !== "ANSWER") break;
       case "AgentConnect": case "BridgeEnter": {
         if (!id) break;
         const c = chans.get(id) || {};
@@ -91,6 +90,7 @@ async function onEvent(ev) {
       }
       case "Hangup": {
         if (!id) break;
+        if (ev.Linkedid && ev.Uniqueid && ev.Uniqueid !== ev.Linkedid) break;
         const c = chans.get(id);
         chans.delete(id);
         if (!c) break;
@@ -100,7 +100,7 @@ async function onEvent(ev) {
             ? (ev.Cause === "17" ? "BUSY" : "MISSED")
             : (CAUSE_STATUS[ev.Cause] || "NO_ANSWER");
         const duration = c.answeredAt ? Math.max(0, Math.round((Date.now() - new Date(c.answeredAt).getTime()) / 1000)) : 0;
-        const recordingUrl = c.recordFile ? `/api/telephony/recordings/${c.recordFile}` : null;
+        const recordingUrl = c.answeredAt && c.recordFile ? `/api/telephony/recordings/${c.recordFile}` : null;
         if (c.callId) {
           await prisma.call.update({
             where: { id: c.callId },

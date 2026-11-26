@@ -60,7 +60,7 @@ function parseCsvLine(line) {
   return out;
 }
 
-const C = { SRC: 1, DST: 2, DCONTEXT: 3, CHANNEL: 5, DSTCHANNEL: 6, START: 9, ANSWER: 10, END: 11, DURATION: 12, BILLSEC: 13, DISPOSITION: 14, UNIQUEID: 16 };
+const C = { SRC: 1, DST: 2, DCONTEXT: 3, CLID: 4, CHANNEL: 5, DSTCHANNEL: 6, START: 9, ANSWER: 10, END: 11, DURATION: 12, BILLSEC: 13, DISPOSITION: 14, UNIQUEID: 16 };
 
 const toDate = (s) => {
   if (!s || !/\d{4}-\d{2}-\d{2}/.test(s)) return null;
@@ -107,6 +107,13 @@ async function main() {
     const m = /^PJSIP\/([A-Za-z0-9_-]+?)-[0-9a-f]+$/.exec(String(chan || ""));
     return m ? canonExt(m[1]) : null;
   };
+  const normName = (s) => String(s ?? "").toLowerCase().replace(/\s+/g, " ").trim();
+  const staff = await prisma.user.findMany({ select: { id: true, fullName: true, isActive: true }, orderBy: [{ isActive: "asc" }, { id: "asc" }] });
+  const byName = new Map(staff.filter((u) => normName(u.fullName)).map((u) => [normName(u.fullName), u]));
+  const clidName = (clid) => {
+    const m = /^"?(.*?)"?\s*<[^>]*>\s*$/.exec(String(clid ?? "").trim());
+    return normName(m ? m[1] : "");
+  };
 
   const recIndex = recs.map((f) => ({ f, t: recTime(f) })).filter((r) => r.t !== null);
   const usedRecs = new Set();
@@ -152,8 +159,9 @@ async function main() {
     const endedAt = g.rows.map((r) => toDate(r[C.END])).filter(Boolean).sort((a, b) => b - a)[0] || null;
     const answeredAt = answered ? (toDate((talkRow || first)[C.ANSWER]) || startedAt) : null;
 
-    const opChan = agentRow?.[C.DSTCHANNEL] || (inbound ? null : first[C.CHANNEL]);
-    const opUser = opChan ? byExt.get(extOf(opChan) || "") : null;
+    const opChan = inbound ? agentRow?.[C.DSTCHANNEL] : first[C.CHANNEL];
+    const chanUser = opChan ? byExt.get(extOf(opChan) || "") ?? null : null;
+    const nameUser = inbound ? null : byName.get(clidName(first[C.CLID])) ?? null;
 
     const digits = String(phone).replace(/\D/g, "");
     const tail = digits.slice(-9);
@@ -165,18 +173,21 @@ async function main() {
       ? await prisma.lead.findFirst({ where: { phone: { contains: tail } }, orderBy: { updatedAt: "desc" }, select: { id: true, fullName: true, managerId: true, manager: { select: { fullName: true } } } })
       : null;
 
+    const existing = await prisma.call.findUnique({ where: { externalId: uid }, select: { id: true, operatorId: true, operatorName: true, leadId: true, contactName: true } });
+    const known = existing?.operatorId ? { id: existing.operatorId, fullName: existing.operatorName } : null;
+    const opUser = inbound ? (chanUser ?? known) : (nameUser ?? known ?? chanUser);
+
     const base = {
       direction: inbound ? "INCOMING" : "OUTGOING",
       status, phone: String(phone), duration,
       startedAt, answeredAt, endedAt,
-      leadId: lead?.id ?? null,
-      contactName: lead?.fullName ?? null,
+      leadId: existing?.leadId ?? lead?.id ?? null,
+      contactName: existing?.contactName ?? lead?.fullName ?? null,
       operatorId: opUser?.id ?? lead?.managerId ?? null,
       operatorName: opUser?.fullName ?? lead?.manager?.fullName ?? null,
     };
     base.recordingUrl = recordingUrl;
 
-    const existing = await prisma.call.findUnique({ where: { externalId: uid }, select: { id: true } });
     if (existing) {
       await prisma.call.update({ where: { externalId: uid }, data: base });
       updated++;
