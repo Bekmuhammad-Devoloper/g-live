@@ -12,7 +12,7 @@ import { Icon } from "../_components/Icon";
 import { PERM_GROUPS, ALL_PERM_KEYS } from "./permissions";
 import { saveRole, deleteRole } from "./actions";
 
-export interface VRole { id: string; name: string; description: string; department: string; permissions: string[]; bossOnly: boolean; staff: number }
+export interface VRole { id: string; name: string; description: string; department: string; permissions: string[]; bossOnly: boolean; staff: number; systemRole: string }
 
 const DEPARTMENTS = ["Boshqaruv", "Sotuv bo'limi", "Marketing bo'limi", "Moliya bo'limi", "Administrativ", "Ta'lim bo'limi"] as const;
 const DEPT_ICON: Record<string, string> = {
@@ -119,10 +119,15 @@ export default function RolesView({ roles, canManage, locale }: { roles: VRole[]
                           <td className="px-4 py-3">
                             <span className="font-medium text-slate-800 dark:text-slate-100">{r.name}</span>
                             {r.bossOnly && <span className="ml-2 rounded bg-amber-100 px-1.5 py-0.5 text-[10px] font-semibold text-amber-700 dark:bg-amber-900/40 dark:text-amber-300">{tr(locale, { uz: "Faqat boss", ru: "Только босс", en: "Boss only", de: "Nur Chef" })}</span>}
+                            <div className="text-[11px] text-slate-400">{tr(locale, { uz: "Tizim roli", ru: "Системная роль", en: "System role", de: "Systemrolle" })}: {r.systemRole}</div>
                           </td>
                           <td className="px-4 py-3 text-slate-500">{r.description || "—"}</td>
-                          <td className="px-4 py-3 text-center"><span className="rounded-md bg-brand-500/15 px-2 py-0.5 text-xs font-bold text-brand-600 dark:text-brand-300">{r.permissions.length}</span></td>
-                          <td className="px-4 py-3 text-center text-slate-500">{r.staff}</td>
+                          <td className="px-4 py-3 text-center">
+                            {r.permissions.length > 0
+                              ? <span className="rounded-md bg-brand-500/15 px-2 py-0.5 text-xs font-bold text-brand-600 dark:text-brand-300">{r.permissions.length}</span>
+                              : <span title={tr(locale, { uz: `Ruxsatlar tizim roli bo'yicha: ${r.systemRole}`, ru: `Права по системной роли: ${r.systemRole}`, en: `Permissions follow the system role: ${r.systemRole}`, de: `Berechtigungen gemäß Systemrolle: ${r.systemRole}` })} className="rounded-md bg-slate-500/10 px-2 py-0.5 text-xs font-semibold text-slate-500 dark:text-slate-400">{tr(locale, { uz: "Standart", ru: "Стандарт", en: "Default", de: "Standard" })}</span>}
+                          </td>
+                          <td className={cn("px-4 py-3 text-center tabular-nums", r.staff > 0 ? "font-bold text-slate-800 dark:text-slate-100" : "text-slate-400")}>{r.staff}</td>
                           {canManage && (
                             <td className="px-4 py-3">
                               <div className="flex items-center justify-end gap-2 text-slate-400">
