@@ -75,6 +75,22 @@ const recTime = (f) => {
 
 const REC_SLACK_MS = 10_000;
 
+function loadWorkerAnswers() {
+  const map = new Map();
+  let text = "";
+  try { text = fs.readFileSync(process.env.AMI_WORKER_LOG || path.join(process.cwd(), "ami-worker.log"), "utf8"); } catch { return map; }
+  for (const line of text.split("\n")) {
+    const m = /^\[(\d{2}):(\d{2}):(\d{2})\] JAVOB: \S+ id=((\d+)\.\d+)/.exec(line);
+    if (!m || map.has(m[4])) continue;
+    const base = Number(m[5]) * 1000;
+    const d = new Date(base);
+    let t = Date.UTC(d.getUTCFullYear(), d.getUTCMonth(), d.getUTCDate(), +m[1], +m[2], +m[3]);
+    if (t < base - 60_000) t += 86_400_000;
+    map.set(m[4], t);
+  }
+  return map;
+}
+
 const isRealNumber = (v) => {
   const s = String(v ?? "").trim();
   return Boolean(s) && !/^<?unknown>?$/i.test(s) && !/^anonymous$/i.test(s) && /\d{5,}/.test(s);
@@ -115,6 +131,7 @@ async function main() {
     return normName(m ? m[1] : "");
   };
 
+  const workerAnswers = loadWorkerAnswers();
   const recIndex = recs.map((f) => ({ f, t: recTime(f) })).filter((r) => r.t !== null);
   const usedRecs = new Set();
   const pickRecording = (tail, from, to) => {
@@ -142,7 +159,7 @@ async function main() {
     if (!isRealNumber(phone)) { skipped++; continue; }
 
     const agentRow = g.rows.find((r) => r[C.DSTCHANNEL] && String(r[C.DISPOSITION]).toUpperCase() === "ANSWERED");
-    const answered = Boolean(agentRow) || (!inbound && g.rows.some((r) => String(r[C.DISPOSITION]).toUpperCase() === "ANSWERED" && Number(r[C.BILLSEC]) > 0));
+    const answered = Boolean(agentRow);
 
     let status;
     if (answered) status = "ANSWERED";
@@ -152,12 +169,25 @@ async function main() {
       status = d.includes("BUSY") ? "BUSY" : d.includes("FAILED") ? "FAILED" : "NO_ANSWER";
     }
 
-    const talkRow = agentRow || (answered ? g.rows.find((r) => Number(r[C.BILLSEC]) > 0) : null);
-    const duration = talkRow ? Math.max(0, Number(talkRow[C.BILLSEC]) || 0) : 0;
+    const existing = await prisma.call.findUnique({ where: { externalId: uid }, select: { id: true, operatorId: true, operatorName: true, leadId: true, contactName: true, answeredAt: true } });
 
     const startedAt = toDate(first[C.START]) || new Date();
     const endedAt = g.rows.map((r) => toDate(r[C.END])).filter(Boolean).sort((a, b) => b - a)[0] || null;
-    const answeredAt = answered ? (toDate((talkRow || first)[C.ANSWER]) || startedAt) : null;
+
+    let duration = 0;
+    let answeredAt = null;
+    if (agentRow) {
+      const rowStart = toDate(agentRow[C.START])?.getTime() ?? startedAt.getTime();
+      const rowEnd = toDate(agentRow[C.END])?.getTime() ?? null;
+      const real = workerAnswers.get(uid) ?? existing?.answeredAt?.getTime() ?? null;
+      if (real !== null && rowEnd !== null && real >= rowStart - 1000 && real <= rowEnd) {
+        answeredAt = new Date(real);
+        duration = Math.max(0, Math.round((rowEnd - real) / 1000));
+      } else {
+        answeredAt = toDate(agentRow[C.ANSWER]) || startedAt;
+        duration = Math.max(0, Number(agentRow[C.BILLSEC]) || 0);
+      }
+    }
 
     const opChan = inbound ? agentRow?.[C.DSTCHANNEL] : first[C.CHANNEL];
     const chanUser = opChan ? byExt.get(extOf(opChan) || "") ?? null : null;
@@ -173,7 +203,6 @@ async function main() {
       ? await prisma.lead.findFirst({ where: { phone: { contains: tail } }, orderBy: { updatedAt: "desc" }, select: { id: true, fullName: true, managerId: true, manager: { select: { fullName: true } } } })
       : null;
 
-    const existing = await prisma.call.findUnique({ where: { externalId: uid }, select: { id: true, operatorId: true, operatorName: true, leadId: true, contactName: true } });
     const known = existing?.operatorId ? { id: existing.operatorId, fullName: existing.operatorName } : null;
     const opUser = inbound ? (chanUser ?? known) : (nameUser ?? known ?? chanUser);
 
