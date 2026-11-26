@@ -34,13 +34,13 @@ export const toneCls: Record<string, string> = {
   blue: "bg-blue-50 text-blue-700 border-blue-200 dark:bg-blue-500/10 dark:text-blue-300 dark:border-blue-500/30",
 };
 
-export const sq: Record<string, string> = {
-  blue: "bg-blue-100 text-blue-600 dark:bg-blue-500/15 dark:text-blue-400",
-  emerald: "bg-emerald-100 text-emerald-600 dark:bg-emerald-500/15 dark:text-emerald-400",
-  red: "bg-red-100 text-red-500 dark:bg-red-500/15 dark:text-red-400",
-  indigo: "bg-indigo-100 text-indigo-600 dark:bg-indigo-500/15 dark:text-indigo-400",
-  violet: "bg-violet-100 text-violet-600 dark:bg-violet-500/15 dark:text-violet-400",
-  purple: "bg-purple-100 text-purple-600 dark:bg-purple-500/15 dark:text-purple-400",
+export const tileTone: Record<string, { icon: string; bar: string; pill: string }> = {
+  blue: { icon: "from-blue-500 to-indigo-600 shadow-blue-500/30", bar: "bg-blue-500", pill: "bg-blue-50 text-blue-700 dark:bg-blue-500/15 dark:text-blue-300" },
+  emerald: { icon: "from-emerald-400 to-emerald-600 shadow-emerald-500/30", bar: "bg-emerald-500", pill: "bg-emerald-50 text-emerald-700 dark:bg-emerald-500/15 dark:text-emerald-300" },
+  red: { icon: "from-rose-400 to-red-600 shadow-red-500/30", bar: "bg-red-500", pill: "bg-red-50 text-red-700 dark:bg-red-500/15 dark:text-red-300" },
+  sky: { icon: "from-sky-400 to-cyan-600 shadow-sky-500/30", bar: "bg-sky-500", pill: "bg-sky-50 text-sky-700 dark:bg-sky-500/15 dark:text-sky-300" },
+  orange: { icon: "from-amber-400 to-orange-600 shadow-orange-500/30", bar: "bg-orange-500", pill: "bg-orange-50 text-orange-700 dark:bg-orange-500/15 dark:text-orange-300" },
+  violet: { icon: "from-violet-500 to-purple-600 shadow-violet-500/30", bar: "bg-violet-500", pill: "bg-violet-50 text-violet-700 dark:bg-violet-500/15 dark:text-violet-300" },
 };
 
 export function initials(name: string): string {

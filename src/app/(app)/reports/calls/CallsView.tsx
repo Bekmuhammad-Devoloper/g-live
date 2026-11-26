@@ -9,7 +9,7 @@ import { exportRows } from "@/lib/export";
 import { Icon } from "../../_components/Icon";
 import CallsTable from "./CallsTable";
 import MissedList from "./MissedList";
-import { DIR, STATUS, sq } from "./meta";
+import { DIR, STATUS, tileTone } from "./meta";
 import type { CallStats, VCall, VOperator } from "./types";
 import { useCdrSync } from "./useCdrSync";
 
@@ -92,14 +92,16 @@ export default function CallsView({ calls, stats, operators, locale, canMark, in
     );
   };
 
-  const answeredPct = stats.total ? `${Math.round((stats.answered / stats.total) * 100)}%` : undefined;
-  const tiles = [
-    { label: tr(locale, { uz: "Jami qo'ng'iroqlar", ru: "Всего звонков", en: "Total calls", de: "Anrufe gesamt" }), icon: "phone", tone: "blue", value: String(stats.total) },
-    { label: tr(locale, { uz: "Javob berilgan", ru: "Отвеченные", en: "Answered", de: "Angenommen" }), icon: "phoneCall", tone: "emerald", value: String(stats.answered), sub: answeredPct },
-    { label: tr(locale, { uz: "O'tkazib yuborilgan", ru: "Пропущенные", en: "Missed", de: "Verpasst" }), icon: "phoneMissed", tone: "red", value: String(stats.missed), sub: stats.missedPending ? `${stats.missedPending} ${tr(locale, { uz: "kutmoqda", ru: "в ожидании", en: "pending", de: "ausstehend" })}` : undefined },
-    { label: tr(locale, { uz: "Kiruvchi", ru: "Входящие", en: "Incoming", de: "Eingehend" }), icon: "arrowDownLeft", tone: "indigo", value: String(stats.incoming) },
-    { label: tr(locale, { uz: "Chiquvchi", ru: "Исходящие", en: "Outgoing", de: "Ausgehend" }), icon: "arrowUpRight", tone: "violet", value: String(stats.outgoing) },
-    { label: tr(locale, { uz: "O'rtacha davomiylik", ru: "Средняя длительность", en: "Average duration", de: "Durchschnittliche Dauer" }), icon: "clock", tone: "purple", value: stats.avgDurationLabel },
+  const pctOf = (n: number) => (stats.total ? `${Math.round((n / stats.total) * 100)}%` : "0%");
+  const num = (n: number) => new Intl.NumberFormat("ru-RU").format(n);
+  const ofTotal = tr(locale, { uz: "jamidan", ru: "от всех", en: "of total", de: "von allen" });
+  const tiles: { label: string; icon: string; tone: string; value: string; sub?: string; hint: string }[] = [
+    { label: tr(locale, { uz: "Jami qo'ng'iroqlar", ru: "Всего звонков", en: "Total calls", de: "Anrufe gesamt" }), icon: "phoneCall", tone: "blue", value: num(stats.total), hint: tr(locale, { uz: "Kiruvchi va chiquvchi", ru: "Входящие и исходящие", en: "Incoming and outgoing", de: "Eingehend und ausgehend" }) },
+    { label: tr(locale, { uz: "Javob berilgan", ru: "Отвеченные", en: "Answered", de: "Angenommen" }), icon: "phoneCheck", tone: "emerald", value: num(stats.answered), sub: pctOf(stats.answered), hint: ofTotal },
+    { label: tr(locale, { uz: "O'tkazib yuborilgan", ru: "Пропущенные", en: "Missed", de: "Verpasst" }), icon: "phoneMissed", tone: "red", value: num(stats.missed), sub: stats.missedPending ? num(stats.missedPending) : undefined, hint: stats.missedPending ? tr(locale, { uz: "qayta qo'ng'iroq kutmoqda", ru: "ждут перезвона", en: "awaiting callback", de: "warten auf Rückruf" }) : tr(locale, { uz: "Hammasiga qayta qo'ng'iroq qilingan", ru: "Всем перезвонили", en: "All called back", de: "Alle zurückgerufen" }) },
+    { label: tr(locale, { uz: "Kiruvchi", ru: "Входящие", en: "Incoming", de: "Eingehend" }), icon: "phoneIncoming", tone: "sky", value: num(stats.incoming), sub: pctOf(stats.incoming), hint: ofTotal },
+    { label: tr(locale, { uz: "Chiquvchi", ru: "Исходящие", en: "Outgoing", de: "Ausgehend" }), icon: "phoneOutgoing", tone: "orange", value: num(stats.outgoing), sub: pctOf(stats.outgoing), hint: ofTotal },
+    { label: tr(locale, { uz: "O'rtacha suhbat", ru: "Средний разговор", en: "Avg. talk time", de: "Ø Gesprächsdauer" }), icon: "stopwatch", tone: "violet", value: stats.avgDurationLabel, hint: tr(locale, { uz: "daqiqa : soniya", ru: "минуты : секунды", en: "minutes : seconds", de: "Minuten : Sekunden" }) },
   ];
 
   const tabs = [
@@ -151,26 +153,29 @@ export default function CallsView({ calls, stats, operators, locale, canMark, in
         </div>
       </div>
 
-      <div className="grid grid-cols-2 gap-4 md:grid-cols-3 lg:grid-cols-6">
-        {tiles.map((t) => (
-          <div
-            key={t.label}
-            className="relative overflow-hidden rounded-2xl border border-slate-200/70 bg-white p-5 shadow-card transition-shadow hover:shadow-md dark:border-slate-800 dark:bg-slate-900"
-          >
-            <div className="flex items-center gap-4">
-              <div className={cn("flex h-12 w-12 shrink-0 items-center justify-center rounded-xl shadow-sm", sq[t.tone])}>
-                <Icon name={t.icon} className="h-5 w-5" />
-              </div>
-              <div className="min-w-0">
-                <div className="flex items-baseline gap-1.5">
-                  <p className="text-2xl font-bold tracking-tight text-slate-900 dark:text-white">{t.value}</p>
-                  {t.sub && <span className="text-xs font-medium text-slate-400">{t.sub}</span>}
+      <div className="grid grid-cols-2 gap-4 md:grid-cols-3 min-[1440px]:grid-cols-6">
+        {tiles.map((t) => {
+          const tone = tileTone[t.tone] ?? tileTone.blue;
+          return (
+            <div
+              key={t.label}
+              className="relative flex flex-col overflow-hidden rounded-2xl border border-slate-200/70 bg-white p-4 shadow-card transition hover:-translate-y-0.5 hover:shadow-md dark:border-slate-800 dark:bg-slate-900"
+            >
+              <span className={cn("absolute inset-x-0 top-0 h-1", tone.bar)} />
+              <div className="flex items-start justify-between gap-2">
+                <p className="pt-0.5 text-[13px] font-semibold leading-snug text-slate-600 dark:text-slate-300">{t.label}</p>
+                <div className={cn("flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-gradient-to-br text-white shadow-lg", tone.icon)}>
+                  <Icon name={t.icon} className="h-5 w-5" strokeWidth={1.9} />
                 </div>
-                <p className="mt-0.5 truncate text-xs font-medium text-slate-500 dark:text-slate-400">{t.label}</p>
+              </div>
+              <p className="mt-2 text-[28px] font-extrabold leading-none tracking-tight tabular-nums text-slate-900 dark:text-white">{t.value}</p>
+              <div className="mt-2.5 flex min-h-[22px] flex-wrap items-center gap-1.5 text-[11px] font-medium text-slate-400 dark:text-slate-500">
+                {t.sub && <span className={cn("whitespace-nowrap rounded-full px-2 py-0.5 text-[11px] font-bold", tone.pill)}>{t.sub}</span>}
+                {t.hint && <span>{t.hint}</span>}
               </div>
             </div>
-          </div>
-        ))}
+          );
+        })}
       </div>
 
       <div className="overflow-hidden rounded-2xl border border-slate-200/70 bg-white shadow-card dark:border-slate-800 dark:bg-slate-900">

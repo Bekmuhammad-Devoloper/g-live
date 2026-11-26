@@ -8,10 +8,10 @@ import type { Locale } from "@/lib/constants";
 const STORAGE_KEY = "gl-billing-history";
 
 const PLANS = [
-  { name: "START", monthly: 500000 },
-  { name: "BASIC", monthly: 1040000 },
-  { name: "PRO", monthly: 1560000 },
-  { name: "PREMIUM", monthly: 3000000 },
+  { name: "START", monthly: 350000 },
+  { name: "STANDART", monthly: 890000 },
+  { name: "PRO", monthly: 1410000 },
+  { name: "PREMIUM", monthly: 2850000 },
 ];
 const PERIODS = [
   { months: 3, off: 0, bonus: 0 },
