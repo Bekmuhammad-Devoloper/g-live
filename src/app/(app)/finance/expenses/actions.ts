@@ -5,7 +5,7 @@ import { z } from "zod";
 import { MAX_MONEY } from "@/lib/constants";
 import { prisma } from "@/lib/db";
 import { requireSession } from "@/lib/auth";
-import { canWriteFor, MODULES } from "@/lib/rbac";
+import { canWriteFor, MODULES, canEditFinance } from "@/lib/rbac";
 import { writeAudit } from "@/lib/audit";
 import { branchWhere } from "@/lib/branchScope";
 
@@ -66,7 +66,7 @@ export async function createExpense(_prev: ExState, formData: FormData): Promise
 
 export async function updateExpense(_prev: ExState, formData: FormData): Promise<ExState> {
   const s = await requireSession();
-  if (!canWriteFor(s, MODULES.EXPENSES)) return { error: "forbidden" };
+  if (!canEditFinance(s.role)) return { error: "forbidden" };
 
   const id = String(formData.get("id") ?? "");
   const parsed = schema.safeParse({
@@ -118,7 +118,7 @@ export async function updateExpense(_prev: ExState, formData: FormData): Promise
 
 export async function deleteExpense(id: string): Promise<void> {
   const s = await requireSession();
-  if (!canWriteFor(s, MODULES.EXPENSES)) return;
+  if (!canEditFinance(s.role)) return;
 
   const before = await prisma.expense.findFirst({ where: { id, ...branchWhere(s) } });
   if (!before) return;

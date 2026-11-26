@@ -1,6 +1,6 @@
 import { requireSession } from "@/lib/auth";
 import { prisma } from "@/lib/db";
-import { canRead, canWrite, MODULES } from "@/lib/rbac";
+import { canRead, canWrite, MODULES, canEditFinance } from "@/lib/rbac";
 import { tr } from "@/lib/tr";
 import { branchWhere, branchViaStudent } from "@/lib/branchScope";
 import { Forbidden } from "../../_components/ui";
@@ -64,6 +64,7 @@ export default async function WithdrawalsPage() {
         courses={courses}
         students={students}
         writable={canWrite(s.role, MODULES.PAYMENTS)}
+        editable={canEditFinance(s.role)}
         locale={s.locale}
         defaultFrom={from}
         defaultTo={to}

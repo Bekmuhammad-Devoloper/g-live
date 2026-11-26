@@ -3,7 +3,7 @@
 import { revalidatePath } from "next/cache";
 import { prisma } from "@/lib/db";
 import { requireSession } from "@/lib/auth";
-import { canWriteFor, MODULES } from "@/lib/rbac";
+import { canWriteFor, MODULES, canEditFinance } from "@/lib/rbac";
 import { writeAudit } from "@/lib/audit";
 
 export type CatResult = { ok?: boolean; error?: "forbidden" | "invalid" | "duplicate" | "notfound" };
@@ -30,7 +30,7 @@ export async function createExpenseCategory(name: string): Promise<CatResult> {
 
 export async function renameExpenseCategory(id: string, name: string): Promise<CatResult> {
   const s = await requireSession();
-  if (!canWriteFor(s, MODULES.EXPENSES)) return { error: "forbidden" };
+  if (!canEditFinance(s.role)) return { error: "forbidden" };
   const clean = String(name ?? "").trim().slice(0, 100);
   if (clean.length < 2) return { error: "invalid" };
 
@@ -49,7 +49,7 @@ export async function renameExpenseCategory(id: string, name: string): Promise<C
 
 export async function deleteExpenseCategory(id: string): Promise<CatResult> {
   const s = await requireSession();
-  if (!canWriteFor(s, MODULES.EXPENSES)) return { error: "forbidden" };
+  if (!canEditFinance(s.role)) return { error: "forbidden" };
 
   const before = await prisma.expenseCategory.findUnique({ where: { id }, include: { _count: { select: { expenses: true } } } });
   if (!before) return { error: "notfound" };

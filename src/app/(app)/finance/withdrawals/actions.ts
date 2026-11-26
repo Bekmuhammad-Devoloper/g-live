@@ -5,7 +5,7 @@ import { revalidatePath } from "next/cache";
 import { z } from "zod";
 import { prisma } from "@/lib/db";
 import { requireSession } from "@/lib/auth";
-import { canWrite, MODULES } from "@/lib/rbac";
+import { canWrite, MODULES, canEditFinance } from "@/lib/rbac";
 import { writeAudit } from "@/lib/audit";
 import { notify } from "@/lib/notify";
 import { formatMoney, MAX_MONEY } from "@/lib/constants";
@@ -73,7 +73,7 @@ export async function createWithdrawal(_prev: WdState, formData: FormData): Prom
 
 export async function cancelWithdrawal(id: string, reason: string): Promise<void> {
   const s = await requireSession();
-  if (!canWrite(s.role, MODULES.PAYMENTS)) return;
+  if (!canEditFinance(s.role)) return;
   if (!reason || reason.trim().length < 3) return;
 
   const before = await prisma.payment.findUnique({ where: { id } });

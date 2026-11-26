@@ -5,7 +5,7 @@ import { z } from "zod";
 import { MAX_MONEY } from "@/lib/constants";
 import { prisma } from "@/lib/db";
 import { requireSession } from "@/lib/auth";
-import { canRead, getPermission, MODULES } from "@/lib/rbac";
+import { canRead, MODULES, canEditFinance } from "@/lib/rbac";
 import { writeAudit } from "@/lib/audit";
 import { setSetting } from "@/lib/settings";
 import {
@@ -15,7 +15,7 @@ import {
 
 export type RuleState = { ok?: boolean; error?: string };
 
-const canManage = (role: string) => getPermission(role, MODULES.SALARY) === "FULL";
+const canManage = (role: string) => canEditFinance(role);
 
 const schema = z.object({
   id: z.string().optional(),

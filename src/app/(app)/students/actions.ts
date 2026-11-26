@@ -114,7 +114,7 @@ export async function getStudentPayments(studentId: string): Promise<{ ok: boole
       canGrace: PAY_GRACE_ROLES.includes(s.role),
       joinDate: joinDate ? joinDate.toISOString() : null,
       lastMonthApplicable,
-      canAdjustDebt: CAN_EDIT_PAY.includes(s.role as never) || (s.role === ROLES.ROP && await ropDebtWindowOpen(studentId)),
+      canAdjustDebt: CAN_EDIT_PAY.includes(s.role as never),
       recent: payments.map((p) => ({
         id: p.id, amount: p.amount, method: p.method, purpose: p.purpose, status: p.status, date: p.createdAt.toISOString(), note: p.note,
         promoCode: p.promoCode, discount: p.discount,
@@ -615,15 +615,9 @@ export async function moveStudentToBranch(
   return { ok: true, branchName: branch.name, removedGroups: stale.length };
 }
 
-const CAN_EDIT_PAY = [ROLES.DIRECTOR, ROLES.DEPUTY_DIRECTOR, ROLES.MANAGER, ROLES.ADMIN, ROLES.ACCOUNTANT];
-const ROP_EDIT_HOURS = 24;
-const ropWindow = (from: Date) => Date.now() - from.getTime() < ROP_EDIT_HOURS * 3_600_000;
-function canEditPaymentAt(role: string, createdAt: Date): boolean {
-  return CAN_EDIT_PAY.includes(role as never) || (role === ROLES.ROP && ropWindow(createdAt));
-}
-async function ropDebtWindowOpen(studentId: string): Promise<boolean> {
-  const last = await prisma.groupStudent.findFirst({ where: { studentId }, orderBy: { joinedAt: "desc" }, select: { joinedAt: true } });
-  return !!last && ropWindow(last.joinedAt);
+const CAN_EDIT_PAY = [ROLES.DIRECTOR, ROLES.DEPUTY_DIRECTOR];
+function canEditPaymentAt(role: string, _createdAt: Date): boolean {
+  return CAN_EDIT_PAY.includes(role as never);
 }
 
 export async function adjustStudentDebt(
@@ -631,7 +625,7 @@ export async function adjustStudentDebt(
   input: { newDebt: number; reason: string },
 ): Promise<{ ok?: boolean; error?: string }> {
   const s = await requireSession();
-  if (!CAN_EDIT_PAY.includes(s.role as never) && !(s.role === ROLES.ROP && await ropDebtWindowOpen(studentId))) return { error: "forbidden" };
+  if (!CAN_EDIT_PAY.includes(s.role as never)) return { error: "forbidden" };
 
   const target = Math.trunc(Number(input.newDebt));
   if (!Number.isFinite(target) || target < 0) return { error: "amount" };
@@ -726,7 +720,7 @@ export async function updatePaymentRecord(
   reason = "",
 ): Promise<{ ok?: boolean; error?: string }> {
   const s = await requireSession();
-  if (!CAN_EDIT_PAY.includes(s.role as never) && s.role !== ROLES.ROP) return { error: "forbidden" };
+  if (!CAN_EDIT_PAY.includes(s.role as never)) return { error: "forbidden" };
   const why = String(reason || "").trim().slice(0, 300);
   if (why.length < 3) return { error: "reason" };
 
@@ -787,7 +781,7 @@ export async function updatePaymentRecord(
 
 export async function deletePaymentRecord(paymentId: string, reason = ""): Promise<{ ok?: boolean; error?: string }> {
   const s = await requireSession();
-  if (!CAN_EDIT_PAY.includes(s.role as never) && s.role !== ROLES.ROP) return { error: "forbidden" };
+  if (!CAN_EDIT_PAY.includes(s.role as never)) return { error: "forbidden" };
   const why = String(reason || "").trim().slice(0, 300);
   if (why.length < 3) return { error: "reason" };
 

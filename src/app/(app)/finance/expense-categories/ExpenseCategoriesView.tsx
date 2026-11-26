@@ -17,7 +17,7 @@ export interface VCategory {
   refs: number;
 }
 
-export default function ExpenseCategoriesView({ categories, writable, locale }: { categories: VCategory[]; writable: boolean; locale: Locale }) {
+export default function ExpenseCategoriesView({ categories, writable, editable = false, locale }: { categories: VCategory[]; writable: boolean; editable?: boolean; locale: Locale }) {
   const router = useRouter();
   const [pending, start] = useTransition();
 
@@ -107,7 +107,7 @@ export default function ExpenseCategoriesView({ categories, writable, locale }: 
                   <td className="px-4 py-3 text-right text-slate-600 dark:text-slate-300">{c.count}</td>
                   <td className="whitespace-nowrap px-4 py-3 text-right font-semibold text-slate-700 dark:text-slate-200">{formatMoney(c.sum, locale)}</td>
                   <td className="px-4 py-3 text-right">
-                    {writable ? (
+                    {editable ? (
                       <div className="inline-flex items-center gap-1.5">
                         <button onClick={() => onRename(c)} disabled={pending} title={tr(locale, { uz: "Tahrirlash", ru: "Редактировать", en: "Edit", de: "Bearbeiten" })}
                           className="grid h-8 w-8 place-items-center rounded-lg border border-slate-200 text-slate-500 transition hover:bg-slate-50 hover:text-brand-600 disabled:opacity-50 dark:border-slate-700 dark:text-slate-300 dark:hover:bg-slate-800">

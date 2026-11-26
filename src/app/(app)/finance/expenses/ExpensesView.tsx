@@ -62,6 +62,7 @@ interface Props {
   categories: { id: string; name: string }[];
   staff: string[];
   writable: boolean;
+  editable: boolean;
   locale: Locale;
   defaultFrom: string;
   defaultTo: string;
@@ -104,7 +105,7 @@ async function downloadXlsx(filename: string, sheet: string, rows: (string | num
   XLSX.writeFile(wb, filename);
 }
 
-export default function ExpensesView({ expenses, categories, staff, writable, locale, defaultFrom, defaultTo, today }: Props) {
+export default function ExpensesView({ expenses, categories, staff, writable, editable, locale, defaultFrom, defaultTo, today }: Props) {
   const [from, setFrom] = useState(defaultFrom);
   const [to, setTo] = useState(defaultTo);
   const [name, setName] = useState("");
@@ -308,7 +309,7 @@ export default function ExpensesView({ expenses, categories, staff, writable, lo
                       <div className="whitespace-nowrap text-xs text-slate-400">{fmtDateTime(e.createdAt)}</div>
                     </td>
                     <td className="px-4 py-3 text-right">
-                      {writable ? (
+                      {editable ? (
                         <div className="inline-flex items-center gap-1.5">
                           <button onClick={() => setEditing(e)} title={tr(locale, { uz: "Tahrirlash", ru: "Редактировать", en: "Edit", de: "Bearbeiten" })}
                             className="grid h-8 w-8 place-items-center rounded-lg border border-slate-200 text-slate-500 transition hover:bg-slate-50 hover:text-brand-600 dark:border-slate-700 dark:text-slate-300 dark:hover:bg-slate-800">

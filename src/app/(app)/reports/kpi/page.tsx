@@ -1,7 +1,7 @@
 import { collectionsByAuthorMonth, commissionByManagerMonth, commissionOf, leadOwners, monthCommission, salesOwnerByStudent, totalCommission } from "@/lib/salesCommission";
 import { requireSession } from "@/lib/auth";
 import { prisma } from "@/lib/db";
-import { canSeeTeamReports, getPermission, MODULES } from "@/lib/rbac";
+import { canSeeTeamReports, canEditFinance } from "@/lib/rbac";
 import { ROLES, type Locale } from "@/lib/constants";
 import { staffBranchWhere } from "@/lib/branchScope";
 import { tr } from "@/lib/tr";
@@ -104,6 +104,6 @@ export default async function KpiPage() {
     };
   });
 
-  const canEdit = getPermission(s.role, MODULES.SALARY) === "FULL";
+  const canEdit = canEditFinance(s.role);
   return <KpiView rows={rows} locale={loc} canEdit={canEdit} />;
 }

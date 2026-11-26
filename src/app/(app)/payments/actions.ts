@@ -5,7 +5,7 @@ import { revalidatePath } from "next/cache";
 import { z } from "zod";
 import { prisma } from "@/lib/db";
 import { requireSession } from "@/lib/auth";
-import { canWrite, MODULES } from "@/lib/rbac";
+import { canWrite, MODULES, canEditFinance } from "@/lib/rbac";
 import { writeAudit } from "@/lib/audit";
 import { notify } from "@/lib/notify";
 import { formatMoney, PAYMENT_METHODS, MAX_MONEY } from "@/lib/constants";
@@ -147,7 +147,7 @@ async function notifyStudentPaid(studentId: string, amount: number) {
 
 export async function cancelPayment(paymentId: string, reason: string): Promise<void> {
   const s = await requireSession();
-  if (!canWrite(s.role, MODULES.PAYMENTS)) return;
+  if (!canEditFinance(s.role)) return;
   if (!reason || reason.trim().length < 3) return;
 
   const before = await prisma.payment.findUnique({ where: { id: paymentId } });

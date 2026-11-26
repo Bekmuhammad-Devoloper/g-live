@@ -1,6 +1,6 @@
 import { requireSession } from "@/lib/auth";
 import { prisma } from "@/lib/db";
-import { canRead, getPermission, MODULES } from "@/lib/rbac";
+import { canRead, MODULES, canEditFinance } from "@/lib/rbac";
 import { ROLES } from "@/lib/constants";
 import { tr } from "@/lib/tr";
 import { branchWhere, staffBranchWhere } from "@/lib/branchScope";
@@ -64,7 +64,7 @@ export default async function SalaryCalculatorPage() {
 
   const now = new Date();
   const period = `${now.getFullYear()}-${p2(now.getMonth() + 1)}`;
-  const canManage = getPermission(s.role, MODULES.SALARY) === "FULL";
+  const canManage = canEditFinance(s.role);
 
   return (
     <div>

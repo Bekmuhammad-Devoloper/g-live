@@ -4,14 +4,14 @@ import { revalidatePath } from "next/cache";
 import { z } from "zod";
 import { prisma } from "@/lib/db";
 import { requireSession } from "@/lib/auth";
-import { getPermission, MODULES } from "@/lib/rbac";
+import { canEditFinance } from "@/lib/rbac";
 import { ROLES } from "@/lib/constants";
 import { writeAudit } from "@/lib/audit";
 
 export type FormState = { ok?: boolean; error?: string };
 
 function canManageSalary(role: string) {
-  return getPermission(role, MODULES.SALARY) === "FULL";
+  return canEditFinance(role);
 }
 
 const schema = z.object({

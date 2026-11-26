@@ -140,6 +140,12 @@ export function canWriteFor(s: { role: string; finance?: boolean }, module: Modu
   return p === "FULL" || p === "OWN";
 }
 
+export const FINANCE_EDIT_ROLES: string[] = ["DIRECTOR", "DEPUTY_DIRECTOR"];
+
+export function canEditFinance(role: string): boolean {
+  return FINANCE_EDIT_ROLES.includes(role);
+}
+
 export function canSeeTeamReports(role: string): boolean {
   const p = getPermission(role, MODULES.REPORTS);
   return p === "FULL" || p === "READ";

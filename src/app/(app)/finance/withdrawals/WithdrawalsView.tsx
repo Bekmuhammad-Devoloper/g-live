@@ -35,12 +35,13 @@ interface Props {
   courses: string[];
   students: { id: string; fullName: string }[];
   writable: boolean;
+  editable?: boolean;
   locale: Locale;
   defaultFrom: string;
   defaultTo: string;
 }
 
-export default function WithdrawalsView({ withdrawals, courses, students, writable, locale, defaultFrom, defaultTo }: Props) {
+export default function WithdrawalsView({ withdrawals, courses, students, writable, editable = false, locale, defaultFrom, defaultTo }: Props) {
   const [from, setFrom] = useState(defaultFrom);
   const [to, setTo] = useState(defaultTo);
   const [q, setQ] = useState("");
@@ -185,7 +186,7 @@ export default function WithdrawalsView({ withdrawals, courses, students, writab
                       <div className="text-slate-600 dark:text-slate-300">{w.author ?? "—"}</div>
                       <div className="text-xs text-slate-400">{fmtDateTime(w.date)}</div>
                     </td>
-                    <td className="px-4 py-3 text-right">{writable ? <CancelBtn id={w.id} locale={locale} /> : <span className="text-slate-400">—</span>}</td>
+                    <td className="px-4 py-3 text-right">{editable ? <CancelBtn id={w.id} locale={locale} /> : <span className="text-slate-400">—</span>}</td>
                   </tr>
                 ))
               )}

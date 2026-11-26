@@ -1,6 +1,6 @@
 import { requireSession } from "@/lib/auth";
 import { prisma } from "@/lib/db";
-import { canReadFor, canWriteFor, MODULES } from "@/lib/rbac";
+import { canReadFor, canWriteFor, MODULES, canEditFinance } from "@/lib/rbac";
 import { tr } from "@/lib/tr";
 import { branchWhere } from "@/lib/branchScope";
 import { Forbidden } from "../../_components/ui";
@@ -59,6 +59,7 @@ export default async function ExpensesPage() {
         categories={categories}
         staff={staff}
         writable={canWriteFor(s, MODULES.EXPENSES)}
+        editable={canEditFinance(s.role)}
         locale={s.locale}
         defaultFrom={from}
         defaultTo={to}

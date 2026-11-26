@@ -2,7 +2,7 @@ import { requireSession } from "@/lib/auth";
 import { prisma } from "@/lib/db";
 import { getT } from "@/lib/i18n";
 import { tr } from "@/lib/tr";
-import { canRead, getPermission, MODULES } from "@/lib/rbac";
+import { canRead, MODULES, canEditFinance } from "@/lib/rbac";
 import { ROLES } from "@/lib/constants";
 import { branchWhere, branchViaGroup, staffBranchWhere } from "@/lib/branchScope";
 import { PageHeader, Card, StatCard, Forbidden } from "../_components/ui";
@@ -107,7 +107,7 @@ export default async function SalaryPage({ searchParams }: { searchParams: Promi
     };
   });
 
-  const canManage = getPermission(s.role, MODULES.SALARY) === "FULL";
+  const canManage = canEditFinance(s.role);
 
   return (
     <>

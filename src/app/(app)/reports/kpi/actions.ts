@@ -3,7 +3,7 @@
 import { revalidatePath } from "next/cache";
 import { prisma } from "@/lib/db";
 import { requireSession } from "@/lib/auth";
-import { canSeeTeamReports, getPermission, MODULES } from "@/lib/rbac";
+import { canSeeTeamReports, canEditFinance } from "@/lib/rbac";
 import { staffBranchWhere } from "@/lib/branchScope";
 import { writeAudit } from "@/lib/audit";
 import { parseMoney } from "@/lib/constants";
@@ -13,7 +13,7 @@ export type KpiPayState = { ok?: boolean; error?: string };
 
 export async function saveKpiPay(userId: string, fiksa: number, kpiPercent: number, collectPercent?: number): Promise<KpiPayState> {
   const s = await requireSession();
-  if (getPermission(s.role, MODULES.SALARY) !== "FULL") return { error: "forbidden" };
+  if (!canEditFinance(s.role)) return { error: "forbidden" };
   if (!userId) return { error: "invalid" };
 
   const f = parseMoney(fiksa);
