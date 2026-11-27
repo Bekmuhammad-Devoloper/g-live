@@ -317,49 +317,40 @@ function Comments({ lead, locale, canWrite, onCommented }: { lead: VLead; locale
         )}
 
         {items === null ? (
-          <div className="space-y-3">
-            {[0, 1].map((k) => (
-              <div key={k} className="flex gap-3">
-                <div className="h-8 w-8 shrink-0 animate-pulse rounded-full bg-slate-100 dark:bg-white/5" />
-                <div className="h-14 flex-1 animate-pulse rounded-2xl bg-slate-100 dark:bg-white/5" />
-              </div>
-            ))}
+          <div className="space-y-2.5">
+            {[0, 1].map((k) => <div key={k} className="h-[72px] animate-pulse rounded-2xl bg-slate-100 dark:bg-white/5" />)}
           </div>
         ) : count === 0 ? (
           <p className="rounded-2xl border border-dashed border-slate-200 px-3 py-5 text-center text-xs text-slate-400 dark:border-white/10">
             {L("Hali izoh yozilmagan", "Комментариев пока нет", "No comments yet", "Noch keine Kommentare")}
           </p>
         ) : (
-          <ul className="space-y-3">
+          <ul className="space-y-2.5">
             {items.map((c) => (
-              <li key={c.id} className="flex gap-3">
-                <DemoAvatar size={32} className="mt-0.5" />
-                <div className="min-w-0 flex-1 rounded-2xl rounded-tl-md bg-slate-50 px-3.5 py-2.5 dark:bg-white/[0.04]">
-                  <div className="flex items-center gap-2">
-                    <span className="min-w-0 flex-1 truncate text-[13px] font-semibold text-slate-800 dark:text-slate-100">
-                      {c.authorName ?? L("Noma'lum", "Неизвестно", "Unknown", "Unbekannt")}
-                      {c.authorRole && <span className="ml-1.5 text-[11px] font-normal text-slate-400">{label(ROLE_LABELS, c.authorRole, locale)}</span>}
-                    </span>
-                    <time dateTime={c.createdAt} className="shrink-0 text-[11px] tabular-nums text-slate-400">{fmtDateTime(c.createdAt)}</time>
-                  </div>
-                  <p className="mt-1 whitespace-pre-wrap break-words text-sm leading-relaxed text-slate-700 dark:text-slate-200">{c.text}</p>
+              <li key={c.id} className="rounded-2xl border border-slate-200/70 bg-slate-50 px-3.5 py-3 dark:border-white/[0.06] dark:bg-white/[0.04]">
+                <div className="flex items-center gap-2.5">
+                  <DemoAvatar size={26} />
+                  <span className="min-w-0 flex-1 truncate text-[13px] font-semibold text-slate-800 dark:text-slate-100">
+                    {c.authorName ?? L("Noma'lum", "Неизвестно", "Unknown", "Unbekannt")}
+                    {c.authorRole && <span className="ml-1.5 text-[11px] font-normal text-slate-400">{label(ROLE_LABELS, c.authorRole, locale)}</span>}
+                  </span>
+                  <time dateTime={c.createdAt} className="shrink-0 text-[11px] tabular-nums text-slate-400">{fmtDateTime(c.createdAt)}</time>
                 </div>
+                <p className="mt-2 whitespace-pre-wrap break-words text-sm leading-relaxed text-slate-700 dark:text-slate-200">{c.text}</p>
               </li>
             ))}
             {lead.note && (
-              <li className="flex gap-3">
-                <span className="mt-0.5 grid h-8 w-8 shrink-0 place-items-center rounded-full bg-amber-500/15 text-amber-600 dark:text-amber-300">
-                  <Icon name="clipboard" className="h-4 w-4" />
-                </span>
-                <div className="min-w-0 flex-1 rounded-2xl rounded-tl-md border border-amber-200/70 bg-amber-50/60 px-3.5 py-2.5 dark:border-amber-500/20 dark:bg-amber-500/[0.06]">
-                  <div className="flex items-center gap-2">
-                    <span className="min-w-0 flex-1 truncate text-[13px] font-semibold text-amber-700 dark:text-amber-300">
-                      {L("Dastlabki izoh (ariza)", "Первичная заметка (заявка)", "Initial note (application)", "Erste Notiz (Antrag)")}
-                    </span>
-                    <time dateTime={lead.createdAt} className="shrink-0 text-[11px] tabular-nums text-slate-400">{fmtDateTime(lead.createdAt)}</time>
-                  </div>
-                  <p className="mt-1 whitespace-pre-wrap break-words text-sm leading-relaxed text-slate-700 dark:text-slate-200">{lead.note}</p>
+              <li className="rounded-2xl border border-amber-200/70 bg-amber-50/60 px-3.5 py-3 dark:border-amber-500/20 dark:bg-amber-500/[0.06]">
+                <div className="flex items-center gap-2.5">
+                  <span className="grid h-[26px] w-[26px] shrink-0 place-items-center rounded-full bg-amber-500/15 text-amber-600 dark:text-amber-300">
+                    <Icon name="clipboard" className="h-3.5 w-3.5" />
+                  </span>
+                  <span className="min-w-0 flex-1 truncate text-[13px] font-semibold text-amber-700 dark:text-amber-300">
+                    {L("Dastlabki izoh (ariza)", "Первичная заметка (заявка)", "Initial note (application)", "Erste Notiz (Antrag)")}
+                  </span>
+                  <time dateTime={lead.createdAt} className="shrink-0 text-[11px] tabular-nums text-slate-400">{fmtDateTime(lead.createdAt)}</time>
                 </div>
+                <p className="mt-2 whitespace-pre-wrap break-words text-sm leading-relaxed text-slate-700 dark:text-slate-200">{lead.note}</p>
               </li>
             )}
           </ul>
