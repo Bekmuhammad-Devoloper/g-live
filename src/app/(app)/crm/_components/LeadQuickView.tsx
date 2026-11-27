@@ -1,12 +1,14 @@
 "use client";
 
-import { useEffect, useState, useTransition } from "react";
+import { useEffect, useState, useTransition, type ReactNode } from "react";
 import { createPortal } from "react-dom";
 import Link from "next/link";
+import { cn } from "@/lib/cn";
 import { tr } from "@/lib/tr";
 import { formatMoney, LEAD_STAGE_LABELS, ROLE_LABELS, label, type Locale } from "@/lib/constants";
 import { Icon } from "../../_components/Icon";
-import { columnDef, columnOf, initials, type VLead } from "../_lib/leadColumns";
+import DemoAvatar from "../../_components/DemoAvatar";
+import { columnDef, columnOf, type VLead } from "../_lib/leadColumns";
 import { addLeadComment, listLeadComments, type LeadComment } from "../actions";
 import PaymentPanel from "../../students/PaymentPanel";
 import type { LeadPayment } from "../[id]/LeadDetail";
@@ -18,11 +20,15 @@ function fmtDateTime(iso: string) {
 }
 
 function fmtDate(iso: string | null) {
-  if (!iso) return "—";
+  if (!iso) return null;
   const d = new Date(iso);
   const p = (n: number) => String(n).padStart(2, "0");
   return `${p(d.getDate())}.${p(d.getMonth() + 1)}.${d.getFullYear()}`;
 }
+
+const SOURCE_ICON: Record<string, string> = { instagram: "instagram", telegram: "telegram", sayt: "globe", site: "globe", web: "globe" };
+const sourceIcon = (s: string) => SOURCE_ICON[s.trim().toLowerCase()] ?? "tag";
+const iconBtn = "grid h-9 w-9 shrink-0 place-items-center rounded-xl text-slate-400 transition hover:bg-slate-100 hover:text-slate-700 dark:hover:bg-white/10 dark:hover:text-slate-100";
 
 export default function LeadQuickView({
   lead, locale, canWrite, onClose, onEnroll, onDelete, onCommented, payment,
@@ -37,7 +43,9 @@ export default function LeadQuickView({
   onCommented?: (leadId: string, at: string) => void;
 }) {
   const [mounted, setMounted] = useState(false);
+  const [copied, setCopied] = useState(false);
   const col = columnDef(columnOf(lead.stage));
+  const L = (uz: string, ru: string, en: string, de: string) => tr(locale, { uz, ru, en, de });
 
   useEffect(() => {
     setMounted(true);
@@ -56,110 +64,146 @@ export default function LeadQuickView({
     }));
   };
 
+  const copyPhone = () => {
+    const done = navigator.clipboard?.writeText(lead.phone);
+    if (!done) return;
+    done.then(() => { setCopied(true); setTimeout(() => setCopied(false), 1600); }).catch(() => {});
+  };
+
+  const tiles: { icon: string; label: string; value: string | null }[] = [
+    {
+      icon: "graduation",
+      label: L("Ta'lim shakli", "Формат обучения", "Study format", "Unterrichtsform"),
+      value: lead.studyFormat ? (lead.studyFormat === "ONLINE" ? L("Onlayn", "Онлайн", "Online", "Online") : L("Oflayn", "Офлайн", "Offline", "Präsenz")) : null,
+    },
+    { icon: "book", label: L("Qiziqqan kurs", "Интересующий курс", "Course of interest", "Interessierter Kurs"), value: lead.interestCourse },
+    { icon: "wallet", label: L("Byudjet", "Бюджет", "Budget", "Budget"), value: lead.budget ? formatMoney(lead.budget, locale) : null },
+    { icon: "user", label: L("Menejer", "Менеджер", "Manager", "Manager"), value: lead.managerName },
+    { icon: "calendar", label: L("Yaratilgan", "Создан", "Created", "Erstellt"), value: fmtDate(lead.createdAt) },
+    { icon: "clock", label: L("Oxirgi harakat", "Последняя активность", "Last activity", "Letzte Aktivität"), value: fmtDate(lead.lastActivity) },
+    { icon: "history", label: L("Harakatlar soni", "Кол-во действий", "Activities", "Aktivitäten"), value: String(lead.activityCount) },
+    ...(lead.testPct != null
+      ? [{
+          icon: "filecheck",
+          label: L("Daraja testi", "Тест уровня", "Level test", "Einstufungstest"),
+          value: `${lead.testSet ?? ""} ${lead.testPct}% · ${lead.testLevel ?? L("o'tmadi", "не сдал", "failed", "nicht bestanden")}`.trim(),
+        }]
+      : []),
+  ];
+
   return createPortal(
     <div className="fixed inset-0 z-[80]" onMouseDown={onClose}>
-      <div className="absolute inset-0 bg-slate-900/50 backdrop-blur-sm" />
+      <div className="absolute inset-0 bg-slate-950/50 backdrop-blur-[3px]" />
       <div
         onMouseDown={(e) => e.stopPropagation()}
         className="animate-slide-in-right absolute right-0 top-0 flex h-full drawer-panel flex-col border-l border-slate-200 bg-white shadow-pop dark:border-white/10 dark:bg-[#15243d]"
       >
-        <div className="relative shrink-0 overflow-hidden border-b border-slate-100 dark:border-white/10">
-          <div className="pointer-events-none absolute inset-0" style={{ background: `linear-gradient(135deg, ${col.color}14, transparent 60%)` }} />
-          <div className="relative flex items-start justify-between gap-3 px-5 py-5">
-            <div className="flex min-w-0 items-center gap-3.5">
-              <span
-                className="flex h-14 w-14 shrink-0 items-center justify-center rounded-full text-base font-bold shadow-sm ring-2 ring-white dark:ring-white/10"
-                style={{ color: col.color, background: `${col.color}24` }}
-              >
-                {initials(lead.fullName)}
+        <div className="relative shrink-0 overflow-hidden border-b border-slate-100 dark:border-white/[0.06]">
+          <div className="pointer-events-none absolute inset-0" style={{ background: `radial-gradient(120% 95% at 0% 0%, ${col.color}2e 0%, ${col.color}0d 40%, transparent 66%)` }} />
+          <div className="relative px-5 pb-5 pt-4">
+            <div className="flex items-center justify-between gap-2">
+              <span className="inline-flex items-center gap-2 text-[11px] font-semibold uppercase tracking-[0.14em] text-slate-400">
+                <span className="h-1.5 w-1.5 rounded-full" style={{ background: col.color }} />
+                {L("Lid kartasi", "Карточка лида", "Lead card", "Lead-Karte")}
               </span>
-              <div className="min-w-0">
-                <div className="truncate text-lg font-bold text-slate-900 dark:text-slate-100">{lead.fullName}</div>
-                <div className="mt-1.5 flex flex-wrap items-center gap-1.5">
-                  <span className="inline-flex items-center rounded-full px-2.5 py-0.5 text-[11px] font-semibold" style={{ color: col.color, background: `${col.color}1f` }}>
+              <button type="button" onClick={onClose} aria-label={L("Yopish", "Закрыть", "Close", "Schließen")} className={iconBtn}>
+                <Icon name="close" className="h-[18px] w-[18px]" />
+              </button>
+            </div>
+
+            <div className="mt-3 flex items-center gap-4">
+              <DemoAvatar size={64} ringColor={col.color} className="shadow-sm ring-offset-[3px] ring-offset-white dark:ring-offset-[#15243d]" />
+              <div className="min-w-0 flex-1">
+                <h2 className="break-words text-[20px] font-bold leading-tight tracking-tight text-slate-900 dark:text-white">{lead.fullName}</h2>
+                <div className="mt-2 flex flex-wrap items-center gap-1.5">
+                  <span className="inline-flex items-center gap-1.5 rounded-full px-2.5 py-1 text-[11px] font-semibold" style={{ color: col.color, background: `${col.color}1f` }}>
+                    <span className="h-1.5 w-1.5 rounded-full" style={{ background: col.color }} />
                     {label(LEAD_STAGE_LABELS, lead.stage, locale)}
                   </span>
                   {lead.source && (
-                    <span className="rounded-full bg-slate-100 px-2 py-0.5 text-[11px] font-medium text-slate-500 dark:bg-white/10 dark:text-slate-300">{lead.source}</span>
+                    <span className="inline-flex items-center gap-1 rounded-full bg-slate-100 px-2.5 py-1 text-[11px] font-medium text-slate-600 dark:bg-white/[0.07] dark:text-slate-300">
+                      <Icon name={sourceIcon(lead.source)} className="h-3 w-3" /> {lead.source}
+                    </span>
                   )}
                 </div>
               </div>
             </div>
-            <div className="flex shrink-0 items-center gap-1">
-              <Link
-                href={`/crm/${lead.id}`}
-                className="flex items-center gap-1.5 rounded-lg border border-slate-200 px-2.5 py-1.5 text-[11px] font-semibold text-slate-600 transition hover:border-brand-300 hover:text-brand-600 dark:border-white/10 dark:text-slate-300 dark:hover:bg-white/10"
+
+            <div className="mt-4 flex items-center gap-1.5 rounded-2xl border border-slate-200 bg-white/80 py-1.5 pl-3.5 pr-1.5 shadow-[0_1px_2px_rgba(15,23,42,0.05)] dark:border-white/10 dark:bg-white/[0.04]">
+              <Icon name="phone" className="h-4 w-4 shrink-0 text-slate-400" />
+              <span className="min-w-0 flex-1 select-all truncate text-[15px] font-semibold tabular-nums text-slate-900 dark:text-white">{lead.phone}</span>
+              <button type="button" onClick={copyPhone} title={L("Nusxa olish", "Копировать", "Copy", "Kopieren")} className={iconBtn}>
+                <Icon name={copied ? "check" : "copy"} className={cn("h-4 w-4", copied && "text-emerald-500")} />
+              </button>
+              <button
+                type="button"
+                onClick={call}
+                className="flex h-9 shrink-0 items-center gap-1.5 rounded-xl bg-emerald-500 px-3.5 text-[13px] font-semibold text-white shadow-sm transition hover:bg-emerald-600 active:scale-[.98]"
               >
-                <Icon name="expand" className="h-3.5 w-3.5" /> {tr(locale, { uz: "To'liq sahifa", ru: "Полная страница", en: "Full page", de: "Vollständige Seite" })}
-              </Link>
-              <button onClick={onClose} className="flex h-8 w-8 items-center justify-center rounded-full text-lg text-slate-400 transition hover:bg-slate-100 hover:text-slate-600 dark:hover:bg-white/10">✕</button>
+                <Icon name="phoneCall" className="h-4 w-4" /> {L("Qo'ng'iroq", "Позвонить", "Call", "Anrufen")}
+              </button>
             </div>
           </div>
         </div>
 
-        <div className="flex-1 space-y-5 overflow-y-auto px-5 py-4">
-          <Section icon="phone" title={tr(locale, { uz: "Aloqa", ru: "Контакты", en: "Contact", de: "Kontakt" })}>
-            <button
-              onClick={call}
-              className="flex w-full items-center justify-between gap-2 rounded-xl border border-slate-200 px-3.5 py-2.5 text-left transition hover:border-emerald-300 hover:bg-emerald-50/60 dark:border-white/10 dark:hover:bg-emerald-950/20"
-            >
-              <span className="truncate text-sm font-semibold text-slate-800 dark:text-slate-100">{lead.phone}</span>
-              <span className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-emerald-500/15 text-emerald-600">
-                <Icon name="phoneCall" className="h-4 w-4" />
-              </span>
-            </button>
-            {lead.email && <Row label={tr(locale, { uz: "Email", ru: "Email", en: "Email", de: "E-Mail" })} value={lead.email} />}
-            {lead.telegram && <Row label="Telegram" value={lead.telegram} />}
+        <div className="flex-1 space-y-6 overflow-y-auto px-5 py-5">
+          {(lead.email || lead.telegram) && (
+            <Section icon="mail" title={L("Aloqa", "Контакты", "Contact", "Kontakt")}>
+              <div className="space-y-2">
+                {lead.email && <InfoLine icon="mail" label="Email" value={lead.email} />}
+                {lead.telegram && <InfoLine icon="telegram" label="Telegram" value={lead.telegram} />}
+              </div>
+            </Section>
+          )}
+
+          <Section icon="info" title={L("Ma'lumotlar", "Данные", "Details", "Details")}>
+            <div className="grid grid-cols-2 gap-2">
+              {tiles.map((t, i) => (
+                <Tile key={t.label} icon={t.icon} label={t.label} value={t.value} wide={i === tiles.length - 1 && tiles.length % 2 === 1} />
+              ))}
+            </div>
           </Section>
 
-          <Section icon="info" title={tr(locale, { uz: "Ma'lumotlar", ru: "Данные", en: "Details", de: "Details" })}>
-            {lead.studyFormat && (
-              <Row
-                label={tr(locale, { uz: "Ta'lim shakli", ru: "Формат обучения", en: "Study format", de: "Unterrichtsform" })}
-                value={lead.studyFormat === "ONLINE"
-                  ? tr(locale, { uz: "Onlayn", ru: "Онлайн", en: "Online", de: "Online" })
-                  : tr(locale, { uz: "Oflayn", ru: "Офлайн", en: "Offline", de: "Präsenz" })}
-              />
-            )}
-            {lead.testPct != null && (
-              <Row
-                label={tr(locale, { uz: "Daraja testi", ru: "Тест уровня", en: "Level test", de: "Einstufungstest" })}
-                value={`${lead.testSet ?? ""} ${lead.testPct}% · ${lead.testLevel ?? tr(locale, { uz: "o'tmadi", ru: "не сдал", en: "failed", de: "nicht bestanden" })}`.trim()}
-              />
-            )}
-            <Row label={tr(locale, { uz: "Qiziqqan kurs", ru: "Интересующий курс", en: "Course of interest", de: "Interessierter Kurs" })} value={lead.interestCourse ?? "—"} />
-            <Row label={tr(locale, { uz: "Byudjet", ru: "Бюджет", en: "Budget", de: "Budget" })} value={lead.budget ? formatMoney(lead.budget, locale) : "—"} />
-            <Row label={tr(locale, { uz: "Menejer", ru: "Менеджер", en: "Manager", de: "Manager" })} value={lead.managerName ?? "—"} />
-            <Row label={tr(locale, { uz: "Yaratilgan", ru: "Создан", en: "Created", de: "Erstellt" })} value={fmtDate(lead.createdAt)} />
-            <Row label={tr(locale, { uz: "Oxirgi harakat", ru: "Последняя активность", en: "Last activity", de: "Letzte Aktivität" })} value={fmtDate(lead.lastActivity)} />
-            <Row label={tr(locale, { uz: "Harakatlar soni", ru: "Кол-во действий", en: "Activities", de: "Aktivitäten" })} value={String(lead.activityCount)} />
-          </Section>
-
-          <Section icon="layers" title={tr(locale, { uz: "Guruh", ru: "Группа", en: "Group", de: "Gruppe" })}>
+          <Section icon="layers" title={L("Guruh", "Группа", "Group", "Gruppe")}>
             {lead.groupName ? (
-              <div className="flex items-center justify-between gap-2 rounded-xl border border-emerald-200 bg-emerald-50/60 px-3.5 py-2.5 dark:border-emerald-900/40 dark:bg-emerald-950/20">
-                <div className="min-w-0">
-                  <div className="truncate text-sm font-semibold text-emerald-700 dark:text-emerald-400">{lead.groupName}</div>
+              <div className="flex items-center gap-3 rounded-2xl border border-emerald-200 bg-emerald-50/70 p-3 dark:border-emerald-500/25 dark:bg-emerald-500/[0.08]">
+                <span className="grid h-10 w-10 shrink-0 place-items-center rounded-xl bg-emerald-500/15 text-emerald-600 dark:text-emerald-400">
+                  <Icon name="layers" className="h-5 w-5" />
+                </span>
+                <div className="min-w-0 flex-1">
+                  <div className="truncate text-sm font-semibold text-emerald-700 dark:text-emerald-300">{lead.groupName}</div>
                   <div className="text-[11px] text-emerald-600/80 dark:text-emerald-400/70">
                     {lead.enrollEditCount > 0
-                      ? tr(locale, { uz: "O'zgartirish imkoni tugagan", ru: "Изменение больше недоступно", en: "No further changes allowed", de: "Keine weiteren Änderungen möglich" })
-                      : tr(locale, { uz: "Bir marta o'zgartirish mumkin", ru: "Можно изменить один раз", en: "Can be changed once", de: "Kann einmal geändert werden" })}
+                      ? L("O'zgartirish imkoni tugagan", "Изменение больше недоступно", "No further changes allowed", "Keine weiteren Änderungen möglich")
+                      : L("Bir marta o'zgartirish mumkin", "Можно изменить один раз", "Can be changed once", "Kann einmal geändert werden")}
                   </div>
                 </div>
                 {canWrite && lead.enrollEditCount === 0 && (
-                  <button onClick={onEnroll} className="shrink-0 rounded-lg border border-emerald-300 px-2.5 py-1 text-[11px] font-semibold text-emerald-700 transition hover:bg-emerald-100 dark:border-emerald-800 dark:text-emerald-400 dark:hover:bg-emerald-900/30">
-                    {tr(locale, { uz: "O'zgartirish", ru: "Изменить", en: "Change", de: "Ändern" })}
+                  <button
+                    type="button"
+                    onClick={onEnroll}
+                    className="h-9 shrink-0 rounded-xl border border-emerald-300 px-3 text-[12px] font-semibold text-emerald-700 transition hover:bg-emerald-100 dark:border-emerald-500/40 dark:text-emerald-300 dark:hover:bg-emerald-500/15"
+                  >
+                    {L("O'zgartirish", "Изменить", "Change", "Ändern")}
                   </button>
                 )}
               </div>
             ) : (
-              <div className={`grid gap-2 ${canWrite ? "grid-cols-2" : "grid-cols-1"}`}>
-                <span className="flex min-h-[40px] items-center justify-center rounded-xl border border-dashed border-slate-300 px-3 py-2 text-center text-xs font-semibold text-slate-400 dark:border-slate-600">
-                  {tr(locale, { uz: "Yo'naltirilmagan", ru: "Не назначена", en: "Not assigned", de: "Nicht zugewiesen" })}
+              <div className="flex items-center gap-3 rounded-2xl border border-dashed border-slate-300 p-3 dark:border-white/15">
+                <span className="grid h-10 w-10 shrink-0 place-items-center rounded-xl bg-slate-100 text-slate-400 dark:bg-white/[0.06]">
+                  <Icon name="layers" className="h-5 w-5" />
                 </span>
+                <div className="min-w-0 flex-1">
+                  <div className="text-sm font-semibold text-slate-700 dark:text-slate-200">{L("Yo'naltirilmagan", "Не назначена", "Not assigned", "Nicht zugewiesen")}</div>
+                  <div className="text-[11px] text-slate-400">{L("Hali guruhga biriktirilmagan", "Ещё не назначен в группу", "Not assigned to a group yet", "Noch keiner Gruppe zugewiesen")}</div>
+                </div>
                 {canWrite && (
-                  <button onClick={onEnroll} className="flex min-h-[40px] items-center justify-center rounded-xl bg-brand-600 px-3 py-2 text-center text-xs font-semibold text-white transition hover:bg-brand-700 active:scale-[.99]">
-                    {tr(locale, { uz: "Guruhga yo'naltirish", ru: "Назначить группу", en: "Assign group", de: "Gruppe zuweisen" })}
+                  <button
+                    type="button"
+                    onClick={onEnroll}
+                    className="flex h-9 shrink-0 items-center gap-1.5 rounded-xl bg-brand-600 px-3.5 text-[12px] font-semibold text-white shadow-sm transition hover:bg-brand-700 active:scale-[.98]"
+                  >
+                    <Icon name="plus" className="h-3.5 w-3.5" /> {L("Guruhga yo'naltirish", "Назначить группу", "Assign group", "Gruppe zuweisen")}
                   </button>
                 )}
               </div>
@@ -167,7 +211,7 @@ export default function LeadQuickView({
           </Section>
 
           {lead.studentId && payment && (payment.canManage || payment.canPay || payment.rop) && (
-            <div className="rounded-xl border border-slate-200/70 p-3 dark:border-slate-800">
+            <div className="rounded-2xl border border-slate-200/80 p-3 dark:border-white/[0.08]">
               <PaymentPanel
                 studentId={lead.studentId}
                 locale={locale}
@@ -184,21 +228,19 @@ export default function LeadQuickView({
           <Comments lead={lead} locale={locale} canWrite={canWrite} onCommented={onCommented} />
         </div>
 
-        <div className="flex shrink-0 gap-2 border-t border-slate-100 bg-white px-5 py-3 dark:border-white/10 dark:bg-[#15243d]">
+        <div className="flex shrink-0 items-center gap-2 border-t border-slate-100 bg-white px-5 py-3 dark:border-white/[0.06] dark:bg-[#15243d]">
           <Link
             href={`/crm/${lead.id}`}
-            className="flex flex-1 items-center justify-center gap-2 rounded-xl bg-brand-600 py-2.5 text-sm font-semibold text-white shadow-sm transition hover:bg-brand-700 active:scale-[.99]"
+            className="flex h-11 flex-1 items-center justify-center gap-2 rounded-xl bg-brand-600 text-sm font-semibold text-white shadow-sm transition hover:bg-brand-700 active:scale-[.99]"
           >
-            <Icon name="expand" className="h-4 w-4" /> {tr(locale, { uz: "To'liq sahifani ochish", ru: "Открыть полностью", en: "Open full page", de: "Vollständige Seite öffnen" })}
+            <Icon name="expand" className="h-4 w-4" /> {L("To'liq sahifani ochish", "Открыть полностью", "Open full page", "Vollständige Seite öffnen")}
           </Link>
-          <button onClick={call} className="flex items-center justify-center gap-2 rounded-xl border border-slate-200 px-4 py-2.5 text-sm font-semibold text-slate-600 transition hover:bg-slate-100 dark:border-slate-700 dark:text-slate-300 dark:hover:bg-white/10">
-            <Icon name="phone" className="h-4 w-4" />
-          </button>
           {onDelete && (
             <button
+              type="button"
               onClick={onDelete}
-              title={tr(locale, { uz: "Lidni o'chirish", ru: "Удалить лид", en: "Delete lead", de: "Lead löschen" })}
-              className="flex items-center justify-center rounded-xl border border-red-200 px-4 py-2.5 text-red-500 transition hover:bg-red-50 dark:border-red-500/30 dark:hover:bg-red-500/10"
+              title={L("Lidni o'chirish", "Удалить лид", "Delete lead", "Lead löschen")}
+              className="grid h-11 w-11 shrink-0 place-items-center rounded-xl border border-red-200 text-red-500 transition hover:bg-red-50 dark:border-red-500/30 dark:hover:bg-red-500/10"
             >
               <Icon name="trash" className="h-4 w-4" />
             </button>
@@ -215,6 +257,7 @@ function Comments({ lead, locale, canWrite, onCommented }: { lead: VLead; locale
   const [text, setText] = useState("");
   const [error, setError] = useState(false);
   const [pending, start] = useTransition();
+  const L = (uz: string, ru: string, en: string, de: string) => tr(locale, { uz, ru, en, de });
 
   useEffect(() => {
     let alive = true;
@@ -239,97 +282,126 @@ function Comments({ lead, locale, canWrite, onCommented }: { lead: VLead; locale
   };
 
   const count = (items?.length ?? 0) + (lead.note ? 1 : 0);
+  const kbd = "rounded border border-slate-200 px-1 font-sans text-[10px] text-slate-500 dark:border-white/10 dark:text-slate-400";
 
   return (
-    <Section icon="alignLeft" title={`${tr(locale, { uz: "Izohlar", ru: "Комментарии", en: "Comments", de: "Kommentare" })}${items ? ` (${count})` : ""}`}>
-      {canWrite && (
-        <div className="rounded-xl border border-slate-200 bg-white p-2.5 transition focus-within:border-brand-400 dark:border-white/10 dark:bg-white/[0.03]">
-          <textarea
-            value={text}
-            onChange={(e) => { setText(e.target.value); setError(false); }}
-            onKeyDown={(e) => { if (e.key === "Enter" && (e.ctrlKey || e.metaKey)) { e.preventDefault(); submit(); } }}
-            rows={3}
-            maxLength={2000}
-            placeholder={tr(locale, { uz: "Izoh yozing...", ru: "Напишите комментарий...", en: "Write a comment...", de: "Kommentar schreiben..." })}
-            className="block w-full resize-none bg-transparent text-sm text-slate-800 outline-none placeholder:text-slate-400 dark:text-slate-100"
-          />
-          <div className="mt-1.5 flex items-center justify-between gap-2">
-            <span className="text-[11px] text-slate-400">
-              {error
-                ? <span className="font-medium text-rose-500">{tr(locale, { uz: "Saqlab bo'lmadi, qayta urinib ko'ring", ru: "Не удалось сохранить, попробуйте снова", en: "Could not save, try again", de: "Speichern fehlgeschlagen, erneut versuchen" })}</span>
-                : "Ctrl + Enter"}
-            </span>
-            <button
-              type="button"
-              onClick={submit}
-              disabled={pending || !text.trim()}
-              className="rounded-lg bg-brand-600 px-3.5 py-1.5 text-xs font-semibold text-white transition hover:bg-brand-700 disabled:opacity-50"
-            >
-              {pending
-                ? tr(locale, { uz: "Saqlanmoqda...", ru: "Сохранение...", en: "Saving...", de: "Wird gespeichert..." })
-                : tr(locale, { uz: "Izoh qo'shish", ru: "Добавить", en: "Add comment", de: "Hinzufügen" })}
-            </button>
+    <Section icon="alignLeft" title={`${L("Izohlar", "Комментарии", "Comments", "Kommentare")}${items ? ` (${count})` : ""}`}>
+      <div className="space-y-3">
+        {canWrite && (
+          <div className="rounded-2xl border border-slate-200 bg-white p-3 transition focus-within:border-brand-400 focus-within:ring-2 focus-within:ring-brand-500/10 dark:border-white/10 dark:bg-white/[0.03]">
+            <textarea
+              value={text}
+              onChange={(e) => { setText(e.target.value); setError(false); }}
+              onKeyDown={(e) => { if (e.key === "Enter" && (e.ctrlKey || e.metaKey)) { e.preventDefault(); submit(); } }}
+              rows={3}
+              maxLength={2000}
+              placeholder={L("Izoh yozing...", "Напишите комментарий...", "Write a comment...", "Kommentar schreiben...")}
+              className="block w-full resize-none bg-transparent text-sm text-slate-800 outline-none placeholder:text-slate-400 dark:text-slate-100"
+            />
+            <div className="mt-2 flex items-center justify-between gap-2 border-t border-slate-100 pt-2 dark:border-white/[0.06]">
+              <span className="text-[11px] text-slate-400">
+                {error
+                  ? <span className="font-medium text-rose-500">{L("Saqlab bo'lmadi, qayta urinib ko'ring", "Не удалось сохранить, попробуйте снова", "Could not save, try again", "Speichern fehlgeschlagen, erneut versuchen")}</span>
+                  : <><kbd className={kbd}>Ctrl</kbd> + <kbd className={kbd}>Enter</kbd></>}
+              </span>
+              <button
+                type="button"
+                onClick={submit}
+                disabled={pending || !text.trim()}
+                className="h-8 rounded-lg bg-brand-600 px-3.5 text-xs font-semibold text-white transition hover:bg-brand-700 disabled:opacity-50"
+              >
+                {pending ? L("Saqlanmoqda...", "Сохранение...", "Saving...", "Wird gespeichert...") : L("Izoh qo'shish", "Добавить", "Add comment", "Hinzufügen")}
+              </button>
+            </div>
           </div>
-        </div>
-      )}
+        )}
 
-      {items === null ? (
-        <div className="space-y-2 pt-1">
-          <div className="h-12 animate-pulse rounded-xl bg-slate-100 dark:bg-white/5" />
-          <div className="h-12 animate-pulse rounded-xl bg-slate-100 dark:bg-white/5" />
-        </div>
-      ) : count === 0 ? (
-        <p className="rounded-xl border border-dashed border-slate-200 px-3 py-4 text-center text-xs text-slate-400 dark:border-white/10">
-          {tr(locale, { uz: "Hali izoh yozilmagan", ru: "Комментариев пока нет", en: "No comments yet", de: "Noch keine Kommentare" })}
-        </p>
-      ) : (
-        <ul className="space-y-2 pt-1">
-          {items.map((c) => (
-            <li key={c.id} className="rounded-xl bg-slate-50 px-3 py-2.5 dark:bg-white/[0.04]">
-              <div className="flex items-center gap-2">
-                <span className="flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-brand-500/15 text-[10px] font-bold text-brand-600 dark:text-brand-300">
-                  {initials(c.authorName ?? "?")}
-                </span>
-                <span className="min-w-0 flex-1 truncate text-xs font-semibold text-slate-700 dark:text-slate-200">
-                  {c.authorName ?? tr(locale, { uz: "Noma'lum", ru: "Неизвестно", en: "Unknown", de: "Unbekannt" })}
-                  {c.authorRole && <span className="ml-1.5 font-normal text-slate-400">{label(ROLE_LABELS, c.authorRole, locale)}</span>}
-                </span>
-                <time dateTime={c.createdAt} className="shrink-0 text-[11px] tabular-nums text-slate-400">{fmtDateTime(c.createdAt)}</time>
+        {items === null ? (
+          <div className="space-y-3">
+            {[0, 1].map((k) => (
+              <div key={k} className="flex gap-3">
+                <div className="h-8 w-8 shrink-0 animate-pulse rounded-full bg-slate-100 dark:bg-white/5" />
+                <div className="h-14 flex-1 animate-pulse rounded-2xl bg-slate-100 dark:bg-white/5" />
               </div>
-              <p className="mt-1.5 whitespace-pre-wrap break-words text-sm leading-relaxed text-slate-700 dark:text-slate-200">{c.text}</p>
-            </li>
-          ))}
-          {lead.note && (
-            <li className="rounded-xl border border-slate-200/70 px-3 py-2.5 dark:border-white/10">
-              <div className="flex items-center justify-between gap-2">
-                <span className="text-xs font-semibold text-slate-500 dark:text-slate-400">{tr(locale, { uz: "Dastlabki izoh (ariza)", ru: "Первичная заметка (заявка)", en: "Initial note (application)", de: "Erste Notiz (Antrag)" })}</span>
-                <time dateTime={lead.createdAt} className="shrink-0 text-[11px] tabular-nums text-slate-400">{fmtDateTime(lead.createdAt)}</time>
-              </div>
-              <p className="mt-1.5 whitespace-pre-wrap break-words text-sm leading-relaxed text-slate-600 dark:text-slate-300">{lead.note}</p>
-            </li>
-          )}
-        </ul>
-      )}
+            ))}
+          </div>
+        ) : count === 0 ? (
+          <p className="rounded-2xl border border-dashed border-slate-200 px-3 py-5 text-center text-xs text-slate-400 dark:border-white/10">
+            {L("Hali izoh yozilmagan", "Комментариев пока нет", "No comments yet", "Noch keine Kommentare")}
+          </p>
+        ) : (
+          <ul className="space-y-3">
+            {items.map((c) => (
+              <li key={c.id} className="flex gap-3">
+                <DemoAvatar size={32} className="mt-0.5" />
+                <div className="min-w-0 flex-1 rounded-2xl rounded-tl-md bg-slate-50 px-3.5 py-2.5 dark:bg-white/[0.04]">
+                  <div className="flex items-center gap-2">
+                    <span className="min-w-0 flex-1 truncate text-[13px] font-semibold text-slate-800 dark:text-slate-100">
+                      {c.authorName ?? L("Noma'lum", "Неизвестно", "Unknown", "Unbekannt")}
+                      {c.authorRole && <span className="ml-1.5 text-[11px] font-normal text-slate-400">{label(ROLE_LABELS, c.authorRole, locale)}</span>}
+                    </span>
+                    <time dateTime={c.createdAt} className="shrink-0 text-[11px] tabular-nums text-slate-400">{fmtDateTime(c.createdAt)}</time>
+                  </div>
+                  <p className="mt-1 whitespace-pre-wrap break-words text-sm leading-relaxed text-slate-700 dark:text-slate-200">{c.text}</p>
+                </div>
+              </li>
+            ))}
+            {lead.note && (
+              <li className="flex gap-3">
+                <span className="mt-0.5 grid h-8 w-8 shrink-0 place-items-center rounded-full bg-amber-500/15 text-amber-600 dark:text-amber-300">
+                  <Icon name="clipboard" className="h-4 w-4" />
+                </span>
+                <div className="min-w-0 flex-1 rounded-2xl rounded-tl-md border border-amber-200/70 bg-amber-50/60 px-3.5 py-2.5 dark:border-amber-500/20 dark:bg-amber-500/[0.06]">
+                  <div className="flex items-center gap-2">
+                    <span className="min-w-0 flex-1 truncate text-[13px] font-semibold text-amber-700 dark:text-amber-300">
+                      {L("Dastlabki izoh (ariza)", "Первичная заметка (заявка)", "Initial note (application)", "Erste Notiz (Antrag)")}
+                    </span>
+                    <time dateTime={lead.createdAt} className="shrink-0 text-[11px] tabular-nums text-slate-400">{fmtDateTime(lead.createdAt)}</time>
+                  </div>
+                  <p className="mt-1 whitespace-pre-wrap break-words text-sm leading-relaxed text-slate-700 dark:text-slate-200">{lead.note}</p>
+                </div>
+              </li>
+            )}
+          </ul>
+        )}
+      </div>
     </Section>
   );
 }
 
-function Section({ icon, title, children }: { icon: string; title: string; children: React.ReactNode }) {
+function Section({ icon, title, children }: { icon: string; title: string; children: ReactNode }) {
   return (
-    <div>
-      <div className="mb-2 flex items-center gap-2 text-xs font-semibold uppercase tracking-wide text-slate-400">
+    <section>
+      <div className="mb-2.5 flex items-center gap-2 text-[11px] font-semibold uppercase tracking-[0.12em] text-slate-400">
         <Icon name={icon} className="h-3.5 w-3.5" /> {title}
       </div>
-      <div className="space-y-1.5">{children}</div>
+      {children}
+    </section>
+  );
+}
+
+function Tile({ icon, label: k, value, wide }: { icon: string; label: string; value: string | null; wide?: boolean }) {
+  return (
+    <div className={cn("rounded-xl border border-slate-200/80 bg-slate-50/70 px-3 py-2.5 dark:border-white/[0.06] dark:bg-white/[0.03]", wide && "col-span-2")}>
+      <div className="flex items-center gap-1.5 text-[11px] font-medium text-slate-400">
+        <Icon name={icon} className="h-3.5 w-3.5 shrink-0" />
+        <span className="truncate">{k}</span>
+      </div>
+      <div className={cn("mt-1 break-words text-sm font-semibold", value ? "text-slate-800 dark:text-slate-100" : "text-slate-300 dark:text-slate-600")}>{value || "—"}</div>
     </div>
   );
 }
 
-function Row({ label: k, value }: { label: string; value: string }) {
+function InfoLine({ icon, label: k, value }: { icon: string; label: string; value: string }) {
   return (
-    <div className="flex items-start justify-between gap-3 border-b border-slate-100 py-1.5 last:border-0 dark:border-white/5">
-      <span className="shrink-0 text-xs text-slate-400">{k}</span>
-      <span className="min-w-0 break-words text-right text-sm font-medium text-slate-700 dark:text-slate-200">{value}</span>
+    <div className="flex items-center gap-3 rounded-xl border border-slate-200/80 px-3 py-2.5 dark:border-white/[0.06]">
+      <span className="grid h-8 w-8 shrink-0 place-items-center rounded-lg bg-slate-100 text-slate-500 dark:bg-white/[0.06] dark:text-slate-300">
+        <Icon name={icon} className="h-4 w-4" />
+      </span>
+      <div className="min-w-0">
+        <div className="text-[11px] text-slate-400">{k}</div>
+        <div className="truncate text-sm font-semibold text-slate-800 dark:text-slate-100">{value}</div>
+      </div>
     </div>
   );
 }

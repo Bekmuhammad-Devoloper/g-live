@@ -7,7 +7,8 @@ import { cn } from "@/lib/cn";
 import { formatMoney, LEAD_STAGE_LABELS, label, type Locale } from "@/lib/constants";
 import { tr } from "@/lib/tr";
 import { Icon } from "../../_components/Icon";
-import { COLUMNS, colorOfStage, initials } from "../_lib/leadColumns";
+import { COLUMNS, colorOfStage } from "../_lib/leadColumns";
+import DemoAvatar from "../../_components/DemoAvatar";
 import { updateLeadField, setLeadManager, moveLeadStage, convertLead, addLeadActivity, branchOptions, moveLeadToBranch, deleteLeadPermanently } from "../actions";
 import BranchMover from "../../_components/BranchMover";
 import EnrollDrawer from "../_components/EnrollDrawer";
@@ -82,9 +83,7 @@ export default function LeadDetail({ lead, activities, managers, prevId, nextId,
         <div className="space-y-4 lg:col-span-2">
           <div className="rounded-2xl border border-slate-200/70 bg-white p-5 shadow-card dark:border-slate-800 dark:bg-slate-900" style={{ borderTop: `3px solid ${color}` }}>
             <div className="flex items-center gap-4">
-              <div className="flex h-20 w-20 shrink-0 items-center justify-center rounded-full text-2xl font-bold" style={{ color, background: `${color}1f`, boxShadow: `inset 0 0 0 3px ${color}55` }}>
-                {initials(lead.fullName)}
-              </div>
+              <DemoAvatar size={80} ringColor={color} className="shadow-sm ring-offset-[3px] ring-offset-white dark:ring-offset-slate-900" />
               <div className="min-w-0">
                 <h1 className="truncate text-xl font-bold text-slate-900 dark:text-slate-100">{lead.fullName}</h1>
                 <button

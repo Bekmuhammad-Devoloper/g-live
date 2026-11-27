@@ -4,7 +4,8 @@ import { useState } from "react";
 import { cn } from "@/lib/cn";
 import { formatMoney, LEAD_STAGE_LABELS, label, type Locale } from "@/lib/constants";
 import { tr } from "@/lib/tr";
-import { columnDef, columnOf, initials, type VLead } from "../_lib/leadColumns";
+import { columnDef, columnOf, type VLead } from "../_lib/leadColumns";
+import DemoAvatar from "../../_components/DemoAvatar";
 import { debtTone, DEBT_BADGE, DEBT_TEXT } from "@/lib/debtTone";
 
 function fmt(iso: string) {
@@ -66,9 +67,7 @@ export default function LeadsTable({ leads, locale, selected, onToggle, onOpen, 
                     </td>
                     <td className="px-4 py-2.5">
                       <div className="flex items-center gap-2.5">
-                        <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full text-[11px] font-bold" style={{ color: col.color, background: `${col.color}1f` }}>
-                          {initials(l.fullName)}
-                        </span>
+                        <DemoAvatar size={32} ringColor={col.color} />
                         <div className="min-w-0">
                           <div className={cn("truncate font-medium", debtTone(l.debt ?? 0, l.debtMonths ?? 1, l.credit ?? 0) === "none" ? "text-slate-800 dark:text-slate-100" : DEBT_TEXT[debtTone(l.debt ?? 0, l.debtMonths ?? 1, l.credit ?? 0)])}>{l.fullName}</div>
                           <button
