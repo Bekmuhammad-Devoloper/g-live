@@ -10,7 +10,7 @@ import { Icon } from "../../_components/Icon";
 import { COLUMNS, ONLINE_COL, STUDENT_ARCHIVE_COL, isArchiveCol, branchIdOfCol, slotIdOfCol, branchColKey, visibleColumns, columnDef, columnOf, columnOfLead, customIdOfCol, groupIdOfCol, isBranchCol, isCustomCol, isGroupCol, type ArchivedStudent, type BranchColumn, type BranchMode, type BranchModeCfg, type CustomColumn, type GroupColumn, type GroupInfo, type VLead } from "../_lib/leadColumns";
 import { saveKanbanOrder, bulkLeadAction, deleteTestLead, dropLeadToBranch, enrollLeadToGroup, moveLeadStage, moveLeadToColumn, removeKanbanColumn, setLeadArchived, setLeadOnline, unpinKanbanGroup } from "../actions";
 import { type Analytics } from "./AnalyticsTiles";
-import FilterBar from "./FilterBar";
+import FilterBar, { leadDateRange } from "./FilterBar";
 import LeadsKanban from "./LeadsKanban";
 import LeadsTable from "./LeadsTable";
 import SelectionActionBar from "./SelectionActionBar";
@@ -63,6 +63,9 @@ export default function LeadsWorkspace({ locale, initialLeads, totalLeads, manag
   const [source, setSource] = useState(params.get("source") ?? "");
   const [manager, setManager] = useState(params.get("manager") ?? "");
   const [branch, setBranch] = useState(params.get("branch") ?? "");
+  const [datePreset, setDatePreset] = useState(params.get("date") ?? "");
+  const [dateFrom, setDateFrom] = useState(params.get("from") ?? "");
+  const [dateTo, setDateTo] = useState(params.get("to") ?? "");
   const [activeCols, setActiveCols] = useState<Set<string>>(new Set((params.get("cols") ?? "").split(",").filter(Boolean)));
   const [selection, setSelection] = useState<Set<string>>(new Set((params.get("selected") ?? "").split(",").filter(Boolean)));
   const [create, setCreate] = useState<{ open: boolean; stage: string; column: CustomColumn | null }>({ open: false, stage: "NEW", column: null });
@@ -103,6 +106,9 @@ export default function LeadsWorkspace({ locale, initialLeads, totalLeads, manag
     if (source) p.set("source", source);
     if (manager) p.set("manager", manager);
     if (branch) p.set("branch", branch);
+    if (datePreset) p.set("date", datePreset);
+    if (datePreset === "custom" && dateFrom) p.set("from", dateFrom);
+    if (datePreset === "custom" && dateTo) p.set("to", dateTo);
     if (activeCols.size) p.set("cols", [...activeCols].join(","));
     if (selection.size) p.set("selected", [...selection].join(","));
     if (sort !== "newest") p.set("sort", sort);
@@ -112,13 +118,18 @@ export default function LeadsWorkspace({ locale, initialLeads, totalLeads, manag
       window.history.replaceState(null, "", url);
     }
     try { localStorage.setItem("crm-view", view); } catch {}
-  }, [view, search, source, manager, branch, activeCols, selection, sort, pathname]);
+  }, [view, search, source, manager, branch, datePreset, dateFrom, dateTo, activeCols, selection, sort, pathname]);
 
   const deferredSearch = useDeferredValue(search);
+  const dateRange = useMemo(() => leadDateRange(datePreset, dateFrom, dateTo), [datePreset, dateFrom, dateTo]);
   const baseFiltered = useMemo(() => {
     const q = deferredSearch.trim().toLowerCase();
     const qDigits = q.replace(/\D/g, "");
     return leads.filter((l) => {
+      if (dateRange) {
+        const ts = new Date(l.createdAt).getTime();
+        if (ts < dateRange.start || ts >= dateRange.end) return false;
+      }
       if (q) {
         const byText = `${l.fullName} ${l.phone}`.toLowerCase().includes(q);
         const byPhone = qDigits.length > 0 && (l.phone ?? "").replace(/\D/g, "").includes(qDigits);
@@ -129,7 +140,7 @@ export default function LeadsWorkspace({ locale, initialLeads, totalLeads, manag
       if (branch && (branch === "none" ? !!l.branchId : l.branchId !== branch)) return false;
       return true;
     });
-  }, [leads, deferredSearch, source, manager, branch]);
+  }, [leads, deferredSearch, source, manager, branch, dateRange]);
 
   const cols = useMemo(
     () => visibleColumns({ locale, groupColumns, customColumns, branchColumns, branchMode, showOnlineCol, hiddenCols }),
@@ -353,8 +364,8 @@ export default function LeadsWorkspace({ locale, initialLeads, totalLeads, manag
   }, [del, locale, router]);
 
   const toggleCol = (key: string) => setActiveCols((prev) => { const n = new Set(prev); n.has(key) ? n.delete(key) : n.add(key); return n; });
-  const clearFilters = () => { setSearch(""); setSource(""); setManager(""); setBranch(""); setActiveCols(new Set()); };
-  const hasFilters = !!(search || source || manager || branch || activeCols.size);
+  const clearFilters = () => { setSearch(""); setSource(""); setManager(""); setBranch(""); setDatePreset(""); setDateFrom(""); setDateTo(""); setActiveCols(new Set()); };
+  const hasFilters = !!(search || source || manager || branch || datePreset || activeCols.size);
   const branchOpts = useMemo(
     () => (branchColumns && branchColumns.length > 1 ? branchColumns.map((b) => ({ id: b.branchId, name: b.name })) : []),
     [branchColumns],
@@ -455,6 +466,9 @@ export default function LeadsWorkspace({ locale, initialLeads, totalLeads, manag
             cols={cols}
             counts={chipCounts} hasFilters={hasFilters} onClear={clearFilters}
             sort={sort} onSort={setSort}
+            datePreset={datePreset} onDatePreset={setDatePreset}
+            dateFrom={dateFrom} onDateFrom={setDateFrom}
+            dateTo={dateTo} onDateTo={setDateTo}
           />
         </div>
       </div>
