@@ -4,7 +4,7 @@ import { cn } from "@/lib/cn";
 import { tr } from "@/lib/tr";
 import type { Locale } from "@/lib/constants";
 import { Icon } from "../../_components/Icon";
-import DateInput from "../../_components/DateInput";
+import DateRangeFilter from "./DateRangeFilter";
 import type { ViewCol } from "../_lib/leadColumns";
 
 interface Opt { id: string; name: string }
@@ -38,42 +38,6 @@ interface Props {
   onDateTo: (v: string) => void;
 }
 
-export const DATE_PRESETS: { key: string; label: { uz: string; ru: string; en: string; de?: string } }[] = [
-  { key: "today", label: { uz: "Bugun", ru: "Сегодня", en: "Today", de: "Heute" } },
-  { key: "yesterday", label: { uz: "Kecha", ru: "Вчера", en: "Yesterday", de: "Gestern" } },
-  { key: "7d", label: { uz: "Oxirgi 7 kun", ru: "Последние 7 дней", en: "Last 7 days", de: "Letzte 7 Tage" } },
-  { key: "30d", label: { uz: "Oxirgi 30 kun", ru: "Последние 30 дней", en: "Last 30 days", de: "Letzte 30 Tage" } },
-  { key: "month", label: { uz: "Shu oy", ru: "Этот месяц", en: "This month", de: "Dieser Monat" } },
-  { key: "prevmonth", label: { uz: "O'tgan oy", ru: "Прошлый месяц", en: "Last month", de: "Letzter Monat" } },
-  { key: "year", label: { uz: "Shu yil", ru: "Этот год", en: "This year", de: "Dieses Jahr" } },
-  { key: "custom", label: { uz: "Oraliq (dan – gacha)", ru: "Период (с – по)", en: "Range (from – to)", de: "Zeitraum (von – bis)" } },
-];
-
-export function leadDateRange(preset: string, from: string, to: string, now = new Date()): { start: number; end: number } | null {
-  const day = (y: number, m: number, d: number) => new Date(y, m, d).getTime();
-  const y = now.getFullYear(), m = now.getMonth(), d = now.getDate();
-  switch (preset) {
-    case "today": return { start: day(y, m, d), end: day(y, m, d + 1) };
-    case "yesterday": return { start: day(y, m, d - 1), end: day(y, m, d) };
-    case "7d": return { start: day(y, m, d - 6), end: day(y, m, d + 1) };
-    case "30d": return { start: day(y, m, d - 29), end: day(y, m, d + 1) };
-    case "month": return { start: day(y, m, 1), end: day(y, m + 1, 1) };
-    case "prevmonth": return { start: day(y, m - 1, 1), end: day(y, m, 1) };
-    case "year": return { start: day(y, 0, 1), end: day(y + 1, 0, 1) };
-    case "custom": {
-      const parse = (v: string) => {
-        const r = /^(\d{4})-(\d{2})-(\d{2})$/.exec(v);
-        return r ? day(+r[1], +r[2] - 1, +r[3]) : null;
-      };
-      let a = parse(from), b = parse(to);
-      if (a === null && b === null) return null;
-      if (a !== null && b !== null && a > b) [a, b] = [b, a];
-      return { start: a ?? -Infinity, end: b === null ? Infinity : b + 86400000 };
-    }
-    default: return null;
-  }
-}
-
 export const SORT_OPTIONS: { key: string; label: { uz: string; ru: string; en: string; de?: string } }[] = [
   { key: "newest", label: { uz: "Eng yangi", ru: "Сначала новые", en: "Newest", de: "Neueste" } },
   { key: "oldest", label: { uz: "Eng eski", ru: "Сначала старые", en: "Oldest", de: "Älteste" } },
@@ -84,9 +48,7 @@ export const SORT_OPTIONS: { key: string; label: { uz: string; ru: string; en: s
 
 export default function FilterBar(p: Props) {
   const locale = p.locale;
-  const selBase = "h-10 rounded-lg border bg-white px-3 text-sm outline-none focus:border-brand-400 dark:bg-slate-800";
-  const sel = cn(selBase, "border-slate-200 text-slate-600 dark:border-slate-700 dark:text-slate-300");
-  const selOn = cn(selBase, "border-brand-400 font-medium text-brand-700 dark:border-brand-500/60 dark:text-brand-200");
+  const sel = "h-10 rounded-lg border border-slate-200 bg-white px-3 text-sm text-slate-600 outline-none focus:border-brand-400 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-300";
   return (
     <div className="space-y-3">
       <div className="flex flex-wrap items-center gap-2.5">
@@ -114,31 +76,13 @@ export default function FilterBar(p: Props) {
             <option value="none">{tr(locale, { uz: "Filialsiz", ru: "Без филиала", en: "No branch", de: "Ohne Filiale" })}</option>
           </select>
         )}
-        <select value={p.datePreset} onChange={(e) => p.onDatePreset(e.target.value)} className={p.datePreset ? selOn : sel}>
-          <option value="">{tr(locale, { uz: "Sana: Barchasi", ru: "Дата: Все", en: "Date: All", de: "Datum: Alle" })}</option>
-          {DATE_PRESETS.map((o) => <option key={o.key} value={o.key}>{tr(locale, { uz: "Sana", ru: "Дата", en: "Date", de: "Datum" })}: {tr(locale, o.label)}</option>)}
-        </select>
-        {p.datePreset === "custom" && (
-          <div className="flex h-10 items-center gap-2 rounded-lg border border-brand-400 bg-white px-3 dark:border-brand-500/60 dark:bg-slate-800">
-            <DateInput
-              locale={locale}
-              value={p.dateFrom}
-              onChange={(e) => p.onDateFrom(e.target.value)}
-              max={p.dateTo || undefined}
-              placeholder={tr(locale, { uz: "Dan", ru: "С", en: "From", de: "Von" })}
-              className="w-[108px] bg-transparent text-sm text-slate-700 dark:text-slate-100"
-            />
-            <span className="text-slate-300 dark:text-slate-600">–</span>
-            <DateInput
-              locale={locale}
-              value={p.dateTo}
-              onChange={(e) => p.onDateTo(e.target.value)}
-              min={p.dateFrom || undefined}
-              placeholder={tr(locale, { uz: "Gacha", ru: "По", en: "To", de: "Bis" })}
-              className="w-[108px] bg-transparent text-sm text-slate-700 dark:text-slate-100"
-            />
-          </div>
-        )}
+        <DateRangeFilter
+          locale={locale}
+          preset={p.datePreset}
+          from={p.dateFrom}
+          to={p.dateTo}
+          onChange={(preset, from, to) => { p.onDatePreset(preset); p.onDateFrom(from); p.onDateTo(to); }}
+        />
         <select value={p.sort} onChange={(e) => p.onSort(e.target.value)} className={sel}>
           {SORT_OPTIONS.map((o) => <option key={o.key} value={o.key}>{tr(locale, { uz: "Saralash", ru: "Сортировка", en: "Sort", de: "Sortieren" })}: {tr(locale, o.label)}</option>)}
         </select>

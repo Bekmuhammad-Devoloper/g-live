@@ -5,7 +5,7 @@ import { createPortal } from "react-dom";
 import { cn } from "@/lib/cn";
 import type { Locale } from "@/lib/constants";
 
-const MONTHS: Record<Locale, string[]> = {
+export const MONTHS: Record<Locale, string[]> = {
   uz: ["Yanvar", "Fevral", "Mart", "Aprel", "May", "Iyun", "Iyul", "Avgust", "Sentabr", "Oktabr", "Noyabr", "Dekabr"],
   ru: ["Январь", "Февраль", "Март", "Апрель", "Май", "Июнь", "Июль", "Август", "Сентябрь", "Октябрь", "Ноябрь", "Декабрь"],
   en: ["January", "February", "March", "April", "May", "June", "July", "August", "September", "October", "November", "December"],
@@ -17,7 +17,7 @@ const MONTHS_SHORT: Record<Locale, string[]> = {
   en: ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"],
   de: ["Jan", "Feb", "Mär", "Apr", "Mai", "Jun", "Jul", "Aug", "Sep", "Okt", "Nov", "Dez"],
 };
-const WEEK: Record<Locale, string[]> = {
+export const WEEK: Record<Locale, string[]> = {
   uz: ["Du", "Se", "Ch", "Pa", "Ju", "Sh", "Ya"],
   ru: ["Пн", "Вт", "Ср", "Чт", "Пт", "Сб", "Вс"],
   en: ["Mo", "Tu", "We", "Th", "Fr", "Sa", "Su"],
