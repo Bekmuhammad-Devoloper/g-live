@@ -333,7 +333,7 @@ function Comments({ lead, locale, canWrite, onCommented }: { lead: VLead; locale
             {items.map((c) => (
               <li key={c.id} className="rounded-xl border border-slate-200/70 bg-slate-50 px-3 py-2.5 dark:border-white/[0.06] dark:bg-white/[0.04]">
                 <div className="flex items-center gap-2">
-                  <DemoAvatar size={24} />
+                  <DemoAvatar size={24} plain />
                   <span className="min-w-0 flex-1 truncate text-[12.5px] font-semibold text-slate-800 dark:text-slate-100">
                     {c.authorName ?? L("Noma'lum", "Неизвестно", "Unknown", "Unbekannt")}
                     {c.authorRole && <span className="ml-1.5 text-[11px] font-normal text-slate-400">{label(ROLE_LABELS, c.authorRole, locale)}</span>}

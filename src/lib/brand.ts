@@ -12,7 +12,7 @@ export interface Brand {
 
 export const BRAND_KEYS = { name: "brand.name", logo: "brand.logo", logoDark: "brand.logoDark", leadAvatar: "brand.leadAvatar" } as const;
 
-export const DEFAULT_LEAD_AVATAR = "";
+export const DEFAULT_LEAD_AVATAR = "/avatars/lead.webp";
 
 export const getBrand = cache(async (): Promise<Brand> => {
   const isMain = !process.env.GL_INSTANCE;
