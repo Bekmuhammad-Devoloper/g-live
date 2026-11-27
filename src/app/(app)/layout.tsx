@@ -82,6 +82,7 @@ export default async function AppLayout({ children }: { children: React.ReactNod
     : ownBranches.length > 0 ? ownBranches : branch ? [{ id: branch.id, name: branch.name }] : [];
 
   const brand = await getBrand();
+  const leadAvatarCss = /^(\/(?!\/)[^\s"'<>\\()]*|https:\/\/[^\s"'<>\\()]+)$/.test(brand.leadAvatar) ? `:root{--lead-avatar:url("${brand.leadAvatar}")}` : "";
   const ai = session.role === ROLES.DIRECTOR || session.role === ROLES.DEPUTY_DIRECTOR ? await getAiAvatarState(session.userId) : null;
   const offPaths = [...disabledModules()].flatMap((m) => INSTANCE_MODULES[m].paths);
   const navItems = navFor(session.role, session).map((it) => ({
@@ -132,6 +133,7 @@ export default async function AppLayout({ children }: { children: React.ReactNod
       }}
     >
       {children}
+      {leadAvatarCss && <style>{leadAvatarCss}</style>}
       <DialogHost locale={session.locale} />
       {canPhone && isModuleEnabled("telephony") && <Softphone locale={session.locale} canConfigure={canConfigureTelephony} />}
     </AppShell>

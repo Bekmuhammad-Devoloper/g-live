@@ -6,15 +6,18 @@ import { cn } from "@/lib/cn";
 import { tr } from "@/lib/tr";
 import type { Locale } from "@/lib/constants";
 import { Icon } from "../_components/Icon";
+import DemoAvatar from "../_components/DemoAvatar";
+import { squareImage } from "../_components/AiAvatarPicker";
 import { saveBrand } from "./actions";
 
 export interface BrandSettingsValue {
   name: string;
   logo: string;
   logoDark: string;
+  leadAvatar: string;
 }
 
-type LogoKey = "logo" | "logoDark";
+type LogoKey = "logo" | "logoDark" | "leadAvatar";
 
 export default function BrandSettings({ locale, initial, defaults }: { locale: Locale; initial: BrandSettingsValue; defaults: BrandSettingsValue }) {
   const T = (uz: string, ru: string, en: string, de: string) => tr(locale, { uz, ru, en, de });
@@ -25,6 +28,7 @@ export default function BrandSettings({ locale, initial, defaults }: { locale: L
   const [saving, startSave] = useTransition();
   const lightRef = useRef<HTMLInputElement>(null);
   const darkRef = useRef<HTMLInputElement>(null);
+  const avatarRef = useRef<HTMLInputElement>(null);
 
   const set = <K extends keyof BrandSettingsValue>(k: K, val: BrandSettingsValue[K]) => { setV((s) => ({ ...s, [k]: val })); setMsg(null); };
 
@@ -39,7 +43,12 @@ export default function BrandSettings({ locale, initial, defaults }: { locale: L
       return;
     }
     setMsg(null); setUploading(key);
-    const fd = new FormData(); fd.set("file", file);
+    void (async () => {
+    const fd = new FormData();
+    if (key === "leadAvatar") {
+      const sq = await squareImage(file);
+      fd.set("file", sq.blob, sq.name);
+    } else fd.set("file", file);
     const xhr = new XMLHttpRequest();
     xhr.open("POST", "/api/upload");
     xhr.onload = () => {
@@ -52,6 +61,7 @@ export default function BrandSettings({ locale, initial, defaults }: { locale: L
     };
     xhr.onerror = () => { setUploading(null); setMsg({ ok: false, text: uploadFailed }); };
     xhr.send(fd);
+    })();
   };
 
   const save = () => {
@@ -68,7 +78,7 @@ export default function BrandSettings({ locale, initial, defaults }: { locale: L
             ? T("Saqlanmadi — ruxsat yo'q", "Не сохранено — нет доступа", "Not saved — no permission", "Nicht gespeichert — keine Berechtigung")
             : r.error === "name_too_long"
               ? T("Nom juda uzun (80 belgigacha)", "Название слишком длинное (до 80 символов)", "Name is too long (up to 80 characters)", "Name ist zu lang (bis zu 80 Zeichen)")
-              : T("Logotip manzili noto'g'ri", "Неверный адрес логотипа", "Invalid logo address", "Ungültige Logo-Adresse"),
+              : T("Rasm manzili noto'g'ri", "Неверный адрес изображения", "Invalid image address", "Ungültige Bildadresse"),
         });
       }
     });
@@ -123,6 +133,7 @@ export default function BrandSettings({ locale, initial, defaults }: { locale: L
       </div>
       <input ref={lightRef} type="file" accept="image/png,image/jpeg,image/webp,image/gif" className="hidden" onChange={onFile("logo")} />
       <input ref={darkRef} type="file" accept="image/png,image/jpeg,image/webp,image/gif" className="hidden" onChange={onFile("logoDark")} />
+      <input ref={avatarRef} type="file" accept="image/png,image/jpeg,image/webp,image/gif" className="hidden" onChange={onFile("leadAvatar")} />
 
       <p className="mt-3 text-xs text-slate-400">
         {T(
@@ -132,6 +143,47 @@ export default function BrandSettings({ locale, initial, defaults }: { locale: L
           "Empfohlen: PNG mit transparentem Hintergrund, 400–800 px breit. Ohne Logo wird der Name als Text angezeigt.",
         )}
       </p>
+
+      <div className="mt-8 border-t border-slate-200 pt-6 dark:border-white/10">
+        <div className="mb-1.5 text-sm font-medium text-slate-600 dark:text-slate-300">
+          {T("Lid va o'quvchi avatari", "Аватар лида и ученика", "Lead & student avatar", "Lead- und Schüler-Avatar")}
+        </div>
+        <div className="flex flex-wrap items-center gap-5">
+          <button
+            type="button"
+            onClick={() => avatarRef.current?.click()}
+            disabled={uploading === "leadAvatar"}
+            className="relative grid h-24 w-24 shrink-0 place-items-center rounded-full ring-2 ring-brand-400/60 ring-offset-2 ring-offset-white transition hover:ring-brand-500 dark:ring-offset-slate-900"
+          >
+            <DemoAvatar size={96} src={v.leadAvatar || defaults.leadAvatar || undefined} />
+            {uploading === "leadAvatar" && (
+              <span className="absolute inset-0 grid place-items-center rounded-full bg-black/45 text-[11px] font-semibold text-white">
+                {T("Yuklanmoqda…", "Загрузка…", "Uploading…", "Wird hochgeladen…")}
+              </span>
+            )}
+          </button>
+          <div className="min-w-0 max-w-md">
+            <p className="text-xs leading-relaxed text-slate-500 dark:text-slate-400">
+              {T(
+                "Lid kartalari, lid oynasi, jadval va izohlarda harf o'rnida ko'rinadigan standart rasm. Kvadrat rasm yuklang (512×512 tavsiya) — avtomatik dumaloq ko'rinishga keltiriladi.",
+                "Стандартное изображение вместо букв в карточках лидов, окне лида, таблице и комментариях. Загрузите квадратное изображение (рекомендуется 512×512) — оно будет круглым.",
+                "Default picture shown instead of initials on lead cards, the lead panel, the table and comments. Upload a square image (512×512 recommended); it is shown as a circle.",
+                "Standardbild statt Initialen in Lead-Karten, Lead-Fenster, Tabelle und Kommentaren. Quadratisches Bild hochladen (512×512 empfohlen); es wird rund angezeigt.",
+              )}
+            </p>
+            <div className="mt-2 flex items-center gap-3 text-xs">
+              <button type="button" onClick={() => avatarRef.current?.click()} disabled={uploading === "leadAvatar"} className="flex items-center gap-1 font-semibold text-brand-600 hover:underline dark:text-brand-300">
+                <Icon name="camera" className="h-3.5 w-3.5" /> {T("Rasm yuklash", "Загрузить", "Upload", "Hochladen")}
+              </button>
+              {v.leadAvatar && (
+                <button type="button" onClick={() => set("leadAvatar", "")} className="font-semibold text-rose-600 hover:underline dark:text-rose-400">
+                  {T("Standartga qaytarish", "Сбросить", "Reset to default", "Zurücksetzen")}
+                </button>
+              )}
+            </div>
+          </div>
+        </div>
+      </div>
 
       <div className="mt-8 flex flex-wrap items-center gap-3">
         <button onClick={save} disabled={saving || uploading !== null}

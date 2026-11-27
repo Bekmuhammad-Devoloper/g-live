@@ -17,7 +17,7 @@ export function AiAvatar({ src, className }: { src: string; className?: string }
   return <img src={src} alt="" draggable={false} className={cn("shrink-0 select-none rounded-full bg-white object-cover", className)} />;
 }
 
-async function squareImage(file: File): Promise<{ blob: Blob; name: string }> {
+export async function squareImage(file: File): Promise<{ blob: Blob; name: string }> {
   const keep = { blob: file as Blob, name: file.name || "ai-avatar.png" };
   if (file.type === "image/gif" || typeof createImageBitmap !== "function") return keep;
   try {

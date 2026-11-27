@@ -67,7 +67,7 @@ function cleanLogoUrl(v: unknown): string | null {
   return null;
 }
 
-export async function saveBrand(input: { name: string; logo: string; logoDark: string }): Promise<SettingResult> {
+export async function saveBrand(input: { name: string; logo: string; logoDark: string; leadAvatar?: string }): Promise<SettingResult> {
   const s = await requireSession();
   if (!ALLOWED.includes(s.role as never)) return { error: "forbidden" };
 
@@ -75,19 +75,21 @@ export async function saveBrand(input: { name: string; logo: string; logoDark: s
   if (name.length > 80) return { error: "name_too_long" };
   const logo = cleanLogoUrl(input?.logo);
   const logoDark = cleanLogoUrl(input?.logoDark);
-  if (logo === null || logoDark === null) return { error: "invalid_logo" };
+  const leadAvatar = cleanLogoUrl(input?.leadAvatar);
+  if (logo === null || logoDark === null || leadAvatar === null) return { error: "invalid_logo" };
 
   await Promise.all([
     setSetting(BRAND_KEYS.name, name),
     setSetting(BRAND_KEYS.logo, logo),
     setSetting(BRAND_KEYS.logoDark, logoDark),
+    setSetting(BRAND_KEYS.leadAvatar, leadAvatar),
   ]);
   await writeAudit({
     actorId: s.userId,
     action: "UPDATE",
     entityType: "Setting",
     entityId: "brand",
-    newValue: { name, logo, logoDark },
+    newValue: { name, logo, logoDark, leadAvatar },
     reason: "Markaz brendi o'zgartirildi",
   });
 

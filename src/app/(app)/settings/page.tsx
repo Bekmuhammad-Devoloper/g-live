@@ -6,7 +6,7 @@ import { Forbidden } from "../_components/ui";
 import LicenseBanner from "../_components/LicenseBanner";
 import GeneralSettings from "./GeneralSettings";
 import { getSetting, getSettings } from "@/lib/settings";
-import { getBrand, BRAND_KEYS } from "@/lib/brand";
+import { getBrand, BRAND_KEYS, DEFAULT_LEAD_AVATAR } from "@/lib/brand";
 import { RECEIPT_MODE_KEY, parseReceiptMode } from "@/lib/receiptMode";
 import { getDefaultMonthlyFee } from "@/lib/debt";
 
@@ -27,12 +27,13 @@ export default async function SettingsPage({ searchParams }: { searchParams: Pro
       : prisma.branch.findFirst({ orderBy: { name: "asc" }, select: { name: true, phone: true } }),
     prisma.branch.findMany({ where: { isActive: true }, orderBy: { name: "asc" }, select: { name: true } }),
     getBrand(),
-    getSettings([BRAND_KEYS.name, BRAND_KEYS.logo, BRAND_KEYS.logoDark]),
+    getSettings([BRAND_KEYS.name, BRAND_KEYS.logo, BRAND_KEYS.logoDark, BRAND_KEYS.leadAvatar]),
   ]);
   const brandDefaults = {
     name: process.env.ORG_NAME?.trim() || (brand.isMain ? "Germaniya Live" : "O'quv markazi"),
     logo: brand.isMain ? "/logo.png" : "",
     logoDark: brand.isMain ? "/logo-dark.png" : "",
+    leadAvatar: DEFAULT_LEAD_AVATAR,
   };
 
   return (
@@ -51,6 +52,7 @@ export default async function SettingsPage({ searchParams }: { searchParams: Pro
             name: brandRaw[BRAND_KEYS.name] ?? "",
             logo: brandRaw[BRAND_KEYS.logo] ?? "",
             logoDark: brandRaw[BRAND_KEYS.logoDark] ?? "",
+            leadAvatar: brandRaw[BRAND_KEYS.leadAvatar] ?? "",
           },
           defaults: brandDefaults,
           name: brand.name,
