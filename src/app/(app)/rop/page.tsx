@@ -86,7 +86,7 @@ export default async function RopDashboardPage({ searchParams }: { searchParams:
   const recentLeads = leads.slice(0, 7);
 
   const QUICK = [
-    { href: "/crm", icon: "download", title: tr(locale, { uz: "Lidlar", ru: "Лиды", en: "Leads", de: "Leads" }), desc: tr(locale, { uz: "Buyurtmalar bazasi", ru: "База заявок", en: "Orders database", de: "Bestellungsdatenbank" }) },
+    { href: "/crm", icon: "leads", title: tr(locale, { uz: "Lidlar", ru: "Лиды", en: "Leads", de: "Leads" }), desc: tr(locale, { uz: "Buyurtmalar bazasi", ru: "База заявок", en: "Orders database", de: "Bestellungsdatenbank" }) },
     { href: "/rop/operators", icon: "headphones", title: tr(locale, { uz: "Operatorlar", ru: "Операторы", en: "Operators", de: "Operatoren" }), desc: tr(locale, { uz: "Jamoa nazorati", ru: "Контроль команды", en: "Team monitoring", de: "Teamüberwachung" }) },
     { href: "/reports/admins", icon: "shield", title: tr(locale, { uz: "Administratorlar", ru: "Администраторы", en: "Administrators", de: "Administratoren" }), desc: tr(locale, { uz: "Filiallar nazorati", ru: "Контроль филиалов", en: "Branch monitoring", de: "Filialüberwachung" }) },
     { href: "/rop/kpi-settings", icon: "trophy", title: "KPI", desc: tr(locale, { uz: "Sozlamalar & reyting", ru: "Настройки и рейтинг", en: "Settings & rating", de: "Einstellungen & Rangliste" }) },
@@ -122,7 +122,7 @@ export default async function RopDashboardPage({ searchParams }: { searchParams:
       </div>
 
       <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-4">
-        <RopTile icon="download" tone="brand" value={newLeads} label={tr(locale, { uz: "Yangi lidlar", ru: "Новые лиды", en: "New leads", de: "Neue Leads" })} delta={`+${createdInPeriod} ${periodShort}`} deltaTone="brand" />
+        <RopTile icon="leads" tone="brand" value={newLeads} label={tr(locale, { uz: "Yangi lidlar", ru: "Новые лиды", en: "New leads", de: "Neue Leads" })} delta={`+${createdInPeriod} ${periodShort}`} deltaTone="brand" />
         <RopTile icon="headphones" tone="amber" value={operators.length} label={tr(locale, { uz: "Faol operatorlar", ru: "Активные операторы", en: "Active operators", de: "Aktive Operatoren" })} delta={tr(locale, { uz: `${assigned} biriktirilgan`, ru: `${assigned} назначено`, en: `${assigned} assigned`, de: `${assigned} zugewiesen` })} deltaTone="slate" />
         <RopTile icon="check" tone="green" value={won} label={tr(locale, { uz: "Muvaffaqiyatli", ru: "Успешные", en: "Successful", de: "Erfolgreich" })} delta={tr(locale, { uz: `${conv}% konversiya`, ru: `${conv}% конверсия`, en: `${conv}% conversion`, de: `${conv}% Konversion` })} deltaTone={conv >= 30 ? "green" : "red"} />
         <RopTile icon="arrowUpRight" tone="violet" value={adminSent} label={tr(locale, { uz: "To'lovga yuborilgan", ru: "Отправлено на оплату", en: "Sent for payment", de: "Zur Zahlung gesendet" })} delta={tr(locale, { uz: `${reprocess} qayta ishlash`, ru: `${reprocess} в доработке`, en: `${reprocess} reprocessing`, de: `${reprocess} in Bearbeitung` })} deltaTone="slate" />

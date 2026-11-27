@@ -18,7 +18,7 @@ type T4 = { uz: string; ru: string; en: string; de: string };
 
 const SUGGEST: { icon: string; tone: string; text: T4 }[] = [
   { icon: "coins", tone: "from-emerald-400 to-teal-500", text: { uz: "Bugun qancha tushum bo'ldi?", ru: "Какая выручка сегодня?", en: "What is today's revenue?", de: "Wie hoch ist der Umsatz heute?" } },
-  { icon: "download", tone: "from-sky-400 to-blue-500", text: { uz: "Shu oy nechta lid tushdi, qaysi manbadan?", ru: "Сколько лидов в этом месяце и откуда?", en: "How many leads this month and from where?", de: "Wie viele Leads diesen Monat und woher?" } },
+  { icon: "leads", tone: "from-sky-400 to-blue-500", text: { uz: "Shu oy nechta lid tushdi, qaysi manbadan?", ru: "Сколько лидов в этом месяце и откуда?", en: "How many leads this month and from where?", de: "Wie viele Leads diesen Monat und woher?" } },
   { icon: "alert", tone: "from-amber-400 to-orange-500", text: { uz: "Qaysi filialda qancha qarzdor bor?", ru: "Сколько должников в каждом филиале?", en: "How many debtors per branch?", de: "Wie viele Schuldner pro Filiale?" } },
   { icon: "graduation", tone: "from-violet-400 to-fuchsia-500", text: { uz: "Yangi o'quvchini qanday qabul qilaman?", ru: "Как принять нового ученика?", en: "How do I enroll a new student?", de: "Wie nehme ich einen neuen Schüler auf?" } },
 ];

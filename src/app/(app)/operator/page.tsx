@@ -159,7 +159,7 @@ export default async function OperatorConsolePage({ searchParams }: { searchPara
       </div>
 
       <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-4">
-        <Tile icon="download" tone="brand" value={assigned} label={T("Tayinlangan lidlar", "Назначенные лиды", "Assigned leads", "Zugewiesene Leads")} delta={`${newCount} ${T("yangi", "новых", "new", "neu")}`} />
+        <Tile icon="leads" tone="brand" value={assigned} label={T("Tayinlangan lidlar", "Назначенные лиды", "Assigned leads", "Zugewiesene Leads")} delta={`${newCount} ${T("yangi", "новых", "new", "neu")}`} />
         <Tile icon="check" tone="green" value={won} label={T("Muvaffaqiyatli", "Успешные", "Successful", "Erfolgreich")} delta={`${conv}%`} />
         <Tile icon="phoneMissed" tone="amber" value={missed} label={T("Javob yo'q", "Нет ответа", "No answer", "Keine Antwort")} delta={`${reprocess} ${T("qayta", "повторно", "retry", "erneut")}`} />
         <Tile icon="eye" tone="violet" value={worked} label={T("Ishlangan lidlar", "Обработанные лиды", "Processed leads", "Bearbeitete Leads")} delta={`${lost} ${T("bloklangan", "заблокировано", "blocked", "blockiert")}`} />

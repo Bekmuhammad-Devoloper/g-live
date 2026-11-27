@@ -282,6 +282,19 @@ export function Icon({
   sketch?: boolean;
   style?: React.CSSProperties;
 }) {
+  if (name === "leads") {
+    return (
+      <img
+        src="/nav/leads.webp"
+        alt=""
+        aria-hidden
+        draggable={false}
+        decoding="async"
+        className={`pointer-events-none shrink-0 select-none object-contain ${className}`}
+        style={{ transform: "scale(1.3)", filter: "drop-shadow(0 1px 1.5px rgb(0 0 0 / 0.28))", ...style }}
+      />
+    );
+  }
   return (
     <svg
       viewBox="0 0 24 24"

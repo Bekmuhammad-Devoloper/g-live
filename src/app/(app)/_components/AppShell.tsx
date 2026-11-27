@@ -63,7 +63,7 @@ const SUBMENUS: Record<string, { title: Record<Locale, string>; groups: SubGroup
       { items: [
         { href: "/reports/conversion", icon: "chart", label: L("Konversiya hisobotlari", "Отчёты по конверсии", "Conversion reports", "Konversionsberichte"), roles: [ROLES.DIRECTOR, ROLES.DEPUTY_DIRECTOR, ROLES.ROP, ROLES.MANAGER] },
         { href: "/reports/attendance", icon: "check", label: L("Davomat hisobotlari", "Отчёты по посещаемости", "Attendance reports", "Anwesenheitsberichte") },
-        { href: "/reports/leads", icon: "download", label: L("Lidlar hisobotlari", "Отчёты по лидам", "Lead reports", "Lead-Berichte") },
+        { href: "/reports/leads", icon: "leads", label: L("Lidlar hisobotlari", "Отчёты по лидам", "Lead reports", "Lead-Berichte") },
         { href: "/reports/left-students", icon: "personMinus", label: L("Guruhni tark etganlar", "Покинувшие группу", "Left the group", "Ausgetretene Schüler") },
       ] },
       { label: L("Jurnallar", "Журналы", "Logs", "Protokolle"), items: [
@@ -176,7 +176,7 @@ type PortalItem = { href: string; icon: string; label: Record<Locale, string>; e
 
 const ROP_NAV: PortalItem[] = [
   { href: "/rop", icon: "grid", label: L("Bosh sahifa", "Главная", "Home", "Startseite"), exact: true },
-  { href: "/crm", icon: "download", label: L("Lidlar", "Лиды", "Leads", "Leads") },
+  { href: "/crm", icon: "leads", label: L("Lidlar", "Лиды", "Leads", "Leads") },
   { href: "/reports/operators", icon: "headphones", label: L("Operatorlar", "Операторы", "Operators", "Operatoren") },
   { href: "/reports/admins", icon: "shield", label: L("Administratorlar", "Администраторы", "Administrators", "Administratoren") },
   { href: "/courses", icon: "book", label: L("Kurslar va darslar", "Курсы и уроки", "Courses and lessons", "Kurse und Lektionen") },
@@ -193,7 +193,7 @@ const ROP_NAV: PortalItem[] = [
 
 const OPERATOR_NAV: PortalItem[] = [
   { href: "/operator", icon: "grid", label: L("Bosh sahifa", "Главная", "Dashboard", "Startseite"), exact: true },
-  { href: "/crm", icon: "download", label: L("Lidlar", "Лиды", "Leads", "Leads") },
+  { href: "/crm", icon: "leads", label: L("Lidlar", "Лиды", "Leads", "Leads") },
   { href: "/reports/calls", icon: "phone", label: L("Qo'ng'iroqlar", "Звонки", "Calls", "Anrufe") },
   { href: "/reminders", icon: "clock", label: L("Eslatmalar", "Напоминания", "Reminders", "Erinnerungen") },
   { href: "/notifications", icon: "bell", label: L("Bildirishnomalar", "Уведомления", "Notifications", "Benachrichtigungen") },

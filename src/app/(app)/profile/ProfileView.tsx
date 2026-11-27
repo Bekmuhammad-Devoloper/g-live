@@ -106,7 +106,7 @@ export default function ProfileView({ locale, me, stats }: {
       </div>
 
       <div className="grid grid-cols-2 gap-4 lg:grid-cols-4">
-        <Tile icon="download" tone="#6366f1" label={L("Mening lidlarim", "Мои лиды", "My leads", "Meine Leads")} value={stats.leads} />
+        <Tile icon="leads" tone="#6366f1" label={L("Mening lidlarim", "Мои лиды", "My leads", "Meine Leads")} value={stats.leads} />
         <Tile icon="clipboard" tone="#f59e0b" label={L("Ochiq topshiriqlar", "Открытые задачи", "Open tasks", "Offene Aufgaben")} value={stats.tasksOpen} />
         <Tile icon="phone" tone="#10b981" label={L("Qo'ng'iroqlarim", "Мои звонки", "My calls", "Meine Anrufe")} value={stats.calls} />
         <Tile icon="calendar" tone="#0ea5e9" label={L("Ro'yxatdan o'tgan", "Дата регистрации", "Joined", "Beigetreten")} value={me.joined} small />
