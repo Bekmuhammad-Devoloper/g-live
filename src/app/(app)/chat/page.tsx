@@ -86,6 +86,7 @@ export default async function ChatPage({ searchParams }: { searchParams: Promise
         studentId: m.studentId,
         student: m.student.fullName,
         group: m.student.enrollments[0]?.group.name ?? null,
+        photo: null,
         last: m.text,
         lastAt: m.createdAt.toISOString(),
         unread: m.fromStudent && !m.readAt ? 1 : 0,
@@ -100,10 +101,23 @@ export default async function ChatPage({ searchParams }: { searchParams: Promise
       studentId: st.id,
       student: st.fullName,
       group: st.enrollments[0]?.group.name ?? null,
+      photo: null,
       last: "",
       lastAt: "",
       unread: 0,
     });
+  }
+
+  const threadIds = [...byStudent.keys()];
+  const withPhoto = threadIds.length
+    ? await prisma.student.findMany({
+        where: { id: { in: threadIds }, imageUrl: { not: null } },
+        select: { id: true, updatedAt: true },
+      })
+    : [];
+  for (const p of withPhoto) {
+    const th = byStudent.get(p.id);
+    if (th) th.photo = `/api/students/${p.id}/photo?v=${p.updatedAt.getTime()}`;
   }
 
   const threads = [...byStudent.values()].sort((a, b) => {
@@ -133,7 +147,7 @@ export default async function ChatPage({ searchParams }: { searchParams: Promise
         <h1 className="text-xl font-bold text-slate-800">
           {tr(s.locale, { uz: "O'quvchilar yozishmasi", ru: "Переписка с учениками", en: "Student messages", de: "Nachrichten der Schüler" })}
           {unreadTotal > 0 ? (
-            <span className="ml-2 rounded-full bg-cyan-600 px-2 py-[2px] align-middle text-xs font-bold text-white">
+            <span className="ml-2 rounded-full bg-cyan-600 px-2 py-[2px] align-middle text-xs font-bold text-white dark:bg-brand-500 dark:text-[#1a1407]">
               {unreadTotal}
             </span>
           ) : null}

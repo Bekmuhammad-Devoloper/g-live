@@ -4,12 +4,14 @@ import { useEffect, useRef, useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
 import { tr } from "@/lib/tr";
 import type { Locale } from "@/lib/constants";
+import DemoAvatar from "../_components/DemoAvatar";
 import { markThreadRead, replyToStudent } from "./actions";
 
 export type VThread = {
   studentId: string;
   student: string;
   group: string | null;
+  photo: string | null;
   last: string;
   lastAt: string;
   unread: number;
@@ -17,14 +19,29 @@ export type VThread = {
 
 export type VMsg = { id: string; fromStudent: boolean; text: string; at: string; author: string | null };
 
-const TG = {
-  wall: "#d9e4ec",
-  out: "#effdde",
-  in: "#ffffff",
-  outTime: "#5eb35a",
-  inTime: "#a1aab3",
-  text: "#0f1419",
-};
+function Avatar({ photo, size }: { photo: string | null; size: number }) {
+  return (
+    <span className="relative inline-block shrink-0" style={{ width: size, height: size }}>
+      <DemoAvatar size={size} />
+      {photo ? (
+        <img
+          key={photo}
+          src={photo}
+          alt=""
+          loading="lazy"
+          decoding="async"
+          ref={(el) => {
+            if (el && el.complete && el.naturalWidth === 0) el.hidden = true;
+          }}
+          onError={(e) => {
+            e.currentTarget.hidden = true;
+          }}
+          className="absolute inset-0 h-full w-full rounded-full object-cover"
+        />
+      ) : null}
+    </span>
+  );
+}
 
 const dayKey = (iso: string) => new Date(iso).toDateString();
 
@@ -44,14 +61,6 @@ const hhmm = (iso: string) => {
   const p = (n: number) => String(n).padStart(2, "0");
   return `${p(d.getHours())}:${p(d.getMinutes())}`;
 };
-
-const initials = (name: string) =>
-  name
-    .split(/\s+/)
-    .slice(0, 2)
-    .map((w) => w[0])
-    .join("")
-    .toUpperCase();
 
 const clock = (iso: string) => {
   const d = new Date(iso);
@@ -130,7 +139,7 @@ export default function ChatView({
             value={q}
             onChange={(e) => setQ(e.target.value)}
             placeholder={T("O'quvchi qidirish…", "Поиск ученика…", "Search student…", "Schüler suchen…")}
-            className="w-full rounded-lg border border-slate-200 px-3 py-1.5 text-sm outline-none focus:border-cyan-500"
+            className="w-full rounded-lg border border-slate-200 bg-transparent px-3 py-1.5 text-sm outline-none placeholder:text-slate-400 focus:border-cyan-500 dark:focus:border-brand-500"
           />
         </div>
 
@@ -142,42 +151,47 @@ export default function ChatView({
           </div>
         ) : (
           <ul className="flex-1 overflow-y-auto">
-            {shown.map((th) => (
-              <li key={th.studentId}>
-                <button
-                  type="button"
-                  onClick={() => select(th.studentId)}
-                  className={
-                    "flex w-full items-start gap-3 border-b border-slate-100 px-4 py-3 text-left transition hover:bg-slate-50 " +
-                    (th.studentId === active ? "bg-cyan-50/60" : "")
-                  }
-                >
-                  <span
+            {shown.map((th) => {
+              const sel = th.studentId === active;
+              return (
+                <li key={th.studentId}>
+                  <button
+                    type="button"
+                    onClick={() => select(th.studentId)}
+                    aria-current={sel ? "true" : undefined}
                     className={
-                      "mt-0.5 grid h-8 w-8 shrink-0 place-items-center rounded-full text-[11px] font-bold " +
-                      (th.lastAt ? "bg-cyan-100 text-cyan-700" : "bg-slate-100 text-slate-400")
+                      "flex w-full items-center gap-3 border-b border-slate-100 px-4 py-3 text-left transition " +
+                      (sel
+                        ? "bg-cyan-50/80 shadow-[inset_3px_0_0_#0891b2] dark:bg-brand-500/[0.09] dark:shadow-[inset_3px_0_0_rgb(var(--brand-500))]"
+                        : "hover:bg-slate-50")
                     }
                   >
-                    {initials(th.student)}
-                  </span>
-                  <div className="min-w-0 flex-1">
-                    <div className="flex items-baseline justify-between gap-2">
-                      <span className="truncate text-sm font-semibold text-slate-800">{th.student}</span>
-                      {th.lastAt ? <span className="shrink-0 text-[11px] text-slate-400">{clock(th.lastAt)}</span> : null}
+                    <Avatar photo={th.photo} size={42} />
+                    <div className="min-w-0 flex-1">
+                      <div className="flex items-baseline justify-between gap-2">
+                        <span className={"truncate text-sm font-semibold " + (sel ? "text-cyan-900 dark:text-brand-200" : "text-slate-800")}>
+                          {th.student}
+                        </span>
+                        {th.lastAt ? (
+                          <span className={"shrink-0 text-[11px] " + (sel ? "text-cyan-700/80 dark:text-brand-300/80" : "text-slate-400")}>
+                            {clock(th.lastAt)}
+                          </span>
+                        ) : null}
+                      </div>
+                      {th.group ? <div className="truncate text-[11.5px] text-slate-400">{th.group}</div> : null}
+                      <div className={"mt-0.5 truncate text-[12.5px] " + (th.lastAt ? "text-slate-500" : "text-slate-300 dark:text-slate-600")}>
+                        {th.lastAt ? th.last : T("yozishma yo'q", "нет сообщений", "no messages", "keine Nachrichten")}
+                      </div>
                     </div>
-                    {th.group ? <div className="truncate text-[11.5px] text-slate-400">{th.group}</div> : null}
-                    <div className={"mt-0.5 truncate text-[12.5px] " + (th.lastAt ? "text-slate-500" : "text-slate-300")}>
-                      {th.lastAt ? th.last : T("yozishma yo'q", "нет сообщений", "no messages", "keine Nachrichten")}
-                    </div>
-                  </div>
-                  {th.unread > 0 ? (
-                    <span className="mt-1 shrink-0 rounded-full bg-cyan-600 px-1.5 py-[1px] text-[11px] font-bold text-white">
-                      {th.unread}
-                    </span>
-                  ) : null}
-                </button>
-              </li>
-            ))}
+                    {th.unread > 0 ? (
+                      <span className="shrink-0 rounded-full bg-cyan-600 px-1.5 py-[1px] text-[11px] font-bold text-white dark:bg-brand-500 dark:text-[#1a1407]">
+                        {th.unread}
+                      </span>
+                    ) : null}
+                  </button>
+                </li>
+              );
+            })}
           </ul>
         )}
       </div>
@@ -189,7 +203,7 @@ export default function ChatView({
           </div>
         ) : (
           <>
-            <div className="flex items-center gap-3 border-b border-black/5 bg-white px-3 py-2.5">
+            <div className="flex items-center gap-3 border-b border-black/5 bg-white px-3 py-2.5 dark:border-white/[0.06]">
               <button
                 type="button"
                 onClick={() => router.replace("/chat", { scroll: false })}
@@ -197,27 +211,24 @@ export default function ChatView({
               >
                 &larr; {T("Ro'yxat", "Список", "List", "Liste")}
               </button>
-              <span className="grid h-10 w-10 shrink-0 place-items-center rounded-full bg-cyan-100 text-[13px] font-semibold text-cyan-700">
-                {initials(open.student)}
-              </span>
+              <Avatar photo={open.photo} size={42} />
               <div className="min-w-0">
-                <div className="truncate text-[15.5px] font-semibold leading-tight text-black">{open.student}</div>
-                {open.group ? <div className="truncate text-[13px] leading-tight text-[#707579]">{open.group}</div> : null}
+                <div className="truncate text-[15.5px] font-semibold leading-tight text-black dark:text-slate-50">{open.student}</div>
+                {open.group ? <div className="truncate text-[13px] leading-tight text-[#707579] dark:text-slate-400">{open.group}</div> : null}
               </div>
             </div>
 
             <div
-              className="min-h-0 flex-1 overflow-y-auto px-3 py-3"
+              className="min-h-0 flex-1 overflow-y-auto bg-[#d9e4ec] px-3 py-3 [--dot-a:rgba(255,255,255,0.55)] [--dot-b:rgba(255,255,255,0.35)] dark:bg-[#0f0e0c] dark:[--dot-a:rgba(212,168,44,0.07)] dark:[--dot-b:rgba(255,255,255,0.03)]"
               style={{
-                backgroundColor: TG.wall,
                 backgroundImage:
-                  "radial-gradient(circle at 12px 12px, rgba(255,255,255,0.55) 2.5px, transparent 3px)," +
-                  "radial-gradient(circle at 36px 36px, rgba(255,255,255,0.35) 2px, transparent 2.5px)",
+                  "radial-gradient(circle at 12px 12px, var(--dot-a) 2.5px, transparent 3px)," +
+                  "radial-gradient(circle at 36px 36px, var(--dot-b) 2px, transparent 2.5px)",
                 backgroundSize: "48px 48px, 48px 48px",
               }}
             >
               {messages.length === 0 ? (
-                <div className="mx-auto mt-6 w-fit rounded-2xl bg-black/15 px-4 py-2 text-[13px] font-medium text-white backdrop-blur-sm">
+                <div className="mx-auto mt-6 w-fit rounded-2xl bg-black/15 px-4 py-2 text-[13px] font-medium text-white backdrop-blur-sm dark:bg-white/[0.06] dark:text-slate-300">
                   {T("Yozishma hali boshlanmagan — birinchi bo'lib yozing", "Переписка ещё не начата — напишите первым", "No messages yet — write first", "Noch keine Nachrichten — schreiben Sie zuerst")}
                 </div>
               ) : null}
@@ -234,7 +245,7 @@ export default function ChatView({
                   <div key={m.id}>
                     {newDay ? (
                       <div className="my-3 flex justify-center">
-                        <span className="rounded-full bg-black/20 px-2.5 py-[3px] text-[12px] font-medium text-white backdrop-blur-sm">
+                        <span className="rounded-full bg-black/20 px-2.5 py-[3px] text-[12px] font-medium text-white backdrop-blur-sm dark:bg-white/[0.07] dark:text-slate-300">
                           {dayLabel(m.at, locale)}
                         </span>
                       </div>
@@ -242,25 +253,28 @@ export default function ChatView({
 
                     <div className={"flex " + (mine ? "justify-end" : "justify-start") + (runEnd ? " mb-2" : " mb-[2px]")}>
                       <div
-                        className="relative max-w-[70%] px-2.5 py-[5px] text-[15px] leading-[19px] shadow-[0_1px_1px_rgba(0,0,0,0.10)]"
+                        className={
+                          "relative max-w-[70%] px-2.5 py-[5px] text-[15px] leading-[19px] text-[#0f1419] shadow-[0_1px_1px_rgba(0,0,0,0.10)] dark:text-slate-100 dark:shadow-[0_1px_2px_rgba(0,0,0,0.5)] " +
+                          (mine ? "bg-[#effdde] dark:bg-[#2e2712]" : "bg-white dark:bg-[#1f1d1a]")
+                        }
                         style={{
-                          background: mine ? TG.out : TG.in,
-                          color: TG.text,
                           borderRadius: 12,
                           borderBottomRightRadius: mine && runEnd ? 2 : 12,
                           borderBottomLeftRadius: !mine && runEnd ? 2 : 12,
                         }}
                       >
                         {mine && m.author && runStart ? (
-                          <div className="mb-[1px] text-[13.5px] font-semibold text-[#0e7490]">{m.author}</div>
+                          <div className="mb-[1px] text-[13.5px] font-semibold text-[#0e7490] dark:text-brand-300">{m.author}</div>
                         ) : null}
 
                         <span className="whitespace-pre-wrap break-words align-top">{m.text}</span>
                         <span className="inline-block w-[44px] select-none align-top" aria-hidden />
 
                         <span
-                          className="absolute bottom-[4px] right-[7px] text-[11px] leading-none"
-                          style={{ color: mine ? TG.outTime : TG.inTime }}
+                          className={
+                            "absolute bottom-[4px] right-[7px] text-[11px] leading-none " +
+                            (mine ? "text-[#5eb35a] dark:text-brand-400/80" : "text-[#a1aab3] dark:text-slate-500")
+                          }
                         >
                           {hhmm(m.at)}
                         </span>
@@ -270,8 +284,10 @@ export default function ChatView({
                             width="9"
                             height="17"
                             viewBox="0 0 9 17"
-                            className={"absolute bottom-0 " + (mine ? "-right-[7px]" : "-left-[7px] -scale-x-100")}
-                            style={{ color: mine ? TG.out : TG.in }}
+                            className={
+                              "absolute bottom-0 " +
+                              (mine ? "-right-[7px] text-[#effdde] dark:text-[#2e2712]" : "-left-[7px] -scale-x-100 text-white dark:text-[#1f1d1a]")
+                            }
                           >
                             <path d="M0 17V0c0 6.5 1.6 12.4 9 17H0Z" fill="currentColor" />
                           </svg>
@@ -285,10 +301,10 @@ export default function ChatView({
             </div>
 
             {canWrite ? (
-              <div className="border-t border-black/5 bg-white px-2.5 py-2">
+              <div className="border-t border-black/5 bg-white px-2.5 py-2 dark:border-white/[0.06]">
                 {err ? <div className="mb-1.5 px-2 text-xs font-medium text-rose-600">{err}</div> : null}
                 <div className="flex items-end gap-2">
-                  <div className="flex flex-1 items-end rounded-[20px] bg-[#f1f3f4] px-3.5 py-[7px]">
+                  <div className="flex flex-1 items-end rounded-[20px] bg-[#f1f3f4] px-3.5 py-[7px] dark:bg-slate-800">
                     <textarea
                       value={text}
                       onChange={(e) => setText(e.target.value.slice(0, 1000))}
@@ -300,7 +316,7 @@ export default function ChatView({
                       }}
                       rows={1}
                       placeholder={T("Javob yozing…", "Напишите ответ…", "Write a reply…", "Antwort schreiben…")}
-                      className="max-h-28 min-h-[24px] flex-1 resize-none bg-transparent text-[15px] leading-[24px] text-black outline-none placeholder:text-[#8d9499]"
+                      className="max-h-28 min-h-[24px] flex-1 resize-none bg-transparent text-[15px] leading-[24px] text-black outline-none placeholder:text-[#8d9499] dark:text-slate-100 dark:placeholder:text-slate-500"
                     />
                   </div>
                   <button
@@ -308,9 +324,9 @@ export default function ChatView({
                     onClick={send}
                     disabled={pending || text.trim().length === 0}
                     aria-label={T("Yuborish", "Отправить", "Send", "Senden")}
-                    className="grid h-[38px] w-[38px] shrink-0 place-items-center rounded-full bg-gradient-to-br from-[#17a2bf] to-[#0e7490] text-white transition active:scale-95 disabled:opacity-35"
+                    className="grid h-[38px] w-[38px] shrink-0 place-items-center rounded-full bg-gradient-to-br from-[#17a2bf] to-[#0e7490] text-white transition active:scale-95 disabled:opacity-35 dark:from-brand-400 dark:to-brand-600 dark:text-[#1a1407]"
                   >
-                    <svg width="19" height="19" viewBox="0 0 24 24" fill="white">
+                    <svg width="19" height="19" viewBox="0 0 24 24" fill="currentColor">
                       <path d="M3.4 20.4 21.9 12 3.4 3.6 3.4 10.1l13.2 1.9-13.2 1.9z" />
                     </svg>
                   </button>
