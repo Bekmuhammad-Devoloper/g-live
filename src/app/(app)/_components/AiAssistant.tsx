@@ -445,10 +445,10 @@ export default function AiAssistant({ locale, userName, ai }: { locale: Locale; 
         type="button"
         onClick={() => setOpen(true)}
         title={title}
-        className="group relative flex items-center gap-2 overflow-hidden rounded-lg bg-gradient-to-r from-violet-600 to-brand-600 py-1 pl-1.5 pr-2.5 text-[11px] font-semibold text-white shadow-sm shadow-violet-500/30 transition hover:shadow-md hover:shadow-violet-500/40 hover:brightness-110"
+        className="group relative flex h-[30px] shrink-0 items-center gap-1.5 overflow-hidden rounded-lg bg-gradient-to-r from-violet-600 to-brand-600 pl-[5px] pr-2.5 text-[11px] font-semibold leading-none text-white shadow-sm transition hover:brightness-110"
       >
         <span aria-hidden className="pointer-events-none absolute inset-y-0 -left-8 z-10 w-6 -skew-x-12 bg-white/30 transition-all duration-700 group-hover:left-[120%]" />
-        <AiAvatar src={avatar.chosen} className="h-6 w-6 ring-[1.5px] ring-white/90" />
+        <AiAvatar src={avatar.chosen} className="h-5 w-5 ring-1 ring-white/80" />
         <span className="hidden sm:inline">AI</span>
       </button>
       {panel}

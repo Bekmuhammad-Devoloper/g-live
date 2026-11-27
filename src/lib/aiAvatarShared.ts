@@ -1,4 +1,4 @@
-export const BUILTIN_AI_AVATARS = ["/ai-avatars/1.svg", "/ai-avatars/2.svg", "/ai-avatars/3.svg", "/ai-avatars/4.svg"];
+export const BUILTIN_AI_AVATARS = ["/ai-avatars/1.webp", "/ai-avatars/2.webp", "/ai-avatars/3.webp", "/ai-avatars/4.webp", "/ai-avatars/5.webp", "/ai-avatars/6.webp"];
 
 export interface AiAvatarState {
   avatars: string[];

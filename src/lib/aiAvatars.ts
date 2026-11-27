@@ -38,7 +38,7 @@ export async function saveChosenAvatar(userId: string, src: string): Promise<voi
 export async function getAiAvatarState(userId: string): Promise<AiAvatarState> {
   const rows = await prisma.setting.findMany({ where: { key: { in: [LIST_KEY, choiceKey(userId)] } } });
   const custom = parseList(rows.find((r) => r.key === LIST_KEY)?.value);
-  const avatars = custom.length ? custom : BUILTIN_AI_AVATARS;
+  const avatars = [...BUILTIN_AI_AVATARS, ...custom];
   const pick = rows.find((r) => r.key === choiceKey(userId))?.value ?? "";
   return { avatars, custom: custom.length > 0, chosen: avatars.includes(pick) ? pick : avatars[0] };
 }

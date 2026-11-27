@@ -137,7 +137,7 @@ export default function AiAvatarPicker({ state, locale, onChange, onClose }: {
                   <Icon name="check" className="h-3 w-3" />
                 </span>
               )}
-              {state.custom && (
+              {src.startsWith("/uploads/") && (
                 <button
                   type="button"
                   onClick={() => remove(src)}
@@ -172,9 +172,7 @@ export default function AiAvatarPicker({ state, locale, onChange, onClose }: {
       </div>
 
       <p className="mt-3 text-[11px] leading-relaxed text-slate-400">
-        {state.custom
-          ? L("O'zingiz yaratgan rasmlarni qo'shing: PNG, JPG, WebP yoki GIF. Kvadrat rasm eng yaxshi chiqadi.", "Добавляйте свои изображения: PNG, JPG, WebP или GIF. Лучше всего квадратные.", "Add your own images: PNG, JPG, WebP or GIF. Square images look best.", "Eigene Bilder hinzufügen: PNG, JPG, WebP oder GIF. Quadratische Bilder wirken am besten.")
-          : L("Hozir namuna rasmlar turibdi. O'zingiz yaratgan birinchi rasmni qo'shsangiz, ro'yxatda faqat sizning rasmlaringiz qoladi.", "Сейчас показаны образцы. После добавления первого своего изображения в списке останутся только ваши.", "These are sample images. Once you add your first own image, only your images will remain.", "Dies sind Beispielbilder. Sobald Sie ein eigenes Bild hinzufügen, bleiben nur Ihre Bilder.")}
+        {L("O'zingiz yaratgan rasmni ham \"+\" orqali qo'shishingiz mumkin: PNG, JPG, WebP yoki GIF. Kvadrat rasm eng yaxshi chiqadi.", "Можно добавить и своё изображение через «+»: PNG, JPG, WebP или GIF. Лучше всего квадратное.", "You can also add your own image with \"+\": PNG, JPG, WebP or GIF. Square images look best.", "Über \"+\" können Sie auch ein eigenes Bild hinzufügen: PNG, JPG, WebP oder GIF. Quadratisch wirkt am besten.")}
       </p>
       {err && <p className="mt-2 text-[12px] font-medium text-rose-600 dark:text-rose-400">{err}</p>}
     </div>
