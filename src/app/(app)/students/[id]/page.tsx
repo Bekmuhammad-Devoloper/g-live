@@ -48,7 +48,7 @@ export default async function StudentProfilePage({ params }: { params: Promise<{
           },
         },
       },
-      payments: { orderBy: { createdAt: "desc" }, take: 20 },
+      payments: { orderBy: { createdAt: "desc" }, take: 50, include: { author: { select: { fullName: true } } } },
       examResults: { orderBy: { takenAt: "desc" }, take: 10, include: { exam: { select: { title: true, passScore: true } } } },
       attendances: { orderBy: { markedAt: "desc" }, take: 60, include: { lesson: { select: { startsAt: true, group: { select: { name: true } } } } } },
       parents: { include: { parent: { select: { fullName: true, phone: true } } } },
@@ -110,6 +110,7 @@ export default async function StudentProfilePage({ params }: { params: Promise<{
     payments: student.payments.map((p) => ({
       id: p.id, amount: p.amount, method: p.method, status: p.status,
       purpose: p.purpose, note: p.note, promoCode: p.promoCode, discount: p.discount, createdAt: iso(p.createdAt)!,
+      author: p.author?.fullName ?? null,
     })),
     exams: student.examResults.map((r) => ({
       id: r.id, title: r.exam.title, score: r.score, passScore: r.exam.passScore,

@@ -28,8 +28,9 @@ function fmtDate(iso: string) {
 }
 
 export default function PaymentPanel({
-  studentId, locale, canManage, canPay, rop = false, cashierName, receiptMode, defaultPurpose, onChanged,
+  studentId, locale, canManage, canPay, rop = false, cashierName, receiptMode, defaultPurpose, onChanged, hideRecent = false,
 }: {
+  hideRecent?: boolean;
   rop?: boolean;
   studentId: string;
   locale: Locale;
@@ -214,7 +215,7 @@ export default function PaymentPanel({
         </div>
       )}
 
-      {pay && (
+      {pay && !hideRecent && (
         pay.recent.length > 0 ? (
           <div className="mt-3 space-y-1.5">
             <div className="flex items-center justify-between text-[11px] font-semibold text-slate-400">

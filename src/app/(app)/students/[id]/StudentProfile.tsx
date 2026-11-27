@@ -1,6 +1,5 @@
 "use client";
 
-import { promoText } from "../../_components/PromoBadge";
 import Link from "next/link";
 import { useState } from "react";
 import { useRouter } from "next/navigation";
@@ -10,6 +9,7 @@ import { EDU_STATUS_LABELS, label, formatMoney, type Locale } from "@/lib/consta
 import type { ReceiptMode } from "@/lib/receiptMode";
 import { Icon } from "../../_components/Icon";
 import PaymentPanel from "../PaymentPanel";
+import PaymentHistory, { type HistoryPay } from "./PaymentHistory";
 import { StudentDetailModal, EditModal, type VStudent } from "../StudentsView";
 import { debtTone, debtMonthsLabel, DEBT_HEX } from "@/lib/debtTone";
 import { StudentAttendanceJournal } from "./StudentAttendanceJournal";
@@ -31,7 +31,7 @@ export interface SProfile {
   branchName: string | null; joined: string; note: string | null;
   paid: number; debt: number; attendancePct: number | null; lessonsCounted: number;
   groups: SGroup[];
-  payments: { id: string; amount: number; method: string; status: string; purpose: string | null; note: string | null; promoCode: string | null; discount: number; createdAt: string }[];
+  payments: HistoryPay[];
   exams: { id: string; title: string; score: number | null; passScore: number; status: string; takenAt: string }[];
   attendance: { id: string; status: string; group: string; date: string }[];
   parents: { name: string; phone: string | null; relation: string | null }[];
@@ -43,9 +43,6 @@ const STATUS_TONE: Record<string, string> = {
 };
 const ATT_TONE: Record<string, string> = {
   PRESENT: "#10b981", ONLINE: "#0ea5e9", LATE: "#f59e0b", MAKEUP: "#8b5cf6", EXCUSED: "#64748b", ABSENT: "#ef4444",
-};
-const PAY_TONE: Record<string, string> = {
-  PAID: "#10b981", PENDING: "#f59e0b", REFUNDED: "#0ea5e9", CANCELLED: "#94a3b8",
 };
 const WD = ["", "Du", "Se", "Chor", "Pa", "Ju", "Sha", "Yak"];
 
@@ -249,6 +246,7 @@ export default function StudentProfile({
                   receiptMode={receiptMode}
                   defaultPurpose={st.groups[0] ? `${st.groups[0].course} ${L("kurs to'lovi", "оплата курса", "course fee", "Kursgebühr")}` : L("Kurs to'lovi", "Оплата курса", "Course fee", "Kursgebühr")}
                   onChanged={() => router.refresh()}
+                  hideRecent
                 />
               </div>
             )}
@@ -257,17 +255,7 @@ export default function StudentProfile({
               <Icon name="history" className="h-3.5 w-3.5" /> {L("To'lovlar tarixi", "История платежей", "Payment history", "Zahlungsverlauf")}
             </div>
             {st.payments.length === 0 ? <Empty text={L("To'lov yo'q", "Платежей нет", "No payments", "Keine Zahlungen")} /> : (
-              <Rows>
-                {st.payments.map((p) => (
-                  <Row
-                    key={p.id}
-                    left={<span className="font-semibold tabular-nums text-slate-800 dark:text-slate-100">{formatMoney(p.amount, locale)}</span>}
-                    sub={[p.method, p.purpose, p.note, promoText(p.promoCode, p.discount, locale)].filter(Boolean).join(" · ")}
-                    right={<Chip tone={PAY_TONE[p.status] ?? "#94a3b8"} text={p.status} />}
-                    date={fmtDate(p.createdAt)}
-                  />
-                ))}
-              </Rows>
+              <PaymentHistory payments={st.payments} locale={locale} canEdit={canManage || canPay} />
             )}
           </div>
         )}

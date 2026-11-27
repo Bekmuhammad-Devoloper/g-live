@@ -237,6 +237,42 @@ export async function acceptPayment(
   };
 }
 
+export async function getPaymentReceipt(paymentId: string): Promise<ReceiptData | null> {
+  const s = await requireSession();
+  if (!ALLOWED.includes(s.role as never) && !canRead(s.role, MODULES.PAYMENTS) && s.role !== ROLES.ROP) return null;
+  if (!paymentId) return null;
+  const p = await prisma.payment.findUnique({
+    where: { id: paymentId },
+    select: {
+      id: true, docNumber: true, createdAt: true, amount: true, method: true, purpose: true, note: true,
+      promoCode: true, discount: true, receiptUrl: true, status: true,
+      author: { select: { fullName: true } },
+      student: { select: { fullName: true, phone: true, branch: { select: { name: true, address: true, phone: true } } } },
+    },
+  });
+  if (!p || p.status !== "PAID") return null;
+  const cfg = await getSettings(["receipt.orgName", "receipt.footer"]);
+  return {
+    docNumber: p.docNumber ?? p.id.slice(-8).toUpperCase(),
+    dateIso: p.createdAt.toISOString(),
+    amount: p.amount,
+    method: p.method,
+    purpose: p.purpose ?? "",
+    note: p.note,
+    promoCode: p.promoCode,
+    discount: p.discount,
+    studentName: p.student.fullName,
+    studentPhone: p.student.phone,
+    orgName: cfg["receipt.orgName"] || (await getBrand()).name,
+    branchName: p.student.branch?.name ?? null,
+    branchAddress: p.student.branch?.address ?? null,
+    branchPhone: p.student.branch?.phone ?? null,
+    cashier: p.author?.fullName ?? "—",
+    footer: cfg["receipt.footer"] || "To'lovingiz uchun rahmat!",
+    receiptUrl: p.receiptUrl,
+  };
+}
+
 export async function setStudentImage(studentId: string, dataUrl: string | null): Promise<{ ok: boolean; error?: string }> {
   const s = await requireSession();
   if (!ALLOWED.includes(s.role as never)) return { ok: false, error: "forbidden" };
