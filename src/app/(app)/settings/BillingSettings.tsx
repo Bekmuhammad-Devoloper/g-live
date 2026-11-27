@@ -1,7 +1,8 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useState, type ReactNode } from "react";
 import { createPortal } from "react-dom";
+import { cn } from "@/lib/cn";
 import { tr } from "@/lib/tr";
 import type { Locale } from "@/lib/constants";
 
@@ -196,6 +197,17 @@ export default function BillingSettings({ locale }: { locale: Locale }) {
   );
 }
 
+const LIMITS: Record<string, { students: number | null; branches: number | null }> = {
+  START: { students: 100, branches: 1 },
+  STANDART: { students: 300, branches: 3 },
+  PRO: { students: 1000, branches: 5 },
+  PREMIUM: { students: null, branches: null },
+};
+
+const glyph = (d: ReactNode, cls = "h-4 w-4") => (
+  <svg viewBox="0 0 24 24" className={cls} fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden>{d}</svg>
+);
+
 function PlanZoom({ plan, locale, sumWord, selected, onClose, onStep, onPick }: {
   plan: { name: string; monthly: number };
   locale: Locale;
@@ -205,94 +217,178 @@ function PlanZoom({ plan, locale, sumWord, selected, onClose, onStep, onPick }: 
   onStep: (d: number) => void;
   onPick: (value: string) => void;
 }) {
-  const oy = tr(locale, { uz: "oy", ru: "мес.", en: "months", de: "Monate" });
-  const perMonth = tr(locale, { uz: "oyiga", ru: "в месяц", en: "per month", de: "pro Monat" });
-  const bonusWord = tr(locale, { uz: "oy bonus", ru: "мес. в подарок", en: "bonus months", de: "Bonusmonate" });
-  const totalWord = tr(locale, { uz: "Jami muddat", ru: "Итого срок", en: "Total term", de: "Gesamtlaufzeit" });
-  const saveWord = tr(locale, { uz: "Tejaysiz", ru: "Экономия", en: "You save", de: "Ersparnis" });
-  const pickWord = tr(locale, { uz: "Tanlash", ru: "Выбрать", en: "Choose", de: "Auswählen" });
-  const pickedWord = tr(locale, { uz: "Tanlangan", ru: "Выбрано", en: "Selected", de: "Ausgewählt" });
-  const navBtn = "flex h-10 w-10 items-center justify-center rounded-full border border-slate-300 bg-white text-slate-600 transition hover:bg-slate-100 dark:border-slate-600 dark:bg-slate-800 dark:text-slate-200 dark:hover:bg-slate-700";
+  const L = (uz: string, ru: string, en: string, de: string) => tr(locale, { uz, ru, en, de });
+  const oy = L("oy", "мес.", "mo", "Mo.");
+  const idx = Math.max(0, PLANS.findIndex((p) => p.name === plan.name));
+  const lim = LIMITS[plan.name];
+  const chip = "inline-flex items-center gap-1.5 rounded-full border border-slate-200 bg-white px-3 py-1.5 text-[12px] font-medium text-slate-600 dark:border-white/10 dark:bg-white/[0.04] dark:text-slate-300";
+  const studentsText = !lim ? "" : lim.students === null
+    ? L("Cheksiz o'quvchi", "Ученики без лимита", "Unlimited students", "Unbegrenzt Schüler")
+    : L(`${fmt(lim.students)} tagacha o'quvchi`, `До ${fmt(lim.students)} учеников`, `Up to ${fmt(lim.students)} students`, `Bis ${fmt(lim.students)} Schüler`);
+  const branchesText = !lim ? "" : lim.branches === null
+    ? L("Cheksiz filial", "Филиалы без лимита", "Unlimited branches", "Unbegrenzt Filialen")
+    : L(`${lim.branches} ta filial`, `${lim.branches} ${lim.branches === 1 ? "филиал" : lim.branches < 5 ? "филиала" : "филиалов"}`, `${lim.branches} ${lim.branches === 1 ? "branch" : "branches"}`, `${lim.branches} ${lim.branches === 1 ? "Filiale" : "Filialen"}`);
 
   return (
-    <div className="fixed inset-0 z-[100] flex items-center justify-center bg-slate-900/60 p-3 backdrop-blur-sm sm:p-6" onMouseDown={onClose}>
+    <div className="fixed inset-0 z-[100] flex items-center justify-center bg-slate-950/60 p-3 backdrop-blur-[6px] sm:p-6" onMouseDown={onClose}>
       <div
         role="dialog"
         aria-modal="true"
         aria-label={plan.name}
-        className="relative max-h-full w-full max-w-5xl overflow-y-auto rounded-3xl border-2 border-[#0f172a] bg-white p-5 shadow-2xl sm:p-8 dark:border-slate-600 dark:bg-slate-800"
+        className="animate-pop-in relative max-h-full w-full max-w-5xl overflow-y-auto rounded-[28px] border border-slate-200/80 bg-white shadow-[0_40px_120px_-30px_rgba(2,6,23,0.65)] dark:border-white/10 dark:bg-[#0b1324]"
         onMouseDown={(e) => e.stopPropagation()}
       >
-        <div className="mb-6 flex flex-wrap items-center justify-between gap-3">
-          <div>
-            <div className="text-4xl font-black tracking-tight text-[#0f172a] sm:text-5xl dark:text-white">{plan.name}</div>
-            <div className="mt-1 text-sm font-semibold text-slate-500 dark:text-slate-400">
-              {fmt(plan.monthly)} {sumWord} / {tr(locale, { uz: "oy", ru: "мес.", en: "month", de: "Monat" })}
+        <div className="border-b border-slate-100 bg-gradient-to-b from-slate-50/80 to-transparent px-5 pb-6 pt-5 sm:px-8 sm:pt-6 dark:border-white/[0.06] dark:from-white/[0.03]">
+          <div className="flex items-center justify-between gap-3">
+            <div role="tablist" className="flex min-w-0 gap-1 overflow-x-auto rounded-full border border-slate-200 bg-slate-100/80 p-1 [scrollbar-width:none] dark:border-white/10 dark:bg-white/[0.04]">
+              {PLANS.map((p, i) => (
+                <button
+                  key={p.name}
+                  type="button"
+                  role="tab"
+                  aria-selected={i === idx}
+                  onClick={() => onStep(i - idx)}
+                  className={cn(
+                    "shrink-0 rounded-full px-2.5 py-1.5 text-[10px] font-bold tracking-[0.04em] transition sm:px-3.5 sm:text-[11px] sm:tracking-[0.08em]",
+                    i === idx
+                      ? "bg-white text-slate-900 shadow-[0_1px_3px_rgba(15,23,42,0.15)] dark:bg-white/[0.14] dark:text-white"
+                      : "text-slate-500 hover:text-slate-900 dark:text-slate-400 dark:hover:text-white",
+                  )}
+                >
+                  {p.name}
+                </button>
+              ))}
             </div>
+            <button
+              type="button"
+              onClick={onClose}
+              aria-label={L("Yopish", "Закрыть", "Close", "Schließen")}
+              className="grid h-9 w-9 shrink-0 place-items-center rounded-full text-slate-400 transition hover:bg-slate-100 hover:text-slate-900 dark:hover:bg-white/10 dark:hover:text-white"
+            >
+              {glyph(<path d="M6 6l12 12M18 6L6 18" />, "h-[18px] w-[18px]")}
+            </button>
           </div>
-          <div className="flex items-center gap-2">
-            <button type="button" onClick={() => onStep(-1)} className={navBtn} aria-label="prev">
-              <svg viewBox="0 0 24 24" className="h-5 w-5" fill="none" stroke="currentColor" strokeWidth="2.4" strokeLinecap="round" strokeLinejoin="round"><path d="M15 18l-6-6 6-6" /></svg>
-            </button>
-            <button type="button" onClick={() => onStep(1)} className={navBtn} aria-label="next">
-              <svg viewBox="0 0 24 24" className="h-5 w-5" fill="none" stroke="currentColor" strokeWidth="2.4" strokeLinecap="round" strokeLinejoin="round"><path d="M9 18l6-6-6-6" /></svg>
-            </button>
-            <button type="button" onClick={onClose} aria-label="close" className={navBtn}>
-              <svg viewBox="0 0 24 24" className="h-5 w-5" fill="none" stroke="currentColor" strokeWidth="2.4" strokeLinecap="round"><path d="M6 6l12 12M18 6L6 18" /></svg>
-            </button>
+
+          <div className="mt-6 flex flex-wrap items-end justify-between gap-x-6 gap-y-4">
+            <div className="min-w-0">
+              <h2 className="text-[34px] font-black leading-none tracking-tight text-slate-900 sm:text-[40px] dark:text-white">{plan.name}</h2>
+              <p className="mt-2.5 text-[14px] text-slate-500 dark:text-slate-400">
+                <span className="font-bold tabular-nums text-slate-900 dark:text-white">{fmt(plan.monthly)}</span> {sumWord} / {oy}
+              </p>
+            </div>
+            {lim && (
+              <div className="flex flex-wrap gap-2">
+                <span className={chip}>
+                  {glyph(<><path d="M16 20v-1.5a4 4 0 0 0-4-4H7a4 4 0 0 0-4 4V20" /><circle cx="9.5" cy="7.5" r="3.5" /><path d="M21 20v-1.5a4 4 0 0 0-3-3.85M15.5 4.15a3.5 3.5 0 0 1 0 6.7" /></>, "h-3.5 w-3.5 text-slate-400")}
+                  {studentsText}
+                </span>
+                <span className={chip}>
+                  {glyph(<><path d="M3 21h18M5 21V7l7-4 7 4v14" /><path d="M9 21v-5h6v5M9 10h.01M15 10h.01" /></>, "h-3.5 w-3.5 text-slate-400")}
+                  {branchesText}
+                </span>
+              </div>
+            )}
           </div>
         </div>
 
-        <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+        <div className="grid gap-4 px-5 pb-6 pt-8 sm:grid-cols-2 sm:px-8 lg:grid-cols-4">
           {PERIODS.map((pr) => {
             const orig = plan.monthly * pr.months;
             const final = priceOf(plan.monthly, pr.months, pr.off);
             const total = pr.months + pr.bonus;
+            const save = orig - final;
             const value = `${plan.name}|${pr.months}`;
             const active = selected === value;
+            const best = pr.months === 12;
+            const row = (icon: ReactNode, label: string, val: string, good: boolean) => (
+              <li className="flex items-center justify-between gap-3">
+                <span className="flex min-w-0 items-center gap-2 text-slate-500 dark:text-slate-400">
+                  <span className="text-slate-400 dark:text-slate-500">{icon}</span>
+                  {label}
+                </span>
+                <span className={cn("whitespace-nowrap font-semibold tabular-nums", good ? "text-emerald-600 dark:text-emerald-400" : val === "—" ? "text-slate-300 dark:text-slate-600" : "text-slate-900 dark:text-white")}>{val}</span>
+              </li>
+            );
             return (
-              <div key={pr.months}
-                className={`flex flex-col overflow-hidden rounded-2xl border-2 bg-[#0f172a] ${active ? "border-emerald-500 ring-4 ring-emerald-200" : "border-[#0f172a]"}`}>
-                <div className="flex items-baseline justify-center gap-1.5 bg-[#0f172a] py-3 text-white">
-                  <span className="text-3xl font-black leading-none">{pr.months}</span>
-                  <span className="text-sm font-bold uppercase">{oy}</span>
-                </div>
-                <div className="flex flex-1 flex-col items-center gap-1 bg-amber-400 px-3 py-5 text-center">
-                  {pr.off > 0 ? (
-                    <div className="flex items-center gap-2">
-                      <span className="text-base font-semibold text-[#475569] line-through">{fmt(orig)}</span>
-                      <span className="rounded-full bg-rose-600 px-2 py-0.5 text-xs font-extrabold text-white">−{Math.round(pr.off * 100)}%</span>
-                    </div>
-                  ) : (
-                    <div className="h-6" />
+              <div
+                key={pr.months}
+                className={cn(
+                  "relative flex flex-col rounded-2xl border p-5 transition duration-200",
+                  active
+                    ? "border-emerald-500 bg-emerald-50/40 shadow-[0_0_0_4px_rgba(16,185,129,0.12)] dark:bg-emerald-500/[0.06]"
+                    : best
+                      ? "border-amber-300 bg-gradient-to-b from-amber-50/90 to-white shadow-[0_22px_50px_-28px_rgba(217,119,6,0.55)] dark:border-amber-400/40 dark:from-amber-400/[0.08] dark:to-transparent"
+                      : "border-slate-200 bg-white hover:-translate-y-0.5 hover:border-slate-300 hover:shadow-[0_18px_40px_-28px_rgba(15,23,42,0.45)] dark:border-white/10 dark:bg-white/[0.02] dark:hover:border-white/20",
+                )}
+              >
+                {best && (
+                  <span className="absolute -top-2.5 left-1/2 -translate-x-1/2 whitespace-nowrap rounded-full bg-amber-400 px-2.5 py-[3px] text-[10px] font-bold uppercase tracking-[0.14em] text-[#0f172a] shadow-sm">
+                    {L("Eng foydali", "Выгоднее всего", "Best value", "Bester Wert")}
+                  </span>
+                )}
+                <div className="flex items-center justify-between gap-2">
+                  <span className="text-[15px] font-bold text-slate-900 dark:text-white">
+                    {pr.months} {oy}
+                  </span>
+                  {pr.off > 0 && (
+                    <span className="rounded-full bg-emerald-500/10 px-2 py-0.5 text-[11px] font-bold tabular-nums text-emerald-600 ring-1 ring-inset ring-emerald-500/20 dark:text-emerald-400">
+                      −{Math.round(pr.off * 100)}%
+                    </span>
                   )}
-                  <div className="text-[28px] font-black leading-tight tabular-nums text-[#0f172a]">{fmt(final)}</div>
-                  <div className="text-sm font-bold text-[#0f172a]">{sumWord}</div>
-                  <div className="mt-2 text-[13px] font-semibold text-[#334155]">
-                    ≈ {fmt(Math.round(final / total))} {sumWord} {perMonth}
+                </div>
+
+                <div className="mt-5">
+                  <div className={cn("h-5 text-[13px] font-medium tabular-nums text-slate-400 line-through decoration-slate-300 dark:decoration-slate-600", pr.off > 0 ? "" : "invisible")}>
+                    {fmt(orig)}
+                  </div>
+                  <div className="flex flex-wrap items-baseline gap-x-1.5">
+                    <span className="whitespace-nowrap text-[26px] font-extrabold leading-tight tracking-tight tabular-nums text-slate-900 dark:text-white">{fmt(final)}</span>
+                    <span className="text-[13px] font-semibold text-slate-400">{sumWord}</span>
+                  </div>
+                  <div className="mt-1 text-[12.5px] text-slate-500 dark:text-slate-400">
+                    ≈ <span className="font-semibold tabular-nums text-slate-700 dark:text-slate-200">{fmt(Math.round(final / total))}</span> {sumWord} / {oy}
                   </div>
                 </div>
-                <div className="space-y-1.5 bg-[#ffffff] px-3 py-3 text-[13px] text-[#334155]">
-                  <div className="flex items-center justify-between">
-                    <span>{totalWord}</span>
-                    <span className="font-extrabold text-[#0f172a]">{total} {oy}</span>
-                  </div>
-                  <div className="flex items-center justify-between">
-                    <span>{tr(locale, { uz: "Bonus", ru: "Бонус", en: "Bonus", de: "Bonus" })}</span>
-                    <span className={`font-extrabold ${pr.bonus > 0 ? "text-emerald-600" : "text-[#94a3b8]"}`}>{pr.bonus > 0 ? `+${pr.bonus} ${bonusWord}` : "—"}</span>
-                  </div>
-                  <div className="flex items-center justify-between">
-                    <span>{saveWord}</span>
-                    <span className={`font-extrabold ${orig - final > 0 ? "text-emerald-600" : "text-[#94a3b8]"}`}>{orig - final > 0 ? `${fmt(orig - final)} ${sumWord}` : "—"}</span>
-                  </div>
-                  <button type="button" onClick={() => onPick(value)}
-                    className={`mt-2 w-full rounded-full py-2 text-sm font-bold text-white transition ${active ? "bg-emerald-600 hover:bg-emerald-700" : "bg-sky-500 hover:bg-sky-600"}`}>
-                    {active ? `✓ ${pickedWord}` : pickWord}
-                  </button>
-                </div>
+
+                <ul className="mt-5 space-y-2.5 border-t border-dashed border-slate-200 pt-4 text-[13px] dark:border-white/10">
+                  {row(glyph(<><rect x="3" y="5" width="18" height="16" rx="2" /><path d="M16 3v4M8 3v4M3 11h18" /></>, "h-3.5 w-3.5"), L("Jami muddat", "Итого срок", "Total term", "Laufzeit"), `${total} ${oy}`, false)}
+                  {row(glyph(<><rect x="3" y="8" width="18" height="4" rx="1" /><path d="M12 8v13M19 12v9H5v-9" /><path d="M7.5 8a2.5 2.5 0 0 1 0-5C11 3 12 8 12 8s1-5 4.5-5a2.5 2.5 0 0 1 0 5" /></>, "h-3.5 w-3.5"), L("Bonus", "Бонус", "Bonus", "Bonus"), pr.bonus > 0 ? `+${pr.bonus} ${oy}` : "—", pr.bonus > 0)}
+                  {row(glyph(<><path d="M20.6 13.4 13.4 20.6a2 2 0 0 1-2.8 0L3 13V3h10l7.6 7.6a2 2 0 0 1 0 2.8z" /><path d="M7.5 7.5h.01" /></>, "h-3.5 w-3.5"), L("Tejaysiz", "Экономия", "You save", "Ersparnis"), save > 0 ? `${fmt(save)} ${sumWord}` : "—", save > 0)}
+                </ul>
+
+                <div className="flex-1" />
+                <button
+                  type="button"
+                  onClick={() => onPick(value)}
+                  className={cn(
+                    "mt-6 flex h-11 w-full items-center justify-center gap-1.5 rounded-xl text-[14px] font-semibold transition active:scale-[0.98]",
+                    active
+                      ? "bg-emerald-600 text-white hover:bg-emerald-700"
+                      : best
+                        ? "bg-amber-400 text-[#0f172a] hover:bg-amber-300"
+                        : "bg-[#0f172a] text-white hover:bg-[#1e293b] dark:bg-white dark:text-[#0f172a] dark:hover:bg-slate-200",
+                  )}
+                >
+                  {active && glyph(<path d="m5 12 5 5L20 7" />)}
+                  {active ? L("Tanlangan", "Выбрано", "Selected", "Ausgewählt") : L("Tanlash", "Выбрать", "Choose", "Auswählen")}
+                </button>
               </div>
             );
           })}
+        </div>
+
+        <div className="flex flex-wrap items-center justify-between gap-x-4 gap-y-2 border-t border-slate-100 px-5 py-4 text-[12px] text-slate-400 sm:px-8 dark:border-white/[0.06]">
+          <span className="flex items-center gap-2">
+            {glyph(<><circle cx="12" cy="12" r="9" /><path d="M12 8h.01M11 12h1v4h1" /></>, "h-3.5 w-3.5")}
+            {L("6 oy va undan uzoq muddatga 10% chegirma va bonus oylar", "От 6 месяцев: скидка 10% и бонусные месяцы", "6 months or longer: 10% off plus bonus months", "Ab 6 Monaten: 10 % Rabatt und Bonusmonate")}
+          </span>
+          <span className="hidden items-center gap-1.5 sm:flex">
+            <kbd className="rounded-md border border-slate-200 px-1.5 py-0.5 font-sans text-[11px] text-slate-500 dark:border-white/10 dark:text-slate-400">←</kbd>
+            <kbd className="rounded-md border border-slate-200 px-1.5 py-0.5 font-sans text-[11px] text-slate-500 dark:border-white/10 dark:text-slate-400">→</kbd>
+            <span className="mr-2">{L("tariflar", "тарифы", "plans", "Tarife")}</span>
+            <kbd className="rounded-md border border-slate-200 px-1.5 py-0.5 font-sans text-[11px] text-slate-500 dark:border-white/10 dark:text-slate-400">Esc</kbd>
+            <span>{L("yopish", "закрыть", "close", "schließen")}</span>
+          </span>
         </div>
       </div>
     </div>
