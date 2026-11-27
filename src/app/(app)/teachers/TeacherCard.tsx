@@ -50,7 +50,7 @@ export default function TeacherCard({ teacher: t, maxStudents, canManage, locale
   };
 
   return (
-    <div className="rounded-2xl border border-slate-200 bg-[#ffffff] p-4 shadow-card transition hover:-translate-y-0.5 hover:shadow-soft dark:border-white/[0.07] dark:bg-[#15243d]">
+    <div className="rounded-2xl border border-slate-200 bg-[#ffffff] p-4 shadow-card transition hover:-translate-y-0.5 hover:shadow-soft dark:border-white/[0.07] dark:bg-[#171614]">
       <div className="flex items-start gap-3">
         <div className="group/av relative h-14 w-14 shrink-0">
           {t.imageUrl ? (

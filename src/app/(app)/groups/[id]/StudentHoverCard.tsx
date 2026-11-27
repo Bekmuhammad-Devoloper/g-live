@@ -71,12 +71,12 @@ export default function StudentHoverCard({ info, locale, className, children }: 
       {pos && createPortal(
         <span
           role="tooltip"
-          className="pointer-events-none fixed z-[90] block rounded-xl border border-slate-200 bg-white p-3 text-left shadow-xl dark:border-white/10 dark:bg-[#15243d]"
+          className="pointer-events-none fixed z-[90] block rounded-xl border border-slate-200 bg-white p-3 text-left shadow-xl dark:border-white/10 dark:bg-[#171614]"
           style={{ width: CARD_WIDTH, left: pos.left, top: pos.top, bottom: pos.bottom }}
         >
           <span
             aria-hidden
-            className={cn("absolute h-3 w-3 rotate-45 bg-white dark:bg-[#15243d]", pos.above ? "-bottom-1.5 border-b border-r" : "-top-1.5 border-l border-t", "border-slate-200 dark:border-white/10")}
+            className={cn("absolute h-3 w-3 rotate-45 bg-white dark:bg-[#171614]", pos.above ? "-bottom-1.5 border-b border-r" : "-top-1.5 border-l border-t", "border-slate-200 dark:border-white/10")}
             style={{ left: pos.arrow }}
           />
           <span className={heading}>{tr(locale, { uz: "Telefon", ru: "Телефон", en: "Phone", de: "Telefon" })}</span>

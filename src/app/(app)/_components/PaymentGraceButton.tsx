@@ -96,7 +96,7 @@ export default function PaymentGraceButton({
           <div
             onMouseDown={(e) => e.stopPropagation()}
             style={{ top: pos.top, left: pos.left }}
-            className="absolute w-[280px] rounded-xl border border-slate-200 bg-white p-3.5 shadow-pop dark:border-white/10 dark:bg-[#15243d]"
+            className="absolute w-[280px] rounded-xl border border-slate-200 bg-white p-3.5 shadow-pop dark:border-white/10 dark:bg-[#171614]"
           >
             <div className="text-sm font-bold text-slate-800 dark:text-slate-100">{L("Qaysi sanagacha faol bo'lsin?", "До какой даты активен?", "Active until which date?", "Aktiv bis zu welchem Datum?")}</div>
             <p className="mt-1 text-[11.5px] leading-snug text-slate-500 dark:text-slate-400">

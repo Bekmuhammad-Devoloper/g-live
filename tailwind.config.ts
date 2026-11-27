@@ -1,5 +1,8 @@
 import type { Config } from "tailwindcss";
 
+const shades = [50, 100, 200, 300, 400, 500, 600, 700, 800, 900, 950];
+const scale = (name: string) => Object.fromEntries(shades.map((s) => [s, `rgb(var(--${name}-${s}) / <alpha-value>)`]));
+
 export default {
   darkMode: "class",
   content: ["./src/**/*.{js,ts,jsx,tsx,mdx}"],
@@ -9,19 +12,8 @@ export default {
         sans: ["var(--font-sans)"],
       },
       colors: {
-        brand: {
-          50: "#eef3ff",
-          100: "#e0e9ff",
-          200: "#c7d7ff",
-          300: "#a4bcff",
-          400: "#7d97ff",
-          500: "#5b6ffb",
-          600: "#4148ef",
-          700: "#3536d4",
-          800: "#2d2eac",
-          900: "#2a2d88",
-          950: "#1a1b52",
-        },
+        brand: scale("brand"),
+        slate: scale("slate"),
       },
       boxShadow: {
         card: "0 1px 2px 0 rgb(15 23 42 / 0.04), 0 1px 3px 0 rgb(15 23 42 / 0.06)",

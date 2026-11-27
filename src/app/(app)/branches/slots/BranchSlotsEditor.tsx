@@ -191,8 +191,8 @@ export default function BranchSlotsEditor({ branchId, initial, canEdit, locale, 
               className={cn(
                 "group relative overflow-hidden rounded-xl border p-3 shadow-[0_6px_18px_-12px_rgba(16,185,129,0.6)] transition",
                 full
-                  ? "bg-gradient-to-br from-rose-50 via-white to-white dark:from-rose-500/10 dark:via-[#15243d] dark:to-[#15243d]"
-                  : "bg-gradient-to-br from-emerald-50 via-white to-white dark:from-emerald-500/10 dark:via-[#15243d] dark:to-[#15243d]",
+                  ? "bg-gradient-to-br from-rose-50 via-white to-white dark:from-rose-500/10 dark:via-[#171614] dark:to-[#171614]"
+                  : "bg-gradient-to-br from-emerald-50 via-white to-white dark:from-emerald-500/10 dark:via-[#171614] dark:to-[#171614]",
                 overSlot === sl.id
                   ? (full ? "border-rose-400 ring-2 ring-rose-300/60" : "border-emerald-500 ring-2 ring-emerald-400/60 scale-[1.01]")
                   : (full ? "border-rose-200/80 dark:border-rose-500/25" : "border-emerald-200/80 dark:border-emerald-500/25"),

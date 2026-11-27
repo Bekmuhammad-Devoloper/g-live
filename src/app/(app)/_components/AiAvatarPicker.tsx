@@ -105,7 +105,7 @@ export default function AiAvatarPicker({ state, locale, onChange, onClose }: {
   };
 
   return (
-    <div className="animate-slide-up shrink-0 border-b border-slate-200/80 bg-white px-4 pb-4 pt-3 shadow-[0_10px_24px_-18px_rgba(15,23,42,0.45)] dark:border-white/10 dark:bg-[#0f1d3a]">
+    <div className="animate-slide-up shrink-0 border-b border-slate-200/80 bg-white px-4 pb-4 pt-3 shadow-[0_10px_24px_-18px_rgba(15,23,42,0.45)] dark:border-white/10 dark:bg-[#1c1b18]">
       <div className="mb-3 flex items-start justify-between gap-2">
         <div className="min-w-0">
           <div className="text-[13px] font-semibold text-slate-800 dark:text-slate-100">{L("AI avatarini tanlang", "Выберите аватар AI", "Choose the AI avatar", "KI-Avatar wählen")}</div>
@@ -126,14 +126,14 @@ export default function AiAvatarPicker({ state, locale, onChange, onClose }: {
                 onClick={() => pick(src)}
                 aria-pressed={active}
                 className={cn(
-                  "block rounded-full ring-offset-2 ring-offset-white transition dark:ring-offset-[#0f1d3a]",
+                  "block rounded-full ring-offset-2 ring-offset-white transition dark:ring-offset-[#1c1b18]",
                   active ? "ring-[3px] ring-violet-500" : "opacity-90 hover:scale-105 hover:opacity-100 hover:ring-2 hover:ring-violet-300",
                 )}
               >
                 <AiAvatar src={src} className="h-14 w-14" />
               </button>
               {active && (
-                <span className="pointer-events-none absolute -bottom-0.5 -right-0.5 grid h-5 w-5 place-items-center rounded-full bg-violet-500 text-white ring-2 ring-white dark:ring-[#0f1d3a]">
+                <span className="pointer-events-none absolute -bottom-0.5 -right-0.5 grid h-5 w-5 place-items-center rounded-full bg-violet-500 text-white ring-2 ring-white dark:ring-[#1c1b18]">
                   <Icon name="check" className="h-3 w-3" />
                 </span>
               )}

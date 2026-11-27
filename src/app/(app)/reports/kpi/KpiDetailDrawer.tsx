@@ -139,7 +139,7 @@ export default function KpiDetailDrawer({ row, tab: initialTab, locale, onClose 
       <div className="absolute inset-0 bg-slate-900/50 backdrop-blur-sm" />
       <div
         onMouseDown={(e) => e.stopPropagation()}
-        className="animate-slide-in-right absolute right-0 top-0 flex h-full w-full max-w-[520px] flex-col border-l border-slate-200 bg-white shadow-pop dark:border-white/10 dark:bg-[#15243d]"
+        className="animate-slide-in-right absolute right-0 top-0 flex h-full w-full max-w-[520px] flex-col border-l border-slate-200 bg-white shadow-pop dark:border-white/10 dark:bg-[#171614]"
       >
         <div className="flex items-center gap-3 border-b border-slate-100 px-5 py-4 dark:border-white/10">
           <Avatar name={row.name} cat={row.cat} size={40} imageUrl={row.imageUrl} />

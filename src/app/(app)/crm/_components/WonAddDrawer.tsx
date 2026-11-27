@@ -208,7 +208,7 @@ export default function WonAddDrawer({
       <div className="absolute inset-0 bg-slate-900/50 backdrop-blur-sm" />
       <div
         onMouseDown={(e) => e.stopPropagation()}
-        className="animate-slide-in-right absolute right-0 top-0 flex h-full drawer-panel flex-col border-l border-slate-200 bg-white shadow-pop dark:border-white/10 dark:bg-[#15243d]"
+        className="animate-slide-in-right absolute right-0 top-0 flex h-full drawer-panel flex-col border-l border-slate-200 bg-white shadow-pop dark:border-white/10 dark:bg-[#171614]"
       >
         <div className="flex items-center gap-2.5 border-b border-slate-200 px-4 py-3.5 dark:border-white/10">
           {mode !== "choose" ? (
@@ -575,7 +575,7 @@ function StylePicker({
             aria-label={c}
             className={cn(
               "h-7 w-7 rounded-lg transition",
-              color === c ? "ring-2 ring-slate-900 ring-offset-2 dark:ring-white dark:ring-offset-[#15243d]" : "hover:scale-110",
+              color === c ? "ring-2 ring-slate-900 ring-offset-2 dark:ring-white dark:ring-offset-[#171614]" : "hover:scale-110",
             )}
             style={{ background: c }}
           />

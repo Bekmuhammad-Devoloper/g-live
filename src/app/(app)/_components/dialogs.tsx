@@ -139,7 +139,7 @@ function DialogCard({ req, locale }: { req: Request; locale: Locale }) {
         aria-modal="true"
         aria-label={headline}
         onMouseDown={(e) => e.stopPropagation()}
-        className="animate-dialog-drop relative w-full max-w-md overflow-hidden rounded-2xl border border-slate-200/80 bg-white shadow-pop dark:border-white/10 dark:bg-[#15243d]"
+        className="animate-dialog-drop relative w-full max-w-md overflow-hidden rounded-2xl border border-slate-200/80 bg-white shadow-pop dark:border-white/10 dark:bg-[#171614]"
       >
         <div className="flex gap-3.5 px-5 pt-5">
           <span className={cn("flex h-11 w-11 shrink-0 items-center justify-center rounded-full", style.badge)}>

@@ -459,7 +459,7 @@ export default function AppShell({ navItems, role, portal, user, locale, labels,
                   >
                     <Icon name={it.icon} className="h-[30px] w-[30px]" />
                     {it.href === "/reminders" && unreadCount > 0 && (
-                      <span className="absolute -right-1 -top-1 flex h-4 min-w-4 items-center justify-center rounded-full bg-red-500 px-1 text-[9px] font-bold text-white ring-2 ring-white dark:ring-[#0d1b38]">
+                      <span className="absolute -right-1 -top-1 flex h-4 min-w-4 items-center justify-center rounded-full bg-red-500 px-1 text-[9px] font-bold text-white ring-2 ring-white dark:ring-[#141312]">
                         {unreadCount > 9 ? "9+" : unreadCount}
                       </span>
                     )}
@@ -492,7 +492,7 @@ export default function AppShell({ navItems, role, portal, user, locale, labels,
 
   return (
     <div className="flex min-h-screen bg-slate-100 dark:bg-slate-950">
-      <aside className="sticky top-0 hidden h-screen w-[120px] shrink-0 flex-col border-r border-slate-200 bg-white dark:border-transparent dark:bg-[#0d1b38] md:flex">
+      <aside className="sticky top-0 hidden h-screen w-[120px] shrink-0 flex-col border-r border-slate-200 bg-white dark:border-transparent dark:bg-[#141312] md:flex">
         {Rail}
       </aside>
 
@@ -502,7 +502,7 @@ export default function AppShell({ navItems, role, portal, user, locale, labels,
           onMouseEnter={cancelClose}
           onMouseLeave={scheduleClose}
         >
-          <div className="flex h-full flex-col border-r border-slate-200 bg-white shadow-pop dark:border-transparent dark:bg-[#0d1b38]">
+          <div className="flex h-full flex-col border-r border-slate-200 bg-white shadow-pop dark:border-transparent dark:bg-[#141312]">
             <div className="shrink-0 border-b border-slate-200 px-4 py-3 text-[15px] font-bold text-slate-800 dark:border-white/5 dark:text-white">
               {SUBMENUS[fly.href].title[locale] ?? SUBMENUS[fly.href].title.uz}
             </div>
@@ -551,7 +551,7 @@ export default function AppShell({ navItems, role, portal, user, locale, labels,
       {open && (
         <div className="fixed inset-0 z-50 md:hidden">
           <div className="absolute inset-0 bg-slate-900/50 backdrop-blur-sm" onClick={() => setOpen(false)} />
-          <aside className="absolute left-0 top-0 flex h-full w-[284px] max-w-[86%] flex-col bg-white shadow-pop dark:bg-[#0d1b38]">
+          <aside className="absolute left-0 top-0 flex h-full w-[284px] max-w-[86%] flex-col bg-white shadow-pop dark:bg-[#141312]">
             <div className="flex h-16 shrink-0 items-center justify-between border-b border-slate-200 px-4 dark:border-white/5">
               {/* eslint-disable-next-line @next/next/no-img-element */}
               <BrandMark brand={brand} className="max-h-9 w-auto object-contain" />

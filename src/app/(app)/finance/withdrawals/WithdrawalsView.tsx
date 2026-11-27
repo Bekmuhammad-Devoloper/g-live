@@ -246,7 +246,7 @@ function NewWithdrawal({ students, locale }: { students: { id: string; fullName:
       {open && (
         <div className="fixed inset-0 z-[80]">
           <div className="absolute inset-0 bg-slate-900/50 backdrop-blur-sm" />
-          <form ref={formRef} action={action} className="animate-slide-in-right absolute right-0 top-0 flex h-full drawer-panel flex-col space-y-3 overflow-y-auto border-l border-slate-200 bg-white p-5 shadow-pop dark:border-white/10 dark:bg-[#15243d]">
+          <form ref={formRef} action={action} className="animate-slide-in-right absolute right-0 top-0 flex h-full drawer-panel flex-col space-y-3 overflow-y-auto border-l border-slate-200 bg-white p-5 shadow-pop dark:border-white/10 dark:bg-[#171614]">
             <div className="flex items-center justify-between">
               <h3 className="text-lg font-bold text-slate-900 dark:text-slate-100">{tr(locale, { uz: "Yangi yechib olish", ru: "Новый вывод средств", en: "New withdrawal", de: "Neue Auszahlung" })}</h3>
               <button type="button" onClick={() => setOpen(false)} className="text-slate-400 hover:text-slate-600"><Icon name="close" className="h-5 w-5" /></button>

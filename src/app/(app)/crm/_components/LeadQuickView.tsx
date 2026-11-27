@@ -99,7 +99,7 @@ export default function LeadQuickView({
         aria-modal="true"
         aria-label={lead.fullName}
         onMouseDown={(e) => e.stopPropagation()}
-        className="animate-slide-in-right absolute right-0 top-0 flex h-full w-[400px] max-w-[92%] flex-col border-l border-slate-200 bg-white shadow-pop dark:border-white/10 dark:bg-[#15243d]"
+        className="animate-slide-in-right absolute right-0 top-0 flex h-full w-[400px] max-w-[92%] flex-col border-l border-slate-200 bg-white shadow-pop dark:border-white/10 dark:bg-[#171614]"
       >
         <div className="relative shrink-0 overflow-hidden border-b border-slate-100 dark:border-white/[0.06]">
           <div className="pointer-events-none absolute inset-0" style={{ background: `radial-gradient(120% 95% at 0% 0%, ${col.color}29 0%, ${col.color}0b 40%, transparent 66%)` }} />
@@ -115,7 +115,7 @@ export default function LeadQuickView({
             </div>
 
             <div className="mt-2 flex items-center gap-3">
-              <DemoAvatar size={48} ringColor={col.color} className="ring-offset-2 ring-offset-white dark:ring-offset-[#15243d]" />
+              <DemoAvatar size={48} ringColor={col.color} className="ring-offset-2 ring-offset-white dark:ring-offset-[#171614]" />
               <div className="min-w-0 flex-1">
                 <h2 className="break-words text-[16px] font-bold leading-snug text-slate-900 dark:text-white">{lead.fullName}</h2>
                 <div className="mt-1 flex flex-wrap items-center gap-1">
@@ -231,7 +231,7 @@ export default function LeadQuickView({
           <Comments lead={lead} locale={locale} canWrite={canWrite} onCommented={onCommented} />
         </div>
 
-        <div className="flex shrink-0 items-center gap-2 border-t border-slate-100 bg-white px-4 py-3 dark:border-white/[0.06] dark:bg-[#15243d]">
+        <div className="flex shrink-0 items-center gap-2 border-t border-slate-100 bg-white px-4 py-3 dark:border-white/[0.06] dark:bg-[#171614]">
           <Link
             href={`/crm/${lead.id}`}
             className="group flex h-10 flex-1 items-center justify-center gap-2 rounded-xl border border-slate-200 bg-white text-[13px] font-semibold text-slate-700 shadow-[0_1px_2px_rgba(15,23,42,0.06)] transition hover:border-brand-300 hover:bg-brand-50/60 hover:text-brand-700 dark:border-white/10 dark:bg-white/[0.04] dark:text-slate-100 dark:hover:border-brand-400/40 dark:hover:bg-brand-500/10 dark:hover:text-white"

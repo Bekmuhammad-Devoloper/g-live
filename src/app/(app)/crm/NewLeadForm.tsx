@@ -80,7 +80,7 @@ export default function NewLeadForm({
         ref={formRef}
         action={submit}
         onMouseDown={(e) => e.stopPropagation()}
-        className="animate-slide-in-right absolute right-0 top-0 flex h-full drawer-panel flex-col border-l border-slate-200 bg-white shadow-pop dark:border-white/10 dark:bg-[#15243d]"
+        className="animate-slide-in-right absolute right-0 top-0 flex h-full drawer-panel flex-col border-l border-slate-200 bg-white shadow-pop dark:border-white/10 dark:bg-[#171614]"
       >
         <div className="flex shrink-0 items-center justify-between gap-2 border-b border-slate-100 px-5 py-4 dark:border-white/10">
           <div className="flex items-center gap-2 text-base font-bold text-slate-800 dark:text-slate-100">

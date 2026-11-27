@@ -14,10 +14,10 @@ export default function ApplyShell({ children }: { children: React.ReactNode }) 
 
   return (
     <BgCtx.Provider value={setBg}>
-      <div className="relative min-h-[100dvh] overflow-hidden bg-[#f3f5fb] text-slate-900 dark:bg-[#0b1220] dark:text-slate-100">
+      <div className="relative min-h-[100dvh] overflow-hidden bg-[#f3f5fb] text-slate-900 dark:bg-[#0e0d0c] dark:text-slate-100">
         {bg && (
           <div key={bg} className="animate-pop-in absolute inset-0 bg-cover bg-center" style={{ backgroundImage: `url("${bg}")` }} aria-hidden>
-            <div className="absolute inset-0 bg-gradient-to-b from-white/55 via-white/70 to-[#f3f5fb]/95 dark:from-[#0b1220]/70 dark:via-[#0b1220]/80 dark:to-[#0b1220]/95" />
+            <div className="absolute inset-0 bg-gradient-to-b from-white/55 via-white/70 to-[#f3f5fb]/95 dark:from-[#0e0d0c]/70 dark:via-[#0e0d0c]/80 dark:to-[#0e0d0c]/95" />
           </div>
         )}
         {!bg && (

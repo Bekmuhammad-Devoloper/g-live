@@ -235,7 +235,7 @@ function PlanZoom({ plan, locale, sumWord, selected, onClose, onStep, onPick }: 
         role="dialog"
         aria-modal="true"
         aria-label={plan.name}
-        className="animate-pop-in relative max-h-full w-full max-w-5xl overflow-y-auto rounded-[28px] border border-slate-200/80 bg-white shadow-[0_40px_120px_-30px_rgba(2,6,23,0.65)] dark:border-white/10 dark:bg-[#0b1324]"
+        className="animate-pop-in relative max-h-full w-full max-w-5xl overflow-y-auto rounded-[28px] border border-slate-200/80 bg-white shadow-[0_40px_120px_-30px_rgba(2,6,23,0.65)] dark:border-white/10 dark:bg-[#121110]"
         onMouseDown={(e) => e.stopPropagation()}
       >
         <div className="border-b border-slate-100 bg-gradient-to-b from-slate-50/80 to-transparent px-5 pb-6 pt-5 sm:px-8 sm:pt-6 dark:border-white/[0.06] dark:from-white/[0.03]">
@@ -366,7 +366,7 @@ function PlanZoom({ plan, locale, sumWord, selected, onClose, onStep, onPick }: 
                       ? "bg-emerald-600 text-white hover:bg-emerald-700"
                       : best
                         ? "bg-amber-400 text-[#0f172a] hover:bg-amber-300"
-                        : "bg-[#0f172a] text-white hover:bg-[#1e293b] dark:bg-white dark:text-[#0f172a] dark:hover:bg-slate-200",
+                        : "bg-[#0f172a] text-white hover:bg-[#1e293b] dark:bg-white dark:text-[#171614] dark:hover:bg-slate-200",
                   )}
                 >
                   {active && glyph(<path d="m5 12 5 5L20 7" />)}

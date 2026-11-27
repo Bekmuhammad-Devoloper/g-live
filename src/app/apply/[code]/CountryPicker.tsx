@@ -44,7 +44,7 @@ export default function CountryPicker({ value, onChange, locked = false }: { val
             role="dialog"
             aria-label="Davlat kodi"
             onClick={(e) => e.stopPropagation()}
-            className="animate-pop-in flex max-h-[82dvh] w-full flex-col overflow-hidden rounded-t-3xl bg-white shadow-2xl sm:max-w-sm sm:rounded-3xl dark:bg-[#111a2e]"
+            className="animate-pop-in flex max-h-[82dvh] w-full flex-col overflow-hidden rounded-t-3xl bg-white shadow-2xl sm:max-w-sm sm:rounded-3xl dark:bg-[#151412]"
           >
             <div className="flex items-center justify-between px-5 pb-2 pt-4">
               <div>

@@ -102,7 +102,7 @@ export default function NewGroupForm({
         onSubmit={() => setHideErr(false)}
         onChange={() => setHideErr(true)}
         onMouseDown={(e) => e.stopPropagation()}
-        className="animate-slide-in-right absolute right-0 top-0 flex h-full drawer-panel flex-col border-l border-slate-200 bg-white shadow-pop dark:border-white/10 dark:bg-[#15243d]"
+        className="animate-slide-in-right absolute right-0 top-0 flex h-full drawer-panel flex-col border-l border-slate-200 bg-white shadow-pop dark:border-white/10 dark:bg-[#171614]"
       >
         <div className="flex shrink-0 items-center justify-between border-b border-slate-100 px-5 py-4 dark:border-white/10">
           <h3 className="text-base font-bold text-slate-800 dark:text-slate-100">{tr(locale, { uz: "Yangi guruh qo'shish", ru: "Добавить новую группу", en: "Add new group", de: "Neue Gruppe hinzufügen" })}</h3>
@@ -151,7 +151,7 @@ export default function NewGroupForm({
             <div className="flex flex-wrap items-center gap-2">
               {GROUP_COLORS.map((c) => (
                 <button key={c} type="button" onClick={() => setColor(c)} aria-label={c}
-                  className={`h-7 w-7 rounded-full transition ${color === c ? "ring-2 ring-slate-500 ring-offset-2 dark:ring-offset-[#15243d]" : "hover:scale-110"}`}
+                  className={`h-7 w-7 rounded-full transition ${color === c ? "ring-2 ring-slate-500 ring-offset-2 dark:ring-offset-[#171614]" : "hover:scale-110"}`}
                   style={{ background: c }} />
               ))}
               <label className="relative flex h-7 w-7 cursor-pointer items-center justify-center rounded-full border border-dashed border-slate-300 text-white/80 dark:border-slate-600" style={{ background: color }} title={tr(locale, { uz: "Boshqa rang", ru: "Другой цвет", en: "Custom color", de: "Andere Farbe" })}>

@@ -121,7 +121,7 @@ export default function DateRangeFilter({ locale, preset, from, to, onChange }: 
     <div
       ref={popRef}
       style={pos ? { top: pos.top, left: pos.left } : { top: -9999, left: -9999 }}
-      className="animate-pop-in fixed z-[200] flex max-w-[calc(100vw-16px)] flex-col gap-3 rounded-2xl border border-slate-200 bg-white p-3 shadow-pop sm:flex-row dark:border-white/10 dark:bg-[#0f1c36]"
+      className="animate-pop-in fixed z-[200] flex max-w-[calc(100vw-16px)] flex-col gap-3 rounded-2xl border border-slate-200 bg-white p-3 shadow-pop sm:flex-row dark:border-white/10 dark:bg-[#1c1b18]"
     >
       <div className="flex flex-wrap gap-1 sm:w-[150px] sm:flex-col sm:flex-nowrap sm:border-r sm:border-slate-100 sm:pr-3 dark:sm:border-white/[0.06]">
         <button type="button" onClick={() => apply("")} className={presetBtn(!preset)}>{L("Barchasi", "Все", "All", "Alle")}</button>

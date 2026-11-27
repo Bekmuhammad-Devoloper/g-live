@@ -15,7 +15,7 @@ export default async function LevelTestPage() {
   const sets = publicTestSets();
   const brand = await getBrand();
   return (
-    <div className="relative min-h-[100dvh] overflow-hidden bg-[#f3f5fb] text-slate-900 dark:bg-[#0b1220] dark:text-slate-100">
+    <div className="relative min-h-[100dvh] overflow-hidden bg-[#f3f5fb] text-slate-900 dark:bg-[#0e0d0c] dark:text-slate-100">
       <div className="pointer-events-none absolute -left-24 -top-24 h-72 w-72 rounded-full bg-brand-400/25 blur-3xl dark:bg-brand-500/20" />
       <div className="pointer-events-none absolute -right-24 top-56 h-72 w-72 rounded-full bg-cyan-300/30 blur-3xl dark:bg-cyan-500/15" />
 

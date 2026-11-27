@@ -81,7 +81,7 @@ export default function OpenGroupFromSlot({ slot, count, locale, onDone }: {
       </button>
       {open && typeof document !== "undefined" && createPortal(
         <div className="fixed inset-0 z-[120] flex justify-end bg-slate-900/40" onMouseDown={(e) => { if (e.target === e.currentTarget) setOpen(false); }}>
-          <div className="animate-slide-in-right flex h-full w-full max-w-md flex-col bg-white shadow-2xl dark:bg-[#15243d]">
+          <div className="animate-slide-in-right flex h-full w-full max-w-md flex-col bg-white shadow-2xl dark:bg-[#171614]">
             <div className="flex items-center justify-between border-b border-slate-200/70 px-5 py-4 dark:border-white/10">
               <div>
                 <div className="text-base font-bold text-slate-800 dark:text-slate-100">{L("Guruh ochish", "Открыть группу", "Open a group", "Gruppe eröffnen")}</div>

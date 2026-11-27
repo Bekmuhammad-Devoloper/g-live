@@ -80,7 +80,7 @@ export default function TeacherDrawer({
     <>
       <div className="fixed inset-0 z-[80]" onMouseDown={onClose}>
         <div className="absolute inset-0 bg-slate-900/50 backdrop-blur-sm" />
-        <div onMouseDown={(e) => e.stopPropagation()} className="animate-slide-in-right absolute right-0 top-0 flex h-full drawer-panel flex-col border-l border-slate-200 bg-white shadow-pop dark:border-white/10 dark:bg-[#15243d]">
+        <div onMouseDown={(e) => e.stopPropagation()} className="animate-slide-in-right absolute right-0 top-0 flex h-full drawer-panel flex-col border-l border-slate-200 bg-white shadow-pop dark:border-white/10 dark:bg-[#171614]">
           <div className="relative shrink-0 overflow-hidden border-b border-slate-100 dark:border-white/10">
             <div className="pointer-events-none absolute inset-0" style={{ background: `linear-gradient(135deg, ${color}14, transparent 60%)` }} />
             <div className="relative flex items-start justify-between gap-3 px-5 py-5">

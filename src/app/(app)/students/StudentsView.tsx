@@ -636,9 +636,9 @@ export function StudentDetailModal({
   return createPortal(
     <div className="fixed inset-0 z-[80]" onMouseDown={onClose}>
       <div className="absolute inset-0 bg-slate-900/50 backdrop-blur-sm" />
-      <div onMouseDown={(e) => e.stopPropagation()} className="animate-slide-in-right absolute right-0 top-0 flex h-full drawer-panel flex-col border-l border-slate-200 bg-white shadow-pop dark:border-white/10 dark:bg-[#15243d]">
+      <div onMouseDown={(e) => e.stopPropagation()} className="animate-slide-in-right absolute right-0 top-0 flex h-full drawer-panel flex-col border-l border-slate-200 bg-white shadow-pop dark:border-white/10 dark:bg-[#171614]">
         <div className="relative shrink-0 overflow-hidden border-b border-slate-100 dark:border-white/10">
-          <div className="pointer-events-none absolute inset-0 bg-gradient-to-br from-brand-50 via-white to-white dark:from-brand-950/40 dark:via-[#15243d] dark:to-[#15243d]" />
+          <div className="pointer-events-none absolute inset-0 bg-gradient-to-br from-brand-50 via-white to-white dark:from-brand-950/40 dark:via-[#171614] dark:to-[#171614]" />
           <div className="relative flex items-start justify-between gap-3 px-5 py-5">
             <div className="flex min-w-0 items-center gap-3.5">
               {st.imageUrl ? (
@@ -752,7 +752,7 @@ export function StudentDetailModal({
         </div>
 
         {canManage && (
-          <div className="flex shrink-0 gap-2 border-t border-slate-100 bg-white px-5 py-3 dark:border-white/10 dark:bg-[#15243d]">
+          <div className="flex shrink-0 gap-2 border-t border-slate-100 bg-white px-5 py-3 dark:border-white/10 dark:bg-[#171614]">
             <button onClick={onEdit} className="flex flex-1 items-center justify-center gap-2 rounded-xl bg-brand-600 py-2.5 text-sm font-semibold text-white shadow-sm transition hover:bg-brand-700 active:scale-[.99]">
               <Icon name="pencil" className="h-4 w-4" /> {tr(locale, { uz: "Tahrirlash", ru: "Редактировать", en: "Edit", de: "Bearbeiten" })}
             </button>
@@ -1043,7 +1043,7 @@ function CreateModal({ locale, onClose, onDone }: { locale: Locale; onClose: () 
       <form
         action={action}
         onMouseDown={(e) => e.stopPropagation()}
-        className="animate-slide-in-right absolute right-0 top-0 flex h-full drawer-panel flex-col border-l border-slate-200 bg-white shadow-pop dark:border-white/10 dark:bg-[#15243d]"
+        className="animate-slide-in-right absolute right-0 top-0 flex h-full drawer-panel flex-col border-l border-slate-200 bg-white shadow-pop dark:border-white/10 dark:bg-[#171614]"
       >
         <div className="flex shrink-0 items-center justify-between border-b border-slate-100 px-5 py-4 dark:border-white/10">
           <h3 className="text-base font-bold text-slate-800 dark:text-slate-100">{tr(locale, { uz: "Yangi talaba", ru: "Новый ученик", en: "New student", de: "Neuer Schüler" })}</h3>
@@ -1129,7 +1129,7 @@ export function EditModal({ student, locale, onClose, onDone }: { student: VStud
       <form
         onSubmit={submit}
         onMouseDown={(e) => e.stopPropagation()}
-        className="animate-slide-in-right absolute right-0 top-0 flex h-full drawer-panel flex-col border-l border-slate-200 bg-white shadow-pop dark:border-white/10 dark:bg-[#15243d]"
+        className="animate-slide-in-right absolute right-0 top-0 flex h-full drawer-panel flex-col border-l border-slate-200 bg-white shadow-pop dark:border-white/10 dark:bg-[#171614]"
       >
         <div className="flex shrink-0 items-center justify-between border-b border-slate-100 px-5 py-4 dark:border-white/10">
           <h3 className="text-base font-bold text-slate-800 dark:text-slate-100">{tr(locale, { uz: "Talabani tahrirlash", ru: "Редактировать ученика", en: "Edit student", de: "Schüler bearbeiten" })}</h3>

@@ -228,7 +228,7 @@ export default function AiAssistant({ locale, userName, ai }: { locale: Locale; 
 
   const panel = open && typeof document !== "undefined" ? createPortal(
     <div className="animate-dialog-fade fixed inset-0 z-[120] flex justify-end bg-slate-900/40 backdrop-blur-[2px]" onMouseDown={(e) => { if (e.target === e.currentTarget) setOpen(false); }}>
-      <div className="animate-slide-in-right flex h-full w-full max-w-[540px] flex-col bg-[#f7f8fc] shadow-[-24px_0_60px_-20px_rgba(15,23,42,0.35)] dark:bg-[#0b1630]">
+      <div className="animate-slide-in-right flex h-full w-full max-w-[540px] flex-col bg-[#f7f8fc] shadow-[-24px_0_60px_-20px_rgba(15,23,42,0.35)] dark:bg-[#121110]">
         <div className="relative shrink-0 overflow-hidden bg-gradient-to-r from-[#e3262b] via-[#ee7a24] to-[#f6b51e] px-4 py-3.5 text-white">
           <div aria-hidden className="pointer-events-none absolute inset-0 bg-[radial-gradient(80%_140%_at_100%_0%,rgba(255,255,255,0.28),transparent_60%),radial-gradient(60%_120%_at_0%_100%,rgba(120,10,10,0.25),transparent_70%)]" />
           <div aria-hidden className="pointer-events-none absolute inset-x-0 bottom-0 h-px bg-gradient-to-r from-transparent via-white/25 to-transparent" />
@@ -326,10 +326,10 @@ export default function AiAssistant({ locale, userName, ai }: { locale: Locale; 
                   type="button"
                   onClick={() => setPicking(true)}
                   title={tr(locale, { uz: "Avatarni almashtirish", ru: "Сменить аватар", en: "Change avatar", de: "Avatar ändern" })}
-                  className="relative block h-[84px] w-[84px] rounded-full shadow-xl shadow-indigo-500/30 ring-4 ring-white transition hover:scale-[1.03] dark:ring-[#0b1630]"
+                  className="relative block h-[84px] w-[84px] rounded-full shadow-xl shadow-indigo-500/30 ring-4 ring-white transition hover:scale-[1.03] dark:ring-[#121110]"
                 >
                   <AiAvatar src={avatar.chosen} className="h-full w-full" />
-                  <span className="absolute -bottom-1 -right-1 grid h-7 w-7 place-items-center rounded-full bg-violet-500 text-white shadow ring-2 ring-white dark:ring-[#0b1630]">
+                  <span className="absolute -bottom-1 -right-1 grid h-7 w-7 place-items-center rounded-full bg-violet-500 text-white shadow ring-2 ring-white dark:ring-[#121110]">
                     <svg viewBox="0 0 24 24" className="h-3.5 w-3.5" fill="none" stroke="currentColor" strokeWidth="2.4" strokeLinecap="round" strokeLinejoin="round"><path d="M12 20h9" /><path d="M16.5 3.5a2.1 2.1 0 0 1 3 3L7 19l-4 1 1-4Z" /></svg>
                   </span>
                 </button>
@@ -410,7 +410,7 @@ export default function AiAssistant({ locale, userName, ai }: { locale: Locale; 
         </div>
         )}
 
-        <form onSubmit={(e) => { e.preventDefault(); setView("chat"); send(input); }} className="shrink-0 bg-gradient-to-t from-[#f7f8fc] via-[#f7f8fc] to-transparent px-4 pb-3 pt-2 dark:from-[#0b1630] dark:via-[#0b1630]">
+        <form onSubmit={(e) => { e.preventDefault(); setView("chat"); send(input); }} className="shrink-0 bg-gradient-to-t from-[#f7f8fc] via-[#f7f8fc] to-transparent px-4 pb-3 pt-2 dark:from-[#121110] dark:via-[#121110]">
           <div className="flex items-end gap-2 rounded-[20px] border border-slate-200/90 bg-white p-1.5 pl-2 shadow-[0_6px_24px_-10px_rgba(15,23,42,0.18)] transition focus-within:border-indigo-300 focus-within:shadow-[0_8px_30px_-10px_rgba(79,70,229,0.35)] dark:border-white/10 dark:bg-white/[0.05]">
             <textarea
               ref={inputRef}

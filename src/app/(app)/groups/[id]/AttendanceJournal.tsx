@@ -201,7 +201,7 @@ export function AttendanceJournal({ groupId, students, locale, readOnly = false,
               {students.map((s, i) => (
                 <Fragment key={s.id}>
                 {s.frozen && !students[i - 1]?.frozen && (
-                  <tr className="border-t-2 border-sky-200 bg-sky-100 dark:border-sky-500/30 dark:bg-[#123049]">
+                  <tr className="border-t-2 border-sky-200 bg-sky-100 dark:border-sky-500/30 dark:bg-[#221f1b]">
                     <td colSpan={days.length + 3} className="px-3 py-1.5">
                       <span className="sticky left-3 inline-flex items-center gap-1.5 text-xs font-bold text-sky-700 dark:text-sky-300">
                         <Icon name="snowflake" className="h-3.5 w-3.5" />
@@ -210,8 +210,8 @@ export function AttendanceJournal({ groupId, students, locale, readOnly = false,
                     </td>
                   </tr>
                 )}
-                <tr className={cn("border-t", s.frozen ? "border-sky-100 bg-sky-50 dark:border-sky-500/20 dark:bg-[#10283f]" : "border-slate-100 dark:border-slate-800")}>
-                  <td className={cn("sticky left-0 z-10 px-3 py-1.5", s.frozen ? "bg-sky-50 dark:bg-[#10283f]" : "bg-white dark:bg-slate-900")}>
+                <tr className={cn("border-t", s.frozen ? "border-sky-100 bg-sky-50 dark:border-sky-500/20 dark:bg-[#1f1d1a]" : "border-slate-100 dark:border-slate-800")}>
+                  <td className={cn("sticky left-0 z-10 px-3 py-1.5", s.frozen ? "bg-sky-50 dark:bg-[#1f1d1a]" : "bg-white dark:bg-slate-900")}>
                     <div className="flex items-center gap-2">
                       <span className="w-5 text-right text-[11px] text-slate-400">{i + 1}.</span>
                       <StudentHoverCard info={s.info} locale={locale} className="min-w-0 max-w-[170px] truncate">

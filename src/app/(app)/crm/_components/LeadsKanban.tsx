@@ -516,7 +516,7 @@ function LostColumn({
               {!student && <span className="text-slate-400">{tr(locale, { uz: "Boshqa ustunga tashlang — qaytadi", ru: "Перетащите в колонку — вернётся", en: "Drag to a column to restore", de: "In Spalte ziehen — zurückholen" })}</span>}
             </div>
             {sec.students.map((st) => (
-              <div key={st.id} className="rounded-xl border border-violet-200/70 bg-white p-3 dark:border-violet-500/25 dark:bg-[#15243d]">
+              <div key={st.id} className="rounded-xl border border-violet-200/70 bg-white p-3 dark:border-violet-500/25 dark:bg-[#171614]">
                 <div className="flex items-start gap-3">
                   <span className="grid h-9 w-9 shrink-0 place-items-center rounded-full bg-violet-100 text-violet-600 dark:bg-violet-500/15 dark:text-violet-300">
                     <Icon name="graduation" className="h-[18px] w-[18px]" />
@@ -570,7 +570,7 @@ function StudentArchivePicker({ locale, onPicked, onClose }: { locale: Locale; o
     return () => { alive = false; clearTimeout(t); };
   }, [q]);
   return (
-    <div className="rounded-xl border border-violet-200 bg-white p-2.5 shadow-lg dark:border-violet-500/30 dark:bg-[#15243d]">
+    <div className="rounded-xl border border-violet-200 bg-white p-2.5 shadow-lg dark:border-violet-500/30 dark:bg-[#171614]">
       <div className="mb-2 flex items-center justify-between text-[11.5px] font-semibold text-violet-700 dark:text-violet-300">
         <span className="inline-flex items-center gap-1.5"><Icon name="graduation" className="h-3.5 w-3.5" /> {tr(locale, { uz: "O'quvchini arxivlash", ru: "Архивировать ученика", en: "Archive a student", de: "Schüler archivieren" })}</span>
         <button type="button" onClick={onClose} className="grid h-6 w-6 place-items-center rounded-md text-slate-400 hover:bg-slate-100 hover:text-slate-600 dark:hover:bg-white/[0.06]"><Icon name="close" className="h-3.5 w-3.5" /></button>
@@ -952,7 +952,7 @@ function GroupBucketCard({ bucket, locale, color, info }: { bucket: Bucket; loca
     </>
   );
 
-  const cls = "block rounded-xl border border-slate-200 bg-white p-3 transition dark:border-white/[0.07] dark:bg-[#15243d]";
+  const cls = "block rounded-xl border border-slate-200 bg-white p-3 transition dark:border-white/[0.07] dark:bg-[#171614]";
 
   return bucket.groupId ? (
     <Link href={`/groups/${bucket.groupId}`} draggable={false} className={cn(cls, "hover:-translate-y-0.5 hover:border-brand-300 hover:shadow-lg")}>

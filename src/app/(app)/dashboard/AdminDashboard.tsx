@@ -116,7 +116,7 @@ export default async function AdminDashboard({ locale }: { locale: Locale }) {
       </div>
 
       {myBranch && (
-        <div className="rounded-2xl border border-emerald-200 bg-white p-4 shadow-card dark:border-emerald-500/20 dark:bg-[#15243d]">
+        <div className="rounded-2xl border border-emerald-200 bg-white p-4 shadow-card dark:border-emerald-500/20 dark:bg-[#171614]">
           <div className="mb-1 flex items-center gap-2">
             <span className="flex h-8 w-8 items-center justify-center rounded-lg bg-emerald-500/15 text-emerald-600"><Icon name="clock" className="h-4 w-4" /></span>
             <div>

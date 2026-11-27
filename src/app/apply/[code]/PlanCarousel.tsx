@@ -97,7 +97,7 @@ export default function PlanCarousel({ plans, selected, onSelect, promo }: {
                 rel === 0 ? "translate-x-0 opacity-100" : cn("pointer-events-none opacity-0", rel === count - 1 && count > 2 ? "-translate-x-full" : "translate-x-full"),
                 on
                   ? "border-brand-600 bg-brand-600 text-white"
-                  : "border-slate-200 bg-white text-slate-700 hover:border-brand-300 dark:border-white/10 dark:bg-[#1e2635] dark:text-slate-200",
+                  : "border-slate-200 bg-white text-slate-700 hover:border-brand-300 dark:border-white/10 dark:bg-[#262421] dark:text-slate-200",
               )}
             >
               <span className="flex items-baseline justify-between gap-3">

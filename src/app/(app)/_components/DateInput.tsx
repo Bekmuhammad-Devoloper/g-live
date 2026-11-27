@@ -158,7 +158,7 @@ export default function DateInput({ type = "date", name, value, defaultValue, on
     <div
       ref={popRef}
       style={{ top: pos.top, left: pos.left, width: 288 }}
-      className="animate-pop-in fixed z-[200] rounded-2xl border border-slate-200 bg-white p-3 shadow-pop dark:border-white/10 dark:bg-[#0f1c36]"
+      className="animate-pop-in fixed z-[200] rounded-2xl border border-slate-200 bg-white p-3 shadow-pop dark:border-white/10 dark:bg-[#1c1b18]"
     >
       <div className="mb-2 flex items-center justify-between">
         <button type="button" className={navBtn} onClick={() => shift(-1)} aria-label="prev">
