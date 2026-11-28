@@ -2,7 +2,7 @@ import { requireSession } from "@/lib/auth";
 import { prisma } from "@/lib/db";
 import { canRead, MODULES } from "@/lib/rbac";
 import { ROLES } from "@/lib/constants";
-import { branchWhere } from "@/lib/branchScope";
+import { branchWhere, staffBranchWhere } from "@/lib/branchScope";
 import { tr } from "@/lib/tr";
 import { Forbidden } from "../_components/ui";
 import RoomsView, { type VRoom, type RoomStatus } from "./RoomsView";
@@ -15,11 +15,16 @@ export default async function RoomsPage() {
     return <Forbidden title={tr(s.locale, { uz: "Kirish taqiqlangan", ru: "Доступ запрещён", en: "Access denied", de: "Zugriff verweigert" })} body={tr(s.locale, { uz: "Bu bo'lim uchun ruxsat yo'q.", ru: "Нет доступа к этому разделу.", en: "You do not have access to this section.", de: "Sie haben keine Berechtigung für diesen Bereich." })} />;
   }
 
-  const [rooms, groups] = await Promise.all([
-    prisma.room.findMany({ where: { AND: [{ isActive: true }, branchWhere(s)] }, orderBy: { name: "asc" } }),
+  const [rooms, groups, staff] = await Promise.all([
+    prisma.room.findMany({ where: { AND: [{ isActive: true }, branchWhere(s)] }, orderBy: { name: "asc" }, include: { responsible: { select: { fullName: true } } } }),
     prisma.group.findMany({
       where: { AND: [{ room: { not: null }, status: { in: ["ACTIVE", "PLANNED"] } }, branchWhere(s)] },
       select: { room: true, name: true, weekdays: true, startTime: true, endTime: true, program: { select: { name: true } } },
+    }),
+    prisma.user.findMany({
+      where: { AND: [{ isActive: true, role: { notIn: [ROLES.STUDENT, ROLES.PARENT] } }, staffBranchWhere(s)] },
+      orderBy: { fullName: "asc" },
+      select: { id: true, fullName: true },
     }),
   ]);
 
@@ -46,8 +51,8 @@ export default async function RoomsPage() {
     return { busy: false, group: null, course: null, until: nextTime, freeMin: next == null ? null : next - nowMin };
   }
 
-  const vrooms: VRoom[] = rooms.map((r) => ({ id: r.id, name: r.name, capacity: r.capacity, note: r.note, status: roomStatus(r.name) }));
+  const vrooms: VRoom[] = rooms.map((r) => ({ id: r.id, name: r.name, capacity: r.capacity, note: r.note, responsibleId: r.responsibleId, responsible: r.responsible?.fullName ?? null, status: roomStatus(r.name) }));
   const canManage = MANAGE_ROLES.includes(s.role as never);
 
-  return <RoomsView locale={s.locale} rooms={vrooms} canManage={canManage} />;
+  return <RoomsView locale={s.locale} rooms={vrooms} canManage={canManage} staff={staff.map((u) => ({ id: u.id, name: u.fullName }))} />;
 }

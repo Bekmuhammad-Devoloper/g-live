@@ -118,6 +118,7 @@ model User {
   studentProfile Student?
   parentProfile  Parent?
   teacherGroups  Group[]  @relation("TeacherGroups")
+  roomsResponsible Room[] @relation("RoomResponsible")
   teacherChats   ChatMessage[] @relation("ChatTeacher")
   authoredChats  ChatMessage[] @relation("ChatAuthor")
 
@@ -705,6 +706,8 @@ model Room {
   name      String
   capacity  Int      @default(0)
   note      String?
+  responsibleId String?
+  responsible   User?  @relation("RoomResponsible", fields: [responsibleId], references: [id], onDelete: SetNull)
   branchId  String?
   isActive  Boolean  @default(true)
   createdAt DateTime @default(now())

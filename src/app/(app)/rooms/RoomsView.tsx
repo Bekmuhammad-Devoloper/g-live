@@ -11,9 +11,10 @@ import { Icon } from "../_components/Icon";
 import { saveRoom, deleteRoom } from "./actions";
 
 export interface RoomStatus { busy: boolean; group: string | null; course: string | null; until: string | null; freeMin: number | null }
-export interface VRoom { id: string; name: string; capacity: number; note: string | null; status: RoomStatus }
+export interface VRoom { id: string; name: string; capacity: number; note: string | null; responsibleId: string | null; responsible: string | null; status: RoomStatus }
+export interface VStaff { id: string; name: string }
 
-export default function RoomsView({ locale, rooms, canManage }: { locale: Locale; rooms: VRoom[]; canManage: boolean }) {
+export default function RoomsView({ locale, rooms, canManage, staff }: { locale: Locale; rooms: VRoom[]; canManage: boolean; staff: VStaff[] }) {
   const router = useRouter();
   const [, start] = useTransition();
   const [search, setSearch] = useState("");
@@ -32,11 +33,18 @@ export default function RoomsView({ locale, rooms, canManage }: { locale: Locale
     <div className="space-y-5">
       <div className="flex flex-wrap items-center justify-between gap-3">
         <h1 className="text-[26px] font-bold tracking-tight text-slate-900 dark:text-slate-100">{tr(locale, { uz: "Xonalar", ru: "Кабинеты", en: "Rooms", de: "Räume" })}</h1>
-        {canManage && (
-          <button onClick={() => setDrawer({ edit: null })} className="flex h-11 items-center gap-2 rounded-full bg-brand-800 px-6 text-sm font-semibold text-white shadow-sm transition hover:bg-brand-900">
-            {tr(locale, { uz: "Yangisini qo'shish", ru: "Добавить новый", en: "Add new", de: "Neu hinzufügen" })}
-          </button>
-        )}
+        <div className="flex items-center gap-2">
+          {rooms.length > 0 && (
+            <a href="/room-labels" target="_blank" rel="noreferrer" className="flex h-11 items-center gap-2 rounded-full border border-slate-200 bg-white px-5 text-sm font-semibold text-slate-700 shadow-sm transition hover:bg-slate-50 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-200 dark:hover:bg-slate-800">
+              <Icon name="qr" className="h-4 w-4" /> {tr(locale, { uz: "QR yorliqlar", ru: "QR-таблички", en: "QR labels", de: "QR-Schilder" })}
+            </a>
+          )}
+          {canManage && (
+            <button onClick={() => setDrawer({ edit: null })} className="flex h-11 items-center gap-2 rounded-full bg-brand-800 px-6 text-sm font-semibold text-white shadow-sm transition hover:bg-brand-900">
+              {tr(locale, { uz: "Yangisini qo'shish", ru: "Добавить новый", en: "Add new", de: "Neu hinzufügen" })}
+            </button>
+          )}
+        </div>
       </div>
 
       {rooms.length > 6 && (
@@ -67,7 +75,10 @@ export default function RoomsView({ locale, rooms, canManage }: { locale: Locale
                   <td className="px-6 py-4">
                     <Link href={`/rooms/${r.id}`} className="flex items-center gap-3 transition hover:text-brand-600">
                       <span className="grid h-9 w-9 shrink-0 place-items-center rounded-lg bg-brand-500/15 text-brand-600 dark:text-brand-300"><Icon name="building" className="h-5 w-5" /></span>
-                      <span className="font-semibold text-slate-800 group-hover:text-brand-600 dark:text-slate-100 dark:group-hover:text-brand-300">{r.name}</span>
+                      <span className="min-w-0">
+                        <span className="block font-semibold text-slate-800 group-hover:text-brand-600 dark:text-slate-100 dark:group-hover:text-brand-300">{r.name}</span>
+                        {r.responsible && <span className="block truncate text-xs text-slate-400">{tr(locale, { uz: "Mas'ul", ru: "Ответственный", en: "Responsible", de: "Verantwortlich" })}: {r.responsible}</span>}
+                      </span>
                     </Link>
                   </td>
                   <td className="px-6 py-4">{r.capacity > 0 ? <span className="inline-flex items-center gap-1 rounded-md bg-brand-500/15 px-2 py-0.5 text-xs font-bold text-brand-600 dark:text-brand-300"><Icon name="users" className="h-3.5 w-3.5" /> {r.capacity}</span> : <span className="text-slate-400">—</span>}</td>
@@ -76,6 +87,7 @@ export default function RoomsView({ locale, rooms, canManage }: { locale: Locale
                     <div className="flex items-center justify-end gap-2.5">
                       <StatusPill status={r.status} locale={locale} />
                       <Link href={`/rooms/${r.id}`} title={tr(locale, { uz: "Xona ma'lumotlari", ru: "Информация о кабинете", en: "Room details", de: "Rauminformationen" })} className="grid h-8 w-8 place-items-center rounded-lg text-slate-400 transition hover:bg-slate-100 hover:text-brand-600 dark:hover:bg-slate-800"><Icon name="building" className="h-4 w-4" /></Link>
+                      <a href={`/room-labels?id=${r.id}`} target="_blank" rel="noreferrer" title={tr(locale, { uz: "QR yorliq", ru: "QR-табличка", en: "QR label", de: "QR-Schild" })} className="grid h-8 w-8 place-items-center rounded-lg text-slate-400 transition hover:bg-slate-100 hover:text-brand-600 dark:hover:bg-slate-800"><Icon name="qr" className="h-4 w-4" /></a>
                       {canManage && (
                         <>
                           <button onClick={() => setDrawer({ edit: r })} title={tr(locale, { uz: "Tahrirlash", ru: "Редактировать", en: "Edit", de: "Bearbeiten" })} className="grid h-8 w-8 place-items-center rounded-lg text-slate-400 transition hover:bg-slate-100 hover:text-brand-600 dark:hover:bg-slate-800"><Icon name="pencil" className="h-4 w-4" /></button>
@@ -91,7 +103,7 @@ export default function RoomsView({ locale, rooms, canManage }: { locale: Locale
         </div>
       </div>
 
-      {drawer && <RoomDrawer locale={locale} edit={drawer.edit} onClose={() => setDrawer(null)} onSaved={(m) => { setDrawer(null); router.refresh(); flash(m); }} />}
+      {drawer && <RoomDrawer locale={locale} edit={drawer.edit} staff={staff} onClose={() => setDrawer(null)} onSaved={(m) => { setDrawer(null); router.refresh(); flash(m); }} />}
       {toast && <div className="fixed bottom-6 left-1/2 z-[90] -translate-x-1/2 rounded-xl bg-slate-900 px-4 py-2.5 text-sm font-medium text-white shadow-pop dark:bg-slate-700">{toast}</div>}
     </div>
   );
@@ -133,7 +145,7 @@ function StatusPill({ status, locale }: { status: RoomStatus; locale: Locale }) 
   );
 }
 
-function RoomDrawer({ locale, edit, onClose, onSaved }: { locale: Locale; edit: VRoom | null; onClose: () => void; onSaved: (msg: string) => void }) {
+function RoomDrawer({ locale, edit, staff, onClose, onSaved }: { locale: Locale; edit: VRoom | null; staff: VStaff[]; onClose: () => void; onSaved: (msg: string) => void }) {
   const [mounted, setMounted] = useState(false);
   const [pending, start] = useTransition();
   const [error, setError] = useState<string | null>(null);
@@ -179,6 +191,14 @@ function RoomDrawer({ locale, edit, onClose, onSaved }: { locale: Locale; edit: 
           <label className="block">
             <span className="mb-1.5 block text-sm font-medium text-slate-600 dark:text-slate-300">{tr(locale, { uz: "Izoh", ru: "Примечание", en: "Note", de: "Notiz" })} <span className="text-slate-400">({tr(locale, { uz: "ixtiyoriy", ru: "необязательно", en: "optional", de: "optional" })})</span></span>
             <input name="note" defaultValue={edit?.note ?? ""} placeholder={tr(locale, { uz: "Qo'shimcha ma'lumot", ru: "Дополнительная информация", en: "Additional info", de: "Zusätzliche Informationen" })} className={inp} />
+          </label>
+          <label className="block">
+            <span className="mb-1.5 block text-sm font-medium text-slate-600 dark:text-slate-300">{tr(locale, { uz: "Mas'ul shaxs", ru: "Ответственный", en: "Responsible person", de: "Verantwortliche Person" })} <span className="text-slate-400">({tr(locale, { uz: "ixtiyoriy", ru: "необязательно", en: "optional", de: "optional" })})</span></span>
+            <select name="responsibleId" defaultValue={edit?.responsibleId ?? ""} className={inp}>
+              <option value="">{tr(locale, { uz: "Belgilanmagan", ru: "Не назначен", en: "Not assigned", de: "Nicht festgelegt" })}</option>
+              {staff.map((u) => <option key={u.id} value={u.id}>{u.name}</option>)}
+            </select>
+            <span className="mt-1 block text-xs text-slate-400">{tr(locale, { uz: "QR yorliqni skanerlaganda ko'rinadi", ru: "Показывается при сканировании QR-таблички", en: "Shown when the QR label is scanned", de: "Wird beim Scannen des QR-Schilds angezeigt" })}</span>
           </label>
           {error && <div className="rounded-lg bg-rose-50 px-3 py-2 text-sm text-rose-600 dark:bg-rose-500/10 dark:text-rose-400">{error}</div>}
         </div>

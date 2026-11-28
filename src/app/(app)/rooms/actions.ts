@@ -49,10 +49,16 @@ export async function saveRoom(fd: FormData): Promise<FormState> {
   const noteProvided = fd.has("note");
   const note = String(fd.get("note") || "").trim() || null;
   if (name.length < 1) return { error: tr(s.locale, { uz: "Xona nomini kiriting", ru: "Введите название комнаты", en: "Enter the room name", de: "Raumnamen eingeben" }) };
+  const responsibleProvided = fd.has("responsibleId");
+  let responsibleId: string | null = String(fd.get("responsibleId") || "").trim() || null;
+  if (responsibleId) {
+    const u = await prisma.user.findUnique({ where: { id: responsibleId }, select: { role: true, isActive: true } });
+    if (!u || !u.isActive || u.role === ROLES.STUDENT || u.role === ROLES.PARENT) responsibleId = null;
+  }
 
   if (id) {
     const prev = await prisma.room.findUnique({ where: { id }, select: { name: true, capacity: true, branchId: true } });
-    await prisma.room.update({ where: { id }, data: { name, capacity, ...(noteProvided ? { note } : {}) } });
+    await prisma.room.update({ where: { id }, data: { name, capacity, ...(noteProvided ? { note } : {}), ...(responsibleProvided ? { responsibleId } : {}) } });
     if (prev?.branchId && (prev.name !== name || prev.capacity !== capacity)) {
       const key = prev.name.trim().toLowerCase();
       const slots = await prisma.branchSlot.findMany({ where: { branchId: prev.branchId }, select: { id: true, room: true, capacity: true } });
@@ -67,7 +73,7 @@ export async function saveRoom(fd: FormData): Promise<FormState> {
     }
     await writeAudit({ actorId: s.userId, action: "UPDATE", entityType: "Room", entityId: id, newValue: { name } });
   } else {
-    const room = await prisma.room.create({ data: { name, capacity, note, branchId: s.branchId } });
+    const room = await prisma.room.create({ data: { name, capacity, note, responsibleId, branchId: s.branchId } });
     await writeAudit({ actorId: s.userId, action: "CREATE", entityType: "Room", entityId: room.id, newValue: { name } });
   }
   revalidatePath("/rooms");
