@@ -11,7 +11,7 @@ export const metadata: Metadata = {
 const UPDATED = "28.11.2026";
 const EMAIL = "yuksalishdev@gmail.com";
 
-type Section = { title: string; body: (string | string[])[] };
+type Section = { id?: string; title: string; body: (string | string[])[] };
 
 const UZ: Section[] = [
   {
@@ -65,9 +65,18 @@ const UZ: Section[] = [
     ],
   },
   {
-    title: "7. Hisob va ma'lumotlarni o'chirish",
+    id: "delete",
+    title: "7. Germaniya Live hisobini va ma'lumotlarni o'chirish",
     body: [
-      `Hisobingizni va unga bog'liq ma'lumotlarni o'chirishni o'quv markazi administratoridan yoki ${EMAIL} manziliga xat yozib so'rashingiz mumkin. So'rov 30 kun ichida bajariladi. Qonun bo'yicha saqlanishi shart bo'lgan to'lov yozuvlari bundan mustasno.`,
+      "Germaniya Live ilovasidagi hisobingizni va unga bog'liq ma'lumotlarni o'chirish uchun:",
+      [
+        `${EMAIL} manziliga «Hisobni o'chirish» mavzusida xat yozing yoki o'quv markazi administratoriga murojaat qiling.`,
+        "Xatda ism-familiyangiz, ilovadagi loginingiz va telefon raqamingizni ko'rsating.",
+        "Biz hisobingizdagi telefon raqami orqali so'rov sizdan ekanini tasdiqlaymiz.",
+        "So'rov 30 kun ichida bajariladi va sizga javob yuboriladi.",
+      ],
+      "O'chiriladi: hisob (login va parol), profil rasmi, uy vazifalari va yuklangan fayllar, ustozga yozilgan xabarlar, o'yin va test natijalari, ballar.",
+      "Saqlanadi: to'lov yozuvlari — buxgalteriya hisobi uchun qonunda belgilangan muddat davomida, keyin o'chiriladi.",
     ],
   },
   {
@@ -134,9 +143,18 @@ const EN: Section[] = [
     ],
   },
   {
-    title: "7. Account and data deletion",
+    id: "delete-en",
+    title: "7. Deleting your Germaniya Live account and data",
     body: [
-      `You can request deletion of your account and related data from the learning center administrator or by emailing ${EMAIL}. Requests are completed within 30 days, except payment records that must be retained by law.`,
+      "To delete your Germaniya Live app account and related data:",
+      [
+        `Email ${EMAIL} with the subject "Delete my account", or contact the learning center administrator.`,
+        "Include your full name, your app login and your phone number.",
+        "We confirm the request with you via the phone number on your account.",
+        "The request is completed within 30 days and you receive a reply.",
+      ],
+      "Deleted: account (login and password), profile photo, homework and uploaded files, messages to teachers, game and test results, points.",
+      "Retained: payment records, kept for the period required by accounting law and then deleted.",
     ],
   },
   {
@@ -155,7 +173,7 @@ function Block({ sections }: { sections: Section[] }) {
   return (
     <div className="space-y-7">
       {sections.map((s) => (
-        <section key={s.title}>
+        <section key={s.title} id={s.id} className="scroll-mt-6">
           <h2 className="text-[17px] font-bold text-slate-900">{s.title}</h2>
           <div className="mt-2 space-y-2.5 text-[15px] leading-relaxed text-slate-600">
             {s.body.map((b, i) =>

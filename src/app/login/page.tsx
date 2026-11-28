@@ -44,7 +44,12 @@ export default async function LoginPage({ searchParams }: { searchParams: Promis
           <LoginForm locale={locale} next={next} />
         </div>
 
-        <p className="mt-6 text-center text-xs text-slate-400">© {new Date().getFullYear()} {brand.name}</p>
+        <p className="mt-6 text-center text-xs text-slate-400">
+          © {new Date().getFullYear()} {brand.name} ·{" "}
+          <a href="/privacy" className="underline-offset-2 hover:text-slate-600 hover:underline">
+            {tr(locale, { uz: "Maxfiylik siyosati", ru: "Политика конфиденциальности", en: "Privacy policy", de: "Datenschutzerklärung" })}
+          </a>
+        </p>
       </div>
     </div>
   );
