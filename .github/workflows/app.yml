@@ -122,6 +122,8 @@ jobs:
           ssh -i ~/.ssh/deploy_key -o BatchMode=yes "$SSH_USER@$SSH_HOST" "mkdir -p $REMOTE_APK_DIR/play"
           scp -i ~/.ssh/deploy_key -o BatchMode=yes \
             germaniya-live.aab "$SSH_USER@$SSH_HOST:$REMOTE_APK_DIR/play/germaniya-live-$CODE.aab"
+          scp -i ~/.ssh/deploy_key -o BatchMode=yes \
+            germaniya-live.apk "$SSH_USER@$SSH_HOST:$REMOTE_APK_DIR/play/germaniya-live-$CODE.apk"
           echo "✅ $REMOTE_APK_DIR/play/germaniya-live-$CODE.aab"
 
       - name: Serverga qo'yish
