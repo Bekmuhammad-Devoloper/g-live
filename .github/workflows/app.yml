@@ -7,6 +7,10 @@ on:
         description: "Yig'ilgan APK serverga qo'yilsinmi (germaniya.live/app yangilanadi)"
         type: boolean
         default: true
+      aab:
+        description: "Google Play uchun AAB ham yig'ilsin (serverda /opt/gl-edu/apk/play ga qo'yiladi)"
+        type: boolean
+        default: false
 
 concurrency:
   group: build-app
@@ -88,6 +92,16 @@ jobs:
           fi
           echo "✅ Imzo to'g'ri"
 
+      - name: AAB yig'ish (Google Play)
+        if: ${{ inputs.aab }}
+        env:
+          GL_KEYSTORE: ${{ runner.temp }}/signing/android.keystore
+        run: |
+          export GL_KEYSTORE_PASS="$(cat "$RUNNER_TEMP/signing/keystore.pass")"
+          ( cd android && ./gradlew --no-daemon bundleRelease )
+          cp android/app/build/outputs/bundle/release/app-release.aab germaniya-live.aab
+          ls -la germaniya-live.aab
+
       - name: Kalitni o'chirish
         if: always()
         run: rm -rf "$RUNNER_TEMP/signing"
@@ -95,8 +109,20 @@ jobs:
       - uses: actions/upload-artifact@v4
         with:
           name: germaniya-live-app
-          path: germaniya-live.apk
+          path: |
+            germaniya-live.apk
+            germaniya-live.aab
+          if-no-files-found: ignore
           retention-days: 30
+
+      - name: AAB ni serverga qo'yish
+        if: ${{ inputs.aab }}
+        run: |
+          CODE=$(grep -oE 'versionCode [0-9]+' android/app/build.gradle | grep -oE '[0-9]+')
+          ssh -i ~/.ssh/deploy_key -o BatchMode=yes "$SSH_USER@$SSH_HOST" "mkdir -p $REMOTE_APK_DIR/play"
+          scp -i ~/.ssh/deploy_key -o BatchMode=yes \
+            germaniya-live.aab "$SSH_USER@$SSH_HOST:$REMOTE_APK_DIR/play/germaniya-live-$CODE.aab"
+          echo "✅ $REMOTE_APK_DIR/play/germaniya-live-$CODE.aab"
 
       - name: Serverga qo'yish
         if: ${{ inputs.publish }}

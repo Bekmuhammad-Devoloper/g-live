@@ -354,8 +354,11 @@ export default async function LandingPage() {
           </div>
         </div>
 
-        <div className="mx-auto mt-11 max-w-6xl border-t border-slate-100 pt-6 text-[13px] text-slate-400">
-          © {new Date().getFullYear()} Germaniya Live
+        <div className="mx-auto mt-11 flex max-w-6xl flex-wrap items-center justify-between gap-3 border-t border-slate-100 pt-6 text-[13px] text-slate-400">
+          <span>© {new Date().getFullYear()} Germaniya Live</span>
+          <Link href="/privacy" className={`rounded font-medium transition hover:text-slate-700 ${focus}`}>
+            Maxfiylik siyosati
+          </Link>
         </div>
       </footer>
     </div>
