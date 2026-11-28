@@ -74,7 +74,7 @@ export default function RoomsView({ locale, rooms, canManage, staff }: { locale:
                   <td className="px-6 py-4"><span className="grid h-7 w-7 place-items-center rounded-full bg-slate-100 text-xs font-bold text-slate-500 dark:bg-slate-800 dark:text-slate-400">{i + 1}</span></td>
                   <td className="px-6 py-4">
                     <Link href={`/rooms/${r.id}`} className="flex items-center gap-3 transition hover:text-brand-600">
-                      <span className="grid h-9 w-9 shrink-0 place-items-center rounded-lg bg-brand-500/15 text-brand-600 dark:text-brand-300"><Icon name="building" className="h-5 w-5" /></span>
+                      <span className="grid h-10 w-10 shrink-0 place-items-center"><Icon name="rooms" className="h-9 w-9" /></span>
                       <span className="min-w-0">
                         <span className="block font-semibold text-slate-800 group-hover:text-brand-600 dark:text-slate-100 dark:group-hover:text-brand-300">{r.name}</span>
                         {r.responsible && <span className="block truncate text-xs text-slate-400">{tr(locale, { uz: "Mas'ul", ru: "Ответственный", en: "Responsible", de: "Verantwortlich" })}: {r.responsible}</span>}

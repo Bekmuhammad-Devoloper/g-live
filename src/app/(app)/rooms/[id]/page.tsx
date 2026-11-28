@@ -54,7 +54,7 @@ export default async function RoomDetailPage({ params }: { params: Promise<{ id:
 
       <div className="flex flex-wrap items-center justify-between gap-4 rounded-2xl border border-slate-200/70 bg-white p-5 shadow-card dark:border-slate-800 dark:bg-slate-900">
         <div className="flex items-center gap-4">
-          <span className="grid h-14 w-14 shrink-0 place-items-center rounded-2xl bg-brand-500/15 text-brand-600 dark:text-brand-300"><Icon name="building" className="h-7 w-7" /></span>
+          <span className="grid h-14 w-14 shrink-0 place-items-center"><Icon name="rooms" className="h-12 w-12" /></span>
           <div>
             <h1 className="text-[24px] font-bold tracking-tight text-slate-900 dark:text-slate-100">{room.name}</h1>
             <div className="mt-1 flex flex-wrap items-center gap-3 text-sm text-slate-500 dark:text-slate-400">

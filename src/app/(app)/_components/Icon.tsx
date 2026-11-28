@@ -4,6 +4,11 @@ const dot = (cx: number, cy: number) => (
   <circle key={`${cx}-${cy}`} cx={cx} cy={cy} r="1.1" fill="currentColor" stroke="none" />
 );
 
+const IMG_ICONS: Record<string, { src: string; scale: number }> = {
+  leads: { src: "/nav/leads.webp", scale: 1.3 },
+  rooms: { src: "/nav/rooms.webp", scale: 1.15 },
+};
+
 const P: Record<string, JSX.Element> = {
   download: (
     <>
@@ -282,16 +287,17 @@ export function Icon({
   sketch?: boolean;
   style?: React.CSSProperties;
 }) {
-  if (name === "leads") {
+  const img = IMG_ICONS[name];
+  if (img) {
     return (
       <img
-        src="/nav/leads.webp"
+        src={img.src}
         alt=""
         aria-hidden
         draggable={false}
         decoding="async"
         className={`pointer-events-none shrink-0 select-none object-contain ${className}`}
-        style={{ transform: "scale(1.3)", filter: "drop-shadow(0 1px 1.5px rgb(0 0 0 / 0.28))", ...style }}
+        style={{ transform: `scale(${img.scale})`, filter: "drop-shadow(0 1px 1.5px rgb(0 0 0 / 0.28))", ...style }}
       />
     );
   }
