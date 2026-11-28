@@ -102,6 +102,35 @@ const SLOTS: { key: SlotKey; labelKey: string }[] = [
 ];
 const DEFAULT_CFG: Record<SlotKey, string> = { t1: "time", t2: "course", t3: "teacher", r1: "room", r2: "day", r3: "group", rb: "" };
 
+function laneLayout<T extends { id: string; startMin: number; endMin: number }>(items: T[]): Map<string, { lane: number; lanes: number }> {
+  const out = new Map<string, { lane: number; lanes: number }>();
+  const sorted = [...items].sort((a, b) => a.startMin - b.startMin || b.endMin - a.endMin);
+  let cluster: string[] = [];
+  let ends: number[] = [];
+  let clusterEnd = -Infinity;
+  const flush = () => {
+    for (const id of cluster) out.get(id)!.lanes = ends.length;
+    cluster = [];
+    ends = [];
+    clusterEnd = -Infinity;
+  };
+  for (const it of sorted) {
+    if (cluster.length && it.startMin >= clusterEnd) flush();
+    let lane = ends.findIndex((e) => e <= it.startMin);
+    if (lane === -1) {
+      lane = ends.length;
+      ends.push(it.endMin);
+    } else {
+      ends[lane] = it.endMin;
+    }
+    out.set(it.id, { lane, lanes: 1 });
+    cluster.push(it.id);
+    clusterEnd = Math.max(clusterEnd, it.endMin);
+  }
+  flush();
+  return out;
+}
+
 function hhmm(min: number) {
   return `${String(Math.floor(min / 60)).padStart(2, "0")}:${String(min % 60).padStart(2, "0")}`;
 }
@@ -121,9 +150,10 @@ function shortDate(iso: string | null | undefined, locale: Locale): string {
 
 function blockStyle(color: string | null | undefined, isPast: boolean): React.CSSProperties | undefined {
   if (!color) return undefined;
+  const tint = color + (isPast ? "1f" : "40");
   return {
     borderLeftColor: isPast ? color + "99" : color,
-    backgroundColor: color + (isPast ? "1f" : "40"),
+    backgroundImage: `linear-gradient(${tint}, ${tint})`,
   };
 }
 
@@ -271,6 +301,7 @@ export default function LessonCalendar(p: Props) {
   }, [groupMode, dayLessons, p.rooms, p.teachers, p.groups]);
   const lessonsForRow = (name: string) =>
     dayLessons.filter((l) => (rowKeyOf(l) || "—") === name);
+  const dayLanes = useMemo(() => laneLayout(dayLessons), [dayLessons]);
 
   function exportCsv() {
     const rows = [[
@@ -371,10 +402,24 @@ export default function LessonCalendar(p: Props) {
                 const { title, sub } = lines(l);
                 const past = p.weekNav ? pastAt(l.endMin) : l.isPast;
                 const cst = blockStyle(l.color, past);
+                const { lane, lanes } = dayLanes.get(l.id) ?? { lane: 0, lanes: 1 };
+                const gap = lanes > 1 ? 4 : 0;
                 return (
-                  <Link key={l.id} href={`/groups/${l.groupId}`} className={cn("absolute left-2 right-2 overflow-hidden rounded-lg border-l-4 p-2 text-xs shadow-sm transition hover:shadow-md", !cst && (past ? "border-slate-400 bg-slate-50 dark:bg-slate-800" : "border-brand-500 bg-brand-50 dark:bg-brand-950/40"))} style={{ top: top + 2, height, ...cst }}>
-                    <div className="font-semibold text-slate-800 dark:text-slate-100">{title}</div>
-                    {sub && <div className="truncate text-slate-500 dark:text-slate-300">{sub}</div>}
+                  <Link
+                    key={l.id}
+                    href={`/groups/${l.groupId}`}
+                    title={`${title}${sub ? `\n${sub}` : ""}`}
+                    className={cn("absolute overflow-hidden rounded-lg border-l-4 p-2 text-xs shadow-sm transition hover:z-10 hover:shadow-md", cst ? "bg-white dark:bg-slate-900" : past ? "border-slate-400 bg-slate-50 dark:bg-slate-800" : "border-brand-500 bg-brand-50 dark:bg-brand-900")}
+                    style={{
+                      top: top + 2,
+                      height,
+                      left: `calc(8px + (100% - 16px) * ${lane / lanes})`,
+                      width: `calc((100% - 16px) / ${lanes} - ${gap}px)`,
+                      ...cst,
+                    }}
+                  >
+                    <div className="truncate font-semibold text-slate-800 dark:text-slate-100">{title}</div>
+                    {sub && <div className={cn("text-slate-500 dark:text-slate-300", lanes > 1 ? "line-clamp-2" : "truncate")}>{sub}</div>}
                   </Link>
                 );
               })}
@@ -395,14 +440,19 @@ export default function LessonCalendar(p: Props) {
                   <div key={s.min} className="flex w-[128px] shrink-0 items-center justify-center border-b border-r border-slate-100 px-1 py-2.5 text-[11px] text-slate-500 dark:border-slate-700/60">{s.label}</div>
                 ))}
               </div>
-              {rowNames.map((name) => (
+              {rowNames.map((name) => {
+                const rowLessons = lessonsForRow(name);
+                const rowLanes = laneLayout(rowLessons);
+                const laneCount = Math.max(1, ...[...rowLanes.values()].map((v) => v.lanes));
+                return (
                 <div key={name} className="flex">
                   <div className="sticky left-0 z-10 flex w-[150px] shrink-0 items-center border-b border-r border-slate-200 bg-white px-3 py-2 text-sm font-medium text-slate-700 dark:border-slate-700 dark:bg-slate-900">
                     <span className="truncate">{name}</span>
                   </div>
-                  <div className="relative border-b border-slate-100 dark:border-slate-800" style={{ width: slots.length * 128, height: ROW_H }}>
+                  <div className="relative border-b border-slate-100 dark:border-slate-800" style={{ width: slots.length * 128, height: ROW_H * laneCount }}>
                     {slots.map((s, i) => (<div key={s.min} className="absolute top-0 h-full border-r border-slate-100 dark:border-slate-800/60" style={{ left: i * 128, width: 128 }} />))}
-                    {lessonsForRow(name).map((l) => {
+                    {rowLessons.map((l) => {
+                      const rowLane = rowLanes.get(l.id)?.lane ?? 0;
                       const left = ((Math.max(range.from * 60, l.startMin) - range.from * 60) / 30) * 128;
                       const width = Math.max(60, ((Math.min(range.to * 60, l.endMin) - l.startMin) / 30) * 128 - 4);
                       const past = p.weekNav ? pastAt(l.endMin) : l.isPast;
@@ -415,8 +465,8 @@ export default function LessonCalendar(p: Props) {
                           key={l.id}
                           href={`/groups/${l.groupId}`}
                           title={`${l.group} · ${hhmm(l.startMin)}–${hhmm(l.endMin)} · ${l.course}${l.note ? `\n\n${l.note}` : ""}`}
-                          className="absolute bottom-1.5 top-1.5 flex flex-col overflow-hidden rounded-lg px-2 py-1.5 text-xs transition hover:z-10 hover:brightness-105 hover:shadow-lg"
-                          style={{ left: left + 2, width, ...cst }}
+                          className="absolute flex flex-col overflow-hidden rounded-lg px-2 py-1.5 text-xs transition hover:z-10 hover:brightness-105 hover:shadow-lg"
+                          style={{ left: left + 2, width, top: rowLane * ROW_H + 6, height: ROW_H - 12, ...cst }}
                         >
                           <span className="mb-1 w-fit max-w-full truncate rounded bg-white/85 px-1.5 py-0.5 text-[10px] font-semibold text-slate-700">
                             {l.group}
@@ -436,7 +486,8 @@ export default function LessonCalendar(p: Props) {
                     })}
                   </div>
                 </div>
-              ))}
+                );
+              })}
             </div>
           )}
         </div>
