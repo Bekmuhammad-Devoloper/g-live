@@ -6,6 +6,7 @@ import { Icon } from "../_components/Icon";
 import { formatMoney, type Locale } from "@/lib/constants";
 import { tr } from "@/lib/tr";
 import type { VTeacher } from "./TeachersView";
+import TeacherAvatar from "./TeacherAvatar";
 import { setTeacherFiksa, updateCurrentSalary } from "./salaryActions";
 import { getTeacherCredentials, setTeacherPassword } from "./teacherActions";
 
@@ -60,11 +61,7 @@ export default function SalaryModal({ teacher: t, canManage, locale, onClose }: 
       >
         <div className="flex items-center justify-between border-b border-slate-100 px-5 py-4 dark:border-white/10">
           <div className="flex min-w-0 items-center gap-3">
-            {t.imageUrl ? (
-              <span className="h-11 w-11 shrink-0 rounded-full bg-cover bg-center ring-2 ring-brand-500/30" style={{ backgroundImage: `url(${t.imageUrl})` }} />
-            ) : (
-              <span className="grid h-11 w-11 shrink-0 place-items-center rounded-full bg-brand-500/15 text-brand-600 dark:text-brand-300"><Icon name="user" className="h-6 w-6" /></span>
-            )}
+            <TeacherAvatar imageUrl={t.imageUrl} gender={t.gender} size={44} iconSize={24} className="bg-brand-500/15 text-brand-600 ring-2 ring-brand-500/30 dark:text-brand-300" />
             <div className="min-w-0">
               <div className="truncate text-base font-bold text-slate-800 dark:text-slate-100">{t.fullName}</div>
               <p className="mt-0.5 flex items-center gap-1 text-xs text-slate-400"><Icon name="wallet" className="h-3.5 w-3.5 text-amber-500" /> {tr(locale, { uz: "Maosh boshqaruvi", ru: "Управление зарплатой", en: "Salary management", de: "Gehaltsverwaltung" })} · {monthLabel(new Date().getFullYear(), new Date().getMonth() + 1, locale)}</p>

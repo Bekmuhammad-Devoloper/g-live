@@ -8,6 +8,7 @@ import { formatMoney, type Locale } from "@/lib/constants";
 import { tr } from "@/lib/tr";
 import type { VTeacher } from "./TeachersView";
 import SalaryModal from "./SalaryModal";
+import TeacherAvatar from "./TeacherAvatar";
 import { setTeacherImage } from "./teacherActions";
 import { groupColor } from "../groups/groupColor";
 
@@ -53,13 +54,7 @@ export default function TeacherCard({ teacher: t, maxStudents, canManage, locale
     <div className="rounded-2xl border border-slate-200 bg-[#ffffff] p-4 shadow-card transition hover:-translate-y-0.5 hover:shadow-soft dark:border-white/[0.07] dark:bg-[#171614]">
       <div className="flex items-start gap-3">
         <div className="group/av relative h-14 w-14 shrink-0">
-          {t.imageUrl ? (
-            <span className="block h-14 w-14 overflow-hidden rounded-full bg-cover bg-center" style={{ backgroundImage: `url(${t.imageUrl})`, boxShadow: `inset 0 0 0 2px ${color}` }} />
-          ) : (
-            <span className="flex h-14 w-14 items-center justify-center rounded-full" style={{ color, background: `${color}1f`, boxShadow: `inset 0 0 0 2px ${color}` }}>
-              <Icon name="user" className="h-7 w-7" />
-            </span>
-          )}
+          <TeacherAvatar imageUrl={t.imageUrl} gender={t.gender} size={56} iconSize={28} style={{ color, background: `${color}1f`, boxShadow: `0 0 0 2px ${color}` }} />
           {canManage && (
             <>
               <button

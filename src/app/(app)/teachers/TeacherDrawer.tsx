@@ -13,6 +13,7 @@ import { StaffForm, type PosOpt } from "../users/UsersView";
 import { deleteStaffPermanent, getStaffDetail, type StaffDetail } from "../users/actions";
 import { groupColor } from "../groups/groupColor";
 import SalaryModal from "./SalaryModal";
+import TeacherAvatar from "./TeacherAvatar";
 import { colorFor } from "./TeacherCard";
 import type { VTeacher } from "./TeachersView";
 
@@ -85,13 +86,7 @@ export default function TeacherDrawer({
             <div className="pointer-events-none absolute inset-0" style={{ background: `linear-gradient(135deg, ${color}14, transparent 60%)` }} />
             <div className="relative flex items-start justify-between gap-3 px-5 py-5">
               <div className="flex min-w-0 items-center gap-3.5">
-                {t.imageUrl ? (
-                  <span className="h-14 w-14 shrink-0 rounded-full bg-cover bg-center ring-2 ring-white dark:ring-white/10" style={{ backgroundImage: `url(${t.imageUrl})` }} />
-                ) : (
-                  <span className="flex h-14 w-14 shrink-0 items-center justify-center rounded-full ring-2 ring-white dark:ring-white/10" style={{ color, background: `${color}24` }}>
-                    <Icon name="user" className="h-7 w-7" />
-                  </span>
-                )}
+                <TeacherAvatar imageUrl={t.imageUrl} gender={t.gender} size={56} iconSize={28} className="ring-2 ring-white dark:ring-white/10" style={{ color, background: `${color}24` }} />
                 <div className="min-w-0">
                   <div className="break-words text-lg font-bold leading-tight text-slate-900 dark:text-slate-100">{t.fullName}</div>
                   <div className="mt-1.5 flex flex-wrap items-center gap-1.5">
