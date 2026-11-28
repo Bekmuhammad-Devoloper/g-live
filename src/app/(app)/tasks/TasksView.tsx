@@ -121,6 +121,7 @@ export default function TasksView({ kind, title, locale, tasks, staff, students,
     return `${p(d.getDate())}.${p(d.getMonth() + 1)} ${p(d.getHours())}:${p(d.getMinutes())}`;
   };
   const sel = "h-9 rounded-lg border border-slate-200 bg-white px-2.5 text-sm text-slate-600 outline-none focus:border-brand-400 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-300";
+  const grow = "max-w-full truncate lg:w-0 lg:min-w-[120px] lg:max-w-[260px] lg:flex-1";
 
   return (
     <div>
@@ -161,18 +162,18 @@ export default function TasksView({ kind, title, locale, tasks, staff, students,
       </div>
 
       {showFilter && (
-        <div className="mb-5 flex flex-wrap items-center gap-2">
-          <select value={fAssignee} onChange={(e) => setFAssignee(e.target.value)} className={sel}><option value="">{tr(locale, { uz: "Mas'ul shaxs", ru: "Ответственный", en: "Assignee", de: "Zuständig" })}</option>{staff.map((x) => <option key={x.id} value={x.name}>{x.name}</option>)}</select>
-          <select value={fStudent} onChange={(e) => setFStudent(e.target.value)} className={sel}><option value="">{tr(locale, { uz: "O'quvchi", ru: "Ученик", en: "Student", de: "Schüler" })}</option>{students.map((x) => <option key={x.id} value={x.name}>{x.name}</option>)}</select>
-          <select value={fType} onChange={(e) => setFType(e.target.value)} className={sel}><option value="">{tr(locale, { uz: "Topshiriq turi", ru: "Тип задачи", en: "Task type", de: "Aufgabentyp" })}</option>{TASK_TYPES.map((x) => <option key={x} value={x}>{x}</option>)}</select>
-          <div className="flex items-center gap-1 rounded-lg border border-slate-200 px-2 dark:border-slate-700">
+        <div className="mb-5 flex flex-wrap items-center gap-2 lg:flex-nowrap">
+          <select value={fAssignee} onChange={(e) => setFAssignee(e.target.value)} className={cn(sel, grow)}><option value="">{tr(locale, { uz: "Mas'ul shaxs", ru: "Ответственный", en: "Assignee", de: "Zuständig" })}</option>{staff.map((x) => <option key={x.id} value={x.name}>{x.name}</option>)}</select>
+          <select value={fStudent} onChange={(e) => setFStudent(e.target.value)} className={cn(sel, grow)}><option value="">{tr(locale, { uz: "O'quvchi", ru: "Ученик", en: "Student", de: "Schüler" })}</option>{students.map((x) => <option key={x.id} value={x.name}>{x.name}</option>)}</select>
+          <select value={fType} onChange={(e) => setFType(e.target.value)} className={cn(sel, "lg:shrink-0")}><option value="">{tr(locale, { uz: "Topshiriq turi", ru: "Тип задачи", en: "Task type", de: "Aufgabentyp" })}</option>{TASK_TYPES.map((x) => <option key={x} value={x}>{x}</option>)}</select>
+          <div className="flex shrink-0 items-center gap-1 rounded-lg border border-slate-200 px-2 dark:border-slate-700">
             <Icon name="calendar" className="h-4 w-4 text-slate-400" />
             <DateInput value={dFrom} onChange={(e) => setDFrom(e.target.value)} className="h-9 bg-transparent text-sm text-slate-600 outline-none dark:text-slate-300" />
             <span className="text-slate-300">–</span>
             <DateInput value={dTo} onChange={(e) => setDTo(e.target.value)} className="h-9 bg-transparent text-sm text-slate-600 outline-none dark:text-slate-300" />
           </div>
-          <select value={fGroup} onChange={(e) => setFGroup(e.target.value)} className={sel}><option value="">{tr(locale, { uz: "Guruh", ru: "Группа", en: "Group", de: "Gruppe" })}</option>{groups.map((x) => <option key={x.id} value={x.name}>{x.name}</option>)}</select>
-          <select value={fStatus} onChange={(e) => setFStatus(e.target.value)} className={sel}><option value="">{tr(locale, { uz: "Holat: Barchasi", ru: "Статус: Все", en: "Status: All", de: "Status: Alle" })}</option><option value="OPEN">{tr(locale, { uz: "Jarayonda", ru: "В процессе", en: "In progress", de: "In Bearbeitung" })}</option><option value="DONE">{tr(locale, { uz: "Bajarilgan", ru: "Выполнено", en: "Done", de: "Erledigt" })}</option></select>
+          <select value={fGroup} onChange={(e) => setFGroup(e.target.value)} className={cn(sel, grow)}><option value="">{tr(locale, { uz: "Guruh", ru: "Группа", en: "Group", de: "Gruppe" })}</option>{groups.map((x) => <option key={x.id} value={x.name}>{x.name}</option>)}</select>
+          <select value={fStatus} onChange={(e) => setFStatus(e.target.value)} className={cn(sel, "lg:shrink-0")}><option value="">{tr(locale, { uz: "Holat: Barchasi", ru: "Статус: Все", en: "Status: All", de: "Status: Alle" })}</option><option value="OPEN">{tr(locale, { uz: "Jarayonda", ru: "В процессе", en: "In progress", de: "In Bearbeitung" })}</option><option value="DONE">{tr(locale, { uz: "Bajarilgan", ru: "Выполнено", en: "Done", de: "Erledigt" })}</option></select>
           {(fAssignee || fStudent || fType || fGroup || fStatus || dFrom || dTo) && (
             <button onClick={() => { setFAssignee(""); setFStudent(""); setFType(""); setFGroup(""); setFStatus(""); setDFrom(""); setDTo(""); }} className="rounded-lg px-3 py-2 text-sm text-slate-400 hover:text-slate-600">{tr(locale, { uz: "Tozalash", ru: "Очистить", en: "Clear", de: "Zurücksetzen" })}</button>
           )}
